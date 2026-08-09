@@ -61,6 +61,7 @@ export default function FormPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [existingProof, setExistingProof] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   // العصر dropdown
@@ -83,15 +84,17 @@ export default function FormPage() {
       })
       .then((data) => {
         if (!data) return;
-        if (data.member && data.member.status !== "REJECTED") { router.push("/home"); return; }
+        if (data.member && data.member.status === "ACTIVE") { router.push("/home"); return; }
         if (data.member) {
-          // Resubmitting after rejection — prefill with the previous answers.
+          // Editing while PENDING, or resubmitting after rejection —
+          // prefill with the previous answers.
           setForm({
             fullName: data.member.fullName || "",
             phone: data.member.phone || data.phone || "",
             age: data.member.age || "",
             paymentMethod: data.member.paymentMethod || "",
           });
+          if (data.member.paymentProof) setExistingProof(data.member.paymentProof);
         } else if (data.phone) {
           setForm((p) => ({ ...p, phone: data.phone }));
         }
@@ -165,20 +168,24 @@ export default function FormPage() {
     if (phoneError) { setError(phoneError); return; }
     if (!form.age) { setError("يرجى اختيار العصر"); return; }
     if (!form.paymentMethod) { setError("يرجى اختيار طريقة الدفع"); return; }
-    if (!selectedFile) { setError("يرجى إرفاق صورة الكابتير"); return; }
+    if (!selectedFile && !existingProof) { setError("يرجى إرفاق صورة الكابتير"); return; }
 
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", selectedFile);
-      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!upRes.ok) throw new Error("فشل رفع صورة الكابتير");
-      const { filename } = await upRes.json();
+      let paymentProof = existingProof;
+      if (selectedFile) {
+        const fd = new FormData();
+        fd.append("file", selectedFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!upRes.ok) throw new Error("فشل رفع صورة الكابتير");
+        const uploaded = await upRes.json();
+        paymentProof = uploaded.filename;
+      }
 
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, paymentProof: filename }),
+        body: JSON.stringify({ ...form, paymentProof }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -378,16 +385,16 @@ export default function FormPage() {
               كابتير — صورة تأكيد الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
             </p>
             <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
-              {previewUrl ? (
+              {previewUrl || existingProof ? (
                 <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={previewUrl}
+                    src={previewUrl || `/api/files/${existingProof}`}
                     alt="الكابتير"
                     className="max-h-48 mx-auto rounded-xl object-contain"
                   />
                   <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
-                    انقر لتغيير الصورة
+                    {previewUrl ? "انقر لتغيير الصورة" : "الصورة الحالية — انقر لتغييرها"}
                   </p>
                 </div>
               ) : (
