@@ -53,3 +53,13 @@ model PushSubscription {
   auth      String
   createdAt DateTime @default(now())
 }
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  adminUsername String
+  action        String
+  targetLabel   String?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}

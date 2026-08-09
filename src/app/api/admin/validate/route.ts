@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
+import { logAction } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const { id, action } = await req.json();
 
     if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
@@ -23,6 +24,8 @@ export async function POST(req: NextRequest) {
       where: { id },
       data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
     });
+
+    await logAction(session.username, action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER", updated.fullName);
 
     sendPushToUser(updated.userId, {
       title: "رابطة شباب التاكلالت",

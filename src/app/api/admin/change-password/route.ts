@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, signToken } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
       where: { id: admin.id },
       data: { password: hashed, tokenVersion: { increment: 1 } },
     });
+
+    await logAction(session.username, "CHANGE_OWN_PASSWORD");
 
     // Re-issue a fresh token for this session so the admin isn't logged
     // out on this device — other devices/sessions are invalidated since
