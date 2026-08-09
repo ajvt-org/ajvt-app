@@ -9,6 +9,7 @@ type FilterTab = "ALL" | Status;
 
 interface Member {
   id: string;
+  userId: string;
   fullName: string;
   phone: string;
   age: string;
@@ -40,6 +41,8 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [proofZoom, setProofZoom] = useState(false);
   const [search, setSearch] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   useEffect(() => { fetchMembers(); }, []);
 
@@ -71,6 +74,25 @@ export default function AdminDashboard() {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function resetPassword(userId: string) {
+    setResetLoading(true);
+    setTempPassword(null);
+    try {
+      const res = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setTempPassword(data.tempPassword);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -177,7 +199,7 @@ export default function AdminDashboard() {
             {filtered.map((m) => (
               <button
                 key={m.id}
-                onClick={() => { setSelected(m); setProofZoom(false); }}
+                onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); }}
                 className="card w-full p-4 text-right transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -234,7 +256,7 @@ export default function AdminDashboard() {
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) { setSelected(null); setProofZoom(false); }
+            if (e.target === e.currentTarget) { setSelected(null); setProofZoom(false); setTempPassword(null); }
           }}
         >
           <div
@@ -251,7 +273,7 @@ export default function AdminDashboard() {
             >
               <h2 className="font-black text-white text-lg">تفاصيل الطلب</h2>
               <button
-                onClick={() => { setSelected(null); setProofZoom(false); }}
+                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); }}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
                 style={{ background: "rgba(255,255,255,0.15)" }}
               >
@@ -282,6 +304,46 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between card p-4">
                 <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>الحالة</span>
                 <span className={`badge ${STATUS_BADGE[selected.status]}`}>{STATUS_LABEL[selected.status]}</span>
+              </div>
+
+              {/* Reset password */}
+              <div className="card p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                    🔑 كلمة مرور الحساب
+                  </span>
+                  <button
+                    onClick={() => resetPassword(selected.userId)}
+                    disabled={resetLoading}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
+                    {resetLoading ? "..." : "إعادة تعيين"}
+                  </button>
+                </div>
+                {tempPassword && (
+                  <div
+                    className="mt-3 rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
+                    style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+                  >
+                    <div>
+                      <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
+                        كلمة المرور الجديدة — سلّمها للعضو
+                      </p>
+                      <p className="font-mono font-black text-lg" style={{ color: "var(--mint-700)" }} dir="ltr">
+                        {tempPassword}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(tempPassword)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                      style={{ background: "var(--mint-600)", color: "white" }}
+                    >
+                      نسخ
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Proof image */}
