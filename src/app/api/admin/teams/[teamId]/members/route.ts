@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
     const { memberId } = await req.json();
 
@@ -24,8 +24,8 @@ export async function POST(
     if (!member) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
-    if (member.status !== "ACTIVE") {
-      return NextResponse.json({ error: "يجب أن تكون عضوية اللاعب مقبولة" }, { status: 400 });
+    if (member.status === "REJECTED") {
+      return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });
     }
 
     const registered = await prisma.activityRegistration.findUnique({
@@ -55,6 +55,9 @@ export async function POST(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Team member add error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

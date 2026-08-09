@@ -104,6 +104,27 @@ export function computeTopScorers(teams: StandingsTeamInput[], matches: ScorerMa
   return Array.from(tally.values()).sort((a, b) => b.goals - a.goals || a.fullName.localeCompare(b.fullName, "ar"));
 }
 
+export interface HeadToHeadMatchInput {
+  id: string;
+  homeTeam: { id: string };
+  awayTeam: { id: string };
+}
+
+// Teams are recreated per tournament (Team belongs to a single Activity), so
+// "past meetings" only ever spans matches within the same activity/tournament.
+export function getHeadToHead<T extends HeadToHeadMatchInput>(
+  matches: T[],
+  teamAId: string,
+  teamBId: string,
+  excludeMatchId?: string
+): T[] {
+  return matches.filter((m) => {
+    if (m.id === excludeMatchId) return false;
+    const pair = new Set([m.homeTeam.id, m.awayTeam.id]);
+    return pair.has(teamAId) && pair.has(teamBId) && teamAId !== teamBId;
+  });
+}
+
 export interface TournamentStats {
   matchesPlayed: number;
   totalGoals: number;

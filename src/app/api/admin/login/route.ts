@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
-import { isRateLimited, recordFailedAttempt, clearAttempts } from "@/lib/rateLimit";
+import { isRateLimited, recordFailedAttempt, clearAttempts, getClientIp } from "@/lib/rateLimit";
 import * as bcrypt from "bcryptjs";
 
 const WINDOW_MS = 15 * 60 * 1000;
@@ -33,6 +33,11 @@ export async function POST(req: NextRequest) {
     }
 
     clearAttempts(key);
+
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: { lastLoginAt: new Date(), lastLoginIp: getClientIp(req) },
+    });
 
     const token = await signToken({ adminId: admin.id, username: admin.username, tokenVersion: admin.tokenVersion });
     const response = NextResponse.json({ ok: true });

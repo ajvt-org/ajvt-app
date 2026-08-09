@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("MEMBERS");
     const { id, action } = await req.json();
 
     if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
+    const existing = await prisma.member.findUnique({ where: { id }, select: { status: true, memberNumber: true } });
     let memberNumber: string | undefined;
-    if (action === "ACTIVE") {
-      const existing = await prisma.member.findUnique({ where: { id }, select: { memberNumber: true } });
-      if (!existing?.memberNumber) memberNumber = await generateMemberNumber();
+    if (action === "ACTIVE" && !existing?.memberNumber) {
+      memberNumber = await generateMemberNumber();
     }
 
     const updated = await prisma.member.update({
@@ -25,7 +25,9 @@ export async function POST(req: NextRequest) {
       data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
     });
 
-    await logAction(session.username, action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER", updated.fullName);
+    const statusLabel: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "غير مقبول" };
+    const transition = existing ? ` (من ${statusLabel[existing.status]} إلى ${statusLabel[action]})` : "";
+    await logAction(session.username, action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER", `${updated.fullName}${transition}`);
 
     sendPushToUser(updated.userId, {
       title: "رابطة شباب التاكلالت",
@@ -40,6 +42,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Validate error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

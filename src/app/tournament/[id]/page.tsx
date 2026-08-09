@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { groupStandings, computeTopScorers, computeStats } from "@/lib/tournament";
+import { groupStandings, computeTopScorers, computeStats, getHeadToHead } from "@/lib/tournament";
+import FollowTeamButton from "@/components/tournament/FollowTeamButton";
+import ShareResultButton from "@/components/tournament/ShareResultButton";
 
 export const dynamic = "force-dynamic";
 
@@ -108,7 +110,7 @@ export default async function PublicTournamentPage({
                   <table className="w-full text-sm" style={{ minWidth: "440px" }}>
                     <thead>
                       <tr style={{ background: "var(--mint-100)" }}>
-                        {["#", "الفريق", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", "نقاط"].map((h) => (
+                        {["#", "الفريق", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", "نقاط", ""].map((h) => (
                           <th key={h} className="px-2 py-2 text-center font-bold" style={{ color: "var(--mint-700)" }}>{h}</th>
                         ))}
                       </tr>
@@ -126,6 +128,7 @@ export default async function PublicTournamentPage({
                           <td className="px-2 py-2 text-center">{r.ga}</td>
                           <td className="px-2 py-2 text-center">{r.gd}</td>
                           <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
+                          <td className="px-2 py-2 text-center"><FollowTeamButton teamId={r.teamId} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -137,21 +140,40 @@ export default async function PublicTournamentPage({
             {played.length > 0 && (
               <div className="space-y-3">
                 <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>✅ النتائج</h2>
-                {played.map((m) => (
+                {played.map((m) => {
+                  const priorMeetings = getHeadToHead(activity.matches, m.homeTeam.id, m.awayTeam.id, m.id);
+                  return (
                   <div key={m.id} className="card p-4">
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                      {m.homeTeam.name} {m.homeScore} - {m.awayScore} {m.awayTeam.name}
-                      {m.homePenalties !== null && m.awayPenalties !== null && (
-                        <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                          {" "}(ركلات ترجيح {m.homePenalties}-{m.awayPenalties})
-                        </span>
-                      )}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                        {m.homeTeam.name} {m.homeScore} - {m.awayScore} {m.awayTeam.name}
+                        {m.homePenalties !== null && m.awayPenalties !== null && (
+                          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+                            {" "}(ركلات ترجيح {m.homePenalties}-{m.awayPenalties})
+                          </span>
+                        )}
+                      </p>
+                      <ShareResultButton
+                        homeTeamName={m.homeTeam.name}
+                        awayTeamName={m.awayTeam.name}
+                        homeScore={m.homeScore ?? 0}
+                        awayScore={m.awayScore ?? 0}
+                        round={m.round}
+                        tournamentTitle={activity.title}
+                      />
+                    </div>
                     <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
                       {m.round && <span>{m.round}</span>}
                       {m.venue && <span>📍 {m.venue}</span>}
                       {m.matchDate && <span dir="ltr">{new Date(m.matchDate).toLocaleDateString("ar")}</span>}
                     </div>
+                    {priorMeetings.length > 0 && (
+                      <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+                        🔁 مواجهات سابقة: {priorMeetings.map((pm) =>
+                          pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"
+                        ).join("، ")}
+                      </p>
+                    )}
                     {m.goals.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {m.goals.map((g, i) => (
@@ -174,7 +196,8 @@ export default async function PublicTournamentPage({
                       </p>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

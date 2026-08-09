@@ -86,8 +86,8 @@ export default function HomePage() {
       <div className="flex-1 px-5 py-6 space-y-5">
         <ActivitiesSection
           hasAnyMember={members.length > 0}
-          activeMembers={members
-            .filter((m) => m.status === "ACTIVE")
+          eligibleMembers={members
+            .filter((m) => m.status !== "REJECTED")
             .map((m) => ({ id: m.id, fullName: m.fullName, registeredActivityIds: m.registrations.map((r) => r.activityId) }))}
           onRegistrationChange={(memberId, activityId, registered) => {
             setMembers((prev) =>

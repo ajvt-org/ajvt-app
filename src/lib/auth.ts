@@ -34,9 +34,19 @@ export async function requireAdmin() {
   const session = await getAdminSession();
   if (!session) throw new Error("UNAUTHORIZED");
   const { adminId, tokenVersion } = session as { adminId: string; tokenVersion: number };
-  const admin = await prisma.admin.findUnique({ where: { id: adminId }, select: { tokenVersion: true } });
+  const admin = await prisma.admin.findUnique({ where: { id: adminId }, select: { tokenVersion: true, role: true } });
   if (!admin || admin.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
-  return session as { adminId: string; username: string; tokenVersion: number };
+  return { ...session, role: admin.role } as { adminId: string; username: string; tokenVersion: number; role: string };
+}
+
+// SUPER always passes — it's the unrestricted role. MEMBERS/ACTIVITIES admins
+// are scoped to their section; other admin API routes reject them with 403.
+export async function requireAdminRole(...allowed: string[]) {
+  const session = await requireAdmin();
+  if (session.role !== "SUPER" && !allowed.includes(session.role)) {
+    throw new Error("FORBIDDEN");
+  }
+  return session;
 }
 
 // --- User session ---

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 
 const CARD_TYPES = ["YELLOW", "RED"];
 
@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const { memberId, teamId, cardType, minute } = await req.json();
 
@@ -53,6 +53,9 @@ export async function POST(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Booking create error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

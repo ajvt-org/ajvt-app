@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
+import { sendMatchReminders } from "@/lib/tournamentNotify";
 
 const MEMBER_SELECT = {
   id: true,
@@ -22,6 +23,8 @@ const MEMBER_SELECT = {
 export async function GET() {
   try {
     const session = await requireUser();
+
+    sendMatchReminders().catch((err) => console.error("Match reminders error:", err));
 
     const user = await prisma.user.findUnique({
       where: { id: session.userId },

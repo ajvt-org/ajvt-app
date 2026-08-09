@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     if ("error" in loaded) return NextResponse.json({ error: loaded.error }, { status: loaded.status });
     const { member, activity } = loaded;
 
-    if (member.status !== "ACTIVE") {
-      return NextResponse.json({ error: "يجب قبول عضويتك أولاً قبل التسجيل في الأنشطة" }, { status: 403 });
+    if (member.status === "REJECTED") {
+      return NextResponse.json({ error: "لا يمكن التسجيل في الأنشطة لطلب انضمام مرفوض" }, { status: 403 });
     }
     if (!activity.isOpen) {
       return NextResponse.json({ error: "التسجيل في هذا النشاط مغلق" }, { status: 409 });
