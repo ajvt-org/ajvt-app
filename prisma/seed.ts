@@ -5,7 +5,7 @@ import * as bcrypt from "bcryptjs";
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) throw new Error("DATABASE_URL is not set");
-const adapter = new PrismaPg({ connectionString: dbUrl });
+const adapter = new PrismaPg({ connectionString: dbUrl, ssl: { rejectUnauthorized: false } });
 const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
 
 async function main() {
