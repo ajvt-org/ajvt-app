@@ -10,9 +10,13 @@ const MEMBER_SELECT = {
   age: true,
   paymentMethod: true,
   paymentProof: true,
+  photo: true,
   status: true,
   createdAt: true,
   memberNumber: true,
+  registrations: {
+    select: { activityId: true, activity: { select: { id: true, title: true } } },
+  },
 } as const;
 
 export async function GET() {

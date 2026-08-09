@@ -8,9 +8,10 @@ interface MemberCardProps {
   age: string;
   memberNumber: string | null;
   createdAt: string;
+  photo?: string | null;
 }
 
-export default function MemberCard({ fullName, age, memberNumber, createdAt }: MemberCardProps) {
+export default function MemberCard({ fullName, age, memberNumber, createdAt, photo }: MemberCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,15 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt }: M
           </div>
 
           <div className="min-w-0 flex-1 space-y-1" dir="rtl" style={{ textAlign: "right" }}>
-            <p className="font-black text-white" style={{ wordBreak: "break-word" }}>{fullName}</p>
+            <div className="flex items-center gap-2 justify-end">
+              <p className="font-black text-white" style={{ wordBreak: "break-word" }}>{fullName}</p>
+              {photo && (
+                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0" style={{ border: "1.5px solid rgba(255,255,255,0.5)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/api/files/${photo}`} alt={fullName} className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
             <p className="text-xs" style={{ color: "#c5e8dc" }}>{age}</p>
             <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.7)" }} dir="ltr">
               {memberNumber}
