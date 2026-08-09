@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     if (!username || !password) {
       return NextResponse.json({ error: "يرجى ملء جميع الحقول" }, { status: 400 });
     }
+    if (username.trim().length > 30) {
+      return NextResponse.json({ error: "اسم المستخدم طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+    }
     if (password.length < 3) {
       return NextResponse.json({ error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" }, { status: 400 });
     }

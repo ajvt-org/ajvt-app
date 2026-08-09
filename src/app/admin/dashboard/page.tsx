@@ -863,6 +863,7 @@ export default function AdminDashboard() {
                   value={newAdmin.username}
                   onChange={(e) => setNewAdmin((p) => ({ ...p, username: e.target.value }))}
                   required
+                  maxLength={30}
                   className="input"
                 />
                 <input
