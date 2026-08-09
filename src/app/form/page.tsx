@@ -83,8 +83,18 @@ export default function FormPage() {
       })
       .then((data) => {
         if (!data) return;
-        if (data.member) { router.push("/home"); return; }
-        if (data.phone) setForm((p) => ({ ...p, phone: data.phone }));
+        if (data.member && data.member.status !== "REJECTED") { router.push("/home"); return; }
+        if (data.member) {
+          // Resubmitting after rejection — prefill with the previous answers.
+          setForm({
+            fullName: data.member.fullName || "",
+            phone: data.member.phone || data.phone || "",
+            age: data.member.age || "",
+            paymentMethod: data.member.paymentMethod || "",
+          });
+        } else if (data.phone) {
+          setForm((p) => ({ ...p, phone: data.phone }));
+        }
       })
       .finally(() => setCheckingAuth(false));
 

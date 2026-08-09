@@ -106,6 +106,17 @@ export default function HomePage() {
 
             {member.status === "PENDING" && <NotificationsButton />}
 
+            {member.status === "REJECTED" && (
+              <div className="card p-5 fade-up delay-1 text-center">
+                <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+                  يمكنك تصحيح بياناتك وإعادة تقديم الطلب
+                </p>
+                <button onClick={() => router.push("/form")} className="btn btn-primary">
+                  إعادة تقديم الطلب ←
+                </button>
+              </div>
+            )}
+
             {/* Membership card with QR code */}
             {member.status === "ACTIVE" && (
               <div className="fade-up delay-1">
