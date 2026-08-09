@@ -31,7 +31,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdmin();
-    const { title, description, period, capacity } = await req.json();
+    const { title, description, period, capacity, photo, isTournament } = await req.json();
 
     if (!title?.trim() || !description?.trim()) {
       return NextResponse.json({ error: "العنوان والوصف مطلوبان" }, { status: 400 });
@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
     }
     if (description.trim().length > 1000) {
       return NextResponse.json({ error: "الوصف طويل جداً (1000 حرف كحد أقصى)" }, { status: 400 });
+    }
+    if (photo !== undefined && photo !== null && typeof photo !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
     let capacityValue: number | null = null;
@@ -57,7 +60,9 @@ export async function POST(req: NextRequest) {
         title: title.trim(),
         description: description.trim(),
         period: period?.trim() || null,
+        photo: photo || null,
         capacity: capacityValue,
+        isTournament: !!isTournament,
       },
     });
 

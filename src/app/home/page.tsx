@@ -167,7 +167,19 @@ function MemberEntry({
       <StatusCard status={member.status} />
 
       <div className="card p-4">
-        <PhotoUpload memberId={member.id} photo={member.photo} onUpdated={onPhotoUpdated} />
+        <PhotoUpload
+          photo={member.photo}
+          onUpload={async (filename) => {
+            const res = await fetch(`/api/members/${member.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ photo: filename }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "فشل حفظ الصورة");
+            onPhotoUpdated(data.photo);
+          }}
+        />
       </div>
 
       {member.status === "PENDING" && (
