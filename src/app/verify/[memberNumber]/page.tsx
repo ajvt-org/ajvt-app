@@ -62,8 +62,8 @@ export default async function VerifyPage({
               <Row label="العصر" value={member!.age} />
               <Row
                 label="عضو منذ"
-                value={new Date(member!.createdAt).toLocaleDateString("ar-MA", {
-                  year: "numeric", month: "long", day: "numeric",
+                value={new Date(member!.createdAt).toLocaleDateString("ar", {
+                  year: "numeric", month: "long", day: "numeric", weekday: "long",
                 })}
               />
             </div>

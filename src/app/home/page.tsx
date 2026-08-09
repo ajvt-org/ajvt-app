@@ -208,7 +208,7 @@ function MemberEntry({
           <InfoRow
             label="تاريخ الطلب"
             value={new Date(member.createdAt).toLocaleDateString("ar", {
-              year: "numeric", month: "long", day: "numeric"
+              year: "numeric", month: "long", day: "numeric", weekday: "long"
             })}
           />
           <InfoRow

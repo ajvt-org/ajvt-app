@@ -255,7 +255,7 @@ export default function AdminDashboard() {
       m.paymentMethod,
       STATUS_LABEL[m.status],
       m.memberNumber || "",
-      new Date(m.createdAt).toLocaleString("ar-MA"),
+      new Date(m.createdAt).toLocaleString("ar"),
     ]);
     const csv = "﻿" + [headers, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
@@ -466,8 +466,8 @@ export default function AdminDashboard() {
                   <span>{m.paymentMethod}</span>
                   <span>•</span>
                   <span dir="ltr">
-                    {new Date(m.createdAt).toLocaleDateString("ar-MA")}{" "}
-                    {new Date(m.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(m.createdAt).toLocaleDateString("ar")}{" "}
+                    {new Date(m.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
               </button>
@@ -517,8 +517,8 @@ export default function AdminDashboard() {
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
                   ["رقم العضوية", selected.memberNumber || "—", "ltr"],
-                  ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar-MA", { year: "numeric", month: "long", day: "numeric" }), undefined],
-                  ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" }), "ltr"],
+                  ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric", weekday: "long" }), undefined],
+                  ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" }), "ltr"],
                 ] as [string, string, string | undefined][]).map(([label, value, dir]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
                     <span className="text-sm shrink-0" style={{ color: "var(--text-muted)" }}>{label}</span>
@@ -841,7 +841,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{a.username}</p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        منذ {new Date(a.createdAt).toLocaleDateString("ar-MA")}
+                        منذ {new Date(a.createdAt).toLocaleDateString("ar")}
                       </p>
                     </div>
                     <button
@@ -926,8 +926,8 @@ export default function AdminDashboard() {
                         {ACTION_LABELS[log.action] || log.action}
                       </p>
                       <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} dir="ltr">
-                        {new Date(log.createdAt).toLocaleDateString("ar-MA")}{" "}
-                        {new Date(log.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(log.createdAt).toLocaleDateString("ar")}{" "}
+                        {new Date(log.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                     {log.targetLabel && (
