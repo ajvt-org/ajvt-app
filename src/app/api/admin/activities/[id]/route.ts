@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const session = await requireAdmin();
     const { id } = await params;
-    const { title, description, period, capacity, isOpen } = await req.json();
+    const { title, description, period, capacity, isOpen, photo, isTournament } = await req.json();
 
     const existing = await prisma.activity.findUnique({ where: { id } });
     if (!existing) {
@@ -23,6 +23,8 @@ export async function PATCH(
       period?: string | null;
       capacity?: number | null;
       isOpen?: boolean;
+      photo?: string | null;
+      isTournament?: boolean;
     } = {};
 
     if (title !== undefined) {
@@ -51,6 +53,15 @@ export async function PATCH(
     }
     if (isOpen !== undefined) {
       data.isOpen = !!isOpen;
+    }
+    if (photo !== undefined) {
+      if (photo !== null && typeof photo !== "string") {
+        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      }
+      data.photo = photo;
+    }
+    if (isTournament !== undefined) {
+      data.isTournament = !!isTournament;
     }
 
     const activity = await prisma.activity.update({ where: { id }, data });

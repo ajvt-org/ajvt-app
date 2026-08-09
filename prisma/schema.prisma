@@ -17,20 +17,24 @@ model User {
 }
 
 model Member {
-  id            String                 @id @default(cuid())
-  userId        String
-  user          User                   @relation(fields: [userId], references: [id])
-  fullName      String
-  phone         String
-  age           String
-  paymentMethod String
-  paymentProof  String
-  photo         String?
-  status        String                 @default("PENDING")
-  memberNumber  String?                @unique
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  registrations ActivityRegistration[]
+  id              String                 @id @default(cuid())
+  userId          String
+  user            User                   @relation(fields: [userId], references: [id])
+  fullName        String
+  phone           String
+  age             String
+  paymentMethod   String
+  paymentProof    String
+  photo           String?
+  status          String                 @default("PENDING")
+  memberNumber    String?                @unique
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  registrations   ActivityRegistration[]
+  teamMemberships TeamMember[]
+  matchGoals      MatchGoal[]
+  matchBookings   MatchBooking[]
+  motmMatches     Match[]                @relation("ManOfTheMatch")
 }
 
 model Activity {
@@ -38,11 +42,112 @@ model Activity {
   title         String
   description   String
   period        String?
+  photo         String?
   capacity      Int?
   isOpen        Boolean                @default(true)
+  isTournament  Boolean                @default(false)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   registrations ActivityRegistration[]
+  teams         Team[]
+  matches       Match[]
+  groups        Group[]
+}
+
+model Group {
+  id         String   @id @default(cuid())
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime @default(now())
+  teams      Team[]
+
+  @@index([activityId])
+}
+
+model Team {
+  id          String         @id @default(cuid())
+  activityId  String
+  activity    Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  groupId     String?
+  group       Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  name        String
+  createdAt   DateTime       @default(now())
+  members     TeamMember[]
+  homeMatches Match[]        @relation("HomeTeam")
+  awayMatches Match[]        @relation("AwayTeam")
+  goals       MatchGoal[]
+  bookings    MatchBooking[]
+
+  @@index([activityId])
+  @@index([groupId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, memberId])
+}
+
+model Match {
+  id              String         @id @default(cuid())
+  activityId      String
+  activity        Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  homeTeamId      String
+  homeTeam        Team           @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId      String
+  awayTeam        Team           @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  matchDate       DateTime?
+  round           String?
+  venue           String?
+  isKnockout      Boolean        @default(false)
+  homeScore       Int?
+  awayScore       Int?
+  homePenalties   Int?
+  awayPenalties   Int?
+  manOfTheMatchId String?
+  manOfTheMatch   Member?        @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
+  status          String         @default("SCHEDULED")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  goals           MatchGoal[]
+  bookings        MatchBooking[]
+
+  @@index([activityId])
+}
+
+model MatchBooking {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  cardType  String
+  minute    Int?
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model MatchGoal {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, memberId])
 }
 
 model ActivityRegistration {

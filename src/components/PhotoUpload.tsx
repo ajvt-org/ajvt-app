@@ -3,12 +3,22 @@
 import { useRef, useState } from "react";
 
 interface PhotoUploadProps {
-  memberId: string;
   photo: string | null;
-  onUpdated: (photo: string | null) => void;
+  onUpload: (filename: string) => Promise<void> | void;
+  imageUrlPrefix?: string;
+  label?: string;
+  placeholderIcon?: string;
+  variant?: "avatar" | "cover";
 }
 
-export default function PhotoUpload({ memberId, photo, onUpdated }: PhotoUploadProps) {
+export default function PhotoUpload({
+  photo,
+  onUpload,
+  imageUrlPrefix = "/api/files",
+  label = "الصورة الشخصية",
+  placeholderIcon = "👤",
+  variant = "avatar",
+}: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -28,15 +38,7 @@ export default function PhotoUpload({ memberId, photo, onUpdated }: PhotoUploadP
       const uploaded = await upRes.json();
       if (!upRes.ok) throw new Error(uploaded.error || "فشل رفع الصورة");
 
-      const patchRes = await fetch(`/api/members/${memberId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photo: uploaded.filename }),
-      });
-      const patched = await patchRes.json();
-      if (!patchRes.ok) throw new Error(patched.error || "فشل حفظ الصورة");
-
-      onUpdated(patched.photo);
+      await onUpload(uploaded.filename);
     } catch (err) {
       setError(err instanceof Error ? err.message : "خطأ غير متوقع");
       setPreviewUrl(null);
@@ -45,7 +47,43 @@ export default function PhotoUpload({ memberId, photo, onUpdated }: PhotoUploadP
     }
   }
 
-  const displayUrl = previewUrl || (photo ? `/api/files/${photo}` : null);
+  const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
+  const hint = photo || previewUrl ? "انقر على الصورة لتغييرها" : "اختياري — انقر لإضافة صورة";
+
+  if (variant === "cover") {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="relative w-full h-32 rounded-xl overflow-hidden flex items-center justify-center"
+          style={{ background: "var(--mint-100)", border: "2px dashed var(--mint-300)" }}
+        >
+          {displayUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-3xl" style={{ color: "var(--mint-500)" }}>{placeholderIcon}</span>
+          )}
+          <div
+            className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1 text-xs py-1 font-semibold"
+            style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
+          >
+            {uploading ? "..." : `📷 ${hint}`}
+          </div>
+        </button>
+        {error && <p className="text-xs mt-1" style={{ color: "#dc2626" }}>{error}</p>}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3">
@@ -58,9 +96,9 @@ export default function PhotoUpload({ memberId, photo, onUpdated }: PhotoUploadP
       >
         {displayUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={displayUrl} alt="الصورة الشخصية" className="w-full h-full object-cover" />
+          <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-2xl" style={{ color: "var(--mint-500)" }}>👤</span>
+          <span className="text-2xl" style={{ color: "var(--mint-500)" }}>{placeholderIcon}</span>
         )}
         <div
           className="absolute bottom-0 inset-x-0 flex items-center justify-center text-[10px] py-0.5"
@@ -70,10 +108,8 @@ export default function PhotoUpload({ memberId, photo, onUpdated }: PhotoUploadP
         </div>
       </button>
       <div className="min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>الصورة الشخصية</p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {photo || previewUrl ? "انقر على الصورة لتغييرها" : "اختياري — انقر لإضافة صورة"}
-        </p>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>{label}</p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{hint}</p>
         {error && <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>{error}</p>}
       </div>
       <input

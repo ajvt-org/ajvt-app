@@ -7,8 +7,10 @@ interface Activity {
   title: string;
   description: string;
   period: string | null;
+  photo: string | null;
   capacity: number | null;
   isOpen: boolean;
+  isTournament: boolean;
   registrantCount: number;
 }
 
@@ -90,7 +92,16 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
 
       <div className="space-y-3">
         {activities.map((activity) => (
-          <div key={activity.id} className="card p-4">
+          <div key={activity.id} className="card overflow-hidden">
+            {activity.photo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/files/activity/${activity.photo}`}
+                alt={activity.title}
+                className="w-full h-36 object-cover"
+              />
+            )}
+            <div className="p-4">
             <div className="flex items-start justify-between gap-3 mb-1.5">
               <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
               {!activity.isOpen && <span className="badge badge-rejected shrink-0">مغلق</span>}
@@ -102,6 +113,18 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
                 <span>👥 {activity.registrantCount}/{activity.capacity}</span>
               )}
             </div>
+
+            {activity.isTournament && (
+              <a
+                href={`/tournament/${activity.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold inline-block mb-3"
+                style={{ color: "var(--mint-700)" }}
+              >
+                🏆 الترتيب والنتائج ←
+              </a>
+            )}
 
             {activeMembers.map((member) => {
               const registered = member.registeredActivityIds.includes(activity.id);
@@ -131,6 +154,7 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
                 </div>
               );
             })}
+            </div>
           </div>
         ))}
       </div>

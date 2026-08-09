@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import PhotoUpload from "@/components/PhotoUpload";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 type FilterTab = "ALL" | Status;
@@ -28,8 +29,10 @@ interface Activity {
   title: string;
   description: string;
   period: string | null;
+  photo: string | null;
   capacity: number | null;
   isOpen: boolean;
+  isTournament: boolean;
   createdAt: string;
   registrations: { id: string; member: { id: string; fullName: string; phone: string; age: string } }[];
 }
@@ -71,6 +74,15 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE_ACTIVITY: "إنشاء نشاط",
   UPDATE_ACTIVITY: "تعديل نشاط",
   DELETE_ACTIVITY: "حذف نشاط",
+  CREATE_TEAM: "إنشاء فريق",
+  UPDATE_TEAM: "تعديل فريق",
+  DELETE_TEAM: "حذف فريق",
+  CREATE_MATCH: "إضافة مباراة",
+  DELETE_MATCH: "حذف مباراة",
+  ENTER_MATCH_RESULT: "إدخال نتيجة مباراة",
+  CREATE_GROUP: "إنشاء مجموعة",
+  UPDATE_GROUP: "تعديل مجموعة",
+  DELETE_GROUP: "حذف مجموعة",
 };
 
 export default function AdminDashboard() {
@@ -110,7 +122,7 @@ export default function AdminDashboard() {
   const [activitiesLoading, setActivitiesLoading] = useState(false);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
   const [activityActionLoading, setActivityActionLoading] = useState(false);
-  const [newActivity, setNewActivity] = useState({ title: "", description: "", period: "", capacity: "" });
+  const [newActivity, setNewActivity] = useState({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false });
   const [activityError, setActivityError] = useState("");
 
   useEffect(() => { fetchMembers(); }, []);
@@ -292,10 +304,38 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setNewActivity({ title: "", description: "", period: "", capacity: "" });
+      setNewActivity({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false });
       await loadActivities();
     } catch (e) {
       setActivityError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActivityActionLoading(false);
+    }
+  }
+
+  async function updateActivityPhoto(id: string, photo: string) {
+    const res = await fetch(`/api/admin/activities/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photo }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "فشلت العملية");
+    await loadActivities();
+  }
+
+  async function toggleActivityTournament(activity: Activity) {
+    setActivityActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/activities/${activity.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isTournament: !activity.isTournament }),
+      });
+      if (!res.ok) throw new Error("فشلت العملية");
+      await loadActivities();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setActivityActionLoading(false);
     }
@@ -1091,6 +1131,16 @@ export default function AdminDashboard() {
               ) : (
                 activities.map((a) => (
                   <div key={a.id} className="card p-4">
+                    <div className="mb-3">
+                      <PhotoUpload
+                        photo={a.photo}
+                        imageUrlPrefix="/api/files/activity"
+                        variant="cover"
+                        label="صورة النشاط"
+                        placeholderIcon="🖼️"
+                        onUpload={(filename) => updateActivityPhoto(a.id, filename)}
+                      />
+                    </div>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{a.title}</p>
@@ -1101,10 +1151,29 @@ export default function AdminDashboard() {
                           <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
                             {a.isOpen ? "مفتوح" : "مغلق"}
                           </span>
+                          {a.isTournament && <span className="badge badge-pending">⚽ بطولة</span>}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-3">
+                    <div className="flex items-center gap-2 mt-3 flex-wrap">
+                      {a.isTournament ? (
+                        <button
+                          onClick={() => router.push(`/admin/tournament/${a.id}?title=${encodeURIComponent(a.title)}`)}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{ background: "var(--mint-700)", color: "white" }}
+                        >
+                          ⚽ إدارة البطولة
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toggleActivityTournament(a)}
+                          disabled={activityActionLoading}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+                        >
+                          ⚽ تحويل إلى بطولة
+                        </button>
+                      )}
                       <button
                         onClick={() => toggleActivityOpen(a)}
                         disabled={activityActionLoading}
@@ -1150,6 +1219,14 @@ export default function AdminDashboard() {
 
               <form onSubmit={createActivity} className="card p-4 space-y-3">
                 <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>➕ إضافة نشاط جديد</p>
+                <PhotoUpload
+                  photo={newActivity.photo || null}
+                  imageUrlPrefix="/api/files/activity"
+                  variant="cover"
+                  label="صورة النشاط"
+                  placeholderIcon="🖼️"
+                  onUpload={(filename) => setNewActivity((p) => ({ ...p, photo: filename }))}
+                />
                 <input
                   type="text"
                   placeholder="عنوان النشاط"
@@ -1183,6 +1260,14 @@ export default function AdminDashboard() {
                   onChange={(e) => setNewActivity((p) => ({ ...p, capacity: e.target.value }))}
                   className="input"
                 />
+                <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-main)" }}>
+                  <input
+                    type="checkbox"
+                    checked={newActivity.isTournament}
+                    onChange={(e) => setNewActivity((p) => ({ ...p, isTournament: e.target.checked }))}
+                  />
+                  ⚽ هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)
+                </label>
                 {activityError && (
                   <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
                     ⚠️ {activityError}

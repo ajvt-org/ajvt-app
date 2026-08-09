@@ -1,8 +1,27 @@
 import Link from "next/link";
 import Image from "next/image";
+import { prisma } from "@/lib/prisma";
 
-export default function LandingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const activities = await prisma.activity.findMany({
+    where: { isOpen: true },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      period: true,
+      photo: true,
+      capacity: true,
+      isTournament: true,
+      _count: { select: { registrations: true } },
+    },
+  });
+
   return (
+    <div>
     <div
       className="flex flex-col items-center justify-center px-6 py-12 text-center"
       style={{
@@ -63,6 +82,47 @@ export default function LandingPage() {
           دخول المشرف
         </Link>
       </div>
+    </div>
+
+    {activities.length > 0 && (
+      <div className="px-5 py-8" style={{ background: "var(--mint-50)" }}>
+        <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
+          🏆 أنشطة هذا الصيف
+        </h2>
+        <div className="max-w-md mx-auto space-y-3">
+          {activities.map((activity) => (
+            <div key={activity.id} className="card overflow-hidden text-right">
+              {activity.photo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/api/files/activity/${activity.photo}`}
+                  alt={activity.title}
+                  className="w-full h-36 object-cover"
+                />
+              )}
+              <div className="p-4">
+                <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
+                <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
+                <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+                  {activity.period && <span>📅 {activity.period}</span>}
+                  {activity.capacity !== null && (
+                    <span>👥 {activity._count.registrations}/{activity.capacity}</span>
+                  )}
+                </div>
+                {activity.isTournament && (
+                  <a href={`/tournament/${activity.id}`} className="text-xs font-bold inline-block mt-2" style={{ color: "var(--mint-700)" }}>
+                    🏆 الترتيب والنتائج ←
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-center mt-5" style={{ color: "var(--text-muted)" }}>
+          أنشئ حساباً وأكمل استمارة الانضمام للتسجيل في الأنشطة
+        </p>
+      </div>
+    )}
     </div>
   );
 }

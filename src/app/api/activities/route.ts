@@ -13,8 +13,10 @@ export async function GET() {
         title: true,
         description: true,
         period: true,
+        photo: true,
         capacity: true,
         isOpen: true,
+        isTournament: true,
         _count: { select: { registrations: true } },
       },
     });
@@ -25,8 +27,10 @@ export async function GET() {
         title: a.title,
         description: a.description,
         period: a.period,
+        photo: a.photo,
         capacity: a.capacity,
         isOpen: a.isOpen,
+        isTournament: a.isTournament,
         registrantCount: a._count.registrations,
       })),
     });
