@@ -1,9 +1,8 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "rabet-takalelat-secret-key-change-in-prod"
-);
+if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const USER_PROTECTED = ["/home", "/form"];
 const ADMIN_PROTECTED = ["/admin/dashboard"];

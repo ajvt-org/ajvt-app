@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       data: { phone: phone.trim(), password: hashed },
     });
 
-    const token = await signToken({ userId: user.id });
+    const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });
     const res = NextResponse.json({ ok: true }, { status: 201 });
     res.cookies.set("user_token", token, {
       httpOnly: true,

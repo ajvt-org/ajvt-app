@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
+import { sendPushToUser } from "@/lib/push";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +23,15 @@ export async function POST(req: NextRequest) {
       where: { id },
       data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
     });
+
+    sendPushToUser(updated.userId, {
+      title: "رابطة شباب التاكلالت",
+      body:
+        action === "ACTIVE"
+          ? "تهانينا! تم قبول عضويتك 🎉"
+          : "نأسف، لم يتم قبول طلب انضمامك",
+      url: "/home",
+    }).catch((err) => console.error("Push notify error:", err));
 
     return NextResponse.json({ member: updated });
   } catch (err) {

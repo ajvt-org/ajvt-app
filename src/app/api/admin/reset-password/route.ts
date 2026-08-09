@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { password: hashed },
+      data: { password: hashed, tokenVersion: { increment: 1 } },
     });
 
     return NextResponse.json({ tempPassword });
