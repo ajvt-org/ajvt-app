@@ -28,7 +28,7 @@ function isArabicName(value: string): boolean {
 
 function validatePhone(phone: string): string | null {
   const digits = phone.replace(/\D/g, "");
-  if (digits.length !== 6) return "يجب أن يكون رقم الهاتف 6 أرقام بالضبط";
+  if (digits.length !== 8) return "يجب أن يكون رقم الهاتف 8 أرقام بالضبط";
   if (!["2", "3", "4"].includes(digits[0]))
     return "يجب أن يبدأ الرقم بـ 2 أو 3 أو 4";
   return null;
@@ -37,7 +37,7 @@ function validatePhone(phone: string): string | null {
 function PhoneInput({
   value,
   onChange,
-  placeholder = "2XXXXX",
+  placeholder = "2XXXXXXX",
 }: {
   value: string;
   onChange: (val: string) => void;
@@ -49,12 +49,12 @@ function PhoneInput({
       inputMode="numeric"
       value={value}
       onChange={(e) => {
-        const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
         onChange(digits);
       }}
       placeholder={placeholder}
       dir="ltr"
-      maxLength={6}
+      maxLength={8}
       className="input"
       style={{ letterSpacing: "0.15em" }}
     />

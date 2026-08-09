@@ -62,13 +62,13 @@ export default function LoginPage() {
               inputMode="numeric"
               value={form.phone}
               onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
                 setForm((p) => ({ ...p, phone: digits }));
               }}
               required
-              placeholder="2XXXXX"
+              placeholder="2XXXXXXX"
               dir="ltr"
-              maxLength={6}
+              maxLength={8}
               className="input"
               style={{ letterSpacing: "0.15em" }}
             />
