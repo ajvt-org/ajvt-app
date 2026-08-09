@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { generateMemberNumber } from "@/lib/member";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,9 +12,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
+    let memberNumber: string | undefined;
+    if (action === "ACTIVE") {
+      const existing = await prisma.member.findUnique({ where: { id }, select: { memberNumber: true } });
+      if (!existing?.memberNumber) memberNumber = await generateMemberNumber();
+    }
+
     const updated = await prisma.member.update({
       where: { id },
-      data: { status: action },
+      data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
     });
 
     return NextResponse.json({ member: updated });

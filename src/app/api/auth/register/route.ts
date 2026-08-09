@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
+import { validatePhone } from "@/lib/utils";
 import * as bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -9,6 +10,10 @@ export async function POST(req: NextRequest) {
 
     if (!phone || !password) {
       return NextResponse.json({ error: "أدخل رقم الهاتف وكلمة المرور" }, { status: 400 });
+    }
+    const phoneError = validatePhone(phone);
+    if (phoneError) {
+      return NextResponse.json({ error: phoneError }, { status: 400 });
     }
     if (password.length < 3) {
       return NextResponse.json({ error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" }, { status: 400 });

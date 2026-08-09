@@ -24,6 +24,7 @@ model Member {
   paymentMethod String
   paymentProof  String
   status        String   @default("PENDING")
+  memberNumber  String?  @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
