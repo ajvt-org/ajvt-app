@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "جمعية AJVT - إدارة العضوية",
+  title: "رابطة شباب التاكلالت",
   description: "منصة إدارة عضوية جمعية AJVT - التسجيل وبطاقات الأعضاء الرقمية",
   keywords: "AJVT, جمعية, عضوية, بطاقة عضو",
 };
