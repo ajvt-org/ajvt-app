@@ -6,7 +6,10 @@ export async function GET() {
   try {
     await requireAdmin();
     const members = await prisma.member.findMany({
-      include: { user: { select: { phone: true } } },
+      include: {
+        user: { select: { phone: true } },
+        registrations: { select: { activityId: true, activity: { select: { id: true, title: true } } } },
+      },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });
     return NextResponse.json({ members });

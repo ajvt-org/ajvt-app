@@ -17,18 +17,44 @@ model User {
 }
 
 model Member {
-  id            String   @id @default(cuid())
+  id            String                 @id @default(cuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
+  user          User                   @relation(fields: [userId], references: [id])
   fullName      String
   phone         String
   age           String
   paymentMethod String
   paymentProof  String
-  status        String   @default("PENDING")
-  memberNumber  String?  @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  photo         String?
+  status        String                 @default("PENDING")
+  memberNumber  String?                @unique
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  registrations ActivityRegistration[]
+}
+
+model Activity {
+  id            String                 @id @default(cuid())
+  title         String
+  description   String
+  period        String?
+  capacity      Int?
+  isOpen        Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  registrations ActivityRegistration[]
+}
+
+model ActivityRegistration {
+  id         String   @id @default(cuid())
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([memberId, activityId])
+  @@index([activityId])
 }
 
 model Admin {

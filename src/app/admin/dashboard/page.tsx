@@ -15,10 +15,23 @@ interface Member {
   age: string;
   paymentMethod: string;
   paymentProof: string;
+  photo: string | null;
   status: Status;
   memberNumber: string | null;
   createdAt: string;
   user?: { phone: string };
+  registrations?: { activityId: string; activity: { id: string; title: string } }[];
+}
+
+interface Activity {
+  id: string;
+  title: string;
+  description: string;
+  period: string | null;
+  capacity: number | null;
+  isOpen: boolean;
+  createdAt: string;
+  registrations: { id: string; member: { id: string; fullName: string; phone: string; age: string } }[];
 }
 
 interface AdminAccount {
@@ -55,6 +68,9 @@ const ACTION_LABELS: Record<string, string> = {
   CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
   CREATE_ADMIN: "إنشاء حساب مشرف",
   DELETE_ADMIN: "حذف حساب مشرف",
+  CREATE_ACTIVITY: "إنشاء نشاط",
+  UPDATE_ACTIVITY: "تعديل نشاط",
+  DELETE_ACTIVITY: "حذف نشاط",
 };
 
 export default function AdminDashboard() {
@@ -88,6 +104,14 @@ export default function AdminDashboard() {
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
+
+  const [showActivities, setShowActivities] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  const [activityActionLoading, setActivityActionLoading] = useState(false);
+  const [newActivity, setNewActivity] = useState({ title: "", description: "", period: "", capacity: "" });
+  const [activityError, setActivityError] = useState("");
 
   useEffect(() => { fetchMembers(); }, []);
 
@@ -242,6 +266,69 @@ export default function AdminDashboard() {
       setAuditLogs(data.logs || []);
     } finally {
       setAuditLoading(false);
+    }
+  }
+
+  async function loadActivities() {
+    setActivitiesLoading(true);
+    try {
+      const res = await fetch("/api/admin/activities");
+      const data = await res.json();
+      setActivities(data.activities || []);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }
+
+  async function createActivity(e: React.FormEvent) {
+    e.preventDefault();
+    setActivityError("");
+    setActivityActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newActivity),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setNewActivity({ title: "", description: "", period: "", capacity: "" });
+      await loadActivities();
+    } catch (e) {
+      setActivityError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActivityActionLoading(false);
+    }
+  }
+
+  async function toggleActivityOpen(activity: Activity) {
+    setActivityActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/activities/${activity.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isOpen: !activity.isOpen }),
+      });
+      if (!res.ok) throw new Error("فشلت العملية");
+      await loadActivities();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActivityActionLoading(false);
+    }
+  }
+
+  async function deleteActivity(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه.")) return;
+    setActivityActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/activities/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("فشلت العملية");
+      await loadActivities();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActivityActionLoading(false);
     }
   }
 
@@ -430,17 +517,24 @@ export default function AdminDashboard() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-black text-white"
-                      style={{
-                        background:
-                          m.status === "ACTIVE" ? "var(--mint-600)"
-                          : m.status === "REJECTED" ? "#dc2626"
-                          : "var(--copper-500)",
-                      }}
-                    >
-                      {m.fullName.charAt(0)}
-                    </div>
+                    {m.photo ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={`/api/files/${m.photo}`} alt={m.fullName} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-black text-white"
+                        style={{
+                          background:
+                            m.status === "ACTIVE" ? "var(--mint-600)"
+                            : m.status === "REJECTED" ? "#dc2626"
+                            : "var(--copper-500)",
+                        }}
+                      >
+                        {m.fullName.charAt(0)}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
                         {m.fullName}
@@ -532,6 +626,18 @@ export default function AdminDashboard() {
                 <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>الحالة</span>
                 <span className={`badge ${STATUS_BADGE[selected.status]}`}>{STATUS_LABEL[selected.status]}</span>
               </div>
+
+              {/* Registered activities */}
+              {selected.registrations && selected.registrations.length > 0 && (
+                <div className="card p-4">
+                  <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>الأنشطة المسجل بها</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.registrations.map((r) => (
+                      <span key={r.activityId} className="badge badge-active">{r.activity.title}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Reset password */}
               <div className="card p-4">
@@ -715,6 +821,12 @@ export default function AdminDashboard() {
                 className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
               >
                 📜 سجل الإجراءات
+              </button>
+              <button
+                onClick={() => { setShowMenu(false); setShowActivities(true); loadActivities(); }}
+                className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+              >
+                🏆 إدارة الأنشطة
               </button>
               <button
                 onClick={() => { setShowMenu(false); exportCSV(); }}
@@ -939,6 +1051,147 @@ export default function AdminDashboard() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Activities management */}
+      {showActivities && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowActivities(false); }}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">🏆 إدارة الأنشطة</h2>
+              <button
+                onClick={() => setShowActivities(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-3">
+              {activitiesLoading ? (
+                <div className="text-center py-8" style={{ color: "var(--mint-500)" }}>⏳</div>
+              ) : activities.length === 0 ? (
+                <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>
+                  لا توجد أنشطة بعد — أضف أول نشاط أدناه
+                </p>
+              ) : (
+                activities.map((a) => (
+                  <div key={a.id} className="card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{a.title}</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{a.description}</p>
+                        <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+                          {a.period && <span>📅 {a.period}</span>}
+                          <span>👥 {a.registrations.length}{a.capacity !== null ? `/${a.capacity}` : ""}</span>
+                          <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
+                            {a.isOpen ? "مفتوح" : "مغلق"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => toggleActivityOpen(a)}
+                        disabled={activityActionLoading}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                      >
+                        {a.isOpen ? "إغلاق التسجيل" : "فتح التسجيل"}
+                      </button>
+                      <button
+                        onClick={() => setExpandedActivity((v) => (v === a.id ? null : a.id))}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                        style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+                      >
+                        {expandedActivity === a.id ? "إخفاء المسجلين" : "عرض المسجلين"}
+                      </button>
+                      <button
+                        onClick={() => deleteActivity(a.id)}
+                        disabled={activityActionLoading}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold mr-auto"
+                        style={{ background: "#fee2e2", color: "#991b1b" }}
+                      >
+                        🗑 حذف
+                      </button>
+                    </div>
+
+                    {expandedActivity === a.id && (
+                      <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                        {a.registrations.length === 0 ? (
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد مسجلون بعد</p>
+                        ) : (
+                          a.registrations.map((r) => (
+                            <div key={r.id} className="flex items-center justify-between text-xs">
+                              <span style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
+                              <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+
+              <form onSubmit={createActivity} className="card p-4 space-y-3">
+                <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>➕ إضافة نشاط جديد</p>
+                <input
+                  type="text"
+                  placeholder="عنوان النشاط"
+                  value={newActivity.title}
+                  onChange={(e) => setNewActivity((p) => ({ ...p, title: e.target.value }))}
+                  required
+                  maxLength={60}
+                  className="input"
+                />
+                <textarea
+                  placeholder="الوصف"
+                  value={newActivity.description}
+                  onChange={(e) => setNewActivity((p) => ({ ...p, description: e.target.value }))}
+                  required
+                  maxLength={1000}
+                  rows={3}
+                  className="input"
+                />
+                <input
+                  type="text"
+                  placeholder="الفترة (اختياري) — مثال: 22-23 أغسطس 2026"
+                  value={newActivity.period}
+                  onChange={(e) => setNewActivity((p) => ({ ...p, period: e.target.value }))}
+                  className="input"
+                />
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="السعة القصوى (اختياري)"
+                  value={newActivity.capacity}
+                  onChange={(e) => setNewActivity((p) => ({ ...p, capacity: e.target.value }))}
+                  className="input"
+                />
+                {activityError && (
+                  <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                    ⚠️ {activityError}
+                  </div>
+                )}
+                <button type="submit" disabled={activityActionLoading} className="btn btn-primary text-sm">
+                  {activityActionLoading ? "..." : "إضافة"}
+                </button>
+              </form>
             </div>
           </div>
         </div>

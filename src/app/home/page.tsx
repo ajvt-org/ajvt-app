@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import MemberCard from "@/components/MemberCard";
 import NotificationsButton from "@/components/NotificationsButton";
+import PhotoUpload from "@/components/PhotoUpload";
+import ActivitiesSection from "@/components/ActivitiesSection";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 
@@ -17,6 +19,8 @@ interface MemberData {
   status: Status;
   createdAt: string;
   memberNumber: string | null;
+  photo: string | null;
+  registrations: { activityId: string; activity: { id: string; title: string } }[];
 }
 
 export default function HomePage() {
@@ -80,6 +84,25 @@ export default function HomePage() {
       </div>
 
       <div className="flex-1 px-5 py-6 space-y-5">
+        <ActivitiesSection
+          hasAnyMember={members.length > 0}
+          activeMembers={members
+            .filter((m) => m.status === "ACTIVE")
+            .map((m) => ({ id: m.id, fullName: m.fullName, registeredActivityIds: m.registrations.map((r) => r.activityId) }))}
+          onRegistrationChange={(memberId, activityId, registered) => {
+            setMembers((prev) =>
+              prev.map((m) => {
+                if (m.id !== memberId) return m;
+                if (registered) {
+                  if (m.registrations.some((r) => r.activityId === activityId)) return m;
+                  return { ...m, registrations: [...m.registrations, { activityId, activity: { id: activityId, title: "" } }] };
+                }
+                return { ...m, registrations: m.registrations.filter((r) => r.activityId !== activityId) };
+              })
+            );
+          }}
+        />
+
         {/* No members registered yet */}
         {members.length === 0 && (
           <div className="fade-up space-y-5">
@@ -108,7 +131,15 @@ export default function HomePage() {
             </button>
 
             {members.map((member, i) => (
-              <MemberEntry key={member.id} member={member} whatsappLink={whatsappLink} delayIndex={i} />
+              <MemberEntry
+                key={member.id}
+                member={member}
+                whatsappLink={whatsappLink}
+                delayIndex={i}
+                onPhotoUpdated={(photo) => {
+                  setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, photo } : m)));
+                }}
+              />
             ))}
           </>
         )}
@@ -121,10 +152,12 @@ function MemberEntry({
   member,
   whatsappLink,
   delayIndex,
+  onPhotoUpdated,
 }: {
   member: MemberData;
   whatsappLink: string;
   delayIndex: number;
+  onPhotoUpdated: (photo: string | null) => void;
 }) {
   const router = useRouter();
   const delayClass = delayIndex === 0 ? "" : "delay-1";
@@ -132,6 +165,10 @@ function MemberEntry({
   return (
     <div className={`fade-up ${delayClass} space-y-4`}>
       <StatusCard status={member.status} />
+
+      <div className="card p-4">
+        <PhotoUpload memberId={member.id} photo={member.photo} onUpdated={onPhotoUpdated} />
+      </div>
 
       {member.status === "PENDING" && (
         <>
@@ -169,6 +206,7 @@ function MemberEntry({
           age={member.age}
           memberNumber={member.memberNumber}
           createdAt={member.createdAt}
+          photo={member.photo}
         />
       )}
 
