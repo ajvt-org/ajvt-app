@@ -7,7 +7,7 @@ const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
 
 export function getUploadDir(): string {
-  // In production (Railway): UPLOAD_DIR=/data/uploads
+  // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
   // In development: public/uploads (served statically)
   return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
 }
