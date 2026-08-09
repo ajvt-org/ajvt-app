@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { join, extname } from "path";
 import { getUploadDir } from "@/app/api/upload/route";
+import { getAdminSession, getUserSession } from "@/lib/auth";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -15,6 +16,13 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
+    // Payment proof screenshots can contain banking details — only signed-in
+    // admins or members may view them, not anyone who guesses/finds the URL.
+    const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
+    if (!admin && !user) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     const { filename } = await params;
     // Safety: block path traversal
     if (filename.includes("..") || filename.includes("/")) {

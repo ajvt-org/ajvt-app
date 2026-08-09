@@ -302,6 +302,7 @@ function FormPageInner() {
               value={form.fullName}
               onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
               required
+              maxLength={30}
               placeholder="أدخل اسمك الكامل بالعربية"
               className="input"
             />
@@ -352,6 +353,7 @@ function FormPageInner() {
                   value={newAge}
                   onChange={(e) => setNewAge(e.target.value)}
                   placeholder="اكتب اسم العصر..."
+                  maxLength={30}
                   className="input flex-1"
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomAge(); } }}
                   autoFocus

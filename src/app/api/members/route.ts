@@ -10,6 +10,12 @@ export async function POST(req: NextRequest) {
     if (!fullName || !phone || !age || !paymentMethod || !paymentProof) {
       return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
     }
+    if (fullName.trim().length > 30) {
+      return NextResponse.json({ error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+    }
+    if (age.trim().length > 30) {
+      return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+    }
 
     // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
     if (id) {
