@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 
 function generateTempPassword(): string {
@@ -9,7 +10,7 @@ function generateTempPassword(): string {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const { userId } = await req.json();
 
     if (!userId) {
@@ -19,10 +20,12 @@ export async function POST(req: NextRequest) {
     const tempPassword = generateTempPassword();
     const hashed = await bcrypt.hash(tempPassword, 12);
 
-    await prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id: userId },
       data: { password: hashed, tokenVersion: { increment: 1 } },
     });
+
+    await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone);
 
     return NextResponse.json({ tempPassword });
   } catch (err) {

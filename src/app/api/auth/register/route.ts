@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
+import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import * as bcrypt from "bcryptjs";
+
+const WINDOW_MS = 60 * 60 * 1000;
+const MAX_ATTEMPTS = 10;
 
 export async function POST(req: NextRequest) {
   try {
+    const key = `register:${getClientIp(req)}`;
+    if (isRateLimited(key, MAX_ATTEMPTS)) {
+      return NextResponse.json({ error: "محاولات كثيرة جداً، حاول بعد قليل" }, { status: 429 });
+    }
+    recordFailedAttempt(key, WINDOW_MS);
+
     const { phone, password } = await req.json();
 
     if (!phone || !password) {

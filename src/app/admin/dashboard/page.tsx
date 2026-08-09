@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -16,8 +16,23 @@ interface Member {
   paymentMethod: string;
   paymentProof: string;
   status: Status;
+  memberNumber: string | null;
   createdAt: string;
   user?: { phone: string };
+}
+
+interface AdminAccount {
+  id: string;
+  username: string;
+  createdAt: string;
+}
+
+interface AuditLogEntry {
+  id: string;
+  adminUsername: string;
+  action: string;
+  targetLabel: string | null;
+  createdAt: string;
 }
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -32,6 +47,16 @@ const STATUS_BADGE: Record<Status, string> = {
   REJECTED: "badge-rejected",
 };
 
+const ACTION_LABELS: Record<string, string> = {
+  APPROVE_MEMBER: "قبول طلب",
+  REJECT_MEMBER: "رفض طلب",
+  DELETE_MEMBER: "حذف طلب",
+  RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
+  CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
+  CREATE_ADMIN: "إنشاء حساب مشرف",
+  DELETE_ADMIN: "حذف حساب مشرف",
+};
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
@@ -43,12 +68,26 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
+  const [showMenu, setShowMenu] = useState(false);
 
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [cpForm, setCpForm] = useState({ current: "", next: "", confirm: "" });
   const [cpError, setCpError] = useState("");
   const [cpLoading, setCpLoading] = useState(false);
   const [cpSuccess, setCpSuccess] = useState(false);
+
+  const [showAdmins, setShowAdmins] = useState(false);
+  const [admins, setAdmins] = useState<AdminAccount[]>([]);
+  const [newAdmin, setNewAdmin] = useState({ username: "", password: "" });
+  const [adminError, setAdminError] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
 
   useEffect(() => { fetchMembers(); }, []);
 
@@ -80,6 +119,21 @@ export default function AdminDashboard() {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function deleteMember(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/admin/members/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("فشلت العملية");
+      await fetchMembers();
+      setSelected(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -137,12 +191,102 @@ export default function AdminDashboard() {
     }
   }
 
+  async function loadAdmins() {
+    try {
+      const res = await fetch("/api/admin/admins");
+      const data = await res.json();
+      setAdmins(data.admins || []);
+    } catch {
+      // ignore
+    }
+  }
+
+  async function createAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    setAdminError("");
+    setAdminLoading(true);
+    try {
+      const res = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAdmin),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setNewAdmin({ username: "", password: "" });
+      await loadAdmins();
+    } catch (e) {
+      setAdminError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setAdminLoading(false);
+    }
+  }
+
+  async function deleteAdmin(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا الحساب؟")) return;
+    try {
+      const res = await fetch(`/api/admin/admins/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await loadAdmins();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    }
+  }
+
+  async function loadAuditLog() {
+    setAuditLoading(true);
+    try {
+      const res = await fetch("/api/admin/audit-log");
+      const data = await res.json();
+      setAuditLogs(data.logs || []);
+    } finally {
+      setAuditLoading(false);
+    }
+  }
+
+  function exportCSV() {
+    const headers = ["الاسم الكامل", "رقم الهاتف", "حساب التطبيق", "العصر", "طريقة الدفع", "الحالة", "رقم العضوية", "تاريخ الطلب"];
+    const rows = members.map((m) => [
+      m.fullName,
+      m.phone,
+      m.user?.phone || "",
+      m.age,
+      m.paymentMethod,
+      STATUS_LABEL[m.status],
+      m.memberNumber || "",
+      new Date(m.createdAt).toLocaleString("ar-MA"),
+    ]);
+    const csv = "﻿" + [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `members-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const counts = {
     ALL: members.length,
     PENDING: members.filter((m) => m.status === "PENDING").length,
     ACTIVE: members.filter((m) => m.status === "ACTIVE").length,
     REJECTED: members.filter((m) => m.status === "REJECTED").length,
   };
+
+  const ageBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    members.forEach((m) => { map[m.age] = (map[m.age] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [members]);
+
+  const paymentBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    members.forEach((m) => { map[m.paymentMethod] = (map[m.paymentMethod] || 0) + 1; });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [members]);
 
   const filtered = members.filter((m) => {
     const matchFilter = filter === "ALL" || m.status === filter;
@@ -171,11 +315,11 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowChangePassword(true)}
+            onClick={() => setShowMenu(true)}
             className="text-xs px-3 py-1.5 rounded-lg font-semibold"
             style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
           >
-            🔑 كلمة المرور
+            ⚙️ إعدادات
           </button>
           <button
             onClick={logout}
@@ -215,6 +359,43 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
+
+        {/* Stats toggle */}
+        <button
+          onClick={() => setShowStats((v) => !v)}
+          className="w-full text-sm font-bold px-4 py-2.5 rounded-xl mb-4 flex items-center justify-between"
+          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+        >
+          <span>📊 الإحصائيات</span>
+          <span>{showStats ? "▲" : "▼"}</span>
+        </button>
+
+        {showStats && (
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="card p-4">
+              <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>حسب العصر</p>
+              <div className="space-y-1.5">
+                {ageBreakdown.map(([age, count]) => (
+                  <div key={age} className="flex items-center justify-between text-xs">
+                    <span style={{ color: "var(--text-main)" }} className="truncate">{age}</span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>حسب طريقة الدفع</p>
+              <div className="space-y-1.5">
+                {paymentBreakdown.map(([method, count]) => (
+                  <div key={method} className="flex items-center justify-between text-xs">
+                    <span style={{ color: "var(--text-main)" }} className="truncate">{method}</span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="mb-4">
@@ -335,6 +516,7 @@ export default function AdminDashboard() {
                   ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
+                  ["رقم العضوية", selected.memberNumber || "—", "ltr"],
                   ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar-MA", { year: "numeric", month: "long", day: "numeric" }), undefined],
                   ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" }), "ltr"],
                 ] as [string, string, string | undefined][]).map(([label, value, dir]) => (
@@ -449,6 +631,16 @@ export default function AdminDashboard() {
                   {actionLoading ? "..." : "تغيير إلى مقبول"}
                 </button>
               )}
+
+              <button
+                onClick={() => deleteMember(selected.id)}
+                disabled={deleteLoading}
+                className="btn w-full text-sm font-bold"
+                style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
+              >
+                {deleteLoading ? "..." : "🗑 حذف الطلب نهائياً"}
+              </button>
+
               <div className="pb-2" />
             </div>
           </div>
@@ -475,6 +667,63 @@ export default function AdminDashboard() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Settings menu */}
+      {showMenu && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowMenu(false); }}
+        >
+          <div
+            className="w-full max-w-sm rounded-t-3xl md:rounded-2xl overflow-hidden"
+            style={{ background: "var(--mint-50)", direction: "rtl" }}
+          >
+            <div className="flex justify-center pt-3 pb-1 md:hidden">
+              <div className="w-10 h-1 rounded-full" style={{ background: "var(--mint-300)" }} />
+            </div>
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">⚙️ إعدادات</h2>
+              <button
+                onClick={() => setShowMenu(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              <button
+                onClick={() => { setShowMenu(false); setShowChangePassword(true); }}
+                className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+              >
+                🔑 تغيير كلمة المرور
+              </button>
+              <button
+                onClick={() => { setShowMenu(false); setShowAdmins(true); loadAdmins(); }}
+                className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+              >
+                👥 إدارة حسابات المشرفين
+              </button>
+              <button
+                onClick={() => { setShowMenu(false); setShowAuditLog(true); loadAuditLog(); }}
+                className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+              >
+                📜 سجل الإجراءات
+              </button>
+              <button
+                onClick={() => { setShowMenu(false); exportCSV(); }}
+                className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+              >
+                📥 تصدير قائمة الأعضاء (CSV)
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -556,6 +805,140 @@ export default function AdminDashboard() {
                 {cpLoading ? "..." : "تغيير كلمة المرور"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage admins */}
+      {showAdmins && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAdmins(false); }}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
+              <button
+                onClick={() => setShowAdmins(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-2">
+                {admins.map((a) => (
+                  <div key={a.id} className="card p-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{a.username}</p>
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        منذ {new Date(a.createdAt).toLocaleDateString("ar-MA")}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => deleteAdmin(a.id)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+                      style={{ background: "#fee2e2", color: "#991b1b" }}
+                    >
+                      حذف
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <form onSubmit={createAdmin} className="card p-4 space-y-3">
+                <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>➕ إضافة مشرف جديد</p>
+                <input
+                  type="text"
+                  placeholder="اسم المستخدم"
+                  value={newAdmin.username}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, username: e.target.value }))}
+                  required
+                  className="input"
+                />
+                <input
+                  type="password"
+                  placeholder="كلمة المرور"
+                  value={newAdmin.password}
+                  onChange={(e) => setNewAdmin((p) => ({ ...p, password: e.target.value }))}
+                  required
+                  className="input"
+                />
+                {adminError && (
+                  <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                    ⚠️ {adminError}
+                  </div>
+                )}
+                <button type="submit" disabled={adminLoading} className="btn btn-primary text-sm">
+                  {adminLoading ? "..." : "إضافة"}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audit log */}
+      {showAuditLog && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAuditLog(false); }}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
+              <button
+                onClick={() => setShowAuditLog(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-2">
+              {auditLoading ? (
+                <div className="text-center py-8" style={{ color: "var(--mint-500)" }}>⏳</div>
+              ) : auditLogs.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا يوجد سجل بعد</p>
+              ) : (
+                auditLogs.map((log) => (
+                  <div key={log.id} className="card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                        {ACTION_LABELS[log.action] || log.action}
+                      </p>
+                      <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} dir="ltr">
+                        {new Date(log.createdAt).toLocaleDateString("ar-MA")}{" "}
+                        {new Date(log.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    {log.targetLabel && (
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{log.targetLabel}</p>
+                    )}
+                    <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
+                      بواسطة {log.adminUsername}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
