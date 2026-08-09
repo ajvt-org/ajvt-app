@@ -79,14 +79,14 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt }: M
             )}
           </div>
 
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="font-black text-white truncate">{fullName}</p>
+          <div className="min-w-0 flex-1 space-y-1" dir="rtl" style={{ textAlign: "right" }}>
+            <p className="font-black text-white" style={{ wordBreak: "break-word" }}>{fullName}</p>
             <p className="text-xs" style={{ color: "#c5e8dc" }}>{age}</p>
             <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.7)" }} dir="ltr">
               {memberNumber}
             </p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              عضو منذ {new Date(createdAt).toLocaleDateString("ar-MA", { year: "numeric", month: "long" })}
+              عضو منذ {new Date(createdAt).toLocaleDateString("ar", { year: "numeric", month: "long" })}
             </p>
           </div>
         </div>
