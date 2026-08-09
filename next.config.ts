@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
 // React/Tailwind rely on inline `style="..."` attributes throughout the app,
-// so style-src needs 'unsafe-inline' — there's no practical nonce/hash setup
-// for per-element inline styles generated at render time. Everything else
-// (scripts, connections, frames) stays locked to same-origin.
+// so style-src needs 'unsafe-inline'. script-src also needs it: Next.js
+// injects inline bootstrap/hydration scripts (RSC payload via
+// `self.__next_f.push(...)`) on every page, and without 'unsafe-inline' (or
+// a per-request nonce wired through proxy.ts, which would force every page
+// into dynamic rendering) the browser blocks them outright — the app loads
+// but nothing is interactive (buttons/redirects silently do nothing). A
+// stricter nonce-based CSP is possible later if needed; this keeps the app
+// working while still blocking remote/third-party script and iframe sources.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
