@@ -13,8 +13,25 @@ export async function POST(req: NextRequest) {
 
     // Check if user already submitted
     const existing = await prisma.member.findUnique({ where: { userId: session.userId } });
-    if (existing) {
+    if (existing && existing.status !== "REJECTED") {
       return NextResponse.json({ error: "لقد قدمت طلباً مسبقاً" }, { status: 409 });
+    }
+
+    // A previously rejected member can resubmit — reuse their row instead of
+    // creating a second one (userId is unique on Member).
+    if (existing) {
+      const updated = await prisma.member.update({
+        where: { id: existing.id },
+        data: {
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          age: age.trim(),
+          paymentMethod,
+          paymentProof,
+          status: "PENDING",
+        },
+      });
+      return NextResponse.json({ id: updated.id }, { status: 200 });
     }
 
     const member = await prisma.member.create({
