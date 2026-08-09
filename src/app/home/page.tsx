@@ -104,7 +104,23 @@ export default function HomePage() {
           <div className="fade-up space-y-4">
             <StatusCard status={member.status} whatsappLink={whatsappLink} />
 
-            {member.status === "PENDING" && <NotificationsButton />}
+            {member.status === "PENDING" && (
+              <>
+                <NotificationsButton />
+                <div className="card p-4 fade-up delay-1 flex items-center justify-between gap-3">
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    لاحظت خطأ في بياناتك؟
+                  </p>
+                  <button
+                    onClick={() => router.push("/form")}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
+                    تعديل الطلب
+                  </button>
+                </div>
+              </>
+            )}
 
             {member.status === "REJECTED" && (
               <div className="card p-5 fade-up delay-1 text-center">
