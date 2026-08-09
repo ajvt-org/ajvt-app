@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
       title: "رابطة شباب التاكلالت",
       body:
         action === "ACTIVE"
-          ? "تهانينا! تم قبول عضويتك 🎉"
-          : "نأسف، لم يتم قبول طلب انضمامك",
+          ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
+          : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
       url: "/home",
     }).catch((err) => console.error("Push notify error:", err));
 
