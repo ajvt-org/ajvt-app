@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "رقم الهاتف أو كلمة المرور غير صحيحة" }, { status: 401 });
     }
 
-    const token = await signToken({ userId: user.id });
+    const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });
     const res = NextResponse.json({ ok: true });
     res.cookies.set("user_token", token, {
       httpOnly: true,

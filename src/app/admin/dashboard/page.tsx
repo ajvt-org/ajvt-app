@@ -44,6 +44,12 @@ export default function AdminDashboard() {
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [cpForm, setCpForm] = useState({ current: "", next: "", confirm: "" });
+  const [cpError, setCpError] = useState("");
+  const [cpLoading, setCpLoading] = useState(false);
+  const [cpSuccess, setCpSuccess] = useState(false);
+
   useEffect(() => { fetchMembers(); }, []);
 
   async function fetchMembers() {
@@ -101,6 +107,36 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   }
 
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setCpError("");
+    if (cpForm.next !== cpForm.confirm) {
+      setCpError("كلمتا المرور غير متطابقتين");
+      return;
+    }
+    if (cpForm.next.length < 3) {
+      setCpError("كلمة المرور يجب أن تكون 3 أحرف على الأقل");
+      return;
+    }
+    setCpLoading(true);
+    try {
+      const res = await fetch("/api/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: cpForm.current, newPassword: cpForm.next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setCpSuccess(true);
+      setCpForm({ current: "", next: "", confirm: "" });
+      setTimeout(() => { setShowChangePassword(false); setCpSuccess(false); }, 1500);
+    } catch (e) {
+      setCpError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setCpLoading(false);
+    }
+  }
+
   const counts = {
     ALL: members.length,
     PENDING: members.filter((m) => m.status === "PENDING").length,
@@ -133,13 +169,22 @@ export default function AdminDashboard() {
             <p className="text-sm font-black text-white leading-none">لوحة تحكم المشرف</p>
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-          style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}
-        >
-          خروج
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+            style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+          >
+            🔑 كلمة المرور
+          </button>
+          <button
+            onClick={logout}
+            className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+            style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}
+          >
+            خروج
+          </button>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -430,6 +475,88 @@ export default function AdminDashboard() {
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Change admin password */}
+      {showChangePassword && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowChangePassword(false); }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl overflow-hidden"
+            style={{ background: "var(--mint-50)", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
+              <button
+                onClick={() => setShowChangePassword(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={changePassword} className="p-5 space-y-3">
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  كلمة المرور الحالية
+                </label>
+                <input
+                  type="password"
+                  value={cpForm.current}
+                  onChange={(e) => setCpForm((p) => ({ ...p, current: e.target.value }))}
+                  required
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  كلمة المرور الجديدة
+                </label>
+                <input
+                  type="password"
+                  value={cpForm.next}
+                  onChange={(e) => setCpForm((p) => ({ ...p, next: e.target.value }))}
+                  required
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  تأكيد كلمة المرور الجديدة
+                </label>
+                <input
+                  type="password"
+                  value={cpForm.confirm}
+                  onChange={(e) => setCpForm((p) => ({ ...p, confirm: e.target.value }))}
+                  required
+                  className="input"
+                />
+              </div>
+
+              {cpError && (
+                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                  ⚠️ {cpError}
+                </div>
+              )}
+              {cpSuccess && (
+                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                  ✅ تم تغيير كلمة المرور
+                </div>
+              )}
+
+              <button type="submit" disabled={cpLoading} className="btn btn-primary mt-1">
+                {cpLoading ? "..." : "تغيير كلمة المرور"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import MemberCard from "@/components/MemberCard";
+import NotificationsButton from "@/components/NotificationsButton";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 
@@ -102,6 +103,8 @@ export default function HomePage() {
         {member && (
           <div className="fade-up space-y-4">
             <StatusCard status={member.status} whatsappLink={whatsappLink} />
+
+            {member.status === "PENDING" && <NotificationsButton />}
 
             {/* Membership card with QR code */}
             {member.status === "ACTIVE" && (

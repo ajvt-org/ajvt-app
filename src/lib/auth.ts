@@ -1,9 +1,9 @@
 ﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { prisma } from "./prisma";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "rabet-takalelat-secret-key-change-in-prod"
-);
+if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function signToken(payload: Record<string, unknown>) {
   return new SignJWT(payload)
@@ -33,7 +33,10 @@ export async function getAdminSession() {
 export async function requireAdmin() {
   const session = await getAdminSession();
   if (!session) throw new Error("UNAUTHORIZED");
-  return session;
+  const { adminId, tokenVersion } = session as { adminId: string; tokenVersion: number };
+  const admin = await prisma.admin.findUnique({ where: { id: adminId }, select: { tokenVersion: true } });
+  if (!admin || admin.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
+  return session as { adminId: string; username: string; tokenVersion: number };
 }
 
 // --- User session ---
@@ -47,5 +50,8 @@ export async function getUserSession() {
 export async function requireUser() {
   const session = await getUserSession();
   if (!session) throw new Error("UNAUTHORIZED");
-  return session as { userId: string };
+  const { userId, tokenVersion } = session as { userId: string; tokenVersion: number };
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { tokenVersion: true } });
+  if (!user || user.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
+  return session as { userId: string; tokenVersion: number };
 }

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
     }
 
-    const token = await signToken({ adminId: admin.id, username: admin.username });
+    const token = await signToken({ adminId: admin.id, username: admin.username, tokenVersion: admin.tokenVersion });
     const response = NextResponse.json({ ok: true });
     response.cookies.set("admin_token", token, {
       httpOnly: true,

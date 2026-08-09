@@ -7,11 +7,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  member    Member?
+  id                String             @id @default(cuid())
+  phone             String             @unique
+  password          String
+  tokenVersion      Int                @default(0)
+  createdAt         DateTime           @default(now())
+  member            Member?
+  pushSubscriptions PushSubscription[]
 }
 
 model Member {
@@ -30,8 +32,24 @@ model Member {
 }
 
 model Admin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  password     String
+  tokenVersion Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Counter {
+  id    String @id
+  value Int    @default(0)
+}
+
+model PushSubscription {
   id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
 }
