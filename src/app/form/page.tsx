@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { validatePhone } from "@/lib/utils";
 
 const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
 
@@ -24,14 +25,6 @@ const DEFAULT_AGES = [
 
 function isArabicName(value: string): boolean {
   return /^[؀-ۿ\s]+$/.test(value.trim());
-}
-
-function validatePhone(phone: string): string | null {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length !== 8) return "يجب أن يكون رقم الهاتف 8 أرقام بالضبط";
-  if (!["2", "3", "4"].includes(digits[0]))
-    return "يجب أن يبدأ الرقم بـ 2 أو 3 أو 4";
-  return null;
 }
 
 function PhoneInput({
@@ -90,9 +83,15 @@ export default function FormPage() {
       })
       .then((data) => {
         if (!data) return;
-        if (data.member) router.push("/home");
+        if (data.member) { router.push("/home"); return; }
+        if (data.phone) setForm((p) => ({ ...p, phone: data.phone }));
       })
       .finally(() => setCheckingAuth(false));
+
+    fetch("/api/ages")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.ages?.length) setAges(data.ages); })
+      .catch(() => {});
   }, [router]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {

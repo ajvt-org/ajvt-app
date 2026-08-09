@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import MemberCard from "@/components/MemberCard";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 
@@ -13,6 +14,7 @@ interface MemberData {
   paymentMethod: string;
   status: Status;
   createdAt: string;
+  memberNumber: string | null;
 }
 
 export default function HomePage() {
@@ -101,6 +103,18 @@ export default function HomePage() {
           <div className="fade-up space-y-4">
             <StatusCard status={member.status} whatsappLink={whatsappLink} />
 
+            {/* Membership card with QR code */}
+            {member.status === "ACTIVE" && (
+              <div className="fade-up delay-1">
+                <MemberCard
+                  fullName={member.fullName}
+                  age={member.age}
+                  memberNumber={member.memberNumber}
+                  createdAt={member.createdAt}
+                />
+              </div>
+            )}
+
             {/* WhatsApp link if active */}
             {member.status === "ACTIVE" && (
               <div className="card p-5 fade-up delay-1">
@@ -139,6 +153,13 @@ export default function HomePage() {
                   value={new Date(member.createdAt).toLocaleDateString("ar", {
                     year: "numeric", month: "long", day: "numeric"
                   })}
+                />
+                <InfoRow
+                  label="وقت الطلب"
+                  value={new Date(member.createdAt).toLocaleTimeString("ar", {
+                    hour: "2-digit", minute: "2-digit"
+                  })}
+                  dir="ltr"
                 />
               </div>
             </div>

@@ -1,10 +1,9 @@
-import { prisma } from "./prisma";
-
-export async function generateMemberNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const count = await prisma.member.count();
-  const seq = String(count + 1).padStart(4, "0");
-  return `AJVT-${year}-${seq}`;
+export function validatePhone(phone: string): string | null {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length !== 8) return "يجب أن يكون رقم الهاتف 8 أرقام بالضبط";
+  if (!["2", "3", "4"].includes(digits[0]))
+    return "يجب أن يبدأ الرقم بـ 2 أو 3 أو 4";
+  return null;
 }
 
 export function formatDate(date: Date | string): string {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { validatePhone } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) { setError(phoneError); return; }
     if (form.password !== form.confirm) {
       setError("كلمتا المرور غير متطابقتين");
       return;
@@ -84,6 +87,9 @@ export default function RegisterPage() {
               className="input"
               style={{ letterSpacing: "0.15em" }}
             />
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              8 أرقام — يبدأ بـ 2 أو 3 أو 4
+            </p>
           </div>
 
           <div>

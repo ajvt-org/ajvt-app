@@ -217,7 +217,10 @@ export default function AdminDashboard() {
                   <span>•</span>
                   <span>{m.paymentMethod}</span>
                   <span>•</span>
-                  <span>{new Date(m.createdAt).toLocaleDateString("ar-MA")}</span>
+                  <span dir="ltr">
+                    {new Date(m.createdAt).toLocaleDateString("ar-MA")}{" "}
+                    {new Date(m.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
               </button>
             ))}
@@ -266,6 +269,7 @@ export default function AdminDashboard() {
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
                   ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar-MA", { year: "numeric", month: "long", day: "numeric" }), undefined],
+                  ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar-MA", { hour: "2-digit", minute: "2-digit" }), "ltr"],
                 ] as [string, string, string | undefined][]).map(([label, value, dir]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
                     <span className="text-sm shrink-0" style={{ color: "var(--text-muted)" }}>{label}</span>
