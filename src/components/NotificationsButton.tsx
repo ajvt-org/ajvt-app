@@ -16,7 +16,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 export default function NotificationsButton() {
   const [status, setStatus] = useState<Status>("default");
 
-  useEffect(() => {
+  function checkStatus() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       setStatus("unsupported");
       return;
@@ -30,6 +30,11 @@ export default function NotificationsButton() {
         if (sub) setStatus("subscribed");
       })
     );
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkStatus();
   }, []);
 
   async function enable() {

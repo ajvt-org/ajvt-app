@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
     const registrations = await prisma.activityRegistration.findMany({
-      where: { activityId: id, member: { status: "ACTIVE" } },
+      where: { activityId: id, member: { status: { not: "REJECTED" } } },
       select: {
         member: {
           select: {
@@ -41,6 +41,9 @@ export async function GET(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Roster fetch error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

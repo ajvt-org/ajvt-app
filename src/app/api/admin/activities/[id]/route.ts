@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
     const { title, description, period, capacity, isOpen, photo, isTournament } = await req.json();
 
@@ -72,6 +72,9 @@ export async function PATCH(
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    }
     console.error("Activity update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -82,7 +85,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
     const activity = await prisma.activity.findUnique({ where: { id }, select: { title: true } });
@@ -97,6 +100,9 @@ export async function DELETE(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Activity delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

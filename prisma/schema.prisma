@@ -14,6 +14,7 @@ model User {
   createdAt         DateTime           @default(now())
   members           Member[]
   pushSubscriptions PushSubscription[]
+  teamFollows       TeamFollow[]
 }
 
 model Member {
@@ -24,7 +25,7 @@ model Member {
   phone           String
   age             String
   paymentMethod   String
-  paymentProof    String
+  paymentProof    String?
   photo           String?
   status          String                 @default("PENDING")
   memberNumber    String?                @unique
@@ -78,9 +79,21 @@ model Team {
   awayMatches Match[]        @relation("AwayTeam")
   goals       MatchGoal[]
   bookings    MatchBooking[]
+  followers   TeamFollow[]
 
   @@index([activityId])
   @@index([groupId])
+}
+
+model TeamFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, teamId])
 }
 
 model TeamMember {
@@ -113,6 +126,7 @@ model Match {
   manOfTheMatchId String?
   manOfTheMatch   Member?        @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
   status          String         @default("SCHEDULED")
+  reminderSentAt  DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   goals           MatchGoal[]
@@ -163,11 +177,14 @@ model ActivityRegistration {
 }
 
 model Admin {
-  id           String   @id @default(cuid())
-  username     String   @unique
+  id           String    @id @default(cuid())
+  username     String    @unique
   password     String
-  tokenVersion Int      @default(0)
-  createdAt    DateTime @default(now())
+  role         String    @default("SUPER")
+  tokenVersion Int       @default(0)
+  lastLoginAt  DateTime?
+  lastLoginIp  String?
+  createdAt    DateTime  @default(now())
 }
 
 model Counter {

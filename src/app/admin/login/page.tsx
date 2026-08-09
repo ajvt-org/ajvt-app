@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center mt-5 text-sm">
-          <a href="/" style={{ color: "rgba(255,255,255,0.5)" }}>← الصفحة الرئيسية</a>
+          <Link href="/" style={{ color: "rgba(255,255,255,0.5)" }}>← الصفحة الرئيسية</Link>
         </p>
       </div>
     </div>

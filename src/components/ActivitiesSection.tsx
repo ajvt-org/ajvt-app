@@ -14,19 +14,19 @@ interface Activity {
   registrantCount: number;
 }
 
-interface ActiveMember {
+interface EligibleMember {
   id: string;
   fullName: string;
   registeredActivityIds: string[];
 }
 
 interface ActivitiesSectionProps {
-  activeMembers: ActiveMember[];
+  eligibleMembers: EligibleMember[];
   hasAnyMember: boolean;
   onRegistrationChange: (memberId: string, activityId: string, registered: boolean) => void;
 }
 
-export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegistrationChange }: ActivitiesSectionProps) {
+export default function ActivitiesSection({ eligibleMembers, hasAnyMember, onRegistrationChange }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
@@ -76,11 +76,11 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
         🏆 أنشطة هذا الصيف
       </h2>
 
-      {activeMembers.length === 0 && (
+      {eligibleMembers.length === 0 && (
         <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
           {hasAnyMember
-            ? "التسجيل في الأنشطة متاح بعد قبول عضويتك."
-            : "تصفح الأنشطة المتاحة — التسجيل يتطلب تقديم طلب انضمام وقبوله أولاً."}
+            ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
+            : "تصفح الأنشطة المتاحة — سجّل طلب انضمام لتتمكن من التسجيل."}
         </p>
       )}
 
@@ -126,7 +126,7 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
               </a>
             )}
 
-            {activeMembers.map((member) => {
+            {eligibleMembers.map((member) => {
               const registered = member.registeredActivityIds.includes(activity.id);
               const key = `${member.id}:${activity.id}`;
               const full = activity.capacity !== null && activity.registrantCount >= activity.capacity && !registered;
@@ -137,7 +137,7 @@ export default function ActivitiesSection({ activeMembers, hasAnyMember, onRegis
                   className="flex items-center justify-between gap-3 py-1.5"
                   style={{ borderTop: "1px solid var(--mint-100)" }}
                 >
-                  {activeMembers.length > 1 && (
+                  {eligibleMembers.length > 1 && (
                     <span className="text-xs truncate" style={{ color: "var(--text-main)" }}>{member.fullName}</span>
                   )}
                   <button

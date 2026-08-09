@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminRole("ACTIVITIES");
 
     const activities = await prisma.activity.findMany({
       orderBy: { createdAt: "desc" },
@@ -24,13 +24,16 @@ export async function GET() {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    }
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { title, description, period, capacity, photo, isTournament } = await req.json();
 
     if (!title?.trim() || !description?.trim()) {
@@ -72,6 +75,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Activity create error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { groupStandings, computeTopScorers, computeStats, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
+import { groupStandings, computeTopScorers, computeStats, getHeadToHead, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
 
 interface RosterMember {
   id: string;
@@ -119,21 +119,21 @@ export default function TournamentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--mint-50)" }}>
+      <div className="flex items-center justify-center py-20">
         <div className="text-4xl animate-pulse" style={{ color: "var(--mint-500)" }}>⏳</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--mint-50)", direction: "rtl" }}>
+    <div>
       <div
-        className="px-4 py-3 flex items-center justify-between sticky top-0 z-20"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))", boxShadow: "0 2px 12px rgba(26,63,51,0.2)" }}
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push("/admin/dashboard")}
+            onClick={() => router.push("/admin/activities")}
             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
             style={{ background: "rgba(255,255,255,0.15)" }}
           >
@@ -633,6 +633,7 @@ function MatchesTab({
                 key={m.id}
                 match={m}
                 teams={teams}
+                allMatches={matches}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -655,6 +656,7 @@ function MatchesTab({
                 key={m.id}
                 match={m}
                 teams={teams}
+                allMatches={matches}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -676,6 +678,7 @@ const CARD_LABEL: Record<string, string> = { YELLOW: "🟨", RED: "🟥" };
 function MatchCard({
   match,
   teams,
+  allMatches,
   onDelete,
   showResultForm,
   onToggleResultForm,
@@ -686,6 +689,7 @@ function MatchCard({
 }: {
   match: Match;
   teams: Team[];
+  allMatches: Match[];
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
@@ -694,6 +698,7 @@ function MatchCard({
   onSaved: () => void;
   onChange: () => void;
 }) {
+  const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
@@ -714,6 +719,13 @@ function MatchCard({
             {match.matchDate && <span dir="ltr">{new Date(match.matchDate).toLocaleDateString("ar")}</span>}
             {match.isKnockout && <span className="badge badge-pending">إقصائية</span>}
           </div>
+          {priorMeetings.length > 0 && (
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              🔁 مواجهات سابقة: {priorMeetings.map((pm) =>
+                pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"
+              ).join("، ")}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button

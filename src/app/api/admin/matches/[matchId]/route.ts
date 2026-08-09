@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 
@@ -50,7 +50,7 @@ export async function PATCH(
   { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const {
       homeScore, awayScore, homeGoals, awayGoals, matchDate, round, venue, isKnockout,
@@ -228,6 +228,9 @@ export async function PATCH(
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    }
     console.error("Match update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -238,7 +241,7 @@ export async function DELETE(
   { params }: { params: Promise<{ matchId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
 
     const match = await prisma.match.findUnique({
@@ -256,6 +259,9 @@ export async function DELETE(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Match delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

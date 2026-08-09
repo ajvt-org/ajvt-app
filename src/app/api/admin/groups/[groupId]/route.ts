@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ groupId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
     const { name } = await req.json();
 
@@ -27,6 +27,9 @@ export async function PATCH(
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    }
     console.error("Group update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -37,7 +40,7 @@ export async function DELETE(
   { params }: { params: Promise<{ groupId: string }> }
 ) {
   try {
-    const session = await requireAdmin();
+    const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
 
     const group = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } });
@@ -52,6 +55,9 @@ export async function DELETE(
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Group delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
