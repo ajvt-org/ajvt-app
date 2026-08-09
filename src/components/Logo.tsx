@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 
 interface LogoProps {
   size?: number;
@@ -9,7 +9,7 @@ export default function Logo({ size = 80, className = "" }: LogoProps) {
   return (
     <Image
       src="/version-final.png"
-      alt="Ø±Ø§Ø¨Ø·Ø© Ø´Ø¨Ø§Ø¨ Ù‚Ø±ÙŠØ© Ø§Ù„ØªØ§ÙƒÙ„Ø§Ù„Øª"
+      alt="رابطة شباب قرية التاكلالت"
       width={size}
       height={size}
       className={className}

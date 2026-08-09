@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
@@ -23,7 +23,7 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
+      return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -32,8 +32,8 @@ export async function GET() {
     });
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "ØºÙŠØ± Ù…ØµØ±Ø­" }, { status: 401 });
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Ø®Ø·Ø£ ÙÙŠ Ø§Ù„Ø®Ø§Ø¯Ù…" }, { status: 500 });
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }
