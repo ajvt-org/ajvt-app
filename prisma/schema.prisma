@@ -12,13 +12,13 @@ model User {
   password          String
   tokenVersion      Int                @default(0)
   createdAt         DateTime           @default(now())
-  member            Member?
+  members           Member[]
   pushSubscriptions PushSubscription[]
 }
 
 model Member {
   id            String   @id @default(cuid())
-  userId        String   @unique
+  userId        String
   user          User     @relation(fields: [userId], references: [id])
   fullName      String
   phone         String

@@ -5,24 +5,24 @@ import { requireUser } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { fullName, phone, age, paymentMethod, paymentProof } = await req.json();
+    const { id, fullName, phone, age, paymentMethod, paymentProof } = await req.json();
 
     if (!fullName || !phone || !age || !paymentMethod || !paymentProof) {
       return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
     }
 
-    // Check if user already submitted
-    const existing = await prisma.member.findUnique({ where: { userId: session.userId } });
-    if (existing && existing.status === "ACTIVE") {
-      return NextResponse.json({ error: "أنت عضو مقبول بالفعل" }, { status: 409 });
-    }
+    // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
+    if (id) {
+      const existing = await prisma.member.findUnique({ where: { id } });
+      if (!existing || existing.userId !== session.userId) {
+        return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      }
+      if (existing.status === "ACTIVE") {
+        return NextResponse.json({ error: "هذا العضو مقبول بالفعل" }, { status: 409 });
+      }
 
-    // PENDING (editing before review) or REJECTED (resubmitting) both reuse
-    // their existing row instead of creating a second one (userId is unique
-    // on Member).
-    if (existing) {
       const updated = await prisma.member.update({
-        where: { id: existing.id },
+        where: { id },
         data: {
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ id: updated.id }, { status: 200 });
     }
 
+    // New member under this account — no cap on how many
     const member = await prisma.member.create({
       data: {
         userId: session.userId,

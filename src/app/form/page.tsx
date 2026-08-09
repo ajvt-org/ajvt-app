@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { validatePhone } from "@/lib/utils";
 
@@ -55,7 +55,24 @@ function PhoneInput({
 }
 
 export default function FormPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="app-shell flex items-center justify-center">
+          <div className="text-3xl animate-pulse">⏳</div>
+        </div>
+      }
+    >
+      <FormPageInner />
+    </Suspense>
+  );
+}
+
+function FormPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -77,35 +94,36 @@ export default function FormPage() {
   });
 
   useEffect(() => {
-    fetch("/api/user/me")
-      .then((r) => {
-        if (r.status === 401) { router.push("/login"); return null; }
-        return r.json();
-      })
-      .then((data) => {
-        if (!data) return;
-        if (data.member && data.member.status === "ACTIVE") { router.push("/home"); return; }
-        if (data.member) {
-          // Editing while PENDING, or resubmitting after rejection —
-          // prefill with the previous answers.
-          setForm({
-            fullName: data.member.fullName || "",
-            phone: data.member.phone || data.phone || "",
-            age: data.member.age || "",
-            paymentMethod: data.member.paymentMethod || "",
-          });
-          if (data.member.paymentProof) setExistingProof(data.member.paymentProof);
-        } else if (data.phone) {
-          setForm((p) => ({ ...p, phone: data.phone }));
-        }
-      })
-      .finally(() => setCheckingAuth(false));
+    async function load() {
+      const meRes = await fetch("/api/user/me");
+      if (meRes.status === 401) { router.push("/login"); return; }
+      const me = await meRes.json();
+
+      if (editId) {
+        const memberRes = await fetch(`/api/members/${editId}`);
+        if (!memberRes.ok) { router.push("/home"); return; }
+        const member = await memberRes.json();
+        if (member.status === "ACTIVE") { router.push("/home"); return; }
+        setForm({
+          fullName: member.fullName || "",
+          phone: member.phone || "",
+          age: member.age || "",
+          paymentMethod: member.paymentMethod || "",
+        });
+        if (member.paymentProof) setExistingProof(member.paymentProof);
+      } else if (me?.phone) {
+        setForm((p) => ({ ...p, phone: me.phone }));
+      }
+
+      setCheckingAuth(false);
+    }
+    load();
 
     fetch("/api/ages")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data?.ages?.length) setAges(data.ages); })
       .catch(() => {});
-  }, [router]);
+  }, [router, editId]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -185,7 +203,7 @@ export default function FormPage() {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, paymentProof }),
+        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paymentProof }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -215,7 +233,9 @@ export default function FormPage() {
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
-          <h1 className="text-base font-black text-white">استمارة الانضمام</h1>
+          <h1 className="text-base font-black text-white">
+            {editId ? "تعديل الطلب" : "استمارة الانضمام"}
+          </h1>
         </div>
       </div>
 
@@ -432,6 +452,8 @@ export default function FormPage() {
                 </svg>
                 جاري إرسال الطلب...
               </span>
+            ) : editId ? (
+              "حفظ التعديلات ←"
             ) : (
               "إرسال طلب الانضمام ←"
             )}
