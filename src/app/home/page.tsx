@@ -22,6 +22,10 @@ interface RegistrationData {
   activity: { id: string; title: string };
 }
 
+interface TeamMembershipData {
+  team: { id: string; name: string; activityId: string };
+}
+
 interface MemberData {
   id: string;
   fullName: string;
@@ -33,6 +37,7 @@ interface MemberData {
   memberNumber: string | null;
   photo: string | null;
   registrations: RegistrationData[];
+  teamMemberships: TeamMembershipData[];
 }
 
 export default function HomePage() {
@@ -114,6 +119,7 @@ export default function HomePage() {
               fullName: m.fullName,
               photo: m.photo,
               registrations: m.registrations.map((r) => ({ activityId: r.activityId, status: r.status, rejectionReason: r.rejectionReason })),
+              teamMemberships: m.teamMemberships.map((tm) => ({ teamId: tm.team.id, teamName: tm.team.name, activityId: tm.team.activityId })),
             }))}
           onReload={loadMembers}
         />

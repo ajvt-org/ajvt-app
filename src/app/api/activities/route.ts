@@ -18,6 +18,7 @@ export async function GET() {
         isOpen: true,
         isTournament: true,
         _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
+        teams: { select: { id: true, name: true }, orderBy: { createdAt: "asc" } },
       },
     });
 
@@ -32,6 +33,7 @@ export async function GET() {
         isOpen: a.isOpen,
         isTournament: a.isTournament,
         registrantCount: a._count.registrations,
+        teams: a.isTournament ? a.teams : [],
       })),
     });
   } catch (err) {
