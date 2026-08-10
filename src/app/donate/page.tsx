@@ -6,6 +6,7 @@ import Image from "next/image";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 
 export default function DonatePage() {
+  const [wantsName, setWantsName] = useState<boolean | null>(null);
   const [donorName, setDonorName] = useState("");
   const [amount, setAmount] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -101,19 +102,54 @@ export default function DonatePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              اسمك (اختياري)
+            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+              هل تريد ذكر اسمك مع التبرع؟
             </label>
-            <input
-              type="text"
-              value={donorName}
-              onChange={(e) => setDonorName(e.target.value)}
-              placeholder="فاعل خير"
-              maxLength={50}
-              className="input"
-            />
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              اتركه فارغاً لتبقى مجهولاً — سيظهر باسم &quot;فاعل خير&quot;
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setWantsName(true)}
+                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                style={{
+                  background: wantsName === true ? "var(--mint-600)" : "white",
+                  color: wantsName === true ? "white" : "var(--mint-700)",
+                  borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
+                }}
+              >
+                ✍️ نعم، باسمي
+              </button>
+              <button
+                type="button"
+                onClick={() => { setWantsName(false); setDonorName(""); }}
+                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                style={{
+                  background: wantsName === false ? "var(--mint-600)" : "white",
+                  color: wantsName === false ? "white" : "var(--mint-700)",
+                  borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
+                }}
+              >
+                🤍 أفضّل أن أبقى مجهولاً
+              </button>
+            </div>
+
+            {wantsName === true && (
+              <input
+                type="text"
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                placeholder="اكتب اسمك هنا"
+                maxLength={50}
+                className="input mt-2"
+                autoFocus
+              />
+            )}
+
+            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+              {wantsName === false
+                ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لا أحد سيعرف من أنت، وهذا اختيارك بالكامل."
+                : wantsName === true
+                ? "سنذكر اسمك تقديراً لدعمك."
+                : "كلا الخيارين متاحان بنفس القدر — اختر ما يناسبك."}
             </p>
           </div>
 

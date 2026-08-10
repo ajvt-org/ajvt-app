@@ -104,8 +104,11 @@ export default function HomePage() {
       <div className="flex-1 px-5 py-6 space-y-5">
         <ActivitiesSection
           hasAnyMember={members.length > 0}
+          hasPendingMember={members.some((m) => m.status === "PENDING")}
+          // Only fully-approved members can register for events — the
+          // membership fee/review comes first, activities come after.
           eligibleMembers={members
-            .filter((m) => m.status !== "REJECTED")
+            .filter((m) => m.status === "ACTIVE")
             .map((m) => ({
               id: m.id,
               fullName: m.fullName,
