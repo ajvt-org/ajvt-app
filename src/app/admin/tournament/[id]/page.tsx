@@ -872,6 +872,9 @@ function MatchesTab({
   const groupStageComplete = groups.length === 2 && groupStageDone && bracketMatches.length === 0;
   // Tant qu'il y a des groupes, le tirage/bracket ne doit pas apparaître avant la fin du tour des poules.
   const knockoutLocked = groups.length > 0 && !groupStageDone;
+  // Format foot standard du club : toujours 2 poules de 4 → demi-finale puis finale,
+  // donc pas de tirage aléatoire générique (réservé aux tournois sans poules, ex. échecs/PlayStation).
+  const isTwoGroupFormat = groups.length === 2;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -971,18 +974,33 @@ function MatchesTab({
 
       {teams.length >= 2 && (
         <div className="card p-4 space-y-3">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🏆 القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)</p>
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {isTwoGroupFormat ? "🏆 نصف النهائي والنهائي" : "🏆 القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)"}
+          </p>
           {bracketMatches.length === 0 ? (
             knockoutLocked ? (
               <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                 🔒 أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.
               </p>
+            ) : isTwoGroupFormat ? (
+              <>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  نصف نهائي متقاطع من ترتيب المجموعتين (الأول من كل مجموعة أمام الثاني من الأخرى)، ثم النهائي.
+                </p>
+                <button
+                  onClick={() => runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  ⚔️ توليد نصف النهائي
+                </button>
+              </>
             ) : (
-            <>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو 32...
-              </p>
-              <div className="flex flex-wrap gap-2">
+              <>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو 32...
+                </p>
                 <button
                   onClick={() => runBracketAction("draw", "إجراء قرعة عشوائية بين جميع الفرق الحالية؟")}
                   disabled={generating}
@@ -991,18 +1009,7 @@ function MatchesTab({
                 >
                   🎲 قرعة عشوائية
                 </button>
-                {groups.length === 2 && (
-                  <button
-                    onClick={() => runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟ يتطلب اكتمال كل نتائج دور المجموعات.")}
-                    disabled={generating}
-                    className="text-sm px-4 rounded-xl font-bold"
-                    style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
-                  >
-                    ⚔️ نصف نهائي من المجموعتين
-                  </button>
-                )}
-              </div>
-            </>
+              </>
             )
           ) : (
             <>
