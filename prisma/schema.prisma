@@ -122,6 +122,7 @@ model Match {
   venue           String?
   order           Int            @default(0)
   isKnockout      Boolean        @default(false)
+  bracketRound    Int? // set only for matches created by the bracket generator (round 1 = first knockout round, increasing towards the final)
   homeScore       Int?
   awayScore       Int?
   homePenalties   Int?
@@ -235,6 +236,14 @@ model Admin {
 model Counter {
   id    String @id
   value Int    @default(0)
+}
+
+model Donation {
+  id        String   @id @default(cuid())
+  donorName String? // null = anonymous ("فاعل خير" in the UI)
+  amount    Int?
+  proof     String
+  createdAt DateTime @default(now())
 }
 
 model PushSubscription {

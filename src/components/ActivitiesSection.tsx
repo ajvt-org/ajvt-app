@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PhotoUpload from "@/components/PhotoUpload";
+import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 
 interface Activity {
   id: string;
@@ -33,7 +34,8 @@ interface ActivitiesSectionProps {
   onReload: () => void;
 }
 
-const STATUS_LABEL: Record<string, string> = { PENDING: "⏳ قيد المراجعة", ACTIVE: "✓ مؤكَّد" };
+const STATUS_LABEL: Record<string, string> = { PENDING: "⏳ قيد المراجعة", ACTIVE: "✅ مقبول", REJECTED: "❌ مرفوض" };
+const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
 export default function ActivitiesSection({ eligibleMembers, hasAnyMember, onReload }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -81,6 +83,7 @@ function ActivityCard({
   eligibleMembers: EligibleMember[];
   onReload: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [proof, setProof] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -90,17 +93,20 @@ function ActivityCard({
     return member.registrations.find((r) => r.activityId === activity.id) || null;
   }
 
+  // Can (re)register: no registration yet, or a previous one was rejected.
   const registrable = eligibleMembers.filter((m) => {
     const r = regFor(m);
     return !r || r.status === "REJECTED";
   });
-  const settled = eligibleMembers.filter((m) => {
-    const r = regFor(m);
-    return r && r.status !== "REJECTED";
-  });
 
   function toggle(memberId: string) {
     setSelected((prev) => (prev.includes(memberId) ? prev.filter((x) => x !== memberId) : [...prev, memberId]));
+  }
+
+  function openForm() {
+    setError("");
+    setSelected(registrable.length === 1 ? [registrable[0].id] : []);
+    setExpanded(true);
   }
 
   async function submit() {
@@ -118,6 +124,7 @@ function ActivityCard({
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setSelected([]);
       setProof(null);
+      setExpanded(false);
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
@@ -141,6 +148,7 @@ function ActivityCard({
 
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const canRegister = registrable.length > 0 && activity.isOpen && !full;
+  const hasAnyRejected = registrable.some((m) => regFor(m)?.status === "REJECTED");
 
   return (
     <div className="card overflow-hidden">
@@ -189,82 +197,97 @@ function ActivityCard({
           </a>
         )}
 
-        {settled.length > 0 && (
-          <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
-            {settled.map((m) => {
-              const r = regFor(m)!;
-              return (
-                <div key={m.id} className="flex items-center justify-between gap-3 text-xs py-0.5">
-                  <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
+        {/* Clear, always-visible status per member — nothing hidden */}
+        <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+          {eligibleMembers.map((m) => {
+            const r = regFor(m);
+            return (
+              <div key={m.id} className="flex items-center justify-between gap-3 text-xs py-0.5">
+                <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
+                {r ? (
                   <div className="flex items-center gap-2">
-                    <span className={`badge ${r.status === "ACTIVE" ? "badge-active" : "badge-pending"}`}>
-                      {STATUS_LABEL[r.status]}
-                    </span>
+                    <span className={`badge ${STATUS_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
                     {r.status === "PENDING" && (
                       <button onClick={() => cancelPending(m.id)} className="font-bold" style={{ color: "#991b1b" }}>
                         إلغاء
                       </button>
                     )}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                ) : (
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>غير مسجَّل</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-        {registrable.length > 0 && !canRegister && (
+        {!canRegister && registrable.length > 0 && (
           <p className="text-xs mt-2 pt-2" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--mint-100)" }}>
             {!activity.isOpen ? "التسجيل في هذا النشاط مغلق حالياً" : "اكتمل عدد المسجلين في هذا النشاط"}
           </p>
         )}
 
-        {canRegister && (
-          <div className="mt-2 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
-            <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-              💳 التسجيل يتطلب دفعاً — يمكنك التسجيل لعدة أشخاص بصورة إثبات دفع واحدة
-            </p>
-            <div className="space-y-1">
-              {registrable.map((m) => {
-                const r = regFor(m);
-                return (
-                  <div key={m.id}>
-                    <label className="flex items-center gap-2 text-xs">
-                      <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />
-                      <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
-                    </label>
-                    {r?.status === "REJECTED" && (
-                      <p className="text-xs mr-6" style={{ color: "#991b1b" }}>
-                        ❌ رُفض سابقاً{r.rejectionReason ? ` — ${r.rejectionReason}` : ""} — يمكنك إعادة المحاولة
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+        {canRegister && !expanded && (
+          <button onClick={openForm} className="btn btn-primary text-sm mt-3">
+            {hasAnyRejected ? "🔄 إعادة المحاولة" : "📝 سجّل الآن"} ←
+          </button>
+        )}
 
-            {selected.length > 0 && (
-              <>
-                <PhotoUpload
-                  photo={proof}
-                  onUpload={(filename) => setProof(filename)}
-                  variant="cover"
-                  label="صورة إثبات الدفع"
-                  placeholderIcon="🧾"
-                />
-                {error && (
-                  <div className="p-2.5 rounded-xl text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
-                    ⚠️ {error}
-                  </div>
-                )}
-                <button
-                  onClick={submit}
-                  disabled={submitting}
-                  className="btn btn-primary text-sm"
-                >
-                  {submitting ? "..." : `تسجيل ${selected.length} ${selected.length === 1 ? "عضو" : "أعضاء"} ←`}
-                </button>
-              </>
+        {canRegister && expanded && (
+          <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+              للمشاركة: سجّل ثم ادفع{" "}
+              <span style={{ color: "var(--copper-600)" }}>100 أوقية على الأقل</span>
+              {" "}— يمكنك دعم النادي بمبلغ أكبر إن رغبت
+            </p>
+
+            {registrable.length > 1 && (
+              <div className="space-y-1">
+                {registrable.map((m) => {
+                  const r = regFor(m);
+                  return (
+                    <div key={m.id}>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />
+                        <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
+                      </label>
+                      {r?.status === "REJECTED" && r.rejectionReason && (
+                        <p className="text-xs mr-6" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
+
+            <PaymentInfoBanner />
+
+            <PhotoUpload
+              photo={proof}
+              onUpload={(filename) => setProof(filename)}
+              variant="cover"
+              label="صورة إثبات الدفع"
+              placeholderIcon="🧾"
+            />
+
+            {error && (
+              <div className="p-2.5 rounded-xl text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button onClick={submit} disabled={submitting} className="btn btn-primary text-sm flex-1">
+                {submitting ? "..." : "✅ تأكيد التسجيل"}
+              </button>
+              <button
+                onClick={() => { setExpanded(false); setError(""); }}
+                className="text-sm px-4 rounded-xl font-bold"
+                style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+              >
+                إلغاء
+              </button>
+            </div>
           </div>
         )}
       </div>

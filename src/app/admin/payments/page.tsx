@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 
 interface Proof {
   id: string;
-  kind: "MEMBERSHIP" | "ACTIVITY";
+  kind: "MEMBERSHIP" | "ACTIVITY" | "DONATION";
   proof: string;
   memberName: string;
   activityTitle: string | null;
+  amount: number | null;
   status: string;
   uploadedAt: string;
   submittedAt: string;
@@ -84,10 +85,14 @@ export default function AdminPaymentsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{p.memberName}</p>
-                  <span className={`badge ${STATUS_CLASS[p.status] || "badge-pending"}`}>{STATUS_LABEL[p.status] || p.status}</span>
+                  {p.kind === "DONATION" ? (
+                    <span className="badge badge-active">💚 تبرّع{p.amount ? ` — ${p.amount} أوقية` : ""}</span>
+                  ) : (
+                    <span className={`badge ${STATUS_CLASS[p.status] || "badge-pending"}`}>{STATUS_LABEL[p.status] || p.status}</span>
+                  )}
                 </div>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : `🏆 ${p.activityTitle}`}
+                  {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : p.kind === "ACTIVITY" ? `🏆 ${p.activityTitle}` : "دعم عام للرابطة"}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                   رُفعت بتاريخ {new Date(p.uploadedAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })}

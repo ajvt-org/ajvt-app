@@ -8,8 +8,9 @@ export async function GET() {
     const role = (session as { role: string }).role;
     const includeMembership = role === "SUPER" || role === "MEMBERS";
     const includeActivity = role === "SUPER" || role === "ACTIVITIES";
+    const includeDonations = role === "SUPER";
 
-    const [members, registrations] = await Promise.all([
+    const [members, registrations, donations] = await Promise.all([
       includeMembership
         ? prisma.member.findMany({
             where: { paymentProof: { not: null } },
@@ -32,6 +33,12 @@ export async function GET() {
             orderBy: { updatedAt: "desc" },
           })
         : Promise.resolve([]),
+      includeDonations
+        ? prisma.donation.findMany({
+            select: { id: true, donorName: true, amount: true, proof: true, createdAt: true },
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
     ]);
 
     const proofs = [
@@ -41,6 +48,7 @@ export async function GET() {
         proof: m.paymentProof as string,
         memberName: m.fullName,
         activityTitle: null as string | null,
+        amount: null as number | null,
         status: m.status,
         uploadedAt: m.updatedAt,
         submittedAt: m.createdAt,
@@ -51,9 +59,21 @@ export async function GET() {
         proof: r.paymentProof as string,
         memberName: r.member.fullName,
         activityTitle: r.activity.title,
+        amount: null as number | null,
         status: r.status,
         uploadedAt: r.updatedAt,
         submittedAt: r.createdAt,
+      })),
+      ...donations.map((d) => ({
+        id: d.id,
+        kind: "DONATION" as const,
+        proof: d.proof,
+        memberName: d.donorName || "فاعل خير",
+        activityTitle: null as string | null,
+        amount: d.amount,
+        status: "ACTIVE",
+        uploadedAt: d.createdAt,
+        submittedAt: d.createdAt,
       })),
     ].sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
 
