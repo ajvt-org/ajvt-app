@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
+import { parseMatchDate } from "@/lib/tournament";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -123,7 +124,7 @@ export async function PATCH(
     }
 
     if (matchDate !== undefined) {
-      updateData.matchDate = matchDate ? new Date(matchDate) : null;
+      updateData.matchDate = matchDate ? parseMatchDate(matchDate) : null;
     }
     if (round !== undefined) {
       updateData.round = round?.trim() || null;

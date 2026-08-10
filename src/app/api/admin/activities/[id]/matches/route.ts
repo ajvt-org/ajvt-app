@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
+import { parseMatchDate } from "@/lib/tournament";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -105,7 +106,7 @@ export async function POST(
         activityId: id,
         homeTeamId,
         awayTeamId,
-        matchDate: matchDate ? new Date(matchDate) : null,
+        matchDate: matchDate ? parseMatchDate(matchDate) : null,
         round: round?.trim() || null,
         venue: venue?.trim() || null,
         isKnockout: !!isKnockout,

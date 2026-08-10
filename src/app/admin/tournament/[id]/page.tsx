@@ -12,6 +12,8 @@ import {
   computeTeamAdvancedStats,
   getHeadToHead,
   getMatchWinnerTeamId,
+  formatMatchDateTime,
+  matchDateToLocalInput,
   type StandingsRow,
   type TopScorerRow,
   type DisciplineRow,
@@ -1071,7 +1073,7 @@ function MatchesTab({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <input
-            type="date"
+            type="datetime-local"
             value={form.matchDate}
             onChange={(e) => setForm((p) => ({ ...p, matchDate: e.target.value }))}
             className="input"
@@ -1222,7 +1224,7 @@ function MatchCard({
           <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
             {match.round && <span>{match.round}</span>}
             {match.venue && <span>📍 {match.venue}</span>}
-            {match.matchDate && <span dir="ltr">{new Date(match.matchDate).toLocaleDateString("ar")}</span>}
+            {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
             {match.isKnockout && <span className="badge badge-pending">إقصائية</span>}
           </div>
           {priorMeetings.length > 0 && (
@@ -1335,7 +1337,7 @@ function MatchCard({
 }
 
 function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Team[]; onChange: () => void }) {
-  const [matchDate, setMatchDate] = useState(match.matchDate ? match.matchDate.slice(0, 10) : "");
+  const [matchDate, setMatchDate] = useState(match.matchDate ? matchDateToLocalInput(match.matchDate) : "");
   const [round, setRound] = useState(match.round || "");
   const [venue, setVenue] = useState(match.venue || "");
   const [isKnockout, setIsKnockout] = useState(match.isKnockout);
@@ -1383,7 +1385,7 @@ function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Tea
         </select>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="input text-sm" />
+        <input type="datetime-local" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="input text-sm" />
         <input type="text" placeholder="الجولة" value={round} onChange={(e) => setRound(e.target.value)} maxLength={40} className="input text-sm" />
       </div>
       <input type="text" placeholder="الملعب" value={venue} onChange={(e) => setVenue(e.target.value)} maxLength={60} className="input text-sm" />
@@ -1858,7 +1860,7 @@ function StandingsTab({
         `${m.homeScore} - ${m.awayScore}`,
         m.awayTeam.name,
         m.venue || "",
-        m.matchDate ? new Date(m.matchDate).toLocaleDateString("ar") : "",
+        m.matchDate ? formatMatchDateTime(m.matchDate) : "",
       ]);
     });
 
