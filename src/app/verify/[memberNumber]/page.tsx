@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export default async function VerifyPage({
       status: true,
       memberNumber: true,
       createdAt: true,
+      photo: true,
+      registrations: {
+        where: { status: "ACTIVE" },
+        select: { activity: { select: { id: true, title: true } } },
+        orderBy: { activity: { createdAt: "asc" } },
+      },
     },
   });
 
@@ -42,11 +49,18 @@ export default async function VerifyPage({
         {valid ? (
           <div className="card p-6 fade-up" style={{ borderColor: "var(--mint-400)" }}>
             <div className="flex flex-col items-center text-center mb-5">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-3"
-                style={{ background: "#d1fae5" }}
-              >
-                ✅
+              <div className="mb-3" style={{ position: "relative" }}>
+                <PlayerAvatar photo={member!.photo} fullName={member!.fullName} size={80} bg="copper" />
+                <span
+                  className="flex items-center justify-center text-sm"
+                  style={{
+                    position: "absolute", bottom: -2, left: -2,
+                    width: 26, height: 26, borderRadius: "50%",
+                    background: "#d1fae5", border: "2px solid white",
+                  }}
+                >
+                  ✅
+                </span>
               </div>
               <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
                 عضوية سارية المفعول
@@ -65,6 +79,19 @@ export default async function VerifyPage({
                 })}
               />
             </div>
+
+            {member!.registrations.length > 0 && (
+              <div className="pt-4 mt-4" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+                  🏆 الأنشطة المسجَّل فيها
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {member!.registrations.map((r) => (
+                    <span key={r.activity.id} className="badge badge-active">{r.activity.title}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="card p-6 text-center fade-up" style={{ borderColor: "#fca5a5" }}>
