@@ -20,8 +20,10 @@ import {
   type TeamAdvancedRow,
 } from "@/lib/tournament";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import TeamLogo from "@/components/tournament/TeamLogo";
 import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
+import PhotoUpload from "@/components/PhotoUpload";
 
 interface RosterMember {
   id: string;
@@ -45,6 +47,7 @@ interface TeamMemberEntry {
 interface Team {
   id: string;
   name: string;
+  logo: string | null;
   groupId: string | null;
   group: Group | null;
   members: TeamMemberEntry[];
@@ -81,8 +84,8 @@ interface MvpVote {
 
 interface Match {
   id: string;
-  homeTeam: { id: string; name: string };
-  awayTeam: { id: string; name: string };
+  homeTeam: { id: string; name: string; logo: string | null };
+  awayTeam: { id: string; name: string; logo: string | null };
   matchDate: string | null;
   round: string | null;
   venue: string | null;
@@ -270,6 +273,7 @@ function TeamsTab({
 }) {
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamGroup, setNewTeamGroup] = useState("");
+  const [newTeamLogo, setNewTeamLogo] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupCapacity, setNewGroupCapacity] = useState("");
   const [editingCapacityId, setEditingCapacityId] = useState<string | null>(null);
@@ -397,6 +401,17 @@ function TeamsTab({
     }
   }
 
+  async function setTeamLogo(teamId: string, logo: string) {
+    const res = await fetch(`/api/admin/teams/${teamId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ logo: logo || null }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "فشلت العملية");
+    onChange();
+  }
+
   async function createTeam(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -405,12 +420,13 @@ function TeamsTab({
       const res = await fetch(`/api/admin/activities/${activityId}/teams`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newTeamName, groupId: newTeamGroup || null }),
+        body: JSON.stringify({ name: newTeamName, groupId: newTeamGroup || null, logo: newTeamLogo || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setNewTeamName("");
       setNewTeamGroup("");
+      setNewTeamLogo("");
       onChange();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ");
@@ -600,6 +616,7 @@ function TeamsTab({
                 className="font-bold flex items-center gap-1.5"
                 style={{ color: "var(--text-main)" }}
               >
+                <TeamLogo logo={team.logo} name={team.name} size={22} />
                 {team.name} <span className="text-xs">✏️</span>
               </button>
             )}
@@ -612,6 +629,15 @@ function TeamsTab({
               🗑 حذف الفريق
             </button>
           </div>
+
+          <PhotoUpload
+            photo={team.logo}
+            imageUrlPrefix="/api/files/team"
+            variant="avatar"
+            label="شعار الفريق"
+            placeholderIcon="🛡️"
+            onUpload={(filename) => setTeamLogo(team.id, filename)}
+          />
 
           {groups.length > 0 && (
             <select
@@ -703,6 +729,14 @@ function TeamsTab({
       ))}
 
       <form onSubmit={createTeam} className="card p-4 space-y-2">
+        <PhotoUpload
+          photo={newTeamLogo || null}
+          imageUrlPrefix="/api/files/team"
+          variant="avatar"
+          label="شعار الفريق"
+          placeholderIcon="🛡️"
+          onUpload={(filename) => setNewTeamLogo(filename)}
+        />
         <input
           type="text"
           placeholder="اسم الفريق الجديد"
@@ -1161,10 +1195,12 @@ function MatchCard({
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+          <p className="font-bold text-sm flex items-center gap-1.5 flex-wrap" style={{ color: "var(--text-main)" }}>
+            <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
             {match.homeTeam.name}
             {match.status === "PLAYED" ? ` ${match.homeScore} - ${match.awayScore} ` : " × "}
             {match.awayTeam.name}
+            <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
             {match.homePenalties !== null && match.awayPenalties !== null && (
               <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                 {" "}(ركلات ترجيح {match.homePenalties}-{match.awayPenalties})
@@ -1860,7 +1896,12 @@ function StandingsTab({
               {group.standings.map((r, i) => (
                 <tr key={r.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
                   <td className="px-2 py-2 text-center">{i + 1}</td>
-                  <td className="px-2 py-2 text-center font-bold" style={{ color: "var(--text-main)" }}>{r.name}</td>
+                  <td className="px-2 py-2 font-bold" style={{ color: "var(--text-main)" }}>
+                    <span className="flex items-center gap-1.5 justify-center">
+                      <TeamLogo logo={r.logo} name={r.name} size={18} />
+                      {r.name}
+                    </span>
+                  </td>
                   <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                   <td className="px-2 py-2 text-center">{r.played}</td>
                   <td className="px-2 py-2 text-center">{r.won}</td>

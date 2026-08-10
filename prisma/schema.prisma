@@ -76,6 +76,7 @@ model Team {
   groupId     String?
   group       Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name        String
+  logo        String?
   createdAt   DateTime       @default(now())
   members     TeamMember[]
   homeMatches Match[]        @relation("HomeTeam")

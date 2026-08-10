@@ -2,6 +2,7 @@ export interface StandingsTeamInput {
   id: string;
   name: string;
   groupId?: string | null;
+  logo?: string | null;
 }
 
 export interface StandingsMatchInput {
@@ -16,6 +17,7 @@ export interface StandingsMatchInput {
 export interface StandingsRow {
   teamId: string;
   name: string;
+  logo: string | null;
   played: number;
   won: number;
   drawn: number;
@@ -29,7 +31,7 @@ export interface StandingsRow {
 export function computeStandings(teams: StandingsTeamInput[], matches: StandingsMatchInput[]): StandingsRow[] {
   const table = new Map<string, StandingsRow>();
   for (const t of teams) {
-    table.set(t.id, { teamId: t.id, name: t.name, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, gd: 0, points: 0 });
+    table.set(t.id, { teamId: t.id, name: t.name, logo: t.logo ?? null, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, gd: 0, points: 0 });
   }
   for (const m of matches) {
     if (m.isKnockout) continue;

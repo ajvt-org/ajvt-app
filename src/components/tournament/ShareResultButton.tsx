@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import TeamLogo from "@/components/tournament/TeamLogo";
 
 interface GoalEntry {
   fullName: string;
@@ -22,6 +23,8 @@ interface BookingEntry {
 interface ShareResultButtonProps {
   homeTeamName: string;
   awayTeamName: string;
+  homeTeamLogo?: string | null;
+  awayTeamLogo?: string | null;
   homeScore: number;
   awayScore: number;
   round: string | null;
@@ -55,6 +58,8 @@ function buildEvents(goals: GoalEntry[], bookings: BookingEntry[], isHome: boole
 export default function ShareResultButton({
   homeTeamName,
   awayTeamName,
+  homeTeamLogo = null,
+  awayTeamLogo = null,
   homeScore,
   awayScore,
   round,
@@ -103,9 +108,15 @@ export default function ShareResultButton({
       >
         <p className="text-xs mb-3" style={{ color: "rgba(255,255,255,0.7)" }}>{tournamentTitle}{round ? ` — ${round}` : ""}</p>
         <div className="flex items-center justify-between gap-3" dir="rtl">
-          <p className="font-black text-white text-sm flex-1 text-center" style={{ wordBreak: "break-word" }}>{homeTeamName}</p>
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <TeamLogo logo={homeTeamLogo} name={homeTeamName} size={28} />
+            <p className="font-black text-white text-sm text-center" style={{ wordBreak: "break-word" }}>{homeTeamName}</p>
+          </div>
           <p className="font-black text-white text-2xl shrink-0">{homeScore} - {awayScore}</p>
-          <p className="font-black text-white text-sm flex-1 text-center" style={{ wordBreak: "break-word" }}>{awayTeamName}</p>
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <TeamLogo logo={awayTeamLogo} name={awayTeamName} size={28} />
+            <p className="font-black text-white text-sm text-center" style={{ wordBreak: "break-word" }}>{awayTeamName}</p>
+          </div>
         </div>
 
         {(homeEvents.length > 0 || awayEvents.length > 0) && (

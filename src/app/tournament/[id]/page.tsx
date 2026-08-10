@@ -16,6 +16,7 @@ import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
 import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import TeamLogo from "@/components/tournament/TeamLogo";
 import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
 
@@ -48,6 +49,7 @@ export default async function PublicTournamentPage({
         select: {
           id: true,
           name: true,
+          logo: true,
           groupId: true,
           members: {
             select: { member: { select: { id: true, fullName: true, photo: true } } },
@@ -59,8 +61,8 @@ export default async function PublicTournamentPage({
         orderBy: [{ status: "asc" }, { order: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
         select: {
           id: true,
-          homeTeam: { select: { id: true, name: true } },
-          awayTeam: { select: { id: true, name: true } },
+          homeTeam: { select: { id: true, name: true, logo: true } },
+          awayTeam: { select: { id: true, name: true, logo: true } },
           matchDate: true,
           round: true,
           venue: true,
@@ -160,7 +162,8 @@ export default async function PublicTournamentPage({
               <div className="grid grid-cols-2 gap-2">
                 {activity.teams.map((team) => (
                   <details key={team.id} className="card p-3">
-                    <summary className="font-bold text-sm cursor-pointer" style={{ color: "var(--text-main)" }}>
+                    <summary className="font-bold text-sm cursor-pointer flex items-center gap-1.5" style={{ color: "var(--text-main)" }}>
+                      <TeamLogo logo={team.logo} name={team.name} size={20} />
                       {team.name} <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>({team.members.length})</span>
                     </summary>
                     {team.members.length === 0 ? (
@@ -210,7 +213,12 @@ export default async function PublicTournamentPage({
                       {group.standings.map((r, i) => (
                         <tr key={r.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
                           <td className="px-2 py-2 text-center">{i + 1}</td>
-                          <td className="px-2 py-2 text-center font-bold" style={{ color: "var(--text-main)" }}>{r.name}</td>
+                          <td className="px-2 py-2 font-bold" style={{ color: "var(--text-main)" }}>
+                            <span className="flex items-center gap-1.5 justify-center">
+                              <TeamLogo logo={r.logo} name={r.name} size={18} />
+                              {r.name}
+                            </span>
+                          </td>
                           <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                           <td className="px-2 py-2 text-center">{r.played}</td>
                           <td className="px-2 py-2 text-center">{r.won}</td>
@@ -236,8 +244,10 @@ export default async function PublicTournamentPage({
                   return (
                   <div key={m.id} className="card p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                      <p className="font-bold text-sm flex items-center gap-1.5 flex-wrap" style={{ color: "var(--text-main)" }}>
+                        <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={20} />
                         {m.homeTeam.name} {m.homeScore} - {m.awayScore} {m.awayTeam.name}
+                        <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={20} />
                         {m.homePenalties !== null && m.awayPenalties !== null && (
                           <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                             {" "}(ركلات ترجيح {m.homePenalties}-{m.awayPenalties})
@@ -247,6 +257,8 @@ export default async function PublicTournamentPage({
                       <ShareResultButton
                         homeTeamName={m.homeTeam.name}
                         awayTeamName={m.awayTeam.name}
+                        homeTeamLogo={m.homeTeam.logo}
+                        awayTeamLogo={m.awayTeam.logo}
                         homeScore={m.homeScore ?? 0}
                         awayScore={m.awayScore ?? 0}
                         round={m.round}
@@ -329,7 +341,11 @@ export default async function PublicTournamentPage({
                 <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>📅 مباريات قادمة</h2>
                 {scheduled.map((m) => (
                   <div key={m.id} className="card p-3">
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{m.homeTeam.name} × {m.awayTeam.name}</p>
+                    <p className="font-bold text-sm flex items-center gap-1.5" style={{ color: "var(--text-main)" }}>
+                      <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={18} />
+                      {m.homeTeam.name} × {m.awayTeam.name}
+                      <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={18} />
+                    </p>
                     <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
                       {m.round && <span>{m.round}</span>}
                       {m.venue && <span>📍 {m.venue}</span>}
