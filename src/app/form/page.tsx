@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { validatePhone } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
+import PhotoUpload from "@/components/PhotoUpload";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -83,6 +84,7 @@ function FormPageInner() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingProof, setExistingProof] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   // العصر dropdown
@@ -115,6 +117,7 @@ function FormPageInner() {
           paymentMethod: member.paymentMethod || "",
         });
         if (member.paymentProof) setExistingProof(member.paymentProof);
+        if (member.photo) setPhoto(member.photo);
       } else if (me?.phone) {
         setForm((p) => ({ ...p, phone: me.phone }));
       }
@@ -207,7 +210,7 @@ function FormPageInner() {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paymentProof }),
+        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paymentProof, photo }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -302,6 +305,19 @@ function FormPageInner() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
+
+          {/* الصورة الشخصية — اختياري */}
+          <div className="card p-4">
+            <PhotoUpload
+              photo={photo}
+              onUpload={(filename) => setPhoto(filename)}
+              label="الصورة الشخصية (اختياري)"
+              placeholderIcon="👤"
+            />
+            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+              يمكنك إضافتها الآن أو لاحقاً، وتغييرها في أي وقت
+            </p>
+          </div>
 
           {/* الاسم الكامل */}
           <div>
