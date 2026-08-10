@@ -299,11 +299,21 @@ export function matchDateToLocalInput(date: string | Date): string {
   return local.toISOString().slice(0, 16);
 }
 
+// "ar"'s default numeric date format embeds RTL marks around the slashes
+// (renders oddly next to Latin digits) — en-GB gives the same DD/MM/YYYY,
+// 24h layout with plain digits and no directional marks.
 export function formatMatchDateTime(date: string | Date): string {
   const d = new Date(date);
-  const dateStr = d.toLocaleDateString("ar", { timeZone: CLUB_TIMEZONE });
-  const timeStr = d.toLocaleTimeString("ar", { timeZone: CLUB_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: false });
-  return `${dateStr} ${timeStr}`;
+  const formatted = d.toLocaleString("en-GB", {
+    timeZone: CLUB_TIMEZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return formatted.replace(", ", " - ");
 }
 
 export function shuffleArray<T>(arr: T[]): T[] {
