@@ -7,13 +7,14 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true } },
   awayTeam: { select: { id: true, name: true } },
-  manOfTheMatch: { select: { id: true, fullName: true } },
+  manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
   goals: {
     select: {
       id: true,
       count: true,
+      minute: true,
       teamId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, fullName: true, photo: true } },
     },
   },
   bookings: {
@@ -22,7 +23,7 @@ const MATCH_INCLUDE = {
       cardType: true,
       minute: true,
       teamId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, fullName: true, photo: true } },
     },
   },
   mvpVote: {
@@ -44,6 +45,7 @@ const MATCH_INCLUDE = {
 interface GoalInput {
   memberId: string;
   count: number;
+  minute: number | null;
 }
 
 function validateGoals(input: unknown): GoalInput[] | null {
@@ -54,7 +56,13 @@ function validateGoals(input: unknown): GoalInput[] | null {
     if (!g || typeof g.memberId !== "string") return null;
     const count = Number(g.count);
     if (!Number.isInteger(count) || count <= 0) return null;
-    goals.push({ memberId: g.memberId, count });
+    let minute: number | null = null;
+    if (g.minute !== undefined && g.minute !== null && g.minute !== "") {
+      const m = Number(g.minute);
+      if (!Number.isInteger(m) || m < 1 || m > 130) return null;
+      minute = m;
+    }
+    goals.push({ memberId: g.memberId, count, minute });
   }
   return goals;
 }
@@ -67,7 +75,7 @@ export async function PATCH(
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const {
-      homeScore, awayScore, homeGoals, awayGoals, matchDate, round, venue, isKnockout,
+      homeScore, awayScore, homeGoals, awayGoals, matchDate, round, venue, isKnockout, order,
       homePenalties, awayPenalties, manOfTheMatchId,
     } = await req.json();
 
@@ -84,6 +92,7 @@ export async function PATCH(
       matchDate?: Date | null;
       round?: string | null;
       venue?: string | null;
+      order?: number;
       isKnockout?: boolean;
       homeScore?: number | null;
       awayScore?: number | null;
@@ -104,6 +113,13 @@ export async function PATCH(
     }
     if (isKnockout !== undefined) {
       updateData.isKnockout = !!isKnockout;
+    }
+    if (order !== undefined) {
+      const n = Number(order);
+      if (!Number.isInteger(n)) {
+        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      }
+      updateData.order = n;
     }
 
     let parsedHomeGoals: GoalInput[] = [];
@@ -210,12 +226,12 @@ export async function PATCH(
         await tx.matchGoal.deleteMany({ where: { matchId } });
         if (parsedHomeGoals.length > 0) {
           await tx.matchGoal.createMany({
-            data: parsedHomeGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.homeTeamId, count: g.count })),
+            data: parsedHomeGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.homeTeamId, count: g.count, minute: g.minute })),
           });
         }
         if (parsedAwayGoals.length > 0) {
           await tx.matchGoal.createMany({
-            data: parsedAwayGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.awayTeamId, count: g.count })),
+            data: parsedAwayGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.awayTeamId, count: g.count, minute: g.minute })),
           });
         }
       }

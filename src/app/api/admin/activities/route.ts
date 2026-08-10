@@ -13,8 +13,13 @@ export async function GET() {
         registrations: {
           select: {
             id: true,
+            status: true,
+            paymentProof: true,
+            rejectionReason: true,
+            createdAt: true,
             member: { select: { id: true, fullName: true, phone: true, age: true } },
           },
+          orderBy: { createdAt: "asc" },
         },
       },
     });

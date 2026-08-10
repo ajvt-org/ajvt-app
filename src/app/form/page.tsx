@@ -4,6 +4,10 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { validatePhone } from "@/lib/utils";
+import { useInactivityLogout } from "@/lib/useInactivityLogout";
+
+// Auto-logout after this long with no click/keypress/scroll/touch.
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
 
@@ -214,6 +218,13 @@ function FormPageInner() {
       setLoading(false);
     }
   }
+
+  async function handleIdleTimeout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  }
+
+  useInactivityLogout(IDLE_TIMEOUT_MS, handleIdleTimeout, !checkingAuth);
 
   if (checkingAuth) {
     return (

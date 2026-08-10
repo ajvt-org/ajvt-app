@@ -6,6 +6,7 @@ import { groupStandings, computeTopScorers, computeStats, getHeadToHead } from "
 import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
 import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -33,13 +34,13 @@ export default async function PublicTournamentPage({
           name: true,
           groupId: true,
           members: {
-            select: { member: { select: { id: true, fullName: true } } },
+            select: { member: { select: { id: true, fullName: true, photo: true } } },
             orderBy: { member: { fullName: "asc" } },
           },
         },
       },
       matches: {
-        orderBy: [{ status: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ status: "asc" }, { order: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
         select: {
           id: true,
           homeTeam: { select: { id: true, name: true } },
@@ -53,12 +54,12 @@ export default async function PublicTournamentPage({
           homePenalties: true,
           awayPenalties: true,
           status: true,
-          manOfTheMatch: { select: { fullName: true } },
+          manOfTheMatch: { select: { fullName: true, photo: true } },
           goals: {
-            select: { count: true, teamId: true, member: { select: { id: true, fullName: true } } },
+            select: { count: true, minute: true, teamId: true, member: { select: { id: true, fullName: true, photo: true } } },
           },
           bookings: {
-            select: { cardType: true, minute: true, teamId: true, member: { select: { fullName: true } } },
+            select: { cardType: true, minute: true, teamId: true, member: { select: { fullName: true, photo: true } } },
           },
           mvpVote: {
             select: {
@@ -142,9 +143,12 @@ export default async function PublicTournamentPage({
                     {team.members.length === 0 ? (
                       <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>لا يوجد لاعبون بعد</p>
                     ) : (
-                      <ul className="mt-2 space-y-1">
+                      <ul className="mt-2 space-y-1.5">
                         {team.members.map(({ member }) => (
-                          <li key={member.id} className="text-xs" style={{ color: "var(--text-muted)" }}>{member.fullName}</li>
+                          <li key={member.id} className="flex items-center gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+                            <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
+                            {member.fullName}
+                          </li>
                         ))}
                       </ul>
                     )}
@@ -165,7 +169,7 @@ export default async function PublicTournamentPage({
                   <table className="w-full text-sm" style={{ minWidth: "440px" }}>
                     <thead>
                       <tr style={{ background: "var(--mint-100)" }}>
-                        {["#", "الفريق", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", "نقاط", ""].map((h) => (
+                        {["#", "الفريق", "نقاط", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", ""].map((h) => (
                           <th key={h} className="px-2 py-2 text-center font-bold" style={{ color: "var(--mint-700)" }}>{h}</th>
                         ))}
                       </tr>
@@ -175,6 +179,7 @@ export default async function PublicTournamentPage({
                         <tr key={r.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
                           <td className="px-2 py-2 text-center">{i + 1}</td>
                           <td className="px-2 py-2 text-center font-bold" style={{ color: "var(--text-main)" }}>{r.name}</td>
+                          <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                           <td className="px-2 py-2 text-center">{r.played}</td>
                           <td className="px-2 py-2 text-center">{r.won}</td>
                           <td className="px-2 py-2 text-center">{r.drawn}</td>
@@ -182,7 +187,6 @@ export default async function PublicTournamentPage({
                           <td className="px-2 py-2 text-center">{r.gf}</td>
                           <td className="px-2 py-2 text-center">{r.ga}</td>
                           <td className="px-2 py-2 text-center">{r.gd}</td>
-                          <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                           <td className="px-2 py-2 text-center"><FollowTeamButton teamId={r.teamId} /></td>
                         </tr>
                       ))}
@@ -215,6 +219,20 @@ export default async function PublicTournamentPage({
                         awayScore={m.awayScore ?? 0}
                         round={m.round}
                         tournamentTitle={activity.title}
+                        goals={m.goals.map((g) => ({
+                          fullName: g.member.fullName,
+                          photo: g.member.photo,
+                          count: g.count,
+                          minute: g.minute,
+                          isHome: g.teamId === m.homeTeam.id,
+                        }))}
+                        bookings={m.bookings.map((b) => ({
+                          fullName: b.member.fullName,
+                          photo: b.member.photo,
+                          cardType: b.cardType as "YELLOW" | "RED",
+                          minute: b.minute,
+                          isHome: b.teamId === m.homeTeam.id,
+                        }))}
                       />
                     </div>
                     <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
@@ -230,23 +248,28 @@ export default async function PublicTournamentPage({
                       </p>
                     )}
                     {m.goals.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="mt-2 flex flex-wrap gap-2">
                         {m.goals.map((g, i) => (
-                          <span key={i} className="badge badge-active">⚽ {g.member.fullName} ({g.count})</span>
+                          <span key={i} className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs font-bold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                            <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
+                            ⚽ {g.member.fullName}{g.minute ? ` ${g.minute}'` : ""}{g.count > 1 ? ` (${g.count})` : ""}
+                          </span>
                         ))}
                       </div>
                     )}
                     {m.bookings.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <div className="mt-1.5 flex flex-wrap gap-2">
                         {m.bookings.map((b, i) => (
-                          <span key={i} className="badge badge-rejected">
+                          <span key={i} className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs font-bold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                            <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
                             {CARD_LABEL[b.cardType]} {b.member.fullName}{b.minute ? ` (${b.minute}')` : ""}
                           </span>
                         ))}
                       </div>
                     )}
                     {m.manOfTheMatch && (
-                      <p className="text-xs mt-1.5 font-semibold" style={{ color: "var(--mint-700)" }}>
+                      <p className="text-xs mt-1.5 font-semibold flex items-center gap-1.5" style={{ color: "var(--mint-700)" }}>
+                        <PlayerAvatar photo={m.manOfTheMatch.photo} fullName={m.manOfTheMatch.fullName} size={20} />
                         🌟 رجل المباراة: {m.manOfTheMatch.fullName}
                       </p>
                     )}
@@ -297,6 +320,7 @@ export default async function PublicTournamentPage({
                       >
                         {i + 1}
                       </span>
+                      <PlayerAvatar photo={s.photo} fullName={s.fullName} size={32} />
                       <div>
                         <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{s.fullName}</p>
                         <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.teamName}</p>

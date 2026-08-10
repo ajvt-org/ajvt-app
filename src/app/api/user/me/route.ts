@@ -16,7 +16,13 @@ const MEMBER_SELECT = {
   createdAt: true,
   memberNumber: true,
   registrations: {
-    select: { activityId: true, activity: { select: { id: true, title: true } } },
+    select: {
+      id: true,
+      activityId: true,
+      status: true,
+      rejectionReason: true,
+      activity: { select: { id: true, title: true } },
+    },
   },
 } as const;
 

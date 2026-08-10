@@ -7,8 +7,20 @@ import MemberCard from "@/components/MemberCard";
 import NotificationsButton from "@/components/NotificationsButton";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
+import { useInactivityLogout } from "@/lib/useInactivityLogout";
+
+// Auto-logout after this long with no click/keypress/scroll/touch.
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
+
+interface RegistrationData {
+  id: string;
+  activityId: string;
+  status: "PENDING" | "ACTIVE" | "REJECTED";
+  rejectionReason: string | null;
+  activity: { id: string; title: string };
+}
 
 interface MemberData {
   id: string;
@@ -20,7 +32,7 @@ interface MemberData {
   createdAt: string;
   memberNumber: string | null;
   photo: string | null;
-  registrations: { activityId: string; activity: { id: string; title: string } }[];
+  registrations: RegistrationData[];
 }
 
 export default function HomePage() {
@@ -28,8 +40,8 @@ export default function HomePage() {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/user/me")
+  function loadMembers() {
+    return fetch("/api/user/me")
       .then((r) => {
         if (r.status === 401) { router.push("/login"); return null; }
         return r.json();
@@ -38,14 +50,20 @@ export default function HomePage() {
         if (!data) return;
         setMembers(data.members || []);
       })
-      .catch(() => router.push("/login"))
-      .finally(() => setLoading(false));
+      .catch(() => router.push("/login"));
+  }
+
+  useEffect(() => {
+    loadMembers().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/");
   }
+
+  useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 
   if (loading) {
     return (
@@ -88,19 +106,12 @@ export default function HomePage() {
           hasAnyMember={members.length > 0}
           eligibleMembers={members
             .filter((m) => m.status !== "REJECTED")
-            .map((m) => ({ id: m.id, fullName: m.fullName, registeredActivityIds: m.registrations.map((r) => r.activityId) }))}
-          onRegistrationChange={(memberId, activityId, registered) => {
-            setMembers((prev) =>
-              prev.map((m) => {
-                if (m.id !== memberId) return m;
-                if (registered) {
-                  if (m.registrations.some((r) => r.activityId === activityId)) return m;
-                  return { ...m, registrations: [...m.registrations, { activityId, activity: { id: activityId, title: "" } }] };
-                }
-                return { ...m, registrations: m.registrations.filter((r) => r.activityId !== activityId) };
-              })
-            );
-          }}
+            .map((m) => ({
+              id: m.id,
+              fullName: m.fullName,
+              registrations: m.registrations.map((r) => ({ activityId: r.activityId, status: r.status, rejectionReason: r.rejectionReason })),
+            }))}
+          onReload={loadMembers}
         />
 
         {/* No members registered yet */}

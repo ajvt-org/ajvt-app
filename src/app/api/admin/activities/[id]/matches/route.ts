@@ -7,13 +7,14 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true } },
   awayTeam: { select: { id: true, name: true } },
-  manOfTheMatch: { select: { id: true, fullName: true } },
+  manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
   goals: {
     select: {
       id: true,
       count: true,
+      minute: true,
       teamId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, fullName: true, photo: true } },
     },
   },
   bookings: {
@@ -22,7 +23,7 @@ const MATCH_INCLUDE = {
       cardType: true,
       minute: true,
       teamId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, fullName: true, photo: true } },
     },
   },
   mvpVote: {
@@ -51,7 +52,7 @@ export async function GET(
 
     const matches = await prisma.match.findMany({
       where: { activityId: id },
-      orderBy: [{ status: "asc" }, { createdAt: "asc" }],
+      orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "asc" }],
       include: MATCH_INCLUDE,
     });
 
@@ -97,6 +98,8 @@ export async function POST(
       return NextResponse.json({ error: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)" }, { status: 400 });
     }
 
+    const maxOrderRow = await prisma.match.findFirst({ where: { activityId: id }, orderBy: { order: "desc" }, select: { order: true } });
+
     const match = await prisma.match.create({
       data: {
         activityId: id,
@@ -106,6 +109,7 @@ export async function POST(
         round: round?.trim() || null,
         venue: venue?.trim() || null,
         isKnockout: !!isKnockout,
+        order: (maxOrderRow?.order || 0) + 1,
       },
       include: MATCH_INCLUDE,
     });

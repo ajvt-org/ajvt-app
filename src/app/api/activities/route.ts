@@ -17,7 +17,7 @@ export async function GET() {
         capacity: true,
         isOpen: true,
         isTournament: true,
-        _count: { select: { registrations: true } },
+        _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
       },
     });
 

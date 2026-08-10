@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { groupStandings, computeTopScorers, computeStats, getHeadToHead, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 
 interface RosterMember {
   id: string;
   fullName: string;
   phone: string;
   age: string;
+  photo: string | null;
   team: { id: string; name: string } | null;
 }
 
@@ -18,7 +20,7 @@ interface Group {
 }
 
 interface TeamMemberEntry {
-  member: { id: string; fullName: string; phone: string; age: string };
+  member: { id: string; fullName: string; phone: string; age: string; photo: string | null };
 }
 
 interface Team {
@@ -32,8 +34,9 @@ interface Team {
 interface MatchGoal {
   id: string;
   count: number;
+  minute: number | null;
   teamId: string;
-  member: { id: string; fullName: string };
+  member: { id: string; fullName: string; photo: string | null };
 }
 
 interface MatchBooking {
@@ -41,7 +44,7 @@ interface MatchBooking {
   cardType: "YELLOW" | "RED";
   minute: number | null;
   teamId: string;
-  member: { id: string; fullName: string };
+  member: { id: string; fullName: string; photo: string | null };
 }
 
 interface MvpCandidate {
@@ -64,12 +67,13 @@ interface Match {
   matchDate: string | null;
   round: string | null;
   venue: string | null;
+  order: number;
   isKnockout: boolean;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
   awayPenalties: number | null;
-  manOfTheMatch: { id: string; fullName: string } | null;
+  manOfTheMatch: { id: string; fullName: string; photo: string | null } | null;
   status: "SCHEDULED" | "PLAYED";
   goals: MatchGoal[];
   bookings: MatchBooking[];
@@ -239,8 +243,52 @@ function TeamsTab({
   const [error, setError] = useState("");
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<Record<string, string>>({});
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editTeamName, setEditTeamName] = useState("");
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editMemberName, setEditMemberName] = useState("");
 
   const unassigned = roster.filter((m) => !m.team);
+
+  async function renameTeam(teamId: string) {
+    if (!editTeamName.trim()) return;
+    setLoadingAction(true);
+    try {
+      const res = await fetch(`/api/admin/teams/${teamId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editTeamName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setEditingTeamId(null);
+      onChange();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setLoadingAction(false);
+    }
+  }
+
+  async function renameMember(memberId: string) {
+    if (!editMemberName.trim()) return;
+    setLoadingAction(true);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: editMemberName }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setEditingMemberId(null);
+      onChange();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setLoadingAction(false);
+    }
+  }
 
   async function createGroup(e: React.FormEvent) {
     e.preventDefault();
@@ -406,11 +454,36 @@ function TeamsTab({
       {teams.map((team) => (
         <div key={team.id} className="card p-4">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="font-bold" style={{ color: "var(--text-main)" }}>{team.name}</p>
+            {editingTeamId === team.id ? (
+              <div className="flex items-center gap-1.5 flex-1">
+                <input
+                  type="text"
+                  value={editTeamName}
+                  onChange={(e) => setEditTeamName(e.target.value)}
+                  maxLength={40}
+                  className="input text-sm flex-1"
+                  autoFocus
+                />
+                <button onClick={() => renameTeam(team.id)} disabled={loadingAction} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "var(--mint-600)", color: "white" }}>
+                  حفظ
+                </button>
+                <button onClick={() => setEditingTeamId(null)} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}>
+                  إلغاء
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setEditingTeamId(team.id); setEditTeamName(team.name); }}
+                className="font-bold flex items-center gap-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
+                {team.name} <span className="text-xs">✏️</span>
+              </button>
+            )}
             <button
               onClick={() => deleteTeam(team.id)}
               disabled={loadingAction}
-              className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+              className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
               🗑 حذف الفريق
@@ -433,11 +506,37 @@ function TeamsTab({
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد لاعبون بعد</p>
             ) : (
               team.members.map(({ member }) => (
-                <div key={member.id} className="flex items-center justify-between text-sm">
-                  <span style={{ color: "var(--text-main)" }}>{member.fullName}</span>
+                <div key={member.id} className="flex items-center justify-between text-sm gap-2">
+                  {editingMemberId === member.id ? (
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <input
+                        type="text"
+                        value={editMemberName}
+                        onChange={(e) => setEditMemberName(e.target.value)}
+                        maxLength={30}
+                        className="input text-sm flex-1"
+                        autoFocus
+                      />
+                      <button onClick={() => renameMember(member.id)} disabled={loadingAction} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "var(--mint-600)", color: "white" }}>
+                        حفظ
+                      </button>
+                      <button onClick={() => setEditingMemberId(null)} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}>
+                        إلغاء
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingMemberId(member.id); setEditMemberName(member.fullName); }}
+                      className="flex-1 flex items-center gap-2 text-right"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
+                      {member.fullName} <span className="text-xs">✏️</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => removeMember(team.id, member.id)}
-                    className="text-xs px-2 py-1 rounded-lg font-bold"
+                    className="text-xs px-2 py-1 rounded-lg font-bold shrink-0"
                     style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                   >
                     إزالة
@@ -507,9 +606,36 @@ function TeamsTab({
             🧍 لاعبون غير مصنّفين ({unassigned.length})
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {unassigned.map((m) => (
-              <span key={m.id} className="badge badge-pending">{m.fullName}</span>
-            ))}
+            {unassigned.map((m) =>
+              editingMemberId === m.id ? (
+                <div key={m.id} className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={editMemberName}
+                    onChange={(e) => setEditMemberName(e.target.value)}
+                    maxLength={30}
+                    className="input text-xs"
+                    style={{ width: "120px" }}
+                    autoFocus
+                  />
+                  <button onClick={() => renameMember(m.id)} disabled={loadingAction} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "var(--mint-600)", color: "white" }}>
+                    حفظ
+                  </button>
+                  <button onClick={() => setEditingMemberId(null)} className="text-xs px-2 py-1 rounded-lg font-bold" style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}>
+                    إلغاء
+                  </button>
+                </div>
+              ) : (
+                <button
+                  key={m.id}
+                  onClick={() => { setEditingMemberId(m.id); setEditMemberName(m.fullName); }}
+                  className="badge badge-pending flex items-center gap-1.5"
+                >
+                  <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
+                  {m.fullName} ✏️
+                </button>
+              )
+            )}
           </div>
         </div>
       )}
@@ -534,6 +660,43 @@ function MatchesTab({
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
   const [cardsFor, setCardsFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
+  const [detailsFor, setDetailsFor] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  async function generateSchedule() {
+    if (!confirm("سيتم اقتراح مباريات إضافية تلقائياً بحيث يلعب كل فريق 3 مباريات إجمالاً. يمكنك حذف أو تعديل أي مباراة بعد ذلك. متابعة؟")) return;
+    setGenerating(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/activities/${activityId}/matches/generate`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= list.length) return;
+    const a = list[index];
+    const b = list[swapIndex];
+    setLoadingAction(true);
+    try {
+      await Promise.all([
+        fetch(`/api/admin/matches/${a.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: b.order }) }),
+        fetch(`/api/admin/matches/${b.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: a.order }) }),
+      ]);
+      onChange();
+    } catch {
+      alert("خطأ في إعادة الترتيب");
+    } finally {
+      setLoadingAction(false);
+    }
+  }
 
   async function createMatch(e: React.FormEvent) {
     e.preventDefault();
@@ -580,6 +743,17 @@ function MatchesTab({
         <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
           ⚠️ {error}
         </div>
+      )}
+
+      {teams.length >= 2 && (
+        <button
+          onClick={generateSchedule}
+          disabled={generating}
+          className="btn btn-primary text-sm"
+          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+        >
+          {generating ? "..." : "🎲 اقترح جدول المباريات (3 مباريات لكل فريق)"}
+        </button>
       )}
 
       <form onSubmit={createMatch} className="card p-4 space-y-3">
@@ -643,7 +817,7 @@ function MatchesTab({
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>📅 مباريات قادمة</p>
           <div className="space-y-3">
-            {scheduled.map((m) => (
+            {scheduled.map((m, i) => (
               <MatchCard
                 key={m.id}
                 match={m}
@@ -656,6 +830,10 @@ function MatchesTab({
                 onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
                 showMvp={mvpFor === m.id}
                 onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
+                showDetails={detailsFor === m.id}
+                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
+                onMoveUp={i > 0 ? () => moveMatch(scheduled, i, "up") : undefined}
+                onMoveDown={i < scheduled.length - 1 ? () => moveMatch(scheduled, i, "down") : undefined}
                 onSaved={() => { setResultFormFor(null); onChange(); }}
                 onChange={onChange}
               />
@@ -681,6 +859,8 @@ function MatchesTab({
                 onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
                 showMvp={mvpFor === m.id}
                 onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
+                showDetails={detailsFor === m.id}
+                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
                 onSaved={() => { setResultFormFor(null); onChange(); }}
                 onChange={onChange}
               />
@@ -705,6 +885,10 @@ function MatchCard({
   onToggleCards,
   showMvp,
   onToggleMvp,
+  showDetails,
+  onToggleDetails,
+  onMoveUp,
+  onMoveDown,
   onSaved,
   onChange,
 }: {
@@ -718,6 +902,10 @@ function MatchCard({
   onToggleCards: () => void;
   showMvp: boolean;
   onToggleMvp: () => void;
+  showDetails: boolean;
+  onToggleDetails: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   onSaved: () => void;
   onChange: () => void;
 }) {
@@ -751,6 +939,28 @@ function MatchCard({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {(onMoveUp || onMoveDown) && (
+            <div className="flex flex-col gap-0.5">
+              <button
+                onClick={onMoveUp}
+                disabled={!onMoveUp}
+                className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
+                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                title="تقديم"
+              >
+                ▲
+              </button>
+              <button
+                onClick={onMoveDown}
+                disabled={!onMoveDown}
+                className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
+                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                title="تأخير"
+              >
+                ▼
+              </button>
+            </div>
+          )}
           <button
             onClick={onToggleResultForm}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
@@ -771,13 +981,17 @@ function MatchCard({
       {match.status === "PLAYED" && match.goals.length > 0 && (
         <div className="mt-2 pt-2 flex flex-wrap gap-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
           {match.goals.map((g) => (
-            <span key={g.id} className="badge badge-active">⚽ {g.member.fullName} ({g.count})</span>
+            <span key={g.id} className="badge badge-active flex items-center gap-1.5">
+              <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
+              ⚽ {g.member.fullName}{g.minute ? ` ${g.minute}'` : ""}{g.count > 1 ? ` (${g.count})` : ""}
+            </span>
           ))}
         </div>
       )}
 
       {match.manOfTheMatch && (
-        <p className="text-xs mt-2 font-semibold" style={{ color: "var(--mint-700)" }}>
+        <p className="text-xs mt-2 font-semibold flex items-center gap-1.5" style={{ color: "var(--mint-700)" }}>
+          <PlayerAvatar photo={match.manOfTheMatch.photo} fullName={match.manOfTheMatch.fullName} size={20} />
           🌟 رجل المباراة: {match.manOfTheMatch.fullName}
         </p>
       )}
@@ -785,7 +999,8 @@ function MatchCard({
       {match.bookings.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {match.bookings.map((b) => (
-            <span key={b.id} className="badge badge-rejected">
+            <span key={b.id} className="badge badge-rejected flex items-center gap-1.5">
+              <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
               {CARD_LABEL[b.cardType]} {b.member.fullName}{b.minute ? ` (${b.minute}')` : ""}
             </span>
           ))}
@@ -807,12 +1022,72 @@ function MatchCard({
         >
           {showMvp ? "إخفاء التصويت" : "🌟 أفضل لاعب"}
         </button>
+        <button
+          onClick={onToggleDetails}
+          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+        >
+          {showDetails ? "إخفاء التفاصيل" : "✏️ تعديل التفاصيل"}
+        </button>
       </div>
 
       {showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
       {showResultForm && <ResultForm match={match} teams={teams} onSaved={onSaved} />}
       {showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
+      {showDetails && <MatchDetailsForm match={match} onChange={onChange} />}
     </div>
+  );
+}
+
+function MatchDetailsForm({ match, onChange }: { match: Match; onChange: () => void }) {
+  const [matchDate, setMatchDate] = useState(match.matchDate ? match.matchDate.slice(0, 10) : "");
+  const [round, setRound] = useState(match.round || "");
+  const [venue, setVenue] = useState(match.venue || "");
+  const [isKnockout, setIsKnockout] = useState(match.isKnockout);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/matches/${match.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchDate: matchDate || null,
+          round: round || null,
+          venue: venue || null,
+          isKnockout,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={save} className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <div className="grid grid-cols-2 gap-2">
+        <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="input text-sm" />
+        <input type="text" placeholder="الجولة" value={round} onChange={(e) => setRound(e.target.value)} maxLength={40} className="input text-sm" />
+      </div>
+      <input type="text" placeholder="الملعب" value={venue} onChange={(e) => setVenue(e.target.value)} maxLength={60} className="input text-sm" />
+      <label className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-main)" }}>
+        <input type="checkbox" checked={isKnockout} onChange={(e) => setIsKnockout(e.target.checked)} />
+        🏆 مباراة خروج المغلوب
+      </label>
+      {error && <p className="text-xs" style={{ color: "#dc2626" }}>{error}</p>}
+      <button type="submit" disabled={loading} className="btn btn-primary text-xs px-3" style={{ width: "auto" }}>
+        {loading ? "..." : "حفظ التفاصيل"}
+      </button>
+    </form>
   );
 }
 
@@ -1064,11 +1339,11 @@ function ResultForm({ match, teams, onSaved }: { match: Match; teams: Team[]; on
   const combinedRoster = [...homeRoster, ...awayRoster];
   const [homeScore, setHomeScore] = useState(match.homeScore?.toString() ?? "");
   const [awayScore, setAwayScore] = useState(match.awayScore?.toString() ?? "");
-  const [homeGoals, setHomeGoals] = useState<{ memberId: string; count: string }[]>(
-    match.goals.filter((g) => g.teamId === match.homeTeam.id).map((g) => ({ memberId: g.member.id, count: String(g.count) }))
+  const [homeGoals, setHomeGoals] = useState<{ memberId: string; count: string; minute: string }[]>(
+    match.goals.filter((g) => g.teamId === match.homeTeam.id).map((g) => ({ memberId: g.member.id, count: String(g.count), minute: g.minute != null ? String(g.minute) : "" }))
   );
-  const [awayGoals, setAwayGoals] = useState<{ memberId: string; count: string }[]>(
-    match.goals.filter((g) => g.teamId === match.awayTeam.id).map((g) => ({ memberId: g.member.id, count: String(g.count) }))
+  const [awayGoals, setAwayGoals] = useState<{ memberId: string; count: string; minute: string }[]>(
+    match.goals.filter((g) => g.teamId === match.awayTeam.id).map((g) => ({ memberId: g.member.id, count: String(g.count), minute: g.minute != null ? String(g.minute) : "" }))
   );
   const [homePenalties, setHomePenalties] = useState(match.homePenalties?.toString() ?? "");
   const [awayPenalties, setAwayPenalties] = useState(match.awayPenalties?.toString() ?? "");
@@ -1087,8 +1362,8 @@ function ResultForm({ match, teams, onSaved }: { match: Match; teams: Team[]; on
       const body: Record<string, unknown> = {
         homeScore: Number(homeScore),
         awayScore: Number(awayScore),
-        homeGoals: homeGoals.filter((g) => g.memberId).map((g) => ({ memberId: g.memberId, count: Number(g.count) || 1 })),
-        awayGoals: awayGoals.filter((g) => g.memberId).map((g) => ({ memberId: g.memberId, count: Number(g.count) || 1 })),
+        homeGoals: homeGoals.filter((g) => g.memberId).map((g) => ({ memberId: g.memberId, count: Number(g.count) || 1, minute: g.minute || null })),
+        awayGoals: awayGoals.filter((g) => g.memberId).map((g) => ({ memberId: g.memberId, count: Number(g.count) || 1, minute: g.minute || null })),
         manOfTheMatchId: manOfTheMatchId || null,
       };
       if (showPenalties && homePenalties !== "" && awayPenalties !== "") {
@@ -1174,8 +1449,8 @@ function GoalRows({
   teamMembers,
 }: {
   label: string;
-  rows: { memberId: string; count: string }[];
-  setRows: (fn: (prev: { memberId: string; count: string }[]) => { memberId: string; count: string }[]) => void;
+  rows: { memberId: string; count: string; minute: string }[];
+  setRows: (fn: (prev: { memberId: string; count: string; minute: string }[]) => { memberId: string; count: string; minute: string }[]) => void;
   teamMembers: { id: string; fullName: string }[];
 }) {
   return (
@@ -1199,7 +1474,18 @@ function GoalRows({
                 type="number"
                 min={1}
                 value={row.count}
+                title="عدد الأهداف"
                 onChange={(e) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, count: e.target.value } : r)))}
+                className="input text-sm"
+                style={{ width: "55px" }}
+              />
+              <input
+                type="number"
+                min={1}
+                max={130}
+                placeholder="الدقيقة"
+                value={row.minute}
+                onChange={(e) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, minute: e.target.value } : r)))}
                 className="input text-sm"
                 style={{ width: "70px" }}
               />
@@ -1215,7 +1501,7 @@ function GoalRows({
           ))}
           <button
             type="button"
-            onClick={() => setRows((prev) => [...prev, { memberId: "", count: "1" }])}
+            onClick={() => setRows((prev) => [...prev, { memberId: "", count: "1", minute: "" }])}
             className="text-xs px-2.5 py-1 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
@@ -1305,7 +1591,7 @@ function StandingsTab({
           <table className="w-full text-sm" style={{ minWidth: "480px" }}>
             <thead>
               <tr style={{ background: "var(--mint-100)" }}>
-                {["#", "الفريق", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", "نقاط"].map((h) => (
+                {["#", "الفريق", "نقاط", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق"].map((h) => (
                   <th key={h} className="px-2 py-2 text-center font-bold" style={{ color: "var(--mint-700)" }}>{h}</th>
                 ))}
               </tr>
@@ -1315,6 +1601,7 @@ function StandingsTab({
                 <tr key={r.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
                   <td className="px-2 py-2 text-center">{i + 1}</td>
                   <td className="px-2 py-2 text-center font-bold" style={{ color: "var(--text-main)" }}>{r.name}</td>
+                  <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                   <td className="px-2 py-2 text-center">{r.played}</td>
                   <td className="px-2 py-2 text-center">{r.won}</td>
                   <td className="px-2 py-2 text-center">{r.drawn}</td>
@@ -1322,7 +1609,6 @@ function StandingsTab({
                   <td className="px-2 py-2 text-center">{r.gf}</td>
                   <td className="px-2 py-2 text-center">{r.ga}</td>
                   <td className="px-2 py-2 text-center">{r.gd}</td>
-                  <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{r.points}</td>
                 </tr>
               ))}
             </tbody>

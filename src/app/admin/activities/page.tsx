@@ -7,6 +7,9 @@ import BarChart from "@/components/admin/BarChart";
 
 interface Registration {
   id: string;
+  status: "PENDING" | "ACTIVE" | "REJECTED";
+  paymentProof: string | null;
+  rejectionReason: string | null;
   member: { id: string; fullName: string; phone: string; age: string };
 }
 
@@ -43,6 +46,8 @@ export default function AdminActivitiesPage() {
   const [activityError, setActivityError] = useState("");
   const [addMemberFor, setAddMemberFor] = useState<Record<string, string>>({});
   const [memberSearch, setMemberSearch] = useState<Record<string, string>>({});
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => { loadAll(); }, []);
 
@@ -167,6 +172,26 @@ export default function AdminActivitiesPage() {
     }
   }
 
+  async function reviewRegistration(activityId: string, registrationId: string, status: "ACTIVE" | "REJECTED", reason?: string) {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/activities/${activityId}/register`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId, status, reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setRejectingId(null);
+      setRejectReason("");
+      await loadAll();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function unregisterMember(activityId: string, memberId: string) {
     setActionLoading(true);
     try {
@@ -203,10 +228,13 @@ export default function AdminActivitiesPage() {
         <>
         <div className="card p-4">
           <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>عدد المسجلين حسب النشاط</p>
-          <BarChart data={activities.map((a) => ({ label: a.title.slice(0, 6), value: a.registrations.length }))} />
+          <BarChart data={activities.map((a) => ({ label: a.title.slice(0, 6), value: a.registrations.filter((r) => r.status !== "REJECTED").length }))} />
         </div>
         {activities.map((a) => {
-          const registeredIds = new Set(a.registrations.map((r) => r.member.id));
+          const confirmedCount = a.registrations.filter((r) => r.status !== "REJECTED").length;
+          const pending = a.registrations.filter((r) => r.status === "PENDING");
+          const active = a.registrations.filter((r) => r.status === "ACTIVE");
+          const registeredIds = new Set(a.registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id));
           const candidates = members.filter((m) => {
             if (registeredIds.has(m.id)) return false;
             const q = (memberSearch[a.id] || "").trim();
@@ -218,8 +246,8 @@ export default function AdminActivitiesPage() {
                 <PhotoUpload
                   photo={a.photo}
                   imageUrlPrefix="/api/files/activity"
-                  variant="cover"
-                  label="صورة النشاط"
+                  variant={a.isTournament ? "avatar" : "cover"}
+                  label={a.isTournament ? "شعار البطولة" : "صورة النشاط"}
                   placeholderIcon="🖼️"
                   onUpload={(filename) => updateActivityPhoto(a.id, filename)}
                 />
@@ -230,7 +258,8 @@ export default function AdminActivitiesPage() {
                   <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{a.description}</p>
                   <div className="flex items-center gap-3 text-xs mt-2 flex-wrap" style={{ color: "var(--text-muted)" }}>
                     {a.period && <span>📅 {a.period}</span>}
-                    <span>👥 {a.registrations.length}{a.capacity !== null ? `/${a.capacity}` : ""}</span>
+                    <span>👥 {confirmedCount}{a.capacity !== null ? `/${a.capacity}` : ""}</span>
+                    {pending.length > 0 && <span className="badge badge-pending">⏳ {pending.length} بانتظار المراجعة</span>}
                     <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
                       {a.isOpen ? "مفتوح" : "مغلق"}
                     </span>
@@ -284,11 +313,79 @@ export default function AdminActivitiesPage() {
 
               {expandedActivity === a.id && (
                 <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                  {pending.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>⏳ طلبات قيد المراجعة</p>
+                      {pending.map((r) => (
+                        <div key={r.id} className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--mint-50)" }}>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold" style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
+                            <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone}</span>
+                          </div>
+                          {r.paymentProof && (
+                            <a href={`/api/files/${r.paymentProof}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold inline-block" style={{ color: "var(--mint-700)" }}>
+                              🧾 عرض إثبات الدفع ←
+                            </a>
+                          )}
+                          {rejectingId === r.id ? (
+                            <div className="space-y-1.5">
+                              <textarea
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="سبب الرفض (اختياري)..."
+                                maxLength={300}
+                                rows={2}
+                                className="input text-xs"
+                              />
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => reviewRegistration(a.id, r.id, "REJECTED", rejectReason)}
+                                  disabled={actionLoading}
+                                  className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                  style={{ background: "#991b1b", color: "white" }}
+                                >
+                                  تأكيد الرفض
+                                </button>
+                                <button
+                                  onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                                  className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                  style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+                                >
+                                  إلغاء
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={() => reviewRegistration(a.id, r.id, "ACTIVE")}
+                                disabled={actionLoading}
+                                className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                style={{ background: "var(--mint-600)", color: "white" }}
+                              >
+                                ✓ قبول
+                              </button>
+                              <button
+                                onClick={() => setRejectingId(r.id)}
+                                disabled={actionLoading}
+                                className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                style={{ background: "#fee2e2", color: "#991b1b" }}
+                              >
+                                ✕ رفض
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
-                    {a.registrations.length === 0 ? (
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد مسجلون بعد</p>
+                    <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>✓ مسجَّلون مؤكَّدون</p>
+                    {active.length === 0 ? (
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد مسجلون مؤكَّدون بعد</p>
                     ) : (
-                      a.registrations.map((r) => (
+                      active.map((r) => (
                         <div key={r.id} className="flex items-center justify-between text-xs">
                           <span style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
                           <div className="flex items-center gap-2">
@@ -349,8 +446,8 @@ export default function AdminActivitiesPage() {
         <PhotoUpload
           photo={newActivity.photo || null}
           imageUrlPrefix="/api/files/activity"
-          variant="cover"
-          label="صورة النشاط"
+          variant={newActivity.isTournament ? "avatar" : "cover"}
+          label={newActivity.isTournament ? "شعار البطولة" : "صورة النشاط"}
           placeholderIcon="🖼️"
           onUpload={(filename) => setNewActivity((p) => ({ ...p, photo: filename }))}
         />
