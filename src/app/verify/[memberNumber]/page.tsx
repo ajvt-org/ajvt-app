@@ -14,7 +14,6 @@ export default async function VerifyPage({
     where: { memberNumber },
     select: {
       fullName: true,
-      phone: true,
       age: true,
       status: true,
       memberNumber: true,
@@ -58,7 +57,6 @@ export default async function VerifyPage({
             <div className="space-y-3 pt-4" style={{ borderTop: "1px solid var(--mint-100)" }}>
               <Row label="الاسم الكامل" value={member!.fullName} />
               <Row label="رقم العضوية" value={member!.memberNumber || "—"} dir="ltr" />
-              <Row label="رقم الهاتف" value={member!.phone} dir="ltr" />
               <Row label="العصر" value={member!.age} />
               <Row
                 label="عضو منذ"

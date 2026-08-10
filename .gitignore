@@ -45,3 +45,7 @@ next-env.d.ts
 # sqlite (migrated to postgres)
 *.db
 *.db-journal
+
+# user-uploaded content (member photos, payment proofs) — not source
+/public/uploads/*
+!/public/uploads/.gitkeep

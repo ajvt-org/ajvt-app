@@ -25,6 +25,20 @@ const MATCH_INCLUDE = {
       member: { select: { id: true, fullName: true } },
     },
   },
+  mvpVote: {
+    select: {
+      id: true,
+      status: true,
+      candidates: {
+        select: {
+          id: true,
+          memberId: true,
+          member: { select: { id: true, fullName: true } },
+          _count: { select: { votes: true } },
+        },
+      },
+    },
+  },
 } as const;
 
 interface GoalInput {
