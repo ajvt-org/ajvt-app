@@ -12,7 +12,7 @@ export async function PATCH(
     const { teamId } = await params;
     const { name, groupId, logo } = await req.json();
 
-    const existing = await prisma.team.findUnique({ where: { id: teamId }, select: { activityId: true } });
+    const existing = await prisma.team.findUnique({ where: { id: teamId }, select: { activityId: true, groupId: true } });
     if (!existing) {
       return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
     }
@@ -25,11 +25,27 @@ export async function PATCH(
       data.name = name.trim();
     }
     if (groupId !== undefined) {
-      if (groupId) {
-        const group = await prisma.group.findFirst({ where: { id: groupId, activityId: existing.activityId } });
+      const newGroupId = groupId || null;
+      if (newGroupId) {
+        const group = await prisma.group.findFirst({ where: { id: newGroupId, activityId: existing.activityId } });
         if (!group) return NextResponse.json({ error: "المجموعة غير موجودة" }, { status: 400 });
       }
-      data.groupId = groupId || null;
+      // Moving a team between groups after its schedule was generated would
+      // desync existing matches' round labels/standings from the new group —
+      // require the schedule to be cleared first (delete the matches, reassign, regenerate).
+      if (newGroupId !== existing.groupId) {
+        const hasMatches = await prisma.match.findFirst({
+          where: { activityId: existing.activityId, OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }] },
+          select: { id: true },
+        });
+        if (hasMatches) {
+          return NextResponse.json(
+            { error: "لا يمكن تغيير مجموعة فريق لديه مباريات مسجَّلة بالفعل — احذف مباريات هذا الفريق أولاً ثم أعد التوليد" },
+            { status: 409 }
+          );
+        }
+      }
+      data.groupId = newGroupId;
     }
     if (logo !== undefined) {
       data.logo = logo || null;

@@ -866,13 +866,12 @@ function MatchesTab({
     groups.every((g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity) &&
     matches.length === 0;
 
-  // Phase de poules terminée (exactement 2 groupes, tous les matchs de poule joués, pas encore de bracket).
+  // Phase de poules terminée : tous les matchs de poule joués (s'il y a des groupes).
   const leagueMatches = matches.filter((m) => !m.isKnockout);
-  const groupStageComplete =
-    groups.length === 2 &&
-    leagueMatches.length > 0 &&
-    leagueMatches.every((m) => m.status === "PLAYED") &&
-    bracketMatches.length === 0;
+  const groupStageDone = leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "PLAYED");
+  const groupStageComplete = groups.length === 2 && groupStageDone && bracketMatches.length === 0;
+  // Tant qu'il y a des groupes, le tirage/bracket ne doit pas apparaître avant la fin du tour des poules.
+  const knockoutLocked = groups.length > 0 && !groupStageDone;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -974,6 +973,11 @@ function MatchesTab({
         <div className="card p-4 space-y-3">
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🏆 القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)</p>
           {bracketMatches.length === 0 ? (
+            knockoutLocked ? (
+              <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+                🔒 أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.
+              </p>
+            ) : (
             <>
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو 32...
@@ -999,6 +1003,7 @@ function MatchesTab({
                 )}
               </div>
             </>
+            )
           ) : (
             <>
               <BracketTree matches={bracketMatches} />

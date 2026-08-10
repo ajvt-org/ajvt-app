@@ -31,6 +31,21 @@ export async function POST(
       return NextResponse.json({ error: "توجد قرعة بالفعل لهذه البطولة — احذف مباريات الدور الإقصائي الحالية أولاً لإعادة القرعة" }, { status: 409 });
     }
 
+    // If the activity uses groups, the knockout stage can't start until the
+    // group stage is fully played — otherwise a random draw could pit two
+    // teams from the same group against each other before it's decided who
+    // actually qualifies.
+    const groupsCount = await prisma.group.count({ where: { activityId: id } });
+    if (groupsCount > 0) {
+      const leagueMatches = await prisma.match.findMany({
+        where: { activityId: id, isKnockout: false },
+        select: { status: true },
+      });
+      if (leagueMatches.length === 0 || leagueMatches.some((m) => m.status !== "PLAYED")) {
+        return NextResponse.json({ error: "أكمل جميع نتائج دور المجموعات أولاً قبل بدء الدور الإقصائي" }, { status: 409 });
+      }
+    }
+
     const maxOrderRow = await prisma.match.findFirst({ where: { activityId: id }, orderBy: { order: "desc" }, select: { order: true } });
     let nextOrder = (maxOrderRow?.order || 0) + 1;
 
