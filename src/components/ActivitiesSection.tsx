@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 
+interface Team {
+  id: string;
+  name: string;
+}
+
 interface Activity {
   id: string;
   title: string;
@@ -13,6 +18,7 @@ interface Activity {
   isOpen: boolean;
   isTournament: boolean;
   registrantCount: number;
+  teams: Team[];
 }
 
 interface MemberRegistration {
@@ -21,11 +27,18 @@ interface MemberRegistration {
   rejectionReason: string | null;
 }
 
+interface MemberTeamMembership {
+  teamId: string;
+  teamName: string;
+  activityId: string;
+}
+
 interface EligibleMember {
   id: string;
   fullName: string;
   photo: string | null;
   registrations: MemberRegistration[];
+  teamMemberships: MemberTeamMembership[];
 }
 
 interface ActivitiesSectionProps {
@@ -91,6 +104,43 @@ function ActivityCard({
 
   function regFor(member: EligibleMember) {
     return member.registrations.find((r) => r.activityId === activity.id) || null;
+  }
+
+  function teamFor(member: EligibleMember) {
+    return member.teamMemberships.find((tm) => tm.activityId === activity.id) || null;
+  }
+
+  async function pickTeam(memberId: string, teamId: string) {
+    setError("");
+    setBusyMemberId(memberId);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      onReload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
+    } finally {
+      setBusyMemberId(null);
+    }
+  }
+
+  async function leaveTeam(memberId: string, teamId: string) {
+    setBusyMemberId(memberId);
+    try {
+      await fetch(`/api/teams/${teamId}/join`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      onReload();
+    } finally {
+      setBusyMemberId(null);
+    }
   }
 
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
@@ -207,6 +257,43 @@ function ActivityCard({
                 </div>
                 {r?.status === "REJECTED" && r.rejectionReason && (
                   <p className="text-xs mr-8" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
+                )}
+                {r?.status === "ACTIVE" && activity.isTournament && activity.teams.length > 0 && (
+                  <div className="mr-8 mt-1.5">
+                    <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+                      🏳️ اختر فريقك (اختياري):
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                    {activity.teams.map((t) => {
+                      const mine = teamFor(m)?.teamId === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => pickTeam(m.id, t.id)}
+                          disabled={busyMemberId === m.id || mine}
+                          className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                          style={{
+                            background: mine ? "var(--mint-600)" : "white",
+                            color: mine ? "white" : "var(--mint-700)",
+                            border: "1px solid var(--mint-200)",
+                          }}
+                        >
+                          {mine ? "✓ " : ""}{t.name}
+                        </button>
+                      );
+                    })}
+                    {teamFor(m) && (
+                      <button
+                        onClick={() => leaveTeam(m.id, teamFor(m)!.teamId)}
+                        disabled={busyMemberId === m.id}
+                        className="text-xs font-bold"
+                        style={{ color: "#991b1b" }}
+                      >
+                        إلغاء الاختيار
+                      </button>
+                    )}
+                    </div>
+                  </div>
                 )}
               </div>
             );

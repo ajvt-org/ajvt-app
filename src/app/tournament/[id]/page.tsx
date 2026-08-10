@@ -8,6 +8,7 @@ import ShareResultButton from "@/components/tournament/ShareResultButton";
 import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import BracketTree from "@/components/tournament/BracketTree";
+import StatsToggle from "@/components/tournament/StatsToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -129,12 +130,12 @@ export default async function PublicTournamentPage({
           <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لم تُحدَّد الفرق بعد</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-2">
-              <StatBox label="مباريات لُعبت" value={stats.matchesPlayed} />
-              <StatBox label="مجموع الأهداف" value={stats.totalGoals} />
-              <StatBox label="معدل الأهداف/مباراة" value={stats.avgGoalsPerMatch} />
-              <StatBox label="أفضل هجوم" value={stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"} />
-            </div>
+            <StatsToggle
+              matchesPlayed={stats.matchesPlayed}
+              totalGoals={stats.totalGoals}
+              avgGoalsPerMatch={stats.avgGoalsPerMatch}
+              bestAttack={stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"}
+            />
 
             <div className="space-y-2">
               <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🧍 الفرق واللاعبون</h2>
@@ -347,15 +348,6 @@ export default async function PublicTournamentPage({
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-function StatBox({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="card p-3 text-center">
-      <p className="text-lg font-black" style={{ color: "var(--mint-700)" }}>{value}</p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</p>
     </div>
   );
 }

@@ -24,6 +24,9 @@ const MEMBER_SELECT = {
       activity: { select: { id: true, title: true } },
     },
   },
+  teamMemberships: {
+    select: { team: { select: { id: true, name: true, activityId: true } } },
+  },
 } as const;
 
 export async function GET() {
