@@ -275,6 +275,37 @@ export function bracketRoundLabel(matchCount: number): string {
   return `الدور الإقصائي`;
 }
 
+// The app has no per-user timezone setting, so match times are always
+// entered/displayed in the club's local timezone (Morocco, fixed UTC+1 —
+// no DST since 2018).
+const CLUB_TIMEZONE = "Africa/Casablanca";
+
+// <input type="datetime-local"> values (YYYY-MM-DDTHH:mm[:ss]) carry no
+// timezone — interpret them as club-local time rather than the server's.
+// Anything else (already-ISO with Z/offset, or a bare YYYY-MM-DD date) is
+// parsed as-is.
+export function parseMatchDate(value: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+    const withSeconds = value.length === 16 ? `${value}:00` : value;
+    return new Date(`${withSeconds}+01:00`);
+  }
+  return new Date(value);
+}
+
+// Inverse of parseMatchDate — populates a <input type="datetime-local">
+// field with the club-local (UTC+1, no DST) representation of a stored date.
+export function matchDateToLocalInput(date: string | Date): string {
+  const local = new Date(new Date(date).getTime() + 60 * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
+export function formatMatchDateTime(date: string | Date): string {
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString("ar", { timeZone: CLUB_TIMEZONE });
+  const timeStr = d.toLocaleTimeString("ar", { timeZone: CLUB_TIMEZONE, hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${dateStr} ${timeStr}`;
+}
+
 export function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {

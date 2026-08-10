@@ -11,6 +11,7 @@ import {
   computeMotmLeaders,
   computeTeamAdvancedStats,
   getHeadToHead,
+  formatMatchDateTime,
 } from "@/lib/tournament";
 import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
@@ -282,7 +283,7 @@ export default async function PublicTournamentPage({
                     <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
                       {m.round && <span>{m.round}</span>}
                       {m.venue && <span>📍 {m.venue}</span>}
-                      {m.matchDate && <span dir="ltr">{new Date(m.matchDate).toLocaleDateString("ar")}</span>}
+                      {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
                     </div>
                     {priorMeetings.length > 0 && (
                       <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
@@ -349,7 +350,7 @@ export default async function PublicTournamentPage({
                     <div className="flex items-center gap-2 text-xs mt-1 flex-wrap" style={{ color: "var(--text-muted)" }}>
                       {m.round && <span>{m.round}</span>}
                       {m.venue && <span>📍 {m.venue}</span>}
-                      {m.matchDate && <span dir="ltr">{new Date(m.matchDate).toLocaleDateString("ar")}</span>}
+                      {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
                     </div>
                   </div>
                 ))}
