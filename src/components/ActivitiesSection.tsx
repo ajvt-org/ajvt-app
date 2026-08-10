@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PhotoUpload from "@/components/PhotoUpload";
-import PaymentInfoBanner from "@/components/PaymentInfoBanner";
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 
 interface Activity {
   id: string;
@@ -25,6 +24,7 @@ interface MemberRegistration {
 interface EligibleMember {
   id: string;
   fullName: string;
+  photo: string | null;
   registrations: MemberRegistration[];
 }
 
@@ -86,53 +86,31 @@ function ActivityCard({
   eligibleMembers: EligibleMember[];
   onReload: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [proof, setProof] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   function regFor(member: EligibleMember) {
     return member.registrations.find((r) => r.activityId === activity.id) || null;
   }
 
-  // Can (re)register: no registration yet, or a previous one was rejected.
-  const registrable = eligibleMembers.filter((m) => {
-    const r = regFor(m);
-    return !r || r.status === "REJECTED";
-  });
+  const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
 
-  function toggle(memberId: string) {
-    setSelected((prev) => (prev.includes(memberId) ? prev.filter((x) => x !== memberId) : [...prev, memberId]));
-  }
-
-  function openForm() {
+  async function register(memberId: string) {
     setError("");
-    setSelected(registrable.length === 1 ? [registrable[0].id] : []);
-    setExpanded(true);
-  }
-
-  async function submit() {
-    if (selected.length === 0) { setError("اختر عضواً واحداً على الأقل"); return; }
-    if (!proof) { setError("يرجى إرفاق صورة إثبات الدفع"); return; }
-    setError("");
-    setSubmitting(true);
+    setBusyMemberId(memberId);
     try {
       const res = await fetch("/api/activities/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activityId: activity.id, memberIds: selected, paymentProof: proof }),
+        body: JSON.stringify({ activityId: activity.id, memberId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setSelected([]);
-      setProof(null);
-      setExpanded(false);
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
     } finally {
-      setSubmitting(false);
+      setBusyMemberId(null);
     }
   }
 
@@ -149,31 +127,18 @@ function ActivityCard({
     }
   }
 
-  const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
-  const canRegister = registrable.length > 0 && activity.isOpen && !full;
-  const hasAnyRejected = registrable.some((m) => regFor(m)?.status === "REJECTED");
-
   return (
     <div className="card overflow-hidden">
       {activity.photo && (
-        activity.isTournament ? (
-          <div className="pt-4 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/api/files/activity/${activity.photo}`}
-              alt={activity.title}
-              className="w-20 h-20 rounded-full object-cover"
-              style={{ border: "2px solid var(--mint-200)" }}
-            />
-          </div>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
+        <div className="pt-4 flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/files/activity/${activity.photo}`}
             alt={activity.title}
-            className="w-full h-36 object-cover"
+            className="w-24 h-24 rounded-full object-cover"
+            style={{ border: "2px solid var(--mint-200)" }}
           />
-        )
+        </div>
       )}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-1.5">
@@ -204,97 +169,53 @@ function ActivityCard({
           </a>
         )}
 
-        {/* Clear, always-visible status per member — nothing hidden */}
+        {/* One tap per person — no payment, no form: membership already covers it */}
         <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           {eligibleMembers.map((m) => {
             const r = regFor(m);
+            const settled = r && r.status !== "REJECTED";
             return (
-              <div key={m.id} className="flex items-center justify-between gap-3 text-xs py-0.5">
-                <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
-                {r ? (
-                  <div className="flex items-center gap-2">
-                    <span className={`badge ${STATUS_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
-                    {r.status === "PENDING" && (
-                      <button onClick={() => cancelPending(m.id)} className="font-bold" style={{ color: "#991b1b" }}>
-                        إلغاء
-                      </button>
-                    )}
+              <div key={m.id}>
+                <div className="flex items-center justify-between gap-3 text-xs py-0.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PlayerAvatar photo={m.photo} fullName={m.fullName} size={26} bg="copper" />
+                    <span className="truncate" style={{ color: "var(--text-main)" }}>{m.fullName}</span>
                   </div>
-                ) : (
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>غير مسجَّل</span>
+                  {settled ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`badge ${STATUS_CLASS[r!.status]}`}>{STATUS_LABEL[r!.status]}</span>
+                      {r!.status === "PENDING" && (
+                        <button onClick={() => cancelPending(m.id)} className="font-bold" style={{ color: "#991b1b" }}>
+                          إلغاء
+                        </button>
+                      )}
+                    </div>
+                  ) : activity.isOpen && !full ? (
+                    <button
+                      onClick={() => register(m.id)}
+                      disabled={busyMemberId === m.id}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+                      style={{ background: "var(--mint-600)", color: "white" }}
+                    >
+                      {busyMemberId === m.id ? "..." : r?.status === "REJECTED" ? "🔄 إعادة المحاولة" : "📝 سجّل"}
+                    </button>
+                  ) : (
+                    <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+                      {!activity.isOpen ? "التسجيل مغلق" : "اكتمل العدد"}
+                    </span>
+                  )}
+                </div>
+                {r?.status === "REJECTED" && r.rejectionReason && (
+                  <p className="text-xs mr-8" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
                 )}
               </div>
             );
           })}
         </div>
 
-        {!canRegister && registrable.length > 0 && (
-          <p className="text-xs mt-2 pt-2" style={{ color: "var(--text-muted)", borderTop: "1px solid var(--mint-100)" }}>
-            {!activity.isOpen ? "التسجيل في هذا النشاط مغلق حالياً" : "اكتمل عدد المسجلين في هذا النشاط"}
-          </p>
-        )}
-
-        {canRegister && !expanded && (
-          <button onClick={openForm} className="btn btn-primary text-sm mt-3">
-            {hasAnyRejected ? "🔄 إعادة المحاولة" : "📝 سجّل الآن"} ←
-          </button>
-        )}
-
-        {canRegister && expanded && (
-          <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
-            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-              للمشاركة: سجّل ثم ادفع{" "}
-              <span style={{ color: "var(--copper-600)" }}>100 أوقية على الأقل</span>
-              {" "}— يمكنك دعم النادي بمبلغ أكبر إن رغبت
-            </p>
-
-            {registrable.length > 1 && (
-              <div className="space-y-1">
-                {registrable.map((m) => {
-                  const r = regFor(m);
-                  return (
-                    <div key={m.id}>
-                      <label className="flex items-center gap-2 text-xs">
-                        <input type="checkbox" checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />
-                        <span style={{ color: "var(--text-main)" }}>{m.fullName}</span>
-                      </label>
-                      {r?.status === "REJECTED" && r.rejectionReason && (
-                        <p className="text-xs mr-6" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <PaymentInfoBanner />
-
-            <PhotoUpload
-              photo={proof}
-              onUpload={(filename) => setProof(filename)}
-              variant="cover"
-              label="صورة إثبات الدفع"
-              placeholderIcon="🧾"
-            />
-
-            {error && (
-              <div className="p-2.5 rounded-xl text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
-                ⚠️ {error}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button onClick={submit} disabled={submitting} className="btn btn-primary text-sm flex-1">
-                {submitting ? "..." : "✅ تأكيد التسجيل"}
-              </button>
-              <button
-                onClick={() => { setExpanded(false); setError(""); }}
-                className="text-sm px-4 rounded-xl font-bold"
-                style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
-              >
-                إلغاء
-              </button>
-            </div>
+        {error && (
+          <div className="p-2.5 rounded-xl text-xs font-semibold mt-2" style={{ background: "#fee2e2", color: "#991b1b" }}>
+            ⚠️ {error}
           </div>
         )}
       </div>

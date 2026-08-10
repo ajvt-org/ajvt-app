@@ -246,7 +246,7 @@ export default function AdminActivitiesPage() {
                 <PhotoUpload
                   photo={a.photo}
                   imageUrlPrefix="/api/files/activity"
-                  variant={a.isTournament ? "avatar" : "cover"}
+                  variant="avatar"
                   label={a.isTournament ? "شعار البطولة" : "صورة النشاط"}
                   placeholderIcon="🖼️"
                   onUpload={(filename) => updateActivityPhoto(a.id, filename)}
@@ -446,7 +446,7 @@ export default function AdminActivitiesPage() {
         <PhotoUpload
           photo={newActivity.photo || null}
           imageUrlPrefix="/api/files/activity"
-          variant={newActivity.isTournament ? "avatar" : "cover"}
+          variant="avatar"
           label={newActivity.isTournament ? "شعار البطولة" : "صورة النشاط"}
           placeholderIcon="🖼️"
           onUpload={(filename) => setNewActivity((p) => ({ ...p, photo: filename }))}

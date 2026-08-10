@@ -2,21 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
+// Registering for an activity is free — the membership fee already paid to
+// get approved (ACTIVE) covers it, so this never asks for another payment.
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { activityId, memberIds, paymentProof } = await req.json();
+    const { activityId, memberId } = await req.json();
 
-    if (!activityId || !Array.isArray(memberIds) || memberIds.length === 0) {
+    if (!activityId || !memberId) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
-    const uniqueMemberIds = Array.from(new Set(memberIds)) as string[];
-    if (!paymentProof || typeof paymentProof !== "string") {
-      return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
-    }
 
-    const [members, activity] = await Promise.all([
-      prisma.member.findMany({ where: { id: { in: uniqueMemberIds } } }),
+    const [member, activity] = await Promise.all([
+      prisma.member.findUnique({ where: { id: memberId } }),
       prisma.activity.findUnique({
         where: { id: activityId },
         select: {
@@ -33,44 +31,35 @@ export async function POST(req: NextRequest) {
     if (!activity.isOpen) {
       return NextResponse.json({ error: "التسجيل في هذا النشاط مغلق" }, { status: 409 });
     }
-    if (members.length !== uniqueMemberIds.length || members.some((m) => m.userId !== session.userId)) {
-      return NextResponse.json({ error: "أحد الأعضاء غير موجود" }, { status: 404 });
+    if (!member || member.userId !== session.userId) {
+      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
-    if (members.some((m) => m.status === "REJECTED")) {
-      return NextResponse.json({ error: "لا يمكن التسجيل في الأنشطة لطلب انضمام مرفوض" }, { status: 403 });
+    if (member.status !== "ACTIVE") {
+      return NextResponse.json({ error: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً" }, { status: 403 });
     }
 
-    const existing = await prisma.activityRegistration.findMany({
-      where: { memberId: { in: uniqueMemberIds }, activityId },
-      select: { memberId: true, status: true },
+    const existing = await prisma.activityRegistration.findUnique({
+      where: { memberId_activityId: { memberId, activityId } },
     });
-    const existingByMember = new Map(existing.map((e) => [e.memberId, e.status]));
-    // Members already pending/active are left untouched — only new or
-    // previously-rejected members actually consume a capacity slot.
-    const toSubmit = uniqueMemberIds.filter((id) => {
-      const status = existingByMember.get(id);
-      return status !== "PENDING" && status !== "ACTIVE";
-    });
-
-    if (toSubmit.length === 0) {
-      return NextResponse.json({ error: "الأعضاء المحددون مسجّلون بالفعل" }, { status: 409 });
+    if (existing && existing.status !== "REJECTED") {
+      return NextResponse.json({ error: "مسجَّل بالفعل في هذا النشاط" }, { status: 409 });
     }
 
-    if (activity.capacity !== null && activity._count.registrations + toSubmit.length > activity.capacity) {
+    if (
+      activity.capacity !== null &&
+      activity._count.registrations >= activity.capacity &&
+      !existing
+    ) {
       return NextResponse.json({ error: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط" }, { status: 409 });
     }
 
-    await prisma.$transaction(
-      toSubmit.map((memberId) =>
-        prisma.activityRegistration.upsert({
-          where: { memberId_activityId: { memberId, activityId } },
-          update: { status: "PENDING", paymentProof, rejectionReason: null },
-          create: { memberId, activityId, status: "PENDING", paymentProof },
-        })
-      )
-    );
+    await prisma.activityRegistration.upsert({
+      where: { memberId_activityId: { memberId, activityId } },
+      update: { status: "PENDING", rejectionReason: null },
+      create: { memberId, activityId, status: "PENDING" },
+    });
 
-    return NextResponse.json({ ok: true, submitted: toSubmit.length, skipped: uniqueMemberIds.length - toSubmit.length });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });

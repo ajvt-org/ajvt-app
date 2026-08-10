@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { id, fullName, phone, age, paymentMethod, paymentProof } = await req.json();
+    const { id, fullName, phone, age, paymentMethod, paymentProof, photo } = await req.json();
 
     if (!fullName || !phone || !age || !paymentMethod || !paymentProof) {
       return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
@@ -15,6 +15,9 @@ export async function POST(req: NextRequest) {
     }
     if (age.trim().length > 30) {
       return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+    }
+    if (photo !== undefined && photo !== null && typeof photo !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
     // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
           age: age.trim(),
           paymentMethod,
           paymentProof,
+          ...(photo !== undefined ? { photo } : {}),
           status: "PENDING",
         },
       });
@@ -50,6 +54,7 @@ export async function POST(req: NextRequest) {
         age: age.trim(),
         paymentMethod,
         paymentProof,
+        photo: photo || null,
         status: "PENDING",
       },
     });

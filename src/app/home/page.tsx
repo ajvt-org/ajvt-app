@@ -112,6 +112,7 @@ export default function HomePage() {
             .map((m) => ({
               id: m.id,
               fullName: m.fullName,
+              photo: m.photo,
               registrations: m.registrations.map((r) => ({ activityId: r.activityId, status: r.status, rejectionReason: r.rejectionReason })),
             }))}
           onReload={loadMembers}

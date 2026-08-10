@@ -106,29 +106,22 @@ export default async function LandingPage() {
           {activities.map((activity) => (
             <div key={activity.id} className="card overflow-hidden text-right">
               {activity.photo && (
-                activity.isTournament ? (
-                  <div className="pt-4 flex justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/files/activity/${activity.photo}`}
-                      alt={activity.title}
-                      className="w-20 h-20 rounded-full object-cover"
-                      style={{ border: "2px solid var(--mint-200)" }}
-                    />
-                  </div>
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
+                <div className="pt-4 flex justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/api/files/activity/${activity.photo}`}
                     alt={activity.title}
-                    className="w-full h-36 object-cover"
+                    className="w-24 h-24 rounded-full object-cover"
+                    style={{ border: "2px solid var(--mint-200)" }}
                   />
-                )
+                </div>
               )}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
-                  <span className="badge badge-open-blink shrink-0 font-bold">🔴 التسجيل مفتوح</span>
+                  <Link href="/register" className="badge badge-open-blink shrink-0 font-bold">
+                    🔴 سجّل الآن
+                  </Link>
                 </div>
                 <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
                 <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
