@@ -281,3 +281,164 @@ export function shuffleArray<T>(arr: T[]): T[] {
   }
   return copy;
 }
+
+export interface BookingInput {
+  teamId: string;
+  cardType: string;
+  member: { id: string; fullName: string; photo?: string | null };
+}
+
+export interface DisciplineMatchInput {
+  bookings: BookingInput[];
+}
+
+export interface DisciplineRow {
+  memberId: string;
+  fullName: string;
+  photo: string | null;
+  teamName: string;
+  yellow: number;
+  red: number;
+}
+
+export function computeDisciplineStats(teams: StandingsTeamInput[], matches: DisciplineMatchInput[]): DisciplineRow[] {
+  const teamNameById = new Map(teams.map((t) => [t.id, t.name]));
+  const tally = new Map<string, DisciplineRow>();
+  for (const m of matches) {
+    for (const b of m.bookings) {
+      let row = tally.get(b.member.id);
+      if (!row) {
+        row = { memberId: b.member.id, fullName: b.member.fullName, photo: b.member.photo ?? null, teamName: teamNameById.get(b.teamId) || "—", yellow: 0, red: 0 };
+        tally.set(b.member.id, row);
+      }
+      if (b.cardType === "RED") row.red++;
+      else row.yellow++;
+    }
+  }
+  return Array.from(tally.values()).sort((a, b) => b.red - a.red || b.yellow - a.yellow || a.fullName.localeCompare(b.fullName, "ar"));
+}
+
+export interface CleanSheetMatchInput {
+  homeTeam: { id: string };
+  awayTeam: { id: string };
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+}
+
+export interface CleanSheetRow {
+  teamId: string;
+  name: string;
+  played: number;
+  cleanSheets: number;
+}
+
+// "Best defense" ranking by matches played without conceding — the data
+// model has no player position, so this is a team stat, not a per-goalkeeper one.
+export function computeCleanSheets(teams: StandingsTeamInput[], matches: CleanSheetMatchInput[]): CleanSheetRow[] {
+  const table = new Map<string, CleanSheetRow>();
+  for (const t of teams) table.set(t.id, { teamId: t.id, name: t.name, played: 0, cleanSheets: 0 });
+  for (const m of matches) {
+    if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) continue;
+    const home = table.get(m.homeTeam.id);
+    const away = table.get(m.awayTeam.id);
+    if (home) { home.played++; if (m.awayScore === 0) home.cleanSheets++; }
+    if (away) { away.played++; if (m.homeScore === 0) away.cleanSheets++; }
+  }
+  return Array.from(table.values()).filter((r) => r.played > 0).sort((a, b) => b.cleanSheets - a.cleanSheets || a.name.localeCompare(b.name, "ar"));
+}
+
+export interface TeamRosterInput {
+  id: string;
+  name: string;
+  members: { member: { id: string } }[];
+}
+
+export interface MotmMatchInput {
+  manOfTheMatch: { id: string; fullName: string; photo?: string | null } | null;
+}
+
+export interface MotmRow {
+  memberId: string;
+  fullName: string;
+  photo: string | null;
+  teamName: string;
+  count: number;
+}
+
+export function computeMotmLeaders(teams: TeamRosterInput[], matches: MotmMatchInput[]): MotmRow[] {
+  const teamNameByMemberId = new Map<string, string>();
+  for (const t of teams) {
+    for (const tm of t.members) teamNameByMemberId.set(tm.member.id, t.name);
+  }
+  const tally = new Map<string, MotmRow>();
+  for (const m of matches) {
+    if (!m.manOfTheMatch) continue;
+    const id = m.manOfTheMatch.id;
+    let row = tally.get(id);
+    if (!row) {
+      row = { memberId: id, fullName: m.manOfTheMatch.fullName, photo: m.manOfTheMatch.photo ?? null, teamName: teamNameByMemberId.get(id) || "—", count: 0 };
+      tally.set(id, row);
+    }
+    row.count++;
+  }
+  return Array.from(tally.values()).sort((a, b) => b.count - a.count || a.fullName.localeCompare(b.fullName, "ar"));
+}
+
+export interface TeamMatchInput {
+  homeTeam: { id: string; name: string };
+  awayTeam: { id: string; name: string };
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+  order: number;
+}
+
+export interface TeamAdvancedRow {
+  teamId: string;
+  name: string;
+  biggestWin: { opponent: string; score: string; gd: number } | null;
+  unbeatenStreak: number;
+  form: ("W" | "D" | "L")[];
+}
+
+export function computeTeamAdvancedStats(teams: StandingsTeamInput[], matches: TeamMatchInput[]): TeamAdvancedRow[] {
+  const played = matches
+    .filter((m) => m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null)
+    .sort((a, b) => a.order - b.order);
+
+  return teams.map((t) => {
+    const teamMatches = played.filter((m) => m.homeTeam.id === t.id || m.awayTeam.id === t.id);
+
+    let biggestWin: TeamAdvancedRow["biggestWin"] = null;
+    for (const m of teamMatches) {
+      const isHome = m.homeTeam.id === t.id;
+      const gf = (isHome ? m.homeScore : m.awayScore) as number;
+      const ga = (isHome ? m.awayScore : m.homeScore) as number;
+      if (gf <= ga) continue;
+      const gd = gf - ga;
+      if (!biggestWin || gd > biggestWin.gd) {
+        biggestWin = { opponent: isHome ? m.awayTeam.name : m.homeTeam.name, score: `${gf}-${ga}`, gd };
+      }
+    }
+
+    let unbeatenStreak = 0;
+    for (let i = teamMatches.length - 1; i >= 0; i--) {
+      const m = teamMatches[i];
+      const isHome = m.homeTeam.id === t.id;
+      const gf = (isHome ? m.homeScore : m.awayScore) as number;
+      const ga = (isHome ? m.awayScore : m.homeScore) as number;
+      if (gf < ga) break;
+      unbeatenStreak++;
+    }
+
+    const form: ("W" | "D" | "L")[] = teamMatches.slice(-5).map((m) => {
+      const isHome = m.homeTeam.id === t.id;
+      const gf = (isHome ? m.homeScore : m.awayScore) as number;
+      const ga = (isHome ? m.awayScore : m.homeScore) as number;
+      return gf > ga ? "W" : gf < ga ? "L" : "D";
+    });
+
+    return { teamId: t.id, name: t.name, biggestWin, unbeatenStreak, form };
+  });
+}
