@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useInactivityLogout } from "@/lib/useInactivityLogout";
+
+// Auto-logout after this long with no click/keypress/scroll/touch — an
+// admin panel with payment proofs and member data shouldn't stay open
+// indefinitely on a shared or unattended device.
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 interface AdminAccount {
   id: string;
@@ -55,6 +61,7 @@ const ACTION_LABELS: Record<string, string> = {
 const NAV_TABS = [
   { href: "/admin/dashboard", label: "👥 الأعضاء" },
   { href: "/admin/activities", label: "🏆 الأنشطة" },
+  { href: "/admin/payments", label: "🧾 المدفوعات" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -107,12 +114,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!role || isLoginPage) return;
-    const allowedPrefix = role === "MEMBERS" ? "/admin/dashboard" : role === "ACTIVITIES" ? "/admin/activities" : null;
-    if (allowedPrefix && pathname && !pathname.startsWith(allowedPrefix)) {
-      router.push(allowedPrefix);
+    const allowedPrefixes =
+      role === "MEMBERS" ? ["/admin/dashboard", "/admin/payments"]
+      : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments"]
+      : null;
+    if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
+      router.push(allowedPrefixes[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, pathname, isLoginPage]);
+
+  useInactivityLogout(IDLE_TIMEOUT_MS, logout, !isLoginPage);
 
   if (isLoginPage) {
     return <>{children}</>;
@@ -120,8 +132,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const visibleTabs = NAV_TABS.filter((tab) => {
     if (!role || role === "SUPER") return true;
-    if (role === "MEMBERS") return tab.href === "/admin/dashboard";
-    if (role === "ACTIVITIES") return tab.href === "/admin/activities";
+    if (role === "MEMBERS") return tab.href === "/admin/dashboard" || tab.href === "/admin/payments";
+    if (role === "ACTIVITIES") return tab.href === "/admin/activities" || tab.href === "/admin/payments";
     return true;
   });
 

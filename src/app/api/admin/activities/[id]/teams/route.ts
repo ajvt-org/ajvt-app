@@ -17,7 +17,7 @@ export async function GET(
       include: {
         group: { select: { id: true, name: true } },
         members: {
-          select: { member: { select: { id: true, fullName: true, phone: true, age: true } } },
+          select: { member: { select: { id: true, fullName: true, phone: true, age: true, photo: true } } },
         },
       },
     });

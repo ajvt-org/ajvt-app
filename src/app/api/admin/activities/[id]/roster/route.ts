@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
 
     const registrations = await prisma.activityRegistration.findMany({
-      where: { activityId: id, member: { status: { not: "REJECTED" } } },
+      where: { activityId: id, status: "ACTIVE", member: { status: { not: "REJECTED" } } },
       select: {
         member: {
           select: {
@@ -19,6 +19,7 @@ export async function GET(
             fullName: true,
             phone: true,
             age: true,
+            photo: true,
             teamMemberships: {
               where: { team: { activityId: id } },
               select: { team: { select: { id: true, name: true } } },
@@ -34,6 +35,7 @@ export async function GET(
       fullName: member.fullName,
       phone: member.phone,
       age: member.age,
+      photo: member.photo,
       team: member.teamMemberships[0]?.team || null,
     }));
 

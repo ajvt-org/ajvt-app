@@ -16,7 +16,7 @@ export default async function LandingPage() {
       photo: true,
       capacity: true,
       isTournament: true,
-      _count: { select: { registrations: true } },
+      _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
     },
   });
 
@@ -103,12 +103,24 @@ export default async function LandingPage() {
           {activities.map((activity) => (
             <div key={activity.id} className="card overflow-hidden text-right">
               {activity.photo && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`/api/files/activity/${activity.photo}`}
-                  alt={activity.title}
-                  className="w-full h-36 object-cover"
-                />
+                activity.isTournament ? (
+                  <div className="pt-4 flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/files/activity/${activity.photo}`}
+                      alt={activity.title}
+                      className="w-20 h-20 rounded-full object-cover"
+                      style={{ border: "2px solid var(--mint-200)" }}
+                    />
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/files/activity/${activity.photo}`}
+                    alt={activity.title}
+                    className="w-full h-36 object-cover"
+                  />
+                )
               )}
               <div className="p-4">
                 <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
