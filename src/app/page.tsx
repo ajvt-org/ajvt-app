@@ -73,7 +73,17 @@ export default async function LandingPage() {
         </Link>
       </div>
 
-      <div className="fade-up delay-4 mt-10">
+      {activities.length > 0 && (
+        <a
+          href="#activities"
+          className="fade-up delay-4 mt-10 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold"
+          style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }}
+        >
+          🏆 أنشطة هذا الصيف جارية الآن ({activities.length}) ⬇️
+        </a>
+      )}
+
+      <div className="fade-up delay-4 mt-6">
         <Link
           href="/admin/login"
           className="text-xs px-3 py-1.5 rounded-full"
@@ -85,7 +95,7 @@ export default async function LandingPage() {
     </div>
 
     {activities.length > 0 && (
-      <div className="px-5 py-8" style={{ background: "var(--mint-50)" }}>
+      <div id="activities" className="px-5 py-8" style={{ background: "var(--mint-50)", scrollMarginTop: "1rem" }}>
         <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
           🏆 أنشطة هذا الصيف
         </h2>

@@ -15,6 +15,7 @@ model User {
   members           Member[]
   pushSubscriptions PushSubscription[]
   teamFollows       TeamFollow[]
+  mvpVotes          MvpVote[]
 }
 
 model Member {
@@ -36,6 +37,7 @@ model Member {
   matchGoals      MatchGoal[]
   matchBookings   MatchBooking[]
   motmMatches     Match[]                @relation("ManOfTheMatch")
+  mvpCandidacies  MvpCandidate[]
 }
 
 model Activity {
@@ -131,8 +133,45 @@ model Match {
   updatedAt       DateTime       @updatedAt
   goals           MatchGoal[]
   bookings        MatchBooking[]
+  mvpVote         MatchMvpVote?
 
   @@index([activityId])
+}
+
+model MatchMvpVote {
+  id        String         @id @default(cuid())
+  matchId   String         @unique
+  match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  status    String         @default("OPEN")
+  createdAt DateTime       @default(now())
+  closedAt  DateTime?
+  candidates MvpCandidate[]
+  votes      MvpVote[]
+}
+
+model MvpCandidate {
+  id       String       @id @default(cuid())
+  voteId   String
+  vote     MatchMvpVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  votes    MvpVote[]
+
+  @@unique([voteId, memberId])
+}
+
+model MvpVote {
+  id          String       @id @default(cuid())
+  voteId      String
+  vote        MatchMvpVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   MvpCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+
+  @@unique([voteId, userId])
+  @@index([candidateId])
 }
 
 model MatchBooking {

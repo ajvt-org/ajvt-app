@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getUserSession } from "@/lib/auth";
 import { groupStandings, computeTopScorers, computeStats, getHeadToHead } from "@/lib/tournament";
 import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
+import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,17 @@ export default async function PublicTournamentPage({
       period: true,
       isTournament: true,
       groups: { select: { id: true, name: true } },
-      teams: { select: { id: true, name: true, groupId: true } },
+      teams: {
+        select: {
+          id: true,
+          name: true,
+          groupId: true,
+          members: {
+            select: { member: { select: { id: true, fullName: true } } },
+            orderBy: { member: { fullName: "asc" } },
+          },
+        },
+      },
       matches: {
         orderBy: [{ status: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
         select: {
@@ -48,6 +60,19 @@ export default async function PublicTournamentPage({
           bookings: {
             select: { cardType: true, minute: true, teamId: true, member: { select: { fullName: true } } },
           },
+          mvpVote: {
+            select: {
+              id: true,
+              status: true,
+              candidates: {
+                select: {
+                  id: true,
+                  member: { select: { id: true, fullName: true } },
+                  _count: { select: { votes: true } },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -56,6 +81,14 @@ export default async function PublicTournamentPage({
   if (!activity || !activity.isTournament) {
     notFound();
   }
+
+  const session = await getUserSession();
+  const userId = session ? (session as { userId: string }).userId : null;
+  const voteIds = activity.matches.map((m) => m.mvpVote?.id).filter((v): v is string => !!v);
+  const myVotes = userId && voteIds.length > 0
+    ? await prisma.mvpVote.findMany({ where: { userId, voteId: { in: voteIds } }, select: { voteId: true, candidateId: true } })
+    : [];
+  const myVoteByVoteId = new Map(myVotes.map((v) => [v.voteId, v.candidateId]));
 
   const standingsByGroup = groupStandings(activity.teams, activity.matches);
   const topScorers = computeTopScorers(activity.teams, activity.matches);
@@ -96,6 +129,28 @@ export default async function PublicTournamentPage({
               <StatBox label="مجموع الأهداف" value={stats.totalGoals} />
               <StatBox label="معدل الأهداف/مباراة" value={stats.avgGoalsPerMatch} />
               <StatBox label="أفضل هجوم" value={stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"} />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🧍 الفرق واللاعبون</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {activity.teams.map((team) => (
+                  <details key={team.id} className="card p-3">
+                    <summary className="font-bold text-sm cursor-pointer" style={{ color: "var(--text-main)" }}>
+                      {team.name} <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>({team.members.length})</span>
+                    </summary>
+                    {team.members.length === 0 ? (
+                      <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>لا يوجد لاعبون بعد</p>
+                    ) : (
+                      <ul className="mt-2 space-y-1">
+                        {team.members.map(({ member }) => (
+                          <li key={member.id} className="text-xs" style={{ color: "var(--text-muted)" }}>{member.fullName}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </details>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -194,6 +249,19 @@ export default async function PublicTournamentPage({
                       <p className="text-xs mt-1.5 font-semibold" style={{ color: "var(--mint-700)" }}>
                         🌟 رجل المباراة: {m.manOfTheMatch.fullName}
                       </p>
+                    )}
+                    {m.mvpVote && (
+                      <MvpVoteWidget
+                        matchId={m.id}
+                        status={m.mvpVote.status as "OPEN" | "CLOSED"}
+                        candidates={m.mvpVote.candidates.map((c) => ({
+                          id: c.id,
+                          fullName: c.member.fullName,
+                          voteCount: c._count.votes,
+                        }))}
+                        loggedIn={!!userId}
+                        initialMyVoteCandidateId={myVoteByVoteId.get(m.mvpVote.id) || null}
+                      />
                     )}
                   </div>
                   );

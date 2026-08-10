@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
+import { getAdminSession, getUserSession } from "@/lib/auth";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
@@ -14,6 +15,14 @@ export function getUploadDir(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Open (unauthenticated) uploads would let anyone flood disk space with
+    // arbitrary files — every legitimate caller (member form, admin panel)
+    // is already signed in.
+    const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
+    if (!admin && !user) {
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
