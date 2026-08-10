@@ -2,7 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { groupStandings, computeTopScorers, computeStats, getHeadToHead, getMatchWinnerTeamId, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
+import {
+  groupStandings,
+  computeTopScorers,
+  computeStats,
+  computeDisciplineStats,
+  computeCleanSheets,
+  computeMotmLeaders,
+  computeTeamAdvancedStats,
+  getHeadToHead,
+  getMatchWinnerTeamId,
+  type StandingsRow,
+  type TopScorerRow,
+  type DisciplineRow,
+  type CleanSheetRow,
+  type MotmRow,
+  type TeamAdvancedRow,
+} from "@/lib/tournament";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
@@ -19,6 +35,7 @@ interface RosterMember {
 interface Group {
   id: string;
   name: string;
+  capacity: number | null;
 }
 
 interface TeamMemberEntry {
@@ -137,6 +154,10 @@ export default function TournamentPage() {
   const standingsByGroup = useMemo(() => groupStandings(teams, matches), [teams, matches]);
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
+  const discipline = useMemo(() => computeDisciplineStats(teams, matches), [teams, matches]);
+  const cleanSheets = useMemo(() => computeCleanSheets(teams, matches), [teams, matches]);
+  const motmLeaders = useMemo(() => computeMotmLeaders(teams, matches), [teams, matches]);
+  const teamAdvancedStats = useMemo(() => computeTeamAdvancedStats(teams, matches), [teams, matches]);
 
   if (loading) {
     return (
@@ -188,7 +209,7 @@ export default function TournamentPage() {
             ["teams", "الفرق"],
             ["matches", "المباريات"],
             ["standings", "الترتيب"],
-            ["scorers", "الهدافون"],
+            ["scorers", "الإحصائيات"],
           ] as [Tab, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -220,7 +241,15 @@ export default function TournamentPage() {
         {tab === "standings" && (
           <StandingsTab title={title} standingsByGroup={standingsByGroup} groups={groups} stats={stats} matches={matches} />
         )}
-        {tab === "scorers" && <ScorersTab topScorers={topScorers} />}
+        {tab === "scorers" && (
+          <ScorersTab
+            topScorers={topScorers}
+            discipline={discipline}
+            cleanSheets={cleanSheets}
+            motmLeaders={motmLeaders}
+            teamAdvancedStats={teamAdvancedStats}
+          />
+        )}
       </div>
     </div>
   );
@@ -242,6 +271,9 @@ function TeamsTab({
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamGroup, setNewTeamGroup] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupCapacity, setNewGroupCapacity] = useState("");
+  const [editingCapacityId, setEditingCapacityId] = useState<string | null>(null);
+  const [editCapacity, setEditCapacity] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
   const [addingTo, setAddingTo] = useState<string | null>(null);
@@ -301,14 +333,34 @@ function TeamsTab({
       const res = await fetch(`/api/admin/activities/${activityId}/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newGroupName }),
+        body: JSON.stringify({ name: newGroupName, capacity: newGroupCapacity || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setNewGroupName("");
+      setNewGroupCapacity("");
       onChange();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setLoadingAction(false);
+    }
+  }
+
+  async function saveCapacity(group: Group) {
+    setLoadingAction(true);
+    try {
+      const res = await fetch(`/api/admin/groups/${group.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: group.name, capacity: editCapacity || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setEditingCapacityId(null);
+      onChange();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setLoadingAction(false);
     }
@@ -429,12 +481,46 @@ function TeamsTab({
         <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>🗂️ المجموعات (اختياري — للبطولات بنظام الدوري ثم خروج المغلوب)</p>
         {groups.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
-            {groups.map((g) => (
-              <span key={g.id} className="badge badge-pending flex items-center gap-1.5">
-                {g.name}
-                <button onClick={() => deleteGroup(g.id)} className="font-bold" style={{ color: "#991b1b" }}>✕</button>
-              </span>
-            ))}
+            {groups.map((g) => {
+              const count = teams.filter((t) => t.groupId === g.id).length;
+              const full = g.capacity != null && count >= g.capacity;
+              return (
+                <span
+                  key={g.id}
+                  className={full ? "badge flex items-center gap-1.5" : "badge badge-pending flex items-center gap-1.5"}
+                  style={full ? { background: "#d1fae5", color: "#065f46" } : undefined}
+                >
+                  {g.name}
+                  {g.capacity != null && (
+                    <span className="font-semibold">({count}/{g.capacity})</span>
+                  )}
+                  {editingCapacityId === g.id ? (
+                    <span className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={2}
+                        max={64}
+                        value={editCapacity}
+                        onChange={(e) => setEditCapacity(e.target.value)}
+                        className="input text-xs"
+                        style={{ width: "56px", padding: "2px 4px" }}
+                        autoFocus
+                      />
+                      <button onClick={() => saveCapacity(g)} className="font-bold">✓</button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingCapacityId(g.id); setEditCapacity(g.capacity != null ? String(g.capacity) : ""); }}
+                      className="text-xs"
+                      title="تحديد عدد الفرق المستهدف"
+                    >
+                      🎯
+                    </button>
+                  )}
+                  <button onClick={() => deleteGroup(g.id)} className="font-bold" style={{ color: "#991b1b" }}>✕</button>
+                </span>
+              );
+            })}
           </div>
         )}
         <form onSubmit={createGroup} className="flex gap-2">
@@ -446,11 +532,45 @@ function TeamsTab({
             maxLength={40}
             className="input flex-1 text-sm"
           />
+          <input
+            type="number"
+            min={2}
+            max={64}
+            placeholder="عدد الفرق المستهدف"
+            value={newGroupCapacity}
+            onChange={(e) => setNewGroupCapacity(e.target.value)}
+            className="input text-sm"
+            style={{ width: "110px" }}
+          />
           <button type="submit" disabled={!newGroupName.trim() || loadingAction} className="btn btn-primary text-xs px-3" style={{ width: "auto" }}>
             إضافة
           </button>
         </form>
       </div>
+
+      {groups.length > 0 && teams.some((t) => !t.groupId) && (
+        <div className="card p-4">
+          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+            🏳️ فرق بدون مجموعة ({teams.filter((t) => !t.groupId).length})
+          </p>
+          <div className="space-y-1.5">
+            {teams.filter((t) => !t.groupId).map((t) => (
+              <div key={t.id} className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold" style={{ color: "var(--text-main)" }}>{t.name}</span>
+                <select
+                  value=""
+                  onChange={(e) => setTeamGroup(t.id, e.target.value)}
+                  className="input text-xs"
+                  style={{ width: "auto" }}
+                >
+                  <option value="">اختر مجموعة...</option>
+                  {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>عدد الفرق: {teams.length}</p>
 
@@ -706,6 +826,20 @@ function MatchesTab({
   const bracketIsFinalDone = currentBracketRoundMatches.length === 1 && currentBracketRoundMatches[0].status === "PLAYED";
   const canAdvanceBracket = bracketMatches.length > 0 && !bracketIsFinalDone;
 
+  // Poules "remplies" : chaque groupe a atteint sa taille cible et aucun calendrier n'a encore été généré.
+  const poolsReady =
+    groups.length > 0 &&
+    groups.every((g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity) &&
+    matches.length === 0;
+
+  // Phase de poules terminée (exactement 2 groupes, tous les matchs de poule joués, pas encore de bracket).
+  const leagueMatches = matches.filter((m) => !m.isKnockout);
+  const groupStageComplete =
+    groups.length === 2 &&
+    leagueMatches.length > 0 &&
+    leagueMatches.every((m) => m.status === "PLAYED") &&
+    bracketMatches.length === 0;
+
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= list.length) return;
@@ -769,6 +903,36 @@ function MatchesTab({
       {error && (
         <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {poolsReady && (
+        <div className="card p-4 space-y-2" style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}>
+          <p className="text-sm font-black" style={{ color: "#065f46" }}>✅ كل المجموعات مكتملة!</p>
+          <p className="text-xs" style={{ color: "#065f46" }}>يمكنك الآن توليد جدول مباريات دور المجموعات (3 مباريات لكل فريق).</p>
+          <button
+            onClick={generateSchedule}
+            disabled={generating}
+            className="btn btn-primary text-sm"
+            style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+          >
+            {generating ? "..." : "🎲 توليد جدول مباريات دور المجموعات"}
+          </button>
+        </div>
+      )}
+
+      {groupStageComplete && (
+        <div className="card p-4 space-y-2" style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}>
+          <p className="text-sm font-black" style={{ color: "#065f46" }}>✅ انتهى دور المجموعات!</p>
+          <p className="text-xs" style={{ color: "#065f46" }}>كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.</p>
+          <button
+            onClick={() => runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")}
+            disabled={generating}
+            className="btn btn-primary text-sm"
+            style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+          >
+            {generating ? "..." : "⚔️ توليد نصف النهائي"}
+          </button>
         </div>
       )}
 
@@ -1715,29 +1879,158 @@ function StandingsTab({
   );
 }
 
-function ScorersTab({ topScorers }: { topScorers: TopScorerRow[] }) {
-  if (topScorers.length === 0) {
-    return <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد أهداف مسجلة بعد</p>;
-  }
+function RankBadge({ i }: { i: number }) {
   return (
-    <div className="space-y-2">
-      {topScorers.slice(0, 15).map((s, i) => (
-        <div key={s.memberId} className="card p-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-              style={{ background: i === 0 ? "#fde68a" : "var(--mint-100)", color: i === 0 ? "#92400e" : "var(--mint-700)" }}
-            >
-              {i + 1}
-            </span>
-            <div>
-              <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{s.fullName}</p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.teamName}</p>
+    <span
+      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+      style={{ background: i === 0 ? "#fde68a" : "var(--mint-100)", color: i === 0 ? "#92400e" : "var(--mint-700)" }}
+    >
+      {i + 1}
+    </span>
+  );
+}
+
+const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; color: string }> = {
+  W: { bg: "#d1fae5", color: "#065f46" },
+  D: { bg: "var(--mint-100)", color: "var(--text-muted)" },
+  L: { bg: "#fee2e2", color: "#991b1b" },
+};
+
+function ScorersTab({
+  topScorers,
+  discipline,
+  cleanSheets,
+  motmLeaders,
+  teamAdvancedStats,
+}: {
+  topScorers: TopScorerRow[];
+  discipline: DisciplineRow[];
+  cleanSheets: CleanSheetRow[];
+  motmLeaders: MotmRow[];
+  teamAdvancedStats: TeamAdvancedRow[];
+}) {
+  const teamsWithStats = teamAdvancedStats.filter((t) => t.biggestWin || t.form.length > 0);
+  const noData =
+    topScorers.length === 0 && discipline.length === 0 && cleanSheets.length === 0 &&
+    motmLeaders.length === 0 && teamsWithStats.length === 0;
+
+  if (noData) {
+    return <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد إحصائيات مسجلة بعد</p>;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="space-y-2">
+        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>⚽ الهدافون</h3>
+        {topScorers.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد أهداف مسجلة بعد</p>
+        ) : (
+          topScorers.slice(0, 15).map((s, i) => (
+            <div key={s.memberId} className="card p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <RankBadge i={i} />
+                <div>
+                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{s.fullName}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.teamName}</p>
+                </div>
+              </div>
+              <span className="font-black" style={{ color: "var(--mint-700)" }}>⚽ {s.goals}</span>
             </div>
-          </div>
-          <span className="font-black" style={{ color: "var(--mint-700)" }}>⚽ {s.goals}</span>
+          ))
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>🟨🟥 الانضباط</h3>
+        {discipline.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد بطاقات مسجلة بعد</p>
+        ) : (
+          discipline.slice(0, 15).map((d, i) => (
+            <div key={d.memberId} className="card p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <RankBadge i={i} />
+                <div>
+                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{d.fullName}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{d.teamName}</p>
+                </div>
+              </div>
+              <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
+                {d.yellow > 0 && `🟨${d.yellow}`} {d.red > 0 && `🟥${d.red}`}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>🧤 أفضل دفاع (مباريات بدون استقبال أهداف)</h3>
+        {cleanSheets.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد بيانات كافية بعد</p>
+        ) : (
+          cleanSheets.slice(0, 10).map((c, i) => (
+            <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <RankBadge i={i} />
+                <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{c.name}</p>
+              </div>
+              <span className="font-black" style={{ color: "var(--mint-700)" }}>🧤 {c.cleanSheets}/{c.played}</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>🌟 رجل المباراة</h3>
+        {motmLeaders.length === 0 ? (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لم يتم تحديد رجل مباراة بعد</p>
+        ) : (
+          motmLeaders.slice(0, 10).map((m, i) => (
+            <div key={m.memberId} className="card p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <RankBadge i={i} />
+                <div>
+                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{m.fullName}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{m.teamName}</p>
+                </div>
+              </div>
+              <span className="font-black" style={{ color: "var(--mint-700)" }}>🌟 {m.count}</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {teamsWithStats.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>📊 إحصائيات الفرق</h3>
+          {teamsWithStats.map((t) => (
+            <div key={t.teamId} className="card p-3 space-y-1">
+              <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{t.name}</p>
+              {t.biggestWin && (
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  🔥 أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
+                </p>
+              )}
+              {t.unbeatenStreak > 0 && (
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>🛡️ سلسلة بدون هزيمة: {t.unbeatenStreak}</p>
+              )}
+              {t.form.length > 0 && (
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>آخر {t.form.length} مباريات:</span>
+                  {t.form.map((f, i) => (
+                    <span
+                      key={i}
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                      style={{ background: FORM_STYLE[f].bg, color: FORM_STYLE[f].color }}
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }

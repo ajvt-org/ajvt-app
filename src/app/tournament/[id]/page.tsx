@@ -2,7 +2,16 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "@/lib/auth";
-import { groupStandings, computeTopScorers, computeStats, getHeadToHead } from "@/lib/tournament";
+import {
+  groupStandings,
+  computeTopScorers,
+  computeStats,
+  computeDisciplineStats,
+  computeCleanSheets,
+  computeMotmLeaders,
+  computeTeamAdvancedStats,
+  getHeadToHead,
+} from "@/lib/tournament";
 import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
 import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
@@ -13,6 +22,11 @@ import StatsToggle from "@/components/tournament/StatsToggle";
 export const dynamic = "force-dynamic";
 
 const CARD_LABEL: Record<string, string> = { YELLOW: "🟨", RED: "🟥" };
+const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; color: string }> = {
+  W: { bg: "#d1fae5", color: "#065f46" },
+  D: { bg: "var(--mint-100)", color: "var(--text-muted)" },
+  L: { bg: "#fee2e2", color: "#991b1b" },
+};
 
 export default async function PublicTournamentPage({
   params,
@@ -58,12 +72,12 @@ export default async function PublicTournamentPage({
           homePenalties: true,
           awayPenalties: true,
           status: true,
-          manOfTheMatch: { select: { fullName: true, photo: true } },
+          manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
           goals: {
             select: { count: true, minute: true, teamId: true, member: { select: { id: true, fullName: true, photo: true } } },
           },
           bookings: {
-            select: { cardType: true, minute: true, teamId: true, member: { select: { fullName: true, photo: true } } },
+            select: { cardType: true, minute: true, teamId: true, member: { select: { id: true, fullName: true, photo: true } } },
           },
           mvpVote: {
             select: {
@@ -98,6 +112,10 @@ export default async function PublicTournamentPage({
   const standingsByGroup = groupStandings(activity.teams, activity.matches);
   const topScorers = computeTopScorers(activity.teams, activity.matches);
   const stats = computeStats(activity.teams, activity.matches);
+  const discipline = computeDisciplineStats(activity.teams, activity.matches);
+  const cleanSheets = computeCleanSheets(activity.teams, activity.matches);
+  const motmLeaders = computeMotmLeaders(activity.teams, activity.matches);
+  const teamAdvancedStats = computeTeamAdvancedStats(activity.teams, activity.matches).filter((t) => t.biggestWin || t.form.length > 0);
   const groupNameById = new Map(activity.groups.map((g) => [g.id, g.name]));
   const singleFlatTable = standingsByGroup.length === 1 && standingsByGroup[0].groupId === null;
 
@@ -341,6 +359,109 @@ export default async function PublicTournamentPage({
                       </div>
                     </div>
                     <span className="font-black" style={{ color: "var(--mint-700)" }}>⚽ {s.goals}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {discipline.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🟨🟥 الانضباط</h2>
+                {discipline.slice(0, 15).map((d, i) => (
+                  <div key={d.memberId} className="card p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+                        style={{ background: i === 0 ? "#fde68a" : "var(--mint-100)", color: i === 0 ? "#92400e" : "var(--mint-700)" }}
+                      >
+                        {i + 1}
+                      </span>
+                      <PlayerAvatar photo={d.photo} fullName={d.fullName} size={32} />
+                      <div>
+                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{d.fullName}</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{d.teamName}</p>
+                      </div>
+                    </div>
+                    <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
+                      {d.yellow > 0 && `🟨${d.yellow}`} {d.red > 0 && `🟥${d.red}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {cleanSheets.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🧤 أفضل دفاع</h2>
+                {cleanSheets.slice(0, 10).map((c, i) => (
+                  <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+                        style={{ background: i === 0 ? "#fde68a" : "var(--mint-100)", color: i === 0 ? "#92400e" : "var(--mint-700)" }}
+                      >
+                        {i + 1}
+                      </span>
+                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{c.name}</p>
+                    </div>
+                    <span className="font-black" style={{ color: "var(--mint-700)" }}>🧤 {c.cleanSheets}/{c.played}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {motmLeaders.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🌟 رجل المباراة</h2>
+                {motmLeaders.slice(0, 10).map((m, i) => (
+                  <div key={m.memberId} className="card p-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+                        style={{ background: i === 0 ? "#fde68a" : "var(--mint-100)", color: i === 0 ? "#92400e" : "var(--mint-700)" }}
+                      >
+                        {i + 1}
+                      </span>
+                      <PlayerAvatar photo={m.photo} fullName={m.fullName} size={32} />
+                      <div>
+                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{m.fullName}</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{m.teamName}</p>
+                      </div>
+                    </div>
+                    <span className="font-black" style={{ color: "var(--mint-700)" }}>🌟 {m.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {teamAdvancedStats.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>📊 إحصائيات الفرق</h2>
+                {teamAdvancedStats.map((t) => (
+                  <div key={t.teamId} className="card p-3 space-y-1">
+                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{t.name}</p>
+                    {t.biggestWin && (
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        🔥 أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
+                      </p>
+                    )}
+                    {t.unbeatenStreak > 0 && (
+                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>🛡️ سلسلة بدون هزيمة: {t.unbeatenStreak}</p>
+                    )}
+                    {t.form.length > 0 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>آخر {t.form.length} مباريات:</span>
+                        {t.form.map((f, i) => (
+                          <span
+                            key={i}
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                            style={{ background: FORM_STYLE[f].bg, color: FORM_STYLE[f].color }}
+                          >
+                            {f}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

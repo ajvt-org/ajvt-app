@@ -62,6 +62,7 @@ model Group {
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   name       String
+  capacity   Int? // target team count — once reached, the admin UI proposes generating the group-stage schedule
   createdAt  DateTime @default(now())
   teams      Team[]
 
