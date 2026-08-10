@@ -71,6 +71,9 @@ export default async function LandingPage() {
         <Link href="/login" className="btn block" style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }}>
           تسجيل الدخول
         </Link>
+        <Link href="/donate" className="btn block" style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "1.5px dashed rgba(255,255,255,0.5)" }}>
+          💚 ادعم الرابطة (بدون حساب)
+        </Link>
       </div>
 
       {activities.length > 0 && (

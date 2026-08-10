@@ -7,6 +7,7 @@ import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
 import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import BracketTree from "@/components/tournament/BracketTree";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,8 @@ export default async function PublicTournamentPage({
           round: true,
           venue: true,
           isKnockout: true,
+          bracketRound: true,
+          order: true,
           homeScore: true,
           awayScore: true,
           homePenalties: true,
@@ -99,6 +102,7 @@ export default async function PublicTournamentPage({
 
   const played = activity.matches.filter((m) => m.status === "PLAYED");
   const scheduled = activity.matches.filter((m) => m.status === "SCHEDULED");
+  const bracketMatches = activity.matches.filter((m): m is typeof m & { bracketRound: number } => m.bracketRound !== null);
 
   return (
     <div className="app-shell">
@@ -156,6 +160,15 @@ export default async function PublicTournamentPage({
                 ))}
               </div>
             </div>
+
+            {bracketMatches.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🏆 الدور الإقصائي</h2>
+                <div className="card p-3">
+                  <BracketTree matches={bracketMatches.map((m) => ({ ...m, status: m.status as "SCHEDULED" | "PLAYED" }))} />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>🏆 الترتيب</h2>

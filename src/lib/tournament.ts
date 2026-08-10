@@ -239,3 +239,45 @@ export function generateMatchSchedule(
 
   return fixtures;
 }
+
+export interface BracketMatchInput {
+  homeTeamId: string;
+  awayTeamId: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
+  status: string;
+}
+
+// Returns the winning team's id, or null if the match hasn't been played yet
+// or ended in a draw that wasn't resolved by a penalty shootout.
+export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
+  if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) return null;
+  if (m.homeScore > m.awayScore) return m.homeTeamId;
+  if (m.awayScore > m.homeScore) return m.awayTeamId;
+  if (m.homePenalties !== null && m.awayPenalties !== null && m.homePenalties !== m.awayPenalties) {
+    return m.homePenalties > m.awayPenalties ? m.homeTeamId : m.awayTeamId;
+  }
+  return null;
+}
+
+// Human label for a knockout round, derived from how many matches it has
+// (i.e. how many participants remain) rather than a round index — works
+// the same whether the bracket started at 16, 8, 4 or 2 participants.
+export function bracketRoundLabel(matchCount: number): string {
+  if (matchCount === 1) return "النهائي";
+  if (matchCount === 2) return "نصف النهائي";
+  if (matchCount === 4) return "ربع النهائي";
+  if (matchCount >= 8 && Number.isInteger(Math.log2(matchCount))) return `دور الـ${matchCount * 2}`;
+  return `الدور الإقصائي`;
+}
+
+export function shuffleArray<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}

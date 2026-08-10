@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { groupStandings, computeTopScorers, computeStats, getHeadToHead, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
+import { groupStandings, computeTopScorers, computeStats, getHeadToHead, getMatchWinnerTeamId, type StandingsRow, type TopScorerRow } from "@/lib/tournament";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import BracketTree from "@/components/tournament/BracketTree";
 
 interface RosterMember {
   id: string;
@@ -69,6 +70,7 @@ interface Match {
   venue: string | null;
   order: number;
   isKnockout: boolean;
+  bracketRound: number | null;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -212,7 +214,7 @@ export default function TournamentPage() {
           />
         )}
         {tab === "matches" && (
-          <MatchesTab activityId={activityId} teams={teams} matches={matches} onChange={loadAll} />
+          <MatchesTab activityId={activityId} teams={teams} groups={groups} matches={matches} onChange={loadAll} />
         )}
         {tab === "standings" && (
           <StandingsTab title={title} standingsByGroup={standingsByGroup} groups={groups} stats={stats} matches={matches} />
@@ -646,11 +648,13 @@ function TeamsTab({
 function MatchesTab({
   activityId,
   teams,
+  groups,
   matches,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
+  groups: Group[];
   matches: Match[];
   onChange: () => void;
 }) {
@@ -678,6 +682,28 @@ function MatchesTab({
       setGenerating(false);
     }
   }
+
+  async function runBracketAction(endpoint: string, confirmMsg: string) {
+    if (!confirm(confirmMsg)) return;
+    setGenerating(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/activities/${activityId}/bracket/${endpoint}`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  const bracketMatches = matches.filter((m) => m.bracketRound !== null) as (Match & { bracketRound: number })[];
+  const maxBracketRound = bracketMatches.length > 0 ? Math.max(...bracketMatches.map((m) => m.bracketRound)) : 0;
+  const currentBracketRoundMatches = bracketMatches.filter((m) => m.bracketRound === maxBracketRound);
+  const bracketIsFinalDone = currentBracketRoundMatches.length === 1 && currentBracketRoundMatches[0].status === "PLAYED";
+  const canAdvanceBracket = bracketMatches.length > 0 && !bracketIsFinalDone;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -742,6 +768,62 @@ function MatchesTab({
       {error && (
         <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {teams.length >= 2 && (
+        <div className="card p-4 space-y-3">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🏆 القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)</p>
+          {bracketMatches.length === 0 ? (
+            <>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو 32...
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => runBracketAction("draw", "إجراء قرعة عشوائية بين جميع الفرق الحالية؟")}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  🎲 قرعة عشوائية
+                </button>
+                {groups.length === 2 && (
+                  <button
+                    onClick={() => runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟ يتطلب اكتمال كل نتائج دور المجموعات.")}
+                    disabled={generating}
+                    className="text-sm px-4 rounded-xl font-bold"
+                    style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+                  >
+                    ⚔️ نصف نهائي من المجموعتين
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <BracketTree matches={bracketMatches} />
+              {canAdvanceBracket && (
+                <button
+                  onClick={() => runBracketAction("next-round", "توليد الدور التالي من نتائج الدور الحالي؟")}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                >
+                  ➡️ توليد الدور التالي
+                </button>
+              )}
+              {bracketIsFinalDone && (() => {
+                const finalMatch = currentBracketRoundMatches[0];
+                const winnerId = getMatchWinnerTeamId({ ...finalMatch, homeTeamId: finalMatch.homeTeam.id, awayTeamId: finalMatch.awayTeam.id });
+                const winnerName = winnerId === finalMatch.homeTeam.id ? finalMatch.homeTeam.name : finalMatch.awayTeam.name;
+                return (
+                  <p className="text-sm font-black text-center" style={{ color: "var(--mint-700)" }}>
+                    🏆 البطل: {winnerName}
+                  </p>
+                );
+              })()}
+            </>
+          )}
         </div>
       )}
 
@@ -1034,22 +1116,25 @@ function MatchCard({
       {showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
       {showResultForm && <ResultForm match={match} teams={teams} onSaved={onSaved} />}
       {showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
-      {showDetails && <MatchDetailsForm match={match} onChange={onChange} />}
+      {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
     </div>
   );
 }
 
-function MatchDetailsForm({ match, onChange }: { match: Match; onChange: () => void }) {
+function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Team[]; onChange: () => void }) {
   const [matchDate, setMatchDate] = useState(match.matchDate ? match.matchDate.slice(0, 10) : "");
   const [round, setRound] = useState(match.round || "");
   const [venue, setVenue] = useState(match.venue || "");
   const [isKnockout, setIsKnockout] = useState(match.isKnockout);
+  const [homeTeamId, setHomeTeamId] = useState(match.homeTeam.id);
+  const [awayTeamId, setAwayTeamId] = useState(match.awayTeam.id);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (homeTeamId === awayTeamId) { setError("لا يمكن أن يلعب الفريق ضد نفسه"); return; }
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/matches/${match.id}`, {
@@ -1060,6 +1145,8 @@ function MatchDetailsForm({ match, onChange }: { match: Match; onChange: () => v
           round: round || null,
           venue: venue || null,
           isKnockout,
+          homeTeamId,
+          awayTeamId,
         }),
       });
       const data = await res.json();
@@ -1074,6 +1161,14 @@ function MatchDetailsForm({ match, onChange }: { match: Match; onChange: () => v
 
   return (
     <form onSubmit={save} className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <div className="grid grid-cols-2 gap-2">
+        <select value={homeTeamId} onChange={(e) => setHomeTeamId(e.target.value)} className="input text-sm">
+          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={awayTeamId} onChange={(e) => setAwayTeamId(e.target.value)} className="input text-sm">
+          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="input text-sm" />
         <input type="text" placeholder="الجولة" value={round} onChange={(e) => setRound(e.target.value)} maxLength={40} className="input text-sm" />

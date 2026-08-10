@@ -76,7 +76,7 @@ export async function PATCH(
     const { matchId } = await params;
     const {
       homeScore, awayScore, homeGoals, awayGoals, matchDate, round, venue, isKnockout, order,
-      homePenalties, awayPenalties, manOfTheMatchId,
+      homePenalties, awayPenalties, manOfTheMatchId, homeTeamId, awayTeamId,
     } = await req.json();
 
     const match = await prisma.match.findUnique({
@@ -100,7 +100,27 @@ export async function PATCH(
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
       status?: string;
+      homeTeamId?: string;
+      awayTeamId?: string;
     } = {};
+
+    // Manual override — e.g. fixing an auto-generated bracket pairing.
+    if (homeTeamId !== undefined || awayTeamId !== undefined) {
+      const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
+      const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
+      if (newHome === newAway) {
+        return NextResponse.json({ error: "لا يمكن أن يلعب الفريق ضد نفسه" }, { status: 400 });
+      }
+      const validTeams = await prisma.team.findMany({
+        where: { id: { in: [newHome, newAway] }, activityId: match.activityId },
+        select: { id: true },
+      });
+      if (validTeams.length !== 2) {
+        return NextResponse.json({ error: "الفريقان يجب أن ينتميا إلى هذه البطولة" }, { status: 400 });
+      }
+      updateData.homeTeamId = newHome;
+      updateData.awayTeamId = newAway;
+    }
 
     if (matchDate !== undefined) {
       updateData.matchDate = matchDate ? new Date(matchDate) : null;
