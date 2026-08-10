@@ -126,7 +126,10 @@ export default async function LandingPage() {
                 )
               )}
               <div className="p-4">
-                <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
+                  <span className="badge badge-open-blink shrink-0 font-bold">🔴 التسجيل مفتوح</span>
+                </div>
                 <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
                 <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
                   {activity.period && <span>📅 {activity.period}</span>}
@@ -135,8 +138,12 @@ export default async function LandingPage() {
                   )}
                 </div>
                 {activity.isTournament && (
-                  <a href={`/tournament/${activity.id}`} className="text-xs font-bold inline-block mt-2" style={{ color: "var(--mint-700)" }}>
-                    🏆 الترتيب والنتائج ←
+                  <a
+                    href={`/tournament/${activity.id}`}
+                    className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mt-2"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
+                    🏆 عرض الترتيب ←
                   </a>
                 )}
               </div>

@@ -31,13 +31,14 @@ interface EligibleMember {
 interface ActivitiesSectionProps {
   eligibleMembers: EligibleMember[];
   hasAnyMember: boolean;
+  hasPendingMember: boolean;
   onReload: () => void;
 }
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "⏳ قيد المراجعة", ACTIVE: "✅ مقبول", REJECTED: "❌ مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
-export default function ActivitiesSection({ eligibleMembers, hasAnyMember, onReload }: ActivitiesSectionProps) {
+export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPendingMember, onReload }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +60,9 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, onRel
 
       {eligibleMembers.length === 0 && (
         <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
-          {hasAnyMember
+          {hasPendingMember
+            ? "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
+            : hasAnyMember
             ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
             : "تصفح الأنشطة المتاحة — سجّل طلب انضمام لتتمكن من التسجيل."}
         </p>
@@ -175,7 +178,11 @@ function ActivityCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-1.5">
           <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
-          {!activity.isOpen && <span className="badge badge-rejected shrink-0">مغلق</span>}
+          {activity.isOpen ? (
+            <span className="badge badge-open-blink shrink-0 font-bold">🔴 التسجيل مفتوح</span>
+          ) : (
+            <span className="badge badge-rejected shrink-0">مغلق</span>
+          )}
         </div>
         <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
         <div className="flex items-center gap-3 text-xs mb-3" style={{ color: "var(--text-muted)" }}>
@@ -190,10 +197,10 @@ function ActivityCard({
             href={`/tournament/${activity.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-bold inline-block mb-3"
-            style={{ color: "var(--mint-700)" }}
+            className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mb-3"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            🏆 الترتيب والنتائج ←
+            🏆 عرض الترتيب ←
           </a>
         )}
 

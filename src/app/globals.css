@@ -185,6 +185,16 @@ body {
 }
 .pulse { animation: pulse-soft 2.2s infinite; }
 
+@keyframes blink-red {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.badge-open-blink {
+  background: #fee2e2;
+  color: #dc2626;
+  animation: blink-red 1.1s ease-in-out infinite;
+}
+
 /* ---- WhatsApp button ---- */
 .btn-whatsapp {
   background: linear-gradient(135deg, #25d366, #128c7e);
