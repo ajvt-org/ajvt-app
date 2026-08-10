@@ -5,8 +5,8 @@ import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 
 const MATCH_INCLUDE = {
-  homeTeam: { select: { id: true, name: true } },
-  awayTeam: { select: { id: true, name: true } },
+  homeTeam: { select: { id: true, name: true, logo: true } },
+  awayTeam: { select: { id: true, name: true, logo: true } },
   manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
   goals: {
     select: {

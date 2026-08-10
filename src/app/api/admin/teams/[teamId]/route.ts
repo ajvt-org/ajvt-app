@@ -10,14 +10,14 @@ export async function PATCH(
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
-    const { name, groupId } = await req.json();
+    const { name, groupId, logo } = await req.json();
 
     const existing = await prisma.team.findUnique({ where: { id: teamId }, select: { activityId: true } });
     if (!existing) {
       return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
     }
 
-    const data: { name?: string; groupId?: string | null } = {};
+    const data: { name?: string; groupId?: string | null; logo?: string | null } = {};
 
     if (name !== undefined) {
       if (!name.trim()) return NextResponse.json({ error: "اسم الفريق مطلوب" }, { status: 400 });
@@ -30,6 +30,9 @@ export async function PATCH(
         if (!group) return NextResponse.json({ error: "المجموعة غير موجودة" }, { status: 400 });
       }
       data.groupId = groupId || null;
+    }
+    if (logo !== undefined) {
+      data.logo = logo || null;
     }
 
     const team = await prisma.team.update({ where: { id: teamId }, data });

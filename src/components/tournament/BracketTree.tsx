@@ -1,10 +1,12 @@
+import TeamLogo from "@/components/tournament/TeamLogo";
+
 interface BracketMatch {
   id: string;
   bracketRound: number;
   order: number;
   round: string | null;
-  homeTeam: { id: string; name: string };
-  awayTeam: { id: string; name: string };
+  homeTeam: { id: string; name: string; logo?: string | null };
+  awayTeam: { id: string; name: string; logo?: string | null };
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -48,17 +50,23 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                     dir="rtl"
                   >
                     <div
-                      className="flex items-center justify-between px-2 text-xs"
+                      className="flex items-center justify-between gap-1 px-2 text-xs"
                       style={{ height: CARD_HEIGHT / 2, background: homeWinner ? "#d1fae5" : "white", fontWeight: homeWinner ? 700 : 400 }}
                     >
-                      <span className="truncate" style={{ color: "var(--text-main)" }}>{homeWinner ? "🏆 " : ""}{m.homeTeam.name}</span>
+                      <span className="flex items-center gap-1 truncate">
+                        <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={16} />
+                        <span className="truncate" style={{ color: "var(--text-main)" }}>{homeWinner ? "🏆 " : ""}{m.homeTeam.name}</span>
+                      </span>
                       {m.status === "PLAYED" && <span>{m.homeScore}</span>}
                     </div>
                     <div
-                      className="flex items-center justify-between px-2 text-xs"
+                      className="flex items-center justify-between gap-1 px-2 text-xs"
                       style={{ height: CARD_HEIGHT / 2, background: awayWinner ? "#d1fae5" : "var(--mint-50)", fontWeight: awayWinner ? 700 : 400, borderTop: "1px solid var(--mint-100)" }}
                     >
-                      <span className="truncate" style={{ color: "var(--text-main)" }}>{awayWinner ? "🏆 " : ""}{m.awayTeam.name}</span>
+                      <span className="flex items-center gap-1 truncate">
+                        <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={16} />
+                        <span className="truncate" style={{ color: "var(--text-main)" }}>{awayWinner ? "🏆 " : ""}{m.awayTeam.name}</span>
+                      </span>
                       {m.status === "PLAYED" && <span>{m.awayScore}</span>}
                     </div>
                   </div>

@@ -41,7 +41,7 @@ export async function POST(
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
-    const { name, groupId } = await req.json();
+    const { name, groupId, logo } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json({ error: "اسم الفريق مطلوب" }, { status: 400 });
@@ -63,7 +63,7 @@ export async function POST(
     }
 
     const team = await prisma.team.create({
-      data: { activityId: id, name: name.trim(), groupId: groupId || null },
+      data: { activityId: id, name: name.trim(), groupId: groupId || null, logo: logo || null },
     });
 
     await logAction(session.username, "CREATE_TEAM", team.name);
