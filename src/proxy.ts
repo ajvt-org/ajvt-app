@@ -7,28 +7,36 @@ const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const USER_PROTECTED = ["/home", "/form"];
 const ADMIN_PROTECTED = ["/admin/dashboard"];
 
+// So the user lands back where they were after signing back in, instead of
+// a generic dashboard/home.
+function loginRedirect(loginPath: string, req: NextRequest): NextResponse {
+  const url = new URL(loginPath, req.url);
+  url.searchParams.set("next", req.nextUrl.pathname + req.nextUrl.search);
+  return NextResponse.redirect(url);
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // User-protected routes
   if (USER_PROTECTED.some((p) => pathname.startsWith(p))) {
     const token = req.cookies.get("user_token")?.value;
-    if (!token) return NextResponse.redirect(new URL("/login", req.url));
+    if (!token) return loginRedirect("/login", req);
     try {
       await jwtVerify(token, SECRET);
     } catch {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return loginRedirect("/login", req);
     }
   }
 
   // Admin-protected routes
   if (ADMIN_PROTECTED.some((p) => pathname.startsWith(p))) {
     const token = req.cookies.get("admin_token")?.value;
-    if (!token) return NextResponse.redirect(new URL("/admin/login", req.url));
+    if (!token) return loginRedirect("/admin/login", req);
     try {
       await jwtVerify(token, SECRET);
     } catch {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
+      return loginRedirect("/admin/login", req);
     }
   }
 

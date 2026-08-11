@@ -26,6 +26,7 @@ import TeamLogo from "@/components/tournament/TeamLogo";
 import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
 import PhotoUpload from "@/components/PhotoUpload";
+import { loginPathWithNext } from "@/lib/utils";
 
 interface RosterMember {
   id: string;
@@ -131,7 +132,7 @@ export default function TournamentPage() {
         fetch(`/api/admin/activities/${activityId}/matches`),
       ]);
       if ([rosterRes, groupsRes, teamsRes, matchesRes].some((r) => r.status === 401)) {
-        router.push("/admin/login");
+        router.push(loginPathWithNext("/admin/login"));
         return;
       }
       const rosterData = await rosterRes.json();

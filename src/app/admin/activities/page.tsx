@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhotoUpload from "@/components/PhotoUpload";
 import BarChart from "@/components/admin/BarChart";
+import { loginPathWithNext } from "@/lib/utils";
 
 interface Registration {
   id: string;
@@ -57,7 +58,7 @@ export default function AdminActivitiesPage() {
         fetch("/api/admin/activities"),
         fetch("/api/admin/members"),
       ]);
-      if (activitiesRes.status === 401 || membersRes.status === 401) { router.push("/admin/login"); return; }
+      if (activitiesRes.status === 401 || membersRes.status === 401) { router.push(loginPathWithNext("/admin/login")); return; }
       const activitiesData = await activitiesRes.json();
       const membersData = await membersRes.json();
       setActivities(activitiesData.activities || []);
@@ -65,7 +66,7 @@ export default function AdminActivitiesPage() {
         id: m.id, fullName: m.fullName, phone: m.phone, status: m.status,
       })));
     } catch {
-      router.push("/admin/login");
+      router.push(loginPathWithNext("/admin/login"));
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,12 @@ export default function AdminActivitiesPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const created = data.activity;
       setNewActivity({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false });
+      if (created?.isTournament) {
+        router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
+        return;
+      }
       await loadAll();
     } catch (e) {
       setActivityError(e instanceof Error ? e.message : "خطأ");

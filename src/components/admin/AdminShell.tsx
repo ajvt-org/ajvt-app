@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
+import { loginPathWithNext } from "@/lib/utils";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -70,6 +71,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const [role, setRole] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const [showMenu, setShowMenu] = useState(false);
 
@@ -102,7 +104,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (isLoginPage) return;
     fetch("/api/admin/me")
-      .then((r) => { if (r.status === 401) { router.push("/admin/login"); return null; } return r.json(); })
+      .then((r) => { if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; } return r.json(); })
       .then((data) => { if (data?.role) setRole(data.role); })
       .catch(() => {});
     fetch("/api/admin/notifications/summary")
@@ -119,10 +121,22 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments"]
       : null;
     if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
-      router.push(allowedPrefixes[0]);
+      router.push(`${allowedPrefixes[0]}?denied=1`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, pathname, isLoginPage]);
+
+  // Show a brief explanation instead of silently bouncing — then clean the
+  // URL so a refresh/share of the link doesn't keep re-showing it.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.location.search.includes("denied=1")) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPermissionDenied(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("denied");
+    router.replace(url.pathname + url.search);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !isLoginPage);
 
@@ -326,6 +340,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           );
         })}
       </div>
+
+      {permissionDenied && (
+        <div
+          className="mx-4 mt-3 p-3 rounded-xl text-sm font-semibold flex items-center justify-between gap-2"
+          style={{ background: "#fef3c7", color: "#92400e" }}
+        >
+          <span>🔒 ليس لديك صلاحية للوصول إلى تلك الصفحة</span>
+          <button onClick={() => setPermissionDenied(false)} className="font-black">✕</button>
+        </div>
+      )}
 
       {children}
 

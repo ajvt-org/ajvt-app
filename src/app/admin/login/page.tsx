@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { safeNextPath } from "@/lib/utils";
 
 export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
+
+function AdminLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [creds, setCreds] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +33,7 @@ export default function AdminLoginPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل تسجيل الدخول");
-      router.push("/admin/dashboard");
+      router.push(safeNextPath(searchParams.get("next"), "/admin/dashboard"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "بيانات غير صحيحة");
     } finally {

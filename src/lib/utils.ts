@@ -6,6 +6,24 @@ export function validatePhone(phone: string): string | null {
   return null;
 }
 
+// Appends the current location as `?next=` to a login path, so that after
+// signing back in the user returns to what they were doing instead of a
+// generic dashboard/home. Client-side only (reads window.location).
+export function loginPathWithNext(loginPath: "/login" | "/admin/login"): string {
+  if (typeof window === "undefined") return loginPath;
+  const next = window.location.pathname + window.location.search;
+  if (next === "/" || next.startsWith(loginPath)) return loginPath;
+  return `${loginPath}?next=${encodeURIComponent(next)}`;
+}
+
+// Validates a `next` redirect target so login pages can't be turned into an
+// open redirect (e.g. /login?next=https://evil.example) — only same-origin
+// relative paths are accepted.
+export function safeNextPath(next: string | null | undefined, fallback: string): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
+  return next;
+}
+
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("ar-DZ", {
     year: "numeric",
