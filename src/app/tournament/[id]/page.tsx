@@ -12,6 +12,8 @@ import {
   computeTeamAdvancedStats,
   getHeadToHead,
   formatMatchDateTime,
+  matchDateKey,
+  todayClubDateKey,
 } from "@/lib/tournament";
 import FollowTeamButton from "@/components/tournament/FollowTeamButton";
 import ShareResultButton from "@/components/tournament/ShareResultButton";
@@ -125,6 +127,10 @@ export default async function PublicTournamentPage({
   const played = activity.matches.filter((m) => m.status === "PLAYED");
   const scheduled = activity.matches.filter((m) => m.status === "SCHEDULED");
   const bracketMatches = activity.matches.filter((m): m is typeof m & { bracketRound: number } => m.bracketRound !== null);
+  const todayKey = todayClubDateKey();
+  const todayMatches = activity.matches
+    .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
+    .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
   return (
     <div className="app-shell">
@@ -151,6 +157,34 @@ export default async function PublicTournamentPage({
           <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لم تُحدَّد الفرق بعد</p>
         ) : (
           <>
+            {todayMatches.length > 0 && (
+              <div className="space-y-2">
+                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>⚡ مباريات اليوم</h2>
+                {todayMatches.map((m) => (
+                  <div key={m.id} className="card p-4" style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}>
+                    <div className="flex items-center justify-between gap-2" dir="rtl">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={28} />
+                        <span className="font-bold text-sm text-white truncate">{m.homeTeam.name}</span>
+                      </div>
+                      <span className="font-black text-white text-lg shrink-0 px-2">
+                        {m.status === "PLAYED" ? `${m.homeScore} - ${m.awayScore}` : "×"}
+                      </span>
+                      <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+                        <span className="font-bold text-sm text-white truncate">{m.awayTeam.name}</span>
+                        <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={28} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs mt-2 flex-wrap" style={{ color: "rgba(255,255,255,0.85)" }}>
+                      {m.round && <span>{m.round}</span>}
+                      {m.venue && <span>📍 {m.venue}</span>}
+                      {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <StatsToggle
               matchesPlayed={stats.matchesPlayed}
               totalGoals={stats.totalGoals}

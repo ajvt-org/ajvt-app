@@ -316,6 +316,26 @@ export function formatMatchDateTime(date: string | Date): string {
   return formatted.replace(", ", " - ");
 }
 
+// Club-local (YYYY-MM-DD) calendar day for a match date — used to find
+// "today"'s matches regardless of where the code happens to run.
+export function matchDateKey(date: string | Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TIMEZONE }).format(new Date(date));
+}
+
+export function todayClubDateKey(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TIMEZONE }).format(new Date());
+}
+
+// A non-knockout ("league") match must stay within a single group — pairing
+// teams from two different groups is how a match ends up silently dropped
+// from both groups' standings (computeStandings only counts a match if both
+// teams are in the pool it was given). Groupless teams/tournaments are fine.
+export function isValidLeaguePairing(isKnockout: boolean, homeGroupId: string | null, awayGroupId: string | null): boolean {
+  if (isKnockout) return true;
+  if (homeGroupId === null || awayGroupId === null) return true;
+  return homeGroupId === awayGroupId;
+}
+
 export function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {

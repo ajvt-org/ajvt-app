@@ -933,6 +933,16 @@ function MatchesTab({
     }
   }
 
+  // Same-group teams only for a league match — cross-group pairings are only
+  // valid once "مباراة خروج المغلوب" (knockout) is checked.
+  const homeTeamForForm = teams.find((t) => t.id === form.homeTeamId);
+  const awayTeamOptions = teams.filter((t) => {
+    if (t.id === form.homeTeamId) return false;
+    if (form.isKnockout) return true;
+    if (!homeTeamForForm || homeTeamForForm.groupId === null || t.groupId === null) return true;
+    return t.groupId === homeTeamForForm.groupId;
+  });
+
   const scheduled = matches.filter((m) => m.status === "SCHEDULED");
   const played = matches.filter((m) => m.status === "PLAYED");
 
@@ -1056,7 +1066,7 @@ function MatchesTab({
         <div className="grid grid-cols-2 gap-2">
           <select
             value={form.homeTeamId}
-            onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value }))}
+            onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value, awayTeamId: "" }))}
             className="input"
           >
             <option value="">الفريق المضيف...</option>
@@ -1068,7 +1078,7 @@ function MatchesTab({
             className="input"
           >
             <option value="">الفريق الضيف...</option>
-            {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {awayTeamOptions.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -1099,7 +1109,7 @@ function MatchesTab({
           <input
             type="checkbox"
             checked={form.isKnockout}
-            onChange={(e) => setForm((p) => ({ ...p, isKnockout: e.target.checked }))}
+            onChange={(e) => setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))}
           />
           🏆 مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)
         </label>
@@ -1349,6 +1359,7 @@ function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Tea
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!awayTeamId) { setError("يجب اختيار الفريق الضيف"); return; }
     if (homeTeamId === awayTeamId) { setError("لا يمكن أن يلعب الفريق ضد نفسه"); return; }
     setLoading(true);
     try {
@@ -1374,14 +1385,23 @@ function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Tea
     }
   }
 
+  const homeTeamForEdit = teams.find((t) => t.id === homeTeamId);
+  const awayTeamOptionsForEdit = teams.filter((t) => {
+    if (t.id === homeTeamId) return false;
+    if (isKnockout) return true;
+    if (!homeTeamForEdit || homeTeamForEdit.groupId === null || t.groupId === null) return true;
+    return t.groupId === homeTeamForEdit.groupId;
+  });
+
   return (
     <form onSubmit={save} className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <div className="grid grid-cols-2 gap-2">
-        <select value={homeTeamId} onChange={(e) => setHomeTeamId(e.target.value)} className="input text-sm">
+        <select value={homeTeamId} onChange={(e) => { setHomeTeamId(e.target.value); setAwayTeamId(""); }} className="input text-sm">
           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
         <select value={awayTeamId} onChange={(e) => setAwayTeamId(e.target.value)} className="input text-sm">
-          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          <option value="">اختر الفريق الضيف...</option>
+          {awayTeamOptionsForEdit.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -1390,7 +1410,7 @@ function MatchDetailsForm({ match, teams, onChange }: { match: Match; teams: Tea
       </div>
       <input type="text" placeholder="الملعب" value={venue} onChange={(e) => setVenue(e.target.value)} maxLength={60} className="input text-sm" />
       <label className="flex items-center gap-2 text-xs font-semibold" style={{ color: "var(--text-main)" }}>
-        <input type="checkbox" checked={isKnockout} onChange={(e) => setIsKnockout(e.target.checked)} />
+        <input type="checkbox" checked={isKnockout} onChange={(e) => { setIsKnockout(e.target.checked); setAwayTeamId(""); }} />
         🏆 مباراة خروج المغلوب
       </label>
       {error && <p className="text-xs" style={{ color: "#dc2626" }}>{error}</p>}
