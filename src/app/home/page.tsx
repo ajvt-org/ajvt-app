@@ -24,6 +24,7 @@ interface RegistrationData {
 }
 
 interface TeamMembershipData {
+  status: "PENDING" | "ACTIVE";
   team: { id: string; name: string; activityId: string };
 }
 
@@ -45,6 +46,7 @@ export default function HomePage() {
   const router = useRouter();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   function loadMembers() {
     return fetch("/api/user/me")
@@ -61,6 +63,9 @@ export default function HomePage() {
 
   useEffect(() => {
     loadMembers().finally(() => setLoading(false));
+    if (typeof navigator !== "undefined" && "clearAppBadge" in navigator) {
+      navigator.clearAppBadge().catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
@@ -98,13 +103,24 @@ export default function HomePage() {
             <p className="text-sm font-black text-white">التاكلالت</p>
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-          style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
-        >
-          خروج
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setRefreshing(true); loadMembers().finally(() => setRefreshing(false)); }}
+            disabled={refreshing}
+            aria-label="تحديث"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+            style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+          >
+            <span className={refreshing ? "animate-spin" : ""} style={{ display: "inline-block" }}>🔄</span>
+          </button>
+          <button
+            onClick={logout}
+            className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+            style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+          >
+            خروج
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 px-5 py-6 space-y-5">
@@ -120,7 +136,7 @@ export default function HomePage() {
               fullName: m.fullName,
               photo: m.photo,
               registrations: m.registrations.map((r) => ({ activityId: r.activityId, status: r.status, rejectionReason: r.rejectionReason })),
-              teamMemberships: m.teamMemberships.map((tm) => ({ teamId: tm.team.id, teamName: tm.team.name, activityId: tm.team.activityId })),
+              teamMemberships: m.teamMemberships.map((tm) => ({ teamId: tm.team.id, teamName: tm.team.name, activityId: tm.team.activityId, status: tm.status })),
             }))}
           onReload={loadMembers}
         />

@@ -25,7 +25,7 @@ const MEMBER_SELECT = {
     },
   },
   teamMemberships: {
-    select: { team: { select: { id: true, name: true, activityId: true } } },
+    select: { status: true, team: { select: { id: true, name: true, activityId: true } } },
   },
 } as const;
 
