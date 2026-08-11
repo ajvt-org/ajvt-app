@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
-import { parseMatchDate } from "@/lib/tournament";
+import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -82,12 +82,17 @@ export async function PATCH(
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
-      include: { homeTeam: { select: { id: true, name: true } }, awayTeam: { select: { id: true, name: true } } },
+      include: {
+        homeTeam: { select: { id: true, name: true, groupId: true } },
+        awayTeam: { select: { id: true, name: true, groupId: true } },
+      },
     });
     if (!match) {
       return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
     }
     const wasPlayed = match.status === "PLAYED";
+    let finalHomeGroupId = match.homeTeam.groupId;
+    let finalAwayGroupId = match.awayTeam.groupId;
 
     const updateData: {
       matchDate?: Date | null;
@@ -114,13 +119,15 @@ export async function PATCH(
       }
       const validTeams = await prisma.team.findMany({
         where: { id: { in: [newHome, newAway] }, activityId: match.activityId },
-        select: { id: true },
+        select: { id: true, groupId: true },
       });
       if (validTeams.length !== 2) {
         return NextResponse.json({ error: "الفريقان يجب أن ينتميا إلى هذه البطولة" }, { status: 400 });
       }
       updateData.homeTeamId = newHome;
       updateData.awayTeamId = newAway;
+      finalHomeGroupId = validTeams.find((t) => t.id === newHome)!.groupId;
+      finalAwayGroupId = validTeams.find((t) => t.id === newAway)!.groupId;
     }
 
     if (matchDate !== undefined) {
@@ -134,6 +141,10 @@ export async function PATCH(
     }
     if (isKnockout !== undefined) {
       updateData.isKnockout = !!isKnockout;
+    }
+    const finalIsKnockout = isKnockout !== undefined ? !!isKnockout : match.isKnockout;
+    if (!isValidLeaguePairing(finalIsKnockout, finalHomeGroupId, finalAwayGroupId)) {
+      return NextResponse.json({ error: "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية" }, { status: 400 });
     }
     if (order !== undefined) {
       const n = Number(order);

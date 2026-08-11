@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
-import { parseMatchDate } from "@/lib/tournament";
+import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -87,10 +87,15 @@ export async function POST(
 
     const teams = await prisma.team.findMany({
       where: { id: { in: [homeTeamId, awayTeamId] }, activityId: id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, groupId: true },
     });
     if (teams.length !== 2) {
       return NextResponse.json({ error: "الفريقان يجب أن ينتميا إلى هذه البطولة" }, { status: 400 });
+    }
+    const homeGroupId = teams.find((t) => t.id === homeTeamId)!.groupId;
+    const awayGroupId = teams.find((t) => t.id === awayTeamId)!.groupId;
+    if (!isValidLeaguePairing(!!isKnockout, homeGroupId, awayGroupId)) {
+      return NextResponse.json({ error: "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية" }, { status: 400 });
     }
     if (round !== undefined && round !== null && String(round).trim().length > 40) {
       return NextResponse.json({ error: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)" }, { status: 400 });
