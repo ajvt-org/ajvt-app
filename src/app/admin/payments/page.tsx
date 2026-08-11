@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginPathWithNext } from "@/lib/utils";
 
 interface Proof {
   id: string;
@@ -27,7 +28,7 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     fetch("/api/admin/payment-proofs")
       .then((r) => {
-        if (r.status === 401) { router.push("/admin/login"); return null; }
+        if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; }
         return r.json();
       })
       .then((data) => { if (data?.proofs) setProofs(data.proofs); })

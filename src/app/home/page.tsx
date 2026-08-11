@@ -8,6 +8,7 @@ import NotificationsButton from "@/components/NotificationsButton";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
+import { loginPathWithNext } from "@/lib/utils";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -48,14 +49,14 @@ export default function HomePage() {
   function loadMembers() {
     return fetch("/api/user/me")
       .then((r) => {
-        if (r.status === 401) { router.push("/login"); return null; }
+        if (r.status === 401) { router.push(loginPathWithNext("/login")); return null; }
         return r.json();
       })
       .then((data) => {
         if (!data) return;
         setMembers(data.members || []);
       })
-      .catch(() => router.push("/login"));
+      .catch(() => router.push(loginPathWithNext("/login")));
   }
 
   useEffect(() => {

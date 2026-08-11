@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
+import { loginPathWithNext } from "@/lib/utils";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 type FilterTab = "ALL" | Status;
@@ -95,11 +96,11 @@ export default function AdminDashboard() {
   async function fetchMembers() {
     try {
       const res = await fetch("/api/admin/members");
-      if (res.status === 401) { router.push("/admin/login"); return; }
+      if (res.status === 401) { router.push(loginPathWithNext("/admin/login")); return; }
       const data = await res.json();
       setMembers(data.members || []);
     } catch {
-      router.push("/admin/login");
+      router.push(loginPathWithNext("/admin/login"));
     } finally {
       setLoading(false);
     }

@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { validatePhone } from "@/lib/utils";
+import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -102,7 +102,7 @@ function FormPageInner() {
   useEffect(() => {
     async function load() {
       const meRes = await fetch("/api/user/me");
-      if (meRes.status === 401) { router.push("/login"); return; }
+      if (meRes.status === 401) { router.push(loginPathWithNext("/login")); return; }
       const me = await meRes.json();
 
       if (editId) {
