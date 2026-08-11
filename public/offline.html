@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>لا يوجد اتصال بالإنترنت</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    background: #f0faf6;
+    color: #1a3f33;
+  }
+  img { width: 72px; height: 72px; margin-bottom: 16px; border-radius: 16px; }
+  h1 { font-size: 1.1rem; margin: 0 0 8px; }
+  p { font-size: 0.9rem; color: #5c8a78; margin: 0 0 20px; max-width: 320px; }
+  button {
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+    background: #2f7a5e;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <img src="/icon-192.png" alt="شعار" />
+  <h1>لا يوجد اتصال بالإنترنت</h1>
+  <p>تحقق من اتصالك بالشبكة وحاول مرة أخرى.</p>
+  <button onclick="location.reload()">إعادة المحاولة</button>
+</body>
+</html>
