@@ -50,7 +50,7 @@ export default function InstallPrompt() {
       <button onClick={install} className="text-xs px-3 py-2 rounded-lg font-bold shrink-0" style={{ background: "var(--mint-600)", color: "white" }}>
         تثبيت
       </button>
-      <button onClick={dismiss} className="text-lg font-bold shrink-0 px-1" style={{ color: "var(--text-muted)" }}>
+      <button onClick={dismiss} aria-label="إغلاق" className="text-lg font-bold shrink-0 px-1" style={{ color: "var(--text-muted)" }}>
         ✕
       </button>
     </div>

@@ -233,6 +233,8 @@ function MemberEntry({
         </div>
       )}
 
+      {member.status === "ACTIVE" && <NotificationsButton dismissible />}
+
       {/* Membership card with QR code */}
       {member.status === "ACTIVE" && (
         <MemberCard

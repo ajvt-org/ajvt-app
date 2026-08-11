@@ -7,9 +7,11 @@ export async function POST(req: NextRequest) {
     const session = await requireUser();
     const { id, fullName, phone, age, paymentMethod, paymentProof, photo } = await req.json();
 
-    if (!fullName || !phone || !age || !paymentMethod || !paymentProof) {
-      return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
-    }
+    if (!fullName) return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
+    if (!phone) return NextResponse.json({ error: "رقم الهاتف مطلوب" }, { status: 400 });
+    if (!age) return NextResponse.json({ error: "يرجى اختيار العصر" }, { status: 400 });
+    if (!paymentMethod) return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
+    if (!paymentProof) return NextResponse.json({ error: "يرجى إرفاق صورة الكابتير" }, { status: 400 });
     if (fullName.trim().length > 30) {
       return NextResponse.json({ error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
     }
