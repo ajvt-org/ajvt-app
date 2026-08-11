@@ -24,6 +24,7 @@ export default function AdminPaymentsPage() {
   const [proofs, setProofs] = useState<Proof[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/payment-proofs")
@@ -36,6 +37,24 @@ export default function AdminPaymentsPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function reviewDonation(id: string, status: "ACTIVE" | "REJECTED") {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/admin/donations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setProofs((prev) => prev.map((p) => (p.id === id && p.kind === "DONATION" ? { ...p, status } : p)));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   const q = search.trim();
   const filtered = q
@@ -69,37 +88,51 @@ export default function AdminPaymentsPage() {
       ) : (
         <div className="space-y-2">
           {filtered.map((p) => (
-            <a
-              key={`${p.kind}-${p.id}`}
-              href={`/api/files/${p.proof}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card p-3 flex items-center gap-3"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/api/files/${p.proof}`}
-                alt={p.memberName}
-                className="w-14 h-14 rounded-lg object-cover shrink-0"
-                style={{ border: "1px solid var(--mint-100)" }}
-              />
+            <div key={`${p.kind}-${p.id}`} className="card p-3 flex items-center gap-3">
+              <a href={`/api/files/${p.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/api/files/${p.proof}`}
+                  alt={p.memberName}
+                  className="w-14 h-14 rounded-lg object-cover"
+                  style={{ border: "1px solid var(--mint-100)" }}
+                />
+              </a>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{p.memberName}</p>
-                  {p.kind === "DONATION" ? (
-                    <span className="badge badge-active">💚 تبرّع{p.amount ? ` — ${p.amount} أوقية` : ""}</span>
-                  ) : (
-                    <span className={`badge ${STATUS_CLASS[p.status] || "badge-pending"}`}>{STATUS_LABEL[p.status] || p.status}</span>
-                  )}
+                  <span className={`badge ${STATUS_CLASS[p.status] || "badge-pending"}`}>
+                    {p.kind === "DONATION" && p.amount ? `${STATUS_LABEL[p.status] || p.status} — ${p.amount} أوقية` : STATUS_LABEL[p.status] || p.status}
+                  </span>
                 </div>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : p.kind === "ACTIVITY" ? `🏆 ${p.activityTitle}` : "دعم عام للرابطة"}
+                  {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : p.kind === "ACTIVITY" ? `🏆 ${p.activityTitle}` : "💚 دعم عام للرابطة"}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                   رُفعت بتاريخ {new Date(p.uploadedAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })}
                 </p>
+                {p.kind === "DONATION" && p.status === "PENDING" && (
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => reviewDonation(p.id, "ACTIVE")}
+                      disabled={busyId === p.id}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                      style={{ background: "var(--mint-600)", color: "white" }}
+                    >
+                      {busyId === p.id ? "..." : "✓ قبول"}
+                    </button>
+                    <button
+                      onClick={() => reviewDonation(p.id, "REJECTED")}
+                      disabled={busyId === p.id}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                      style={{ background: "#fee2e2", color: "#991b1b" }}
+                    >
+                      {busyId === p.id ? "..." : "✕ رفض"}
+                    </button>
+                  </div>
+                )}
               </div>
-            </a>
+            </div>
           ))}
         </div>
       )}

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
+import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -117,6 +118,7 @@ function FormPageInner() {
     phone: "",
     age: "",
     paymentMethod: "",
+    paidAmount: "",
   });
 
   useEffect(() => {
@@ -135,6 +137,7 @@ function FormPageInner() {
           phone: member.phone || "",
           age: member.age || "",
           paymentMethod: member.paymentMethod || "",
+          paidAmount: member.paidAmount != null ? String(member.paidAmount) : "",
         });
         if (member.paymentProof) setExistingProof(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
@@ -227,6 +230,8 @@ function FormPageInner() {
     if (phoneError) { setError(phoneError); return; }
     if (!form.age) { setError("يرجى اختيار العصر"); return; }
     if (!form.paymentMethod) { setError("يرجى اختيار طريقة الدفع"); return; }
+    const paidAmountError = validatePaidAmount(form.paidAmount);
+    if (paidAmountError) { setError(paidAmountError); return; }
     if (!selectedFile && !existingProof) { setError("يرجى إرفاق صورة الكابتير"); return; }
 
     setLoading(true);
@@ -244,7 +249,7 @@ function FormPageInner() {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paymentProof, photo }),
+        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paidAmount: Number(form.paidAmount), paymentProof, photo }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -444,6 +449,26 @@ function FormPageInner() {
           </div>
 
           <SectionHeader step={2} title="طريقة الدفع" />
+
+          {/* المبلغ المدفوع */}
+          <div>
+            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={MEMBERSHIP_FEE}
+              value={form.paidAmount}
+              onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
+              placeholder={String(MEMBERSHIP_FEE)}
+              className="input"
+              dir="ltr"
+            />
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً كتبرّع باسمك بعد قبول الطلب
+            </p>
+          </div>
 
           {/* طريقة الدفع */}
           <div>

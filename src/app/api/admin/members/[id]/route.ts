@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
 import { logAction } from "@/lib/audit";
+import { validatePaidAmount } from "@/lib/donations";
+import { syncMembershipDonation } from "@/lib/donationsServer";
 
 export async function PATCH(
   req: NextRequest,
@@ -13,14 +15,14 @@ export async function PATCH(
     // so either admin scope may do it — not just "MEMBERS".
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, phone, age } = await req.json();
+    const { fullName, phone, age, photo, paidAmount } = await req.json();
 
     const existing = await prisma.member.findUnique({ where: { id }, select: { fullName: true } });
     if (!existing) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
 
-    const data: { fullName?: string; phone?: string; age?: string } = {};
+    const data: { fullName?: string; phone?: string; age?: string; photo?: string | null; paidAmount?: number | null } = {};
 
     if (fullName !== undefined) {
       if (!fullName.trim()) return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
@@ -37,8 +39,27 @@ export async function PATCH(
       if (age.trim().length > 30) return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
       data.age = age.trim();
     }
+    if (photo !== undefined) {
+      if (photo !== null && typeof photo !== "string") {
+        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      }
+      data.photo = photo;
+    }
+    if (paidAmount !== undefined) {
+      if (paidAmount === null) {
+        data.paidAmount = null;
+      } else {
+        const paidAmountError = validatePaidAmount(paidAmount);
+        if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
+        data.paidAmount = Number(paidAmount);
+      }
+    }
 
-    const member = await prisma.member.update({ where: { id }, data });
+    const member = await prisma.$transaction(async (tx) => {
+      const m = await tx.member.update({ where: { id }, data });
+      await syncMembershipDonation(tx, id);
+      return m;
+    });
     await logAction(session.username, "UPDATE_MEMBER", `${existing.fullName} → ${member.fullName}`);
 
     return NextResponse.json({ member });

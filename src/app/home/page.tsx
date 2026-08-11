@@ -34,6 +34,7 @@ interface MemberData {
   phone: string;
   age: string;
   paymentMethod: string;
+  paidAmount: number | null;
   status: Status;
   createdAt: string;
   memberNumber: string | null;
@@ -285,6 +286,32 @@ function MemberEntry({
         </div>
       )}
 
+      {/* Donate any time */}
+      {member.status === "ACTIVE" && (
+        <div className="card p-5">
+          <h3 className="font-bold mb-3" style={{ color: "var(--text-main)" }}>
+            💚 ادعم الرابطة
+          </h3>
+          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+            يمكنك التبرع للرابطة في أي وقت باسمك، وسيظهر تبرعك في لوحة شرف المتبرعين بعد مراجعته.
+          </p>
+          <button
+            onClick={() => router.push(`/donate?memberId=${member.id}`)}
+            className="btn"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            💚 تبرّع للرابطة الآن
+          </button>
+          <button
+            onClick={() => router.push("/leaderboard")}
+            className="text-xs font-bold mt-3 w-full text-center"
+            style={{ color: "var(--mint-600)" }}
+          >
+            🏆 شاهد لوحة شرف المتبرعين
+          </button>
+        </div>
+      )}
+
       {/* Member info summary */}
       <div className="card p-5">
         <h3 className="font-bold mb-3 pb-2" style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}>
@@ -295,6 +322,9 @@ function MemberEntry({
           <InfoRow label="رقم الهاتف" value={member.phone} dir="ltr" />
           <InfoRow label="العصر" value={member.age} />
           <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
+          {member.paidAmount != null && (
+            <InfoRow label="المبلغ المسدد" value={`${member.paidAmount} أوقية`} dir="ltr" />
+          )}
           <InfoRow
             label="تاريخ الطلب"
             value={new Date(member.createdAt).toLocaleDateString("ar", {

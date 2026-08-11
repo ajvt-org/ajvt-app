@@ -28,6 +28,7 @@ model Member {
   paymentMethod   String
   paymentProof    String?
   photo           String?
+  paidAmount      Int?
   status          String                 @default("PENDING")
   memberNumber    String?                @unique
   createdAt       DateTime               @default(now())
@@ -38,6 +39,7 @@ model Member {
   matchBookings   MatchBooking[]
   motmMatches     Match[]                @relation("ManOfTheMatch")
   mvpCandidacies  MvpCandidate[]
+  donations       Donation[]
 }
 
 model Activity {
@@ -245,8 +247,16 @@ model Donation {
   id        String   @id @default(cuid())
   donorName String? // null = anonymous ("فاعل خير" in the UI)
   amount    Int?
-  proof     String
+  proof     String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
+  status    String   @default("PENDING") // PENDING | ACTIVE | REJECTED — MEMBERSHIP-source rows are always created ACTIVE
+  source    String   @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([status])
 }
 
 model PushSubscription {

@@ -1,11 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 
 export default function DonatePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="app-shell flex items-center justify-center">
+          <div className="text-3xl animate-pulse">⏳</div>
+        </div>
+      }
+    >
+      <DonatePageInner />
+    </Suspense>
+  );
+}
+
+function DonatePageInner() {
+  const searchParams = useSearchParams();
+  const memberId = searchParams.get("memberId");
+
+  const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
+  const [checkingMember, setCheckingMember] = useState(!!memberId);
+
   const [wantsName, setWantsName] = useState<boolean | null>(null);
   const [donorName, setDonorName] = useState("");
   const [amount, setAmount] = useState("");
@@ -14,6 +35,19 @@ export default function DonatePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (!memberId) return;
+    fetch(`/api/members/${memberId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && data.status === "ACTIVE") {
+          setLockedMember({ id: data.id, fullName: data.fullName });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingMember(false));
+  }, [memberId]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -27,13 +61,22 @@ export default function DonatePage() {
     e.preventDefault();
     setError("");
     if (!selectedFile) { setError("يرجى إرفاق صورة إثبات الدفع"); return; }
+    const n = Number(amount);
+    if (!amount.trim() || !Number.isInteger(n) || n <= 0) {
+      setError("يرجى إدخال مبلغ التبرع");
+      return;
+    }
 
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append("file", selectedFile);
-      if (donorName.trim()) fd.append("donorName", donorName.trim());
-      if (amount.trim()) fd.append("amount", amount.trim());
+      fd.append("amount", amount.trim());
+      if (lockedMember) {
+        fd.append("memberId", lockedMember.id);
+      } else if (donorName.trim()) {
+        fd.append("donorName", donorName.trim());
+      }
 
       const res = await fetch("/api/donations", { method: "POST", body: fd });
       const data = await res.json();
@@ -46,6 +89,14 @@ export default function DonatePage() {
     }
   }
 
+  if (checkingMember) {
+    return (
+      <div className="app-shell flex items-center justify-center">
+        <div className="text-3xl animate-pulse">⏳</div>
+      </div>
+    );
+  }
+
   if (done) {
     return (
       <div className="app-shell flex items-center justify-center">
@@ -55,7 +106,7 @@ export default function DonatePage() {
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
             تم استلام تبرعك وسيتم مراجعته من طرف الرابطة. جزاك الله خيراً.
           </p>
-          <Link href="/" className="btn btn-primary">العودة للصفحة الرئيسية</Link>
+          <Link href="/leaderboard" className="btn btn-primary">🏆 شاهد لوحة شرف المتبرعين</Link>
         </div>
       </div>
     );
@@ -78,8 +129,13 @@ export default function DonatePage() {
         <div className="card p-5 text-center fade-up">
           <div className="text-3xl mb-2">💚</div>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            يمكنك دعم الرابطة بأي مبلغ تختاره دون الحاجة لإنشاء حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة.
+            {lockedMember
+              ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
+              : "يمكنك دعم الرابطة بأي مبلغ تختاره دون الحاجة لإنشاء حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
           </p>
+          <Link href="/leaderboard" className="text-xs font-bold mt-2 inline-block" style={{ color: "var(--mint-600)" }}>
+            🏆 شاهد لوحة شرف المتبرعين
+          </Link>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
@@ -87,7 +143,7 @@ export default function DonatePage() {
 
           <div>
             <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              المبلغ (اختياري)
+              المبلغ <span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <input
               type="number"
@@ -96,62 +152,70 @@ export default function DonatePage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="بالأوقية"
+              required
               className="input"
               dir="ltr"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-              هل تريد ذكر اسمك مع التبرع؟
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setWantsName(true)}
-                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                style={{
-                  background: wantsName === true ? "var(--mint-600)" : "white",
-                  color: wantsName === true ? "white" : "var(--mint-700)",
-                  borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
-                }}
-              >
-                ✍️ نعم، باسمي
-              </button>
-              <button
-                type="button"
-                onClick={() => { setWantsName(false); setDonorName(""); }}
-                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                style={{
-                  background: wantsName === false ? "var(--mint-600)" : "white",
-                  color: wantsName === false ? "white" : "var(--mint-700)",
-                  borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
-                }}
-              >
-                🤍 أفضّل أن أبقى مجهولاً
-              </button>
+          {lockedMember ? (
+            <div className="card p-4 flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>سيُسجَّل التبرع باسم</span>
+              <span className="text-sm font-black" style={{ color: "var(--mint-700)" }}>{lockedMember.fullName}</span>
             </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+                هل تريد ذكر اسمك مع التبرع؟
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setWantsName(true)}
+                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                  style={{
+                    background: wantsName === true ? "var(--mint-600)" : "white",
+                    color: wantsName === true ? "white" : "var(--mint-700)",
+                    borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
+                  }}
+                >
+                  ✍️ نعم، باسمي
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setWantsName(false); setDonorName(""); }}
+                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                  style={{
+                    background: wantsName === false ? "var(--mint-600)" : "white",
+                    color: wantsName === false ? "white" : "var(--mint-700)",
+                    borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
+                  }}
+                >
+                  🤍 أفضّل أن أبقى مجهولاً
+                </button>
+              </div>
 
-            {wantsName === true && (
-              <input
-                type="text"
-                value={donorName}
-                onChange={(e) => setDonorName(e.target.value)}
-                placeholder="اكتب اسمك هنا"
-                maxLength={50}
-                className="input mt-2"
-                autoFocus
-              />
-            )}
+              {wantsName === true && (
+                <input
+                  type="text"
+                  value={donorName}
+                  onChange={(e) => setDonorName(e.target.value)}
+                  placeholder="اكتب اسمك هنا"
+                  maxLength={50}
+                  className="input mt-2"
+                  autoFocus
+                />
+              )}
 
-            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-              {wantsName === false
-                ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لا أحد سيعرف من أنت، وهذا اختيارك بالكامل."
-                : wantsName === true
-                ? "سنذكر اسمك تقديراً لدعمك."
-                : "كلا الخيارين متاحان بنفس القدر — اختر ما يناسبك."}
-            </p>
-          </div>
+              <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+                {wantsName === false
+                  ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم."
+                  : wantsName === true
+                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
+                  : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
+              </p>
+            </div>
+          )}
 
           <div>
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>

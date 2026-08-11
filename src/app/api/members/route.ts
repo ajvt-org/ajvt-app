@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { validatePaidAmount } from "@/lib/donations";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { id, fullName, phone, age, paymentMethod, paymentProof, photo } = await req.json();
+    const { id, fullName, phone, age, paymentMethod, paymentProof, photo, paidAmount } = await req.json();
 
     if (!fullName) return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
     if (!phone) return NextResponse.json({ error: "رقم الهاتف مطلوب" }, { status: 400 });
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
     if (photo !== undefined && photo !== null && typeof photo !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
+    const paidAmountError = validatePaidAmount(paidAmount);
+    if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
 
     // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
     if (id) {
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest) {
           paymentMethod,
           paymentProof,
           ...(photo !== undefined ? { photo } : {}),
+          paidAmount: Number(paidAmount),
           status: "PENDING",
         },
       });
@@ -57,6 +61,7 @@ export async function POST(req: NextRequest) {
         paymentMethod,
         paymentProof,
         photo: photo || null,
+        paidAmount: Number(paidAmount),
         status: "PENDING",
       },
     });

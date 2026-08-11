@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction } from "@/lib/audit";
+import { syncMembershipDonation } from "@/lib/donationsServer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,9 +21,13 @@ export async function POST(req: NextRequest) {
       memberNumber = await generateMemberNumber();
     }
 
-    const updated = await prisma.member.update({
-      where: { id },
-      data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
+    const updated = await prisma.$transaction(async (tx) => {
+      const m = await tx.member.update({
+        where: { id },
+        data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
+      });
+      await syncMembershipDonation(tx, id);
+      return m;
     });
 
     const statusLabel: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "غير مقبول" };

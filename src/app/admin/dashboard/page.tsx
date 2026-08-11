@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext } from "@/lib/utils";
+import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 type FilterTab = "ALL" | Status;
@@ -17,6 +18,7 @@ interface Member {
   paymentMethod: string;
   paymentProof: string | null;
   photo: string | null;
+  paidAmount: number | null;
   status: Status;
   memberNumber: string | null;
   createdAt: string;
@@ -45,6 +47,7 @@ const emptyManualForm = {
   memberPhone: "",
   age: "",
   paymentMethod: "",
+  paidAmount: "",
   status: "ACTIVE" as "PENDING" | "ACTIVE",
 };
 
@@ -61,6 +64,15 @@ export default function AdminDashboard() {
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showStats, setShowStats] = useState(false);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPhoto, setEditPhoto] = useState<string | null>(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
+  const [editPhotoUploading, setEditPhotoUploading] = useState(false);
+  const [editPaidAmount, setEditPaidAmount] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualForm, setManualForm] = useState(emptyManualForm);
@@ -136,6 +148,64 @@ export default function AdminDashboard() {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setDeleteLoading(false);
+    }
+  }
+
+  function startEdit() {
+    if (!selected) return;
+    setEditName(selected.fullName);
+    setEditPhoto(selected.photo);
+    setEditPhotoPreview(selected.photo ? `/api/files/${selected.photo}` : null);
+    setEditPaidAmount(selected.paidAmount != null ? String(selected.paidAmount) : "");
+    setEditError("");
+    setEditing(true);
+  }
+
+  async function handleEditPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditPhotoPreview(URL.createObjectURL(file));
+    setEditPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشل رفع الملف");
+      setEditPhoto(data.filename);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "فشل رفع الملف");
+    } finally {
+      setEditPhotoUploading(false);
+    }
+  }
+
+  async function saveEdit() {
+    if (!selected) return;
+    if (!editName.trim()) { setEditError("الاسم الكامل مطلوب"); return; }
+    let paidAmountValue: number | null = null;
+    if (editPaidAmount.trim()) {
+      const paidAmountError = validatePaidAmount(editPaidAmount);
+      if (paidAmountError) { setEditError(paidAmountError); return; }
+      paidAmountValue = Number(editPaidAmount);
+    }
+    setEditSaving(true);
+    setEditError("");
+    try {
+      const res = await fetch(`/api/admin/members/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: editName.trim(), photo: editPhoto, paidAmount: paidAmountValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setMembers((prev) => prev.map((m) => (m.id === selected.id ? { ...m, ...data.member } : m)));
+      setSelected((prev) => (prev ? { ...prev, ...data.member } : prev));
+      setEditing(false);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "خطأ");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -365,7 +435,7 @@ export default function AdminDashboard() {
           {filtered.map((m) => (
             <button
               key={m.id}
-              onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); }}
+              onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); }}
               className="card w-full p-4 text-right transition-all hover:shadow-md"
             >
               <div className="flex items-center justify-between gap-3">
@@ -445,7 +515,7 @@ export default function AdminDashboard() {
             >
               <h2 className="font-black text-white text-lg">تفاصيل الطلب</h2>
               <button
-                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); }}
+                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); setEditing(false); }}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
                 style={{ background: "rgba(255,255,255,0.15)" }}
               >
@@ -454,14 +524,113 @@ export default function AdminDashboard() {
             </div>
 
             <div className="p-5 space-y-4">
+              {/* Photo + name (editable) */}
+              <div className="card p-4 flex items-center gap-4">
+                <div className="relative shrink-0">
+                  {editing ? (
+                    <label className="cursor-pointer block">
+                      <div
+                        className="w-16 h-16 rounded-full overflow-hidden border-2"
+                        style={{ borderColor: "var(--mint-300)" }}
+                      >
+                        {editPhotoPreview ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={editPhotoPreview} alt={editName} className="w-full h-full object-cover" />
+                        ) : (
+                          <div
+                            className="w-full h-full flex items-center justify-center text-xl font-black text-white"
+                            style={{ background: "var(--mint-600)" }}
+                          >
+                            {editName.charAt(0) || "?"}
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className="absolute -bottom-1 -left-1 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center text-white"
+                        style={{ background: "var(--mint-700)" }}
+                      >
+                        📷
+                      </span>
+                      <input type="file" accept="image/*" onChange={handleEditPhotoChange} style={{ display: "none" }} />
+                    </label>
+                  ) : selected.photo ? (
+                    <div className="w-16 h-16 rounded-full overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/api/files/${selected.photo}`} alt={selected.fullName} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black text-white"
+                      style={{ background: "var(--mint-600)" }}
+                    >
+                      {selected.fullName.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  {editing ? (
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      maxLength={30}
+                      className="input"
+                    />
+                  ) : (
+                    <p className="font-black text-lg truncate" style={{ color: "var(--text-main)" }}>
+                      {selected.fullName}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => (editing ? setEditing(false) : startEdit())}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
+                  style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                >
+                  {editing ? "إلغاء" : "✏️ تعديل"}
+                </button>
+              </div>
+
+              {editing && (
+                <div className="card p-3 space-y-2">
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                      المبلغ المسدد (أوقية)
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={MEMBERSHIP_FEE}
+                      value={editPaidAmount}
+                      onChange={(e) => setEditPaidAmount(e.target.value)}
+                      placeholder={String(MEMBERSHIP_FEE)}
+                      className="input"
+                      dir="ltr"
+                    />
+                  </div>
+                  {editError && (
+                    <div className="p-2 rounded-lg text-xs font-semibold mb-2" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                      ⚠️ {editError}
+                    </div>
+                  )}
+                  <button
+                    onClick={saveEdit}
+                    disabled={editSaving || editPhotoUploading}
+                    className="btn btn-primary text-sm w-full"
+                  >
+                    {editPhotoUploading ? "جاري رفع الصورة..." : editSaving ? "..." : "💾 حفظ التعديلات"}
+                  </button>
+                </div>
+              )}
+
               {/* Info */}
               <div className="card p-4 space-y-3">
                 {([
-                  ["الاسم الكامل", selected.fullName, undefined],
                   ["رقم الهاتف", selected.phone, "ltr"],
                   ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
+                  ["المبلغ المسدد", selected.paidAmount ? `${selected.paidAmount} أوقية` : "—", "ltr"],
                   ["رقم العضوية", selected.memberNumber || "—", "ltr"],
                   ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric", weekday: "long" }), undefined],
                   ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" }), "ltr"],
@@ -760,6 +929,21 @@ export default function AdminDashboard() {
                       <option value="" disabled>اختر...</option>
                       {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                      المبلغ المسدد (أوقية) — اختياري
+                    </label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={MEMBERSHIP_FEE}
+                      value={manualForm.paidAmount}
+                      onChange={(e) => setManualForm((p) => ({ ...p, paidAmount: e.target.value }))}
+                      placeholder={String(MEMBERSHIP_FEE)}
+                      className="input"
+                      dir="ltr"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>حالة العضوية</label>
