@@ -41,17 +41,20 @@ export async function POST(
 
     const existingMembership = await prisma.teamMember.findFirst({
       where: { memberId, team: { activityId: team.activityId } },
-      select: { id: true, teamId: true },
+      select: { id: true, teamId: true, status: true },
     });
     if (existingMembership?.teamId === teamId) {
       return NextResponse.json({ ok: true });
+    }
+    if (existingMembership?.status === "ACTIVE") {
+      return NextResponse.json({ error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
       if (existingMembership) {
         await tx.teamMember.delete({ where: { id: existingMembership.id } });
       }
-      await tx.teamMember.create({ data: { teamId, memberId } });
+      await tx.teamMember.create({ data: { teamId, memberId, status: "PENDING" } });
     });
 
     return NextResponse.json({ ok: true });
@@ -80,6 +83,11 @@ export async function DELETE(
     const member = await prisma.member.findUnique({ where: { id: memberId }, select: { userId: true } });
     if (!member || member.userId !== session.userId) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+    }
+
+    const existing = await prisma.teamMember.findUnique({ where: { teamId_memberId: { teamId, memberId } }, select: { status: true } });
+    if (existing?.status === "ACTIVE") {
+      return NextResponse.json({ error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" }, { status: 403 });
     }
 
     await prisma.teamMember.deleteMany({ where: { teamId, memberId } });

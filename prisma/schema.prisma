@@ -106,6 +106,7 @@ model TeamMember {
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   memberId  String
   member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE") // "PENDING" (self-service join, awaiting admin approval) | "ACTIVE" (locked in)
   createdAt DateTime @default(now())
 
   @@unique([teamId, memberId])

@@ -44,6 +44,7 @@ interface Group {
 }
 
 interface TeamMemberEntry {
+  status: "PENDING" | "ACTIVE";
   member: { id: string; fullName: string; phone: string; age: string; photo: string | null };
 }
 
@@ -488,6 +489,20 @@ function TeamsTab({
     }
   }
 
+  async function approveMember(teamId: string, memberId: string) {
+    setLoadingAction(true);
+    try {
+      const res = await fetch(`/api/admin/teams/${teamId}/members/${memberId}`, { method: "PATCH" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      onChange();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setLoadingAction(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {error && (
@@ -657,7 +672,7 @@ function TeamsTab({
             {team.members.length === 0 ? (
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد لاعبون بعد</p>
             ) : (
-              team.members.map(({ member }) => (
+              team.members.map(({ member, status }) => (
                 <div key={member.id} className="flex items-center justify-between text-sm gap-2">
                   {editingMemberId === member.id ? (
                     <div className="flex items-center gap-1.5 flex-1">
@@ -684,15 +699,30 @@ function TeamsTab({
                     >
                       <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
                       {member.fullName} <span className="text-xs">✏️</span>
+                      {status === "PENDING" && (
+                        <span className="badge badge-pending" style={{ fontSize: "10px" }}>⏳ بانتظار الموافقة</span>
+                      )}
                     </button>
                   )}
-                  <button
-                    onClick={() => removeMember(team.id, member.id)}
-                    className="text-xs px-2 py-1 rounded-lg font-bold shrink-0"
-                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                  >
-                    إزالة
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {status === "PENDING" && (
+                      <button
+                        onClick={() => approveMember(team.id, member.id)}
+                        disabled={loadingAction}
+                        className="text-xs px-2 py-1 rounded-lg font-bold"
+                        style={{ background: "var(--mint-600)", color: "white" }}
+                      >
+                        ✓ قبول
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeMember(team.id, member.id)}
+                      className="text-xs px-2 py-1 rounded-lg font-bold"
+                      style={{ background: status === "PENDING" ? "#fee2e2" : "var(--mint-100)", color: status === "PENDING" ? "#991b1b" : "var(--mint-700)" }}
+                    >
+                      {status === "PENDING" ? "✕ رفض" : "إزالة"}
+                    </button>
+                  </div>
                 </div>
               ))
             )}

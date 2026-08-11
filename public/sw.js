@@ -39,7 +39,14 @@ self.addEventListener("push", (event) => {
     data: { url: data.url || "/" },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // App-icon badge (e.g. shows "1" when a membership gets accepted) —
+      // cleared client-side once the member actually opens the app.
+      "setAppBadge" in self.navigator ? self.navigator.setAppBadge(1).catch(() => {}) : Promise.resolve(),
+    ])
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {

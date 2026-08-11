@@ -57,6 +57,7 @@ const ACTION_LABELS: Record<string, string> = {
   UPDATE_GROUP: "تعديل مجموعة",
   DELETE_GROUP: "حذف مجموعة",
   SEND_BROADCAST: "إرسال إشعار جماعي",
+  APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
 };
 
 const NAV_TABS = [
@@ -71,6 +72,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const [role, setRole] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingTeamRequests, setPendingTeamRequests] = useState(0);
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   const [showMenu, setShowMenu] = useState(false);
@@ -109,7 +111,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       .catch(() => {});
     fetch("/api/admin/notifications/summary")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setPendingCount(data.pendingMembers || 0); })
+      .then((data) => {
+        if (!data) return;
+        setPendingCount(data.pendingMembers || 0);
+        setPendingTeamRequests(data.pendingTeamRequests || 0);
+      })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoginPage]);
@@ -334,6 +340,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
                 >
                   {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              )}
+              {tab.href === "/admin/activities" && pendingTeamRequests > 0 && (
+                <span
+                  className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
+                  style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
+                >
+                  {pendingTeamRequests > 9 ? "9+" : pendingTeamRequests}
                 </span>
               )}
             </button>

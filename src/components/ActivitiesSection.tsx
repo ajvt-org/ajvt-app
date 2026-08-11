@@ -32,6 +32,7 @@ interface MemberTeamMembership {
   teamId: string;
   teamName: string;
   activityId: string;
+  status: "PENDING" | "ACTIVE";
 }
 
 interface EligibleMember {
@@ -146,7 +147,7 @@ function ActivityCard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      showToast("تم اختيار الفريق");
+      showToast("تم إرسال طلب الانضمام — بانتظار موافقة المشرف");
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
@@ -156,15 +157,20 @@ function ActivityCard({
   }
 
   async function leaveTeam(memberId: string, teamId: string) {
+    setError("");
     setBusyMemberId(memberId);
     try {
-      await fetch(`/api/teams/${teamId}/join`, {
+      const res = await fetch(`/api/teams/${teamId}/join`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
-      showToast("تم إلغاء اختيار الفريق");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      showToast("تم إلغاء الطلب");
       onReload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
     } finally {
       setBusyMemberId(null);
     }
@@ -287,43 +293,57 @@ function ActivityCard({
                 {r?.status === "REJECTED" && r.rejectionReason && (
                   <p className="text-xs mr-8" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
                 )}
-                {r?.status === "ACTIVE" && activity.isTournament && activity.teams.length > 0 && (
-                  <div className="mr-8 mt-1.5">
-                    <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-                      🏳️ اختر فريقك (اختياري):
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                    {activity.teams.map((t) => {
-                      const mine = teamFor(m)?.teamId === t.id;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => pickTeam(m.id, t.id)}
-                          disabled={busyMemberId === m.id || mine}
-                          className="text-xs px-2.5 py-1 rounded-lg font-bold"
-                          style={{
-                            background: mine ? "var(--mint-600)" : "white",
-                            color: mine ? "white" : "var(--mint-700)",
-                            border: "1px solid var(--mint-200)",
-                          }}
-                        >
-                          {mine ? "✓ " : ""}{t.name}
-                        </button>
-                      );
-                    })}
-                    {teamFor(m) && (
-                      <button
-                        onClick={() => leaveTeam(m.id, teamFor(m)!.teamId)}
-                        disabled={busyMemberId === m.id}
-                        className="text-xs font-bold"
-                        style={{ color: "#991b1b" }}
-                      >
-                        إلغاء الاختيار
-                      </button>
-                    )}
+                {r?.status === "ACTIVE" && activity.isTournament && activity.teams.length > 0 && (() => {
+                  const myTeam = teamFor(m);
+                  const locked = myTeam?.status === "ACTIVE";
+                  return (
+                    <div className="mr-8 mt-1.5">
+                      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+                        🏳️ {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
+                      </p>
+                      {locked ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="badge badge-active">✓ {myTeam!.teamName}</span>
+                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>تم التأكيد — لا يمكن تغييره</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {activity.teams.map((t) => {
+                            const mine = myTeam?.teamId === t.id;
+                            return (
+                              <button
+                                key={t.id}
+                                onClick={() => pickTeam(m.id, t.id)}
+                                disabled={busyMemberId === m.id || mine}
+                                className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                style={{
+                                  background: mine ? "var(--mint-600)" : "white",
+                                  color: mine ? "white" : "var(--mint-700)",
+                                  border: "1px solid var(--mint-200)",
+                                }}
+                              >
+                                {mine ? "⏳ " : ""}{t.name}
+                              </button>
+                            );
+                          })}
+                          {myTeam && (
+                            <>
+                              <span className="badge badge-pending" style={{ fontSize: "10px" }}>⏳ بانتظار الموافقة</span>
+                              <button
+                                onClick={() => leaveTeam(m.id, myTeam.teamId)}
+                                disabled={busyMemberId === m.id}
+                                className="text-xs font-bold"
+                                style={{ color: "#991b1b" }}
+                              >
+                                إلغاء الطلب
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
