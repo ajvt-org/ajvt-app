@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/Toast";
 
 export default function FollowTeamButton({ teamId }: { teamId: string }) {
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [following, setFollowing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const showToast = useToast();
 
   useEffect(() => {
     fetch(`/api/teams/${teamId}/follow`)
@@ -24,7 +26,10 @@ export default function FollowTeamButton({ teamId }: { teamId: string }) {
     setBusy(true);
     try {
       const res = await fetch(`/api/teams/${teamId}/follow`, { method: following ? "DELETE" : "POST" });
-      if (res.ok) setFollowing((v) => !v);
+      if (res.ok) {
+        setFollowing((v) => !v);
+        showToast(following ? "تم إلغاء المتابعة" : "تتابع الفريق الآن");
+      }
     } finally {
       setBusy(false);
     }

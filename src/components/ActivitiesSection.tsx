@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import { useToast } from "@/components/Toast";
 
 interface Team {
   id: string;
@@ -63,7 +64,22 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPe
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading || activities.length === 0) return null;
+  if (loading) {
+    return (
+      <div className="space-y-3" id="activities">
+        <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
+          🏆 أنشطة هذا الصيف
+        </h2>
+        <div className="card p-4 animate-pulse space-y-3">
+          <div className="h-4 rounded-lg w-2/3" style={{ background: "var(--mint-100)" }} />
+          <div className="h-3 rounded-lg w-full" style={{ background: "var(--mint-100)" }} />
+          <div className="h-3 rounded-lg w-4/5" style={{ background: "var(--mint-100)" }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (activities.length === 0) return null;
 
   return (
     <div className="space-y-3 fade-up" id="activities">
@@ -77,7 +93,15 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPe
             ? "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
             : hasAnyMember
             ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
-            : "تصفح الأنشطة المتاحة — سجّل طلب انضمام لتتمكن من التسجيل."}
+            : (
+              <>
+                تصفح الأنشطة المتاحة —{" "}
+                <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
+                  سجّل طلب انضمام
+                </a>
+                {" "}لتتمكن من التسجيل.
+              </>
+            )}
         </p>
       )}
 
@@ -101,6 +125,7 @@ function ActivityCard({
 }) {
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const showToast = useToast();
 
   function regFor(member: EligibleMember) {
     return member.registrations.find((r) => r.activityId === activity.id) || null;
@@ -121,6 +146,7 @@ function ActivityCard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      showToast("تم اختيار الفريق");
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
@@ -137,6 +163,7 @@ function ActivityCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
+      showToast("تم إلغاء اختيار الفريق");
       onReload();
     } finally {
       setBusyMemberId(null);
@@ -156,6 +183,7 @@ function ActivityCard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      showToast("تم التسجيل في النشاط");
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
@@ -171,6 +199,7 @@ function ActivityCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId, activityId: activity.id }),
       });
+      showToast("تم إلغاء الطلب");
       onReload();
     } catch {
       // best-effort — the member can just try again

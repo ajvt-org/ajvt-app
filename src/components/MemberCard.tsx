@@ -14,6 +14,8 @@ interface MemberCardProps {
 export default function MemberCard({ fullName, age, memberNumber, createdAt, photo }: MemberCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [canShare, setCanShare] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,6 +25,11 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null));
   }, [memberNumber]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCanShare(typeof navigator !== "undefined" && !!navigator.share);
+  }, []);
 
   async function downloadCard() {
     if (!cardRef.current) return;
@@ -42,6 +49,27 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
       console.error("Card download error:", err);
     } finally {
       setDownloading(false);
+    }
+  }
+
+  async function shareCard() {
+    if (!cardRef.current) return;
+    setSharing(true);
+    try {
+      const { default: html2canvas } = await import("html2canvas-pro");
+      const canvas = await html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) return;
+      const file = new File([blob], `بطاقة-عضوية-${memberNumber}.png`, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "بطاقة العضوية" });
+      } else {
+        await navigator.share({ title: "بطاقة العضوية", url: `${window.location.origin}/verify/${memberNumber}` });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") console.error("Card share error:", err);
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -101,14 +129,26 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
         </div>
       </div>
 
-      <button
-        onClick={downloadCard}
-        disabled={downloading}
-        className="text-xs px-3 py-2 rounded-lg font-bold w-full mt-3"
-        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-      >
-        {downloading ? "..." : "⬇️ تحميل البطاقة"}
-      </button>
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={downloadCard}
+          disabled={downloading}
+          className="text-xs px-3 py-2 rounded-lg font-bold flex-1"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          {downloading ? "..." : "⬇️ تحميل البطاقة"}
+        </button>
+        {canShare && (
+          <button
+            onClick={shareCard}
+            disabled={sharing}
+            className="text-xs px-3 py-2 rounded-lg font-bold flex-1"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
+            {sharing ? "..." : "📤 مشاركة"}
+          </button>
+        )}
+      </div>
 
       <p className="text-xs text-center mt-2" style={{ color: "var(--text-muted)" }}>
         امسح رمز QR للتحقق من صلاحية العضوية
