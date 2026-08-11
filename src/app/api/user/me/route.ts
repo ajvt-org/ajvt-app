@@ -12,6 +12,7 @@ const MEMBER_SELECT = {
   paymentMethod: true,
   paymentProof: true,
   photo: true,
+  paidAmount: true,
   status: true,
   createdAt: true,
   memberNumber: true,

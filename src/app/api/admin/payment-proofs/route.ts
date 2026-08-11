@@ -35,7 +35,11 @@ export async function GET() {
         : Promise.resolve([]),
       includeDonations
         ? prisma.donation.findMany({
-            select: { id: true, donorName: true, amount: true, proof: true, createdAt: true },
+            // MEMBERSHIP-source rows are the surplus of an already-reviewed
+            // membership payment (same proof, same admin action) — showing
+            // them again here would duplicate the MEMBERSHIP-kind card above.
+            where: { source: { not: "MEMBERSHIP" } },
+            select: { id: true, donorName: true, amount: true, proof: true, status: true, createdAt: true, updatedAt: true },
             orderBy: { createdAt: "desc" },
           })
         : Promise.resolve([]),
@@ -67,12 +71,12 @@ export async function GET() {
       ...donations.map((d) => ({
         id: d.id,
         kind: "DONATION" as const,
-        proof: d.proof,
+        proof: d.proof as string,
         memberName: d.donorName || "فاعل خير",
         activityTitle: null as string | null,
         amount: d.amount,
-        status: "ACTIVE",
-        uploadedAt: d.createdAt,
+        status: d.status,
+        uploadedAt: d.updatedAt,
         submittedAt: d.createdAt,
       })),
     ].sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());

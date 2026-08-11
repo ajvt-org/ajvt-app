@@ -76,6 +76,14 @@ export default async function LandingPage() {
         </Link>
       </div>
 
+      <Link
+        href="/leaderboard"
+        className="fade-up delay-3 mt-4 text-xs font-bold"
+        style={{ color: "rgba(255,255,255,0.75)" }}
+      >
+        🏆 لوحة شرف المتبرعين
+      </Link>
+
       {activities.length > 0 && (
         <a
           href="#activities"

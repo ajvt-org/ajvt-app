@@ -21,6 +21,7 @@ export async function GET(
         paymentMethod: true,
         paymentProof: true,
         photo: true,
+        paidAmount: true,
         status: true,
         createdAt: true,
       },
