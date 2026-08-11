@@ -66,6 +66,14 @@ export default function RegisterPage() {
           <Image src="/version-final.png" alt="شعار" width={80} height={80} className="opacity-80" />
         </div>
 
+        <div className="flex items-center justify-center gap-2 fade-up">
+          <span className="text-xs font-black px-2.5 py-1 rounded-full" style={{ background: "var(--mint-600)", color: "white" }}>1</span>
+          <span className="text-xs font-bold" style={{ color: "var(--text-main)" }}>إنشاء حساب</span>
+          <span className="text-xs" style={{ color: "var(--text-muted)" }}>—</span>
+          <span className="text-xs font-black px-2.5 py-1 rounded-full" style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}>2</span>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>استمارة الانضمام</span>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4 fade-up delay-1">
           <div>
             <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
