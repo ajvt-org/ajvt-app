@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/Toast";
 
 interface Candidate {
   id: string;
@@ -26,6 +27,7 @@ export default function MvpVoteWidget({
   const [myVote, setMyVote] = useState(initialMyVoteCandidateId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const showToast = useToast();
 
   async function castVote(candidateId: string) {
     setBusy(true);
@@ -39,6 +41,7 @@ export default function MvpVoteWidget({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setMyVote(candidateId);
+      showToast("تم تسجيل صوتك");
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
     } finally {
