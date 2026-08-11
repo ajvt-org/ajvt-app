@@ -18,6 +18,12 @@ const PAYMENT_CODES: Record<string, string> = {
   "مصرفي": "037940",
 };
 
+// Filling this form legitimately means leaving the app to pay, then coming
+// back — long enough to trip the 30-minute idle logout. Autosaving the text
+// fields (not the proof photo, too large for localStorage) means that
+// doesn't silently wipe out what the member already typed.
+const DRAFT_KEY = "ajvt_form_draft";
+
 const DEFAULT_AGES = [
   "البدريين",
   "الفائزين",
@@ -56,6 +62,20 @@ function PhoneInput({
       className="input"
       style={{ letterSpacing: "0.15em" }}
     />
+  );
+}
+
+function SectionHeader({ step, title }: { step: number; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+        style={{ background: "var(--mint-600)", color: "white" }}
+      >
+        {step}
+      </span>
+      <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>{title}</p>
+    </div>
   );
 }
 
@@ -118,8 +138,17 @@ function FormPageInner() {
         });
         if (member.paymentProof) setExistingProof(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
-      } else if (me?.phone) {
-        setForm((p) => ({ ...p, phone: me.phone }));
+      } else {
+        const draft = localStorage.getItem(DRAFT_KEY);
+        if (draft) {
+          try {
+            setForm(JSON.parse(draft));
+          } catch {
+            setForm((p) => ({ ...p, phone: me?.phone || "" }));
+          }
+        } else if (me?.phone) {
+          setForm((p) => ({ ...p, phone: me.phone }));
+        }
       }
 
       setCheckingAuth(false);
@@ -131,6 +160,11 @@ function FormPageInner() {
       .then((data) => { if (data?.ages?.length) setAges(data.ages); })
       .catch(() => {});
   }, [router, editId]);
+
+  useEffect(() => {
+    if (checkingAuth || editId) return;
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+  }, [form, checkingAuth, editId]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -214,6 +248,7 @@ function FormPageInner() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
+      if (!editId) localStorage.removeItem(DRAFT_KEY);
       router.push("/home");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "خطأ غير متوقع");
@@ -246,7 +281,9 @@ function FormPageInner() {
       >
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+            {editId ? "رابطة شباب قرية التاكلالت" : "الخطوة 2 من 2"}
+          </p>
           <h1 className="text-base font-black text-white">
             {editId ? "تعديل الطلب" : "استمارة الانضمام"}
           </h1>
@@ -306,6 +343,8 @@ function FormPageInner() {
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
 
+          <SectionHeader step={1} title="المعلومات الشخصية" />
+
           {/* الصورة الشخصية — اختياري */}
           <div className="card p-4">
             <PhotoUpload
@@ -350,7 +389,7 @@ function FormPageInner() {
               onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
             />
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              6 أرقام — يبدأ بـ 2 أو 3 أو 4
+              8 أرقام — يبدأ بـ 2 أو 3 أو 4
             </p>
           </div>
 
@@ -404,6 +443,8 @@ function FormPageInner() {
             )}
           </div>
 
+          <SectionHeader step={2} title="طريقة الدفع" />
+
           {/* طريقة الدفع */}
           <div>
             <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
@@ -427,6 +468,8 @@ function FormPageInner() {
               ))}
             </div>
           </div>
+
+          <SectionHeader step={3} title="إثبات الدفع" />
 
           {/* كابتير */}
           <div>
