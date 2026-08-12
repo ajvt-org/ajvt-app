@@ -2,19 +2,11 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
-
-function stripSslMode(url: string): string {
-  const u = new URL(url);
-  u.searchParams.delete("sslmode");
-  return u.toString();
-}
+import { pgAdapterOptions } from "../src/lib/db-url";
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) throw new Error("DATABASE_URL is not set");
-const adapter = new PrismaPg({
-  connectionString: stripSslMode(dbUrl),
-  ssl: { rejectUnauthorized: false },
-});
+const adapter = new PrismaPg(pgAdapterOptions(dbUrl));
 const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
 
 async function main() {

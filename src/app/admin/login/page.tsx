@@ -68,7 +68,7 @@ function AdminLoginForm() {
                 value={creds.username}
                 onChange={(e) => setCreds((p) => ({ ...p, username: e.target.value }))}
                 required
-                placeholder="admin"
+                placeholder=""
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/40 font-semibold transition-all"
                 style={{ background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", fontFamily: "Tajawal, sans-serif", fontSize: "1rem" }}
                 onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.6)")}

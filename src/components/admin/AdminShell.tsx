@@ -58,12 +58,16 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_GROUP: "حذف مجموعة",
   SEND_BROADCAST: "إرسال إشعار جماعي",
   APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
+  CREATE_EXPENSE: "إضافة مصروف",
+  UPDATE_EXPENSE: "تعديل مصروف",
+  DELETE_EXPENSE: "حذف مصروف",
 };
 
 const NAV_TABS = [
   { href: "/admin/dashboard", label: "👥 الأعضاء" },
   { href: "/admin/activities", label: "🏆 الأنشطة" },
   { href: "/admin/payments", label: "🧾 المدفوعات" },
+  { href: "/admin/expenses", label: "💸 المصاريف" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -123,8 +127,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!role || isLoginPage) return;
     const allowedPrefixes =
-      role === "MEMBERS" ? ["/admin/dashboard", "/admin/payments"]
-      : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments"]
+      role === "MEMBERS" ? ["/admin/dashboard", "/admin/payments", "/admin/expenses"]
+      : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments", "/admin/expenses"]
       : null;
     if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
       router.push(`${allowedPrefixes[0]}?denied=1`);
@@ -152,8 +156,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const visibleTabs = NAV_TABS.filter((tab) => {
     if (!role || role === "SUPER") return true;
-    if (role === "MEMBERS") return tab.href === "/admin/dashboard" || tab.href === "/admin/payments";
-    if (role === "ACTIVITIES") return tab.href === "/admin/activities" || tab.href === "/admin/payments";
+    if (role === "MEMBERS") return tab.href === "/admin/dashboard" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
+    if (role === "ACTIVITIES") return tab.href === "/admin/activities" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
     return true;
   });
 

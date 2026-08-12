@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext } from "@/lib/utils";
-import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
+import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 type FilterTab = "ALL" | Status;
@@ -38,7 +38,6 @@ const STATUS_BADGE: Record<Status, string> = {
   REJECTED: "badge-rejected",
 };
 
-const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
 const DEFAULT_AGES = ["البدريين", "الفائزين", "النجميين", "المجاهدين", "المنصورين", "الخاشعين", "التائبين"];
 
 const emptyManualForm = {

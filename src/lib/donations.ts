@@ -3,6 +3,8 @@
 
 export const MEMBERSHIP_FEE = 100;
 
+export const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
+
 export function validatePaidAmount(v: unknown): string | null {
   const n = Number(v);
   if (!Number.isInteger(n) || n < MEMBERSHIP_FEE) {
