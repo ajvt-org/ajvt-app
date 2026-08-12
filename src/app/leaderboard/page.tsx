@@ -1,13 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getLeaderboardData } from "@/lib/donationsServer";
+import { getUserSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
+async function getDonateHref() {
+  const session = await getUserSession();
+  if (!session) return "/donate";
+  const { userId } = session as { userId: string };
+  const activeMember = await prisma.member.findFirst({
+    where: { userId, status: "ACTIVE" },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return activeMember ? `/donate?memberId=${activeMember.id}` : "/donate";
+}
+
 export default async function LeaderboardPage() {
   const { leaderboard, anonymousTotal } = await getLeaderboardData();
+  const donateHref = await getDonateHref();
 
   return (
     <div className="app-shell">
@@ -79,7 +94,7 @@ export default async function LeaderboardPage() {
           </p>
         )}
 
-        <Link href="/donate" className="btn btn-primary fade-up">
+        <Link href={donateHref} className="btn btn-primary fade-up">
           💚 ادعم الرابطة الآن
         </Link>
       </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction } from "@/lib/audit";
 
 export async function PATCH(
@@ -16,9 +17,9 @@ export async function PATCH(
     // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
-    const { status, memberId, donorName, donorPhone, donorPhoto, amount } = await req.json();
+    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod } = await req.json();
 
-    if ([status, memberId, donorName, donorPhone, donorPhoto, amount].every((v) => v === undefined)) {
+    if ([status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod].every((v) => v === undefined)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (status !== undefined && !["ACTIVE", "REJECTED"].includes(status)) {
@@ -42,7 +43,7 @@ export async function PATCH(
       return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" }, { status: 400 });
     }
 
-    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number } = {};
+    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number; paymentMethod?: string | null } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
@@ -85,6 +86,13 @@ export async function PATCH(
       data.amount = n;
     }
 
+    if (paymentMethod !== undefined) {
+      if (paymentMethod !== null && !PAYMENT_METHODS.includes(paymentMethod)) {
+        return NextResponse.json({ error: "طريقة دفع غير صالحة" }, { status: 400 });
+      }
+      data.paymentMethod = paymentMethod;
+    }
+
     const donation = await prisma.donation.update({
       where: { id },
       data,
@@ -101,7 +109,7 @@ export async function PATCH(
         memberId ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}` : (existing.donorName || "فاعل خير")
       );
     }
-    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined) {
+    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined || paymentMethod !== undefined) {
       await logAction(session.username, "UPDATE_DONATION", donation.member?.fullName || donation.donorName || "فاعل خير");
     }
 

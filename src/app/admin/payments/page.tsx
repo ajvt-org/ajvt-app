@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext, validatePhone } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 
 interface Proof {
@@ -14,6 +15,7 @@ interface Proof {
   amount: number | null;
   status: string;
   source?: "PUBLIC" | "SELF";
+  paymentMethod?: string | null;
   memberId?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
@@ -30,7 +32,7 @@ interface MemberOption {
 const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
-const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "" };
+const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "", paymentMethod: "" };
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
@@ -47,6 +49,7 @@ export default function AdminPaymentsPage() {
   const [editDonorPhone, setEditDonorPhone] = useState("");
   const [editDonorPhoto, setEditDonorPhoto] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("");
   const [editError, setEditError] = useState("");
 
   const [showManualDonation, setShowManualDonation] = useState(false);
@@ -118,6 +121,7 @@ export default function AdminPaymentsPage() {
     setEditDonorPhone(p.donorPhone || "");
     setEditDonorPhoto(p.donorPhoto || null);
     setEditAmount(p.amount != null ? String(p.amount) : "");
+    setEditPaymentMethod(p.paymentMethod || "");
     setEditError("");
   }
 
@@ -136,6 +140,7 @@ export default function AdminPaymentsPage() {
     try {
       const body: Record<string, unknown> = {
         donorPhone: editDonorPhone.trim() || null,
+        paymentMethod: editPaymentMethod || null,
       };
       if (!p.memberId) {
         body.donorName = editDonorName.trim();
@@ -157,6 +162,7 @@ export default function AdminPaymentsPage() {
             donorPhone: data.donation.donorPhone,
             donorPhoto: data.donation.donorPhoto,
             amount: data.donation.amount,
+            paymentMethod: data.donation.paymentMethod,
             memberName: item.memberId ? item.memberName : (data.donation.donorName || "فاعل خير"),
           }
         : item)));
@@ -187,6 +193,7 @@ export default function AdminPaymentsPage() {
           donorPhone: manualDonation.donorPhone.trim(),
           donorPhoto: manualDonation.donorPhoto || null,
           amount: n,
+          paymentMethod: manualDonation.paymentMethod || null,
         }),
       });
       const data = await res.json();
@@ -202,6 +209,7 @@ export default function AdminPaymentsPage() {
           amount: d.amount,
           status: d.status,
           source: d.source,
+          paymentMethod: d.paymentMethod,
           memberId: d.memberId,
           donorName: d.donorName,
           donorPhone: d.donorPhone,
@@ -422,6 +430,15 @@ export default function AdminPaymentsPage() {
                         className="input text-xs"
                         style={{ background: "white" }}
                       />
+                      <select
+                        value={editPaymentMethod}
+                        onChange={(e) => setEditPaymentMethod(e.target.value)}
+                        className="input text-xs"
+                        style={{ background: "white" }}
+                      >
+                        <option value="">طريقة الدفع — غير محددة</option>
+                        {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
                       {editError && (
                         <div className="p-2 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
                           ⚠️ {editError}
@@ -551,7 +568,7 @@ export default function AdminPaymentsPage() {
               </div>
               <div>
                 <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-                  المبلغ (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
+                  المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -562,6 +579,19 @@ export default function AdminPaymentsPage() {
                   required
                   className="input"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  طريقة الدفع
+                </label>
+                <select
+                  value={manualDonation.paymentMethod}
+                  onChange={(e) => setManualDonation((p) => ({ ...p, paymentMethod: e.target.value }))}
+                  className="input"
+                >
+                  <option value="">غير محددة</option>
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
 
               {manualError && (

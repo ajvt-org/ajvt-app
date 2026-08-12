@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction } from "@/lib/audit";
 
 // Records a donation the admin collected outside the app (cash in hand,
@@ -11,7 +12,7 @@ import { logAction } from "@/lib/audit";
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("SUPER");
-    const { donorName, donorPhone, amount, proof, donorPhoto } = await req.json();
+    const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod } = await req.json();
 
     if (!donorName?.trim()) {
       return NextResponse.json({ error: "الاسم مطلوب" }, { status: 400 });
@@ -31,6 +32,9 @@ export async function POST(req: NextRequest) {
     if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
+    if (paymentMethod !== undefined && paymentMethod !== null && !PAYMENT_METHODS.includes(paymentMethod)) {
+      return NextResponse.json({ error: "طريقة دفع غير صالحة" }, { status: 400 });
+    }
 
     const donation = await prisma.donation.create({
       data: {
@@ -39,6 +43,7 @@ export async function POST(req: NextRequest) {
         amount: n,
         proof: proof || null,
         donorPhoto: donorPhoto || null,
+        paymentMethod: paymentMethod || null,
         source: "PUBLIC",
         status: "ACTIVE",
       },

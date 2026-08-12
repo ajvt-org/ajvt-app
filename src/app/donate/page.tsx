@@ -204,7 +204,7 @@ function DonatePageInner() {
 
           <div>
             <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              المبلغ <span style={{ color: "var(--copper-500)" }}>*</span>
+              المبلغ (MRU)<span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <input
               type="number"
