@@ -37,12 +37,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "حجم الملف يتجاوز 5 ميغابايت" }, { status: 400 });
     }
 
-    // A logged-in ACTIVE member donating from /home is identified — no
-    // anonymity choice, real name always attributed. Anyone else (no
-    // session, or memberId omitted) stays on the public/anonymous flow this
-    // route was originally built for.
+    // A logged-in ACTIVE member donating from /home is identified — always
+    // linked to their account (memberId), but they can still choose to have
+    // their name withheld on the public leaderboard (donorName stays null).
+    // Anyone else (no session, or memberId omitted) stays on the
+    // public/anonymous flow this route was originally built for.
     let memberId: string | null = null;
     let selfName: string | null = null;
+    let selfAnonymous = false;
     if (typeof memberIdRaw === "string" && memberIdRaw.trim()) {
       const session = await getUserSession();
       if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
@@ -56,10 +58,11 @@ export async function POST(req: NextRequest) {
       }
       memberId = memberIdRaw.trim();
       selfName = member.fullName;
+      selfAnonymous = formData.get("anonymous") === "true";
     }
 
-    let donorName: string | null = selfName;
-    if (!selfName && typeof donorNameRaw === "string" && donorNameRaw.trim()) {
+    let donorName: string | null = selfAnonymous ? null : selfName;
+    if (!memberId && typeof donorNameRaw === "string" && donorNameRaw.trim()) {
       if (donorNameRaw.trim().length > 50) {
         return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
       }

@@ -146,12 +146,12 @@ model Match {
 }
 
 model MatchMvpVote {
-  id        String         @id @default(cuid())
-  matchId   String         @unique
-  match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  status    String         @default("OPEN")
-  createdAt DateTime       @default(now())
-  closedAt  DateTime?
+  id         String         @id @default(cuid())
+  matchId    String         @unique
+  match      Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  status     String         @default("OPEN")
+  createdAt  DateTime       @default(now())
+  closedAt   DateTime?
   candidates MvpCandidate[]
   votes      MvpVote[]
 }
@@ -244,16 +244,17 @@ model Counter {
 }
 
 model Donation {
-  id        String   @id @default(cuid())
-  donorName String? // null = anonymous ("فاعل خير" in the UI)
-  amount    Int?
-  proof     String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
-  status    String   @default("PENDING") // PENDING | ACTIVE | REJECTED — MEMBERSHIP-source rows are always created ACTIVE
-  source    String   @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
-  memberId  String?
-  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  donorName  String? // null = anonymous ("فاعل خير" in the UI) — even when memberId is set (a member chose to stay anonymous)
+  donorPhone String? // recorded for manually-entered donors with no app account, or as a general contact note
+  amount     Int?
+  proof      String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
+  status     String   @default("PENDING") // PENDING | ACTIVE | REJECTED — MEMBERSHIP-source rows are always created ACTIVE
+  source     String   @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
+  memberId   String?
+  member     Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([memberId])
   @@index([status])

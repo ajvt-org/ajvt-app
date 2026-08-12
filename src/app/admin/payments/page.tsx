@@ -2,18 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext, validatePhone } from "@/lib/utils";
 
 interface Proof {
   id: string;
   kind: "MEMBERSHIP" | "ACTIVITY" | "DONATION";
-  proof: string;
+  proof: string | null;
   memberName: string;
   activityTitle: string | null;
   amount: number | null;
   status: string;
   source?: "PUBLIC" | "SELF";
   memberId?: string | null;
+  donorName?: string | null;
+  donorPhone?: string | null;
   uploadedAt: string;
   submittedAt: string;
 }
@@ -26,6 +28,8 @@ interface MemberOption {
 const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
+const emptyManualDonation = { donorName: "", donorPhone: "", amount: "" };
+
 export default function AdminPaymentsPage() {
   const router = useRouter();
   const [proofs, setProofs] = useState<Proof[]>([]);
@@ -35,6 +39,17 @@ export default function AdminPaymentsPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [linkSearch, setLinkSearch] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDonorName, setEditDonorName] = useState("");
+  const [editDonorPhone, setEditDonorPhone] = useState("");
+  const [editAmount, setEditAmount] = useState("");
+  const [editError, setEditError] = useState("");
+
+  const [showManualDonation, setShowManualDonation] = useState(false);
+  const [manualDonation, setManualDonation] = useState(emptyManualDonation);
+  const [manualError, setManualError] = useState("");
+  const [manualLoading, setManualLoading] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -94,6 +109,107 @@ export default function AdminPaymentsPage() {
     }
   }
 
+  function startEdit(p: Proof) {
+    setEditingId(p.id);
+    setEditDonorName(p.donorName || "");
+    setEditDonorPhone(p.donorPhone || "");
+    setEditAmount(p.amount != null ? String(p.amount) : "");
+    setEditError("");
+  }
+
+  async function saveEdit(p: Proof) {
+    setEditError("");
+    if (!p.memberId && !editDonorName.trim()) {
+      setEditError("الاسم مطلوب");
+      return;
+    }
+    const n = editAmount.trim() ? Number(editAmount) : null;
+    if (n !== null && (!Number.isInteger(n) || n <= 0)) {
+      setEditError("المبلغ يجب أن يكون رقماً صحيحاً موجباً");
+      return;
+    }
+    setBusyId(p.id);
+    try {
+      const body: Record<string, unknown> = {
+        donorPhone: editDonorPhone.trim() || null,
+      };
+      if (!p.memberId) body.donorName = editDonorName.trim();
+      if (n !== null) body.amount = n;
+
+      const res = await fetch(`/api/admin/donations/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setProofs((prev) => prev.map((item) => (item.id === p.id && item.kind === "DONATION"
+        ? {
+            ...item,
+            donorName: data.donation.donorName,
+            donorPhone: data.donation.donorPhone,
+            amount: data.donation.amount,
+            memberName: item.memberId ? item.memberName : (data.donation.donorName || "فاعل خير"),
+          }
+        : item)));
+      setEditingId(null);
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function createManualDonation(e: React.FormEvent) {
+    e.preventDefault();
+    setManualError("");
+    if (!manualDonation.donorName.trim()) { setManualError("الاسم مطلوب"); return; }
+    const phoneError = validatePhone(manualDonation.donorPhone);
+    if (phoneError) { setManualError(phoneError); return; }
+    const n = Number(manualDonation.amount);
+    if (!Number.isInteger(n) || n <= 0) { setManualError("المبلغ يجب أن يكون رقماً صحيحاً موجباً"); return; }
+
+    setManualLoading(true);
+    try {
+      const res = await fetch("/api/admin/donations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          donorName: manualDonation.donorName.trim(),
+          donorPhone: manualDonation.donorPhone.trim(),
+          amount: n,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const d = data.donation;
+      setProofs((prev) => [
+        {
+          id: d.id,
+          kind: "DONATION" as const,
+          proof: d.proof,
+          memberName: d.donorName || "فاعل خير",
+          activityTitle: null,
+          amount: d.amount,
+          status: d.status,
+          source: d.source,
+          memberId: d.memberId,
+          donorName: d.donorName,
+          donorPhone: d.donorPhone,
+          uploadedAt: d.updatedAt,
+          submittedAt: d.createdAt,
+        },
+        ...prev,
+      ]);
+      setManualDonation(emptyManualDonation);
+      setShowManualDonation(false);
+    } catch (e) {
+      setManualError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setManualLoading(false);
+    }
+  }
+
   const q = search.trim();
   const filtered = q
     ? proofs.filter((p) => p.memberName.includes(q) || (p.activityTitle || "").includes(q))
@@ -115,9 +231,18 @@ export default function AdminPaymentsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        🧾 كل إثباتات الدفع ({proofs.length})
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          🧾 كل إثباتات الدفع ({proofs.length})
+        </p>
+        <button
+          onClick={() => { setShowManualDonation(true); setManualError(""); }}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
+          ➕ تسجيل تبرع يدوياً
+        </button>
+      </div>
       <input
         type="text"
         placeholder="بحث بالاسم أو النشاط..."
@@ -133,15 +258,24 @@ export default function AdminPaymentsPage() {
           {filtered.map((p) => (
             <div key={`${p.kind}-${p.id}`} className="card p-3">
               <div className="flex items-center gap-3">
-                <a href={`/api/files/${p.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/api/files/${p.proof}`}
-                    alt={p.memberName}
-                    className="w-14 h-14 rounded-lg object-cover"
-                    style={{ border: "1px solid var(--mint-100)" }}
-                  />
-                </a>
+                {p.proof ? (
+                  <a href={`/api/files/${p.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/api/files/${p.proof}`}
+                      alt={p.memberName}
+                      className="w-14 h-14 rounded-lg object-cover"
+                      style={{ border: "1px solid var(--mint-100)" }}
+                    />
+                  </a>
+                ) : (
+                  <div
+                    className="w-14 h-14 rounded-lg flex items-center justify-center text-xl shrink-0"
+                    style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
+                  >
+                    📇
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{p.memberName}</p>
@@ -155,6 +289,9 @@ export default function AdminPaymentsPage() {
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                     {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : p.kind === "ACTIVITY" ? `🏆 ${p.activityTitle}` : "💚 دعم عام للرابطة"}
                   </p>
+                  {p.kind === "DONATION" && p.donorPhone && (
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }} dir="ltr">📞 {p.donorPhone}</p>
+                  )}
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                     رُفعت بتاريخ {new Date(p.uploadedAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })}
                   </p>
@@ -201,6 +338,14 @@ export default function AdminPaymentsPage() {
                           {busyId === p.id ? "..." : "↩️ إعادة تفعيل"}
                         </button>
                       )}
+                      <button
+                        onClick={() => startEdit(p)}
+                        disabled={busyId === p.id}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                      >
+                        ✏️ تعديل
+                      </button>
                       {p.source === "PUBLIC" && (
                         p.memberId ? (
                           <button
@@ -222,6 +367,63 @@ export default function AdminPaymentsPage() {
                           </button>
                         )
                       )}
+                    </div>
+                  )}
+
+                  {editingId === p.id && (
+                    <div className="mt-2 p-2.5 rounded-lg space-y-2" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}>
+                      {!p.memberId && (
+                        <input
+                          type="text"
+                          placeholder="اسم المتبرع"
+                          value={editDonorName}
+                          onChange={(e) => setEditDonorName(e.target.value)}
+                          maxLength={50}
+                          className="input text-xs"
+                          style={{ background: "white" }}
+                        />
+                      )}
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        placeholder="رقم الهاتف (اختياري)"
+                        value={editDonorPhone}
+                        onChange={(e) => setEditDonorPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                        maxLength={8}
+                        className="input text-xs"
+                        style={{ background: "white" }}
+                      />
+                      <input
+                        type="number"
+                        dir="ltr"
+                        placeholder="المبلغ"
+                        value={editAmount}
+                        onChange={(e) => setEditAmount(e.target.value)}
+                        className="input text-xs"
+                        style={{ background: "white" }}
+                      />
+                      {editError && (
+                        <div className="p-2 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                          ⚠️ {editError}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveEdit(p)}
+                          disabled={busyId === p.id}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{ background: "var(--mint-600)", color: "white" }}
+                        >
+                          {busyId === p.id ? "..." : "💾 حفظ"}
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                          style={{ background: "white", color: "var(--text-muted)" }}
+                        >
+                          إلغاء
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -259,6 +461,92 @@ export default function AdminPaymentsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Manual donation add */}
+      {showManualDonation && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowManualDonation(false); }}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">➕ تسجيل تبرع يدوياً</h2>
+              <button
+                onClick={() => setShowManualDonation(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={createManualDonation} className="p-5 space-y-3">
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                لتبرع تلقيته خارج التطبيق نقداً أو تحويلاً — يُحتسب مباشرة في لوحة شرف المتبرعين.
+              </p>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  اسم المتبرع <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={manualDonation.donorName}
+                  onChange={(e) => setManualDonation((p) => ({ ...p, donorName: e.target.value }))}
+                  maxLength={50}
+                  required
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  dir="ltr"
+                  value={manualDonation.donorPhone}
+                  onChange={(e) => setManualDonation((p) => ({ ...p, donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                  placeholder="2XXXXXXX"
+                  maxLength={8}
+                  required
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  المبلغ (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  dir="ltr"
+                  min={1}
+                  value={manualDonation.amount}
+                  onChange={(e) => setManualDonation((p) => ({ ...p, amount: e.target.value }))}
+                  required
+                  className="input"
+                />
+              </div>
+
+              {manualError && (
+                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                  ⚠️ {manualError}
+                </div>
+              )}
+
+              <button type="submit" disabled={manualLoading} className="btn btn-primary text-sm">
+                {manualLoading ? "..." : "تسجيل التبرع"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

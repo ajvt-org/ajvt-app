@@ -47,12 +47,19 @@ export default async function LeaderboardPage() {
                     </td>
                     <td className="px-3 py-2.5 font-bold" style={{ color: "var(--text-main)" }}>
                       <span className="flex items-center gap-2 justify-center">
-                        <span
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
-                          style={{ background: "var(--mint-600)" }}
-                        >
-                          {entry.name.charAt(0)}
-                        </span>
+                        {entry.photo ? (
+                          <span className="w-7 h-7 rounded-full overflow-hidden shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={`/api/files/member/${entry.photo}`} alt={entry.name} className="w-full h-full object-cover" />
+                          </span>
+                        ) : (
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
+                            style={{ background: "var(--mint-600)" }}
+                          >
+                            {entry.name.charAt(0)}
+                          </span>
+                        )}
                         {entry.name}
                       </span>
                     </td>
