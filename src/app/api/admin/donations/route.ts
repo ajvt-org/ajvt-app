@@ -20,8 +20,10 @@ export async function POST(req: NextRequest) {
     if (donorName.trim().length > 50) {
       return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
     }
-    const phoneError = validatePhone(donorPhone);
-    if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
+    if (donorPhone !== undefined && donorPhone !== null && donorPhone !== "") {
+      const phoneError = validatePhone(donorPhone);
+      if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
+    }
     const n = Number(amount);
     if (!Number.isInteger(n) || n <= 0) {
       return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
     const donation = await prisma.donation.create({
       data: {
         donorName: donorName.trim(),
-        donorPhone: donorPhone.trim(),
+        donorPhone: donorPhone?.trim() || null,
         amount: n,
         proof: proof || null,
         donorPhoto: donorPhoto || null,

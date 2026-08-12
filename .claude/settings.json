@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DATABASE_URL=\"postgresql://postgres:Aa20122724@localhost:5432/AJVTAGUI\" npx tsx _tmp_test_intisab_daem.mjs)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s http://localhost:3000/leaderboard)",
+      "Bash('/c/Program Files/PostgreSQL/18/bin/psql.exe' -h localhost -p 5432 -U postgres -d AJVTAGUI -c ' *)",
+      "Bash(curl -s -b /tmp/ajvt-admin-cookies.txt http://localhost:3000/admin/payments -o /dev/null -w 'HTTP:%{http_code}\\\\n')",
+      "Bash(curl -s -b /tmp/ajvt-admin-cookies.txt http://localhost:3000/api/admin/payment-proofs)",
+      "Bash(test -f \"src/app/api/admin/donations/[id]/route.ts\")",
+      "Bash(node \"C:\\\\Users\\\\moham\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-moham-OneDrive-Desktop-ajvt-app\\\\3825b597-e84a-4643-a532-c31e2bdb8bfc\\\\scratchpad\\\\test_donation_delete.mjs\")",
+      "Bash(curl -s -b /tmp/ajvt-admin-cookies.txt -X DELETE http://localhost:3000/api/admin/donations/nonexistent-id-test -w '\\\\nHTTP:%{http_code}\\\\n')",
+      "Bash(node \"C:\\\\Users\\\\moham\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-moham-OneDrive-Desktop-ajvt-app\\\\3825b597-e84a-4643-a532-c31e2bdb8bfc\\\\scratchpad\\\\debug_cookie.mjs\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:Aa20122724@localhost:5432/AJVTAGUI\" npx prisma migrate dev --name member_optional_account)",
+      "Bash(powershell -Command \"Stop-Process -Id 5844 -Force\")",
+      "Bash(curl -s -b /tmp/ajvt-admin-cookies.txt http://localhost:3000/api/admin/members -o /dev/null -w 'HTTP:%{http_code}\\\\n')",
+      "Bash(node \"C:\\\\Users\\\\moham\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-moham-OneDrive-Desktop-ajvt-app\\\\3825b597-e84a-4643-a532-c31e2bdb8bfc\\\\scratchpad\\\\test_unknown_phone_flow.mjs\")",
+      "Bash(curl -s -o /dev/null -w 'HTTP:%{http_code}\\\\n' -b /tmp/ajvt-admin-cookies.txt http://localhost:3000/admin/activities)",
+      "Bash(\"/c/Program Files/PostgreSQL/18/bin/psql.exe\" -h localhost -p 5432 -U postgres -d AJVTAGUI -c \"DELETE FROM \\\\\"User\\\\\" WHERE phone = '22990009';\")"
+    ]
+  }
+}

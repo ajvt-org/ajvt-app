@@ -40,6 +40,7 @@ export default function AdminPaymentsPage() {
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [kindFilter, setKindFilter] = useState<"ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [linkSearch, setLinkSearch] = useState("");
@@ -73,6 +74,21 @@ export default function AdminPaymentsPage() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function deleteDonation(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا التبرع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/admin/donations/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setProofs((prev) => prev.filter((p) => !(p.id === id && p.kind === "DONATION")));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function reviewDonation(id: string, status: "ACTIVE" | "REJECTED") {
     setBusyId(id);
@@ -178,8 +194,10 @@ export default function AdminPaymentsPage() {
     e.preventDefault();
     setManualError("");
     if (!manualDonation.donorName.trim()) { setManualError("الاسم مطلوب"); return; }
-    const phoneError = validatePhone(manualDonation.donorPhone);
-    if (phoneError) { setManualError(phoneError); return; }
+    if (manualDonation.donorPhone.trim()) {
+      const phoneError = validatePhone(manualDonation.donorPhone);
+      if (phoneError) { setManualError(phoneError); return; }
+    }
     const n = Number(manualDonation.amount);
     if (!Number.isInteger(n) || n <= 0) { setManualError("المبلغ يجب أن يكون رقماً صحيحاً موجباً"); return; }
 
@@ -190,7 +208,7 @@ export default function AdminPaymentsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           donorName: manualDonation.donorName.trim(),
-          donorPhone: manualDonation.donorPhone.trim(),
+          donorPhone: manualDonation.donorPhone.trim() || null,
           donorPhoto: manualDonation.donorPhoto || null,
           amount: n,
           paymentMethod: manualDonation.paymentMethod || null,
@@ -229,9 +247,17 @@ export default function AdminPaymentsPage() {
   }
 
   const q = search.trim();
+  const byKind = kindFilter === "ALL" ? proofs : proofs.filter((p) => p.kind === kindFilter);
   const filtered = q
-    ? proofs.filter((p) => p.memberName.includes(q) || (p.activityTitle || "").includes(q))
-    : proofs;
+    ? byKind.filter((p) => p.memberName.includes(q) || (p.activityTitle || "").includes(q))
+    : byKind;
+
+  const KIND_TABS: { key: "ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION"; label: string }[] = [
+    { key: "ALL", label: "الكل" },
+    { key: "MEMBERSHIP", label: "💳 انتساب" },
+    { key: "ACTIVITY", label: "🏆 الأنشطة" },
+    { key: "DONATION", label: "💚 دعم" },
+  ];
 
   const linkQuery = linkSearch.trim();
   const linkResults = linkQuery
@@ -260,6 +286,21 @@ export default function AdminPaymentsPage() {
         >
           ➕ تسجيل تبرع يدوياً
         </button>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {KIND_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setKindFilter(t.key)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
+            style={{
+              background: kindFilter === t.key ? "var(--mint-600)" : "var(--mint-100)",
+              color: kindFilter === t.key ? "white" : "var(--mint-700)",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
       <input
         type="text"
@@ -312,6 +353,8 @@ export default function AdminPaymentsPage() {
                   )}
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                     رُفعت بتاريخ {new Date(p.uploadedAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })}
+                    {" — "}
+                    {new Date(p.uploadedAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                   </p>
 
                   {p.kind === "DONATION" && (
@@ -363,6 +406,14 @@ export default function AdminPaymentsPage() {
                         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                       >
                         ✏️ تعديل
+                      </button>
+                      <button
+                        onClick={() => deleteDonation(p.id)}
+                        disabled={busyId === p.id}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                        style={{ background: "#fee2e2", color: "#991b1b" }}
+                      >
+                        {busyId === p.id ? "..." : "🗑️ حذف نهائياً"}
                       </button>
                       {p.source === "PUBLIC" && (
                         p.memberId ? (
@@ -553,7 +604,7 @@ export default function AdminPaymentsPage() {
               </div>
               <div>
                 <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-                  رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
+                  رقم الهاتف (اختياري)
                 </label>
                 <input
                   type="tel"
@@ -562,7 +613,6 @@ export default function AdminPaymentsPage() {
                   onChange={(e) => setManualDonation((p) => ({ ...p, donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
                   placeholder="2XXXXXXX"
                   maxLength={8}
-                  required
                   className="input"
                 />
               </div>

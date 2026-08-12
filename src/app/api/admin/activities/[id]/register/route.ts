@@ -104,14 +104,16 @@ export async function PATCH(
       `${registration.member.fullName} → ${registration.activity.title}`
     );
 
-    sendPushToUser(registration.member.userId, {
-      title: "رابطة شباب التاكلالت",
-      body:
-        status === "ACTIVE"
-          ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
-          : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${String(reason).trim()}` : ""}`,
-      url: "/home",
-    }).catch((err) => console.error("Registration review push error:", err));
+    if (registration.member.userId) {
+      sendPushToUser(registration.member.userId, {
+        title: "رابطة شباب التاكلالت",
+        body:
+          status === "ACTIVE"
+            ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
+            : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${String(reason).trim()}` : ""}`,
+        url: "/home",
+      }).catch((err) => console.error("Registration review push error:", err));
+    }
 
     return NextResponse.json({ registration: updated });
   } catch (err) {

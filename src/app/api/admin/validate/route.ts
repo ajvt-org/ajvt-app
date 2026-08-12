@@ -34,14 +34,16 @@ export async function POST(req: NextRequest) {
     const transition = existing ? ` (من ${statusLabel[existing.status]} إلى ${statusLabel[action]})` : "";
     await logAction(session.username, action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER", `${updated.fullName}${transition}`);
 
-    sendPushToUser(updated.userId, {
-      title: "رابطة شباب التاكلالت",
-      body:
-        action === "ACTIVE"
-          ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
-          : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
-      url: "/home",
-    }).catch((err) => console.error("Push notify error:", err));
+    if (updated.userId) {
+      sendPushToUser(updated.userId, {
+        title: "رابطة شباب التاكلالت",
+        body:
+          action === "ACTIVE"
+            ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
+            : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
+        url: "/home",
+      }).catch((err) => console.error("Push notify error:", err));
+    }
 
     return NextResponse.json({ member: updated });
   } catch (err) {

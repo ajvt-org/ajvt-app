@@ -17,7 +17,7 @@ export async function notifyTeams(
     }),
   ]);
   const userIds = Array.from(
-    new Set([...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)])
+    new Set([...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter((id): id is string => id !== null))
   );
   await Promise.all(
     userIds.map((uid) => sendPushToUser(uid, payload).catch((err) => console.error("Tournament push error:", err)))

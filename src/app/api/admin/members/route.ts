@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
-import { generateMemberNumber } from "@/lib/member";
+import { generateMemberNumber, generateTempPassword } from "@/lib/member";
 import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
@@ -32,18 +32,16 @@ export async function GET() {
   }
 }
 
-function generateTempPassword(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
-
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("MEMBERS");
-    const { accountPhone, fullName, memberPhone, age, paymentMethod, paymentProof, status, paidAmount } = await req.json();
+    const { accountPhone, fullName, memberPhone, phoneUnknown, age, paymentMethod, paymentProof, status, paidAmount } = await req.json();
 
-    const phoneError = validatePhone(accountPhone);
-    if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-    if (!fullName?.trim() || !memberPhone?.trim() || !age?.trim() || !paymentMethod?.trim()) {
+    if (!phoneUnknown) {
+      const phoneError = validatePhone(accountPhone);
+      if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
+    }
+    if (!fullName?.trim() || (!phoneUnknown && !memberPhone?.trim()) || !age?.trim() || !paymentMethod?.trim()) {
       return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
     }
     if (fullName.trim().length > 30) {
@@ -65,12 +63,16 @@ export async function POST(req: NextRequest) {
       paidAmountValue = Number(paidAmount);
     }
 
-    let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
+    let userId: string | null = null;
     let tempPassword: string | undefined;
-    if (!user) {
-      tempPassword = generateTempPassword();
-      const hashed = await bcrypt.hash(tempPassword, 12);
-      user = await prisma.user.create({ data: { phone: accountPhone.trim(), password: hashed } });
+    if (!phoneUnknown) {
+      let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
+      if (!user) {
+        tempPassword = generateTempPassword();
+        const hashed = await bcrypt.hash(tempPassword, 12);
+        user = await prisma.user.create({ data: { phone: accountPhone.trim(), password: hashed } });
+      }
+      userId = user.id;
     }
 
     const memberNumber = status === "ACTIVE" ? await generateMemberNumber() : undefined;
@@ -78,9 +80,9 @@ export async function POST(req: NextRequest) {
     const member = await prisma.$transaction(async (tx) => {
       const m = await tx.member.create({
         data: {
-          userId: user.id,
+          userId,
           fullName: fullName.trim(),
-          phone: memberPhone.trim(),
+          phone: phoneUnknown ? null : memberPhone.trim(),
           age: age.trim(),
           paymentMethod,
           paymentProof: paymentProof || null,

@@ -11,7 +11,7 @@ interface Registration {
   status: "PENDING" | "ACTIVE" | "REJECTED";
   paymentProof: string | null;
   rejectionReason: string | null;
-  member: { id: string; fullName: string; phone: string; age: string };
+  member: { id: string; fullName: string; phone: string | null; age: string };
 }
 
 interface Activity {
@@ -33,7 +33,7 @@ interface Activity {
 interface MemberOption {
   id: string;
   fullName: string;
-  phone: string;
+  phone: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
 }
 
@@ -68,7 +68,7 @@ export default function AdminActivitiesPage() {
       const activitiesData = await activitiesRes.json();
       const membersData = await membersRes.json();
       setActivities(activitiesData.activities || []);
-      setMembers((membersData.members || []).map((m: { id: string; fullName: string; phone: string; status: string }) => ({
+      setMembers((membersData.members || []).map((m: { id: string; fullName: string; phone: string | null; status: string }) => ({
         id: m.id, fullName: m.fullName, phone: m.phone, status: m.status,
       })));
     } catch {
@@ -296,7 +296,7 @@ export default function AdminActivitiesPage() {
           const candidates = members.filter((m) => {
             if (registeredIds.has(m.id)) return false;
             const q = (memberSearch[a.id] || "").trim();
-            return !q || m.fullName.includes(q) || m.phone.includes(q);
+            return !q || m.fullName.includes(q) || (m.phone || "").includes(q);
           });
           return (
             <div key={a.id} className="card p-4">
@@ -438,7 +438,7 @@ export default function AdminActivitiesPage() {
                         <div key={r.id} className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--mint-50)" }}>
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-semibold" style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
-                            <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone}</span>
+                            <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone || "غير معروف"}</span>
                           </div>
                           {r.paymentProof && (
                             <a href={`/api/files/${r.paymentProof}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold inline-block" style={{ color: "var(--mint-700)" }}>
@@ -507,7 +507,7 @@ export default function AdminActivitiesPage() {
                         <div key={r.id} className="flex items-center justify-between text-xs">
                           <span style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
                           <div className="flex items-center gap-2">
-                            <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone}</span>
+                            <span style={{ color: "var(--text-muted)" }} dir="ltr">{r.member.phone || "غير معروف"}</span>
                             <button
                               onClick={() => unregisterMember(a.id, r.member.id)}
                               className="font-bold px-2 py-0.5 rounded"

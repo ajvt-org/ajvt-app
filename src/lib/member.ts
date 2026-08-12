@@ -12,3 +12,7 @@ export async function generateMemberNumber(): Promise<string> {
   const seq = String(counter.value).padStart(4, "0");
   return `AJVT-${year}-${seq}`;
 }
+
+export function generateTempPassword(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}

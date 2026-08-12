@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (target === "AGE") where.age = age.trim();
 
     const members = await prisma.member.findMany({ where, select: { userId: true } });
-    const userIds = Array.from(new Set(members.map((m) => m.userId)));
+    const userIds = Array.from(new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)));
 
     await Promise.all(
       userIds.map((uid) =>
