@@ -3,7 +3,11 @@
 
 export const MEMBERSHIP_FEE = 100;
 
-export const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
+// Self-service flows (membership form, public donate form) require a
+// transfer-proof screenshot, so cash isn't an option there — only admin
+// contexts (manual entry/edit, where the admin vouches in person) allow it.
+export const ONLINE_PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
+export const PAYMENT_METHODS = [...ONLINE_PAYMENT_METHODS, "نقداً"];
 
 export function validatePaidAmount(v: unknown): string | null {
   const n = Number(v);

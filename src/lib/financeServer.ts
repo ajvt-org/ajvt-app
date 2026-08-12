@@ -37,7 +37,7 @@ export async function getFinanceSummary(recentDays = 30) {
     }),
     prisma.donation.findMany({
       where: { status: "ACTIVE", source: { not: "MEMBERSHIP" } },
-      select: { amount: true, paymentMethod: true, createdAt: true, donorName: true },
+      select: { id: true, amount: true, paymentMethod: true, createdAt: true, donorName: true },
     }),
     prisma.expense.findMany({ select: { amount: true } }),
   ]);
@@ -75,6 +75,8 @@ export async function getFinanceSummary(recentDays = 30) {
     addNamed(intisabByMethod, key, m.fullName, m.paidAmount ?? 0);
   }
 
+  const unassigned: { id: string; name: string; amount: number }[] = [];
+
   for (const d of donations) {
     const key = addRevenue(d.amount ?? 0, d.paymentMethod, d.createdAt);
     const name = d.donorName?.trim();
@@ -82,6 +84,9 @@ export async function getFinanceSummary(recentDays = 30) {
       addNamed(daemByMethod, key, name, d.amount ?? 0);
     } else {
       anonymousByMethod.set(key, (anonymousByMethod.get(key) || 0) + (d.amount ?? 0));
+    }
+    if (!d.paymentMethod) {
+      unassigned.push({ id: d.id, name: name || "فاعل خير", amount: d.amount ?? 0 });
     }
   }
 
@@ -107,6 +112,7 @@ export async function getFinanceSummary(recentDays = 30) {
   return {
     byMethod,
     byMethodDetail,
+    unassigned,
     days,
     totalRevenue,
     totalExpenses,
