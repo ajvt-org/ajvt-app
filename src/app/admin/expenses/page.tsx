@@ -15,8 +15,20 @@ interface Expense {
   createdBy: string;
 }
 
+interface NamedEntry {
+  name: string;
+  amount: number;
+}
+
+interface MethodDetail {
+  intisab: NamedEntry[];
+  daem: NamedEntry[];
+  anonymousTotal: number;
+}
+
 interface FinanceSummary {
   byMethod: Record<string, number>;
+  byMethodDetail: Record<string, MethodDetail>;
   days: { date: string; total: number; byMethod: Record<string, number> }[];
   totalRevenue: number;
   totalExpenses: number;
@@ -41,6 +53,15 @@ export default function AdminExpensesPage() {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
+
+  function toggleMethod(method: string) {
+    setExpandedMethods((prev) => {
+      const next = new Set(prev);
+      if (next.has(method)) next.delete(method); else next.add(method);
+      return next;
+    });
+  }
 
   function load() {
     return Promise.all([
@@ -165,13 +186,67 @@ export default function AdminExpensesPage() {
         {byMethod.length === 0 ? (
           <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>لا توجد بيانات بعد</p>
         ) : (
-          <div className="space-y-1.5">
-            {byMethod.map(([method, total]) => (
-              <div key={method} className="flex items-center justify-between text-xs">
-                <span style={{ color: "var(--text-main)" }} className="truncate">{method}</span>
-                <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{total} أوقية</span>
-              </div>
-            ))}
+          <div className="space-y-2">
+            {byMethod.map(([method, total]) => {
+              const detail = summary?.byMethodDetail?.[method];
+              const expanded = expandedMethods.has(method);
+              return (
+                <div key={method}>
+                  <button
+                    type="button"
+                    onClick={() => toggleMethod(method)}
+                    className="w-full flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span style={{ color: "var(--mint-600)" }}>{expanded ? "▾" : "◂"}</span>
+                      <span style={{ color: "var(--text-main)" }} className="font-bold truncate">{method}</span>
+                    </span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{total} أوقية</span>
+                  </button>
+
+                  {expanded && detail && (
+                    <div className="mt-2 mr-4 space-y-2.5 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                      <div>
+                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>1- انتساب</p>
+                        {detail.intisab.length === 0 ? (
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد</p>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {detail.intisab.map((entry, i) => (
+                              <div key={i} className="flex items-center justify-between text-xs">
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>{entry.name}</span>
+                                <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>2- دعم</p>
+                        {detail.daem.length === 0 ? (
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد</p>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {detail.daem.map((entry, i) => (
+                              <div key={i} className="flex items-center justify-between text-xs">
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>{entry.name}</span>
+                                <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {detail.anonymousTotal > 0 && (
+                        <div className="flex items-center justify-between text-xs pt-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                          <span style={{ color: "var(--text-muted)" }}>🤍 فاعل خير</span>
+                          <span className="font-bold shrink-0" style={{ color: "var(--text-muted)" }}>{detail.anonymousTotal} أوقية</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
