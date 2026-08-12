@@ -79,6 +79,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [role, setRole] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingTeamRequests, setPendingTeamRequests] = useState(0);
+  const [pendingDonations, setPendingDonations] = useState(0);
   const [permissionDenied, setPermissionDenied] = useState(false);
 
   const [showMenu, setShowMenu] = useState(false);
@@ -121,6 +122,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         if (!data) return;
         setPendingCount(data.pendingMembers || 0);
         setPendingTeamRequests(data.pendingTeamRequests || 0);
+        setPendingDonations(data.pendingDonations || 0);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -354,6 +356,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
                 >
                   {pendingTeamRequests > 9 ? "9+" : pendingTeamRequests}
+                </span>
+              )}
+              {tab.href === "/admin/payments" && pendingDonations > 0 && (
+                <span
+                  className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
+                  style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
+                >
+                  {pendingDonations > 9 ? "9+" : pendingDonations}
                 </span>
               )}
             </button>
