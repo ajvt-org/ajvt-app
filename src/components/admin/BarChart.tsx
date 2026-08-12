@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface BarChartProps {
   data: { label: string; value: number }[];
   height?: number;
@@ -7,42 +9,66 @@ interface BarChartProps {
 }
 
 export default function BarChart({ data, height = 120, color = "var(--mint-600)" }: BarChartProps) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   if (data.length === 0) return null;
+
   const max = Math.max(1, ...data.map((d) => d.value));
-  const barWidth = 100 / data.length;
+  const peakIndex = data.reduce((best, d, i) => (d.value > data[best].value ? i : best), 0);
 
   return (
     <div>
-      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" style={{ width: "100%", height }}>
+      <div
+        className="flex items-stretch gap-[2px]"
+        style={{ height, direction: "ltr", borderBottom: "1px solid var(--mint-100)" }}
+      >
         {data.map((d, i) => {
-          const barHeight = (d.value / max) * (height - 20);
-          const x = i * barWidth;
+          const pct = (d.value / max) * 100;
+          const active = activeIndex === i;
+          const showLabel = d.value > 0 && (active || i === peakIndex);
           return (
-            <g key={i}>
-              <rect
-                x={x + barWidth * 0.15}
-                y={height - 20 - barHeight}
-                width={barWidth * 0.7}
-                height={barHeight}
-                fill={color}
-                rx={1}
+            <div
+              key={i}
+              className="relative flex-1"
+              tabIndex={d.value > 0 ? 0 : undefined}
+              role={d.value > 0 ? "img" : undefined}
+              aria-label={d.value > 0 ? `${d.label}: ${d.value}` : undefined}
+              onMouseEnter={() => setActiveIndex(i)}
+              onMouseLeave={() => setActiveIndex((h) => (h === i ? null : h))}
+              onFocus={() => setActiveIndex(i)}
+              onBlur={() => setActiveIndex((h) => (h === i ? null : h))}
+              style={{ outline: "none" }}
+            >
+              {showLabel && (
+                <span
+                  className="absolute font-bold whitespace-nowrap"
+                  style={{
+                    bottom: `calc(${pct}% + 4px)`,
+                    insetInlineStart: "50%",
+                    transform: "translateX(-50%)",
+                    fontSize: "10px",
+                    color: "var(--text-main)",
+                  }}
+                >
+                  {d.value}
+                </span>
+              )}
+              <div
+                className="absolute bottom-0 mx-auto inset-x-0"
+                style={{
+                  height: `${pct}%`,
+                  maxWidth: 22,
+                  background: active ? "var(--mint-700)" : color,
+                  borderRadius: "4px 4px 0 0",
+                  transition: "background 0.15s",
+                }}
               />
-              <text
-                x={x + barWidth / 2}
-                y={height - 20 - barHeight - 3}
-                textAnchor="middle"
-                fontSize="6"
-                fill="var(--text-main)"
-              >
-                {d.value > 0 ? d.value : ""}
-              </text>
-            </g>
+            </div>
           );
         })}
-      </svg>
-      <div className="flex" style={{ direction: "ltr" }}>
+      </div>
+      <div className="flex gap-[2px] mt-1" style={{ direction: "ltr" }}>
         {data.map((d, i) => (
-          <div key={i} style={{ width: `${barWidth}%` }} className="text-center">
+          <div key={i} className="flex-1 text-center">
             <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{d.label}</span>
           </div>
         ))}

@@ -7,12 +7,10 @@ import Link from "next/link";
 import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
-import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
+import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
-
-const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
 
 const PAYMENT_CODES: Record<string, string> = {
   "بنكيلي": "027217",

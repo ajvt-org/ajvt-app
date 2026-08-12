@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getUploadDir } from "@/app/api/upload/route";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
+import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
     const donorNameRaw = formData.get("donorName");
     const amountRaw = formData.get("amount");
     const memberIdRaw = formData.get("memberId");
+    const paymentMethodRaw = formData.get("paymentMethod");
 
     if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -75,6 +77,11 @@ export async function POST(req: NextRequest) {
     }
     const amount = n;
 
+    if (typeof paymentMethodRaw !== "string" || !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)) {
+      return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
+    }
+    const paymentMethod = paymentMethodRaw;
+
     const ext = file.name.split(".").pop() || "jpg";
     const filename = `${uuidv4()}.${ext}`;
     const uploadDir = getUploadDir();
@@ -85,6 +92,7 @@ export async function POST(req: NextRequest) {
       data: {
         donorName,
         amount,
+        paymentMethod,
         proof: filename,
         memberId,
         source: memberId ? "SELF" : "PUBLIC",

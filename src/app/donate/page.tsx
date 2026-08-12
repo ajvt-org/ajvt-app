@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
+import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 
 export default function DonatePage() {
   return (
@@ -32,6 +33,7 @@ function DonatePageInner() {
   const [wantsName, setWantsName] = useState<boolean | null>(null);
   const [donorName, setDonorName] = useState("");
   const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -69,12 +71,17 @@ function DonatePageInner() {
       setError("يرجى إدخال مبلغ التبرع");
       return;
     }
+    if (!paymentMethod) {
+      setError("يرجى اختيار طريقة الدفع");
+      return;
+    }
 
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append("file", selectedFile);
       fd.append("amount", amount.trim());
+      fd.append("paymentMethod", paymentMethod);
       if (lockedMember) {
         fd.append("memberId", lockedMember.id);
         if (wantsName === false) fd.append("anonymous", "true");
@@ -217,6 +224,29 @@ function DonatePageInner() {
               className="input"
               dir="ltr"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+              طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {PAYMENT_METHODS.map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  onClick={() => setPaymentMethod(method)}
+                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                  style={{
+                    background: paymentMethod === method ? "var(--mint-600)" : "white",
+                    color: paymentMethod === method ? "white" : "var(--mint-700)",
+                    borderColor: paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                  }}
+                >
+                  {method}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>

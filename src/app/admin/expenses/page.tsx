@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
+import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 
 interface Expense {
@@ -26,9 +27,16 @@ interface MethodDetail {
   anonymousTotal: number;
 }
 
+interface UnassignedDonation {
+  id: string;
+  name: string;
+  amount: number;
+}
+
 interface FinanceSummary {
   byMethod: Record<string, number>;
   byMethodDetail: Record<string, MethodDetail>;
+  unassigned: UnassignedDonation[];
   days: { date: string; total: number; byMethod: Record<string, number> }[];
   totalRevenue: number;
   totalExpenses: number;
@@ -43,9 +51,12 @@ function todayInputValue() {
 
 export default function AdminExpensesPage() {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reassignValue, setReassignValue] = useState<Record<string, string>>({});
+  const [reassigningId, setReassigningId] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -78,8 +89,32 @@ export default function AdminExpensesPage() {
 
   useEffect(() => {
     load().finally(() => setLoading(false));
+    fetch("/api/admin/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.role) setRole(data.role); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function reassignPaymentMethod(id: string) {
+    const method = reassignValue[id];
+    if (!method) return;
+    setReassigningId(id);
+    try {
+      const res = await fetch(`/api/admin/donations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethod: method }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setReassigningId(null);
+    }
+  }
 
   function openCreate() {
     setEditingId(null);
@@ -214,7 +249,7 @@ export default function AdminExpensesPage() {
                           <div className="space-y-0.5">
                             {detail.intisab.map((entry, i) => (
                               <div key={i} className="flex items-center justify-between text-xs">
-                                <span className="truncate" style={{ color: "var(--text-main)" }}>{entry.name}</span>
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>{i + 1}. {entry.name}</span>
                                 <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
                               </div>
                             ))}
@@ -229,7 +264,7 @@ export default function AdminExpensesPage() {
                           <div className="space-y-0.5">
                             {detail.daem.map((entry, i) => (
                               <div key={i} className="flex items-center justify-between text-xs">
-                                <span className="truncate" style={{ color: "var(--text-main)" }}>{entry.name}</span>
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>{i + 1}. {entry.name}</span>
                                 <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
                               </div>
                             ))}
@@ -250,6 +285,42 @@ export default function AdminExpensesPage() {
           </div>
         )}
       </div>
+
+      {/* Reassign donations with no payment method set — SUPER only, same scope as donation management */}
+      {role === "SUPER" && summary && summary.unassigned.length > 0 && (
+        <div className="card p-4">
+          <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+            💳 مبالغ بلا طريقة دفع محددة ({summary.unassigned.length})
+          </p>
+          <div className="space-y-2">
+            {summary.unassigned.map((u) => (
+              <div key={u.id} className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold truncate" style={{ color: "var(--text-main)" }}>{u.name}</p>
+                  <p className="text-xs" style={{ color: "var(--mint-600)" }}>{u.amount} أوقية</p>
+                </div>
+                <select
+                  value={reassignValue[u.id] || ""}
+                  onChange={(e) => setReassignValue((p) => ({ ...p, [u.id]: e.target.value }))}
+                  className="input text-xs"
+                  style={{ width: "auto" }}
+                >
+                  <option value="">اختر طريقة الدفع...</option>
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <button
+                  onClick={() => reassignPaymentMethod(u.id)}
+                  disabled={!reassignValue[u.id] || reassigningId === u.id}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+                  style={{ background: "var(--mint-600)", color: "white" }}
+                >
+                  {reassigningId === u.id ? "..." : "حفظ"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Daily revenue, last 30 days */}
       <div className="card p-4">
