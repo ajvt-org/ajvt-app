@@ -39,29 +39,35 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
 interface LeaderboardEntry {
   rank: number;
   name: string;
+  photo: string | null;
   total: number;
 }
 
 export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[]; anonymousTotal: number }> {
   const donations = await prisma.donation.findMany({
     where: { status: "ACTIVE" },
-    select: { amount: true, donorName: true, memberId: true, member: { select: { fullName: true } } },
+    select: { amount: true, donorName: true, memberId: true, member: { select: { fullName: true, photo: true } } },
   });
 
-  const byKey = new Map<string, { name: string; total: number }>();
+  const byKey = new Map<string, { name: string; photo: string | null; total: number }>();
   let anonymousTotal = 0;
 
   for (const d of donations) {
     const amount = d.amount ?? 0;
-    if (d.memberId) {
+    // memberId set + donorName present -> attributed & shown with photo (the
+    // member's real name, whether from the automatic membership surplus or a
+    // logged-in donation they chose to attribute to themselves).
+    // memberId set + donorName null -> the member explicitly chose to stay
+    // anonymous for this donation; don't out them just because we know who
+    // they are internally.
+    if (d.memberId && d.donorName) {
       const key = `m:${d.memberId}`;
-      const name = d.member?.fullName ?? "عضو الرابطة";
-      const entry = byKey.get(key) ?? { name, total: 0 };
+      const entry = byKey.get(key) ?? { name: d.donorName, photo: d.member?.photo ?? null, total: 0 };
       entry.total += amount;
       byKey.set(key, entry);
-    } else if (d.donorName?.trim()) {
+    } else if (!d.memberId && d.donorName?.trim()) {
       const key = `n:${d.donorName.trim()}`;
-      const entry = byKey.get(key) ?? { name: d.donorName.trim(), total: 0 };
+      const entry = byKey.get(key) ?? { name: d.donorName.trim(), photo: null, total: 0 };
       entry.total += amount;
       byKey.set(key, entry);
     } else {

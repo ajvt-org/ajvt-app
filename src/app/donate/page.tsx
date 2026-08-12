@@ -45,6 +45,7 @@ function DonatePageInner() {
       .then((data) => {
         if (data && data.status === "ACTIVE") {
           setLockedMember({ id: data.id, fullName: data.fullName });
+          setWantsName(true);
         }
       })
       .catch(() => {})
@@ -76,6 +77,7 @@ function DonatePageInner() {
       fd.append("amount", amount.trim());
       if (lockedMember) {
         fd.append("memberId", lockedMember.id);
+        if (wantsName === false) fd.append("anonymous", "true");
       } else if (donorName.trim()) {
         fd.append("donorName", donorName.trim());
       }
@@ -217,64 +219,57 @@ function DonatePageInner() {
             />
           </div>
 
-          {lockedMember ? (
-            <div className="card p-4 flex items-center justify-between gap-3">
-              <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>سيُسجَّل التبرع باسم</span>
-              <span className="text-sm font-black" style={{ color: "var(--mint-700)" }}>{lockedMember.fullName}</span>
+          <div>
+            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+              هل تريد ذكر اسمك مع التبرع؟
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setWantsName(true)}
+                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                style={{
+                  background: wantsName === true ? "var(--mint-600)" : "white",
+                  color: wantsName === true ? "white" : "var(--mint-700)",
+                  borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
+                }}
+              >
+                ✍️ نعم{lockedMember ? ` — ${lockedMember.fullName}` : "، باسمي"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setWantsName(false); setDonorName(""); }}
+                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                style={{
+                  background: wantsName === false ? "var(--mint-600)" : "white",
+                  color: wantsName === false ? "white" : "var(--mint-700)",
+                  borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
+                }}
+              >
+                🤍 أفضّل أن أبقى مجهولاً
+              </button>
             </div>
-          ) : (
-            <div>
-              <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-                هل تريد ذكر اسمك مع التبرع؟
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWantsName(true)}
-                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                  style={{
-                    background: wantsName === true ? "var(--mint-600)" : "white",
-                    color: wantsName === true ? "white" : "var(--mint-700)",
-                    borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
-                  }}
-                >
-                  ✍️ نعم، باسمي
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setWantsName(false); setDonorName(""); }}
-                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                  style={{
-                    background: wantsName === false ? "var(--mint-600)" : "white",
-                    color: wantsName === false ? "white" : "var(--mint-700)",
-                    borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
-                  }}
-                >
-                  🤍 أفضّل أن أبقى مجهولاً
-                </button>
-              </div>
 
-              {wantsName === true && (
-                <input
-                  type="text"
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                  placeholder="اكتب اسمك هنا"
-                  maxLength={50}
-                  className="input mt-2"
-                  autoFocus
-                />
-              )}
+            {!lockedMember && wantsName === true && (
+              <input
+                type="text"
+                value={donorName}
+                onChange={(e) => setDonorName(e.target.value)}
+                placeholder="اكتب اسمك هنا"
+                maxLength={50}
+                className="input mt-2"
+                autoFocus
+              />
+            )}
 
-              <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-                {wantsName === false
-                  ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم."
-                  : wantsName === true
-                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
-                  : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
-              </p>
-            </div>
-          )}
+            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+              {wantsName === false
+                ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم."
+                : wantsName === true
+                ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
+                : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
+            </p>
+          </div>
 
           <div>
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
