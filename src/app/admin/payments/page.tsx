@@ -32,7 +32,7 @@ interface MemberOption {
 const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
-const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "", paymentMethod: "" };
+const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "", paymentMethod: "", proof: "" };
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
@@ -51,6 +51,7 @@ export default function AdminPaymentsPage() {
   const [editDonorPhoto, setEditDonorPhoto] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [editPaymentMethod, setEditPaymentMethod] = useState("");
+  const [editProof, setEditProof] = useState<string | null>(null);
   const [editError, setEditError] = useState("");
 
   const [showManualDonation, setShowManualDonation] = useState(false);
@@ -138,6 +139,7 @@ export default function AdminPaymentsPage() {
     setEditDonorPhoto(p.donorPhoto || null);
     setEditAmount(p.amount != null ? String(p.amount) : "");
     setEditPaymentMethod(p.paymentMethod || "");
+    setEditProof(p.proof || null);
     setEditError("");
   }
 
@@ -157,6 +159,7 @@ export default function AdminPaymentsPage() {
       const body: Record<string, unknown> = {
         donorPhone: editDonorPhone.trim() || null,
         paymentMethod: editPaymentMethod || null,
+        proof: editProof,
       };
       if (!p.memberId) {
         body.donorName = editDonorName.trim();
@@ -179,6 +182,7 @@ export default function AdminPaymentsPage() {
             donorPhoto: data.donation.donorPhoto,
             amount: data.donation.amount,
             paymentMethod: data.donation.paymentMethod,
+            proof: data.donation.proof,
             memberName: item.memberId ? item.memberName : (data.donation.donorName || "فاعل خير"),
           }
         : item)));
@@ -212,6 +216,7 @@ export default function AdminPaymentsPage() {
           donorPhoto: manualDonation.donorPhoto || null,
           amount: n,
           paymentMethod: manualDonation.paymentMethod || null,
+          proof: manualDonation.proof || null,
         }),
       });
       const data = await res.json();
@@ -441,6 +446,13 @@ export default function AdminPaymentsPage() {
 
                   {editingId === p.id && (
                     <div className="mt-2 p-2.5 rounded-lg space-y-2" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}>
+                      <PhotoUpload
+                        photo={editProof}
+                        variant="cover"
+                        label="إثبات الدفع"
+                        placeholderIcon="🧾"
+                        onUpload={(filename) => setEditProof(filename)}
+                      />
                       {!p.memberId && (
                         <>
                           <PhotoUpload
@@ -588,6 +600,13 @@ export default function AdminPaymentsPage() {
                 label="صورة المتبرع (اختياري)"
                 placeholderIcon="👤"
                 onUpload={(filename) => setManualDonation((p) => ({ ...p, donorPhoto: filename }))}
+              />
+              <PhotoUpload
+                photo={manualDonation.proof || null}
+                variant="cover"
+                label="إثبات الدفع (اختياري — يمكن إضافته لاحقاً)"
+                placeholderIcon="🧾"
+                onUpload={(filename) => setManualDonation((p) => ({ ...p, proof: filename }))}
               />
               <div>
                 <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
