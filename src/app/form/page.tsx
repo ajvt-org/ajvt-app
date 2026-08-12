@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
@@ -296,6 +297,22 @@ function FormPageInner() {
       </div>
 
       <div className="px-5 py-6 pb-10">
+
+        {/* Purpose of membership */}
+        <div
+          className="rounded-2xl p-4 mb-4 fade-up text-center"
+          style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+        >
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            🏆 الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
+          </p>
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
+            <Link href="/donate" className="font-bold" style={{ color: "var(--mint-600)" }}>
+              تبرّع من هنا
+            </Link>
+          </p>
+        </div>
 
         {/* Payment info banner */}
         <div
