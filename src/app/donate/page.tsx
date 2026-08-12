@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
@@ -21,11 +21,13 @@ export default function DonatePage() {
 }
 
 function DonatePageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const memberId = searchParams.get("memberId");
 
   const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
   const [checkingMember, setCheckingMember] = useState(!!memberId);
+  const [confirmedAnonymous, setConfirmedAnonymous] = useState(false);
 
   const [wantsName, setWantsName] = useState<boolean | null>(null);
   const [donorName, setDonorName] = useState("");
@@ -112,6 +114,63 @@ function DonatePageInner() {
     );
   }
 
+  // Anonymous visitor (no account, not donating as a known ACTIVE member) —
+  // make sure they know a donation isn't membership before they proceed:
+  // no account, no membership card, no activities. Skipped entirely for a
+  // signed-in ACTIVE member donating from /home (lockedMember already set).
+  if (!lockedMember && !confirmedAnonymous) {
+    return (
+      <div className="app-shell">
+        <div
+          className="px-5 py-4 flex items-center gap-3"
+          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+        >
+          <Image src="/version-final.png" alt="شعار" width={38} height={38} />
+          <div>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
+            <h1 className="text-base font-black text-white">دعم الرابطة</h1>
+          </div>
+        </div>
+
+        <div className="px-5 py-6 pb-10 space-y-5">
+          <div className="card p-5 fade-up">
+            <div className="text-3xl mb-2 text-center">💚</div>
+            <p className="text-sm font-bold mb-2 text-center" style={{ color: "var(--text-main)" }}>
+              أنت على وشك التبرع بدون إنشاء حساب
+            </p>
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              بدون حساب لن يكون لديك بطاقة عضوية رقمية، ولن تتمكن من المشاركة في أنشطة وفعاليات الرابطة — التبرع هنا يبقى دعماً عاماً منفصلاً عن العضوية.
+            </p>
+          </div>
+
+          <div className="card p-5 fade-up delay-1" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}>
+            <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              🏆 الاشتراك في الرابطة (100 أوقية على الأقل) يتيح لك:
+            </p>
+            <ul className="text-sm space-y-1" style={{ color: "var(--text-muted)" }}>
+              <li>• المشاركة في الأنشطة والفعاليات</li>
+              <li>• بطاقة عضوية رقمية بمعرّف خاص بك</li>
+              <li>• أي مبلغ زائد عن 100 يُحتسب تلقائياً كتبرّع باسمك</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2.5 fade-up delay-2">
+            <button onClick={() => router.push("/register")} className="btn btn-primary">
+              🎓 إنشاء حساب والانضمام للرابطة
+            </button>
+            <button
+              onClick={() => setConfirmedAnonymous(true)}
+              className="btn"
+              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+            >
+              💚 المتابعة والتبرع بدون حساب
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <div
@@ -131,7 +190,7 @@ function DonatePageInner() {
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             {lockedMember
               ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
-              : "يمكنك دعم الرابطة بأي مبلغ تختاره دون الحاجة لإنشاء حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
+              : "تتابع الآن كمتبرع بدون حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
           </p>
           <Link href="/leaderboard" className="text-xs font-bold mt-2 inline-block" style={{ color: "var(--mint-600)" }}>
             🏆 شاهد لوحة شرف المتبرعين

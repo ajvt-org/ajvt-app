@@ -39,7 +39,18 @@ export async function GET() {
             // membership payment (same proof, same admin action) — showing
             // them again here would duplicate the MEMBERSHIP-kind card above.
             where: { source: { not: "MEMBERSHIP" } },
-            select: { id: true, donorName: true, amount: true, proof: true, status: true, createdAt: true, updatedAt: true },
+            select: {
+              id: true,
+              donorName: true,
+              amount: true,
+              proof: true,
+              status: true,
+              source: true,
+              memberId: true,
+              member: { select: { fullName: true } },
+              createdAt: true,
+              updatedAt: true,
+            },
             orderBy: { createdAt: "desc" },
           })
         : Promise.resolve([]),
@@ -72,10 +83,12 @@ export async function GET() {
         id: d.id,
         kind: "DONATION" as const,
         proof: d.proof as string,
-        memberName: d.donorName || "فاعل خير",
+        memberName: d.member?.fullName || d.donorName || "فاعل خير",
         activityTitle: null as string | null,
         amount: d.amount,
         status: d.status,
+        source: d.source,
+        memberId: d.memberId,
         uploadedAt: d.updatedAt,
         submittedAt: d.createdAt,
       })),
