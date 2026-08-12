@@ -33,11 +33,21 @@ interface UnassignedDonation {
   amount: number;
 }
 
+interface DayRecord {
+  date: string;
+  time: string;
+  name: string;
+  amount: number;
+  method: string;
+  kind: "انتساب" | "دعم";
+}
+
 interface FinanceSummary {
   byMethod: Record<string, number>;
   byMethodDetail: Record<string, MethodDetail>;
   unassigned: UnassignedDonation[];
-  days: { date: string; total: number; byMethod: Record<string, number> }[];
+  days: { date: string; total: number; byMethod: Record<string, number>; records: DayRecord[] }[];
+  allRecords: DayRecord[];
   totalRevenue: number;
   totalExpenses: number;
   net: number;
@@ -65,6 +75,7 @@ export default function AdminExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
   function toggleMethod(method: string) {
     setExpandedMethods((prev) => {
@@ -72,6 +83,31 @@ export default function AdminExpensesPage() {
       if (next.has(method)) next.delete(method); else next.add(method);
       return next;
     });
+  }
+
+  function toggleDay(date: string) {
+    setExpandedDays((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date); else next.add(date);
+      return next;
+    });
+  }
+
+  function exportCSV() {
+    const headers = ["التاريخ", "النوع", "الاسم / الوصف", "التصنيف", "طريقة الدفع", "المبلغ"];
+    const revenueRows = (summary?.allRecords || []).map((r) => [r.date, "إيراد", r.name, r.kind, r.method, r.amount]);
+    const expenseRows = expenses.map((e) => [e.date.slice(0, 10), "مصروف", e.label, "مصروف", "-", e.amount]);
+    const rows = [...revenueRows, ...expenseRows].sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+    const csv = "﻿" + [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `finance-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function load() {
@@ -197,7 +233,16 @@ export default function AdminExpensesPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>💸 المصاريف والإيرادات</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>💸 المصاريف والإيرادات</p>
+        <button
+          onClick={exportCSV}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
+          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+        >
+          📥 تصدير CSV
+        </button>
+      </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-2">
@@ -328,13 +373,43 @@ export default function AdminExpensesPage() {
         {days.length === 0 ? (
           <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>لا توجد إيرادات في هذه الفترة</p>
         ) : (
-          <div className="space-y-1.5 max-h-64 overflow-y-auto">
-            {days.map((d) => (
-              <div key={d.date} className="flex items-center justify-between text-xs" dir="ltr">
-                <span style={{ color: "var(--text-main)" }}>{d.date}</span>
-                <span className="font-black" style={{ color: "var(--mint-600)" }}>{d.total} أوقية</span>
-              </div>
-            ))}
+          <div className="space-y-1.5 max-h-80 overflow-y-auto">
+            {days.map((d) => {
+              const expandedDay = expandedDays.has(d.date);
+              return (
+                <div key={d.date}>
+                  <button
+                    type="button"
+                    onClick={() => toggleDay(d.date)}
+                    className="w-full flex items-center justify-between text-xs"
+                    dir="ltr"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span style={{ color: "var(--mint-600)" }}>{expandedDay ? "▾" : "◂"}</span>
+                      <span style={{ color: "var(--text-main)" }}>{d.date}</span>
+                    </span>
+                    <span className="font-black" style={{ color: "var(--mint-600)" }}>{d.total} أوقية</span>
+                  </button>
+
+                  {expandedDay && (
+                    <div className="mt-1.5 mr-4 space-y-1 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                      {d.records.length === 0 ? (
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد تفاصيل</p>
+                      ) : (
+                        d.records.map((r, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs gap-2">
+                            <span className="truncate" style={{ color: "var(--text-main)" }}>
+                              {r.name} <span style={{ color: "var(--text-muted)" }}>({r.kind} · {r.method})</span>
+                            </span>
+                            <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{r.amount} أوقية</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

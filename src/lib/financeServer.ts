@@ -3,6 +3,15 @@ import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
+interface DayRecord {
+  date: string; // YYYY-MM-DD
+  time: string; // full ISO timestamp, for sorting/export
+  name: string;
+  amount: number;
+  method: string;
+  kind: "انتساب" | "دعم";
+}
+
 interface DayTotal {
   date: string; // YYYY-MM-DD
   total: number;
@@ -46,13 +55,14 @@ export async function getFinanceSummary(recentDays = 30) {
 
   const byMethod: Record<string, number> = {};
   const byDay = new Map<string, DayTotal>();
+  const allRecords: DayRecord[] = [];
   let totalRevenue = 0;
 
   const intisabByMethod = new Map<string, Map<string, number>>();
   const daemByMethod = new Map<string, Map<string, number>>();
   const anonymousByMethod = new Map<string, number>();
 
-  function addRevenue(amount: number, method: string | null, date: Date) {
+  function addRevenue(amount: number, method: string | null, date: Date, name: string, kind: "انتساب" | "دعم") {
     const key = method || UNSPECIFIED_METHOD;
     byMethod[key] = (byMethod[key] || 0) + amount;
     totalRevenue += amount;
@@ -62,6 +72,7 @@ export async function getFinanceSummary(recentDays = 30) {
     entry.total += amount;
     entry.byMethod[key] = (entry.byMethod[key] || 0) + amount;
     byDay.set(day, entry);
+    allRecords.push({ date: day, time: date.toISOString(), name, amount, method: key, kind });
 
     return key;
   }
@@ -74,15 +85,15 @@ export async function getFinanceSummary(recentDays = 30) {
 
   for (const m of members) {
     const fee = Math.min(m.paidAmount ?? 0, MEMBERSHIP_FEE);
-    const key = addRevenue(fee, m.paymentMethod, m.createdAt);
+    const key = addRevenue(fee, m.paymentMethod, m.createdAt, m.fullName, "انتساب");
     addNamed(intisabByMethod, key, m.fullName, fee);
   }
 
   const unassigned: { id: string; name: string; amount: number }[] = [];
 
   for (const d of donations) {
-    const key = addRevenue(d.amount ?? 0, d.paymentMethod, d.createdAt);
     const name = d.donorName?.trim();
+    const key = addRevenue(d.amount ?? 0, d.paymentMethod, d.createdAt, name || "فاعل خير", "دعم");
     if (name) {
       addNamed(daemByMethod, key, name, d.amount ?? 0);
     } else {
@@ -108,7 +119,11 @@ export async function getFinanceSummary(recentDays = 30) {
 
   const days = [...byDay.values()]
     .filter((d) => d.date >= cutoffKey)
-    .sort((a, b) => b.date.localeCompare(a.date));
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((d) => ({
+      ...d,
+      records: allRecords.filter((r) => r.date === d.date).sort((a, b) => b.time.localeCompare(a.time)),
+    }));
 
   const totalExpenses = expenses.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0);
 
@@ -117,6 +132,9 @@ export async function getFinanceSummary(recentDays = 30) {
     byMethodDetail,
     unassigned,
     days,
+    // Full, un-windowed record list (unlike `days`, not limited to recentDays)
+    // — used for CSV export so it covers the whole history, not just the UI window.
+    allRecords: [...allRecords].sort((a, b) => b.time.localeCompare(a.time)),
     totalRevenue,
     totalExpenses,
     net: totalRevenue - totalExpenses,
