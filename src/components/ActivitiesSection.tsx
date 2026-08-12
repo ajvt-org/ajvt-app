@@ -18,6 +18,8 @@ interface Activity {
   capacity: number | null;
   isOpen: boolean;
   isTournament: boolean;
+  isVolunteer: boolean;
+  whatsappLink: string | null;
   registrantCount: number;
   teams: Team[];
 }
@@ -189,13 +191,20 @@ function ActivityCard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      showToast("تم التسجيل في النشاط");
+      showToast(activity.isVolunteer ? "تم تسجيلك كمتطوع 💚" : "تم التسجيل في النشاط");
       onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطأ غير متوقع");
     } finally {
       setBusyMemberId(null);
     }
+  }
+
+  function registerVolunteer(memberId: string) {
+    // Open the WhatsApp group synchronously in the click handler — a browser popup
+    // blocker would kill the redirect if it happened after the register() await below.
+    if (activity.whatsappLink) window.open(activity.whatsappLink, "_blank", "noopener,noreferrer");
+    register(memberId);
   }
 
   async function cancelPending(memberId: string) {
@@ -277,12 +286,18 @@ function ActivityCard({
                     </div>
                   ) : activity.isOpen && !full ? (
                     <button
-                      onClick={() => register(m.id)}
+                      onClick={() => (activity.isVolunteer ? registerVolunteer(m.id) : register(m.id))}
                       disabled={busyMemberId === m.id}
                       className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
                       style={{ background: "var(--mint-600)", color: "white" }}
                     >
-                      {busyMemberId === m.id ? "..." : r?.status === "REJECTED" ? "🔄 إعادة المحاولة" : "📝 سجّل"}
+                      {busyMemberId === m.id
+                        ? "..."
+                        : r?.status === "REJECTED"
+                        ? "🔄 إعادة المحاولة"
+                        : activity.isVolunteer
+                        ? "🤝 تطوع"
+                        : "📝 سجّل"}
                     </button>
                   ) : (
                     <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>

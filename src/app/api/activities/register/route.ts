@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
         select: {
           id: true,
           isOpen: true,
+          isVolunteer: true,
           capacity: true,
           _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
         },
@@ -53,10 +54,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط" }, { status: 409 });
     }
 
+    const status = activity.isVolunteer ? "ACTIVE" : "PENDING";
     await prisma.activityRegistration.upsert({
       where: { memberId_activityId: { memberId, activityId } },
-      update: { status: "PENDING", rejectionReason: null },
-      create: { memberId, activityId, status: "PENDING" },
+      update: { status, rejectionReason: null },
+      create: { memberId, activityId, status },
     });
 
     return NextResponse.json({ ok: true });
