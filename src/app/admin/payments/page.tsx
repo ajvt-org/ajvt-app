@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext, validatePhone } from "@/lib/utils";
+import PhotoUpload from "@/components/PhotoUpload";
 
 interface Proof {
   id: string;
@@ -16,6 +17,7 @@ interface Proof {
   memberId?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
+  donorPhoto?: string | null;
   uploadedAt: string;
   submittedAt: string;
 }
@@ -28,7 +30,7 @@ interface MemberOption {
 const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
-const emptyManualDonation = { donorName: "", donorPhone: "", amount: "" };
+const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "" };
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
@@ -43,6 +45,7 @@ export default function AdminPaymentsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDonorName, setEditDonorName] = useState("");
   const [editDonorPhone, setEditDonorPhone] = useState("");
+  const [editDonorPhoto, setEditDonorPhoto] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [editError, setEditError] = useState("");
 
@@ -113,6 +116,7 @@ export default function AdminPaymentsPage() {
     setEditingId(p.id);
     setEditDonorName(p.donorName || "");
     setEditDonorPhone(p.donorPhone || "");
+    setEditDonorPhoto(p.donorPhoto || null);
     setEditAmount(p.amount != null ? String(p.amount) : "");
     setEditError("");
   }
@@ -133,7 +137,10 @@ export default function AdminPaymentsPage() {
       const body: Record<string, unknown> = {
         donorPhone: editDonorPhone.trim() || null,
       };
-      if (!p.memberId) body.donorName = editDonorName.trim();
+      if (!p.memberId) {
+        body.donorName = editDonorName.trim();
+        body.donorPhoto = editDonorPhoto;
+      }
       if (n !== null) body.amount = n;
 
       const res = await fetch(`/api/admin/donations/${p.id}`, {
@@ -148,6 +155,7 @@ export default function AdminPaymentsPage() {
             ...item,
             donorName: data.donation.donorName,
             donorPhone: data.donation.donorPhone,
+            donorPhoto: data.donation.donorPhoto,
             amount: data.donation.amount,
             memberName: item.memberId ? item.memberName : (data.donation.donorName || "فاعل خير"),
           }
@@ -177,6 +185,7 @@ export default function AdminPaymentsPage() {
         body: JSON.stringify({
           donorName: manualDonation.donorName.trim(),
           donorPhone: manualDonation.donorPhone.trim(),
+          donorPhoto: manualDonation.donorPhoto || null,
           amount: n,
         }),
       });
@@ -196,6 +205,7 @@ export default function AdminPaymentsPage() {
           memberId: d.memberId,
           donorName: d.donorName,
           donorPhone: d.donorPhone,
+          donorPhoto: d.donorPhoto,
           uploadedAt: d.updatedAt,
           submittedAt: d.createdAt,
         },
@@ -373,15 +383,25 @@ export default function AdminPaymentsPage() {
                   {editingId === p.id && (
                     <div className="mt-2 p-2.5 rounded-lg space-y-2" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}>
                       {!p.memberId && (
-                        <input
-                          type="text"
-                          placeholder="اسم المتبرع"
-                          value={editDonorName}
-                          onChange={(e) => setEditDonorName(e.target.value)}
-                          maxLength={50}
-                          className="input text-xs"
-                          style={{ background: "white" }}
-                        />
+                        <>
+                          <PhotoUpload
+                            photo={editDonorPhoto}
+                            imageUrlPrefix="/api/files/donation"
+                            variant="avatar"
+                            label="صورة المتبرع"
+                            placeholderIcon="👤"
+                            onUpload={(filename) => setEditDonorPhoto(filename)}
+                          />
+                          <input
+                            type="text"
+                            placeholder="اسم المتبرع"
+                            value={editDonorName}
+                            onChange={(e) => setEditDonorName(e.target.value)}
+                            maxLength={50}
+                            className="input text-xs"
+                            style={{ background: "white" }}
+                          />
+                        </>
                       )}
                       <input
                         type="tel"
@@ -493,6 +513,14 @@ export default function AdminPaymentsPage() {
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 لتبرع تلقيته خارج التطبيق نقداً أو تحويلاً — يُحتسب مباشرة في لوحة شرف المتبرعين.
               </p>
+              <PhotoUpload
+                photo={manualDonation.donorPhoto || null}
+                imageUrlPrefix="/api/files/donation"
+                variant="avatar"
+                label="صورة المتبرع (اختياري)"
+                placeholderIcon="👤"
+                onUpload={(filename) => setManualDonation((p) => ({ ...p, donorPhoto: filename }))}
+              />
               <div>
                 <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
                   اسم المتبرع <span style={{ color: "var(--copper-500)" }}>*</span>

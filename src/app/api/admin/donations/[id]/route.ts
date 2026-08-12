@@ -16,15 +16,18 @@ export async function PATCH(
     // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
-    const { status, memberId, donorName, donorPhone, amount } = await req.json();
+    const { status, memberId, donorName, donorPhone, donorPhoto, amount } = await req.json();
 
-    if ([status, memberId, donorName, donorPhone, amount].every((v) => v === undefined)) {
+    if ([status, memberId, donorName, donorPhone, donorPhoto, amount].every((v) => v === undefined)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (status !== undefined && !["ACTIVE", "REJECTED"].includes(status)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (memberId !== undefined && memberId !== null && typeof memberId !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
+    if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
@@ -39,7 +42,7 @@ export async function PATCH(
       return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" }, { status: 400 });
     }
 
-    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; amount?: number } = {};
+    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
@@ -70,6 +73,10 @@ export async function PATCH(
       }
     }
 
+    if (donorPhoto !== undefined) {
+      data.donorPhoto = donorPhoto || null;
+    }
+
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isInteger(n) || n <= 0) {
@@ -94,7 +101,7 @@ export async function PATCH(
         memberId ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}` : (existing.donorName || "فاعل خير")
       );
     }
-    if (donorName !== undefined || donorPhone !== undefined || amount !== undefined) {
+    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined) {
       await logAction(session.username, "UPDATE_DONATION", donation.member?.fullName || donation.donorName || "فاعل خير");
     }
 

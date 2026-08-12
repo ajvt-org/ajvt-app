@@ -630,7 +630,7 @@ export default function AdminDashboard() {
                   ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
-                  ["المبلغ المسدد", selected.paidAmount ? `${selected.paidAmount} أوقية` : "—", "ltr"],
+                  ["المبلغ المسدد", selected.paidAmount ? `${selected.paidAmount} أوقية` : "—", undefined],
                   ["رقم العضوية", selected.memberNumber || "—", "ltr"],
                   ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric", weekday: "long" }), undefined],
                   ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" }), "ltr"],

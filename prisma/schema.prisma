@@ -250,6 +250,7 @@ model Donation {
   id         String   @id @default(cuid())
   donorName  String? // null = anonymous ("فاعل خير" in the UI) — even when memberId is set (a member chose to stay anonymous)
   donorPhone String? // recorded for manually-entered donors with no app account, or as a general contact note
+  donorPhoto String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
   amount     Int?
   proof      String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
   status     String   @default("PENDING") // PENDING | ACTIVE | REJECTED — MEMBERSHIP-source rows are always created ACTIVE

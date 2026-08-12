@@ -47,10 +47,10 @@ export default async function LeaderboardPage() {
                     </td>
                     <td className="px-3 py-2.5 font-bold" style={{ color: "var(--text-main)" }}>
                       <span className="flex items-center gap-2 justify-center">
-                        {entry.photo ? (
+                        {entry.photoUrl ? (
                           <span className="w-7 h-7 rounded-full overflow-hidden shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`/api/files/member/${entry.photo}`} alt={entry.name} className="w-full h-full object-cover" />
+                            <img src={entry.photoUrl} alt={entry.name} className="w-full h-full object-cover" />
                           </span>
                         ) : (
                           <span
@@ -63,7 +63,7 @@ export default async function LeaderboardPage() {
                         {entry.name}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-center font-black" style={{ color: "var(--mint-700)" }} dir="ltr">
+                    <td className="px-3 py-2.5 text-center font-black" style={{ color: "var(--mint-700)" }}>
                       {entry.total} أوقية
                     </td>
                   </tr>
