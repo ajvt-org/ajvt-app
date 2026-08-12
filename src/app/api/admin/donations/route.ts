@@ -11,7 +11,7 @@ import { logAction } from "@/lib/audit";
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("SUPER");
-    const { donorName, donorPhone, amount, proof } = await req.json();
+    const { donorName, donorPhone, amount, proof, donorPhoto } = await req.json();
 
     if (!donorName?.trim()) {
       return NextResponse.json({ error: "الاسم مطلوب" }, { status: 400 });
@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     if (proof !== undefined && proof !== null && typeof proof !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
+    if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
 
     const donation = await prisma.donation.create({
       data: {
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
         donorPhone: donorPhone.trim(),
         amount: n,
         proof: proof || null,
+        donorPhoto: donorPhoto || null,
         source: "PUBLIC",
         status: "ACTIVE",
       },

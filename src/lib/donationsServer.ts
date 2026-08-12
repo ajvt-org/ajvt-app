@@ -39,35 +39,44 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
 interface LeaderboardEntry {
   rank: number;
   name: string;
-  photo: string | null;
+  photoUrl: string | null;
   total: number;
 }
 
 export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[]; anonymousTotal: number }> {
   const donations = await prisma.donation.findMany({
     where: { status: "ACTIVE" },
-    select: { amount: true, donorName: true, memberId: true, member: { select: { fullName: true, photo: true } } },
+    select: {
+      amount: true,
+      donorName: true,
+      donorPhoto: true,
+      memberId: true,
+      member: { select: { fullName: true, photo: true } },
+    },
   });
 
-  const byKey = new Map<string, { name: string; photo: string | null; total: number }>();
+  const byKey = new Map<string, { name: string; photoUrl: string | null; total: number }>();
   let anonymousTotal = 0;
 
   for (const d of donations) {
     const amount = d.amount ?? 0;
-    // memberId set + donorName present -> attributed & shown with photo (the
-    // member's real name, whether from the automatic membership surplus or a
-    // logged-in donation they chose to attribute to themselves).
+    // memberId set + donorName present -> attributed & shown with the
+    // member's own account photo (whether from the automatic membership
+    // surplus or a logged-in donation they chose to attribute to themselves).
     // memberId set + donorName null -> the member explicitly chose to stay
     // anonymous for this donation; don't out them just because we know who
     // they are internally.
     if (d.memberId && d.donorName) {
       const key = `m:${d.memberId}`;
-      const entry = byKey.get(key) ?? { name: d.donorName, photo: d.member?.photo ?? null, total: 0 };
+      const photoUrl = d.member?.photo ? `/api/files/member/${d.member.photo}` : null;
+      const entry = byKey.get(key) ?? { name: d.donorName, photoUrl, total: 0 };
       entry.total += amount;
       byKey.set(key, entry);
     } else if (!d.memberId && d.donorName?.trim()) {
       const key = `n:${d.donorName.trim()}`;
-      const entry = byKey.get(key) ?? { name: d.donorName.trim(), photo: null, total: 0 };
+      const photoUrl = d.donorPhoto ? `/api/files/donation/${d.donorPhoto}` : null;
+      const entry = byKey.get(key) ?? { name: d.donorName.trim(), photoUrl, total: 0 };
+      if (!entry.photoUrl && photoUrl) entry.photoUrl = photoUrl;
       entry.total += amount;
       byKey.set(key, entry);
     } else {

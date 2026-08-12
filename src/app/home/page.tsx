@@ -323,7 +323,7 @@ function MemberEntry({
           <InfoRow label="العصر" value={member.age} />
           <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
           {member.paidAmount != null && (
-            <InfoRow label="المبلغ المسدد" value={`${member.paidAmount} أوقية`} dir="ltr" />
+            <InfoRow label="المبلغ المسدد" value={`${member.paidAmount} أوقية`} />
           )}
           <InfoRow
             label="تاريخ الطلب"
