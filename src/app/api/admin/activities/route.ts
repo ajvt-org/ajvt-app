@@ -8,7 +8,7 @@ export async function GET() {
     await requireAdminRole("ACTIVITIES");
 
     const activities = await prisma.activity.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { order: "asc" },
       include: {
         registrations: {
           select: {
@@ -39,7 +39,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
-    const { title, description, period, capacity, photo, isTournament } = await req.json();
+    const { title, description, period, capacity, photo, isTournament, isVolunteer, whatsappLink } = await req.json();
 
     if (!title?.trim() || !description?.trim()) {
       return NextResponse.json({ error: "العنوان والوصف مطلوبان" }, { status: 400 });
@@ -53,6 +53,12 @@ export async function POST(req: NextRequest) {
     if (photo !== undefined && photo !== null && typeof photo !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
+    if (isTournament && isVolunteer) {
+      return NextResponse.json({ error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" }, { status: 400 });
+    }
+    if (isVolunteer && !/^https?:\/\//.test(whatsappLink?.trim() || "")) {
+      return NextResponse.json({ error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" }, { status: 400 });
+    }
 
     let capacityValue: number | null = null;
     if (capacity !== undefined && capacity !== null && capacity !== "") {
@@ -63,6 +69,8 @@ export async function POST(req: NextRequest) {
       capacityValue = n;
     }
 
+    const { _max } = await prisma.activity.aggregate({ _max: { order: true } });
+
     const activity = await prisma.activity.create({
       data: {
         title: title.trim(),
@@ -71,6 +79,9 @@ export async function POST(req: NextRequest) {
         photo: photo || null,
         capacity: capacityValue,
         isTournament: !!isTournament,
+        isVolunteer: !!isVolunteer,
+        whatsappLink: isVolunteer ? whatsappLink.trim() : null,
+        order: (_max.order ?? -1) + 1,
       },
     });
 

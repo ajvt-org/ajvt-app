@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
-    const { title, description, period, capacity, isOpen, photo, isTournament } = await req.json();
+    const { title, description, period, capacity, isOpen, photo, isTournament, isVolunteer, whatsappLink, order } = await req.json();
 
     const existing = await prisma.activity.findUnique({ where: { id } });
     if (!existing) {
@@ -25,6 +25,9 @@ export async function PATCH(
       isOpen?: boolean;
       photo?: string | null;
       isTournament?: boolean;
+      isVolunteer?: boolean;
+      whatsappLink?: string | null;
+      order?: number;
     } = {};
 
     if (title !== undefined) {
@@ -62,6 +65,29 @@ export async function PATCH(
     }
     if (isTournament !== undefined) {
       data.isTournament = !!isTournament;
+    }
+    if (isVolunteer !== undefined) {
+      data.isVolunteer = !!isVolunteer;
+    }
+    if (whatsappLink !== undefined) {
+      data.whatsappLink = whatsappLink?.trim() || null;
+    }
+    if (order !== undefined) {
+      const n = Number(order);
+      if (!Number.isInteger(n)) {
+        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+      }
+      data.order = n;
+    }
+
+    const nextIsTournament = data.isTournament ?? existing.isTournament;
+    const nextIsVolunteer = data.isVolunteer ?? existing.isVolunteer;
+    if (nextIsTournament && nextIsVolunteer) {
+      return NextResponse.json({ error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" }, { status: 400 });
+    }
+    const nextWhatsappLink = data.whatsappLink !== undefined ? data.whatsappLink : existing.whatsappLink;
+    if (nextIsVolunteer && !/^https?:\/\//.test(nextWhatsappLink || "")) {
+      return NextResponse.json({ error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" }, { status: 400 });
     }
 
     const activity = await prisma.activity.update({ where: { id }, data });
