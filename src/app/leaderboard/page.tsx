@@ -49,9 +49,9 @@ export default async function LeaderboardPage() {
             <table className="w-full text-sm" style={{ minWidth: "320px" }}>
               <thead>
                 <tr style={{ background: "var(--mint-100)" }}>
-                  {["#", "الداعم", "المجموع"].map((h) => (
-                    <th key={h} className="px-3 py-2.5 text-center font-bold" style={{ color: "var(--mint-700)" }}>{h}</th>
-                  ))}
+                  <th className="px-3 py-2.5 text-center font-bold" style={{ color: "var(--mint-700)" }}>#</th>
+                  <th className="px-3 py-2.5 text-right font-bold" style={{ color: "var(--mint-700)" }}>الداعم</th>
+                  <th className="px-3 py-2.5 text-center font-bold" style={{ color: "var(--mint-700)" }}>المجموع</th>
                 </tr>
               </thead>
               <tbody>
@@ -61,7 +61,7 @@ export default async function LeaderboardPage() {
                       {entry.rank <= 3 ? MEDALS[entry.rank - 1] : entry.rank}
                     </td>
                     <td className="px-3 py-2.5 font-bold" style={{ color: "var(--text-main)" }}>
-                      <span className="flex items-center gap-2 justify-center">
+                      <span className="flex items-center gap-2 justify-start">
                         {entry.photoUrl ? (
                           <span className="w-7 h-7 rounded-full overflow-hidden shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
