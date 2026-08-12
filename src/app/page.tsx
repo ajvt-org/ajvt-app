@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function LandingPage() {
   const activities = await prisma.activity.findMany({
     where: { isOpen: true },
-    orderBy: { createdAt: "asc" },
+    orderBy: { order: "asc" },
     select: {
       id: true,
       title: true,
@@ -16,6 +16,8 @@ export default async function LandingPage() {
       photo: true,
       capacity: true,
       isTournament: true,
+      isVolunteer: true,
+      whatsappLink: true,
       _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
     },
   });
@@ -127,14 +129,25 @@ export default async function LandingPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
-                  <Link href="/register" className="badge badge-open-blink shrink-0 font-bold">
-                    🔴 سجّل الآن
-                  </Link>
+                  {activity.isVolunteer ? (
+                    <a
+                      href={activity.whatsappLink || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="badge badge-open-blink shrink-0 font-bold"
+                    >
+                      تطوع معنا 💚
+                    </a>
+                  ) : (
+                    <Link href="/register" className="badge badge-open-blink shrink-0 font-bold">
+                      🔴 سجّل الآن
+                    </Link>
+                  )}
                 </div>
                 <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
                 <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
                   {activity.period && <span>📅 {activity.period}</span>}
-                  {activity.capacity !== null && (
+                  {!activity.isVolunteer && activity.capacity !== null && (
                     <span>👥 {activity._count.registrations}/{activity.capacity}</span>
                   )}
                 </div>

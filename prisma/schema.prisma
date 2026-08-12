@@ -51,6 +51,9 @@ model Activity {
   capacity      Int?
   isOpen        Boolean                @default(true)
   isTournament  Boolean                @default(false)
+  isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
+  whatsappLink  String?
+  order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
   registrations ActivityRegistration[]

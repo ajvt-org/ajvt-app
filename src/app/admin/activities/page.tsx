@@ -23,6 +23,9 @@ interface Activity {
   capacity: number | null;
   isOpen: boolean;
   isTournament: boolean;
+  isVolunteer: boolean;
+  whatsappLink: string | null;
+  order: number;
   createdAt: string;
   registrations: Registration[];
 }
@@ -43,12 +46,15 @@ export default function AdminActivitiesPage() {
   const [loading, setLoading] = useState(true);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [newActivity, setNewActivity] = useState({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false });
+  const [newActivity, setNewActivity] = useState({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false, isVolunteer: false, whatsappLink: "" });
   const [activityError, setActivityError] = useState("");
   const [addMemberFor, setAddMemberFor] = useState<Record<string, string>>({});
   const [memberSearch, setMemberSearch] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [linkDraft, setLinkDraft] = useState("");
+  const [reorderLoading, setReorderLoading] = useState(false);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -85,7 +91,7 @@ export default function AdminActivitiesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       const created = data.activity;
-      setNewActivity({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false });
+      setNewActivity({ title: "", description: "", period: "", capacity: "", photo: "", isTournament: false, isVolunteer: false, whatsappLink: "" });
       if (created?.isTournament) {
         router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
         return;
@@ -135,6 +141,52 @@ export default function AdminActivitiesPage() {
         body: JSON.stringify({ isOpen: !activity.isOpen }),
       });
       if (!res.ok) throw new Error("فشلت العملية");
+      await loadAll();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function moveActivity(index: number, direction: "up" | "down") {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= activities.length) return;
+    const a = activities[index];
+    const b = activities[targetIndex];
+    setReorderLoading(true);
+    try {
+      await Promise.all([
+        fetch(`/api/admin/activities/${a.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: b.order }),
+        }),
+        fetch(`/api/admin/activities/${b.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: a.order }),
+        }),
+      ]);
+      await loadAll();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setReorderLoading(false);
+    }
+  }
+
+  async function saveWhatsappLink(id: string) {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/activities/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappLink: linkDraft.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setEditingLinkId(null);
       await loadAll();
     } catch (e) {
       alert(e instanceof Error ? e.message : "خطأ");
@@ -236,7 +288,7 @@ export default function AdminActivitiesPage() {
           <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>عدد المسجلين حسب النشاط</p>
           <BarChart data={activities.map((a) => ({ label: a.title.slice(0, 6), value: a.registrations.filter((r) => r.status !== "REJECTED").length }))} />
         </div>
-        {activities.map((a) => {
+        {activities.map((a, index) => {
           const confirmedCount = a.registrations.filter((r) => r.status !== "REJECTED").length;
           const pending = a.registrations.filter((r) => r.status === "PENDING");
           const active = a.registrations.filter((r) => r.status === "ACTIVE");
@@ -248,6 +300,29 @@ export default function AdminActivitiesPage() {
           });
           return (
             <div key={a.id} className="card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+                  ترتيب الظهور في الصفحة الرئيسية
+                </p>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => moveActivity(index, "up")}
+                    disabled={reorderLoading || index === 0}
+                    className="w-7 h-7 rounded-lg font-bold disabled:opacity-30"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => moveActivity(index, "down")}
+                    disabled={reorderLoading || index === activities.length - 1}
+                    className="w-7 h-7 rounded-lg font-bold disabled:opacity-30"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
+                    ↓
+                  </button>
+                </div>
+              </div>
               <div className="mb-3">
                 <PhotoUpload
                   photo={a.photo}
@@ -264,17 +339,50 @@ export default function AdminActivitiesPage() {
                   <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{a.description}</p>
                   <div className="flex items-center gap-3 text-xs mt-2 flex-wrap" style={{ color: "var(--text-muted)" }}>
                     {a.period && <span>📅 {a.period}</span>}
-                    <span>👥 {confirmedCount}{a.capacity !== null ? `/${a.capacity}` : ""}</span>
+                    {!a.isVolunteer && <span>👥 {confirmedCount}{a.capacity !== null ? `/${a.capacity}` : ""}</span>}
                     {pending.length > 0 && <span className="badge badge-pending">⏳ {pending.length} بانتظار المراجعة</span>}
                     <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
-                      {a.isOpen ? "مفتوح" : "مغلق"}
+                      {a.isOpen ? "ظاهر" : "مخفي"}
                     </span>
                     {a.isTournament && <span className="badge badge-pending">⚽ بطولة</span>}
+                    {a.isVolunteer && <span className="badge badge-pending">🤝 حملة تطوعية</span>}
                   </div>
+                  {a.isVolunteer && (
+                    <div className="mt-2">
+                      {editingLinkId === a.id ? (
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            dir="ltr"
+                            value={linkDraft}
+                            onChange={(e) => setLinkDraft(e.target.value)}
+                            placeholder="https://chat.whatsapp.com/..."
+                            className="input text-xs flex-1"
+                          />
+                          <button
+                            onClick={() => saveWhatsappLink(a.id)}
+                            disabled={actionLoading}
+                            className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-600)", color: "white" }}
+                          >
+                            حفظ
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setEditingLinkId(a.id); setLinkDraft(a.whatsappLink || ""); }}
+                          className="text-xs font-bold"
+                          style={{ color: "var(--mint-600)" }}
+                        >
+                          💬 {a.whatsappLink || "إضافة رابط الواتساب"} ✏️
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-3 flex-wrap">
-                {a.isTournament ? (
+                {a.isVolunteer ? null : a.isTournament ? (
                   <button
                     onClick={() => router.push(`/admin/tournament/${a.id}?title=${encodeURIComponent(a.title)}`)}
                     className="text-xs px-3 py-1.5 rounded-lg font-bold"
@@ -298,15 +406,19 @@ export default function AdminActivitiesPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  {a.isOpen ? "إغلاق التسجيل" : "فتح التسجيل"}
+                  {a.isVolunteer
+                    ? (a.isOpen ? "إخفاء من الصفحة الرئيسية" : "إظهار في الصفحة الرئيسية")
+                    : (a.isOpen ? "إغلاق التسجيل" : "فتح التسجيل")}
                 </button>
-                <button
-                  onClick={() => setExpandedActivity((v) => (v === a.id ? null : a.id))}
-                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                  style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
-                >
-                  {expandedActivity === a.id ? "إخفاء المسجلين" : "إدارة المسجلين"}
-                </button>
+                {!a.isVolunteer && (
+                  <button
+                    onClick={() => setExpandedActivity((v) => (v === a.id ? null : a.id))}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                    style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+                  >
+                    {expandedActivity === a.id ? "إخفاء المسجلين" : "إدارة المسجلين"}
+                  </button>
+                )}
                 <button
                   onClick={() => deleteActivity(a.id)}
                   disabled={actionLoading}
@@ -494,10 +606,29 @@ export default function AdminActivitiesPage() {
           <input
             type="checkbox"
             checked={newActivity.isTournament}
-            onChange={(e) => setNewActivity((p) => ({ ...p, isTournament: e.target.checked }))}
+            onChange={(e) => setNewActivity((p) => ({ ...p, isTournament: e.target.checked, isVolunteer: e.target.checked ? false : p.isVolunteer }))}
           />
           ⚽ هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)
         </label>
+        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--text-main)" }}>
+          <input
+            type="checkbox"
+            checked={newActivity.isVolunteer}
+            onChange={(e) => setNewActivity((p) => ({ ...p, isVolunteer: e.target.checked, isTournament: e.target.checked ? false : p.isTournament }))}
+          />
+          🤝 هذا النشاط حملة تطوعية (بدون تسجيل داخل التطبيق — رابط واتساب مباشر)
+        </label>
+        {newActivity.isVolunteer && (
+          <input
+            type="text"
+            dir="ltr"
+            placeholder="رابط مجموعة الواتساب — https://chat.whatsapp.com/..."
+            value={newActivity.whatsappLink}
+            onChange={(e) => setNewActivity((p) => ({ ...p, whatsappLink: e.target.value }))}
+            required
+            className="input"
+          />
+        )}
         {activityError && (
           <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
             ⚠️ {activityError}
