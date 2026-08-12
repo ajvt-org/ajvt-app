@@ -3,6 +3,7 @@ import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ToastProvider } from "@/components/Toast";
 import InstallPrompt from "@/components/InstallPrompt";
+import VisitTracker from "@/components/VisitTracker";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -36,6 +37,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col">
         <ServiceWorkerRegister />
+        <VisitTracker />
         <ToastProvider>
           {children}
           <InstallPrompt />
