@@ -16,7 +16,7 @@ async function main() {
     update: {},
     create: { username: "admin", password: hashed },
   });
-  console.log("✅ Admin: username=admin | password=admin123");
+  console.log("✅ Admin seed OK (username=admin)");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
