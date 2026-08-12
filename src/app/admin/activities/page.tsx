@@ -340,7 +340,8 @@ export default function AdminActivitiesPage() {
                   <div className="flex items-center gap-3 text-xs mt-2 flex-wrap" style={{ color: "var(--text-muted)" }}>
                     {a.period && <span>📅 {a.period}</span>}
                     {!a.isVolunteer && <span>👥 {confirmedCount}{a.capacity !== null ? `/${a.capacity}` : ""}</span>}
-                    {pending.length > 0 && <span className="badge badge-pending">⏳ {pending.length} بانتظار المراجعة</span>}
+                    {a.isVolunteer && confirmedCount > 0 && <span className="badge badge-active">💚 {confirmedCount} متطوعين</span>}
+                    {!a.isVolunteer && pending.length > 0 && <span className="badge badge-pending">⏳ {pending.length} بانتظار المراجعة</span>}
                     <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
                       {a.isOpen ? "ظاهر" : "مخفي"}
                     </span>
