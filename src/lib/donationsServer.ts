@@ -11,7 +11,7 @@ type Db = PrismaClient | Prisma.TransactionClient;
 export async function syncMembershipDonation(db: Db, memberId: string) {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { status: true, paidAmount: true, fullName: true, paymentProof: true },
+    select: { status: true, paidAmount: true, fullName: true, paymentProof: true, paymentMethod: true },
   });
   if (!member) return;
 
@@ -25,7 +25,7 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
   });
 
   if (surplus > 0) {
-    const data = { amount: surplus, donorName: member.fullName, proof: member.paymentProof };
+    const data = { amount: surplus, donorName: member.fullName, proof: member.paymentProof, paymentMethod: member.paymentMethod };
     if (existing) {
       await db.donation.update({ where: { id: existing.id }, data });
     } else {

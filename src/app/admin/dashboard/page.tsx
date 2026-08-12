@@ -11,9 +11,9 @@ type FilterTab = "ALL" | Status;
 
 interface Member {
   id: string;
-  userId: string;
+  userId: string | null; // null = admin-added with an unknown phone number, no account yet
   fullName: string;
-  phone: string;
+  phone: string | null; // null alongside userId — see above
   age: string;
   paymentMethod: string;
   paymentProof: string | null;
@@ -22,7 +22,7 @@ interface Member {
   status: Status;
   memberNumber: string | null;
   createdAt: string;
-  user?: { phone: string };
+  user?: { phone: string } | null;
   registrations?: { activityId: string; activity: { id: string; title: string } }[];
 }
 
@@ -44,6 +44,7 @@ const emptyManualForm = {
   accountPhone: "",
   fullName: "",
   memberPhone: "",
+  phoneUnknown: false,
   age: "",
   paymentMethod: "",
   paidAmount: "",
@@ -61,6 +62,9 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [accountPhoneInput, setAccountPhoneInput] = useState("");
+  const [attachAccountLoading, setAttachAccountLoading] = useState(false);
+  const [attachAccountError, setAttachAccountError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
@@ -227,6 +231,30 @@ export default function AdminDashboard() {
     }
   }
 
+  async function attachAccount(memberId: string) {
+    setAttachAccountError("");
+    if (!accountPhoneInput.trim()) { setAttachAccountError("رقم الهاتف مطلوب"); return; }
+    setAttachAccountLoading(true);
+    setTempPassword(null);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountPhone: accountPhoneInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setSelected(data.member);
+      setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, userId: data.member.userId, phone: data.member.phone } : m)));
+      if (data.tempPassword) setTempPassword(data.tempPassword);
+      setAccountPhoneInput("");
+    } catch (e) {
+      setAttachAccountError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setAttachAccountLoading(false);
+    }
+  }
+
   async function createManualMember(e: React.FormEvent) {
     e.preventDefault();
     setManualError("");
@@ -256,7 +284,7 @@ export default function AdminDashboard() {
     const headers = ["الاسم الكامل", "رقم الهاتف", "حساب التطبيق", "العصر", "طريقة الدفع", "الحالة", "رقم العضوية", "تاريخ الطلب"];
     const rows = members.map((m) => [
       m.fullName,
-      m.phone,
+      m.phone || "",
       m.user?.phone || "",
       m.age,
       m.paymentMethod,
@@ -314,7 +342,7 @@ export default function AdminDashboard() {
   const filtered = members.filter((m) => {
     const matchFilter = filter === "ALL" || m.status === filter;
     const q = search.toLowerCase();
-    const matchSearch = !q || m.fullName.includes(q) || m.phone.includes(q) || (m.user?.phone || "").includes(q);
+    const matchSearch = !q || m.fullName.includes(q) || (m.phone || "").includes(q) || (m.user?.phone || "").includes(q);
     return matchFilter && matchSearch;
   });
 
@@ -462,7 +490,7 @@ export default function AdminDashboard() {
                       {m.fullName}
                     </p>
                     <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
-                      {m.phone}
+                      {m.phone || "غير معروف"}
                     </p>
                   </div>
                 </div>
@@ -625,7 +653,7 @@ export default function AdminDashboard() {
               {/* Info */}
               <div className="card p-4 space-y-3">
                 {([
-                  ["رقم الهاتف", selected.phone, "ltr"],
+                  ["رقم الهاتف", selected.phone || "غير معروف", "ltr"],
                   ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
                   ["العصر", selected.age, undefined],
                   ["طريقة الدفع", selected.paymentMethod, undefined],
@@ -659,21 +687,51 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Reset password */}
+              {/* Reset password / attach account */}
               <div className="card p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-                    🔑 كلمة مرور الحساب
-                  </span>
-                  <button
-                    onClick={() => resetPassword(selected.userId)}
-                    disabled={resetLoading}
-                    className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                  >
-                    {resetLoading ? "..." : "إعادة تعيين"}
-                  </button>
-                </div>
+                {selected.userId ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                      🔑 كلمة مرور الحساب
+                    </span>
+                    <button
+                      onClick={() => resetPassword(selected.userId!)}
+                      disabled={resetLoading}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                      style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                    >
+                      {resetLoading ? "..." : "إعادة تعيين"}
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+                      📵 لا يوجد حساب مرتبط — رقم الهاتف غير معروف
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        value={accountPhoneInput}
+                        onChange={(e) => setAccountPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                        placeholder="2XXXXXXX"
+                        maxLength={8}
+                        className="input text-sm"
+                      />
+                      <button
+                        onClick={() => attachAccount(selected.id)}
+                        disabled={attachAccountLoading}
+                        className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+                        style={{ background: "var(--mint-600)", color: "white" }}
+                      >
+                        {attachAccountLoading ? "..." : "إنشاء حساب"}
+                      </button>
+                    </div>
+                    {attachAccountError && (
+                      <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>{attachAccountError}</p>
+                    )}
+                  </div>
+                )}
                 {tempPassword && (
                   <div
                     className="mt-3 rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
@@ -864,24 +922,38 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <form onSubmit={createManualMember} className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-                      رقم هاتف الحساب <span style={{ color: "var(--copper-500)" }}>*</span>
-                    </label>
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: "var(--mint-100)" }}>
                     <input
-                      type="tel"
-                      dir="ltr"
-                      value={manualForm.accountPhone}
-                      onChange={(e) => setManualForm((p) => ({ ...p, accountPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
-                      placeholder="2XXXXXXX"
-                      maxLength={8}
-                      required
-                      className="input"
+                      type="checkbox"
+                      id="phoneUnknown"
+                      checked={manualForm.phoneUnknown}
+                      onChange={(e) => setManualForm((p) => ({ ...p, phoneUnknown: e.target.checked, accountPhone: "", memberPhone: "" }))}
+                      className="w-4 h-4"
                     />
-                    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                      إن لم يوجد حساب بهذا الرقم، سيُنشأ حساب جديد تلقائياً بكلمة مرور مؤقتة
-                    </p>
+                    <label htmlFor="phoneUnknown" className="text-sm font-bold" style={{ color: "var(--mint-700)" }}>
+                      📵 رقم الهاتف غير معروف — يُضاف لاحقاً
+                    </label>
                   </div>
+                  {!manualForm.phoneUnknown && (
+                    <div>
+                      <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                        رقم هاتف الحساب <span style={{ color: "var(--copper-500)" }}>*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        value={manualForm.accountPhone}
+                        onChange={(e) => setManualForm((p) => ({ ...p, accountPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                        placeholder="2XXXXXXX"
+                        maxLength={8}
+                        required
+                        className="input"
+                      />
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                        إن لم يوجد حساب بهذا الرقم، سيُنشأ حساب جديد تلقائياً بكلمة مرور مؤقتة
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>الاسم الكامل</label>
                     <input
@@ -893,18 +965,20 @@ export default function AdminDashboard() {
                       className="input"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>رقم هاتف العضو</label>
-                    <input
-                      type="tel"
-                      dir="ltr"
-                      value={manualForm.memberPhone}
-                      onChange={(e) => setManualForm((p) => ({ ...p, memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
-                      maxLength={8}
-                      required
-                      className="input"
-                    />
-                  </div>
+                  {!manualForm.phoneUnknown && (
+                    <div>
+                      <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>رقم هاتف العضو</label>
+                      <input
+                        type="tel"
+                        dir="ltr"
+                        value={manualForm.memberPhone}
+                        onChange={(e) => setManualForm((p) => ({ ...p, memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                        maxLength={8}
+                        required
+                        className="input"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>العصر</label>
                     <select

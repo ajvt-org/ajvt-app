@@ -58,6 +58,8 @@ const ACTION_LABELS: Record<string, string> = {
   DELETE_GROUP: "حذف مجموعة",
   SEND_BROADCAST: "إرسال إشعار جماعي",
   APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
+  DELETE_DONATION: "حذف تبرع نهائياً",
+  ATTACH_MEMBER_ACCOUNT: "إنشاء حساب لعضو",
   CREATE_EXPENSE: "إضافة مصروف",
   UPDATE_EXPENSE: "تعديل مصروف",
   DELETE_EXPENSE: "حذف مصروف",
@@ -549,11 +551,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                         <span className="badge badge-pending">{ROLE_LABEL[a.role] || a.role}</span>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        منذ {new Date(a.createdAt).toLocaleDateString("ar")}
+                        منذ {new Date(a.createdAt).toLocaleDateString("ar")} — {new Date(a.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {a.lastLoginAt
-                          ? `آخر دخول: ${new Date(a.lastLoginAt).toLocaleDateString("ar")} — ${a.lastLoginIp || "—"}`
+                          ? `آخر دخول: ${new Date(a.lastLoginAt).toLocaleDateString("ar")} — ${new Date(a.lastLoginAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })} — ${a.lastLoginIp || "—"}`
                           : "لم يسجّل الدخول بعد"}
                       </p>
                     </div>

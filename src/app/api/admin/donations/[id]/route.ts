@@ -36,10 +36,13 @@ export async function PATCH(
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
-    // MEMBERSHIP-source rows are derived from Member.paidAmount/status and
-    // kept in sync automatically — manual edits here would be silently
-    // overwritten (or resurrected) the next time that sync runs.
-    if (existing.source === "MEMBERSHIP") {
+    // MEMBERSHIP-source rows are derived from Member.paidAmount/status/
+    // paymentMethod and kept in sync automatically (see syncMembershipDonation)
+    // — amount/name/proof edits here would be silently overwritten the next
+    // time that sync runs. paymentMethod is the one field it also propagates
+    // automatically going forward, but an admin may still need to fix it by
+    // hand for rows synced before that existed.
+    if (existing.source === "MEMBERSHIP" && [status, memberId, donorName, donorPhone, donorPhoto, amount].some((v) => v !== undefined)) {
       return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" }, { status: 400 });
     }
 
@@ -122,6 +125,41 @@ export async function PATCH(
       return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     }
     console.error("Donation update error:", err);
+    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await requireAdminRole("SUPER");
+    const { id } = await params;
+
+    const existing = await prisma.donation.findUnique({ where: { id }, select: { source: true, donorName: true, amount: true } });
+    if (!existing) {
+      return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
+    }
+    // MEMBERSHIP-source rows are derived automatically (see syncMembershipDonation)
+    // — deleting one here would just have it recreated the next time the
+    // linked member's paidAmount/status is touched.
+    if (existing.source === "MEMBERSHIP") {
+      return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" }, { status: 400 });
+    }
+
+    await prisma.donation.delete({ where: { id } });
+    await logAction(session.username, "DELETE_DONATION", `${existing.donorName || "فاعل خير"} — ${existing.amount ?? 0} أوقية`);
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    if (err instanceof Error && err.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    }
+    if (err instanceof Error && err.message === "FORBIDDEN") {
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    }
+    console.error("Donation delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }

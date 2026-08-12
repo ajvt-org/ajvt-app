@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
-
-function generateTempPassword(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
-}
 
 export async function POST(req: NextRequest) {
   try {

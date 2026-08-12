@@ -78,6 +78,11 @@ export default async function VerifyPage({
                   year: "numeric", month: "long", day: "numeric", weekday: "long",
                 })}
               />
+              <Row
+                label="وقت الانضمام"
+                value={new Date(member!.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                dir="ltr"
+              />
             </div>
 
             {member!.registrations.length > 0 && (

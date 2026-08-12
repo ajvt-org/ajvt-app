@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -25,10 +26,11 @@ function sortedEntries(map: Map<string, number>): NamedEntry[] {
     .sort((a, b) => b.amount - a.amount);
 }
 
-// Revenue = confirmed membership fees (Member.paidAmount, status ACTIVE) +
-// confirmed donations, excluding MEMBERSHIP-source rows since those already
-// mirror a slice of paidAmount (see syncMembershipDonation) — summing both
-// would double-count that portion.
+// Revenue = membership fees (capped at MEMBERSHIP_FEE per member — "انتساب")
+// + all confirmed donations ("دعم"), including MEMBERSHIP-source rows: those
+// mirror a member's surplus over the fee (see syncMembershipDonation) and are
+// exactly the amount that should count as دعم rather than انتساب, matching
+// the public leaderboard's own attribution.
 export async function getFinanceSummary(recentDays = 30) {
   const [members, donations, expenses] = await Promise.all([
     prisma.member.findMany({
@@ -36,7 +38,7 @@ export async function getFinanceSummary(recentDays = 30) {
       select: { fullName: true, paidAmount: true, paymentMethod: true, createdAt: true },
     }),
     prisma.donation.findMany({
-      where: { status: "ACTIVE", source: { not: "MEMBERSHIP" } },
+      where: { status: "ACTIVE" },
       select: { id: true, amount: true, paymentMethod: true, createdAt: true, donorName: true },
     }),
     prisma.expense.findMany({ select: { amount: true } }),
@@ -71,8 +73,9 @@ export async function getFinanceSummary(recentDays = 30) {
   }
 
   for (const m of members) {
-    const key = addRevenue(m.paidAmount ?? 0, m.paymentMethod, m.createdAt);
-    addNamed(intisabByMethod, key, m.fullName, m.paidAmount ?? 0);
+    const fee = Math.min(m.paidAmount ?? 0, MEMBERSHIP_FEE);
+    const key = addRevenue(fee, m.paymentMethod, m.createdAt);
+    addNamed(intisabByMethod, key, m.fullName, fee);
   }
 
   const unassigned: { id: string; name: string; amount: number }[] = [];
