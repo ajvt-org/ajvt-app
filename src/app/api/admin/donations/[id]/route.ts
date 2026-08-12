@@ -17,9 +17,9 @@ export async function PATCH(
     // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
-    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod } = await req.json();
+    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } = await req.json();
 
-    if ([status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod].every((v) => v === undefined)) {
+    if ([status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof].every((v) => v === undefined)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (status !== undefined && !["ACTIVE", "REJECTED"].includes(status)) {
@@ -31,22 +31,26 @@ export async function PATCH(
     if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
+    if (proof !== undefined && proof !== null && typeof proof !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
 
     const existing = await prisma.donation.findUnique({ where: { id }, select: { source: true, donorName: true } });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
     // MEMBERSHIP-source rows are derived from Member.paidAmount/status/
-    // paymentMethod and kept in sync automatically (see syncMembershipDonation)
-    // — amount/name/proof edits here would be silently overwritten the next
-    // time that sync runs. paymentMethod is the one field it also propagates
-    // automatically going forward, but an admin may still need to fix it by
-    // hand for rows synced before that existed.
-    if (existing.source === "MEMBERSHIP" && [status, memberId, donorName, donorPhone, donorPhoto, amount].some((v) => v !== undefined)) {
+    // paymentMethod/paymentProof and kept in sync automatically (see
+    // syncMembershipDonation) — amount/name/proof edits here would be
+    // silently overwritten the next time that sync runs. paymentMethod is
+    // the one field it also propagates automatically going forward, but an
+    // admin may still need to fix it by hand for rows synced before that
+    // existed.
+    if (existing.source === "MEMBERSHIP" && [status, memberId, donorName, donorPhone, donorPhoto, amount, proof].some((v) => v !== undefined)) {
       return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" }, { status: 400 });
     }
 
-    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number; paymentMethod?: string | null } = {};
+    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number; paymentMethod?: string | null; proof?: string | null } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
@@ -81,6 +85,10 @@ export async function PATCH(
       data.donorPhoto = donorPhoto || null;
     }
 
+    if (proof !== undefined) {
+      data.proof = proof || null;
+    }
+
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isInteger(n) || n <= 0) {
@@ -112,7 +120,7 @@ export async function PATCH(
         memberId ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}` : (existing.donorName || "فاعل خير")
       );
     }
-    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined || paymentMethod !== undefined) {
+    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined || paymentMethod !== undefined || proof !== undefined) {
       await logAction(session.username, "UPDATE_DONATION", donation.member?.fullName || donation.donorName || "فاعل خير");
     }
 
