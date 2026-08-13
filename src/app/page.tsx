@@ -86,15 +86,13 @@ export default async function LandingPage() {
         🏆 لوحة شرف المتبرعين
       </Link>
 
-      {activities.length > 0 && (
-        <a
-          href="#activities"
-          className="fade-up delay-4 mt-10 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold"
-          style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }}
-        >
-          🏆 أنشطة هذا الصيف جارية الآن ({activities.length}) ⬇️
-        </a>
-      )}
+      <a
+        href="#activities"
+        className="fade-up delay-4 mt-10 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold"
+        style={{ background: "rgba(255,255,255,0.18)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }}
+      >
+        {activities.length > 0 ? `🏆 أنشطة هذا الصيف جارية الآن (${activities.length}) ⬇️` : "🧠 المسابقة الثقافية ⬇️"}
+      </a>
 
       <div className="fade-up delay-4 mt-6">
         <Link
@@ -107,12 +105,31 @@ export default async function LandingPage() {
       </div>
     </div>
 
-    {activities.length > 0 && (
-      <div id="activities" className="px-5 py-8" style={{ background: "var(--mint-50)", scrollMarginTop: "1rem" }}>
+    <div id="activities" className="px-5 py-8" style={{ background: "var(--mint-50)", scrollMarginTop: "1rem" }}>
         <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
           🏆 أنشطة هذا الصيف
         </h2>
         <div className="max-w-md mx-auto space-y-3">
+          <div className="card overflow-hidden text-right">
+            <div className="pt-4 flex justify-center">
+              <div
+                className="w-24 h-24 rounded-full flex items-center justify-center text-4xl"
+                style={{ background: "linear-gradient(160deg, var(--mint-500), var(--mint-700))", border: "2px solid var(--mint-200)" }}
+              >
+                🧠
+              </div>
+            </div>
+            <div className="p-4 text-center">
+              <h3 className="font-bold" style={{ color: "var(--text-main)" }}>المسابقة الثقافية</h3>
+              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+                أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥 — متاحة للمنتسبين الذين أكملوا الانتساب
+              </p>
+              <Link href="/register" className="btn btn-primary mt-4">
+                أنشئ حساباً وأكمل استمارة الانضمام ←
+              </Link>
+            </div>
+          </div>
+
           {activities.map((activity) => (
             <div key={activity.id} className="card overflow-hidden text-right">
               {activity.photo && (
@@ -164,11 +181,12 @@ export default async function LandingPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-center mt-5" style={{ color: "var(--text-muted)" }}>
-          أنشئ حساباً وأكمل استمارة الانضمام للتسجيل في الأنشطة
-        </p>
-      </div>
-    )}
+        {activities.length > 0 && (
+          <p className="text-xs text-center mt-5" style={{ color: "var(--text-muted)" }}>
+            أنشئ حساباً وأكمل استمارة الانضمام للتسجيل في الأنشطة
+          </p>
+        )}
+    </div>
     </div>
   );
 }
