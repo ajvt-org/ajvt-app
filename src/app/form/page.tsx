@@ -7,6 +7,7 @@ import Link from "next/link";
 import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
+import ProofUpload from "@/components/ProofUpload";
 import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
@@ -124,10 +125,9 @@ function FormPageInner() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [existingProof, setExistingProof] = useState<string | null>(null);
+  const [proofFilename, setProofFilename] = useState<string | null>(null);
+  const [proofUploading, setProofUploading] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -175,7 +175,7 @@ function FormPageInner() {
           // rather than leaving the reconciliation field blank.
           referenceCode: member.referenceCode || generateReferenceCode(),
         });
-        if (member.paymentProof) setExistingProof(member.paymentProof);
+        if (member.paymentProof) setProofFilename(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
         setAuthenticated(true);
         setCheckingAuth(false);
@@ -229,14 +229,6 @@ function FormPageInner() {
     setForm({ fullName: "", phone: "", age: "", paymentMethod: "", paidAmount: "", referenceCode: generateReferenceCode() });
     localStorage.removeItem(DRAFT_KEY);
     setDraftRestored(false);
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
   }
 
   function handleAgeSelect(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -333,24 +325,15 @@ function FormPageInner() {
     if (!form.paymentMethod) { setError("يرجى اختيار طريقة الدفع"); return; }
     const paidAmountError = validatePaidAmount(form.paidAmount);
     if (paidAmountError) { setError(paidAmountError); return; }
-    if (!selectedFile && !existingProof) { setError("يرجى إرفاق صورة الكابتير"); return; }
+    if (proofUploading) { setError("يرجى الانتظار حتى انتهاء رفع الصورة"); return; }
+    if (!proofFilename) { setError("يرجى إرفاق صورة الكابتير"); return; }
 
     setLoading(true);
     try {
-      let paymentProof = existingProof;
-      if (selectedFile) {
-        const fd = new FormData();
-        fd.append("file", selectedFile);
-        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!upRes.ok) throw new Error("فشل رفع صورة الكابتير");
-        const uploaded = await upRes.json();
-        paymentProof = uploaded.filename;
-      }
-
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paidAmount: Number(form.paidAmount), paymentProof, photo }),
+        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paidAmount: Number(form.paidAmount), paymentProof: proofFilename, photo }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -748,42 +731,7 @@ function FormPageInner() {
                 </p>
               </div>
 
-              <div>
-                <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-                  كابتير — صورة تأكيد الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-                </p>
-                <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
-                  {previewUrl || existingProof ? (
-                    <div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={previewUrl || `/api/files/${existingProof}`}
-                        alt="الكابتير"
-                        className="max-h-48 mx-auto rounded-xl object-contain"
-                      />
-                      <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
-                        {previewUrl ? "انقر لتغيير الصورة" : "الصورة الحالية — انقر لتغييرها"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">📸</div>
-                      <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
-                        انقر لاختيار صورة من هاتفك
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                        PNG / JPG — حجم أقصى 5 ميغابايت
-                      </p>
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    style={{ display: "none" }}
-                  />
-                </label>
-              </div>
+              <ProofUpload existingProof={proofFilename} onUploaded={setProofFilename} onUploadingChange={setProofUploading} />
 
               {error && (
                 <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
@@ -795,7 +743,7 @@ function FormPageInner() {
                 <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
                   → السابق
                 </button>
-                <button type="submit" disabled={loading} className="btn btn-primary flex-1">
+                <button type="submit" disabled={loading || proofUploading} className="btn btn-primary flex-1">
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
