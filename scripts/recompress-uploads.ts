@@ -3,6 +3,7 @@ import { readdir, readFile, writeFile, copyFile, rm, rename, mkdir } from "fs/pr
 import { existsSync } from "fs";
 import { join, extname, basename } from "path";
 import { fileURLToPath } from "url";
+import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import sharp from "sharp";
@@ -118,9 +119,13 @@ interface FileResult {
 }
 
 export async function processOneFile(oldFilename: string): Promise<FileResult> {
-  const id = basename(oldFilename, extname(oldFilename));
-  const newFilename = `${id}.webp`;
-  const thumbFilename = `${id}-thumb.webp`;
+  // Always a fresh id, even if oldFilename is already "<uuid>.webp" — A4
+  // relies on uploaded files never being rewritten in place under the same
+  // name (immutable caching), so recompressing here must never reuse the
+  // old name, only ever replace it.
+  const newId = uuidv4();
+  const newFilename = `${newId}.webp`;
+  const thumbFilename = `${newId}-thumb.webp`;
   const oldPath = join(UPLOAD_DIR, oldFilename);
 
   const original = await readFile(oldPath);
@@ -138,17 +143,16 @@ export async function processOneFile(oldFilename: string): Promise<FileResult> {
     const backupPath = join(BACKUP_DIR, oldFilename);
     if (!existsSync(backupPath)) await copyFile(oldPath, backupPath);
 
-    // Write to temp names first — if newFilename === oldFilename (source was
-    // already a .webp, just not yet compressed to spec), this avoids
-    // truncating the file we're still reading from mid-write.
-    const tmpFull = join(UPLOAD_DIR, `.${id}.tmp.webp`);
-    const tmpThumb = join(UPLOAD_DIR, `.${id}.tmp-thumb.webp`);
+    // Write to temp names first, then rename into place — avoids leaving a
+    // half-written file at the final path if the process dies mid-write.
+    const tmpFull = join(UPLOAD_DIR, `.${newId}.tmp.webp`);
+    const tmpThumb = join(UPLOAD_DIR, `.${newId}.tmp-thumb.webp`);
     await writeFile(tmpFull, full);
     await writeFile(tmpThumb, thumbnail);
     await rename(tmpFull, join(UPLOAD_DIR, newFilename));
     await rename(tmpThumb, join(UPLOAD_DIR, thumbFilename));
 
-    if (newFilename !== oldFilename) await rm(oldPath, { force: true });
+    await rm(oldPath, { force: true });
   }
 
   return {
@@ -195,7 +199,8 @@ async function main() {
   for (const filename of candidates) {
     const id = basename(filename, extname(filename));
     const already = manifest[id];
-    const outputStillOnDisk = already && existsSync(join(UPLOAD_DIR, already.newFilename)) && existsSync(join(UPLOAD_DIR, `${id}-thumb.webp`));
+    const alreadyThumbName = already ? `${basename(already.newFilename, extname(already.newFilename))}-thumb.webp` : null;
+    const outputStillOnDisk = already && alreadyThumbName && existsSync(join(UPLOAD_DIR, already.newFilename)) && existsSync(join(UPLOAD_DIR, alreadyThumbName));
     if (already && outputStillOnDisk) {
       skipped++;
       continue;
