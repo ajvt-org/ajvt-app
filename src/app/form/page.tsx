@@ -106,6 +106,7 @@ function FormPageInner() {
   const [existingProof, setExistingProof] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
 
   // العصر dropdown
   const [ages, setAges] = useState<string[]>(DEFAULT_AGES);
@@ -145,6 +146,7 @@ function FormPageInner() {
         if (draft) {
           try {
             setForm(JSON.parse(draft));
+            setDraftRestored(true);
           } catch {
             setForm((p) => ({ ...p, phone: me?.phone || "" }));
           }
@@ -165,8 +167,17 @@ function FormPageInner() {
 
   useEffect(() => {
     if (checkingAuth || editId) return;
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    const timeout = setTimeout(() => {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    }, 300);
+    return () => clearTimeout(timeout);
   }, [form, checkingAuth, editId]);
+
+  function startOver() {
+    setForm({ fullName: "", phone: "", age: "", paymentMethod: "", paidAmount: "" });
+    localStorage.removeItem(DRAFT_KEY);
+    setDraftRestored(false);
+  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -295,6 +306,25 @@ function FormPageInner() {
       </div>
 
       <div className="px-5 py-6 pb-10">
+
+        {draftRestored && !editId && (
+          <div
+            className="rounded-2xl p-3 mb-4 fade-up flex items-center justify-between gap-3"
+            style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+          >
+            <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
+              💾 تم استرجاع بياناتك المحفوظة من محاولة سابقة
+            </p>
+            <button
+              type="button"
+              onClick={startOver}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+              style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+            >
+              البدء من جديد
+            </button>
+          </div>
+        )}
 
         {/* Purpose of membership */}
         <div
