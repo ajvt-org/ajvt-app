@@ -3,9 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { getAdminSession, getUserSession } from "@/lib/auth";
-
-const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
 
 export function getUploadDir(): string {
   // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
@@ -27,19 +25,30 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File | null;
 
     if (!file) return NextResponse.json({ error: "لم يتم إرفاق ملف" }, { status: 400 });
-    if (!ALLOWED_TYPES.includes(file.type))
-      return NextResponse.json({ error: "نوع الملف غير مدعوم (PNG/JPG فقط)" }, { status: 400 });
-    if (file.size > MAX_SIZE)
-      return NextResponse.json({ error: "حجم الملف يتجاوز 5 ميغابايت" }, { status: 400 });
+    if (!ALLOWED_UPLOAD_TYPES.includes(file.type))
+      return NextResponse.json({ error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" }, { status: 400 });
+    if (file.size > MAX_UPLOAD_SIZE)
+      return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${uuidv4()}.${ext}`;
+    const id = uuidv4();
+    const filename = `${id}.webp`;
+    const thumbnailFilename = `${id}-thumb.webp`;
     const uploadDir = getUploadDir();
+    let processed;
+    try {
+      processed = await processImage(Buffer.from(await file.arrayBuffer()));
+    } catch (err) {
+      console.error("Image processing error:", err);
+      return NextResponse.json({ error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" }, { status: 400 });
+    }
 
     await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, filename), Buffer.from(await file.arrayBuffer()));
+    await Promise.all([
+      writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
+      writeFile(join(/* turbopackIgnore: true */ uploadDir, thumbnailFilename), processed.thumbnail),
+    ]);
 
-    return NextResponse.json({ filename }, { status: 200 });
+    return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });
   } catch (err) {
     console.error("Upload error:", err);
     return NextResponse.json({ error: "فشل رفع الملف" }, { status: 500 });
