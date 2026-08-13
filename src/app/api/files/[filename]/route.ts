@@ -32,8 +32,12 @@ export async function GET(
     const buffer = await readFile(filePath);
     const ext = extname(filename).toLowerCase();
     const contentType = MIME[ext] || "application/octet-stream";
+    // private (not public): this route is auth-gated, so a shared/proxy
+    // cache must never store a response meant for one admin/member's
+    // session. Filenames are uuid-based and never rewritten in place
+    // (recompression always assigns a new name), so immutable is safe.
     return new NextResponse(buffer, {
-      headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" },
+      headers: { "Content-Type": contentType, "Cache-Control": "private, max-age=31536000, immutable" },
     });
   } catch {
     return new NextResponse("Not found", { status: 404 });

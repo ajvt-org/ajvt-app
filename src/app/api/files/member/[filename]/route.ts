@@ -36,7 +36,7 @@ export async function GET(
     const ext = extname(filename).toLowerCase();
     const contentType = MIME[ext] || "application/octet-stream";
     return new NextResponse(buffer, {
-      headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000" },
+      headers: { "Content-Type": contentType, "Cache-Control": "public, max-age=31536000, immutable" },
     });
   } catch {
     return new NextResponse("Not found", { status: 404 });
