@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext, validatePhone } from "@/lib/utils";
+import { loginPathWithNext, validatePhone, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -33,6 +33,7 @@ const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
 const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "", paymentMethod: "", proof: "" };
+const PAGE_SIZE = 30;
 
 export default function AdminPaymentsPage() {
   const router = useRouter();
@@ -41,6 +42,8 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION">("ALL");
+  const [page, setPage] = useState(1);
+  const [lastFilterKey, setLastFilterKey] = useState("ALL|");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [linkingId, setLinkingId] = useState<string | null>(null);
   const [linkSearch, setLinkSearch] = useState("");
@@ -257,6 +260,19 @@ export default function AdminPaymentsPage() {
     ? byKind.filter((p) => p.memberName.includes(q) || (p.activityTitle || "").includes(q))
     : byKind;
 
+  // Reset to page 1 whenever the filter/search changes shape — adjusted
+  // during render (not an effect) so it takes effect in the same pass
+  // instead of causing an extra render.
+  const filterKey = `${kindFilter}|${q}`;
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const KIND_TABS: { key: "ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION"; label: string }[] = [
     { key: "ALL", label: "الكل" },
     { key: "MEMBERSHIP", label: "💳 انتساب" },
@@ -319,15 +335,19 @@ export default function AdminPaymentsPage() {
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد نتائج</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p) => (
+          {paginated.map((p) => (
             <div key={`${p.kind}-${p.id}`} className="card p-3">
               <div className="flex items-center gap-3">
                 {p.proof ? (
                   <a href={`/api/files/${p.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/api/files/${p.proof}`}
+                      src={toThumbUrl(`/api/files/${p.proof}`)}
                       alt={p.memberName}
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      decoding="async"
                       className="w-14 h-14 rounded-lg object-cover"
                       style={{ border: "1px solid var(--mint-100)" }}
                     />
@@ -561,6 +581,30 @@ export default function AdminPaymentsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            ← السابق
+          </button>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+            صفحة {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            التالي →
+          </button>
         </div>
       )}
 

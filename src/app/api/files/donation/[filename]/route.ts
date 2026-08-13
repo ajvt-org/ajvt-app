@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { extname, join } from "path";
 import { prisma } from "@/lib/prisma";
 import { getUploadDir } from "@/app/api/upload/route";
+import { toBaseFilename } from "@/lib/imageProcessing";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -26,7 +27,7 @@ export async function GET(
     // shown publicly on the leaderboard — like member/activity photos, only
     // serve filenames actually attached to a donation as donorPhoto, so this
     // route can't be used to probe the shared upload directory.
-    const donation = await prisma.donation.findFirst({ where: { donorPhoto: filename }, select: { id: true } });
+    const donation = await prisma.donation.findFirst({ where: { donorPhoto: toBaseFilename(filename) }, select: { id: true } });
     if (!donation) {
       return new NextResponse("Not found", { status: 404 });
     }

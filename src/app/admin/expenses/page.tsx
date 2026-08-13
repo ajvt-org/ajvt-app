@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -54,6 +54,7 @@ interface FinanceSummary {
 }
 
 const emptyExpenseForm = { label: "", amount: "", note: "", date: "", proof: "" };
+const PAGE_SIZE = 30;
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10);
@@ -65,6 +66,7 @@ export default function AdminExpensesPage() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [reassignValue, setReassignValue] = useState<Record<string, string>>({});
   const [reassigningId, setReassigningId] = useState<string | null>(null);
 
@@ -241,6 +243,9 @@ export default function AdminExpensesPage() {
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const days = summary?.days || [];
+  const totalExpensePages = Math.max(1, Math.ceil(expenses.length / PAGE_SIZE));
+  const currentExpensePage = Math.min(page, totalExpensePages);
+  const paginatedExpenses = expenses.slice((currentExpensePage - 1) * PAGE_SIZE, currentExpensePage * PAGE_SIZE);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
@@ -469,15 +474,19 @@ export default function AdminExpensesPage() {
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد مصاريف مسجلة بعد</p>
       ) : (
         <div className="space-y-2">
-          {expenses.map((e) => (
+          {paginatedExpenses.map((e) => (
             <div key={e.id} className="card p-3">
               <div className="flex items-center gap-3">
                 {e.proof ? (
                   <a href={`/api/files/${e.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/api/files/${e.proof}`}
+                      src={toThumbUrl(`/api/files/${e.proof}`)}
                       alt={e.label}
+                      width={48}
+                      height={48}
+                      loading="lazy"
+                      decoding="async"
                       className="w-12 h-12 rounded-lg object-cover"
                       style={{ border: "1px solid var(--mint-100)" }}
                     />
@@ -521,6 +530,30 @@ export default function AdminExpensesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalExpensePages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            onClick={() => setPage(currentExpensePage - 1)}
+            disabled={currentExpensePage <= 1}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            ← السابق
+          </button>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+            صفحة {currentExpensePage} / {totalExpensePages}
+          </span>
+          <button
+            onClick={() => setPage(currentExpensePage + 1)}
+            disabled={currentExpensePage >= totalExpensePages}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            التالي →
+          </button>
         </div>
       )}
 

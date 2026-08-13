@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { extname, join } from "path";
 import { prisma } from "@/lib/prisma";
 import { getUploadDir } from "@/app/api/upload/route";
+import { toBaseFilename } from "@/lib/imageProcessing";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -26,7 +27,7 @@ export async function GET(
     // unlike payment proofs/member photos — but only serve filenames that are
     // actually attached to an activity, so this route can't be used to probe
     // the shared upload directory for other members' private files.
-    const activity = await prisma.activity.findFirst({ where: { photo: filename }, select: { id: true } });
+    const activity = await prisma.activity.findFirst({ where: { photo: toBaseFilename(filename) }, select: { id: true } });
     if (!activity) {
       return new NextResponse("Not found", { status: 404 });
     }

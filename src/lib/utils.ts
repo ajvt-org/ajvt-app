@@ -31,3 +31,11 @@ export function formatDate(date: Date | string): string {
     day: "numeric",
   });
 }
+
+// Converts a full-resolution /api/files/... URL to its thumbnail
+// counterpart. Falls back to the original URL unchanged for files uploaded
+// before compression existed (not yet .webp) — those have no thumbnail on
+// disk, so the caller ends up requesting the full image, same as before.
+export function toThumbUrl(url: string): string {
+  return url.endsWith(".webp") ? `${url.slice(0, -".webp".length)}-thumb.webp` : url;
+}

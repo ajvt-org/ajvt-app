@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getLeaderboardData } from "@/lib/donationsServer";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { toThumbUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,15 @@ export default async function LeaderboardPage() {
                         {entry.photoUrl ? (
                           <span className="w-7 h-7 rounded-full overflow-hidden shrink-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={entry.photoUrl} alt={entry.name} className="w-full h-full object-cover" />
+                            <img
+                              src={toThumbUrl(entry.photoUrl)}
+                              alt={entry.name}
+                              width={28}
+                              height={28}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover"
+                            />
                           </span>
                         ) : (
                           <span

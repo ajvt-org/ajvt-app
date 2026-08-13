@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { toThumbUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -119,8 +120,12 @@ export default async function LandingPage() {
                 <div className="pt-4 flex justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/api/files/activity/${activity.photo}`}
+                    src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
                     alt={activity.title}
+                    width={96}
+                    height={96}
+                    loading="lazy"
+                    decoding="async"
                     className="w-24 h-24 rounded-full object-cover"
                     style={{ border: "2px solid var(--mint-200)" }}
                   />
