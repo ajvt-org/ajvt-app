@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { toThumbUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -136,8 +137,12 @@ export default async function LandingPage() {
                 <div className="pt-4 flex justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/api/files/activity/${activity.photo}`}
+                    src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
                     alt={activity.title}
+                    width={96}
+                    height={96}
+                    loading="lazy"
+                    decoding="async"
                     className="w-24 h-24 rounded-full object-cover"
                     style={{ border: "2px solid var(--mint-200)" }}
                   />
@@ -146,20 +151,12 @@ export default async function LandingPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3 mb-1">
                   <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
-                  {activity.isVolunteer ? (
-                    <a
-                      href={activity.whatsappLink || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="badge badge-open-blink shrink-0 font-bold"
-                    >
-                      تطوع معنا 💚
-                    </a>
-                  ) : (
-                    <Link href="/register" className="badge badge-open-blink shrink-0 font-bold">
-                      🔴 سجّل الآن
-                    </Link>
-                  )}
+                  <span
+                    className="badge badge-open-blink shrink-0 font-bold"
+                    style={activity.isVolunteer ? { background: "#dcfce7", color: "#16a34a" } : undefined}
+                  >
+                    {activity.isVolunteer ? "🟢 مفتوح للتطوع" : "🔴 مفتوح للتسجيل"}
+                  </span>
                 </div>
                 <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
                 <div className="flex items-center gap-3 text-xs mt-2" style={{ color: "var(--text-muted)" }}>
@@ -168,15 +165,36 @@ export default async function LandingPage() {
                     <span>👥 {activity._count.registrations}/{activity.capacity}</span>
                   )}
                 </div>
-                {activity.isTournament && (
-                  <a
-                    href={`/tournament/${activity.id}`}
-                    className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mt-2"
-                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                  >
-                    🏆 عرض الترتيب ←
-                  </a>
-                )}
+                <div className="mt-3 space-y-2">
+                  {activity.isVolunteer ? (
+                    <a
+                      href={activity.whatsappLink || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-whatsapp"
+                      style={{ minHeight: "44px", padding: "0.65rem 1.25rem", fontSize: "0.9rem" }}
+                    >
+                      🤝 انضم كمتطوع الآن — واتساب
+                    </a>
+                  ) : (
+                    <Link
+                      href="/register"
+                      className="btn btn-copper"
+                      style={{ minHeight: "44px", padding: "0.65rem 1.25rem", fontSize: "0.9rem" }}
+                    >
+                      📝 سجّل الآن — أنشئ حسابك للمشاركة
+                    </Link>
+                  )}
+                  {activity.isTournament && (
+                    <a
+                      href={`/tournament/${activity.id}`}
+                      className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block"
+                      style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                    >
+                      🏆 عرض الترتيب ←
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           ))}

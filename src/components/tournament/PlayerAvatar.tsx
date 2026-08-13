@@ -1,3 +1,5 @@
+import { toThumbUrl } from "@/lib/utils";
+
 interface PlayerAvatarProps {
   photo: string | null;
   fullName: string;
@@ -25,8 +27,12 @@ export default function PlayerAvatar({ photo, fullName, size = 28, bg = "mint" }
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/api/files/member/${photo}`}
+      src={toThumbUrl(`/api/files/member/${photo}`)}
       alt={fullName}
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
       className="rounded-full object-cover shrink-0"
       style={{ width: size, height: size, border: `2px solid ${colors.border}` }}
     />
