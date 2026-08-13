@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import MemberCard from "@/components/MemberCard";
+import StatusTimeline from "@/components/StatusTimeline";
 import NotificationsButton from "@/components/NotificationsButton";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
@@ -37,6 +38,7 @@ interface MemberData {
   paidAmount: number | null;
   status: Status;
   createdAt: string;
+  updatedAt: string;
   memberNumber: string | null;
   photo: string | null;
   registrations: RegistrationData[];
@@ -204,6 +206,7 @@ function MemberEntry({
   return (
     <div className={`fade-up ${delayClass} space-y-4`}>
       <StatusCard status={member.status} />
+      <StatusTimeline status={member.status} createdAt={member.createdAt} updatedAt={member.updatedAt} />
 
       <div className="card p-4">
         <PhotoUpload
