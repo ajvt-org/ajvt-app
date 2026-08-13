@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
           ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
           paidAmount: Number(paidAmount),
           status: "PENDING",
+          rejectionReason: null,
         },
       });
       return NextResponse.json({ id: updated.id }, { status: 200 });

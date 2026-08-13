@@ -14,6 +14,7 @@ const MEMBER_SELECT = {
   photo: true,
   paidAmount: true,
   status: true,
+  rejectionReason: true,
   createdAt: true,
   updatedAt: true,
   memberNumber: true,

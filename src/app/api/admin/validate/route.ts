@@ -5,14 +5,18 @@ import { generateMemberNumber } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction } from "@/lib/audit";
 import { syncMembershipDonation } from "@/lib/donationsServer";
+import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("MEMBERS");
-    const { id, action } = await req.json();
+    const { id, action, rejectionReason } = await req.json();
 
     if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
+    if (action === "REJECTED" && rejectionReason !== undefined && rejectionReason !== null && !REJECTION_REASONS.includes(rejectionReason)) {
+      return NextResponse.json({ error: "سبب الرفض غير صالح" }, { status: 400 });
     }
 
     const existing = await prisma.member.findUnique({ where: { id }, select: { status: true, memberNumber: true } });
@@ -24,7 +28,12 @@ export async function POST(req: NextRequest) {
     const updated = await prisma.$transaction(async (tx) => {
       const m = await tx.member.update({
         where: { id },
-        data: { status: action, ...(memberNumber ? { memberNumber } : {}) },
+        data: {
+          status: action,
+          ...(memberNumber ? { memberNumber } : {}),
+          // A stale reason from a past rejection shouldn't linger once approved.
+          rejectionReason: action === "REJECTED" ? (rejectionReason || null) : null,
+        },
       });
       await syncMembershipDonation(tx, id);
       return m;

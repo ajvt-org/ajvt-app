@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
+import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 type FilterTab = "ALL" | Status;
@@ -60,6 +61,8 @@ export default function AdminDashboard() {
   const [selected, setSelected] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [proofZoom, setProofZoom] = useState(false);
+  const [showRejectPicker, setShowRejectPicker] = useState(false);
+  const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
@@ -124,22 +127,27 @@ export default function AdminDashboard() {
     }
   }
 
-  async function validate(id: string, action: "ACTIVE" | "REJECTED") {
+  async function validate(id: string, action: "ACTIVE" | "REJECTED", reason?: string) {
     setActionLoading(true);
     try {
       const res = await fetch("/api/admin/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action }),
+        body: JSON.stringify({ id, action, ...(reason ? { rejectionReason: reason } : {}) }),
       });
       if (!res.ok) throw new Error("فشلت العملية");
       await fetchMembers();
       setSelected(null);
+      setShowRejectPicker(false);
     } catch (e) {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
       setActionLoading(false);
     }
+  }
+
+  function rejectWithReason(id: string) {
+    validate(id, "REJECTED", rejectReason);
   }
 
   async function deleteMember(id: string) {
@@ -474,7 +482,7 @@ export default function AdminDashboard() {
           {paginated.map((m) => (
             <button
               key={m.id}
-              onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); }}
+              onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); setShowRejectPicker(false); }}
               className="card w-full p-4 text-right transition-all hover:shadow-md"
             >
               <div className="flex items-center justify-between gap-3">
@@ -569,7 +577,7 @@ export default function AdminDashboard() {
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) { setSelected(null); setProofZoom(false); setTempPassword(null); }
+            if (e.target === e.currentTarget) { setSelected(null); setProofZoom(false); setTempPassword(null); setShowRejectPicker(false); }
           }}
         >
           <div
@@ -586,7 +594,7 @@ export default function AdminDashboard() {
             >
               <h2 className="font-black text-white text-lg">تفاصيل الطلب</h2>
               <button
-                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); setEditing(false); }}
+                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); setEditing(false); setShowRejectPicker(false); }}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
                 style={{ background: "rgba(255,255,255,0.15)" }}
               >
@@ -829,7 +837,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Actions */}
-              {selected.status === "PENDING" && (
+              {selected.status === "PENDING" && !showRejectPicker && (
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => validate(selected.id, "ACTIVE")}
@@ -839,24 +847,56 @@ export default function AdminDashboard() {
                     {actionLoading ? "..." : "✅ قبول"}
                   </button>
                   <button
-                    onClick={() => validate(selected.id, "REJECTED")}
+                    onClick={() => setShowRejectPicker(true)}
                     disabled={actionLoading}
                     className="btn text-sm font-bold"
                     style={{ background: "#dc2626", color: "white" }}
                   >
-                    {actionLoading ? "..." : "❌ رفض"}
+                    ❌ رفض
                   </button>
                 </div>
               )}
-              {selected.status === "ACTIVE" && (
+              {selected.status === "ACTIVE" && !showRejectPicker && (
                 <button
-                  onClick={() => validate(selected.id, "REJECTED")}
+                  onClick={() => setShowRejectPicker(true)}
                   disabled={actionLoading}
                   className="btn w-full text-sm font-bold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  {actionLoading ? "..." : "تغيير إلى مرفوض"}
+                  تغيير إلى مرفوض
                 </button>
+              )}
+              {(selected.status === "PENDING" || selected.status === "ACTIVE") && showRejectPicker && (
+                <div className="card p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>
+                  <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
+                    سبب الرفض — سيظهر للعضو
+                  </label>
+                  <select
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    className="input text-sm"
+                  >
+                    {REJECTION_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowRejectPicker(false)}
+                      disabled={actionLoading}
+                      className="btn text-sm"
+                      style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={() => rejectWithReason(selected.id)}
+                      disabled={actionLoading}
+                      className="btn text-sm font-bold flex-1"
+                      style={{ background: "#dc2626", color: "white" }}
+                    >
+                      {actionLoading ? "..." : "تأكيد الرفض"}
+                    </button>
+                  </div>
+                </div>
               )}
               {selected.status === "REJECTED" && (
                 <button

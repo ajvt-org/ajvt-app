@@ -7,6 +7,7 @@ import MemberCard from "@/components/MemberCard";
 import StatusTimeline from "@/components/StatusTimeline";
 import NotificationsButton from "@/components/NotificationsButton";
 import PhotoUpload from "@/components/PhotoUpload";
+import ProofUpload from "@/components/ProofUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
@@ -35,8 +36,10 @@ interface MemberData {
   phone: string;
   age: string;
   paymentMethod: string;
+  paymentProof: string | null;
   paidAmount: number | null;
   status: Status;
+  rejectionReason: string | null;
   createdAt: string;
   updatedAt: string;
   memberNumber: string | null;
@@ -180,6 +183,7 @@ export default function HomePage() {
                 onPhotoUpdated={(photo) => {
                   setMembers((prev) => prev.map((m) => (m.id === member.id ? { ...m, photo } : m)));
                 }}
+                onReload={loadMembers}
               />
             ))}
           </>
@@ -194,14 +198,48 @@ function MemberEntry({
   whatsappLink,
   delayIndex,
   onPhotoUpdated,
+  onReload,
 }: {
   member: MemberData;
   whatsappLink: string;
   delayIndex: number;
   onPhotoUpdated: (photo: string | null) => void;
+  onReload: () => void;
 }) {
   const router = useRouter();
   const delayClass = delayIndex === 0 ? "" : "delay-1";
+  const [newProof, setNewProof] = useState<string | null>(null);
+  const [resubmitting, setResubmitting] = useState(false);
+  const [resubmitError, setResubmitError] = useState("");
+
+  async function quickResubmit() {
+    if (!newProof) return;
+    setResubmitting(true);
+    setResubmitError("");
+    try {
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: member.id,
+          fullName: member.fullName,
+          phone: member.phone,
+          age: member.age,
+          paymentMethod: member.paymentMethod,
+          paidAmount: member.paidAmount,
+          paymentProof: newProof,
+          photo: member.photo,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
+      onReload();
+    } catch (err) {
+      setResubmitError(err instanceof Error ? err.message : "خطأ غير متوقع");
+    } finally {
+      setResubmitting(false);
+    }
+  }
 
   return (
     <div className={`fade-up ${delayClass} space-y-4`}>
@@ -243,12 +281,37 @@ function MemberEntry({
       )}
 
       {member.status === "REJECTED" && (
-        <div className="card p-5 text-center">
-          <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
-            يمكنك تصحيح بياناته وإعادة تقديم الطلب
+        <div className="card p-5">
+          {member.rejectionReason && (
+            <div className="rounded-xl p-3 mb-4" style={{ background: "#fff5f5", border: "1px solid #fca5a5" }}>
+              <p className="text-xs font-bold mb-0.5" style={{ color: "#991b1b" }}>سبب الرفض</p>
+              <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>{member.rejectionReason}</p>
+            </div>
+          )}
+
+          <p className="text-sm mb-3 font-bold" style={{ color: "var(--text-main)" }}>
+            أرفق صورة جديدة لإثبات الدفع وأعد الإرسال مباشرة
           </p>
-          <button onClick={() => router.push(`/form?id=${member.id}`)} className="btn btn-primary">
-            إعادة تقديم الطلب ←
+          <ProofUpload existingProof={member.paymentProof} onUploaded={setNewProof} />
+
+          {resubmitError && (
+            <p className="text-xs mt-2 font-semibold" style={{ color: "#dc2626" }}>⚠️ {resubmitError}</p>
+          )}
+
+          <button
+            onClick={quickResubmit}
+            disabled={!newProof || resubmitting}
+            className="btn btn-primary mt-3 disabled:opacity-40"
+          >
+            {resubmitting ? "جاري إعادة الإرسال..." : "إعادة الإرسال ←"}
+          </button>
+
+          <button
+            onClick={() => router.push(`/form?id=${member.id}`)}
+            className="text-xs font-bold mt-3 w-full text-center"
+            style={{ color: "var(--mint-600)" }}
+          >
+            أو عدّل بيانات أخرى في الطلب
           </button>
         </div>
       )}
