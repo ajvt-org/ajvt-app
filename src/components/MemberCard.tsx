@@ -11,11 +11,11 @@ interface MemberCardProps {
   photo?: string | null;
 }
 
+type Busy = "image" | "pdf" | "share" | null;
+
 export default function MemberCard({ fullName, age, memberNumber, createdAt, photo }: MemberCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [canShare, setCanShare] = useState(false);
+  const [busy, setBusy] = useState<Busy>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,50 +26,82 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
       .catch(() => setQrDataUrl(null));
   }, [memberNumber]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCanShare(typeof navigator !== "undefined" && !!navigator.share);
-  }, []);
+  // html2canvas-pro (not the plain html2canvas package — its Arabic/RTL
+  // text shaping is unreliable) is loaded only here, on demand, never as
+  // part of the page's own first-load bundle.
+  async function renderCanvas() {
+    if (!cardRef.current) return null;
+    const { default: html2canvas } = await import("html2canvas-pro");
+    return html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
+  }
 
-  async function downloadCard() {
-    if (!cardRef.current) return;
-    setDownloading(true);
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadImage() {
+    setBusy("image");
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
-      const canvas = await html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
+      const canvas = await renderCanvas();
+      if (!canvas) return;
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `بطاقة-عضوية-${memberNumber}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `بطاقة-عضوية-${memberNumber}.png`);
     } catch (err) {
-      console.error("Card download error:", err);
+      console.error("Card image download error:", err);
     } finally {
-      setDownloading(false);
+      setBusy(null);
+    }
+  }
+
+  async function downloadPdf() {
+    setBusy("pdf");
+    try {
+      const [canvas, { jsPDF }] = await Promise.all([renderCanvas(), import("jspdf")]);
+      if (!canvas) return;
+      const pdf = new jsPDF({
+        orientation: canvas.width >= canvas.height ? "landscape" : "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.save(`بطاقة-عضوية-${memberNumber}.pdf`);
+    } catch (err) {
+      console.error("Card PDF download error:", err);
+    } finally {
+      setBusy(null);
     }
   }
 
   async function shareCard() {
-    if (!cardRef.current) return;
-    setSharing(true);
+    setBusy("share");
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
-      const canvas = await html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
+      const canvas = await renderCanvas();
+      if (!canvas) return;
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) return;
+
       const file = new File([blob], `بطاقة-عضوية-${memberNumber}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "بطاقة العضوية" });
-      } else {
-        await navigator.share({ title: "بطاقة العضوية", url: `${window.location.origin}/verify/${memberNumber}` });
+        return;
       }
+      if (navigator.share) {
+        await navigator.share({ title: "بطاقة العضوية", url: `${window.location.origin}/verify/${memberNumber}` });
+        return;
+      }
+      // No Web Share API on this browser — fall back to a direct download
+      // rather than the button silently doing nothing.
+      downloadBlob(blob, `بطاقة-عضوية-${memberNumber}.png`);
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") console.error("Card share error:", err);
     } finally {
-      setSharing(false);
+      setBusy(null);
     }
   }
 
@@ -131,23 +163,29 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
 
       <div className="flex gap-2 mt-3">
         <button
-          onClick={downloadCard}
-          disabled={downloading}
-          className="text-xs px-3 py-2 rounded-lg font-bold flex-1"
+          onClick={downloadImage}
+          disabled={busy !== null}
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {downloading ? "..." : "⬇️ تحميل البطاقة"}
+          {busy === "image" ? "..." : "⬇️ صورة"}
         </button>
-        {canShare && (
-          <button
-            onClick={shareCard}
-            disabled={sharing}
-            className="text-xs px-3 py-2 rounded-lg font-bold flex-1"
-            style={{ background: "var(--mint-600)", color: "white" }}
-          >
-            {sharing ? "..." : "📤 مشاركة"}
-          </button>
-        )}
+        <button
+          onClick={downloadPdf}
+          disabled={busy !== null}
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          {busy === "pdf" ? "..." : "📄 PDF"}
+        </button>
+        <button
+          onClick={shareCard}
+          disabled={busy !== null}
+          className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
+          {busy === "share" ? "..." : "📤 مشاركة"}
+        </button>
       </div>
 
       <p className="text-xs text-center mt-2" style={{ color: "var(--text-muted)" }}>
