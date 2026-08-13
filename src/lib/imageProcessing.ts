@@ -24,6 +24,14 @@ export interface ProcessedImage {
   thumbnail: Buffer;
 }
 
+// A thumbnail ("<id>-thumb.webp") is never itself stored in the DB — only
+// the full filename ("<id>.webp") is. The /api/files/* routes check
+// ownership by looking up that stored filename, so a request for the
+// thumbnail variant needs to be checked against this base form instead.
+export function toBaseFilename(filename: string): string {
+  return filename.replace(/-thumb(\.\w+)$/, "$1");
+}
+
 // sharp strips all metadata (EXIF included) by default unless .withMetadata()
 // is called — .rotate() must run first to bake in the orientation before
 // that metadata is gone, otherwise portrait photos come out sideways.
