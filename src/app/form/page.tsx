@@ -46,6 +46,17 @@ function isArabicName(value: string): boolean {
   return /^[؀-ۿ\s]+$/.test(value.trim());
 }
 
+// Excludes visually-ambiguous characters (0/O, 1/I/L) — this gets
+// hand-typed into a bank transfer's note field on a small phone screen.
+const REFERENCE_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+function generateReferenceCode(): string {
+  let code = "";
+  for (let i = 0; i < 5; i++) {
+    code += REFERENCE_CODE_ALPHABET[Math.floor(Math.random() * REFERENCE_CODE_ALPHABET.length)];
+  }
+  return `AJ-${code}`;
+}
+
 function PhoneInput({
   value,
   onChange,
@@ -139,9 +150,10 @@ function FormPageInner() {
     age: "",
     paymentMethod: "",
     paidAmount: "",
+    referenceCode: "",
   });
 
-  const steps = editId ? ([1] as const) : authenticated ? STEPS_AUTHENTICATED : STEPS_NEW;
+  const steps = editId ? STEPS_AUTHENTICATED : authenticated ? STEPS_AUTHENTICATED : STEPS_NEW;
   const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
 
   useEffect(() => {
@@ -159,6 +171,9 @@ function FormPageInner() {
           age: member.age || "",
           paymentMethod: member.paymentMethod || "",
           paidAmount: member.paidAmount != null ? String(member.paidAmount) : "",
+          // Older members predate this field — fall back to a fresh code
+          // rather than leaving the reconciliation field blank.
+          referenceCode: member.referenceCode || generateReferenceCode(),
         });
         if (member.paymentProof) setExistingProof(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
@@ -182,13 +197,14 @@ function FormPageInner() {
       const draft = localStorage.getItem(DRAFT_KEY);
       if (draft) {
         try {
-          setForm(JSON.parse(draft));
+          const parsed = JSON.parse(draft);
+          setForm({ ...parsed, referenceCode: parsed.referenceCode || generateReferenceCode() });
           setDraftRestored(true);
         } catch {
-          setForm((p) => ({ ...p, phone: initialPhone }));
+          setForm((p) => ({ ...p, phone: initialPhone, referenceCode: generateReferenceCode() }));
         }
-      } else if (initialPhone) {
-        setForm((p) => ({ ...p, phone: initialPhone }));
+      } else {
+        setForm((p) => ({ ...p, phone: initialPhone, referenceCode: generateReferenceCode() }));
       }
 
       setCheckingAuth(false);
@@ -210,7 +226,7 @@ function FormPageInner() {
   }, [form, checkingAuth, editId]);
 
   function startOver() {
-    setForm({ fullName: "", phone: "", age: "", paymentMethod: "", paidAmount: "" });
+    setForm({ fullName: "", phone: "", age: "", paymentMethod: "", paidAmount: "", referenceCode: generateReferenceCode() });
     localStorage.removeItem(DRAFT_KEY);
     setDraftRestored(false);
   }
@@ -405,7 +421,7 @@ function FormPageInner() {
           </div>
         )}
 
-        {currentStep === 1 && (
+        {currentStep === 1 && !editId && (
           <div
             className="rounded-2xl p-4 mb-4 fade-up text-center"
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
@@ -598,53 +614,119 @@ function FormPageInner() {
               </p>
             </div>
 
-            <div
-              className="rounded-2xl p-4 mb-6 fade-up"
-              style={{
-                background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
-                border: "1px solid var(--copper-400)",
-              }}
-            >
-              <p className="text-sm font-bold mb-3 text-white">💳 معلومات الدفع</p>
-              <div className="space-y-2">
+            <div className="fade-up">
+              <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+                طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <div className="grid grid-cols-3 gap-2">
                 {PAYMENT_METHODS.map((method) => (
-                  <div
+                  <button
                     key={method}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
+                    className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                    style={{
+                      background: form.paymentMethod === method ? "var(--mint-600)" : "white",
+                      color: form.paymentMethod === method ? "white" : "var(--mint-700)",
+                      borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                    }}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {form.paymentMethod && (
+              <div
+                className="rounded-2xl p-4 mt-4 mb-6 fade-up"
+                style={{
+                  background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
+                  border: "1px solid var(--copper-400)",
+                }}
+              >
+                <p className="text-sm font-bold mb-3 text-white">💳 الدفع عبر {form.paymentMethod}</p>
+                <div className="space-y-2">
+                  <div
                     className="flex items-center justify-between rounded-xl px-3 py-2"
                     style={{ background: "rgba(255,255,255,0.1)" }}
                   >
-                    <span className="text-sm font-semibold text-white">{method}</span>
+                    <span className="text-sm font-semibold text-white">رقم المستلم</span>
                     <div className="flex items-center gap-2">
-                      <span
-                        className="font-mono font-bold text-sm"
-                        style={{ color: "var(--mint-200)" }}
-                        dir="ltr"
-                      >
-                        {PAYMENT_CODES[method]}
+                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                        {PAYMENT_CODES[form.paymentMethod]}
                       </span>
                       <button
                         type="button"
-                        onClick={() => copyCode(PAYMENT_CODES[method])}
+                        onClick={() => copyCode(PAYMENT_CODES[form.paymentMethod])}
                         className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                         style={{
-                          background: copied === PAYMENT_CODES[method]
-                            ? "rgba(52,211,153,0.3)"
-                            : "rgba(255,255,255,0.15)",
-                          color: copied === PAYMENT_CODES[method] ? "#6ee7b7" : "white",
+                          background: copied === PAYMENT_CODES[form.paymentMethod] ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                          color: copied === PAYMENT_CODES[form.paymentMethod] ? "#6ee7b7" : "white",
                           border: "1px solid rgba(255,255,255,0.2)",
                           minWidth: "52px",
                         }}
                       >
-                        {copied === PAYMENT_CODES[method] ? "✓ تم" : "نسخ"}
+                        {copied === PAYMENT_CODES[form.paymentMethod] ? "✓ تم" : "نسخ"}
                       </button>
                     </div>
                   </div>
-                ))}
+
+                  <div
+                    className="flex items-center justify-between rounded-xl px-3 py-2"
+                    style={{ background: "rgba(255,255,255,0.1)" }}
+                  >
+                    <span className="text-sm font-semibold text-white">المبلغ</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                        {form.paidAmount || MEMBERSHIP_FEE}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyCode(String(form.paidAmount || MEMBERSHIP_FEE))}
+                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
+                        style={{
+                          background: copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                          color: copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "#6ee7b7" : "white",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          minWidth: "52px",
+                        }}
+                      >
+                        {copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "✓ تم" : "نسخ"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    className="flex items-center justify-between rounded-xl px-3 py-2"
+                    style={{ background: "rgba(255,255,255,0.1)" }}
+                  >
+                    <span className="text-sm font-semibold text-white">رمز الطلب (اكتبه في سبب التحويل)</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                        {form.referenceCode}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyCode(form.referenceCode)}
+                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
+                        style={{
+                          background: copied === form.referenceCode ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                          color: copied === form.referenceCode ? "#6ee7b7" : "white",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          minWidth: "52px",
+                        }}
+                      >
+                        {copied === form.referenceCode ? "✓ تم" : "نسخ"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
+                </p>
               </div>
-              <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-                الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
-              </p>
-            </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
               <div>
@@ -664,29 +746,6 @@ function FormPageInner() {
                 <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                   الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً كتبرّع باسمك بعد قبول الطلب
                 </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-                  طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {PAYMENT_METHODS.map((method) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
-                      className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                      style={{
-                        background: form.paymentMethod === method ? "var(--mint-600)" : "white",
-                        color: form.paymentMethod === method ? "white" : "var(--mint-700)",
-                        borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
-                      }}
-                    >
-                      {method}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div>
@@ -733,11 +792,9 @@ function FormPageInner() {
               )}
 
               <div className="flex gap-2 mt-2">
-                {!editId && (
-                  <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
-                    → السابق
-                  </button>
-                )}
+                <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                  → السابق
+                </button>
                 <button type="submit" disabled={loading} className="btn btn-primary flex-1">
                   {loading ? (
                     <span className="flex items-center gap-2">
