@@ -112,7 +112,7 @@ function LoginForm() {
 
         <p className="text-center text-sm fade-up delay-2" style={{ color: "var(--text-muted)" }}>
           ليس لديك حساب؟{" "}
-          <Link href="/register" className="font-bold" style={{ color: "var(--mint-600)" }}>
+          <Link href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
             إنشاء حساب
           </Link>
         </p>

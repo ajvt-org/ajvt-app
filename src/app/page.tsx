@@ -68,7 +68,7 @@ export default async function LandingPage() {
       <div className="fade-up delay-2 w-16 h-0.5 mx-auto mb-10 rounded-full" style={{ background: "rgba(255,255,255,0.35)" }} />
 
       <div className="fade-up delay-3 w-full max-w-xs space-y-3">
-        <Link href="/register" className="btn btn-copper block">
+        <Link href="/form" className="btn btn-copper block">
           إنشاء حساب جديد
         </Link>
         <Link href="/login" className="btn block" style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1.5px solid rgba(255,255,255,0.4)" }}>
@@ -161,7 +161,7 @@ export default async function LandingPage() {
                     </a>
                   ) : (
                     <Link
-                      href="/register"
+                      href="/form"
                       className="btn btn-copper"
                       style={{ minHeight: "44px", padding: "0.65rem 1.25rem", fontSize: "0.9rem" }}
                     >
