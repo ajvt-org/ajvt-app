@@ -43,12 +43,8 @@ const STATUS_BADGE: Record<Status, string> = {
   REJECTED: "badge-rejected",
 };
 
-<<<<<<< HEAD
-=======
-const DEFAULT_AGES = ["البدريين", "الفائزين", "النجميين", "المجاهدين", "المنصورين", "الخاشعين", "التائبين"];
 const PAGE_SIZE = 30;
 
->>>>>>> 78760c65e79dedc8861442760f2f0ac923bd37d5
 const emptyManualForm = {
   accountPhone: "",
   fullName: "",
