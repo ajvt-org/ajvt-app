@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -33,17 +33,28 @@ interface UnassignedDonation {
   amount: number;
 }
 
+interface DayRecord {
+  date: string;
+  time: string;
+  name: string;
+  amount: number;
+  method: string;
+  kind: "انتساب" | "دعم";
+}
+
 interface FinanceSummary {
   byMethod: Record<string, number>;
   byMethodDetail: Record<string, MethodDetail>;
   unassigned: UnassignedDonation[];
-  days: { date: string; total: number; byMethod: Record<string, number> }[];
+  days: { date: string; total: number; byMethod: Record<string, number>; records: DayRecord[] }[];
+  allRecords: DayRecord[];
   totalRevenue: number;
   totalExpenses: number;
   net: number;
 }
 
 const emptyExpenseForm = { label: "", amount: "", note: "", date: "", proof: "" };
+const PAGE_SIZE = 30;
 
 function todayInputValue() {
   return new Date().toISOString().slice(0, 10);
@@ -55,6 +66,7 @@ export default function AdminExpensesPage() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [reassignValue, setReassignValue] = useState<Record<string, string>>({});
   const [reassigningId, setReassigningId] = useState<string | null>(null);
 
@@ -65,6 +77,7 @@ export default function AdminExpensesPage() {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
   function toggleMethod(method: string) {
     setExpandedMethods((prev) => {
@@ -72,6 +85,42 @@ export default function AdminExpensesPage() {
       if (next.has(method)) next.delete(method); else next.add(method);
       return next;
     });
+  }
+
+  function toggleDay(date: string) {
+    setExpandedDays((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date); else next.add(date);
+      return next;
+    });
+  }
+
+  // Groups a day's records into kind -> method -> records, so a busy day
+  // (30+ transactions) reads as sections instead of one long flat list.
+  function groupDayRecords(records: DayRecord[]) {
+    const groups: Record<string, Record<string, DayRecord[]>> = { "دعم": {}, "انتساب": {} };
+    for (const r of records) {
+      groups[r.kind][r.method] = groups[r.kind][r.method] || [];
+      groups[r.kind][r.method].push(r);
+    }
+    return groups;
+  }
+
+  function exportCSV() {
+    const headers = ["التاريخ", "النوع", "الاسم / الوصف", "التصنيف", "طريقة الدفع", "المبلغ"];
+    const revenueRows = (summary?.allRecords || []).map((r) => [r.date, "إيراد", r.name, r.kind, r.method, r.amount]);
+    const expenseRows = expenses.map((e) => [e.date.slice(0, 10), "مصروف", e.label, "مصروف", "-", e.amount]);
+    const rows = [...revenueRows, ...expenseRows].sort((a, b) => String(b[0]).localeCompare(String(a[0])));
+    const csv = "﻿" + [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `finance-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function load() {
@@ -194,10 +243,22 @@ export default function AdminExpensesPage() {
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const days = summary?.days || [];
+  const totalExpensePages = Math.max(1, Math.ceil(expenses.length / PAGE_SIZE));
+  const currentExpensePage = Math.min(page, totalExpensePages);
+  const paginatedExpenses = expenses.slice((currentExpensePage - 1) * PAGE_SIZE, currentExpensePage * PAGE_SIZE);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>💸 المصاريف والإيرادات</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>💸 المصاريف والإيرادات</p>
+        <button
+          onClick={exportCSV}
+          className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
+          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+        >
+          📥 تصدير CSV
+        </button>
+      </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-2">
@@ -328,13 +389,69 @@ export default function AdminExpensesPage() {
         {days.length === 0 ? (
           <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>لا توجد إيرادات في هذه الفترة</p>
         ) : (
-          <div className="space-y-1.5 max-h-64 overflow-y-auto">
-            {days.map((d) => (
-              <div key={d.date} className="flex items-center justify-between text-xs" dir="ltr">
-                <span style={{ color: "var(--text-main)" }}>{d.date}</span>
-                <span className="font-black" style={{ color: "var(--mint-600)" }}>{d.total} أوقية</span>
-              </div>
-            ))}
+          <div className="space-y-1.5 max-h-80 overflow-y-auto">
+            {days.map((d) => {
+              const expandedDay = expandedDays.has(d.date);
+              return (
+                <div key={d.date}>
+                  <button
+                    type="button"
+                    onClick={() => toggleDay(d.date)}
+                    className="w-full flex items-center justify-between text-xs"
+                    dir="ltr"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span style={{ color: "var(--mint-600)" }}>{expandedDay ? "▾" : "◂"}</span>
+                      <span style={{ color: "var(--text-main)" }}>{d.date}</span>
+                    </span>
+                    <span className="font-black" style={{ color: "var(--mint-600)" }}>{d.total} أوقية</span>
+                  </button>
+
+                  {expandedDay && (
+                    <div className="mt-1.5 mr-4 space-y-3 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                      {d.records.length === 0 ? (
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد تفاصيل</p>
+                      ) : (
+                        (["دعم", "انتساب"] as const).map((kind) => {
+                          const methods = groupDayRecords(d.records)[kind];
+                          const methodKeys = Object.keys(methods);
+                          if (methodKeys.length === 0) return null;
+                          return (
+                            <div key={kind}>
+                              <p className="text-xs font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                                {kind === "دعم" ? "💚 دعم" : "🪪 انتساب"}
+                              </p>
+                              <div className="space-y-2 mr-2">
+                                {methodKeys.map((method) => {
+                                  const items = methods[method];
+                                  const subtotal = items.reduce((sum, r) => sum + r.amount, 0);
+                                  return (
+                                    <div key={method}>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold" style={{ color: "var(--mint-700)" }}>{method}</span>
+                                        <span className="font-bold" style={{ color: "var(--mint-600)" }}>{subtotal} أوقية</span>
+                                      </div>
+                                      <div className="mr-2 mt-0.5 space-y-0.5">
+                                        {items.map((r, i) => (
+                                          <div key={i} className="flex items-center justify-between text-xs">
+                                            <span className="truncate" style={{ color: "var(--text-muted)" }}>{r.name}</span>
+                                            <span className="shrink-0" style={{ color: "var(--text-muted)" }}>{r.amount} أوقية</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -357,15 +474,19 @@ export default function AdminExpensesPage() {
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد مصاريف مسجلة بعد</p>
       ) : (
         <div className="space-y-2">
-          {expenses.map((e) => (
+          {paginatedExpenses.map((e) => (
             <div key={e.id} className="card p-3">
               <div className="flex items-center gap-3">
                 {e.proof ? (
                   <a href={`/api/files/${e.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/api/files/${e.proof}`}
+                      src={toThumbUrl(`/api/files/${e.proof}`)}
                       alt={e.label}
+                      width={48}
+                      height={48}
+                      loading="lazy"
+                      decoding="async"
                       className="w-12 h-12 rounded-lg object-cover"
                       style={{ border: "1px solid var(--mint-100)" }}
                     />
@@ -409,6 +530,30 @@ export default function AdminExpensesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {totalExpensePages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            onClick={() => setPage(currentExpensePage - 1)}
+            disabled={currentExpensePage <= 1}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            ← السابق
+          </button>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+            صفحة {currentExpensePage} / {totalExpensePages}
+          </span>
+          <button
+            onClick={() => setPage(currentExpensePage + 1)}
+            disabled={currentExpensePage >= totalExpensePages}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            التالي →
+          </button>
         </div>
       )}
 

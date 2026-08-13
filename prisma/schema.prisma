@@ -294,6 +294,22 @@ model Expense {
   @@index([date])
 }
 
+// One row per (day, anonymous visitor) — the visitor cookie is set by
+// /api/track-visit and never tied to a User/Member/Admin. pageViews counts
+// repeat navigations within the same day for that visitor; the row count
+// per day is the daily unique-visitor count.
+model SiteVisit {
+  id        String   @id @default(cuid())
+  date      String // YYYY-MM-DD (UTC day bucket)
+  visitorId String // anonymous cookie value, no PII
+  pageViews Int      @default(1)
+  lastSeen  DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([date, visitorId])
+  @@index([date])
+}
+
 model PushSubscription {
   id        String   @id @default(cuid())
   userId    String

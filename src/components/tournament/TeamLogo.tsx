@@ -1,3 +1,5 @@
+import { toThumbUrl } from "@/lib/utils";
+
 interface TeamLogoProps {
   logo: string | null | undefined;
   name: string;
@@ -20,8 +22,12 @@ export default function TeamLogo({ logo, size = 24 }: TeamLogoProps) {
     // to this logo, so alt="" avoids screen readers/copy-paste doubling it.
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={`/api/files/team/${logo}`}
+      src={toThumbUrl(`/api/files/team/${logo}`)}
       alt=""
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
       className="rounded-full object-cover shrink-0"
       style={{ width: size, height: size, border: "2px solid var(--mint-200)" }}
     />

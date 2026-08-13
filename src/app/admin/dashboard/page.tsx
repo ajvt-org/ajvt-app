@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
-import { loginPathWithNext } from "@/lib/utils";
+import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
@@ -43,6 +43,12 @@ const STATUS_BADGE: Record<Status, string> = {
   REJECTED: "badge-rejected",
 };
 
+<<<<<<< HEAD
+=======
+const DEFAULT_AGES = ["البدريين", "الفائزين", "النجميين", "المجاهدين", "المنصورين", "الخاشعين", "التائبين"];
+const PAGE_SIZE = 30;
+
+>>>>>>> 78760c65e79dedc8861442760f2f0ac923bd37d5
 const emptyManualForm = {
   accountPhone: "",
   fullName: "",
@@ -63,6 +69,8 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [proofZoom, setProofZoom] = useState(false);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [accountPhoneInput, setAccountPhoneInput] = useState("");
@@ -463,6 +471,15 @@ export default function AdminDashboard() {
     const matchSearch = !q || m.fullName.includes(q) || (m.phone || "").includes(q) || (m.user?.phone || "").includes(q);
     return matchFilter && matchSearch;
   });
+  const filterKey = `${filter}|${search}`;
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -584,7 +601,7 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((m) => (
+          {paginated.map((m) => (
             <button
               key={m.id}
               onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); }}
@@ -595,7 +612,15 @@ export default function AdminDashboard() {
                   {m.photo ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/api/files/${m.photo}`} alt={m.fullName} className="w-full h-full object-cover" />
+                      <img
+                        src={toThumbUrl(`/api/files/${m.photo}`)}
+                        alt={m.fullName}
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ) : (
                     <div
@@ -641,6 +666,30 @@ export default function AdminDashboard() {
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-3">
+          <button
+            onClick={() => setPage(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            ← السابق
+          </button>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+            صفحة {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            التالي →
+          </button>
         </div>
       )}
 

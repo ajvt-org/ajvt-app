@@ -26,6 +26,7 @@ async function main() {
     update: {},
     create: { username: "admin", password: hashed },
   });
+<<<<<<< HEAD
   console.log("✅ Admin: username=admin | password=admin123");
 
   for (const name of DEFAULT_AGE_GROUPS) {
@@ -39,6 +40,9 @@ async function main() {
     if (age) await prisma.ageGroup.upsert({ where: { name: age }, update: {}, create: { name: age } });
   }
   console.log("✅ Age groups seeded");
+=======
+  console.log("✅ Admin seed OK (username=admin)");
+>>>>>>> 78760c65e79dedc8861442760f2f0ac923bd37d5
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

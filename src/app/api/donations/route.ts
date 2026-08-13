@@ -4,12 +4,11 @@ import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { prisma } from "@/lib/prisma";
 import { getUploadDir } from "@/app/api/upload/route";
+import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
 import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
 
-const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
@@ -32,11 +31,11 @@ export async function POST(req: NextRequest) {
     const paymentMethodRaw = formData.get("paymentMethod");
 
     if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: "نوع الملف غير مدعوم (PNG/JPG فقط)" }, { status: 400 });
+    if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" }, { status: 400 });
     }
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "حجم الملف يتجاوز 5 ميغابايت" }, { status: 400 });
+    if (file.size > MAX_UPLOAD_SIZE) {
+      return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
     }
 
     // A logged-in ACTIVE member donating from /home is identified — always
@@ -82,11 +81,21 @@ export async function POST(req: NextRequest) {
     }
     const paymentMethod = paymentMethodRaw;
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${uuidv4()}.${ext}`;
+    const id = uuidv4();
+    const filename = `${id}.webp`;
     const uploadDir = getUploadDir();
+    let processed;
+    try {
+      processed = await processImage(Buffer.from(await file.arrayBuffer()));
+    } catch (err) {
+      console.error("Image processing error:", err);
+      return NextResponse.json({ error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" }, { status: 400 });
+    }
     await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, filename), Buffer.from(await file.arrayBuffer()));
+    await Promise.all([
+      writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
+      writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
+    ]);
 
     await prisma.donation.create({
       data: {
