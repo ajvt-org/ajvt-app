@@ -108,6 +108,10 @@ function LoginForm() {
           <button type="submit" disabled={loading} className="btn btn-primary mt-2">
             {loading ? "جاري التحقق..." : "دخول ←"}
           </button>
+
+          <Link href="/forgot-password" className="block text-center text-xs font-bold" style={{ color: "var(--mint-600)" }}>
+            نسيت كلمة المرور؟
+          </Link>
         </form>
 
         <p className="text-center text-sm fade-up delay-2" style={{ color: "var(--text-muted)" }}>
