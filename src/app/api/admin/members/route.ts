@@ -35,7 +35,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("MEMBERS");
-    const { accountPhone, fullName, memberPhone, phoneUnknown, age, paymentMethod, paymentProof, status, paidAmount } = await req.json();
+    const { accountPhone, fullName, memberPhone, phoneUnknown, age, paymentMethod, paymentProof, photo, status, paidAmount } = await req.json();
 
     if (!phoneUnknown) {
       const phoneError = validatePhone(accountPhone);
@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "حالة غير صالحة" }, { status: 400 });
     }
     if (paymentProof !== undefined && paymentProof !== null && typeof paymentProof !== "string") {
+      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    }
+    if (photo !== undefined && photo !== null && typeof photo !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     let paidAmountValue: number | null = null;
@@ -86,6 +89,7 @@ export async function POST(req: NextRequest) {
           age: age.trim(),
           paymentMethod,
           paymentProof: paymentProof || null,
+          photo: photo || null,
           paidAmount: paidAmountValue,
           status,
           memberNumber,
