@@ -15,6 +15,7 @@ const MEMBER_SELECT = {
   paidAmount: true,
   status: true,
   createdAt: true,
+  updatedAt: true,
   memberNumber: true,
   registrations: {
     select: {
