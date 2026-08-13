@@ -128,6 +128,7 @@ function FormPageInner() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [proofFilename, setProofFilename] = useState<string | null>(null);
   const [proofUploading, setProofUploading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -271,6 +272,20 @@ function FormPageInner() {
     }
   }
 
+  async function shareReferenceCode() {
+    const text = `رقم دفتري في رابطة شباب قرية التاكلالت: ${form.referenceCode}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch {
+        // user cancelled the share sheet, or the browser rejected it — fall
+        // through to copy so the action still does something useful
+      }
+    }
+    copyCode(form.referenceCode);
+  }
+
   function validateStep1(): string | null {
     if (!form.fullName.trim()) return "يرجى إدخال الاسم الكامل";
     if (!isArabicName(form.fullName)) return "الاسم الكامل يجب أن يكون بالحروف العربية فقط";
@@ -338,7 +353,7 @@ function FormPageInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
       if (!editId) localStorage.removeItem(DRAFT_KEY);
-      router.push("/home");
+      setSubmitted(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "خطأ غير متوقع");
     } finally {
@@ -359,6 +374,68 @@ function FormPageInner() {
     return (
       <div className="app-shell flex items-center justify-center">
         <div className="text-3xl animate-pulse">⏳</div>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="app-shell">
+        <div
+          className="px-5 py-8 text-center"
+          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+        >
+          <div className="text-5xl mb-2">✅</div>
+          <h1 className="text-lg font-black text-white">
+            {editId ? "تم إرسال التعديلات بنجاح" : "تم إرسال طلبك بنجاح"}
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
+            سيراجع فريق الرابطة طلبك خلال أقل من ساعة
+          </p>
+        </div>
+
+        <div className="px-5 py-6 space-y-4">
+          <div className="card p-4 fade-up">
+            <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
+              رقم دفترك — احتفظ به للمتابعة
+            </p>
+            <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "var(--mint-50)" }}>
+              <span className="font-mono font-black text-lg" style={{ color: "var(--mint-700)" }} dir="ltr">
+                {form.referenceCode}
+              </span>
+              <button
+                type="button"
+                onClick={() => copyCode(form.referenceCode)}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: copied === form.referenceCode ? "var(--mint-600)" : "white", color: copied === form.referenceCode ? "white" : "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+              >
+                {copied === form.referenceCode ? "✓ تم النسخ" : "نسخ"}
+              </button>
+            </div>
+          </div>
+
+          <div className="card p-4 fade-up delay-1">
+            <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>ملخص الطلب</p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>الاسم</span><span className="font-bold">{form.fullName}</span></div>
+              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>العصر</span><span className="font-bold">{form.age}</span></div>
+              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span><span className="font-bold">{form.paymentMethod}</span></div>
+              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>المبلغ</span><span className="font-bold" dir="ltr">{form.paidAmount} أوقية</span></div>
+            </div>
+          </div>
+
+          <button type="button" onClick={shareReferenceCode} className="btn btn-primary fade-up delay-1">
+            📤 مشاركة رقم الدفتر
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/home")}
+            className="btn fade-up delay-2"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            الذهاب إلى حسابي ←
+          </button>
+        </div>
       </div>
     );
   }
