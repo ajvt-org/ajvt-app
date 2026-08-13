@@ -16,6 +16,10 @@ model User {
   pushSubscriptions PushSubscription[]
   teamFollows       TeamFollow[]
   mvpVotes          MvpVote[]
+  quizAssignments   QuizAssignment[]
+  currentStreak     Int                @default(0) // consecutive days of app activity ("flame")
+  longestStreak     Int                @default(0)
+  lastActiveDate    DateTime? // calendar day (UTC) of the last streak-qualifying visit
 }
 
 model Member {
@@ -248,6 +252,15 @@ model Counter {
   value Int    @default(0)
 }
 
+// Admin-managed list of "عصر" (age-group/cohort) names offered when adding
+// or editing a Member. Member.age stays a plain string snapshot — renaming
+// or deleting an entry here never rewrites existing members' age values.
+model AgeGroup {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
 model Donation {
   id            String   @id @default(cuid())
   donorName     String? // null = anonymous ("فاعل خير" in the UI) — even when memberId is set (a member chose to stay anonymous)
@@ -317,4 +330,66 @@ model AuditLog {
   createdAt     DateTime @default(now())
 
   @@index([createdAt])
+}
+
+model QuizQuestion {
+  id           String           @id @default(cuid())
+  text         String
+  category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
+  points       Int              @default(10)
+  correctCount Int              @default(1) // number of answers that must be selected to earn credit
+  active       Boolean          @default(true) // soft-disable without losing send history
+  createdBy    String // admin username
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  answers      QuizAnswer[]
+  assignments  QuizAssignment[]
+
+  @@index([active])
+}
+
+model QuizAnswer {
+  id         String       @id @default(cuid())
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean      @default(false)
+  order      Int          @default(0)
+
+  @@index([questionId])
+}
+
+// One row = one question sent to one user. The unique constraint is what
+// guarantees a user never receives the same question twice, in either send
+// mode. batchId groups the rows created by a single send action (manual
+// SAME/RANDOM or the daily auto-send) for admin reporting.
+model QuizAssignment {
+  id                String       @id @default(cuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId        String
+  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  batchId           String
+  mode              String // "SAME" | "RANDOM"
+  sentAt            DateTime     @default(now())
+  answeredAt        DateTime?
+  selectedAnswerIds String[]     @default([])
+  isCorrect         Boolean?
+  pointsAwarded     Int          @default(0)
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([batchId])
+}
+
+// Singleton row (id fixed to "singleton", same idiom as Counter) holding the
+// quiz's global defaults plus the daily auto-send marker.
+model QuizSettings {
+  id                  String    @id
+  defaultAnswerCount  Int       @default(4)
+  defaultCorrectCount Int       @default(1)
+  defaultPoints       Int       @default(10)
+  questionsPerDay     Int       @default(1)
+  lastAutoSendDate    DateTime?
+  updatedAt           DateTime  @updatedAt
 }

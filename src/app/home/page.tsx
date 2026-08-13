@@ -11,6 +11,7 @@ import ProofUpload from "@/components/ProofUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -133,6 +134,9 @@ export default function HomePage() {
         <ActivitiesSection
           hasAnyMember={members.length > 0}
           hasPendingMember={members.some((m) => m.status === "PENDING")}
+          // The quiz is a paid-membership perk — same "منتسب" bar as anything
+          // else gated behind an approved, fee-paid membership.
+          quizAccess={members.some((m) => m.status === "ACTIVE" && m.paidAmount !== null && m.paidAmount >= MEMBERSHIP_FEE)}
           // Only fully-approved members can register for events — the
           // membership fee/review comes first, activities come after.
           eligibleMembers={members

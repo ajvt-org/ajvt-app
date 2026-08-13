@@ -29,6 +29,11 @@ interface Member {
   registrations?: { activityId: string; activity: { id: string; title: string } }[];
 }
 
+interface AgeGroup {
+  id: string;
+  name: string;
+}
+
 const STATUS_LABEL: Record<Status, string> = {
   PENDING: "قيد الانتظار",
   ACTIVE: "مقبول",
@@ -41,7 +46,6 @@ const STATUS_BADGE: Record<Status, string> = {
   REJECTED: "badge-rejected",
 };
 
-const DEFAULT_AGES = ["البدريين", "الفائزين", "النجميين", "المجاهدين", "المنصورين", "الخاشعين", "التائبين"];
 const PAGE_SIZE = 30;
 
 const emptyManualForm = {
@@ -80,6 +84,7 @@ export default function AdminDashboard() {
 
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editAge, setEditAge] = useState("");
   const [editPhoto, setEditPhoto] = useState<string | null>(null);
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
   const [editPhotoUploading, setEditPhotoUploading] = useState(false);
@@ -95,6 +100,18 @@ export default function AdminDashboard() {
   const [manualProof, setManualProof] = useState<string | null>(null);
   const [manualProofPreview, setManualProofPreview] = useState<string | null>(null);
   const [manualProofUploading, setManualProofUploading] = useState(false);
+  const [manualPhoto, setManualPhoto] = useState<string | null>(null);
+  const [manualPhotoPreview, setManualPhotoPreview] = useState<string | null>(null);
+  const [manualPhotoUploading, setManualPhotoUploading] = useState(false);
+
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [showAgeGroups, setShowAgeGroups] = useState(false);
+  const [newAgeGroupName, setNewAgeGroupName] = useState("");
+  const [ageGroupSaving, setAgeGroupSaving] = useState(false);
+  const [ageGroupError, setAgeGroupError] = useState("");
+  const [ageGroupBusyId, setAgeGroupBusyId] = useState<string | null>(null);
+  const [renamingAgeGroupId, setRenamingAgeGroupId] = useState<string | null>(null);
+  const [renameAgeGroupValue, setRenameAgeGroupValue] = useState("");
 
   async function handleManualProofChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -116,7 +133,27 @@ export default function AdminDashboard() {
     }
   }
 
-  useEffect(() => { fetchMembers(); }, []);
+  async function handleManualPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setManualPhotoPreview(URL.createObjectURL(file));
+    setManualPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشل رفع الملف");
+      setManualPhoto(data.filename);
+    } catch (err) {
+      setManualError(err instanceof Error ? err.message : "فشل رفع الملف");
+      setManualPhotoPreview(null);
+    } finally {
+      setManualPhotoUploading(false);
+    }
+  }
+
+  useEffect(() => { fetchMembers(); fetchAgeGroups(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchMembers() {
     try {
@@ -128,6 +165,85 @@ export default function AdminDashboard() {
       router.push(loginPathWithNext("/admin/login"));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAgeGroups() {
+    try {
+      const res = await fetch("/api/admin/age-groups");
+      if (res.ok) {
+        const data = await res.json();
+        setAgeGroups(data.ageGroups || []);
+      }
+    } catch {
+      // non-critical — the age select just falls back to an empty list
+    }
+  }
+
+  async function addAgeGroup(e: React.FormEvent) {
+    e.preventDefault();
+    setAgeGroupError("");
+    if (!newAgeGroupName.trim()) return;
+    setAgeGroupSaving(true);
+    try {
+      const res = await fetch("/api/admin/age-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newAgeGroupName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setAgeGroups((prev) => [...prev, data.ageGroup]);
+      setNewAgeGroupName("");
+    } catch (e) {
+      setAgeGroupError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setAgeGroupSaving(false);
+    }
+  }
+
+  function startRenameAgeGroup(g: AgeGroup) {
+    setRenamingAgeGroupId(g.id);
+    setRenameAgeGroupValue(g.name);
+    setAgeGroupError("");
+  }
+
+  async function saveRenameAgeGroup(id: string) {
+    if (!renameAgeGroupValue.trim()) return;
+    setAgeGroupBusyId(id);
+    setAgeGroupError("");
+    try {
+      const res = await fetch(`/api/admin/age-groups/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: renameAgeGroupValue.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      setAgeGroups((prev) => prev.map((g) => (g.id === id ? data.ageGroup : g)));
+      setRenamingAgeGroupId(null);
+    } catch (e) {
+      setAgeGroupError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setAgeGroupBusyId(null);
+    }
+  }
+
+  async function deleteAgeGroup(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا العصر من القائمة؟ لن يؤثر ذلك على الأعضاء الحاليين.")) return;
+    setAgeGroupBusyId(id);
+    setAgeGroupError("");
+    try {
+      const res = await fetch(`/api/admin/age-groups/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "فشلت العملية");
+      }
+      setAgeGroups((prev) => prev.filter((g) => g.id !== id));
+    } catch (e) {
+      setAgeGroupError(e instanceof Error ? e.message : "خطأ");
+    } finally {
+      setAgeGroupBusyId(null);
     }
   }
 
@@ -213,6 +329,7 @@ export default function AdminDashboard() {
   function startEdit() {
     if (!selected) return;
     setEditName(selected.fullName);
+    setEditAge(selected.age);
     setEditPhoto(selected.photo);
     setEditPhotoPreview(selected.photo ? `/api/files/${selected.photo}` : null);
     setEditPaidAmount(selected.paidAmount != null ? String(selected.paidAmount) : "");
@@ -254,7 +371,7 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/members/${selected.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: editName.trim(), photo: editPhoto, paidAmount: paidAmountValue }),
+        body: JSON.stringify({ fullName: editName.trim(), age: editAge, photo: editPhoto, paidAmount: paidAmountValue }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
@@ -320,7 +437,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/admin/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...manualForm, paymentProof: manualProof }),
+        body: JSON.stringify({ ...manualForm, paymentProof: manualProof, photo: manualPhoto }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
@@ -328,6 +445,8 @@ export default function AdminDashboard() {
       setManualForm(emptyManualForm);
       setManualProof(null);
       setManualProofPreview(null);
+      setManualPhoto(null);
+      setManualPhotoPreview(null);
       await fetchMembers();
     } catch (e) {
       setManualError(e instanceof Error ? e.message : "خطأ");
@@ -564,6 +683,13 @@ export default function AdminDashboard() {
           className="input flex-1"
           style={{ background: "white" }}
         />
+        <button
+          onClick={() => setShowAgeGroups(true)}
+          className="text-sm font-bold px-4 rounded-xl"
+          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+        >
+          🏷️ الأعصر
+        </button>
         <button
           onClick={() => { setShowManualAdd(true); setManualResult(null); setManualError(""); }}
           className="btn btn-primary text-sm px-4"
@@ -814,6 +940,21 @@ export default function AdminDashboard() {
 
               {editing && (
                 <div className="card p-3 space-y-2">
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                      العصر
+                    </label>
+                    <select
+                      value={editAge}
+                      onChange={(e) => setEditAge(e.target.value)}
+                      className="input"
+                    >
+                      {!ageGroups.some((g) => g.name === editAge) && editAge && (
+                        <option value={editAge}>{editAge}</option>
+                      )}
+                      {ageGroups.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
                       المبلغ المسدد (أوقية)
@@ -1203,6 +1344,27 @@ export default function AdminDashboard() {
                       className="input"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                      صورة العضو (اختياري)
+                    </label>
+                    <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
+                      {manualPhotoPreview ? (
+                        <div>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={manualPhotoPreview} alt="صورة العضو" className="max-h-32 mx-auto rounded-xl object-contain" />
+                          <p className="mt-1 text-xs text-center" style={{ color: "var(--mint-600)" }}>
+                            {manualPhotoUploading ? "جاري الرفع..." : "انقر لتغيير الصورة"}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+                          📷 انقر لإرفاق صورة العضو (اختياري)
+                        </p>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleManualPhotoChange} style={{ display: "none" }} />
+                    </label>
+                  </div>
                   {!manualForm.phoneUnknown && (
                     <div>
                       <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>رقم هاتف العضو</label>
@@ -1218,7 +1380,17 @@ export default function AdminDashboard() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>العصر</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>العصر</label>
+                      <button
+                        type="button"
+                        onClick={() => { setShowManualAdd(false); setShowAgeGroups(true); }}
+                        className="text-xs font-bold"
+                        style={{ color: "var(--mint-600)" }}
+                      >
+                        🏷️ إدارة الأعصر
+                      </button>
+                    </div>
                     <select
                       value={manualForm.age}
                       onChange={(e) => setManualForm((p) => ({ ...p, age: e.target.value }))}
@@ -1226,7 +1398,7 @@ export default function AdminDashboard() {
                       className="input"
                     >
                       <option value="" disabled>اختر العصر...</option>
-                      {DEFAULT_AGES.map((a) => <option key={a} value={a}>{a}</option>)}
+                      {ageGroups.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
                     </select>
                   </div>
                   <div>
@@ -1295,10 +1467,131 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  <button type="submit" disabled={manualLoading} className="btn btn-primary text-sm">
-                    {manualLoading ? "..." : "إنشاء العضو"}
+                  <button
+                    type="submit"
+                    disabled={manualLoading || manualProofUploading || manualPhotoUploading}
+                    className="btn btn-primary text-sm"
+                  >
+                    {manualProofUploading || manualPhotoUploading ? "جاري رفع الصورة..." : manualLoading ? "..." : "إنشاء العضو"}
                   </button>
                 </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Age groups management ("الأعصر") */}
+      {showAgeGroups && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
+          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAgeGroups(false); }}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">🏷️ إدارة الأعصر</h2>
+              <button
+                onClick={() => setShowAgeGroups(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل أو حذف عصر هنا لا يغيّر عصر الأعضاء الحاليين الذين اختاروه من قبل.
+              </p>
+
+              <form onSubmit={addAgeGroup} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newAgeGroupName}
+                  onChange={(e) => setNewAgeGroupName(e.target.value)}
+                  placeholder="اسم عصر جديد..."
+                  maxLength={30}
+                  className="input text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={ageGroupSaving || !newAgeGroupName.trim()}
+                  className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
+                  style={{ background: "var(--mint-600)", color: "white" }}
+                >
+                  {ageGroupSaving ? "..." : "➕ إضافة"}
+                </button>
+              </form>
+
+              {ageGroupError && (
+                <div className="p-2.5 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                  ⚠️ {ageGroupError}
+                </div>
+              )}
+
+              {ageGroups.length === 0 ? (
+                <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>لا توجد أعصر مسجلة بعد</p>
+              ) : (
+                <div className="space-y-2">
+                  {ageGroups.map((g) => (
+                    <div key={g.id} className="card p-3 flex items-center gap-2">
+                      {renamingAgeGroupId === g.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={renameAgeGroupValue}
+                            onChange={(e) => setRenameAgeGroupValue(e.target.value)}
+                            maxLength={30}
+                            className="input text-sm flex-1"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => saveRenameAgeGroup(g.id)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-600)", color: "white" }}
+                          >
+                            {ageGroupBusyId === g.id ? "..." : "حفظ"}
+                          </button>
+                          <button
+                            onClick={() => setRenamingAgeGroupId(null)}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                          >
+                            إلغاء
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm font-bold flex-1 truncate" style={{ color: "var(--text-main)" }}>{g.name}</span>
+                          <button
+                            onClick={() => startRenameAgeGroup(g)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                          >
+                            ✏️ تعديل
+                          </button>
+                          <button
+                            onClick={() => deleteAgeGroup(g.id)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "#fee2e2", color: "#991b1b" }}
+                          >
+                            {ageGroupBusyId === g.id ? "..." : "🗑️"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
