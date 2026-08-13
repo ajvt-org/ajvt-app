@@ -93,6 +93,17 @@ export default function AdminExpensesPage() {
     });
   }
 
+  // Groups a day's records into kind -> method -> records, so a busy day
+  // (30+ transactions) reads as sections instead of one long flat list.
+  function groupDayRecords(records: DayRecord[]) {
+    const groups: Record<string, Record<string, DayRecord[]>> = { "دعم": {}, "انتساب": {} };
+    for (const r of records) {
+      groups[r.kind][r.method] = groups[r.kind][r.method] || [];
+      groups[r.kind][r.method].push(r);
+    }
+    return groups;
+  }
+
   function exportCSV() {
     const headers = ["التاريخ", "النوع", "الاسم / الوصف", "التصنيف", "طريقة الدفع", "المبلغ"];
     const revenueRows = (summary?.allRecords || []).map((r) => [r.date, "إيراد", r.name, r.kind, r.method, r.amount]);
@@ -392,18 +403,44 @@ export default function AdminExpensesPage() {
                   </button>
 
                   {expandedDay && (
-                    <div className="mt-1.5 mr-4 space-y-1 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                    <div className="mt-1.5 mr-4 space-y-3 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
                       {d.records.length === 0 ? (
                         <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد تفاصيل</p>
                       ) : (
-                        d.records.map((r, i) => (
-                          <div key={i} className="flex items-center justify-between text-xs gap-2">
-                            <span className="truncate" style={{ color: "var(--text-main)" }}>
-                              {r.name} <span style={{ color: "var(--text-muted)" }}>({r.kind} · {r.method})</span>
-                            </span>
-                            <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{r.amount} أوقية</span>
-                          </div>
-                        ))
+                        (["دعم", "انتساب"] as const).map((kind) => {
+                          const methods = groupDayRecords(d.records)[kind];
+                          const methodKeys = Object.keys(methods);
+                          if (methodKeys.length === 0) return null;
+                          return (
+                            <div key={kind}>
+                              <p className="text-xs font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                                {kind === "دعم" ? "💚 دعم" : "🪪 انتساب"}
+                              </p>
+                              <div className="space-y-2 mr-2">
+                                {methodKeys.map((method) => {
+                                  const items = methods[method];
+                                  const subtotal = items.reduce((sum, r) => sum + r.amount, 0);
+                                  return (
+                                    <div key={method}>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold" style={{ color: "var(--mint-700)" }}>{method}</span>
+                                        <span className="font-bold" style={{ color: "var(--mint-600)" }}>{subtotal} أوقية</span>
+                                      </div>
+                                      <div className="mr-2 mt-0.5 space-y-0.5">
+                                        {items.map((r, i) => (
+                                          <div key={i} className="flex items-center justify-between text-xs">
+                                            <span className="truncate" style={{ color: "var(--text-muted)" }}>{r.name}</span>
+                                            <span className="shrink-0" style={{ color: "var(--text-muted)" }}>{r.amount} أوقية</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   )}
