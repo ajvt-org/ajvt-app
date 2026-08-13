@@ -21,6 +21,8 @@ interface Member {
   photo: string | null;
   paidAmount: number | null;
   status: Status;
+  rejectionReason: string | null;
+  referenceCode: string | null;
   memberNumber: string | null;
   createdAt: string;
   user?: { phone: string } | null;
@@ -62,6 +64,8 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState(false);
   const [proofZoom, setProofZoom] = useState(false);
   const [showRejectPicker, setShowRejectPicker] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -127,6 +131,9 @@ export default function AdminDashboard() {
     }
   }
 
+  // Advances to the next row on the current page instead of just closing —
+  // lets an admin work through a queue of obvious cases without returning
+  // to the list after every single decision (cf. AGENTS.md UX TODO, F).
   async function validate(id: string, action: "ACTIVE" | "REJECTED", reason?: string) {
     setActionLoading(true);
     try {
@@ -136,9 +143,12 @@ export default function AdminDashboard() {
         body: JSON.stringify({ id, action, ...(reason ? { rejectionReason: reason } : {}) }),
       });
       if (!res.ok) throw new Error("فشلت العملية");
+      const idx = paginated.findIndex((m) => m.id === id);
+      const next = idx !== -1 ? paginated[idx + 1] : undefined;
       await fetchMembers();
-      setSelected(null);
+      setSelected(next && next.id !== id ? next : null);
       setShowRejectPicker(false);
+      setProofZoom(false);
     } catch (e) {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
@@ -148,6 +158,41 @@ export default function AdminDashboard() {
 
   function rejectWithReason(id: string) {
     validate(id, "REJECTED", rejectReason);
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  // Batch action is approve-only on purpose — a rejection should always get
+  // an individually chosen reason (B3), so it stays a per-row action.
+  async function bulkApprove() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`قبول ${selectedIds.size} طلب دفعة واحدة؟`)) return;
+    setBulkLoading(true);
+    try {
+      const results = await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          fetch("/api/admin/validate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, action: "ACTIVE" }),
+          })
+        )
+      );
+      const failed = results.filter((r) => !r.ok).length;
+      setSelectedIds(new Set());
+      await fetchMembers();
+      if (failed > 0) alert(`تعذّر قبول ${failed} من الطلبات`);
+    } catch {
+      alert("حدث خطأ أثناء القبول الجماعي");
+    } finally {
+      setBulkLoading(false);
+    }
   }
 
   async function deleteMember(id: string) {
@@ -353,7 +398,11 @@ export default function AdminDashboard() {
   const filtered = members.filter((m) => {
     const matchFilter = filter === "ALL" || m.status === filter;
     const q = search.toLowerCase();
-    const matchSearch = !q || m.fullName.includes(q) || (m.phone || "").includes(q) || (m.user?.phone || "").includes(q);
+    const matchSearch = !q
+      || m.fullName.includes(q)
+      || (m.phone || "").includes(q)
+      || (m.user?.phone || "").includes(q)
+      || (m.referenceCode || "").toLowerCase().includes(q);
     return matchFilter && matchSearch;
   });
   const filterKey = `${filter}|${search}`;
@@ -365,6 +414,64 @@ export default function AdminDashboard() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Keyboard-driven review: a/r/n so a straightforward case (proof already
+  // visible in the drawer) can be resolved without touching the mouse —
+  // 1-5 pick a rejection reason once the picker is open. Ignored while
+  // typing in a field, and while any request is in flight.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!selected || actionLoading) return;
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+      if (showRejectPicker) {
+        if (e.key === "Escape") { setShowRejectPicker(false); return; }
+        const reasonIdx = Number(e.key) - 1;
+        if (Number.isInteger(reasonIdx) && reasonIdx >= 0 && reasonIdx < REJECTION_REASONS.length) {
+          e.preventDefault();
+          const reason = REJECTION_REASONS[reasonIdx];
+          setRejectReason(reason);
+          validate(selected.id, "REJECTED", reason);
+        }
+        return;
+      }
+
+      if (e.key === "Escape") {
+        setSelected(null);
+      } else if (e.key.toLowerCase() === "a" && selected.status === "PENDING") {
+        e.preventDefault();
+        validate(selected.id, "ACTIVE");
+      } else if (e.key.toLowerCase() === "r" && (selected.status === "PENDING" || selected.status === "ACTIVE")) {
+        e.preventDefault();
+        setShowRejectPicker(true);
+      } else if (e.key.toLowerCase() === "n" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const idx = paginated.findIndex((m) => m.id === selected.id);
+        if (idx !== -1 && paginated[idx + 1]) {
+          setSelected(paginated[idx + 1]);
+          setProofZoom(false);
+          setTempPassword(null);
+          setEditing(false);
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const idx = paginated.findIndex((m) => m.id === selected.id);
+        if (idx > 0) {
+          setSelected(paginated[idx - 1]);
+          setProofZoom(false);
+          setTempPassword(null);
+          setEditing(false);
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  // validate is recreated every render; omitted below (re-subscribing the
+  // listener each render would be harmless but pointless) — same pattern
+  // already tolerated for fetchMembers above.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, showRejectPicker, actionLoading, paginated]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -451,7 +558,7 @@ export default function AdminDashboard() {
       <div className="flex gap-2 mb-4">
         <input
           type="text"
-          placeholder="بحث بالاسم أو الهاتف..."
+          placeholder="بحث بالاسم أو الهاتف أو رمز الطلب..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="input flex-1"
@@ -465,6 +572,31 @@ export default function AdminDashboard() {
           ➕ إضافة عضو يدوياً
         </button>
       </div>
+
+      {filter === "PENDING" && selectedIds.size > 0 && (
+        <div className="card p-3 mb-3 flex items-center justify-between gap-3" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-300)" }}>
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {selectedIds.size} محدد
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+              style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={bulkApprove}
+              disabled={bulkLoading}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+              style={{ background: "var(--mint-600)", color: "white" }}
+            >
+              {bulkLoading ? "..." : `✅ قبول الكل (${selectedIds.size})`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (
@@ -480,13 +612,23 @@ export default function AdminDashboard() {
       ) : (
         <div className="space-y-3">
           {paginated.map((m) => (
-            <button
+            <div
               key={m.id}
               onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); setShowRejectPicker(false); }}
-              className="card w-full p-4 text-right transition-all hover:shadow-md"
+              className="card w-full p-4 text-right transition-all hover:shadow-md cursor-pointer"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
+                  {filter === "PENDING" && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(m.id)}
+                      onChange={() => toggleSelected(m.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-4 h-4 shrink-0"
+                      aria-label={`تحديد ${m.fullName}`}
+                    />
+                  )}
                   {m.photo ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -542,7 +684,7 @@ export default function AdminDashboard() {
                   {new Date(m.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -837,6 +979,11 @@ export default function AdminDashboard() {
               </div>
 
               {/* Actions */}
+              {(selected.status === "PENDING" || selected.status === "ACTIVE") && (
+                <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+                  ⌨️ اختصارات: A قبول — R رفض — N التالي
+                </p>
+              )}
               {selected.status === "PENDING" && !showRejectPicker && (
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -869,14 +1016,14 @@ export default function AdminDashboard() {
               {(selected.status === "PENDING" || selected.status === "ACTIVE") && showRejectPicker && (
                 <div className="card p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>
                   <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-                    سبب الرفض — سيظهر للعضو
+                    سبب الرفض — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
                   </label>
                   <select
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                     className="input text-sm"
                   >
-                    {REJECTION_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    {REJECTION_REASONS.map((r, i) => <option key={r} value={r}>{i + 1}. {r}</option>)}
                   </select>
                   <div className="flex gap-2">
                     <button
@@ -899,13 +1046,20 @@ export default function AdminDashboard() {
                 </div>
               )}
               {selected.status === "REJECTED" && (
-                <button
-                  onClick={() => validate(selected.id, "ACTIVE")}
-                  disabled={actionLoading}
-                  className="btn btn-primary w-full text-sm"
-                >
-                  {actionLoading ? "..." : "تغيير إلى مقبول"}
-                </button>
+                <>
+                  {selected.rejectionReason && (
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      سبب الرفض: <span className="font-bold">{selected.rejectionReason}</span>
+                    </p>
+                  )}
+                  <button
+                    onClick={() => validate(selected.id, "ACTIVE")}
+                    disabled={actionLoading}
+                    className="btn btn-primary w-full text-sm"
+                  >
+                    {actionLoading ? "..." : "تغيير إلى مقبول"}
+                  </button>
+                </>
               )}
 
               <button
