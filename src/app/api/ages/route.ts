@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
 
 const DEFAULT_AGES = [
   "البدريين",
@@ -12,10 +11,11 @@ const DEFAULT_AGES = [
   "التائبين",
 ];
 
+// Public: just category labels for the age-group dropdown, not personal
+// data — needed on /form's step 1, which anonymous visitors can now reach
+// before creating an account.
 export async function GET() {
   try {
-    await requireUser();
-
     const used = await prisma.member.findMany({
       distinct: ["age"],
       orderBy: { createdAt: "asc" },
@@ -29,9 +29,7 @@ export async function GET() {
 
     return NextResponse.json({ ages });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
+    console.error("Ages fetch error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
 }

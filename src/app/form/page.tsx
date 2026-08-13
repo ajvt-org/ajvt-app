@@ -20,8 +20,9 @@ const PAYMENT_CODES: Record<string, string> = {
 
 // Filling this form legitimately means leaving the app to pay, then coming
 // back — long enough to trip the 30-minute idle logout. Autosaving the text
-// fields (not the proof photo, too large for localStorage) means that
-// doesn't silently wipe out what the member already typed.
+// fields (not the proof photo, too large for localStorage, nor the
+// password, too sensitive) means that doesn't silently wipe out what the
+// member already typed.
 const DRAFT_KEY = "ajvt_form_draft";
 
 const DEFAULT_AGES = [
@@ -33,6 +34,13 @@ const DEFAULT_AGES = [
   "الخاشعين",
   "التائبين",
 ];
+
+// New registrations walk 3 steps (info → account → payment). Someone who
+// already has an account (returning to add another member, or resuming
+// mid-flow right after step 2 created one) skips straight past step 2 —
+// there's nothing left to create.
+const STEPS_NEW = [1, 2, 3] as const;
+const STEPS_AUTHENTICATED = [1, 3] as const;
 
 function isArabicName(value: string): boolean {
   return /^[؀-ۿ\s]+$/.test(value.trim());
@@ -65,16 +73,21 @@ function PhoneInput({
   );
 }
 
-function SectionHeader({ step, title }: { step: number; title: string }) {
+function ProgressBar({ stepIndex, total }: { stepIndex: number; total: number }) {
   return (
-    <div className="flex items-center gap-2">
-      <span
-        className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-        style={{ background: "var(--mint-600)", color: "white" }}
-      >
-        {step}
-      </span>
-      <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>{title}</p>
+    <div className="mb-5 fade-up">
+      <div className="flex items-center gap-1.5">
+        {Array.from({ length: total }).map((_, i) => (
+          <div
+            key={i}
+            className="flex-1 h-1.5 rounded-full transition-all"
+            style={{ background: i <= stepIndex ? "var(--mint-600)" : "var(--mint-100)" }}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-center mt-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+        الخطوة {stepIndex + 1} من {total}
+      </p>
     </div>
   );
 }
@@ -107,6 +120,13 @@ function FormPageInner() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+
+  // Step 2 — account creation. Never persisted (not part of `form`).
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [accountLoading, setAccountLoading] = useState(false);
 
   // العصر dropdown
   const [ages, setAges] = useState<string[]>(DEFAULT_AGES);
@@ -121,13 +141,14 @@ function FormPageInner() {
     paidAmount: "",
   });
 
+  const steps = editId ? ([1] as const) : authenticated ? STEPS_AUTHENTICATED : STEPS_NEW;
+  const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
+
   useEffect(() => {
     async function load() {
-      const meRes = await fetch("/api/user/me");
-      if (meRes.status === 401) { router.push(loginPathWithNext("/login")); return; }
-      const me = await meRes.json();
-
       if (editId) {
+        const meRes = await fetch("/api/user/me");
+        if (meRes.status === 401) { router.push(loginPathWithNext("/login")); return; }
         const memberRes = await fetch(`/api/members/${editId}`);
         if (!memberRes.ok) { router.push("/home"); return; }
         const member = await memberRes.json();
@@ -141,18 +162,33 @@ function FormPageInner() {
         });
         if (member.paymentProof) setExistingProof(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
-      } else {
-        const draft = localStorage.getItem(DRAFT_KEY);
-        if (draft) {
-          try {
-            setForm(JSON.parse(draft));
-            setDraftRestored(true);
-          } catch {
-            setForm((p) => ({ ...p, phone: me?.phone || "" }));
-          }
-        } else if (me?.phone) {
-          setForm((p) => ({ ...p, phone: me.phone }));
+        setAuthenticated(true);
+        setCheckingAuth(false);
+        return;
+      }
+
+      // A fresh registration doesn't require an account yet — steps 1 and 2
+      // (personal info, then account creation) are open to anonymous
+      // visitors. Only check whether a session already exists so returning
+      // members skip straight past step 2.
+      let initialPhone = "";
+      const meRes = await fetch("/api/user/me");
+      if (meRes.ok) {
+        const me = await meRes.json();
+        setAuthenticated(true);
+        initialPhone = me?.phone || "";
+      }
+
+      const draft = localStorage.getItem(DRAFT_KEY);
+      if (draft) {
+        try {
+          setForm(JSON.parse(draft));
+          setDraftRestored(true);
+        } catch {
+          setForm((p) => ({ ...p, phone: initialPhone }));
         }
+      } else if (initialPhone) {
+        setForm((p) => ({ ...p, phone: initialPhone }));
       }
 
       setCheckingAuth(false);
@@ -227,18 +263,57 @@ function FormPageInner() {
     }
   }
 
+  function validateStep1(): string | null {
+    if (!form.fullName.trim()) return "يرجى إدخال الاسم الكامل";
+    if (!isArabicName(form.fullName)) return "الاسم الكامل يجب أن يكون بالحروف العربية فقط";
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) return phoneError;
+    if (!form.age) return "يرجى اختيار العصر";
+    return null;
+  }
+
+  function goBack() {
+    setError("");
+    setStepIndex((i) => Math.max(0, i - 1));
+  }
+
+  function goNextFromStep1() {
+    setError("");
+    const err = validateStep1();
+    if (err) { setError(err); return; }
+    setStepIndex((i) => i + 1);
+  }
+
+  async function createAccount() {
+    setError("");
+    if (password.length < 3) { setError("كلمة المرور يجب أن تكون 3 أحرف على الأقل"); return; }
+    if (password !== confirmPassword) { setError("كلمتا المرور غير متطابقتين"); return; }
+
+    setAccountLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "فشل إنشاء الحساب");
+      // `steps` recomputes to [1, 3] now that authenticated is true —
+      // stepIndex (still 1) lands on step 3 automatically.
+      setAuthenticated(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+    } finally {
+      setAccountLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
-    if (!form.fullName.trim()) { setError("يرجى إدخال الاسم الكامل"); return; }
-    if (!isArabicName(form.fullName)) {
-      setError("الاسم الكامل يجب أن يكون بالحروف العربية فقط");
-      return;
-    }
-    const phoneError = validatePhone(form.phone);
-    if (phoneError) { setError(phoneError); return; }
-    if (!form.age) { setError("يرجى اختيار العصر"); return; }
+    const step1Error = validateStep1();
+    if (step1Error) { setError(step1Error); return; }
     if (!form.paymentMethod) { setError("يرجى اختيار طريقة الدفع"); return; }
     const paidAmountError = validatePaidAmount(form.paidAmount);
     if (paidAmountError) { setError(paidAmountError); return; }
@@ -277,7 +352,9 @@ function FormPageInner() {
     router.push("/login");
   }
 
-  useInactivityLogout(IDLE_TIMEOUT_MS, handleIdleTimeout, !checkingAuth);
+  // Anonymous visitors on steps 1-2 have no session to lose — only arm the
+  // idle logout once an account actually exists (editing, or past step 2).
+  useInactivityLogout(IDLE_TIMEOUT_MS, handleIdleTimeout, authenticated && !checkingAuth);
 
   if (checkingAuth) {
     return (
@@ -297,7 +374,7 @@ function FormPageInner() {
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {editId ? "رابطة شباب قرية التاكلالت" : "الخطوة 2 من 2"}
+            رابطة شباب قرية التاكلالت
           </p>
           <h1 className="text-base font-black text-white">
             {editId ? "تعديل الطلب" : "استمارة الانضمام"}
@@ -307,7 +384,9 @@ function FormPageInner() {
 
       <div className="px-5 py-6 pb-10">
 
-        {draftRestored && !editId && (
+        {!editId && <ProgressBar stepIndex={stepIndex} total={steps.length} />}
+
+        {draftRestored && !editId && currentStep === 1 && (
           <div
             className="rounded-2xl p-3 mb-4 fade-up flex items-center justify-between gap-3"
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
@@ -326,281 +405,358 @@ function FormPageInner() {
           </div>
         )}
 
-        {/* Purpose of membership */}
-        <div
-          className="rounded-2xl p-4 mb-4 fade-up text-center"
-          style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
-        >
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            🏆 الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
-            <Link href="/donate" className="font-bold" style={{ color: "var(--mint-600)" }}>
-              تبرّع من هنا
-            </Link>
-          </p>
-        </div>
+        {currentStep === 1 && (
+          <div
+            className="rounded-2xl p-4 mb-4 fade-up text-center"
+            style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+          >
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+              🏆 الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
+            </p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
+              <Link href="/donate" className="font-bold" style={{ color: "var(--mint-600)" }}>
+                تبرّع من هنا
+              </Link>
+            </p>
+          </div>
+        )}
 
-        {/* Payment info banner */}
-        <div
-          className="rounded-2xl p-4 mb-6 fade-up"
-          style={{
-            background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
-            border: "1px solid var(--copper-400)",
-          }}
-        >
-          <p className="text-sm font-bold mb-3 text-white">💳 معلومات الدفع</p>
-          <div className="space-y-2">
-            {PAYMENT_METHODS.map((method) => (
-              <div
-                key={method}
-                className="flex items-center justify-between rounded-xl px-3 py-2"
-                style={{ background: "rgba(255,255,255,0.1)" }}
+        {/* Step 1 — personal info */}
+        {currentStep === 1 && (
+          <div className="space-y-5 fade-up delay-1">
+            <div>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                الاسم الكامل (بالحروف العربية) <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <input
+                name="fullName"
+                value={form.fullName}
+                onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+                required
+                maxLength={30}
+                placeholder="أدخل اسمك الكامل بالعربية"
+                className="input"
+              />
+              {form.fullName && !isArabicName(form.fullName) && (
+                <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
+                  يرجى الكتابة بالحروف العربية فقط
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <PhoneInput
+                value={form.phone}
+                onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
+              />
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                8 أرقام — يبدأ بـ 2 أو 3 أو 4
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                العصر <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <select
+                value={showAddAge ? "__add__" : form.age}
+                onChange={handleAgeSelect}
+                className="input"
+                style={{ appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a9c7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "left 12px center", paddingLeft: "36px" }}
               >
-                <span className="text-sm font-semibold text-white">{method}</span>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="font-mono font-bold text-sm"
-                    style={{ color: "var(--mint-200)" }}
-                    dir="ltr"
-                  >
-                    {PAYMENT_CODES[method]}
-                  </span>
+                <option value="" disabled>اختر العصر...</option>
+                {ages.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+                <option value="__add__">➕ إضافة عصر جديد</option>
+              </select>
+
+              {showAddAge && (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={newAge}
+                    onChange={(e) => setNewAge(e.target.value)}
+                    placeholder="اكتب اسم العصر..."
+                    maxLength={30}
+                    className="input flex-1"
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomAge(); } }}
+                    autoFocus
+                  />
                   <button
                     type="button"
-                    onClick={() => copyCode(PAYMENT_CODES[method])}
-                    className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                    style={{
-                      background: copied === PAYMENT_CODES[method]
-                        ? "rgba(52,211,153,0.3)"
-                        : "rgba(255,255,255,0.15)",
-                      color: copied === PAYMENT_CODES[method] ? "#6ee7b7" : "white",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      minWidth: "52px",
-                    }}
+                    onClick={addCustomAge}
+                    disabled={!newAge.trim()}
+                    className="btn btn-primary px-4 py-2 text-sm font-bold disabled:opacity-40"
+                    style={{ width: "auto" }}
                   >
-                    {copied === PAYMENT_CODES[method] ? "✓ تم" : "نسخ"}
+                    إضافة
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-            الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
-          </p>
-        </div>
+              )}
 
-        <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
+              {form.age && !showAddAge && (
+                <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
+                  ✓ {form.age}
+                </p>
+              )}
+            </div>
 
-          <SectionHeader step={1} title="المعلومات الشخصية" />
-
-          {/* الصورة الشخصية — اختياري */}
-          <div className="card p-4">
-            <PhotoUpload
-              photo={photo}
-              onUpload={(filename) => setPhoto(filename)}
-              label="الصورة الشخصية (اختياري)"
-              placeholderIcon="👤"
-            />
-            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-              يمكنك إضافتها الآن أو لاحقاً، وتغييرها في أي وقت
-            </p>
-          </div>
-
-          {/* الاسم الكامل */}
-          <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              الاسم الكامل (بالحروف العربية) <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <input
-              name="fullName"
-              value={form.fullName}
-              onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
-              required
-              maxLength={30}
-              placeholder="أدخل اسمك الكامل بالعربية"
-              className="input"
-            />
-            {form.fullName && !isArabicName(form.fullName) && (
-              <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
-                يرجى الكتابة بالحروف العربية فقط
-              </p>
-            )}
-          </div>
-
-          {/* رقم الهاتف */}
-          <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <PhoneInput
-              value={form.phone}
-              onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
-            />
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              8 أرقام — يبدأ بـ 2 أو 3 أو 4
-            </p>
-          </div>
-
-          {/* العصر — dropdown */}
-          <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              العصر <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <select
-              value={showAddAge ? "__add__" : form.age}
-              onChange={handleAgeSelect}
-              className="input"
-              style={{ appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a9c7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "left 12px center", paddingLeft: "36px" }}
-            >
-              <option value="" disabled>اختر العصر...</option>
-              {ages.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-              <option value="__add__">➕ إضافة عصر جديد</option>
-            </select>
-
-            {/* Custom age input */}
-            {showAddAge && (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={newAge}
-                  onChange={(e) => setNewAge(e.target.value)}
-                  placeholder="اكتب اسم العصر..."
-                  maxLength={30}
-                  className="input flex-1"
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomAge(); } }}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={addCustomAge}
-                  disabled={!newAge.trim()}
-                  className="btn btn-primary px-4 py-2 text-sm font-bold disabled:opacity-40"
-                  style={{ width: "auto" }}
-                >
-                  إضافة
-                </button>
+            {error && (
+              <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                ⚠️ {error}
               </div>
             )}
 
-            {form.age && !showAddAge && (
-              <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
-                ✓ {form.age}
+            <button type="button" onClick={goNextFromStep1} className="btn btn-primary mt-2">
+              التالي ←
+            </button>
+          </div>
+        )}
+
+        {/* Step 2 — account creation (skipped for members who already have one) */}
+        {currentStep === 2 && (
+          <div className="space-y-5 fade-up delay-1">
+            <div className="card p-4 text-center">
+              <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                🔒 أنشئ حساباً لحفظ طلبك ومتابعته لاحقاً
               </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }} dir="ltr">
+                {form.phone}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                تأكيد كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="input"
+              />
+            </div>
+
+            {error && (
+              <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                ⚠️ {error}
+                {error === "رقم الهاتف مسجّل مسبقاً" && (
+                  <>
+                    {" — "}
+                    <Link href={loginPathWithNext("/login")} className="underline font-bold">
+                      تسجيل الدخول
+                    </Link>
+                  </>
+                )}
+              </div>
             )}
-          </div>
 
-          <SectionHeader step={2} title="طريقة الدفع" />
-
-          {/* المبلغ المدفوع */}
-          <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={MEMBERSHIP_FEE}
-              value={form.paidAmount}
-              onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
-              placeholder={String(MEMBERSHIP_FEE)}
-              className="input"
-              dir="ltr"
-            />
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً كتبرّع باسمك بعد قبول الطلب
-            </p>
-          </div>
-
-          {/* طريقة الدفع */}
-          <div>
-            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-              طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {PAYMENT_METHODS.map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
-                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                  style={{
-                    background: form.paymentMethod === method ? "var(--mint-600)" : "white",
-                    color: form.paymentMethod === method ? "white" : "var(--mint-700)",
-                    borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
-                  }}
-                >
-                  {method}
-                </button>
-              ))}
+            <div className="flex gap-2 mt-2">
+              <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                → السابق
+              </button>
+              <button type="button" onClick={createAccount} disabled={accountLoading} className="btn btn-primary flex-1">
+                {accountLoading ? "جاري إنشاء الحساب..." : "التالي ←"}
+              </button>
             </div>
           </div>
+        )}
 
-          <SectionHeader step={3} title="إثبات الدفع" />
+        {/* Step 3 — payment and proof */}
+        {currentStep === 3 && (
+          <>
+            <div className="card p-4 mb-4 fade-up">
+              <PhotoUpload
+                photo={photo}
+                onUpload={(filename) => setPhoto(filename)}
+                label="الصورة الشخصية (اختياري)"
+                placeholderIcon="👤"
+              />
+              <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+                يمكنك إضافتها الآن أو لاحقاً من صفحتك الشخصية
+              </p>
+            </div>
 
-          {/* كابتير */}
-          <div>
-            <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              كابتير — صورة تأكيد الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-            </p>
-            <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
-              {previewUrl || existingProof ? (
-                <div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={previewUrl || `/api/files/${existingProof}`}
-                    alt="الكابتير"
-                    className="max-h-48 mx-auto rounded-xl object-contain"
-                  />
-                  <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
-                    {previewUrl ? "انقر لتغيير الصورة" : "الصورة الحالية — انقر لتغييرها"}
-                  </p>
+            <div
+              className="rounded-2xl p-4 mb-6 fade-up"
+              style={{
+                background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
+                border: "1px solid var(--copper-400)",
+              }}
+            >
+              <p className="text-sm font-bold mb-3 text-white">💳 معلومات الدفع</p>
+              <div className="space-y-2">
+                {PAYMENT_METHODS.map((method) => (
+                  <div
+                    key={method}
+                    className="flex items-center justify-between rounded-xl px-3 py-2"
+                    style={{ background: "rgba(255,255,255,0.1)" }}
+                  >
+                    <span className="text-sm font-semibold text-white">{method}</span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="font-mono font-bold text-sm"
+                        style={{ color: "var(--mint-200)" }}
+                        dir="ltr"
+                      >
+                        {PAYMENT_CODES[method]}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyCode(PAYMENT_CODES[method])}
+                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
+                        style={{
+                          background: copied === PAYMENT_CODES[method]
+                            ? "rgba(52,211,153,0.3)"
+                            : "rgba(255,255,255,0.15)",
+                          color: copied === PAYMENT_CODES[method] ? "#6ee7b7" : "white",
+                          border: "1px solid rgba(255,255,255,0.2)",
+                          minWidth: "52px",
+                        }}
+                      >
+                        {copied === PAYMENT_CODES[method] ? "✓ تم" : "نسخ"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
+                الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
+              <div>
+                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={MEMBERSHIP_FEE}
+                  value={form.paidAmount}
+                  onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
+                  placeholder={String(MEMBERSHIP_FEE)}
+                  className="input"
+                  dir="ltr"
+                />
+                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                  الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً كتبرّع باسمك بعد قبول الطلب
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+                  طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYMENT_METHODS.map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
+                      className="py-3 rounded-xl text-sm font-bold transition-all border-2"
+                      style={{
+                        background: form.paymentMethod === method ? "var(--mint-600)" : "white",
+                        color: form.paymentMethod === method ? "white" : "var(--mint-700)",
+                        borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                      }}
+                    >
+                      {method}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <div className="text-center">
-                  <div className="text-4xl mb-2">📸</div>
-                  <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
-                    انقر لاختيار صورة من هاتفك
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                    PNG / JPG — حجم أقصى 5 ميغابايت
-                  </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  كابتير — صورة تأكيد الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+                </p>
+                <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
+                  {previewUrl || existingProof ? (
+                    <div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previewUrl || `/api/files/${existingProof}`}
+                        alt="الكابتير"
+                        className="max-h-48 mx-auto rounded-xl object-contain"
+                      />
+                      <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
+                        {previewUrl ? "انقر لتغيير الصورة" : "الصورة الحالية — انقر لتغييرها"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">📸</div>
+                      <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
+                        انقر لاختيار صورة من هاتفك
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                        PNG / JPG — حجم أقصى 5 ميغابايت
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                  />
+                </label>
+              </div>
+
+              {error && (
+                <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                  ⚠️ {error}
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-            </label>
-          </div>
 
-          {error && (
-            <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          <button type="submit" disabled={loading} className="btn btn-primary mt-2">
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                جاري إرسال الطلب...
-              </span>
-            ) : editId ? (
-              "حفظ التعديلات ←"
-            ) : (
-              "إرسال طلب الانضمام ←"
-            )}
-          </button>
-        </form>
+              <div className="flex gap-2 mt-2">
+                {!editId && (
+                  <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                    → السابق
+                  </button>
+                )}
+                <button type="submit" disabled={loading} className="btn btn-primary flex-1">
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      جاري إرسال الطلب...
+                    </span>
+                  ) : editId ? (
+                    "حفظ التعديلات ←"
+                  ) : (
+                    "إرسال طلب الانضمام ←"
+                  )}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
