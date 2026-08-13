@@ -25,7 +25,7 @@ interface ActivityOption {
   title: string;
 }
 
-const ROLE_LABEL: Record<string, string> = { SUPER: "كامل الصلاحيات", MEMBERS: "الأعضاء فقط", ACTIVITIES: "الأنشطة فقط" };
+const ROLE_LABEL: Record<string, string> = { SUPER: "كامل الصلاحيات", MEMBERS: "الأعضاء فقط", ACTIVITIES: "الأنشطة فقط", QUIZ: "المسابقة الثقافية فقط" };
 
 interface AuditLogEntry {
   id: string;
@@ -63,6 +63,15 @@ const ACTION_LABELS: Record<string, string> = {
   CREATE_EXPENSE: "إضافة مصروف",
   UPDATE_EXPENSE: "تعديل مصروف",
   DELETE_EXPENSE: "حذف مصروف",
+  UPDATE_MEMBER: "تعديل بيانات عضو",
+  CREATE_AGE_GROUP: "إضافة عصر",
+  UPDATE_AGE_GROUP: "تعديل اسم عصر",
+  DELETE_AGE_GROUP: "حذف عصر",
+  CREATE_QUIZ_QUESTION: "إضافة سؤال ",
+  UPDATE_QUIZ_QUESTION: "تعديل سؤال ",
+  DELETE_QUIZ_QUESTION: "حذف سؤال ",
+  SEND_QUIZ_QUESTION: "إرسال سؤال ",
+  UPDATE_QUIZ_SETTINGS: "تعديل إعدادات المسابقة الثقافية ",
 };
 
 const NAV_TABS = [
@@ -70,6 +79,7 @@ const NAV_TABS = [
   { href: "/admin/activities", label: "🏆 الأنشطة" },
   { href: "/admin/payments", label: "🧾 المدفوعات" },
   { href: "/admin/expenses", label: "💸 المصاريف" },
+  { href: "/admin/quiz", label: "🧠 المسابقة الثقافية " },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -131,6 +141,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     const allowedPrefixes =
       role === "MEMBERS" ? ["/admin/dashboard", "/admin/payments", "/admin/expenses"]
       : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments", "/admin/expenses"]
+      : role === "QUIZ" ? ["/admin/quiz"]
       : null;
     if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
       router.push(`${allowedPrefixes[0]}?denied=1`);
@@ -160,6 +171,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     if (!role || role === "SUPER") return true;
     if (role === "MEMBERS") return tab.href === "/admin/dashboard" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
     if (role === "ACTIVITIES") return tab.href === "/admin/activities" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
+    if (role === "QUIZ") return tab.href === "/admin/quiz";
     return true;
   });
 
@@ -597,6 +609,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   <option value="SUPER">كامل الصلاحيات</option>
                   <option value="MEMBERS">الأعضاء فقط</option>
                   <option value="ACTIVITIES">الأنشطة فقط</option>
+                  <option value="QUIZ">المسابقة الثقافية  فقط</option>
                 </select>
                 {adminError && (
                   <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>

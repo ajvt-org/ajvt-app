@@ -47,13 +47,42 @@ interface ActivitiesSectionProps {
   eligibleMembers: EligibleMember[];
   hasAnyMember: boolean;
   hasPendingMember: boolean;
+  quizAccess: boolean;
   onReload: () => void;
 }
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "⏳ قيد المراجعة", ACTIVE: "✅ مقبول", REJECTED: "❌ مرفوض" };
 const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
 
-export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPendingMember, onReload }: ActivitiesSectionProps) {
+function QuizCard({ quizAccess }: { quizAccess: boolean }) {
+  return (
+    <div className="card overflow-hidden">
+      <div className="p-4 flex items-center gap-3">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0"
+          style={{ background: quizAccess ? "linear-gradient(160deg, var(--mint-500), var(--mint-700))" : "var(--mint-100)" }}
+        >
+          🧠
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>المسابقة الثقافية</h3>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {quizAccess ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥" : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
+          </p>
+        </div>
+        {quizAccess ? (
+          <a href="/quiz" className="text-xs px-3 py-2 rounded-lg font-bold shrink-0" style={{ background: "var(--mint-600)", color: "white" }}>
+            العب ←
+          </a>
+        ) : (
+          <span className="text-lg shrink-0" title="متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب">🔒</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPendingMember, quizAccess, onReload }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +100,7 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPe
         <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
           🏆 أنشطة هذا الصيف
         </h2>
+        <QuizCard quizAccess={quizAccess} />
         <div className="card p-4 animate-pulse space-y-3">
           <div className="h-4 rounded-lg w-2/3" style={{ background: "var(--mint-100)" }} />
           <div className="h-3 rounded-lg w-full" style={{ background: "var(--mint-100)" }} />
@@ -80,37 +110,41 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPe
     );
   }
 
-  if (activities.length === 0) return null;
-
   return (
     <div className="space-y-3 fade-up" id="activities">
       <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
         🏆 أنشطة هذا الصيف
       </h2>
 
-      {eligibleMembers.length === 0 && (
-        <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
-          {hasPendingMember
-            ? "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
-            : hasAnyMember
-            ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
-            : (
-              <>
-                تصفح الأنشطة المتاحة —{" "}
-                <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
-                  سجّل طلب انضمام
-                </a>
-                {" "}لتتمكن من التسجيل.
-              </>
-            )}
-        </p>
-      )}
+      <QuizCard quizAccess={quizAccess} />
 
-      <div className="space-y-3">
-        {activities.map((activity) => (
-          <ActivityCard key={activity.id} activity={activity} eligibleMembers={eligibleMembers} onReload={onReload} />
-        ))}
-      </div>
+      {activities.length > 0 && (
+        <>
+          {eligibleMembers.length === 0 && (
+            <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
+              {hasPendingMember
+                ? "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
+                : hasAnyMember
+                ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
+                : (
+                  <>
+                    تصفح الأنشطة المتاحة —{" "}
+                    <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
+                      سجّل طلب انضمام
+                    </a>
+                    {" "}لتتمكن من التسجيل.
+                  </>
+                )}
+            </p>
+          )}
+
+          <div className="space-y-3">
+            {activities.map((activity) => (
+              <ActivityCard key={activity.id} activity={activity} eligibleMembers={eligibleMembers} onReload={onReload} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
