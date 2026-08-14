@@ -5,6 +5,7 @@ import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
 import type { Group, RosterMember, Team } from "./types";
+import Icon from "@/components/Icon";
 
 export default function TeamsTab({
   activityId,
@@ -316,7 +317,7 @@ export default function TeamsTab({
                       className="text-xs"
                       title="تحديد عدد الفرق المستهدف"
                     >
-                      🎯
+                      <Icon name="target" size={14} />
                     </button>
                   )}
                   <button
@@ -324,7 +325,7 @@ export default function TeamsTab({
                     className="font-bold"
                     style={{ color: "#991b1b" }}
                   >
-                    ✕
+                    <Icon name="close" size={14} />
                   </button>
                 </span>
               );

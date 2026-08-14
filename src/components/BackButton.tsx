@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Icon from "./Icon";
 
 // A plain link rather than router.back(). window.history counts entries from
 // other sites too, so going back could carry a member out of the app entirely
@@ -17,19 +18,7 @@ export default function BackButton({ href }: { href: string }) {
         color: "#fff",
       }}
     >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M9 18l6-6-6-6" />
-      </svg>
+      <Icon name="chevronRight" />
     </Link>
   );
 }
