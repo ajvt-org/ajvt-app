@@ -53,6 +53,7 @@ jobs:
         DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
         JWT_SECRET: "ci-build-only-not-a-real-secret"
     - run: npm test --if-present
+    - run: npm run test:ui
     - run: npm run test:api
       env:
         TEST_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_test"
