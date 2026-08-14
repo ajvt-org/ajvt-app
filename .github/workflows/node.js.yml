@@ -34,9 +34,9 @@ jobs:
         node-version: [22.x]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -62,7 +62,7 @@ jobs:
       env:
         E2E_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_e2e"
         JWT_SECRET: "ci-e2e-not-a-real-secret"
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: failure()
       with:
         name: playwright-report
