@@ -6,6 +6,7 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { validateGoals, type GoalInput } from "@/lib/matchInput";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -44,31 +45,6 @@ const MATCH_INCLUDE = {
     },
   },
 } as const;
-
-interface GoalInput {
-  memberId: string;
-  count: number;
-  minute: number | null;
-}
-
-function validateGoals(input: unknown): GoalInput[] | null {
-  if (input === undefined) return [];
-  if (!Array.isArray(input)) return null;
-  const goals: GoalInput[] = [];
-  for (const g of input) {
-    if (!g || typeof g.memberId !== "string") return null;
-    const count = Number(g.count);
-    if (!Number.isInteger(count) || count <= 0) return null;
-    let minute: number | null = null;
-    if (g.minute !== undefined && g.minute !== null && g.minute !== "") {
-      const m = Number(g.minute);
-      if (!Number.isInteger(m) || m < 1 || m > 130) return null;
-      minute = m;
-    }
-    goals.push({ memberId: g.memberId, count, minute });
-  }
-  return goals;
-}
 
 export const PATCH = withRoute(
   "PATCH /api/admin/matches/[matchId]",
