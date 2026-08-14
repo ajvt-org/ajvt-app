@@ -350,12 +350,11 @@ export function matchDateToLocalInput(date: string | Date): string {
   return local.toISOString().slice(0, 16);
 }
 
-// "ar"'s default numeric date format embeds RTL marks around the slashes
-// (renders oddly next to Latin digits) — en-GB gives the same DD/MM/YYYY,
-// 24h layout with plain digits and no directional marks.
+// Same shape as formatDateTime, but a kickoff belongs to the club's day
+// rather than the reader's, so the parts come from a zoned formatter and are
+// reassembled instead of read off a Date.
 export function formatMatchDateTime(date: string | Date): string {
-  const d = new Date(date);
-  const formatted = d.toLocaleString("en-GB", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: CLUB_TIMEZONE,
     day: "2-digit",
     month: "2-digit",
@@ -363,8 +362,10 @@ export function formatMatchDateTime(date: string | Date): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  });
-  return formatted.replace(", ", " - ");
+  }).formatToParts(new Date(date));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("year")}/${part("month")}/${part("day")} ${part("hour")}:${part("minute")}`;
 }
 
 // Club-local (YYYY-MM-DD) calendar day for a match date — used to find
