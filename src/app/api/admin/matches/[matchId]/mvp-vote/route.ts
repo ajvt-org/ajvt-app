@@ -5,6 +5,8 @@ import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { parse } from "@/lib/validation";
+import { mvpVoteCreateSchema, mvpVoteStatusSchema } from "./schema";
 
 const VOTE_INCLUDE = {
   candidates: {
@@ -22,19 +24,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
-    const { candidateMemberIds } = await req.json();
-
-    if (
-      !Array.isArray(candidateMemberIds) ||
-      candidateMemberIds.length < 2 ||
-      candidateMemberIds.length > 6
-    ) {
-      return NextResponse.json({ error: "يجب اختيار بين 2 و6 لاعبين مرشحين" }, { status: 400 });
-    }
-    const uniqueIds = Array.from(new Set(candidateMemberIds));
-    if (uniqueIds.length !== candidateMemberIds.length) {
-      return NextResponse.json({ error: "لا يمكن اختيار نفس اللاعب مرتين" }, { status: 400 });
-    }
+    const { candidateMemberIds } = parse(mvpVoteCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -56,12 +46,12 @@ export const POST = withRoute(
 
     const rosterEntries = await prisma.teamMember.findMany({
       where: {
-        memberId: { in: uniqueIds as string[] },
+        memberId: { in: candidateMemberIds },
         teamId: { in: [match.homeTeamId, match.awayTeamId] },
       },
       select: { memberId: true },
     });
-    if (rosterEntries.length !== uniqueIds.length) {
+    if (rosterEntries.length !== candidateMemberIds.length) {
       return NextResponse.json(
         { error: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين" },
         { status: 400 },
@@ -71,7 +61,7 @@ export const POST = withRoute(
     const vote = await prisma.matchMvpVote.create({
       data: {
         matchId,
-        candidates: { create: uniqueIds.map((memberId) => ({ memberId: memberId as string })) },
+        candidates: { create: candidateMemberIds.map((memberId) => ({ memberId })) },
       },
       include: VOTE_INCLUDE,
     });
@@ -97,11 +87,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
-    const { status } = await req.json();
-
-    if (!["OPEN", "CLOSED"].includes(status)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { status } = parse(mvpVoteStatusSchema, await req.json());
 
     const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
     if (!existing) {
