@@ -3,17 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { expenseUpdateSchema } from "../schema";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
-    const { label, amount, note, date, proof } = await req.json();
-
-    if ([label, amount, note, date, proof].every((v) => v === undefined)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { label, amount, note, date, proof } = parse(expenseUpdateSchema, await req.json());
 
     const existing = await prisma.expense.findUnique({ where: { id }, select: { id: true } });
     if (!existing) {
@@ -28,42 +26,15 @@ export const PATCH = withRoute(
       proof?: string | null;
     } = {};
 
-    if (label !== undefined) {
-      if (!label.trim()) return NextResponse.json({ error: "وصف المصروف مطلوب" }, { status: 400 });
-      if (label.trim().length > 100)
-        return NextResponse.json({ error: "الوصف طويل جداً (100 حرف كحد أقصى)" }, { status: 400 });
-      data.label = label.trim();
-    }
-
-    if (amount !== undefined) {
-      const n = Number(amount);
-      if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json(
-          { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
-          { status: 400 },
-        );
-      }
-      data.amount = n;
-    }
+    if (label !== undefined) data.label = label;
+    if (amount !== undefined) data.amount = Number(amount);
 
     if (note !== undefined) {
       data.note = note?.trim() || null;
     }
 
-    if (date !== undefined) {
-      const parsedDate = new Date(date);
-      if (Number.isNaN(parsedDate.getTime())) {
-        return NextResponse.json({ error: "تاريخ غير صالح" }, { status: 400 });
-      }
-      data.date = parsedDate;
-    }
-
-    if (proof !== undefined) {
-      if (proof !== null && typeof proof !== "string") {
-        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-      }
-      data.proof = proof;
-    }
+    if (date !== undefined) data.date = new Date(date as string);
+    if (proof !== undefined) data.proof = proof;
 
     const expense = await prisma.expense.update({ where: { id }, data });
     await logAction(
