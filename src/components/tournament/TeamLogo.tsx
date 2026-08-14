@@ -9,12 +9,12 @@ interface TeamLogoProps {
 export default function TeamLogo({ logo, size = 24 }: TeamLogoProps) {
   if (!logo) {
     return (
-      <div
-        className="rounded-full flex items-center justify-center shrink-0"
+      <span
+        className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
         style={{ width: size, height: size, background: "var(--mint-100)", fontSize: size * 0.55 }}
       >
         🛡️
-      </div>
+      </span>
     );
   }
   return (
