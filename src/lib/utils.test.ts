@@ -1,6 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import {
-  formatDate,
   formatDateTime,
   formatDayKey,
   formatTime,
@@ -126,10 +125,14 @@ describe("formatTime", () => {
 
 describe("formatDayKey", () => {
   it("reads a rollup key as a local day, not utc midnight", () => {
-    expect(formatDayKey("2026-08-14")).toBe(formatDate(new Date(2026, 7, 14)));
+    expect(formatDayKey("2026-08-14")).toBe("2026/08/14");
   });
 
   it("does not slip to the previous day", () => {
-    expect(formatDayKey("2026-01-01")).toBe(formatDate(new Date(2026, 0, 1)));
+    expect(formatDayKey("2026-01-01")).toBe("2026/01/01");
+  });
+
+  it("emits no directional marks, the rows it fills are dir=ltr", () => {
+    expect(formatDayKey("2026-08-14")).toMatch(/^[\d/]+$/);
   });
 });
