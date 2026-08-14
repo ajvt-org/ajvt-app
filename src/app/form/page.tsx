@@ -8,6 +8,7 @@ import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
+import { generateReferenceCode } from "@/lib/referenceCode";
 import {
   MEMBERSHIP_FEE,
   ONLINE_PAYMENT_METHODS as PAYMENT_METHODS,
@@ -49,17 +50,6 @@ const STEPS_AUTHENTICATED = [1, 3] as const;
 
 function isArabicName(value: string): boolean {
   return /^[؀-ۿ\s]+$/.test(value.trim());
-}
-
-// Excludes visually-ambiguous characters (0/O, 1/I/L) — this gets
-// hand-typed into a bank transfer's note field on a small phone screen.
-const REFERENCE_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
-function generateReferenceCode(): string {
-  let code = "";
-  for (let i = 0; i < 5; i++) {
-    code += REFERENCE_CODE_ALPHABET[Math.floor(Math.random() * REFERENCE_CODE_ALPHABET.length)];
-  }
-  return `AJ-${code}`;
 }
 
 function PhoneInput({
@@ -407,6 +397,9 @@ function FormPageInner() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
+      if (data.referenceCode && data.referenceCode !== form.referenceCode) {
+        setForm((p) => ({ ...p, referenceCode: data.referenceCode }));
+      }
       if (!editId) localStorage.removeItem(DRAFT_KEY);
       setSubmitted(true);
     } catch (err: unknown) {

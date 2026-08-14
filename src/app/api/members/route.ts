@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { validatePaidAmount } from "@/lib/donations";
+import { generateReferenceCode, isValidReferenceCode } from "@/lib/referenceCode";
+
+const CODE_ATTEMPTS = 5;
+
+function isUniqueViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +49,8 @@ export async function POST(req: NextRequest) {
     }
     if (
       referenceCode !== undefined &&
-      (typeof referenceCode !== "string" || referenceCode.length > 20)
+      referenceCode !== null &&
+      !isValidReferenceCode(referenceCode)
     ) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
@@ -80,22 +88,33 @@ export async function POST(req: NextRequest) {
     }
 
     // New member under this account — no cap on how many
-    const member = await prisma.member.create({
-      data: {
-        userId: session.userId,
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-        age: age.trim(),
-        paymentMethod,
-        paymentProof,
-        photo: photo || null,
-        paidAmount: Number(paidAmount),
-        referenceCode: referenceCode || null,
-        status: "PENDING",
-      },
-    });
+    let code: string | null = referenceCode || null;
 
-    return NextResponse.json({ id: member.id }, { status: 201 });
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const member = await prisma.member.create({
+          data: {
+            userId: session.userId,
+            fullName: fullName.trim(),
+            phone: phone.trim(),
+            age: age.trim(),
+            paymentMethod,
+            paymentProof,
+            photo: photo || null,
+            paidAmount: Number(paidAmount),
+            referenceCode: code,
+            status: "PENDING",
+          },
+        });
+        return NextResponse.json(
+          { id: member.id, referenceCode: member.referenceCode },
+          { status: 201 },
+        );
+      } catch (err) {
+        if (!isUniqueViolation(err) || !code || attempt >= CODE_ATTEMPTS) throw err;
+        code = generateReferenceCode();
+      }
+    }
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
