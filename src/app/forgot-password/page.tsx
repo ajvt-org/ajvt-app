@@ -5,6 +5,7 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { api } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import ArrowLabel from "@/components/ArrowLabel";
 
 // No automated SMS/WhatsApp-API channel is wired up (both would mean a new
 // paid external service) — recovery goes through an admin, who already has
@@ -73,7 +74,7 @@ export default function ForgotPasswordPage() {
 
         <div className="text-center fade-up delay-2 pt-2">
           <Link href="/login" className="text-xs font-bold" style={{ color: "var(--mint-600)" }}>
-            ← تذكرت كلمة المرور؟ تسجيل الدخول
+            <ArrowLabel direction="back">تذكرت كلمة المرور؟ تسجيل الدخول</ArrowLabel>
           </Link>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
+import ArrowLabel from "@/components/ArrowLabel";
 
 interface Candidate {
   id: string;
@@ -99,7 +100,7 @@ export default function MvpVoteWidget({
             ))}
           </div>
           <a href="/login" className="text-xs font-semibold" style={{ color: "var(--mint-600)" }}>
-            سجّل الدخول للتصويت ←
+            <ArrowLabel>سجّل الدخول للتصويت</ArrowLabel>
           </a>
         </div>
       ) : myVote ? (
