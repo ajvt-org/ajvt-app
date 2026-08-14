@@ -1,4 +1,5 @@
 import { toThumbUrl } from "@/lib/utils";
+import Icon from "@/components/Icon";
 
 interface TeamLogoProps {
   logo: string | null | undefined;
@@ -13,7 +14,7 @@ export default function TeamLogo({ logo, size = 24 }: TeamLogoProps) {
         className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
         style={{ width: size, height: size, background: "var(--mint-100)", fontSize: size * 0.55 }}
       >
-        🛡️
+        <Icon name="shield" size={Math.round(size * 0.6)} />
       </span>
     );
   }
