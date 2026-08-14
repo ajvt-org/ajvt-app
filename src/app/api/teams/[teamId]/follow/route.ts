@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, getUserSession } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const session = await getUserSession();
@@ -13,8 +14,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tea
   return NextResponse.json({ following: !!follow, loggedIn: true });
 }
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/teams/[teamId]/follow",
+  async (_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
 
@@ -30,31 +32,17 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ te
     });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("Follow team error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/teams/[teamId]/follow",
+  async (_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
 
     await prisma.teamFollow.deleteMany({ where: { userId: session.userId, teamId } });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("Unfollow team error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
 // Players can pick their own team once their registration for that
 // tournament is approved — switching teams just moves the membership,
 // admin can still override anything from the tournament admin screen.
-export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/teams/[teamId]/join",
+  async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
     const { memberId } = await req.json();
@@ -61,20 +63,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tea
     });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("Team self-join error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/teams/[teamId]/join",
+  async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
     const { memberId } = await req.json();
@@ -105,11 +99,5 @@ export async function DELETE(
     await prisma.teamMember.deleteMany({ where: { teamId, memberId } });
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("Team self-leave error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

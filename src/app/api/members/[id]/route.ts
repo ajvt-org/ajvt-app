@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const GET = withRoute(
+  "GET /api/members/[id]",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireUser();
     const { id } = await params;
 
@@ -32,16 +34,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { userId: _userId, ...rest } = member;
     void _userId;
     return NextResponse.json(rest);
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/members/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireUser();
     const { id } = await params;
     const { photo } = await req.json();
@@ -62,11 +60,5 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     return NextResponse.json(member);
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("Member photo update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
