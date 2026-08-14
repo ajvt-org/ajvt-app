@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate, loginPathWithNext, toThumbUrl } from "@/lib/utils";
+import { formatDate, formatDayKey, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
@@ -497,7 +497,7 @@ export default function AdminExpensesPage() {
                   >
                     <span className="flex items-center gap-1.5">
                       <span style={{ color: "var(--mint-600)" }}>{expandedDay ? "▾" : "◂"}</span>
-                      <span style={{ color: "var(--text-main)" }}>{d.date}</span>
+                      <span style={{ color: "var(--text-main)" }}>{formatDayKey(d.date)}</span>
                     </span>
                     <span className="font-black" style={{ color: "var(--mint-600)" }}>
                       {d.total} أوقية
