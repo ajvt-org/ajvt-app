@@ -1,26 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
+import { api } from "@/lib/api";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
 
 // No automated SMS/WhatsApp-API channel is wired up (both would mean a new
 // paid external service) — recovery goes through an admin, who already has
 // a reset tool in /admin/dashboard. This page is the member-facing half:
 // it gets them to that admin with everything needed to act immediately,
 // instead of leaving them with no path back into their account at all.
-const SUPPORT_WHATSAPP_NUMBER = "22241070328"; // +222 41070328, Mauritania country code included for wa.me
-
-function buildWhatsappUrl(phone: string): string {
+function buildWhatsappUrl(support: string, phone: string): string {
   const trimmed = phone.trim();
   const message = trimmed
     ? `السلام عليكم، نسيت كلمة مرور حسابي في تطبيق رابطة شباب قرية التاكلالت. رقم هاتفي المسجل في التطبيق: ${trimmed}`
     : "السلام عليكم، نسيت كلمة مرور حسابي في تطبيق رابطة شباب قرية التاكلالت وأحتاج مساعدة لاستعادتها.";
-  return `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${support}?text=${encodeURIComponent(message)}`;
 }
 
 export default function ForgotPasswordPage() {
   const [phone, setPhone] = useState("");
+  const [support, setSupport] = useState(DEFAULT_SETTINGS.supportWhatsapp);
+
+  useEffect(() => {
+    api
+      .get<{ settings: { supportWhatsapp: string } }>("/api/settings")
+      .then((d) => setSupport(d.settings.supportWhatsapp))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="app-shell">
@@ -52,7 +60,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <a
-          href={buildWhatsappUrl(phone)}
+          href={buildWhatsappUrl(support, phone)}
           target="_blank"
           rel="noopener noreferrer"
           className="btn btn-whatsapp fade-up delay-1"
