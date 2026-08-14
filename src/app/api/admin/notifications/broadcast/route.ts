@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { sendPushToUser } from "@/lib/push";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 export const POST = withRoute(
   "POST /api/admin/notifications/broadcast",
@@ -43,7 +44,7 @@ export const POST = withRoute(
     await Promise.all(
       userIds.map((uid) =>
         sendPushToUser(uid, { title: title.trim(), body: body.trim() }).catch((err) =>
-          console.error("Broadcast push error:", err),
+          logger.error("broadcast.push.error", err),
         ),
       ),
     );

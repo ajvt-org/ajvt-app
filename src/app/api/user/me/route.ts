@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const MEMBER_SELECT = {
   id: true,
@@ -36,7 +37,7 @@ const MEMBER_SELECT = {
 export const GET = withRoute("GET /api/user/me", async () => {
   const session = await requireUser();
 
-  sendMatchReminders().catch((err) => console.error("Match reminders error:", err));
+  sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },

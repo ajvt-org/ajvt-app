@@ -9,6 +9,7 @@ import {
 } from "@/lib/quiz";
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 export const GET = withRoute("GET /api/quiz/me", async () => {
   const session = await requireUser();
@@ -24,7 +25,7 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   // Unlike sendMatchReminders() (fire-and-forget in /api/user/me), this is
   // awaited: if this is the first visit of the day, the freshly-generated
   // question(s) must show up in this very response, not on the next visit.
-  await runDailyQuizAutoSend().catch((err) => console.error("Quiz auto-send error:", err));
+  await runDailyQuizAutoSend().catch((err) => logger.error("quiz.autosend.error", err));
 
   const [pending, standing, user] = await Promise.all([
     getPendingAssignments(session.userId),
