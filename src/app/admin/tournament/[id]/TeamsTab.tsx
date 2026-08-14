@@ -322,10 +322,11 @@ export default function TeamsTab({
                   )}
                   <button
                     onClick={() => deleteGroup(g.id)}
-                    className="font-bold"
-                    style={{ color: "#991b1b" }}
+                    aria-label={`حذف ${g.name}`}
+                    className="flex items-center justify-center shrink-0"
+                    style={{ width: 32, height: 32, color: "#991b1b" }}
                   >
-                    <Icon name="close" size={14} />
+                    <Icon name="close" size={16} />
                   </button>
                 </span>
               );
