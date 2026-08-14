@@ -5,7 +5,7 @@ import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
 import type { Group, RosterMember, Team } from "./types";
-import Icon from "@/components/Icon";
+import GroupsPanel from "./GroupsPanel";
 
 export default function TeamsTab({
   activityId,
@@ -23,10 +23,6 @@ export default function TeamsTab({
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamGroup, setNewTeamGroup] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupCapacity, setNewGroupCapacity] = useState("");
-  const [editingCapacityId, setEditingCapacityId] = useState<string | null>(null);
-  const [editCapacity, setEditCapacity] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
   const [addingTo, setAddingTo] = useState<string | null>(null);
@@ -70,61 +66,6 @@ export default function TeamsTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setEditingMemberId(null);
-      onChange();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
-    } finally {
-      setLoadingAction(false);
-    }
-  }
-
-  async function createGroup(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoadingAction(true);
-    try {
-      const res = await fetch(`/api/admin/activities/${activityId}/groups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newGroupName, capacity: newGroupCapacity || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setNewGroupName("");
-      setNewGroupCapacity("");
-      onChange();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
-    } finally {
-      setLoadingAction(false);
-    }
-  }
-
-  async function saveCapacity(group: Group) {
-    setLoadingAction(true);
-    try {
-      const res = await fetch(`/api/admin/groups/${group.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: group.name, capacity: editCapacity || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setEditingCapacityId(null);
-      onChange();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
-    } finally {
-      setLoadingAction(false);
-    }
-  }
-
-  async function deleteGroup(groupId: string) {
-    if (!confirm("حذف هذه المجموعة؟ ستبقى الفرق لكن بدون تصنيف.")) return;
-    setLoadingAction(true);
-    try {
-      const res = await fetch(`/api/admin/groups/${groupId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
       onChange();
     } catch (e) {
       alert(e instanceof Error ? e.message : "خطأ");
@@ -267,101 +208,13 @@ export default function TeamsTab({
         </div>
       )}
 
-      <div className="card p-4">
-        <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-          🗂️ المجموعات (اختياري — للبطولات بنظام الدوري ثم خروج المغلوب)
-        </p>
-        {groups.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {groups.map((g) => {
-              const count = teams.filter((t) => t.groupId === g.id).length;
-              const full = g.capacity != null && count >= g.capacity;
-              return (
-                <span
-                  key={g.id}
-                  className={
-                    full
-                      ? "badge flex items-center gap-1.5"
-                      : "badge badge-pending flex items-center gap-1.5"
-                  }
-                  style={full ? { background: "#d1fae5", color: "#065f46" } : undefined}
-                >
-                  {g.name}
-                  {g.capacity != null && (
-                    <span className="font-semibold">
-                      ({count}/{g.capacity})
-                    </span>
-                  )}
-                  {editingCapacityId === g.id ? (
-                    <span className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        min={2}
-                        max={64}
-                        value={editCapacity}
-                        onChange={(e) => setEditCapacity(e.target.value)}
-                        className="input text-xs"
-                        style={{ width: "56px", padding: "2px 4px" }}
-                        autoFocus
-                      />
-                      <button onClick={() => saveCapacity(g)} className="font-bold">
-                        ✓
-                      </button>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setEditingCapacityId(g.id);
-                        setEditCapacity(g.capacity != null ? String(g.capacity) : "");
-                      }}
-                      className="text-xs"
-                      title="تحديد عدد الفرق المستهدف"
-                    >
-                      <Icon name="target" size={14} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => deleteGroup(g.id)}
-                    aria-label={`حذف ${g.name}`}
-                    className="flex items-center justify-center shrink-0"
-                    style={{ width: 32, height: 32, color: "#991b1b" }}
-                  >
-                    <Icon name="close" size={16} />
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-        )}
-        <form onSubmit={createGroup} className="flex gap-2">
-          <input
-            type="text"
-            placeholder="اسم مجموعة جديدة (مثال: المجموعة أ)"
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            maxLength={40}
-            className="input flex-1 text-sm"
-          />
-          <input
-            type="number"
-            min={2}
-            max={64}
-            placeholder="عدد الفرق المستهدف"
-            value={newGroupCapacity}
-            onChange={(e) => setNewGroupCapacity(e.target.value)}
-            className="input text-sm"
-            style={{ width: "110px" }}
-          />
-          <button
-            type="submit"
-            disabled={!newGroupName.trim() || loadingAction}
-            className="btn btn-primary text-xs px-3"
-            style={{ width: "auto" }}
-          >
-            إضافة
-          </button>
-        </form>
-      </div>
+      <GroupsPanel
+        activityId={activityId}
+        groups={groups}
+        teams={teams}
+        onChange={onChange}
+        onError={setError}
+      />
 
       {groups.length > 0 && teams.some((t) => !t.groupId) && (
         <div className="card p-4">
