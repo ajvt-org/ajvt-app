@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import PageHeader from "@/components/PageHeader";
+import { getUserSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ export default async function VerifyPage({
 }: {
   params: Promise<{ memberNumber: string }>;
 }) {
+  const session = await getUserSession();
   const { memberNumber } = await params;
 
   const member = await prisma.member.findUnique({
@@ -32,7 +34,7 @@ export default async function VerifyPage({
 
   return (
     <div className="app-shell">
-      <PageHeader title={"التحقق من العضوية"} backHref="/" />
+      <PageHeader title={"التحقق من العضوية"} backHref={session ? "/home" : "/"} />
 
       <div className="flex-1 px-5 py-8 space-y-5">
         {valid ? (
