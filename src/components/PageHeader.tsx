@@ -15,7 +15,7 @@ export default function PageHeader({
       className="px-5 py-4 flex items-center gap-3"
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
-      {backHref ? <BackButton fallbackHref={backHref} /> : null}
+      {backHref ? <BackButton href={backHref} /> : null}
       <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
