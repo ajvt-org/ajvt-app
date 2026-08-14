@@ -8,6 +8,7 @@ import { syncMembershipDonation } from "@/lib/donationsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -70,7 +71,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
           ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
           : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
       url: "/home",
-    }).catch((err) => console.error("Push notify error:", err));
+    }).catch((err) => logger.error("push.notify.error", err));
   }
 
   return NextResponse.json({ member: updated });

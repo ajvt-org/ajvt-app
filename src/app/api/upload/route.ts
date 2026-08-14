@@ -4,6 +4,7 @@ import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { getAdminSession, getUserSession } from "@/lib/auth";
 import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
+import { logger } from "@/lib/logger";
 
 export function getUploadDir(): string {
   // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     try {
       processed = await processImage(Buffer.from(await file.arrayBuffer()));
     } catch (err) {
-      console.error("Image processing error:", err);
+      logger.error("image.processing.error", err);
       return NextResponse.json(
         { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
         { status: 400 },
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });
   } catch (err) {
-    console.error("Upload error:", err);
+    logger.error("upload.error", err);
     return NextResponse.json({ error: "فشل رفع الملف" }, { status: 500 });
   }
 }

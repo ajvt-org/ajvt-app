@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
+import { logger } from "./logger";
 
 export async function notifyTeams(
   homeTeamId: string,
@@ -25,7 +26,7 @@ export async function notifyTeams(
   );
   await Promise.all(
     userIds.map((uid) =>
-      sendPushToUser(uid, payload).catch((err) => console.error("Tournament push error:", err)),
+      sendPushToUser(uid, payload).catch((err) => logger.error("tournament.push.error", err)),
     ),
   );
 }
@@ -60,10 +61,10 @@ export async function sendMatchReminders() {
       title: "رابطة شباب التاكلالت",
       body: `تذكير: مباراة فريقك غداً — ${m.homeTeam.name} × ${m.awayTeam.name}`,
       url: `/tournament/${m.activityId}`,
-    }).catch((err) => console.error("Match reminder push error:", err));
+    }).catch((err) => logger.error("match.reminder.push.error", err));
 
     await prisma.match
       .update({ where: { id: m.id }, data: { reminderSentAt: now } })
-      .catch((err) => console.error("Match reminder stamp error:", err));
+      .catch((err) => logger.error("match.reminder.stamp.error", err));
   }
 }

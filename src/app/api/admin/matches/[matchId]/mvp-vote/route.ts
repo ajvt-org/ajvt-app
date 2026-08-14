@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const VOTE_INCLUDE = {
   candidates: {
@@ -85,7 +86,7 @@ export const POST = withRoute(
       title: "رابطة شباب التاكلالت",
       body: `🌟 صوّت الآن لأفضل لاعب في مباراة ${match.homeTeam.name} × ${match.awayTeam.name}`,
       url: `/tournament/${match.activityId}`,
-    }).catch((err) => console.error("MVP vote open push error:", err));
+    }).catch((err) => logger.error("mvp.vote.open.push.error", err));
 
     return NextResponse.json({ vote }, { status: 201 });
   },

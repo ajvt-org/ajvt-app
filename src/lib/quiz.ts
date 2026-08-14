@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
+import { logger } from "./logger";
 
 const QUIZ_PUSH_PAYLOAD = {
   title: "رابطة شباب التاكلالت",
@@ -208,7 +209,7 @@ function shuffle<T>(input: T[]): T[] {
 async function pushToAssignedUsers(userIds: string[]) {
   await Promise.all(
     userIds.map((uid) =>
-      sendPushToUser(uid, QUIZ_PUSH_PAYLOAD).catch((err) => console.error("Quiz push error:", err)),
+      sendPushToUser(uid, QUIZ_PUSH_PAYLOAD).catch((err) => logger.error("quiz.push.error", err)),
     ),
   );
 }
