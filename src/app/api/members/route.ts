@@ -7,12 +7,9 @@ import { memberSubmissionSchema } from "./schema";
 import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError } from "@/lib/errors";
+import { isUniqueViolation } from "@/lib/prismaError";
 
 const CODE_ATTEMPTS = 5;
-
-function isUniqueViolation(err: unknown): boolean {
-  return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
-}
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
