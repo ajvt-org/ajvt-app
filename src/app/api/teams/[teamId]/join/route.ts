@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { teamMemberSchema } from "./schema";
 
 // Players can pick their own team once their registration for that
 // tournament is approved — switching teams just moves the membership,
@@ -11,11 +13,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = await req.json();
-
-    if (!memberId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { memberId } = parse(teamMemberSchema, await req.json());
 
     const [member, team] = await Promise.all([
       prisma.member.findUnique({ where: { id: memberId }, select: { userId: true, status: true } }),
@@ -71,11 +69,7 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = await req.json();
-
-    if (!memberId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { memberId } = parse(teamMemberSchema, await req.json());
 
     const member = await prisma.member.findUnique({
       where: { id: memberId },

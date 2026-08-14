@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { mvpVoteCastSchema } from "./schema";
 import { isUniqueViolation } from "@/lib/prismaError";
 
 export const POST = withRoute(
@@ -9,11 +11,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireUser();
     const { matchId } = await params;
-    const { candidateId } = await req.json();
-
-    if (!candidateId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { candidateId } = parse(mvpVoteCastSchema, await req.json());
 
     const vote = await prisma.matchMvpVote.findUnique({
       where: { matchId },
