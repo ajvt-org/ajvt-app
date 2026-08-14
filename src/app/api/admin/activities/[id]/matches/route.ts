@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -43,8 +44,9 @@ const MATCH_INCLUDE = {
   },
 } as const;
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const GET = withRoute(
+  "GET /api/admin/activities/[id]/matches",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -55,19 +57,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     });
 
     return NextResponse.json({ matches });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/activities/[id]/matches",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
     const { homeTeamId, awayTeamId, matchDate, round, venue, isKnockout } = await req.json();
@@ -144,14 +139,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }).catch((err) => console.error("Match created push error:", err));
 
     return NextResponse.json({ match }, { status: 201 });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Match create error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

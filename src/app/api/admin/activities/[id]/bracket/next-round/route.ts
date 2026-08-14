@@ -3,12 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { getMatchWinnerTeamId, bracketRoundLabel } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 // Advances the bracket by one round: takes the winners of the current
 // (fully-played) round and pairs them up. Works the same whether the
 // current round came from a random draw or from crossed semis.
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/activities/[id]/bracket/next-round",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -98,14 +100,5 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     );
 
     return NextResponse.json({ ok: true, created: data.length });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Bracket next round error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
