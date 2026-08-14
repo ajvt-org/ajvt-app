@@ -337,83 +337,100 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen" style={{ background: "var(--mint-50)", direction: "rtl" }}>
-      <div
-        className="px-4 py-3 flex items-center justify-between sticky top-0 z-30"
-        style={{
-          background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))",
-          boxShadow: "0 2px 12px rgba(26,63,51,0.2)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <Image src="/version-final.png" alt="شعار" width={36} height={36} />
-          <p className="text-sm font-black text-white leading-none">لوحة تحكم المشرف</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowMenu(true)}
-            className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-            style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
-          >
-            ⚙️ إعدادات
-          </button>
-          <button
-            onClick={logout}
-            className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-            style={{
-              background: "rgba(239,68,68,0.2)",
-              color: "#fca5a5",
-              border: "1px solid rgba(239,68,68,0.3)",
-            }}
-          >
-            خروج
-          </button>
-        </div>
-      </div>
-
-      <div
-        className="px-4 py-2 flex items-center gap-2 sticky top-[52px] z-20"
-        style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
-      >
-        {visibleTabs.map((tab) => {
-          const active = pathname === tab.href || pathname?.startsWith(tab.href + "/");
-          return (
+      <div className="sticky top-0 z-30">
+        <div
+          className="px-4 py-3 flex items-center justify-between"
+          style={{
+            background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))",
+            boxShadow: "0 2px 12px rgba(26,63,51,0.2)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <Image src="/version-final.png" alt="شعار" width={36} height={36} />
+            <p className="text-sm font-black text-white leading-none">لوحة تحكم المشرف</p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              key={tab.href}
-              onClick={() => router.push(tab.href)}
-              className="text-sm font-bold px-3 py-1.5 rounded-lg relative"
+              onClick={() => setShowMenu(true)}
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+              style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+            >
+              ⚙️ إعدادات
+            </button>
+            <button
+              onClick={logout}
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold"
               style={{
-                background: active ? "var(--mint-700)" : "transparent",
-                color: active ? "white" : "var(--text-main)",
+                background: "rgba(239,68,68,0.2)",
+                color: "#fca5a5",
+                border: "1px solid rgba(239,68,68,0.3)",
               }}
             >
-              {tab.label}
-              {tab.href === "/admin/dashboard" && pendingCount > 0 && (
-                <span
-                  className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
-                  style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
-                >
-                  {pendingCount > 9 ? "9+" : pendingCount}
-                </span>
-              )}
-              {tab.href === "/admin/activities" && pendingTeamRequests > 0 && (
-                <span
-                  className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
-                  style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
-                >
-                  {pendingTeamRequests > 9 ? "9+" : pendingTeamRequests}
-                </span>
-              )}
-              {tab.href === "/admin/payments" && pendingDonations > 0 && (
-                <span
-                  className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
-                  style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
-                >
-                  {pendingDonations > 9 ? "9+" : pendingDonations}
-                </span>
-              )}
+              خروج
             </button>
-          );
-        })}
+          </div>
+        </div>
+
+        <div
+          className="tab-strip px-4 py-2"
+          style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
+        >
+          {visibleTabs.map((tab) => {
+            const active = pathname === tab.href || pathname?.startsWith(tab.href + "/");
+            return (
+              <button
+                key={tab.href}
+                onClick={() => router.push(tab.href)}
+                className="text-sm font-bold px-3 py-1.5 rounded-lg relative"
+                style={{
+                  background: active ? "var(--mint-700)" : "transparent",
+                  color: active ? "white" : "var(--text-main)",
+                }}
+              >
+                {tab.label}
+                {tab.href === "/admin/dashboard" && pendingCount > 0 && (
+                  <span
+                    className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
+                    style={{
+                      background: "#dc2626",
+                      fontSize: "9px",
+                      width: "16px",
+                      height: "16px",
+                    }}
+                  >
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                )}
+                {tab.href === "/admin/activities" && pendingTeamRequests > 0 && (
+                  <span
+                    className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
+                    style={{
+                      background: "#dc2626",
+                      fontSize: "9px",
+                      width: "16px",
+                      height: "16px",
+                    }}
+                  >
+                    {pendingTeamRequests > 9 ? "9+" : pendingTeamRequests}
+                  </span>
+                )}
+                {tab.href === "/admin/payments" && pendingDonations > 0 && (
+                  <span
+                    className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
+                    style={{
+                      background: "#dc2626",
+                      fontSize: "9px",
+                      width: "16px",
+                      height: "16px",
+                    }}
+                  >
+                    {pendingDonations > 9 ? "9+" : pendingDonations}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {permissionDenied && (
