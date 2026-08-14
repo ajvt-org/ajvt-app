@@ -12,6 +12,7 @@ import ActivitiesSection from "@/components/ActivitiesSection";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import Icon from "@/components/Icon";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -126,9 +127,7 @@ export default function HomePage() {
             className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
             style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
           >
-            <span className={refreshing ? "animate-spin" : ""} style={{ display: "inline-block" }}>
-              🔄
-            </span>
+            <Icon name="refresh" className={refreshing ? "animate-spin" : ""} />
           </button>
           <button
             onClick={logout}

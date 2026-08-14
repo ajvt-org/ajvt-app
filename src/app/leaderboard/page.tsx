@@ -24,10 +24,11 @@ async function getDonateHref() {
 export default async function LeaderboardPage() {
   const { leaderboard, anonymousTotal } = await getLeaderboardData();
   const donateHref = await getDonateHref();
+  const session = await getUserSession();
 
   return (
     <div className="app-shell">
-      <PageHeader title={"🏆 لوحة شرف المتبرعين"} backHref="/" />
+      <PageHeader title={"🏆 لوحة شرف المتبرعين"} backHref={session ? "/home" : "/"} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {leaderboard.length === 0 ? (
