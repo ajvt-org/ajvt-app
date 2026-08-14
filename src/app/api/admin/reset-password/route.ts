@@ -5,13 +5,16 @@ import { logAction } from "@/lib/audit";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { resetPasswordSchema } from "./schema";
 
 export const POST = withRoute("POST /api/admin/reset-password", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
-  const { userId } = await req.json();
+  const { userId } = parse(resetPasswordSchema, await req.json());
 
-  if (!userId) {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!user) {
+    return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
   }
 
   const tempPassword = generateTempPassword();

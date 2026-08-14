@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { validatePhone } from "@/lib/utils";
 import { generateMemberNumber, generateTempPassword } from "@/lib/member";
 import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
@@ -11,6 +10,8 @@ import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { parse } from "@/lib/validation";
+import { adminMemberCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
@@ -40,38 +41,8 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     photo,
     status,
     paidAmount,
-  } = await req.json();
+  } = parse(adminMemberCreateSchema, await req.json());
 
-  if (!phoneUnknown) {
-    const phoneError = validatePhone(accountPhone);
-    if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-  }
-  if (
-    !fullName?.trim() ||
-    (!phoneUnknown && !memberPhone?.trim()) ||
-    !age?.trim() ||
-    !paymentMethod?.trim()
-  ) {
-    return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
-  }
-  if (fullName.trim().length > 30) {
-    return NextResponse.json(
-      { error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" },
-      { status: 400 },
-    );
-  }
-  if (age.trim().length > 30) {
-    return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
-  }
-  if (!["PENDING", "ACTIVE"].includes(status)) {
-    return NextResponse.json({ error: "حالة غير صالحة" }, { status: 400 });
-  }
-  if (paymentProof !== undefined && paymentProof !== null && typeof paymentProof !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
-  if (photo !== undefined && photo !== null && typeof photo !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
   let paidAmountValue: number | null = null;
   if (paidAmount !== undefined && paidAmount !== null && String(paidAmount).trim() !== "") {
     const paidAmountError = validatePaidAmount(paidAmount, (await getAppSettings()).membershipFee);
@@ -82,11 +53,13 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
   let userId: string | null = null;
   let tempPassword: string | undefined;
   if (!phoneUnknown) {
-    let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
+    let user = await prisma.user.findUnique({ where: { phone: accountPhone!.trim() } });
     if (!user) {
       tempPassword = generateTempPassword();
       const hashed = await bcrypt.hash(tempPassword, 12);
-      user = await prisma.user.create({ data: { phone: accountPhone.trim(), password: hashed } });
+      user = await prisma.user.create({
+        data: { phone: accountPhone!.trim(), password: hashed },
+      });
     }
     userId = user.id;
   }
@@ -97,9 +70,9 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     const m = await tx.member.create({
       data: {
         userId,
-        fullName: fullName.trim(),
-        phone: phoneUnknown ? null : memberPhone.trim(),
-        age: age.trim(),
+        fullName,
+        phone: phoneUnknown ? null : memberPhone!.trim(),
+        age,
         paymentMethod,
         paymentProof: paymentProof || null,
         photo: photo || null,

@@ -9,6 +9,8 @@ import { syncMembershipDonation } from "@/lib/donationsServer";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { adminMemberUpdateSchema } from "./schema";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
@@ -18,7 +20,10 @@ export const PATCH = withRoute(
     // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, phone, age, photo, paidAmount, accountPhone } = await req.json();
+    const { fullName, phone, age, photo, paidAmount, accountPhone } = parse(
+      adminMemberUpdateSchema,
+      await req.json(),
+    );
 
     const existing = await prisma.member.findUnique({
       where: { id },
@@ -37,16 +42,7 @@ export const PATCH = withRoute(
       userId?: string;
     } = {};
 
-    if (fullName !== undefined) {
-      if (!fullName.trim())
-        return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
-      if (fullName.trim().length > 30)
-        return NextResponse.json(
-          { error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" },
-          { status: 400 },
-        );
-      data.fullName = fullName.trim();
-    }
+    if (fullName !== undefined) data.fullName = fullName;
     if (phone !== undefined && phone !== null) {
       const phoneError = validatePhone(phone);
       if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
@@ -76,21 +72,8 @@ export const PATCH = withRoute(
       if (phone === undefined) data.phone = accountPhone.trim();
     }
 
-    if (age !== undefined) {
-      if (!age.trim()) return NextResponse.json({ error: "اسم العصر مطلوب" }, { status: 400 });
-      if (age.trim().length > 30)
-        return NextResponse.json(
-          { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
-          { status: 400 },
-        );
-      data.age = age.trim();
-    }
-    if (photo !== undefined) {
-      if (photo !== null && typeof photo !== "string") {
-        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-      }
-      data.photo = photo;
-    }
+    if (age !== undefined) data.age = age;
+    if (photo !== undefined) data.photo = photo;
     if (paidAmount !== undefined) {
       if (paidAmount === null) {
         data.paidAmount = null;
@@ -114,7 +97,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "ATTACH_MEMBER_ACCOUNT",
-        `${member.fullName} — ${accountPhone.trim()}`,
+        `${member.fullName} — ${accountPhone!.trim()}`,
       );
     }
 
