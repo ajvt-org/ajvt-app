@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
-import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
+import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { FilterTab, Member, AgeGroup } from "./types";
-import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE, emptyManualForm } from "./constants";
+import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
+import { uploadFile } from "@/lib/upload";
 import AgeGroupsDialog from "./AgeGroupsDialog";
+import ManualAddDialog from "./ManualAddDialog";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -45,59 +47,9 @@ export default function AdminDashboard() {
   const [editError, setEditError] = useState("");
 
   const [showManualAdd, setShowManualAdd] = useState(false);
-  const [manualForm, setManualForm] = useState(emptyManualForm);
-  const [manualError, setManualError] = useState("");
-  const [manualLoading, setManualLoading] = useState(false);
-  const [manualResult, setManualResult] = useState<{ tempPassword?: string } | null>(null);
-  const [manualProof, setManualProof] = useState<string | null>(null);
-  const [manualProofPreview, setManualProofPreview] = useState<string | null>(null);
-  const [manualProofUploading, setManualProofUploading] = useState(false);
-  const [manualPhoto, setManualPhoto] = useState<string | null>(null);
-  const [manualPhotoPreview, setManualPhotoPreview] = useState<string | null>(null);
-  const [manualPhotoUploading, setManualPhotoUploading] = useState(false);
 
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [showAgeGroups, setShowAgeGroups] = useState(false);
-
-  async function handleManualProofChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setManualProofPreview(URL.createObjectURL(file));
-    setManualProofUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل رفع الملف");
-      setManualProof(data.filename);
-    } catch (err) {
-      setManualError(err instanceof Error ? err.message : "فشل رفع الملف");
-      setManualProofPreview(null);
-    } finally {
-      setManualProofUploading(false);
-    }
-  }
-
-  async function handleManualPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setManualPhotoPreview(URL.createObjectURL(file));
-    setManualPhotoUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل رفع الملف");
-      setManualPhoto(data.filename);
-    } catch (err) {
-      setManualError(err instanceof Error ? err.message : "فشل رفع الملف");
-      setManualPhotoPreview(null);
-    } finally {
-      setManualPhotoUploading(false);
-    }
-  }
 
   useEffect(() => {
     fetchMembers();
@@ -229,12 +181,7 @@ export default function AdminDashboard() {
     setEditPhotoPreview(URL.createObjectURL(file));
     setEditPhotoUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل رفع الملف");
-      setEditPhoto(data.filename);
+      setEditPhoto(await uploadFile(file));
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "فشل رفع الملف");
     } finally {
@@ -329,33 +276,6 @@ export default function AdminDashboard() {
       setAttachAccountError(e instanceof Error ? e.message : "خطأ");
     } finally {
       setAttachAccountLoading(false);
-    }
-  }
-
-  async function createManualMember(e: React.FormEvent) {
-    e.preventDefault();
-    setManualError("");
-    setManualResult(null);
-    setManualLoading(true);
-    try {
-      const res = await fetch("/api/admin/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...manualForm, paymentProof: manualProof, photo: manualPhoto }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setManualResult({ tempPassword: data.tempPassword });
-      setManualForm(emptyManualForm);
-      setManualProof(null);
-      setManualProofPreview(null);
-      setManualPhoto(null);
-      setManualPhotoPreview(null);
-      await fetchMembers();
-    } catch (e) {
-      setManualError(e instanceof Error ? e.message : "خطأ");
-    } finally {
-      setManualLoading(false);
     }
   }
 
@@ -633,11 +553,7 @@ export default function AdminDashboard() {
           🏷️ الأعصر
         </button>
         <button
-          onClick={() => {
-            setShowManualAdd(true);
-            setManualResult(null);
-            setManualError("");
-          }}
+          onClick={() => setShowManualAdd(true)}
           className="btn btn-primary text-sm px-4"
           style={{ width: "auto" }}
         >
@@ -1317,373 +1233,16 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Manual member add */}
       {showManualAdd && (
-        <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowManualAdd(false);
+        <ManualAddDialog
+          ageGroups={ageGroups}
+          onCreated={fetchMembers}
+          onManageAgeGroups={() => {
+            setShowManualAdd(false);
+            setShowAgeGroups(true);
           }}
-        >
-          <div
-            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
-            style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
-          >
-            <div
-              className="px-5 py-4 flex items-center justify-between sticky top-0"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <h2 className="font-black text-white text-base">➕ إضافة عضو يدوياً</h2>
-              <button
-                onClick={() => setShowManualAdd(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-5 space-y-3">
-              {manualResult ? (
-                <div className="space-y-3">
-                  <div
-                    className="p-3 rounded-xl text-sm font-semibold"
-                    style={{ background: "#d1fae5", color: "#065f46" }}
-                  >
-                    ✅ تم إنشاء العضو بنجاح
-                  </div>
-                  {manualResult.tempPassword && (
-                    <div
-                      className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
-                      style={{ background: "white", border: "1px solid var(--mint-200)" }}
-                    >
-                      <div>
-                        <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
-                          كلمة مرور الحساب الجديد — سلّمها للعضو
-                        </p>
-                        <p
-                          className="font-mono font-black text-lg"
-                          style={{ color: "var(--mint-700)" }}
-                          dir="ltr"
-                        >
-                          {manualResult.tempPassword}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => navigator.clipboard.writeText(manualResult.tempPassword!)}
-                        className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                        style={{ background: "var(--mint-600)", color: "white" }}
-                      >
-                        نسخ
-                      </button>
-                    </div>
-                  )}
-                  <button onClick={() => setManualResult(null)} className="btn btn-primary text-sm">
-                    إضافة عضو آخر
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={createManualMember} className="space-y-3">
-                  <div
-                    className="flex items-center gap-2 p-2.5 rounded-lg"
-                    style={{ background: "var(--mint-100)" }}
-                  >
-                    <input
-                      type="checkbox"
-                      id="phoneUnknown"
-                      checked={manualForm.phoneUnknown}
-                      onChange={(e) =>
-                        setManualForm((p) => ({
-                          ...p,
-                          phoneUnknown: e.target.checked,
-                          accountPhone: "",
-                          memberPhone: "",
-                        }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <label
-                      htmlFor="phoneUnknown"
-                      className="text-sm font-bold"
-                      style={{ color: "var(--mint-700)" }}
-                    >
-                      📵 رقم الهاتف غير معروف — يُضاف لاحقاً
-                    </label>
-                  </div>
-                  {!manualForm.phoneUnknown && (
-                    <div>
-                      <label
-                        className="block text-sm font-bold mb-1.5"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        رقم هاتف الحساب <span style={{ color: "var(--copper-500)" }}>*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        dir="ltr"
-                        value={manualForm.accountPhone}
-                        onChange={(e) =>
-                          setManualForm((p) => ({
-                            ...p,
-                            accountPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
-                          }))
-                        }
-                        placeholder="2XXXXXXX"
-                        maxLength={8}
-                        required
-                        className="input"
-                      />
-                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                        إن لم يوجد حساب بهذا الرقم، سيُنشأ حساب جديد تلقائياً بكلمة مرور مؤقتة
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      الاسم الكامل
-                    </label>
-                    <input
-                      type="text"
-                      value={manualForm.fullName}
-                      onChange={(e) => setManualForm((p) => ({ ...p, fullName: e.target.value }))}
-                      maxLength={30}
-                      required
-                      className="input"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      صورة العضو (اختياري)
-                    </label>
-                    <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
-                      {manualPhotoPreview ? (
-                        <div>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={manualPhotoPreview}
-                            alt="صورة العضو"
-                            className="max-h-32 mx-auto rounded-xl object-contain"
-                          />
-                          <p
-                            className="mt-1 text-xs text-center"
-                            style={{ color: "var(--mint-600)" }}
-                          >
-                            {manualPhotoUploading ? "جاري الرفع..." : "انقر لتغيير الصورة"}
-                          </p>
-                        </div>
-                      ) : (
-                        <p
-                          className="text-xs text-center py-3"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          📷 انقر لإرفاق صورة العضو (اختياري)
-                        </p>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleManualPhotoChange}
-                        style={{ display: "none" }}
-                      />
-                    </label>
-                  </div>
-                  {!manualForm.phoneUnknown && (
-                    <div>
-                      <label
-                        className="block text-sm font-bold mb-1.5"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        رقم هاتف العضو
-                      </label>
-                      <input
-                        type="tel"
-                        dir="ltr"
-                        value={manualForm.memberPhone}
-                        onChange={(e) =>
-                          setManualForm((p) => ({
-                            ...p,
-                            memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
-                          }))
-                        }
-                        maxLength={8}
-                        required
-                        className="input"
-                      />
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label
-                        className="block text-sm font-bold"
-                        style={{ color: "var(--text-main)" }}
-                      >
-                        العصر
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowManualAdd(false);
-                          setShowAgeGroups(true);
-                        }}
-                        className="text-xs font-bold"
-                        style={{ color: "var(--mint-600)" }}
-                      >
-                        🏷️ إدارة الأعصر
-                      </button>
-                    </div>
-                    <select
-                      value={manualForm.age}
-                      onChange={(e) => setManualForm((p) => ({ ...p, age: e.target.value }))}
-                      required
-                      className="input"
-                    >
-                      <option value="" disabled>
-                        اختر العصر...
-                      </option>
-                      {ageGroups.map((g) => (
-                        <option key={g.id} value={g.name}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      طريقة الدفع
-                    </label>
-                    <select
-                      value={manualForm.paymentMethod}
-                      onChange={(e) =>
-                        setManualForm((p) => ({ ...p, paymentMethod: e.target.value }))
-                      }
-                      required
-                      className="input"
-                    >
-                      <option value="" disabled>
-                        اختر...
-                      </option>
-                      {PAYMENT_METHODS.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      المبلغ المسدد (أوقية) — اختياري
-                    </label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={MEMBERSHIP_FEE}
-                      value={manualForm.paidAmount}
-                      onChange={(e) => setManualForm((p) => ({ ...p, paidAmount: e.target.value }))}
-                      placeholder={String(MEMBERSHIP_FEE)}
-                      className="input"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      حالة العضوية
-                    </label>
-                    <select
-                      value={manualForm.status}
-                      onChange={(e) =>
-                        setManualForm((p) => ({
-                          ...p,
-                          status: e.target.value as "PENDING" | "ACTIVE",
-                        }))
-                      }
-                      className="input"
-                    >
-                      <option value="ACTIVE">مقبول مباشرة</option>
-                      <option value="PENDING">قيد الانتظار</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-bold mb-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      صورة إثبات الدفع (اختياري)
-                    </label>
-                    <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
-                      {manualProofPreview ? (
-                        <div>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={manualProofPreview}
-                            alt="إثبات الدفع"
-                            className="max-h-32 mx-auto rounded-xl object-contain"
-                          />
-                          <p
-                            className="mt-1 text-xs text-center"
-                            style={{ color: "var(--mint-600)" }}
-                          >
-                            {manualProofUploading ? "جاري الرفع..." : "انقر لتغيير الصورة"}
-                          </p>
-                        </div>
-                      ) : (
-                        <p
-                          className="text-xs text-center py-3"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          📸 انقر لإرفاق صورة (اختياري)
-                        </p>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleManualProofChange}
-                        style={{ display: "none" }}
-                      />
-                    </label>
-                  </div>
-
-                  {manualError && (
-                    <div
-                      className="p-3 rounded-xl text-sm font-semibold"
-                      style={{ background: "#fee2e2", color: "#991b1b" }}
-                    >
-                      ⚠️ {manualError}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={manualLoading || manualProofUploading || manualPhotoUploading}
-                    className="btn btn-primary text-sm"
-                  >
-                    {manualProofUploading || manualPhotoUploading
-                      ? "جاري رفع الصورة..."
-                      : manualLoading
-                        ? "..."
-                        : "إنشاء العضو"}
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
+          onClose={() => setShowManualAdd(false)}
+        />
       )}
 
       {showAgeGroups && (
