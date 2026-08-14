@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
+import { withRoute } from "@/lib/route";
 
 const MEMBER_SELECT = {
   id: true,
@@ -32,43 +33,36 @@ const MEMBER_SELECT = {
   },
 } as const;
 
-export async function GET() {
-  try {
-    const session = await requireUser();
+export const GET = withRoute("GET /api/user/me", async () => {
+  const session = await requireUser();
 
-    sendMatchReminders().catch((err) => console.error("Match reminders error:", err));
+  sendMatchReminders().catch((err) => console.error("Match reminders error:", err));
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      include: { members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } } },
-    });
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    include: { members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } } },
+  });
 
-    if (!user) {
-      return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
-    }
-
-    const members = await Promise.all(
-      user.members.map(async (member) => {
-        if (member.status === "ACTIVE" && !member.memberNumber) {
-          const memberNumber = await generateMemberNumber();
-          return prisma.member.update({
-            where: { id: member.id },
-            data: { memberNumber },
-            select: MEMBER_SELECT,
-          });
-        }
-        return member;
-      }),
-    );
-
-    return NextResponse.json({
-      phone: user.phone,
-      members,
-    });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
+  if (!user) {
+    return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
   }
-}
+
+  const members = await Promise.all(
+    user.members.map(async (member) => {
+      if (member.status === "ACTIVE" && !member.memberNumber) {
+        const memberNumber = await generateMemberNumber();
+        return prisma.member.update({
+          where: { id: member.id },
+          data: { memberNumber },
+          select: MEMBER_SELECT,
+        });
+      }
+      return member;
+    }),
+  );
+
+  return NextResponse.json({
+    phone: user.phone,
+    members,
+  });
+});

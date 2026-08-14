@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/user/me/route";
 import { resetDb } from "./helpers";
 
-describe("routes still using the hand-written error check", () => {
+describe("the 401 contract", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("keeps answering 401, even though auth now throws a typed error", async () => {
+  it("answers 401 with the same body the hand-written checks used to return", async () => {
     const res = await GET();
 
     expect(res.status).toBe(401);
