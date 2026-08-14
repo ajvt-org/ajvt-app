@@ -113,7 +113,17 @@ describe("POST /api/members", () => {
     expect(res.status).toBe(409);
   });
 
-  it("answers 409 when the reference code is already taken", async () => {
+  it("keeps the code the member wrote on their transfer", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", { ...validBody, referenceCode: "AJ-ABCDE" }));
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).referenceCode).toBe("AJ-ABCDE");
+  });
+
+  it("hands out a different code instead of dead-ending on a collision", async () => {
     const first = await createUser("22334455");
     await signInAs(first);
     await POST(post("/api/members", { ...validBody, referenceCode: "AJ-ABCDE" }));
@@ -122,6 +132,32 @@ describe("POST /api/members", () => {
     await signInAs(second);
     const res = await POST(post("/api/members", { ...validBody, referenceCode: "AJ-ABCDE" }));
 
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(201);
+    const { referenceCode } = await res.json();
+    expect(referenceCode).not.toBe("AJ-ABCDE");
+    expect(referenceCode).toMatch(/^AJ-[23456789A-HJKMNP-Z]{5}$/);
+    expect(await prisma.member.count()).toBe(2);
+  });
+
+  it("refuses a code the client invented in the wrong shape", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    for (const bad of ["hello", "AJ-abcde", "AJ-ABC", "AJ-ABCDEF", "AJ-A1CDE", "XX-ABCDE"]) {
+      expect((await POST(post("/api/members", { ...validBody, referenceCode: bad }))).status).toBe(
+        400,
+      );
+    }
+    expect(await prisma.member.count()).toBe(0);
+  });
+
+  it("still allows a submission with no code at all", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", validBody));
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).referenceCode).toBeNull();
   });
 });
