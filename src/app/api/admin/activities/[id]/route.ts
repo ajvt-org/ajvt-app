@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { activityUpdateSchema } from "./schema";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]",
@@ -20,7 +22,7 @@ export const PATCH = withRoute(
       isVolunteer,
       whatsappLink,
       order,
-    } = await req.json();
+    } = parse(activityUpdateSchema, await req.json());
 
     const existing = await prisma.activity.findUnique({ where: { id } });
     if (!existing) {
@@ -40,63 +42,16 @@ export const PATCH = withRoute(
       order?: number;
     } = {};
 
-    if (title !== undefined) {
-      if (!title.trim()) return NextResponse.json({ error: "العنوان مطلوب" }, { status: 400 });
-      if (title.trim().length > 60)
-        return NextResponse.json(
-          { error: "العنوان طويل جداً (60 حرفاً كحد أقصى)" },
-          { status: 400 },
-        );
-      data.title = title.trim();
-    }
-    if (description !== undefined) {
-      if (!description.trim()) return NextResponse.json({ error: "الوصف مطلوب" }, { status: 400 });
-      if (description.trim().length > 1000)
-        return NextResponse.json({ error: "الوصف طويل جداً (1000 حرف كحد أقصى)" }, { status: 400 });
-      data.description = description.trim();
-    }
-    if (period !== undefined) {
-      data.period = period?.trim() || null;
-    }
-    if (capacity !== undefined) {
-      if (capacity === null || capacity === "") {
-        data.capacity = null;
-      } else {
-        const n = Number(capacity);
-        if (!Number.isInteger(n) || n <= 0) {
-          return NextResponse.json(
-            { error: "السعة يجب أن تكون رقماً صحيحاً موجباً" },
-            { status: 400 },
-          );
-        }
-        data.capacity = n;
-      }
-    }
-    if (isOpen !== undefined) {
-      data.isOpen = !!isOpen;
-    }
-    if (photo !== undefined) {
-      if (photo !== null && typeof photo !== "string") {
-        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-      }
-      data.photo = photo;
-    }
-    if (isTournament !== undefined) {
-      data.isTournament = !!isTournament;
-    }
-    if (isVolunteer !== undefined) {
-      data.isVolunteer = !!isVolunteer;
-    }
-    if (whatsappLink !== undefined) {
-      data.whatsappLink = whatsappLink?.trim() || null;
-    }
-    if (order !== undefined) {
-      const n = Number(order);
-      if (!Number.isInteger(n)) {
-        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-      }
-      data.order = n;
-    }
+    if (title !== undefined) data.title = title;
+    if (description !== undefined) data.description = description;
+    if (period !== undefined) data.period = period?.trim() || null;
+    if (capacity !== undefined) data.capacity = capacity;
+    if (isOpen !== undefined) data.isOpen = !!isOpen;
+    if (photo !== undefined) data.photo = photo;
+    if (isTournament !== undefined) data.isTournament = !!isTournament;
+    if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
+    if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
+    if (order !== undefined) data.order = Number(order);
 
     const nextIsTournament = data.isTournament ?? existing.isTournament;
     const nextIsVolunteer = data.isVolunteer ?? existing.isVolunteer;

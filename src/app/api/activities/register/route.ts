@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { activityRegisterSchema } from "./schema";
 
 // Registering for an activity is free — the membership fee already paid to
 // get approved (ACTIVE) covers it, so this never asks for another payment.
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
-  const { activityId, memberId } = await req.json();
-
-  if (!activityId || !memberId) {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
+  const { activityId, memberId } = parse(activityRegisterSchema, await req.json());
 
   const [member, activity] = await Promise.all([
     prisma.member.findUnique({ where: { id: memberId } }),
@@ -72,10 +70,7 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
 
 export const DELETE = withRoute("DELETE /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
-  const { memberId, activityId } = await req.json();
-  if (!memberId || !activityId) {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
+  const { memberId, activityId } = parse(activityRegisterSchema, await req.json());
 
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member || member.userId !== session.userId) {
