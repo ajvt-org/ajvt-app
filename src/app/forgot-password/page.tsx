@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 // No automated SMS/WhatsApp-API channel is wired up (both would mean a new
 // paid external service) — recovery goes through an admin, who already has
@@ -24,18 +24,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Image src="/version-final.png" alt="شعار" width={40} height={40} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">استعادة كلمة المرور</h1>
-        </div>
-      </div>
+      <PageHeader title="استعادة كلمة المرور" backHref="/login" />
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="card p-5 fade-up">

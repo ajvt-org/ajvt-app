@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getLeaderboardData } from "@/lib/donationsServer";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toThumbUrl } from "@/lib/utils";
+import PageHeader from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -27,18 +27,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">🏆 لوحة شرف المتبرعين</h1>
-        </div>
-      </div>
+      <PageHeader title={"🏆 لوحة شرف المتبرعين"} backHref="/" />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {leaderboard.length === 0 ? (
