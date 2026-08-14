@@ -1,4 +1,5 @@
 import { formatDate } from "@/lib/utils";
+import Icon from "@/components/Icon";
 
 type Status = "PENDING" | "ACTIVE" | "REJECTED";
 
@@ -45,7 +46,7 @@ export default function StatusTimeline({ status, createdAt, updatedAt }: StatusT
                   color: step.done || step.current ? "white" : "var(--mint-400)",
                 }}
               >
-                {step.done ? "✓" : i + 1}
+                {step.done ? <Icon name="check" size={13} /> : i + 1}
               </div>
               {i < steps.length - 1 && (
                 <div
