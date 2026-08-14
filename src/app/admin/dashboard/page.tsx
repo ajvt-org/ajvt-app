@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
-import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
+import {
+  formatDateTime,
+  formatFullDate,
+  formatTime,
+  loginPathWithNext,
+  toThumbUrl,
+} from "@/lib/utils";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { FilterTab, Member, AgeGroup } from "./types";
@@ -281,7 +287,7 @@ export default function AdminDashboard() {
       m.paymentMethod,
       STATUS_LABEL[m.status],
       m.memberNumber || "",
-      new Date(m.createdAt).toLocaleString("ar"),
+      formatDateTime(m.createdAt),
     ]);
     downloadCsv(`members-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(headers, rows));
   }
@@ -665,13 +671,7 @@ export default function AdminDashboard() {
                 <span>•</span>
                 <span>{m.paymentMethod}</span>
                 <span>•</span>
-                <span dir="ltr">
-                  {new Date(m.createdAt).toLocaleDateString("ar")}{" "}
-                  {new Date(m.createdAt).toLocaleTimeString("ar", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
+                <span dir="ltr">{formatDateTime(m.createdAt)}</span>
               </div>
             </div>
           ))}
@@ -907,24 +907,8 @@ export default function AdminDashboard() {
                       undefined,
                     ],
                     ["رقم العضوية", selected.memberNumber || "—", "ltr"],
-                    [
-                      "تاريخ الطلب",
-                      new Date(selected.createdAt).toLocaleDateString("ar", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        weekday: "long",
-                      }),
-                      undefined,
-                    ],
-                    [
-                      "وقت الطلب",
-                      new Date(selected.createdAt).toLocaleTimeString("ar", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }),
-                      "ltr",
-                    ],
+                    ["تاريخ الطلب", formatFullDate(selected.createdAt), undefined],
+                    ["وقت الطلب", formatTime(selected.createdAt), "ltr"],
                   ] as [string, string, string | undefined][]
                 ).map(([label, value, dir]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
