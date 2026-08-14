@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -136,7 +137,7 @@ export const POST = withRoute(
       title: "رابطة شباب التاكلالت",
       body: `تم تحديد مباراة فريقك: ${home.name} × ${away.name}`,
       url: `/tournament/${id}`,
-    }).catch((err) => console.error("Match created push error:", err));
+    }).catch((err) => logger.error("match.created.push.error", err));
 
     return NextResponse.json({ match }, { status: 201 });
   },

@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -104,7 +105,7 @@ export const PATCH = withRoute(
             ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
             : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${String(reason).trim()}` : ""}`,
         url: "/home",
-      }).catch((err) => console.error("Registration review push error:", err));
+      }).catch((err) => logger.error("registration.review.push.error", err));
     }
 
     return NextResponse.json({ registration: updated });

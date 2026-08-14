@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { HttpError } from "./errors";
+import { logger } from "./logger";
 
 export function withRoute<Args extends unknown[]>(
   name: string,
@@ -12,7 +13,7 @@ export function withRoute<Args extends unknown[]>(
       if (err instanceof HttpError) {
         return NextResponse.json({ error: err.clientMessage }, { status: err.status });
       }
-      console.error(`${name} error:`, err);
+      logger.error(name, err);
       return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
     }
   };

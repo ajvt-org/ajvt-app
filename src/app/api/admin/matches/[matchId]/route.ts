@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -345,7 +346,7 @@ export const PATCH = withRoute(
           title: "رابطة شباب التاكلالت",
           body: `نتيجة مباراة فريقك: ${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
           url: `/tournament/${match.activityId}`,
-        }).catch((err) => console.error("Match result push error:", err));
+        }).catch((err) => logger.error("match.result.push.error", err));
       }
     }
 
