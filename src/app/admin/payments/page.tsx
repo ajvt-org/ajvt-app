@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { loginPathWithNext, validatePhone, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
+import { api, errorMessage } from "@/lib/api";
 
 interface Proof {
   id: string;
@@ -22,6 +23,23 @@ interface Proof {
   donorPhoto?: string | null;
   uploadedAt: string;
   submittedAt: string;
+}
+
+interface DonationResponse {
+  donation: {
+    id: string;
+    donorName: string | null;
+    donorPhone: string | null;
+    donorPhoto: string | null;
+    amount: number | null;
+    status: string;
+    source: "PUBLIC" | "SELF";
+    paymentMethod: string | null;
+    proof: string | null;
+    memberId: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 interface MemberOption {
@@ -111,12 +129,10 @@ export default function AdminPaymentsPage() {
     if (!confirm("هل أنت متأكد من حذف هذا التبرع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/donations/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.del(`/api/admin/donations/${id}`);
       setProofs((prev) => prev.filter((p) => !(p.id === id && p.kind === "DONATION")));
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -125,18 +141,12 @@ export default function AdminPaymentsPage() {
   async function reviewDonation(id: string, status: "ACTIVE" | "REJECTED") {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/donations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/donations/${id}`, { status });
       setProofs((prev) =>
         prev.map((p) => (p.id === id && p.kind === "DONATION" ? { ...p, status } : p)),
       );
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -145,13 +155,7 @@ export default function AdminPaymentsPage() {
   async function linkDonation(id: string, memberId: string | null) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/donations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.patch<DonationResponse>(`/api/admin/donations/${id}`, { memberId });
       const linkedName = memberId ? members.find((m) => m.id === memberId)?.fullName : undefined;
       setProofs((prev) =>
         prev.map((p) =>
@@ -163,7 +167,7 @@ export default function AdminPaymentsPage() {
       setLinkingId(null);
       setLinkSearch("");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -204,13 +208,7 @@ export default function AdminPaymentsPage() {
       }
       if (n !== null) body.amount = n;
 
-      const res = await fetch(`/api/admin/donations/${p.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.patch<DonationResponse>(`/api/admin/donations/${p.id}`, body);
       setProofs((prev) =>
         prev.map((item) =>
           item.id === p.id && item.kind === "DONATION"
@@ -229,7 +227,7 @@ export default function AdminPaymentsPage() {
       );
       setEditingId(null);
     } catch (e) {
-      setEditError(e instanceof Error ? e.message : "خطأ");
+      setEditError(errorMessage(e));
     } finally {
       setBusyId(null);
     }
@@ -257,20 +255,14 @@ export default function AdminPaymentsPage() {
 
     setManualLoading(true);
     try {
-      const res = await fetch("/api/admin/donations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          donorName: manualDonation.donorName.trim(),
-          donorPhone: manualDonation.donorPhone.trim() || null,
-          donorPhoto: manualDonation.donorPhoto || null,
-          amount: n,
-          paymentMethod: manualDonation.paymentMethod || null,
-          proof: manualDonation.proof || null,
-        }),
+      const data = await api.post<DonationResponse>("/api/admin/donations", {
+        donorName: manualDonation.donorName.trim(),
+        donorPhone: manualDonation.donorPhone.trim() || null,
+        donorPhoto: manualDonation.donorPhoto || null,
+        amount: n,
+        paymentMethod: manualDonation.paymentMethod || null,
+        proof: manualDonation.proof || null,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       const d = data.donation;
       setProofs((prev) => [
         {
@@ -295,7 +287,7 @@ export default function AdminPaymentsPage() {
       setManualDonation(emptyManualDonation);
       setShowManualDonation(false);
     } catch (e) {
-      setManualError(e instanceof Error ? e.message : "خطأ");
+      setManualError(errorMessage(e));
     } finally {
       setManualLoading(false);
     }

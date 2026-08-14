@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
+import { api, errorMessage } from "@/lib/api";
 
 interface Expense {
   id: string;
@@ -175,16 +176,10 @@ export default function AdminExpensesPage() {
     if (!method) return;
     setReassigningId(id);
     try {
-      const res = await fetch(`/api/admin/donations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentMethod: method }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/donations/${id}`, { paymentMethod: method });
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setReassigningId(null);
     }
@@ -232,20 +227,12 @@ export default function AdminExpensesPage() {
         date: form.date || undefined,
         proof: form.proof || null,
       };
-      const res = await fetch(
-        editingId ? `/api/admin/expenses/${editingId}` : "/api/admin/expenses",
-        {
-          method: editingId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
+      else await api.post("/api/admin/expenses", body);
       setShowForm(false);
       await load();
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : "خطأ");
+      setFormError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -255,12 +242,10 @@ export default function AdminExpensesPage() {
     if (!confirm("هل أنت متأكد من حذف هذا المصروف؟")) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/expenses/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.del(`/api/admin/expenses/${id}`);
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setBusyId(null);
     }
