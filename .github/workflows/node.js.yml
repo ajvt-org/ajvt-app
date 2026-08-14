@@ -14,6 +14,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ajvt
+          POSTGRES_PASSWORD: ajvt
+          POSTGRES_DB: ajvt
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ajvt"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     strategy:
       matrix:
         node-version: [20.x, 22.x]
@@ -39,3 +54,6 @@ jobs:
         DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
         JWT_SECRET: "ci-build-only-not-a-real-secret"
     - run: npm test --if-present
+    - run: npm run test:api
+      env:
+        TEST_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_test"
