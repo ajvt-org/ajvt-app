@@ -111,10 +111,10 @@ describe("ManualAddDialog", () => {
     expect(props.onManageAgeGroups).toHaveBeenCalled();
   });
 
-  it("closes on the close control", async () => {
+  it("closes on the close control, which screen readers can name", async () => {
     const props = setup();
 
-    await userEvent.click(screen.getByRole("button", { name: "✕" }));
+    await userEvent.click(screen.getByRole("button", { name: "إغلاق" }));
 
     expect(props.onClose).toHaveBeenCalled();
   });

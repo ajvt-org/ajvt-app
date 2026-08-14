@@ -6,6 +6,8 @@ import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
+import DialogClose from "@/components/DialogClose";
+import Icon from "@/components/Icon";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -422,8 +424,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           style={{ background: "#fef3c7", color: "#92400e" }}
         >
           <span>🔒 ليس لديك صلاحية للوصول إلى تلك الصفحة</span>
-          <button onClick={() => setPermissionDenied(false)} className="font-black">
-            ✕
+          <button
+            onClick={() => setPermissionDenied(false)}
+            aria-label="إغلاق"
+            className="flex items-center shrink-0"
+          >
+            <Icon name="close" size={16} />
           </button>
         </div>
       )}
@@ -451,13 +457,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">⚙️ إعدادات</h2>
-              <button
-                onClick={() => setShowMenu(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowMenu(false)} />
             </div>
             <div className="p-4 space-y-2">
               <button
@@ -525,13 +525,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
-              <button
-                onClick={() => setShowChangePassword(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowChangePassword(false)} />
             </div>
 
             <form onSubmit={changePassword} className="p-5 space-y-3">
@@ -624,13 +618,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
-              <button
-                onClick={() => setShowAdmins(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowAdmins(false)} />
             </div>
 
             <div className="p-5 space-y-4">
@@ -734,13 +722,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
-              <button
-                onClick={() => setShowAuditLog(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowAuditLog(false)} />
             </div>
 
             <div className="p-5 space-y-2">
@@ -805,13 +787,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">📣 إرسال إشعار جماعي</h2>
-              <button
-                onClick={() => setShowBroadcast(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowBroadcast(false)} />
             </div>
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">
