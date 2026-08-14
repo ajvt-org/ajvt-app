@@ -3,11 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { computeStandings, bracketRoundLabel } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 // Crossed semi-finals from a completed 2-group stage: 1st of A vs 2nd of B,
 // 1st of B vs 2nd of A.
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/activities/[id]/bracket/semis-from-groups",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -108,14 +110,5 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     );
 
     return NextResponse.json({ ok: true, created: data.length });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Bracket semis error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

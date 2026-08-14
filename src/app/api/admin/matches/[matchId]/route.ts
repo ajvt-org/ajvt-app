@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -68,11 +69,9 @@ function validateGoals(input: unknown): GoalInput[] | null {
   return goals;
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/matches/[matchId]",
+  async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const {
@@ -351,23 +350,12 @@ export async function PATCH(
     }
 
     return NextResponse.json({ match: updated });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Match update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/matches/[matchId]",
+  async (_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
 
@@ -387,14 +375,5 @@ export async function DELETE(
     );
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Match delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
