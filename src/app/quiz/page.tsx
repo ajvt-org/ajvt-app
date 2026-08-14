@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
+import PageHeader from "@/components/PageHeader";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -152,18 +152,7 @@ export default function QuizPage() {
   if (ineligible) {
     return (
       <div className="app-shell">
-        <div
-          className="px-5 py-4 flex items-center gap-3"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-          <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              رابطة شباب قرية التاكلالت
-            </p>
-            <h1 className="text-base font-black text-white">🧠 المسابقة الثقافية</h1>
-          </div>
-        </div>
+        <PageHeader title={"🧠 المسابقة الثقافية"} backHref="/home" />
         <div className="px-5 py-10">
           <div className="card p-8 text-center fade-up">
             <div className="text-4xl mb-3">🔒</div>
@@ -197,18 +186,7 @@ export default function QuizPage() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">🧠 المسابقة الثقافية</h1>
-        </div>
-      </div>
+      <PageHeader title={"🧠 المسابقة الثقافية"} backHref="/home" />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {/* Stats bar: streak, points, rank */}
