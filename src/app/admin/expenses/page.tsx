@@ -7,6 +7,7 @@ import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
+import Icon from "@/components/Icon";
 
 interface Expense {
   id: string;
@@ -685,10 +686,11 @@ export default function AdminExpensesPage() {
           <button
             onClick={() => setPage(currentExpensePage - 1)}
             disabled={currentExpensePage <= 1}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            → السابق
+            <Icon name="chevronRight" size={14} />
+            السابق
           </button>
           <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
             صفحة {currentExpensePage} / {totalExpensePages}
@@ -696,10 +698,11 @@ export default function AdminExpensesPage() {
           <button
             onClick={() => setPage(currentExpensePage + 1)}
             disabled={currentExpensePage >= totalExpensePages}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            التالي ←
+            التالي
+            <Icon name="chevronLeft" size={14} />
           </button>
         </div>
       )}

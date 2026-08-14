@@ -683,10 +683,11 @@ export default function AdminDashboard() {
           <button
             onClick={() => setPage(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            → السابق
+            <Icon name="chevronRight" size={14} />
+            السابق
           </button>
           <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
             صفحة {currentPage} / {totalPages}
@@ -694,10 +695,11 @@ export default function AdminDashboard() {
           <button
             onClick={() => setPage(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            التالي ←
+            التالي
+            <Icon name="chevronLeft" size={14} />
           </button>
         </div>
       )}
