@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { logAction } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
+    const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
     const { memberId } = parse(teamMemberSchema, await req.json());
 
@@ -55,6 +56,12 @@ export const POST = withRoute(
         member: { select: { id: true, fullName: true, phone: true, age: true } },
       },
     });
+
+    await logAction(
+      session.username,
+      "ADD_TEAM_MEMBER",
+      `${teamMember.member.fullName} → ${team.name}`,
+    );
 
     return NextResponse.json({ teamMember }, { status: 201 });
   },
