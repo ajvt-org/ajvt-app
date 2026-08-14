@@ -357,11 +357,13 @@ select:focus-visible,
   }
 }
 
-/* The standings table has 11 columns but the member shell is 430px wide, so
-   it always scrolled sideways on a phone. Wins, draws, losses and the goal
-   columns drop out on narrow screens; rank, team, played, difference and
-   points are what a reader actually scans. */
-@media (max-width: 560px) {
+/* The standings table has 11 columns but the member shell is a fixed 430px,
+   so the viewport width says nothing about the space available — on a desktop
+   the query never fired and the table stayed cramped. Ask the container. */
+.table-fit {
+  container-type: inline-size;
+}
+@container (max-width: 560px) {
   .col-detail {
     display: none;
   }
