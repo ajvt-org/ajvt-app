@@ -8,6 +8,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 interface Proof {
   id: string;
@@ -349,7 +350,7 @@ export default function AdminPaymentsPage() {
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          ➕ تسجيل تبرع يدوياً
+          <IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>
         </button>
       </div>
       <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -461,7 +462,7 @@ export default function AdminPaymentsPage() {
                             className="text-xs px-3 py-1.5 rounded-lg font-bold"
                             style={{ background: "#fee2e2", color: "#991b1b" }}
                           >
-                            {busyId === p.id ? "..." : "✕ رفض"}
+                            {busyId === p.id ? "..." : <IconLabel name="close">رفض</IconLabel>}
                           </button>
                         </>
                       )}
@@ -491,7 +492,7 @@ export default function AdminPaymentsPage() {
                         className="text-xs px-3 py-1.5 rounded-lg font-bold"
                         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                       >
-                        ✏️ تعديل
+                        <IconLabel name="pencil">تعديل</IconLabel>
                       </button>
                       <button
                         onClick={() => deleteDonation(p.id)}
@@ -499,7 +500,7 @@ export default function AdminPaymentsPage() {
                         className="text-xs px-3 py-1.5 rounded-lg font-bold"
                         style={{ background: "#fee2e2", color: "#991b1b" }}
                       >
-                        {busyId === p.id ? "..." : "🗑️ حذف نهائياً"}
+                        {busyId === p.id ? "..." : <IconLabel name="trash">حذف نهائياً</IconLabel>}
                       </button>
                       {p.source === "PUBLIC" &&
                         (p.memberId ? (
@@ -609,7 +610,7 @@ export default function AdminPaymentsPage() {
                           className="text-xs px-3 py-1.5 rounded-lg font-bold"
                           style={{ background: "var(--mint-600)", color: "white" }}
                         >
-                          {busyId === p.id ? "..." : "💾 حفظ"}
+                          {busyId === p.id ? "..." : <IconLabel name="save">حفظ</IconLabel>}
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
@@ -710,7 +711,9 @@ export default function AdminPaymentsPage() {
               className="px-5 py-4 flex items-center justify-between sticky top-0"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">➕ تسجيل تبرع يدوياً</h2>
+              <h2 className="font-black text-white text-base">
+                <IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>
+              </h2>
               <DialogClose onClick={() => setShowManualDonation(false)} />
             </div>
 

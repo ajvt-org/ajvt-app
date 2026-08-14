@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function ResultForm({
   match,
@@ -281,7 +282,7 @@ export function GoalRows({
             className="text-xs px-2.5 py-1 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            ➕ إضافة هداف
+            <IconLabel name="plus">إضافة هداف</IconLabel>
           </button>
         </div>
       )}

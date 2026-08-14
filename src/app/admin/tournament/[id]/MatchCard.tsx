@@ -9,6 +9,8 @@ import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
 import { CARD_LABEL } from "./constants";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function MatchCard({
   match,
@@ -94,7 +96,7 @@ export default function MatchCard({
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 title="تقديم"
               >
-                ▲
+                <Icon name="chevronUp" size={12} />
               </button>
               <button
                 onClick={onMoveDown}
@@ -103,7 +105,7 @@ export default function MatchCard({
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 title="تأخير"
               >
-                ▼
+                <Icon name="chevronDown" size={12} />
               </button>
             </div>
           )}
@@ -198,7 +200,7 @@ export default function MatchCard({
             border: "1px solid var(--mint-200)",
           }}
         >
-          {showDetails ? "إخفاء التفاصيل" : "✏️ تعديل التفاصيل"}
+          {showDetails ? "إخفاء التفاصيل" : <IconLabel name="pencil">تعديل التفاصيل</IconLabel>}
         </button>
       </div>
 
