@@ -5,6 +5,8 @@ import { validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { donationUpdateSchema } from "./schema";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -17,27 +19,7 @@ export const PATCH = withRoute(
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
     const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } =
-      await req.json();
-
-    if (
-      [status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof].every(
-        (v) => v === undefined,
-      )
-    ) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    if (status !== undefined && !["ACTIVE", "REJECTED"].includes(status)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    if (memberId !== undefined && memberId !== null && typeof memberId !== "string") {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    if (proof !== undefined && proof !== null && typeof proof !== "string") {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+      parse(donationUpdateSchema, await req.json());
 
     const existing = await prisma.donation.findUnique({
       where: { id },
