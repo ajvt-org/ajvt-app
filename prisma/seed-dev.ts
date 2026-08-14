@@ -329,7 +329,7 @@ async function main() {
         order: i,
         homeScore,
         awayScore,
-        status: played ? "FINISHED" : "SCHEDULED",
+        status: played ? "PLAYED" : "SCHEDULED",
         manOfTheMatchId: played ? (roster[teams[h].id]?.[0] ?? null) : null,
       },
     });
