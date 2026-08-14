@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
+import { api, errorMessage } from "@/lib/api";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -229,13 +230,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     }
     setCpLoading(true);
     try {
-      const res = await fetch("/api/admin/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: cpForm.current, newPassword: cpForm.next }),
+      await api.post("/api/admin/change-password", {
+        currentPassword: cpForm.current,
+        newPassword: cpForm.next,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setCpSuccess(true);
       setCpForm({ current: "", next: "", confirm: "" });
       setTimeout(() => {
@@ -243,7 +241,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         setCpSuccess(false);
       }, 1500);
     } catch (e) {
-      setCpError(e instanceof Error ? e.message : "خطأ");
+      setCpError(errorMessage(e));
     } finally {
       setCpLoading(false);
     }
@@ -264,17 +262,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     setAdminError("");
     setAdminLoading(true);
     try {
-      const res = await fetch("/api/admin/admins", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newAdmin),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post("/api/admin/admins", newAdmin);
       setNewAdmin({ username: "", password: "", role: "SUPER" });
       await loadAdmins();
     } catch (e) {
-      setAdminError(e instanceof Error ? e.message : "خطأ");
+      setAdminError(errorMessage(e));
     } finally {
       setAdminLoading(false);
     }
@@ -283,12 +275,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   async function deleteAdmin(id: string) {
     if (!confirm("هل أنت متأكد من حذف هذا الحساب؟")) return;
     try {
-      const res = await fetch(`/api/admin/admins/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.del(`/api/admin/admins/${id}`);
       await loadAdmins();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     }
   }
 
@@ -332,17 +322,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     setBroadcastSuccess(null);
     setBroadcastLoading(true);
     try {
-      const res = await fetch("/api/admin/notifications/broadcast", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(broadcastForm),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.post<{ recipientCount: number }>(
+        "/api/admin/notifications/broadcast",
+        broadcastForm,
+      );
       setBroadcastSuccess(data.recipientCount);
       setBroadcastForm({ target: "ALL", activityId: "", age: "", title: "", body: "" });
     } catch (e) {
-      setBroadcastError(e instanceof Error ? e.message : "خطأ");
+      setBroadcastError(errorMessage(e));
     } finally {
       setBroadcastLoading(false);
     }

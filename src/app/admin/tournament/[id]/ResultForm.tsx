@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Match, Team } from "./types";
+import { api, errorMessage } from "@/lib/api";
 
 export default function ResultForm({
   match,
@@ -74,16 +75,10 @@ export default function ResultForm({
         body.homePenalties = Number(homePenalties);
         body.awayPenalties = Number(awayPenalties);
       }
-      const res = await fetch(`/api/admin/matches/${match.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/matches/${match.id}`, body);
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }

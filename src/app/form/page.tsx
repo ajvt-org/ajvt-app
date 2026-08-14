@@ -16,6 +16,7 @@ import {
 } from "@/lib/donations";
 import { arabicValidity } from "@/lib/validationMessage";
 import { api } from "@/lib/api";
+import { errorMessage } from "@/lib/api";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -359,7 +360,7 @@ function FormPageInner() {
       // stepIndex (still 1) lands on step 3 automatically.
       setAuthenticated(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(errorMessage(err));
     } finally {
       setAccountLoading(false);
     }
@@ -413,7 +414,7 @@ function FormPageInner() {
       if (!editId) localStorage.removeItem(DRAFT_KEY);
       setSubmitted(true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(errorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Match, Team } from "./types";
 import { CARD_LABEL } from "./constants";
+import { api, errorMessage } from "@/lib/api";
 
 export default function BookingsForm({
   match,
@@ -28,18 +29,17 @@ export default function BookingsForm({
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/matches/${match.id}/bookings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, teamId, cardType, minute: minute || null }),
+      await api.post(`/api/admin/matches/${match.id}/bookings`, {
+        memberId,
+        teamId,
+        cardType,
+        minute: minute || null,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setMemberId("");
       setMinute("");
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
