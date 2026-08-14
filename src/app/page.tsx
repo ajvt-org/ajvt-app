@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { toThumbUrl } from "@/lib/utils";
+import ArrowLabel from "@/components/ArrowLabel";
 
 export const dynamic = "force-dynamic";
 
@@ -167,7 +168,7 @@ export default async function LandingPage() {
                 أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥 — متاحة للمنتسبين الذين أكملوا الانتساب
               </p>
               <Link href="/register" className="btn btn-primary mt-4">
-                أنشئ حساباً وأكمل استمارة الانضمام ←
+                <ArrowLabel>أنشئ حساباً وأكمل استمارة الانضمام</ArrowLabel>
               </Link>
             </div>
           </div>
@@ -239,7 +240,7 @@ export default async function LandingPage() {
                       className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block"
                       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                     >
-                      🏆 عرض الترتيب ←
+                      <ArrowLabel>🏆 عرض الترتيب</ArrowLabel>
                     </Link>
                   )}
                 </div>

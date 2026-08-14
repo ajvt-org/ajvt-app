@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { toThumbUrl } from "@/lib/utils";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
+import ArrowLabel from "./ArrowLabel";
 
 interface Team {
   id: string;
@@ -97,7 +98,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
             className="text-xs px-3 py-2 rounded-lg font-bold shrink-0"
             style={{ background: "var(--mint-600)", color: "white" }}
           >
-            العب ←
+            <ArrowLabel>العب</ArrowLabel>
           </a>
         ) : (
           <span className="text-lg shrink-0" title="متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب">
@@ -330,7 +331,7 @@ function ActivityCard({
             className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mb-3"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            🏆 عرض الترتيب ←
+            <ArrowLabel>🏆 عرض الترتيب</ArrowLabel>
           </Link>
         )}
 

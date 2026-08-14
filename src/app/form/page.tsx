@@ -17,6 +17,7 @@ import {
 import { arabicValidity } from "@/lib/validationMessage";
 import { api } from "@/lib/api";
 import { errorMessage } from "@/lib/api";
+import ArrowLabel from "@/components/ArrowLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -523,7 +524,7 @@ function FormPageInner() {
             className="btn fade-up delay-2"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            الذهاب إلى حسابي ←
+            <ArrowLabel>الذهاب إلى حسابي</ArrowLabel>
           </button>
         </div>
       </div>
@@ -711,7 +712,7 @@ function FormPageInner() {
             )}
 
             <button type="button" onClick={goNextFromStep1} className="btn btn-primary mt-2">
-              التالي ←
+              <ArrowLabel>التالي</ArrowLabel>
             </button>
           </div>
         )}
@@ -788,7 +789,7 @@ function FormPageInner() {
                 className="btn px-4"
                 style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                → السابق
+                <ArrowLabel direction="back">السابق</ArrowLabel>
               </button>
               <button
                 type="button"
@@ -796,7 +797,7 @@ function FormPageInner() {
                 disabled={accountLoading}
                 className="btn btn-primary flex-1"
               >
-                {accountLoading ? "جاري إنشاء الحساب..." : "التالي ←"}
+                {accountLoading ? "جاري إنشاء الحساب..." : <ArrowLabel>التالي</ArrowLabel>}
               </button>
             </div>
           </div>
@@ -1007,7 +1008,7 @@ function FormPageInner() {
                   className="btn px-4"
                   style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  → السابق
+                  <ArrowLabel direction="back">السابق</ArrowLabel>
                 </button>
                 <button
                   type="submit"
@@ -1034,9 +1035,9 @@ function FormPageInner() {
                       جاري إرسال الطلب...
                     </span>
                   ) : editId ? (
-                    "حفظ التعديلات ←"
+                    <ArrowLabel>حفظ التعديلات</ArrowLabel>
                   ) : (
-                    "إرسال طلب الانضمام ←"
+                    <ArrowLabel>إرسال طلب الانضمام</ArrowLabel>
                   )}
                 </button>
               </div>

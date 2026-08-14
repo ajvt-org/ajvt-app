@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import ArrowLabel from "@/components/ArrowLabel";
 
 export default function NotFound() {
   const pathname = usePathname();
@@ -36,7 +37,7 @@ export default function NotFound() {
           className="btn btn-primary mt-2"
           style={{ width: "auto", paddingInline: "2rem" }}
         >
-          {isAdmin ? "← لوحة التحكم" : "← الصفحة الرئيسية"}
+          <ArrowLabel direction="back">{isAdmin ? "لوحة التحكم" : "الصفحة الرئيسية"}</ArrowLabel>
         </Link>
       </div>
     </div>
