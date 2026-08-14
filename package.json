@@ -22,7 +22,8 @@
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "db:studio": "prisma studio",
     "setup": "prisma migrate dev --name init && tsx prisma/seed.ts",
-    "test:api": "vitest run --config vitest.api.config.mts"
+    "test:api": "vitest run --config vitest.api.config.mts",
+    "test:ui": "vitest run --config vitest.ui.config.mts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -51,6 +52,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.4",
     "@types/node": "^20",
     "@types/pg": "^8.21.0",
     "@types/react": "^19",
@@ -58,6 +61,7 @@
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
+    "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "tailwindcss": "^4",
     "tsx": "^4.23.11",
