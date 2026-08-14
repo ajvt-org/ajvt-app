@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
+import { arabicValidity } from "@/lib/validationMessage";
 
 export default function LoginPage() {
   return (
@@ -76,6 +77,7 @@ function LoginForm() {
                 setForm((p) => ({ ...p, phone: digits }));
               }}
               required
+              {...arabicValidity()}
               placeholder="2XXXXXXX"
               dir="ltr"
               maxLength={8}
@@ -94,6 +96,7 @@ function LoginForm() {
               value={form.password}
               onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
               required
+              {...arabicValidity()}
               placeholder="••••••••"
               className="input"
             />
