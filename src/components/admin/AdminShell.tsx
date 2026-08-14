@@ -8,6 +8,8 @@ import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
+import { auditActionLabel } from "@/lib/auditLabels";
+import { formatDateTime } from "@/lib/utils";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -42,45 +44,6 @@ interface AuditLogEntry {
   targetLabel: string | null;
   createdAt: string;
 }
-
-const ACTION_LABELS: Record<string, string> = {
-  APPROVE_MEMBER: "قبول طلب",
-  REJECT_MEMBER: "رفض طلب",
-  DELETE_MEMBER: "حذف طلب",
-  CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",
-  RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
-  CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
-  CREATE_ADMIN: "إنشاء حساب مشرف",
-  DELETE_ADMIN: "حذف حساب مشرف",
-  CREATE_ACTIVITY: "إنشاء نشاط",
-  UPDATE_ACTIVITY: "تعديل نشاط",
-  DELETE_ACTIVITY: "حذف نشاط",
-  CREATE_TEAM: "إنشاء فريق",
-  UPDATE_TEAM: "تعديل فريق",
-  DELETE_TEAM: "حذف فريق",
-  CREATE_MATCH: "إضافة مباراة",
-  DELETE_MATCH: "حذف مباراة",
-  ENTER_MATCH_RESULT: "إدخال نتيجة مباراة",
-  CREATE_GROUP: "إنشاء مجموعة",
-  UPDATE_GROUP: "تعديل مجموعة",
-  DELETE_GROUP: "حذف مجموعة",
-  SEND_BROADCAST: "إرسال إشعار جماعي",
-  APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
-  DELETE_DONATION: "حذف تبرع نهائياً",
-  ATTACH_MEMBER_ACCOUNT: "إنشاء حساب لعضو",
-  CREATE_EXPENSE: "إضافة مصروف",
-  UPDATE_EXPENSE: "تعديل مصروف",
-  DELETE_EXPENSE: "حذف مصروف",
-  UPDATE_MEMBER: "تعديل بيانات عضو",
-  CREATE_AGE_GROUP: "إضافة عصر",
-  UPDATE_AGE_GROUP: "تعديل اسم عصر",
-  DELETE_AGE_GROUP: "حذف عصر",
-  CREATE_QUIZ_QUESTION: "إضافة سؤال ",
-  UPDATE_QUIZ_QUESTION: "تعديل سؤال ",
-  DELETE_QUIZ_QUESTION: "حذف سؤال ",
-  SEND_QUIZ_QUESTION: "إرسال سؤال ",
-  UPDATE_QUIZ_SETTINGS: "تعديل إعدادات المسابقة الثقافية ",
-};
 
 const NAV_TABS = [
   { href: "/admin/dashboard", label: "👥 الأعضاء" },
@@ -658,7 +621,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {a.lastLoginAt
-                          ? `آخر دخول: ${new Date(a.lastLoginAt).toLocaleDateString("ar")} — ${new Date(a.lastLoginAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })} — ${a.lastLoginIp || "—"}`
+                          ? `آخر دخول: ${formatDateTime(a.lastLoginAt)} — ${a.lastLoginIp || "—"}`
                           : "لم يسجّل الدخول بعد"}
                       </p>
                     </div>
@@ -756,18 +719,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   <div key={log.id} className="card p-3">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                        {ACTION_LABELS[log.action] || log.action}
+                        {auditActionLabel(log.action)}
                       </p>
                       <span
                         className="text-xs shrink-0"
                         style={{ color: "var(--text-muted)" }}
                         dir="ltr"
                       >
-                        {new Date(log.createdAt).toLocaleDateString("ar")}{" "}
-                        {new Date(log.createdAt).toLocaleTimeString("ar", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatDateTime(log.createdAt)}
                       </span>
                     </div>
                     {log.targetLabel && (
