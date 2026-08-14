@@ -356,3 +356,13 @@ select:focus-visible,
     display: none !important;
   }
 }
+
+/* The standings table has 11 columns but the member shell is 430px wide, so
+   it always scrolled sideways on a phone. Wins, draws, losses and the goal
+   columns drop out on narrow screens; rank, team, played, difference and
+   points are what a reader actually scans. */
+@media (max-width: 560px) {
+  .col-detail {
+    display: none;
+  }
+}
