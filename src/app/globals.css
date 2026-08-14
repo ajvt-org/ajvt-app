@@ -48,15 +48,30 @@ body {
 }
 
 /* ---- Scrollbar ---- */
+/* The track used to be a solid mint band flush against the text, so every
+   scrolling list looked like it had a line stuck to its first column. A
+   transparent track plus a transparent border on the thumb (clipped to the
+   padding box) leaves the thumb floating clear of the content. */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--mint-100);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--mint-400);
-  border-radius: 2px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mint-600);
+  background-clip: padding-box;
+}
+* {
+  scrollbar-color: var(--mint-400) transparent;
+  scrollbar-width: thin;
 }
 
 /* ---- Utility classes ---- */
