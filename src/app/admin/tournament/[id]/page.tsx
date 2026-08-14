@@ -17,6 +17,7 @@ import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
+import BackButton from "@/components/BackButton";
 
 export default function TournamentPage() {
   const router = useRouter();
@@ -95,13 +96,7 @@ export default function TournamentPage() {
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push("/admin/activities")}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-            style={{ background: "rgba(255,255,255,0.15)" }}
-          >
-            ←
-          </button>
+          <BackButton href="/admin/activities" />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               ⚽ إدارة البطولة
