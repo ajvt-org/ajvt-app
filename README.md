@@ -59,7 +59,8 @@ Plain `npm run db:seed` only creates the `admin` account and the age groups. Tha
 ## Tests
 
 ```bash
-npm test        # unit tests, no database
+npm test          # unit tests, no database
+npm run test:ui   # components, in jsdom
 npm run test:api  # route handlers against a real database
 ```
 
