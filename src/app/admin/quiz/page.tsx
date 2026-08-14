@@ -351,7 +351,7 @@ export default function AdminQuizPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="admin-page space-y-5">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         🧠 المسابقة الثقافية
       </p>

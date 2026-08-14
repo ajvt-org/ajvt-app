@@ -316,7 +316,7 @@ export default function AdminActivitiesPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-3">
+    <div className="admin-page space-y-3">
       {activities.length === 0 ? (
         <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>
           لا توجد أنشطة بعد — أضف أول نشاط أدناه

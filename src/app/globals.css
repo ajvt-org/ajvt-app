@@ -176,6 +176,20 @@ select:focus-visible,
   color: #991b1b;
 }
 
+/* Admin pages were capped between 672 and 896px, which is a narrow strip on
+   the laptop where results and memberships actually get entered. Phones keep
+   the old width; only desktop gets the extra room. */
+.admin-page {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+@media (min-width: 1024px) {
+  .admin-page {
+    max-width: 72rem;
+  }
+}
+
 /* Compact sizes. Without these every small control was hand-styled, which is
    why one screen ended up with five different button treatments. 40px is the
    smallest comfortable touch target. */
