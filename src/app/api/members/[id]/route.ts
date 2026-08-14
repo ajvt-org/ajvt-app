@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { memberPhotoSchema } from "./schema";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -42,11 +44,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireUser();
     const { id } = await params;
-    const { photo } = await req.json();
-
-    if (photo !== null && typeof photo !== "string") {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { photo } = parse(memberPhotoSchema, await req.json());
 
     const existing = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
     if (!existing || existing.userId !== session.userId) {
