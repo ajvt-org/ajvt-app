@@ -34,6 +34,26 @@ describe("api", () => {
     });
   });
 
+  it("sends a delete without a body when none is given", async () => {
+    const fetchMock = mockFetch(200, {});
+
+    await api.del("/api/admin/teams/t1");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/admin/teams/t1", { method: "DELETE" });
+  });
+
+  it("sends a delete body as json when one is given", async () => {
+    const fetchMock = mockFetch(200, {});
+
+    await api.del("/api/teams/t1/join", { memberId: "m1" });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/teams/t1/join", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: "m1" }),
+    });
+  });
+
   it("throws the server's arabic message, not a generic one", async () => {
     mockFetch(400, { error: "الاسم الكامل مطلوب" });
 

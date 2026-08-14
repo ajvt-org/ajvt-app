@@ -6,6 +6,7 @@ import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
 import type { Group, RosterMember, Team } from "./types";
 import GroupsPanel from "./GroupsPanel";
+import { api, errorMessage } from "@/lib/api";
 
 export default function TeamsTab({
   activityId,
@@ -38,17 +39,11 @@ export default function TeamsTab({
     if (!editTeamName.trim()) return;
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editTeamName }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/teams/${teamId}`, { name: editTeamName });
       setEditingTeamId(null);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -58,17 +53,11 @@ export default function TeamsTab({
     if (!editMemberName.trim()) return;
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/members/${memberId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: editMemberName }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/members/${memberId}`, { fullName: editMemberName });
       setEditingMemberId(null);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -77,28 +66,17 @@ export default function TeamsTab({
   async function setTeamGroup(teamId: string, groupId: string) {
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId: groupId || null }),
-      });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.patch(`/api/admin/teams/${teamId}`, { groupId: groupId || null });
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
   }
 
   async function setTeamLogo(teamId: string, logo: string) {
-    const res = await fetch(`/api/admin/teams/${teamId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ logo: logo || null }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "فشلت العملية");
+    await api.patch(`/api/admin/teams/${teamId}`, { logo: logo || null });
     onChange();
   }
 
@@ -107,23 +85,17 @@ export default function TeamsTab({
     setError("");
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/teams`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newTeamName,
-          groupId: newTeamGroup || null,
-          logo: newTeamLogo || null,
-        }),
+      await api.post(`/api/admin/activities/${activityId}/teams`, {
+        name: newTeamName,
+        groupId: newTeamGroup || null,
+        logo: newTeamLogo || null,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setNewTeamName("");
       setNewTeamGroup("");
       setNewTeamLogo("");
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -133,11 +105,10 @@ export default function TeamsTab({
     if (!confirm("هل تريد حذف هذا الفريق؟")) return;
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/teams/${teamId}`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -149,18 +120,12 @@ export default function TeamsTab({
     setError("");
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/admin/teams/${teamId}/members`, { memberId });
       setSelectedMember((p) => ({ ...p, [teamId]: "" }));
       setAddingTo(null);
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -169,13 +134,10 @@ export default function TeamsTab({
   async function removeMember(teamId: string, memberId: string) {
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}/members/${memberId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/teams/${teamId}/members/${memberId}`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -184,14 +146,10 @@ export default function TeamsTab({
   async function approveMember(teamId: string, memberId: string) {
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/teams/${teamId}/members/${memberId}`, {
-        method: "PATCH",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/teams/${teamId}/members/${memberId}`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }

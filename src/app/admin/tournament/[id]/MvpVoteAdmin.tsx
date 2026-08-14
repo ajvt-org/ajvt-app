@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Match, Team } from "./types";
+import { api, errorMessage } from "@/lib/api";
 
 export default function MvpVoteAdmin({
   match,
@@ -34,16 +35,12 @@ export default function MvpVoteAdmin({
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/matches/${match.id}/mvp-vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ candidateMemberIds: selected }),
+      await api.post(`/api/admin/matches/${match.id}/mvp-vote`, {
+        candidateMemberIds: selected,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -52,15 +49,10 @@ export default function MvpVoteAdmin({
   async function setStatus(status: "OPEN" | "CLOSED") {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/matches/${match.id}/mvp-vote`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.patch(`/api/admin/matches/${match.id}/mvp-vote`, { status });
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -70,11 +62,10 @@ export default function MvpVoteAdmin({
     if (!confirm("حذف هذا التصويت نهائياً؟ ستُحذف كل الأصوات المسجَّلة.")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/matches/${match.id}/mvp-vote`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/matches/${match.id}/mvp-vote`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoading(false);
     }

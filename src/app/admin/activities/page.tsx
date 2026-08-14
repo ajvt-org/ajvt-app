@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PhotoUpload from "@/components/PhotoUpload";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext } from "@/lib/utils";
+import { api, errorMessage } from "@/lib/api";
 
 interface Registration {
   id: string;
@@ -108,13 +109,7 @@ export default function AdminActivitiesPage() {
     setActivityError("");
     setActionLoading(true);
     try {
-      const res = await fetch("/api/admin/activities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newActivity),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.post<{ activity: Activity }>("/api/admin/activities", newActivity);
       const created = data.activity;
       setNewActivity({
         title: "",
@@ -132,35 +127,26 @@ export default function AdminActivitiesPage() {
       }
       await loadAll();
     } catch (e) {
-      setActivityError(e instanceof Error ? e.message : "خطأ");
+      setActivityError(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
   }
 
   async function updateActivityPhoto(id: string, photo: string) {
-    const res = await fetch(`/api/admin/activities/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ photo }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "فشلت العملية");
+    await api.patch(`/api/admin/activities/${id}`, { photo });
     await loadAll();
   }
 
   async function toggleActivityTournament(activity: Activity) {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activity.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isTournament: !activity.isTournament }),
+      await api.patch(`/api/admin/activities/${activity.id}`, {
+        isTournament: !activity.isTournament,
       });
-      if (!res.ok) throw new Error("فشلت العملية");
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -169,15 +155,10 @@ export default function AdminActivitiesPage() {
   async function toggleActivityOpen(activity: Activity) {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activity.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isOpen: !activity.isOpen }),
-      });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.patch(`/api/admin/activities/${activity.id}`, { isOpen: !activity.isOpen });
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -204,7 +185,7 @@ export default function AdminActivitiesPage() {
       ]);
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setReorderLoading(false);
     }
@@ -213,17 +194,13 @@ export default function AdminActivitiesPage() {
   async function saveWhatsappLink(id: string) {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ whatsappLink: linkDraft.trim() }),
+      await api.patch(`/api/admin/activities/${id}`, {
+        whatsappLink: linkDraft.trim(),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setEditingLinkId(null);
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -233,11 +210,10 @@ export default function AdminActivitiesPage() {
     if (!confirm("هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه.")) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/activities/${id}`);
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -248,17 +224,11 @@ export default function AdminActivitiesPage() {
     if (!memberId) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/admin/activities/${activityId}/register`, { memberId });
       setAddMemberFor((p) => ({ ...p, [activityId]: "" }));
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -272,18 +242,16 @@ export default function AdminActivitiesPage() {
   ) {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/register`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registrationId, status, reason }),
+      await api.patch(`/api/admin/activities/${activityId}/register`, {
+        registrationId,
+        status,
+        reason,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setRejectingId(null);
       setRejectReason("");
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -292,15 +260,10 @@ export default function AdminActivitiesPage() {
   async function unregisterMember(activityId: string, memberId: string) {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/register`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/activities/${activityId}/register`, { memberId });
       await loadAll();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }

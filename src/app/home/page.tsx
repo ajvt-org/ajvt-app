@@ -13,6 +13,7 @@ import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import Icon from "@/components/Icon";
+import { errorMessage } from "@/lib/api";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -256,7 +257,7 @@ function MemberEntry({
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
       onReload();
     } catch (err) {
-      setResubmitError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setResubmitError(errorMessage(err));
     } finally {
       setResubmitting(false);
     }
