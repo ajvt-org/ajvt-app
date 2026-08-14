@@ -12,6 +12,7 @@ import { toCsv, downloadCsv } from "@/lib/csv";
 import { uploadFile } from "@/lib/upload";
 import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
+import { api, ApiError, errorMessage } from "@/lib/api";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -58,15 +59,11 @@ export default function AdminDashboard() {
 
   async function fetchMembers() {
     try {
-      const res = await fetch("/api/admin/members");
-      if (res.status === 401) {
-        router.push(loginPathWithNext("/admin/login"));
-        return;
-      }
-      const data = await res.json();
+      const data = await api.get<{ members: Member[] }>("/api/admin/members");
       setMembers(data.members || []);
-    } catch {
-      router.push(loginPathWithNext("/admin/login"));
+    } catch (e) {
+      const status = e instanceof ApiError ? e.status : 0;
+      if (status === 401 || status === 0) router.push(loginPathWithNext("/admin/login"));
     } finally {
       setLoading(false);
     }
@@ -74,11 +71,8 @@ export default function AdminDashboard() {
 
   async function fetchAgeGroups() {
     try {
-      const res = await fetch("/api/admin/age-groups");
-      if (res.ok) {
-        const data = await res.json();
-        setAgeGroups(data.ageGroups || []);
-      }
+      const data = await api.get<{ ageGroups: AgeGroup[] }>("/api/admin/age-groups");
+      setAgeGroups(data.ageGroups || []);
     } catch {
       // non-critical — the age select just falls back to an empty list
     }
@@ -90,12 +84,11 @@ export default function AdminDashboard() {
   async function validate(id: string, action: "ACTIVE" | "REJECTED", reason?: string) {
     setActionLoading(true);
     try {
-      const res = await fetch("/api/admin/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action, ...(reason ? { rejectionReason: reason } : {}) }),
+      await api.post("/api/admin/validate", {
+        id,
+        action,
+        ...(reason ? { rejectionReason: reason } : {}),
       });
-      if (!res.ok) throw new Error("فشلت العملية");
       const idx = paginated.findIndex((m) => m.id === id);
       const next = idx !== -1 ? paginated[idx + 1] : undefined;
       await fetchMembers();
@@ -103,7 +96,7 @@ export default function AdminDashboard() {
       setShowRejectPicker(false);
       setProofZoom(false);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setActionLoading(false);
     }
@@ -129,16 +122,12 @@ export default function AdminDashboard() {
     if (!confirm(`قبول ${selectedIds.size} طلب دفعة واحدة؟`)) return;
     setBulkLoading(true);
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         Array.from(selectedIds).map((id) =>
-          fetch("/api/admin/validate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, action: "ACTIVE" }),
-          }),
+          api.post("/api/admin/validate", { id, action: "ACTIVE" }),
         ),
       );
-      const failed = results.filter((r) => !r.ok).length;
+      const failed = results.filter((r) => r.status === "rejected").length;
       setSelectedIds(new Set());
       await fetchMembers();
       if (failed > 0) alert(`تعذّر قبول ${failed} من الطلبات`);
@@ -153,12 +142,11 @@ export default function AdminDashboard() {
     if (!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`/api/admin/members/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/members/${id}`);
       await fetchMembers();
       setSelected(null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setDeleteLoading(false);
     }
@@ -207,23 +195,17 @@ export default function AdminDashboard() {
     setEditSaving(true);
     setEditError("");
     try {
-      const res = await fetch(`/api/admin/members/${selected.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: editName.trim(),
-          age: editAge,
-          photo: editPhoto,
-          paidAmount: paidAmountValue,
-        }),
+      const data = await api.patch<{ member: Member }>(`/api/admin/members/${selected.id}`, {
+        fullName: editName.trim(),
+        age: editAge,
+        photo: editPhoto,
+        paidAmount: paidAmountValue,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setMembers((prev) => prev.map((m) => (m.id === selected.id ? { ...m, ...data.member } : m)));
       setSelected((prev) => (prev ? { ...prev, ...data.member } : prev));
       setEditing(false);
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "خطأ");
+      setEditError(errorMessage(err));
     } finally {
       setEditSaving(false);
     }
@@ -233,16 +215,12 @@ export default function AdminDashboard() {
     setResetLoading(true);
     setTempPassword(null);
     try {
-      const res = await fetch("/api/admin/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+      const data = await api.post<{ tempPassword: string }>("/api/admin/reset-password", {
+        userId,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setTempPassword(data.tempPassword);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setResetLoading(false);
     }
@@ -257,13 +235,10 @@ export default function AdminDashboard() {
     setAttachAccountLoading(true);
     setTempPassword(null);
     try {
-      const res = await fetch(`/api/admin/members/${memberId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountPhone: accountPhoneInput.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.patch<{ member: Member; tempPassword?: string }>(
+        `/api/admin/members/${memberId}`,
+        { accountPhone: accountPhoneInput.trim() },
+      );
       setSelected(data.member);
       setMembers((prev) =>
         prev.map((m) =>
@@ -273,7 +248,7 @@ export default function AdminDashboard() {
       if (data.tempPassword) setTempPassword(data.tempPassword);
       setAccountPhoneInput("");
     } catch (e) {
-      setAttachAccountError(e instanceof Error ? e.message : "خطأ");
+      setAttachAccountError(errorMessage(e));
     } finally {
       setAttachAccountLoading(false);
     }

@@ -63,11 +63,7 @@ export default function AgeGroupsDialog({
     setAgeGroupBusyId(id);
     setAgeGroupError("");
     try {
-      const res = await fetch(`/api/admin/age-groups/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "فشلت العملية");
-      }
+      await api.del(`/api/admin/age-groups/${id}`);
       onChanged();
     } catch (e) {
       setAgeGroupError(errorMessage(e));
