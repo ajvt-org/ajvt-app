@@ -23,10 +23,11 @@ export function safeNextPath(next: string | null | undefined, fallback: string):
   return next;
 }
 
-// toLocaleString("ar") embeds right-to-left marks, and the surrounding span
-// is dir="ltr" to keep the digits in order — the two together reorder the
-// parts on screen. Building the string by hand keeps it free of any
-// directional characters, so it reads the same everywhere.
+// Dates render in two shapes: written out for a single field, compact and
+// numeric for list rows. The numeric ones are built by hand because
+// toLocaleString("ar") embeds right-to-left marks, and the spans holding them
+// are dir="ltr" to keep digits in order; together those reorder the parts on
+// screen.
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -39,6 +40,21 @@ export function formatDate(date: Date | string): string {
     month: "long",
     day: "numeric",
   });
+}
+
+export function formatFullDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString("ar-DZ", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function formatTime(date: Date | string): string {
+  const d = new Date(date);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // Converts a full-resolution /api/files/... URL to its thumbnail

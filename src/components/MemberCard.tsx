@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
+import { formatDate } from "@/lib/utils";
 
 interface MemberCardProps {
   fullName: string;
@@ -182,8 +183,7 @@ export default function MemberCard({
               {memberNumber}
             </p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              عضو منذ{" "}
-              {new Date(createdAt).toLocaleDateString("ar", { year: "numeric", month: "long" })}
+              عضو منذ {formatDate(createdAt)}
             </p>
           </div>
         </div>

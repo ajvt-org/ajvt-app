@@ -1,10 +1,11 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import {
-  validatePhone,
+  formatDateTime,
+  formatTime,
+  loginPathWithNext,
   safeNextPath,
   toThumbUrl,
-  loginPathWithNext,
-  formatDateTime,
+  validatePhone,
 } from "./utils";
 
 describe("validatePhone", () => {
@@ -108,5 +109,15 @@ describe("formatDateTime", () => {
 
   it("emits no directional marks, which is what scrambled the log", () => {
     expect(formatDateTime(new Date(2026, 7, 14, 15, 18))).toMatch(/^[\d/: ]+$/);
+  });
+});
+
+describe("formatTime", () => {
+  it("uses a 24 hour clock with no am/pm marker to reorder", () => {
+    expect(formatTime(new Date(2026, 7, 14, 15, 18))).toBe("15:18");
+  });
+
+  it("pads the hour", () => {
+    expect(formatTime(new Date(2026, 7, 14, 9, 5))).toBe("09:05");
   });
 });

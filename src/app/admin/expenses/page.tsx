@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
+import { formatDate, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
@@ -639,12 +639,7 @@ export default function AdminExpensesPage() {
                       {e.label}
                     </p>
                     <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {new Date(e.date).toLocaleDateString("ar", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}{" "}
-                      — بواسطة {e.createdBy}
+                      {formatDate(e.date)} — بواسطة {e.createdBy}
                     </p>
                     {e.note && (
                       <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
