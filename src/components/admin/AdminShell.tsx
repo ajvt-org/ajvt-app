@@ -86,6 +86,7 @@ const NAV_TABS = [
   { href: "/admin/expenses", label: "💸 المصاريف" },
   { href: "/admin/quiz", label: "🧠 المسابقة الثقافية " },
   { href: "/admin/stats", label: "📊 الإحصائيات" },
+  { href: "/admin/settings", label: "⚙️ الإعدادات" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
