@@ -10,7 +10,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
 import ActivitiesSection from "@/components/ActivitiesSection";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
-import { formatFullDate, formatTime, loginPathWithNext } from "@/lib/utils";
+import { formatDate, formatTime, loginPathWithNext } from "@/lib/utils";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import Icon from "@/components/Icon";
 import { errorMessage } from "@/lib/api";
@@ -434,7 +434,7 @@ function MemberEntry({
           {member.paidAmount != null && (
             <InfoRow label="المبلغ المسدد" value={`${member.paidAmount} أوقية`} />
           )}
-          <InfoRow label="تاريخ الطلب" value={formatFullDate(member.createdAt)} />
+          <InfoRow label="تاريخ الطلب" value={formatDate(member.createdAt)} />
           <InfoRow label="وقت الطلب" value={formatTime(member.createdAt)} dir="ltr" />
         </div>
       </div>

@@ -23,23 +23,25 @@ export function safeNextPath(next: string | null | undefined, fallback: string):
   return next;
 }
 
-// Dates render in two shapes: written out for a single field, compact and
-// numeric for list rows. The numeric ones are built by hand because
-// toLocaleString("ar") embeds right-to-left marks, and the spans holding them
-// are dir="ltr" to keep digits in order; together those reorder the parts on
-// screen.
+// One date shape for the whole app: year/month/day, zero padded, built by
+// hand. toLocaleDateString("ar-DZ") writes the month out and embeds
+// right-to-left marks; inside the dir="ltr" spans that hold digits, those
+// marks reorder the parts on screen.
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function numericDate(d: Date): string {
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+}
+
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${numericDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("ar-DZ", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return numericDate(new Date(date));
 }
 
 // The daily rollups key their rows by "YYYY-MM-DD". Handing that straight to
@@ -47,21 +49,11 @@ export function formatDate(date: Date | string): string {
 // anyone west of Greenwich, so the parts are split out and rebuilt locally.
 export function formatDayKey(key: string): string {
   const [year, month, day] = key.split("-").map(Number);
-  return formatDate(new Date(year, month - 1, day));
-}
-
-export function formatFullDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("ar-DZ", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return numericDate(new Date(year, month - 1, day));
 }
 
 export function formatTime(date: Date | string): string {
   const d = new Date(date);
-  const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
