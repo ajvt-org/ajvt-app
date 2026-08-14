@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { logAction } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { bookingCreateSchema } from "./schema";
 
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
+    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const { memberId, teamId, cardType, minute } = parse(bookingCreateSchema, await req.json());
 
@@ -40,6 +41,12 @@ export const POST = withRoute(
         member: { select: { id: true, fullName: true } },
       },
     });
+
+    await logAction(
+      session.username,
+      "CREATE_BOOKING",
+      `${booking.member.fullName} — ${booking.cardType}`,
+    );
 
     return NextResponse.json({ booking }, { status: 201 });
   },
