@@ -4,6 +4,7 @@ import { signToken } from "@/lib/auth";
 import { isRateLimited, recordFailedAttempt, clearAttempts, getClientIp } from "@/lib/rateLimit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -17,22 +18,26 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
 
   const key = `admin-login:${username}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
+    logger.warn("admin.login.rate_limited", { username, ip: getClientIp(req) });
     return NextResponse.json({ error: "محاولات كثيرة جداً، حاول بعد قليل" }, { status: 429 });
   }
 
   const admin = await prisma.admin.findUnique({ where: { username } });
   if (!admin) {
     recordFailedAttempt(key, WINDOW_MS);
+    logger.warn("admin.login.failed", { username, ip: getClientIp(req), reason: "unknown_user" });
     return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(password, admin.password);
   if (!valid) {
     recordFailedAttempt(key, WINDOW_MS);
+    logger.warn("admin.login.failed", { username, ip: getClientIp(req), reason: "bad_password" });
     return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
   }
 
   clearAttempts(key);
+  logger.info("admin.login.ok", { username, role: admin.role, ip: getClientIp(req) });
 
   await prisma.admin.update({
     where: { id: admin.id },
