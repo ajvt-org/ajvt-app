@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
+import PageHeader from "@/components/PageHeader";
 
 export default function DonatePage() {
   return (
@@ -137,18 +137,7 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <div
-          className="px-5 py-4 flex items-center gap-3"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-          <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              رابطة شباب قرية التاكلالت
-            </p>
-            <h1 className="text-base font-black text-white">دعم الرابطة</h1>
-          </div>
-        </div>
+        <PageHeader title={"دعم الرابطة"} backHref="/" />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -195,18 +184,7 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">دعم الرابطة</h1>
-        </div>
-      </div>
+      <PageHeader title={"دعم الرابطة"} backHref="/" />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
