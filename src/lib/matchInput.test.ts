@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateGoals } from "./matchInput";
+import { validateGoals, parseScorePair } from "./matchInput";
 
 const goal = { memberId: "m1", count: 1, minute: 10 };
 
@@ -65,5 +65,43 @@ describe("validateGoals", () => {
 
   it("rejects the whole list if one row is bad", () => {
     expect(validateGoals([goal, { ...goal, count: 0 }])).toBeNull();
+  });
+});
+
+describe("parseScorePair", () => {
+  it("reads a plain score", () => {
+    expect(parseScorePair(2, 1)).toEqual({ home: 2, away: 1 });
+  });
+
+  it("reads a goalless draw", () => {
+    expect(parseScorePair(0, 0)).toEqual({ home: 0, away: 0 });
+  });
+
+  it("reads what a number input actually sends", () => {
+    expect(parseScorePair("2", "1")).toEqual({ home: 2, away: 1 });
+  });
+
+  it("clears the score when both sides are null", () => {
+    expect(parseScorePair(null, null)).toBeNull();
+  });
+
+  it("reads a lone null as zero, which is what the form sends", () => {
+    expect(parseScorePair(null, 3)).toEqual({ home: 0, away: 3 });
+  });
+
+  it("rejects a score given for one side only", () => {
+    expect(parseScorePair(3, undefined)).toBe("invalid");
+  });
+
+  it("rejects a negative score", () => {
+    expect(parseScorePair(-1, 0)).toBe("invalid");
+  });
+
+  it("rejects a fractional score", () => {
+    expect(parseScorePair(1.5, 0)).toBe("invalid");
+  });
+
+  it("rejects something that is not a number", () => {
+    expect(parseScorePair("two", 0)).toBe("invalid");
   });
 });
