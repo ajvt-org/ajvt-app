@@ -104,7 +104,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (err instanceof Error && err.message === "UNAUTHORIZED")
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     console.error("Quiz question update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -131,7 +131,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (err instanceof Error && err.message === "UNAUTHORIZED")
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     console.error("Quiz question delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
