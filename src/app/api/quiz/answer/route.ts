@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { computeIsCorrect, isQuizEligible } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { quizAnswerSchema } from "./schema";
 
 export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) => {
   const session = await requireUser();
@@ -14,14 +16,7 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
     );
   }
 
-  const { assignmentId, selectedAnswerIds } = await req.json();
-
-  if (!assignmentId || typeof assignmentId !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
-  if (!Array.isArray(selectedAnswerIds) || selectedAnswerIds.some((id) => typeof id !== "string")) {
-    return NextResponse.json({ error: "يجب اختيار إجابة واحدة على الأقل" }, { status: 400 });
-  }
+  const { assignmentId, selectedAnswerIds } = parse(quizAnswerSchema, await req.json());
 
   const assignment = await prisma.quizAssignment.findUnique({
     where: { id: assignmentId },
