@@ -1,21 +1,13 @@
-"use client";
+import Link from "next/link";
 
-import { useRouter } from "next/navigation";
-
-export default function BackButton({ fallbackHref }: { fallbackHref: string }) {
-  const router = useRouter();
-
-  function goBack() {
-    // A member arriving from a shared link or a cold PWA start has no history
-    // to pop, so send them to the closest sensible parent instead.
-    if (window.history.length > 1) router.back();
-    else router.push(fallbackHref);
-  }
-
+// A plain link rather than router.back(). window.history counts entries from
+// other sites too, so going back could carry a member out of the app entirely
+// — a link to a known parent always stays inside it, and works the same when
+// the page was opened from a shared link with no history at all.
+export default function BackButton({ href }: { href: string }) {
   return (
-    <button
-      type="button"
-      onClick={goBack}
+    <Link
+      href={href}
       aria-label="رجوع"
       className="shrink-0 rounded-lg flex items-center justify-center"
       style={{
@@ -38,6 +30,6 @@ export default function BackButton({ fallbackHref }: { fallbackHref: string }) {
       >
         <path d="M9 18l6-6-6-6" />
       </svg>
-    </button>
+    </Link>
   );
 }
