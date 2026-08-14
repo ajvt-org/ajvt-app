@@ -7,6 +7,7 @@ import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { validatePaidAmount } from "@/lib/donations";
+import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { withRoute } from "@/lib/route";
 
@@ -72,7 +73,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
   }
   let paidAmountValue: number | null = null;
   if (paidAmount !== undefined && paidAmount !== null && String(paidAmount).trim() !== "") {
-    const paidAmountError = validatePaidAmount(paidAmount);
+    const paidAmountError = validatePaidAmount(paidAmount, (await getAppSettings()).membershipFee);
     if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
     paidAmountValue = Number(paidAmount);
   }

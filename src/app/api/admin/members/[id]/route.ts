@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
 import { logAction } from "@/lib/audit";
 import { validatePaidAmount } from "@/lib/donations";
+import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
@@ -94,7 +95,10 @@ export const PATCH = withRoute(
       if (paidAmount === null) {
         data.paidAmount = null;
       } else {
-        const paidAmountError = validatePaidAmount(paidAmount);
+        const paidAmountError = validatePaidAmount(
+          paidAmount,
+          (await getAppSettings()).membershipFee,
+        );
         if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
         data.paidAmount = Number(paidAmount);
       }
