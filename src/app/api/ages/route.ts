@@ -10,7 +10,11 @@ export async function GET() {
       prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" }, select: { name: true } }),
       // Members can free-type a custom age on the membership form — carry
       // any such value along even if it was never added to the managed list.
-      prisma.member.findMany({ distinct: ["age"], orderBy: { createdAt: "asc" }, select: { age: true } }),
+      prisma.member.findMany({
+        distinct: ["age"],
+        orderBy: { createdAt: "asc" },
+        select: { age: true },
+      }),
     ]);
 
     const ages = ageGroups.map((g) => g.name);

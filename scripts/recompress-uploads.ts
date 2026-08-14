@@ -23,7 +23,9 @@ import { processImage } from "../src/lib/imageProcessing";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const uploadDirArg = process.argv.find((a) => a.startsWith("--upload-dir="));
-const UPLOAD_DIR = uploadDirArg ? uploadDirArg.slice("--upload-dir=".length) : process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
+const UPLOAD_DIR = uploadDirArg
+  ? uploadDirArg.slice("--upload-dir=".length)
+  : process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
 
 // Kept outside UPLOAD_DIR on purpose: in dev, UPLOAD_DIR is public/uploads,
 // served statically by Next — anything placed inside it (backups, the
@@ -61,7 +63,11 @@ async function saveManifest(manifest: Manifest) {
 // Chaque champ ci-dessous stocke un nom de fichier d'upload (pas une URL).
 // Un même fichier n'est jamais référencé par plus d'une ligne (uuid unique
 // par upload), donc un index nom -> emplacement suffit.
-type FileRef = { model: "member" | "donation" | "activity" | "team" | "expense" | "activityRegistration"; id: string; field: string };
+type FileRef = {
+  model: "member" | "donation" | "activity" | "team" | "expense" | "activityRegistration";
+  id: string;
+  field: string;
+};
 
 async function buildFileRefIndex(prisma: PrismaClient): Promise<Map<string, FileRef>> {
   const index = new Map<string, FileRef>();
@@ -89,7 +95,8 @@ async function buildFileRefIndex(prisma: PrismaClient): Promise<Map<string, File
   for (const a of activities) add(a.photo, { model: "activity", id: a.id, field: "photo" });
   for (const t of teams) add(t.logo, { model: "team", id: t.id, field: "logo" });
   for (const e of expenses) add(e.proof, { model: "expense", id: e.id, field: "proof" });
-  for (const r of registrations) add(r.paymentProof, { model: "activityRegistration", id: r.id, field: "paymentProof" });
+  for (const r of registrations)
+    add(r.paymentProof, { model: "activityRegistration", id: r.id, field: "paymentProof" });
 
   return index;
 }
@@ -97,12 +104,18 @@ async function buildFileRefIndex(prisma: PrismaClient): Promise<Map<string, File
 async function updateFileRef(prisma: PrismaClient, ref: FileRef, newFilename: string) {
   const data = { [ref.field]: newFilename };
   switch (ref.model) {
-    case "member": return prisma.member.update({ where: { id: ref.id }, data });
-    case "donation": return prisma.donation.update({ where: { id: ref.id }, data });
-    case "activity": return prisma.activity.update({ where: { id: ref.id }, data });
-    case "team": return prisma.team.update({ where: { id: ref.id }, data });
-    case "expense": return prisma.expense.update({ where: { id: ref.id }, data });
-    case "activityRegistration": return prisma.activityRegistration.update({ where: { id: ref.id }, data });
+    case "member":
+      return prisma.member.update({ where: { id: ref.id }, data });
+    case "donation":
+      return prisma.donation.update({ where: { id: ref.id }, data });
+    case "activity":
+      return prisma.activity.update({ where: { id: ref.id }, data });
+    case "team":
+      return prisma.team.update({ where: { id: ref.id }, data });
+    case "expense":
+      return prisma.expense.update({ where: { id: ref.id }, data });
+    case "activityRegistration":
+      return prisma.activityRegistration.update({ where: { id: ref.id }, data });
   }
 }
 
@@ -169,7 +182,11 @@ export async function processOneFile(oldFilename: string): Promise<FileResult> {
 
 async function main() {
   console.log(`Dossier d'uploads : ${UPLOAD_DIR}`);
-  console.log(DRY_RUN ? "Mode --dry-run : aucune écriture, aucune modification en base.\n" : "Mode réel : les fichiers seront recompressés et la base mise à jour.\n");
+  console.log(
+    DRY_RUN
+      ? "Mode --dry-run : aucune écriture, aucune modification en base.\n"
+      : "Mode réel : les fichiers seront recompressés et la base mise à jour.\n",
+  );
 
   if (!existsSync(UPLOAD_DIR)) {
     console.error(`Dossier introuvable : ${UPLOAD_DIR}`);
@@ -192,15 +209,26 @@ async function main() {
 
   const fileRefIndex = await buildFileRefIndex(prisma);
 
-  let processed = 0, skipped = 0, errors = 0, orphans = 0, dbUpdates = 0;
-  let beforeTotal = 0, afterTotal = 0;
+  let processed = 0,
+    skipped = 0,
+    errors = 0,
+    orphans = 0,
+    dbUpdates = 0;
+  let beforeTotal = 0,
+    afterTotal = 0;
   const log: (FileResult & { dbUpdated: boolean; orphan: boolean })[] = [];
 
   for (const filename of candidates) {
     const id = basename(filename, extname(filename));
     const already = manifest[id];
-    const alreadyThumbName = already ? `${basename(already.newFilename, extname(already.newFilename))}-thumb.webp` : null;
-    const outputStillOnDisk = already && alreadyThumbName && existsSync(join(UPLOAD_DIR, already.newFilename)) && existsSync(join(UPLOAD_DIR, alreadyThumbName));
+    const alreadyThumbName = already
+      ? `${basename(already.newFilename, extname(already.newFilename))}-thumb.webp`
+      : null;
+    const outputStillOnDisk =
+      already &&
+      alreadyThumbName &&
+      existsSync(join(UPLOAD_DIR, already.newFilename)) &&
+      existsSync(join(UPLOAD_DIR, alreadyThumbName));
     if (already && outputStillOnDisk) {
       skipped++;
       continue;
@@ -213,7 +241,17 @@ async function main() {
       errors++;
       const message = err instanceof Error ? err.message : String(err);
       console.error(`❌ ${filename} : ${message}`);
-      log.push({ oldFilename: filename, newFilename: filename, beforeBytes: 0, afterBytes: 0, thumbBytes: 0, status: "error", error: message, dbUpdated: false, orphan: false });
+      log.push({
+        oldFilename: filename,
+        newFilename: filename,
+        beforeBytes: 0,
+        afterBytes: 0,
+        thumbBytes: 0,
+        status: "error",
+        error: message,
+        dbUpdated: false,
+        orphan: false,
+      });
       continue;
     }
 
@@ -224,7 +262,9 @@ async function main() {
     const ref = fileRefIndex.get(filename);
     let dbUpdated = false;
     if (ref && result.newFilename !== filename) {
-      console.log(`  ${DRY_RUN ? "[dry-run] mettrait à jour" : "mise à jour"} ${ref.model}.${ref.field} (${ref.id}) : ${filename} → ${result.newFilename}`);
+      console.log(
+        `  ${DRY_RUN ? "[dry-run] mettrait à jour" : "mise à jour"} ${ref.model}.${ref.field} (${ref.id}) : ${filename} → ${result.newFilename}`,
+      );
       if (!DRY_RUN) {
         await updateFileRef(prisma, ref, result.newFilename);
       }
@@ -247,8 +287,13 @@ async function main() {
       await saveManifest(manifest);
     }
 
-    const pct = result.beforeBytes > 0 ? (100 - ((result.afterBytes + result.thumbBytes) / result.beforeBytes) * 100).toFixed(0) : "0";
-    console.log(`✅ ${filename} : ${(result.beforeBytes / 1024).toFixed(0)} Ko → ${(result.afterBytes / 1024).toFixed(0)} Ko + ${(result.thumbBytes / 1024).toFixed(1)} Ko miniature (-${pct}%)`);
+    const pct =
+      result.beforeBytes > 0
+        ? (100 - ((result.afterBytes + result.thumbBytes) / result.beforeBytes) * 100).toFixed(0)
+        : "0";
+    console.log(
+      `✅ ${filename} : ${(result.beforeBytes / 1024).toFixed(0)} Ko → ${(result.afterBytes / 1024).toFixed(0)} Ko + ${(result.thumbBytes / 1024).toFixed(1)} Ko miniature (-${pct}%)`,
+    );
 
     log.push({ ...result, dbUpdated, orphan: !ref });
   }
@@ -273,7 +318,9 @@ async function main() {
   }
   if (!DRY_RUN) {
     console.log(`\nOriginaux sauvegardés dans : ${BACKUP_DIR}`);
-    console.log("À supprimer une fois les images vérifiées sur le site (ils comptent dans l'usage disque tant qu'ils restent là).");
+    console.log(
+      "À supprimer une fois les images vérifiées sur le site (ils comptent dans l'usage disque tant qu'ils restent là).",
+    );
   }
 
   await prisma.$disconnect();

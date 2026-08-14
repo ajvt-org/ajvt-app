@@ -13,7 +13,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "يرجى ملء جميع الحقول" }, { status: 400 });
     }
     if (newPassword.length < 3) {
-      return NextResponse.json({ error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" }, { status: 400 });
+      return NextResponse.json(
+        { error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" },
+        { status: 400 },
+      );
     }
 
     const admin = await prisma.admin.findUnique({ where: { id: session.adminId } });

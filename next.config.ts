@@ -23,12 +23,7 @@ const CSP = [
 
 const nextConfig: NextConfig = {
   // Allow access from other devices on the local network (for testing from phone)
-  allowedDevOrigins: [
-    "192.168.0.19",
-    "192.168.1.*",
-    "192.168.0.*",
-    "10.0.0.*",
-  ],
+  allowedDevOrigins: ["192.168.0.19", "192.168.1.*", "192.168.0.*", "10.0.0.*"],
 
   async headers() {
     // Skip in dev: Turbopack's HMR (eval'd chunks, websocket) would trip

@@ -34,17 +34,23 @@ export async function POST(req: NextRequest) {
     if (target === "AGE") where.age = age.trim();
 
     const members = await prisma.member.findMany({ where, select: { userId: true } });
-    const userIds = Array.from(new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)));
+    const userIds = Array.from(
+      new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)),
+    );
 
     await Promise.all(
       userIds.map((uid) =>
         sendPushToUser(uid, { title: title.trim(), body: body.trim() }).catch((err) =>
-          console.error("Broadcast push error:", err)
-        )
-      )
+          console.error("Broadcast push error:", err),
+        ),
+      ),
     );
 
-    await logAction(session.username, "SEND_BROADCAST", `${title.trim()} → ${userIds.length} مستلم`);
+    await logAction(
+      session.username,
+      "SEND_BROADCAST",
+      `${title.trim()} → ${userIds.length} مستلم`,
+    );
 
     return NextResponse.json({ ok: true, recipientCount: userIds.length });
   } catch (err) {

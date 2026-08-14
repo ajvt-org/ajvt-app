@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
     }
     const n = Number(amount);
     if (!Number.isInteger(n) || n <= 0) {
-      return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+      return NextResponse.json(
+        { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
+        { status: 400 },
+      );
     }
     if (proof !== undefined && proof !== null && typeof proof !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
@@ -34,7 +37,11 @@ export async function POST(req: NextRequest) {
     if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
-    if (paymentMethod !== undefined && paymentMethod !== null && !PAYMENT_METHODS.includes(paymentMethod)) {
+    if (
+      paymentMethod !== undefined &&
+      paymentMethod !== null &&
+      !PAYMENT_METHODS.includes(paymentMethod)
+    ) {
       return NextResponse.json({ error: "طريقة دفع غير صالحة" }, { status: 400 });
     }
 

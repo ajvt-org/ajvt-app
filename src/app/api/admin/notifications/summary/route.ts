@@ -11,7 +11,9 @@ export async function GET() {
     const [pendingMembers, pendingTeamRequests, pendingDonations] = await Promise.all([
       prisma.member.count({ where: { status: "PENDING" } }),
       prisma.teamMember.count({ where: { status: "PENDING" } }),
-      session.role === "SUPER" ? prisma.donation.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
+      session.role === "SUPER"
+        ? prisma.donation.count({ where: { status: "PENDING" } })
+        : Promise.resolve(0),
     ]);
     return NextResponse.json({ pendingMembers, pendingTeamRequests, pendingDonations });
   } catch (err) {

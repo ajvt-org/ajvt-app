@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
@@ -16,7 +16,10 @@ export async function PATCH(
       return NextResponse.json({ error: "اسم المجموعة مطلوب" }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json({ error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     const data: { name: string; capacity?: number | null } = { name: name.trim() };
     if (capacity !== undefined) {
@@ -25,7 +28,10 @@ export async function PATCH(
       } else {
         const capacityValue = Number(capacity);
         if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-          return NextResponse.json({ error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" }, { status: 400 });
+          return NextResponse.json(
+            { error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" },
+            { status: 400 },
+          );
         }
         data.capacity = capacityValue;
       }
@@ -49,7 +55,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");

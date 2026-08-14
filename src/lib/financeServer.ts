@@ -62,7 +62,13 @@ export async function getFinanceSummary(recentDays = 30) {
   const daemByMethod = new Map<string, Map<string, number>>();
   const anonymousByMethod = new Map<string, number>();
 
-  function addRevenue(amount: number, method: string | null, date: Date, name: string, kind: "انتساب" | "دعم") {
+  function addRevenue(
+    amount: number,
+    method: string | null,
+    date: Date,
+    name: string,
+    kind: "انتساب" | "دعم",
+  ) {
     const key = method || UNSPECIFIED_METHOD;
     byMethod[key] = (byMethod[key] || 0) + amount;
     totalRevenue += amount;
@@ -77,7 +83,12 @@ export async function getFinanceSummary(recentDays = 30) {
     return key;
   }
 
-  function addNamed(byMethodMap: Map<string, Map<string, number>>, method: string, name: string, amount: number) {
+  function addNamed(
+    byMethodMap: Map<string, Map<string, number>>,
+    method: string,
+    name: string,
+    amount: number,
+  ) {
     const perName = byMethodMap.get(method) || new Map<string, number>();
     perName.set(name, (perName.get(name) || 0) + amount);
     byMethodMap.set(method, perName);
@@ -122,7 +133,9 @@ export async function getFinanceSummary(recentDays = 30) {
     .sort((a, b) => b.date.localeCompare(a.date))
     .map((d) => ({
       ...d,
-      records: allRecords.filter((r) => r.date === d.date).sort((a, b) => b.time.localeCompare(a.time)),
+      records: allRecords
+        .filter((r) => r.date === d.date)
+        .sort((a, b) => b.time.localeCompare(a.time)),
     }));
 
   const totalExpenses = expenses.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0);

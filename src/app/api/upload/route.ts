@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: "لم يتم إرفاق ملف" }, { status: 400 });
     if (!ALLOWED_UPLOAD_TYPES.includes(file.type))
-      return NextResponse.json({ error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" },
+        { status: 400 },
+      );
     if (file.size > MAX_UPLOAD_SIZE)
       return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
 
@@ -39,13 +42,19 @@ export async function POST(req: NextRequest) {
       processed = await processImage(Buffer.from(await file.arrayBuffer()));
     } catch (err) {
       console.error("Image processing error:", err);
-      return NextResponse.json({ error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" }, { status: 400 });
+      return NextResponse.json(
+        { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
+        { status: 400 },
+      );
     }
 
     await mkdir(uploadDir, { recursive: true });
     await Promise.all([
       writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-      writeFile(join(/* turbopackIgnore: true */ uploadDir, thumbnailFilename), processed.thumbnail),
+      writeFile(
+        join(/* turbopackIgnore: true */ uploadDir, thumbnailFilename),
+        processed.thumbnail,
+      ),
     ]);
 
     return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });

@@ -71,14 +71,23 @@ export default function MvpVoteWidget({
                 <div key={c.id}>
                   <div className="flex items-center justify-between text-xs mb-0.5">
                     <span style={{ color: "var(--text-main)", fontWeight: isWinner ? 700 : 400 }}>
-                      {isWinner ? "🏅 " : ""}{c.fullName}
+                      {isWinner ? "🏅 " : ""}
+                      {c.fullName}
                     </span>
-                    <span style={{ color: "var(--text-muted)" }}>{c.voteCount} ({pct}%)</span>
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {c.voteCount} ({pct}%)
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--mint-100)" }}>
+                  <div
+                    className="h-1.5 rounded-full overflow-hidden"
+                    style={{ background: "var(--mint-100)" }}
+                  >
                     <div
                       className="h-1.5 rounded-full"
-                      style={{ width: `${pct}%`, background: isWinner ? "var(--copper-500)" : "var(--mint-500)" }}
+                      style={{
+                        width: `${pct}%`,
+                        background: isWinner ? "var(--copper-500)" : "var(--mint-500)",
+                      }}
                     />
                   </div>
                 </div>
@@ -89,7 +98,9 @@ export default function MvpVoteWidget({
         <div>
           <div className="flex flex-wrap gap-1.5 mb-1.5">
             {candidates.map((c) => (
-              <span key={c.id} className="badge badge-pending">{c.fullName}</span>
+              <span key={c.id} className="badge badge-pending">
+                {c.fullName}
+              </span>
             ))}
           </div>
           <a href="/login" className="text-xs font-semibold" style={{ color: "var(--mint-600)" }}>
@@ -116,7 +127,11 @@ export default function MvpVoteWidget({
         </div>
       )}
 
-      {error && <p className="text-xs mt-1" style={{ color: "#dc2626" }}>{error}</p>}
+      {error && (
+        <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

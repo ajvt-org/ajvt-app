@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { touchUserActivity, runDailyQuizAutoSend, getPendingAssignments, getUserQuizStanding, isQuizEligible } from "@/lib/quiz";
+import {
+  touchUserActivity,
+  runDailyQuizAutoSend,
+  getPendingAssignments,
+  getUserQuizStanding,
+  isQuizEligible,
+} from "@/lib/quiz";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -8,7 +14,10 @@ export async function GET() {
     const session = await requireUser();
 
     if (!(await isQuizEligible(session.userId))) {
-      return NextResponse.json({ error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب", eligible: false }, { status: 403 });
+      return NextResponse.json(
+        { error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب", eligible: false },
+        { status: 403 },
+      );
     }
 
     await touchUserActivity(session.userId);
@@ -20,7 +29,10 @@ export async function GET() {
     const [pending, standing, user] = await Promise.all([
       getPendingAssignments(session.userId),
       getUserQuizStanding(session.userId),
-      prisma.user.findUnique({ where: { id: session.userId }, select: { currentStreak: true, longestStreak: true } }),
+      prisma.user.findUnique({
+        where: { id: session.userId },
+        select: { currentStreak: true, longestStreak: true },
+      }),
     ]);
 
     return NextResponse.json({

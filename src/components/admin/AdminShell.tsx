@@ -25,7 +25,12 @@ interface ActivityOption {
   title: string;
 }
 
-const ROLE_LABEL: Record<string, string> = { SUPER: "كامل الصلاحيات", MEMBERS: "الأعضاء فقط", ACTIVITIES: "الأنشطة فقط", QUIZ: "المسابقة الثقافية فقط" };
+const ROLE_LABEL: Record<string, string> = {
+  SUPER: "كامل الصلاحيات",
+  MEMBERS: "الأعضاء فقط",
+  ACTIVITIES: "الأنشطة فقط",
+  QUIZ: "المسابقة الثقافية فقط",
+};
 
 interface AuditLogEntry {
   id: string;
@@ -112,7 +117,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [auditLoading, setAuditLoading] = useState(false);
 
   const [showBroadcast, setShowBroadcast] = useState(false);
-  const [broadcastForm, setBroadcastForm] = useState({ target: "ALL", activityId: "", age: "", title: "", body: "" });
+  const [broadcastForm, setBroadcastForm] = useState({
+    target: "ALL",
+    activityId: "",
+    age: "",
+    title: "",
+    body: "",
+  });
   const [broadcastActivities, setBroadcastActivities] = useState<ActivityOption[]>([]);
   const [broadcastAges, setBroadcastAges] = useState<string[]>([]);
   const [broadcastError, setBroadcastError] = useState("");
@@ -124,8 +135,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (isLoginPage) return;
     fetch("/api/admin/me")
-      .then((r) => { if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; } return r.json(); })
-      .then((data) => { if (data?.role) setRole(data.role); })
+      .then((r) => {
+        if (r.status === 401) {
+          router.push(loginPathWithNext("/admin/login"));
+          return null;
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (data?.role) setRole(data.role);
+      })
       .catch(() => {});
     fetch("/api/admin/notifications/summary")
       .then((r) => (r.ok ? r.json() : null))
@@ -142,10 +161,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!role || isLoginPage) return;
     const allowedPrefixes =
-      role === "MEMBERS" ? ["/admin/dashboard", "/admin/payments", "/admin/expenses"]
-      : role === "ACTIVITIES" ? ["/admin/activities", "/admin/payments", "/admin/expenses"]
-      : role === "QUIZ" ? ["/admin/quiz"]
-      : null;
+      role === "MEMBERS"
+        ? ["/admin/dashboard", "/admin/payments", "/admin/expenses"]
+        : role === "ACTIVITIES"
+          ? ["/admin/activities", "/admin/payments", "/admin/expenses"]
+          : role === "QUIZ"
+            ? ["/admin/quiz"]
+            : null;
     if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
       router.push(`${allowedPrefixes[0]}?denied=1`);
     }
@@ -172,8 +194,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const visibleTabs = NAV_TABS.filter((tab) => {
     if (!role || role === "SUPER") return true;
-    if (role === "MEMBERS") return tab.href === "/admin/dashboard" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
-    if (role === "ACTIVITIES") return tab.href === "/admin/activities" || tab.href === "/admin/payments" || tab.href === "/admin/expenses";
+    if (role === "MEMBERS")
+      return (
+        tab.href === "/admin/dashboard" ||
+        tab.href === "/admin/payments" ||
+        tab.href === "/admin/expenses"
+      );
+    if (role === "ACTIVITIES")
+      return (
+        tab.href === "/admin/activities" ||
+        tab.href === "/admin/payments" ||
+        tab.href === "/admin/expenses"
+      );
     if (role === "QUIZ") return tab.href === "/admin/quiz";
     return true;
   });
@@ -205,7 +237,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setCpSuccess(true);
       setCpForm({ current: "", next: "", confirm: "" });
-      setTimeout(() => { setShowChangePassword(false); setCpSuccess(false); }, 1500);
+      setTimeout(() => {
+        setShowChangePassword(false);
+        setCpSuccess(false);
+      }, 1500);
     } catch (e) {
       setCpError(e instanceof Error ? e.message : "خطأ");
     } finally {
@@ -278,7 +313,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       ]);
       const activitiesData = await activitiesRes.json();
       const agesData = await agesRes.json();
-      setBroadcastActivities((activitiesData.activities || []).map((a: { id: string; title: string }) => ({ id: a.id, title: a.title })));
+      setBroadcastActivities(
+        (activitiesData.activities || []).map((a: { id: string; title: string }) => ({
+          id: a.id,
+          title: a.title,
+        })),
+      );
       setBroadcastAges(agesData.ages || []);
     } catch {
       // ignore — selects just stay empty
@@ -331,7 +371,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <button
             onClick={logout}
             className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-            style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}
+            style={{
+              background: "rgba(239,68,68,0.2)",
+              color: "#fca5a5",
+              border: "1px solid rgba(239,68,68,0.3)",
+            }}
           >
             خروج
           </button>
@@ -390,7 +434,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           style={{ background: "#fef3c7", color: "#92400e" }}
         >
           <span>🔒 ليس لديك صلاحية للوصول إلى تلك الصفحة</span>
-          <button onClick={() => setPermissionDenied(false)} className="font-black">✕</button>
+          <button onClick={() => setPermissionDenied(false)} className="font-black">
+            ✕
+          </button>
         </div>
       )}
 
@@ -401,7 +447,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowMenu(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowMenu(false);
+          }}
         >
           <div
             className="w-full max-w-sm rounded-t-3xl md:rounded-2xl overflow-hidden"
@@ -425,28 +473,42 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </div>
             <div className="p-4 space-y-2">
               <button
-                onClick={() => { setShowMenu(false); setShowChangePassword(true); }}
+                onClick={() => {
+                  setShowMenu(false);
+                  setShowChangePassword(true);
+                }}
                 className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
               >
                 🔑 تغيير كلمة المرور
               </button>
               {role === "SUPER" && (
                 <button
-                  onClick={() => { setShowMenu(false); setShowAdmins(true); loadAdmins(); }}
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowAdmins(true);
+                    loadAdmins();
+                  }}
                   className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
                 >
                   👥 إدارة حسابات المشرفين
                 </button>
               )}
               <button
-                onClick={() => { setShowMenu(false); setShowAuditLog(true); loadAuditLog(); }}
+                onClick={() => {
+                  setShowMenu(false);
+                  setShowAuditLog(true);
+                  loadAuditLog();
+                }}
                 className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
               >
                 📜 سجل الإجراءات
               </button>
               {role === "SUPER" && (
                 <button
-                  onClick={() => { setShowMenu(false); openBroadcast(); }}
+                  onClick={() => {
+                    setShowMenu(false);
+                    openBroadcast();
+                  }}
                   className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
                 >
                   📣 إرسال إشعار جماعي
@@ -462,7 +524,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowChangePassword(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowChangePassword(false);
+          }}
         >
           <div
             className="w-full max-w-sm rounded-2xl overflow-hidden"
@@ -484,7 +548,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
             <form onSubmit={changePassword} className="p-5 space-y-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   كلمة المرور الحالية
                 </label>
                 <input
@@ -496,7 +563,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   كلمة المرور الجديدة
                 </label>
                 <input
@@ -508,7 +578,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   تأكيد كلمة المرور الجديدة
                 </label>
                 <input
@@ -521,12 +594,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </div>
 
               {cpError && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {cpError}
                 </div>
               )}
               {cpSuccess && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#d1fae5", color: "#065f46" }}
+                >
                   ✅ تم تغيير كلمة المرور
                 </div>
               )}
@@ -544,7 +623,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowAdmins(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAdmins(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -570,11 +651,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   <div key={a.id} className="card p-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{a.username}</p>
+                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                          {a.username}
+                        </p>
                         <span className="badge badge-pending">{ROLE_LABEL[a.role] || a.role}</span>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        منذ {new Date(a.createdAt).toLocaleDateString("ar")} — {new Date(a.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                        منذ {new Date(a.createdAt).toLocaleDateString("ar")} —{" "}
+                        {new Date(a.createdAt).toLocaleTimeString("ar", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {a.lastLoginAt
@@ -594,7 +681,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </div>
 
               <form onSubmit={createAdmin} className="card p-4 space-y-3">
-                <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>➕ إضافة مشرف جديد</p>
+                <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                  ➕ إضافة مشرف جديد
+                </p>
                 <input
                   type="text"
                   placeholder="اسم المستخدم"
@@ -620,10 +709,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   <option value="SUPER">كامل الصلاحيات</option>
                   <option value="MEMBERS">الأعضاء فقط</option>
                   <option value="ACTIVITIES">الأنشطة فقط</option>
-                  <option value="QUIZ">المسابقة الثقافية  فقط</option>
+                  <option value="QUIZ">المسابقة الثقافية فقط</option>
                 </select>
                 {adminError && (
-                  <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                  <div
+                    className="p-3 rounded-xl text-sm font-semibold"
+                    style={{ background: "#fee2e2", color: "#991b1b" }}
+                  >
                     ⚠️ {adminError}
                   </div>
                 )}
@@ -641,7 +733,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowAuditLog(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAuditLog(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -663,9 +757,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
             <div className="p-5 space-y-2">
               {auditLoading ? (
-                <div className="text-center py-8" style={{ color: "var(--mint-500)" }}>⏳</div>
+                <div className="text-center py-8" style={{ color: "var(--mint-500)" }}>
+                  ⏳
+                </div>
               ) : auditLogs.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا يوجد سجل بعد</p>
+                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+                  لا يوجد سجل بعد
+                </p>
               ) : (
                 auditLogs.map((log) => (
                   <div key={log.id} className="card p-3">
@@ -673,13 +771,22 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                       <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
                         {ACTION_LABELS[log.action] || log.action}
                       </p>
-                      <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} dir="ltr">
+                      <span
+                        className="text-xs shrink-0"
+                        style={{ color: "var(--text-muted)" }}
+                        dir="ltr"
+                      >
                         {new Date(log.createdAt).toLocaleDateString("ar")}{" "}
-                        {new Date(log.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(log.createdAt).toLocaleTimeString("ar", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                     {log.targetLabel && (
-                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>{log.targetLabel}</p>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                        {log.targetLabel}
+                      </p>
                     )}
                     <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
                       بواسطة {log.adminUsername}
@@ -697,7 +804,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowBroadcast(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBroadcast(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -719,7 +828,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>المستلمون</label>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  المستلمون
+                </label>
                 <select
                   value={broadcastForm.target}
                   onChange={(e) => setBroadcastForm((p) => ({ ...p, target: e.target.value }))}
@@ -738,8 +852,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   required
                   className="input"
                 >
-                  <option value="" disabled>اختر النشاط...</option>
-                  {broadcastActivities.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
+                  <option value="" disabled>
+                    اختر النشاط...
+                  </option>
+                  {broadcastActivities.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.title}
+                    </option>
+                  ))}
                 </select>
               )}
 
@@ -750,8 +870,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   required
                   className="input"
                 >
-                  <option value="" disabled>اختر العصر...</option>
-                  {broadcastAges.map((a) => <option key={a} value={a}>{a}</option>)}
+                  <option value="" disabled>
+                    اختر العصر...
+                  </option>
+                  {broadcastAges.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
                 </select>
               )}
 
@@ -775,12 +901,18 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               />
 
               {broadcastError && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {broadcastError}
                 </div>
               )}
               {broadcastSuccess !== null && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#d1fae5", color: "#065f46" }}
+                >
                   ✅ تم الإرسال إلى {broadcastSuccess} عضو
                 </div>
               )}

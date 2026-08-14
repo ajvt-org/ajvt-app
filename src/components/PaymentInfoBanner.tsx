@@ -5,9 +5,9 @@ import { useState } from "react";
 const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
 
 const PAYMENT_CODES: Record<string, string> = {
-  "بنكيلي": "027217",
-  "السداد": "08493",
-  "مصرفي": "037940",
+  بنكيلي: "027217",
+  السداد: "08493",
+  مصرفي: "037940",
 };
 
 export default function PaymentInfoBanner({ note }: { note?: string }) {
@@ -48,7 +48,11 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
           >
             <span className="text-sm font-semibold text-white">{method}</span>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+              <span
+                className="font-mono font-bold text-sm"
+                style={{ color: "var(--mint-200)" }}
+                dir="ltr"
+              >
                 {PAYMENT_CODES[method]}
               </span>
               <button
@@ -56,7 +60,10 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
                 onClick={() => copyCode(PAYMENT_CODES[method])}
                 className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                 style={{
-                  background: copied === PAYMENT_CODES[method] ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                  background:
+                    copied === PAYMENT_CODES[method]
+                      ? "rgba(52,211,153,0.3)"
+                      : "rgba(255,255,255,0.15)",
                   color: copied === PAYMENT_CODES[method] ? "#6ee7b7" : "white",
                   border: "1px solid rgba(255,255,255,0.2)",
                   minWidth: "52px",
@@ -68,7 +75,11 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
           </div>
         ))}
       </div>
-      {note && <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.75)" }}>{note}</p>}
+      {note && (
+        <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.75)" }}>
+          {note}
+        </p>
+      )}
     </div>
   );
 }

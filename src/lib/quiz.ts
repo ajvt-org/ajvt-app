@@ -3,7 +3,11 @@ import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
 
-const QUIZ_PUSH_PAYLOAD = { title: "رابطة شباب التاكلالت", body: "🧠 سؤال ثقافي جديد بانتظارك!", url: "/quiz" };
+const QUIZ_PUSH_PAYLOAD = {
+  title: "رابطة شباب التاكلالت",
+  body: "🧠 سؤال ثقافي جديد بانتظارك!",
+  url: "/quiz",
+};
 
 // --- Eligibility ---
 // Only paid-up members ("منتسب") can play: a User needs at least one Member
@@ -31,7 +35,11 @@ async function getEligibleUserIds(): Promise<string[]> {
 // --- Settings (singleton row, same idiom as Counter) ---
 
 export async function getQuizSettings() {
-  return prisma.quizSettings.upsert({ where: { id: "singleton" }, update: {}, create: { id: "singleton" } });
+  return prisma.quizSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton" },
+  });
 }
 
 export async function updateQuizSettings(data: {
@@ -40,7 +48,11 @@ export async function updateQuizSettings(data: {
   defaultPoints?: number;
   questionsPerDay?: number;
 }) {
-  return prisma.quizSettings.upsert({ where: { id: "singleton" }, update: data, create: { id: "singleton", ...data } });
+  return prisma.quizSettings.upsert({
+    where: { id: "singleton" },
+    update: data,
+    create: { id: "singleton", ...data },
+  });
 }
 
 // --- Streak ("flame") ---
@@ -53,7 +65,11 @@ function todayUTC(): Date {
 }
 
 function isSameUTCDay(a: Date, b: Date): boolean {
-  return a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth() && a.getUTCDate() === b.getUTCDate();
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate()
+  );
 }
 
 export async function touchUserActivity(userId: string): Promise<void> {
@@ -68,12 +84,17 @@ export async function touchUserActivity(userId: string): Promise<void> {
 
   const yesterday = new Date(today);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  const continuesStreak = user.lastActiveDate ? isSameUTCDay(user.lastActiveDate, yesterday) : false;
+  const continuesStreak = user.lastActiveDate
+    ? isSameUTCDay(user.lastActiveDate, yesterday)
+    : false;
 
   const currentStreak = continuesStreak ? user.currentStreak + 1 : 1;
   const longestStreak = Math.max(user.longestStreak, currentStreak);
 
-  await prisma.user.update({ where: { id: userId }, data: { lastActiveDate: today, currentStreak, longestStreak } });
+  await prisma.user.update({
+    where: { id: userId },
+    data: { lastActiveDate: today, currentStreak, longestStreak },
+  });
 }
 
 // --- Leaderboard / rank ---
@@ -100,7 +121,11 @@ export async function getQuizLeaderboard(limit?: number): Promise<QuizLeaderboar
         id: true,
         currentStreak: true,
         longestStreak: true,
-        members: { select: { fullName: true, photo: true }, orderBy: { createdAt: "asc" }, take: 1 },
+        members: {
+          select: { fullName: true, photo: true },
+          orderBy: { createdAt: "asc" },
+          take: 1,
+        },
       },
     }),
     prisma.quizAssignment.groupBy({ by: ["userId"], _sum: { pointsAwarded: true } }),
@@ -181,12 +206,21 @@ function shuffle<T>(input: T[]): T[] {
 }
 
 async function pushToAssignedUsers(userIds: string[]) {
-  await Promise.all(userIds.map((uid) => sendPushToUser(uid, QUIZ_PUSH_PAYLOAD).catch((err) => console.error("Quiz push error:", err))));
+  await Promise.all(
+    userIds.map((uid) =>
+      sendPushToUser(uid, QUIZ_PUSH_PAYLOAD).catch((err) => console.error("Quiz push error:", err)),
+    ),
+  );
 }
 
 // Sends the same question to every eligible user who hasn't already received it.
-export async function sendSameQuestionToAll(questionId: string): Promise<{ sentCount: number; skippedCount: number }> {
-  const question = await prisma.quizQuestion.findUnique({ where: { id: questionId }, select: { id: true } });
+export async function sendSameQuestionToAll(
+  questionId: string,
+): Promise<{ sentCount: number; skippedCount: number }> {
+  const question = await prisma.quizQuestion.findUnique({
+    where: { id: questionId },
+    select: { id: true },
+  });
   if (!question) throw new Error("QUESTION_NOT_FOUND");
 
   const eligibleUserIds = await getEligibleUserIds();
@@ -215,7 +249,9 @@ export async function sendSameQuestionToAll(questionId: string): Promise<{ sentC
 // get the same set — and no user ever receives a question twice (enforced both by
 // the in-memory "seen" filter here and, belt-and-suspenders, by the
 // @@unique([userId, questionId]) constraint via skipDuplicates).
-export async function sendRandomBatch(count: number): Promise<{ sentCount: number; skippedCount: number }> {
+export async function sendRandomBatch(
+  count: number,
+): Promise<{ sentCount: number; skippedCount: number }> {
   const eligibleUserIds = await getEligibleUserIds();
   const [users, activeQuestions, existingAssignments] = await Promise.all([
     prisma.user.findMany({ where: { id: { in: eligibleUserIds } }, select: { id: true } }),
@@ -271,7 +307,10 @@ export async function runDailyQuizAutoSend(): Promise<void> {
   // Claim today's run before the heavy lifting so a second near-simultaneous
   // request (a different user opening the app around the same moment)
   // doesn't trigger a duplicate batch.
-  await prisma.quizSettings.update({ where: { id: "singleton" }, data: { lastAutoSendDate: today } });
+  await prisma.quizSettings.update({
+    where: { id: "singleton" },
+    data: { lastAutoSendDate: today },
+  });
 
   await sendRandomBatch(settings.questionsPerDay);
 }

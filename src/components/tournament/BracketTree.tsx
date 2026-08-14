@@ -20,7 +20,9 @@ const CARD_GAP = 16;
 export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
   if (matches.length === 0) return null;
 
-  const roundNumbers = Array.from(new Set(matches.map((m) => m.bracketRound))).sort((a, b) => a - b);
+  const roundNumbers = Array.from(new Set(matches.map((m) => m.bracketRound))).sort(
+    (a, b) => a - b,
+  );
   const rounds = roundNumbers.map((n) => ({
     number: n,
     label: matches.find((m) => m.bracketRound === n)?.round || `الدور ${n}`,
@@ -35,7 +37,11 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
       <div className="flex gap-8" style={{ minWidth: "fit-content" }} dir="ltr">
         {rounds.map((round) => (
           <div key={round.number} className="flex flex-col" style={{ width: 170 }}>
-            <p className="text-xs font-bold text-center mb-2" style={{ color: "var(--mint-700)" }} dir="rtl">
+            <p
+              className="text-xs font-bold text-center mb-2"
+              style={{ color: "var(--mint-700)" }}
+              dir="rtl"
+            >
               {round.label}
             </p>
             <div className="flex flex-col justify-around flex-1" style={{ height: treeHeight }}>
@@ -51,21 +57,36 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                   >
                     <div
                       className="flex items-center justify-between gap-1 px-2 text-xs"
-                      style={{ height: CARD_HEIGHT / 2, background: homeWinner ? "#d1fae5" : "white", fontWeight: homeWinner ? 700 : 400 }}
+                      style={{
+                        height: CARD_HEIGHT / 2,
+                        background: homeWinner ? "#d1fae5" : "white",
+                        fontWeight: homeWinner ? 700 : 400,
+                      }}
                     >
                       <span className="flex items-center gap-1 truncate">
                         <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={16} />
-                        <span className="truncate" style={{ color: "var(--text-main)" }}>{homeWinner ? "🏆 " : ""}{m.homeTeam.name}</span>
+                        <span className="truncate" style={{ color: "var(--text-main)" }}>
+                          {homeWinner ? "🏆 " : ""}
+                          {m.homeTeam.name}
+                        </span>
                       </span>
                       {m.status === "PLAYED" && <span>{m.homeScore}</span>}
                     </div>
                     <div
                       className="flex items-center justify-between gap-1 px-2 text-xs"
-                      style={{ height: CARD_HEIGHT / 2, background: awayWinner ? "#d1fae5" : "var(--mint-50)", fontWeight: awayWinner ? 700 : 400, borderTop: "1px solid var(--mint-100)" }}
+                      style={{
+                        height: CARD_HEIGHT / 2,
+                        background: awayWinner ? "#d1fae5" : "var(--mint-50)",
+                        fontWeight: awayWinner ? 700 : 400,
+                        borderTop: "1px solid var(--mint-100)",
+                      }}
                     >
                       <span className="flex items-center gap-1 truncate">
                         <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={16} />
-                        <span className="truncate" style={{ color: "var(--text-main)" }}>{awayWinner ? "🏆 " : ""}{m.awayTeam.name}</span>
+                        <span className="truncate" style={{ color: "var(--text-main)" }}>
+                          {awayWinner ? "🏆 " : ""}
+                          {m.awayTeam.name}
+                        </span>
                       </span>
                       {m.status === "PLAYED" && <span>{m.awayScore}</span>}
                     </div>

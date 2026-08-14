@@ -9,7 +9,12 @@ interface StatsToggleProps {
   bestAttack: string;
 }
 
-export default function StatsToggle({ matchesPlayed, totalGoals, avgGoalsPerMatch, bestAttack }: StatsToggleProps) {
+export default function StatsToggle({
+  matchesPlayed,
+  totalGoals,
+  avgGoalsPerMatch,
+  bestAttack,
+}: StatsToggleProps) {
   const [show, setShow] = useState(false);
 
   return (
@@ -37,8 +42,12 @@ export default function StatsToggle({ matchesPlayed, totalGoals, avgGoalsPerMatc
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="card p-3 text-center">
-      <p className="text-lg font-black" style={{ color: "var(--mint-700)" }}>{value}</p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>{label}</p>
+      <p className="text-lg font-black" style={{ color: "var(--mint-700)" }}>
+        {value}
+      </p>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </p>
     </div>
   );
 }

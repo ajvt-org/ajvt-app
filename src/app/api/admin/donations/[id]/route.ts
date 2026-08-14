@@ -5,10 +5,7 @@ import { validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction } from "@/lib/audit";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Donations are only visible to SUPER admins today (see payment-proofs'
     // includeDonations gate) — management follows the same scope: the admin
@@ -17,9 +14,14 @@ export async function PATCH(
     // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
-    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } = await req.json();
+    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } =
+      await req.json();
 
-    if ([status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof].every((v) => v === undefined)) {
+    if (
+      [status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof].every(
+        (v) => v === undefined,
+      )
+    ) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (status !== undefined && !["ACTIVE", "REJECTED"].includes(status)) {
@@ -35,7 +37,10 @@ export async function PATCH(
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
-    const existing = await prisma.donation.findUnique({ where: { id }, select: { source: true, donorName: true } });
+    const existing = await prisma.donation.findUnique({
+      where: { id },
+      select: { source: true, donorName: true },
+    });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
@@ -46,16 +51,36 @@ export async function PATCH(
     // the one field it also propagates automatically going forward, but an
     // admin may still need to fix it by hand for rows synced before that
     // existed.
-    if (existing.source === "MEMBERSHIP" && [status, memberId, donorName, donorPhone, donorPhoto, amount, proof].some((v) => v !== undefined)) {
-      return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" }, { status: 400 });
+    if (
+      existing.source === "MEMBERSHIP" &&
+      [status, memberId, donorName, donorPhone, donorPhoto, amount, proof].some(
+        (v) => v !== undefined,
+      )
+    ) {
+      return NextResponse.json(
+        { error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" },
+        { status: 400 },
+      );
     }
 
-    const data: { status?: string; memberId?: string | null; donorName?: string | null; donorPhone?: string | null; donorPhoto?: string | null; amount?: number; paymentMethod?: string | null; proof?: string | null } = {};
+    const data: {
+      status?: string;
+      memberId?: string | null;
+      donorName?: string | null;
+      donorPhone?: string | null;
+      donorPhoto?: string | null;
+      amount?: number;
+      paymentMethod?: string | null;
+      proof?: string | null;
+    } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
       if (memberId !== null) {
-        const member = await prisma.member.findUnique({ where: { id: memberId }, select: { id: true } });
+        const member = await prisma.member.findUnique({
+          where: { id: memberId },
+          select: { id: true },
+        });
         if (!member) return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
       }
       data.memberId = memberId;
@@ -64,7 +89,11 @@ export async function PATCH(
     if (donorName !== undefined) {
       if (donorName !== null) {
         if (!donorName.trim()) return NextResponse.json({ error: "الاسم مطلوب" }, { status: 400 });
-        if (donorName.trim().length > 50) return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
+        if (donorName.trim().length > 50)
+          return NextResponse.json(
+            { error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" },
+            { status: 400 },
+          );
         data.donorName = donorName.trim();
       } else {
         data.donorName = null;
@@ -92,7 +121,10 @@ export async function PATCH(
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+        return NextResponse.json(
+          { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
+          { status: 400 },
+        );
       }
       data.amount = n;
     }
@@ -111,17 +143,34 @@ export async function PATCH(
     });
 
     if (status !== undefined) {
-      await logAction(session.username, status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION", donation.member?.fullName || existing.donorName || "فاعل خير");
+      await logAction(
+        session.username,
+        status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
+        donation.member?.fullName || existing.donorName || "فاعل خير",
+      );
     }
     if (memberId !== undefined) {
       await logAction(
         session.username,
         memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
-        memberId ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}` : (existing.donorName || "فاعل خير")
+        memberId
+          ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}`
+          : existing.donorName || "فاعل خير",
       );
     }
-    if (donorName !== undefined || donorPhone !== undefined || donorPhoto !== undefined || amount !== undefined || paymentMethod !== undefined || proof !== undefined) {
-      await logAction(session.username, "UPDATE_DONATION", donation.member?.fullName || donation.donorName || "فاعل خير");
+    if (
+      donorName !== undefined ||
+      donorPhone !== undefined ||
+      donorPhoto !== undefined ||
+      amount !== undefined ||
+      paymentMethod !== undefined ||
+      proof !== undefined
+    ) {
+      await logAction(
+        session.username,
+        "UPDATE_DONATION",
+        donation.member?.fullName || donation.donorName || "فاعل خير",
+      );
     }
 
     return NextResponse.json({ donation });
@@ -137,15 +186,15 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
 
-    const existing = await prisma.donation.findUnique({ where: { id }, select: { source: true, donorName: true, amount: true } });
+    const existing = await prisma.donation.findUnique({
+      where: { id },
+      select: { source: true, donorName: true, amount: true },
+    });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
@@ -153,11 +202,18 @@ export async function DELETE(
     // — deleting one here would just have it recreated the next time the
     // linked member's paidAmount/status is touched.
     if (existing.source === "MEMBERSHIP") {
-      return NextResponse.json({ error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" }, { status: 400 });
+      return NextResponse.json(
+        { error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" },
+        { status: 400 },
+      );
     }
 
     await prisma.donation.delete({ where: { id } });
-    await logAction(session.username, "DELETE_DONATION", `${existing.donorName || "فاعل خير"} — ${existing.amount ?? 0} أوقية`);
+    await logAction(
+      session.username,
+      "DELETE_DONATION",
+      `${existing.donorName || "فاعل خير"} — ${existing.amount ?? 0} أوقية`,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {

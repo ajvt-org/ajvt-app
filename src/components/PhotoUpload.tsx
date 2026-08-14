@@ -64,7 +64,9 @@ export default function PhotoUpload({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-3xl" style={{ color: "var(--mint-500)" }}>{placeholderIcon}</span>
+            <span className="text-3xl" style={{ color: "var(--mint-500)" }}>
+              {placeholderIcon}
+            </span>
           )}
           <div
             className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1 text-xs py-1 font-semibold"
@@ -73,7 +75,11 @@ export default function PhotoUpload({
             {uploading ? "..." : `📷 ${hint}`}
           </div>
         </button>
-        {error && <p className="text-xs mt-1" style={{ color: "#dc2626" }}>{error}</p>}
+        {error && (
+          <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
+            {error}
+          </p>
+        )}
         <input
           ref={inputRef}
           type="file"
@@ -98,7 +104,9 @@ export default function PhotoUpload({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-2xl" style={{ color: "var(--mint-500)" }}>{placeholderIcon}</span>
+          <span className="text-2xl" style={{ color: "var(--mint-500)" }}>
+            {placeholderIcon}
+          </span>
         )}
         <div
           className="absolute bottom-0 inset-x-0 flex items-center justify-center text-[10px] py-0.5"
@@ -108,9 +116,17 @@ export default function PhotoUpload({
         </div>
       </button>
       <div className="min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>{label}</p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{hint}</p>
-        {error && <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>{error}</p>}
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          {label}
+        </p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {hint}
+        </p>
+        {error && (
+          <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>
+            {error}
+          </p>
+        )}
       </div>
       <input
         ref={inputRef}

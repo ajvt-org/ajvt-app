@@ -36,9 +36,12 @@ async function main() {
   // admin-managed list never misses a value real members already have.
   const usedAges = await prisma.member.findMany({ distinct: ["age"], select: { age: true } });
   for (const { age } of usedAges) {
-    if (age) await prisma.ageGroup.upsert({ where: { name: age }, update: {}, create: { name: age } });
+    if (age)
+      await prisma.ageGroup.upsert({ where: { name: age }, update: {}, create: { name: age } });
   }
   console.log("✅ Age groups seeded");
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

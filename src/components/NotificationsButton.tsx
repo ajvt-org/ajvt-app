@@ -20,7 +20,11 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
   const [dismissed, setDismissed] = useState(false);
 
   function checkStatus() {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    if (
+      !("serviceWorker" in navigator) ||
+      !("PushManager" in window) ||
+      !("Notification" in window)
+    ) {
       setStatus("unsupported");
       return;
     }
@@ -31,7 +35,7 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
     navigator.serviceWorker.register("/sw.js").then((reg) =>
       reg.pushManager.getSubscription().then((sub) => {
         if (sub) setStatus("subscribed");
-      })
+      }),
     );
   }
 
@@ -51,7 +55,10 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
 
   async function enable() {
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!vapidKey) { setStatus("error"); return; }
+    if (!vapidKey) {
+      setStatus("error");
+      return;
+    }
 
     setStatus("subscribing");
     try {
@@ -86,36 +93,38 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
   return (
     <div className="card p-4 flex items-center justify-between gap-3">
       <div>
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🔔 فعّل الإشعارات</p>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          🔔 فعّل الإشعارات
+        </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {status === "denied"
             ? "الإشعارات محظورة — فعّلها من إعدادات المتصفح"
             : dismissible
-            ? "لتصلك تذكيرات المباريات وأخبار الأنشطة أولاً بأول"
-            : "لتصلك رسالة فور قبول أو رفض طلبك"}
+              ? "لتصلك تذكيرات المباريات وأخبار الأنشطة أولاً بأول"
+              : "لتصلك رسالة فور قبول أو رفض طلبك"}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-      {status !== "denied" && (
-        <button
-          onClick={enable}
-          disabled={status === "subscribing"}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          {status === "subscribing" ? "..." : "تفعيل"}
-        </button>
-      )}
-      {dismissible && (
-        <button
-          onClick={dismiss}
-          aria-label="إغلاق"
-          className="text-lg font-bold px-1"
-          style={{ color: "var(--text-muted)" }}
-        >
-          ✕
-        </button>
-      )}
+        {status !== "denied" && (
+          <button
+            onClick={enable}
+            disabled={status === "subscribing"}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
+            {status === "subscribing" ? "..." : "تفعيل"}
+          </button>
+        )}
+        {dismissible && (
+          <button
+            onClick={dismiss}
+            aria-label="إغلاق"
+            className="text-lg font-bold px-1"
+            style={{ color: "var(--text-muted)" }}
+          >
+            ✕
+          </button>
+        )}
       </div>
     </div>
   );

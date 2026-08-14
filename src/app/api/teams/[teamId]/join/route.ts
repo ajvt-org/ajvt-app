@@ -5,10 +5,7 @@ import { requireUser } from "@/lib/auth";
 // Players can pick their own team once their registration for that
 // tournament is approved — switching teams just moves the membership,
 // admin can still override anything from the tournament admin screen.
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   try {
     const session = await requireUser();
     const { teamId } = await params;
@@ -36,7 +33,10 @@ export async function POST(
       where: { memberId_activityId: { memberId, activityId: team.activityId } },
     });
     if (!registered || registered.status !== "ACTIVE") {
-      return NextResponse.json({ error: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً" }, { status: 403 });
+      return NextResponse.json(
+        { error: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً" },
+        { status: 403 },
+      );
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
@@ -47,7 +47,10 @@ export async function POST(
       return NextResponse.json({ ok: true });
     }
     if (existingMembership?.status === "ACTIVE") {
-      return NextResponse.json({ error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" }, { status: 403 });
+      return NextResponse.json(
+        { error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" },
+        { status: 403 },
+      );
     }
 
     await prisma.$transaction(async (tx) => {
@@ -69,7 +72,7 @@ export async function POST(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const session = await requireUser();
@@ -80,14 +83,23 @@ export async function DELETE(
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
 
-    const member = await prisma.member.findUnique({ where: { id: memberId }, select: { userId: true } });
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: { userId: true },
+    });
     if (!member || member.userId !== session.userId) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
 
-    const existing = await prisma.teamMember.findUnique({ where: { teamId_memberId: { teamId, memberId } }, select: { status: true } });
+    const existing = await prisma.teamMember.findUnique({
+      where: { teamId_memberId: { teamId, memberId } },
+      select: { status: true },
+    });
     if (existing?.status === "ACTIVE") {
-      return NextResponse.json({ error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" }, { status: 403 });
+      return NextResponse.json(
+        { error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" },
+        { status: 403 },
+      );
     }
 
     await prisma.teamMember.deleteMany({ where: { teamId, memberId } });
