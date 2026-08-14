@@ -3,13 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
-import {
-  formatDateTime,
-  formatFullDate,
-  formatTime,
-  loginPathWithNext,
-  toThumbUrl,
-} from "@/lib/utils";
+import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { FilterTab, Member, AgeGroup } from "./types";
@@ -909,7 +903,7 @@ export default function AdminDashboard() {
                       undefined,
                     ],
                     ["رقم العضوية", selected.memberNumber || "—", "ltr"],
-                    ["تاريخ الطلب", formatFullDate(selected.createdAt), undefined],
+                    ["تاريخ الطلب", formatDate(selected.createdAt), undefined],
                     ["وقت الطلب", formatTime(selected.createdAt), "ltr"],
                   ] as [string, string, string | undefined][]
                 ).map(([label, value, dir]) => (

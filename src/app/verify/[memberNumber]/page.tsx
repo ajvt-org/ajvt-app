@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import PageHeader from "@/components/PageHeader";
 import { getUserSession } from "@/lib/auth";
-import { formatFullDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +74,7 @@ export default async function VerifyPage({
               <Row label="الاسم الكامل" value={member!.fullName} />
               <Row label="رقم العضوية" value={member!.memberNumber || "—"} dir="ltr" />
               <Row label="العصر" value={member!.age} />
-              <Row label="عضو منذ" value={formatFullDate(member!.createdAt)} />
+              <Row label="عضو منذ" value={formatDate(member!.createdAt)} />
               <Row label="وقت الانضمام" value={formatTime(member!.createdAt)} dir="ltr" />
             </div>
 
