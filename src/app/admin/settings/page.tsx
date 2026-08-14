@@ -20,7 +20,7 @@ export default function AdminSettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function save(e: React.FormEvent) {
+  async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
     setError("");

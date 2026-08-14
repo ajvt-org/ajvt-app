@@ -25,7 +25,7 @@ export default function MatchDetailsForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function save(e: React.FormEvent) {
+  async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (!awayTeamId) {

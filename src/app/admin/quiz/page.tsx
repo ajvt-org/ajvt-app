@@ -118,7 +118,7 @@ export default function AdminQuizPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function saveSettings(ev: React.FormEvent) {
+  async function saveSettings(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
     setSettingsError("");
     const body: Record<string, number> = {};
@@ -187,7 +187,7 @@ export default function AdminQuizPage() {
     );
   }
 
-  async function submitQuestionForm(ev: React.FormEvent) {
+  async function submitQuestionForm(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
     setFormError("");
 
