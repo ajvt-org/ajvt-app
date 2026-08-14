@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { generateReferenceCode } from "@/lib/referenceCode";
 import { parse } from "@/lib/validation";
 import { memberSubmissionSchema } from "./schema";
+import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError } from "@/lib/errors";
 
@@ -15,6 +16,7 @@ function isUniqueViolation(err: unknown): boolean {
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
+  const { membershipFee } = await getAppSettings();
   const {
     id,
     fullName,
@@ -25,7 +27,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     photo,
     paidAmount,
     referenceCode,
-  } = parse(memberSubmissionSchema, await req.json());
+  } = parse(memberSubmissionSchema(membershipFee), await req.json());
 
   // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
   if (id) {
