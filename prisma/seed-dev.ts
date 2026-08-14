@@ -2,6 +2,9 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import sharp from "sharp";
 import { pgAdapterOptions } from "../src/lib/db-url";
 
 const dbUrl = process.env.DATABASE_URL;
@@ -64,6 +67,36 @@ const REJECTION_REASONS = [
   "طلب مكرر",
 ];
 const REFERENCE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
+const PALETTE = ["#265c49", "#357a62", "#4a9c7e", "#c47c5a", "#b0643e", "#70b89c"];
+const written: string[] = [];
+
+function placeholder(name: string): string {
+  written.push(name);
+  return name;
+}
+
+async function writePlaceholders() {
+  await mkdir(UPLOAD_DIR, { recursive: true });
+  for (let i = 0; i < written.length; i++) {
+    const name = written[i];
+    const colour = PALETTE[i % PALETTE.length];
+    const label = name.replace(/^seed-|\.webp$/g, "");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600">
+      <rect width="600" height="600" fill="${colour}"/>
+      <text x="300" y="320" font-size="56" fill="#ffffff" text-anchor="middle"
+        font-family="sans-serif">${label}</text>
+    </svg>`;
+    const base = Buffer.from(svg);
+    await writeFile(join(UPLOAD_DIR, name), await sharp(base).webp({ quality: 75 }).toBuffer());
+    await writeFile(
+      join(UPLOAD_DIR, name.replace(/\.webp$/, "-thumb.webp")),
+      await sharp(base).resize(300, 300, { fit: "cover" }).webp({ quality: 70 }).toBuffer(),
+    );
+  }
+  console.log(`Placeholder images written: ${written.length * 2} files in ${UPLOAD_DIR}`);
+}
 
 let seq = 0;
 function next(): number {
@@ -180,8 +213,8 @@ async function main() {
         phone: i % 9 === 8 ? null : user.phone,
         age: pick(AGE_GROUPS, i),
         paymentMethod: pick(PAYMENT_METHODS, i),
-        paymentProof: i % 7 === 6 ? null : `seed-proof-${next()}.webp`,
-        photo: i % 3 === 0 ? `seed-photo-${next()}.webp` : null,
+        paymentProof: i % 7 === 6 ? null : placeholder(`seed-proof-${next()}.webp`),
+        photo: i % 3 === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
         paidAmount: [500, 1000, 1500, 2000, 3000][i % 5],
         referenceCode: referenceCode(i),
         status,
@@ -206,7 +239,7 @@ async function main() {
       title: "دوري رابطة شباب التاكلالت 2026",
       description: "دوري كرة القدم السنوي بين فرق القرية، بمشاركة ثمانية فرق موزعة على مجموعتين.",
       period: "أغسطس 2026",
-      photo: "seed-activity-1.webp",
+      photo: placeholder("seed-activity-1.webp"),
       isTournament: true,
       isOpen: true,
       order: 0,
@@ -241,7 +274,7 @@ async function main() {
         memberId: active[i].id,
         activityId: lecture.id,
         status: i < 8 ? "ACTIVE" : i < 11 ? "PENDING" : "REJECTED",
-        paymentProof: i % 4 === 0 ? `seed-reg-${next()}.webp` : null,
+        paymentProof: i % 4 === 0 ? placeholder(`seed-reg-${next()}.webp`) : null,
         rejectionReason: i === 11 ? "معلومات ناقصة أو غير صحيحة" : null,
       },
     });
@@ -275,7 +308,7 @@ async function main() {
           activityId: tournament.id,
           groupId: groups[i < 4 ? 0 : 1].id,
           name: teamNames[i],
-          logo: i % 2 === 0 ? `seed-logo-${next()}.webp` : null,
+          logo: i % 2 === 0 ? placeholder(`seed-logo-${next()}.webp`) : null,
         },
       }),
     );
@@ -404,9 +437,9 @@ async function main() {
       data: {
         donorName: anonymous ? null : fullName(40 + i),
         donorPhone: anonymous ? null : phone(40 + i),
-        donorPhoto: i % 5 === 0 ? `seed-donor-${next()}.webp` : null,
+        donorPhoto: i % 5 === 0 ? placeholder(`seed-donor-${next()}.webp`) : null,
         amount: [2000, 5000, 10000, 15000, 25000][i % 5],
-        proof: `seed-donation-${next()}.webp`,
+        proof: placeholder(`seed-donation-${next()}.webp`),
         status: i < 7 ? "ACTIVE" : "PENDING",
         source: "PUBLIC",
         paymentMethod: pick(PAYMENT_METHODS, i),
@@ -431,7 +464,7 @@ async function main() {
         label: label as string,
         amount: amount as number,
         note: i % 2 === 0 ? "فاتورة متوفرة لدى أمين الصندوق" : null,
-        proof: i % 3 === 0 ? `seed-expense-${next()}.webp` : null,
+        proof: i % 3 === 0 ? placeholder(`seed-expense-${next()}.webp`) : null,
         date: daysAgo(45 - i * 6),
         createdBy: "admin",
       },
@@ -527,6 +560,8 @@ async function main() {
     expenses: expenses.length,
     questions: created.length,
   };
+
+  await writePlaceholders();
 
   console.log("Dev data seeded:", counts);
   console.log("Admins: admin / members / activities, password admin123");
