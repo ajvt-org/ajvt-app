@@ -11,13 +11,18 @@ type Db = PrismaClient | Prisma.TransactionClient;
 export async function syncMembershipDonation(db: Db, memberId: string) {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { status: true, paidAmount: true, fullName: true, paymentProof: true, paymentMethod: true },
+    select: {
+      status: true,
+      paidAmount: true,
+      fullName: true,
+      paymentProof: true,
+      paymentMethod: true,
+    },
   });
   if (!member) return;
 
-  const surplus = member.status === "ACTIVE" && member.paidAmount
-    ? member.paidAmount - MEMBERSHIP_FEE
-    : 0;
+  const surplus =
+    member.status === "ACTIVE" && member.paidAmount ? member.paidAmount - MEMBERSHIP_FEE : 0;
 
   const existing = await db.donation.findFirst({
     where: { memberId, source: "MEMBERSHIP" },
@@ -25,11 +30,18 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
   });
 
   if (surplus > 0) {
-    const data = { amount: surplus, donorName: member.fullName, proof: member.paymentProof, paymentMethod: member.paymentMethod };
+    const data = {
+      amount: surplus,
+      donorName: member.fullName,
+      proof: member.paymentProof,
+      paymentMethod: member.paymentMethod,
+    };
     if (existing) {
       await db.donation.update({ where: { id: existing.id }, data });
     } else {
-      await db.donation.create({ data: { ...data, memberId, source: "MEMBERSHIP", status: "ACTIVE" } });
+      await db.donation.create({
+        data: { ...data, memberId, source: "MEMBERSHIP", status: "ACTIVE" },
+      });
     }
   } else if (existing) {
     await db.donation.delete({ where: { id: existing.id } });
@@ -43,7 +55,10 @@ interface LeaderboardEntry {
   total: number;
 }
 
-export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[]; anonymousTotal: number }> {
+export async function getLeaderboardData(): Promise<{
+  leaderboard: LeaderboardEntry[];
+  anonymousTotal: number;
+}> {
   const donations = await prisma.donation.findMany({
     where: { status: "ACTIVE" },
     select: {

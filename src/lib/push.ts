@@ -12,7 +12,7 @@ if (publicKey && privateKey) {
 
 export async function sendPushToUser(
   userId: string,
-  payload: { title: string; body: string; url?: string }
+  payload: { title: string; body: string; url?: string },
 ) {
   if (!publicKey || !privateKey) return;
 
@@ -26,7 +26,7 @@ export async function sendPushToUser(
             endpoint: sub.endpoint,
             keys: { p256dh: sub.p256dh, auth: sub.auth },
           },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
         );
       } catch (err: unknown) {
         const statusCode = (err as { statusCode?: number }).statusCode;
@@ -36,6 +36,6 @@ export async function sendPushToUser(
           console.error("Push send error:", err);
         }
       }
-    })
+    }),
   );
 }

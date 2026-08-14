@@ -4,10 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -47,7 +44,11 @@ export async function POST(
       create: { memberId, activityId: id, status: "ACTIVE" },
     });
 
-    await logAction(session.username, "ADMIN_REGISTER_ACTIVITY", `${member.fullName} → ${activity.title}`);
+    await logAction(
+      session.username,
+      "ADMIN_REGISTER_ACTIVITY",
+      `${member.fullName} → ${activity.title}`,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -62,10 +63,7 @@ export async function POST(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -94,14 +92,14 @@ export async function PATCH(
       where: { id: registrationId },
       data: {
         status,
-        rejectionReason: status === "REJECTED" ? (String(reason || "").trim() || null) : null,
+        rejectionReason: status === "REJECTED" ? String(reason || "").trim() || null : null,
       },
     });
 
     await logAction(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
-      `${registration.member.fullName} → ${registration.activity.title}`
+      `${registration.member.fullName} → ${registration.activity.title}`,
     );
 
     if (registration.member.userId) {
@@ -128,10 +126,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;

@@ -43,10 +43,7 @@ const MATCH_INCLUDE = {
   },
 } as const;
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -69,10 +66,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -90,21 +84,40 @@ export async function POST(
       select: { id: true, name: true, groupId: true },
     });
     if (teams.length !== 2) {
-      return NextResponse.json({ error: "الفريقان يجب أن ينتميا إلى هذه البطولة" }, { status: 400 });
+      return NextResponse.json(
+        { error: "الفريقان يجب أن ينتميا إلى هذه البطولة" },
+        { status: 400 },
+      );
     }
     const homeGroupId = teams.find((t) => t.id === homeTeamId)!.groupId;
     const awayGroupId = teams.find((t) => t.id === awayTeamId)!.groupId;
     if (!isValidLeaguePairing(!!isKnockout, homeGroupId, awayGroupId)) {
-      return NextResponse.json({ error: "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
+        },
+        { status: 400 },
+      );
     }
     if (round !== undefined && round !== null && String(round).trim().length > 40) {
-      return NextResponse.json({ error: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     if (venue !== undefined && venue !== null && String(venue).trim().length > 60) {
-      return NextResponse.json({ error: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
 
-    const maxOrderRow = await prisma.match.findFirst({ where: { activityId: id }, orderBy: { order: "desc" }, select: { order: true } });
+    const maxOrderRow = await prisma.match.findFirst({
+      where: { activityId: id },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
 
     const match = await prisma.match.create({
       data: {

@@ -82,7 +82,8 @@ export default function AdminExpensesPage() {
   function toggleMethod(method: string) {
     setExpandedMethods((prev) => {
       const next = new Set(prev);
-      if (next.has(method)) next.delete(method); else next.add(method);
+      if (next.has(method)) next.delete(method);
+      else next.add(method);
       return next;
     });
   }
@@ -90,7 +91,8 @@ export default function AdminExpensesPage() {
   function toggleDay(date: string) {
     setExpandedDays((prev) => {
       const next = new Set(prev);
-      if (next.has(date)) next.delete(date); else next.add(date);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
       return next;
     });
   }
@@ -98,7 +100,7 @@ export default function AdminExpensesPage() {
   // Groups a day's records into kind -> method -> records, so a busy day
   // (30+ transactions) reads as sections instead of one long flat list.
   function groupDayRecords(records: DayRecord[]) {
-    const groups: Record<string, Record<string, DayRecord[]>> = { "دعم": {}, "انتساب": {} };
+    const groups: Record<string, Record<string, DayRecord[]>> = { دعم: {}, انتساب: {} };
     for (const r of records) {
       groups[r.kind][r.method] = groups[r.kind][r.method] || [];
       groups[r.kind][r.method].push(r);
@@ -108,12 +110,30 @@ export default function AdminExpensesPage() {
 
   function exportCSV() {
     const headers = ["التاريخ", "النوع", "الاسم / الوصف", "التصنيف", "طريقة الدفع", "المبلغ"];
-    const revenueRows = (summary?.allRecords || []).map((r) => [r.date, "إيراد", r.name, r.kind, r.method, r.amount]);
-    const expenseRows = expenses.map((e) => [e.date.slice(0, 10), "مصروف", e.label, "مصروف", "-", e.amount]);
-    const rows = [...revenueRows, ...expenseRows].sort((a, b) => String(b[0]).localeCompare(String(a[0])));
-    const csv = "﻿" + [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+    const revenueRows = (summary?.allRecords || []).map((r) => [
+      r.date,
+      "إيراد",
+      r.name,
+      r.kind,
+      r.method,
+      r.amount,
+    ]);
+    const expenseRows = expenses.map((e) => [
+      e.date.slice(0, 10),
+      "مصروف",
+      e.label,
+      "مصروف",
+      "-",
+      e.amount,
+    ]);
+    const rows = [...revenueRows, ...expenseRows].sort((a, b) =>
+      String(b[0]).localeCompare(String(a[0])),
+    );
+    const csv =
+      "﻿" +
+      [headers, ...rows]
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -126,7 +146,10 @@ export default function AdminExpensesPage() {
   function load() {
     return Promise.all([
       fetch("/api/admin/finance/summary").then((r) => {
-        if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; }
+        if (r.status === 401) {
+          router.push(loginPathWithNext("/admin/login"));
+          return null;
+        }
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
@@ -140,7 +163,9 @@ export default function AdminExpensesPage() {
     load().finally(() => setLoading(false));
     fetch("/api/admin/me")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.role) setRole(data.role); })
+      .then((data) => {
+        if (data?.role) setRole(data.role);
+      })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -188,9 +213,15 @@ export default function AdminExpensesPage() {
   async function submitForm(ev: React.FormEvent) {
     ev.preventDefault();
     setFormError("");
-    if (!form.label.trim()) { setFormError("الوصف مطلوب"); return; }
+    if (!form.label.trim()) {
+      setFormError("الوصف مطلوب");
+      return;
+    }
     const n = Number(form.amount);
-    if (!Number.isInteger(n) || n <= 0) { setFormError("المبلغ يجب أن يكون رقماً صحيحاً موجباً"); return; }
+    if (!Number.isInteger(n) || n <= 0) {
+      setFormError("المبلغ يجب أن يكون رقماً صحيحاً موجباً");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -201,11 +232,14 @@ export default function AdminExpensesPage() {
         date: form.date || undefined,
         proof: form.proof || null,
       };
-      const res = await fetch(editingId ? `/api/admin/expenses/${editingId}` : "/api/admin/expenses", {
-        method: editingId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        editingId ? `/api/admin/expenses/${editingId}` : "/api/admin/expenses",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setShowForm(false);
@@ -245,16 +279,25 @@ export default function AdminExpensesPage() {
   const days = summary?.days || [];
   const totalExpensePages = Math.max(1, Math.ceil(expenses.length / PAGE_SIZE));
   const currentExpensePage = Math.min(page, totalExpensePages);
-  const paginatedExpenses = expenses.slice((currentExpensePage - 1) * PAGE_SIZE, currentExpensePage * PAGE_SIZE);
+  const paginatedExpenses = expenses.slice(
+    (currentExpensePage - 1) * PAGE_SIZE,
+    currentExpensePage * PAGE_SIZE,
+  );
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>💸 المصاريف والإيرادات</p>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          💸 المصاريف والإيرادات
+        </p>
         <button
           onClick={exportCSV}
           className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
-          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+          style={{
+            background: "white",
+            color: "var(--mint-700)",
+            border: "1px solid var(--mint-100)",
+          }}
         >
           📥 تصدير CSV
         </button>
@@ -263,24 +306,40 @@ export default function AdminExpensesPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-2">
         <div className="card p-3 text-center">
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>💰 الإيرادات</p>
-          <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>{summary?.totalRevenue ?? 0}</p>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+            💰 الإيرادات
+          </p>
+          <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
+            {summary?.totalRevenue ?? 0}
+          </p>
         </div>
         <div className="card p-3 text-center">
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>💸 المصاريف</p>
-          <p className="text-base font-black" style={{ color: "var(--copper-500)" }}>{summary?.totalExpenses ?? 0}</p>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+            💸 المصاريف
+          </p>
+          <p className="text-base font-black" style={{ color: "var(--copper-500)" }}>
+            {summary?.totalExpenses ?? 0}
+          </p>
         </div>
         <div className="card p-3 text-center">
-          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>📊 الصافي</p>
-          <p className="text-base font-black" style={{ color: "var(--text-main)" }}>{summary?.net ?? 0}</p>
+          <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+            📊 الصافي
+          </p>
+          <p className="text-base font-black" style={{ color: "var(--text-main)" }}>
+            {summary?.net ?? 0}
+          </p>
         </div>
       </div>
 
       {/* By payment method */}
       <div className="card p-4">
-        <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>حسب طريقة الدفع (كل الإيرادات)</p>
+        <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+          حسب طريقة الدفع (كل الإيرادات)
+        </p>
         {byMethod.length === 0 ? (
-          <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>لا توجد بيانات بعد</p>
+          <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+            لا توجد بيانات بعد
+          </p>
         ) : (
           <div className="space-y-2">
             {byMethod.map(([method, total]) => {
@@ -295,47 +354,84 @@ export default function AdminExpensesPage() {
                   >
                     <span className="flex items-center gap-1.5">
                       <span style={{ color: "var(--mint-600)" }}>{expanded ? "▾" : "◂"}</span>
-                      <span style={{ color: "var(--text-main)" }} className="font-bold truncate">{method}</span>
+                      <span style={{ color: "var(--text-main)" }} className="font-bold truncate">
+                        {method}
+                      </span>
                     </span>
-                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{total} أوقية</span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>
+                      {total} أوقية
+                    </span>
                   </button>
 
                   {expanded && detail && (
-                    <div className="mt-2 mr-4 space-y-2.5 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                    <div
+                      className="mt-2 mr-4 space-y-2.5 p-2.5 rounded-lg"
+                      style={{ background: "var(--mint-50)" }}
+                    >
                       <div>
-                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>1- انتساب</p>
+                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                          1- انتساب
+                        </p>
                         {detail.intisab.length === 0 ? (
-                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد</p>
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            لا يوجد
+                          </p>
                         ) : (
                           <div className="space-y-0.5">
                             {detail.intisab.map((entry, i) => (
                               <div key={i} className="flex items-center justify-between text-xs">
-                                <span className="truncate" style={{ color: "var(--text-main)" }}>{i + 1}. {entry.name}</span>
-                                <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>
+                                  {i + 1}. {entry.name}
+                                </span>
+                                <span
+                                  className="font-bold shrink-0"
+                                  style={{ color: "var(--mint-600)" }}
+                                >
+                                  {entry.amount} أوقية
+                                </span>
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>2- دعم</p>
+                        <p className="text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                          2- دعم
+                        </p>
                         {detail.daem.length === 0 ? (
-                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا يوجد</p>
+                          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                            لا يوجد
+                          </p>
                         ) : (
                           <div className="space-y-0.5">
                             {detail.daem.map((entry, i) => (
                               <div key={i} className="flex items-center justify-between text-xs">
-                                <span className="truncate" style={{ color: "var(--text-main)" }}>{i + 1}. {entry.name}</span>
-                                <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>{entry.amount} أوقية</span>
+                                <span className="truncate" style={{ color: "var(--text-main)" }}>
+                                  {i + 1}. {entry.name}
+                                </span>
+                                <span
+                                  className="font-bold shrink-0"
+                                  style={{ color: "var(--mint-600)" }}
+                                >
+                                  {entry.amount} أوقية
+                                </span>
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
                       {detail.anonymousTotal > 0 && (
-                        <div className="flex items-center justify-between text-xs pt-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                        <div
+                          className="flex items-center justify-between text-xs pt-1.5"
+                          style={{ borderTop: "1px solid var(--mint-100)" }}
+                        >
                           <span style={{ color: "var(--text-muted)" }}>🤍 فاعل خير</span>
-                          <span className="font-bold shrink-0" style={{ color: "var(--text-muted)" }}>{detail.anonymousTotal} أوقية</span>
+                          <span
+                            className="font-bold shrink-0"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            {detail.anonymousTotal} أوقية
+                          </span>
                         </div>
                       )}
                     </div>
@@ -357,8 +453,12 @@ export default function AdminExpensesPage() {
             {summary.unassigned.map((u) => (
               <div key={u.id} className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold truncate" style={{ color: "var(--text-main)" }}>{u.name}</p>
-                  <p className="text-xs" style={{ color: "var(--mint-600)" }}>{u.amount} أوقية</p>
+                  <p className="text-xs font-bold truncate" style={{ color: "var(--text-main)" }}>
+                    {u.name}
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--mint-600)" }}>
+                    {u.amount} أوقية
+                  </p>
                 </div>
                 <select
                   value={reassignValue[u.id] || ""}
@@ -367,7 +467,11 @@ export default function AdminExpensesPage() {
                   style={{ width: "auto" }}
                 >
                   <option value="">اختر طريقة الدفع...</option>
-                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
                 </select>
                 <button
                   onClick={() => reassignPaymentMethod(u.id)}
@@ -385,9 +489,13 @@ export default function AdminExpensesPage() {
 
       {/* Daily revenue, last 30 days */}
       <div className="card p-4">
-        <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>الإيرادات اليومية (آخر 30 يوماً)</p>
+        <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+          الإيرادات اليومية (آخر 30 يوماً)
+        </p>
         {days.length === 0 ? (
-          <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>لا توجد إيرادات في هذه الفترة</p>
+          <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+            لا توجد إيرادات في هذه الفترة
+          </p>
         ) : (
           <div className="space-y-1.5 max-h-80 overflow-y-auto">
             {days.map((d) => {
@@ -404,13 +512,20 @@ export default function AdminExpensesPage() {
                       <span style={{ color: "var(--mint-600)" }}>{expandedDay ? "▾" : "◂"}</span>
                       <span style={{ color: "var(--text-main)" }}>{d.date}</span>
                     </span>
-                    <span className="font-black" style={{ color: "var(--mint-600)" }}>{d.total} أوقية</span>
+                    <span className="font-black" style={{ color: "var(--mint-600)" }}>
+                      {d.total} أوقية
+                    </span>
                   </button>
 
                   {expandedDay && (
-                    <div className="mt-1.5 mr-4 space-y-3 p-2.5 rounded-lg" style={{ background: "var(--mint-50)" }}>
+                    <div
+                      className="mt-1.5 mr-4 space-y-3 p-2.5 rounded-lg"
+                      style={{ background: "var(--mint-50)" }}
+                    >
                       {d.records.length === 0 ? (
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>لا توجد تفاصيل</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          لا توجد تفاصيل
+                        </p>
                       ) : (
                         (["دعم", "انتساب"] as const).map((kind) => {
                           const methods = groupDayRecords(d.records)[kind];
@@ -418,7 +533,10 @@ export default function AdminExpensesPage() {
                           if (methodKeys.length === 0) return null;
                           return (
                             <div key={kind}>
-                              <p className="text-xs font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                              <p
+                                className="text-xs font-bold mb-1.5"
+                                style={{ color: "var(--text-main)" }}
+                              >
                                 {kind === "دعم" ? "💚 دعم" : "🪪 انتساب"}
                               </p>
                               <div className="space-y-2 mr-2">
@@ -428,14 +546,37 @@ export default function AdminExpensesPage() {
                                   return (
                                     <div key={method}>
                                       <div className="flex items-center justify-between text-xs">
-                                        <span className="font-bold" style={{ color: "var(--mint-700)" }}>{method}</span>
-                                        <span className="font-bold" style={{ color: "var(--mint-600)" }}>{subtotal} أوقية</span>
+                                        <span
+                                          className="font-bold"
+                                          style={{ color: "var(--mint-700)" }}
+                                        >
+                                          {method}
+                                        </span>
+                                        <span
+                                          className="font-bold"
+                                          style={{ color: "var(--mint-600)" }}
+                                        >
+                                          {subtotal} أوقية
+                                        </span>
                                       </div>
                                       <div className="mr-2 mt-0.5 space-y-0.5">
                                         {items.map((r, i) => (
-                                          <div key={i} className="flex items-center justify-between text-xs">
-                                            <span className="truncate" style={{ color: "var(--text-muted)" }}>{r.name}</span>
-                                            <span className="shrink-0" style={{ color: "var(--text-muted)" }}>{r.amount} أوقية</span>
+                                          <div
+                                            key={i}
+                                            className="flex items-center justify-between text-xs"
+                                          >
+                                            <span
+                                              className="truncate"
+                                              style={{ color: "var(--text-muted)" }}
+                                            >
+                                              {r.name}
+                                            </span>
+                                            <span
+                                              className="shrink-0"
+                                              style={{ color: "var(--text-muted)" }}
+                                            >
+                                              {r.amount} أوقية
+                                            </span>
                                           </div>
                                         ))}
                                       </div>
@@ -471,14 +612,21 @@ export default function AdminExpensesPage() {
       </div>
 
       {expenses.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد مصاريف مسجلة بعد</p>
+        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+          لا توجد مصاريف مسجلة بعد
+        </p>
       ) : (
         <div className="space-y-2">
           {paginatedExpenses.map((e) => (
             <div key={e.id} className="card p-3">
               <div className="flex items-center gap-3">
                 {e.proof ? (
-                  <a href={`/api/files/${e.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  <a
+                    href={`/api/files/${e.proof}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={toThumbUrl(`/api/files/${e.proof}`)}
@@ -501,13 +649,26 @@ export default function AdminExpensesPage() {
                 )}
                 <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-bold text-sm truncate" style={{ color: "var(--text-main)" }}>{e.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                      {new Date(e.date).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })} — بواسطة {e.createdBy}
+                    <p className="font-bold text-sm truncate" style={{ color: "var(--text-main)" }}>
+                      {e.label}
                     </p>
-                    {e.note && <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{e.note}</p>}
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                      {new Date(e.date).toLocaleDateString("ar", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}{" "}
+                      — بواسطة {e.createdBy}
+                    </p>
+                    {e.note && (
+                      <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                        {e.note}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>{e.amount} أوقية</p>
+                  <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>
+                    {e.amount} أوقية
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 mt-2">
@@ -562,7 +723,9 @@ export default function AdminExpensesPage() {
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(ev) => { if (ev.target === ev.currentTarget) setShowForm(false); }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) setShowForm(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -586,7 +749,10 @@ export default function AdminExpensesPage() {
 
             <form onSubmit={submitForm} className="p-5 space-y-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   صورة الفاتورة / الإيصال (اختياري)
                 </label>
                 <PhotoUpload
@@ -599,7 +765,10 @@ export default function AdminExpensesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   الوصف <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
@@ -612,7 +781,10 @@ export default function AdminExpensesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
@@ -626,7 +798,10 @@ export default function AdminExpensesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   التاريخ
                 </label>
                 <input
@@ -638,7 +813,10 @@ export default function AdminExpensesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   ملاحظة (اختياري)
                 </label>
                 <input
@@ -651,7 +829,10 @@ export default function AdminExpensesPage() {
               </div>
 
               {formError && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {formError}
                 </div>
               )}

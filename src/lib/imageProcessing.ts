@@ -41,7 +41,12 @@ export async function processImage(buffer: Buffer): Promise<ProcessedImage> {
   const [full, thumbnail] = await Promise.all([
     source
       .clone()
-      .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: "inside", withoutEnlargement: true })
+      .resize({
+        width: MAX_DIMENSION,
+        height: MAX_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
       .webp({ quality: WEBP_QUALITY })
       .toBuffer(),
     source

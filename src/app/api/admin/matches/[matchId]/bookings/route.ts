@@ -4,10 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 
 const CARD_TYPES = ["YELLOW", "RED"];
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
@@ -20,12 +17,18 @@ export async function POST(
     if (minute !== undefined && minute !== null && minute !== "") {
       const n = Number(minute);
       if (!Number.isInteger(n) || n < 1 || n > 130) {
-        return NextResponse.json({ error: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130" }, { status: 400 });
+        return NextResponse.json(
+          { error: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130" },
+          { status: 400 },
+        );
       }
       minuteValue = n;
     }
 
-    const match = await prisma.match.findUnique({ where: { id: matchId }, select: { homeTeamId: true, awayTeamId: true } });
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: { homeTeamId: true, awayTeamId: true },
+    });
     if (!match) {
       return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
     }
@@ -33,7 +36,9 @@ export async function POST(
       return NextResponse.json({ error: "الفريق لا ينتمي إلى هذه المباراة" }, { status: 400 });
     }
 
-    const inRoster = await prisma.teamMember.findUnique({ where: { teamId_memberId: { teamId, memberId } } });
+    const inRoster = await prisma.teamMember.findUnique({
+      where: { teamId_memberId: { teamId, memberId } },
+    });
     if (!inRoster) {
       return NextResponse.json({ error: "اللاعب لا ينتمي إلى هذا الفريق" }, { status: 400 });
     }

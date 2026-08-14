@@ -50,7 +50,12 @@ interface AnswerFormRow {
   isCorrect: boolean;
 }
 
-const emptySettingsForm = { defaultAnswerCount: "4", defaultCorrectCount: "1", defaultPoints: "10", questionsPerDay: "1" };
+const emptySettingsForm = {
+  defaultAnswerCount: "4",
+  defaultCorrectCount: "1",
+  defaultPoints: "10",
+  questionsPerDay: "1",
+};
 
 export default function AdminQuizPage() {
   const router = useRouter();
@@ -84,7 +89,10 @@ export default function AdminQuizPage() {
   function load() {
     return Promise.all([
       fetch("/api/admin/quiz/settings").then((r) => {
-        if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; }
+        if (r.status === 401) {
+          router.push(loginPathWithNext("/admin/login"));
+          return null;
+        }
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/quiz/questions").then((r) => (r.ok ? r.json() : null)),
@@ -179,24 +187,50 @@ export default function AdminQuizPage() {
   }
 
   function toggleAnswerCorrect(index: number) {
-    setFormAnswers((prev) => prev.map((a, i) => (i === index ? { ...a, isCorrect: !a.isCorrect } : a)));
+    setFormAnswers((prev) =>
+      prev.map((a, i) => (i === index ? { ...a, isCorrect: !a.isCorrect } : a)),
+    );
   }
 
   async function submitQuestionForm(ev: React.FormEvent) {
     ev.preventDefault();
     setFormError("");
 
-    if (!formText.trim()) { setFormError("نص السؤال مطلوب"); return; }
-    if (!formCategory.trim()) { setFormError("التصنيف مطلوب"); return; }
+    if (!formText.trim()) {
+      setFormError("نص السؤال مطلوب");
+      return;
+    }
+    if (!formCategory.trim()) {
+      setFormError("التصنيف مطلوب");
+      return;
+    }
     const points = Number(formPoints);
-    if (!Number.isInteger(points) || points <= 0) { setFormError("النقاط يجب أن تكون رقماً صحيحاً موجباً"); return; }
+    if (!Number.isInteger(points) || points <= 0) {
+      setFormError("النقاط يجب أن تكون رقماً صحيحاً موجباً");
+      return;
+    }
     const correctCount = Number(formCorrectCount);
-    if (!Number.isInteger(correctCount) || correctCount <= 0) { setFormError("عدد الإجابات الصحيحة غير صالح"); return; }
-    if (formAnswers.length < 2) { setFormError("يجب إضافة إجابتين على الأقل"); return; }
-    if (formAnswers.some((a) => !a.text.trim())) { setFormError("كل الإجابات يجب أن تحتوي على نص"); return; }
-    if (correctCount > formAnswers.length) { setFormError("عدد الإجابات الصحيحة أكبر من عدد الإجابات"); return; }
+    if (!Number.isInteger(correctCount) || correctCount <= 0) {
+      setFormError("عدد الإجابات الصحيحة غير صالح");
+      return;
+    }
+    if (formAnswers.length < 2) {
+      setFormError("يجب إضافة إجابتين على الأقل");
+      return;
+    }
+    if (formAnswers.some((a) => !a.text.trim())) {
+      setFormError("كل الإجابات يجب أن تحتوي على نص");
+      return;
+    }
+    if (correctCount > formAnswers.length) {
+      setFormError("عدد الإجابات الصحيحة أكبر من عدد الإجابات");
+      return;
+    }
     const correctGiven = formAnswers.filter((a) => a.isCorrect).length;
-    if (correctGiven !== correctCount) { setFormError(`يجب تحديد ${correctCount} إجابة (إجابات) صحيحة بالضبط`); return; }
+    if (correctGiven !== correctCount) {
+      setFormError(`يجب تحديد ${correctCount} إجابة (إجابات) صحيحة بالضبط`);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -207,11 +241,14 @@ export default function AdminQuizPage() {
         correctCount,
         answers: formAnswers.map((a) => ({ text: a.text.trim(), isCorrect: a.isCorrect })),
       };
-      const res = await fetch(editingId ? `/api/admin/quiz/questions/${editingId}` : "/api/admin/quiz/questions", {
-        method: editingId ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(
+        editingId ? `/api/admin/quiz/questions/${editingId}` : "/api/admin/quiz/questions",
+        {
+          method: editingId ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setShowForm(false);
@@ -269,7 +306,8 @@ export default function AdminQuizPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل الإرسال");
       showToast(
-        `تم الإرسال إلى ${data.sentCount} مستخدم` + (data.skippedCount ? ` (تم تخطي ${data.skippedCount} استلموه من قبل)` : "")
+        `تم الإرسال إلى ${data.sentCount} مستخدم` +
+          (data.skippedCount ? ` (تم تخطي ${data.skippedCount} استلموه من قبل)` : ""),
       );
       await load();
     } catch (e) {
@@ -292,7 +330,8 @@ export default function AdminQuizPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل الإرسال");
       showToast(
-        `تم الإرسال إلى ${data.sentCount} مستخدم` + (data.skippedCount ? ` (${data.skippedCount} لم يتبق لهم أسئلة كافية)` : "")
+        `تم الإرسال إلى ${data.sentCount} مستخدم` +
+          (data.skippedCount ? ` (${data.skippedCount} لم يتبق لهم أسئلة كافية)` : ""),
       );
       await load();
     } catch (e) {
@@ -313,44 +352,96 @@ export default function AdminQuizPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🧠 المسابقة الثقافية</p>
+      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+        🧠 المسابقة الثقافية
+      </p>
 
       {/* Settings */}
       <form onSubmit={saveSettings} className="card p-4 space-y-3">
-        <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>⚙️ الإعدادات الافتراضية</p>
+        <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+          ⚙️ الإعدادات الافتراضية
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>عدد الإجابات الافتراضي</label>
-            <input type="number" dir="ltr" min={2} className="input text-sm" value={settingsForm.defaultAnswerCount}
-              onChange={(e) => setSettingsForm((p) => ({ ...p, defaultAnswerCount: e.target.value }))} />
+            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+              عدد الإجابات الافتراضي
+            </label>
+            <input
+              type="number"
+              dir="ltr"
+              min={2}
+              className="input text-sm"
+              value={settingsForm.defaultAnswerCount}
+              onChange={(e) =>
+                setSettingsForm((p) => ({ ...p, defaultAnswerCount: e.target.value }))
+              }
+            />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>عدد الإجابات الصحيحة الافتراضي</label>
-            <input type="number" dir="ltr" min={1} className="input text-sm" value={settingsForm.defaultCorrectCount}
-              onChange={(e) => setSettingsForm((p) => ({ ...p, defaultCorrectCount: e.target.value }))} />
+            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+              عدد الإجابات الصحيحة الافتراضي
+            </label>
+            <input
+              type="number"
+              dir="ltr"
+              min={1}
+              className="input text-sm"
+              value={settingsForm.defaultCorrectCount}
+              onChange={(e) =>
+                setSettingsForm((p) => ({ ...p, defaultCorrectCount: e.target.value }))
+              }
+            />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>النقاط الافتراضية للسؤال</label>
-            <input type="number" dir="ltr" min={1} className="input text-sm" value={settingsForm.defaultPoints}
-              onChange={(e) => setSettingsForm((p) => ({ ...p, defaultPoints: e.target.value }))} />
+            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+              النقاط الافتراضية للسؤال
+            </label>
+            <input
+              type="number"
+              dir="ltr"
+              min={1}
+              className="input text-sm"
+              value={settingsForm.defaultPoints}
+              onChange={(e) => setSettingsForm((p) => ({ ...p, defaultPoints: e.target.value }))}
+            />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>عدد الأسئلة المرسلة يومياً</label>
-            <input type="number" dir="ltr" min={1} className="input text-sm" value={settingsForm.questionsPerDay}
-              onChange={(e) => setSettingsForm((p) => ({ ...p, questionsPerDay: e.target.value }))} />
+            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+              عدد الأسئلة المرسلة يومياً
+            </label>
+            <input
+              type="number"
+              dir="ltr"
+              min={1}
+              className="input text-sm"
+              value={settingsForm.questionsPerDay}
+              onChange={(e) => setSettingsForm((p) => ({ ...p, questionsPerDay: e.target.value }))}
+            />
           </div>
         </div>
         {settingsError && (
-          <div className="p-2.5 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>⚠️ {settingsError}</div>
+          <div
+            className="p-2.5 rounded-lg text-xs font-semibold"
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
+            ⚠️ {settingsError}
+          </div>
         )}
-        <button type="submit" disabled={savingSettings} className="text-xs px-3 py-2 rounded-lg font-bold" style={{ background: "var(--mint-600)", color: "white" }}>
+        <button
+          type="submit"
+          disabled={savingSettings}
+          className="text-xs px-3 py-2 rounded-lg font-bold"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
           {savingSettings ? "..." : "💾 حفظ الإعدادات"}
         </button>
       </form>
 
       {/* Random send */}
       <div className="card p-4 space-y-2">
-        <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>🎲 إرسال دفعة عشوائية (سؤال مختلف محتمل لكل مستخدم، بدون تكرار)</p>
+        <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+          🎲 إرسال دفعة عشوائية (سؤال مختلف محتمل لكل مستخدم، بدون تكرار)
+        </p>
         <div className="flex gap-2">
           <input
             type="number"
@@ -374,30 +465,47 @@ export default function AdminQuizPage() {
 
       {/* Questions */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>❓ الأسئلة ({questions.length})</p>
-        <button onClick={openCreate} className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0" style={{ background: "var(--mint-600)", color: "white" }}>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          ❓ الأسئلة ({questions.length})
+        </p>
+        <button
+          onClick={openCreate}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
           ➕ سؤال جديد
         </button>
       </div>
 
       {questions.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد أسئلة مسجلة بعد</p>
+        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+          لا توجد أسئلة مسجلة بعد
+        </p>
       ) : (
         <div className="space-y-2">
           {questions.map((q) => (
             <div key={q.id} className="card p-3 space-y-2" style={{ opacity: q.active ? 1 : 0.6 }}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{q.text}</p>
+                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                    {q.text}
+                  </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    {q.category} · ⭐ {q.points} نقطة · {q.correctCount} إجابة صحيحة من {q.answers.length}
+                    {q.category} · ⭐ {q.points} نقطة · {q.correctCount} إجابة صحيحة من{" "}
+                    {q.answers.length}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
-                    أُرسلت لـ {q.sentCount} · أُجيبت {q.answeredCount} · صحيحة {q.correctSubmissions}
+                    أُرسلت لـ {q.sentCount} · أُجيبت {q.answeredCount} · صحيحة{" "}
+                    {q.correctSubmissions}
                   </p>
                 </div>
                 {!q.active && (
-                  <span className="badge shrink-0" style={{ background: "var(--mint-100)", color: "var(--text-muted)" }}>معطّل</span>
+                  <span
+                    className="badge shrink-0"
+                    style={{ background: "var(--mint-100)", color: "var(--text-muted)" }}
+                  >
+                    معطّل
+                  </span>
                 )}
               </div>
 
@@ -410,13 +518,28 @@ export default function AdminQuizPage() {
                 >
                   {sendingId === q.id ? "..." : "📤 إرسال للجميع"}
                 </button>
-                <button onClick={() => openEdit(q)} disabled={busyId === q.id} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                <button
+                  onClick={() => openEdit(q)}
+                  disabled={busyId === q.id}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                >
                   ✏️ تعديل
                 </button>
-                <button onClick={() => toggleActive(q)} disabled={busyId === q.id} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                <button
+                  onClick={() => toggleActive(q)}
+                  disabled={busyId === q.id}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                >
                   {q.active ? "⏸️ إيقاف" : "▶️ تفعيل"}
                 </button>
-                <button onClick={() => deleteQuestion(q.id)} disabled={busyId === q.id} className="text-xs px-3 py-1.5 rounded-lg font-bold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <button
+                  onClick={() => deleteQuestion(q.id)}
+                  disabled={busyId === q.id}
+                  className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   {busyId === q.id ? "..." : "🗑️ حذف"}
                 </button>
               </div>
@@ -427,8 +550,13 @@ export default function AdminQuizPage() {
 
       {/* Leaderboard */}
       <div className="card overflow-hidden">
-        <button onClick={() => setShowLeaderboard((v) => !v)} className="w-full flex items-center justify-between px-4 py-3">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>🏆 الترتيب الكامل ({leaderboard.length})</p>
+        <button
+          onClick={() => setShowLeaderboard((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3"
+        >
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            🏆 الترتيب الكامل ({leaderboard.length})
+          </p>
           <span style={{ color: "var(--mint-600)" }}>{showLeaderboard ? "▾" : "◂"}</span>
         </button>
         {showLeaderboard && (
@@ -437,7 +565,13 @@ export default function AdminQuizPage() {
               <thead>
                 <tr style={{ background: "var(--mint-100)" }}>
                   {["#", "المستخدم", "النقاط", "🔥"].map((h) => (
-                    <th key={h} className="px-3 py-2 text-center font-bold" style={{ color: "var(--mint-700)" }}>{h}</th>
+                    <th
+                      key={h}
+                      className="px-3 py-2 text-center font-bold"
+                      style={{ color: "var(--mint-700)" }}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -448,16 +582,28 @@ export default function AdminQuizPage() {
                       <span
                         className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-black"
                         style={{
-                          background: entry.rank <= 3 ? "linear-gradient(160deg, var(--copper-400), var(--copper-600))" : "var(--mint-100)",
+                          background:
+                            entry.rank <= 3
+                              ? "linear-gradient(160deg, var(--copper-400), var(--copper-600))"
+                              : "var(--mint-100)",
                           color: entry.rank <= 3 ? "#fff" : "var(--mint-700)",
                         }}
                       >
                         {entry.rank <= 3 ? MEDALS[entry.rank - 1] : entry.rank}
                       </span>
                     </td>
-                    <td className="px-3 py-2 font-bold" style={{ color: "var(--text-main)" }}>{entry.name}</td>
-                    <td className="px-3 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>{entry.total}</td>
-                    <td className="px-3 py-2 text-center" style={{ color: "var(--copper-600)" }}>{entry.currentStreak}</td>
+                    <td className="px-3 py-2 font-bold" style={{ color: "var(--text-main)" }}>
+                      {entry.name}
+                    </td>
+                    <td
+                      className="px-3 py-2 text-center font-black"
+                      style={{ color: "var(--mint-700)" }}
+                    >
+                      {entry.total}
+                    </td>
+                    <td className="px-3 py-2 text-center" style={{ color: "var(--copper-600)" }}>
+                      {entry.currentStreak}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -471,38 +617,108 @@ export default function AdminQuizPage() {
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(ev) => { if (ev.target === ev.currentTarget) setShowForm(false); }}
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) setShowForm(false);
+          }}
         >
-          <div className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto" style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}>
-            <div className="px-5 py-4 flex items-center justify-between sticky top-0" style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}>
-              <h2 className="font-black text-white text-base">{editingId ? "✏️ تعديل سؤال" : "➕ سؤال جديد"}</h2>
-              <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold" style={{ background: "rgba(255,255,255,0.15)" }}>✕</button>
+          <div
+            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
+            style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
+          >
+            <div
+              className="px-5 py-4 flex items-center justify-between sticky top-0"
+              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+            >
+              <h2 className="font-black text-white text-base">
+                {editingId ? "✏️ تعديل سؤال" : "➕ سؤال جديد"}
+              </h2>
+              <button
+                onClick={() => setShowForm(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={submitQuestionForm} className="p-5 space-y-3">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>نص السؤال <span style={{ color: "var(--copper-500)" }}>*</span></label>
-                <textarea value={formText} onChange={(e) => setFormText(e.target.value)} rows={2} required className="input" />
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  نص السؤال <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <textarea
+                  value={formText}
+                  onChange={(e) => setFormText(e.target.value)}
+                  rows={2}
+                  required
+                  className="input"
+                />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>التصنيف <span style={{ color: "var(--copper-500)" }}>*</span></label>
-                <input type="text" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="تاريخ، رياضة، جغرافيا..." required className="input" />
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  التصنيف <span style={{ color: "var(--copper-500)" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  placeholder="تاريخ، رياضة، جغرافيا..."
+                  required
+                  className="input"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>النقاط</label>
-                  <input type="number" dir="ltr" min={1} value={formPoints} onChange={(e) => setFormPoints(e.target.value)} className="input" />
+                  <label
+                    className="block text-sm font-bold mb-1.5"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    النقاط
+                  </label>
+                  <input
+                    type="number"
+                    dir="ltr"
+                    min={1}
+                    value={formPoints}
+                    onChange={(e) => setFormPoints(e.target.value)}
+                    className="input"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>عدد الإجابات الصحيحة</label>
-                  <input type="number" dir="ltr" min={1} value={formCorrectCount} onChange={(e) => setFormCorrectCount(e.target.value)} className="input" />
+                  <label
+                    className="block text-sm font-bold mb-1.5"
+                    style={{ color: "var(--text-main)" }}
+                  >
+                    عدد الإجابات الصحيحة
+                  </label>
+                  <input
+                    type="number"
+                    dir="ltr"
+                    min={1}
+                    value={formCorrectCount}
+                    onChange={(e) => setFormCorrectCount(e.target.value)}
+                    className="input"
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>الإجابات</label>
-                  <button type="button" onClick={addAnswerRow} className="text-xs px-2.5 py-1 rounded-lg font-bold" style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                  <label className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                    الإجابات
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addAnswerRow}
+                    className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                    style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                  >
                     ➕ إضافة إجابة
                   </button>
                 </div>
@@ -512,13 +728,33 @@ export default function AdminQuizPage() {
                       type="button"
                       onClick={() => toggleAnswerCorrect(i)}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 font-bold"
-                      style={a.isCorrect ? { background: "#d1fae5", color: "#065f46" } : { background: "#fff", border: "1.5px solid var(--mint-200)", color: "var(--text-muted)" }}
+                      style={
+                        a.isCorrect
+                          ? { background: "#d1fae5", color: "#065f46" }
+                          : {
+                              background: "#fff",
+                              border: "1.5px solid var(--mint-200)",
+                              color: "var(--text-muted)",
+                            }
+                      }
                       title="إجابة صحيحة؟"
                     >
                       {a.isCorrect ? "✓" : ""}
                     </button>
-                    <input type="text" value={a.text} onChange={(e) => updateAnswerText(i, e.target.value)} className="input text-sm" placeholder={`إجابة ${i + 1}`} />
-                    <button type="button" onClick={() => removeAnswerRow(i)} disabled={formAnswers.length <= 2} className="text-sm shrink-0" style={{ color: "#dc2626", opacity: formAnswers.length <= 2 ? 0.3 : 1 }}>
+                    <input
+                      type="text"
+                      value={a.text}
+                      onChange={(e) => updateAnswerText(i, e.target.value)}
+                      className="input text-sm"
+                      placeholder={`إجابة ${i + 1}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAnswerRow(i)}
+                      disabled={formAnswers.length <= 2}
+                      className="text-sm shrink-0"
+                      style={{ color: "#dc2626", opacity: formAnswers.length <= 2 ? 0.3 : 1 }}
+                    >
                       🗑️
                     </button>
                   </div>
@@ -526,7 +762,12 @@ export default function AdminQuizPage() {
               </div>
 
               {formError && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>⚠️ {formError}</div>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
+                  ⚠️ {formError}
+                </div>
               )}
 
               <button type="submit" disabled={saving} className="btn btn-primary text-sm">

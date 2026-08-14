@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
     if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" },
+        { status: 400 },
+      );
     }
     if (file.size > MAX_UPLOAD_SIZE) {
       return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
@@ -72,11 +75,17 @@ export async function POST(req: NextRequest) {
 
     const n = Number(amountRaw);
     if (!Number.isInteger(n) || n <= 0) {
-      return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+      return NextResponse.json(
+        { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
+        { status: 400 },
+      );
     }
     const amount = n;
 
-    if (typeof paymentMethodRaw !== "string" || !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)) {
+    if (
+      typeof paymentMethodRaw !== "string" ||
+      !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)
+    ) {
       return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
     }
     const paymentMethod = paymentMethodRaw;
@@ -89,12 +98,18 @@ export async function POST(req: NextRequest) {
       processed = await processImage(Buffer.from(await file.arrayBuffer()));
     } catch (err) {
       console.error("Image processing error:", err);
-      return NextResponse.json({ error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" }, { status: 400 });
+      return NextResponse.json(
+        { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
+        { status: 400 },
+      );
     }
     await mkdir(uploadDir, { recursive: true });
     await Promise.all([
       writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-      writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
+      writeFile(
+        join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`),
+        processed.thumbnail,
+      ),
     ]);
 
     await prisma.donation.create({

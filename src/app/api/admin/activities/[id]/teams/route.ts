@@ -3,10 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -17,7 +14,11 @@ export async function GET(
       include: {
         group: { select: { id: true, name: true } },
         members: {
-          select: { id: true, status: true, member: { select: { id: true, fullName: true, phone: true, age: true, photo: true } } },
+          select: {
+            id: true,
+            status: true,
+            member: { select: { id: true, fullName: true, phone: true, age: true, photo: true } },
+          },
         },
       },
     });
@@ -34,10 +35,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -47,10 +45,16 @@ export async function POST(
       return NextResponse.json({ error: "اسم الفريق مطلوب" }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json({ error: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
 
-    const activity = await prisma.activity.findUnique({ where: { id }, select: { isTournament: true } });
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      select: { isTournament: true },
+    });
     if (!activity?.isTournament) {
       return NextResponse.json({ error: "هذا النشاط ليس بطولة" }, { status: 400 });
     }

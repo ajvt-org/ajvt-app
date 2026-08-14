@@ -2,22 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, getUserSession } from "@/lib/auth";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const session = await getUserSession();
   if (!session) return NextResponse.json({ following: false, loggedIn: false });
   const { teamId } = await params;
   const { userId } = session as { userId: string };
-  const follow = await prisma.teamFollow.findUnique({ where: { userId_teamId: { userId, teamId } } });
+  const follow = await prisma.teamFollow.findUnique({
+    where: { userId_teamId: { userId, teamId } },
+  });
   return NextResponse.json({ following: !!follow, loggedIn: true });
 }
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   try {
     const session = await requireUser();
     const { teamId } = await params;
@@ -45,7 +41,7 @@ export async function POST(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
+  { params }: { params: Promise<{ teamId: string }> },
 ) {
   try {
     const session = await requireUser();

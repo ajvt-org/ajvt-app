@@ -6,23 +6,44 @@ import { validatePaidAmount } from "@/lib/donations";
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser();
-    const { id, fullName, phone, age, paymentMethod, paymentProof, photo, paidAmount, referenceCode } = await req.json();
+    const {
+      id,
+      fullName,
+      phone,
+      age,
+      paymentMethod,
+      paymentProof,
+      photo,
+      paidAmount,
+      referenceCode,
+    } = await req.json();
 
     if (!fullName) return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
     if (!phone) return NextResponse.json({ error: "رقم الهاتف مطلوب" }, { status: 400 });
     if (!age) return NextResponse.json({ error: "يرجى اختيار العصر" }, { status: 400 });
-    if (!paymentMethod) return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
-    if (!paymentProof) return NextResponse.json({ error: "يرجى إرفاق صورة الكابتير" }, { status: 400 });
+    if (!paymentMethod)
+      return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
+    if (!paymentProof)
+      return NextResponse.json({ error: "يرجى إرفاق صورة الكابتير" }, { status: 400 });
     if (fullName.trim().length > 30) {
-      return NextResponse.json({ error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     if (age.trim().length > 30) {
-      return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     if (photo !== undefined && photo !== null && typeof photo !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
-    if (referenceCode !== undefined && (typeof referenceCode !== "string" || referenceCode.length > 20)) {
+    if (
+      referenceCode !== undefined &&
+      (typeof referenceCode !== "string" || referenceCode.length > 20)
+    ) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     const paidAmountError = validatePaidAmount(paidAmount);
@@ -80,7 +101,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     }
     if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
-      return NextResponse.json({ error: "رمز الطلب مستخدم بالفعل، يرجى إعادة المحاولة" }, { status: 409 });
+      return NextResponse.json(
+        { error: "رمز الطلب مستخدم بالفعل، يرجى إعادة المحاولة" },
+        { status: 409 },
+      );
     }
     console.error("Member create error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });

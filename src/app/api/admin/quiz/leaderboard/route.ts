@@ -8,8 +8,10 @@ export async function GET() {
     const leaderboard = await getQuizLeaderboard();
     return NextResponse.json({ leaderboard });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN") return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+    if (err instanceof Error && err.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    if (err instanceof Error && err.message === "FORBIDDEN")
+      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
     console.error("Quiz leaderboard error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }

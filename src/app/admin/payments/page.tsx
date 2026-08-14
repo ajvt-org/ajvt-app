@@ -29,10 +29,25 @@ interface MemberOption {
   fullName: string;
 }
 
-const STATUS_LABEL: Record<string, string> = { PENDING: "قيد الانتظار", ACTIVE: "مقبول", REJECTED: "مرفوض" };
-const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "قيد الانتظار",
+  ACTIVE: "مقبول",
+  REJECTED: "مرفوض",
+};
+const STATUS_CLASS: Record<string, string> = {
+  PENDING: "badge-pending",
+  ACTIVE: "badge-active",
+  REJECTED: "badge-rejected",
+};
 
-const emptyManualDonation = { donorName: "", donorPhone: "", amount: "", donorPhoto: "", paymentMethod: "", proof: "" };
+const emptyManualDonation = {
+  donorName: "",
+  donorPhone: "",
+  amount: "",
+  donorPhoto: "",
+  paymentMethod: "",
+  proof: "",
+};
 const PAGE_SIZE = 30;
 
 export default function AdminPaymentsPage() {
@@ -41,7 +56,9 @@ export default function AdminPaymentsPage() {
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [kindFilter, setKindFilter] = useState<"ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION">("ALL");
+  const [kindFilter, setKindFilter] = useState<"ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION">(
+    "ALL",
+  );
   const [page, setPage] = useState(1);
   const [lastFilterKey, setLastFilterKey] = useState("ALL|");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -65,14 +82,25 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/admin/payment-proofs").then((r) => {
-        if (r.status === 401) { router.push(loginPathWithNext("/admin/login")); return null; }
+        if (r.status === 401) {
+          router.push(loginPathWithNext("/admin/login"));
+          return null;
+        }
         return r.json();
       }),
-      fetch("/api/admin/members").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/admin/members")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
       .then(([proofsData, membersData]) => {
         if (proofsData?.proofs) setProofs(proofsData.proofs);
-        if (membersData?.members) setMembers(membersData.members.map((m: { id: string; fullName: string }) => ({ id: m.id, fullName: m.fullName })));
+        if (membersData?.members)
+          setMembers(
+            membersData.members.map((m: { id: string; fullName: string }) => ({
+              id: m.id,
+              fullName: m.fullName,
+            })),
+          );
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -104,7 +132,9 @@ export default function AdminPaymentsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setProofs((prev) => prev.map((p) => (p.id === id && p.kind === "DONATION" ? { ...p, status } : p)));
+      setProofs((prev) =>
+        prev.map((p) => (p.id === id && p.kind === "DONATION" ? { ...p, status } : p)),
+      );
     } catch (e) {
       alert(e instanceof Error ? e.message : "خطأ");
     } finally {
@@ -123,9 +153,13 @@ export default function AdminPaymentsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       const linkedName = memberId ? members.find((m) => m.id === memberId)?.fullName : undefined;
-      setProofs((prev) => prev.map((p) => (p.id === id && p.kind === "DONATION"
-        ? { ...p, memberId, memberName: linkedName || data.donation.donorName || "فاعل خير" }
-        : p)));
+      setProofs((prev) =>
+        prev.map((p) =>
+          p.id === id && p.kind === "DONATION"
+            ? { ...p, memberId, memberName: linkedName || data.donation.donorName || "فاعل خير" }
+            : p,
+        ),
+      );
       setLinkingId(null);
       setLinkSearch("");
     } catch (e) {
@@ -177,18 +211,22 @@ export default function AdminPaymentsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
-      setProofs((prev) => prev.map((item) => (item.id === p.id && item.kind === "DONATION"
-        ? {
-            ...item,
-            donorName: data.donation.donorName,
-            donorPhone: data.donation.donorPhone,
-            donorPhoto: data.donation.donorPhoto,
-            amount: data.donation.amount,
-            paymentMethod: data.donation.paymentMethod,
-            proof: data.donation.proof,
-            memberName: item.memberId ? item.memberName : (data.donation.donorName || "فاعل خير"),
-          }
-        : item)));
+      setProofs((prev) =>
+        prev.map((item) =>
+          item.id === p.id && item.kind === "DONATION"
+            ? {
+                ...item,
+                donorName: data.donation.donorName,
+                donorPhone: data.donation.donorPhone,
+                donorPhoto: data.donation.donorPhoto,
+                amount: data.donation.amount,
+                paymentMethod: data.donation.paymentMethod,
+                proof: data.donation.proof,
+                memberName: item.memberId ? item.memberName : data.donation.donorName || "فاعل خير",
+              }
+            : item,
+        ),
+      );
       setEditingId(null);
     } catch (e) {
       setEditError(e instanceof Error ? e.message : "خطأ");
@@ -200,13 +238,22 @@ export default function AdminPaymentsPage() {
   async function createManualDonation(e: React.FormEvent) {
     e.preventDefault();
     setManualError("");
-    if (!manualDonation.donorName.trim()) { setManualError("الاسم مطلوب"); return; }
+    if (!manualDonation.donorName.trim()) {
+      setManualError("الاسم مطلوب");
+      return;
+    }
     if (manualDonation.donorPhone.trim()) {
       const phoneError = validatePhone(manualDonation.donorPhone);
-      if (phoneError) { setManualError(phoneError); return; }
+      if (phoneError) {
+        setManualError(phoneError);
+        return;
+      }
     }
     const n = Number(manualDonation.amount);
-    if (!Number.isInteger(n) || n <= 0) { setManualError("المبلغ يجب أن يكون رقماً صحيحاً موجباً"); return; }
+    if (!Number.isInteger(n) || n <= 0) {
+      setManualError("المبلغ يجب أن يكون رقماً صحيحاً موجباً");
+      return;
+    }
 
     setManualLoading(true);
     try {
@@ -301,7 +348,10 @@ export default function AdminPaymentsPage() {
           🧾 كل إثباتات الدفع ({proofs.length})
         </p>
         <button
-          onClick={() => { setShowManualDonation(true); setManualError(""); }}
+          onClick={() => {
+            setShowManualDonation(true);
+            setManualError("");
+          }}
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
@@ -332,14 +382,21 @@ export default function AdminPaymentsPage() {
       />
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>لا توجد نتائج</p>
+        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+          لا توجد نتائج
+        </p>
       ) : (
         <div className="space-y-2">
           {paginated.map((p) => (
             <div key={`${p.kind}-${p.id}`} className="card p-3">
               <div className="flex items-center gap-3">
                 {p.proof ? (
-                  <a href={`/api/files/${p.proof}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  <a
+                    href={`/api/files/${p.proof}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0"
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={toThumbUrl(`/api/files/${p.proof}`)}
@@ -362,24 +419,42 @@ export default function AdminPaymentsPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>{p.memberName}</p>
+                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                      {p.memberName}
+                    </p>
                     <span className={`badge ${STATUS_CLASS[p.status] || "badge-pending"}`}>
-                      {p.kind === "DONATION" && p.amount ? `${STATUS_LABEL[p.status] || p.status} — ${p.amount} أوقية` : STATUS_LABEL[p.status] || p.status}
+                      {p.kind === "DONATION" && p.amount
+                        ? `${STATUS_LABEL[p.status] || p.status} — ${p.amount} أوقية`
+                        : STATUS_LABEL[p.status] || p.status}
                     </span>
                     {p.kind === "DONATION" && p.memberId && (
                       <span className="badge badge-active">🔗 مرتبط بعضو</span>
                     )}
                   </div>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    {p.kind === "MEMBERSHIP" ? "💳 عضوية الرابطة" : p.kind === "ACTIVITY" ? `🏆 ${p.activityTitle}` : "💚 دعم عام للرابطة"}
+                    {p.kind === "MEMBERSHIP"
+                      ? "💳 عضوية الرابطة"
+                      : p.kind === "ACTIVITY"
+                        ? `🏆 ${p.activityTitle}`
+                        : "💚 دعم عام للرابطة"}
                   </p>
                   {p.kind === "DONATION" && p.donorPhone && (
-                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }} dir="ltr">📞 {p.donorPhone}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }} dir="ltr">
+                      📞 {p.donorPhone}
+                    </p>
                   )}
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    رُفعت بتاريخ {new Date(p.uploadedAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric" })}
+                    رُفعت بتاريخ{" "}
+                    {new Date(p.uploadedAt).toLocaleDateString("ar", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
                     {" — "}
-                    {new Date(p.uploadedAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(p.uploadedAt).toLocaleTimeString("ar", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
 
                   {p.kind === "DONATION" && (
@@ -440,8 +515,8 @@ export default function AdminPaymentsPage() {
                       >
                         {busyId === p.id ? "..." : "🗑️ حذف نهائياً"}
                       </button>
-                      {p.source === "PUBLIC" && (
-                        p.memberId ? (
+                      {p.source === "PUBLIC" &&
+                        (p.memberId ? (
                           <button
                             onClick={() => linkDonation(p.id, null)}
                             disabled={busyId === p.id}
@@ -452,20 +527,25 @@ export default function AdminPaymentsPage() {
                           </button>
                         ) : (
                           <button
-                            onClick={() => { setLinkingId(linkingId === p.id ? null : p.id); setLinkSearch(""); }}
+                            onClick={() => {
+                              setLinkingId(linkingId === p.id ? null : p.id);
+                              setLinkSearch("");
+                            }}
                             disabled={busyId === p.id}
                             className="text-xs px-3 py-1.5 rounded-lg font-bold"
                             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                           >
                             🔗 ربط بعضو مسجل
                           </button>
-                        )
-                      )}
+                        ))}
                     </div>
                   )}
 
                   {editingId === p.id && (
-                    <div className="mt-2 p-2.5 rounded-lg space-y-2" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}>
+                    <div
+                      className="mt-2 p-2.5 rounded-lg space-y-2"
+                      style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
+                    >
                       <PhotoUpload
                         photo={editProof}
                         variant="cover"
@@ -499,7 +579,9 @@ export default function AdminPaymentsPage() {
                         dir="ltr"
                         placeholder="رقم الهاتف (اختياري)"
                         value={editDonorPhone}
-                        onChange={(e) => setEditDonorPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                        onChange={(e) =>
+                          setEditDonorPhone(e.target.value.replace(/\D/g, "").slice(0, 8))
+                        }
                         maxLength={8}
                         className="input text-xs"
                         style={{ background: "white" }}
@@ -520,10 +602,17 @@ export default function AdminPaymentsPage() {
                         style={{ background: "white" }}
                       >
                         <option value="">طريقة الدفع — غير محددة</option>
-                        {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                        {PAYMENT_METHODS.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
                       </select>
                       {editError && (
-                        <div className="p-2 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                        <div
+                          className="p-2 rounded-lg text-xs font-semibold"
+                          style={{ background: "#fee2e2", color: "#991b1b" }}
+                        >
                           ⚠️ {editError}
                         </div>
                       )}
@@ -548,7 +637,10 @@ export default function AdminPaymentsPage() {
                   )}
 
                   {linkingId === p.id && (
-                    <div className="mt-2 p-2 rounded-lg" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}>
+                    <div
+                      className="mt-2 p-2 rounded-lg"
+                      style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
+                    >
                       <input
                         type="text"
                         autoFocus
@@ -560,7 +652,12 @@ export default function AdminPaymentsPage() {
                       />
                       <div className="mt-1.5 space-y-1 max-h-40 overflow-y-auto">
                         {linkResults.length === 0 ? (
-                          <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>لا يوجد عضو مطابق</p>
+                          <p
+                            className="text-xs text-center py-2"
+                            style={{ color: "var(--text-muted)" }}
+                          >
+                            لا يوجد عضو مطابق
+                          </p>
                         ) : (
                           linkResults.map((m) => (
                             <button
@@ -613,7 +710,9 @@ export default function AdminPaymentsPage() {
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowManualDonation(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowManualDonation(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -653,7 +752,10 @@ export default function AdminPaymentsPage() {
                 onUpload={(filename) => setManualDonation((p) => ({ ...p, proof: filename }))}
               />
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   اسم المتبرع <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
@@ -666,21 +768,32 @@ export default function AdminPaymentsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   رقم الهاتف (اختياري)
                 </label>
                 <input
                   type="tel"
                   dir="ltr"
                   value={manualDonation.donorPhone}
-                  onChange={(e) => setManualDonation((p) => ({ ...p, donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                  onChange={(e) =>
+                    setManualDonation((p) => ({
+                      ...p,
+                      donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
+                    }))
+                  }
                   placeholder="2XXXXXXX"
                   maxLength={8}
                   className="input"
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
@@ -694,21 +807,33 @@ export default function AdminPaymentsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   طريقة الدفع
                 </label>
                 <select
                   value={manualDonation.paymentMethod}
-                  onChange={(e) => setManualDonation((p) => ({ ...p, paymentMethod: e.target.value }))}
+                  onChange={(e) =>
+                    setManualDonation((p) => ({ ...p, paymentMethod: e.target.value }))
+                  }
                   className="input"
                 >
                   <option value="">غير محددة</option>
-                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {manualError && (
-                <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-3 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {manualError}
                 </div>
               )}

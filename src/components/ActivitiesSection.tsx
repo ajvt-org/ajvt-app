@@ -54,8 +54,16 @@ interface ActivitiesSectionProps {
   onReload: () => void;
 }
 
-const STATUS_LABEL: Record<string, string> = { PENDING: "⏳ قيد المراجعة", ACTIVE: "✅ مقبول", REJECTED: "❌ مرفوض" };
-const STATUS_CLASS: Record<string, string> = { PENDING: "badge-pending", ACTIVE: "badge-active", REJECTED: "badge-rejected" };
+const STATUS_LABEL: Record<string, string> = {
+  PENDING: "⏳ قيد المراجعة",
+  ACTIVE: "✅ مقبول",
+  REJECTED: "❌ مرفوض",
+};
+const STATUS_CLASS: Record<string, string> = {
+  PENDING: "badge-pending",
+  ACTIVE: "badge-active",
+  REJECTED: "badge-rejected",
+};
 
 function QuizCard({ quizAccess }: { quizAccess: boolean }) {
   return (
@@ -63,36 +71,58 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
       <div className="p-4 flex items-center gap-3">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0"
-          style={{ background: quizAccess ? "linear-gradient(160deg, var(--mint-500), var(--mint-700))" : "var(--mint-100)" }}
+          style={{
+            background: quizAccess
+              ? "linear-gradient(160deg, var(--mint-500), var(--mint-700))"
+              : "var(--mint-100)",
+          }}
         >
           🧠
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>المسابقة الثقافية</h3>
+          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
+            المسابقة الثقافية
+          </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {quizAccess ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥" : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
+            {quizAccess
+              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥"
+              : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
           </p>
         </div>
         {quizAccess ? (
-          <a href="/quiz" className="text-xs px-3 py-2 rounded-lg font-bold shrink-0" style={{ background: "var(--mint-600)", color: "white" }}>
+          <a
+            href="/quiz"
+            className="text-xs px-3 py-2 rounded-lg font-bold shrink-0"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
             العب ←
           </a>
         ) : (
-          <span className="text-lg shrink-0" title="متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب">🔒</span>
+          <span className="text-lg shrink-0" title="متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب">
+            🔒
+          </span>
         )}
       </div>
     </div>
   );
 }
 
-export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPendingMember, quizAccess, onReload }: ActivitiesSectionProps) {
+export default function ActivitiesSection({
+  eligibleMembers,
+  hasAnyMember,
+  hasPendingMember,
+  quizAccess,
+  onReload,
+}: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/activities")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.activities) setActivities(data.activities); })
+      .then((data) => {
+        if (data?.activities) setActivities(data.activities);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -125,25 +155,30 @@ export default function ActivitiesSection({ eligibleMembers, hasAnyMember, hasPe
         <>
           {eligibleMembers.length === 0 && (
             <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
-              {hasPendingMember
-                ? "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
-                : hasAnyMember
-                ? "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
-                : (
-                  <>
-                    تصفح الأنشطة المتاحة —{" "}
-                    <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
-                      سجّل طلب انضمام
-                    </a>
-                    {" "}لتتمكن من التسجيل.
-                  </>
-                )}
+              {hasPendingMember ? (
+                "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
+              ) : hasAnyMember ? (
+                "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
+              ) : (
+                <>
+                  تصفح الأنشطة المتاحة —{" "}
+                  <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
+                    سجّل طلب انضمام
+                  </a>{" "}
+                  لتتمكن من التسجيل.
+                </>
+              )}
             </p>
           )}
 
           <div className="space-y-3">
             {activities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} eligibleMembers={eligibleMembers} onReload={onReload} />
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                eligibleMembers={eligibleMembers}
+                onReload={onReload}
+              />
             ))}
           </div>
         </>
@@ -275,18 +310,27 @@ function ActivityCard({
       )}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-1.5">
-          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>{activity.title}</h3>
+          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
+            {activity.title}
+          </h3>
           {activity.isOpen ? (
             <span className="badge badge-open-blink shrink-0 font-bold">🔴 التسجيل مفتوح</span>
           ) : (
             <span className="badge badge-rejected shrink-0">مغلق</span>
           )}
         </div>
-        <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>{activity.description}</p>
-        <div className="flex items-center gap-3 text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+        <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
+          {activity.description}
+        </p>
+        <div
+          className="flex items-center gap-3 text-xs mb-3"
+          style={{ color: "var(--text-muted)" }}
+        >
           {activity.period && <span>📅 {activity.period}</span>}
           {activity.capacity !== null && (
-            <span>👥 {activity.registrantCount}/{activity.capacity}</span>
+            <span>
+              👥 {activity.registrantCount}/{activity.capacity}
+            </span>
           )}
         </div>
 
@@ -312,20 +356,30 @@ function ActivityCard({
                 <div className="flex items-center justify-between gap-3 text-xs py-0.5">
                   <div className="flex items-center gap-2 min-w-0">
                     <PlayerAvatar photo={m.photo} fullName={m.fullName} size={26} bg="copper" />
-                    <span className="truncate" style={{ color: "var(--text-main)" }}>{m.fullName}</span>
+                    <span className="truncate" style={{ color: "var(--text-main)" }}>
+                      {m.fullName}
+                    </span>
                   </div>
                   {settled ? (
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`badge ${STATUS_CLASS[r!.status]}`}>{STATUS_LABEL[r!.status]}</span>
+                      <span className={`badge ${STATUS_CLASS[r!.status]}`}>
+                        {STATUS_LABEL[r!.status]}
+                      </span>
                       {r!.status === "PENDING" && (
-                        <button onClick={() => cancelPending(m.id)} className="font-bold" style={{ color: "#991b1b" }}>
+                        <button
+                          onClick={() => cancelPending(m.id)}
+                          className="font-bold"
+                          style={{ color: "#991b1b" }}
+                        >
                           إلغاء
                         </button>
                       )}
                     </div>
                   ) : activity.isOpen && !full ? (
                     <button
-                      onClick={() => (activity.isVolunteer ? registerVolunteer(m.id) : register(m.id))}
+                      onClick={() =>
+                        activity.isVolunteer ? registerVolunteer(m.id) : register(m.id)
+                      }
                       disabled={busyMemberId === m.id}
                       className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
                       style={{ background: "var(--mint-600)", color: "white" }}
@@ -333,10 +387,10 @@ function ActivityCard({
                       {busyMemberId === m.id
                         ? "..."
                         : r?.status === "REJECTED"
-                        ? "🔄 إعادة المحاولة"
-                        : activity.isVolunteer
-                        ? "🤝 تطوع"
-                        : "📝 سجّل"}
+                          ? "🔄 إعادة المحاولة"
+                          : activity.isVolunteer
+                            ? "🤝 تطوع"
+                            : "📝 سجّل"}
                     </button>
                   ) : (
                     <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
@@ -345,66 +399,79 @@ function ActivityCard({
                   )}
                 </div>
                 {r?.status === "REJECTED" && r.rejectionReason && (
-                  <p className="text-xs mr-8" style={{ color: "#991b1b" }}>سبب الرفض السابق: {r.rejectionReason}</p>
+                  <p className="text-xs mr-8" style={{ color: "#991b1b" }}>
+                    سبب الرفض السابق: {r.rejectionReason}
+                  </p>
                 )}
-                {r?.status === "ACTIVE" && activity.isTournament && activity.teams.length > 0 && (() => {
-                  const myTeam = teamFor(m);
-                  const locked = myTeam?.status === "ACTIVE";
-                  return (
-                    <div className="mr-8 mt-1.5">
-                      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-                        🏳️ {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
-                      </p>
-                      {locked ? (
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="badge badge-active">✓ {myTeam!.teamName}</span>
-                          <span className="text-xs" style={{ color: "var(--text-muted)" }}>تم التأكيد — لا يمكن تغييره</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {activity.teams.map((t) => {
-                            const mine = myTeam?.teamId === t.id;
-                            return (
-                              <button
-                                key={t.id}
-                                onClick={() => pickTeam(m.id, t.id)}
-                                disabled={busyMemberId === m.id || mine}
-                                className="text-xs px-2.5 py-1 rounded-lg font-bold"
-                                style={{
-                                  background: mine ? "var(--mint-600)" : "white",
-                                  color: mine ? "white" : "var(--mint-700)",
-                                  border: "1px solid var(--mint-200)",
-                                }}
-                              >
-                                {mine ? "⏳ " : ""}{t.name}
-                              </button>
-                            );
-                          })}
-                          {myTeam && (
-                            <>
-                              <span className="badge badge-pending" style={{ fontSize: "10px" }}>⏳ بانتظار الموافقة</span>
-                              <button
-                                onClick={() => leaveTeam(m.id, myTeam.teamId)}
-                                disabled={busyMemberId === m.id}
-                                className="text-xs font-bold"
-                                style={{ color: "#991b1b" }}
-                              >
-                                إلغاء الطلب
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                {r?.status === "ACTIVE" &&
+                  activity.isTournament &&
+                  activity.teams.length > 0 &&
+                  (() => {
+                    const myTeam = teamFor(m);
+                    const locked = myTeam?.status === "ACTIVE";
+                    return (
+                      <div className="mr-8 mt-1.5">
+                        <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+                          🏳️ {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
+                        </p>
+                        {locked ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="badge badge-active">✓ {myTeam!.teamName}</span>
+                            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                              تم التأكيد — لا يمكن تغييره
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {activity.teams.map((t) => {
+                              const mine = myTeam?.teamId === t.id;
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => pickTeam(m.id, t.id)}
+                                  disabled={busyMemberId === m.id || mine}
+                                  className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                                  style={{
+                                    background: mine ? "var(--mint-600)" : "white",
+                                    color: mine ? "white" : "var(--mint-700)",
+                                    border: "1px solid var(--mint-200)",
+                                  }}
+                                >
+                                  {mine ? "⏳ " : ""}
+                                  {t.name}
+                                </button>
+                              );
+                            })}
+                            {myTeam && (
+                              <>
+                                <span className="badge badge-pending" style={{ fontSize: "10px" }}>
+                                  ⏳ بانتظار الموافقة
+                                </span>
+                                <button
+                                  onClick={() => leaveTeam(m.id, myTeam.teamId)}
+                                  disabled={busyMemberId === m.id}
+                                  className="text-xs font-bold"
+                                  style={{ color: "#991b1b" }}
+                                >
+                                  إلغاء الطلب
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
               </div>
             );
           })}
         </div>
 
         {error && (
-          <div className="p-2.5 rounded-xl text-xs font-semibold mt-2" style={{ background: "#fee2e2", color: "#991b1b" }}>
+          <div
+            className="p-2.5 rounded-xl text-xs font-semibold mt-2"
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
             ⚠️ {error}
           </div>
         )}

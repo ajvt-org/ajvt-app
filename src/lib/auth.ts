@@ -34,9 +34,17 @@ export async function requireAdmin() {
   const session = await getAdminSession();
   if (!session) throw new Error("UNAUTHORIZED");
   const { adminId, tokenVersion } = session as { adminId: string; tokenVersion: number };
-  const admin = await prisma.admin.findUnique({ where: { id: adminId }, select: { tokenVersion: true, role: true } });
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+    select: { tokenVersion: true, role: true },
+  });
   if (!admin || admin.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
-  return { ...session, role: admin.role } as { adminId: string; username: string; tokenVersion: number; role: string };
+  return { ...session, role: admin.role } as {
+    adminId: string;
+    username: string;
+    tokenVersion: number;
+    role: string;
+  };
 }
 
 // SUPER always passes — it's the unrestricted role. MEMBERS/ACTIVITIES admins
@@ -61,7 +69,10 @@ export async function requireUser() {
   const session = await getUserSession();
   if (!session) throw new Error("UNAUTHORIZED");
   const { userId, tokenVersion } = session as { userId: string; tokenVersion: number };
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { tokenVersion: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { tokenVersion: true },
+  });
   if (!user || user.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
   return session as { userId: string; tokenVersion: number };
 }

@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"];
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
 const COMPRESS_THRESHOLD = 2 * 1024 * 1024; // above this, shrink before sending — most phone camera shots
 const COMPRESS_MAX_DIMENSION = 1600;
 const COMPRESS_QUALITY = 0.75;
@@ -36,7 +43,9 @@ async function compressForUpload(file: File): Promise<File | Blob> {
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", COMPRESS_QUALITY));
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", COMPRESS_QUALITY),
+    );
     if (!blob || blob.size >= file.size) return file;
     return blob;
   } catch {
@@ -44,7 +53,10 @@ async function compressForUpload(file: File): Promise<File | Blob> {
   }
 }
 
-function uploadWithProgress(body: FormData, onProgress: (pct: number) => void): Promise<{ filename: string }> {
+function uploadWithProgress(
+  body: FormData,
+  onProgress: (pct: number) => void,
+): Promise<{ filename: string }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload");
@@ -55,7 +67,11 @@ function uploadWithProgress(body: FormData, onProgress: (pct: number) => void): 
     };
     xhr.onload = () => {
       let data: { filename?: string; error?: string } = {};
-      try { data = JSON.parse(xhr.responseText); } catch { /* non-JSON error body */ }
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        /* non-JSON error body */
+      }
       if (xhr.status >= 200 && xhr.status < 300 && data.filename) {
         resolve({ filename: data.filename });
       } else {
@@ -69,7 +85,11 @@ function uploadWithProgress(body: FormData, onProgress: (pct: number) => void): 
   });
 }
 
-export default function ProofUpload({ existingProof, onUploaded, onUploadingChange }: ProofUploadProps) {
+export default function ProofUpload({
+  existingProof,
+  onUploaded,
+  onUploadingChange,
+}: ProofUploadProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -148,33 +168,47 @@ export default function ProofUpload({ existingProof, onUploaded, onUploadingChan
 
           {status === "uploading" && (
             <div className="mt-2">
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--mint-100)" }}>
+              <div
+                className="h-1.5 rounded-full overflow-hidden"
+                style={{ background: "var(--mint-100)" }}
+              >
                 <div
                   className="h-full rounded-full transition-all"
                   style={{ width: `${progress}%`, background: "var(--mint-600)" }}
                 />
               </div>
-              <p className="mt-1 text-xs text-center font-semibold" style={{ color: "var(--mint-600)" }}>
+              <p
+                className="mt-1 text-xs text-center font-semibold"
+                style={{ color: "var(--mint-600)" }}
+              >
                 جاري الرفع... {progress}%
               </p>
             </div>
           )}
 
           {status === "preparing" && (
-            <p className="mt-2 text-xs text-center font-semibold" style={{ color: "var(--mint-600)" }}>
+            <p
+              className="mt-2 text-xs text-center font-semibold"
+              style={{ color: "var(--mint-600)" }}
+            >
               جاري تجهيز الصورة...
             </p>
           )}
 
           {status === "done" && (
-            <p className="mt-2 text-xs text-center font-semibold" style={{ color: "var(--mint-600)" }}>
+            <p
+              className="mt-2 text-xs text-center font-semibold"
+              style={{ color: "var(--mint-600)" }}
+            >
               ✓ تم رفع الصورة
             </p>
           )}
 
           {status === "error" && (
             <div className="mt-2 text-center">
-              <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>⚠️ {error}</p>
+              <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>
+                ⚠️ {error}
+              </p>
               <button
                 type="button"
                 onClick={retry}

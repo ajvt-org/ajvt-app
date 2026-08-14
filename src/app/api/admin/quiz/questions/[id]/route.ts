@@ -39,7 +39,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.category = category.trim();
     }
     if (points !== undefined) {
-      if (!Number.isInteger(points) || points <= 0) return NextResponse.json({ error: "النقاط يجب أن تكون رقماً صحيحاً موجباً" }, { status: 400 });
+      if (!Number.isInteger(points) || points <= 0)
+        return NextResponse.json(
+          { error: "النقاط يجب أن تكون رقماً صحيحاً موجباً" },
+          { status: 400 },
+        );
       data.points = points;
     }
     if (active !== undefined) data.active = !!active;
@@ -61,11 +65,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         return NextResponse.json({ error: "كل الإجابات يجب أن تحتوي على نص" }, { status: 400 });
       }
       if (finalCorrectCount > answers.length) {
-        return NextResponse.json({ error: "عدد الإجابات الصحيحة أكبر من عدد الإجابات" }, { status: 400 });
+        return NextResponse.json(
+          { error: "عدد الإجابات الصحيحة أكبر من عدد الإجابات" },
+          { status: 400 },
+        );
       }
       const correctGiven = (answers as AnswerInput[]).filter((a) => a.isCorrect).length;
       if (correctGiven !== finalCorrectCount) {
-        return NextResponse.json({ error: `يجب تحديد ${finalCorrectCount} إجابة (إجابات) صحيحة بالضبط` }, { status: 400 });
+        return NextResponse.json(
+          { error: `يجب تحديد ${finalCorrectCount} إجابة (إجابات) صحيحة بالضبط` },
+          { status: 400 },
+        );
       }
     }
 
@@ -73,18 +83,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (answers !== undefined) {
         await tx.quizAnswer.deleteMany({ where: { questionId: id } });
         data.answers = {
-          create: (answers as AnswerInput[]).map((a, i) => ({ text: a.text.trim(), isCorrect: !!a.isCorrect, order: i })),
+          create: (answers as AnswerInput[]).map((a, i) => ({
+            text: a.text.trim(),
+            isCorrect: !!a.isCorrect,
+            order: i,
+          })),
         };
       }
-      return tx.quizQuestion.update({ where: { id }, data, include: { answers: { orderBy: { order: "asc" } } } });
+      return tx.quizQuestion.update({
+        where: { id },
+        data,
+        include: { answers: { orderBy: { order: "asc" } } },
+      });
     });
 
     await logAction(session.username, "UPDATE_QUIZ_QUESTION", question.text.slice(0, 60));
 
     return NextResponse.json({ question });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN") return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+    if (err instanceof Error && err.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    if (err instanceof Error && err.message === "FORBIDDEN")
+      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
     console.error("Quiz question update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -95,7 +115,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
 
-    const question = await prisma.quizQuestion.findUnique({ where: { id }, select: { text: true } });
+    const question = await prisma.quizQuestion.findUnique({
+      where: { id },
+      select: { text: true },
+    });
     if (!question) {
       return NextResponse.json({ error: "السؤال غير موجود" }, { status: 404 });
     }
@@ -105,8 +128,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN") return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+    if (err instanceof Error && err.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    if (err instanceof Error && err.message === "FORBIDDEN")
+      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
     console.error("Quiz question delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }

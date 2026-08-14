@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit";
 
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string; memberId: string }> }
+  { params }: { params: Promise<{ teamId: string; memberId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
@@ -13,14 +13,25 @@ export async function PATCH(
 
     const existing = await prisma.teamMember.findUnique({
       where: { teamId_memberId: { teamId, memberId } },
-      select: { id: true, team: { select: { name: true } }, member: { select: { fullName: true } } },
+      select: {
+        id: true,
+        team: { select: { name: true } },
+        member: { select: { fullName: true } },
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
 
-    const teamMember = await prisma.teamMember.update({ where: { id: existing.id }, data: { status: "ACTIVE" } });
-    await logAction(session.username, "APPROVE_TEAM_JOIN", `${existing.member.fullName} — ${existing.team.name}`);
+    const teamMember = await prisma.teamMember.update({
+      where: { id: existing.id },
+      data: { status: "ACTIVE" },
+    });
+    await logAction(
+      session.username,
+      "APPROVE_TEAM_JOIN",
+      `${existing.member.fullName} — ${existing.team.name}`,
+    );
 
     return NextResponse.json({ teamMember });
   } catch (err) {
@@ -37,7 +48,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string; memberId: string }> }
+  { params }: { params: Promise<{ teamId: string; memberId: string }> },
 ) {
   try {
     await requireAdminRole("ACTIVITIES");

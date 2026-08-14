@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
     }
     const n = Number(amount);
     if (!Number.isInteger(n) || n <= 0) {
-      return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+      return NextResponse.json(
+        { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
+        { status: 400 },
+      );
     }
     if (note !== undefined && note !== null && typeof note !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
@@ -56,7 +59,11 @@ export async function POST(req: NextRequest) {
         createdBy: session.username,
       },
     });
-    await logAction(session.username, "CREATE_EXPENSE", `${expense.label} — ${expense.amount} أوقية`);
+    await logAction(
+      session.username,
+      "CREATE_EXPENSE",
+      `${expense.label} — ${expense.amount} أوقية`,
+    );
 
     return NextResponse.json({ expense }, { status: 201 });
   } catch (err) {
