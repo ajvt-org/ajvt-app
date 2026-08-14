@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: phoneError }, { status: 400 });
     }
     if (password.length < 3) {
-      return NextResponse.json({ error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" }, { status: 400 });
+      return NextResponse.json(
+        { error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" },
+        { status: 400 },
+      );
     }
 
     const existing = await prisma.user.findUnique({ where: { phone: phone.trim() } });

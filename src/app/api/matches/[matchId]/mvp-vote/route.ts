@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   try {
     const session = await requireUser();
     const { matchId } = await params;

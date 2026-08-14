@@ -12,7 +12,12 @@ const BG_COLORS: Record<string, { placeholder: string; border: string }> = {
   copper: { placeholder: "var(--copper-300)", border: "var(--copper-500)" },
 };
 
-export default function PlayerAvatar({ photo, fullName, size = 28, bg = "mint" }: PlayerAvatarProps) {
+export default function PlayerAvatar({
+  photo,
+  fullName,
+  size = 28,
+  bg = "mint",
+}: PlayerAvatarProps) {
   const colors = BG_COLORS[bg];
   if (!photo) {
     return (

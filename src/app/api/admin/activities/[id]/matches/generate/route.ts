@@ -6,18 +6,25 @@ import { generateMatchSchedule } from "@/lib/tournament";
 
 const TARGET_PER_TEAM = 3;
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
     const [teams, existingMatches, maxOrderRow] = await Promise.all([
-      prisma.team.findMany({ where: { activityId: id }, select: { id: true, name: true, groupId: true, group: { select: { name: true } } } }),
-      prisma.match.findMany({ where: { activityId: id }, select: { homeTeamId: true, awayTeamId: true } }),
-      prisma.match.findFirst({ where: { activityId: id }, orderBy: { order: "desc" }, select: { order: true } }),
+      prisma.team.findMany({
+        where: { activityId: id },
+        select: { id: true, name: true, groupId: true, group: { select: { name: true } } },
+      }),
+      prisma.match.findMany({
+        where: { activityId: id },
+        select: { homeTeamId: true, awayTeamId: true },
+      }),
+      prisma.match.findFirst({
+        where: { activityId: id },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      }),
     ]);
 
     if (teams.length < 2) {
@@ -46,7 +53,12 @@ export async function POST(
     const allFixtures: Fixture[] = [];
     for (const pool of pools.values()) {
       if (pool.teamIds.length < 2) continue;
-      const fixtures = generateMatchSchedule(pool.teamIds, TARGET_PER_TEAM, existingCounts, existingPairs);
+      const fixtures = generateMatchSchedule(
+        pool.teamIds,
+        TARGET_PER_TEAM,
+        existingCounts,
+        existingPairs,
+      );
       for (const f of fixtures) {
         allFixtures.push({
           ...f,
@@ -56,7 +68,10 @@ export async function POST(
     }
 
     if (allFixtures.length === 0) {
-      return NextResponse.json({ error: "لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل 3 مباريات" }, { status: 409 });
+      return NextResponse.json(
+        { error: "لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل 3 مباريات" },
+        { status: 409 },
+      );
     }
 
     allFixtures.sort((a, b) => a.round - b.round);

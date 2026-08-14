@@ -153,12 +153,18 @@ export default function AdminDashboard() {
     }
   }
 
-  useEffect(() => { fetchMembers(); fetchAgeGroups(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchMembers();
+    fetchAgeGroups();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchMembers() {
     try {
       const res = await fetch("/api/admin/members");
-      if (res.status === 401) { router.push(loginPathWithNext("/admin/login")); return; }
+      if (res.status === 401) {
+        router.push(loginPathWithNext("/admin/login"));
+        return;
+      }
       const data = await res.json();
       setMembers(data.members || []);
     } catch {
@@ -230,7 +236,8 @@ export default function AdminDashboard() {
   }
 
   async function deleteAgeGroup(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا العصر من القائمة؟ لن يؤثر ذلك على الأعضاء الحاليين.")) return;
+    if (!confirm("هل أنت متأكد من حذف هذا العصر من القائمة؟ لن يؤثر ذلك على الأعضاء الحاليين."))
+      return;
     setAgeGroupBusyId(id);
     setAgeGroupError("");
     try {
@@ -279,7 +286,8 @@ export default function AdminDashboard() {
   function toggleSelected(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -297,8 +305,8 @@ export default function AdminDashboard() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, action: "ACTIVE" }),
-          })
-        )
+          }),
+        ),
       );
       const failed = results.filter((r) => !r.ok).length;
       setSelectedIds(new Set());
@@ -358,11 +366,17 @@ export default function AdminDashboard() {
 
   async function saveEdit() {
     if (!selected) return;
-    if (!editName.trim()) { setEditError("الاسم الكامل مطلوب"); return; }
+    if (!editName.trim()) {
+      setEditError("الاسم الكامل مطلوب");
+      return;
+    }
     let paidAmountValue: number | null = null;
     if (editPaidAmount.trim()) {
       const paidAmountError = validatePaidAmount(editPaidAmount);
-      if (paidAmountError) { setEditError(paidAmountError); return; }
+      if (paidAmountError) {
+        setEditError(paidAmountError);
+        return;
+      }
       paidAmountValue = Number(editPaidAmount);
     }
     setEditSaving(true);
@@ -371,7 +385,12 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/admin/members/${selected.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: editName.trim(), age: editAge, photo: editPhoto, paidAmount: paidAmountValue }),
+        body: JSON.stringify({
+          fullName: editName.trim(),
+          age: editAge,
+          photo: editPhoto,
+          paidAmount: paidAmountValue,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
@@ -406,7 +425,10 @@ export default function AdminDashboard() {
 
   async function attachAccount(memberId: string) {
     setAttachAccountError("");
-    if (!accountPhoneInput.trim()) { setAttachAccountError("رقم الهاتف مطلوب"); return; }
+    if (!accountPhoneInput.trim()) {
+      setAttachAccountError("رقم الهاتف مطلوب");
+      return;
+    }
     setAttachAccountLoading(true);
     setTempPassword(null);
     try {
@@ -418,7 +440,11 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setSelected(data.member);
-      setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, userId: data.member.userId, phone: data.member.phone } : m)));
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === memberId ? { ...m, userId: data.member.userId, phone: data.member.phone } : m,
+        ),
+      );
       if (data.tempPassword) setTempPassword(data.tempPassword);
       setAccountPhoneInput("");
     } catch (e) {
@@ -456,7 +482,16 @@ export default function AdminDashboard() {
   }
 
   function exportCSV() {
-    const headers = ["الاسم الكامل", "رقم الهاتف", "حساب التطبيق", "العصر", "طريقة الدفع", "الحالة", "رقم العضوية", "تاريخ الطلب"];
+    const headers = [
+      "الاسم الكامل",
+      "رقم الهاتف",
+      "حساب التطبيق",
+      "العصر",
+      "طريقة الدفع",
+      "الحالة",
+      "رقم العضوية",
+      "تاريخ الطلب",
+    ];
     const rows = members.map((m) => [
       m.fullName,
       m.phone || "",
@@ -467,9 +502,11 @@ export default function AdminDashboard() {
       m.memberNumber || "",
       new Date(m.createdAt).toLocaleString("ar"),
     ]);
-    const csv = "﻿" + [headers, ...rows]
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+    const csv =
+      "﻿" +
+      [headers, ...rows]
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -488,13 +525,17 @@ export default function AdminDashboard() {
 
   const ageBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
-    members.forEach((m) => { map[m.age] = (map[m.age] || 0) + 1; });
+    members.forEach((m) => {
+      map[m.age] = (map[m.age] || 0) + 1;
+    });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }, [members]);
 
   const paymentBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
-    members.forEach((m) => { map[m.paymentMethod] = (map[m.paymentMethod] || 0) + 1; });
+    members.forEach((m) => {
+      map[m.paymentMethod] = (map[m.paymentMethod] || 0) + 1;
+    });
     return Object.entries(map).sort((a, b) => b[1] - a[1]);
   }, [members]);
 
@@ -517,11 +558,12 @@ export default function AdminDashboard() {
   const filtered = members.filter((m) => {
     const matchFilter = filter === "ALL" || m.status === filter;
     const q = search.toLowerCase();
-    const matchSearch = !q
-      || m.fullName.includes(q)
-      || (m.phone || "").includes(q)
-      || (m.user?.phone || "").includes(q)
-      || (m.referenceCode || "").toLowerCase().includes(q);
+    const matchSearch =
+      !q ||
+      m.fullName.includes(q) ||
+      (m.phone || "").includes(q) ||
+      (m.user?.phone || "").includes(q) ||
+      (m.referenceCode || "").toLowerCase().includes(q);
     return matchFilter && matchSearch;
   });
   const filterKey = `${filter}|${search}`;
@@ -545,7 +587,10 @@ export default function AdminDashboard() {
       if (tag === "input" || tag === "textarea" || tag === "select") return;
 
       if (showRejectPicker) {
-        if (e.key === "Escape") { setShowRejectPicker(false); return; }
+        if (e.key === "Escape") {
+          setShowRejectPicker(false);
+          return;
+        }
         const reasonIdx = Number(e.key) - 1;
         if (Number.isInteger(reasonIdx) && reasonIdx >= 0 && reasonIdx < REJECTION_REASONS.length) {
           e.preventDefault();
@@ -561,7 +606,10 @@ export default function AdminDashboard() {
       } else if (e.key.toLowerCase() === "a" && selected.status === "PENDING") {
         e.preventDefault();
         validate(selected.id, "ACTIVE");
-      } else if (e.key.toLowerCase() === "r" && (selected.status === "PENDING" || selected.status === "ACTIVE")) {
+      } else if (
+        e.key.toLowerCase() === "r" &&
+        (selected.status === "PENDING" || selected.status === "ACTIVE")
+      ) {
         e.preventDefault();
         setShowRejectPicker(true);
       } else if (e.key.toLowerCase() === "n" || e.key === "ArrowDown") {
@@ -586,15 +634,14 @@ export default function AdminDashboard() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  // validate is recreated every render; omitted below (re-subscribing the
-  // listener each render would be harmless but pointless) — same pattern
-  // already tolerated for fetchMembers above.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // validate is recreated every render; omitted below (re-subscribing the
+    // listener each render would be harmless but pointless) — same pattern
+    // already tolerated for fetchMembers above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, showRejectPicker, actionLoading, paginated]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-
       {/* Stat chips */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {(["ALL", "PENDING", "ACTIVE", "REJECTED"] as FilterTab[]).map((s) => (
@@ -605,18 +652,20 @@ export default function AdminDashboard() {
             style={{
               background: filter === s ? "var(--mint-700)" : "white",
               color: filter === s ? "white" : "var(--text-main)",
-              boxShadow: filter === s
-                ? "0 2px 8px rgba(26,63,51,0.25)"
-                : "0 1px 4px rgba(0,0,0,0.06)",
+              boxShadow:
+                filter === s ? "0 2px 8px rgba(26,63,51,0.25)" : "0 1px 4px rgba(0,0,0,0.06)",
               border: filter === s ? "none" : "1px solid var(--mint-100)",
             }}
           >
             <div className="text-xl font-black leading-none mb-0.5">{counts[s]}</div>
             <div className="text-xs font-semibold opacity-80">
-              {s === "ALL" ? "الكل"
-                : s === "PENDING" ? "انتظار"
-                : s === "ACTIVE" ? "مقبول"
-                : "مرفوض"}
+              {s === "ALL"
+                ? "الكل"
+                : s === "PENDING"
+                  ? "انتظار"
+                  : s === "ACTIVE"
+                    ? "مقبول"
+                    : "مرفوض"}
             </div>
           </button>
         ))}
@@ -626,7 +675,11 @@ export default function AdminDashboard() {
         <button
           onClick={() => setShowStats((v) => !v)}
           className="flex-1 text-sm font-bold px-4 py-2.5 rounded-xl flex items-center justify-between"
-          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+          style={{
+            background: "white",
+            color: "var(--mint-700)",
+            border: "1px solid var(--mint-100)",
+          }}
         >
           <span>📊 الإحصائيات</span>
           <span>{showStats ? "▲" : "▼"}</span>
@@ -634,7 +687,11 @@ export default function AdminDashboard() {
         <button
           onClick={exportCSV}
           className="text-sm font-bold px-4 py-2.5 rounded-xl"
-          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+          style={{
+            background: "white",
+            color: "var(--mint-700)",
+            border: "1px solid var(--mint-100)",
+          }}
         >
           📥 CSV
         </button>
@@ -643,33 +700,47 @@ export default function AdminDashboard() {
       {showStats && (
         <div className="space-y-3 mb-5">
           <div className="card p-4">
-            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>التسجيلات خلال آخر 14 يوماً</p>
+            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+              التسجيلات خلال آخر 14 يوماً
+            </p>
             <BarChart data={signupsByDay} />
           </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="card p-4">
-            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>حسب العصر</p>
-            <div className="space-y-1.5">
-              {ageBreakdown.map(([age, count]) => (
-                <div key={age} className="flex items-center justify-between text-xs">
-                  <span style={{ color: "var(--text-main)" }} className="truncate">{age}</span>
-                  <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{count}</span>
-                </div>
-              ))}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="card p-4">
+              <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+                حسب العصر
+              </p>
+              <div className="space-y-1.5">
+                {ageBreakdown.map(([age, count]) => (
+                  <div key={age} className="flex items-center justify-between text-xs">
+                    <span style={{ color: "var(--text-main)" }} className="truncate">
+                      {age}
+                    </span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>
+                      {count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="card p-4">
+              <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+                حسب طريقة الدفع
+              </p>
+              <div className="space-y-1.5">
+                {paymentBreakdown.map(([method, count]) => (
+                  <div key={method} className="flex items-center justify-between text-xs">
+                    <span style={{ color: "var(--text-main)" }} className="truncate">
+                      {method}
+                    </span>
+                    <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>
+                      {count}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="card p-4">
-            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>حسب طريقة الدفع</p>
-            <div className="space-y-1.5">
-              {paymentBreakdown.map(([method, count]) => (
-                <div key={method} className="flex items-center justify-between text-xs">
-                  <span style={{ color: "var(--text-main)" }} className="truncate">{method}</span>
-                  <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
         </div>
       )}
 
@@ -686,12 +757,20 @@ export default function AdminDashboard() {
         <button
           onClick={() => setShowAgeGroups(true)}
           className="text-sm font-bold px-4 rounded-xl"
-          style={{ background: "white", color: "var(--mint-700)", border: "1px solid var(--mint-100)" }}
+          style={{
+            background: "white",
+            color: "var(--mint-700)",
+            border: "1px solid var(--mint-100)",
+          }}
         >
           🏷️ الأعصر
         </button>
         <button
-          onClick={() => { setShowManualAdd(true); setManualResult(null); setManualError(""); }}
+          onClick={() => {
+            setShowManualAdd(true);
+            setManualResult(null);
+            setManualError("");
+          }}
           className="btn btn-primary text-sm px-4"
           style={{ width: "auto" }}
         >
@@ -700,7 +779,10 @@ export default function AdminDashboard() {
       </div>
 
       {filter === "PENDING" && selectedIds.size > 0 && (
-        <div className="card p-3 mb-3 flex items-center justify-between gap-3" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-300)" }}>
+        <div
+          className="card p-3 mb-3 flex items-center justify-between gap-3"
+          style={{ background: "var(--mint-50)", border: "1px solid var(--mint-300)" }}
+        >
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             {selectedIds.size} محدد
           </p>
@@ -708,7 +790,11 @@ export default function AdminDashboard() {
             <button
               onClick={() => setSelectedIds(new Set())}
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+              style={{
+                background: "white",
+                color: "var(--text-muted)",
+                border: "1px solid var(--mint-200)",
+              }}
             >
               إلغاء
             </button>
@@ -740,7 +826,13 @@ export default function AdminDashboard() {
           {paginated.map((m) => (
             <div
               key={m.id}
-              onClick={() => { setSelected(m); setProofZoom(false); setTempPassword(null); setEditing(false); setShowRejectPicker(false); }}
+              onClick={() => {
+                setSelected(m);
+                setProofZoom(false);
+                setTempPassword(null);
+                setEditing(false);
+                setShowRejectPicker(false);
+              }}
               className="card w-full p-4 text-right transition-all hover:shadow-md cursor-pointer"
             >
               <div className="flex items-center justify-between gap-3">
@@ -773,9 +865,11 @@ export default function AdminDashboard() {
                       className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-black text-white"
                       style={{
                         background:
-                          m.status === "ACTIVE" ? "var(--mint-600)"
-                          : m.status === "REJECTED" ? "#dc2626"
-                          : "var(--copper-500)",
+                          m.status === "ACTIVE"
+                            ? "var(--mint-600)"
+                            : m.status === "REJECTED"
+                              ? "#dc2626"
+                              : "var(--copper-500)",
                       }}
                     >
                       {m.fullName.charAt(0)}
@@ -807,7 +901,10 @@ export default function AdminDashboard() {
                 <span>•</span>
                 <span dir="ltr">
                   {new Date(m.createdAt).toLocaleDateString("ar")}{" "}
-                  {new Date(m.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(m.createdAt).toLocaleTimeString("ar", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
               </div>
             </div>
@@ -845,7 +942,12 @@ export default function AdminDashboard() {
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) { setSelected(null); setProofZoom(false); setTempPassword(null); setShowRejectPicker(false); }
+            if (e.target === e.currentTarget) {
+              setSelected(null);
+              setProofZoom(false);
+              setTempPassword(null);
+              setShowRejectPicker(false);
+            }
           }}
         >
           <div
@@ -862,7 +964,13 @@ export default function AdminDashboard() {
             >
               <h2 className="font-black text-white text-lg">تفاصيل الطلب</h2>
               <button
-                onClick={() => { setSelected(null); setProofZoom(false); setTempPassword(null); setEditing(false); setShowRejectPicker(false); }}
+                onClick={() => {
+                  setSelected(null);
+                  setProofZoom(false);
+                  setTempPassword(null);
+                  setEditing(false);
+                  setShowRejectPicker(false);
+                }}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
                 style={{ background: "rgba(255,255,255,0.15)" }}
               >
@@ -882,7 +990,11 @@ export default function AdminDashboard() {
                       >
                         {editPhotoPreview ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={editPhotoPreview} alt={editName} className="w-full h-full object-cover" />
+                          <img
+                            src={editPhotoPreview}
+                            alt={editName}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div
                             className="w-full h-full flex items-center justify-center text-xl font-black text-white"
@@ -898,12 +1010,21 @@ export default function AdminDashboard() {
                       >
                         📷
                       </span>
-                      <input type="file" accept="image/*" onChange={handleEditPhotoChange} style={{ display: "none" }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditPhotoChange}
+                        style={{ display: "none" }}
+                      />
                     </label>
                   ) : selected.photo ? (
                     <div className="w-16 h-16 rounded-full overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/api/files/${selected.photo}`} alt={selected.fullName} className="w-full h-full object-cover" />
+                      <img
+                        src={`/api/files/${selected.photo}`}
+                        alt={selected.fullName}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ) : (
                     <div
@@ -924,7 +1045,10 @@ export default function AdminDashboard() {
                       className="input"
                     />
                   ) : (
-                    <p className="font-black text-lg truncate" style={{ color: "var(--text-main)" }}>
+                    <p
+                      className="font-black text-lg truncate"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       {selected.fullName}
                     </p>
                   )}
@@ -941,7 +1065,10 @@ export default function AdminDashboard() {
               {editing && (
                 <div className="card p-3 space-y-2">
                   <div>
-                    <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                    <label
+                      className="block text-xs font-bold mb-1"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       العصر
                     </label>
                     <select
@@ -952,11 +1079,18 @@ export default function AdminDashboard() {
                       {!ageGroups.some((g) => g.name === editAge) && editAge && (
                         <option value={editAge}>{editAge}</option>
                       )}
-                      {ageGroups.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
+                      {ageGroups.map((g) => (
+                        <option key={g.id} value={g.name}>
+                          {g.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+                    <label
+                      className="block text-xs font-bold mb-1"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       المبلغ المسدد (أوقية)
                     </label>
                     <input
@@ -971,7 +1105,10 @@ export default function AdminDashboard() {
                     />
                   </div>
                   {editError && (
-                    <div className="p-2 rounded-lg text-xs font-semibold mb-2" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                    <div
+                      className="p-2 rounded-lg text-xs font-semibold mb-2"
+                      style={{ background: "#fee2e2", color: "#991b1b" }}
+                    >
                       ⚠️ {editError}
                     </div>
                   )}
@@ -980,43 +1117,85 @@ export default function AdminDashboard() {
                     disabled={editSaving || editPhotoUploading}
                     className="btn btn-primary text-sm w-full"
                   >
-                    {editPhotoUploading ? "جاري رفع الصورة..." : editSaving ? "..." : "💾 حفظ التعديلات"}
+                    {editPhotoUploading
+                      ? "جاري رفع الصورة..."
+                      : editSaving
+                        ? "..."
+                        : "💾 حفظ التعديلات"}
                   </button>
                 </div>
               )}
 
               {/* Info */}
               <div className="card p-4 space-y-3">
-                {([
-                  ["رقم الهاتف", selected.phone || "غير معروف", "ltr"],
-                  ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
-                  ["العصر", selected.age, undefined],
-                  ["طريقة الدفع", selected.paymentMethod, undefined],
-                  ["المبلغ المسدد", selected.paidAmount ? `${selected.paidAmount} أوقية` : "—", undefined],
-                  ["رقم العضوية", selected.memberNumber || "—", "ltr"],
-                  ["تاريخ الطلب", new Date(selected.createdAt).toLocaleDateString("ar", { year: "numeric", month: "long", day: "numeric", weekday: "long" }), undefined],
-                  ["وقت الطلب", new Date(selected.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" }), "ltr"],
-                ] as [string, string, string | undefined][]).map(([label, value, dir]) => (
+                {(
+                  [
+                    ["رقم الهاتف", selected.phone || "غير معروف", "ltr"],
+                    ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
+                    ["العصر", selected.age, undefined],
+                    ["طريقة الدفع", selected.paymentMethod, undefined],
+                    [
+                      "المبلغ المسدد",
+                      selected.paidAmount ? `${selected.paidAmount} أوقية` : "—",
+                      undefined,
+                    ],
+                    ["رقم العضوية", selected.memberNumber || "—", "ltr"],
+                    [
+                      "تاريخ الطلب",
+                      new Date(selected.createdAt).toLocaleDateString("ar", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        weekday: "long",
+                      }),
+                      undefined,
+                    ],
+                    [
+                      "وقت الطلب",
+                      new Date(selected.createdAt).toLocaleTimeString("ar", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                      "ltr",
+                    ],
+                  ] as [string, string, string | undefined][]
+                ).map(([label, value, dir]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
-                    <span className="text-sm shrink-0" style={{ color: "var(--text-muted)" }}>{label}</span>
-                    <span className="text-sm font-bold" style={{ color: "var(--text-main)" }} dir={dir}>{value}</span>
+                    <span className="text-sm shrink-0" style={{ color: "var(--text-muted)" }}>
+                      {label}
+                    </span>
+                    <span
+                      className="text-sm font-bold"
+                      style={{ color: "var(--text-main)" }}
+                      dir={dir}
+                    >
+                      {value}
+                    </span>
                   </div>
                 ))}
               </div>
 
               {/* Status */}
               <div className="flex items-center justify-between card p-4">
-                <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>الحالة</span>
-                <span className={`badge ${STATUS_BADGE[selected.status]}`}>{STATUS_LABEL[selected.status]}</span>
+                <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+                  الحالة
+                </span>
+                <span className={`badge ${STATUS_BADGE[selected.status]}`}>
+                  {STATUS_LABEL[selected.status]}
+                </span>
               </div>
 
               {/* Registered activities */}
               {selected.registrations && selected.registrations.length > 0 && (
                 <div className="card p-4">
-                  <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>الأنشطة المسجل بها</p>
+                  <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+                    الأنشطة المسجل بها
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {selected.registrations.map((r) => (
-                      <span key={r.activityId} className="badge badge-active">{r.activity.title}</span>
+                      <span key={r.activityId} className="badge badge-active">
+                        {r.activity.title}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -1040,7 +1219,10 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div>
-                    <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+                    <p
+                      className="text-sm font-semibold mb-2"
+                      style={{ color: "var(--text-muted)" }}
+                    >
                       📵 لا يوجد حساب مرتبط — رقم الهاتف غير معروف
                     </p>
                     <div className="flex items-center gap-2">
@@ -1048,7 +1230,9 @@ export default function AdminDashboard() {
                         type="tel"
                         dir="ltr"
                         value={accountPhoneInput}
-                        onChange={(e) => setAccountPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                        onChange={(e) =>
+                          setAccountPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 8))
+                        }
                         placeholder="2XXXXXXX"
                         maxLength={8}
                         className="input text-sm"
@@ -1063,7 +1247,9 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                     {attachAccountError && (
-                      <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>{attachAccountError}</p>
+                      <p className="text-xs mt-1.5" style={{ color: "#dc2626" }}>
+                        {attachAccountError}
+                      </p>
                     )}
                   </div>
                 )}
@@ -1076,7 +1262,11 @@ export default function AdminDashboard() {
                       <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
                         كلمة المرور الجديدة — سلّمها للعضو
                       </p>
-                      <p className="font-mono font-black text-lg" style={{ color: "var(--mint-700)" }} dir="ltr">
+                      <p
+                        className="font-mono font-black text-lg"
+                        style={{ color: "var(--mint-700)" }}
+                        dir="ltr"
+                      >
                         {tempPassword}
                       </p>
                     </div>
@@ -1094,7 +1284,9 @@ export default function AdminDashboard() {
 
               {/* Proof image */}
               <div>
-                <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>📸 صورة الكابتير</p>
+                <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+                  📸 صورة الكابتير
+                </p>
                 {selected.paymentProof ? (
                   <>
                     <div
@@ -1110,10 +1302,15 @@ export default function AdminDashboard() {
                         style={{ background: "#f3f4f6" }}
                       />
                     </div>
-                    <p className="text-xs text-center mt-1" style={{ color: "var(--text-muted)" }}>انقر للتكبير</p>
+                    <p className="text-xs text-center mt-1" style={{ color: "var(--text-muted)" }}>
+                      انقر للتكبير
+                    </p>
                   </>
                 ) : (
-                  <p className="text-sm card p-3 text-center" style={{ color: "var(--text-muted)" }}>
+                  <p
+                    className="text-sm card p-3 text-center"
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع
                   </p>
                 )}
@@ -1154,38 +1351,50 @@ export default function AdminDashboard() {
                   تغيير إلى مرفوض
                 </button>
               )}
-              {(selected.status === "PENDING" || selected.status === "ACTIVE") && showRejectPicker && (
-                <div className="card p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>
-                  <label className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-                    سبب الرفض — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
-                  </label>
-                  <select
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    className="input text-sm"
-                  >
-                    {REJECTION_REASONS.map((r, i) => <option key={r} value={r}>{i + 1}. {r}</option>)}
-                  </select>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowRejectPicker(false)}
-                      disabled={actionLoading}
-                      className="btn text-sm"
-                      style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+              {(selected.status === "PENDING" || selected.status === "ACTIVE") &&
+                showRejectPicker && (
+                  <div className="card p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>
+                    <label
+                      className="block text-xs font-bold"
+                      style={{ color: "var(--text-main)" }}
                     >
-                      إلغاء
-                    </button>
-                    <button
-                      onClick={() => rejectWithReason(selected.id)}
-                      disabled={actionLoading}
-                      className="btn text-sm font-bold flex-1"
-                      style={{ background: "#dc2626", color: "white" }}
+                      سبب الرفض — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
+                    </label>
+                    <select
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      className="input text-sm"
                     >
-                      {actionLoading ? "..." : "تأكيد الرفض"}
-                    </button>
+                      {REJECTION_REASONS.map((r, i) => (
+                        <option key={r} value={r}>
+                          {i + 1}. {r}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowRejectPicker(false)}
+                        disabled={actionLoading}
+                        className="btn text-sm"
+                        style={{
+                          background: "white",
+                          color: "var(--text-muted)",
+                          border: "1px solid var(--mint-200)",
+                        }}
+                      >
+                        إلغاء
+                      </button>
+                      <button
+                        onClick={() => rejectWithReason(selected.id)}
+                        disabled={actionLoading}
+                        className="btn text-sm font-bold flex-1"
+                        style={{ background: "#dc2626", color: "white" }}
+                      >
+                        {actionLoading ? "..." : "تأكيد الرفض"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               {selected.status === "REJECTED" && (
                 <>
                   {selected.rejectionReason && (
@@ -1246,7 +1455,9 @@ export default function AdminDashboard() {
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowManualAdd(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowManualAdd(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -1269,7 +1480,10 @@ export default function AdminDashboard() {
             <div className="p-5 space-y-3">
               {manualResult ? (
                 <div className="space-y-3">
-                  <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#d1fae5", color: "#065f46" }}>
+                  <div
+                    className="p-3 rounded-xl text-sm font-semibold"
+                    style={{ background: "#d1fae5", color: "#065f46" }}
+                  >
                     ✅ تم إنشاء العضو بنجاح
                   </div>
                   {manualResult.tempPassword && (
@@ -1281,7 +1495,11 @@ export default function AdminDashboard() {
                         <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
                           كلمة مرور الحساب الجديد — سلّمها للعضو
                         </p>
-                        <p className="font-mono font-black text-lg" style={{ color: "var(--mint-700)" }} dir="ltr">
+                        <p
+                          className="font-mono font-black text-lg"
+                          style={{ color: "var(--mint-700)" }}
+                          dir="ltr"
+                        >
                           {manualResult.tempPassword}
                         </p>
                       </div>
@@ -1301,28 +1519,50 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <form onSubmit={createManualMember} className="space-y-3">
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: "var(--mint-100)" }}>
+                  <div
+                    className="flex items-center gap-2 p-2.5 rounded-lg"
+                    style={{ background: "var(--mint-100)" }}
+                  >
                     <input
                       type="checkbox"
                       id="phoneUnknown"
                       checked={manualForm.phoneUnknown}
-                      onChange={(e) => setManualForm((p) => ({ ...p, phoneUnknown: e.target.checked, accountPhone: "", memberPhone: "" }))}
+                      onChange={(e) =>
+                        setManualForm((p) => ({
+                          ...p,
+                          phoneUnknown: e.target.checked,
+                          accountPhone: "",
+                          memberPhone: "",
+                        }))
+                      }
                       className="w-4 h-4"
                     />
-                    <label htmlFor="phoneUnknown" className="text-sm font-bold" style={{ color: "var(--mint-700)" }}>
+                    <label
+                      htmlFor="phoneUnknown"
+                      className="text-sm font-bold"
+                      style={{ color: "var(--mint-700)" }}
+                    >
                       📵 رقم الهاتف غير معروف — يُضاف لاحقاً
                     </label>
                   </div>
                   {!manualForm.phoneUnknown && (
                     <div>
-                      <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                      <label
+                        className="block text-sm font-bold mb-1.5"
+                        style={{ color: "var(--text-main)" }}
+                      >
                         رقم هاتف الحساب <span style={{ color: "var(--copper-500)" }}>*</span>
                       </label>
                       <input
                         type="tel"
                         dir="ltr"
                         value={manualForm.accountPhone}
-                        onChange={(e) => setManualForm((p) => ({ ...p, accountPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                        onChange={(e) =>
+                          setManualForm((p) => ({
+                            ...p,
+                            accountPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
+                          }))
+                        }
                         placeholder="2XXXXXXX"
                         maxLength={8}
                         required
@@ -1334,7 +1574,12 @@ export default function AdminDashboard() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>الاسم الكامل</label>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      الاسم الكامل
+                    </label>
                     <input
                       type="text"
                       value={manualForm.fullName}
@@ -1345,34 +1590,62 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       صورة العضو (اختياري)
                     </label>
                     <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
                       {manualPhotoPreview ? (
                         <div>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={manualPhotoPreview} alt="صورة العضو" className="max-h-32 mx-auto rounded-xl object-contain" />
-                          <p className="mt-1 text-xs text-center" style={{ color: "var(--mint-600)" }}>
+                          <img
+                            src={manualPhotoPreview}
+                            alt="صورة العضو"
+                            className="max-h-32 mx-auto rounded-xl object-contain"
+                          />
+                          <p
+                            className="mt-1 text-xs text-center"
+                            style={{ color: "var(--mint-600)" }}
+                          >
                             {manualPhotoUploading ? "جاري الرفع..." : "انقر لتغيير الصورة"}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+                        <p
+                          className="text-xs text-center py-3"
+                          style={{ color: "var(--text-muted)" }}
+                        >
                           📷 انقر لإرفاق صورة العضو (اختياري)
                         </p>
                       )}
-                      <input type="file" accept="image/*" onChange={handleManualPhotoChange} style={{ display: "none" }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleManualPhotoChange}
+                        style={{ display: "none" }}
+                      />
                     </label>
                   </div>
                   {!manualForm.phoneUnknown && (
                     <div>
-                      <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>رقم هاتف العضو</label>
+                      <label
+                        className="block text-sm font-bold mb-1.5"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        رقم هاتف العضو
+                      </label>
                       <input
                         type="tel"
                         dir="ltr"
                         value={manualForm.memberPhone}
-                        onChange={(e) => setManualForm((p) => ({ ...p, memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8) }))}
+                        onChange={(e) =>
+                          setManualForm((p) => ({
+                            ...p,
+                            memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
+                          }))
+                        }
                         maxLength={8}
                         required
                         className="input"
@@ -1381,10 +1654,18 @@ export default function AdminDashboard() {
                   )}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>العصر</label>
+                      <label
+                        className="block text-sm font-bold"
+                        style={{ color: "var(--text-main)" }}
+                      >
+                        العصر
+                      </label>
                       <button
                         type="button"
-                        onClick={() => { setShowManualAdd(false); setShowAgeGroups(true); }}
+                        onClick={() => {
+                          setShowManualAdd(false);
+                          setShowAgeGroups(true);
+                        }}
                         className="text-xs font-bold"
                         style={{ color: "var(--mint-600)" }}
                       >
@@ -1397,24 +1678,46 @@ export default function AdminDashboard() {
                       required
                       className="input"
                     >
-                      <option value="" disabled>اختر العصر...</option>
-                      {ageGroups.map((g) => <option key={g.id} value={g.name}>{g.name}</option>)}
+                      <option value="" disabled>
+                        اختر العصر...
+                      </option>
+                      {ageGroups.map((g) => (
+                        <option key={g.id} value={g.name}>
+                          {g.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>طريقة الدفع</label>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      طريقة الدفع
+                    </label>
                     <select
                       value={manualForm.paymentMethod}
-                      onChange={(e) => setManualForm((p) => ({ ...p, paymentMethod: e.target.value }))}
+                      onChange={(e) =>
+                        setManualForm((p) => ({ ...p, paymentMethod: e.target.value }))
+                      }
                       required
                       className="input"
                     >
-                      <option value="" disabled>اختر...</option>
-                      {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                      <option value="" disabled>
+                        اختر...
+                      </option>
+                      {PAYMENT_METHODS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       المبلغ المسدد (أوقية) — اختياري
                     </label>
                     <input
@@ -1429,10 +1732,20 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>حالة العضوية</label>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
+                      حالة العضوية
+                    </label>
                     <select
                       value={manualForm.status}
-                      onChange={(e) => setManualForm((p) => ({ ...p, status: e.target.value as "PENDING" | "ACTIVE" }))}
+                      onChange={(e) =>
+                        setManualForm((p) => ({
+                          ...p,
+                          status: e.target.value as "PENDING" | "ACTIVE",
+                        }))
+                      }
                       className="input"
                     >
                       <option value="ACTIVE">مقبول مباشرة</option>
@@ -1440,29 +1753,50 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                    <label
+                      className="block text-sm font-bold mb-1.5"
+                      style={{ color: "var(--text-main)" }}
+                    >
                       صورة إثبات الدفع (اختياري)
                     </label>
                     <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
                       {manualProofPreview ? (
                         <div>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={manualProofPreview} alt="إثبات الدفع" className="max-h-32 mx-auto rounded-xl object-contain" />
-                          <p className="mt-1 text-xs text-center" style={{ color: "var(--mint-600)" }}>
+                          <img
+                            src={manualProofPreview}
+                            alt="إثبات الدفع"
+                            className="max-h-32 mx-auto rounded-xl object-contain"
+                          />
+                          <p
+                            className="mt-1 text-xs text-center"
+                            style={{ color: "var(--mint-600)" }}
+                          >
                             {manualProofUploading ? "جاري الرفع..." : "انقر لتغيير الصورة"}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
+                        <p
+                          className="text-xs text-center py-3"
+                          style={{ color: "var(--text-muted)" }}
+                        >
                           📸 انقر لإرفاق صورة (اختياري)
                         </p>
                       )}
-                      <input type="file" accept="image/*" onChange={handleManualProofChange} style={{ display: "none" }} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleManualProofChange}
+                        style={{ display: "none" }}
+                      />
                     </label>
                   </div>
 
                   {manualError && (
-                    <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                    <div
+                      className="p-3 rounded-xl text-sm font-semibold"
+                      style={{ background: "#fee2e2", color: "#991b1b" }}
+                    >
                       ⚠️ {manualError}
                     </div>
                   )}
@@ -1472,7 +1806,11 @@ export default function AdminDashboard() {
                     disabled={manualLoading || manualProofUploading || manualPhotoUploading}
                     className="btn btn-primary text-sm"
                   >
-                    {manualProofUploading || manualPhotoUploading ? "جاري رفع الصورة..." : manualLoading ? "..." : "إنشاء العضو"}
+                    {manualProofUploading || manualPhotoUploading
+                      ? "جاري رفع الصورة..."
+                      : manualLoading
+                        ? "..."
+                        : "إنشاء العضو"}
                   </button>
                 </form>
               )}
@@ -1486,7 +1824,9 @@ export default function AdminDashboard() {
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
           style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowAgeGroups(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAgeGroups(false);
+          }}
         >
           <div
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
@@ -1508,7 +1848,8 @@ export default function AdminDashboard() {
 
             <div className="p-5 space-y-4">
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل أو حذف عصر هنا لا يغيّر عصر الأعضاء الحاليين الذين اختاروه من قبل.
+                هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل أو حذف عصر هنا لا يغيّر عصر
+                الأعضاء الحاليين الذين اختاروه من قبل.
               </p>
 
               <form onSubmit={addAgeGroup} className="flex items-center gap-2">
@@ -1531,13 +1872,18 @@ export default function AdminDashboard() {
               </form>
 
               {ageGroupError && (
-                <div className="p-2.5 rounded-lg text-xs font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-2.5 rounded-lg text-xs font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {ageGroupError}
                 </div>
               )}
 
               {ageGroups.length === 0 ? (
-                <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>لا توجد أعصر مسجلة بعد</p>
+                <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>
+                  لا توجد أعصر مسجلة بعد
+                </p>
               ) : (
                 <div className="space-y-2">
                   {ageGroups.map((g) => (
@@ -1570,7 +1916,12 @@ export default function AdminDashboard() {
                         </>
                       ) : (
                         <>
-                          <span className="text-sm font-bold flex-1 truncate" style={{ color: "var(--text-main)" }}>{g.name}</span>
+                          <span
+                            className="text-sm font-bold flex-1 truncate"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {g.name}
+                          </span>
                           <button
                             onClick={() => startRenameAgeGroup(g)}
                             disabled={ageGroupBusyId === g.id}

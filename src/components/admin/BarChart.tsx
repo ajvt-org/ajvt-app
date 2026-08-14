@@ -69,7 +69,9 @@ export default function BarChart({ data, height = 120, color = "var(--mint-600)"
       <div className="flex gap-[2px] mt-1" style={{ direction: "ltr" }}>
         {data.map((d, i) => (
           <div key={i} className="flex-1 text-center">
-            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>{d.label}</span>
+            <span className="text-[9px]" style={{ color: "var(--text-muted)" }}>
+              {d.label}
+            </span>
           </div>
         ))}
       </div>

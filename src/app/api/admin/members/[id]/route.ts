@@ -8,10 +8,7 @@ import { syncMembershipDonation } from "@/lib/donationsServer";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Renaming a player often happens while managing a tournament roster,
     // so either admin scope may do it — not just "MEMBERS". Attaching an
@@ -20,16 +17,31 @@ export async function PATCH(
     const { id } = await params;
     const { fullName, phone, age, photo, paidAmount, accountPhone } = await req.json();
 
-    const existing = await prisma.member.findUnique({ where: { id }, select: { fullName: true, userId: true } });
+    const existing = await prisma.member.findUnique({
+      where: { id },
+      select: { fullName: true, userId: true },
+    });
     if (!existing) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
 
-    const data: { fullName?: string; phone?: string | null; age?: string; photo?: string | null; paidAmount?: number | null; userId?: string } = {};
+    const data: {
+      fullName?: string;
+      phone?: string | null;
+      age?: string;
+      photo?: string | null;
+      paidAmount?: number | null;
+      userId?: string;
+    } = {};
 
     if (fullName !== undefined) {
-      if (!fullName.trim()) return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
-      if (fullName.trim().length > 30) return NextResponse.json({ error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      if (!fullName.trim())
+        return NextResponse.json({ error: "الاسم الكامل مطلوب" }, { status: 400 });
+      if (fullName.trim().length > 30)
+        return NextResponse.json(
+          { error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" },
+          { status: 400 },
+        );
       data.fullName = fullName.trim();
     }
     if (phone !== undefined && phone !== null) {
@@ -63,7 +75,11 @@ export async function PATCH(
 
     if (age !== undefined) {
       if (!age.trim()) return NextResponse.json({ error: "اسم العصر مطلوب" }, { status: 400 });
-      if (age.trim().length > 30) return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      if (age.trim().length > 30)
+        return NextResponse.json(
+          { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
+          { status: 400 },
+        );
       data.age = age.trim();
     }
     if (photo !== undefined) {
@@ -89,7 +105,11 @@ export async function PATCH(
     });
     await logAction(session.username, "UPDATE_MEMBER", `${existing.fullName} → ${member.fullName}`);
     if (data.userId) {
-      await logAction(session.username, "ATTACH_MEMBER_ACCOUNT", `${member.fullName} — ${accountPhone.trim()}`);
+      await logAction(
+        session.username,
+        "ATTACH_MEMBER_ACCOUNT",
+        `${member.fullName} — ${accountPhone.trim()}`,
+      );
     }
 
     return NextResponse.json({ member, tempPassword });
@@ -105,10 +125,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;

@@ -29,6 +29,7 @@ jobs:
     - run: npm ci
     - run: npm run lint --if-present
     - run: npm run typecheck
+    - run: npm run format:check
     - run: npm run build --if-present
       env:
         # prisma generate + next build never touch a live database (every

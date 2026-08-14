@@ -16,7 +16,9 @@ export async function GET() {
     const members = await prisma.member.findMany({
       include: {
         user: { select: { phone: true } },
-        registrations: { select: { activityId: true, activity: { select: { id: true, title: true } } } },
+        registrations: {
+          select: { activityId: true, activity: { select: { id: true, title: true } } },
+        },
       },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });
@@ -35,20 +37,42 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("MEMBERS");
-    const { accountPhone, fullName, memberPhone, phoneUnknown, age, paymentMethod, paymentProof, photo, status, paidAmount } = await req.json();
+    const {
+      accountPhone,
+      fullName,
+      memberPhone,
+      phoneUnknown,
+      age,
+      paymentMethod,
+      paymentProof,
+      photo,
+      status,
+      paidAmount,
+    } = await req.json();
 
     if (!phoneUnknown) {
       const phoneError = validatePhone(accountPhone);
       if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
     }
-    if (!fullName?.trim() || (!phoneUnknown && !memberPhone?.trim()) || !age?.trim() || !paymentMethod?.trim()) {
+    if (
+      !fullName?.trim() ||
+      (!phoneUnknown && !memberPhone?.trim()) ||
+      !age?.trim() ||
+      !paymentMethod?.trim()
+    ) {
       return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
     }
     if (fullName.trim().length > 30) {
-      return NextResponse.json({ error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     if (age.trim().length > 30) {
-      return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     if (!["PENDING", "ACTIVE"].includes(status)) {
       return NextResponse.json({ error: "حالة غير صالحة" }, { status: 400 });

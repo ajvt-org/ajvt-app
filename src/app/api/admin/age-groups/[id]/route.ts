@@ -13,7 +13,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "اسم العصر مطلوب" }, { status: 400 });
     }
     if (name.trim().length > 30) {
-      return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
 
     const existing = await prisma.ageGroup.findUnique({ where: { id } });
@@ -30,8 +33,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json({ ageGroup });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN") return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    if (err instanceof Error && err.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    if (err instanceof Error && err.message === "FORBIDDEN")
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     console.error("Age group update error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
@@ -52,8 +57,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN") return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+    if (err instanceof Error && err.message === "UNAUTHORIZED")
+      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    if (err instanceof Error && err.message === "FORBIDDEN")
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     console.error("Age group delete error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }

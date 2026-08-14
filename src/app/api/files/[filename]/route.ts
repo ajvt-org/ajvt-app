@@ -13,7 +13,7 @@ const MIME: Record<string, string> = {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ filename: string }> }
+  { params }: { params: Promise<{ filename: string }> },
 ) {
   try {
     // Payment proof screenshots can contain banking details — only signed-in
@@ -37,7 +37,10 @@ export async function GET(
     // session. Filenames are uuid-based and never rewritten in place
     // (recompression always assigns a new name), so immutable is safe.
     return new NextResponse(buffer, {
-      headers: { "Content-Type": contentType, "Cache-Control": "private, max-age=31536000, immutable" },
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "private, max-age=31536000, immutable",
+      },
     });
   } catch {
     return new NextResponse("Not found", { status: 404 });

@@ -50,13 +50,23 @@ export default async function VerifyPage({
           <div className="card p-6 fade-up" style={{ borderColor: "var(--mint-400)" }}>
             <div className="flex flex-col items-center text-center mb-5">
               <div className="mb-3" style={{ position: "relative" }}>
-                <PlayerAvatar photo={member!.photo} fullName={member!.fullName} size={80} bg="copper" />
+                <PlayerAvatar
+                  photo={member!.photo}
+                  fullName={member!.fullName}
+                  size={80}
+                  bg="copper"
+                />
                 <span
                   className="flex items-center justify-center text-sm"
                   style={{
-                    position: "absolute", bottom: -2, left: -2,
-                    width: 26, height: 26, borderRadius: "50%",
-                    background: "#d1fae5", border: "2px solid white",
+                    position: "absolute",
+                    bottom: -2,
+                    left: -2,
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: "#d1fae5",
+                    border: "2px solid white",
                   }}
                 >
                   ✅
@@ -75,12 +85,18 @@ export default async function VerifyPage({
               <Row
                 label="عضو منذ"
                 value={new Date(member!.createdAt).toLocaleDateString("ar", {
-                  year: "numeric", month: "long", day: "numeric", weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  weekday: "long",
                 })}
               />
               <Row
                 label="وقت الانضمام"
-                value={new Date(member!.createdAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}
+                value={new Date(member!.createdAt).toLocaleTimeString("ar", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
                 dir="ltr"
               />
             </div>
@@ -92,7 +108,9 @@ export default async function VerifyPage({
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {member!.registrations.map((r) => (
-                    <span key={r.activity.id} className="badge badge-active">{r.activity.title}</span>
+                    <span key={r.activity.id} className="badge badge-active">
+                      {r.activity.title}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -122,8 +140,12 @@ export default async function VerifyPage({
 function Row({ label, value, dir }: { label: string; value: string; dir?: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-sm" style={{ color: "var(--text-muted)" }}>{label}</span>
-      <span className="text-sm font-semibold" style={{ color: "var(--text-main)" }} dir={dir}>{value}</span>
+      <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </span>
+      <span className="text-sm font-semibold" style={{ color: "var(--text-main)" }} dir={dir}>
+        {value}
+      </span>
     </div>
   );
 }

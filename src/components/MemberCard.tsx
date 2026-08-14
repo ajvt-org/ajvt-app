@@ -13,7 +13,13 @@ interface MemberCardProps {
 
 type Busy = "image" | "pdf" | "share" | null;
 
-export default function MemberCard({ fullName, age, memberNumber, createdAt, photo }: MemberCardProps) {
+export default function MemberCard({
+  fullName,
+  age,
+  memberNumber,
+  createdAt,
+  photo,
+}: MemberCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState<Busy>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -21,7 +27,11 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
   useEffect(() => {
     if (!memberNumber) return;
     const verifyUrl = `${window.location.origin}/verify/${memberNumber}`;
-    QRCode.toDataURL(verifyUrl, { width: 220, margin: 1, color: { dark: "#1a3f33", light: "#ffffff" } })
+    QRCode.toDataURL(verifyUrl, {
+      width: 220,
+      margin: 1,
+      color: { dark: "#1a3f33", light: "#ffffff" },
+    })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null));
   }, [memberNumber]);
@@ -92,14 +102,18 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
         return;
       }
       if (navigator.share) {
-        await navigator.share({ title: "بطاقة العضوية", url: `${window.location.origin}/verify/${memberNumber}` });
+        await navigator.share({
+          title: "بطاقة العضوية",
+          url: `${window.location.origin}/verify/${memberNumber}`,
+        });
         return;
       }
       // No Web Share API on this browser — fall back to a direct download
       // rather than the button silently doing nothing.
       downloadBlob(blob, `بطاقة-عضوية-${memberNumber}.png`);
     } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") console.error("Card share error:", err);
+      if (err instanceof Error && err.name !== "AbortError")
+        console.error("Card share error:", err);
     } finally {
       setBusy(null);
     }
@@ -109,7 +123,10 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
 
   return (
     <div className="card p-5 overflow-hidden">
-      <h3 className="font-bold mb-3 pb-2" style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}>
+      <h3
+        className="font-bold mb-3 pb-2"
+        style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}
+      >
         🪪 بطاقة العضوية
       </h3>
 
@@ -122,16 +139,15 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/version-final.png" alt="شعار" width={36} height={36} />
           <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+              رابطة شباب قرية
+            </p>
             <p className="text-sm font-black text-white">التاكلالت</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div
-            className="rounded-xl p-2 shrink-0"
-            style={{ background: "white" }}
-          >
+          <div className="rounded-xl p-2 shrink-0" style={{ background: "white" }}>
             {qrDataUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={qrDataUrl} alt="QR Code" width={96} height={96} />
@@ -142,20 +158,32 @@ export default function MemberCard({ fullName, age, memberNumber, createdAt, pho
 
           <div className="min-w-0 flex-1 space-y-1" dir="rtl" style={{ textAlign: "right" }}>
             <div className="flex items-center gap-2 justify-end">
-              <p className="font-black text-white" style={{ wordBreak: "break-word" }}>{fullName}</p>
+              <p className="font-black text-white" style={{ wordBreak: "break-word" }}>
+                {fullName}
+              </p>
               {photo && (
-                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0" style={{ border: "1.5px solid rgba(255,255,255,0.5)" }}>
+                <div
+                  className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+                  style={{ border: "1.5px solid rgba(255,255,255,0.5)" }}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/api/files/${photo}`} alt={fullName} className="w-full h-full object-cover" />
+                  <img
+                    src={`/api/files/${photo}`}
+                    alt={fullName}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
             </div>
-            <p className="text-xs" style={{ color: "#c5e8dc" }}>{age}</p>
+            <p className="text-xs" style={{ color: "#c5e8dc" }}>
+              {age}
+            </p>
             <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.7)" }} dir="ltr">
               {memberNumber}
             </p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              عضو منذ {new Date(createdAt).toLocaleDateString("ar", { year: "numeric", month: "long" })}
+              عضو منذ{" "}
+              {new Date(createdAt).toLocaleDateString("ar", { year: "numeric", month: "long" })}
             </p>
           </div>
         </div>

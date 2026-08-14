@@ -44,13 +44,26 @@ export default function InstallPrompt() {
     >
       <span className="text-2xl shrink-0">📲</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>أضف التطبيق لشاشتك الرئيسية</p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>وصول أسرع، بدون فتح المتصفح في كل مرة</p>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          أضف التطبيق لشاشتك الرئيسية
+        </p>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          وصول أسرع، بدون فتح المتصفح في كل مرة
+        </p>
       </div>
-      <button onClick={install} className="text-xs px-3 py-2 rounded-lg font-bold shrink-0" style={{ background: "var(--mint-600)", color: "white" }}>
+      <button
+        onClick={install}
+        className="text-xs px-3 py-2 rounded-lg font-bold shrink-0"
+        style={{ background: "var(--mint-600)", color: "white" }}
+      >
         تثبيت
       </button>
-      <button onClick={dismiss} aria-label="إغلاق" className="text-lg font-bold shrink-0 px-1" style={{ color: "var(--text-muted)" }}>
+      <button
+        onClick={dismiss}
+        aria-label="إغلاق"
+        className="text-lg font-bold shrink-0 px-1"
+        style={{ color: "var(--text-muted)" }}
+      >
         ✕
       </button>
     </div>

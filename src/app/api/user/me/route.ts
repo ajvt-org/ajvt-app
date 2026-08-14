@@ -58,7 +58,7 @@ export async function GET() {
           });
         }
         return member;
-      })
+      }),
     );
 
     return NextResponse.json({

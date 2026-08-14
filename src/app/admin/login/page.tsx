@@ -44,22 +44,37 @@ function AdminLoginForm() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-5"
-      style={{ background: "linear-gradient(160deg, var(--mint-800) 0%, var(--mint-600) 100%)", direction: "rtl" }}
+      style={{
+        background: "linear-gradient(160deg, var(--mint-800) 0%, var(--mint-600) 100%)",
+        direction: "rtl",
+      }}
     >
       <div className="w-full max-w-sm fade-up">
         <div className="text-center mb-8">
           <div
             className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: "rgba(255,255,255,0.18)", border: "2px solid rgba(255,255,255,0.35)", padding: "8px" }}
+            style={{
+              background: "rgba(255,255,255,0.18)",
+              border: "2px solid rgba(255,255,255,0.35)",
+              padding: "8px",
+            }}
           >
             <Image src="/version-final.png" alt="شعار" width={80} height={80} />
           </div>
           <h1 className="text-xl font-black text-white mb-1">لوحة تحكم المشرف</h1>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>رابطة شباب قرية التاكلالت</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+            رابطة شباب قرية التاكلالت
+          </p>
         </div>
 
-        <div className="rounded-2xl p-6"
-          style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(16px)" }}>
+        <div
+          className="rounded-2xl p-6"
+          style={{
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-bold mb-1.5 text-white">اسم المستخدم</label>
@@ -70,7 +85,12 @@ function AdminLoginForm() {
                 required
                 placeholder=""
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/40 font-semibold transition-all"
-                style={{ background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", fontFamily: "Tajawal, sans-serif", fontSize: "1rem" }}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1.5px solid rgba(255,255,255,0.2)",
+                  fontFamily: "Tajawal, sans-serif",
+                  fontSize: "1rem",
+                }}
                 onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.6)")}
                 onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.2)")}
               />
@@ -84,14 +104,25 @@ function AdminLoginForm() {
                 required
                 placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/40 transition-all"
-                style={{ background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", fontFamily: "Tajawal, sans-serif", fontSize: "1rem" }}
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1.5px solid rgba(255,255,255,0.2)",
+                  fontFamily: "Tajawal, sans-serif",
+                  fontSize: "1rem",
+                }}
                 onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.6)")}
                 onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.2)")}
               />
             </div>
             {error && (
-              <div className="p-3 rounded-xl text-sm font-semibold"
-                style={{ background: "rgba(239,68,68,0.2)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <div
+                className="p-3 rounded-xl text-sm font-semibold"
+                style={{
+                  background: "rgba(239,68,68,0.2)",
+                  color: "#fca5a5",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                }}
+              >
                 ⚠️ {error}
               </div>
             )}
@@ -102,7 +133,9 @@ function AdminLoginForm() {
         </div>
 
         <p className="text-center mt-5 text-sm">
-          <Link href="/" style={{ color: "rgba(255,255,255,0.5)" }}>← الصفحة الرئيسية</Link>
+          <Link href="/" style={{ color: "rgba(255,255,255,0.5)" }}>
+            ← الصفحة الرئيسية
+          </Link>
         </p>
       </div>
     </div>

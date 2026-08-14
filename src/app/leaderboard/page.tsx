@@ -33,7 +33,9 @@ export default async function LeaderboardPage() {
       >
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+            رابطة شباب قرية التاكلالت
+          </p>
           <h1 className="text-base font-black text-white">🏆 لوحة شرف المتبرعين</h1>
         </div>
       </div>
@@ -42,17 +44,36 @@ export default async function LeaderboardPage() {
         {leaderboard.length === 0 ? (
           <div className="card p-8 text-center fade-up">
             <div className="text-4xl mb-3">🤍</div>
-            <p className="font-semibold" style={{ color: "var(--text-main)" }}>لا يوجد متبرعون بعد</p>
-            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>كن أول داعم للرابطة!</p>
+            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
+              لا يوجد متبرعون بعد
+            </p>
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+              كن أول داعم للرابطة!
+            </p>
           </div>
         ) : (
           <div className="card overflow-x-auto fade-up">
             <table className="w-full text-sm" style={{ minWidth: "320px" }}>
               <thead>
                 <tr style={{ background: "var(--mint-100)" }}>
-                  <th className="px-3 py-2.5 text-center font-bold" style={{ color: "var(--mint-700)" }}>#</th>
-                  <th className="px-3 py-2.5 text-right font-bold" style={{ color: "var(--mint-700)" }}>الداعم</th>
-                  <th className="px-3 py-2.5 text-center font-bold" style={{ color: "var(--mint-700)" }}>المجموع</th>
+                  <th
+                    className="px-3 py-2.5 text-center font-bold"
+                    style={{ color: "var(--mint-700)" }}
+                  >
+                    #
+                  </th>
+                  <th
+                    className="px-3 py-2.5 text-right font-bold"
+                    style={{ color: "var(--mint-700)" }}
+                  >
+                    الداعم
+                  </th>
+                  <th
+                    className="px-3 py-2.5 text-center font-bold"
+                    style={{ color: "var(--mint-700)" }}
+                  >
+                    المجموع
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -87,7 +108,10 @@ export default async function LeaderboardPage() {
                         {entry.name}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-center font-black" style={{ color: "var(--mint-700)" }}>
+                    <td
+                      className="px-3 py-2.5 text-center font-black"
+                      style={{ color: "var(--mint-700)" }}
+                    >
                       {entry.total} أوقية
                     </td>
                   </tr>

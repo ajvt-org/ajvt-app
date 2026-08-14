@@ -10,25 +10,35 @@ function isPowerOfTwo(n: number): boolean {
 
 // Random draw for a pure knockout tournament (chess, PlayStation, or any
 // activity without groups) — pairs up every team attached to the activity.
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
-    const teams = await prisma.team.findMany({ where: { activityId: id }, select: { id: true, name: true } });
+    const teams = await prisma.team.findMany({
+      where: { activityId: id },
+      select: { id: true, name: true },
+    });
     if (!isPowerOfTwo(teams.length)) {
       return NextResponse.json(
-        { error: `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${teams.length}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح` },
-        { status: 400 }
+        {
+          error: `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${teams.length}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح`,
+        },
+        { status: 400 },
       );
     }
 
-    const existingBracket = await prisma.match.findFirst({ where: { activityId: id, bracketRound: { not: null } } });
+    const existingBracket = await prisma.match.findFirst({
+      where: { activityId: id, bracketRound: { not: null } },
+    });
     if (existingBracket) {
-      return NextResponse.json({ error: "توجد قرعة بالفعل لهذه البطولة — احذف مباريات الدور الإقصائي الحالية أولاً لإعادة القرعة" }, { status: 409 });
+      return NextResponse.json(
+        {
+          error:
+            "توجد قرعة بالفعل لهذه البطولة — احذف مباريات الدور الإقصائي الحالية أولاً لإعادة القرعة",
+        },
+        { status: 409 },
+      );
     }
 
     // If the activity uses groups, the knockout stage can't start until the
@@ -42,11 +52,18 @@ export async function POST(
         select: { status: true },
       });
       if (leagueMatches.length === 0 || leagueMatches.some((m) => m.status !== "PLAYED")) {
-        return NextResponse.json({ error: "أكمل جميع نتائج دور المجموعات أولاً قبل بدء الدور الإقصائي" }, { status: 409 });
+        return NextResponse.json(
+          { error: "أكمل جميع نتائج دور المجموعات أولاً قبل بدء الدور الإقصائي" },
+          { status: 409 },
+        );
       }
     }
 
-    const maxOrderRow = await prisma.match.findFirst({ where: { activityId: id }, orderBy: { order: "desc" }, select: { order: true } });
+    const maxOrderRow = await prisma.match.findFirst({
+      where: { activityId: id },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
     let nextOrder = (maxOrderRow?.order || 0) + 1;
 
     const shuffled = shuffleArray(teams);

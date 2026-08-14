@@ -3,10 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -28,10 +25,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
@@ -41,22 +35,33 @@ export async function POST(
       return NextResponse.json({ error: "اسم المجموعة مطلوب" }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json({ error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" },
+        { status: 400 },
+      );
     }
     let capacityValue: number | null = null;
     if (capacity !== undefined && capacity !== null && capacity !== "") {
       capacityValue = Number(capacity);
       if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-        return NextResponse.json({ error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" }, { status: 400 });
+        return NextResponse.json(
+          { error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" },
+          { status: 400 },
+        );
       }
     }
 
-    const activity = await prisma.activity.findUnique({ where: { id }, select: { isTournament: true } });
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      select: { isTournament: true },
+    });
     if (!activity?.isTournament) {
       return NextResponse.json({ error: "هذا النشاط ليس بطولة" }, { status: 400 });
     }
 
-    const group = await prisma.group.create({ data: { activityId: id, name: name.trim(), capacity: capacityValue } });
+    const group = await prisma.group.create({
+      data: { activityId: id, name: name.trim(), capacity: capacityValue },
+    });
     await logAction(session.username, "CREATE_GROUP", group.name);
 
     return NextResponse.json({ group }, { status: 201 });
