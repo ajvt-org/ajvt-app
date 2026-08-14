@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const WRITE = /(?:prisma|tx)\.\w+\.(?:create|createMany|update|updateMany|upsert|delete|deleteMany)\b/;
+const WRITE =
+  /(?:prisma|tx)\.\w+\.(?:create|createMany|update|updateMany|upsert|delete|deleteMany)\b/;
 
 // Reading a request never needs an audit entry, and these two write rows that
 // belong to the visitor rather than to an admin decision.
