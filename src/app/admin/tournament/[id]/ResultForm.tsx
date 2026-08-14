@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
 
 export default function ResultForm({
   match,
@@ -266,10 +267,11 @@ export function GoalRows({
               <button
                 type="button"
                 onClick={() => setRows((prev) => prev.filter((_, idx) => idx !== i))}
-                className="text-xs px-2 rounded-lg font-bold"
+                aria-label="حذف السطر"
+                className="px-2 rounded-lg flex items-center justify-center"
                 style={{ background: "#fee2e2", color: "#991b1b" }}
               >
-                ✕
+                <Icon name="close" size={14} />
               </button>
             </div>
           ))}

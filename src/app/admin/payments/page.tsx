@@ -6,6 +6,7 @@ import { loginPathWithNext, validatePhone, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
+import DialogClose from "@/components/DialogClose";
 
 interface Proof {
   id: string;
@@ -715,13 +716,7 @@ export default function AdminPaymentsPage() {
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">➕ تسجيل تبرع يدوياً</h2>
-              <button
-                onClick={() => setShowManualDonation(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowManualDonation(false)} />
             </div>
 
             <form onSubmit={createManualDonation} className="p-5 space-y-3">

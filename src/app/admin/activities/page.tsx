@@ -6,6 +6,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
 
 interface Registration {
   id: string;
@@ -319,18 +320,20 @@ export default function AdminActivitiesPage() {
                     <button
                       onClick={() => moveActivity(index, "up")}
                       disabled={reorderLoading || index === 0}
-                      className="w-7 h-7 rounded-lg font-bold disabled:opacity-30"
+                      aria-label="نقل لأعلى"
+                      className="w-7 h-7 rounded-lg disabled:opacity-30 flex items-center justify-center"
                       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                     >
-                      ↑
+                      <Icon name="arrowUp" size={15} />
                     </button>
                     <button
                       onClick={() => moveActivity(index, "down")}
                       disabled={reorderLoading || index === activities.length - 1}
-                      className="w-7 h-7 rounded-lg font-bold disabled:opacity-30"
+                      aria-label="نقل لأسفل"
+                      className="w-7 h-7 rounded-lg disabled:opacity-30 flex items-center justify-center"
                       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                     >
-                      ↓
+                      <Icon name="arrowDown" size={15} />
                     </button>
                   </div>
                 </div>

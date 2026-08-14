@@ -6,6 +6,7 @@ import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
+import DialogClose from "@/components/DialogClose";
 
 interface Expense {
   id: string;
@@ -723,13 +724,7 @@ export default function AdminExpensesPage() {
               <h2 className="font-black text-white text-base">
                 {editingId ? "✏️ تعديل مصروف" : "➕ إضافة مصروف"}
               </h2>
-              <button
-                onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowForm(false)} />
             </div>
 
             <form onSubmit={submitForm} className="p-5 space-y-3">
