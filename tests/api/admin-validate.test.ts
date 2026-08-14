@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/validate/route";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import { logAction } from "@/lib/audit";
 
 async function pendingMember() {
   const user = await createUser();
@@ -157,5 +158,78 @@ describe("POST /api/admin/validate", () => {
     expect(
       (await POST(post("/api/admin/validate", { id: member.id, action: "DELETED" }))).status,
     ).toBe(400);
+  });
+});
+
+describe("what an approval records in the audit log", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  async function approveAndReadLog() {
+    const member = await pendingMember();
+    const admin = await createAdmin("members-admin", "MEMBERS");
+    await signInAsAdmin(admin);
+
+    await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({ orderBy: { createdAt: "desc" } });
+    return { member, admin, entry };
+  }
+
+  it("names the admin by id, not only by username", async () => {
+    const { admin, entry } = await approveAndReadLog();
+
+    expect(entry.adminUsername).toBe("members-admin");
+    expect(entry.adminId).toBe(admin.id);
+    expect(entry.adminRole).toBe("MEMBERS");
+  });
+
+  it("points at the row that changed", async () => {
+    const { member, entry } = await approveAndReadLog();
+
+    expect(entry.targetType).toBe("Member");
+    expect(entry.targetId).toBe(member.id);
+  });
+
+  it("keeps the status on both sides of the change", async () => {
+    const { entry } = await approveAndReadLog();
+
+    expect(entry.before).toMatchObject({ status: "PENDING" });
+    expect(entry.after).toMatchObject({ status: "ACTIVE" });
+  });
+
+  it("records the member number the approval handed out", async () => {
+    const { entry } = await approveAndReadLog();
+
+    expect((entry.after as { memberNumber: string }).memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
+  });
+
+  it("still renders rows written before these fields existed", async () => {
+    await prisma.auditLog.create({
+      data: { adminUsername: "old-admin", action: "APPROVE_MEMBER", targetLabel: "محمد" },
+    });
+
+    const entry = await prisma.auditLog.findFirstOrThrow({ where: { adminUsername: "old-admin" } });
+    expect(entry.adminId).toBeNull();
+    expect(entry.before).toBeNull();
+  });
+});
+
+describe("what the audit log refuses to store", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("drops a secret before it reaches the table", async () => {
+    await logAction("admin", "CREATE_MEMBER_MANUAL", "محمد", {
+      after: { fullName: "محمد", password: "hunter2", tempPassword: "AB12CD" },
+    });
+
+    const entry = await prisma.auditLog.findFirstOrThrow();
+    const after = entry.after as Record<string, string>;
+    expect(after.fullName).toBe("محمد");
+    expect(after.password).not.toBe("hunter2");
+    expect(after.tempPassword).not.toBe("AB12CD");
   });
 });
