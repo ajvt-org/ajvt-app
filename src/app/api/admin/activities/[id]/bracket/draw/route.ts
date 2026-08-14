@@ -2,12 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
-import { bracketRoundLabel, shuffleArray } from "@/lib/tournament";
+import { bracketRoundLabel, shuffleArray, isPowerOfTwo } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
-
-function isPowerOfTwo(n: number): boolean {
-  return n >= 2 && (n & (n - 1)) === 0;
-}
 
 // Random draw for a pure knockout tournament (chess, PlayStation, or any
 // activity without groups) — pairs up every team attached to the activity.
