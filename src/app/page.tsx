@@ -234,13 +234,13 @@ export default async function LandingPage() {
                     </Link>
                   )}
                   {activity.isTournament && (
-                    <a
+                    <Link
                       href={`/tournament/${activity.id}`}
                       className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block"
                       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                     >
                       🏆 عرض الترتيب ←
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>
