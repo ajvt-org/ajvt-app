@@ -2,30 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-
-const CARD_TYPES = ["YELLOW", "RED"];
+import { parse } from "@/lib/validation";
+import { bookingCreateSchema } from "./schema";
 
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
-    const { memberId, teamId, cardType, minute } = await req.json();
-
-    if (!memberId || !teamId || !CARD_TYPES.includes(cardType)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    let minuteValue: number | null = null;
-    if (minute !== undefined && minute !== null && minute !== "") {
-      const n = Number(minute);
-      if (!Number.isInteger(n) || n < 1 || n > 130) {
-        return NextResponse.json(
-          { error: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130" },
-          { status: 400 },
-        );
-      }
-      minuteValue = n;
-    }
+    const { memberId, teamId, cardType, minute } = parse(bookingCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -46,7 +31,7 @@ export const POST = withRoute(
     }
 
     const booking = await prisma.matchBooking.create({
-      data: { matchId, memberId, teamId, cardType, minute: minuteValue },
+      data: { matchId, memberId, teamId, cardType, minute: minute ?? null },
       select: {
         id: true,
         cardType: true,
