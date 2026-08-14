@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useToast } from "@/components/Toast";
 import { toThumbUrl } from "@/lib/utils";
+import Link from "next/link";
 
 interface Team {
   id: string;
@@ -338,15 +339,13 @@ function ActivityCard({
         </div>
 
         {activity.isTournament && (
-          <a
+          <Link
             href={`/tournament/${activity.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mb-3"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
             🏆 عرض الترتيب ←
-          </a>
+          </Link>
         )}
 
         {/* One tap per person — no payment, no form: membership already covers it */}
