@@ -1,0 +1,19 @@
+import { z } from "zod";
+
+const INVALID = "بيانات غير صالحة";
+const REASON_TOO_LONG = "النص طويل جداً (300 حرف كحد أقصى)";
+
+const REASON_MAX = 300;
+
+export const adminRegisterSchema = z.object({
+  memberId: z.string(INVALID).min(1, INVALID),
+});
+
+export const registrationReviewSchema = z.object({
+  registrationId: z.string(INVALID).min(1, INVALID),
+  status: z.enum(["ACTIVE", "REJECTED"], INVALID),
+  reason: z
+    .string(INVALID)
+    .refine((v) => v.trim().length <= REASON_MAX, REASON_TOO_LONG)
+    .nullish(),
+});
