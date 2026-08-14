@@ -194,13 +194,9 @@ export default async function LandingPage() {
                   <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
                     {activity.title}
                   </h3>
-                  <span
-                    className="badge badge-open-blink shrink-0 font-bold"
-                    style={
-                      activity.isVolunteer ? { background: "#dcfce7", color: "#16a34a" } : undefined
-                    }
-                  >
-                    {activity.isVolunteer ? "🟢 مفتوح للتطوع" : "🔴 مفتوح للتسجيل"}
+                  <span className="badge badge-open shrink-0 font-bold">
+                    <span className="badge-dot" aria-hidden="true" />
+                    {activity.isVolunteer ? "مفتوح للتطوع" : "مفتوح للتسجيل"}
                   </span>
                 </div>
                 <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>

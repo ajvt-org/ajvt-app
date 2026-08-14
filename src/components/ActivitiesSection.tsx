@@ -314,7 +314,10 @@ function ActivityCard({
             {activity.title}
           </h3>
           {activity.isOpen ? (
-            <span className="badge badge-open-blink shrink-0 font-bold">🔴 التسجيل مفتوح</span>
+            <span className="badge badge-open shrink-0 font-bold">
+              <span className="badge-dot" aria-hidden="true" />
+              التسجيل مفتوح
+            </span>
           ) : (
             <span className="badge badge-rejected shrink-0">مغلق</span>
           )}
