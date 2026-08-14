@@ -7,6 +7,7 @@ import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
+import ArrowLabel from "@/components/ArrowLabel";
 
 interface Registration {
   id: string;
@@ -513,7 +514,7 @@ export default function AdminActivitiesPage() {
                                 className="text-xs font-bold inline-block"
                                 style={{ color: "var(--mint-700)" }}
                               >
-                                🧾 عرض إثبات الدفع ←
+                                <ArrowLabel>🧾 عرض إثبات الدفع</ArrowLabel>
                               </a>
                             )}
                             {rejectingId === r.id ? (
