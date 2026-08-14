@@ -20,11 +20,11 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await page.fill('input[name="fullName"]', MEMBER.fullName);
   await page.fill('input[type="tel"]', MEMBER.phone);
   await page.selectOption("select", MEMBER.age);
-  await page.click("text=التالي ←");
+  await page.getByRole("button", { name: "التالي" }).click();
 
   await page.fill('input[type="password"] >> nth=0', MEMBER.password);
   await page.fill('input[type="password"] >> nth=1', MEMBER.password);
-  await page.click("text=التالي ←");
+  await page.getByRole("button", { name: "التالي" }).click();
 
   await page.click(`text=${MEMBER.paymentMethod}`);
   await page.fill('input[type="number"]', "100");
@@ -32,7 +32,7 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
     .locator('input[type="file"]')
     .last()
     .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
-  await page.click("text=إرسال طلب الانضمام ←");
+  await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
 
   await expect(page.getByText(MEMBER.fullName).first()).toBeVisible();
 
