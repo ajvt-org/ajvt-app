@@ -3,6 +3,7 @@
 import { matchDateToLocalInput } from "@/lib/tournament";
 import { useState } from "react";
 import type { Match, Team } from "./types";
+import { api, errorMessage } from "@/lib/api";
 
 export default function MatchDetailsForm({
   match,
@@ -37,23 +38,17 @@ export default function MatchDetailsForm({
     }
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/matches/${match.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matchDate: matchDate || null,
-          round: round || null,
-          venue: venue || null,
-          isKnockout,
-          homeTeamId,
-          awayTeamId,
-        }),
+      await api.patch(`/api/admin/matches/${match.id}`, {
+        matchDate: matchDate || null,
+        round: round || null,
+        venue: venue || null,
+        isKnockout,
+        homeTeamId,
+        awayTeamId,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }

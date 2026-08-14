@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Icon from "@/components/Icon";
 import type { Group, Team } from "./types";
+import { api, errorMessage } from "@/lib/api";
 
 export default function GroupsPanel({
   activityId,
@@ -28,18 +29,15 @@ export default function GroupsPanel({
     onError("");
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/groups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newGroupName, capacity: newGroupCapacity || null }),
+      await api.post(`/api/admin/activities/${activityId}/groups`, {
+        name: newGroupName,
+        capacity: newGroupCapacity || null,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setNewGroupName("");
       setNewGroupCapacity("");
       onChange();
     } catch (e) {
-      onError(e instanceof Error ? e.message : "خطأ");
+      onError(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -48,17 +46,14 @@ export default function GroupsPanel({
   async function saveCapacity(group: Group) {
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/groups/${group.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: group.name, capacity: editCapacity || null }),
+      await api.patch(`/api/admin/groups/${group.id}`, {
+        name: group.name,
+        capacity: editCapacity || null,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       setEditingCapacityId(null);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -68,11 +63,10 @@ export default function GroupsPanel({
     if (!confirm("حذف هذه المجموعة؟ ستبقى الفرق لكن بدون تصنيف.")) return;
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/groups/${groupId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/groups/${groupId}`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }

@@ -5,6 +5,7 @@ import { getMatchWinnerTeamId } from "@/lib/tournament";
 import { useState } from "react";
 import type { Group, Match, Team } from "./types";
 import MatchCard from "./MatchCard";
+import { api, errorMessage } from "@/lib/api";
 
 export default function MatchesTab({
   activityId,
@@ -45,14 +46,10 @@ export default function MatchesTab({
     setGenerating(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/matches/generate`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/admin/activities/${activityId}/matches/generate`);
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setGenerating(false);
     }
@@ -63,14 +60,10 @@ export default function MatchesTab({
     setGenerating(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/bracket/${endpoint}`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/admin/activities/${activityId}/bracket/${endpoint}`);
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setGenerating(false);
     }
@@ -143,13 +136,7 @@ export default function MatchesTab({
     }
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/activities/${activityId}/matches`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/admin/activities/${activityId}/matches`, form);
       setForm({
         homeTeamId: "",
         awayTeamId: "",
@@ -160,7 +147,7 @@ export default function MatchesTab({
       });
       onChange();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ");
+      setError(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }
@@ -170,11 +157,10 @@ export default function MatchesTab({
     if (!confirm("هل تريد حذف هذه المباراة؟")) return;
     setLoadingAction(true);
     try {
-      const res = await fetch(`/api/admin/matches/${matchId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("فشلت العملية");
+      await api.del(`/api/admin/matches/${matchId}`);
       onChange();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "خطأ");
+      alert(errorMessage(e));
     } finally {
       setLoadingAction(false);
     }

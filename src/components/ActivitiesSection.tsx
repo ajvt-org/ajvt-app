@@ -5,6 +5,7 @@ import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useToast } from "@/components/Toast";
 import { toThumbUrl } from "@/lib/utils";
 import Link from "next/link";
+import { api, errorMessage } from "@/lib/api";
 
 interface Team {
   id: string;
@@ -213,17 +214,11 @@ function ActivityCard({
     setError("");
     setBusyMemberId(memberId);
     try {
-      const res = await fetch(`/api/teams/${teamId}/join`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/teams/${teamId}/join`, { memberId });
       showToast("تم إرسال طلب الانضمام — بانتظار موافقة المشرف");
       onReload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
+      setError(errorMessage(e));
     } finally {
       setBusyMemberId(null);
     }
@@ -233,17 +228,11 @@ function ActivityCard({
     setError("");
     setBusyMemberId(memberId);
     try {
-      const res = await fetch(`/api/teams/${teamId}/join`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.del(`/api/teams/${teamId}/join`, { memberId });
       showToast("تم إلغاء الطلب");
       onReload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
+      setError(errorMessage(e));
     } finally {
       setBusyMemberId(null);
     }
@@ -255,17 +244,14 @@ function ActivityCard({
     setError("");
     setBusyMemberId(memberId);
     try {
-      const res = await fetch("/api/activities/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activityId: activity.id, memberId }),
+      await api.post("/api/activities/register", {
+        activityId: activity.id,
+        memberId,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
       showToast(activity.isVolunteer ? "تم تسجيلك كمتطوع 💚" : "تم التسجيل في النشاط");
       onReload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
+      setError(errorMessage(e));
     } finally {
       setBusyMemberId(null);
     }

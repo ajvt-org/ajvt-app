@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
+import { api, errorMessage } from "@/lib/api";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -135,17 +136,11 @@ export default function AdminQuizPage() {
     }
     setSavingSettings(true);
     try {
-      const res = await fetch("/api/admin/quiz/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      const data = await api.patch<{ settings: QuizSettings }>("/api/admin/quiz/settings", body);
       setSettings(data.settings);
       showToast("تم حفظ الإعدادات");
     } catch (e) {
-      setSettingsError(e instanceof Error ? e.message : "خطأ");
+      setSettingsError(errorMessage(e));
     } finally {
       setSavingSettings(false);
     }
@@ -241,21 +236,16 @@ export default function AdminQuizPage() {
         correctCount,
         answers: formAnswers.map((a) => ({ text: a.text.trim(), isCorrect: a.isCorrect })),
       };
-      const res = await fetch(
-        editingId ? `/api/admin/quiz/questions/${editingId}` : "/api/admin/quiz/questions",
-        {
-          method: editingId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      if (editingId) {
+        await api.patch(`/api/admin/quiz/questions/${editingId}`, body);
+      } else {
+        await api.post("/api/admin/quiz/questions", body);
+      }
       setShowForm(false);
       showToast(editingId ? "تم حفظ التعديل" : "تمت إضافة السؤال");
       await load();
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : "خطأ");
+      setFormError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -264,16 +254,10 @@ export default function AdminQuizPage() {
   async function toggleActive(q: QuestionRow) {
     setBusyId(q.id);
     try {
-      const res = await fetch(`/api/admin/quiz/questions/${q.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: !q.active }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.patch(`/api/admin/quiz/questions/${q.id}`, { active: !q.active });
       await load();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "خطأ", "error");
+      showToast(errorMessage(e), "error");
     } finally {
       setBusyId(null);
     }
@@ -283,13 +267,11 @@ export default function AdminQuizPage() {
     if (!confirm("هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به.")) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/admin/quiz/questions/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.del(`/api/admin/quiz/questions/${id}`);
       showToast("تم حذف السؤال");
       await load();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "خطأ", "error");
+      showToast(errorMessage(e), "error");
     } finally {
       setBusyId(null);
     }
@@ -311,7 +293,7 @@ export default function AdminQuizPage() {
       );
       await load();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "خطأ", "error");
+      showToast(errorMessage(e), "error");
     } finally {
       setSendingId(null);
     }
@@ -335,7 +317,7 @@ export default function AdminQuizPage() {
       );
       await load();
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "خطأ", "error");
+      showToast(errorMessage(e), "error");
     } finally {
       setSendingRandom(false);
     }
