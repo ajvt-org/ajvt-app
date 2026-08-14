@@ -70,14 +70,26 @@ function validateGoals(input: unknown): GoalInput[] | null {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
+  { params }: { params: Promise<{ matchId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const {
-      homeScore, awayScore, homeGoals, awayGoals, matchDate, round, venue, isKnockout, order,
-      homePenalties, awayPenalties, manOfTheMatchId, homeTeamId, awayTeamId,
+      homeScore,
+      awayScore,
+      homeGoals,
+      awayGoals,
+      matchDate,
+      round,
+      venue,
+      isKnockout,
+      order,
+      homePenalties,
+      awayPenalties,
+      manOfTheMatchId,
+      homeTeamId,
+      awayTeamId,
     } = await req.json();
 
     const match = await prisma.match.findUnique({
@@ -122,7 +134,10 @@ export async function PATCH(
         select: { id: true, groupId: true },
       });
       if (validTeams.length !== 2) {
-        return NextResponse.json({ error: "الفريقان يجب أن ينتميا إلى هذه البطولة" }, { status: 400 });
+        return NextResponse.json(
+          { error: "الفريقان يجب أن ينتميا إلى هذه البطولة" },
+          { status: 400 },
+        );
       }
       updateData.homeTeamId = newHome;
       updateData.awayTeamId = newAway;
@@ -144,7 +159,13 @@ export async function PATCH(
     }
     const finalIsKnockout = isKnockout !== undefined ? !!isKnockout : match.isKnockout;
     if (!isValidLeaguePairing(finalIsKnockout, finalHomeGroupId, finalAwayGroupId)) {
-      return NextResponse.json({ error: "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
+        },
+        { status: 400 },
+      );
     }
     if (order !== undefined) {
       const n = Number(order);
@@ -167,7 +188,10 @@ export async function PATCH(
         const hs = Number(homeScore);
         const as = Number(awayScore);
         if (!Number.isInteger(hs) || hs < 0 || !Number.isInteger(as) || as < 0) {
-          return NextResponse.json({ error: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب" }, { status: 400 });
+          return NextResponse.json(
+            { error: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب" },
+            { status: 400 },
+          );
         }
 
         const hg = validateGoals(homeGoals);
@@ -176,10 +200,16 @@ export async function PATCH(
           return NextResponse.json({ error: "بيانات الهدافين غير صالحة" }, { status: 400 });
         }
         if (hg.length > 0 && hg.reduce((s, g) => s + g.count, 0) !== hs) {
-          return NextResponse.json({ error: "مجموع أهداف لاعبي الفريق المضيف لا يطابق النتيجة" }, { status: 400 });
+          return NextResponse.json(
+            { error: "مجموع أهداف لاعبي الفريق المضيف لا يطابق النتيجة" },
+            { status: 400 },
+          );
         }
         if (ag.length > 0 && ag.reduce((s, g) => s + g.count, 0) !== as) {
-          return NextResponse.json({ error: "مجموع أهداف لاعبي الفريق الضيف لا يطابق النتيجة" }, { status: 400 });
+          return NextResponse.json(
+            { error: "مجموع أهداف لاعبي الفريق الضيف لا يطابق النتيجة" },
+            { status: 400 },
+          );
         }
 
         if (hg.length > 0 || ag.length > 0) {
@@ -194,12 +224,18 @@ export async function PATCH(
           const memberTeam = new Map(validMembers.map((m) => [m.memberId, m.teamId]));
           for (const g of hg) {
             if (memberTeam.get(g.memberId) !== match.homeTeamId) {
-              return NextResponse.json({ error: "أحد الهدافين ليس ضمن الفريق المضيف" }, { status: 400 });
+              return NextResponse.json(
+                { error: "أحد الهدافين ليس ضمن الفريق المضيف" },
+                { status: 400 },
+              );
             }
           }
           for (const g of ag) {
             if (memberTeam.get(g.memberId) !== match.awayTeamId) {
-              return NextResponse.json({ error: "أحد الهدافين ليس ضمن الفريق الضيف" }, { status: 400 });
+              return NextResponse.json(
+                { error: "أحد الهدافين ليس ضمن الفريق الضيف" },
+                { status: 400 },
+              );
             }
           }
         }
@@ -220,19 +256,30 @@ export async function PATCH(
         const hp = Number(homePenalties);
         const ap = Number(awayPenalties);
         if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(ap) || ap < 0) {
-          return NextResponse.json({ error: "نتيجة ركلات الترجيح يجب أن تكون رقماً صحيحاً غير سالب" }, { status: 400 });
+          return NextResponse.json(
+            { error: "نتيجة ركلات الترجيح يجب أن تكون رقماً صحيحاً غير سالب" },
+            { status: 400 },
+          );
         }
         if (hp === ap) {
           return NextResponse.json({ error: "لا يمكن أن تتعادل ركلات الترجيح" }, { status: 400 });
         }
         const effectiveKnockout = updateData.isKnockout ?? match.isKnockout;
-        const effectiveHome = updateData.homeScore !== undefined ? updateData.homeScore : match.homeScore;
-        const effectiveAway = updateData.awayScore !== undefined ? updateData.awayScore : match.awayScore;
+        const effectiveHome =
+          updateData.homeScore !== undefined ? updateData.homeScore : match.homeScore;
+        const effectiveAway =
+          updateData.awayScore !== undefined ? updateData.awayScore : match.awayScore;
         if (!effectiveKnockout) {
-          return NextResponse.json({ error: "ركلات الترجيح متاحة فقط لمباريات خروج المغلوب" }, { status: 400 });
+          return NextResponse.json(
+            { error: "ركلات الترجيح متاحة فقط لمباريات خروج المغلوب" },
+            { status: 400 },
+          );
         }
         if (effectiveHome === null || effectiveAway === null || effectiveHome !== effectiveAway) {
-          return NextResponse.json({ error: "ركلات الترجيح متاحة فقط عند تعادل النتيجة" }, { status: 400 });
+          return NextResponse.json(
+            { error: "ركلات الترجيح متاحة فقط عند تعادل النتيجة" },
+            { status: 400 },
+          );
         }
         updateData.homePenalties = hp;
         updateData.awayPenalties = ap;
@@ -244,10 +291,16 @@ export async function PATCH(
         updateData.manOfTheMatchId = null;
       } else {
         const inRoster = await prisma.teamMember.findFirst({
-          where: { memberId: manOfTheMatchId, teamId: { in: [match.homeTeamId, match.awayTeamId] } },
+          where: {
+            memberId: manOfTheMatchId,
+            teamId: { in: [match.homeTeamId, match.awayTeamId] },
+          },
         });
         if (!inRoster) {
-          return NextResponse.json({ error: "رجل المباراة يجب أن يكون ضمن أحد الفريقين" }, { status: 400 });
+          return NextResponse.json(
+            { error: "رجل المباراة يجب أن يكون ضمن أحد الفريقين" },
+            { status: 400 },
+          );
         }
         updateData.manOfTheMatchId = manOfTheMatchId;
       }
@@ -258,12 +311,24 @@ export async function PATCH(
         await tx.matchGoal.deleteMany({ where: { matchId } });
         if (parsedHomeGoals.length > 0) {
           await tx.matchGoal.createMany({
-            data: parsedHomeGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.homeTeamId, count: g.count, minute: g.minute })),
+            data: parsedHomeGoals.map((g) => ({
+              matchId,
+              memberId: g.memberId,
+              teamId: match.homeTeamId,
+              count: g.count,
+              minute: g.minute,
+            })),
           });
         }
         if (parsedAwayGoals.length > 0) {
           await tx.matchGoal.createMany({
-            data: parsedAwayGoals.map((g) => ({ matchId, memberId: g.memberId, teamId: match.awayTeamId, count: g.count, minute: g.minute })),
+            data: parsedAwayGoals.map((g) => ({
+              matchId,
+              memberId: g.memberId,
+              teamId: match.awayTeamId,
+              count: g.count,
+              minute: g.minute,
+            })),
           });
         }
       }
@@ -274,7 +339,7 @@ export async function PATCH(
       await logAction(
         session.username,
         "ENTER_MATCH_RESULT",
-        `${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`
+        `${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
       );
       if (!wasPlayed) {
         notifyTeams(match.homeTeamId, match.awayTeamId, {
@@ -300,7 +365,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
+  { params }: { params: Promise<{ matchId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
@@ -315,7 +380,11 @@ export async function DELETE(
     }
 
     await prisma.match.delete({ where: { id: matchId } });
-    await logAction(session.username, "DELETE_MATCH", `${match.homeTeam.name} × ${match.awayTeam.name}`);
+    await logAction(
+      session.username,
+      "DELETE_MATCH",
+      `${match.homeTeam.name} × ${match.awayTeam.name}`,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {

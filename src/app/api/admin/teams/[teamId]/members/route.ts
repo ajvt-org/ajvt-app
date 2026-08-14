@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   try {
     await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
@@ -20,7 +17,10 @@ export async function POST(
       return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
     }
 
-    const member = await prisma.member.findUnique({ where: { id: memberId }, select: { status: true, fullName: true } });
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: { status: true, fullName: true },
+    });
     if (!member) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
@@ -41,14 +41,19 @@ export async function POST(
     });
     if (existingMembership) {
       return NextResponse.json(
-        { error: `هذا العضو منضم بالفعل إلى فريق "${existingMembership.team.name}" في هذه البطولة` },
-        { status: 409 }
+        {
+          error: `هذا العضو منضم بالفعل إلى فريق "${existingMembership.team.name}" في هذه البطولة`,
+        },
+        { status: 409 },
       );
     }
 
     const teamMember = await prisma.teamMember.create({
       data: { teamId, memberId },
-      select: { id: true, member: { select: { id: true, fullName: true, phone: true, age: true } } },
+      select: {
+        id: true,
+        member: { select: { id: true, fullName: true, phone: true, age: true } },
+      },
     });
 
     return NextResponse.json({ teamMember }, { status: 201 });

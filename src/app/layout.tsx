@@ -6,9 +6,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import VisitTracker from "@/components/VisitTracker";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "https://ajvt-app.onrender.com"
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://ajvt-app.onrender.com"),
   title: "رابطة شباب التاكلالت",
   description: "منصة إدارة عضوية جمعية AJVT - التسجيل وبطاقات الأعضاء الرقمية",
   keywords: "AJVT, جمعية, عضوية, بطاقة عضو",
@@ -24,11 +22,7 @@ export const viewport: Viewport = {
   themeColor: "#265c49",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <head>

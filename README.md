@@ -56,6 +56,16 @@ Plain `npm run db:seed` only creates the `admin` account and the age groups. Tha
 | `npm run db:studio` | Browse the database in Prisma Studio |
 | `npm run lint` | ESLint |
 
+## Formatting
+
+Prettier owns formatting, CI checks it. Run `npm run format` before pushing, or set your editor to format on save.
+
+The whole codebase was reformatted in one commit. Run this once so `git blame` skips it:
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
 ## Environment
 
 Copy `.env.example` to `.env`. Two variables are required:

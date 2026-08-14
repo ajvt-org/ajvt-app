@@ -39,7 +39,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
-    const { title, description, period, capacity, photo, isTournament, isVolunteer, whatsappLink } = await req.json();
+    const { title, description, period, capacity, photo, isTournament, isVolunteer, whatsappLink } =
+      await req.json();
 
     if (!title?.trim() || !description?.trim()) {
       return NextResponse.json({ error: "العنوان والوصف مطلوبان" }, { status: 400 });
@@ -54,17 +55,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
     if (isTournament && isVolunteer) {
-      return NextResponse.json({ error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" }, { status: 400 });
+      return NextResponse.json(
+        { error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" },
+        { status: 400 },
+      );
     }
     if (isVolunteer && !/^https?:\/\//.test(whatsappLink?.trim() || "")) {
-      return NextResponse.json({ error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" }, { status: 400 });
+      return NextResponse.json(
+        { error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" },
+        { status: 400 },
+      );
     }
 
     let capacityValue: number | null = null;
     if (capacity !== undefined && capacity !== null && capacity !== "") {
       const n = Number(capacity);
       if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json({ error: "السعة يجب أن تكون رقماً صحيحاً موجباً" }, { status: 400 });
+        return NextResponse.json(
+          { error: "السعة يجب أن تكون رقماً صحيحاً موجباً" },
+          { status: 400 },
+        );
       }
       capacityValue = n;
     }

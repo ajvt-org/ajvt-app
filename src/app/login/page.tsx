@@ -100,7 +100,10 @@ function LoginForm() {
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+            <div
+              className="p-3 rounded-xl text-sm font-semibold"
+              style={{ background: "#fee2e2", color: "#991b1b" }}
+            >
               ⚠️ {error}
             </div>
           )}
@@ -109,7 +112,11 @@ function LoginForm() {
             {loading ? "جاري التحقق..." : "دخول ←"}
           </button>
 
-          <Link href="/forgot-password" className="block text-center text-xs font-bold" style={{ color: "var(--mint-600)" }}>
+          <Link
+            href="/forgot-password"
+            className="block text-center text-xs font-bold"
+            style={{ color: "var(--mint-600)" }}
+          >
             نسيت كلمة المرور؟
           </Link>
         </form>

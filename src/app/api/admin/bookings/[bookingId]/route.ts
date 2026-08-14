@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ bookingId: string }> }
+  { params }: { params: Promise<{ bookingId: string }> },
 ) {
   try {
     await requireAdminRole("ACTIVITIES");

@@ -65,7 +65,10 @@ function DonatePageInner() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!selectedFile) { setError("يرجى إرفاق صورة إثبات الدفع"); return; }
+    if (!selectedFile) {
+      setError("يرجى إرفاق صورة إثبات الدفع");
+      return;
+    }
     const n = Number(amount);
     if (!amount.trim() || !Number.isInteger(n) || n <= 0) {
       setError("يرجى إدخال مبلغ التبرع");
@@ -113,11 +116,15 @@ function DonatePageInner() {
       <div className="app-shell flex items-center justify-center">
         <div className="card p-8 text-center max-w-sm mx-4 fade-up">
           <div className="text-5xl mb-4">❤️</div>
-          <h1 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>شكراً لدعمك!</h1>
+          <h1 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>
+            شكراً لدعمك!
+          </h1>
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
             تم استلام تبرعك وسيتم مراجعته من طرف الرابطة. جزاك الله خيراً.
           </p>
-          <Link href="/leaderboard" className="btn btn-primary">🏆 شاهد لوحة شرف المتبرعين</Link>
+          <Link href="/leaderboard" className="btn btn-primary">
+            🏆 شاهد لوحة شرف المتبرعين
+          </Link>
         </div>
       </div>
     );
@@ -136,7 +143,9 @@ function DonatePageInner() {
         >
           <Image src="/version-final.png" alt="شعار" width={38} height={38} />
           <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+              رابطة شباب قرية التاكلالت
+            </p>
             <h1 className="text-base font-black text-white">دعم الرابطة</h1>
           </div>
         </div>
@@ -148,11 +157,15 @@ function DonatePageInner() {
               أنت على وشك التبرع بدون إنشاء حساب
             </p>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              بدون حساب لن يكون لديك بطاقة عضوية رقمية، ولن تتمكن من المشاركة في أنشطة وفعاليات الرابطة — التبرع هنا يبقى دعماً عاماً منفصلاً عن العضوية.
+              بدون حساب لن يكون لديك بطاقة عضوية رقمية، ولن تتمكن من المشاركة في أنشطة وفعاليات
+              الرابطة — التبرع هنا يبقى دعماً عاماً منفصلاً عن العضوية.
             </p>
           </div>
 
-          <div className="card p-5 fade-up delay-1" style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}>
+          <div
+            className="card p-5 fade-up delay-1"
+            style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
+          >
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
               🏆 الاشتراك في الرابطة (100 أوقية على الأقل) يتيح لك:
             </p>
@@ -188,7 +201,9 @@ function DonatePageInner() {
       >
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>رابطة شباب قرية التاكلالت</p>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+            رابطة شباب قرية التاكلالت
+          </p>
           <h1 className="text-base font-black text-white">دعم الرابطة</h1>
         </div>
       </div>
@@ -201,7 +216,11 @@ function DonatePageInner() {
               ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
               : "تتابع الآن كمتبرع بدون حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
           </p>
-          <Link href="/leaderboard" className="text-xs font-bold mt-2 inline-block" style={{ color: "var(--mint-600)" }}>
+          <Link
+            href="/leaderboard"
+            className="text-xs font-bold mt-2 inline-block"
+            style={{ color: "var(--mint-600)" }}
+          >
             🏆 شاهد لوحة شرف المتبرعين
           </Link>
         </div>
@@ -268,7 +287,10 @@ function DonatePageInner() {
               </button>
               <button
                 type="button"
-                onClick={() => { setWantsName(false); setDonorName(""); }}
+                onClick={() => {
+                  setWantsName(false);
+                  setDonorName("");
+                }}
                 className="py-3 rounded-xl text-sm font-bold transition-all border-2"
                 style={{
                   background: wantsName === false ? "var(--mint-600)" : "white",
@@ -294,10 +316,10 @@ function DonatePageInner() {
 
             <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
               {wantsName === false
-                ? "سيُسجَّل تبرعك باسم \"فاعل خير\" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم."
+                ? 'سيُسجَّل تبرعك باسم "فاعل خير" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم.'
                 : wantsName === true
-                ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
-                : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
+                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
+                  : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
             </p>
           </div>
 
@@ -309,22 +331,40 @@ function DonatePageInner() {
               {previewUrl ? (
                 <div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={previewUrl} alt="إثبات الدفع" className="max-h-48 mx-auto rounded-xl object-contain" />
-                  <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>انقر لتغيير الصورة</p>
+                  <img
+                    src={previewUrl}
+                    alt="إثبات الدفع"
+                    className="max-h-48 mx-auto rounded-xl object-contain"
+                  />
+                  <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
+                    انقر لتغيير الصورة
+                  </p>
                 </div>
               ) : (
                 <div className="text-center">
                   <div className="text-4xl mb-2">🧾</div>
-                  <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>انقر لاختيار صورة من هاتفك</p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>PNG / JPG — حجم أقصى 5 ميغابايت</p>
+                  <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
+                    انقر لاختيار صورة من هاتفك
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                    PNG / JPG — حجم أقصى 5 ميغابايت
+                  </p>
                 </div>
               )}
-              <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+              />
             </label>
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+            <div
+              className="p-4 rounded-xl text-sm font-semibold"
+              style={{ background: "#fee2e2", color: "#991b1b" }}
+            >
               ⚠️ {error}
             </div>
           )}

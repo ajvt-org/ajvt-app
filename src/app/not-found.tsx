@@ -25,11 +25,17 @@ export default function NotFound() {
 
       <div className="flex-1 px-5 py-10 flex flex-col items-center justify-center text-center space-y-4">
         <p className="text-5xl">🔍</p>
-        <p className="font-bold text-lg" style={{ color: "var(--text-main)" }}>لم نجد هذه الصفحة</p>
+        <p className="font-bold text-lg" style={{ color: "var(--text-main)" }}>
+          لم نجد هذه الصفحة
+        </p>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           الرابط الذي فتحته غير صحيح أو تم حذف الصفحة.
         </p>
-        <Link href={isAdmin ? "/admin/dashboard" : "/"} className="btn btn-primary mt-2" style={{ width: "auto", paddingInline: "2rem" }}>
+        <Link
+          href={isAdmin ? "/admin/dashboard" : "/"}
+          className="btn btn-primary mt-2"
+          style={{ width: "auto", paddingInline: "2rem" }}
+        >
           {isAdmin ? "← لوحة التحكم" : "← الصفحة الرئيسية"}
         </Link>
       </div>

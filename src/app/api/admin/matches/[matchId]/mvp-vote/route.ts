@@ -15,16 +15,17 @@ const VOTE_INCLUDE = {
   },
 } as const;
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
     const { candidateMemberIds } = await req.json();
 
-    if (!Array.isArray(candidateMemberIds) || candidateMemberIds.length < 2 || candidateMemberIds.length > 6) {
+    if (
+      !Array.isArray(candidateMemberIds) ||
+      candidateMemberIds.length < 2 ||
+      candidateMemberIds.length > 6
+    ) {
       return NextResponse.json({ error: "يجب اختيار بين 2 و6 لاعبين مرشحين" }, { status: 400 });
     }
     const uniqueIds = Array.from(new Set(candidateMemberIds));
@@ -44,15 +45,24 @@ export async function POST(
       return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
     }
     if (match.mvpVote) {
-      return NextResponse.json({ error: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء" }, { status: 409 });
+      return NextResponse.json(
+        { error: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء" },
+        { status: 409 },
+      );
     }
 
     const rosterEntries = await prisma.teamMember.findMany({
-      where: { memberId: { in: uniqueIds as string[] }, teamId: { in: [match.homeTeamId, match.awayTeamId] } },
+      where: {
+        memberId: { in: uniqueIds as string[] },
+        teamId: { in: [match.homeTeamId, match.awayTeamId] },
+      },
       select: { memberId: true },
     });
     if (rosterEntries.length !== uniqueIds.length) {
-      return NextResponse.json({ error: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين" }, { status: 400 });
+      return NextResponse.json(
+        { error: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين" },
+        { status: 400 },
+      );
     }
 
     const vote = await prisma.matchMvpVote.create({
@@ -63,7 +73,11 @@ export async function POST(
       include: VOTE_INCLUDE,
     });
 
-    await logAction(session.username, "OPEN_MVP_VOTE", `${match.homeTeam.name} × ${match.awayTeam.name}`);
+    await logAction(
+      session.username,
+      "OPEN_MVP_VOTE",
+      `${match.homeTeam.name} × ${match.awayTeam.name}`,
+    );
 
     notifyTeams(match.homeTeamId, match.awayTeamId, {
       title: "رابطة شباب التاكلالت",
@@ -86,7 +100,7 @@ export async function POST(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
+  { params }: { params: Promise<{ matchId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");
@@ -108,7 +122,11 @@ export async function PATCH(
       include: VOTE_INCLUDE,
     });
 
-    await logAction(session.username, status === "CLOSED" ? "CLOSE_MVP_VOTE" : "REOPEN_MVP_VOTE", matchId);
+    await logAction(
+      session.username,
+      status === "CLOSED" ? "CLOSE_MVP_VOTE" : "REOPEN_MVP_VOTE",
+      matchId,
+    );
 
     return NextResponse.json({ vote });
   } catch (err) {
@@ -125,7 +143,7 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
+  { params }: { params: Promise<{ matchId: string }> },
 ) {
   try {
     const session = await requireAdminRole("ACTIVITIES");

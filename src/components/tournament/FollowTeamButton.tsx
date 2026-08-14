@@ -25,7 +25,9 @@ export default function FollowTeamButton({ teamId }: { teamId: string }) {
   async function toggle() {
     setBusy(true);
     try {
-      const res = await fetch(`/api/teams/${teamId}/follow`, { method: following ? "DELETE" : "POST" });
+      const res = await fetch(`/api/teams/${teamId}/follow`, {
+        method: following ? "DELETE" : "POST",
+      });
       if (res.ok) {
         setFollowing((v) => !v);
         showToast(following ? "تم إلغاء المتابعة" : "تتابع الفريق الآن");

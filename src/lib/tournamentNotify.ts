@@ -4,7 +4,7 @@ import { sendPushToUser } from "./push";
 export async function notifyTeams(
   homeTeamId: string,
   awayTeamId: string,
-  payload: { title: string; body: string; url?: string }
+  payload: { title: string; body: string; url?: string },
 ) {
   const [teamMembers, followers] = await Promise.all([
     prisma.teamMember.findMany({
@@ -17,10 +17,16 @@ export async function notifyTeams(
     }),
   ]);
   const userIds = Array.from(
-    new Set([...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter((id): id is string => id !== null))
+    new Set(
+      [...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter(
+        (id): id is string => id !== null,
+      ),
+    ),
   );
   await Promise.all(
-    userIds.map((uid) => sendPushToUser(uid, payload).catch((err) => console.error("Tournament push error:", err)))
+    userIds.map((uid) =>
+      sendPushToUser(uid, payload).catch((err) => console.error("Tournament push error:", err)),
+    ),
   );
 }
 
@@ -56,8 +62,8 @@ export async function sendMatchReminders() {
       url: `/tournament/${m.activityId}`,
     }).catch((err) => console.error("Match reminder push error:", err));
 
-    await prisma.match.update({ where: { id: m.id }, data: { reminderSentAt: now } }).catch((err) =>
-      console.error("Match reminder stamp error:", err)
-    );
+    await prisma.match
+      .update({ where: { id: m.id }, data: { reminderSentAt: now } })
+      .catch((err) => console.error("Match reminder stamp error:", err));
   }
 }

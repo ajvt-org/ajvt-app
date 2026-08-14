@@ -39,7 +39,11 @@ export async function POST(req: NextRequest) {
       data: { lastLoginAt: new Date(), lastLoginIp: getClientIp(req) },
     });
 
-    const token = await signToken({ adminId: admin.id, username: admin.username, tokenVersion: admin.tokenVersion });
+    const token = await signToken({
+      adminId: admin.id,
+      username: admin.username,
+      tokenVersion: admin.tokenVersion,
+    });
     const response = NextResponse.json({ ok: true });
     response.cookies.set("admin_token", token, {
       httpOnly: true,

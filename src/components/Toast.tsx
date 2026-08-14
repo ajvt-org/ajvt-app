@@ -43,7 +43,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               maxWidth: "90vw",
             }}
           >
-            {t.kind === "success" ? "✅ " : "⚠️ "}{t.message}
+            {t.kind === "success" ? "✅ " : "⚠️ "}
+            {t.message}
           </div>
         ))}
       </div>

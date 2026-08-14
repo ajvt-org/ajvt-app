@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
     const session = await requireUser();
 
     if (!(await isQuizEligible(session.userId))) {
-      return NextResponse.json({ error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب" }, { status: 403 });
+      return NextResponse.json(
+        { error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب" },
+        { status: 403 },
+      );
     }
 
     const { assignmentId, selectedAnswerIds } = await req.json();
@@ -16,7 +19,10 @@ export async function POST(req: NextRequest) {
     if (!assignmentId || typeof assignmentId !== "string") {
       return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
     }
-    if (!Array.isArray(selectedAnswerIds) || selectedAnswerIds.some((id) => typeof id !== "string")) {
+    if (
+      !Array.isArray(selectedAnswerIds) ||
+      selectedAnswerIds.some((id) => typeof id !== "string")
+    ) {
       return NextResponse.json({ error: "يجب اختيار إجابة واحدة على الأقل" }, { status: 400 });
     }
 
@@ -38,11 +44,16 @@ export async function POST(req: NextRequest) {
     }
 
     const validAnswerIds = new Set(assignment.question.answers.map((a) => a.id));
-    if (selectedAnswerIds.length === 0 || !selectedAnswerIds.every((id) => validAnswerIds.has(id))) {
+    if (
+      selectedAnswerIds.length === 0 ||
+      !selectedAnswerIds.every((id) => validAnswerIds.has(id))
+    ) {
       return NextResponse.json({ error: "إجابة غير صالحة" }, { status: 400 });
     }
 
-    const correctAnswerIds = assignment.question.answers.filter((a) => a.isCorrect).map((a) => a.id);
+    const correctAnswerIds = assignment.question.answers
+      .filter((a) => a.isCorrect)
+      .map((a) => a.id);
     const isCorrect = computeIsCorrect(correctAnswerIds, selectedAnswerIds);
     const pointsAwarded = isCorrect ? assignment.question.points : 0;
 

@@ -26,13 +26,33 @@ const AGE_GROUPS = [
 ];
 
 const FIRST_NAMES = [
-  "محمد", "أحمد", "سيدي", "الحسن", "عبد الله", "إبراهيم", "يعقوب", "المختار",
-  "بابا", "الشيخ", "عثمان", "موسى", "خالد", "سليمان", "يوسف", "عمر",
+  "محمد",
+  "أحمد",
+  "سيدي",
+  "الحسن",
+  "عبد الله",
+  "إبراهيم",
+  "يعقوب",
+  "المختار",
+  "بابا",
+  "الشيخ",
+  "عثمان",
+  "موسى",
+  "خالد",
+  "سليمان",
+  "يوسف",
+  "عمر",
 ];
 
 const LAST_NAMES = [
-  "ولد أحمد", "ولد محمد", "ولد سيدي", "ولد الحسن", "ولد بابا", "ولد المختار",
-  "ولد إبراهيم", "ولد عثمان",
+  "ولد أحمد",
+  "ولد محمد",
+  "ولد سيدي",
+  "ولد الحسن",
+  "ولد بابا",
+  "ولد المختار",
+  "ولد إبراهيم",
+  "ولد عثمان",
 ];
 
 const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
@@ -135,11 +155,11 @@ async function main() {
           phone: phone(i),
           password: userPassword,
           currentStreak: i % 5,
-          longestStreak: (i % 5) + i % 3,
+          longestStreak: (i % 5) + (i % 3),
           lastActiveDate: i % 4 === 0 ? daysAgo(i % 7) : null,
           createdAt: daysAgo(120 - i * 3),
         },
-      })
+      }),
     );
   }
 
@@ -232,13 +252,19 @@ async function main() {
     groups.push(
       await prisma.group.create({
         data: { activityId: tournament.id, name, capacity: 4 },
-      })
+      }),
     );
   }
 
   const teamNames = [
-    "فريق النجم", "فريق الوحدة", "فريق الشباب", "فريق الأمل",
-    "فريق النصر", "فريق الفتح", "فريق التقدم", "فريق الوفاق",
+    "فريق النجم",
+    "فريق الوحدة",
+    "فريق الشباب",
+    "فريق الأمل",
+    "فريق النصر",
+    "فريق الفتح",
+    "فريق التقدم",
+    "فريق الوفاق",
   ];
 
   const teams = [];
@@ -251,7 +277,7 @@ async function main() {
           name: teamNames[i],
           logo: i % 2 === 0 ? `seed-logo-${next()}.webp` : null,
         },
-      })
+      }),
     );
   }
 
@@ -276,8 +302,14 @@ async function main() {
   }
 
   const pairs = [
-    [0, 1], [2, 3], [0, 2], [1, 3],
-    [4, 5], [6, 7], [4, 6], [5, 7],
+    [0, 1],
+    [2, 3],
+    [0, 2],
+    [1, 3],
+    [4, 5],
+    [6, 7],
+    [4, 6],
+    [5, 7],
   ];
 
   for (let i = 0; i < pairs.length; i++) {
@@ -298,7 +330,7 @@ async function main() {
         homeScore,
         awayScore,
         status: played ? "FINISHED" : "SCHEDULED",
-        manOfTheMatchId: played ? roster[teams[h].id]?.[0] ?? null : null,
+        manOfTheMatchId: played ? (roster[teams[h].id]?.[0] ?? null) : null,
       },
     });
 
@@ -336,9 +368,7 @@ async function main() {
       });
       const candidates = [];
       for (const memberId of (roster[teams[h].id] ?? []).slice(0, 3)) {
-        candidates.push(
-          await prisma.mvpCandidate.create({ data: { voteId: vote.id, memberId } })
-        );
+        candidates.push(await prisma.mvpCandidate.create({ data: { voteId: vote.id, memberId } }));
       }
       for (let v = 0; v < Math.min(users.length, 6); v++) {
         if (!candidates.length) break;
@@ -500,7 +530,9 @@ async function main() {
 
   console.log("Dev data seeded:", counts);
   console.log("Admins: admin / members / activities, password admin123");
-  console.log(`Member accounts: ${users[0].phone} .. ${users[users.length - 1].phone}, password user123`);
+  console.log(
+    `Member accounts: ${users[0].phone} .. ${users[users.length - 1].phone}, password user123`,
+  );
 }
 
 main()

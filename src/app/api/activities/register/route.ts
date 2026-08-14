@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
     }
     if (member.status !== "ACTIVE") {
-      return NextResponse.json({ error: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً" }, { status: 403 });
+      return NextResponse.json(
+        { error: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً" },
+        { status: 403 },
+      );
     }
 
     const existing = await prisma.activityRegistration.findUnique({
@@ -51,7 +54,10 @@ export async function POST(req: NextRequest) {
       activity._count.registrations >= activity.capacity &&
       !existing
     ) {
-      return NextResponse.json({ error: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط" }, { status: 409 });
+      return NextResponse.json(
+        { error: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط" },
+        { status: 409 },
+      );
     }
 
     const status = activity.isVolunteer ? "ACTIVE" : "PENDING";

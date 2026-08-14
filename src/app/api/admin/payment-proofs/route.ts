@@ -14,7 +14,14 @@ export async function GET() {
       includeMembership
         ? prisma.member.findMany({
             where: { paymentProof: { not: null } },
-            select: { id: true, fullName: true, paymentProof: true, status: true, createdAt: true, updatedAt: true },
+            select: {
+              id: true,
+              fullName: true,
+              paymentProof: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+            },
             orderBy: { updatedAt: "desc" },
           })
         : Promise.resolve([]),

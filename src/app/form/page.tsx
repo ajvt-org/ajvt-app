@@ -8,15 +8,19 @@ import { validatePhone, loginPathWithNext } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
-import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
+import {
+  MEMBERSHIP_FEE,
+  ONLINE_PAYMENT_METHODS as PAYMENT_METHODS,
+  validatePaidAmount,
+} from "@/lib/donations";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 const PAYMENT_CODES: Record<string, string> = {
-  "بنكيلي": "027217",
-  "السداد": "08493",
-  "مصرفي": "037940",
+  بنكيلي: "027217",
+  السداد: "08493",
+  مصرفي: "037940",
 };
 
 // Filling this form legitimately means leaving the app to pay, then coming
@@ -97,7 +101,10 @@ function ProgressBar({ stepIndex, total }: { stepIndex: number; total: number })
           />
         ))}
       </div>
-      <p className="text-xs text-center mt-1.5 font-semibold" style={{ color: "var(--text-muted)" }}>
+      <p
+        className="text-xs text-center mt-1.5 font-semibold"
+        style={{ color: "var(--text-muted)" }}
+      >
         الخطوة {stepIndex + 1} من {total}
       </p>
     </div>
@@ -161,11 +168,20 @@ function FormPageInner() {
     async function load() {
       if (editId) {
         const meRes = await fetch("/api/user/me");
-        if (meRes.status === 401) { router.push(loginPathWithNext("/login")); return; }
+        if (meRes.status === 401) {
+          router.push(loginPathWithNext("/login"));
+          return;
+        }
         const memberRes = await fetch(`/api/members/${editId}`);
-        if (!memberRes.ok) { router.push("/home"); return; }
+        if (!memberRes.ok) {
+          router.push("/home");
+          return;
+        }
         const member = await memberRes.json();
-        if (member.status === "ACTIVE") { router.push("/home"); return; }
+        if (member.status === "ACTIVE") {
+          router.push("/home");
+          return;
+        }
         setForm({
           fullName: member.fullName || "",
           phone: member.phone || "",
@@ -214,7 +230,9 @@ function FormPageInner() {
 
     fetch("/api/ages")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.ages?.length) setAges(data.ages); })
+      .then((data) => {
+        if (data?.ages?.length) setAges(data.ages);
+      })
       .catch(() => {});
   }, [router, editId]);
 
@@ -227,7 +245,14 @@ function FormPageInner() {
   }, [form, checkingAuth, editId]);
 
   function startOver() {
-    setForm({ fullName: "", phone: "", age: "", paymentMethod: "", paidAmount: "", referenceCode: generateReferenceCode() });
+    setForm({
+      fullName: "",
+      phone: "",
+      age: "",
+      paymentMethod: "",
+      paidAmount: "",
+      referenceCode: generateReferenceCode(),
+    });
     localStorage.removeItem(DRAFT_KEY);
     setDraftRestored(false);
   }
@@ -303,14 +328,23 @@ function FormPageInner() {
   function goNextFromStep1() {
     setError("");
     const err = validateStep1();
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
     setStepIndex((i) => i + 1);
   }
 
   async function createAccount() {
     setError("");
-    if (password.length < 3) { setError("كلمة المرور يجب أن تكون 3 أحرف على الأقل"); return; }
-    if (password !== confirmPassword) { setError("كلمتا المرور غير متطابقتين"); return; }
+    if (password.length < 3) {
+      setError("كلمة المرور يجب أن تكون 3 أحرف على الأقل");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("كلمتا المرور غير متطابقتين");
+      return;
+    }
 
     setAccountLoading(true);
     try {
@@ -336,19 +370,40 @@ function FormPageInner() {
     setError("");
 
     const step1Error = validateStep1();
-    if (step1Error) { setError(step1Error); return; }
-    if (!form.paymentMethod) { setError("يرجى اختيار طريقة الدفع"); return; }
+    if (step1Error) {
+      setError(step1Error);
+      return;
+    }
+    if (!form.paymentMethod) {
+      setError("يرجى اختيار طريقة الدفع");
+      return;
+    }
     const paidAmountError = validatePaidAmount(form.paidAmount);
-    if (paidAmountError) { setError(paidAmountError); return; }
-    if (proofUploading) { setError("يرجى الانتظار حتى انتهاء رفع الصورة"); return; }
-    if (!proofFilename) { setError("يرجى إرفاق صورة الكابتير"); return; }
+    if (paidAmountError) {
+      setError(paidAmountError);
+      return;
+    }
+    if (proofUploading) {
+      setError("يرجى الانتظار حتى انتهاء رفع الصورة");
+      return;
+    }
+    if (!proofFilename) {
+      setError("يرجى إرفاق صورة الكابتير");
+      return;
+    }
 
     setLoading(true);
     try {
       const res = await fetch("/api/members", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...(editId ? { id: editId } : {}), ...form, paidAmount: Number(form.paidAmount), paymentProof: proofFilename, photo }),
+        body: JSON.stringify({
+          ...(editId ? { id: editId } : {}),
+          ...form,
+          paidAmount: Number(form.paidAmount),
+          paymentProof: proofFilename,
+          photo,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
@@ -399,15 +454,26 @@ function FormPageInner() {
             <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
               رقم دفترك — احتفظ به للمتابعة
             </p>
-            <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "var(--mint-50)" }}>
-              <span className="font-mono font-black text-lg" style={{ color: "var(--mint-700)" }} dir="ltr">
+            <div
+              className="flex items-center justify-between rounded-xl px-3 py-2.5"
+              style={{ background: "var(--mint-50)" }}
+            >
+              <span
+                className="font-mono font-black text-lg"
+                style={{ color: "var(--mint-700)" }}
+                dir="ltr"
+              >
                 {form.referenceCode}
               </span>
               <button
                 type="button"
                 onClick={() => copyCode(form.referenceCode)}
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: copied === form.referenceCode ? "var(--mint-600)" : "white", color: copied === form.referenceCode ? "white" : "var(--mint-700)", border: "1px solid var(--mint-200)" }}
+                style={{
+                  background: copied === form.referenceCode ? "var(--mint-600)" : "white",
+                  color: copied === form.referenceCode ? "white" : "var(--mint-700)",
+                  border: "1px solid var(--mint-200)",
+                }}
               >
                 {copied === form.referenceCode ? "✓ تم النسخ" : "نسخ"}
               </button>
@@ -415,16 +481,36 @@ function FormPageInner() {
           </div>
 
           <div className="card p-4 fade-up delay-1">
-            <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>ملخص الطلب</p>
+            <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
+              ملخص الطلب
+            </p>
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>الاسم</span><span className="font-bold">{form.fullName}</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>العصر</span><span className="font-bold">{form.age}</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span><span className="font-bold">{form.paymentMethod}</span></div>
-              <div className="flex justify-between"><span style={{ color: "var(--text-muted)" }}>المبلغ</span><span className="font-bold" dir="ltr">{form.paidAmount} أوقية</span></div>
+              <div className="flex justify-between">
+                <span style={{ color: "var(--text-muted)" }}>الاسم</span>
+                <span className="font-bold">{form.fullName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: "var(--text-muted)" }}>العصر</span>
+                <span className="font-bold">{form.age}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span>
+                <span className="font-bold">{form.paymentMethod}</span>
+              </div>
+              <div className="flex justify-between">
+                <span style={{ color: "var(--text-muted)" }}>المبلغ</span>
+                <span className="font-bold" dir="ltr">
+                  {form.paidAmount} أوقية
+                </span>
+              </div>
             </div>
           </div>
 
-          <button type="button" onClick={shareReferenceCode} className="btn btn-primary fade-up delay-1">
+          <button
+            type="button"
+            onClick={shareReferenceCode}
+            className="btn btn-primary fade-up delay-1"
+          >
             📤 مشاركة رقم الدفتر
           </button>
           <button
@@ -459,7 +545,6 @@ function FormPageInner() {
       </div>
 
       <div className="px-5 py-6 pb-10">
-
         {!editId && <ProgressBar stepIndex={stepIndex} total={steps.length} />}
 
         {draftRestored && !editId && currentStep === 1 && (
@@ -474,7 +559,11 @@ function FormPageInner() {
               type="button"
               onClick={startOver}
               className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-              style={{ background: "white", color: "var(--text-muted)", border: "1px solid var(--mint-200)" }}
+              style={{
+                background: "white",
+                color: "var(--text-muted)",
+                border: "1px solid var(--mint-200)",
+              }}
             >
               البدء من جديد
             </button>
@@ -502,7 +591,10 @@ function FormPageInner() {
         {currentStep === 1 && (
           <div className="space-y-5 fade-up delay-1">
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 الاسم الكامل (بالحروف العربية) <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
@@ -522,7 +614,10 @@ function FormPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <PhoneInput
@@ -535,18 +630,32 @@ function FormPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 العصر <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <select
                 value={showAddAge ? "__add__" : form.age}
                 onChange={handleAgeSelect}
                 className="input"
-                style={{ appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a9c7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "left 12px center", paddingLeft: "36px" }}
+                style={{
+                  appearance: "none",
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a9c7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "left 12px center",
+                  paddingLeft: "36px",
+                }}
               >
-                <option value="" disabled>اختر العصر...</option>
+                <option value="" disabled>
+                  اختر العصر...
+                </option>
                 {ages.map((a) => (
-                  <option key={a} value={a}>{a}</option>
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
                 ))}
                 <option value="__add__">➕ إضافة عصر جديد</option>
               </select>
@@ -560,7 +669,12 @@ function FormPageInner() {
                     placeholder="اكتب اسم العصر..."
                     maxLength={30}
                     className="input flex-1"
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomAge(); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomAge();
+                      }
+                    }}
                     autoFocus
                   />
                   <button
@@ -583,7 +697,10 @@ function FormPageInner() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+              <div
+                className="p-4 rounded-xl text-sm font-semibold"
+                style={{ background: "#fee2e2", color: "#991b1b" }}
+              >
                 ⚠️ {error}
               </div>
             )}
@@ -607,7 +724,10 @@ function FormPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
@@ -621,7 +741,10 @@ function FormPageInner() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+              <label
+                className="block text-sm font-bold mb-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 تأكيد كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
@@ -635,7 +758,10 @@ function FormPageInner() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+              <div
+                className="p-4 rounded-xl text-sm font-semibold"
+                style={{ background: "#fee2e2", color: "#991b1b" }}
+              >
                 ⚠️ {error}
                 {error === "رقم الهاتف مسجّل مسبقاً" && (
                   <>
@@ -649,10 +775,20 @@ function FormPageInner() {
             )}
 
             <div className="flex gap-2 mt-2">
-              <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
+              <button
+                type="button"
+                onClick={goBack}
+                className="btn px-4"
+                style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
+              >
                 → السابق
               </button>
-              <button type="button" onClick={createAccount} disabled={accountLoading} className="btn btn-primary flex-1">
+              <button
+                type="button"
+                onClick={createAccount}
+                disabled={accountLoading}
+                className="btn btn-primary flex-1"
+              >
                 {accountLoading ? "جاري إنشاء الحساب..." : "التالي ←"}
               </button>
             </div>
@@ -688,7 +824,8 @@ function FormPageInner() {
                     style={{
                       background: form.paymentMethod === method ? "var(--mint-600)" : "white",
                       color: form.paymentMethod === method ? "white" : "var(--mint-700)",
-                      borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                      borderColor:
+                        form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
                     }}
                   >
                     {method}
@@ -705,7 +842,9 @@ function FormPageInner() {
                   border: "1px solid var(--copper-400)",
                 }}
               >
-                <p className="text-sm font-bold mb-3 text-white">💳 الدفع عبر {form.paymentMethod}</p>
+                <p className="text-sm font-bold mb-3 text-white">
+                  💳 الدفع عبر {form.paymentMethod}
+                </p>
                 <div className="space-y-2">
                   <div
                     className="flex items-center justify-between rounded-xl px-3 py-2"
@@ -713,7 +852,11 @@ function FormPageInner() {
                   >
                     <span className="text-sm font-semibold text-white">رقم المستلم</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                      <span
+                        className="font-mono font-bold text-sm"
+                        style={{ color: "var(--mint-200)" }}
+                        dir="ltr"
+                      >
                         {PAYMENT_CODES[form.paymentMethod]}
                       </span>
                       <button
@@ -721,7 +864,10 @@ function FormPageInner() {
                         onClick={() => copyCode(PAYMENT_CODES[form.paymentMethod])}
                         className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                         style={{
-                          background: copied === PAYMENT_CODES[form.paymentMethod] ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                          background:
+                            copied === PAYMENT_CODES[form.paymentMethod]
+                              ? "rgba(52,211,153,0.3)"
+                              : "rgba(255,255,255,0.15)",
                           color: copied === PAYMENT_CODES[form.paymentMethod] ? "#6ee7b7" : "white",
                           border: "1px solid rgba(255,255,255,0.2)",
                           minWidth: "52px",
@@ -738,7 +884,11 @@ function FormPageInner() {
                   >
                     <span className="text-sm font-semibold text-white">المبلغ</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                      <span
+                        className="font-mono font-bold text-sm"
+                        style={{ color: "var(--mint-200)" }}
+                        dir="ltr"
+                      >
                         {form.paidAmount || MEMBERSHIP_FEE}
                       </span>
                       <button
@@ -746,8 +896,14 @@ function FormPageInner() {
                         onClick={() => copyCode(String(form.paidAmount || MEMBERSHIP_FEE))}
                         className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                         style={{
-                          background: copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
-                          color: copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "#6ee7b7" : "white",
+                          background:
+                            copied === String(form.paidAmount || MEMBERSHIP_FEE)
+                              ? "rgba(52,211,153,0.3)"
+                              : "rgba(255,255,255,0.15)",
+                          color:
+                            copied === String(form.paidAmount || MEMBERSHIP_FEE)
+                              ? "#6ee7b7"
+                              : "white",
                           border: "1px solid rgba(255,255,255,0.2)",
                           minWidth: "52px",
                         }}
@@ -761,9 +917,15 @@ function FormPageInner() {
                     className="flex items-center justify-between rounded-xl px-3 py-2"
                     style={{ background: "rgba(255,255,255,0.1)" }}
                   >
-                    <span className="text-sm font-semibold text-white">رمز الطلب (اكتبه في سبب التحويل)</span>
+                    <span className="text-sm font-semibold text-white">
+                      رمز الطلب (اكتبه في سبب التحويل)
+                    </span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm" style={{ color: "var(--mint-200)" }} dir="ltr">
+                      <span
+                        className="font-mono font-bold text-sm"
+                        style={{ color: "var(--mint-200)" }}
+                        dir="ltr"
+                      >
                         {form.referenceCode}
                       </span>
                       <button
@@ -771,7 +933,10 @@ function FormPageInner() {
                         onClick={() => copyCode(form.referenceCode)}
                         className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                         style={{
-                          background: copied === form.referenceCode ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+                          background:
+                            copied === form.referenceCode
+                              ? "rgba(52,211,153,0.3)"
+                              : "rgba(255,255,255,0.15)",
                           color: copied === form.referenceCode ? "#6ee7b7" : "white",
                           border: "1px solid rgba(255,255,255,0.2)",
                           minWidth: "52px",
@@ -783,14 +948,18 @@ function FormPageInner() {
                   </div>
                 </div>
                 <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
+                  الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها
+                  أدناه
                 </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
               <div>
-                <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                <label
+                  className="block text-sm font-bold mb-1.5"
+                  style={{ color: "var(--text-main)" }}
+                >
                   المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
@@ -804,28 +973,56 @@ function FormPageInner() {
                   dir="ltr"
                 />
                 <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                  الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً كتبرّع باسمك بعد قبول الطلب
+                  الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً
+                  كتبرّع باسمك بعد قبول الطلب
                 </p>
               </div>
 
-              <ProofUpload existingProof={proofFilename} onUploaded={setProofFilename} onUploadingChange={setProofUploading} />
+              <ProofUpload
+                existingProof={proofFilename}
+                onUploaded={setProofFilename}
+                onUploadingChange={setProofUploading}
+              />
 
               {error && (
-                <div className="p-4 rounded-xl text-sm font-semibold" style={{ background: "#fee2e2", color: "#991b1b" }}>
+                <div
+                  className="p-4 rounded-xl text-sm font-semibold"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
                   ⚠️ {error}
                 </div>
               )}
 
               <div className="flex gap-2 mt-2">
-                <button type="button" onClick={goBack} className="btn px-4" style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}>
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className="btn px-4"
+                  style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
+                >
                   → السابق
                 </button>
-                <button type="submit" disabled={loading || proofUploading} className="btn btn-primary flex-1">
+                <button
+                  type="submit"
+                  disabled={loading || proofUploading}
+                  className="btn btn-primary flex-1"
+                >
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
                       </svg>
                       جاري إرسال الطلب...
                     </span>

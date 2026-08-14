@@ -3,10 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdmin();
     const { id } = await params;
@@ -21,18 +18,28 @@ export async function PATCH(
       return NextResponse.json({ error: "المصروف غير موجود" }, { status: 404 });
     }
 
-    const data: { label?: string; amount?: number; note?: string | null; date?: Date; proof?: string | null } = {};
+    const data: {
+      label?: string;
+      amount?: number;
+      note?: string | null;
+      date?: Date;
+      proof?: string | null;
+    } = {};
 
     if (label !== undefined) {
       if (!label.trim()) return NextResponse.json({ error: "وصف المصروف مطلوب" }, { status: 400 });
-      if (label.trim().length > 100) return NextResponse.json({ error: "الوصف طويل جداً (100 حرف كحد أقصى)" }, { status: 400 });
+      if (label.trim().length > 100)
+        return NextResponse.json({ error: "الوصف طويل جداً (100 حرف كحد أقصى)" }, { status: 400 });
       data.label = label.trim();
     }
 
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+        return NextResponse.json(
+          { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
+          { status: 400 },
+        );
       }
       data.amount = n;
     }
@@ -57,7 +64,11 @@ export async function PATCH(
     }
 
     const expense = await prisma.expense.update({ where: { id }, data });
-    await logAction(session.username, "UPDATE_EXPENSE", `${expense.label} — ${expense.amount} أوقية`);
+    await logAction(
+      session.username,
+      "UPDATE_EXPENSE",
+      `${expense.label} — ${expense.amount} أوقية`,
+    );
 
     return NextResponse.json({ expense });
   } catch (err) {
@@ -69,10 +80,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireAdmin();
     const { id } = await params;
@@ -83,7 +91,11 @@ export async function DELETE(
     }
 
     await prisma.expense.delete({ where: { id } });
-    await logAction(session.username, "DELETE_EXPENSE", `${existing.label} — ${existing.amount} أوقية`);
+    await logAction(
+      session.username,
+      "DELETE_EXPENSE",
+      `${existing.label} — ${existing.amount} أوقية`,
+    );
 
     return NextResponse.json({ ok: true });
   } catch (err) {
