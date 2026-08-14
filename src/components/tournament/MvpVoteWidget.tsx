@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/Toast";
+import { api, errorMessage } from "@/lib/api";
 
 interface Candidate {
   id: string;
@@ -33,17 +34,11 @@ export default function MvpVoteWidget({
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`/api/matches/${matchId}/mvp-vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ candidateId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشلت العملية");
+      await api.post(`/api/matches/${matchId}/mvp-vote`, { candidateId });
       setMyVote(candidateId);
       showToast("تم تسجيل صوتك");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "خطأ غير متوقع");
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }

@@ -38,7 +38,8 @@ export const api = {
   get: <T>(url: string) => request<T>(url),
   post: <T>(url: string, body?: unknown) => request<T>(url, json("POST", body)),
   patch: <T>(url: string, body?: unknown) => request<T>(url, json("PATCH", body)),
-  del: <T>(url: string) => request<T>(url, { method: "DELETE" }),
+  del: <T>(url: string, body?: unknown) =>
+    request<T>(url, body === undefined ? { method: "DELETE" } : json("DELETE", body)),
 };
 
 export function errorMessage(err: unknown): string {

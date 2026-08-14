@@ -7,6 +7,7 @@ import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
+import { errorMessage } from "@/lib/api";
 
 export default function DonatePage() {
   return (
@@ -98,7 +99,7 @@ function DonatePageInner() {
       if (!res.ok) throw new Error(data.error || "فشل إرسال التبرع");
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
