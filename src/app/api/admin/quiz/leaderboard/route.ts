@@ -11,7 +11,7 @@ export async function GET() {
     if (err instanceof Error && err.message === "UNAUTHORIZED")
       return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
     if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
+      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
     console.error("Quiz leaderboard error:", err);
     return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
   }
