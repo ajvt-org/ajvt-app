@@ -6,7 +6,9 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { validateGoals, type GoalInput } from "@/lib/matchInput";
+import { validateGoals, parseScorePair, type GoalInput } from "@/lib/matchInput";
+import { parse } from "@/lib/validation";
+import { matchUpdateSchema } from "./schema";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -66,7 +68,7 @@ export const PATCH = withRoute(
       manOfTheMatchId,
       homeTeamId,
       awayTeamId,
-    } = await req.json();
+    } = parse(matchUpdateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -144,11 +146,7 @@ export const PATCH = withRoute(
       );
     }
     if (order !== undefined) {
-      const n = Number(order);
-      if (!Number.isInteger(n)) {
-        return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-      }
-      updateData.order = n;
+      updateData.order = Number(order);
     }
 
     let parsedHomeGoals: GoalInput[] = [];
@@ -156,19 +154,20 @@ export const PATCH = withRoute(
     const enteringResult = homeScore !== undefined || awayScore !== undefined;
 
     if (enteringResult) {
-      if (homeScore === null && awayScore === null) {
+      const scores = parseScorePair(homeScore, awayScore);
+      if (scores === "invalid") {
+        return NextResponse.json(
+          { error: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب" },
+          { status: 400 },
+        );
+      }
+      if (scores === null) {
         updateData.homeScore = null;
         updateData.awayScore = null;
         updateData.status = "SCHEDULED";
       } else {
-        const hs = Number(homeScore);
-        const as = Number(awayScore);
-        if (!Number.isInteger(hs) || hs < 0 || !Number.isInteger(as) || as < 0) {
-          return NextResponse.json(
-            { error: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب" },
-            { status: 400 },
-          );
-        }
+        const hs = scores.home;
+        const as = scores.away;
 
         const hg = validateGoals(homeGoals);
         const ag = validateGoals(awayGoals);
@@ -225,18 +224,19 @@ export const PATCH = withRoute(
     }
 
     if (homePenalties !== undefined || awayPenalties !== undefined) {
-      if (homePenalties === null && awayPenalties === null) {
+      const penalties = parseScorePair(homePenalties, awayPenalties);
+      if (penalties === "invalid") {
+        return NextResponse.json(
+          { error: "نتيجة ركلات الترجيح يجب أن تكون رقماً صحيحاً غير سالب" },
+          { status: 400 },
+        );
+      }
+      if (penalties === null) {
         updateData.homePenalties = null;
         updateData.awayPenalties = null;
       } else {
-        const hp = Number(homePenalties);
-        const ap = Number(awayPenalties);
-        if (!Number.isInteger(hp) || hp < 0 || !Number.isInteger(ap) || ap < 0) {
-          return NextResponse.json(
-            { error: "نتيجة ركلات الترجيح يجب أن تكون رقماً صحيحاً غير سالب" },
-            { status: 400 },
-          );
-        }
+        const hp = penalties.home;
+        const ap = penalties.away;
         if (hp === ap) {
           return NextResponse.json({ error: "لا يمكن أن تتعادل ركلات الترجيح" }, { status: 400 });
         }
