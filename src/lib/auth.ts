@@ -1,6 +1,7 @@
 ﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
+import { UnauthorizedError, ForbiddenError } from "./errors";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -32,13 +33,13 @@ export async function getAdminSession() {
 
 export async function requireAdmin() {
   const session = await getAdminSession();
-  if (!session) throw new Error("UNAUTHORIZED");
+  if (!session) throw new UnauthorizedError();
   const { adminId, tokenVersion } = session as { adminId: string; tokenVersion: number };
   const admin = await prisma.admin.findUnique({
     where: { id: adminId },
     select: { tokenVersion: true, role: true },
   });
-  if (!admin || admin.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
+  if (!admin || admin.tokenVersion !== tokenVersion) throw new UnauthorizedError();
   return { ...session, role: admin.role } as {
     adminId: string;
     username: string;
@@ -52,7 +53,7 @@ export async function requireAdmin() {
 export async function requireAdminRole(...allowed: string[]) {
   const session = await requireAdmin();
   if (session.role !== "SUPER" && !allowed.includes(session.role)) {
-    throw new Error("FORBIDDEN");
+    throw new ForbiddenError();
   }
   return session;
 }
@@ -67,12 +68,12 @@ export async function getUserSession() {
 
 export async function requireUser() {
   const session = await getUserSession();
-  if (!session) throw new Error("UNAUTHORIZED");
+  if (!session) throw new UnauthorizedError();
   const { userId, tokenVersion } = session as { userId: string; tokenVersion: number };
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { tokenVersion: true },
   });
-  if (!user || user.tokenVersion !== tokenVersion) throw new Error("UNAUTHORIZED");
+  if (!user || user.tokenVersion !== tokenVersion) throw new UnauthorizedError();
   return session as { userId: string; tokenVersion: number };
 }
