@@ -8,6 +8,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 interface Expense {
   id: string;
@@ -286,7 +287,7 @@ export default function AdminExpensesPage() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          📥 تصدير CSV
+          <IconLabel name="download">تصدير CSV</IconLabel>
         </button>
       </div>
 
@@ -340,7 +341,7 @@ export default function AdminExpensesPage() {
                     className="w-full flex items-center justify-between text-xs"
                   >
                     <span className="flex items-center gap-1.5">
-                      <span style={{ color: "var(--mint-600)" }}>{expanded ? "▾" : "◂"}</span>
+                      <Icon name={expanded ? "chevronDown" : "chevronLeft"} size={14} />
                       <span style={{ color: "var(--text-main)" }} className="font-bold truncate">
                         {method}
                       </span>
@@ -496,7 +497,7 @@ export default function AdminExpensesPage() {
                     dir="ltr"
                   >
                     <span className="flex items-center gap-1.5">
-                      <span style={{ color: "var(--mint-600)" }}>{expandedDay ? "▾" : "◂"}</span>
+                      <Icon name={expandedDay ? "chevronDown" : "chevronLeft"} size={14} />
                       <span style={{ color: "var(--text-main)" }}>{formatDayKey(d.date)}</span>
                     </span>
                     <span className="font-black" style={{ color: "var(--mint-600)" }}>
@@ -594,7 +595,7 @@ export default function AdminExpensesPage() {
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          ➕ إضافة مصروف
+          <IconLabel name="plus">إضافة مصروف</IconLabel>
         </button>
       </div>
 
@@ -660,7 +661,7 @@ export default function AdminExpensesPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  ✏️ تعديل
+                  <IconLabel name="pencil">تعديل</IconLabel>
                 </button>
                 <button
                   onClick={() => deleteExpense(e.id)}
@@ -668,7 +669,7 @@ export default function AdminExpensesPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  {busyId === e.id ? "..." : "🗑️ حذف"}
+                  {busyId === e.id ? "..." : <IconLabel name="trash">حذف</IconLabel>}
                 </button>
               </div>
             </div>
@@ -720,7 +721,11 @@ export default function AdminExpensesPage() {
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">
-                {editingId ? "✏️ تعديل مصروف" : "➕ إضافة مصروف"}
+                {editingId ? (
+                  <IconLabel name="pencil">تعديل مصروف</IconLabel>
+                ) : (
+                  <IconLabel name="plus">إضافة مصروف</IconLabel>
+                )}
               </h2>
               <DialogClose onClick={() => setShowForm(false)} />
             </div>
@@ -816,7 +821,13 @@ export default function AdminExpensesPage() {
               )}
 
               <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-                {saving ? "..." : editingId ? "💾 حفظ التعديل" : "إضافة المصروف"}
+                {saving ? (
+                  "..."
+                ) : editingId ? (
+                  <IconLabel name="save">حفظ التعديل</IconLabel>
+                ) : (
+                  "إضافة المصروف"
+                )}
               </button>
             </form>
           </div>

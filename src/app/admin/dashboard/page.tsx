@@ -21,6 +21,7 @@ import ManualAddDialog from "./ManualAddDialog";
 import { initialFilterTab } from "./initialTab";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -458,7 +459,7 @@ export default function AdminDashboard() {
           }}
         >
           <span>📊 الإحصائيات</span>
-          <span>{showStats ? "▲" : "▼"}</span>
+          <Icon name={showStats ? "chevronUp" : "chevronDown"} size={14} />
         </button>
         <button
           onClick={exportCSV}
@@ -469,7 +470,7 @@ export default function AdminDashboard() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          📥 CSV
+          <IconLabel name="download">CSV</IconLabel>
         </button>
       </div>
 
@@ -546,7 +547,7 @@ export default function AdminDashboard() {
           className="btn btn-primary text-sm px-4"
           style={{ width: "auto" }}
         >
-          ➕ إضافة عضو يدوياً
+          <IconLabel name="plus">إضافة عضو يدوياً</IconLabel>
         </button>
       </div>
 
@@ -827,7 +828,7 @@ export default function AdminDashboard() {
                   className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  {editing ? "إلغاء" : "✏️ تعديل"}
+                  {editing ? "إلغاء" : <IconLabel name="pencil">تعديل</IconLabel>}
                 </button>
               </div>
 
@@ -886,11 +887,13 @@ export default function AdminDashboard() {
                     disabled={editSaving || editPhotoUploading}
                     className="btn btn-primary text-sm w-full"
                   >
-                    {editPhotoUploading
-                      ? "جاري رفع الصورة..."
-                      : editSaving
-                        ? "..."
-                        : "💾 حفظ التعديلات"}
+                    {editPhotoUploading ? (
+                      "جاري رفع الصورة..."
+                    ) : editSaving ? (
+                      "..."
+                    ) : (
+                      <IconLabel name="save">حفظ التعديلات</IconLabel>
+                    )}
                   </button>
                 </div>
               )}
@@ -959,7 +962,7 @@ export default function AdminDashboard() {
                 {selected.userId ? (
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-                      🔑 كلمة مرور الحساب
+                      <IconLabel name="key">كلمة مرور الحساب</IconLabel>
                     </span>
                     <button
                       onClick={() => resetPassword(selected.userId!)}
