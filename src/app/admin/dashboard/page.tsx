@@ -581,7 +581,7 @@ export default function AdminDashboard() {
   }, [selected, showRejectPicker, actionLoading, paginated]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="admin-page">
       {/* Stat chips */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {(["ALL", "PENDING", "ACTIVE", "REJECTED"] as FilterTab[]).map((s) => (

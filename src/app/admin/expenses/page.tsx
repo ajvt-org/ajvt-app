@@ -270,7 +270,7 @@ export default function AdminExpensesPage() {
   );
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+    <div className="admin-page space-y-5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           💸 المصاريف والإيرادات
