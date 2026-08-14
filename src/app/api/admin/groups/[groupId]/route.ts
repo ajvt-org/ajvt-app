@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> },
-) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/groups/[groupId]",
+  async (req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
     const { name, capacity } = await req.json();
@@ -41,23 +40,12 @@ export async function PATCH(
     await logAction(session.username, "UPDATE_GROUP", group.name);
 
     return NextResponse.json({ group });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Group update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/groups/[groupId]",
+  async (_req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
 
@@ -70,14 +58,5 @@ export async function DELETE(
     await logAction(session.username, "DELETE_GROUP", group.name);
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Group delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

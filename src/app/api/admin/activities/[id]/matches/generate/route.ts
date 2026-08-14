@@ -3,11 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { generateMatchSchedule } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 const TARGET_PER_TEAM = 3;
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/activities/[id]/matches/generate",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -90,14 +92,5 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await logAction(session.username, "GENERATE_MATCH_SCHEDULE", `${allFixtures.length} مباراة`);
 
     return NextResponse.json({ ok: true, created: allFixtures.length });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Generate schedule error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

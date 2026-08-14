@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/age-groups/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
     const { name } = await req.json();
@@ -32,18 +34,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await logAction(session.username, "UPDATE_AGE_GROUP", `${existing.name} → ${ageGroup.name}`);
 
     return NextResponse.json({ ageGroup });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    console.error("Age group update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/age-groups/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
@@ -56,12 +52,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await logAction(session.username, "DELETE_AGE_GROUP", existing.name);
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    console.error("Age group delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/teams/[teamId]",
+  async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
     const { name, groupId, logo } = await req.json();
@@ -67,23 +69,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ te
     await logAction(session.username, "UPDATE_TEAM", team.name);
 
     return NextResponse.json({ team });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Team update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/teams/[teamId]",
+  async (_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
 
@@ -96,14 +87,5 @@ export async function DELETE(
     await logAction(session.username, "DELETE_TEAM", team.name);
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Team delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
