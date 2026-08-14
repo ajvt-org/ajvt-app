@@ -205,7 +205,7 @@ export default function AdminExpensesPage() {
     setShowForm(true);
   }
 
-  async function submitForm(ev: React.FormEvent) {
+  async function submitForm(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
     setFormError("");
     if (!form.label.trim()) {

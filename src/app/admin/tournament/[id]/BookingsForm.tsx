@@ -23,7 +23,7 @@ export default function BookingsForm({
 
   const roster = teams.find((t) => t.id === teamId)?.members.map((m) => m.member) || [];
 
-  async function addBooking(e: React.FormEvent) {
+  async function addBooking(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!memberId) return;
     setError("");

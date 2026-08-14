@@ -64,7 +64,7 @@ function DonatePageInner() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (!selectedFile) {

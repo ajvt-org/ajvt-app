@@ -20,7 +20,7 @@ export default function AgeGroupsDialog({
   const [renamingAgeGroupId, setRenamingAgeGroupId] = useState<string | null>(null);
   const [renameAgeGroupValue, setRenameAgeGroupValue] = useState("");
 
-  async function addAgeGroup(e: React.FormEvent) {
+  async function addAgeGroup(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setAgeGroupError("");
     if (!newAgeGroupName.trim()) return;
