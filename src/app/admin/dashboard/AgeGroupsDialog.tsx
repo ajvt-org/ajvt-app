@@ -4,6 +4,8 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup } from "./types";
 import DialogClose from "@/components/DialogClose";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function AgeGroupsDialog({
   ageGroups,
@@ -114,7 +116,7 @@ export default function AgeGroupsDialog({
               className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-600)", color: "white" }}
             >
-              {ageGroupSaving ? "..." : "➕ إضافة"}
+              {ageGroupSaving ? "..." : <IconLabel name="plus">إضافة</IconLabel>}
             </button>
           </form>
 
@@ -175,7 +177,7 @@ export default function AgeGroupsDialog({
                         className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                       >
-                        ✏️ تعديل
+                        <IconLabel name="pencil">تعديل</IconLabel>
                       </button>
                       <button
                         onClick={() => deleteAgeGroup(g.id)}
@@ -183,7 +185,7 @@ export default function AgeGroupsDialog({
                         className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
                         style={{ background: "#fee2e2", color: "#991b1b" }}
                       >
-                        {ageGroupBusyId === g.id ? "..." : "🗑️"}
+                        {ageGroupBusyId === g.id ? "..." : <Icon name="trash" size={14} />}
                       </button>
                     </>
                   )}

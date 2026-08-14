@@ -7,6 +7,8 @@ import { useState } from "react";
 import type { Group, RosterMember, Team } from "./types";
 import GroupsPanel from "./GroupsPanel";
 import { api, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function TeamsTab({
   activityId,
@@ -253,7 +255,7 @@ export default function TeamsTab({
                 style={{ color: "var(--text-main)" }}
               >
                 <TeamLogo logo={team.logo} name={team.name} size={22} />
-                {team.name} <span className="text-xs">✏️</span>
+                {team.name} <Icon name="pencil" size={12} />
               </button>
             )}
             <button
@@ -338,7 +340,7 @@ export default function TeamsTab({
                       style={{ color: "var(--text-main)" }}
                     >
                       <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
-                      {member.fullName} <span className="text-xs">✏️</span>
+                      {member.fullName} <Icon name="pencil" size={12} />
                       {status === "PENDING" && (
                         <span className="badge badge-pending" style={{ fontSize: "10px" }}>
                           ⏳ بانتظار الموافقة
@@ -365,7 +367,7 @@ export default function TeamsTab({
                         color: status === "PENDING" ? "#991b1b" : "var(--mint-700)",
                       }}
                     >
-                      {status === "PENDING" ? "✕ رفض" : "إزالة"}
+                      {status === "PENDING" ? <IconLabel name="close">رفض</IconLabel> : "إزالة"}
                     </button>
                   </div>
                 </div>
@@ -402,7 +404,7 @@ export default function TeamsTab({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              ➕ إضافة لاعب
+              <IconLabel name="plus">إضافة لاعب</IconLabel>
             </button>
           )}
         </div>
@@ -441,7 +443,7 @@ export default function TeamsTab({
           </select>
         )}
         <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
-          {loadingAction ? "..." : "➕ فريق"}
+          {loadingAction ? "..." : <IconLabel name="plus">فريق</IconLabel>}
         </button>
       </form>
 
@@ -493,7 +495,7 @@ export default function TeamsTab({
                   className="badge badge-pending flex items-center gap-1.5"
                 >
                   <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
-                  {m.fullName} ✏️
+                  {m.fullName} <Icon name="pencil" size={12} />
                 </button>
               ),
             )}

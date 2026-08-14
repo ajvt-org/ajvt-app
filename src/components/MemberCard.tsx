@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { formatDate } from "@/lib/utils";
+import IconLabel from "@/components/IconLabel";
 
 interface MemberCardProps {
   fullName: string;
@@ -212,7 +213,7 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          {busy === "share" ? "..." : "📤 مشاركة"}
+          {busy === "share" ? "..." : <IconLabel name="upload">مشاركة</IconLabel>}
         </button>
       </div>
 

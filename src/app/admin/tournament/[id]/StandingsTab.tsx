@@ -4,6 +4,7 @@ import StatsToggle from "@/components/tournament/StatsToggle";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { computeStats, formatMatchDateTime, type StandingsRow } from "@/lib/tournament";
 import type { Group, Match } from "./types";
+import IconLabel from "@/components/IconLabel";
 
 export default function StandingsTab({
   title,
@@ -96,7 +97,7 @@ export default function StandingsTab({
         className="text-xs px-3 py-1.5 rounded-lg font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        📥 تصدير الترتيب والنتائج (CSV)
+        <IconLabel name="download">تصدير الترتيب والنتائج (CSV)</IconLabel>
       </button>
 
       {standingsByGroup.map((group) => (

@@ -18,6 +18,7 @@ import { arabicValidity } from "@/lib/validationMessage";
 import { api } from "@/lib/api";
 import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
+import IconLabel from "@/components/IconLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -516,7 +517,7 @@ function FormPageInner() {
             onClick={shareReferenceCode}
             className="btn btn-primary fade-up delay-1"
           >
-            📤 مشاركة رقم الدفتر
+            <IconLabel name="upload">مشاركة رقم الدفتر</IconLabel>
           </button>
           <button
             type="button"
@@ -558,7 +559,7 @@ function FormPageInner() {
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
           >
             <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
-              💾 تم استرجاع بياناتك المحفوظة من محاولة سابقة
+              <IconLabel name="save">تم استرجاع بياناتك المحفوظة من محاولة سابقة</IconLabel>
             </p>
             <button
               type="button"
@@ -722,7 +723,7 @@ function FormPageInner() {
           <div className="space-y-5 fade-up delay-1">
             <div className="card p-4 text-center">
               <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                🔒 أنشئ حساباً لحفظ طلبك ومتابعته لاحقاً
+                <IconLabel name="lock">أنشئ حساباً لحفظ طلبك ومتابعته لاحقاً</IconLabel>
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }} dir="ltr">
                 {form.phone}

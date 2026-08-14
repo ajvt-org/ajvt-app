@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
+import IconLabel from "@/components/IconLabel";
 
 interface GoalEntry {
   fullName: string;
@@ -190,7 +191,7 @@ export default function ShareResultButton({
         className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        {downloading ? "..." : "📤 مشاركة النتيجة"}
+        {downloading ? "..." : <IconLabel name="upload">مشاركة النتيجة</IconLabel>}
       </button>
     </div>
   );

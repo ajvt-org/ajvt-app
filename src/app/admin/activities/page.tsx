@@ -8,6 +8,7 @@ import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
+import IconLabel from "@/components/IconLabel";
 
 interface Registration {
   id: string;
@@ -412,7 +413,8 @@ export default function AdminActivitiesPage() {
                             className="text-xs font-bold"
                             style={{ color: "var(--mint-600)" }}
                           >
-                            💬 {a.whatsappLink || "إضافة رابط الواتساب"} ✏️
+                            <Icon name="chat" size={14} /> {a.whatsappLink || "إضافة رابط الواتساب"}{" "}
+                            <Icon name="pencil" size={12} />
                           </button>
                         )}
                       </div>
@@ -571,7 +573,7 @@ export default function AdminActivitiesPage() {
                                   className="text-xs px-2.5 py-1 rounded-lg font-bold"
                                   style={{ background: "#fee2e2", color: "#991b1b" }}
                                 >
-                                  ✕ رفض
+                                  <IconLabel name="close">رفض</IconLabel>
                                 </button>
                               </div>
                             )}
@@ -611,7 +613,7 @@ export default function AdminActivitiesPage() {
 
                     <div className="space-y-1.5">
                       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-                        ➕ تسجيل عضو يدوياً
+                        <IconLabel name="plus">تسجيل عضو يدوياً</IconLabel>
                       </p>
                       <input
                         type="text"
@@ -655,7 +657,7 @@ export default function AdminActivitiesPage() {
 
       <form onSubmit={createActivity} className="card p-4 space-y-3">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          ➕ إضافة نشاط جديد
+          <IconLabel name="plus">إضافة نشاط جديد</IconLabel>
         </p>
         <PhotoUpload
           photo={newActivity.photo || null}
