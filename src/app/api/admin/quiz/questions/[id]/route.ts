@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
 interface AnswerInput {
   text: string;
@@ -17,8 +18,9 @@ interface QuizQuestionUpdateData {
   answers?: { create: { text: string; isCorrect: boolean; order: number }[] };
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/quiz/questions/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
     const { text, category, points, correctCount, active, answers } = await req.json();
@@ -100,18 +102,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await logAction(session.username, "UPDATE_QUIZ_QUESTION", question.text.slice(0, 60));
 
     return NextResponse.json({ question });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
-    console.error("Quiz question update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/quiz/questions/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
 
@@ -127,12 +123,5 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await logAction(session.username, "DELETE_QUIZ_QUESTION", question.text.slice(0, 60));
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED")
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    if (err instanceof Error && err.message === "FORBIDDEN")
-      return NextResponse.json({ error: "غير مسموح" }, { status: 403 });
-    console.error("Quiz question delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
