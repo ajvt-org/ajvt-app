@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/matches/[matchId]/mvp-vote",
+  async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireUser();
     const { matchId } = await params;
     const { candidateId } = await req.json();
@@ -39,11 +41,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mat
     }
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    console.error("MVP vote cast error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

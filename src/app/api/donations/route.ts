@@ -8,6 +8,7 @@ import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/image
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
 import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
+import { withRoute } from "@/lib/route";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -15,118 +16,104 @@ const MAX_ATTEMPTS = 5;
 // Public, unauthenticated endpoint (donors don't have an account) — handles
 // its own upload instead of going through /api/upload, which requires a
 // session. Rate-limited by IP since anyone can call this.
-export async function POST(req: NextRequest) {
-  try {
-    const key = `donate:${getClientIp(req)}`;
-    if (isRateLimited(key, MAX_ATTEMPTS)) {
-      return NextResponse.json({ error: "محاولات كثيرة جداً، حاول لاحقاً" }, { status: 429 });
-    }
-    recordFailedAttempt(key, WINDOW_MS);
-
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const donorNameRaw = formData.get("donorName");
-    const amountRaw = formData.get("amount");
-    const memberIdRaw = formData.get("memberId");
-    const paymentMethodRaw = formData.get("paymentMethod");
-
-    if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
-    if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" },
-        { status: 400 },
-      );
-    }
-    if (file.size > MAX_UPLOAD_SIZE) {
-      return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
-    }
-
-    // A logged-in ACTIVE member donating from /home is identified — always
-    // linked to their account (memberId), but they can still choose to have
-    // their name withheld on the public leaderboard (donorName stays null).
-    // Anyone else (no session, or memberId omitted) stays on the
-    // public/anonymous flow this route was originally built for.
-    let memberId: string | null = null;
-    let selfName: string | null = null;
-    let selfAnonymous = false;
-    if (typeof memberIdRaw === "string" && memberIdRaw.trim()) {
-      const session = await getUserSession();
-      if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-      const { userId } = session as { userId: string };
-      const member = await prisma.member.findUnique({
-        where: { id: memberIdRaw.trim() },
-        select: { userId: true, status: true, fullName: true },
-      });
-      if (!member || member.userId !== userId || member.status !== "ACTIVE") {
-        return NextResponse.json({ error: "عضو غير صالح" }, { status: 403 });
-      }
-      memberId = memberIdRaw.trim();
-      selfName = member.fullName;
-      selfAnonymous = formData.get("anonymous") === "true";
-    }
-
-    let donorName: string | null = selfAnonymous ? null : selfName;
-    if (!memberId && typeof donorNameRaw === "string" && donorNameRaw.trim()) {
-      if (donorNameRaw.trim().length > 50) {
-        return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
-      }
-      donorName = donorNameRaw.trim();
-    }
-
-    const n = Number(amountRaw);
-    if (!Number.isInteger(n) || n <= 0) {
-      return NextResponse.json(
-        { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
-        { status: 400 },
-      );
-    }
-    const amount = n;
-
-    if (
-      typeof paymentMethodRaw !== "string" ||
-      !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)
-    ) {
-      return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
-    }
-    const paymentMethod = paymentMethodRaw;
-
-    const id = uuidv4();
-    const filename = `${id}.webp`;
-    const uploadDir = getUploadDir();
-    let processed;
-    try {
-      processed = await processImage(Buffer.from(await file.arrayBuffer()));
-    } catch (err) {
-      console.error("Image processing error:", err);
-      return NextResponse.json(
-        { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
-        { status: 400 },
-      );
-    }
-    await mkdir(uploadDir, { recursive: true });
-    await Promise.all([
-      writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
-      writeFile(
-        join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`),
-        processed.thumbnail,
-      ),
-    ]);
-
-    await prisma.donation.create({
-      data: {
-        donorName,
-        amount,
-        paymentMethod,
-        proof: filename,
-        memberId,
-        source: memberId ? "SELF" : "PUBLIC",
-        status: "PENDING",
-      },
-    });
-
-    return NextResponse.json({ ok: true }, { status: 201 });
-  } catch (err) {
-    console.error("Donation error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
+export const POST = withRoute("POST /api/donations", async (req: NextRequest) => {
+  const key = `donate:${getClientIp(req)}`;
+  if (isRateLimited(key, MAX_ATTEMPTS)) {
+    return NextResponse.json({ error: "محاولات كثيرة جداً، حاول لاحقاً" }, { status: 429 });
   }
-}
+  recordFailedAttempt(key, WINDOW_MS);
+
+  const formData = await req.formData();
+  const file = formData.get("file") as File | null;
+  const donorNameRaw = formData.get("donorName");
+  const amountRaw = formData.get("amount");
+  const memberIdRaw = formData.get("memberId");
+  const paymentMethodRaw = formData.get("paymentMethod");
+
+  if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
+  if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
+    return NextResponse.json(
+      { error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" },
+      { status: 400 },
+    );
+  }
+  if (file.size > MAX_UPLOAD_SIZE) {
+    return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
+  }
+
+  // A logged-in ACTIVE member donating from /home is identified — always
+  // linked to their account (memberId), but they can still choose to have
+  // their name withheld on the public leaderboard (donorName stays null).
+  // Anyone else (no session, or memberId omitted) stays on the
+  // public/anonymous flow this route was originally built for.
+  let memberId: string | null = null;
+  let selfName: string | null = null;
+  let selfAnonymous = false;
+  if (typeof memberIdRaw === "string" && memberIdRaw.trim()) {
+    const session = await getUserSession();
+    if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    const { userId } = session as { userId: string };
+    const member = await prisma.member.findUnique({
+      where: { id: memberIdRaw.trim() },
+      select: { userId: true, status: true, fullName: true },
+    });
+    if (!member || member.userId !== userId || member.status !== "ACTIVE") {
+      return NextResponse.json({ error: "عضو غير صالح" }, { status: 403 });
+    }
+    memberId = memberIdRaw.trim();
+    selfName = member.fullName;
+    selfAnonymous = formData.get("anonymous") === "true";
+  }
+
+  let donorName: string | null = selfAnonymous ? null : selfName;
+  if (!memberId && typeof donorNameRaw === "string" && donorNameRaw.trim()) {
+    if (donorNameRaw.trim().length > 50) {
+      return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
+    }
+    donorName = donorNameRaw.trim();
+  }
+
+  const n = Number(amountRaw);
+  if (!Number.isInteger(n) || n <= 0) {
+    return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
+  }
+  const amount = n;
+
+  if (typeof paymentMethodRaw !== "string" || !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)) {
+    return NextResponse.json({ error: "يرجى اختيار طريقة الدفع" }, { status: 400 });
+  }
+  const paymentMethod = paymentMethodRaw;
+
+  const id = uuidv4();
+  const filename = `${id}.webp`;
+  const uploadDir = getUploadDir();
+  let processed;
+  try {
+    processed = await processImage(Buffer.from(await file.arrayBuffer()));
+  } catch (err) {
+    console.error("Image processing error:", err);
+    return NextResponse.json(
+      { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
+      { status: 400 },
+    );
+  }
+  await mkdir(uploadDir, { recursive: true });
+  await Promise.all([
+    writeFile(join(/* turbopackIgnore: true */ uploadDir, filename), processed.full),
+    writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
+  ]);
+
+  await prisma.donation.create({
+    data: {
+      donorName,
+      amount,
+      paymentMethod,
+      proof: filename,
+      memberId,
+      source: memberId ? "SELF" : "PUBLIC",
+      status: "PENDING",
+    },
+  });
+
+  return NextResponse.json({ ok: true }, { status: 201 });
+});
