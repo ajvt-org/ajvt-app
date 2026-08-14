@@ -18,7 +18,8 @@
     "db:up": "docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "db:studio": "prisma studio",
-    "setup": "prisma migrate dev --name init && tsx prisma/seed.ts"
+    "setup": "prisma migrate dev --name init && tsx prisma/seed.ts",
+    "test:api": "vitest run --config vitest.api.config.mts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
