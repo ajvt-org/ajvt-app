@@ -171,6 +171,31 @@ select:focus-visible,
   color: var(--mint-700);
 }
 
+.btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Compact sizes. Without these every small control was hand-styled, which is
+   why one screen ended up with five different button treatments. 40px is the
+   smallest comfortable touch target. */
+.btn-sm {
+  width: auto;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.625rem;
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 0.625rem;
+  flex-shrink: 0;
+}
+
 /* ---- Status badges ---- */
 .badge {
   display: inline-flex;
