@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
+import { arabicValidity } from "@/lib/validationMessage";
 
 export default function AdminLoginPage() {
   return (
@@ -83,6 +84,7 @@ function AdminLoginForm() {
                 value={creds.username}
                 onChange={(e) => setCreds((p) => ({ ...p, username: e.target.value }))}
                 required
+                {...arabicValidity()}
                 placeholder=""
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/40 font-semibold transition-all"
                 style={{
@@ -102,6 +104,7 @@ function AdminLoginForm() {
                 value={creds.password}
                 onChange={(e) => setCreds((p) => ({ ...p, password: e.target.value }))}
                 required
+                {...arabicValidity()}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-white/40 transition-all"
                 style={{

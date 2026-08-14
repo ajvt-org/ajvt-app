@@ -6,6 +6,7 @@ import Link from "next/link";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import PageHeader from "@/components/PageHeader";
+import { arabicValidity } from "@/lib/validationMessage";
 
 export default function DonatePage() {
   return (
@@ -218,6 +219,7 @@ function DonatePageInner() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="بالأوقية"
               required
+              {...arabicValidity()}
               className="input"
               dir="ltr"
             />

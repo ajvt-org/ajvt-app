@@ -14,6 +14,7 @@ import {
   ONLINE_PAYMENT_METHODS as PAYMENT_METHODS,
   validatePaidAmount,
 } from "@/lib/donations";
+import { arabicValidity } from "@/lib/validationMessage";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -595,6 +596,7 @@ function FormPageInner() {
                 value={form.fullName}
                 onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
                 required
+                {...arabicValidity()}
                 maxLength={30}
                 placeholder="أدخل اسمك الكامل بالعربية"
                 className="input"
@@ -728,6 +730,7 @@ function FormPageInner() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                {...arabicValidity()}
                 placeholder="••••••••"
                 className="input"
               />
@@ -745,6 +748,7 @@ function FormPageInner() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                {...arabicValidity()}
                 placeholder="••••••••"
                 className="input"
               />
