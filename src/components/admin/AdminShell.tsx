@@ -9,6 +9,7 @@ import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import { auditActionLabel } from "@/lib/auditLabels";
+import DialogBack from "@/components/DialogBack";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -316,10 +317,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowMenu(true)}
-              className="text-xs px-3 py-1.5 rounded-lg font-semibold"
+              className="text-xs px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5"
               style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
             >
-              ⚙️ إعدادات
+              <Icon name="shield" size={14} />
+              أدوات المشرف
             </button>
             <button
               onClick={logout}
@@ -435,7 +437,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               className="px-5 py-4 flex items-center justify-between"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">⚙️ إعدادات</h2>
+              <h2 className="font-black text-white text-base">أدوات المشرف</h2>
               <DialogClose onClick={() => setShowMenu(false)} />
             </div>
             <div className="p-4 space-y-2">
@@ -504,7 +506,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
-              <DialogClose onClick={() => setShowChangePassword(false)} />
+              <DialogBack
+                onClick={() => {
+                  setShowChangePassword(false);
+                  setShowMenu(true);
+                }}
+              />
             </div>
 
             <form onSubmit={changePassword} className="p-5 space-y-3">
@@ -597,7 +604,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
-              <DialogClose onClick={() => setShowAdmins(false)} />
+              <DialogBack
+                onClick={() => {
+                  setShowAdmins(false);
+                  setShowMenu(true);
+                }}
+              />
             </div>
 
             <div className="p-5 space-y-4">
@@ -697,7 +709,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
-              <DialogClose onClick={() => setShowAuditLog(false)} />
+              <DialogBack
+                onClick={() => {
+                  setShowAuditLog(false);
+                  setShowMenu(true);
+                }}
+              />
             </div>
 
             <div className="p-5 space-y-2">
@@ -758,7 +775,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">📣 إرسال إشعار جماعي</h2>
-              <DialogClose onClick={() => setShowBroadcast(false)} />
+              <DialogBack
+                onClick={() => {
+                  setShowBroadcast(false);
+                  setShowMenu(true);
+                }}
+              />
             </div>
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">
