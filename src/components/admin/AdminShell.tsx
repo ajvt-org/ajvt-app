@@ -371,7 +371,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </div>
 
       <div
-        className="px-4 py-2 flex items-center gap-2 sticky top-[52px] z-20"
+        className="tab-strip px-4 py-2 sticky top-[52px] z-20"
         style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
       >
         {visibleTabs.map((tab) => {
