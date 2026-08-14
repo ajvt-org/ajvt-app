@@ -393,3 +393,14 @@ model QuizSettings {
   lastAutoSendDate    DateTime?
   updatedAt           DateTime  @updatedAt
 }
+
+// Singleton row (id fixed to "singleton", same idiom as QuizSettings) holding
+// the values the association decides rather than the developer: the fee, the
+// contact number members are sent to. Changing one shouldn't need a deploy.
+model AppSettings {
+  id              String   @id
+  membershipFee   Int      @default(100)
+  supportWhatsapp String   @default("22241070328")
+  whatsappGroup   String?
+  updatedAt       DateTime @updatedAt
+}
