@@ -77,6 +77,11 @@ body {
 /* ---- Utility classes ---- */
 
 .app-shell {
+  /* width:100% because `margin: 0 auto` on a flex child cancels the default
+     stretch, leaving the shell to shrink to its content. Pages with wide
+     content still filled the 430px; short ones collapsed and the banner came
+     out narrower than the page. */
+  width: 100%;
   max-width: 430px;
   margin: 0 auto;
   min-height: 100svh;
