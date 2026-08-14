@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { toCsv, downloadCsv } from "@/lib/csv";
 import { uploadFile } from "@/lib/upload";
 import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
+import { initialFilterTab } from "./initialTab";
 import { api, ApiError, errorMessage } from "@/lib/api";
 
 export default function AdminDashboard() {
@@ -19,6 +20,7 @@ export default function AdminDashboard() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterTab>("PENDING");
+  const tabPicked = useRef(false);
   const [selected, setSelected] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [proofZoom, setProofZoom] = useState(false);
@@ -60,7 +62,12 @@ export default function AdminDashboard() {
   async function fetchMembers() {
     try {
       const data = await api.get<{ members: Member[] }>("/api/admin/members");
-      setMembers(data.members || []);
+      const loaded = data.members || [];
+      setMembers(loaded);
+      if (!tabPicked.current) {
+        tabPicked.current = true;
+        setFilter(initialFilterTab(loaded));
+      }
     } catch (e) {
       const status = e instanceof ApiError ? e.status : 0;
       if (status === 401 || status === 0) router.push(loginPathWithNext("/admin/login"));
