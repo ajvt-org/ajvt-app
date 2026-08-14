@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Icon from "./Icon";
 
 type Status = "unsupported" | "default" | "subscribing" | "subscribed" | "denied" | "error";
 
@@ -119,10 +120,10 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
           <button
             onClick={dismiss}
             aria-label="إغلاق"
-            className="text-lg font-bold px-1"
+            className="px-1 flex items-center"
             style={{ color: "var(--text-muted)" }}
           >
-            ✕
+            <Icon name="close" size={16} />
           </button>
         )}
       </div>

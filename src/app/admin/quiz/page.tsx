@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
+import DialogClose from "@/components/DialogClose";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -614,13 +615,7 @@ export default function AdminQuizPage() {
               <h2 className="font-black text-white text-base">
                 {editingId ? "✏️ تعديل سؤال" : "➕ سؤال جديد"}
               </h2>
-              <button
-                onClick={() => setShowForm(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              >
-                ✕
-              </button>
+              <DialogClose onClick={() => setShowForm(false)} />
             </div>
 
             <form onSubmit={submitQuestionForm} className="p-5 space-y-3">
