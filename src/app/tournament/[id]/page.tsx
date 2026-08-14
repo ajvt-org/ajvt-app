@@ -289,7 +289,7 @@ export default async function PublicTournamentPage({
                 🏆 الترتيب
               </h2>
               {standingsByGroup.map((group) => (
-                <div key={group.groupId ?? "none"} className="card overflow-x-auto">
+                <div key={group.groupId ?? "none"} className="card table-fit overflow-x-auto">
                   {!singleFlatTable && (
                     <p
                       className="text-sm font-bold px-3 pt-3"
