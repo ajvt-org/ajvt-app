@@ -233,7 +233,7 @@ export default function AdminPaymentsPage() {
     }
   }
 
-  async function createManualDonation(e: React.FormEvent) {
+  async function createManualDonation(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setManualError("");
     if (!manualDonation.donorName.trim()) {

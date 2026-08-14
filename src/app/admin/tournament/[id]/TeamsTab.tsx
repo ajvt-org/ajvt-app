@@ -80,7 +80,7 @@ export default function TeamsTab({
     onChange();
   }
 
-  async function createTeam(e: React.FormEvent) {
+  async function createTeam(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoadingAction(true);

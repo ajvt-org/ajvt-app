@@ -104,7 +104,7 @@ export default function AdminActivitiesPage() {
     }
   }
 
-  async function createActivity(e: React.FormEvent) {
+  async function createActivity(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setActivityError("");
     setActionLoading(true);

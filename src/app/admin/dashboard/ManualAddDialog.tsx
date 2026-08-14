@@ -61,7 +61,7 @@ export default function ManualAddDialog({
     }
   }
 
-  async function createMember(e: React.FormEvent) {
+  async function createMember(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setResult(null);
