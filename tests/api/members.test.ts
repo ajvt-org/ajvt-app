@@ -48,15 +48,43 @@ describe("POST /api/members", () => {
     expect(await prisma.member.count()).toBe(0);
   });
 
-  it("requires the fields the form requires", async () => {
+  it("requires the fields the form requires, with the same message as before", async () => {
     const user = await createUser();
     await signInAs(user);
 
-    for (const field of ["fullName", "phone", "age", "paymentMethod", "paymentProof"]) {
-      const body = { ...validBody, [field]: undefined };
-      expect((await POST(post("/api/members", body))).status).toBe(400);
+    const expected: Record<string, string> = {
+      fullName: "الاسم الكامل مطلوب",
+      phone: "رقم الهاتف مطلوب",
+      age: "يرجى اختيار العصر",
+      paymentMethod: "يرجى اختيار طريقة الدفع",
+      paymentProof: "يرجى إرفاق صورة الكابتير",
+    };
+
+    for (const [field, message] of Object.entries(expected)) {
+      const res = await POST(post("/api/members", { ...validBody, [field]: undefined }));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: message });
     }
     expect(await prisma.member.count()).toBe(0);
+  });
+
+  it("keeps the exact wording of the length and amount errors", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const cases: [Record<string, unknown>, string][] = [
+      [{ fullName: "a".repeat(31) }, "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)"],
+      [{ age: "b".repeat(31) }, "اسم العصر طويل جداً (30 حرفاً كحد أقصى)"],
+      [{ paidAmount: 10 }, "يرجى إدخال مبلغ صحيح (100 أوقية على الأقل)"],
+      [{ photo: 42 }, "بيانات غير صالحة"],
+      [{ referenceCode: "nope" }, "بيانات غير صالحة"],
+    ];
+
+    for (const [patch, message] of cases) {
+      const res = await POST(post("/api/members", { ...validBody, ...patch }));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: message });
+    }
   });
 
   it("rejects an amount below the membership fee", async () => {
