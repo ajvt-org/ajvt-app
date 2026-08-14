@@ -21,12 +21,12 @@ export default function PlayerAvatar({
   const colors = BG_COLORS[bg];
   if (!photo) {
     return (
-      <div
-        className="rounded-full flex items-center justify-center shrink-0"
+      <span
+        className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
         style={{ width: size, height: size, background: colors.placeholder, fontSize: size * 0.55 }}
       >
         👤
-      </div>
+      </span>
     );
   }
   return (
