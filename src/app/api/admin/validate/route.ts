@@ -9,6 +9,7 @@ import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { getClientIp } from "@/lib/rateLimit";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -28,7 +29,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
 
   const existing = await prisma.member.findUnique({
     where: { id },
-    select: { status: true, memberNumber: true },
+    select: { status: true, memberNumber: true, rejectionReason: true },
   });
   let memberNumber: string | undefined;
   if (action === "ACTIVE" && !existing?.memberNumber) {
@@ -61,6 +62,20 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     session.username,
     action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER",
     `${updated.fullName}${transition}`,
+    {
+      adminId: session.adminId,
+      adminRole: session.role,
+      targetType: "Member",
+      targetId: updated.id,
+      before: existing,
+      after: {
+        status: updated.status,
+        memberNumber: updated.memberNumber,
+        rejectionReason: updated.rejectionReason,
+      },
+      ip: getClientIp(req),
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    },
   );
 
   if (updated.userId) {

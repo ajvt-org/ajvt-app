@@ -329,7 +329,20 @@ model AuditLog {
   targetLabel   String?
   createdAt     DateTime @default(now())
 
+  // Everything below is optional on purpose: rows written before these
+  // existed still have to render in the log viewer.
+  adminId    String?
+  adminRole  String?
+  targetType String?
+  targetId   String?
+  before     Json?
+  after      Json?
+  meta       Json?
+  ip         String?
+  userAgent  String?
+
   @@index([createdAt])
+  @@index([targetType, targetId])
 }
 
 model QuizQuestion {
