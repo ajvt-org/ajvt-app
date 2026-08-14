@@ -10,13 +10,8 @@ export default function BackButton({ href }: { href: string }) {
     <Link
       href={href}
       aria-label="رجوع"
-      className="shrink-0 rounded-lg flex items-center justify-center"
-      style={{
-        width: 36,
-        height: 36,
-        background: "rgba(255,255,255,0.15)",
-        color: "#fff",
-      }}
+      className="btn btn-icon"
+      style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
     >
       <Icon name="chevronRight" />
     </Link>
