@@ -5,16 +5,15 @@ import { logAction } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { parse } from "@/lib/validation";
+import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
-    const { memberId } = await req.json();
-    if (!memberId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const [member, activity] = await Promise.all([
       prisma.member.findUnique({ where: { id: memberId }, select: { id: true, fullName: true } }),
@@ -62,14 +61,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
-    const { registrationId, status, reason } = await req.json();
-
-    if (!registrationId || !["ACTIVE", "REJECTED"].includes(status)) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
-    if (reason !== undefined && reason !== null && String(reason).trim().length > 300) {
-      return NextResponse.json({ error: "النص طويل جداً (300 حرف كحد أقصى)" }, { status: 400 });
-    }
+    const { registrationId, status, reason } = parse(registrationReviewSchema, await req.json());
 
     const registration = await prisma.activityRegistration.findUnique({
       where: { id: registrationId },
@@ -87,7 +79,7 @@ export const PATCH = withRoute(
       where: { id: registrationId },
       data: {
         status,
-        rejectionReason: status === "REJECTED" ? String(reason || "").trim() || null : null,
+        rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
       },
     });
 
@@ -103,7 +95,7 @@ export const PATCH = withRoute(
         body:
           status === "ACTIVE"
             ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
-            : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${String(reason).trim()}` : ""}`,
+            : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${reason.trim()}` : ""}`,
         url: "/home",
       }).catch((err) => logger.error("registration.review.push.error", err));
     }
@@ -117,10 +109,7 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
-    const { memberId } = await req.json();
-    if (!memberId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { memberId } = parse(adminRegisterSchema, await req.json());
 
     await prisma.activityRegistration.deleteMany({ where: { memberId, activityId: id } });
 

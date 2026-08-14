@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { activityCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/activities", async () => {
   await requireAdminRole("ACTIVITIES");
@@ -30,20 +32,8 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
 export const POST = withRoute("POST /api/admin/activities", async (req: NextRequest) => {
   const session = await requireAdminRole("ACTIVITIES");
   const { title, description, period, capacity, photo, isTournament, isVolunteer, whatsappLink } =
-    await req.json();
+    parse(activityCreateSchema, await req.json());
 
-  if (!title?.trim() || !description?.trim()) {
-    return NextResponse.json({ error: "العنوان والوصف مطلوبان" }, { status: 400 });
-  }
-  if (title.trim().length > 60) {
-    return NextResponse.json({ error: "العنوان طويل جداً (60 حرفاً كحد أقصى)" }, { status: 400 });
-  }
-  if (description.trim().length > 1000) {
-    return NextResponse.json({ error: "الوصف طويل جداً (1000 حرف كحد أقصى)" }, { status: 400 });
-  }
-  if (photo !== undefined && photo !== null && typeof photo !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
   if (isTournament && isVolunteer) {
     return NextResponse.json(
       { error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" },
@@ -57,27 +47,18 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
     );
   }
 
-  let capacityValue: number | null = null;
-  if (capacity !== undefined && capacity !== null && capacity !== "") {
-    const n = Number(capacity);
-    if (!Number.isInteger(n) || n <= 0) {
-      return NextResponse.json({ error: "السعة يجب أن تكون رقماً صحيحاً موجباً" }, { status: 400 });
-    }
-    capacityValue = n;
-  }
-
   const { _max } = await prisma.activity.aggregate({ _max: { order: true } });
 
   const activity = await prisma.activity.create({
     data: {
-      title: title.trim(),
-      description: description.trim(),
+      title,
+      description,
       period: period?.trim() || null,
       photo: photo || null,
-      capacity: capacityValue,
+      capacity: capacity ?? null,
       isTournament: !!isTournament,
       isVolunteer: !!isVolunteer,
-      whatsappLink: isVolunteer ? whatsappLink.trim() : null,
+      whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
       order: (_max.order ?? -1) + 1,
     },
   });
