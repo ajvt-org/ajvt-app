@@ -1,5 +1,7 @@
-// Goal rows come straight from the admin form, so every field is unknown
-// until checked. A minute outside 1..130 is a typo, not a real match event.
+// Goal rows and score pairs come straight from the admin form, so every field
+// is unknown until checked. A minute outside 1..130 is a typo, not a real match
+// event. A pair of nulls clears the score; a single null reads as zero, because
+// that is what the form has always sent for "0".
 export interface GoalInput {
   memberId: string;
   count: number;
@@ -23,4 +25,14 @@ export function validateGoals(input: unknown): GoalInput[] | null {
     goals.push({ memberId: g.memberId, count, minute });
   }
   return goals;
+}
+
+export type ScorePair = { home: number; away: number } | null;
+
+export function parseScorePair(home: unknown, away: unknown): ScorePair | "invalid" {
+  if (home === null && away === null) return null;
+  const h = Number(home);
+  const a = Number(away);
+  if (!Number.isInteger(h) || h < 0 || !Number.isInteger(a) || a < 0) return "invalid";
+  return { home: h, away: a };
 }
