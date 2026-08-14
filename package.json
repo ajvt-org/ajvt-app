@@ -8,6 +8,7 @@
     "build": "prisma generate && next build",
     "start": "node scripts/start.mjs",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:dev": "tsx prisma/seed-dev.ts",
