@@ -3,9 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { sendPushToUser } from "@/lib/push";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
-export async function POST(req: NextRequest) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/notifications/broadcast",
+  async (req: NextRequest) => {
     const session = await requireAdminRole("SUPER");
     const { target, activityId, age, title, body } = await req.json();
 
@@ -53,14 +55,5 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json({ ok: true, recipientCount: userIds.length });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Broadcast error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
-export async function GET() {
-  try {
-    const session = await requireAdmin();
-    return NextResponse.json({ username: session.username, role: session.role });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+export const GET = withRoute("GET /api/admin/me", async () => {
+  const session = await requireAdmin();
+  return NextResponse.json({ username: session.username, role: session.role });
+});

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const GET = withRoute(
+  "GET /api/admin/activities/[id]/roster",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -37,14 +39,5 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }));
 
     return NextResponse.json({ roster });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Roster fetch error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

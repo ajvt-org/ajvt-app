@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/activities/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
     const {
@@ -117,20 +119,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await logAction(session.username, "UPDATE_ACTIVITY", activity.title);
 
     return NextResponse.json({ activity });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Activity update error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/activities/[id]",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -143,14 +137,5 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await logAction(session.username, "DELETE_ACTIVITY", activity.title);
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Activity delete error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

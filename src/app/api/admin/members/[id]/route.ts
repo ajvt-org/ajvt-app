@@ -7,9 +7,11 @@ import { validatePaidAmount } from "@/lib/donations";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
+import { withRoute } from "@/lib/route";
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const PATCH = withRoute(
+  "PATCH /api/admin/members/[id]",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     // Renaming a player often happens while managing a tournament roster,
     // so either admin scope may do it — not just "MEMBERS". Attaching an
     // account (accountPhone) is a membership concern though, checked below.
@@ -113,20 +115,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     return NextResponse.json({ member, tempPassword });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Update member error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const DELETE = withRoute(
+  "DELETE /api/admin/members/[id]",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
@@ -139,14 +133,5 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     await logAction(session.username, "DELETE_MEMBER", member.fullName);
 
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Delete member error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

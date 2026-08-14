@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { bracketRoundLabel, shuffleArray } from "@/lib/tournament";
+import { withRoute } from "@/lib/route";
 
 function isPowerOfTwo(n: number): boolean {
   return n >= 2 && (n & (n - 1)) === 0;
@@ -10,8 +11,9 @@ function isPowerOfTwo(n: number): boolean {
 
 // Random draw for a pure knockout tournament (chess, PlayStation, or any
 // activity without groups) — pairs up every team attached to the activity.
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/activities/[id]/bracket/draw",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
@@ -85,14 +87,5 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await logAction(session.username, "GENERATE_BRACKET_DRAW", `${data.length} مباراة — ${label}`);
 
     return NextResponse.json({ ok: true, created: data.length });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Bracket draw error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);

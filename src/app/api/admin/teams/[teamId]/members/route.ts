@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
+import { withRoute } from "@/lib/route";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
-  try {
+export const POST = withRoute(
+  "POST /api/admin/teams/[teamId]/members",
+  async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
     const { memberId } = await req.json();
@@ -57,14 +59,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tea
     });
 
     return NextResponse.json({ teamMember }, { status: 201 });
-  } catch (err) {
-    if (err instanceof Error && err.message === "UNAUTHORIZED") {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
-    if (err instanceof Error && err.message === "FORBIDDEN") {
-      return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
-    }
-    console.error("Team member add error:", err);
-    return NextResponse.json({ error: "خطأ في الخادم" }, { status: 500 });
-  }
-}
+  },
+);
