@@ -6,6 +6,7 @@ import {
   generateMatchSchedule,
   getMatchWinnerTeamId,
   bracketRoundLabel,
+  isPowerOfTwo,
   type StandingsMatchInput,
 } from "./tournament";
 
@@ -277,5 +278,21 @@ describe("generateMatchSchedule", () => {
     );
 
     expect(new Set(pairs).size).toBe(pairs.length);
+  });
+});
+
+describe("isPowerOfTwo", () => {
+  it("accepts bracket sizes that halve cleanly", () => {
+    for (const n of [2, 4, 8, 16, 32]) expect(isPowerOfTwo(n)).toBe(true);
+  });
+
+  it("rejects sizes that would leave an odd round", () => {
+    for (const n of [3, 5, 6, 7, 9, 12]) expect(isPowerOfTwo(n)).toBe(false);
+  });
+
+  it("rejects anything below two teams", () => {
+    expect(isPowerOfTwo(1)).toBe(false);
+    expect(isPowerOfTwo(0)).toBe(false);
+    expect(isPowerOfTwo(-4)).toBe(false);
   });
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { isUniqueViolation } from "@/lib/prismaError";
 
 export const POST = withRoute(
   "POST /api/matches/[matchId]/mvp-vote",
@@ -33,8 +34,7 @@ export const POST = withRoute(
         data: { voteId: vote.id, candidateId, userId: session.userId },
       });
     } catch (err: unknown) {
-      const code = (err as { code?: string }).code;
-      if (code === "P2002") {
+      if (isUniqueViolation(err)) {
         return NextResponse.json({ error: "لقد صوّتَ بالفعل في هذه المباراة" }, { status: 409 });
       }
       throw err;

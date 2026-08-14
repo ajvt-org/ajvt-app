@@ -313,6 +313,11 @@ export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
 // Human label for a knockout round, derived from how many matches it has
 // (i.e. how many participants remain) rather than a round index — works
 // the same whether the bracket started at 16, 8, 4 or 2 participants.
+// A knockout bracket only works when every round halves cleanly.
+export function isPowerOfTwo(n: number): boolean {
+  return n >= 2 && (n & (n - 1)) === 0;
+}
+
 export function bracketRoundLabel(matchCount: number): string {
   if (matchCount === 1) return "النهائي";
   if (matchCount === 2) return "نصف النهائي";
