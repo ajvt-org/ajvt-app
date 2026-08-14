@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
-import { loginPathWithNext } from "@/lib/utils";
+import { formatDateTime, loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import { auditActionLabel } from "@/lib/auditLabels";
-import { formatDateTime } from "@/lib/utils";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -613,11 +612,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                         <span className="badge badge-pending">{ROLE_LABEL[a.role] || a.role}</span>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        منذ {new Date(a.createdAt).toLocaleDateString("ar")} —{" "}
-                        {new Date(a.createdAt).toLocaleTimeString("ar", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        منذ {formatDateTime(a.createdAt)}
                       </p>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {a.lastLoginAt

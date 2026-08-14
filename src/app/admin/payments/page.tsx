@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext, validatePhone, toThumbUrl } from "@/lib/utils";
+import { formatDate, formatTime, loginPathWithNext, toThumbUrl, validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
@@ -438,17 +438,9 @@ export default function AdminPaymentsPage() {
                     </p>
                   )}
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    رُفعت بتاريخ{" "}
-                    {new Date(p.uploadedAt).toLocaleDateString("ar", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    رُفعت بتاريخ {formatDate(p.uploadedAt)}
                     {" — "}
-                    {new Date(p.uploadedAt).toLocaleTimeString("ar", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatTime(p.uploadedAt)}
                   </p>
 
                   {p.kind === "DONATION" && (
