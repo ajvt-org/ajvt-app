@@ -23,6 +23,16 @@ export function safeNextPath(next: string | null | undefined, fallback: string):
   return next;
 }
 
+// toLocaleString("ar") embeds right-to-left marks, and the surrounding span
+// is dir="ltr" to keep the digits in order — the two together reorder the
+// parts on screen. Building the string by hand keeps it free of any
+// directional characters, so it reads the same everywhere.
+export function formatDateTime(date: Date | string): string {
+  const d = new Date(date);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("ar-DZ", {
     year: "numeric",

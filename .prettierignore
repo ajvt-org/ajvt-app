@@ -7,3 +7,4 @@ prisma/schema.prisma
 *.md
 *.yml
 *.yaml
+test-results
