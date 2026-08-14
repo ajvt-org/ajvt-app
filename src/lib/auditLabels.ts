@@ -54,6 +54,10 @@ export const ACTION_LABELS: Record<string, string> = {
   GENERATE_BRACKET_SEMIS: "توليد نصف النهائي",
   GENERATE_BRACKET_NEXT_ROUND: "توليد الدور التالي",
   UPDATE_SETTINGS: "تعديل إعدادات الرابطة",
+  ADMIN_LOGIN: "دخول مشرف",
+  CREATE_BOOKING: "تسجيل بطاقة",
+  DELETE_BOOKING: "حذف بطاقة",
+  ADD_TEAM_MEMBER: "إضافة لاعب إلى فريق",
 };
 
 export function auditActionLabel(action: string): string {
