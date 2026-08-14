@@ -56,6 +56,17 @@ Plain `npm run db:seed` only creates the `admin` account and the age groups. Tha
 | `npm run db:studio` | Browse the database in Prisma Studio |
 | `npm run lint` | ESLint |
 
+## Tests
+
+```bash
+npm test        # unit tests, no database
+npm run test:api  # route handlers against a real database
+```
+
+`test:api` needs the container from `npm run db:up`. It creates a separate `ajvt_test` database on it, migrates it, and truncates every table between tests, so it never touches your dev data. Point `TEST_DATABASE_URL` somewhere else if you want another target.
+
+The route handlers are plain exported functions, so the tests import `POST` and call it. Only `next/headers` is faked, to supply the session cookie. Everything else is real: the JWT is signed and verified, and the queries hit Postgres.
+
 ## Formatting
 
 Prettier owns formatting, CI checks it. Run `npm run format` before pushing, or set your editor to format on save.
