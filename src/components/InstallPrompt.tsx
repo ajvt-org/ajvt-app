@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Icon from "./Icon";
 
 const DISMISSED_KEY = "ajvt_install_dismissed";
 
@@ -61,10 +62,10 @@ export default function InstallPrompt() {
       <button
         onClick={dismiss}
         aria-label="إغلاق"
-        className="text-lg font-bold shrink-0 px-1"
+        className="px-1 shrink-0 flex items-center"
         style={{ color: "var(--text-muted)" }}
       >
-        ✕
+        <Icon name="close" size={16} />
       </button>
     </div>
   );

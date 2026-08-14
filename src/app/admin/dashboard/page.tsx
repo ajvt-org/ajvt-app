@@ -14,6 +14,7 @@ import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
 import { initialFilterTab } from "./initialTab";
 import { api, ApiError, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -736,10 +737,11 @@ export default function AdminDashboard() {
                   setEditing(false);
                   setShowRejectPicker(false);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                aria-label="إغلاق"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white"
                 style={{ background: "rgba(255,255,255,0.15)" }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -1206,11 +1208,12 @@ export default function AdminDashboard() {
             className="max-w-full max-h-full object-contain rounded-2xl"
           />
           <button
-            className="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+            aria-label="إغلاق"
+            className="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-white"
             style={{ background: "rgba(255,255,255,0.15)" }}
             onClick={() => setProofZoom(false)}
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
       )}

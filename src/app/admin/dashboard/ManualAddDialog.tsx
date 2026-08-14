@@ -6,6 +6,7 @@ import { api, errorMessage } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { emptyManualForm } from "./constants";
 import type { AgeGroup } from "./types";
+import DialogClose from "@/components/DialogClose";
 
 type Props = {
   ageGroups: AgeGroup[];
@@ -103,13 +104,7 @@ export default function ManualAddDialog({
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
           <h2 className="font-black text-white text-base">➕ إضافة عضو يدوياً</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
-            style={{ background: "rgba(255,255,255,0.15)" }}
-          >
-            ✕
-          </button>
+          <DialogClose onClick={onClose} />
         </div>
 
         <div className="p-5 space-y-3">
