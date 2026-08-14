@@ -298,28 +298,28 @@ export default async function PublicTournamentPage({
                       {group.groupId ? groupNameById.get(group.groupId) || "مجموعة" : "بدون مجموعة"}
                     </p>
                   )}
-                  <table className="w-full text-sm" style={{ minWidth: "440px" }}>
+                  <table className="w-full text-sm">
                     <thead>
                       <tr style={{ background: "var(--mint-100)" }}>
                         {[
-                          "#",
-                          "الفريق",
-                          "نقاط",
-                          "لعب",
-                          "فاز",
-                          "تعادل",
-                          "خسر",
-                          "له",
-                          "عليه",
-                          "الفرق",
-                          "",
+                          { label: "#", detail: false },
+                          { label: "الفريق", detail: false },
+                          { label: "نقاط", detail: false },
+                          { label: "لعب", detail: false },
+                          { label: "فاز", detail: true },
+                          { label: "تعادل", detail: true },
+                          { label: "خسر", detail: true },
+                          { label: "له", detail: true },
+                          { label: "عليه", detail: true },
+                          { label: "الفرق", detail: false },
+                          { label: "", detail: false },
                         ].map((h) => (
                           <th
-                            key={h}
-                            className="px-2 py-2 text-center font-bold"
+                            key={h.label}
+                            className={`px-2 py-2 text-center font-bold${h.detail ? " col-detail" : ""}`}
                             style={{ color: "var(--mint-700)" }}
                           >
-                            {h}
+                            {h.label}
                           </th>
                         ))}
                       </tr>
@@ -341,11 +341,11 @@ export default async function PublicTournamentPage({
                             {r.points}
                           </td>
                           <td className="px-2 py-2 text-center">{r.played}</td>
-                          <td className="px-2 py-2 text-center">{r.won}</td>
-                          <td className="px-2 py-2 text-center">{r.drawn}</td>
-                          <td className="px-2 py-2 text-center">{r.lost}</td>
-                          <td className="px-2 py-2 text-center">{r.gf}</td>
-                          <td className="px-2 py-2 text-center">{r.ga}</td>
+                          <td className="px-2 py-2 text-center col-detail">{r.won}</td>
+                          <td className="px-2 py-2 text-center col-detail">{r.drawn}</td>
+                          <td className="px-2 py-2 text-center col-detail">{r.lost}</td>
+                          <td className="px-2 py-2 text-center col-detail">{r.gf}</td>
+                          <td className="px-2 py-2 text-center col-detail">{r.ga}</td>
                           <td className="px-2 py-2 text-center">{r.gd}</td>
                           <td className="px-2 py-2 text-center">
                             <FollowTeamButton teamId={r.teamId} />
