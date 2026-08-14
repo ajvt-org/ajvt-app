@@ -10,10 +10,11 @@ import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
-  sendMatchReminders().catch((err) => console.error("Match reminders error:", err));
+  sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
   const members = await prisma.member.findMany({
     include: {
       user: { select: { phone: true } },

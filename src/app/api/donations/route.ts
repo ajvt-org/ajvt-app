@@ -9,6 +9,7 @@ import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit
 import { getUserSession } from "@/lib/auth";
 import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
 import { withRoute } from "@/lib/route";
+import { logger } from "@/lib/logger";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -91,7 +92,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   try {
     processed = await processImage(Buffer.from(await file.arrayBuffer()));
   } catch (err) {
-    console.error("Image processing error:", err);
+    logger.error("image.processing.error", err);
     return NextResponse.json(
       { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
       { status: 400 },
