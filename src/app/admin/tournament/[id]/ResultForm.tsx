@@ -47,7 +47,7 @@ export default function ResultForm({
   const scoresTied = homeScore !== "" && awayScore !== "" && homeScore === awayScore;
   const showPenalties = match.isKnockout && scoresTied;
 
-  async function save(e: React.FormEvent) {
+  async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);

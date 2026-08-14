@@ -217,7 +217,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     router.push("/admin/login");
   }
 
-  async function changePassword(e: React.FormEvent) {
+  async function changePassword(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setCpError("");
     if (cpForm.next !== cpForm.confirm) {
@@ -257,7 +257,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     }
   }
 
-  async function createAdmin(e: React.FormEvent) {
+  async function createAdmin(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setAdminError("");
     setAdminLoading(true);
@@ -316,7 +316,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     }
   }
 
-  async function sendBroadcast(e: React.FormEvent) {
+  async function sendBroadcast(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setBroadcastError("");
     setBroadcastSuccess(null);

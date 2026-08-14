@@ -127,7 +127,7 @@ export default function MatchesTab({
     }
   }
 
-  async function createMatch(e: React.FormEvent) {
+  async function createMatch(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     if (!form.homeTeamId || !form.awayTeamId) {

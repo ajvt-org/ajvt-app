@@ -24,7 +24,7 @@ export default function GroupsPanel({
   const [editCapacity, setEditCapacity] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
-  async function createGroup(e: React.FormEvent) {
+  async function createGroup(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     onError("");
     setLoadingAction(true);
