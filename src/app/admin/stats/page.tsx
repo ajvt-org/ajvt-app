@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPathWithNext } from "@/lib/utils";
+import { formatDayKey, loginPathWithNext } from "@/lib/utils";
 
 interface DayVisits {
   date: string;
@@ -56,7 +56,7 @@ function DailyVisitsChart({ days }: { days: DayVisits[] }) {
               style={{ fill: "var(--mint-500)" }}
             >
               <title>
-                {d.date} — {d.visitors} زائر ({d.pageViews} مشاهدة)
+                {formatDayKey(d.date)} — {d.visitors} زائر ({d.pageViews} مشاهدة)
               </title>
             </rect>
           );
@@ -168,7 +168,7 @@ export default function AdminStatsPage() {
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
           {[...days].reverse().map((d) => (
             <div key={d.date} className="flex items-center justify-between text-xs" dir="ltr">
-              <span style={{ color: "var(--text-main)" }}>{d.date}</span>
+              <span style={{ color: "var(--text-main)" }}>{formatDayKey(d.date)}</span>
               <span>
                 <span className="font-black" style={{ color: "var(--mint-600)" }}>
                   {d.visitors} زائر
