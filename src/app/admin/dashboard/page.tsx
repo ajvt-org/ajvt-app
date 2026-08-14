@@ -6,58 +6,9 @@ import BarChart from "@/components/admin/BarChart";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
-
-type Status = "PENDING" | "ACTIVE" | "REJECTED";
-type FilterTab = "ALL" | Status;
-
-interface Member {
-  id: string;
-  userId: string | null; // null = admin-added with an unknown phone number, no account yet
-  fullName: string;
-  phone: string | null; // null alongside userId — see above
-  age: string;
-  paymentMethod: string;
-  paymentProof: string | null;
-  photo: string | null;
-  paidAmount: number | null;
-  status: Status;
-  rejectionReason: string | null;
-  referenceCode: string | null;
-  memberNumber: string | null;
-  createdAt: string;
-  user?: { phone: string } | null;
-  registrations?: { activityId: string; activity: { id: string; title: string } }[];
-}
-
-interface AgeGroup {
-  id: string;
-  name: string;
-}
-
-const STATUS_LABEL: Record<Status, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "غير مقبول",
-};
-
-const STATUS_BADGE: Record<Status, string> = {
-  PENDING: "badge-pending",
-  ACTIVE: "badge-active",
-  REJECTED: "badge-rejected",
-};
-
-const PAGE_SIZE = 30;
-
-const emptyManualForm = {
-  accountPhone: "",
-  fullName: "",
-  memberPhone: "",
-  phoneUnknown: false,
-  age: "",
-  paymentMethod: "",
-  paidAmount: "",
-  status: "ACTIVE" as "PENDING" | "ACTIVE",
-};
+import type { FilterTab, Member, AgeGroup } from "./types";
+import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE, emptyManualForm } from "./constants";
+import { toCsv, downloadCsv } from "@/lib/csv";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -502,18 +453,7 @@ export default function AdminDashboard() {
       m.memberNumber || "",
       new Date(m.createdAt).toLocaleString("ar"),
     ]);
-    const csv =
-      "﻿" +
-      [headers, ...rows]
-        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-        .join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `members-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv(`members-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(headers, rows));
   }
 
   const counts = {
