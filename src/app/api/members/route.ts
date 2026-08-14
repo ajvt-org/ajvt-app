@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { validatePaidAmount } from "@/lib/donations";
-import { generateReferenceCode, isValidReferenceCode } from "@/lib/referenceCode";
+import { generateReferenceCode } from "@/lib/referenceCode";
+import { parse } from "@/lib/validation";
+import { memberSubmissionSchema } from "./schema";
 import { withRoute } from "@/lib/route";
-import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
+import { ConflictError, NotFoundError } from "@/lib/errors";
 
 const CODE_ATTEMPTS = 5;
 
@@ -24,31 +25,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     photo,
     paidAmount,
     referenceCode,
-  } = await req.json();
-
-  if (!fullName) throw new ValidationError("الاسم الكامل مطلوب");
-  if (!phone) throw new ValidationError("رقم الهاتف مطلوب");
-  if (!age) throw new ValidationError("يرجى اختيار العصر");
-  if (!paymentMethod) throw new ValidationError("يرجى اختيار طريقة الدفع");
-  if (!paymentProof) throw new ValidationError("يرجى إرفاق صورة الكابتير");
-  if (fullName.trim().length > 30) {
-    throw new ValidationError("الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)");
-  }
-  if (age.trim().length > 30) {
-    throw new ValidationError("اسم العصر طويل جداً (30 حرفاً كحد أقصى)");
-  }
-  if (photo !== undefined && photo !== null && typeof photo !== "string") {
-    throw new ValidationError("بيانات غير صالحة");
-  }
-  if (
-    referenceCode !== undefined &&
-    referenceCode !== null &&
-    !isValidReferenceCode(referenceCode)
-  ) {
-    throw new ValidationError("بيانات غير صالحة");
-  }
-  const paidAmountError = validatePaidAmount(paidAmount);
-  if (paidAmountError) throw new ValidationError(paidAmountError);
+  } = parse(memberSubmissionSchema, await req.json());
 
   // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
   if (id) {
