@@ -5,6 +5,7 @@ import { isRateLimited, recordFailedAttempt, clearAttempts, getClientIp } from "
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { logAction } from "@/lib/audit";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -43,6 +44,7 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
     where: { id: admin.id },
     data: { lastLoginAt: new Date(), lastLoginIp: getClientIp(req) },
   });
+  await logAction(admin.username, "ADMIN_LOGIN", getClientIp(req) || undefined);
 
   const token = await signToken({
     adminId: admin.id,
