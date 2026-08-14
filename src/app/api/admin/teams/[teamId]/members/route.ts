@@ -2,17 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
-    const { memberId } = await req.json();
-
-    if (!memberId) {
-      return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-    }
+    const { memberId } = parse(teamMemberSchema, await req.json());
 
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { validatePhone } from "@/lib/utils";
-import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { donationCreateSchema } from "./schema";
 
 // Records a donation the admin collected outside the app (cash in hand,
 // bank transfer confirmed by phone, etc.) — no proof screenshot required,
@@ -12,39 +12,15 @@ import { withRoute } from "@/lib/route";
 // confirmed it happened), same as manually-added members.
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
-  const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod } = await req.json();
-
-  if (!donorName?.trim()) {
-    return NextResponse.json({ error: "الاسم مطلوب" }, { status: 400 });
-  }
-  if (donorName.trim().length > 50) {
-    return NextResponse.json({ error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" }, { status: 400 });
-  }
-  if (donorPhone !== undefined && donorPhone !== null && donorPhone !== "") {
-    const phoneError = validatePhone(donorPhone);
-    if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-  }
+  const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod } = parse(
+    donationCreateSchema,
+    await req.json(),
+  );
   const n = Number(amount);
-  if (!Number.isInteger(n) || n <= 0) {
-    return NextResponse.json({ error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" }, { status: 400 });
-  }
-  if (proof !== undefined && proof !== null && typeof proof !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
-  if (donorPhoto !== undefined && donorPhoto !== null && typeof donorPhoto !== "string") {
-    return NextResponse.json({ error: "بيانات غير صالحة" }, { status: 400 });
-  }
-  if (
-    paymentMethod !== undefined &&
-    paymentMethod !== null &&
-    !PAYMENT_METHODS.includes(paymentMethod)
-  ) {
-    return NextResponse.json({ error: "طريقة دفع غير صالحة" }, { status: 400 });
-  }
 
   const donation = await prisma.donation.create({
     data: {
-      donorName: donorName.trim(),
+      donorName,
       donorPhone: donorPhone?.trim() || null,
       amount: n,
       proof: proof || null,
@@ -54,7 +30,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       status: "ACTIVE",
     },
   });
-  await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName.trim()} — ${n} أوقية`);
+  await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${n} أوقية`);
 
   return NextResponse.json({ donation }, { status: 201 });
 });
