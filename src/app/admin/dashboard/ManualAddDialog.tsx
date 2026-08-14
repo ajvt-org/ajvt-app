@@ -7,6 +7,7 @@ import { uploadFile } from "@/lib/upload";
 import { emptyManualForm } from "./constants";
 import type { AgeGroup } from "./types";
 import DialogClose from "@/components/DialogClose";
+import IconLabel from "@/components/IconLabel";
 
 type Props = {
   ageGroups: AgeGroup[];
@@ -103,7 +104,9 @@ export default function ManualAddDialog({
           className="px-5 py-4 flex items-center justify-between sticky top-0"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          <h2 className="font-black text-white text-base">➕ إضافة عضو يدوياً</h2>
+          <h2 className="font-black text-white text-base">
+            <IconLabel name="plus">إضافة عضو يدوياً</IconLabel>
+          </h2>
           <DialogClose onClick={onClose} />
         </div>
 

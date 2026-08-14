@@ -6,6 +6,7 @@ import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -155,7 +156,9 @@ export default function QuizPage() {
         <PageHeader title={"🧠 المسابقة الثقافية"} backHref="/home" />
         <div className="px-5 py-10">
           <div className="card p-8 text-center fade-up">
-            <div className="text-4xl mb-3">🔒</div>
+            <div className="mb-3 flex justify-center">
+              <Icon name="lock" size={40} />
+            </div>
             <p className="font-bold" style={{ color: "var(--text-main)" }}>
               المسابقة متاحة للمنتسبين فقط
             </p>

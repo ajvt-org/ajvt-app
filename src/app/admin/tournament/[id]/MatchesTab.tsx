@@ -7,6 +7,8 @@ import type { Group, Match, Team } from "./types";
 import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function MatchesTab({
   activityId,
@@ -247,8 +249,8 @@ export default function MatchesTab({
           {bracketMatches.length === 0 ? (
             knockoutLocked ? (
               <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                🔒 أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء
-                دور المجموعات.
+                <Icon name="lock" size={14} /> أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات
+                الدور الإقصائي هنا بعد انتهاء دور المجموعات.
               </p>
             ) : isTwoGroupFormat ? (
               <>
@@ -338,7 +340,7 @@ export default function MatchesTab({
 
       <form onSubmit={createMatch} className="card p-4 space-y-3">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          ➕ مباراة جديدة
+          <IconLabel name="plus">مباراة جديدة</IconLabel>
         </p>
         <div className="grid grid-cols-2 gap-2">
           <select

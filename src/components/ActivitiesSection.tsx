@@ -7,6 +7,8 @@ import { toThumbUrl } from "@/lib/utils";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "./ArrowLabel";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 interface Team {
   id: string;
@@ -102,7 +104,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
           </a>
         ) : (
           <span className="text-lg shrink-0" title="متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب">
-            🔒
+            <Icon name="lock" size={18} />
           </span>
         )}
       </div>
@@ -373,13 +375,15 @@ function ActivityCard({
                       className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
                       style={{ background: "var(--mint-600)", color: "white" }}
                     >
-                      {busyMemberId === m.id
-                        ? "..."
-                        : r?.status === "REJECTED"
-                          ? "🔄 إعادة المحاولة"
-                          : activity.isVolunteer
-                            ? "🤝 تطوع"
-                            : "📝 سجّل"}
+                      {busyMemberId === m.id ? (
+                        "..."
+                      ) : r?.status === "REJECTED" ? (
+                        <IconLabel name="refresh">إعادة المحاولة</IconLabel>
+                      ) : activity.isVolunteer ? (
+                        "🤝 تطوع"
+                      ) : (
+                        "📝 سجّل"
+                      )}
                     </button>
                   ) : (
                     <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>

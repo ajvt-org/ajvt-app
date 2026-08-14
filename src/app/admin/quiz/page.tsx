@@ -6,6 +6,8 @@ import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -342,7 +344,7 @@ export default function AdminQuizPage() {
       {/* Settings */}
       <form onSubmit={saveSettings} className="card p-4 space-y-3">
         <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
-          ⚙️ الإعدادات الافتراضية
+          <IconLabel name="target">الإعدادات الافتراضية</IconLabel>
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -416,7 +418,7 @@ export default function AdminQuizPage() {
           className="text-xs px-3 py-2 rounded-lg font-bold"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          {savingSettings ? "..." : "💾 حفظ الإعدادات"}
+          {savingSettings ? "..." : <IconLabel name="save">حفظ الإعدادات</IconLabel>}
         </button>
       </form>
 
@@ -456,7 +458,7 @@ export default function AdminQuizPage() {
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          ➕ سؤال جديد
+          <IconLabel name="plus">سؤال جديد</IconLabel>
         </button>
       </div>
 
@@ -499,7 +501,7 @@ export default function AdminQuizPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "var(--mint-600)", color: "white" }}
                 >
-                  {sendingId === q.id ? "..." : "📤 إرسال للجميع"}
+                  {sendingId === q.id ? "..." : <IconLabel name="upload">إرسال للجميع</IconLabel>}
                 </button>
                 <button
                   onClick={() => openEdit(q)}
@@ -507,7 +509,7 @@ export default function AdminQuizPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  ✏️ تعديل
+                  <IconLabel name="pencil">تعديل</IconLabel>
                 </button>
                 <button
                   onClick={() => toggleActive(q)}
@@ -523,7 +525,7 @@ export default function AdminQuizPage() {
                   className="text-xs px-3 py-1.5 rounded-lg font-bold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  {busyId === q.id ? "..." : "🗑️ حذف"}
+                  {busyId === q.id ? "..." : <IconLabel name="trash">حذف</IconLabel>}
                 </button>
               </div>
             </div>
@@ -540,7 +542,7 @@ export default function AdminQuizPage() {
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             🏆 الترتيب الكامل ({leaderboard.length})
           </p>
-          <span style={{ color: "var(--mint-600)" }}>{showLeaderboard ? "▾" : "◂"}</span>
+          <Icon name={showLeaderboard ? "chevronDown" : "chevronLeft"} size={14} />
         </button>
         {showLeaderboard && (
           <div className="overflow-x-auto" style={{ borderTop: "1px solid var(--mint-100)" }}>
@@ -613,7 +615,11 @@ export default function AdminQuizPage() {
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
               <h2 className="font-black text-white text-base">
-                {editingId ? "✏️ تعديل سؤال" : "➕ سؤال جديد"}
+                {editingId ? (
+                  <IconLabel name="pencil">تعديل سؤال</IconLabel>
+                ) : (
+                  <IconLabel name="plus">سؤال جديد</IconLabel>
+                )}
               </h2>
               <DialogClose onClick={() => setShowForm(false)} />
             </div>
@@ -696,7 +702,7 @@ export default function AdminQuizPage() {
                     className="text-xs px-2.5 py-1 rounded-lg font-bold"
                     style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                   >
-                    ➕ إضافة إجابة
+                    <IconLabel name="plus">إضافة إجابة</IconLabel>
                   </button>
                 </div>
                 {formAnswers.map((a, i) => (
@@ -732,7 +738,7 @@ export default function AdminQuizPage() {
                       className="text-sm shrink-0"
                       style={{ color: "#dc2626", opacity: formAnswers.length <= 2 ? 0.3 : 1 }}
                     >
-                      🗑️
+                      <Icon name="trash" size={14} />
                     </button>
                   </div>
                 ))}
@@ -748,7 +754,13 @@ export default function AdminQuizPage() {
               )}
 
               <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-                {saving ? "..." : editingId ? "💾 حفظ التعديل" : "إضافة السؤال"}
+                {saving ? (
+                  "..."
+                ) : editingId ? (
+                  <IconLabel name="save">حفظ التعديل</IconLabel>
+                ) : (
+                  "إضافة السؤال"
+                )}
               </button>
             </form>
           </div>

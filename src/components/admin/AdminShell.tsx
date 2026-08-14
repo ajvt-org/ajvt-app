@@ -10,6 +10,7 @@ import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import { auditActionLabel } from "@/lib/auditLabels";
 import DialogBack from "@/components/DialogBack";
+import IconLabel from "@/components/IconLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
 // admin panel with payment proofs and member data shouldn't stay open
@@ -404,7 +405,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           className="mx-4 mt-3 p-3 rounded-xl text-sm font-semibold flex items-center justify-between gap-2"
           style={{ background: "#fef3c7", color: "#92400e" }}
         >
-          <span>🔒 ليس لديك صلاحية للوصول إلى تلك الصفحة</span>
+          <span>
+            <IconLabel name="lock">ليس لديك صلاحية للوصول إلى تلك الصفحة</IconLabel>
+          </span>
           <button
             onClick={() => setPermissionDenied(false)}
             aria-label="إغلاق"
@@ -448,7 +451,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 }}
                 className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
               >
-                🔑 تغيير كلمة المرور
+                <IconLabel name="key">تغيير كلمة المرور</IconLabel>
               </button>
               {role === "SUPER" && (
                 <button
@@ -645,7 +648,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
               <form onSubmit={createAdmin} className="card p-4 space-y-3">
                 <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  ➕ إضافة مشرف جديد
+                  <IconLabel name="plus">إضافة مشرف جديد</IconLabel>
                 </p>
                 <input
                   type="text"
