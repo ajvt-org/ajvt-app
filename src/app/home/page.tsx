@@ -14,6 +14,7 @@ import { formatFullDate, formatTime, loginPathWithNext } from "@/lib/utils";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import Icon from "@/components/Icon";
 import { errorMessage } from "@/lib/api";
+import ArrowLabel from "@/components/ArrowLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -184,7 +185,7 @@ export default function HomePage() {
                 أكمل استمارة الانضمام للانضمام إلى رابطة شباب قرية التاكلالت
               </p>
               <button onClick={() => router.push("/form")} className="btn btn-primary">
-                تعبئة استمارة الانضمام ←
+                <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
               </button>
             </div>
           </div>
@@ -342,7 +343,7 @@ function MemberEntry({
             disabled={!newProof || resubmitting}
             className="btn btn-primary mt-3 disabled:opacity-40"
           >
-            {resubmitting ? "جاري إعادة الإرسال..." : "إعادة الإرسال ←"}
+            {resubmitting ? "جاري إعادة الإرسال..." : <ArrowLabel>إعادة الإرسال</ArrowLabel>}
           </button>
 
           <button

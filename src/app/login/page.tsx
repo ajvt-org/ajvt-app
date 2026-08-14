@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
+import ArrowLabel from "@/components/ArrowLabel";
 
 export default function LoginPage() {
   return (
@@ -112,7 +113,7 @@ function LoginForm() {
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary mt-2">
-            {loading ? "جاري التحقق..." : "دخول ←"}
+            {loading ? "جاري التحقق..." : <ArrowLabel>دخول</ArrowLabel>}
           </button>
 
           <Link
@@ -133,7 +134,7 @@ function LoginForm() {
 
         <div className="text-center fade-up delay-3 pt-2">
           <Link href="/" className="text-xs" style={{ color: "var(--text-muted)" }}>
-            ← الصفحة الرئيسية
+            <ArrowLabel direction="back">الصفحة الرئيسية</ArrowLabel>
           </Link>
         </div>
       </div>

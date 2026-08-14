@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { Group, Match, Team } from "./types";
 import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
+import ArrowLabel from "@/components/ArrowLabel";
 
 export default function MatchesTab({
   activityId,
@@ -295,7 +296,7 @@ export default function MatchesTab({
                   disabled={generating}
                   className="btn btn-primary text-sm"
                 >
-                  ➡️ توليد الدور التالي
+                  <ArrowLabel>توليد الدور التالي</ArrowLabel>
                 </button>
               )}
               {bracketIsFinalDone &&
