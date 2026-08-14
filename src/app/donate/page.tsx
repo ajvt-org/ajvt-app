@@ -137,7 +137,7 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <PageHeader title={"دعم الرابطة"} backHref="/" />
+        <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -184,7 +184,7 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={"دعم الرابطة"} backHref="/" />
+      <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
