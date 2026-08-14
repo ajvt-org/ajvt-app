@@ -15,6 +15,7 @@ import {
   validatePaidAmount,
 } from "@/lib/donations";
 import { arabicValidity } from "@/lib/validationMessage";
+import { api } from "@/lib/api";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -126,6 +127,14 @@ function FormPageInner() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [proofFilename, setProofFilename] = useState<string | null>(null);
   const [proofUploading, setProofUploading] = useState(false);
+  const [membershipFee, setMembershipFee] = useState(MEMBERSHIP_FEE);
+
+  useEffect(() => {
+    api
+      .get<{ settings: { membershipFee: number } }>("/api/settings")
+      .then((d) => setMembershipFee(d.settings.membershipFee))
+      .catch(() => {});
+  }, []);
   const [submitted, setSubmitted] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -369,7 +378,7 @@ function FormPageInner() {
       setError("يرجى اختيار طريقة الدفع");
       return;
     }
-    const paidAmountError = validatePaidAmount(form.paidAmount);
+    const paidAmountError = validatePaidAmount(form.paidAmount, membershipFee);
     if (paidAmountError) {
       setError(paidAmountError);
       return;
@@ -886,26 +895,26 @@ function FormPageInner() {
                         style={{ color: "var(--mint-200)" }}
                         dir="ltr"
                       >
-                        {form.paidAmount || MEMBERSHIP_FEE}
+                        {form.paidAmount || membershipFee}
                       </span>
                       <button
                         type="button"
-                        onClick={() => copyCode(String(form.paidAmount || MEMBERSHIP_FEE))}
+                        onClick={() => copyCode(String(form.paidAmount || membershipFee))}
                         className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
                         style={{
                           background:
-                            copied === String(form.paidAmount || MEMBERSHIP_FEE)
+                            copied === String(form.paidAmount || membershipFee)
                               ? "rgba(52,211,153,0.3)"
                               : "rgba(255,255,255,0.15)",
                           color:
-                            copied === String(form.paidAmount || MEMBERSHIP_FEE)
+                            copied === String(form.paidAmount || membershipFee)
                               ? "#6ee7b7"
                               : "white",
                           border: "1px solid rgba(255,255,255,0.2)",
                           minWidth: "52px",
                         }}
                       >
-                        {copied === String(form.paidAmount || MEMBERSHIP_FEE) ? "✓ تم" : "نسخ"}
+                        {copied === String(form.paidAmount || membershipFee) ? "✓ تم" : "نسخ"}
                       </button>
                     </div>
                   </div>

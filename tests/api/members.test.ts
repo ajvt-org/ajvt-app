@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/members/route";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createUser, signInAs } from "./helpers";
+import { saveAppSettings } from "@/lib/settingsServer";
 
 const validBody = {
   fullName: "محمد ولد أحمد",
@@ -94,6 +95,28 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", { ...validBody, paidAmount: 10 }));
 
     expect(res.status).toBe(400);
+  });
+
+  it("enforces the fee the association set, not the one in the code", async () => {
+    await saveAppSettings({ membershipFee: 500 });
+    const user = await createUser();
+    await signInAs(user);
+
+    const tooLow = await POST(post("/api/members", { ...validBody, paidAmount: 300 }));
+    expect(tooLow.status).toBe(400);
+    expect(await tooLow.json()).toEqual({ error: "يرجى إدخال مبلغ صحيح (500 أوقية على الأقل)" });
+
+    const enough = await POST(post("/api/members", { ...validBody, paidAmount: 500 }));
+    expect(enough.status).toBe(201);
+  });
+
+  it("still accepts 100 when the association has not changed anything", async () => {
+    const user = await createUser();
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", { ...validBody, paidAmount: 100 }));
+
+    expect(res.status).toBe(201);
   });
 
   it("lets the owner fix a pending submission", async () => {
