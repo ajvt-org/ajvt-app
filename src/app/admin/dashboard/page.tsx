@@ -686,7 +686,7 @@ export default function AdminDashboard() {
             className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            ← السابق
+            → السابق
           </button>
           <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
             صفحة {currentPage} / {totalPages}
@@ -697,7 +697,7 @@ export default function AdminDashboard() {
             className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            التالي →
+            التالي ←
           </button>
         </div>
       )}
