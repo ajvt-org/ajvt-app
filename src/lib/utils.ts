@@ -42,6 +42,14 @@ export function formatDate(date: Date | string): string {
   });
 }
 
+// The daily rollups key their rows by "YYYY-MM-DD". Handing that straight to
+// new Date() reads it as UTC midnight, which lands on the previous day for
+// anyone west of Greenwich, so the parts are split out and rebuilt locally.
+export function formatDayKey(key: string): string {
+  const [year, month, day] = key.split("-").map(Number);
+  return formatDate(new Date(year, month - 1, day));
+}
+
 export function formatFullDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("ar-DZ", {
     weekday: "long",
