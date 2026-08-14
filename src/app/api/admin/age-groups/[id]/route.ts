@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
+import { getClientIp } from "@/lib/rateLimit";
 import { withRoute } from "@/lib/route";
 
 export const PATCH = withRoute(
@@ -30,8 +31,21 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: "هذا العصر موجود بالفعل" }, { status: 409 });
     }
 
-    const ageGroup = await prisma.ageGroup.update({ where: { id }, data: { name: name.trim() } });
-    await logAction(session.username, "UPDATE_AGE_GROUP", `${existing.name} → ${ageGroup.name}`);
+    const [ageGroup, moved] = await prisma.$transaction([
+      prisma.ageGroup.update({ where: { id }, data: { name: name.trim() } }),
+      prisma.member.updateMany({ where: { age: existing.name }, data: { age: name.trim() } }),
+    ]);
+    await logAction(session.username, "UPDATE_AGE_GROUP", `${existing.name} → ${ageGroup.name}`, {
+      adminId: session.adminId,
+      adminRole: session.role,
+      targetType: "AgeGroup",
+      targetId: ageGroup.id,
+      before: { name: existing.name },
+      after: { name: ageGroup.name },
+      meta: { membersRenamed: moved.count },
+      ip: getClientIp(req),
+      userAgent: req.headers.get("user-agent") ?? undefined,
+    });
 
     return NextResponse.json({ ageGroup });
   },
