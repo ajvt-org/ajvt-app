@@ -228,7 +228,7 @@ export default async function PublicTournamentPage({
               <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
                 🧍 الفرق واللاعبون
               </h2>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 items-start gap-2">
                 {activity.teams.map((team) => (
                   <details key={team.id} className="card p-3">
                     <summary
