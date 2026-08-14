@@ -23,7 +23,8 @@
     "db:studio": "prisma studio",
     "setup": "prisma migrate dev --name init && tsx prisma/seed.ts",
     "test:api": "vitest run --config vitest.api.config.mts",
-    "test:ui": "vitest run --config vitest.ui.config.mts"
+    "test:ui": "vitest run --config vitest.ui.config.mts",
+    "test:e2e": "tsx tests/e2e/prepareDb.ts && playwright test"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -51,6 +52,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.4",
