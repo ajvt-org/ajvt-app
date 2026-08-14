@@ -115,7 +115,7 @@ export default function TournamentPage() {
         </a>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-5">
+      <div className="admin-page">
         {error && (
           <div
             className="p-3 rounded-xl text-sm font-semibold mb-4"
