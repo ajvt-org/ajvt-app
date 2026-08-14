@@ -185,7 +185,6 @@ export default function ManualAddDialog({
                   <label
                     className="block text-sm font-bold mb-1.5"
                     style={{ color: "var(--text-main)" }}
-
                     htmlFor="accountPhone"
                   >
                     رقم هاتف الحساب <span style={{ color: "var(--copper-500)" }}>*</span>
@@ -215,7 +214,6 @@ export default function ManualAddDialog({
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
-
                   htmlFor="fullName"
                 >
                   الاسم الكامل
@@ -268,7 +266,6 @@ export default function ManualAddDialog({
                   <label
                     className="block text-sm font-bold mb-1.5"
                     style={{ color: "var(--text-main)" }}
-
                     htmlFor="memberPhone"
                   >
                     رقم هاتف العضو
@@ -329,7 +326,6 @@ export default function ManualAddDialog({
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
-
                   htmlFor="paymentMethod"
                 >
                   طريقة الدفع
@@ -355,7 +351,6 @@ export default function ManualAddDialog({
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
-
                   htmlFor="paidAmount"
                 >
                   المبلغ المسدد (أوقية) — اختياري
@@ -376,7 +371,6 @@ export default function ManualAddDialog({
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
-
                   htmlFor="status"
                 >
                   حالة العضوية
