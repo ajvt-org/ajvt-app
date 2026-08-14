@@ -505,13 +505,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               className="px-5 py-4 flex items-center justify-between"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
               <DialogBack
                 onClick={() => {
                   setShowChangePassword(false);
                   setShowMenu(true);
                 }}
               />
+              <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
             </div>
 
             <form onSubmit={changePassword} className="p-5 space-y-3">
@@ -603,13 +603,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               className="px-5 py-4 flex items-center justify-between sticky top-0"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
               <DialogBack
                 onClick={() => {
                   setShowAdmins(false);
                   setShowMenu(true);
                 }}
               />
+              <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
             </div>
 
             <div className="p-5 space-y-4">
@@ -708,13 +708,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               className="px-5 py-4 flex items-center justify-between sticky top-0"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
               <DialogBack
                 onClick={() => {
                   setShowAuditLog(false);
                   setShowMenu(true);
                 }}
               />
+              <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
             </div>
 
             <div className="p-5 space-y-2">
@@ -774,13 +774,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               className="px-5 py-4 flex items-center justify-between sticky top-0"
               style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
             >
-              <h2 className="font-black text-white text-base">📣 إرسال إشعار جماعي</h2>
               <DialogBack
                 onClick={() => {
                   setShowBroadcast(false);
                   setShowMenu(true);
                 }}
               />
+              <h2 className="font-black text-white text-base">📣 إرسال إشعار جماعي</h2>
             </div>
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">
