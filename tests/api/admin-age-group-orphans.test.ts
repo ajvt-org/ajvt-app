@@ -83,6 +83,19 @@ describe("POST /api/admin/age-groups/reassign", () => {
     expect(await prisma.member.count({ where: { age: "المبشرين" } })).toBe(1);
   });
 
+  it("does not touch updatedAt, the member page reads it as their decision date", async () => {
+    await signInAsAdmin(await createAdmin());
+    await prisma.ageGroup.create({ data: { name: "المنصورون" } });
+    const member = await aMember("محمد", "المنصورين");
+    const before = member.updatedAt;
+
+    await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
+
+    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(after.age).toBe("المنصورون");
+    expect(after.updatedAt.getTime()).toBe(before.getTime());
+  });
+
   it("refuses a target that is not a group, that would just move the orphan", async () => {
     await signInAsAdmin(await createAdmin());
     await aMember("محمد", "المنصورين");
