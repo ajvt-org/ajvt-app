@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { generateMemberNumber, generateTempPassword } from "@/lib/member";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { validatePaidAmount } from "@/lib/donations";
@@ -85,7 +85,20 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     return m;
   });
 
-  await logAction(session.username, "CREATE_MEMBER_MANUAL", member.fullName);
+  await logAction(session.username, "CREATE_MEMBER_MANUAL", member.fullName, {
+    ...auditContext(session, req),
+    targetType: "Member",
+    targetId: member.id,
+    after: {
+      fullName: member.fullName,
+      phone: member.phone,
+      age: member.age,
+      paymentMethod: member.paymentMethod,
+      paidAmount: member.paidAmount,
+      status: member.status,
+      memberNumber: member.memberNumber,
+    },
+  });
 
   return NextResponse.json({ member, tempPassword }, { status: 201 });
 });

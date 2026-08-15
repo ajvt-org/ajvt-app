@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { logger } from "./logger";
 import { redact } from "./redact";
+import { getClientIp } from "./rateLimit";
+import type { NextRequest } from "next/server";
 import type { Prisma } from "@prisma/client";
 
 // The fourth argument is optional so the forty existing three-argument calls
@@ -18,6 +20,20 @@ export type AuditDetails = {
   ip?: string;
   userAgent?: string;
 };
+
+// Who and from where. Identical in every route, so it is built once here
+// rather than spelled out at each call site.
+export function auditContext(
+  session: { adminId: string; role: string },
+  req: NextRequest,
+): AuditDetails {
+  return {
+    adminId: session.adminId,
+    adminRole: session.role,
+    ip: getClientIp(req),
+    userAgent: req.headers.get("user-agent") ?? undefined,
+  };
+}
 
 function snapshot(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined) return undefined;
