@@ -24,7 +24,7 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
 
   const valid = await bcrypt.compare(currentPassword, admin.password);
   if (!valid) {
-    return NextResponse.json({ error: "كلمة المرور الحالية غير صحيحة" }, { status: 401 });
+    return NextResponse.json({ error: auth.currentPasswordWrong }, { status: 401 });
   }
 
   const hashed = await bcrypt.hash(newPassword, 12);

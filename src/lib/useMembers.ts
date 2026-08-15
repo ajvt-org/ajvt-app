@@ -49,11 +49,21 @@ export function useMembers() {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // A 401 here means the token was revoked, by a password change or an admin
+  // reset. Dropping the cookie on the way out matters: left in place it still
+  // parses, so the server keeps drawing the member bar for a session that
+  // nothing will actually serve.
+  function signOutAndReturnToLogin() {
+    return fetch("/api/auth/logout", { method: "POST" })
+      .catch(() => {})
+      .finally(() => router.push(loginPathWithNext("/login")));
+  }
+
   function reload() {
     return fetch("/api/user/me")
       .then((r) => {
         if (r.status === 401) {
-          router.push(loginPathWithNext("/login"));
+          signOutAndReturnToLogin();
           return null;
         }
         return r.json();
@@ -62,7 +72,7 @@ export function useMembers() {
         if (!data) return;
         setMembers(data.members || []);
       })
-      .catch(() => router.push(loginPathWithNext("/login")));
+      .catch(() => signOutAndReturnToLogin());
   }
 
   useEffect(() => {
