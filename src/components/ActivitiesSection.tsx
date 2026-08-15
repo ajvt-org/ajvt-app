@@ -7,7 +7,7 @@ import { toThumbUrl } from "@/lib/utils";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "./ArrowLabel";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 
@@ -60,10 +60,10 @@ interface ActivitiesSectionProps {
   onReload: () => void;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "⏳ قيد المراجعة",
-  ACTIVE: "✅ مقبول",
-  REJECTED: "❌ مرفوض",
+const STATUS_LABEL: Record<string, { icon: IconName; text: string }> = {
+  PENDING: { icon: "clock", text: "قيد المراجعة" },
+  ACTIVE: { icon: "check", text: "مقبول" },
+  REJECTED: { icon: "close", text: "مرفوض" },
 };
 const STATUS_CLASS: Record<string, string> = {
   PENDING: "badge-pending",
@@ -76,14 +76,15 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
     <div className="card overflow-hidden">
       <div className="p-4 flex items-center gap-3">
         <div
-          className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0"
+          className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
           style={{
             background: quizAccess
               ? "linear-gradient(160deg, var(--mint-500), var(--mint-700))"
               : "var(--mint-100)",
+            color: quizAccess ? "#fff" : "var(--mint-700)",
           }}
         >
-          🧠
+          <Icon name="quiz" size={28} />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
@@ -137,7 +138,7 @@ export default function ActivitiesSection({
     return (
       <div className="space-y-3" id="activities">
         <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
-          🏆 أنشطة هذا الصيف
+          <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
         </h2>
         <QuizCard quizAccess={quizAccess} />
         <div className="card p-4 animate-pulse space-y-3">
@@ -152,7 +153,7 @@ export default function ActivitiesSection({
   return (
     <div className="space-y-3 fade-up" id="activities">
       <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
-        🏆 أنشطة هذا الصيف
+        <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
       </h2>
 
       <QuizCard quizAccess={quizAccess} />
@@ -322,12 +323,14 @@ function ActivityCard({
         >
           {activity.period && (
             <span>
-              📅 <NumericRanges>{activity.period}</NumericRanges>
+              <Icon name="calendar" size={13} className="icon-inline" />{" "}
+              <NumericRanges>{activity.period}</NumericRanges>
             </span>
           )}
           {activity.capacity !== null && (
             <span>
-              👥 {activity.registrantCount}/{activity.capacity}
+              <Icon name="users" size={13} className="icon-inline" /> {activity.registrantCount}/
+              {activity.capacity}
             </span>
           )}
         </div>
@@ -338,7 +341,9 @@ function ActivityCard({
             className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mb-3"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <ArrowLabel>🏆 عرض الترتيب</ArrowLabel>
+            <ArrowLabel>
+              <IconLabel name="trophy">عرض الترتيب</IconLabel>
+            </ArrowLabel>
           </Link>
         )}
 
@@ -359,7 +364,9 @@ function ActivityCard({
                   {settled ? (
                     <div className="flex items-center gap-2 shrink-0">
                       <span className={`badge ${STATUS_CLASS[r!.status]}`}>
-                        {STATUS_LABEL[r!.status]}
+                        <IconLabel name={STATUS_LABEL[r!.status].icon} size={11}>
+                          {STATUS_LABEL[r!.status].text}
+                        </IconLabel>
                       </span>
                       {r!.status === "PENDING" && (
                         <button
@@ -385,9 +392,9 @@ function ActivityCard({
                       ) : r?.status === "REJECTED" ? (
                         <IconLabel name="refresh">إعادة المحاولة</IconLabel>
                       ) : activity.isVolunteer ? (
-                        "🤝 تطوع"
+                        <IconLabel name="handshake">تطوع</IconLabel>
                       ) : (
-                        "📝 سجّل"
+                        <IconLabel name="pencil">سجّل</IconLabel>
                       )}
                     </button>
                   ) : (
@@ -410,11 +417,16 @@ function ActivityCard({
                     return (
                       <div className="mr-8 mt-1.5">
                         <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-                          🏳️ {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
+                          <Icon name="flag" size={12} className="icon-inline" />{" "}
+                          {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
                         </p>
                         {locked ? (
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="badge badge-active">✓ {myTeam!.teamName}</span>
+                            <span className="badge badge-active">
+                              <IconLabel name="check" size={11}>
+                                {myTeam!.teamName}
+                              </IconLabel>
+                            </span>
                             <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                               تم التأكيد — لا يمكن تغييره
                             </span>
@@ -470,7 +482,7 @@ function ActivityCard({
             className="p-2.5 rounded-xl text-xs font-semibold mt-2"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            ⚠️ {error}
+            <Icon name="warning" size={13} className="icon-inline" /> {error}
           </div>
         )}
       </div>

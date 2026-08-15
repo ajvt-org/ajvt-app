@@ -15,6 +15,7 @@ import { MEMBERSHIP_FEE } from "@/lib/donations";
 import Icon from "@/components/Icon";
 import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
+import IconLabel from "@/components/IconLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -177,7 +178,9 @@ export default function HomePage() {
         {members.length === 0 && (
           <div className="fade-up space-y-5">
             <div className="card p-6 text-center">
-              <div className="text-4xl mb-3">📋</div>
+              <div className="mb-3 flex justify-center">
+                <Icon name="list" size={40} />
+              </div>
               <h2 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>
                 لم تقدم طلب انضمام بعد
               </h2>
@@ -334,7 +337,7 @@ function MemberEntry({
 
           {resubmitError && (
             <p className="text-xs mt-2 font-semibold" style={{ color: "#dc2626" }}>
-              ⚠️ {resubmitError}
+              <Icon name="warning" size={13} className="icon-inline" /> {resubmitError}
             </p>
           )}
 
@@ -413,7 +416,7 @@ function MemberEntry({
             className="text-xs font-bold mt-3 w-full text-center"
             style={{ color: "var(--mint-600)" }}
           >
-            🏆 شاهد لوحة شرف المتبرعين
+            <IconLabel name="trophy">شاهد لوحة شرف المتبرعين</IconLabel>
           </button>
         </div>
       )}
