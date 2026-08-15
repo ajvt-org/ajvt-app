@@ -9,22 +9,27 @@ import MemberTabs from "@/components/MemberTabs";
 // The page is the list of sections in LANDING_SECTIONS, in that order. Hiding
 // one or swapping two is an edit to that array.
 export default async function LandingPage() {
+  const wantsActivities = LANDING_SECTIONS.includes("activities");
   const [session, rows] = await Promise.all([
     getUserSession(),
-    prisma.activity.findMany({
-      where: { isOpen: true },
-      orderBy: { order: "asc" },
-      select: {
-        id: true,
-        title: true,
-        period: true,
-        startsAt: true,
-        endsAt: true,
-        withTime: true,
-        photo: true,
-        isVolunteer: true,
-      },
-    }),
+    // Only queried when a section actually renders it, so dropping
+    // "activities" from the list drops the query with it.
+    wantsActivities
+      ? prisma.activity.findMany({
+          where: { isOpen: true },
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            title: true,
+            period: true,
+            startsAt: true,
+            endsAt: true,
+            withTime: true,
+            photo: true,
+            isVolunteer: true,
+          },
+        })
+      : Promise.resolve([]),
   ]);
 
   const activities = rows.map((a) => ({
@@ -39,7 +44,7 @@ export default async function LandingPage() {
     <div className="app-shell">
       {LANDING_SECTIONS.map((section) =>
         section === "hero" ? (
-          <LandingHero key={section} activityCount={activities.length} />
+          <LandingHero key={section} />
         ) : (
           <LandingActivities key={section} activities={activities} />
         ),

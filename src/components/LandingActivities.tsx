@@ -15,16 +15,24 @@ export type LandingActivity = {
   isVolunteer: boolean;
 };
 
-export default function LandingActivities({ activities }: { activities: LandingActivity[] }) {
+export default function LandingActivities({
+  activities,
+  heading = true,
+}: {
+  activities: LandingActivity[];
+  heading?: boolean;
+}) {
   return (
     <div
       id="activities"
       className="px-5 py-8"
       style={{ background: "var(--mint-50)", scrollMarginTop: "1rem" }}
     >
-      <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
-      </h2>
+      {heading && (
+        <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
+          <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
+        </h2>
+      )}
 
       <div className="max-w-md mx-auto space-y-3">
         <Link href="/quiz" className="card p-3.5 flex items-center gap-3">

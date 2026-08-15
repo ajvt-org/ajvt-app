@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// The first thing a visitor sees: who the association is and the three ways
-// in. Split out so the landing page is a list of sections rather than one
-// long file, and so dropping it is an edit to LANDING_SECTIONS.
-export default function LandingHero({ activityCount }: { activityCount: number }) {
+// The first thing a visitor sees: who the association is, and the two doors
+// that have nowhere else to live. Support and the activities have their own
+// tabs, so they are not repeated here.
+export default function LandingHero() {
   return (
     <div
       className="flex flex-col items-center justify-center px-6 py-12 text-center"
@@ -73,40 +73,7 @@ export default function LandingHero({ activityCount }: { activityCount: number }
         >
           تسجيل الدخول
         </Link>
-        <Link
-          href="/donate"
-          className="btn block"
-          style={{
-            background: "rgba(255,255,255,0.1)",
-            color: "#fff",
-            border: "1.5px dashed rgba(255,255,255,0.5)",
-          }}
-        >
-          💚 ادعم الرابطة (بدون حساب)
-        </Link>
       </div>
-
-      <Link
-        href="/leaderboard"
-        className="fade-up delay-3 mt-4 text-xs font-bold"
-        style={{ color: "rgba(255,255,255,0.75)" }}
-      >
-        🏆 لوحة شرف المتبرعين
-      </Link>
-
-      <a
-        href="#activities"
-        className="fade-up delay-4 mt-10 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold"
-        style={{
-          background: "rgba(255,255,255,0.18)",
-          color: "#fff",
-          border: "1.5px solid rgba(255,255,255,0.4)",
-        }}
-      >
-        {activityCount > 0
-          ? `🏆 أنشطة هذا الصيف جارية الآن (${activityCount}) ⬇️`
-          : "🧠 المسابقة الثقافية ⬇️"}
-      </a>
 
       <div className="fade-up delay-4 mt-6">
         <Link
