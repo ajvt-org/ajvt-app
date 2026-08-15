@@ -536,7 +536,7 @@ export default function AdminDashboard() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          🏷️ الأعاصر
+          🏷️ الأعصار
         </button>
         <button
           onClick={() => setShowManualAdd(true)}

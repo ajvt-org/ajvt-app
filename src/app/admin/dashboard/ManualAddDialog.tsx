@@ -300,7 +300,7 @@ export default function ManualAddDialog({
                     className="text-xs font-bold"
                     style={{ color: "var(--mint-600)" }}
                   >
-                    🏷️ إدارة الأعاصر
+                    🏷️ إدارة الأعصار
                   </button>
                 </div>
                 <select
