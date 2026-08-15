@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -9,6 +10,7 @@ import NotificationsToggle from "@/components/NotificationsToggle";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
 import { useMembers } from "@/lib/useMembers";
+import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 
 // The account's own tab: who is on it, where each request stands, and the way
 // out. Supporting the association has a tab of its own, so it is not repeated
@@ -16,12 +18,14 @@ import { useMembers } from "@/lib/useMembers";
 export default function ProfilePage() {
   const router = useRouter();
   const { members, setMembers, loading, reload, logout } = useMembers();
+  const headings = useMemo(() => members.map((m) => ({ id: m.id, label: m.fullName })), [members]);
+  const { bind, behind } = useNameBehindHeader(headings);
 
   const whatsappLink = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://chat.whatsapp.com/XXXXX";
 
   return (
     <div className="app-shell">
-      <PageHeader title="حسابي" />
+      <PageHeader title={behind ?? "حسابي"} />
 
       {loading ? (
         <PageLoading />
@@ -59,6 +63,7 @@ export default function ProfilePage() {
                     );
                   }}
                   onReload={reload}
+                  nameRef={bind(member.id)}
                 />
               </div>
             ))
