@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { toThumbUrl } from "@/lib/utils";
 import ArrowLabel from "@/components/ArrowLabel";
 import NumericRanges from "@/components/NumericRanges";
+import { formatActivityDates } from "@/lib/activityDates";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
@@ -18,6 +19,9 @@ export default async function LandingPage() {
       title: true,
       description: true,
       period: true,
+      startsAt: true,
+      endsAt: true,
+      withTime: true,
       photo: true,
       capacity: true,
       isTournament: true,
@@ -211,10 +215,10 @@ export default async function LandingPage() {
                   className="flex items-center gap-3 text-xs mt-2"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {activity.period && (
+                  {formatActivityDates(activity) && (
                     <span>
                       <Icon name="calendar" size={13} className="icon-inline" />{" "}
-                      <NumericRanges>{activity.period}</NumericRanges>
+                      <NumericRanges>{formatActivityDates(activity)!}</NumericRanges>
                     </span>
                   )}
                   {!activity.isVolunteer && activity.capacity !== null && (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { formatActivityDates } from "@/lib/activityDates";
 
 export const GET = withRoute("GET /api/activities", async () => {
   await requireUser();
@@ -13,6 +14,9 @@ export const GET = withRoute("GET /api/activities", async () => {
       title: true,
       description: true,
       period: true,
+      startsAt: true,
+      endsAt: true,
+      withTime: true,
       photo: true,
       capacity: true,
       isOpen: true,
@@ -29,7 +33,7 @@ export const GET = withRoute("GET /api/activities", async () => {
       id: a.id,
       title: a.title,
       description: a.description,
-      period: a.period,
+      when: formatActivityDates(a),
       photo: a.photo,
       capacity: a.capacity,
       isOpen: a.isOpen,
