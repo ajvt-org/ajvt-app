@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { toThumbUrl } from "@/lib/utils";
 import ArrowLabel from "@/components/ArrowLabel";
 import NumericRanges from "@/components/NumericRanges";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export const dynamic = "force-dynamic";
 
@@ -146,19 +148,20 @@ export default async function LandingPage() {
         style={{ background: "var(--mint-50)", scrollMarginTop: "1rem" }}
       >
         <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
-          🏆 أنشطة هذا الصيف
+          <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
         </h2>
         <div className="max-w-md mx-auto space-y-3">
           <div className="card overflow-hidden text-right">
             <div className="pt-4 flex justify-center">
               <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-4xl"
+                className="w-24 h-24 rounded-full flex items-center justify-center"
                 style={{
                   background: "linear-gradient(160deg, var(--mint-500), var(--mint-700))",
                   border: "2px solid var(--mint-200)",
+                  color: "#fff",
                 }}
               >
-                🧠
+                <Icon name="quiz" size={44} />
               </div>
             </div>
             <div className="p-4 text-center">
@@ -210,12 +213,14 @@ export default async function LandingPage() {
                 >
                   {activity.period && (
                     <span>
-                      📅 <NumericRanges>{activity.period}</NumericRanges>
+                      <Icon name="calendar" size={13} className="icon-inline" />{" "}
+                      <NumericRanges>{activity.period}</NumericRanges>
                     </span>
                   )}
                   {!activity.isVolunteer && activity.capacity !== null && (
                     <span>
-                      👥 {activity._count.registrations}/{activity.capacity}
+                      <Icon name="users" size={13} className="icon-inline" />{" "}
+                      {activity._count.registrations}/{activity.capacity}
                     </span>
                   )}
                 </div>
@@ -228,7 +233,7 @@ export default async function LandingPage() {
                       className="btn btn-whatsapp"
                       style={{ minHeight: "44px", padding: "0.65rem 1.25rem", fontSize: "0.9rem" }}
                     >
-                      🤝 انضم كمتطوع الآن — واتساب
+                      <IconLabel name="handshake">انضم كمتطوع الآن — واتساب</IconLabel>
                     </a>
                   ) : (
                     <Link
@@ -236,7 +241,7 @@ export default async function LandingPage() {
                       className="btn btn-copper"
                       style={{ minHeight: "44px", padding: "0.65rem 1.25rem", fontSize: "0.9rem" }}
                     >
-                      📝 سجّل الآن — أنشئ حسابك للمشاركة
+                      <IconLabel name="pencil">سجّل الآن — أنشئ حسابك للمشاركة</IconLabel>
                     </Link>
                   )}
                   {activity.isTournament && (
@@ -245,7 +250,9 @@ export default async function LandingPage() {
                       className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block"
                       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                     >
-                      <ArrowLabel>🏆 عرض الترتيب</ArrowLabel>
+                      <ArrowLabel>
+                        <IconLabel name="trophy">عرض الترتيب</IconLabel>
+                      </ArrowLabel>
                     </Link>
                   )}
                 </div>
