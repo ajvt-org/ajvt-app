@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { members } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]/members/[memberId]",
@@ -23,7 +24,7 @@ export const PATCH = withRoute(
       },
     });
     if (!existing) {
-      return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
     const teamMember = await prisma.teamMember.update({
@@ -66,7 +67,7 @@ export const DELETE = withRoute(
       },
     });
     if (!existing) {
-      return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
     await prisma.teamMember.delete({ where: { id: existing.id } });

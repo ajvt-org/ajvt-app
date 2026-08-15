@@ -4,24 +4,22 @@ import { requireAdmin, signToken } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { auth, common } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/change-password", async (req: NextRequest) => {
   const session = await requireAdmin();
   const { currentPassword, newPassword } = await req.json();
 
   if (!currentPassword || !newPassword) {
-    return NextResponse.json({ error: "يرجى ملء جميع الحقول" }, { status: 400 });
+    return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
   if (newPassword.length < 3) {
-    return NextResponse.json(
-      { error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
 
   const admin = await prisma.admin.findUnique({ where: { id: session.adminId } });
   if (!admin) {
-    return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+    return NextResponse.json({ error: common.unauthorized }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(currentPassword, admin.password);

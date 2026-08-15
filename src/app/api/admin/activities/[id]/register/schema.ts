@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const REASON_TOO_LONG = "النص طويل جداً (300 حرف كحد أقصى)";
 
 const REASON_MAX = 300;

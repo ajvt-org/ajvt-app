@@ -8,6 +8,7 @@ import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError } from "@/lib/errors";
 import { isUniqueViolation } from "@/lib/prismaError";
+import { members } from "@/lib/messages";
 
 const CODE_ATTEMPTS = 5;
 
@@ -30,7 +31,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   if (id) {
     const existing = await prisma.member.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.userId) {
-      throw new NotFoundError("العضو غير موجود");
+      throw new NotFoundError(members.notFound);
     }
     if (existing.status === "ACTIVE") {
       throw new ConflictError("هذا العضو مقبول بالفعل");

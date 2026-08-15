@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { validatePhone } from "@/lib/utils";
+import { common, money } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
-const NAME_REQUIRED = "الاسم مطلوب";
-const NAME_TOO_LONG = "الاسم طويل جداً (50 حرفاً كحد أقصى)";
-const AMOUNT_INVALID = "المبلغ يجب أن يكون رقماً صحيحاً موجباً";
-const METHOD_INVALID = "طريقة دفع غير صالحة";
+const INVALID = common.invalidBody;
+const NAME_REQUIRED = money.nameRequired;
+const NAME_TOO_LONG = money.nameTooLong;
+const AMOUNT_INVALID = money.amountInvalid;
+const METHOD_INVALID = money.paymentMethodInvalid;
 
 const NAME_MAX = 50;
 

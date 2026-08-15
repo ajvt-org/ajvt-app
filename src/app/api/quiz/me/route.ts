@@ -10,15 +10,13 @@ import {
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { quiz } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/quiz/me", async () => {
   const session = await requireUser();
 
   if (!(await isQuizEligible(session.userId))) {
-    return NextResponse.json(
-      { error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب", eligible: false },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: quiz.paidMembersOnly, eligible: false }, { status: 403 });
   }
 
   await touchUserActivity(session.userId);

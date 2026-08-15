@@ -11,6 +11,7 @@ import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
+import { common, members } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
@@ -30,7 +31,7 @@ export const PATCH = withRoute(
       select: { fullName: true, userId: true, phone: true, age: true, paidAmount: true },
     });
     if (!existing) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
     const data: {
@@ -54,7 +55,7 @@ export const PATCH = withRoute(
       // Attaching a login account to a member added without one — a
       // membership concern, not something a tournament-only admin needs.
       if (session.role === "ACTIVITIES") {
-        return NextResponse.json({ error: "ليس لديك صلاحية لهذا الإجراء" }, { status: 403 });
+        return NextResponse.json({ error: common.forbidden }, { status: 403 });
       }
       if (existing.userId) {
         return NextResponse.json({ error: "لهذا العضو حساب مسبقاً" }, { status: 400 });
@@ -139,7 +140,7 @@ export const DELETE = withRoute(
       select: { fullName: true, phone: true, age: true, status: true, memberNumber: true },
     });
     if (!member) {
-      return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
     await prisma.member.delete({ where: { id } });

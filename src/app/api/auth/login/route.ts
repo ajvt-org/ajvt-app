@@ -6,6 +6,7 @@ import { withRoute } from "@/lib/route";
 import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import * as bcrypt from "bcryptjs";
+import { auth, common } from "@/lib/messages";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -16,14 +17,14 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
   const { phone, password } = await req.json();
 
   if (!phone || !password) {
-    throw new ValidationError("أدخل رقم الهاتف وكلمة المرور");
+    throw new ValidationError(auth.credentialsRequired);
   }
 
   const key = `login:${phone.trim()}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
     // No phone number here on purpose, it identifies a member.
     logger.warn("member.login.rate_limited");
-    throw new HttpError("RATE_LIMITED", 429, "محاولات كثيرة جداً، حاول بعد قليل");
+    throw new HttpError("RATE_LIMITED", 429, common.tooManyAttempts);
   }
 
   const user = await prisma.user.findUnique({ where: { phone: phone.trim() } });

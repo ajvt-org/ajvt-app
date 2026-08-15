@@ -7,6 +7,7 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { mvpVoteCreateSchema, mvpVoteStatusSchema } from "./schema";
+import { push, tournament } from "@/lib/messages";
 
 const VOTE_INCLUDE = {
   candidates: {
@@ -35,7 +36,7 @@ export const POST = withRoute(
       },
     });
     if (!match) {
-      return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
     if (match.mvpVote) {
       return NextResponse.json(
@@ -73,7 +74,7 @@ export const POST = withRoute(
     );
 
     notifyTeams(match.homeTeamId, match.awayTeamId, {
-      title: "رابطة شباب التاكلالت",
+      title: push.title,
       body: `🌟 صوّت الآن لأفضل لاعب في مباراة ${match.homeTeam.name} × ${match.awayTeam.name}`,
       url: `/tournament/${match.activityId}`,
     }).catch((err) => logger.error("mvp.vote.open.push.error", err));
@@ -91,7 +92,7 @@ export const PATCH = withRoute(
 
     const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
     if (!existing) {
-      return NextResponse.json({ error: "لا يوجد تصويت لهذه المباراة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
     }
 
     const vote = await prisma.matchMvpVote.update({
@@ -118,7 +119,7 @@ export const DELETE = withRoute(
 
     const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
     if (!existing) {
-      return NextResponse.json({ error: "لا يوجد تصويت لهذه المباراة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
     }
 
     await prisma.matchMvpVote.delete({ where: { matchId } });

@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
+import { members, tournament } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
@@ -15,7 +16,7 @@ export const POST = withRoute(
 
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) {
-      return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
     const member = await prisma.member.findUnique({
@@ -23,7 +24,7 @@ export const POST = withRoute(
       select: { status: true, fullName: true },
     });
     if (!member) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
     if (member.status === "REJECTED") {
       return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });

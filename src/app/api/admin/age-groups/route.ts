@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { ageGroups } from "@/lib/messages";
 
 // Orphans are age values members hold that match no group. They are left
 // over from renames made before the rename started reaching members, and
@@ -30,15 +31,15 @@ export const POST = withRoute("POST /api/admin/age-groups", async (req: NextRequ
   const { name } = await req.json();
 
   if (!name?.trim()) {
-    return NextResponse.json({ error: "اسم العصر مطلوب" }, { status: 400 });
+    return NextResponse.json({ error: ageGroups.nameRequired }, { status: 400 });
   }
   if (name.trim().length > 30) {
-    return NextResponse.json({ error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" }, { status: 400 });
+    return NextResponse.json({ error: ageGroups.nameTooLong }, { status: 400 });
   }
 
   const existing = await prisma.ageGroup.findUnique({ where: { name: name.trim() } });
   if (existing) {
-    return NextResponse.json({ error: "هذا العصر موجود بالفعل" }, { status: 409 });
+    return NextResponse.json({ error: ageGroups.alreadyExists }, { status: 409 });
   }
 
   const ageGroup = await prisma.ageGroup.create({ data: { name: name.trim() } });

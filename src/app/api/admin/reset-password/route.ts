@@ -7,6 +7,7 @@ import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { resetPasswordSchema } from "./schema";
+import { members } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/reset-password", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -14,7 +15,7 @@ export const POST = withRoute("POST /api/admin/reset-password", async (req: Next
 
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
   if (!user) {
-    return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: members.notFound }, { status: 404 });
   }
 
   const tempPassword = generateTempPassword();

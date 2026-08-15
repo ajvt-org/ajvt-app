@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
+import { quiz } from "@/lib/messages";
 
 interface AnswerInput {
   text: string;
@@ -62,16 +63,16 @@ export const POST = withRoute("POST /api/admin/quiz/questions", async (req: Next
   const { text, category, points, correctCount, answers } = await req.json();
 
   if (!text?.trim()) {
-    return NextResponse.json({ error: "نص السؤال مطلوب" }, { status: 400 });
+    return NextResponse.json({ error: quiz.textRequired }, { status: 400 });
   }
   if (!category?.trim()) {
-    return NextResponse.json({ error: "التصنيف مطلوب" }, { status: 400 });
+    return NextResponse.json({ error: quiz.categoryRequired }, { status: 400 });
   }
   if (!Array.isArray(answers) || answers.length < 2) {
-    return NextResponse.json({ error: "يجب إضافة إجابتين على الأقل" }, { status: 400 });
+    return NextResponse.json({ error: quiz.twoAnswersMinimum }, { status: 400 });
   }
   if ((answers as AnswerInput[]).some((a) => !a?.text?.trim())) {
-    return NextResponse.json({ error: "كل الإجابات يجب أن تحتوي على نص" }, { status: 400 });
+    return NextResponse.json({ error: quiz.answersNeedText }, { status: 400 });
   }
 
   const settings = await getQuizSettings();
@@ -82,10 +83,7 @@ export const POST = withRoute("POST /api/admin/quiz/questions", async (req: Next
       : settings.defaultCorrectCount;
 
   if (finalCorrectCount > answers.length) {
-    return NextResponse.json(
-      { error: "عدد الإجابات الصحيحة أكبر من عدد الإجابات" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: quiz.tooManyCorrect }, { status: 400 });
   }
   const correctGiven = (answers as AnswerInput[]).filter((a) => a.isCorrect).length;
   if (correctGiven !== finalCorrectCount) {

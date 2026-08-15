@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const MINUTE_INVALID = "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130";
 
 const MINUTE_MIN = 1;

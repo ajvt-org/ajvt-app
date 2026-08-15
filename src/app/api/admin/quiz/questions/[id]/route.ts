@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { quiz } from "@/lib/messages";
 
 interface AnswerInput {
   text: string;
@@ -27,17 +28,18 @@ export const PATCH = withRoute(
 
     const existing = await prisma.quizQuestion.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "السؤال غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
     }
 
     const data: QuizQuestionUpdateData = {};
 
     if (text !== undefined) {
-      if (!text.trim()) return NextResponse.json({ error: "نص السؤال مطلوب" }, { status: 400 });
+      if (!text.trim()) return NextResponse.json({ error: quiz.textRequired }, { status: 400 });
       data.text = text.trim();
     }
     if (category !== undefined) {
-      if (!category.trim()) return NextResponse.json({ error: "التصنيف مطلوب" }, { status: 400 });
+      if (!category.trim())
+        return NextResponse.json({ error: quiz.categoryRequired }, { status: 400 });
       data.category = category.trim();
     }
     if (points !== undefined) {
@@ -61,16 +63,13 @@ export const PATCH = withRoute(
 
     if (answers !== undefined) {
       if (!Array.isArray(answers) || answers.length < 2) {
-        return NextResponse.json({ error: "يجب إضافة إجابتين على الأقل" }, { status: 400 });
+        return NextResponse.json({ error: quiz.twoAnswersMinimum }, { status: 400 });
       }
       if ((answers as AnswerInput[]).some((a) => !a?.text?.trim())) {
-        return NextResponse.json({ error: "كل الإجابات يجب أن تحتوي على نص" }, { status: 400 });
+        return NextResponse.json({ error: quiz.answersNeedText }, { status: 400 });
       }
       if (finalCorrectCount > answers.length) {
-        return NextResponse.json(
-          { error: "عدد الإجابات الصحيحة أكبر من عدد الإجابات" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: quiz.tooManyCorrect }, { status: 400 });
       }
       const correctGiven = (answers as AnswerInput[]).filter((a) => a.isCorrect).length;
       if (correctGiven !== finalCorrectCount) {
@@ -116,7 +115,7 @@ export const DELETE = withRoute(
       select: { text: true },
     });
     if (!question) {
-      return NextResponse.json({ error: "السؤال غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
     }
 
     await prisma.quizQuestion.delete({ where: { id } });

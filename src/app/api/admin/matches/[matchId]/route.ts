@@ -10,6 +10,7 @@ import { validateGoals, parseScorePair, type GoalInput } from "@/lib/matchInput"
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
+import { push, tournament } from "@/lib/messages";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -79,7 +80,7 @@ export const PATCH = withRoute(
       },
     });
     if (!match) {
-      return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
     const wasPlayed = match.status === "PLAYED";
     let finalHomeGroupId = match.homeTeam.groupId;
@@ -106,17 +107,14 @@ export const PATCH = withRoute(
       const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
       const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
       if (newHome === newAway) {
-        return NextResponse.json({ error: "لا يمكن أن يلعب الفريق ضد نفسه" }, { status: 400 });
+        return NextResponse.json({ error: tournament.teamAgainstItself }, { status: 400 });
       }
       const validTeams = await prisma.team.findMany({
         where: { id: { in: [newHome, newAway] }, activityId: match.activityId },
         select: { id: true, groupId: true },
       });
       if (validTeams.length !== 2) {
-        return NextResponse.json(
-          { error: "الفريقان يجب أن ينتميا إلى هذه البطولة" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: tournament.teamsNotInTournament }, { status: 400 });
       }
       updateData.homeTeamId = newHome;
       updateData.awayTeamId = newAway;
@@ -331,7 +329,7 @@ export const PATCH = withRoute(
       );
       if (!wasPlayed) {
         notifyTeams(match.homeTeamId, match.awayTeamId, {
-          title: "رابطة شباب التاكلالت",
+          title: push.title,
           body: `نتيجة مباراة فريقك: ${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
           url: `/tournament/${match.activityId}`,
         }).catch((err) => logger.error("match.result.push.error", err));
@@ -353,7 +351,7 @@ export const DELETE = withRoute(
       include: { homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
     });
     if (!match) {
-      return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
 
     await prisma.match.delete({ where: { id: matchId } });

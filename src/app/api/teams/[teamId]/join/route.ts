@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
+import { members, tournament } from "@/lib/messages";
 
 // Players can pick their own team once their registration for that
 // tournament is approved — switching teams just moves the membership,
@@ -20,13 +21,13 @@ export const POST = withRoute(
       prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
     ]);
     if (!member || member.userId !== session.userId) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
     if (member.status !== "ACTIVE") {
       return NextResponse.json({ error: "يجب أن تكون العضوية مقبولة أولاً" }, { status: 403 });
     }
     if (!team) {
-      return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
     const registered = await prisma.activityRegistration.findUnique({
@@ -76,7 +77,7 @@ export const DELETE = withRoute(
       select: { userId: true },
     });
     if (!member || member.userId !== session.userId) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
     const existing = await prisma.teamMember.findUnique({

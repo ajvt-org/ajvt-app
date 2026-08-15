@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { activities, tournament } from "@/lib/messages";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/groups",
@@ -27,22 +28,16 @@ export const POST = withRoute(
     const { name, capacity } = await req.json();
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "اسم المجموعة مطلوب" }, { status: 400 });
+      return NextResponse.json({ error: tournament.groupNameRequired }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json(
-        { error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.groupNameTooLong }, { status: 400 });
     }
     let capacityValue: number | null = null;
     if (capacity !== undefined && capacity !== null && capacity !== "") {
       capacityValue = Number(capacity);
       if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-        return NextResponse.json(
-          { error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: tournament.targetTeamsRange }, { status: 400 });
       }
     }
 
@@ -51,7 +46,7 @@ export const POST = withRoute(
       select: { isTournament: true },
     });
     if (!activity?.isTournament) {
-      return NextResponse.json({ error: "هذا النشاط ليس بطولة" }, { status: 400 });
+      return NextResponse.json({ error: activities.notATournament }, { status: 400 });
     }
 
     const group = await prisma.group.create({

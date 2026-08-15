@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { activities, common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const BOTH_REQUIRED = "العنوان والوصف مطلوبان";
-const TITLE_TOO_LONG = "العنوان طويل جداً (60 حرفاً كحد أقصى)";
-const DESCRIPTION_TOO_LONG = "الوصف طويل جداً (1000 حرف كحد أقصى)";
+const TITLE_TOO_LONG = activities.titleTooLong;
+const DESCRIPTION_TOO_LONG = activities.descriptionTooLong;
 const CAPACITY_INVALID = "السعة يجب أن تكون رقماً صحيحاً موجباً";
 
 const TITLE_MAX = 60;
@@ -18,7 +19,7 @@ export const capacity = z
   })
   .transform((v) => (v === null || v === "" ? null : Number(v)));
 
-const DATE_INVALID = "تاريخ غير صالح";
+const DATE_INVALID = common.invalidDate;
 const ORDER_INVALID = "تاريخ النهاية قبل تاريخ البداية";
 
 // The admin form sends "YYYY-MM-DD" and an optional "HH:MM". Both are read as

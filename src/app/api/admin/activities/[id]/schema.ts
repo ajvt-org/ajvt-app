@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { capacity, activityDate, endsAfterStart, DATE_ORDER_INVALID } from "../schema";
+import { activities, common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const TITLE_REQUIRED = "العنوان مطلوب";
-const TITLE_TOO_LONG = "العنوان طويل جداً (60 حرفاً كحد أقصى)";
+const TITLE_TOO_LONG = activities.titleTooLong;
 const DESCRIPTION_REQUIRED = "الوصف مطلوب";
-const DESCRIPTION_TOO_LONG = "الوصف طويل جداً (1000 حرف كحد أقصى)";
+const DESCRIPTION_TOO_LONG = activities.descriptionTooLong;
 
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 1000;
