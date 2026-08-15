@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { bookingCreateSchema } from "./schema";
 
@@ -46,6 +46,18 @@ export const POST = withRoute(
       session.username,
       "CREATE_BOOKING",
       `${booking.member.fullName} — ${booking.cardType}`,
+      {
+        ...auditContext(session, req),
+        targetType: "MatchBooking",
+        targetId: booking.id,
+        after: {
+          matchId,
+          memberId: booking.member.id,
+          teamId: booking.teamId,
+          cardType: booking.cardType,
+          minute: booking.minute,
+        },
+      },
     );
 
     return NextResponse.json({ booking }, { status: 201 });
