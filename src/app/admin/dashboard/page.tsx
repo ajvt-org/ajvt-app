@@ -452,7 +452,7 @@ export default function AdminDashboard() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          <span>📊 الإحصائيات</span>
+          <IconLabel name="chart">الإحصائيات</IconLabel>
           <Icon name={showStats ? "chevronUp" : "chevronDown"} size={14} />
         </button>
         <button
@@ -536,7 +536,7 @@ export default function AdminDashboard() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          🏷️ الأعصار
+          <IconLabel name="tag">الأعصار</IconLabel>
         </button>
         <button
           onClick={() => setShowManualAdd(true)}

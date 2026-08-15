@@ -91,7 +91,9 @@ export default function AgeGroupsDialog({
           className="px-5 py-4 flex items-center justify-between sticky top-0"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          <h2 className="font-black text-white text-base">🏷️ إدارة الأعصار</h2>
+          <h2 className="font-black text-white text-base">
+            <IconLabel name="tag">إدارة الأعصار</IconLabel>
+          </h2>
           <DialogClose onClick={() => onClose()} />
         </div>
 
