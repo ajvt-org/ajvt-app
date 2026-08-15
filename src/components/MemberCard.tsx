@@ -9,6 +9,7 @@ interface MemberCardProps {
   fullName: string;
   age: string;
   memberNumber: string | null;
+  verifyToken: string | null;
   createdAt: string;
   photo?: string | null;
 }
@@ -19,6 +20,7 @@ export default function MemberCard({
   fullName,
   age,
   memberNumber,
+  verifyToken,
   createdAt,
   photo,
 }: MemberCardProps) {
@@ -27,8 +29,8 @@ export default function MemberCard({
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!memberNumber) return;
-    const verifyUrl = `${window.location.origin}/verify/${memberNumber}`;
+    if (!verifyToken) return;
+    const verifyUrl = `${window.location.origin}/verify/${verifyToken}`;
     QRCode.toDataURL(verifyUrl, {
       width: 220,
       margin: 1,
@@ -36,7 +38,7 @@ export default function MemberCard({
     })
       .then(setQrDataUrl)
       .catch(() => setQrDataUrl(null));
-  }, [memberNumber]);
+  }, [verifyToken]);
 
   // html2canvas-pro (not the plain html2canvas package — its Arabic/RTL
   // text shaping is unreliable) is loaded only here, on demand, never as
@@ -106,7 +108,7 @@ export default function MemberCard({
       if (navigator.share) {
         await navigator.share({
           title: "بطاقة العضوية",
-          url: `${window.location.origin}/verify/${memberNumber}`,
+          url: `${window.location.origin}/verify/${verifyToken}`,
         });
         return;
       }
