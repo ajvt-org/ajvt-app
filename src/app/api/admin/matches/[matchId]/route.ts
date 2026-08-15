@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger";
 import { validateGoals, parseScorePair, type GoalInput } from "@/lib/matchInput";
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
+import type { MatchStatus } from "@prisma/client";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -95,7 +96,7 @@ export const PATCH = withRoute(
       homePenalties?: number | null;
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
-      status?: string;
+      status?: MatchStatus;
       homeTeamId?: string;
       awayTeamId?: string;
     } = {};
