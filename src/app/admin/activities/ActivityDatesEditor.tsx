@@ -75,7 +75,7 @@ export default function ActivityDatesEditor({
         </p>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
           من
         </label>
@@ -83,7 +83,7 @@ export default function ActivityDatesEditor({
           type="date"
           value={startDay}
           onChange={(e) => setStartDay(e.target.value)}
-          className="input text-sm"
+          className="input text-sm flex-1 min-w-0"
         />
         <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
           إلى
@@ -93,7 +93,7 @@ export default function ActivityDatesEditor({
           value={endDay}
           min={startDay || undefined}
           onChange={(e) => setEndDay(e.target.value)}
-          className="input text-sm"
+          className="input text-sm flex-1 min-w-0"
         />
       </div>
 

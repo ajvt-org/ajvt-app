@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { generateTempPassword } from "@/lib/member";
+import { tempPasswordExpiry } from "@/lib/tempPassword";
+import { getAppSettings } from "@/lib/settingsServer";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -20,18 +22,24 @@ export const POST = withRoute("POST /api/admin/reset-password", async (req: Next
 
   const tempPassword = generateTempPassword();
   const hashed = await bcrypt.hash(tempPassword, 12);
+  const { tempPasswordHours } = await getAppSettings();
+  const expiresAt = tempPasswordExpiry(tempPasswordHours);
 
   const updated = await prisma.user.update({
     where: { id: userId },
-    data: { password: hashed, tokenVersion: { increment: 1 } },
+    data: {
+      password: hashed,
+      tempPasswordExpiresAt: expiresAt,
+      tokenVersion: { increment: 1 },
+    },
   });
 
   await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone, {
     ...auditContext(session, req),
     targetType: "User",
     targetId: updated.id,
-    meta: { phone: updated.phone },
+    meta: { phone: updated.phone, expiresAt },
   });
 
-  return NextResponse.json({ tempPassword });
+  return NextResponse.json({ tempPassword, expiresAt, hours: tempPasswordHours });
 });

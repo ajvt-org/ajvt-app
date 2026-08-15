@@ -720,7 +720,7 @@ export default function AdminActivitiesPage() {
           rows={3}
           className="input"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
             من
           </label>
@@ -728,7 +728,7 @@ export default function AdminActivitiesPage() {
             type="date"
             value={newActivity.startsAt}
             onChange={(e) => setNewActivity((p) => ({ ...p, startsAt: e.target.value }))}
-            className="input"
+            className="input flex-1 min-w-0"
           />
           <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
             إلى
@@ -738,7 +738,7 @@ export default function AdminActivitiesPage() {
             value={newActivity.endsAt}
             min={newActivity.startsAt || undefined}
             onChange={(e) => setNewActivity((p) => ({ ...p, endsAt: e.target.value }))}
-            className="input"
+            className="input flex-1 min-w-0"
           />
         </div>
         <input
