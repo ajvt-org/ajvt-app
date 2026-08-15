@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Icon from "./Icon";
 
 interface PhotoUploadProps {
   photo: string | null;
@@ -8,7 +9,7 @@ interface PhotoUploadProps {
   imageUrlPrefix?: string;
   label?: string;
   placeholderIcon?: string;
-  variant?: "avatar" | "cover";
+  variant?: "avatar" | "cover" | "hero";
 }
 
 export default function PhotoUpload({
@@ -49,6 +50,54 @@ export default function PhotoUpload({
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
   const hint = photo || previewUrl ? "انقر على الصورة لتغييرها" : "اختياري — انقر لإضافة صورة";
+
+  // The profile opens on the person, so the picture is the page's first thing
+  // rather than a card of its own further down.
+  if (variant === "hero") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          aria-label={hint}
+          className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center"
+          style={{
+            background: "var(--mint-100)",
+            border: "3px solid #fff",
+            boxShadow: "0 2px 12px rgba(26, 63, 51, 0.14)",
+          }}
+        >
+          {displayUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
+          ) : (
+            <span style={{ color: "var(--mint-500)" }}>
+              <Icon name="user" size={40} />
+            </span>
+          )}
+          <span
+            className="absolute bottom-0 inset-x-0 flex items-center justify-center py-1"
+            style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
+          >
+            {uploading ? "..." : <Icon name="camera" size={14} />}
+          </span>
+        </button>
+        {error && (
+          <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
+            {error}
+          </p>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+      </>
+    );
+  }
 
   if (variant === "cover") {
     return (
