@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { amount, donorName, donorPhone, paymentMethod } from "../schema";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 
 export const donationUpdateSchema = z
   .object({

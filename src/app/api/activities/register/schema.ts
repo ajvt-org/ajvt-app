@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 
 export const activityRegisterSchema = z.object({
   activityId: z.string(INVALID).min(1, INVALID),

@@ -6,6 +6,7 @@ import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { logAction } from "@/lib/audit";
+import { common } from "@/lib/messages";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -14,13 +15,13 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
   const { username, password } = await req.json();
 
   if (!username || !password) {
-    return NextResponse.json({ error: "يرجى ملء جميع الحقول" }, { status: 400 });
+    return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
 
   const key = `admin-login:${username}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
     logger.warn("admin.login.rate_limited", { username, ip: getClientIp(req) });
-    return NextResponse.json({ error: "محاولات كثيرة جداً، حاول بعد قليل" }, { status: 429 });
+    return NextResponse.json({ error: common.tooManyAttempts }, { status: 429 });
   }
 
   const admin = await prisma.admin.findUnique({ where: { username } });

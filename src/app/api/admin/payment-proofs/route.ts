@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { money } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const session = await requireAdmin();
@@ -93,7 +94,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: d.id,
       kind: "DONATION" as const,
       proof: d.proof as string | null,
-      memberName: d.member?.fullName || d.donorName || "فاعل خير",
+      memberName: d.member?.fullName || d.donorName || money.anonymousDonor,
       activityTitle: null as string | null,
       amount: d.amount,
       status: d.status,

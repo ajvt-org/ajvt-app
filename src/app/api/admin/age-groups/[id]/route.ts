@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { renameMemberAge } from "@/lib/ageGroups";
+import { ageGroups } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/age-groups/[id]",
@@ -13,13 +14,10 @@ export const PATCH = withRoute(
     const { name } = await req.json();
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "اسم العصر مطلوب" }, { status: 400 });
+      return NextResponse.json({ error: ageGroups.nameRequired }, { status: 400 });
     }
     if (name.trim().length > 30) {
-      return NextResponse.json(
-        { error: "اسم العصر طويل جداً (30 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: ageGroups.nameTooLong }, { status: 400 });
     }
 
     const existing = await prisma.ageGroup.findUnique({ where: { id } });
@@ -28,7 +26,7 @@ export const PATCH = withRoute(
     }
     const clash = await prisma.ageGroup.findUnique({ where: { name: name.trim() } });
     if (clash && clash.id !== id) {
-      return NextResponse.json({ error: "هذا العصر موجود بالفعل" }, { status: 409 });
+      return NextResponse.json({ error: ageGroups.alreadyExists }, { status: 409 });
     }
 
     const [ageGroup, moved] = await prisma.$transaction([

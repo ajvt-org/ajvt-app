@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { getAdminSession, getUserSession } from "@/lib/auth";
 import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
 import { logger } from "@/lib/logger";
+import { common, uploads } from "@/lib/messages";
 
 export function getUploadDir(): string {
   // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     // is already signed in.
     const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
     if (!admin && !user) {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
+      return NextResponse.json({ error: common.unauthorized }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -27,12 +28,9 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: "لم يتم إرفاق ملف" }, { status: 400 });
     if (!ALLOWED_UPLOAD_TYPES.includes(file.type))
-      return NextResponse.json(
-        { error: "نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: uploads.unsupportedType }, { status: 400 });
     if (file.size > MAX_UPLOAD_SIZE)
-      return NextResponse.json({ error: "حجم الملف يتجاوز 10 ميغابايت" }, { status: 400 });
+      return NextResponse.json({ error: uploads.tooLarge }, { status: 400 });
 
     const id = uuidv4();
     const filename = `${id}.webp`;
@@ -43,10 +41,7 @@ export async function POST(req: NextRequest) {
       processed = await processImage(Buffer.from(await file.arrayBuffer()));
     } catch (err) {
       logger.error("image.processing.error", err);
-      return NextResponse.json(
-        { error: "تعذرت معالجة الصورة، يرجى تجربة صورة أخرى" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: uploads.processingFailed }, { status: 400 });
     }
 
     await mkdir(uploadDir, { recursive: true });
@@ -61,6 +56,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });
   } catch (err) {
     logger.error("upload.error", err);
-    return NextResponse.json({ error: "فشل رفع الملف" }, { status: 500 });
+    return NextResponse.json({ error: uploads.failed }, { status: 500 });
   }
 }

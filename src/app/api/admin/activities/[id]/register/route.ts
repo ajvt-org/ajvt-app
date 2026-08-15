@@ -7,6 +7,7 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
+import { activities, members, push } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -27,8 +28,8 @@ export const POST = withRoute(
         },
       }),
     ]);
-    if (!member) return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
-    if (!activity) return NextResponse.json({ error: "النشاط غير موجود" }, { status: 404 });
+    if (!member) return NextResponse.json({ error: members.notFound }, { status: 404 });
+    if (!activity) return NextResponse.json({ error: activities.notFound }, { status: 404 });
 
     if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
       const already = await prisma.activityRegistration.findUnique({
@@ -106,7 +107,7 @@ export const PATCH = withRoute(
 
     if (registration.member.userId) {
       sendPushToUser(registration.member.userId, {
-        title: "رابطة شباب التاكلالت",
+        title: push.title,
         body:
           status === "ACTIVE"
             ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`

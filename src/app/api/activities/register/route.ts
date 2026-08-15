@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityRegisterSchema } from "./schema";
+import { activities, members } from "@/lib/messages";
 
 // Registering for an activity is free — the membership fee already paid to
 // get approved (ACTIVE) covers it, so this never asks for another payment.
@@ -25,13 +26,13 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
     }),
   ]);
   if (!activity) {
-    return NextResponse.json({ error: "النشاط غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: activities.notFound }, { status: 404 });
   }
   if (!activity.isOpen) {
     return NextResponse.json({ error: "التسجيل في هذا النشاط مغلق" }, { status: 409 });
   }
   if (!member || member.userId !== session.userId) {
-    return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: members.notFound }, { status: 404 });
   }
   if (member.status !== "ACTIVE") {
     return NextResponse.json(
@@ -74,7 +75,7 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
 
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member || member.userId !== session.userId) {
-    return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: members.notFound }, { status: 404 });
   }
 
   await prisma.activityRegistration.deleteMany({ where: { memberId, activityId } });

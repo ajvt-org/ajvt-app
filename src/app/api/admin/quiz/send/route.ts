@@ -4,6 +4,7 @@ import { logAction } from "@/lib/audit";
 import { getQuizSettings, sendSameQuestionToAll, sendRandomBatch } from "@/lib/quiz";
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
+import { quiz } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/quiz/send", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
@@ -18,7 +19,7 @@ export const POST = withRoute("POST /api/admin/quiz/send", async (req: NextReque
       select: { text: true },
     });
     if (!question) {
-      return NextResponse.json({ error: "السؤال غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
     }
 
     const result = await sendSameQuestionToAll(questionId);

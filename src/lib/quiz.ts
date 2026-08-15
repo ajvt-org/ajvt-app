@@ -3,9 +3,10 @@ import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
 import { logger } from "./logger";
+import { push } from "@/lib/messages";
 
 const QUIZ_PUSH_PAYLOAD = {
-  title: "رابطة شباب التاكلالت",
+  title: push.title,
   body: "🧠 سؤال ثقافي جديد بانتظارك!",
   url: "/quiz",
 };
