@@ -5,6 +5,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import MemberProfile from "@/components/MemberProfile";
+import NotificationsToggle from "@/components/NotificationsToggle";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
 import { useMembers } from "@/lib/useMembers";
@@ -64,6 +65,7 @@ export default function ProfilePage() {
           )}
 
           <div className="space-y-3 pt-2">
+            <NotificationsToggle awaitingDecision={members.some((m) => m.status === "PENDING")} />
             {members.length > 0 && (
               <button onClick={() => router.push("/form")} className="btn btn-outline">
                 <IconLabel name="plus">إضافة عضو آخر</IconLabel>

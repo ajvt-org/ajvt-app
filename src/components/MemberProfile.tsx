@@ -7,7 +7,6 @@ import MemberIdentity from "@/components/MemberIdentity";
 import MemberInfoCard from "@/components/MemberInfoCard";
 import MemberRejected from "@/components/MemberRejected";
 import MemberStatusCard from "@/components/MemberStatusCard";
-import NotificationsButton from "@/components/NotificationsButton";
 import StatusTimeline from "@/components/StatusTimeline";
 import type { MemberData } from "@/lib/useMembers";
 
@@ -70,8 +69,6 @@ export default function MemberProfile({
           </a>
         </>
       )}
-
-      <NotificationsButton dismissible={active} />
 
       <MemberInfoCard
         member={member}
