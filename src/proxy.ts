@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-const USER_PROTECTED = ["/home", "/profile"];
+const USER_PROTECTED = ["/home", "/profile", "/change-password"];
 const ADMIN_PROTECTED = ["/admin/dashboard"];
 const CHANGE_PASSWORD_PATH = "/change-password";
 

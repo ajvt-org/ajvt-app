@@ -10,6 +10,7 @@ import { getUserSession } from "@/lib/auth";
 import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
 
 const WINDOW_MS = 60 * 60 * 1000;
@@ -25,7 +26,16 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
   recordFailedAttempt(key, WINDOW_MS);
 
-  const formData = await req.formData();
+  // The endpoint is public, so a request that is not a form arrives sooner or
+  // later. formData() throws on one, which surfaced as a 500 and logged as a
+  // fault of ours rather than of the caller.
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    throw new ValidationError(common.invalidBody);
+  }
+
   const file = formData.get("file") as File | null;
   const donorNameRaw = formData.get("donorName");
   const amountRaw = formData.get("amount");
