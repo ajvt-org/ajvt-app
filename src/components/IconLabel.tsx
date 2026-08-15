@@ -16,7 +16,7 @@ export default function IconLabel({
 }) {
   return (
     <span className="inline-flex items-center justify-center gap-1.5">
-      <Icon name={name} size={size} />
+      <Icon name={name} size={size} className="icon-inline" />
       {children}
     </span>
   );

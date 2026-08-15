@@ -255,7 +255,7 @@ export default function TeamsTab({
                 style={{ color: "var(--text-main)" }}
               >
                 <TeamLogo logo={team.logo} name={team.name} size={22} />
-                {team.name} <Icon name="pencil" size={12} />
+                {team.name} <Icon name="pencil" size={12} className="icon-inline" />
               </button>
             )}
             <button
@@ -340,7 +340,7 @@ export default function TeamsTab({
                       style={{ color: "var(--text-main)" }}
                     >
                       <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
-                      {member.fullName} <Icon name="pencil" size={12} />
+                      {member.fullName} <Icon name="pencil" size={12} className="icon-inline" />
                       {status === "PENDING" && (
                         <span className="badge badge-pending" style={{ fontSize: "10px" }}>
                           ⏳ بانتظار الموافقة
@@ -495,7 +495,7 @@ export default function TeamsTab({
                   className="badge badge-pending flex items-center gap-1.5"
                 >
                   <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
-                  {m.fullName} <Icon name="pencil" size={12} />
+                  {m.fullName} <Icon name="pencil" size={12} className="icon-inline" />
                 </button>
               ),
             )}
