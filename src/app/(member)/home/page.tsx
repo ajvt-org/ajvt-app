@@ -171,7 +171,6 @@ export default function HomePage() {
                 status: tm.status,
               })),
             }))}
-          onReload={loadMembers}
         />
 
         {/* No members registered yet */}
