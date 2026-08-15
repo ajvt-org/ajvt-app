@@ -97,8 +97,8 @@ export default function AgeGroupsDialog({
 
         <div className="p-5 space-y-4">
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل أو حذف عصر هنا لا يغيّر عصر الأعضاء
-            الحاليين الذين اختاروه من قبل.
+            هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل اسم عصر هنا يغيّره لدى كل الأعضاء
+            الذين اختاروه من قبل، أما حذفه فلا يغيّر شيئاً لديهم.
           </p>
 
           <form onSubmit={addAgeGroup} className="flex items-center gap-2">
