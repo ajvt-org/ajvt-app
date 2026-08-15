@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import IconLabel from "@/components/IconLabel";
 
 const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
 
@@ -38,7 +39,9 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
         border: "1px solid var(--copper-400)",
       }}
     >
-      <p className="text-sm font-bold mb-3 text-white">💳 معلومات الدفع</p>
+      <p className="text-sm font-bold mb-3 text-white">
+        <IconLabel name="card">معلومات الدفع</IconLabel>
+      </p>
       <div className="space-y-2">
         {PAYMENT_METHODS.map((method) => (
           <div

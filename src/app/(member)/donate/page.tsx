@@ -8,13 +8,16 @@ import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
+import PageLoading from "@/components/PageLoading";
 
 export default function DonatePage() {
   return (
     <Suspense
       fallback={
-        <div className="app-shell flex items-center justify-center">
-          <div className="text-3xl animate-pulse">⏳</div>
+        <div className="app-shell">
+          <PageLoading />
         </div>
       }
     >
@@ -125,8 +128,8 @@ function DonatePageInner() {
 
   if (checkingMember) {
     return (
-      <div className="app-shell flex items-center justify-center">
-        <div className="text-3xl animate-pulse">⏳</div>
+      <div className="app-shell">
+        <PageLoading />
       </div>
     );
   }
@@ -135,7 +138,9 @@ function DonatePageInner() {
     return (
       <div className="app-shell flex items-center justify-center">
         <div className="card p-8 text-center max-w-sm mx-4 fade-up">
-          <div className="text-5xl mb-4">❤️</div>
+          <div className="mb-4 flex justify-center">
+            <Icon name="heart" filled size={48} color="var(--mint-600)" />
+          </div>
           <h1 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>
             شكراً لدعمك!
           </h1>
@@ -143,7 +148,7 @@ function DonatePageInner() {
             تم استلام تبرعك وسيتم مراجعته من طرف الرابطة. جزاك الله خيراً.
           </p>
           <Link href="/leaderboard" className="btn btn-primary">
-            🏆 شاهد لوحة شرف المتبرعين
+            <IconLabel name="trophy">شاهد لوحة شرف المتبرعين</IconLabel>
           </Link>
         </div>
       </div>
@@ -161,7 +166,9 @@ function DonatePageInner() {
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
-            <div className="text-3xl mb-2 text-center">💚</div>
+            <div className="mb-2 flex justify-center">
+              <Icon name="heart" filled size={32} color="var(--mint-600)" />
+            </div>
             <p className="text-sm font-bold mb-2 text-center" style={{ color: "var(--text-main)" }}>
               أنت على وشك التبرع بدون إنشاء حساب
             </p>
@@ -176,7 +183,8 @@ function DonatePageInner() {
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
           >
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              🏆 الاشتراك في الرابطة (100 أوقية على الأقل) يتيح لك:
+              <Icon name="trophy" size={14} className="icon-inline" /> الاشتراك في الرابطة (100
+              أوقية على الأقل) يتيح لك:
             </p>
             <ul className="text-sm space-y-1" style={{ color: "var(--text-muted)" }}>
               <li>• المشاركة في الأنشطة والفعاليات</li>
@@ -187,14 +195,16 @@ function DonatePageInner() {
 
           <div className="space-y-2.5 fade-up delay-2">
             <button onClick={() => router.push("/form")} className="btn btn-primary">
-              🎓 إنشاء حساب والانضمام للرابطة
+              <IconLabel name="user">إنشاء حساب والانضمام للرابطة</IconLabel>
             </button>
             <button
               onClick={() => setConfirmedAnonymous(true)}
               className="btn"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              💚 المتابعة والتبرع بدون حساب
+              <IconLabel name="heart" filled>
+                المتابعة والتبرع بدون حساب
+              </IconLabel>
             </button>
           </div>
         </div>
@@ -208,7 +218,9 @@ function DonatePageInner() {
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
-          <div className="text-3xl mb-2">💚</div>
+          <div className="mb-2 flex justify-center">
+            <Icon name="heart" filled size={32} color="var(--mint-600)" />
+          </div>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             {lockedMember
               ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
@@ -219,7 +231,7 @@ function DonatePageInner() {
             className="text-xs font-bold mt-2 inline-block"
             style={{ color: "var(--mint-600)" }}
           >
-            🏆 شاهد لوحة شرف المتبرعين
+            <IconLabel name="trophy">شاهد لوحة شرف المتبرعين</IconLabel>
           </Link>
         </div>
 
@@ -282,7 +294,9 @@ function DonatePageInner() {
                   borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
                 }}
               >
-                ✍️ نعم{lockedMember ? ` — ${lockedMember.fullName}` : "، باسمي"}
+                <IconLabel name="pencil">
+                  نعم{lockedMember ? ` — ${lockedMember.fullName}` : "، باسمي"}
+                </IconLabel>
               </button>
               <button
                 type="button"
@@ -297,7 +311,7 @@ function DonatePageInner() {
                   borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
                 }}
               >
-                🤍 أفضّل أن أبقى مجهولاً
+                <IconLabel name="lock">أفضّل أن أبقى مجهولاً</IconLabel>
               </button>
             </div>
 
@@ -315,10 +329,10 @@ function DonatePageInner() {
 
             <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
               {wantsName === false
-                ? 'سيُسجَّل تبرعك باسم "فاعل خير" — لن يظهر في 🏆 لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم.'
+                ? 'سيُسجَّل تبرعك باسم "فاعل خير" — لن يظهر في لوحة شرف المتبرعين، لكن سيُحتسب ضمن مجموع الدعم.'
                 : wantsName === true
-                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في 🏆 لوحة شرف المتبرعين."
-                  : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في 🏆 لوحة شرف المتبرعين."}
+                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في لوحة شرف المتبرعين."
+                  : "كلا الخيارين متاحان بنفس القدر — لكن مشاركة اسمك تُدرجك في لوحة شرف المتبرعين."}
             </p>
           </div>
 
@@ -341,7 +355,9 @@ function DonatePageInner() {
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="text-4xl mb-2">🧾</div>
+                  <div className="mb-2 flex justify-center" style={{ color: "var(--mint-500)" }}>
+                    <Icon name="receipt" size={36} />
+                  </div>
                   <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
                     انقر لاختيار صورة من هاتفك
                   </p>
@@ -364,12 +380,18 @@ function DonatePageInner() {
               className="p-4 rounded-xl text-sm font-semibold"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              ⚠️ {error}
+              <Icon name="warning" size={14} className="icon-inline" /> {error}
             </div>
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary">
-            {loading ? "جاري الإرسال..." : "💚 تأكيد الدعم"}
+            {loading ? (
+              "جاري الإرسال..."
+            ) : (
+              <IconLabel name="heart" filled>
+                تأكيد الدعم
+              </IconLabel>
+            )}
           </button>
         </form>
       </div>
