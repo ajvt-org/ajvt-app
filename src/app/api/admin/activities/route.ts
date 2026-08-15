@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
@@ -63,7 +63,18 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
     },
   });
 
-  await logAction(session.username, "CREATE_ACTIVITY", activity.title);
+  await logAction(session.username, "CREATE_ACTIVITY", activity.title, {
+    ...auditContext(session, req),
+    targetType: "Activity",
+    targetId: activity.id,
+    after: {
+      title: activity.title,
+      period: activity.period,
+      capacity: activity.capacity,
+      isTournament: activity.isTournament,
+      isVolunteer: activity.isVolunteer,
+    },
+  });
 
   return NextResponse.json({ activity }, { status: 201 });
 });

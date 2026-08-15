@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
@@ -40,7 +40,7 @@ export const POST = withRoute(
     }
 
     // Admin-initiated registration is confirmed immediately — no review queue.
-    await prisma.activityRegistration.upsert({
+    const registration = await prisma.activityRegistration.upsert({
       where: { memberId_activityId: { memberId, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
       create: { memberId, activityId: id, status: "ACTIVE" },
@@ -50,6 +50,12 @@ export const POST = withRoute(
       session.username,
       "ADMIN_REGISTER_ACTIVITY",
       `${member.fullName} → ${activity.title}`,
+      {
+        ...auditContext(session, req),
+        targetType: "ActivityRegistration",
+        targetId: registration.id,
+        after: { status: registration.status, memberId, activityId: id },
+      },
     );
 
     return NextResponse.json({ ok: true });
@@ -67,6 +73,8 @@ export const PATCH = withRoute(
       where: { id: registrationId },
       select: {
         activityId: true,
+        status: true,
+        rejectionReason: true,
         member: { select: { fullName: true, userId: true } },
         activity: { select: { title: true } },
       },
@@ -87,6 +95,13 @@ export const PATCH = withRoute(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
       `${registration.member.fullName} → ${registration.activity.title}`,
+      {
+        ...auditContext(session, req),
+        targetType: "ActivityRegistration",
+        targetId: registrationId,
+        before: { status: registration.status, rejectionReason: registration.rejectionReason },
+        after: { status: updated.status, rejectionReason: updated.rejectionReason },
+      },
     );
 
     if (registration.member.userId) {
