@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatActivityDates } from "@/lib/activityDates";
 import LandingActivities from "@/components/LandingActivities";
+import PageHeader from "@/components/PageHeader";
 
 // The activities tab for someone with no account. A signed-in member gets
 // /home instead, which knows what they are registered for.
@@ -22,7 +23,9 @@ export default async function ActivitiesPage() {
 
   return (
     <div className="app-shell">
+      <PageHeader title="الأنشطة" />
       <LandingActivities
+        heading={false}
         activities={rows.map((a) => ({
           id: a.id,
           title: a.title,
