@@ -6,7 +6,7 @@ import { formatDate, formatTime, loginPathWithNext, toThumbUrl, validatePhone } 
 import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
-import DialogClose from "@/components/DialogClose";
+import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
@@ -707,15 +707,10 @@ export default function AdminPaymentsPage() {
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
             style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
           >
-            <div
-              className="px-5 py-4 flex items-center justify-between sticky top-0"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <h2 className="font-black text-white text-base">
-                <IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>
-              </h2>
-              <DialogClose onClick={() => setShowManualDonation(false)} />
-            </div>
+            <DialogHeader
+              title={<IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>}
+              onClose={() => setShowManualDonation(false)}
+            />
 
             <form onSubmit={createManualDonation} className="p-5 space-y-3">
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>

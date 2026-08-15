@@ -6,7 +6,7 @@ import { api, errorMessage } from "@/lib/api";
 import { uploadFile } from "@/lib/upload";
 import { emptyManualForm } from "./constants";
 import type { AgeGroup } from "./types";
-import DialogClose from "@/components/DialogClose";
+import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 
 type Props = {
@@ -100,15 +100,10 @@ export default function ManualAddDialog({
         className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
-        <div
-          className="px-5 py-4 flex items-center justify-between sticky top-0"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          <h2 className="font-black text-white text-base">
-            <IconLabel name="plus">إضافة عضو يدوياً</IconLabel>
-          </h2>
-          <DialogClose onClick={onClose} />
-        </div>
+        <DialogHeader
+          title={<IconLabel name="plus">إضافة عضو يدوياً</IconLabel>}
+          onClose={onClose}
+        />
 
         <div className="p-5 space-y-3">
           {result ? (

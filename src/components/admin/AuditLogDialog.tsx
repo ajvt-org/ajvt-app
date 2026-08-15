@@ -1,6 +1,6 @@
 "use client";
 
-import DialogBack from "@/components/DialogBack";
+import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import AuditLogEntryCard from "./AuditLogEntryCard";
 import type { AuditLogEntry } from "./auditLogTypes";
@@ -28,15 +28,7 @@ export default function AuditLogDialog({
         className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
         style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
       >
-        <div
-          className="px-5 py-4 flex items-center justify-between sticky top-0"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          <DialogBack onClick={onBack} />
-          <h2 className="font-black text-white text-base">
-            <IconLabel name="list">سجل الإجراءات</IconLabel>
-          </h2>
-        </div>
+        <DialogHeader title={<IconLabel name="list">سجل الإجراءات</IconLabel>} onBack={onBack} />
 
         <div className="p-5 space-y-2">
           {loading ? (
