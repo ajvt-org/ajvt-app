@@ -413,3 +413,17 @@ select:focus-visible,
 .icon-inline {
   transform: translateY(-0.14em);
 }
+
+/* A button that lays its content out inline sets the icon-and-label box on
+   the text baseline. That box takes its own baseline from its first item,
+   the icon, which has none, so the browser uses the icon's bottom edge and
+   the line box still reserves descender room below it. Making the button a
+   flex container takes the baseline out of the question. */
+:where(button, a):has(> .icon-label) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn:has(> .icon-label) {
+  display: flex;
+}
