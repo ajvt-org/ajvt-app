@@ -17,6 +17,7 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { hoursLabel } from "@/lib/arabicPlural";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -1034,7 +1035,7 @@ export default function AdminDashboard() {
                         {tempPassword}
                       </p>
                       <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                        صالحة {tempPasswordHours} ساعة، وسيُطلب منه تغييرها عند الدخول
+                        صالحة {hoursLabel(tempPasswordHours)}، وسيُطلب منه تغييرها عند الدخول
                       </p>
                     </div>
                     <button

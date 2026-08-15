@@ -10,6 +10,6 @@ export interface AppSettingsValues {
 export const DEFAULT_SETTINGS: AppSettingsValues = {
   membershipFee: 100,
   supportWhatsapp: "22241070328",
-  tempPasswordHours: 24,
+  tempPasswordHours: 1,
   whatsappGroup: null,
 };
