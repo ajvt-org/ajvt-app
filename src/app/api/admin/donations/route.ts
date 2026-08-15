@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
@@ -30,7 +30,19 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       status: "ACTIVE",
     },
   });
-  await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${n} أوقية`);
+  await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${n} أوقية`, {
+    ...auditContext(session, req),
+    targetType: "Donation",
+    targetId: donation.id,
+    after: {
+      donorName: donation.donorName,
+      donorPhone: donation.donorPhone,
+      amount: donation.amount,
+      paymentMethod: donation.paymentMethod,
+      status: donation.status,
+      source: donation.source,
+    },
+  });
 
   return NextResponse.json({ donation }, { status: 201 });
 });

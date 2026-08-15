@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
@@ -21,10 +21,7 @@ export const PATCH = withRoute(
     const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } =
       parse(donationUpdateSchema, await req.json());
 
-    const existing = await prisma.donation.findUnique({
-      where: { id },
-      select: { source: true, donorName: true },
-    });
+    const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
@@ -126,11 +123,18 @@ export const PATCH = withRoute(
       include: { member: { select: { fullName: true } } },
     });
 
+    const target = {
+      ...auditContext(session, req),
+      targetType: "Donation",
+      targetId: donation.id,
+    };
+
     if (status !== undefined) {
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
         donation.member?.fullName || existing.donorName || "فاعل خير",
+        { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
     if (memberId !== undefined) {
@@ -140,6 +144,11 @@ export const PATCH = withRoute(
         memberId
           ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}`
           : existing.donorName || "فاعل خير",
+        {
+          ...target,
+          before: { memberId: existing.memberId },
+          after: { memberId: donation.memberId },
+        },
       );
     }
     if (
@@ -154,6 +163,18 @@ export const PATCH = withRoute(
         session.username,
         "UPDATE_DONATION",
         donation.member?.fullName || donation.donorName || "فاعل خير",
+        {
+          ...target,
+          before: existing,
+          after: {
+            donorName: donation.donorName,
+            donorPhone: donation.donorPhone,
+            donorPhoto: donation.donorPhoto,
+            amount: donation.amount,
+            paymentMethod: donation.paymentMethod,
+            proof: donation.proof,
+          },
+        },
       );
     }
 
@@ -163,14 +184,11 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/donations/[id]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
 
-    const existing = await prisma.donation.findUnique({
-      where: { id },
-      select: { source: true, donorName: true, amount: true },
-    });
+    const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
@@ -189,6 +207,12 @@ export const DELETE = withRoute(
       session.username,
       "DELETE_DONATION",
       `${existing.donorName || "فاعل خير"} — ${existing.amount ?? 0} أوقية`,
+      {
+        ...auditContext(session, req),
+        targetType: "Donation",
+        targetId: id,
+        before: existing,
+      },
     );
 
     return NextResponse.json({ ok: true });
