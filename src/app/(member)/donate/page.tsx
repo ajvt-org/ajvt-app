@@ -29,7 +29,7 @@ function DonatePageInner() {
   const memberId = searchParams.get("memberId");
 
   const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
-  const [checkingMember, setCheckingMember] = useState(!!memberId);
+  const [checkingMember, setCheckingMember] = useState(true);
   const [confirmedAnonymous, setConfirmedAnonymous] = useState(false);
 
   const [wantsName, setWantsName] = useState<boolean | null>(null);
@@ -42,13 +42,31 @@ function DonatePageInner() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  // Arriving from /home carries the member in the URL. Arriving from the tab
+  // bar carries nothing, so the session is asked instead — otherwise a
+  // signed-in member is told they are about to donate without an account.
+  // A donation belongs to the account, not to one of its members, and an
+  // account has no name of its own; the first active member is the name it
+  // goes under, which is what the leaderboard link already assumes.
   useEffect(() => {
-    if (!memberId) return;
-    fetch(`/api/members/${memberId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && data.status === "ACTIVE") {
-          setLockedMember({ id: data.id, fullName: data.fullName });
+    const lookup = memberId
+      ? fetch(`/api/members/${memberId}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) =>
+            data && data.status === "ACTIVE" ? [{ id: data.id, fullName: data.fullName }] : [],
+          )
+      : fetch("/api/user/me")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) =>
+            (data?.members ?? [])
+              .filter((m: { status: string }) => m.status === "ACTIVE")
+              .map((m: { id: string; fullName: string }) => ({ id: m.id, fullName: m.fullName })),
+          );
+
+    lookup
+      .then((found: { id: string; fullName: string }[]) => {
+        if (found.length > 0) {
+          setLockedMember(found[0]);
           setWantsName(true);
         }
       })
@@ -139,7 +157,7 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
+        <PageHeader title={"دعم الرابطة"} />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -186,7 +204,7 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
+      <PageHeader title={"دعم الرابطة"} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">

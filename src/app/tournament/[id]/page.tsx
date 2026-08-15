@@ -158,7 +158,10 @@ export default async function PublicTournamentPage({
 
   return (
     <div className="app-shell">
-      <PageHeader title={activity.title} backHref={session ? "/home" : "/"} />
+      {/* The only way in is the activity's own page, and a tournament carries
+          the activity's id, so back goes where the visitor actually came
+          from rather than to whichever home their session implies. */}
+      <PageHeader title={activity.title} backHref={`/activities/${id}`} />
 
       <div className="flex-1 px-5 py-6 space-y-5">
         {activity.description && (

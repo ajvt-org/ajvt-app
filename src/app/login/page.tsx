@@ -7,6 +7,7 @@ import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
+import PageHeader from "@/components/PageHeader";
 
 export default function LoginPage() {
   return (
@@ -45,18 +46,7 @@ function LoginForm() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Image src="/version-final.png" alt="شعار" width={40} height={40} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">تسجيل الدخول</h1>
-        </div>
-      </div>
+      <PageHeader title="تسجيل الدخول" backHref="/" />
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="flex justify-center fade-up mb-4">
@@ -131,12 +121,6 @@ function LoginForm() {
             إنشاء حساب
           </Link>
         </p>
-
-        <div className="text-center fade-up delay-3 pt-2">
-          <Link href="/" className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <ArrowLabel direction="back">الصفحة الرئيسية</ArrowLabel>
-          </Link>
-        </div>
       </div>
     </div>
   );

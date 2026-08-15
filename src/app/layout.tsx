@@ -4,6 +4,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ToastProvider } from "@/components/Toast";
 import InstallPrompt from "@/components/InstallPrompt";
 import VisitTracker from "@/components/VisitTracker";
+import PullToRefresh from "@/components/PullToRefresh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://ajvt-app.onrender.com"),
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ServiceWorkerRegister />
         <VisitTracker />
+        <PullToRefresh />
         <ToastProvider>
           {children}
           <InstallPrompt />
