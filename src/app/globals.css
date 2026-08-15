@@ -230,6 +230,47 @@ select:focus-visible,
   flex-shrink: 0;
 }
 
+/* ---- Toggle ---- */
+/* The knob travels along the inline axis, so it starts at the leading edge
+   and ends at the trailing one in either direction the page is written. */
+.toggle {
+  position: relative;
+  width: 3rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--mint-200);
+  transition: background 0.18s ease;
+}
+
+.toggle[data-on] {
+  background: var(--mint-600);
+}
+
+.toggle:disabled {
+  opacity: 0.45;
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 0.1875rem;
+  inset-inline-start: 0.1875rem;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(26, 63, 51, 0.3);
+  transition: translate 0.18s ease;
+}
+
+.toggle[data-on] .toggle-knob {
+  translate: 1.25rem 0;
+}
+
+[dir="rtl"] .toggle[data-on] .toggle-knob {
+  translate: -1.25rem 0;
+}
+
 /* ---- Status badges ---- */
 .badge {
   display: inline-flex;
