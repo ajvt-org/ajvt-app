@@ -6,7 +6,7 @@ import BarChart from "@/components/admin/BarChart";
 import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
-import type { FilterTab, Member, AgeGroup } from "./types";
+import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
 import { uploadFile } from "@/lib/upload";
@@ -54,6 +54,7 @@ export default function AdminDashboard() {
   const [showManualAdd, setShowManualAdd] = useState(false);
 
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [orphanAges, setOrphanAges] = useState<OrphanAge[]>([]);
   const [showAgeGroups, setShowAgeGroups] = useState(false);
 
   useEffect(() => {
@@ -80,8 +81,11 @@ export default function AdminDashboard() {
 
   async function fetchAgeGroups() {
     try {
-      const data = await api.get<{ ageGroups: AgeGroup[] }>("/api/admin/age-groups");
+      const data = await api.get<{ ageGroups: AgeGroup[]; orphans: OrphanAge[] }>(
+        "/api/admin/age-groups",
+      );
       setAgeGroups(data.ageGroups || []);
+      setOrphanAges(data.orphans || []);
     } catch {
       // non-critical — the age select just falls back to an empty list
     }
@@ -1218,7 +1222,11 @@ export default function AdminDashboard() {
       {showAgeGroups && (
         <AgeGroupsDialog
           ageGroups={ageGroups}
-          onChanged={fetchAgeGroups}
+          orphans={orphanAges}
+          onChanged={() => {
+            fetchAgeGroups();
+            fetchMembers();
+          }}
           onClose={() => setShowAgeGroups(false)}
         />
       )}

@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import type { AgeGroup } from "./types";
+import type { AgeGroup, OrphanAge } from "./types";
+import OrphanAgeGroups from "./OrphanAgeGroups";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
 export default function AgeGroupsDialog({
   ageGroups,
+  orphans,
   onChanged,
   onClose,
 }: {
   ageGroups: AgeGroup[];
+  orphans: OrphanAge[];
   onChanged: () => void;
   onClose: () => void;
 }) {
@@ -100,6 +103,8 @@ export default function AgeGroupsDialog({
             هذه القائمة تظهر عند إضافة عضو أو تعديل عصره. تعديل اسم عصر هنا يغيّره لدى كل الأعضاء
             الذين اختاروه من قبل، أما حذفه فلا يغيّر شيئاً لديهم.
           </p>
+
+          <OrphanAgeGroups orphans={orphans} ageGroups={ageGroups} onChanged={onChanged} />
 
           <form onSubmit={addAgeGroup} className="flex items-center gap-2">
             <input
