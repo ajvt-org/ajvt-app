@@ -3,13 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { generateMemberNumber } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-import { getClientIp } from "@/lib/rateLimit";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -63,8 +62,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     action === "ACTIVE" ? "APPROVE_MEMBER" : "REJECT_MEMBER",
     `${updated.fullName}${transition}`,
     {
-      adminId: session.adminId,
-      adminRole: session.role,
+      ...auditContext(session, req),
       targetType: "Member",
       targetId: updated.id,
       before: existing,
@@ -73,8 +71,6 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         memberNumber: updated.memberNumber,
         rejectionReason: updated.rejectionReason,
       },
-      ip: getClientIp(req),
-      userAgent: req.headers.get("user-agent") ?? undefined,
     },
   );
 
