@@ -230,6 +230,30 @@ select:focus-visible,
   flex-shrink: 0;
 }
 
+/* The title is remounted when it changes, so a banner that takes on the name
+   of whatever you scrolled to slides its new title in rather than swapping it
+   between frames. Everywhere else the title never changes and this never runs. */
+.page-header-title {
+  animation: header-title-in 0.2s ease;
+}
+
+@keyframes header-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-header-title {
+    animation: none;
+  }
+}
+
 /* ---- Toggle ---- */
 /* The knob travels along the inline axis, so it starts at the leading edge
    and ends at the trailing one in either direction the page is written. */

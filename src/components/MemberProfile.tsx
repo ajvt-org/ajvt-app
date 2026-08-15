@@ -22,12 +22,14 @@ export default function MemberProfile({
   delayIndex,
   onPhotoUpdated,
   onReload,
+  nameRef,
 }: {
   member: MemberData;
   whatsappLink: string;
   delayIndex: number;
   onPhotoUpdated: (photo: string | null) => void;
   onReload: () => void;
+  nameRef?: (el: HTMLElement | null) => void;
 }) {
   const router = useRouter();
   const delayClass = delayIndex === 0 ? "" : "delay-1";
@@ -35,7 +37,7 @@ export default function MemberProfile({
 
   return (
     <div className={`fade-up ${delayClass} space-y-4`}>
-      <MemberIdentity member={member} onPhotoUpdated={onPhotoUpdated} />
+      <MemberIdentity member={member} onPhotoUpdated={onPhotoUpdated} nameRef={nameRef} />
 
       {!active && (
         <>

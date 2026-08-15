@@ -12,7 +12,7 @@ export default function PageHeader({
 }) {
   return (
     <div
-      className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
+      className="page-header px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
       {backHref ? <BackButton href={backHref} /> : null}
@@ -21,7 +21,9 @@ export default function PageHeader({
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
           رابطة شباب قرية التاكلالت
         </p>
-        <h1 className="text-base font-black text-white truncate">{title}</h1>
+        <h1 key={title} className="page-header-title text-base font-black text-white truncate">
+          {title}
+        </h1>
       </div>
       {actions}
     </div>
