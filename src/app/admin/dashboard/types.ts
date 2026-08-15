@@ -23,6 +23,7 @@ export interface Member {
 export interface AgeGroup {
   id: string;
   name: string;
+  count?: number;
 }
 
 export interface OrphanAge {

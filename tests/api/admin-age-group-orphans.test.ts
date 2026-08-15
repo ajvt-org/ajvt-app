@@ -51,6 +51,21 @@ describe("GET /api/admin/age-groups", () => {
 
     expect(body.orphans.map((o: { name: string }) => o.name)).toEqual(["ب", "أ"]);
   });
+
+  it("counts the members in each group so a merge can show the size", async () => {
+    await signInAsAdmin(await createAdmin());
+    await prisma.ageGroup.create({ data: { name: "المنصورون" } });
+    await prisma.ageGroup.create({ data: { name: "المبشرين" } });
+    await aMember("محمد", "المنصورون");
+    await aMember("أحمد", "المنصورون");
+
+    const body = await (await GET()).json();
+
+    const byName = Object.fromEntries(
+      body.ageGroups.map((g: { name: string; count: number }) => [g.name, g.count]),
+    );
+    expect(byName).toEqual({ المنصورون: 2, المبشرين: 0 });
+  });
 });
 
 describe("POST /api/admin/age-groups/reassign", () => {
