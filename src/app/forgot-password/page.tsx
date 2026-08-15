@@ -42,6 +42,10 @@ export default function ForgotPasswordPage() {
             لا يمكن استعادة كلمة المرور تلقائياً حالياً. تواصل معنا عبر واتساب وسيقوم أحد المشرفين
             بإعادة تعيينها لك خلال وقت قصير.
           </p>
+          <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+            ستصلك كلمة مرور مؤقتة صالحة لمدة محدودة، وسيُطلب منك اختيار كلمة مرور خاصة بك عند أول
+            دخول.
+          </p>
         </div>
 
         <div className="fade-up delay-1">

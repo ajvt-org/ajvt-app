@@ -11,8 +11,8 @@ describe("changePasswordSchema", () => {
     });
   });
 
-  it("rejects a missing current password", () => {
-    expect(rejectionOf(changePasswordSchema, { newPassword: "new" })).toBe("بيانات غير صالحة");
+  it("allows a missing current password, which a temporary one is not asked for", () => {
+    expect(parse(changePasswordSchema, { newPassword: "new" })).toEqual({ newPassword: "new" });
   });
 
   it("rejects an empty current password, so a blank field is not a valid answer", () => {

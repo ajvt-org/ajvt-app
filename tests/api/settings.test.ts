@@ -8,6 +8,7 @@ import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
 const valid = {
   membershipFee: 250,
   supportWhatsapp: "22299887766",
+  tempPasswordHours: 12,
   whatsappGroup: "https://chat.whatsapp.com/abc",
 };
 
