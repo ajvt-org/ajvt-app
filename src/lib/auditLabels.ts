@@ -33,6 +33,7 @@ export const ACTION_LABELS: Record<string, string> = {
   CREATE_AGE_GROUP: "إضافة عصر",
   UPDATE_AGE_GROUP: "تعديل اسم عصر",
   DELETE_AGE_GROUP: "حذف عصر",
+  REASSIGN_AGE_GROUP: "نقل أعضاء إلى عصر آخر",
   CREATE_QUIZ_QUESTION: "إضافة سؤال ",
   UPDATE_QUIZ_QUESTION: "تعديل سؤال ",
   DELETE_QUIZ_QUESTION: "حذف سؤال ",
