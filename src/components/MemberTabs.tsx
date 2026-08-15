@@ -2,27 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Icon, { type IconName } from "@/components/Icon";
+import Icon from "@/components/Icon";
+import { MEMBER_TABS, VISITOR_TABS } from "@/lib/navigation";
 
 // The bar is fixed, so it would sit on top of the last thing on the page. The
 // spacer is an ordinary block of the same height in normal flow, which keeps
 // every page clear of it without any page having to know the bar exists.
-const TABS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/home", label: "الأنشطة", icon: "trophy" },
-  { href: "/donate", label: "ادعم", icon: "heart" },
-  { href: "/quiz", label: "المسابقة", icon: "quiz" },
-];
-
-export default function MemberTabs() {
+export default function MemberTabs({ signedIn = true }: { signedIn?: boolean }) {
   const pathname = usePathname();
+  const tabs = signedIn ? MEMBER_TABS : VISITOR_TABS;
 
   return (
     <>
       <div className="tab-bar-spacer" aria-hidden="true" />
       <nav className="tab-bar" aria-label="التنقل">
         <div className="tab-bar-inner">
-          {TABS.map((tab) => {
-            const active = pathname === tab.href || pathname?.startsWith(`${tab.href}/`);
+          {tabs.map((tab) => {
+            const active = tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
             return (
               <Link
                 key={tab.href}
