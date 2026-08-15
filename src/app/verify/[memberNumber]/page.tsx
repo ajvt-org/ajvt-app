@@ -35,7 +35,7 @@ export default async function VerifyPage({
 
   return (
     <div className="app-shell">
-      <PageHeader title={"التحقق من العضوية"} backHref={session ? "/home" : "/"} />
+      <PageHeader title={"التحقق من العضوية"} backHref={session ? "/profile" : "/"} />
 
       <div className="flex-1 px-5 py-8 space-y-5">
         {valid ? (

@@ -82,7 +82,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         action === "ACTIVE"
           ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
           : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
-      url: "/home",
+      url: "/profile",
     }).catch((err) => logger.error("push.notify.error", err));
   }
 
