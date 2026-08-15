@@ -24,6 +24,9 @@ const FIELD_LABELS: Record<string, string> = {
   date: "التاريخ",
   title: "العنوان",
   whatsappLink: "رابط الواتساب",
+  startsAt: "تاريخ البداية",
+  endsAt: "تاريخ النهاية",
+  withTime: "تحديد الساعة",
   membersRenamed: "الأعضاء المحدَّثون",
 };
 
