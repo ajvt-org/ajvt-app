@@ -7,7 +7,7 @@ import { PAYMENT_METHODS } from "@/lib/donations";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
 import DialogHeader from "@/components/DialogHeader";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
 interface Proof {
@@ -315,11 +315,15 @@ export default function AdminPaymentsPage() {
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const KIND_TABS: { key: "ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION"; label: string }[] = [
+  const KIND_TABS: {
+    key: "ALL" | "MEMBERSHIP" | "ACTIVITY" | "DONATION";
+    label: string;
+    icon?: IconName;
+  }[] = [
     { key: "ALL", label: "الكل" },
-    { key: "MEMBERSHIP", label: "💳 انتساب" },
-    { key: "ACTIVITY", label: "🏆 الأنشطة" },
-    { key: "DONATION", label: "💚 دعم" },
+    { key: "MEMBERSHIP", label: "انتساب", icon: "card" as const },
+    { key: "ACTIVITY", label: "الأنشطة", icon: "trophy" as const },
+    { key: "DONATION", label: "دعم", icon: "heart" as const },
   ];
 
   const linkQuery = linkSearch.trim();
@@ -340,7 +344,7 @@ export default function AdminPaymentsPage() {
     <div className="admin-page space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          🧾 كل إثباتات الدفع ({proofs.length})
+          <IconLabel name="receipt">كل إثباتات الدفع ({proofs.length})</IconLabel>
         </p>
         <button
           onClick={() => {
@@ -364,7 +368,7 @@ export default function AdminPaymentsPage() {
               color: kindFilter === t.key ? "white" : "var(--mint-700)",
             }}
           >
-            {t.label}
+            {t.icon ? <IconLabel name={t.icon}>{t.label}</IconLabel> : t.label}
           </button>
         ))}
       </div>
@@ -409,7 +413,7 @@ export default function AdminPaymentsPage() {
                     className="w-14 h-14 rounded-lg flex items-center justify-center text-xl shrink-0"
                     style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
                   >
-                    📇
+                    <Icon name="contact" size={18} className="icon-inline" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -423,19 +427,25 @@ export default function AdminPaymentsPage() {
                         : STATUS_LABEL[p.status] || p.status}
                     </span>
                     {p.kind === "DONATION" && p.memberId && (
-                      <span className="badge badge-active">🔗 مرتبط بعضو</span>
+                      <span className="badge badge-active">
+                        <IconLabel name="link" size={11}>
+                          مرتبط بعضو
+                        </IconLabel>
+                      </span>
                     )}
                   </div>
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                    {p.kind === "MEMBERSHIP"
-                      ? "💳 عضوية الرابطة"
-                      : p.kind === "ACTIVITY"
-                        ? `🏆 ${p.activityTitle}`
-                        : "💚 دعم عام للرابطة"}
+                    {p.kind === "MEMBERSHIP" ? (
+                      <IconLabel name="card">عضوية الرابطة</IconLabel>
+                    ) : p.kind === "ACTIVITY" ? (
+                      <IconLabel name="trophy">{p.activityTitle}</IconLabel>
+                    ) : (
+                      <IconLabel name="heart">دعم عام للرابطة</IconLabel>
+                    )}
                   </p>
                   {p.kind === "DONATION" && p.donorPhone && (
                     <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }} dir="ltr">
-                      📞 {p.donorPhone}
+                      <Icon name="phone" size={13} className="icon-inline" /> {p.donorPhone}
                     </p>
                   )}
                   <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
@@ -454,7 +464,7 @@ export default function AdminPaymentsPage() {
                             className="text-xs px-3 py-1.5 rounded-lg font-bold"
                             style={{ background: "var(--mint-600)", color: "white" }}
                           >
-                            {busyId === p.id ? "..." : "✓ قبول"}
+                            {busyId === p.id ? "..." : <IconLabel name="check">قبول</IconLabel>}
                           </button>
                           <button
                             onClick={() => reviewDonation(p.id, "REJECTED")}
@@ -473,7 +483,7 @@ export default function AdminPaymentsPage() {
                           className="text-xs px-3 py-1.5 rounded-lg font-bold"
                           style={{ background: "#fee2e2", color: "#991b1b" }}
                         >
-                          {busyId === p.id ? "..." : "🚫 إبطال التبرع"}
+                          {busyId === p.id ? "..." : <IconLabel name="ban">إبطال التبرع</IconLabel>}
                         </button>
                       )}
                       {p.status === "REJECTED" && (
@@ -522,7 +532,7 @@ export default function AdminPaymentsPage() {
                             className="text-xs px-3 py-1.5 rounded-lg font-bold"
                             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                           >
-                            🔗 ربط بعضو مسجل
+                            <IconLabel name="link">ربط بعضو مسجل</IconLabel>
                           </button>
                         ))}
                     </div>
@@ -600,7 +610,7 @@ export default function AdminPaymentsPage() {
                           className="p-2 rounded-lg text-xs font-semibold"
                           style={{ background: "#fee2e2", color: "#991b1b" }}
                         >
-                          ⚠️ {editError}
+                          <Icon name="warning" size={13} className="icon-inline" /> {editError}
                         </div>
                       )}
                       <div className="flex gap-2">
@@ -814,7 +824,7 @@ export default function AdminPaymentsPage() {
                   className="p-3 rounded-xl text-sm font-semibold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  ⚠️ {manualError}
+                  <Icon name="warning" size={13} className="icon-inline" /> {manualError}
                 </div>
               )}
 

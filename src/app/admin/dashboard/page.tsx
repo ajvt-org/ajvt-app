@@ -577,7 +577,11 @@ export default function AdminDashboard() {
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-600)", color: "white" }}
             >
-              {bulkLoading ? "..." : `✅ قبول الكل (${selectedIds.size})`}
+              {bulkLoading ? (
+                "..."
+              ) : (
+                <IconLabel name="check">قبول الكل ({selectedIds.size})</IconLabel>
+              )}
             </button>
           </div>
         </div>
@@ -879,7 +883,7 @@ export default function AdminDashboard() {
                       className="p-2 rounded-lg text-xs font-semibold mb-2"
                       style={{ background: "#fee2e2", color: "#991b1b" }}
                     >
-                      ⚠️ {editError}
+                      <Icon name="warning" size={13} className="icon-inline" /> {editError}
                     </div>
                   )}
                   <button
@@ -1085,7 +1089,7 @@ export default function AdminDashboard() {
                     disabled={actionLoading}
                     className="btn btn-primary text-sm"
                   >
-                    {actionLoading ? "..." : "✅ قبول"}
+                    {actionLoading ? "..." : <IconLabel name="check">قبول</IconLabel>}
                   </button>
                   <button
                     onClick={() => setShowRejectPicker(true)}
