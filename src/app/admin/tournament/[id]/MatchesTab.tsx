@@ -249,8 +249,8 @@ export default function MatchesTab({
           {bracketMatches.length === 0 ? (
             knockoutLocked ? (
               <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                <Icon name="lock" size={14} /> أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات
-                الدور الإقصائي هنا بعد انتهاء دور المجموعات.
+                <Icon name="lock" size={14} className="icon-inline" /> أكمل جميع نتائج دور المجموعات
+                أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.
               </p>
             ) : isTwoGroupFormat ? (
               <>
