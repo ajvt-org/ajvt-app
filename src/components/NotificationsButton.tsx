@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
+import IconLabel from "./IconLabel";
 
 type Status = "unsupported" | "default" | "subscribing" | "subscribed" | "denied" | "error";
 
@@ -95,7 +96,7 @@ export default function NotificationsButton({ dismissible = false }: { dismissib
     <div className="card p-4 flex items-center justify-between gap-3">
       <div>
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          🔔 فعّل الإشعارات
+          <IconLabel name="bell">فعّل الإشعارات</IconLabel>
         </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {status === "denied"
