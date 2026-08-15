@@ -11,16 +11,19 @@ export const MEMBER_TABS: Tab[] = [
   { href: "/quiz", label: "المسابقة", icon: "quiz" },
 ];
 
-// A visitor with no account gets the same shape, with the last tab pointing
-// at the way in rather than at their own pages.
+// A visitor gets the way in first — leading edge, so rightmost in Arabic —
+// and it points at the landing page rather than straight at the login form,
+// which carries no bar and would strand them.
 export const VISITOR_TABS: Tab[] = [
-  { href: "/", label: "الأنشطة", icon: "trophy" },
+  { href: "/", label: "دخول", icon: "user" },
+  { href: "/activities", label: "الأنشطة", icon: "trophy" },
   { href: "/donate", label: "ادعم", icon: "heart" },
   { href: "/quiz", label: "المسابقة", icon: "quiz" },
-  { href: "/login", label: "دخول", icon: "user" },
 ];
 
 export type LandingSection = "hero" | "activities";
 
-// Order is the order on screen. Drop one to hide it.
-export const LANDING_SECTIONS: LandingSection[] = ["hero", "activities"];
+// The landing page is the way in: who the association is and the two doors.
+// The activities have their own tab, so they are not repeated here. Adding
+// "activities" back puts the list underneath the hero again.
+export const LANDING_SECTIONS: LandingSection[] = ["hero"];

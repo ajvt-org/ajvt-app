@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
-import { loginPathWithNext } from "@/lib/utils";
 import { useToast } from "@/components/Toast";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
+import Link from "next/link";
+import IconLabel from "@/components/IconLabel";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -61,6 +62,7 @@ export default function QuizPage() {
 
   const [data, setData] = useState<QuizMeData | null>(null);
   const [ineligible, setIneligible] = useState(false);
+  const [visitor, setVisitor] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
@@ -70,8 +72,10 @@ export default function QuizPage() {
   function loadData() {
     return fetch("/api/quiz/me")
       .then((r) => {
+        // A visitor reached this from the tab bar or the landing page. Sending
+        // them to the login screen strands them there — it carries no tab bar.
         if (r.status === 401) {
-          router.push(loginPathWithNext("/login"));
+          setVisitor(true);
           return null;
         }
         if (r.status === 403) {
@@ -83,13 +87,12 @@ export default function QuizPage() {
       .then((json) => {
         if (json) setData(json);
       })
-      .catch(() => router.push(loginPathWithNext("/login")));
+      .catch(() => setVisitor(true));
   }
 
   useEffect(() => {
     loadData().finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
+  }, []);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -145,6 +148,30 @@ export default function QuizPage() {
         <div className="text-center" style={{ color: "var(--mint-500)" }}>
           <div className="text-4xl mb-3 animate-pulse">🧠</div>
           <p className="text-sm font-semibold">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (visitor) {
+    return (
+      <div className="app-shell">
+        <PageHeader title={"المسابقة الثقافية"} backHref="/" />
+        <div className="px-5 py-10">
+          <div className="card p-8 text-center fade-up">
+            <div className="mb-3 flex justify-center">
+              <Icon name="lock" size={40} />
+            </div>
+            <p className="font-bold" style={{ color: "var(--text-main)" }}>
+              المسابقة متاحة للمنتسبين فقط
+            </p>
+            <p className="text-sm mt-2" style={{ color: "var(--text-muted)" }}>
+              أنشئ حساباً وأكمل استمارة الانضمام للمشاركة في المسابقة الثقافية.
+            </p>
+            <Link href="/form" className="btn btn-primary mt-5">
+              <IconLabel name="pencil">أنشئ حسابك</IconLabel>
+            </Link>
+          </div>
         </div>
       </div>
     );
