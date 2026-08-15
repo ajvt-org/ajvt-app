@@ -29,6 +29,7 @@ export default function AdminSettingsPage() {
       const d = await api.patch<{ settings: AppSettingsValues }>("/api/admin/settings", {
         membershipFee: Number(values.membershipFee),
         supportWhatsapp: values.supportWhatsapp,
+        tempPasswordHours: Number(values.tempPasswordHours),
         whatsappGroup: values.whatsappGroup ?? "",
       });
       setValues(d.settings);
@@ -76,6 +77,29 @@ export default function AdminSettingsPage() {
           />
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
             المبلغ الأدنى المقبول في استمارة الانضمام.
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+            صلاحية كلمة المرور المؤقتة (ساعة)
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={720}
+            step={1}
+            value={values.tempPasswordHours}
+            onChange={(e) =>
+              setValues((p) => ({ ...p, tempPasswordHours: Number(e.target.value) || 0 }))
+            }
+            required
+            {...arabicValidity()}
+            className="input"
+            dir="ltr"
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            بعد هذه المدة تتوقف كلمة المرور المؤقتة عن العمل ويحتاج العضو إلى واحدة جديدة.
           </p>
         </div>
 

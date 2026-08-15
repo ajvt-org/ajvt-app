@@ -7,6 +7,7 @@ export async function getAppSettings(): Promise<AppSettingsValues> {
   return {
     membershipFee: row.membershipFee,
     supportWhatsapp: row.supportWhatsapp,
+    tempPasswordHours: row.tempPasswordHours,
     whatsappGroup: row.whatsappGroup,
   };
 }

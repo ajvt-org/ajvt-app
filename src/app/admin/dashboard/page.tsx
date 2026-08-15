@@ -16,6 +16,8 @@ import { initialFilterTab } from "./initialTab";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { hoursLabel } from "@/lib/arabicPlural";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -35,6 +37,7 @@ export default function AdminDashboard() {
   const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [tempPasswordHours, setTempPasswordHours] = useState(DEFAULT_SETTINGS.tempPasswordHours);
   const [accountPhoneInput, setAccountPhoneInput] = useState("");
   const [attachAccountLoading, setAttachAccountLoading] = useState(false);
   const [attachAccountError, setAttachAccountError] = useState("");
@@ -228,10 +231,12 @@ export default function AdminDashboard() {
     setResetLoading(true);
     setTempPassword(null);
     try {
-      const data = await api.post<{ tempPassword: string }>("/api/admin/reset-password", {
-        userId,
-      });
+      const data = await api.post<{ tempPassword: string; hours: number }>(
+        "/api/admin/reset-password",
+        { userId },
+      );
       setTempPassword(data.tempPassword);
+      setTempPasswordHours(data.hours);
     } catch (e) {
       alert(errorMessage(e));
     } finally {
@@ -1020,7 +1025,7 @@ export default function AdminDashboard() {
                   >
                     <div>
                       <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
-                        كلمة المرور الجديدة — سلّمها للعضو
+                        كلمة المرور المؤقتة — سلّمها للعضو
                       </p>
                       <p
                         className="font-mono font-black text-lg"
@@ -1028,6 +1033,9 @@ export default function AdminDashboard() {
                         dir="ltr"
                       >
                         {tempPassword}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                        صالحة {hoursLabel(tempPasswordHours)}، وسيُطلب منه تغييرها عند الدخول
                       </p>
                     </div>
                     <button
