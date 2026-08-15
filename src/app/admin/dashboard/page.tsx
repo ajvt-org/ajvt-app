@@ -457,14 +457,16 @@ export default function AdminDashboard() {
         </button>
         <button
           onClick={exportCSV}
-          className="text-sm font-bold px-4 py-2.5 rounded-xl"
+          aria-label="تصدير CSV"
+          title="تصدير CSV"
+          className="text-sm font-bold px-4 py-2.5 rounded-xl flex items-center"
           style={{
             background: "white",
             color: "var(--mint-700)",
             border: "1px solid var(--mint-100)",
           }}
         >
-          <IconLabel name="download">CSV</IconLabel>
+          <Icon name="download" size={18} />
         </button>
       </div>
 
@@ -534,7 +536,7 @@ export default function AdminDashboard() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          🏷️ الأعصر
+          🏷️ الأعصار
         </button>
         <button
           onClick={() => setShowManualAdd(true)}

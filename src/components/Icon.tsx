@@ -35,7 +35,7 @@ export default function Icon({
   className,
 }: {
   name: IconName;
-  size?: number;
+  size?: number | string;
   className?: string;
 }) {
   return (
