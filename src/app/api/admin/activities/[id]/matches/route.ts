@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
@@ -131,7 +131,18 @@ export const POST = withRoute(
 
     const home = teams.find((t) => t.id === homeTeamId)!;
     const away = teams.find((t) => t.id === awayTeamId)!;
-    await logAction(session.username, "CREATE_MATCH", `${home.name} × ${away.name}`);
+    await logAction(session.username, "CREATE_MATCH", `${home.name} × ${away.name}`, {
+      ...auditContext(session, req),
+      targetType: "Match",
+      targetId: match.id,
+      after: {
+        activityId: id,
+        homeTeam: home.name,
+        awayTeam: away.name,
+        matchDate: match.matchDate,
+        isKnockout: match.isKnockout,
+      },
+    });
 
     notifyTeams(homeTeamId, awayTeamId, {
       title: "رابطة شباب التاكلالت",

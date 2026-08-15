@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
 
@@ -61,6 +61,12 @@ export const POST = withRoute(
       session.username,
       "ADD_TEAM_MEMBER",
       `${teamMember.member.fullName} → ${team.name}`,
+      {
+        ...auditContext(session, req),
+        targetType: "TeamMember",
+        targetId: teamMember.id,
+        after: { teamId, memberId, teamName: team.name },
+      },
     );
 
     return NextResponse.json({ teamMember }, { status: 201 });

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]/members/[memberId]",
   async (
-    _req: NextRequest,
+    req: NextRequest,
     { params }: { params: Promise<{ teamId: string; memberId: string }> },
   ) => {
     const session = await requireAdminRole("ACTIVITIES");
@@ -17,6 +17,7 @@ export const PATCH = withRoute(
       where: { teamId_memberId: { teamId, memberId } },
       select: {
         id: true,
+        status: true,
         team: { select: { name: true } },
         member: { select: { fullName: true } },
       },
@@ -33,6 +34,13 @@ export const PATCH = withRoute(
       session.username,
       "APPROVE_TEAM_JOIN",
       `${existing.member.fullName} — ${existing.team.name}`,
+      {
+        ...auditContext(session, req),
+        targetType: "TeamMember",
+        targetId: existing.id,
+        before: { status: existing.status },
+        after: { status: teamMember.status },
+      },
     );
 
     return NextResponse.json({ teamMember });
@@ -42,13 +50,37 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/teams/[teamId]/members/[memberId]",
   async (
-    _req: NextRequest,
+    req: NextRequest,
     { params }: { params: Promise<{ teamId: string; memberId: string }> },
   ) => {
-    await requireAdminRole("ACTIVITIES");
+    const session = await requireAdminRole("ACTIVITIES");
     const { teamId, memberId } = await params;
 
-    await prisma.teamMember.deleteMany({ where: { teamId, memberId } });
+    const existing = await prisma.teamMember.findUnique({
+      where: { teamId_memberId: { teamId, memberId } },
+      select: {
+        id: true,
+        status: true,
+        team: { select: { name: true } },
+        member: { select: { fullName: true } },
+      },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
+    }
+
+    await prisma.teamMember.delete({ where: { id: existing.id } });
+    await logAction(
+      session.username,
+      "REMOVE_TEAM_MEMBER",
+      `${existing.member.fullName} — ${existing.team.name}`,
+      {
+        ...auditContext(session, req),
+        targetType: "TeamMember",
+        targetId: existing.id,
+        before: { teamId, memberId, status: existing.status },
+      },
+    );
 
     return NextResponse.json({ ok: true });
   },

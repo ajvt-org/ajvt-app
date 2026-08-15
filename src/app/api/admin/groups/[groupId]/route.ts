@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 export const PATCH = withRoute(
@@ -36,8 +36,18 @@ export const PATCH = withRoute(
       }
     }
 
+    const existing = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true, capacity: true },
+    });
     const group = await prisma.group.update({ where: { id: groupId }, data });
-    await logAction(session.username, "UPDATE_GROUP", group.name);
+    await logAction(session.username, "UPDATE_GROUP", group.name, {
+      ...auditContext(session, req),
+      targetType: "Group",
+      targetId: group.id,
+      before: existing,
+      after: { name: group.name, capacity: group.capacity },
+    });
 
     return NextResponse.json({ group });
   },
