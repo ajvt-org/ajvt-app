@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-const USER_PROTECTED = ["/home"];
+const USER_PROTECTED = ["/home", "/profile"];
 const ADMIN_PROTECTED = ["/admin/dashboard"];
 
 // So the user lands back where they were after signing back in, instead of
@@ -59,5 +59,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/home/:path*", "/form/:path*", "/admin/dashboard/:path*"],
+  matcher: ["/home/:path*", "/profile/:path*", "/form/:path*", "/admin/dashboard/:path*"],
 };
