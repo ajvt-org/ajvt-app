@@ -87,6 +87,9 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       capacity: activity.capacity,
       isTournament: activity.isTournament,
       isVolunteer: activity.isVolunteer,
+      startsAt: activity.startsAt,
+      endsAt: activity.endsAt,
+      withTime: activity.withTime,
     },
   });
 

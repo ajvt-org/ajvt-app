@@ -93,6 +93,9 @@ export const PATCH = withRoute(
         isTournament: activity.isTournament,
         isVolunteer: activity.isVolunteer,
         whatsappLink: activity.whatsappLink,
+        startsAt: activity.startsAt,
+        endsAt: activity.endsAt,
+        withTime: activity.withTime,
       },
     });
 
