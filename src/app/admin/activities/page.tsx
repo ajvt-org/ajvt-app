@@ -10,6 +10,8 @@ import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
+import ActivityDatesEditor from "./ActivityDatesEditor";
+import { formatActivityDates } from "@/lib/activityDates";
 
 interface Registration {
   id: string;
@@ -24,6 +26,9 @@ interface Activity {
   title: string;
   description: string;
   period: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  withTime: boolean;
   photo: string | null;
   capacity: number | null;
   isOpen: boolean;
@@ -58,7 +63,8 @@ export default function AdminActivitiesPage() {
   const [newActivity, setNewActivity] = useState({
     title: "",
     description: "",
-    period: "",
+    startsAt: "",
+    endsAt: "",
     capacity: "",
     photo: "",
     isTournament: false,
@@ -119,7 +125,8 @@ export default function AdminActivitiesPage() {
       setNewActivity({
         title: "",
         description: "",
-        period: "",
+        startsAt: "",
+        endsAt: "",
         capacity: "",
         photo: "",
         isTournament: false,
@@ -363,9 +370,10 @@ export default function AdminActivitiesPage() {
                       className="flex items-center gap-3 text-xs mt-2 flex-wrap"
                       style={{ color: "var(--text-muted)" }}
                     >
-                      {a.period && (
+                      {formatActivityDates(a) && (
                         <span>
-                          📅 <NumericRanges>{a.period}</NumericRanges>
+                          <Icon name="calendar" size={13} className="icon-inline" />{" "}
+                          <NumericRanges>{formatActivityDates(a)!}</NumericRanges>
                         </span>
                       )}
                       {!a.isVolunteer && (
@@ -425,6 +433,9 @@ export default function AdminActivitiesPage() {
                         )}
                       </div>
                     )}
+                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
+                      <ActivityDatesEditor activity={a} onSaved={loadAll} />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -691,13 +702,27 @@ export default function AdminActivitiesPage() {
           rows={3}
           className="input"
         />
-        <input
-          type="text"
-          placeholder="الفترة (اختياري) — مثال: 22-23 أغسطس 2026"
-          value={newActivity.period}
-          onChange={(e) => setNewActivity((p) => ({ ...p, period: e.target.value }))}
-          className="input"
-        />
+        <div className="flex items-center gap-2">
+          <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+            من
+          </label>
+          <input
+            type="date"
+            value={newActivity.startsAt}
+            onChange={(e) => setNewActivity((p) => ({ ...p, startsAt: e.target.value }))}
+            className="input"
+          />
+          <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+            إلى
+          </label>
+          <input
+            type="date"
+            value={newActivity.endsAt}
+            min={newActivity.startsAt || undefined}
+            onChange={(e) => setNewActivity((p) => ({ ...p, endsAt: e.target.value }))}
+            className="input"
+          />
+        </div>
         <input
           type="number"
           min={1}

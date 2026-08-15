@@ -52,7 +52,10 @@ model Activity {
   id            String                 @id @default(cuid())
   title         String
   description   String
-  period        String?
+  period        String? // legacy free text, shown only when startsAt is unset
+  startsAt      DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
+  endsAt        DateTime?
+  withTime      Boolean                @default(false)
   photo         String?
   capacity      Int?
   isOpen        Boolean                @default(true)

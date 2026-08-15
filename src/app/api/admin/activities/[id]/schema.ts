@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { capacity } from "../schema";
+import { capacity, activityDate, endsAfterStart, DATE_ORDER_INVALID } from "../schema";
 
 const INVALID = "بيانات غير صالحة";
 const TITLE_REQUIRED = "العنوان مطلوب";
@@ -14,25 +14,30 @@ const order = z.unknown().superRefine((v, ctx) => {
   if (!Number.isInteger(Number(v))) ctx.addIssue({ code: "custom", message: INVALID });
 });
 
-export const activityUpdateSchema = z.object({
-  title: z
-    .string(TITLE_REQUIRED)
-    .refine((v) => v.trim().length > 0, TITLE_REQUIRED)
-    .refine((v) => v.trim().length <= TITLE_MAX, TITLE_TOO_LONG)
-    .transform((v) => v.trim())
-    .optional(),
-  description: z
-    .string(DESCRIPTION_REQUIRED)
-    .refine((v) => v.trim().length > 0, DESCRIPTION_REQUIRED)
-    .refine((v) => v.trim().length <= DESCRIPTION_MAX, DESCRIPTION_TOO_LONG)
-    .transform((v) => v.trim())
-    .optional(),
-  period: z.string(INVALID).nullish(),
-  capacity: capacity.optional(),
-  isOpen: z.unknown().optional(),
-  photo: z.string(INVALID).nullish(),
-  isTournament: z.unknown().optional(),
-  isVolunteer: z.unknown().optional(),
-  whatsappLink: z.string(INVALID).nullish(),
-  order: order.optional(),
-});
+export const activityUpdateSchema = z
+  .object({
+    title: z
+      .string(TITLE_REQUIRED)
+      .refine((v) => v.trim().length > 0, TITLE_REQUIRED)
+      .refine((v) => v.trim().length <= TITLE_MAX, TITLE_TOO_LONG)
+      .transform((v) => v.trim())
+      .optional(),
+    description: z
+      .string(DESCRIPTION_REQUIRED)
+      .refine((v) => v.trim().length > 0, DESCRIPTION_REQUIRED)
+      .refine((v) => v.trim().length <= DESCRIPTION_MAX, DESCRIPTION_TOO_LONG)
+      .transform((v) => v.trim())
+      .optional(),
+    period: z.string(INVALID).nullish(),
+    capacity: capacity.optional(),
+    isOpen: z.unknown().optional(),
+    photo: z.string(INVALID).nullish(),
+    isTournament: z.unknown().optional(),
+    isVolunteer: z.unknown().optional(),
+    whatsappLink: z.string(INVALID).nullish(),
+    order: order.optional(),
+    startsAt: activityDate.optional(),
+    endsAt: activityDate.optional(),
+    withTime: z.unknown().optional(),
+  })
+  .refine(endsAfterStart, { message: DATE_ORDER_INVALID, path: ["endsAt"] });

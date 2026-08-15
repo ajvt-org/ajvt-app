@@ -18,21 +18,49 @@ export const capacity = z
   })
   .transform((v) => (v === null || v === "" ? null : Number(v)));
 
-export const activityCreateSchema = z.object({
-  title: z
-    .string(BOTH_REQUIRED)
-    .refine((v) => v.trim().length > 0, BOTH_REQUIRED)
-    .refine((v) => v.trim().length <= TITLE_MAX, TITLE_TOO_LONG)
-    .transform((v) => v.trim()),
-  description: z
-    .string(BOTH_REQUIRED)
-    .refine((v) => v.trim().length > 0, BOTH_REQUIRED)
-    .refine((v) => v.trim().length <= DESCRIPTION_MAX, DESCRIPTION_TOO_LONG)
-    .transform((v) => v.trim()),
-  period: z.string(INVALID).nullish(),
-  photo: z.string(INVALID).nullish(),
-  capacity: capacity.optional(),
-  isTournament: z.unknown().optional(),
-  isVolunteer: z.unknown().optional(),
-  whatsappLink: z.string(INVALID).nullish(),
-});
+const DATE_INVALID = "تاريخ غير صالح";
+const ORDER_INVALID = "تاريخ النهاية قبل تاريخ البداية";
+
+// The admin form sends "YYYY-MM-DD" and an optional "HH:MM". Both are read as
+// UTC so the stored day is the calendar day the admin picked, whatever zone
+// the browser is in.
+export const activityDate = z
+  .unknown()
+  .superRefine((v, ctx) => {
+    if (v === null || v === "" || v === undefined) return;
+    if (typeof v !== "string" || Number.isNaN(new Date(v).getTime())) {
+      ctx.addIssue({ code: "custom", message: DATE_INVALID });
+    }
+  })
+  .transform((v) => (v === null || v === "" || v === undefined ? null : new Date(v as string)));
+
+export function endsAfterStart(value: { startsAt?: Date | null; endsAt?: Date | null }): boolean {
+  if (!value.startsAt || !value.endsAt) return true;
+  return value.endsAt.getTime() >= value.startsAt.getTime();
+}
+
+export { ORDER_INVALID as DATE_ORDER_INVALID };
+
+export const activityCreateSchema = z
+  .object({
+    title: z
+      .string(BOTH_REQUIRED)
+      .refine((v) => v.trim().length > 0, BOTH_REQUIRED)
+      .refine((v) => v.trim().length <= TITLE_MAX, TITLE_TOO_LONG)
+      .transform((v) => v.trim()),
+    description: z
+      .string(BOTH_REQUIRED)
+      .refine((v) => v.trim().length > 0, BOTH_REQUIRED)
+      .refine((v) => v.trim().length <= DESCRIPTION_MAX, DESCRIPTION_TOO_LONG)
+      .transform((v) => v.trim()),
+    period: z.string(INVALID).nullish(),
+    photo: z.string(INVALID).nullish(),
+    capacity: capacity.optional(),
+    isTournament: z.unknown().optional(),
+    isVolunteer: z.unknown().optional(),
+    whatsappLink: z.string(INVALID).nullish(),
+    startsAt: activityDate.optional(),
+    endsAt: activityDate.optional(),
+    withTime: z.unknown().optional(),
+  })
+  .refine(endsAfterStart, { message: ORDER_INVALID, path: ["endsAt"] });
