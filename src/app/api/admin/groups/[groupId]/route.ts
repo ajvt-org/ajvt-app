@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { tournament } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/groups/[groupId]",
@@ -12,13 +13,10 @@ export const PATCH = withRoute(
     const { name, capacity } = await req.json();
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "اسم المجموعة مطلوب" }, { status: 400 });
+      return NextResponse.json({ error: tournament.groupNameRequired }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json(
-        { error: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.groupNameTooLong }, { status: 400 });
     }
     const data: { name: string; capacity?: number | null } = { name: name.trim() };
     if (capacity !== undefined) {
@@ -27,10 +25,7 @@ export const PATCH = withRoute(
       } else {
         const capacityValue = Number(capacity);
         if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-          return NextResponse.json(
-            { error: "عدد الفرق المستهدف يجب أن يكون بين 2 و64" },
-            { status: 400 },
-          );
+          return NextResponse.json({ error: tournament.targetTeamsRange }, { status: 400 });
         }
         data.capacity = capacityValue;
       }
@@ -61,7 +56,7 @@ export const DELETE = withRoute(
 
     const group = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } });
     if (!group) {
-      return NextResponse.json({ error: "المجموعة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.groupNotFound }, { status: 404 });
     }
 
     await prisma.group.delete({ where: { id: groupId } });

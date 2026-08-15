@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, getUserSession } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { tournament } from "@/lib/messages";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
   const session = await getUserSession();
@@ -22,7 +23,7 @@ export const POST = withRoute(
 
     const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true } });
     if (!team) {
-      return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
     await prisma.teamFollow.upsert({

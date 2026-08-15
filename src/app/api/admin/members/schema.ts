@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { validatePhone } from "@/lib/utils";
+import { ageGroups, common, members } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const ALL_REQUIRED = "جميع الحقول مطلوبة";
-const NAME_TOO_LONG = "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)";
-const AGE_TOO_LONG = "اسم العصر طويل جداً (30 حرفاً كحد أقصى)";
+const NAME_TOO_LONG = members.fullNameTooLong;
+const AGE_TOO_LONG = ageGroups.nameTooLong;
 const STATUS_INVALID = "حالة غير صالحة";
 
 const NAME_MAX = 30;

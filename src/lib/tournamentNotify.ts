@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
 import { logger } from "./logger";
+import { push } from "@/lib/messages";
 
 export async function notifyTeams(
   homeTeamId: string,
@@ -58,7 +59,7 @@ export async function sendMatchReminders() {
 
   for (const m of matches) {
     await notifyTeams(m.homeTeamId, m.awayTeamId, {
-      title: "رابطة شباب التاكلالت",
+      title: push.title,
       body: `تذكير: مباراة فريقك غداً — ${m.homeTeam.name} × ${m.awayTeam.name}`,
       url: `/tournament/${m.activityId}`,
     }).catch((err) => logger.error("match.reminder.push.error", err));

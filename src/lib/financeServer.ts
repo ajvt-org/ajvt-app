@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { money } from "@/lib/messages";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -26,7 +27,7 @@ interface NamedEntry {
 interface MethodDetail {
   intisab: NamedEntry[]; // membership fees, by member name
   daem: NamedEntry[]; // named donations, by donor name
-  anonymousTotal: number; // donations with no donor name ("فاعل خير")
+  anonymousTotal: number; // donations with no donor name (money.anonymousDonor)
 }
 
 function sortedEntries(map: Map<string, number>): NamedEntry[] {
@@ -104,14 +105,20 @@ export async function getFinanceSummary(recentDays = 30) {
 
   for (const d of donations) {
     const name = d.donorName?.trim();
-    const key = addRevenue(d.amount ?? 0, d.paymentMethod, d.createdAt, name || "فاعل خير", "دعم");
+    const key = addRevenue(
+      d.amount ?? 0,
+      d.paymentMethod,
+      d.createdAt,
+      name || money.anonymousDonor,
+      "دعم",
+    );
     if (name) {
       addNamed(daemByMethod, key, name, d.amount ?? 0);
     } else {
       anonymousByMethod.set(key, (anonymousByMethod.get(key) || 0) + (d.amount ?? 0));
     }
     if (!d.paymentMethod) {
-      unassigned.push({ id: d.id, name: name || "فاعل خير", amount: d.amount ?? 0 });
+      unassigned.push({ id: d.id, name: name || money.anonymousDonor, amount: d.amount ?? 0 });
     }
   }
 

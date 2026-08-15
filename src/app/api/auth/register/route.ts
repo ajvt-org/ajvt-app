@@ -5,6 +5,7 @@ import { validatePhone } from "@/lib/utils";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { auth, common } from "@/lib/messages";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 10;
@@ -12,24 +13,21 @@ const MAX_ATTEMPTS = 10;
 export const POST = withRoute("POST /api/auth/register", async (req: NextRequest) => {
   const key = `register:${getClientIp(req)}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
-    return NextResponse.json({ error: "محاولات كثيرة جداً، حاول بعد قليل" }, { status: 429 });
+    return NextResponse.json({ error: common.tooManyAttempts }, { status: 429 });
   }
   recordFailedAttempt(key, WINDOW_MS);
 
   const { phone, password } = await req.json();
 
   if (!phone || !password) {
-    return NextResponse.json({ error: "أدخل رقم الهاتف وكلمة المرور" }, { status: 400 });
+    return NextResponse.json({ error: auth.credentialsRequired }, { status: 400 });
   }
   const phoneError = validatePhone(phone);
   if (phoneError) {
     return NextResponse.json({ error: phoneError }, { status: 400 });
   }
   if (password.length < 3) {
-    return NextResponse.json(
-      { error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
 
   const existing = await prisma.user.findUnique({ where: { phone: phone.trim() } });

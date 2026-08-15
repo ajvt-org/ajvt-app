@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { tournament } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]",
@@ -13,18 +14,16 @@ export const PATCH = withRoute(
 
     const existing = await prisma.team.findUnique({ where: { id: teamId } });
     if (!existing) {
-      return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
     const data: { name?: string; groupId?: string | null; logo?: string | null } = {};
 
     if (name !== undefined) {
-      if (!name.trim()) return NextResponse.json({ error: "اسم الفريق مطلوب" }, { status: 400 });
+      if (!name.trim())
+        return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
       if (name.trim().length > 40)
-        return NextResponse.json(
-          { error: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: tournament.teamNameTooLong }, { status: 400 });
       data.name = name.trim();
     }
     if (groupId !== undefined) {
@@ -33,7 +32,7 @@ export const PATCH = withRoute(
         const group = await prisma.group.findFirst({
           where: { id: newGroupId, activityId: existing.activityId },
         });
-        if (!group) return NextResponse.json({ error: "المجموعة غير موجودة" }, { status: 400 });
+        if (!group) return NextResponse.json({ error: tournament.groupNotFound }, { status: 400 });
       }
       // Moving a team between groups after its schedule was generated would
       // desync existing matches' round labels/standings from the new group —
@@ -83,7 +82,7 @@ export const DELETE = withRoute(
 
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) {
-      return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
     await prisma.team.delete({ where: { id: teamId } });

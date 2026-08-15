@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { auth, common } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/admins", async () => {
   await requireAdminRole("SUPER");
@@ -26,7 +27,7 @@ export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest)
   const { username, password, role } = await req.json();
 
   if (!username || !password) {
-    return NextResponse.json({ error: "يرجى ملء جميع الحقول" }, { status: 400 });
+    return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
   if (username.trim().length > 30) {
     return NextResponse.json(
@@ -35,10 +36,7 @@ export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest)
     );
   }
   if (password.length < 3) {
-    return NextResponse.json(
-      { error: "كلمة المرور يجب أن تكون 3 أحرف على الأقل" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
   const roleValue = ["SUPER", "MEMBERS", "ACTIVITIES"].includes(role) ? role : "SUPER";
 

@@ -5,15 +5,13 @@ import { computeIsCorrect, isQuizEligible } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { quizAnswerSchema } from "./schema";
+import { quiz } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) => {
   const session = await requireUser();
 
   if (!(await isQuizEligible(session.userId))) {
-    return NextResponse.json(
-      { error: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: quiz.paidMembersOnly }, { status: 403 });
   }
 
   const { assignmentId, selectedAnswerIds } = parse(quizAnswerSchema, await req.json());
@@ -29,7 +27,7 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
   });
 
   if (!assignment || assignment.userId !== session.userId) {
-    return NextResponse.json({ error: "السؤال غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
   }
   if (assignment.answeredAt) {
     return NextResponse.json({ error: "تمت الإجابة على هذا السؤال من قبل" }, { status: 400 });

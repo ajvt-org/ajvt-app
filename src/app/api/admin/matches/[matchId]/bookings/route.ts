@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { bookingCreateSchema } from "./schema";
+import { tournament } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
@@ -18,7 +19,7 @@ export const POST = withRoute(
       select: { homeTeamId: true, awayTeamId: true },
     });
     if (!match) {
-      return NextResponse.json({ error: "المباراة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
     if (teamId !== match.homeTeamId && teamId !== match.awayTeamId) {
       return NextResponse.json({ error: "الفريق لا ينتمي إلى هذه المباراة" }, { status: 400 });

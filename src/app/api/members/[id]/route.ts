@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { memberPhotoSchema } from "./schema";
+import { members } from "@/lib/messages";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -30,7 +31,7 @@ export const GET = withRoute(
     });
 
     if (!member || member.userId !== session.userId) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
     const { userId: _userId, ...rest } = member;
@@ -48,7 +49,7 @@ export const PATCH = withRoute(
 
     const existing = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
     if (!existing || existing.userId !== session.userId) {
-      return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
     const member = await prisma.member.update({

@@ -9,6 +9,7 @@ import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { members, push } from "@/lib/messages";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -51,8 +52,8 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
 
   const statusLabel: Record<string, string> = {
     PENDING: "قيد الانتظار",
-    ACTIVE: "مقبول",
-    REJECTED: "غير مقبول",
+    ACTIVE: members.approved,
+    REJECTED: members.rejected,
   };
   const transition = existing
     ? ` (من ${statusLabel[existing.status]} إلى ${statusLabel[action]})`
@@ -76,7 +77,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
 
   if (updated.userId) {
     sendPushToUser(updated.userId, {
-      title: "رابطة شباب التاكلالت",
+      title: push.title,
       body:
         action === "ACTIVE"
           ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`

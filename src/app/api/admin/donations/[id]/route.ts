@@ -8,6 +8,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
+import { members, money } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -63,19 +64,17 @@ export const PATCH = withRoute(
           where: { id: memberId },
           select: { id: true },
         });
-        if (!member) return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
+        if (!member) return NextResponse.json({ error: members.notFound }, { status: 404 });
       }
       data.memberId = memberId;
     }
 
     if (donorName !== undefined) {
       if (donorName !== null) {
-        if (!donorName.trim()) return NextResponse.json({ error: "الاسم مطلوب" }, { status: 400 });
+        if (!donorName.trim())
+          return NextResponse.json({ error: money.nameRequired }, { status: 400 });
         if (donorName.trim().length > 50)
-          return NextResponse.json(
-            { error: "الاسم طويل جداً (50 حرفاً كحد أقصى)" },
-            { status: 400 },
-          );
+          return NextResponse.json({ error: money.nameTooLong }, { status: 400 });
         data.donorName = donorName.trim();
       } else {
         data.donorName = null;
@@ -103,17 +102,14 @@ export const PATCH = withRoute(
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json(
-          { error: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" },
-          { status: 400 },
-        );
+        return NextResponse.json({ error: money.amountInvalid }, { status: 400 });
       }
       data.amount = n;
     }
 
     if (paymentMethod !== undefined) {
       if (paymentMethod !== null && !PAYMENT_METHODS.includes(paymentMethod)) {
-        return NextResponse.json({ error: "طريقة دفع غير صالحة" }, { status: 400 });
+        return NextResponse.json({ error: money.paymentMethodInvalid }, { status: 400 });
       }
       data.paymentMethod = paymentMethod;
     }
@@ -134,7 +130,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donation.member?.fullName || existing.donorName || "فاعل خير",
+        donation.member?.fullName || existing.donorName || money.anonymousDonor,
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
@@ -143,8 +139,8 @@ export const PATCH = withRoute(
         session.username,
         memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
         memberId
-          ? `${existing.donorName || "فاعل خير"} → ${donation.member?.fullName}`
-          : existing.donorName || "فاعل خير",
+          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.fullName}`
+          : existing.donorName || money.anonymousDonor,
         {
           ...target,
           before: { memberId: existing.memberId },
@@ -163,7 +159,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "UPDATE_DONATION",
-        donation.member?.fullName || donation.donorName || "فاعل خير",
+        donation.member?.fullName || donation.donorName || money.anonymousDonor,
         {
           ...target,
           before: existing,
@@ -207,7 +203,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_DONATION",
-      `${existing.donorName || "فاعل خير"} — ${existing.amount ?? 0} أوقية`,
+      `${existing.donorName || money.anonymousDonor} — ${existing.amount ?? 0} أوقية`,
       {
         ...auditContext(session, req),
         targetType: "Donation",
