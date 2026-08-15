@@ -156,7 +156,7 @@ export default function QuizPage() {
   if (visitor) {
     return (
       <div className="app-shell">
-        <PageHeader title={"المسابقة الثقافية"} backHref="/" />
+        <PageHeader title={"المسابقة الثقافية"} />
         <div className="px-5 py-10">
           <div className="card p-8 text-center fade-up">
             <div className="mb-3 flex justify-center">
@@ -180,7 +180,7 @@ export default function QuizPage() {
   if (ineligible) {
     return (
       <div className="app-shell">
-        <PageHeader title={"🧠 المسابقة الثقافية"} backHref="/home" />
+        <PageHeader title={"المسابقة الثقافية"} />
         <div className="px-5 py-10">
           <div className="card p-8 text-center fade-up">
             <div className="mb-3 flex justify-center">
@@ -216,7 +216,7 @@ export default function QuizPage() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={"🧠 المسابقة الثقافية"} backHref="/home" />
+      <PageHeader title={"المسابقة الثقافية"} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {/* Stats bar: streak, points, rank */}

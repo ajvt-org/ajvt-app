@@ -29,7 +29,6 @@ function DonatePageInner() {
   const memberId = searchParams.get("memberId");
 
   const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
-  const [myMembers, setMyMembers] = useState<{ id: string; fullName: string }[]>([]);
   const [checkingMember, setCheckingMember] = useState(true);
   const [confirmedAnonymous, setConfirmedAnonymous] = useState(false);
 
@@ -66,7 +65,6 @@ function DonatePageInner() {
 
     lookup
       .then((found: { id: string; fullName: string }[]) => {
-        setMyMembers(found);
         if (found.length > 0) {
           setLockedMember(found[0]);
           setWantsName(true);
@@ -159,10 +157,7 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <PageHeader
-          title={"دعم الرابطة"}
-          backHref={memberId || myMembers.length > 0 ? "/home" : "/"}
-        />
+        <PageHeader title={"دعم الرابطة"} />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -209,10 +204,7 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader
-        title={"دعم الرابطة"}
-        backHref={memberId || myMembers.length > 0 ? "/home" : "/"}
-      />
+      <PageHeader title={"دعم الرابطة"} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
