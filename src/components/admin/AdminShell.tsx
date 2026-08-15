@@ -7,7 +7,7 @@ import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { formatDateTime, loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import DialogBack from "@/components/DialogBack";
 import AuditLogDialog from "./AuditLogDialog";
 import { adminRoleLabel } from "@/lib/adminRoles";
@@ -33,14 +33,14 @@ interface ActivityOption {
   title: string;
 }
 
-const NAV_TABS = [
-  { href: "/admin/dashboard", label: "👥 الأعضاء" },
-  { href: "/admin/activities", label: "🏆 الأنشطة" },
-  { href: "/admin/payments", label: "🧾 المدفوعات" },
-  { href: "/admin/expenses", label: "💸 المصاريف" },
-  { href: "/admin/quiz", label: "🧠 المسابقة الثقافية " },
-  { href: "/admin/stats", label: "📊 الإحصائيات" },
-  { href: "/admin/settings", label: "⚙️ الإعدادات" },
+const NAV_TABS: { href: string; label: string; icon: IconName }[] = [
+  { href: "/admin/dashboard", label: "الأعضاء", icon: "users" },
+  { href: "/admin/activities", label: "الأنشطة", icon: "trophy" },
+  { href: "/admin/payments", label: "المدفوعات", icon: "receipt" },
+  { href: "/admin/expenses", label: "المصاريف", icon: "banknote" },
+  { href: "/admin/quiz", label: "المسابقة الثقافية", icon: "brain" },
+  { href: "/admin/stats", label: "الإحصائيات", icon: "chart" },
+  { href: "/admin/settings", label: "الإعدادات", icon: "gear" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -341,7 +341,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   color: active ? "white" : "var(--text-main)",
                 }}
               >
-                {tab.label}
+                <IconLabel name={tab.icon}>{tab.label}</IconLabel>
                 {tab.href === "/admin/dashboard" && pendingCount > 0 && (
                   <span
                     className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
@@ -449,7 +449,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   }}
                   className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
                 >
-                  👥 إدارة حسابات المشرفين
+                  <IconLabel name="users">إدارة حسابات المشرفين</IconLabel>
                 </button>
               )}
               <button
@@ -460,7 +460,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 }}
                 className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
               >
-                📜 سجل الإجراءات
+                <IconLabel name="list">سجل الإجراءات</IconLabel>
               </button>
               {role === "SUPER" && (
                 <button
@@ -470,7 +470,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   }}
                   className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
                 >
-                  📣 إرسال إشعار جماعي
+                  <IconLabel name="megaphone">إرسال إشعار جماعي</IconLabel>
                 </button>
               )}
             </div>
@@ -599,7 +599,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   setShowMenu(true);
                 }}
               />
-              <h2 className="font-black text-white text-base">👥 حسابات المشرفين</h2>
+              <h2 className="font-black text-white text-base">
+                <IconLabel name="users">حسابات المشرفين</IconLabel>
+              </h2>
             </div>
 
             <div className="p-5 space-y-4">
@@ -716,7 +718,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   setShowMenu(true);
                 }}
               />
-              <h2 className="font-black text-white text-base">📣 إرسال إشعار جماعي</h2>
+              <h2 className="font-black text-white text-base">
+                <IconLabel name="megaphone">إرسال إشعار جماعي</IconLabel>
+              </h2>
             </div>
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">

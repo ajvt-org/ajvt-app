@@ -1,6 +1,7 @@
 "use client";
 
 import DialogBack from "@/components/DialogBack";
+import IconLabel from "@/components/IconLabel";
 import AuditLogEntryCard from "./AuditLogEntryCard";
 import type { AuditLogEntry } from "./auditLogTypes";
 
@@ -32,7 +33,9 @@ export default function AuditLogDialog({
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
           <DialogBack onClick={onBack} />
-          <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
+          <h2 className="font-black text-white text-base">
+            <IconLabel name="list">سجل الإجراءات</IconLabel>
+          </h2>
         </div>
 
         <div className="p-5 space-y-2">
