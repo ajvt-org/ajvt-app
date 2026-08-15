@@ -4,6 +4,7 @@ import { POST as LOGIN } from "@/app/api/auth/login/route";
 import { POST as CHANGE } from "@/app/api/user/password/route";
 import { GET as ME } from "@/app/api/user/me/route";
 import { prisma } from "@/lib/prisma";
+import { getUserSession } from "@/lib/auth";
 import { resetDb, post, createUser, signInAs } from "./helpers";
 
 const HOUR = 60 * 60 * 1000;
@@ -104,5 +105,24 @@ describe("temporary passwords", () => {
     expect(res.status).toBe(400);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     expect(await bcrypt.compare("secret", after.password)).toBe(true);
+  });
+});
+
+describe("a revoked session", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("stops reading as signed in, so pages do not draw the member bar over it", async () => {
+    const user = await createUser("22334455", "secret");
+    await signInAs(user);
+    expect(await getUserSession()).not.toBeNull();
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { tokenVersion: { increment: 1 } },
+    });
+
+    expect(await getUserSession()).toBeNull();
   });
 });

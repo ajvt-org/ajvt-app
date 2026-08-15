@@ -60,34 +60,47 @@ export async function requireAdminRole(...allowed: string[]) {
 }
 
 // --- User session ---
-export async function getUserSession() {
+// A signature only proves we issued the token, not that it is still good.
+// Changing a password or an admin reset raises tokenVersion, which revokes
+// every older token, so the check belongs here rather than in each caller:
+// a page asking "is this person signed in" was answering yes to a session
+// that every API call would refuse, and drew the member bar over it.
+async function loadUserSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get("user_token")?.value;
   if (!token) return null;
-  return verifyToken(token);
+
+  const payload = await verifyToken(token);
+  if (!payload) return null;
+
+  const { userId, tokenVersion } = payload as { userId?: string; tokenVersion?: number };
+  if (!userId) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { tokenVersion: true, tempPasswordExpiresAt: true },
+  });
+  if (!user || user.tokenVersion !== tokenVersion) return null;
+
+  return { payload, userId, tokenVersion: user.tokenVersion, user };
+}
+
+export async function getUserSession() {
+  const loaded = await loadUserSession();
+  return loaded ? loaded.payload : null;
 }
 
 // The token carries a mustChangePassword claim so the proxy can redirect
 // without a query, but the claim lives in the caller's cookie. This is the
 // check that decides, and it reads the column every time.
 export async function requireUser(options: { allowTempPassword?: boolean } = {}) {
-  const session = await getUserSession();
-  if (!session) throw new UnauthorizedError();
-  const { userId, tokenVersion } = session as { userId: string; tokenVersion: number };
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { tokenVersion: true, tempPasswordExpiresAt: true },
-  });
-  if (!user || user.tokenVersion !== tokenVersion) throw new UnauthorizedError();
+  const loaded = await loadUserSession();
+  if (!loaded) throw new UnauthorizedError();
 
-  const onTempPassword = user.tempPasswordExpiresAt !== null;
+  const onTempPassword = loaded.user.tempPasswordExpiresAt !== null;
   if (onTempPassword && !options.allowTempPassword) {
     throw new HttpError("PASSWORD_CHANGE_REQUIRED", 403, auth.mustChangePassword);
   }
 
-  return { ...session, userId, tokenVersion, onTempPassword } as {
-    userId: string;
-    tokenVersion: number;
-    onTempPassword: boolean;
-  };
+  return { userId: loaded.userId, tokenVersion: loaded.tokenVersion, onTempPassword };
 }
