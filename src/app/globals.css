@@ -478,3 +478,16 @@ select:focus-visible,
 body:has(.tab-bar) .install-prompt {
   bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
+
+/* The shell asks for a whole viewport, and the bar's spacer is added after
+   it, so a tabbed page came out exactly one bar too tall and scrolled with
+   nothing to show. Give the shell the height the bar leaves it. */
+body:has(.tab-bar) .app-shell {
+  min-height: calc(100svh - 4rem - env(safe-area-inset-bottom, 0px));
+}
+
+/* The pull-to-refresh gesture is ours, so the browser's own must not fire
+   underneath it and reload the page twice. */
+body {
+  overscroll-behavior-y: contain;
+}
