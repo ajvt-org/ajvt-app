@@ -11,7 +11,12 @@ import Toggle from "./Toggle";
 // deleted — because a switch that only hid itself would leave the pushes
 // arriving. A browser-level block cannot be undone from here: permission is
 // only ever asked once, so that state is off, disabled, and says where to go.
+//
+// With no VAPID key the deployment cannot send at all, so there is nothing to
+// switch and the whole row is absent. Offering it would fail on every tap.
 type Status = "unsupported" | "off" | "busy" | "on" | "denied" | "error";
+
+const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -31,7 +36,10 @@ export default function NotificationsToggle({
 
   useEffect(() => {
     const supported =
-      "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+      Boolean(VAPID_KEY) &&
+      "serviceWorker" in navigator &&
+      "PushManager" in window &&
+      "Notification" in window;
     const settled: Status | null = !supported
       ? "unsupported"
       : Notification.permission === "denied"
@@ -52,12 +60,6 @@ export default function NotificationsToggle({
   }, []);
 
   async function enable() {
-    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!vapidKey) {
-      setStatus("error");
-      return;
-    }
-
     setStatus("busy");
     try {
       const permission = await Notification.requestPermission();
@@ -70,7 +72,7 @@ export default function NotificationsToggle({
       await navigator.serviceWorker.ready;
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_KEY as string) as BufferSource,
       });
 
       const json = subscription.toJSON();
