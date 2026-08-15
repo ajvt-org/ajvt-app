@@ -71,10 +71,6 @@ export default function ProfilePage() {
             </div>
           ) : (
             <>
-              <button onClick={() => router.push("/form")} className="btn btn-outline fade-up">
-                <IconLabel name="plus">إضافة عضو آخر</IconLabel>
-              </button>
-
               {members.map((member, i) => (
                 <div key={member.id} className="space-y-4">
                   {members.length > 1 && (
@@ -95,6 +91,10 @@ export default function ProfilePage() {
                   />
                 </div>
               ))}
+
+              <button onClick={() => router.push("/form")} className="btn btn-outline fade-up">
+                <IconLabel name="plus">إضافة عضو آخر</IconLabel>
+              </button>
             </>
           )}
         </div>
