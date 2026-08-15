@@ -7,6 +7,7 @@ import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import * as bcrypt from "bcryptjs";
 import { auth, common } from "@/lib/messages";
+import { isTempPasswordActive, isTempPasswordExpired } from "@/lib/tempPassword";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -39,9 +40,20 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
     throw new UnauthorizedError(BAD_CREDENTIALS);
   }
 
+  // Checked after the password, so a wrong guess still answers with the
+  // generic failure rather than confirming the account exists.
+  if (isTempPasswordExpired(user.tempPasswordExpiresAt)) {
+    throw new UnauthorizedError(auth.tempPasswordExpired);
+  }
+
   clearAttempts(key);
 
-  const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });
+  const mustChangePassword = isTempPasswordActive(user.tempPasswordExpiresAt);
+  const token = await signToken({
+    userId: user.id,
+    tokenVersion: user.tokenVersion,
+    mustChangePassword,
+  });
   const res = NextResponse.json({ ok: true });
   res.cookies.set("user_token", token, {
     httpOnly: true,

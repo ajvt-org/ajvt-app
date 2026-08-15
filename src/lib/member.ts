@@ -1,3 +1,4 @@
+import { randomInt } from "crypto";
 import { prisma } from "./prisma";
 
 export async function generateMemberNumber(): Promise<string> {
@@ -13,6 +14,9 @@ export async function generateMemberNumber(): Promise<string> {
   return `AJVT-${year}-${seq}`;
 }
 
+// randomInt, not Math.random: this is a password, and Math.random's output is
+// predictable from earlier values, which matters most for a code an attacker
+// knows was just issued.
 export function generateTempPassword(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
 }

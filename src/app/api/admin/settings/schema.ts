@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { common, money } from "@/lib/messages";
+import { auth, common, money } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 
@@ -17,6 +17,15 @@ export const appSettingsSchema = z.object({
     .string(INVALID)
     .refine((v) => /^\d{8,15}$/.test(v.trim()), "رقم الواتساب غير صالح")
     .transform((v) => v.trim()),
+  tempPasswordHours: z
+    .unknown()
+    .superRefine((v, ctx) => {
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 720) {
+        ctx.addIssue({ code: "custom", message: auth.tempPasswordHoursInvalid });
+      }
+    })
+    .transform((v) => Number(v)),
   whatsappGroup: z
     .string(INVALID)
     .refine((v) => v === "" || v.startsWith("https://"), "الرابط غير صالح")

@@ -14,6 +14,11 @@ import { changePasswordSchema } from "./schema";
 // this is: a phone left unlocked is the likeliest way in, and without it that
 // phone can lock the owner out of their own account.
 //
+// The exception is a temporary password issued by an admin. Whoever is here
+// typed it minutes ago to get in, and asking them to repeat it only invites
+// them to keep using it. Whether that applies is read from the database, not
+// taken from the caller, so leaving the field out does not skip the check.
+//
 // Changing it raises tokenVersion, which requireUser checks, so every other
 // session dies. This one is handed a fresh cookie, since signing out the person
 // who just changed their password is not what they asked for.
@@ -21,36 +26,46 @@ const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
 export const POST = withRoute("POST /api/user/password", async (req: NextRequest) => {
-  const session = await requireUser();
+  const session = await requireUser({ allowTempPassword: true });
   const { currentPassword, newPassword } = parse(changePasswordSchema, await req.json());
-
-  const key = `password:${session.userId}`;
-  if (isRateLimited(key, MAX_ATTEMPTS)) {
-    logger.warn("member.password.rate_limited");
-    throw new HttpError("RATE_LIMITED", 429, common.tooManyAttempts);
-  }
 
   const user = await prisma.user.findUnique({ where: { id: session.userId } });
   if (!user) throw new UnauthorizedError();
 
-  const valid = await bcrypt.compare(currentPassword, user.password);
-  if (!valid) {
-    recordFailedAttempt(key, WINDOW_MS);
-    throw new UnauthorizedError(auth.currentPasswordWrong);
+  if (!session.onTempPassword) {
+    const key = `password:${session.userId}`;
+    if (isRateLimited(key, MAX_ATTEMPTS)) {
+      logger.warn("member.password.rate_limited");
+      throw new HttpError("RATE_LIMITED", 429, common.tooManyAttempts);
+    }
+    if (!currentPassword) {
+      throw new ValidationError(common.allFieldsRequired);
+    }
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      recordFailedAttempt(key, WINDOW_MS);
+      throw new UnauthorizedError(auth.currentPasswordWrong);
+    }
+    clearAttempts(key);
   }
 
-  if (currentPassword === newPassword) {
+  if (await bcrypt.compare(newPassword, user.password)) {
     throw new ValidationError(auth.passwordUnchanged);
   }
 
-  clearAttempts(key);
-
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: { password: await bcrypt.hash(newPassword, 12), tokenVersion: { increment: 1 } },
+    data: {
+      password: await bcrypt.hash(newPassword, 12),
+      tempPasswordExpiresAt: null,
+      tokenVersion: { increment: 1 },
+    },
   });
 
-  const token = await signToken({ userId: updated.id, tokenVersion: updated.tokenVersion });
+  const token = await signToken({
+    userId: updated.id,
+    tokenVersion: updated.tokenVersion,
+    mustChangePassword: false,
+  });
   const res = NextResponse.json({ ok: true });
   res.cookies.set("user_token", token, {
     httpOnly: true,
