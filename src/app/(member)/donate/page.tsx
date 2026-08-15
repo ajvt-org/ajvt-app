@@ -46,6 +46,9 @@ function DonatePageInner() {
   // Arriving from /home carries the member in the URL. Arriving from the tab
   // bar carries nothing, so the session is asked instead — otherwise a
   // signed-in member is told they are about to donate without an account.
+  // A donation belongs to the account, not to one of its members, and an
+  // account has no name of its own; the first active member is the name it
+  // goes under, which is what the leaderboard link already assumes.
   useEffect(() => {
     const lookup = memberId
       ? fetch(`/api/members/${memberId}`)
@@ -227,27 +230,6 @@ function DonatePageInner() {
             🏆 شاهد لوحة شرف المتبرعين
           </Link>
         </div>
-
-        {myMembers.length > 1 && (
-          <div className="card p-4 fade-up">
-            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
-              التبرع باسم
-            </p>
-            <select
-              value={lockedMember?.id ?? ""}
-              onChange={(e) =>
-                setLockedMember(myMembers.find((m) => m.id === e.target.value) ?? null)
-              }
-              className="input text-sm"
-            >
-              {myMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.fullName}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
           <PaymentInfoBanner />
