@@ -378,12 +378,16 @@ export default function AdminActivitiesPage() {
                       )}
                       {!a.isVolunteer && (
                         <span>
-                          👥 {confirmedCount}
+                          <Icon name="users" size={13} className="icon-inline" /> {confirmedCount}
                           {a.capacity !== null ? `/${a.capacity}` : ""}
                         </span>
                       )}
                       {a.isVolunteer && confirmedCount > 0 && (
-                        <span className="badge badge-active">💚 {confirmedCount} متطوعين</span>
+                        <span className="badge badge-active">
+                          <IconLabel name="heart" size={11}>
+                            {confirmedCount} متطوعين
+                          </IconLabel>
+                        </span>
                       )}
                       {!a.isVolunteer && pending.length > 0 && (
                         <span className="badge badge-pending">
@@ -393,8 +397,20 @@ export default function AdminActivitiesPage() {
                       <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
                         {a.isOpen ? "ظاهر" : "مخفي"}
                       </span>
-                      {a.isTournament && <span className="badge badge-pending">⚽ بطولة</span>}
-                      {a.isVolunteer && <span className="badge badge-pending">🤝 حملة تطوعية</span>}
+                      {a.isTournament && (
+                        <span className="badge badge-pending">
+                          <IconLabel name="ball" size={11}>
+                            بطولة
+                          </IconLabel>
+                        </span>
+                      )}
+                      {a.isVolunteer && (
+                        <span className="badge badge-pending">
+                          <IconLabel name="handshake" size={11}>
+                            حملة تطوعية
+                          </IconLabel>
+                        </span>
+                      )}
                     </div>
                     {a.isVolunteer && (
                       <div className="mt-2">
@@ -449,7 +465,7 @@ export default function AdminActivitiesPage() {
                       className="text-xs px-3 py-1.5 rounded-lg font-bold"
                       style={{ background: "var(--mint-700)", color: "white" }}
                     >
-                      ⚽ إدارة البطولة
+                      <IconLabel name="ball">إدارة البطولة</IconLabel>
                     </button>
                   ) : (
                     <button
@@ -462,7 +478,7 @@ export default function AdminActivitiesPage() {
                         border: "1px solid var(--mint-200)",
                       }}
                     >
-                      ⚽ تحويل إلى بطولة
+                      <IconLabel name="ball">تحويل إلى بطولة</IconLabel>
                     </button>
                   )}
                   <button
@@ -534,7 +550,9 @@ export default function AdminActivitiesPage() {
                                 className="text-xs font-bold inline-block"
                                 style={{ color: "var(--mint-700)" }}
                               >
-                                <ArrowLabel>🧾 عرض إثبات الدفع</ArrowLabel>
+                                <ArrowLabel>
+                                  <IconLabel name="receipt">عرض إثبات الدفع</IconLabel>
+                                </ArrowLabel>
                               </a>
                             )}
                             {rejectingId === r.id ? (
@@ -582,7 +600,7 @@ export default function AdminActivitiesPage() {
                                   className="text-xs px-2.5 py-1 rounded-lg font-bold"
                                   style={{ background: "var(--mint-600)", color: "white" }}
                                 >
-                                  ✓ قبول
+                                  <IconLabel name="check">قبول</IconLabel>
                                 </button>
                                 <button
                                   onClick={() => setRejectingId(r.id)}
@@ -601,7 +619,7 @@ export default function AdminActivitiesPage() {
 
                     <div className="space-y-1.5">
                       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-                        ✓ مسجَّلون مؤكَّدون
+                        <IconLabel name="check">مسجَّلون مؤكَّدون</IconLabel>
                       </p>
                       {active.length === 0 ? (
                         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -746,7 +764,7 @@ export default function AdminActivitiesPage() {
               }))
             }
           />
-          ⚽ هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)
+          <IconLabel name="ball">هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)</IconLabel>
         </label>
         <label
           className="flex items-center gap-2 text-sm font-semibold"
