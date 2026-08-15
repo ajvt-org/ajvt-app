@@ -13,12 +13,16 @@ export const GET = withRoute("GET /api/admin/age-groups", async () => {
     prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.member.groupBy({ by: ["age"], _count: { _all: true } }),
   ]);
+  const counts = new Map(used.map((row) => [row.age, row._count._all]));
   const known = new Set(ageGroups.map((g) => g.name));
   const orphans = used
     .filter((row) => row.age && !known.has(row.age))
     .map((row) => ({ name: row.age, count: row._count._all }))
     .sort((a, b) => b.count - a.count);
-  return NextResponse.json({ ageGroups, orphans });
+  return NextResponse.json({
+    ageGroups: ageGroups.map((g) => ({ ...g, count: counts.get(g.name) ?? 0 })),
+    orphans,
+  });
 });
 
 export const POST = withRoute("POST /api/admin/age-groups", async (req: NextRequest) => {
