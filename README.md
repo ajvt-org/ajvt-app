@@ -68,6 +68,35 @@ npm run test:api  # route handlers against a real database
 
 The route handlers are plain exported functions, so the tests import `POST` and call it. Only `next/headers` is faked, to supply the session cookie. Everything else is real: the JWT is signed and verified, and the queries hit Postgres.
 
+## Branches and deploys
+
+`dev` is where work lands. `master` is what is deployed. Render watches `master` and deploys every push to it, so merging into `master` is the release.
+
+Day to day:
+
+```bash
+git checkout dev
+git checkout -b feat-something
+# ... work, then open a pull request into dev
+```
+
+CI runs on pull requests into either branch, so nothing reaches `master` untested.
+
+To release, merge `dev` into `master` and tag it:
+
+```bash
+git checkout master
+git merge --no-ff dev
+git tag -a 0.19.0 -m "what changed"
+git push origin master 0.19.0
+```
+
+Tags live on `master` only, so a tag always means the version was deployed. `git log --tags master` is the deployment history.
+
+Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge.
+
+To roll back, point Render at the previous commit, or revert on `master` and push.
+
 ## Formatting
 
 Prettier owns formatting, CI checks it. Run `npm run format` before pushing, or set your editor to format on save.
@@ -89,7 +118,7 @@ The rest are optional and the app works without them:
 
 - `NEXT_PUBLIC_BASE_URL` is used for link previews, defaults to the production URL
 - `NEXT_PUBLIC_WHATSAPP_LINK` is the group invite shown to members
-- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` turn on push notifications. Without both, push is skipped and nothing breaks
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` turn on push notifications. Without both, the notifications switch on the profile is hidden and nothing breaks. Generate a pair with `npx web-push generate-vapid-keys`
 - `UPLOAD_DIR` is where uploaded images are written, defaults to `public/uploads`
 
 ## Uploads
