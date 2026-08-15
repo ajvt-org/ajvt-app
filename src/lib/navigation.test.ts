@@ -45,6 +45,11 @@ describe("the tab bars", () => {
     }
   });
 
+  it("keep the account on the leading edge of both", () => {
+    expect(MEMBER_TABS[0].icon).toBe("user");
+    expect(VISITOR_TABS[0].icon).toBe("user");
+  });
+
   it("light the activities tab on an activity page in both", () => {
     expect(MEMBER_TABS.filter((t) => isTabActive(t, "/activities/abc"))).toHaveLength(1);
     expect(VISITOR_TABS.filter((t) => isTabActive(t, "/activities/abc"))).toHaveLength(1);

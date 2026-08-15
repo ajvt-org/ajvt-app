@@ -178,12 +178,12 @@ function FormPageInner() {
         }
         const memberRes = await fetch(`/api/members/${editId}`);
         if (!memberRes.ok) {
-          router.push("/home");
+          router.push("/profile");
           return;
         }
         const member = await memberRes.json();
         if (member.status === "ACTIVE") {
-          router.push("/home");
+          router.push("/profile");
           return;
         }
         setForm({
@@ -522,7 +522,7 @@ function FormPageInner() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/home")}
+            onClick={() => router.push("/profile")}
             className="btn fade-up delay-2"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
@@ -542,7 +542,7 @@ function FormPageInner() {
       >
         {/* The form is reached from the landing page or from an activity, and
             it is long: without this there is no way out but the browser. */}
-        <BackButton href={authenticated ? "/home" : "/"} />
+        <BackButton href={authenticated ? "/profile" : "/"} />
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
