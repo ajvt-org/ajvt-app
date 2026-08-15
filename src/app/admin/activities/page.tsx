@@ -9,6 +9,7 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
+import NumericRanges from "@/components/NumericRanges";
 
 interface Registration {
   id: string;
@@ -362,7 +363,11 @@ export default function AdminActivitiesPage() {
                       className="flex items-center gap-3 text-xs mt-2 flex-wrap"
                       style={{ color: "var(--text-muted)" }}
                     >
-                      {a.period && <span>📅 {a.period}</span>}
+                      {a.period && (
+                        <span>
+                          📅 <NumericRanges>{a.period}</NumericRanges>
+                        </span>
+                      )}
                       {!a.isVolunteer && (
                         <span>
                           👥 {confirmedCount}
