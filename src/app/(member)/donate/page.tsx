@@ -29,7 +29,8 @@ function DonatePageInner() {
   const memberId = searchParams.get("memberId");
 
   const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
-  const [checkingMember, setCheckingMember] = useState(!!memberId);
+  const [myMembers, setMyMembers] = useState<{ id: string; fullName: string }[]>([]);
+  const [checkingMember, setCheckingMember] = useState(true);
   const [confirmedAnonymous, setConfirmedAnonymous] = useState(false);
 
   const [wantsName, setWantsName] = useState<boolean | null>(null);
@@ -42,13 +43,29 @@ function DonatePageInner() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  // Arriving from /home carries the member in the URL. Arriving from the tab
+  // bar carries nothing, so the session is asked instead — otherwise a
+  // signed-in member is told they are about to donate without an account.
   useEffect(() => {
-    if (!memberId) return;
-    fetch(`/api/members/${memberId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && data.status === "ACTIVE") {
-          setLockedMember({ id: data.id, fullName: data.fullName });
+    const lookup = memberId
+      ? fetch(`/api/members/${memberId}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) =>
+            data && data.status === "ACTIVE" ? [{ id: data.id, fullName: data.fullName }] : [],
+          )
+      : fetch("/api/user/me")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) =>
+            (data?.members ?? [])
+              .filter((m: { status: string }) => m.status === "ACTIVE")
+              .map((m: { id: string; fullName: string }) => ({ id: m.id, fullName: m.fullName })),
+          );
+
+    lookup
+      .then((found: { id: string; fullName: string }[]) => {
+        setMyMembers(found);
+        if (found.length > 0) {
+          setLockedMember(found[0]);
           setWantsName(true);
         }
       })
@@ -139,7 +156,10 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
+        <PageHeader
+          title={"دعم الرابطة"}
+          backHref={memberId || myMembers.length > 0 ? "/home" : "/"}
+        />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -186,7 +206,10 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={"دعم الرابطة"} backHref={memberId ? "/home" : "/"} />
+      <PageHeader
+        title={"دعم الرابطة"}
+        backHref={memberId || myMembers.length > 0 ? "/home" : "/"}
+      />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
@@ -204,6 +227,27 @@ function DonatePageInner() {
             🏆 شاهد لوحة شرف المتبرعين
           </Link>
         </div>
+
+        {myMembers.length > 1 && (
+          <div className="card p-4 fade-up">
+            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
+              التبرع باسم
+            </p>
+            <select
+              value={lockedMember?.id ?? ""}
+              onChange={(e) =>
+                setLockedMember(myMembers.find((m) => m.id === e.target.value) ?? null)
+              }
+              className="input text-sm"
+            >
+              {myMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.fullName}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
           <PaymentInfoBanner />
