@@ -80,22 +80,25 @@ git checkout -b feat-something
 # ... work, then open a pull request into dev
 ```
 
-CI runs on pull requests into either branch, so nothing reaches `master` untested.
+Both branches are protected. Neither takes a direct push, both need the build to pass, and neither can be force pushed or deleted. No review approval is required, since a pull request cannot be approved by the person who opened it.
 
-To release, merge `dev` into `master` and tag it:
+A release is a pull request too, from `dev` into `master`:
 
 ```bash
-git checkout master
-git merge --no-ff dev
+gh pr create --base master --head dev --title "Release 0.19.0"
+# merge once the build passes, then tag what was deployed
+git checkout master && git pull
 git tag -a 0.19.0 -m "what changed"
-git push origin master 0.19.0
+git push origin 0.19.0
 ```
 
 Tags live on `master` only, so a tag always means the version was deployed. `git log --tags master` is the deployment history.
 
-Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge.
+Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge, and the reason the build has to pass before one can happen.
 
-To roll back, point Render at the previous commit, or revert on `master` and push.
+To roll back, redeploy the previous commit from the Render dashboard. That is faster than a revert, and it does not undo a migration either way.
+
+Admins are not covered by the rules, so there is a way through if the build is broken and something has to ship. Use it knowingly.
 
 ## Formatting
 
