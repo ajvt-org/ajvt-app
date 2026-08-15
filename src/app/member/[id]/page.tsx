@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// This page is no longer used; redirect to home
+// Kept only for links handed out before the account moved to /profile.
 export default function OldMemberPage() {
-  redirect("/home");
+  redirect("/profile");
 }
