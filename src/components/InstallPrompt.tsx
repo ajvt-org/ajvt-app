@@ -40,7 +40,7 @@ export default function InstallPrompt() {
 
   return (
     <div
-      className="fixed bottom-4 inset-x-4 z-50 card p-3 flex items-center gap-3 fade-up"
+      className="install-prompt fixed inset-x-4 z-50 card p-3 flex items-center gap-3 fade-up"
       style={{ maxWidth: "420px", margin: "0 auto", border: "1px solid var(--mint-200)" }}
     >
       <span className="text-2xl shrink-0">📲</span>
