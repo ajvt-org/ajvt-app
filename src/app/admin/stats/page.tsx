@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDayKey, loginPathWithNext } from "@/lib/utils";
+import IconLabel from "@/components/IconLabel";
 
 interface DayVisits {
   date: string;
@@ -110,13 +111,13 @@ export default function AdminStatsPage() {
   return (
     <div className="admin-page space-y-5">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        📊 إحصائيات الزيارات
+        <IconLabel name="chart">إحصائيات الزيارات</IconLabel>
       </p>
 
       <div className="grid grid-cols-2 gap-2">
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            👤 زوار اليوم
+            <IconLabel name="user">زوار اليوم</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
             {stats?.today ?? 0}
@@ -124,7 +125,7 @@ export default function AdminStatsPage() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            👤 زوار الأمس
+            <IconLabel name="user">زوار الأمس</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
             {stats?.yesterday ?? 0}
@@ -132,7 +133,7 @@ export default function AdminStatsPage() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            📅 آخر 7 أيام
+            <IconLabel name="calendar">آخر 7 أيام</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
             {stats?.last7Days ?? 0}
@@ -140,7 +141,7 @@ export default function AdminStatsPage() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            🗓️ آخر 30 يوماً
+            <IconLabel name="calendar">آخر 30 يوماً</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
             {stats?.last30Days ?? 0}

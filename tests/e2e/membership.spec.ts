@@ -47,7 +47,7 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
 
   await adminPage.getByText(MEMBER.fullName).first().click();
-  await adminPage.getByRole("button", { name: "✅ قبول" }).click();
+  await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
 
   await adminPage.getByRole("button", { name: "الكل" }).click();
   await expect(

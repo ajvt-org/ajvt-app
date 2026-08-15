@@ -276,7 +276,7 @@ export default function AdminExpensesPage() {
     <div className="admin-page space-y-5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          💸 المصاريف والإيرادات
+          <IconLabel name="banknote">المصاريف والإيرادات</IconLabel>
         </p>
         <button
           onClick={exportCSV}
@@ -295,7 +295,7 @@ export default function AdminExpensesPage() {
       <div className="grid grid-cols-3 gap-2">
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            💰 الإيرادات
+            <IconLabel name="wallet">الإيرادات</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--mint-600)" }}>
             {summary?.totalRevenue ?? 0}
@@ -303,7 +303,7 @@ export default function AdminExpensesPage() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            💸 المصاريف
+            <IconLabel name="banknote">المصاريف</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--copper-500)" }}>
             {summary?.totalExpenses ?? 0}
@@ -311,7 +311,7 @@ export default function AdminExpensesPage() {
         </div>
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-            📊 الصافي
+            <IconLabel name="chart">الصافي</IconLabel>
           </p>
           <p className="text-base font-black" style={{ color: "var(--text-main)" }}>
             {summary?.net ?? 0}
@@ -435,7 +435,9 @@ export default function AdminExpensesPage() {
       {role === "SUPER" && summary && summary.unassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
-            💳 مبالغ بلا طريقة دفع محددة ({summary.unassigned.length})
+            <IconLabel name="card">
+              مبالغ بلا طريقة دفع محددة ({summary.unassigned.length})
+            </IconLabel>
           </p>
           <div className="space-y-2">
             {summary.unassigned.map((u) => (
@@ -525,7 +527,15 @@ export default function AdminExpensesPage() {
                                 className="text-xs font-bold mb-1.5"
                                 style={{ color: "var(--text-main)" }}
                               >
-                                {kind === "دعم" ? "💚 دعم" : "🪪 انتساب"}
+                                {kind === "دعم" ? (
+                                  <IconLabel name="heart" size={11}>
+                                    دعم
+                                  </IconLabel>
+                                ) : (
+                                  <IconLabel name="idCard" size={11}>
+                                    انتساب
+                                  </IconLabel>
+                                )}
                               </p>
                               <div className="space-y-2 mr-2">
                                 {methodKeys.map((method) => {
@@ -588,7 +598,7 @@ export default function AdminExpensesPage() {
       {/* Expenses list */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          💸 سجل المصاريف ({expenses.length})
+          <IconLabel name="banknote">سجل المصاريف ({expenses.length})</IconLabel>
         </p>
         <button
           onClick={openCreate}
@@ -632,7 +642,7 @@ export default function AdminExpensesPage() {
                     className="w-12 h-12 rounded-lg flex items-center justify-center text-lg shrink-0"
                     style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
                   >
-                    🧾
+                    <Icon name="receipt" size={16} className="icon-inline" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1 flex items-center justify-between gap-2">
@@ -816,7 +826,7 @@ export default function AdminExpensesPage() {
                   className="p-3 rounded-xl text-sm font-semibold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  ⚠️ {formError}
+                  <Icon name="warning" size={13} className="icon-inline" /> {formError}
                 </div>
               )}
 
