@@ -6,9 +6,8 @@ import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { formatDateTime, loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
-import DialogClose from "@/components/DialogClose";
+import DialogHeader from "@/components/DialogHeader";
 import Icon, { type IconName } from "@/components/Icon";
-import DialogBack from "@/components/DialogBack";
 import AuditLogDialog from "./AuditLogDialog";
 import { adminRoleLabel } from "@/lib/adminRoles";
 import type { AuditLogEntry } from "./auditLogTypes";
@@ -423,13 +422,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             <div className="flex justify-center pt-3 pb-1 md:hidden">
               <div className="w-10 h-1 rounded-full" style={{ background: "var(--mint-300)" }} />
             </div>
-            <div
-              className="px-5 py-4 flex items-center justify-between"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <h2 className="font-black text-white text-base">أدوات المشرف</h2>
-              <DialogClose onClick={() => setShowMenu(false)} />
-            </div>
+            <DialogHeader title="أدوات المشرف" sticky={false} onClose={() => setShowMenu(false)} />
             <div className="p-4 space-y-2">
               <button
                 onClick={() => {
@@ -491,18 +484,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             className="w-full max-w-sm rounded-2xl overflow-hidden"
             style={{ background: "var(--mint-50)", direction: "rtl" }}
           >
-            <div
-              className="px-5 py-4 flex items-center justify-between"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <DialogBack
-                onClick={() => {
-                  setShowChangePassword(false);
-                  setShowMenu(true);
-                }}
-              />
-              <h2 className="font-black text-white text-base">تغيير كلمة المرور</h2>
-            </div>
+            <DialogHeader
+              title="تغيير كلمة المرور"
+              sticky={false}
+              onBack={() => {
+                setShowChangePassword(false);
+                setShowMenu(true);
+              }}
+            />
 
             <form onSubmit={changePassword} className="p-5 space-y-3">
               <div>
@@ -589,20 +578,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
             style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
           >
-            <div
-              className="px-5 py-4 flex items-center justify-between sticky top-0"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <DialogBack
-                onClick={() => {
-                  setShowAdmins(false);
-                  setShowMenu(true);
-                }}
-              />
-              <h2 className="font-black text-white text-base">
-                <IconLabel name="users">حسابات المشرفين</IconLabel>
-              </h2>
-            </div>
+            <DialogHeader
+              title={<IconLabel name="users">حسابات المشرفين</IconLabel>}
+              onBack={() => {
+                setShowAdmins(false);
+                setShowMenu(true);
+              }}
+            />
 
             <div className="p-5 space-y-4">
               <div className="space-y-2">
@@ -708,20 +690,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
             style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
           >
-            <div
-              className="px-5 py-4 flex items-center justify-between sticky top-0"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <DialogBack
-                onClick={() => {
-                  setShowBroadcast(false);
-                  setShowMenu(true);
-                }}
-              />
-              <h2 className="font-black text-white text-base">
-                <IconLabel name="megaphone">إرسال إشعار جماعي</IconLabel>
-              </h2>
-            </div>
+            <DialogHeader
+              title={<IconLabel name="megaphone">إرسال إشعار جماعي</IconLabel>}
+              onBack={() => {
+                setShowBroadcast(false);
+                setShowMenu(true);
+              }}
+            />
 
             <form onSubmit={sendBroadcast} className="p-5 space-y-3">
               <div>
