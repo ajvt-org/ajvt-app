@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseUpdateSchema } from "../schema";
@@ -13,7 +13,7 @@ export const PATCH = withRoute(
     const { id } = await params;
     const { label, amount, note, date, proof } = parse(expenseUpdateSchema, await req.json());
 
-    const existing = await prisma.expense.findUnique({ where: { id }, select: { id: true } });
+    const existing = await prisma.expense.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "المصروف غير موجود" }, { status: 404 });
     }
@@ -41,6 +41,19 @@ export const PATCH = withRoute(
       session.username,
       "UPDATE_EXPENSE",
       `${expense.label} — ${expense.amount} أوقية`,
+      {
+        ...auditContext(session, req),
+        targetType: "Expense",
+        targetId: expense.id,
+        before: existing,
+        after: {
+          label: expense.label,
+          amount: expense.amount,
+          note: expense.note,
+          date: expense.date,
+          proof: expense.proof,
+        },
+      },
     );
 
     return NextResponse.json({ expense });
@@ -49,7 +62,7 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/expenses/[id]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
 
@@ -63,6 +76,12 @@ export const DELETE = withRoute(
       session.username,
       "DELETE_EXPENSE",
       `${existing.label} — ${existing.amount} أوقية`,
+      {
+        ...auditContext(session, req),
+        targetType: "Expense",
+        targetId: id,
+        before: existing,
+      },
     );
 
     return NextResponse.json({ ok: true });
