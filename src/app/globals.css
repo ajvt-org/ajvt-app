@@ -427,3 +427,54 @@ select:focus-visible,
 .btn:has(> .icon-label) {
   display: flex;
 }
+
+/* The bar is pinned to the viewport, so it is centred on the same 430px
+   column the shell uses rather than spanning the whole window. The inset
+   keeps it above the home indicator on an installed iPhone. */
+.tab-bar-spacer {
+  height: calc(4rem + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+}
+
+.tab-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  background: #fff;
+  border-top: 1px solid var(--mint-100);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 16px rgba(26, 63, 51, 0.06);
+}
+
+.tab-bar-inner {
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  height: 4rem;
+}
+
+.tab-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  font-weight: 700;
+  transition: color 0.15s ease;
+}
+
+.tab-bar-label {
+  font-size: 0.6875rem;
+}
+
+/* The install prompt floats above the fold of the page. Where the tab bar is
+   on screen it has to clear it, otherwise it lands on top of a tab. */
+.install-prompt {
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+body:has(.tab-bar) .install-prompt {
+  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
