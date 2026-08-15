@@ -9,6 +9,7 @@ import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "./ArrowLabel";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import NumericRanges from "@/components/NumericRanges";
 
 interface Team {
   id: string;
@@ -319,7 +320,11 @@ function ActivityCard({
           className="flex items-center gap-3 text-xs mb-3"
           style={{ color: "var(--text-muted)" }}
         >
-          {activity.period && <span>📅 {activity.period}</span>}
+          {activity.period && (
+            <span>
+              📅 <NumericRanges>{activity.period}</NumericRanges>
+            </span>
+          )}
           {activity.capacity !== null && (
             <span>
               👥 {activity.registrantCount}/{activity.capacity}

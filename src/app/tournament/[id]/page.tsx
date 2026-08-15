@@ -22,6 +22,7 @@ import TeamLogo from "@/components/tournament/TeamLogo";
 import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
 import PageHeader from "@/components/PageHeader";
+import NumericRanges from "@/components/NumericRanges";
 
 export const dynamic = "force-dynamic";
 
@@ -162,7 +163,7 @@ export default async function PublicTournamentPage({
         )}
         {activity.period && (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            📅 {activity.period}
+            📅 <NumericRanges>{activity.period}</NumericRanges>
           </p>
         )}
 

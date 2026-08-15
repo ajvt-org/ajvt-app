@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { toThumbUrl } from "@/lib/utils";
 import ArrowLabel from "@/components/ArrowLabel";
+import NumericRanges from "@/components/NumericRanges";
 
 export const dynamic = "force-dynamic";
 
@@ -207,7 +208,11 @@ export default async function LandingPage() {
                   className="flex items-center gap-3 text-xs mt-2"
                   style={{ color: "var(--text-muted)" }}
                 >
-                  {activity.period && <span>📅 {activity.period}</span>}
+                  {activity.period && (
+                    <span>
+                      📅 <NumericRanges>{activity.period}</NumericRanges>
+                    </span>
+                  )}
                   {!activity.isVolunteer && activity.capacity !== null && (
                     <span>
                       👥 {activity._count.registrations}/{activity.capacity}
