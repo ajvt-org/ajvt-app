@@ -7,11 +7,10 @@ import Link from "next/link";
 export default function LandingHero() {
   return (
     <div
-      className="flex flex-col items-center justify-center px-6 py-12 text-center"
+      className="flex flex-col items-center justify-center px-6 py-8 text-center flex-1"
       style={{
         background:
           "linear-gradient(180deg, var(--mint-700) 0%, var(--mint-500) 55%, var(--mint-50) 100%)",
-        minHeight: "100svh",
       }}
     >
       {/* Logo */}
