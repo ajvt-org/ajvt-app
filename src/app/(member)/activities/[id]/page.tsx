@@ -94,12 +94,16 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
   if (!activity) {
     return (
       <div className="app-shell">
-        <PageHeader title="النشاط" backHref="/home" />
+        <PageHeader title="النشاط" backHref={signedIn ? "/home" : "/activities"} />
         <div className="px-5 py-10 text-center space-y-3">
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             لم نجد هذا النشاط.
           </p>
-          <Link href="/home" className="text-sm font-bold" style={{ color: "var(--mint-600)" }}>
+          <Link
+            href={signedIn ? "/home" : "/activities"}
+            className="text-sm font-bold"
+            style={{ color: "var(--mint-600)" }}
+          >
             <ArrowLabel direction="back">الأنشطة</ArrowLabel>
           </Link>
         </div>
@@ -109,7 +113,7 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="app-shell">
-      <PageHeader title={activity.title} backHref="/home" />
+      <PageHeader title={activity.title} backHref={signedIn ? "/home" : "/activities"} />
 
       <div className="px-5 py-5 space-y-4">
         <div className="card overflow-hidden">

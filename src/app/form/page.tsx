@@ -19,6 +19,7 @@ import { api } from "@/lib/api";
 import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
+import BackButton from "@/components/BackButton";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -539,6 +540,9 @@ function FormPageInner() {
         className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
+        {/* The form is reached from the landing page or from an activity, and
+            it is long: without this there is no way out but the browser. */}
+        <BackButton href={authenticated ? "/home" : "/"} />
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
