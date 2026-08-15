@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 
 export const DELETE = withRoute(
   "DELETE /api/admin/bookings/[bookingId]",
-  async (_req: NextRequest, { params }: { params: Promise<{ bookingId: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ bookingId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { bookingId } = await params;
 
     const booking = await prisma.matchBooking.findUnique({
       where: { id: bookingId },
-      select: { cardType: true, member: { select: { fullName: true } } },
+      select: {
+        cardType: true,
+        minute: true,
+        matchId: true,
+        teamId: true,
+        member: { select: { id: true, fullName: true } },
+      },
     });
     if (!booking) return NextResponse.json({ ok: true });
 
@@ -21,6 +27,18 @@ export const DELETE = withRoute(
       session.username,
       "DELETE_BOOKING",
       `${booking.member.fullName} — ${booking.cardType}`,
+      {
+        ...auditContext(session, req),
+        targetType: "MatchBooking",
+        targetId: bookingId,
+        before: {
+          matchId: booking.matchId,
+          memberId: booking.member.id,
+          teamId: booking.teamId,
+          cardType: booking.cardType,
+          minute: booking.minute,
+        },
+      },
     );
 
     return NextResponse.json({ ok: true });

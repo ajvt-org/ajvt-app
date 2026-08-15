@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
@@ -316,6 +316,17 @@ export const PATCH = withRoute(
         session.username,
         "ENTER_MATCH_RESULT",
         `${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
+        {
+          ...auditContext(session, req),
+          targetType: "Match",
+          targetId: matchId,
+          before: { homeScore: match.homeScore, awayScore: match.awayScore, status: match.status },
+          after: {
+            homeScore: updateData.homeScore,
+            awayScore: updateData.awayScore,
+            status: updateData.status,
+          },
+        },
       );
       if (!wasPlayed) {
         notifyTeams(match.homeTeamId, match.awayTeamId, {
@@ -332,7 +343,7 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/matches/[matchId]",
-  async (_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
 
@@ -349,6 +360,19 @@ export const DELETE = withRoute(
       session.username,
       "DELETE_MATCH",
       `${match.homeTeam.name} × ${match.awayTeam.name}`,
+      {
+        ...auditContext(session, req),
+        targetType: "Match",
+        targetId: matchId,
+        before: {
+          homeTeam: match.homeTeam.name,
+          awayTeam: match.awayTeam.name,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          status: match.status,
+          matchDate: match.matchDate,
+        },
+      },
     );
 
     return NextResponse.json({ ok: true });

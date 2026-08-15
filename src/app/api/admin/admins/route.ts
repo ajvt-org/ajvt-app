@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 
@@ -53,7 +53,12 @@ export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest)
     select: { id: true, username: true, role: true, createdAt: true },
   });
 
-  await logAction(session.username, "CREATE_ADMIN", admin.username);
+  await logAction(session.username, "CREATE_ADMIN", admin.username, {
+    ...auditContext(session, req),
+    targetType: "Admin",
+    targetId: admin.id,
+    after: { username: admin.username, role: admin.role },
+  });
 
   return NextResponse.json({ admin }, { status: 201 });
 });
