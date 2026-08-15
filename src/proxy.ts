@@ -6,6 +6,7 @@ const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 const USER_PROTECTED = ["/home", "/profile"];
 const ADMIN_PROTECTED = ["/admin/dashboard"];
+const CHANGE_PASSWORD_PATH = "/change-password";
 
 // So the user lands back where they were after signing back in, instead of
 // a generic dashboard/home.
@@ -26,8 +27,35 @@ async function requireUserToken(req: NextRequest): Promise<NextResponse | null> 
   }
 }
 
+// A temporary password gets you exactly one screen. The claim is read from the
+// token rather than the database because middleware has no database, so this is
+// only the redirect: requireUser rejects every API call for the same reason,
+// and that check is the one that decides.
+//
+// /admin is left alone because an admin session is a different cookie, and the
+// change form itself has to stay reachable or there is no way out of the lock.
+async function tempPasswordRedirect(req: NextRequest): Promise<NextResponse | null> {
+  const { pathname } = req.nextUrl;
+  if (pathname.startsWith(CHANGE_PASSWORD_PATH) || pathname.startsWith("/admin")) return null;
+
+  const token = req.cookies.get("user_token")?.value;
+  if (!token) return null;
+
+  try {
+    const { payload } = await jwtVerify(token, SECRET);
+    if (!payload.mustChangePassword) return null;
+  } catch {
+    return null;
+  }
+
+  return NextResponse.redirect(new URL(CHANGE_PASSWORD_PATH, req.url));
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  const locked = await tempPasswordRedirect(req);
+  if (locked) return locked;
 
   // User-protected routes
   if (USER_PROTECTED.some((p) => pathname.startsWith(p))) {
@@ -58,6 +86,12 @@ export async function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
+// Every page, because a temporary password locks the whole app and not just the
+// member area. API routes are excluded: requireUser already refuses them, and a
+// redirect is no answer to fetch. Static files and the service worker are
+// excluded so the shell still loads while locked.
 export const config = {
-  matcher: ["/home/:path*", "/profile/:path*", "/form/:path*", "/admin/dashboard/:path*"],
+  matcher: [
+    "/((?!api/|_next/|uploads/|sw\\.js|manifest\\.json|offline\\.html|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|txt|xml|woff2?|ttf)$).*)",
+  ],
 };

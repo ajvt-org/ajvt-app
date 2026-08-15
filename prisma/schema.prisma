@@ -30,19 +30,23 @@ datasource db {
 }
 
 model User {
-  id                String             @id @default(cuid())
-  phone             String             @unique
-  password          String
-  tokenVersion      Int                @default(0)
-  createdAt         DateTime           @default(now())
-  members           Member[]
-  pushSubscriptions PushSubscription[]
-  teamFollows       TeamFollow[]
-  mvpVotes          MvpVote[]
-  quizAssignments   QuizAssignment[]
-  currentStreak     Int                @default(0) // consecutive days of app activity ("flame")
-  longestStreak     Int                @default(0)
-  lastActiveDate    DateTime? // calendar day (UTC) of the last streak-qualifying visit
+  id                    String             @id @default(cuid())
+  phone                 String             @unique
+  password              String
+  tokenVersion          Int                @default(0)
+  // Set when an admin issues a temporary password. Non-null means the current
+  // password is temporary: the app is locked until it is changed, and the
+  // password stops working altogether once this passes.
+  tempPasswordExpiresAt DateTime?
+  createdAt             DateTime           @default(now())
+  members               Member[]
+  pushSubscriptions     PushSubscription[]
+  teamFollows           TeamFollow[]
+  mvpVotes              MvpVote[]
+  quizAssignments       QuizAssignment[]
+  currentStreak         Int                @default(0) // consecutive days of app activity ("flame")
+  longestStreak         Int                @default(0)
+  lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
 }
 
 model Member {
@@ -438,9 +442,10 @@ model QuizSettings {
 // the values the association decides rather than the developer: the fee, the
 // contact number members are sent to. Changing one shouldn't need a deploy.
 model AppSettings {
-  id              String   @id
-  membershipFee   Int      @default(100)
-  supportWhatsapp String   @default("22241070328")
-  whatsappGroup   String?
-  updatedAt       DateTime @updatedAt
+  id                String   @id
+  membershipFee     Int      @default(100)
+  supportWhatsapp   String   @default("22241070328")
+  tempPasswordHours Int      @default(24)
+  whatsappGroup     String?
+  updatedAt         DateTime @updatedAt
 }

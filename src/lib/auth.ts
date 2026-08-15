@@ -1,7 +1,8 @@
 ﻿import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
-import { UnauthorizedError, ForbiddenError } from "./errors";
+import { HttpError, UnauthorizedError, ForbiddenError } from "./errors";
+import { auth } from "./messages";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -66,14 +67,27 @@ export async function getUserSession() {
   return verifyToken(token);
 }
 
-export async function requireUser() {
+// The token carries a mustChangePassword claim so the proxy can redirect
+// without a query, but the claim lives in the caller's cookie. This is the
+// check that decides, and it reads the column every time.
+export async function requireUser(options: { allowTempPassword?: boolean } = {}) {
   const session = await getUserSession();
   if (!session) throw new UnauthorizedError();
   const { userId, tokenVersion } = session as { userId: string; tokenVersion: number };
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { tokenVersion: true },
+    select: { tokenVersion: true, tempPasswordExpiresAt: true },
   });
   if (!user || user.tokenVersion !== tokenVersion) throw new UnauthorizedError();
-  return session as { userId: string; tokenVersion: number };
+
+  const onTempPassword = user.tempPasswordExpiresAt !== null;
+  if (onTempPassword && !options.allowTempPassword) {
+    throw new HttpError("PASSWORD_CHANGE_REQUIRED", 403, auth.mustChangePassword);
+  }
+
+  return { ...session, userId, tokenVersion, onTempPassword } as {
+    userId: string;
+    tokenVersion: number;
+    onTempPassword: boolean;
+  };
 }
