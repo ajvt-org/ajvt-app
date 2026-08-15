@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 export const DELETE = withRoute(
   "DELETE /api/admin/admins/[id]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
 
@@ -19,13 +19,21 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: "لا يمكن حذف آخر حساب مشرف" }, { status: 400 });
     }
 
-    const target = await prisma.admin.findUnique({ where: { id }, select: { username: true } });
+    const target = await prisma.admin.findUnique({
+      where: { id },
+      select: { username: true, role: true, lastLoginAt: true, createdAt: true },
+    });
     if (!target) {
       return NextResponse.json({ error: "الحساب غير موجود" }, { status: 404 });
     }
 
     await prisma.admin.delete({ where: { id } });
-    await logAction(session.username, "DELETE_ADMIN", target.username);
+    await logAction(session.username, "DELETE_ADMIN", target.username, {
+      ...auditContext(session, req),
+      targetType: "Admin",
+      targetId: id,
+      before: target,
+    });
 
     return NextResponse.json({ ok: true });
   },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 export const PATCH = withRoute(
@@ -11,10 +11,7 @@ export const PATCH = withRoute(
     const { teamId } = await params;
     const { name, groupId, logo } = await req.json();
 
-    const existing = await prisma.team.findUnique({
-      where: { id: teamId },
-      select: { activityId: true, groupId: true },
-    });
+    const existing = await prisma.team.findUnique({ where: { id: teamId } });
     if (!existing) {
       return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
     }
@@ -66,7 +63,13 @@ export const PATCH = withRoute(
     }
 
     const team = await prisma.team.update({ where: { id: teamId }, data });
-    await logAction(session.username, "UPDATE_TEAM", team.name);
+    await logAction(session.username, "UPDATE_TEAM", team.name, {
+      ...auditContext(session, req),
+      targetType: "Team",
+      targetId: team.id,
+      before: existing,
+      after: { name: team.name, groupId: team.groupId, logo: team.logo },
+    });
 
     return NextResponse.json({ team });
   },
@@ -74,17 +77,22 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/teams/[teamId]",
-  async (_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
 
-    const team = await prisma.team.findUnique({ where: { id: teamId }, select: { name: true } });
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) {
       return NextResponse.json({ error: "الفريق غير موجود" }, { status: 404 });
     }
 
     await prisma.team.delete({ where: { id: teamId } });
-    await logAction(session.username, "DELETE_TEAM", team.name);
+    await logAction(session.username, "DELETE_TEAM", team.name, {
+      ...auditContext(session, req),
+      targetType: "Team",
+      targetId: teamId,
+      before: team,
+    });
 
     return NextResponse.json({ ok: true });
   },

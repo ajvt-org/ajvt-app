@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { getAppSettings, saveAppSettings } from "@/lib/settingsServer";
@@ -22,7 +22,12 @@ export const PATCH = withRoute("PATCH /api/admin/settings", async (req: NextRequ
     by: session.username,
     membershipFee: { from: before.membershipFee, to: values.membershipFee },
   });
-  await logAction(session.username, "UPDATE_SETTINGS", `${values.membershipFee} أوقية`);
+  await logAction(session.username, "UPDATE_SETTINGS", `${values.membershipFee} أوقية`, {
+    ...auditContext(session, req),
+    targetType: "Settings",
+    before,
+    after: values,
+  });
 
   return NextResponse.json({ settings: await getAppSettings() });
 });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 export const GET = withRoute(
@@ -57,7 +57,12 @@ export const POST = withRoute(
     const group = await prisma.group.create({
       data: { activityId: id, name: name.trim(), capacity: capacityValue },
     });
-    await logAction(session.username, "CREATE_GROUP", group.name);
+    await logAction(session.username, "CREATE_GROUP", group.name, {
+      ...auditContext(session, req),
+      targetType: "Group",
+      targetId: group.id,
+      after: { name: group.name, activityId: id, capacity: group.capacity },
+    });
 
     return NextResponse.json({ group }, { status: 201 });
   },
