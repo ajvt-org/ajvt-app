@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { renameMemberAge } from "@/lib/ageGroups";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/age-groups/[id]",
@@ -32,7 +33,7 @@ export const PATCH = withRoute(
 
     const [ageGroup, moved] = await prisma.$transaction([
       prisma.ageGroup.update({ where: { id }, data: { name: name.trim() } }),
-      prisma.member.updateMany({ where: { age: existing.name }, data: { age: name.trim() } }),
+      renameMemberAge(existing.name, name.trim()),
     ]);
     await logAction(session.username, "UPDATE_AGE_GROUP", `${existing.name} → ${ageGroup.name}`, {
       ...auditContext(session, req),
@@ -40,7 +41,7 @@ export const PATCH = withRoute(
       targetId: ageGroup.id,
       before: { name: existing.name },
       after: { name: ageGroup.name },
-      meta: { membersRenamed: moved.count },
+      meta: { membersRenamed: moved },
     });
 
     return NextResponse.json({ ageGroup });

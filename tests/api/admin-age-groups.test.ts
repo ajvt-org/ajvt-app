@@ -59,6 +59,19 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     expect(entry.meta).toEqual({ membersRenamed: 1 });
   });
 
+  it("does not touch updatedAt, the member page reads it as their decision date", async () => {
+    await signInAsAdmin(await createAdmin());
+    const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
+    const member = await aMember("محمد", "المنصورين");
+    const before = member.updatedAt;
+
+    await PATCH(...withId(group.id, { name: "المنصورون" }));
+
+    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(after.age).toBe("المنصورون");
+    expect(after.updatedAt.getTime()).toBe(before.getTime());
+  });
+
   it("leaves members alone when the new name is taken", async () => {
     await signInAsAdmin(await createAdmin());
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
