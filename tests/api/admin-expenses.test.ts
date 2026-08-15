@@ -208,3 +208,44 @@ describe("DELETE /api/admin/expenses/[id]", () => {
     expect(await res.json()).toEqual({ error: "المصروف غير موجود" });
   });
 });
+
+describe("expense audit detail", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("records the target and the new values on create", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    await POST(post("/api/admin/expenses", validExpense));
+
+    const expense = await prisma.expense.findFirstOrThrow();
+    const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "CREATE_EXPENSE" } });
+    expect(entry.targetType).toBe("Expense");
+    expect(entry.targetId).toBe(expense.id);
+    expect(entry.adminRole).toBe("SUPER");
+    expect(entry.after).toMatchObject({ label: validExpense.label, amount: 18000 });
+  });
+
+  it("records both sides of an edit", async () => {
+    await signInAsAdmin(await createAdmin());
+    const expense = await anExpense();
+
+    await PATCH(...patch(expense.id, { amount: 9999 }));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "UPDATE_EXPENSE" } });
+    expect(entry.before).toMatchObject({ amount: 12000 });
+    expect(entry.after).toMatchObject({ amount: 9999 });
+  });
+
+  it("keeps the row it deleted", async () => {
+    await signInAsAdmin(await createAdmin());
+    const expense = await anExpense();
+
+    await DELETE(...patch(expense.id, {}));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "DELETE_EXPENSE" } });
+    expect(entry.targetId).toBe(expense.id);
+    expect(entry.before).toMatchObject({ label: "إيجار الملعب", amount: 12000 });
+  });
+});

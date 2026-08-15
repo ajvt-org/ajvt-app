@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseCreateSchema } from "./schema";
@@ -29,7 +29,23 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       createdBy: session.username,
     },
   });
-  await logAction(session.username, "CREATE_EXPENSE", `${expense.label} — ${expense.amount} أوقية`);
+  await logAction(
+    session.username,
+    "CREATE_EXPENSE",
+    `${expense.label} — ${expense.amount} أوقية`,
+    {
+      ...auditContext(session, req),
+      targetType: "Expense",
+      targetId: expense.id,
+      after: {
+        label: expense.label,
+        amount: expense.amount,
+        note: expense.note,
+        date: expense.date,
+        proof: expense.proof,
+      },
+    },
+  );
 
   return NextResponse.json({ expense }, { status: 201 });
 });
