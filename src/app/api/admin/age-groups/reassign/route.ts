@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { renameMemberAge } from "@/lib/ageGroups";
 
 // Moves the members stranded on an old age value onto a group that exists.
 // The target has to be a real group, otherwise this would just create a new
@@ -23,11 +24,8 @@ export const POST = withRoute("POST /api/admin/age-groups/reassign", async (req:
     return NextResponse.json({ error: "العصر الجديد غير موجود" }, { status: 404 });
   }
 
-  const moved = await prisma.member.updateMany({
-    where: { age: from.trim() },
-    data: { age: target.name },
-  });
-  if (moved.count === 0) {
+  const moved = await renameMemberAge(from.trim(), target.name);
+  if (moved === 0) {
     return NextResponse.json({ error: "لا يوجد أعضاء بهذا العصر" }, { status: 404 });
   }
 
@@ -37,8 +35,8 @@ export const POST = withRoute("POST /api/admin/age-groups/reassign", async (req:
     targetId: target.id,
     before: { name: from.trim() },
     after: { name: target.name },
-    meta: { membersRenamed: moved.count },
+    meta: { membersRenamed: moved },
   });
 
-  return NextResponse.json({ moved: moved.count });
+  return NextResponse.json({ moved });
 });
