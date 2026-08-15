@@ -75,11 +75,13 @@ export default function Icon({
   size = 20,
   className,
   filled,
+  color,
 }: {
   name: IconName;
   size?: number | string;
   className?: string;
   filled?: boolean;
+  color?: string;
 }) {
   const solid = filled ?? SOLID.has(name);
 
@@ -94,6 +96,7 @@ export default function Icon({
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={color ? { color } : undefined}
       aria-hidden="true"
       focusable="false"
     >
