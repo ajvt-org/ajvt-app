@@ -181,7 +181,7 @@ async function main() {
   }
 
   const users = [];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 30; i++) {
     users.push(
       await prisma.user.create({
         data: {
@@ -202,7 +202,12 @@ async function main() {
 
   for (let i = 0; i < 34; i++) {
     const status = i < 22 ? "ACTIVE" : i < 30 ? "PENDING" : "REJECTED";
-    const user = i < users.length ? users[i] : users[i % users.length];
+    // Nearly every account carries one person. Two carry a family, because
+    // the registration route puts no cap on how many and the screens have to
+    // cope with both — but a list where most accounts look like a family is
+    // not what the admin sees.
+    const FAMILY: Record<number, number> = { 30: 5, 31: 5, 32: 6, 33: 6 };
+    const user = users[FAMILY[i] ?? i % users.length];
     const isActive = status === "ACTIVE";
     if (isActive) memberNumber += 1;
 

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { formatActivityDates } from "@/lib/activityDates";
 
+// No sign-in required: every field here is already on the public landing
+// page, and the activity page has to render for a visitor deciding whether
+// an account is worth creating.
 export const GET = withRoute("GET /api/activities", async () => {
-  await requireUser();
-
   const activities = await prisma.activity.findMany({
     orderBy: [{ isOpen: "desc" }, { createdAt: "asc" }],
     select: {

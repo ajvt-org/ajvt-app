@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import NumericRanges from "@/components/NumericRanges";
 import ActivityRegistrations from "@/components/ActivityRegistrations";
-import { toThumbUrl, loginPathWithNext } from "@/lib/utils";
+import { toThumbUrl } from "@/lib/utils";
 import type { Activity, EligibleMember } from "@/components/activityTypes";
 
 type MemberFromApi = {
@@ -27,9 +26,9 @@ type MemberFromApi = {
 
 export default function ActivityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [eligibleMembers, setEligibleMembers] = useState<EligibleMember[]>([]);
+  const [signedIn, setSignedIn] = useState(true);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -38,13 +37,17 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
         fetch("/api/activities"),
         fetch("/api/user/me"),
       ]);
-      if (activitiesRes.status === 401 || meRes.status === 401) {
-        router.push(loginPathWithNext("/login"));
+      const { activities } = await activitiesRes.json();
+      setActivity((activities || []).find((a: Activity) => a.id === id) ?? null);
+
+      // A visitor with no account still gets the page; what they cannot do is
+      // register, and that is where they are asked to create one.
+      if (meRes.status === 401) {
+        setSignedIn(false);
+        setEligibleMembers([]);
         return;
       }
-      const { activities } = await activitiesRes.json();
       const { members } = await meRes.json();
-      setActivity((activities || []).find((a: Activity) => a.id === id) ?? null);
       setEligibleMembers(
         (members || [])
           .filter((m: MemberFromApi) => m.status === "ACTIVE")
@@ -66,7 +69,7 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
           })),
       );
     } catch {
-      router.push(loginPathWithNext("/login"));
+      setSignedIn(false);
     }
   }
 
@@ -174,11 +177,26 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
               </Link>
             )}
 
-            <ActivityRegistrations
-              activity={activity}
-              eligibleMembers={eligibleMembers}
-              onReload={load}
-            />
+            {signedIn ? (
+              <ActivityRegistrations
+                activity={activity}
+                eligibleMembers={eligibleMembers}
+                onReload={load}
+              />
+            ) : activity.isVolunteer && activity.whatsappLink ? (
+              <a
+                href={activity.whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-whatsapp"
+              >
+                <IconLabel name="handshake">انضم كمتطوع الآن — واتساب</IconLabel>
+              </a>
+            ) : (
+              <Link href="/form" className="btn btn-copper">
+                <IconLabel name="pencil">سجّل الآن — أنشئ حسابك للمشاركة</IconLabel>
+              </Link>
+            )}
           </div>
         </div>
       </div>
