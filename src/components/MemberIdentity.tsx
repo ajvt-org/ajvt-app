@@ -7,9 +7,11 @@ import type { MemberData } from "@/lib/useMembers";
 export default function MemberIdentity({
   member,
   onPhotoUpdated,
+  nameRef,
 }: {
   member: MemberData;
   onPhotoUpdated: (photo: string | null) => void;
+  nameRef?: (el: HTMLElement | null) => void;
 }) {
   return (
     <div className="flex flex-col items-center text-center gap-2">
@@ -28,7 +30,7 @@ export default function MemberIdentity({
         }}
       />
 
-      <h2 className="font-black text-lg mt-1" style={{ color: "var(--text-main)" }}>
+      <h2 ref={nameRef} className="font-black text-lg mt-1" style={{ color: "var(--text-main)" }}>
         {member.fullName}
       </h2>
 
