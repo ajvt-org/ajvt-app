@@ -5,7 +5,6 @@ import { toThumbUrl } from "@/lib/utils";
 import Link from "next/link";
 import ArrowLabel from "./ArrowLabel";
 import Icon from "@/components/Icon";
-import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import type { Activity, EligibleMember } from "./activityTypes";
 
@@ -81,9 +80,6 @@ export default function ActivitiesSection({
   if (loading) {
     return (
       <div className="space-y-3" id="activities">
-        <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
-        </h2>
         <QuizCard quizAccess={quizAccess} />
         <div className="card p-4 animate-pulse space-y-3">
           <div className="h-4 rounded-lg w-2/3" style={{ background: "var(--mint-100)" }} />
@@ -96,10 +92,6 @@ export default function ActivitiesSection({
 
   return (
     <div className="space-y-3 fade-up" id="activities">
-      <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
-      </h2>
-
       <QuizCard quizAccess={quizAccess} />
 
       {activities.length > 0 && (
