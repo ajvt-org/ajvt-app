@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
-import { getClientIp } from "@/lib/rateLimit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
 // Moves the members stranded on an old age value onto a group that exists.
@@ -33,15 +32,12 @@ export const POST = withRoute("POST /api/admin/age-groups/reassign", async (req:
   }
 
   await logAction(session.username, "REASSIGN_AGE_GROUP", `${from.trim()} → ${target.name}`, {
-    adminId: session.adminId,
-    adminRole: session.role,
+    ...auditContext(session, req),
     targetType: "AgeGroup",
     targetId: target.id,
     before: { name: from.trim() },
     after: { name: target.name },
     meta: { membersRenamed: moved.count },
-    ip: getClientIp(req),
-    userAgent: req.headers.get("user-agent") ?? undefined,
   });
 
   return NextResponse.json({ moved: moved.count });

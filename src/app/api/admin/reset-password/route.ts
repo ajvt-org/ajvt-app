@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { generateTempPassword } from "@/lib/member";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
@@ -25,7 +25,12 @@ export const POST = withRoute("POST /api/admin/reset-password", async (req: Next
     data: { password: hashed, tokenVersion: { increment: 1 } },
   });
 
-  await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone);
+  await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone, {
+    ...auditContext(session, req),
+    targetType: "User",
+    targetId: updated.id,
+    meta: { phone: updated.phone },
+  });
 
   return NextResponse.json({ tempPassword });
 });
