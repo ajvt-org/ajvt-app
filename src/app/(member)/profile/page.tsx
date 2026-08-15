@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
+import ChangePassword from "@/components/ChangePassword";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import MemberProfile from "@/components/MemberProfile";
@@ -71,6 +72,7 @@ export default function ProfilePage() {
 
           <div className="space-y-3 pt-2">
             <NotificationsToggle awaitingDecision={members.some((m) => m.status === "PENDING")} />
+            <ChangePassword />
             {members.length > 0 && (
               <button onClick={() => router.push("/form")} className="btn btn-outline">
                 <IconLabel name="plus">إضافة عضو آخر</IconLabel>
