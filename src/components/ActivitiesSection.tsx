@@ -20,7 +20,7 @@ interface Activity {
   id: string;
   title: string;
   description: string;
-  period: string | null;
+  when: string | null;
   photo: string | null;
   capacity: number | null;
   isOpen: boolean;
@@ -321,10 +321,10 @@ function ActivityCard({
           className="flex items-center gap-3 text-xs mb-3"
           style={{ color: "var(--text-muted)" }}
         >
-          {activity.period && (
+          {activity.when && (
             <span>
               <Icon name="calendar" size={13} className="icon-inline" />{" "}
-              <NumericRanges>{activity.period}</NumericRanges>
+              <NumericRanges>{activity.when}</NumericRanges>
             </span>
           )}
           {activity.capacity !== null && (

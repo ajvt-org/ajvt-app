@@ -22,6 +22,9 @@ export const PATCH = withRoute(
       isVolunteer,
       whatsappLink,
       order,
+      startsAt,
+      endsAt,
+      withTime,
     } = parse(activityUpdateSchema, await req.json());
 
     const existing = await prisma.activity.findUnique({ where: { id } });
@@ -40,6 +43,9 @@ export const PATCH = withRoute(
       isVolunteer?: boolean;
       whatsappLink?: string | null;
       order?: number;
+      startsAt?: Date | null;
+      endsAt?: Date | null;
+      withTime?: boolean;
     } = {};
 
     if (title !== undefined) data.title = title;
@@ -52,6 +58,9 @@ export const PATCH = withRoute(
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
     if (order !== undefined) data.order = Number(order);
+    if (startsAt !== undefined) data.startsAt = startsAt;
+    if (endsAt !== undefined) data.endsAt = endsAt;
+    if (withTime !== undefined) data.withTime = !!withTime;
 
     const nextIsTournament = data.isTournament ?? existing.isTournament;
     const nextIsVolunteer = data.isVolunteer ?? existing.isVolunteer;
