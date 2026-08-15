@@ -31,8 +31,19 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
 
 export const POST = withRoute("POST /api/admin/activities", async (req: NextRequest) => {
   const session = await requireAdminRole("ACTIVITIES");
-  const { title, description, period, capacity, photo, isTournament, isVolunteer, whatsappLink } =
-    parse(activityCreateSchema, await req.json());
+  const {
+    title,
+    description,
+    period,
+    capacity,
+    photo,
+    isTournament,
+    isVolunteer,
+    whatsappLink,
+    startsAt,
+    endsAt,
+    withTime,
+  } = parse(activityCreateSchema, await req.json());
 
   if (isTournament && isVolunteer) {
     return NextResponse.json(
@@ -54,6 +65,9 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       title,
       description,
       period: period?.trim() || null,
+      startsAt: startsAt ?? null,
+      endsAt: endsAt ?? null,
+      withTime: !!withTime,
       photo: photo || null,
       capacity: capacity ?? null,
       isTournament: !!isTournament,

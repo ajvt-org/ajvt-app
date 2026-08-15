@@ -23,6 +23,8 @@ import BracketTree from "@/components/tournament/BracketTree";
 import StatsToggle from "@/components/tournament/StatsToggle";
 import PageHeader from "@/components/PageHeader";
 import NumericRanges from "@/components/NumericRanges";
+import { formatActivityDates } from "@/lib/activityDates";
+import Icon from "@/components/Icon";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,9 @@ export default async function PublicTournamentPage({
       title: true,
       description: true,
       period: true,
+      startsAt: true,
+      endsAt: true,
+      withTime: true,
       isTournament: true,
       groups: { select: { id: true, name: true } },
       teams: {
@@ -161,9 +166,10 @@ export default async function PublicTournamentPage({
             {activity.description}
           </p>
         )}
-        {activity.period && (
+        {formatActivityDates(activity) && (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            📅 <NumericRanges>{activity.period}</NumericRanges>
+            <Icon name="calendar" size={13} className="icon-inline" />{" "}
+            <NumericRanges>{formatActivityDates(activity)!}</NumericRanges>
           </p>
         )}
 
