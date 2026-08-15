@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
@@ -71,7 +71,21 @@ export const PATCH = withRoute(
     }
 
     const activity = await prisma.activity.update({ where: { id }, data });
-    await logAction(session.username, "UPDATE_ACTIVITY", activity.title);
+    await logAction(session.username, "UPDATE_ACTIVITY", activity.title, {
+      ...auditContext(session, req),
+      targetType: "Activity",
+      targetId: activity.id,
+      before: existing,
+      after: {
+        title: activity.title,
+        period: activity.period,
+        capacity: activity.capacity,
+        isOpen: activity.isOpen,
+        isTournament: activity.isTournament,
+        isVolunteer: activity.isVolunteer,
+        whatsappLink: activity.whatsappLink,
+      },
+    });
 
     return NextResponse.json({ activity });
   },
@@ -79,17 +93,22 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/activities/[id]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
-    const activity = await prisma.activity.findUnique({ where: { id }, select: { title: true } });
+    const activity = await prisma.activity.findUnique({ where: { id } });
     if (!activity) {
       return NextResponse.json({ error: "النشاط غير موجود" }, { status: 404 });
     }
 
     await prisma.activity.delete({ where: { id } });
-    await logAction(session.username, "DELETE_ACTIVITY", activity.title);
+    await logAction(session.username, "DELETE_ACTIVITY", activity.title, {
+      ...auditContext(session, req),
+      targetType: "Activity",
+      targetId: id,
+      before: activity,
+    });
 
     return NextResponse.json({ ok: true });
   },
