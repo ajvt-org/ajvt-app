@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "@/lib/auth";
 import { formatActivityDates } from "@/lib/activityDates";
@@ -8,6 +9,10 @@ import MemberTabs from "@/components/MemberTabs";
 
 // The page is the list of sections in LANDING_SECTIONS, in that order. Hiding
 // one or swapping two is an edit to that array.
+//
+// It is also the manifest's start_url, so the installed app reopens here every
+// time. Someone already signed in is sent on rather than shown the two doors
+// again, which read as being logged out.
 export default async function LandingPage() {
   const wantsActivities = LANDING_SECTIONS.includes("activities");
   const [session, rows] = await Promise.all([
@@ -32,6 +37,8 @@ export default async function LandingPage() {
       : Promise.resolve([]),
   ]);
 
+  if (session) redirect("/home");
+
   const activities = rows.map((a) => ({
     id: a.id,
     title: a.title,
@@ -51,7 +58,7 @@ export default async function LandingPage() {
           ),
         )}
       </div>
-      <MemberTabs signedIn={Boolean(session)} />
+      <MemberTabs signedIn={false} />
     </>
   );
 }
