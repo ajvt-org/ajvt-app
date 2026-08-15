@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
-import { MEMBER_TABS, VISITOR_TABS } from "@/lib/navigation";
+import { MEMBER_TABS, VISITOR_TABS, isTabActive } from "@/lib/navigation";
 
 // The bar is fixed, so it would sit on top of the last thing on the page. The
 // spacer is an ordinary block of the same height in normal flow, which keeps
@@ -18,7 +18,7 @@ export default function MemberTabs({ signedIn = true }: { signedIn?: boolean }) 
       <nav className="tab-bar" aria-label="التنقل">
         <div className="tab-bar-inner">
           {tabs.map((tab) => {
-            const active = tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
+            const active = isTabActive(tab, pathname);
             return (
               <Link
                 key={tab.href}
@@ -27,7 +27,9 @@ export default function MemberTabs({ signedIn = true }: { signedIn?: boolean }) 
                 className="tab-bar-item"
                 style={{ color: active ? "var(--mint-700)" : "var(--text-muted)" }}
               >
-                <Icon name={tab.icon} size={22} />
+                <span className="tab-bar-icon">
+                  <Icon name={tab.icon} size={22} />
+                </span>
                 <span className="tab-bar-label">{tab.label}</span>
               </Link>
             );

@@ -465,8 +465,31 @@ select:focus-visible,
   transition: color 0.15s ease;
 }
 
+/* Colour alone was too quiet to say which tab you are on, and it says nothing
+   at all to anyone who cannot separate the two greens. The pill behind the
+   active icon is a shape, so it reads at a glance either way. */
+.tab-bar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tab-bar-item[aria-current="page"] .tab-bar-icon {
+  background: var(--mint-100);
+}
+
 .tab-bar-label {
   font-size: 0.6875rem;
+}
+
+.tab-bar-item[aria-current="page"] .tab-bar-label {
+  font-weight: 900;
 }
 
 /* The install prompt floats above the fold of the page. Where the tab bar is
