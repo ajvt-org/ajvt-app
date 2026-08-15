@@ -72,6 +72,27 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     expect(after.updatedAt.getTime()).toBe(before.getTime());
   });
 
+  it("keeps the payment proof order, that list sorts on the same field", async () => {
+    await signInAsAdmin(await createAdmin());
+    const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
+    const older = await prisma.member.create({
+      data: { fullName: "محمد", age: "المنصورين", paymentMethod: "بنكيلي", paymentProof: "a.webp" },
+    });
+    const newer = await prisma.member.create({
+      data: { fullName: "أحمد", age: "المبشرين", paymentMethod: "بنكيلي", paymentProof: "b.webp" },
+    });
+
+    await PATCH(...withId(group.id, { name: "المنصورون" }));
+
+    const rows = await prisma.member.findMany({
+      where: { paymentProof: { not: null } },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true },
+    });
+    expect(rows[0].id).toBe(newer.id);
+    expect(rows[1].id).toBe(older.id);
+  });
+
   it("leaves members alone when the new name is taken", async () => {
     await signInAsAdmin(await createAdmin());
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
