@@ -122,11 +122,33 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/activities/[id]/register",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
+    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
-    await prisma.activityRegistration.deleteMany({ where: { memberId, activityId: id } });
+    const existing = await prisma.activityRegistration.findUnique({
+      where: { memberId_activityId: { memberId, activityId: id } },
+      select: {
+        id: true,
+        status: true,
+        member: { select: { fullName: true } },
+        activity: { select: { title: true } },
+      },
+    });
+    if (!existing) return NextResponse.json({ ok: true });
+
+    await prisma.activityRegistration.delete({ where: { id: existing.id } });
+    await logAction(
+      session.username,
+      "ADMIN_UNREGISTER_ACTIVITY",
+      `${existing.member.fullName} — ${existing.activity.title}`,
+      {
+        ...auditContext(session, req),
+        targetType: "ActivityRegistration",
+        targetId: existing.id,
+        before: { memberId, activityId: id, status: existing.status },
+      },
+    );
 
     return NextResponse.json({ ok: true });
   },
