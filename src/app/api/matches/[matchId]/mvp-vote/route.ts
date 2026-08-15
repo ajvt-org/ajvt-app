@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { mvpVoteCastSchema } from "./schema";
 import { isUniqueViolation } from "@/lib/prismaError";
+import { tournament } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/matches/[matchId]/mvp-vote",
@@ -18,7 +19,7 @@ export const POST = withRoute(
       select: { id: true, status: true, candidates: { select: { id: true } } },
     });
     if (!vote) {
-      return NextResponse.json({ error: "لا يوجد تصويت لهذه المباراة" }, { status: 404 });
+      return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
     }
     if (vote.status !== "OPEN") {
       return NextResponse.json({ error: "التصويت مغلق" }, { status: 409 });

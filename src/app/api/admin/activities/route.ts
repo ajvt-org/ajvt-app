@@ -5,6 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
+import { activities } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/activities", async () => {
   await requireAdminRole("ACTIVITIES");
@@ -46,16 +47,10 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
   } = parse(activityCreateSchema, await req.json());
 
   if (isTournament && isVolunteer) {
-    return NextResponse.json(
-      { error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: activities.tournamentAndVolunteer }, { status: 400 });
   }
   if (isVolunteer && !/^https?:\/\//.test(whatsappLink?.trim() || "")) {
-    return NextResponse.json(
-      { error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: activities.whatsappRequired }, { status: 400 });
   }
 
   const { _max } = await prisma.activity.aggregate({ _max: { order: true } });

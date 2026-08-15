@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { common, members } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const BOTH_REQUIRED = "العنوان والنص مطلوبان";
 const TOO_LONG = "النص طويل جداً";
 const ACTIVITY_REQUIRED = "يرجى اختيار النشاط";
-const AGE_REQUIRED = "يرجى اختيار العصر";
+const AGE_REQUIRED = members.pickAgeGroup;
 
 const TITLE_MAX = 60;
 const BODY_MAX = 300;

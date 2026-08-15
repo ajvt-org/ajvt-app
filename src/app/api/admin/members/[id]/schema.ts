@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { ageGroups, common, members } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
-const NAME_REQUIRED = "الاسم الكامل مطلوب";
-const NAME_TOO_LONG = "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)";
-const AGE_REQUIRED = "اسم العصر مطلوب";
-const AGE_TOO_LONG = "اسم العصر طويل جداً (30 حرفاً كحد أقصى)";
+const INVALID = common.invalidBody;
+const NAME_REQUIRED = members.fullNameRequired;
+const NAME_TOO_LONG = members.fullNameTooLong;
+const AGE_REQUIRED = ageGroups.nameRequired;
+const AGE_TOO_LONG = ageGroups.nameTooLong;
 
 const NAME_MAX = 30;
 const AGE_MAX = 30;

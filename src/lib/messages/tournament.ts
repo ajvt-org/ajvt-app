@@ -1,0 +1,13 @@
+export const tournament = {
+  teamNotFound: "الفريق غير موجود",
+  teamNameRequired: "اسم الفريق مطلوب",
+  teamNameTooLong: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)",
+  groupNotFound: "المجموعة غير موجودة",
+  groupNameRequired: "اسم المجموعة مطلوب",
+  groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
+  targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
+  matchNotFound: "المباراة غير موجودة",
+  teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
+  teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
+  noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
+} as const;

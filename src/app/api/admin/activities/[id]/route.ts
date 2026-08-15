@@ -5,6 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
+import { activities } from "@/lib/messages";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]",
@@ -29,7 +30,7 @@ export const PATCH = withRoute(
 
     const existing = await prisma.activity.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "النشاط غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: activities.notFound }, { status: 404 });
     }
 
     const data: {
@@ -65,18 +66,12 @@ export const PATCH = withRoute(
     const nextIsTournament = data.isTournament ?? existing.isTournament;
     const nextIsVolunteer = data.isVolunteer ?? existing.isVolunteer;
     if (nextIsTournament && nextIsVolunteer) {
-      return NextResponse.json(
-        { error: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: activities.tournamentAndVolunteer }, { status: 400 });
     }
     const nextWhatsappLink =
       data.whatsappLink !== undefined ? data.whatsappLink : existing.whatsappLink;
     if (nextIsVolunteer && !/^https?:\/\//.test(nextWhatsappLink || "")) {
-      return NextResponse.json(
-        { error: "رابط مجموعة الواتساب مطلوب لحملات التطوع" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: activities.whatsappRequired }, { status: 400 });
     }
 
     const activity = await prisma.activity.update({ where: { id }, data });
@@ -111,7 +106,7 @@ export const DELETE = withRoute(
 
     const activity = await prisma.activity.findUnique({ where: { id } });
     if (!activity) {
-      return NextResponse.json({ error: "النشاط غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: activities.notFound }, { status: 404 });
     }
 
     await prisma.activity.delete({ where: { id } });

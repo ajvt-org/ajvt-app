@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { activities, tournament } from "@/lib/messages";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/teams",
@@ -37,13 +38,10 @@ export const POST = withRoute(
     const { name, groupId, logo } = await req.json();
 
     if (!name?.trim()) {
-      return NextResponse.json({ error: "اسم الفريق مطلوب" }, { status: 400 });
+      return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
     }
     if (name.trim().length > 40) {
-      return NextResponse.json(
-        { error: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.teamNameTooLong }, { status: 400 });
     }
 
     const activity = await prisma.activity.findUnique({
@@ -51,13 +49,13 @@ export const POST = withRoute(
       select: { isTournament: true },
     });
     if (!activity?.isTournament) {
-      return NextResponse.json({ error: "هذا النشاط ليس بطولة" }, { status: 400 });
+      return NextResponse.json({ error: activities.notATournament }, { status: 400 });
     }
 
     if (groupId) {
       const group = await prisma.group.findFirst({ where: { id: groupId, activityId: id } });
       if (!group) {
-        return NextResponse.json({ error: "المجموعة غير موجودة" }, { status: 400 });
+        return NextResponse.json({ error: tournament.groupNotFound }, { status: 400 });
       }
     }
 

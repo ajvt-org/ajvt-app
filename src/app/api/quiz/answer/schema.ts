@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const ANSWER_REQUIRED = "يجب اختيار إجابة واحدة على الأقل";
 
 export const quizAnswerSchema = z.object({

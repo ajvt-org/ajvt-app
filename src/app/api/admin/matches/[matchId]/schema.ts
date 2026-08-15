@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 
 const order = z.unknown().superRefine((v, ctx) => {
   if (!Number.isInteger(Number(v))) ctx.addIssue({ code: "custom", message: INVALID });

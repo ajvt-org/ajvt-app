@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { common, money } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 const LABEL_REQUIRED = "وصف المصروف مطلوب";
 const LABEL_TOO_LONG = "الوصف طويل جداً (100 حرف كحد أقصى)";
-const AMOUNT_INVALID = "المبلغ يجب أن يكون رقماً صحيحاً موجباً";
-const DATE_INVALID = "تاريخ غير صالح";
+const AMOUNT_INVALID = money.amountInvalid;
+const DATE_INVALID = common.invalidDate;
 
 const label = z
   .string(LABEL_REQUIRED)

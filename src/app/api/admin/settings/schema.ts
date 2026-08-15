@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common, money } from "@/lib/messages";
 
-const INVALID = "بيانات غير صالحة";
+const INVALID = common.invalidBody;
 
 export const appSettingsSchema = z.object({
   membershipFee: z
@@ -8,7 +9,7 @@ export const appSettingsSchema = z.object({
     .superRefine((v, ctx) => {
       const n = Number(v);
       if (!Number.isInteger(n) || n <= 0) {
-        ctx.addIssue({ code: "custom", message: "المبلغ يجب أن يكون رقماً صحيحاً موجباً" });
+        ctx.addIssue({ code: "custom", message: money.amountInvalid });
       }
     })
     .transform((v) => Number(v)),

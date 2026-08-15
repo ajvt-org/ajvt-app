@@ -1,3 +1,4 @@
+import { common } from "@/lib/messages";
 // The `message` stays the bare code ("UNAUTHORIZED", "FORBIDDEN") because 68
 // routes still test `err.message === "UNAUTHORIZED"` by hand. Those keep
 // working untouched while routes migrate to withRoute() one at a time.
@@ -15,31 +16,31 @@ export class HttpError extends Error {
 }
 
 export class UnauthorizedError extends HttpError {
-  constructor(clientMessage = "غير مصرح") {
+  constructor(clientMessage: string = common.unauthorized) {
     super("UNAUTHORIZED", 401, clientMessage);
   }
 }
 
 export class ForbiddenError extends HttpError {
-  constructor(clientMessage = "ليس لديك صلاحية لهذا الإجراء") {
+  constructor(clientMessage: string = common.forbidden) {
     super("FORBIDDEN", 403, clientMessage);
   }
 }
 
 export class NotFoundError extends HttpError {
-  constructor(clientMessage = "غير موجود") {
+  constructor(clientMessage: string = "غير موجود") {
     super("NOT_FOUND", 404, clientMessage);
   }
 }
 
 export class ConflictError extends HttpError {
-  constructor(clientMessage = "العملية غير ممكنة في هذه الحالة") {
+  constructor(clientMessage: string = "العملية غير ممكنة في هذه الحالة") {
     super("CONFLICT", 409, clientMessage);
   }
 }
 
 export class ValidationError extends HttpError {
-  constructor(clientMessage = "بيانات غير صالحة") {
+  constructor(clientMessage: string = common.invalidBody) {
     super("VALIDATION", 400, clientMessage);
   }
 }
