@@ -7,6 +7,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
+import type { ReviewStatus } from "@prisma/client";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -45,7 +46,7 @@ export const PATCH = withRoute(
     }
 
     const data: {
-      status?: string;
+      status?: ReviewStatus;
       memberId?: string | null;
       donorName?: string | null;
       donorPhone?: string | null;

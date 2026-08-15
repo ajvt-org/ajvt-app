@@ -1,3 +1,26 @@
+// Statuses were plain strings, so a typo in a route reached the database and
+// only surfaced as a row nothing matched. Each set is closed and named here.
+enum ReviewStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum TeamMemberStatus {
+  PENDING
+  ACTIVE
+}
+
+enum MatchStatus {
+  SCHEDULED
+  PLAYED
+}
+
+enum MvpVoteStatus {
+  OPEN
+  CLOSED
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -34,7 +57,7 @@ model Member {
   photo           String?
   paidAmount      Int?
   referenceCode   String?                @unique // short code the member writes in their bank transfer note, for admin reconciliation
-  status          String                 @default("PENDING")
+  status          ReviewStatus           @default(PENDING)
   rejectionReason String? // one of src/lib/rejectionReasons.ts, set on REJECTED, cleared on resubmit/approval
   memberNumber    String?                @unique
   createdAt       DateTime               @default(now())
@@ -115,13 +138,13 @@ model TeamFollow {
 }
 
 model TeamMember {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   teamId    String
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
   memberId  String
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  status    String   @default("ACTIVE") // "PENDING" (self-service join, awaiting admin approval) | "ACTIVE" (locked in)
-  createdAt DateTime @default(now())
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status    TeamMemberStatus @default(ACTIVE) // PENDING = self-service join awaiting approval, ACTIVE = locked in
+  createdAt DateTime         @default(now())
 
   @@unique([teamId, memberId])
 }
@@ -146,7 +169,7 @@ model Match {
   awayPenalties   Int?
   manOfTheMatchId String?
   manOfTheMatch   Member?        @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
-  status          String         @default("SCHEDULED")
+  status          MatchStatus    @default(SCHEDULED)
   reminderSentAt  DateTime?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -161,7 +184,7 @@ model MatchMvpVote {
   id         String         @id @default(cuid())
   matchId    String         @unique
   match      Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  status     String         @default("OPEN")
+  status     MvpVoteStatus  @default(OPEN)
   createdAt  DateTime       @default(now())
   closedAt   DateTime?
   candidates MvpCandidate[]
@@ -224,16 +247,16 @@ model MatchGoal {
 }
 
 model ActivityRegistration {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
   memberId        String
-  member          Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   activityId      String
-  activity        Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  status          String   @default("PENDING")
+  activity        Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  status          ReviewStatus @default(PENDING)
   paymentProof    String?
   rejectionReason String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@unique([memberId, activityId])
   @@index([activityId])
@@ -266,19 +289,19 @@ model AgeGroup {
 }
 
 model Donation {
-  id            String   @id @default(cuid())
+  id            String       @id @default(cuid())
   donorName     String? // null = anonymous ("فاعل خير" in the UI) — even when memberId is set (a member chose to stay anonymous)
   donorPhone    String? // recorded for manually-entered donors with no app account, or as a general contact note
   donorPhoto    String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
   amount        Int?
   proof         String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
-  status        String   @default("PENDING") // PENDING | ACTIVE | REJECTED — MEMBERSHIP-source rows are always created ACTIVE
-  source        String   @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
+  status        ReviewStatus @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
+  source        String       @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
   paymentMethod String? // بنكيلي | السداد | مصرفي | نقداً — set manually by admin (proof screenshots aren't parsed automatically)
   memberId      String?
-  member        Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  member        Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([memberId])
   @@index([status])
