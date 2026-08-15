@@ -91,7 +91,7 @@ export default function AgeGroupsDialog({
           className="px-5 py-4 flex items-center justify-between sticky top-0"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          <h2 className="font-black text-white text-base">🏷️ إدارة الأعصر</h2>
+          <h2 className="font-black text-white text-base">🏷️ إدارة الأعاصر</h2>
           <DialogClose onClick={() => onClose()} />
         </div>
 
@@ -131,7 +131,7 @@ export default function AgeGroupsDialog({
 
           {ageGroups.length === 0 ? (
             <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>
-              لا توجد أعصر مسجلة بعد
+              لا توجد أعاصر مسجلة بعد
             </p>
           ) : (
             <div className="space-y-2">
