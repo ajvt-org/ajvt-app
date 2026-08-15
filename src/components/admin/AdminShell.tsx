@@ -8,8 +8,10 @@ import { formatDateTime, loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
-import { auditActionLabel } from "@/lib/auditLabels";
 import DialogBack from "@/components/DialogBack";
+import AuditLogDialog from "./AuditLogDialog";
+import { adminRoleLabel } from "@/lib/adminRoles";
+import type { AuditLogEntry } from "./auditLogTypes";
 import IconLabel from "@/components/IconLabel";
 
 // Auto-logout after this long with no click/keypress/scroll/touch — an
@@ -29,21 +31,6 @@ interface AdminAccount {
 interface ActivityOption {
   id: string;
   title: string;
-}
-
-const ROLE_LABEL: Record<string, string> = {
-  SUPER: "كامل الصلاحيات",
-  MEMBERS: "الأعضاء فقط",
-  ACTIVITIES: "الأنشطة فقط",
-  QUIZ: "المسابقة الثقافية فقط",
-};
-
-interface AuditLogEntry {
-  id: string;
-  adminUsername: string;
-  action: string;
-  targetLabel: string | null;
-  createdAt: string;
 }
 
 const NAV_TABS = [
@@ -624,7 +611,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                         <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
                           {a.username}
                         </p>
-                        <span className="badge badge-pending">{ROLE_LABEL[a.role] || a.role}</span>
+                        <span className="badge badge-pending">{adminRoleLabel(a.role)}</span>
                       </div>
                       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                         منذ {formatDateTime(a.createdAt)}
@@ -694,70 +681,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       )}
 
-      {/* Audit log */}
       {showAuditLog && (
-        <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-          style={{ background: "rgba(10,30,20,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAuditLog(false);
+        <AuditLogDialog
+          logs={auditLogs}
+          loading={auditLoading}
+          onClose={() => setShowAuditLog(false)}
+          onBack={() => {
+            setShowAuditLog(false);
+            setShowMenu(true);
           }}
-        >
-          <div
-            className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
-            style={{ background: "var(--mint-50)", maxHeight: "88svh", direction: "rtl" }}
-          >
-            <div
-              className="px-5 py-4 flex items-center justify-between sticky top-0"
-              style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-            >
-              <DialogBack
-                onClick={() => {
-                  setShowAuditLog(false);
-                  setShowMenu(true);
-                }}
-              />
-              <h2 className="font-black text-white text-base">📜 سجل الإجراءات</h2>
-            </div>
-
-            <div className="p-5 space-y-2">
-              {auditLoading ? (
-                <div className="text-center py-8" style={{ color: "var(--mint-500)" }}>
-                  ⏳
-                </div>
-              ) : auditLogs.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-                  لا يوجد سجل بعد
-                </p>
-              ) : (
-                auditLogs.map((log) => (
-                  <div key={log.id} className="card p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                        {auditActionLabel(log.action)}
-                      </p>
-                      <span
-                        className="text-xs shrink-0"
-                        style={{ color: "var(--text-muted)" }}
-                        dir="ltr"
-                      >
-                        {formatDateTime(log.createdAt)}
-                      </span>
-                    </div>
-                    {log.targetLabel && (
-                      <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                        {log.targetLabel}
-                      </p>
-                    )}
-                    <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
-                      بواسطة {log.adminUsername}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        />
       )}
 
       {/* Broadcast notification */}
