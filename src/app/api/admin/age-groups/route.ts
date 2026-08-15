@@ -4,10 +4,21 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 
+// Orphans are age values members hold that match no group. They are left
+// over from renames made before the rename started reaching members, and
+// nothing else in the admin panel can see them.
 export const GET = withRoute("GET /api/admin/age-groups", async () => {
   await requireAdminRole("MEMBERS");
-  const ageGroups = await prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" } });
-  return NextResponse.json({ ageGroups });
+  const [ageGroups, used] = await Promise.all([
+    prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.member.groupBy({ by: ["age"], _count: { _all: true } }),
+  ]);
+  const known = new Set(ageGroups.map((g) => g.name));
+  const orphans = used
+    .filter((row) => row.age && !known.has(row.age))
+    .map((row) => ({ name: row.age, count: row._count._all }))
+    .sort((a, b) => b.count - a.count);
+  return NextResponse.json({ ageGroups, orphans });
 });
 
 export const POST = withRoute("POST /api/admin/age-groups", async (req: NextRequest) => {

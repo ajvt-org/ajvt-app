@@ -24,3 +24,8 @@ export interface AgeGroup {
   id: string;
   name: string;
 }
+
+export interface OrphanAge {
+  name: string;
+  count: number;
+}
