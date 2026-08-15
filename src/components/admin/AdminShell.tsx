@@ -37,7 +37,7 @@ const NAV_TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/admin/activities", label: "الأنشطة", icon: "trophy" },
   { href: "/admin/payments", label: "المدفوعات", icon: "receipt" },
   { href: "/admin/expenses", label: "المصاريف", icon: "banknote" },
-  { href: "/admin/quiz", label: "المسابقة الثقافية", icon: "brain" },
+  { href: "/admin/quiz", label: "المسابقة الثقافية", icon: "quiz" },
   { href: "/admin/stats", label: "الإحصائيات", icon: "chart" },
   { href: "/admin/settings", label: "الإعدادات", icon: "gear" },
 ];
