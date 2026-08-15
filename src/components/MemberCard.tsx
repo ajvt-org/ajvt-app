@@ -129,7 +129,7 @@ export default function MemberCard({
         className="font-bold mb-3 pb-2"
         style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}
       >
-        🪪 بطاقة العضوية
+        <IconLabel name="idCard">بطاقة العضوية</IconLabel>
       </h3>
 
       <div
@@ -197,7 +197,7 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {busy === "image" ? "..." : "⬇️ صورة"}
+          {busy === "image" ? "..." : <IconLabel name="download">صورة</IconLabel>}
         </button>
         <button
           onClick={downloadPdf}
@@ -205,7 +205,7 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {busy === "pdf" ? "..." : "📄 PDF"}
+          {busy === "pdf" ? "..." : <IconLabel name="file">PDF</IconLabel>}
         </button>
         <button
           onClick={shareCard}
