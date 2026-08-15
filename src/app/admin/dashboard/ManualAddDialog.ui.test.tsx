@@ -106,7 +106,7 @@ describe("ManualAddDialog", () => {
   it("hands age group management back to the dashboard", async () => {
     const props = setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /إدارة الأعاصر/ }));
+    await userEvent.click(screen.getByRole("button", { name: /إدارة الأعصار/ }));
 
     expect(props.onManageAgeGroups).toHaveBeenCalled();
   });
