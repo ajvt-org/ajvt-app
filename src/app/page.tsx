@@ -41,15 +41,17 @@ export default async function LandingPage() {
   }));
 
   return (
-    <div className="app-shell">
-      {LANDING_SECTIONS.map((section) =>
-        section === "hero" ? (
-          <LandingHero key={section} />
-        ) : (
-          <LandingActivities key={section} activities={activities} />
-        ),
-      )}
+    <>
+      <div className="app-shell">
+        {LANDING_SECTIONS.map((section) =>
+          section === "hero" ? (
+            <LandingHero key={section} />
+          ) : (
+            <LandingActivities key={section} activities={activities} />
+          ),
+        )}
+      </div>
       <MemberTabs signedIn={Boolean(session)} />
-    </div>
+    </>
   );
 }
