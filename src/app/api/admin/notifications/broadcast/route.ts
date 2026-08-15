@@ -7,6 +7,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { broadcastSchema } from "./schema";
 import { logger } from "@/lib/logger";
+import type { ReviewStatus } from "@prisma/client";
 
 export const POST = withRoute(
   "POST /api/admin/notifications/broadcast",
@@ -15,7 +16,7 @@ export const POST = withRoute(
     const { target, activityId, age, title, body } = parse(broadcastSchema, await req.json());
 
     const where: {
-      status: string;
+      status: ReviewStatus;
       registrations?: { some: { activityId: string } };
       age?: string;
     } = { status: "ACTIVE" };
