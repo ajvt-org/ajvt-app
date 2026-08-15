@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
-import { logAction } from "@/lib/audit";
+import { logAction, auditContext } from "@/lib/audit";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
@@ -27,7 +27,7 @@ export const PATCH = withRoute(
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, userId: true },
+      select: { fullName: true, userId: true, phone: true, age: true, paidAmount: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "العضو غير موجود" }, { status: 404 });
@@ -92,12 +92,35 @@ export const PATCH = withRoute(
       await syncMembershipDonation(tx, id);
       return m;
     });
-    await logAction(session.username, "UPDATE_MEMBER", `${existing.fullName} → ${member.fullName}`);
+    await logAction(
+      session.username,
+      "UPDATE_MEMBER",
+      `${existing.fullName} → ${member.fullName}`,
+      {
+        ...auditContext(session, req),
+        targetType: "Member",
+        targetId: member.id,
+        before: existing,
+        after: {
+          fullName: member.fullName,
+          phone: member.phone,
+          age: member.age,
+          paidAmount: member.paidAmount,
+        },
+      },
+    );
     if (data.userId) {
       await logAction(
         session.username,
         "ATTACH_MEMBER_ACCOUNT",
         `${member.fullName} — ${accountPhone!.trim()}`,
+        {
+          ...auditContext(session, req),
+          targetType: "Member",
+          targetId: member.id,
+          before: { userId: null },
+          after: { userId: data.userId, phone: accountPhone!.trim() },
+        },
       );
     }
 
@@ -107,17 +130,25 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/members/[id]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({ where: { id }, select: { fullName: true } });
+    const member = await prisma.member.findUnique({
+      where: { id },
+      select: { fullName: true, phone: true, age: true, status: true, memberNumber: true },
+    });
     if (!member) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
 
     await prisma.member.delete({ where: { id } });
-    await logAction(session.username, "DELETE_MEMBER", member.fullName);
+    await logAction(session.username, "DELETE_MEMBER", member.fullName, {
+      ...auditContext(session, req),
+      targetType: "Member",
+      targetId: id,
+      before: member,
+    });
 
     return NextResponse.json({ ok: true });
   },
