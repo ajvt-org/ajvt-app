@@ -413,8 +413,9 @@ export default function AdminActivitiesPage() {
                             className="text-xs font-bold"
                             style={{ color: "var(--mint-600)" }}
                           >
-                            <Icon name="chat" size={14} /> {a.whatsappLink || "إضافة رابط الواتساب"}{" "}
-                            <Icon name="pencil" size={12} />
+                            <Icon name="chat" size={14} className="icon-inline" />{" "}
+                            {a.whatsappLink || "إضافة رابط الواتساب"}{" "}
+                            <Icon name="pencil" size={12} className="icon-inline" />
                           </button>
                         )}
                       </div>

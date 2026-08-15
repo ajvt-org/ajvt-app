@@ -406,3 +406,10 @@ select:focus-visible,
 .tab-strip > * {
   flex-shrink: 0;
 }
+
+/* Arabic carries most of its mass above the baseline, so centring an icon's
+   box against the line box leaves it sitting below the text it labels. The
+   nudge lifts the icon onto the text's optical centre. */
+.icon-inline {
+  transform: translateY(-0.14em);
+}
