@@ -7,6 +7,8 @@ import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl }
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
+import Link from "next/link";
+import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
@@ -1124,6 +1126,14 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
+
+              <Link
+                href={`/admin/members/${selected.id}`}
+                className="text-xs font-bold block"
+                style={{ color: "var(--mint-600)" }}
+              >
+                <ArrowLabel>الملف الكامل للعضو</ArrowLabel>
+              </Link>
 
               {/* Proof image */}
               <div>
