@@ -1,0 +1,21 @@
+// A booking drawn as the card itself. 🟨 and 🟥 are squares in most fonts and
+// carry the reader's emoji style, so they stop looking like cards at all.
+export default function CardChip({ type, count }: { type: "YELLOW" | "RED"; count?: number }) {
+  const yellow = type === "YELLOW";
+  return (
+    <span className="inline-flex items-center gap-1 align-middle">
+      <span
+        role="img"
+        aria-label={yellow ? "بطاقة صفراء" : "بطاقة حمراء"}
+        style={{
+          display: "inline-block",
+          width: "0.62em",
+          height: "0.88em",
+          borderRadius: "2px",
+          background: yellow ? "#facc15" : "#dc2626",
+        }}
+      />
+      {count !== undefined && count}
+    </span>
+  );
+}
