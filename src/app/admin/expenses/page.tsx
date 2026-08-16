@@ -9,6 +9,8 @@ import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import ExpenseTagChips from "@/components/admin/ExpenseTagChips";
+import ExpenseTagManager, { type ExpenseTagRow } from "@/components/admin/ExpenseTagManager";
 
 interface Expense {
   id: string;
@@ -18,6 +20,7 @@ interface Expense {
   proof: string | null;
   date: string;
   createdBy: string;
+  tags: { id: string; name: string }[];
 }
 
 interface NamedEntry {
@@ -57,7 +60,14 @@ interface FinanceSummary {
   net: number;
 }
 
-const emptyExpenseForm = { label: "", amount: "", note: "", date: "", proof: "" };
+const emptyExpenseForm = {
+  label: "",
+  amount: "",
+  note: "",
+  date: "",
+  proof: "",
+  tagIds: [] as string[],
+};
 const PAGE_SIZE = 30;
 
 function todayInputValue() {
@@ -76,6 +86,9 @@ export default function AdminExpensesPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [tags, setTags] = useState<ExpenseTagRow[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState(emptyExpenseForm);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -157,9 +170,11 @@ export default function AdminExpensesPage() {
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([summaryData, expensesData]) => {
+      fetch("/api/admin/expense-tags").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([summaryData, expensesData, tagsData]) => {
       if (summaryData) setSummary(summaryData);
       if (expensesData?.expenses) setExpenses(expensesData.expenses);
+      if (tagsData?.tags) setTags(tagsData.tags);
     });
   }
 
@@ -203,6 +218,7 @@ export default function AdminExpensesPage() {
       note: e.note || "",
       date: e.date.slice(0, 10),
       proof: e.proof || "",
+      tagIds: e.tags.map((t) => t.id),
     });
     setFormError("");
     setShowForm(true);
@@ -229,6 +245,7 @@ export default function AdminExpensesPage() {
         note: form.note.trim() || null,
         date: form.date || undefined,
         proof: form.proof || null,
+        tagIds: form.tagIds,
       };
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
@@ -265,9 +282,15 @@ export default function AdminExpensesPage() {
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const days = summary?.days || [];
-  const totalExpensePages = Math.max(1, Math.ceil(expenses.length / PAGE_SIZE));
+  // Any of the picked tags, not all of them: picking two asks for both kinds
+  // of spending, which is what a reader of a filter row expects.
+  const shownExpenses =
+    tagFilter.length === 0
+      ? expenses
+      : expenses.filter((e) => e.tags.some((t) => tagFilter.includes(t.id)));
+  const totalExpensePages = Math.max(1, Math.ceil(shownExpenses.length / PAGE_SIZE));
   const currentExpensePage = Math.min(page, totalExpensePages);
-  const paginatedExpenses = expenses.slice(
+  const paginatedExpenses = shownExpenses.slice(
     (currentExpensePage - 1) * PAGE_SIZE,
     currentExpensePage * PAGE_SIZE,
   );
@@ -598,20 +621,59 @@ export default function AdminExpensesPage() {
       {/* Expenses list */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">سجل المصاريف ({expenses.length})</IconLabel>
+          <IconLabel name="banknote">سجل المصاريف ({shownExpenses.length})</IconLabel>
         </p>
-        <button
-          onClick={openCreate}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          <IconLabel name="plus">إضافة مصروف</IconLabel>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setShowTagManager((v) => !v)}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <IconLabel name="tag">التصنيفات</IconLabel>
+          </button>
+          <button
+            onClick={openCreate}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
+            <IconLabel name="plus">إضافة مصروف</IconLabel>
+          </button>
+        </div>
       </div>
 
-      {expenses.length === 0 ? (
+      {showTagManager && (
+        <ExpenseTagManager tags={tags} onChanged={load} onClose={() => setShowTagManager(false)} />
+      )}
+
+      {tags.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+            تصفية:
+          </span>
+          <ExpenseTagChips
+            tags={tags}
+            selected={tagFilter}
+            onToggle={(id) =>
+              setTagFilter((prev) =>
+                prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
+              )
+            }
+          />
+          {tagFilter.length > 0 && (
+            <button
+              onClick={() => setTagFilter([])}
+              className="text-xs font-bold"
+              style={{ color: "var(--mint-700)" }}
+            >
+              الكل
+            </button>
+          )}
+        </div>
+      )}
+
+      {shownExpenses.length === 0 ? (
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          لا توجد مصاريف مسجلة بعد
+          {tagFilter.length > 0 ? "لا توجد مصاريف بهذا التصنيف" : "لا توجد مصاريف مسجلة بعد"}
         </p>
       ) : (
         <div className="space-y-2">
@@ -657,6 +719,11 @@ export default function AdminExpensesPage() {
                       <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
                         {e.note}
                       </p>
+                    )}
+                    {e.tags.length > 0 && (
+                      <div className="mt-1.5">
+                        <ExpenseTagChips tags={e.tags} />
+                      </div>
                     )}
                   </div>
                   <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>
@@ -823,6 +890,24 @@ export default function AdminExpensesPage() {
                   onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
                   maxLength={200}
                   className="input"
+                />
+              </div>
+              <div>
+                <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+                  التصنيفات
+                </p>
+                <ExpenseTagChips
+                  tags={tags}
+                  selected={form.tagIds}
+                  onToggle={(id) =>
+                    setForm((p) => ({
+                      ...p,
+                      tagIds: p.tagIds.includes(id)
+                        ? p.tagIds.filter((t) => t !== id)
+                        : [...p.tagIds, id],
+                    }))
+                  }
+                  empty="لا توجد تصنيفات بعد — أضفها من زر التصنيفات"
                 />
               </div>
 

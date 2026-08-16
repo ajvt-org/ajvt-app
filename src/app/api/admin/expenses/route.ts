@@ -8,13 +8,16 @@ import { expenseCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
   await requireAdmin();
-  const expenses = await prisma.expense.findMany({ orderBy: { date: "desc" } });
+  const expenses = await prisma.expense.findMany({
+    orderBy: { date: "desc" },
+    include: { tags: { select: { id: true, name: true } } },
+  });
   return NextResponse.json({ expenses });
 });
 
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
   const session = await requireAdmin();
-  const { label, amount, note, date, proof } = parse(expenseCreateSchema, await req.json());
+  const { label, amount, note, date, proof, tagIds } = parse(expenseCreateSchema, await req.json());
 
   const n = Number(amount);
   const parsedDate = date === undefined || date === null ? new Date() : new Date(date as string);
@@ -27,7 +30,9 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       proof: proof || null,
       date: parsedDate,
       createdBy: session.username,
+      tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
     },
+    include: { tags: { select: { id: true, name: true } } },
   });
   await logAction(
     session.username,
