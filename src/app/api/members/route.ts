@@ -15,17 +15,8 @@ const CODE_ATTEMPTS = 5;
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee } = await getAppSettings();
-  const {
-    id,
-    fullName,
-    phone,
-    age,
-    paymentMethod,
-    paymentProof,
-    photo,
-    paidAmount,
-    referenceCode,
-  } = parse(memberSubmissionSchema(membershipFee), await req.json());
+  const { id, fullName, age, paymentMethod, paymentProof, photo, paidAmount, referenceCode } =
+    parse(memberSubmissionSchema(membershipFee), await req.json());
 
   // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
   if (id) {
@@ -41,7 +32,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       where: { id },
       data: {
         fullName: fullName.trim(),
-        phone: phone.trim(),
         age: age.trim(),
         paymentMethod,
         paymentProof,
@@ -58,6 +48,10 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   }
 
   // New member under this account — no cap on how many
+  const account = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { phone: true },
+  });
   let code: string | null = referenceCode || null;
 
   for (let attempt = 0; ; attempt++) {
@@ -66,7 +60,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         data: {
           userId: session.userId,
           fullName: fullName.trim(),
-          phone: phone.trim(),
+          // A copy of the account number, which is the only one asked for.
+          phone: account?.phone ?? null,
           age: age.trim(),
           paymentMethod,
           paymentProof,

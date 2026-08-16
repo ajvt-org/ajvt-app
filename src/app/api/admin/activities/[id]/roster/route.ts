@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { memberPhone } from "@/lib/memberPhone";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
@@ -32,7 +33,7 @@ export const GET = withRoute(
     const roster = registrations.map(({ member }) => ({
       id: member.id,
       fullName: member.fullName,
-      phone: member.phone,
+      phone: memberPhone(member),
       age: member.age,
       photo: member.photo,
       team: member.teamMemberships[0]?.team || null,

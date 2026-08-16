@@ -34,7 +34,6 @@ export default function MemberRejected({
         body: JSON.stringify({
           id: member.id,
           fullName: member.fullName,
-          phone: member.phone,
           age: member.age,
           paymentMethod: member.paymentMethod,
           paidAmount: member.paidAmount,

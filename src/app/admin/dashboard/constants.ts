@@ -17,7 +17,6 @@ export const PAGE_SIZE = 30;
 export const emptyManualForm = {
   accountPhone: "",
   fullName: "",
-  memberPhone: "",
   phoneUnknown: false,
   age: "",
   paymentMethod: "",
