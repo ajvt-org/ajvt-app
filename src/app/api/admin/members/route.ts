@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { generateMemberNumber, generateTempPassword } from "@/lib/member";
+import { issueMembership, generateTempPassword } from "@/lib/member";
 import { logAction, auditContext } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
@@ -64,7 +64,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     userId = user.id;
   }
 
-  const memberNumber = status === "ACTIVE" ? await generateMemberNumber() : undefined;
+  const issued = status === "ACTIVE" ? await issueMembership() : undefined;
 
   const member = await prisma.$transaction(async (tx) => {
     const m = await tx.member.create({
@@ -78,7 +78,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         photo: photo || null,
         paidAmount: paidAmountValue,
         status,
-        memberNumber,
+        ...(issued ?? {}),
       },
     });
     await syncMembershipDonation(tx, m.id);

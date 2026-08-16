@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { generateMemberNumber } from "@/lib/member";
+import { issueMembership } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
@@ -20,6 +20,7 @@ const MEMBER_SELECT = {
   createdAt: true,
   updatedAt: true,
   memberNumber: true,
+  verifyToken: true,
   registrations: {
     select: {
       id: true,
@@ -51,10 +52,9 @@ export const GET = withRoute("GET /api/user/me", async () => {
   const members = await Promise.all(
     user.members.map(async (member) => {
       if (member.status === "ACTIVE" && !member.memberNumber) {
-        const memberNumber = await generateMemberNumber();
         return prisma.member.update({
           where: { id: member.id },
-          data: { memberNumber },
+          data: await issueMembership(),
           select: MEMBER_SELECT,
         });
       }

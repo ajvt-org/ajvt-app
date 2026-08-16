@@ -39,6 +39,7 @@ export interface MemberData {
   createdAt: string;
   updatedAt: string;
   memberNumber: string | null;
+  verifyToken: string | null;
   photo: string | null;
   registrations: RegistrationData[];
   teamMemberships: TeamMembershipData[];

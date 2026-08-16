@@ -2,20 +2,22 @@ import { prisma } from "@/lib/prisma";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import PageHeader from "@/components/PageHeader";
 import { getUserSession } from "@/lib/auth";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function VerifyPage({
-  params,
-}: {
-  params: Promise<{ memberNumber: string }>;
-}) {
+// Reached by scanning the QR on a membership card, so it answers to anyone.
+// It is looked up by verifyToken and never by memberNumber: the number runs in
+// sequence, and a page keyed on it can be counted through from a single card.
+//
+// It shows what someone checking a card at a door needs and nothing else. The
+// activities a member signed up for are not that.
+export default async function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
   const session = await getUserSession();
-  const { memberNumber } = await params;
+  const { token } = await params;
 
   const member = await prisma.member.findUnique({
-    where: { memberNumber },
+    where: { verifyToken: token },
     select: {
       fullName: true,
       age: true,
@@ -23,11 +25,6 @@ export default async function VerifyPage({
       memberNumber: true,
       createdAt: true,
       photo: true,
-      registrations: {
-        where: { status: "ACTIVE" },
-        select: { activity: { select: { id: true, title: true } } },
-        orderBy: { activity: { createdAt: "asc" } },
-      },
     },
   });
 
@@ -75,23 +72,7 @@ export default async function VerifyPage({
               <Row label="رقم العضوية" value={member!.memberNumber || "—"} dir="ltr" />
               <Row label="العصر" value={member!.age} />
               <Row label="عضو منذ" value={formatDate(member!.createdAt)} />
-              <Row label="وقت الانضمام" value={formatTime(member!.createdAt)} dir="ltr" />
             </div>
-
-            {member!.registrations.length > 0 && (
-              <div className="pt-4 mt-4" style={{ borderTop: "1px solid var(--mint-100)" }}>
-                <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-                  🏆 الأنشطة المسجَّل فيها
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {member!.registrations.map((r) => (
-                    <span key={r.activity.id} className="badge badge-active">
-                      {r.activity.title}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <div className="card p-6 text-center fade-up" style={{ borderColor: "#fca5a5" }}>
