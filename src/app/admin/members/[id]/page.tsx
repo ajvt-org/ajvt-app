@@ -10,6 +10,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
+import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
@@ -131,6 +132,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </button>
         </div>
       </div>
+
+      <SamePersonWarning memberId={member.id} />
 
       {editing ? (
         <MemberEditForm
