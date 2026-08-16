@@ -138,13 +138,8 @@ export default async function LeaderboardPage() {
                 {leaderboard.map((entry) => (
                   <tr
                     key={entry.rank}
-                    style={{
-                      borderTop: "1px solid var(--mint-100)",
-                      background: mineRanks.has(entry.rank) ? "var(--mint-50)" : undefined,
-                      boxShadow: mineRanks.has(entry.rank)
-                        ? "inset 3px 0 0 0 var(--mint-600)"
-                        : undefined,
-                    }}
+                    className={mineRanks.has(entry.rank) ? "row-mine" : undefined}
+                    style={{ borderTop: "1px solid var(--mint-100)" }}
                   >
                     <td className="px-3 py-2.5 text-center font-bold">
                       {entry.rank <= 3 ? (
