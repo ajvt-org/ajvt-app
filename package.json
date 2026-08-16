@@ -25,7 +25,8 @@
     "test:api": "vitest run --config vitest.api.config.mts",
     "test:ui": "vitest run --config vitest.ui.config.mts",
     "test:e2e": "tsx tests/e2e/prepareDb.ts && playwright test",
-    "db:proof-hashes": "tsx prisma/backfillProofHashes.ts"
+    "db:proof-hashes": "tsx prisma/backfillProofHashes.ts",
+    "db:phone-check": "tsx prisma/phoneDivergence.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhotoUpload from "@/components/PhotoUpload";
 import BarChart from "@/components/admin/BarChart";
+import { memberPhone } from "@/lib/memberPhone";
 import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -101,10 +102,16 @@ export default function AdminActivitiesPage() {
       setActivities(activitiesData.activities || []);
       setMembers(
         (membersData.members || []).map(
-          (m: { id: string; fullName: string; phone: string | null; status: string }) => ({
+          (m: {
+            id: string;
+            fullName: string;
+            phone: string | null;
+            status: string;
+            user: { phone: string } | null;
+          }) => ({
             id: m.id,
             fullName: m.fullName,
-            phone: m.phone,
+            phone: memberPhone(m),
             status: m.status,
           }),
         ),

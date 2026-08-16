@@ -11,7 +11,6 @@ export function memberSubmissionSchema(fee: number) {
       .string(members.fullNameRequired)
       .min(1, members.fullNameRequired)
       .refine((v) => v.trim().length <= 30, members.fullNameTooLong),
-    phone: z.string("رقم الهاتف مطلوب").min(1, "رقم الهاتف مطلوب"),
     age: z
       .string(members.pickAgeGroup)
       .min(1, members.pickAgeGroup)

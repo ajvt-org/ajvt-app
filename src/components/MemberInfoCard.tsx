@@ -1,6 +1,7 @@
 import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMembers";
+import { memberPhone } from "@/lib/memberPhone";
 
 // The name is not repeated here — it is the heading directly above. The
 // acceptance date is, because an accepted request no longer shows the stages.
@@ -31,7 +32,7 @@ export default function MemberInfoCard({
         )}
       </div>
       <div className="space-y-2.5">
-        <InfoRow label="رقم الهاتف" value={member.phone} dir="ltr" />
+        <InfoRow label="رقم الهاتف" value={memberPhone(member) ?? "—"} dir="ltr" />
         <InfoRow label="العصر" value={member.age} />
         <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
         {member.paidAmount != null && (
