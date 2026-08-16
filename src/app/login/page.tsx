@@ -46,7 +46,9 @@ function LoginForm() {
 
   return (
     <div className="app-shell">
-      <PageHeader title="تسجيل الدخول" backHref="/" />
+      {/* Back goes where `next` points, which is the page that sent you here
+          and the page you land on after signing in. */}
+      <PageHeader title="تسجيل الدخول" backHref={safeNextPath(searchParams.get("next"), "/")} />
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="flex justify-center fade-up mb-4">
