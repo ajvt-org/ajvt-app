@@ -485,8 +485,13 @@ button:disabled {
 
 /* Arabic carries most of its mass above the baseline, so centring an icon's
    box against the line box leaves it sitting below the text it labels. The
-   nudge lifts the icon onto the text's optical centre. */
+   nudge lifts the icon onto the text's optical centre.
+   Preflight lays every svg out as a block, which inside a paragraph puts the
+   icon on a line of its own and leaves the label stranded underneath, so the
+   display is restored here as well. */
 .icon-inline {
+  display: inline-block;
+  vertical-align: middle;
   transform: translateY(-0.14em);
 }
 
