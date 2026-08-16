@@ -1,59 +1,16 @@
 import "dotenv/config";
 import { prisma } from "../src/lib/prisma";
-import { planAccount, type DuplicateMember } from "../src/lib/duplicateMembers";
+import { findDuplicateAccounts, applyDuplicatePlans } from "../src/lib/duplicateMembersServer";
+import type { DuplicateRow } from "../src/lib/duplicateMembersServer";
 
 // Reports, and with --apply settles, the accounts that hold more than one
 // membership. Prints what it would do and changes nothing unless asked, so the
 // list can be read before anything goes.
 //
-// The same rule runs in the migration that adds the unique index, so an
-// account settled here is a no-op there.
+// No account is ever deleted. The same rule runs in the migration that adds
+// the unique index, so an account settled here is a no-op there.
 
-type Row = DuplicateMember & { userId: string; fullName: string };
-
-async function load(): Promise<Map<string, Row[]>> {
-  const members = await prisma.member.findMany({
-    where: { userId: { not: null } },
-    select: {
-      id: true,
-      userId: true,
-      fullName: true,
-      status: true,
-      createdAt: true,
-      memberNumber: true,
-      _count: {
-        select: {
-          registrations: true,
-          teamMemberships: true,
-          donations: true,
-          matchGoals: true,
-          matchBookings: true,
-          mvpCandidacies: true,
-          motmMatches: true,
-        },
-      },
-    },
-  });
-
-  const byUser = new Map<string, Row[]>();
-  for (const m of members) {
-    const row: Row = {
-      id: m.id,
-      userId: m.userId!,
-      fullName: m.fullName,
-      status: m.status,
-      createdAt: m.createdAt,
-      memberNumber: m.memberNumber,
-      ...m._count,
-    };
-    const rows = byUser.get(row.userId);
-    if (rows) rows.push(row);
-    else byUser.set(row.userId, [row]);
-  }
-  return byUser;
-}
-
-function describe(row: Row): string {
+function describe(row: DuplicateRow): string {
   const records = [
     row.memberNumber ? `carte ${row.memberNumber}` : null,
     row.registrations ? `${row.registrations} inscriptions` : null,
@@ -69,9 +26,8 @@ function describe(row: Row): string {
 
 async function main() {
   const apply = process.argv.includes("--apply");
-  const byUser = await load();
+  const plans = await findDuplicateAccounts();
 
-  const plans = [...byUser.values()].map(planAccount).filter((p) => p !== null);
   if (plans.length === 0) {
     console.log("no account holds more than one membership");
     return;
@@ -85,20 +41,17 @@ async function main() {
     for (const row of plan.detach) console.log(`  detach  ${describe(row)}`);
   }
 
-  const remove = plans.flatMap((p) => p.remove).map((m) => m.id);
-  const detach = plans.flatMap((p) => p.detach).map((m) => m.id);
-  console.log(`\n${remove.length} to delete, ${detach.length} to detach`);
+  const remove = plans.flatMap((p) => p.remove).length;
+  const detach = plans.flatMap((p) => p.detach).length;
+  console.log(`\n${remove} memberships to delete, ${detach} to detach, 0 accounts touched`);
 
   if (!apply) {
     console.log("dry run — pass --apply to carry it out");
     return;
   }
 
-  await prisma.$transaction([
-    prisma.member.updateMany({ where: { id: { in: detach } }, data: { userId: null } }),
-    prisma.member.deleteMany({ where: { id: { in: remove } } }),
-  ]);
-  console.log("done");
+  const done = await applyDuplicatePlans(plans);
+  console.log(`deleted ${done.removed}, detached ${done.detached}`);
 }
 
 main()
