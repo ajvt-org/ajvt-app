@@ -230,7 +230,13 @@ function FormPageInner() {
       if (draft) {
         try {
           const parsed = JSON.parse(draft);
-          setForm({ ...parsed, referenceCode: parsed.referenceCode || generateReferenceCode() });
+          setForm({
+            ...parsed,
+            // A draft can carry a number typed before signing in. The account's
+            // is the one that counts, and the one the server will store.
+            phone: initialPhone || parsed.phone || "",
+            referenceCode: parsed.referenceCode || generateReferenceCode(),
+          });
           setDraftRestored(true);
         } catch {
           setForm((p) => ({ ...p, phone: initialPhone, referenceCode: generateReferenceCode() }));
