@@ -23,14 +23,21 @@ export const PATCH = withRoute(
     // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, photo, paidAmount, accountPhone } = parse(
+    const { fullName, age, paymentMethod, photo, paidAmount, accountPhone } = parse(
       adminMemberUpdateSchema,
       await req.json(),
     );
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, userId: true, phone: true, age: true, paidAmount: true },
+      select: {
+        fullName: true,
+        userId: true,
+        phone: true,
+        age: true,
+        paymentMethod: true,
+        paidAmount: true,
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
@@ -40,6 +47,7 @@ export const PATCH = withRoute(
       fullName?: string;
       phone?: string | null;
       age?: string;
+      paymentMethod?: string;
       photo?: string | null;
       paidAmount?: number | null;
       userId?: string;
@@ -91,6 +99,7 @@ export const PATCH = withRoute(
     }
 
     if (age !== undefined) data.age = age;
+    if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
     if (photo !== undefined) data.photo = photo;
     if (paidAmount !== undefined) {
       if (paidAmount === null) {
@@ -123,6 +132,7 @@ export const PATCH = withRoute(
           fullName: member.fullName,
           phone: member.phone,
           age: member.age,
+          paymentMethod: member.paymentMethod,
           paidAmount: member.paidAmount,
         },
       },
