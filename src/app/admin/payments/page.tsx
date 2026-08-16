@@ -745,10 +745,12 @@ export default function AdminPaymentsPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="payment-field-1"
                 >
                   اسم المتبرع <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="payment-field-1"
                   type="text"
                   value={manualDonation.donorName}
                   onChange={(e) => setManualDonation((p) => ({ ...p, donorName: e.target.value }))}
@@ -761,10 +763,12 @@ export default function AdminPaymentsPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="payment-field-2"
                 >
                   رقم الهاتف (اختياري)
                 </label>
                 <input
+                  id="payment-field-2"
                   type="tel"
                   dir="ltr"
                   value={manualDonation.donorPhone}
@@ -783,10 +787,12 @@ export default function AdminPaymentsPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="payment-field-3"
                 >
                   المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="payment-field-3"
                   type="number"
                   dir="ltr"
                   min={1}
@@ -800,10 +806,12 @@ export default function AdminPaymentsPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="payment-field-4"
                 >
                   طريقة الدفع
                 </label>
                 <select
+                  id="payment-field-4"
                   value={manualDonation.paymentMethod}
                   onChange={(e) =>
                     setManualDonation((p) => ({ ...p, paymentMethod: e.target.value }))
