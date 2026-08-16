@@ -7,7 +7,7 @@ import { memberSubmissionSchema } from "./schema";
 import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError } from "@/lib/errors";
-import { isUniqueViolation } from "@/lib/prismaError";
+import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { members } from "@/lib/messages";
 
 const CODE_ATTEMPTS = 5;
@@ -47,11 +47,21 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     return NextResponse.json({ id: updated.id }, { status: 200 });
   }
 
-  // New member under this account — no cap on how many
+  // One membership per account. A second form is how the same person ended up
+  // both approved and rejected: the duplicate was refused, and the refusal is
+  // what the profile showed. Correcting the one that exists is the only way in,
+  // whatever state it is in.
+  //
+  // The same read carries the account's phone number, which is the one the
+  // membership is stored with.
   const account = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { phone: true },
+    select: { phone: true, members: { select: { id: true }, take: 1 } },
   });
+  if (account?.members.length) {
+    throw new ConflictError(members.alreadyHasRequest);
+  }
+
   let code: string | null = referenceCode || null;
 
   for (let attempt = 0; ; attempt++) {
@@ -77,6 +87,11 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       );
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
+      // Two submissions at once: the second loses the userId index, and no
+      // fresh reference code would settle that.
+      if (uniqueViolationFields(err).includes("userId")) {
+        throw new ConflictError(members.alreadyHasRequest);
+      }
       if (!code || attempt >= CODE_ATTEMPTS) {
         throw new ConflictError("رمز الطلب مستخدم بالفعل، يرجى إعادة المحاولة");
       }

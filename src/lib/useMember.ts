@@ -6,10 +6,11 @@ import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { goAfterAuthChange } from "@/lib/authNav";
 
-// The people on the signed-in account, for the two tabs that need them: the
-// activities list, which asks who may register, and the profile, which shows
-// each of them. Both also inherit the session handling, so an expired cookie
-// lands on the login page from either.
+// The membership on the signed-in account, for the two tabs that need it: the
+// activities list, which asks whether it may register, and the profile, which
+// shows it. Both also inherit the session handling, so an expired cookie lands
+// on the login page from either. An account carries at most one membership,
+// so /api/user/me returns a list of nought or one.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export type Status = "PENDING" | "ACTIVE" | "REJECTED";
@@ -47,9 +48,9 @@ export interface MemberData {
   teamMemberships: TeamMembershipData[];
 }
 
-export function useMembers() {
+export function useMember() {
   const router = useRouter();
-  const [members, setMembers] = useState<MemberData[]>([]);
+  const [member, setMember] = useState<MemberData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // A 401 here means the token was revoked, by a password change or an admin
@@ -73,7 +74,7 @@ export function useMembers() {
       })
       .then((data) => {
         if (!data) return;
-        setMembers(data.members || []);
+        setMember(data.members?.[0] ?? null);
       })
       .catch(() => signOutAndReturnToLogin());
   }
@@ -93,5 +94,5 @@ export function useMembers() {
 
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 
-  return { members, setMembers, loading, reload, logout };
+  return { member, setMember, loading, reload, logout };
 }

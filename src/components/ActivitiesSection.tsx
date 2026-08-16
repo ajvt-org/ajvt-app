@@ -9,9 +9,8 @@ import NumericRanges from "@/components/NumericRanges";
 import type { Activity, EligibleMember } from "./activityTypes";
 
 interface ActivitiesSectionProps {
-  eligibleMembers: EligibleMember[];
-  hasAnyMember: boolean;
-  hasPendingMember: boolean;
+  eligibleMember: EligibleMember | null;
+  memberStatus: "PENDING" | "ACTIVE" | "REJECTED" | null;
   quizAccess: boolean;
 }
 
@@ -59,9 +58,8 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
 }
 
 export default function ActivitiesSection({
-  eligibleMembers,
-  hasAnyMember,
-  hasPendingMember,
+  eligibleMember,
+  memberStatus,
   quizAccess,
 }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -96,11 +94,11 @@ export default function ActivitiesSection({
 
       {activities.length > 0 && (
         <>
-          {eligibleMembers.length === 0 && (
+          {!eligibleMember && (
             <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
-              {hasPendingMember ? (
+              {memberStatus === "PENDING" ? (
                 "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة."
-              ) : hasAnyMember ? (
+              ) : memberStatus === "REJECTED" ? (
                 "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة."
               ) : (
                 <>
@@ -116,11 +114,7 @@ export default function ActivitiesSection({
 
           <div className="space-y-3">
             {activities.map((activity) => (
-              <ActivityCard
-                key={activity.id}
-                activity={activity}
-                eligibleMembers={eligibleMembers}
-              />
+              <ActivityCard key={activity.id} activity={activity} member={eligibleMember} />
             ))}
           </div>
         </>
@@ -129,20 +123,12 @@ export default function ActivitiesSection({
   );
 }
 
-function ActivityCard({
-  activity,
-  eligibleMembers,
-}: {
-  activity: Activity;
-  eligibleMembers: EligibleMember[];
-}) {
+function ActivityCard({ activity, member }: { activity: Activity; member: EligibleMember | null }) {
   // A row says what the activity is and where this account stands with it.
-  // Anything per-person waits for the activity's own page, because an account
-  // can hold several members and repeating them in every row read as several
-  // accounts.
-  const registered = eligibleMembers.filter((m) =>
-    m.registrations.some((r) => r.activityId === activity.id && r.status !== "REJECTED"),
-  ).length;
+  // Anything more waits for the activity's own page.
+  const registered = !!member?.registrations.some(
+    (r) => r.activityId === activity.id && r.status !== "REJECTED",
+  );
 
   return (
     <Link href={`/activities/${activity.id}`} className="card p-3.5 flex items-center gap-3">
@@ -188,10 +174,9 @@ function ActivityCard({
               <NumericRanges>{activity.when}</NumericRanges>
             </span>
           )}
-          {registered > 0 && (
+          {registered && (
             <span style={{ color: "var(--mint-600)" }}>
               <Icon name="check" size={12} className="icon-inline" /> مسجَّل
-              {registered > 1 ? ` (${registered})` : ""}
             </span>
           )}
         </span>
