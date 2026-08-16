@@ -59,10 +59,15 @@ export default function AdminSettingsPage() {
 
       <form onSubmit={save} className="card p-5 space-y-4">
         <div>
-          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="settings-field-1"
+          >
             رسم العضوية (أوقية)
           </label>
           <input
+            id="settings-field-1"
             type="number"
             min={1}
             step={1}
@@ -81,10 +86,15 @@ export default function AdminSettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="settings-field-2"
+          >
             صلاحية كلمة المرور المؤقتة (ساعة)
           </label>
           <input
+            id="settings-field-2"
             type="number"
             min={1}
             max={720}
@@ -104,10 +114,15 @@ export default function AdminSettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="settings-field-3"
+          >
             رقم واتساب الدعم
           </label>
           <input
+            id="settings-field-3"
             type="tel"
             inputMode="numeric"
             value={values.supportWhatsapp}
@@ -125,10 +140,15 @@ export default function AdminSettingsPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="settings-field-4"
+          >
             رابط مجموعة الواتساب
           </label>
           <input
+            id="settings-field-4"
             type="url"
             value={values.whatsappGroup ?? ""}
             onChange={(e) => setValues((p) => ({ ...p, whatsappGroup: e.target.value }))}
