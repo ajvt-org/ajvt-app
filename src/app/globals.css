@@ -604,3 +604,64 @@ body:has(.tab-bar) .app-shell {
 body {
   overscroll-behavior-y: contain;
 }
+
+/* ---- Activity page ---- */
+/* The page is about one activity, so the picture leads it instead of sitting
+   in a card that only made sense when several were listed together. Posters,
+   logos and photographs all arrive here at whatever shape they were uploaded:
+   the image is contained so nothing is cropped away, over a blurred copy of
+   itself so the frame is never empty bars. */
+.activity-hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--mint-500), var(--mint-700));
+}
+
+.activity-hero-blur {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(22px) brightness(0.7);
+  transform: scale(1.2);
+}
+
+.activity-hero-img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.activity-hero-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.activity-hero-badge {
+  position: absolute;
+  bottom: 0.75rem;
+  inset-inline-start: 0.75rem;
+}
+
+/* How full it is, said as a shape rather than only as a fraction. */
+.capacity-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mint-100);
+  overflow: hidden;
+}
+
+.capacity-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--mint-600);
+}

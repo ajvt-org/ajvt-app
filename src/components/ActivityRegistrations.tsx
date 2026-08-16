@@ -109,14 +109,18 @@ export default function ActivityRegistrations({
   return (
     <>
       {/* One tap per person — no payment, no form: membership already covers it */}
-      <div className="space-y-1.5 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <div className="space-y-1.5">
         {eligibleMembers.map((m) => {
           const r = regFor(m);
           const settled = r && r.status !== "REJECTED";
           return (
             <div key={m.id}>
               <div
-                className={`flex items-center gap-3 text-xs py-0.5 ${named ? "justify-between" : "justify-end"}`}
+                className={
+                  named
+                    ? "flex items-center justify-between gap-3 text-xs py-0.5"
+                    : "flex flex-col items-stretch gap-2 text-xs"
+                }
               >
                 {named && (
                   <div className="flex items-center gap-2 min-w-0">
@@ -127,7 +131,13 @@ export default function ActivityRegistrations({
                   </div>
                 )}
                 {settled ? (
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div
+                    className={
+                      named
+                        ? "flex items-center gap-2 shrink-0"
+                        : "flex items-center justify-center gap-2 py-1"
+                    }
+                  >
                     <span className={`badge ${STATUS_CLASS[r!.status]}`}>
                       <IconLabel name={STATUS_LABEL[r!.status].icon} size={11}>
                         {STATUS_LABEL[r!.status].text}
@@ -149,8 +159,12 @@ export default function ActivityRegistrations({
                       activity.isVolunteer ? registerVolunteer(m.id) : register(m.id)
                     }
                     disabled={busyMemberId === m.id}
-                    className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-                    style={{ background: "var(--mint-600)", color: "white" }}
+                    className={
+                      named
+                        ? "text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+                        : "btn btn-primary"
+                    }
+                    style={named ? { background: "var(--mint-600)", color: "white" } : undefined}
                   >
                     {busyMemberId === m.id ? (
                       "..."
@@ -163,7 +177,10 @@ export default function ActivityRegistrations({
                     )}
                   </button>
                 ) : (
-                  <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+                  <span
+                    className={named ? "text-xs shrink-0" : "text-xs text-center py-2"}
+                    style={{ color: "var(--text-muted)" }}
+                  >
                     {!activity.isOpen ? "التسجيل مغلق" : "اكتمل العدد"}
                   </span>
                 )}
