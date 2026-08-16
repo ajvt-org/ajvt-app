@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PhotoUpload from "@/components/PhotoUpload";
 import BarChart from "@/components/admin/BarChart";
-import { memberPhone } from "@/lib/memberPhone";
 import { loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -111,7 +110,7 @@ export default function AdminActivitiesPage() {
           }) => ({
             id: m.id,
             fullName: m.fullName,
-            phone: memberPhone(m),
+            phone: m.user?.phone ?? null,
             status: m.status,
           }),
         ),

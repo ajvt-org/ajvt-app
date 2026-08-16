@@ -10,7 +10,6 @@ async function pendingMember() {
     data: {
       userId: user.id,
       fullName: "محمد ولد أحمد",
-      phone: user.phone,
       age: "البدريين",
       paymentMethod: "بنكيلي",
       paidAmount: 1000,

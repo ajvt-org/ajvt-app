@@ -11,7 +11,6 @@ async function aMember(fullName = "محمد") {
   return prisma.member.create({
     data: {
       fullName,
-      phone: "22334455",
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "ACTIVE",

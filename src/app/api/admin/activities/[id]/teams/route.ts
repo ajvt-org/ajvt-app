@@ -20,7 +20,15 @@ export const GET = withRoute(
           select: {
             id: true,
             status: true,
-            member: { select: { id: true, fullName: true, phone: true, age: true, photo: true } },
+            member: {
+              select: {
+                id: true,
+                fullName: true,
+                age: true,
+                photo: true,
+                user: { select: { phone: true } },
+              },
+            },
           },
         },
       },

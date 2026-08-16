@@ -57,7 +57,6 @@ model Member {
   userId          String?                @unique
   user            User?                  @relation(fields: [userId], references: [id])
   fullName        String
-  phone           String? // null alongside userId — see above
   age             String
   paymentMethod   String
   paymentProof    String?

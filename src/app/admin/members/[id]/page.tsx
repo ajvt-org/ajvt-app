@@ -3,7 +3,6 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memberPhone } from "@/lib/memberPhone";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { auditActionLabel } from "@/lib/auditLabels";
 import Icon from "@/components/Icon";
@@ -117,7 +116,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {member.fullName}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <span dir="ltr">{memberPhone(member) || "—"}</span> · {member.age}
+            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.age}
             {member.memberNumber ? ` · ${member.memberNumber}` : ""}
           </p>
         </div>

@@ -9,7 +9,6 @@ const ALREADY = "لهذا الحساب عضو مسبقاً";
 const validBody = {
   accountPhone: "22334455",
   fullName: "محمد ولد أحمد",
-  memberPhone: "22334455",
   age: "البدريين",
   paymentMethod: "بنكيلي",
   status: "ACTIVE",
@@ -29,7 +28,6 @@ async function memberFor(userId: string | null, over: Record<string, unknown> = 
     data: {
       userId,
       fullName: "عضو",
-      phone: "22334455",
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "ACTIVE",
@@ -68,7 +66,7 @@ describe("admin membership is one per account", () => {
 
   it("attaches an account to a member added without one", async () => {
     await signIn();
-    const member = await memberFor(null, { phone: null });
+    const member = await memberFor(null);
 
     const res = await PATCH(
       patch(`/api/admin/members/${member.id}`, { accountPhone: "22334455" }),
@@ -133,7 +131,7 @@ describe("admin membership is one per account", () => {
     await signIn();
     const taken = await createUser("22334455");
     await memberFor(taken.id);
-    const orphan = await memberFor(null, { phone: null, fullName: "آخر" });
+    const orphan = await memberFor(null, { fullName: "آخر" });
 
     const res = await PATCH(
       patch(`/api/admin/members/${orphan.id}`, { accountPhone: "22334455" }),
