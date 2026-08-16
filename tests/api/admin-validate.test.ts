@@ -117,6 +117,33 @@ describe("POST /api/admin/validate", () => {
     expect(after.rejectionReason).toBe("الصورة غير واضحة");
   });
 
+  it("will not refuse a member without saying why", async () => {
+    const member = await pendingMember();
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    for (const body of [
+      { id: member.id, action: "REJECTED" },
+      { id: member.id, action: "REJECTED", rejectionReason: null },
+      { id: member.id, action: "REJECTED", rejectionReason: "" },
+    ]) {
+      const res = await POST(post("/api/admin/validate", body));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "سبب الرفض مطلوب" });
+    }
+
+    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(after.status).toBe("PENDING");
+  });
+
+  it("still approves without a reason, which is not a thing to explain", async () => {
+    const member = await pendingMember();
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+
+    expect(res.status).toBe(200);
+  });
+
   it("refuses a rejection reason that is not on the list", async () => {
     const member = await pendingMember();
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
