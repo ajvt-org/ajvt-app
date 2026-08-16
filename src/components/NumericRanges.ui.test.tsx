@@ -2,34 +2,59 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import NumericRanges from "./NumericRanges";
 
-function isolated(text: string) {
+// jsdom does no bidi layout, so these check the markup that decides the order.
+// The order it actually produces on screen is measured in tests/e2e/bidi.spec.ts,
+// which is the test that would have caught the range reading backwards.
+function ranges(text: string) {
+  const { container } = render(<NumericRanges>{text}</NumericRanges>);
+  return Array.from(container.querySelectorAll('span[dir="rtl"]')).map((el) => el.textContent);
+}
+
+function fractions(text: string) {
   const { container } = render(<NumericRanges>{text}</NumericRanges>);
   return Array.from(container.querySelectorAll('span[dir="ltr"]')).map((el) => el.textContent);
 }
 
+function numbersIsolated(text: string) {
+  const { container } = render(<NumericRanges>{text}</NumericRanges>);
+  return Array.from(container.querySelectorAll("bdi")).map((el) => el.textContent);
+}
+
 describe("NumericRanges", () => {
-  it("isolates a range written with spaces, the one that reads backwards", () => {
-    expect(isolated("24 - 29 أغسطس")).toEqual(["24 - 29"]);
+  it("lets a spaced range take the direction of the sentence", () => {
+    expect(ranges("24 - 29 أغسطس")).toEqual(["24 - 29"]);
   });
 
-  it("isolates an en dash range, neutral even without spaces", () => {
-    expect(isolated("24–29 أغسطس")).toEqual(["24–29"]);
+  it("does the same for an en dash", () => {
+    expect(ranges("24–29 أغسطس")).toEqual(["24–29"]);
   });
 
-  it("isolates a tight hyphen range too, so the markup does not depend on typing", () => {
-    expect(isolated("24-29 أغسطس")).toEqual(["24-29"]);
+  it("does the same for a tight hyphen, which binds the numbers if left alone", () => {
+    expect(ranges("24-29 أغسطس")).toEqual(["24-29"]);
   });
 
-  it("isolates a slash range", () => {
-    expect(isolated("5/32 مشارك")).toEqual(["5/32"]);
+  // The separator can only stay neutral if neither number reaches across it.
+  it("isolates each number so the separator does not bind them", () => {
+    expect(numbersIsolated("24-29 أغسطس")).toEqual(["24", "29"]);
+  });
+
+  it("keeps a time range in sentence order too", () => {
+    expect(ranges("17:00 - 18:00")).toEqual(["17:00 - 18:00"]);
+  });
+
+  // A count out of a total is not a range: 32/5 would say something else.
+  it("leaves a slash going left to right", () => {
+    expect(fractions("5/32 مشارك")).toEqual(["5/32"]);
+    expect(ranges("5/32 مشارك")).toEqual([]);
   });
 
   it("leaves a single number alone", () => {
-    expect(isolated("يوم 24 أغسطس")).toEqual([]);
+    expect(ranges("يوم 24 أغسطس")).toEqual([]);
+    expect(numbersIsolated("يوم 24 أغسطس")).toEqual([]);
   });
 
   it("handles more than one range in the same text", () => {
-    expect(isolated("24 - 29 أغسطس و 3 - 5 سبتمبر")).toEqual(["24 - 29", "3 - 5"]);
+    expect(ranges("24 - 29 أغسطس و 3 - 5 سبتمبر")).toEqual(["24 - 29", "3 - 5"]);
   });
 
   it("keeps the whole text, nothing is dropped", () => {
