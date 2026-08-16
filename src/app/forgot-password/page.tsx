@@ -49,12 +49,18 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="fade-up delay-1">
-          <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          <label
+            htmlFor="forgot-phone"
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+          >
             رقم هاتفك المسجل (اختياري — يسهّل التعرف على حسابك)
           </label>
           <input
+            id="forgot-phone"
             type="tel"
             inputMode="numeric"
+            autoComplete="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
             placeholder="2XXXXXXX"

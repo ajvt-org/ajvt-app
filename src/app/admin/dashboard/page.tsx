@@ -847,10 +847,12 @@ export default function AdminDashboard() {
                     <label
                       className="block text-xs font-bold mb-1"
                       style={{ color: "var(--text-main)" }}
+                      htmlFor="dash-field-1"
                     >
                       العصر
                     </label>
                     <select
+                      id="dash-field-1"
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
                       className="input"
@@ -869,10 +871,12 @@ export default function AdminDashboard() {
                     <label
                       className="block text-xs font-bold mb-1"
                       style={{ color: "var(--text-main)" }}
+                      htmlFor="dash-field-2"
                     >
                       المبلغ المسدد (أوقية)
                     </label>
                     <input
+                      id="dash-field-2"
                       type="number"
                       inputMode="numeric"
                       min={MEMBERSHIP_FEE}
@@ -1125,10 +1129,12 @@ export default function AdminDashboard() {
                     <label
                       className="block text-xs font-bold"
                       style={{ color: "var(--text-main)" }}
+                      htmlFor="dash-field-3"
                     >
                       سبب الرفض — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
                     </label>
                     <select
+                      id="dash-field-3"
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
                       className="input text-sm"
