@@ -1,5 +1,5 @@
 import type { IconName } from "@/components/Icon";
-import type { Status } from "@/lib/useMembers";
+import type { Status } from "@/lib/useMember";
 
 // One description of each status, so the badge at the top of the profile and
 // the card explaining it can never say different things.
