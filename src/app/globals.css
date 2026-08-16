@@ -484,12 +484,14 @@ select:focus-visible,
    the icon, which has none, so the browser uses the icon's bottom edge and
    the line box still reserves descender room below it. Making the button a
    flex container takes the baseline out of the question. */
-:where(button, a):has(> .icon-label) {
+:where(button, a):has(> .icon-label),
+:where(button, a):has(> .arrow-label) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-.btn:has(> .icon-label) {
+.btn:has(> .icon-label),
+.btn:has(> .arrow-label) {
   display: flex;
 }
 
