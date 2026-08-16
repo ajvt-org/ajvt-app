@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { getLeaderboardData } from "@/lib/donationsServer";
+import { getLeaderboardData, toPublicEntry } from "@/lib/donationsServer";
 import { resetDb } from "./helpers";
 
 async function member(fullName: string) {
@@ -112,5 +112,17 @@ describe("the supporters board", () => {
 
     expect(leaderboard).toHaveLength(1);
     expect(leaderboard[0].total).toBe(500);
+  });
+
+  it("never hands the account behind an anonymous row to the browser", async () => {
+    const m = await member("محمد");
+    await gift(10000, { memberId: m.id });
+
+    const { leaderboard } = await getLeaderboardData();
+    const sent = leaderboard.map(toPublicEntry);
+
+    expect(leaderboard[0].memberIds).toEqual([m.id]);
+    expect(Object.keys(sent[0])).toEqual(["rank", "name", "photoUrl", "total", "anonymous"]);
+    expect(JSON.stringify(sent)).not.toContain(m.id);
   });
 });
