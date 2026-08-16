@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { getLeaderboardData } from "@/lib/donationsServer";
+import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import SupportersTable from "@/components/SupportersTable";
 import { countedLabel } from "@/lib/arabicPlural";
 import IconLabel from "@/components/IconLabel";
 
 export const dynamic = "force-dynamic";
-
-const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 
 // A tab of its own, so there is no back button and nothing to guess about
 // where the reader came from.
@@ -44,7 +42,6 @@ export default async function LeaderboardPage() {
     : [];
   // Ranks are unique, so they identify a row without carrying the account down
   // into the table. Only the person looking sees their own rows marked.
-  const mineRanks = new Set(mine.map((e) => e.rank));
 
   return (
     <div className="app-shell">
@@ -110,67 +107,11 @@ export default async function LeaderboardPage() {
             </p>
           </div>
         ) : (
-          <div className="card overflow-x-auto fade-up">
-            <table className="w-full text-sm" style={{ minWidth: "320px" }}>
-              <thead>
-                <tr style={{ background: "var(--mint-100)" }}>
-                  <th
-                    className="px-3 py-2.5 text-center font-bold"
-                    style={{ color: "var(--mint-700)" }}
-                  >
-                    #
-                  </th>
-                  <th
-                    className="px-3 py-2.5 text-right font-bold"
-                    style={{ color: "var(--mint-700)" }}
-                  >
-                    الداعم
-                  </th>
-                  <th
-                    className="px-3 py-2.5 text-center font-bold"
-                    style={{ color: "var(--mint-700)" }}
-                  >
-                    المجموع
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboard.map((entry) => (
-                  <tr
-                    key={entry.rank}
-                    className={mineRanks.has(entry.rank) ? "row-mine" : undefined}
-                    style={{ borderTop: "1px solid var(--mint-100)" }}
-                  >
-                    <td className="px-3 py-2.5 text-center font-bold">
-                      {entry.rank <= 3 ? (
-                        <span
-                          className="inline-flex"
-                          role="img"
-                          aria-label={`المركز ${entry.rank}`}
-                        >
-                          <Icon name="medal" size={20} color={MEDALS[entry.rank - 1]} />
-                        </span>
-                      ) : (
-                        entry.rank
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5 font-bold" style={{ color: "var(--text-main)" }}>
-                      <span className="flex items-center gap-2 justify-start">
-                        <PlayerAvatar photoUrl={entry.photoUrl} fullName={entry.name} />
-                        {entry.name}
-                      </span>
-                    </td>
-                    <td
-                      className="px-3 py-2.5 text-center font-black"
-                      style={{ color: "var(--mint-700)" }}
-                    >
-                      {entry.total} أوقية
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <SupportersTable
+            initial={leaderboard.slice(0, SUPPORTERS_PAGE_SIZE).map(toPublicEntry)}
+            total={leaderboard.length}
+            mineRanks={mine.map((e) => e.rank)}
+          />
         )}
       </div>
     </div>
