@@ -11,6 +11,7 @@ import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
+import MemberEditForm from "./MemberEditForm";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -30,9 +31,10 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
   const [data, setData] = useState<MemberProfile | null>(null);
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    fetch(`/api/admin/members/${id}/profile`)
+  function load() {
+    return fetch(`/api/admin/members/${id}/profile`)
       .then((r) => {
         if (r.status === 401) {
           router.push(loginPathWithNext("/admin/login"));
@@ -47,8 +49,12 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
       .then((json) => {
         if (json) setData(json);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, router]);
 
   if (loading) {
@@ -113,8 +119,28 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {member.memberNumber ? ` · ${member.memberNumber}` : ""}
           </p>
         </div>
-        <span className="text-xs font-bold shrink-0">{STATUS_LABEL[member.status]}</span>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="text-xs font-bold">{STATUS_LABEL[member.status]}</span>
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            {editing ? "إلغاء" : <IconLabel name="pencil">تعديل</IconLabel>}
+          </button>
+        </div>
       </div>
+
+      {editing && (
+        <MemberEditForm
+          member={member}
+          onSaved={() => {
+            setEditing(false);
+            load();
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      )}
 
       <ProfileSection icon="wallet" title="الدفع">
         <dl className="text-sm space-y-1">
