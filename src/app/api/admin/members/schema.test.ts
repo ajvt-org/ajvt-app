@@ -6,7 +6,6 @@ import { adminMemberCreateSchema } from "./schema";
 const valid = {
   accountPhone: "22334455",
   fullName: "محمد ولد أحمد",
-  memberPhone: "33445566",
   age: "أشبال",
   paymentMethod: "نقداً",
   status: "ACTIVE",
@@ -96,17 +95,11 @@ describe("adminMemberCreateSchema", () => {
     );
   });
 
-  it("asks for a member phone when the phone is known", () => {
-    expect(rejectionOf(adminMemberCreateSchema, { ...valid, memberPhone: "" })).toBe(
-      "جميع الحقول مطلوبة",
-    );
-  });
-
-  it("skips both phone checks when the phone is unknown", () => {
+  it("skips the phone check when the phone is unknown", () => {
     const parsed = parse(adminMemberCreateSchema, {
       ...valid,
       phoneUnknown: true,
-      memberPhone: "",
+      accountPhone: "",
     });
     expect(parsed.fullName).toBe("محمد ولد أحمد");
   });

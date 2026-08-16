@@ -6,7 +6,6 @@ import { saveAppSettings } from "@/lib/settingsServer";
 
 const validBody = {
   fullName: "محمد ولد أحمد",
-  phone: "22334455",
   age: "البدريين",
   paymentMethod: "بنكيلي",
   paymentProof: "proof.webp",
@@ -38,6 +37,17 @@ describe("POST /api/members", () => {
     expect(member?.memberNumber).toBeNull();
   });
 
+  it("takes the number off the account rather than asking for one", async () => {
+    const user = await createUser("33445566");
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", { ...validBody, phone: "22119988" }));
+
+    expect(res.status).toBe(201);
+    const member = await prisma.member.findFirstOrThrow();
+    expect(member.phone).toBe("33445566");
+  });
+
   it("refuses a session whose tokenVersion is stale", async () => {
     const user = await createUser();
     await signInAs(user);
@@ -55,7 +65,6 @@ describe("POST /api/members", () => {
 
     const expected: Record<string, string> = {
       fullName: "الاسم الكامل مطلوب",
-      phone: "رقم الهاتف مطلوب",
       age: "يرجى اختيار العصر",
       paymentMethod: "يرجى اختيار طريقة الدفع",
       paymentProof: "يرجى إرفاق صورة الكابتير",
@@ -150,6 +159,57 @@ describe("POST /api/members", () => {
     expect(res.status).toBe(404);
     const untouched = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(untouched.fullName).toBe(validBody.fullName);
+  });
+
+  it("refuses a second form on an account that already has one", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await POST(post("/api/members", validBody));
+
+    const res = await POST(post("/api/members", { ...validBody, fullName: "اسم آخر" }));
+
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({
+      error: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
+    });
+    expect(await prisma.member.count()).toBe(1);
+  });
+
+  it("refuses a second form even after the first was rejected", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await POST(post("/api/members", validBody));
+    await prisma.member.updateMany({
+      where: { userId: user.id },
+      data: { status: "REJECTED", rejectionReason: "طلب مكرر" },
+    });
+
+    const res = await POST(post("/api/members", validBody));
+
+    expect(res.status).toBe(409);
+    expect(await prisma.member.count()).toBe(1);
+  });
+
+  it("lets a rejected member fix the form they already have", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await POST(post("/api/members", validBody));
+    const member = await prisma.member.findFirstOrThrow();
+    await prisma.member.update({
+      where: { id: member.id },
+      data: { status: "REJECTED", rejectionReason: "الصورة غير واضحة" },
+    });
+
+    const res = await POST(
+      post("/api/members", { ...validBody, id: member.id, paymentProof: "better.webp" }),
+    );
+
+    expect(res.status).toBe(200);
+    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(updated.status).toBe("PENDING");
+    expect(updated.rejectionReason).toBeNull();
+    expect(updated.paymentProof).toBe("better.webp");
+    expect(await prisma.member.count()).toBe(1);
   });
 
   it("will not reopen a member who is already approved", async () => {

@@ -10,6 +10,7 @@ import { generateTempPassword } from "@/lib/member";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { ConflictError } from "@/lib/errors";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
 import { common, members } from "@/lib/messages";
@@ -22,7 +23,7 @@ export const PATCH = withRoute(
     // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, phone, age, photo, paidAmount, accountPhone } = parse(
+    const { fullName, age, photo, paidAmount, accountPhone } = parse(
       adminMemberUpdateSchema,
       await req.json(),
     );
@@ -45,11 +46,6 @@ export const PATCH = withRoute(
     } = {};
 
     if (fullName !== undefined) data.fullName = fullName;
-    if (phone !== undefined && phone !== null) {
-      const phoneError = validatePhone(phone);
-      if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-      data.phone = phone.trim();
-    }
 
     let tempPassword: string | undefined;
     if (accountPhone !== undefined) {
@@ -64,22 +60,34 @@ export const PATCH = withRoute(
       const phoneError = validatePhone(accountPhone);
       if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
 
-      let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
-      if (!user) {
+      const found = await prisma.user.findUnique({
+        where: { phone: accountPhone.trim() },
+        select: { id: true, members: { select: { id: true }, take: 1 } },
+      });
+      // One membership per account, so an account that already carries one
+      // cannot take this member as well. Same sentence and same status as the
+      // manual add, which can hit the same wall.
+      if (found?.members.length) {
+        throw new ConflictError(members.accountAlreadyHasMember);
+      }
+      let userId = found?.id;
+      if (!userId) {
         // The same deal as a reset: the admin reads this password out over the
         // phone, so it expires and the member has to replace it on first use.
         tempPassword = generateTempPassword();
         const { tempPasswordHours } = await getAppSettings();
-        user = await prisma.user.create({
+        const created = await prisma.user.create({
           data: {
             phone: accountPhone.trim(),
             password: await bcrypt.hash(tempPassword, 12),
             tempPasswordExpiresAt: tempPasswordExpiry(tempPasswordHours),
           },
         });
+        userId = created.id;
       }
-      data.userId = user.id;
-      if (phone === undefined) data.phone = accountPhone.trim();
+      data.userId = userId;
+      // The member's number is the account's, so attaching one sets it.
+      data.phone = accountPhone.trim();
     }
 
     if (age !== undefined) data.age = age;
