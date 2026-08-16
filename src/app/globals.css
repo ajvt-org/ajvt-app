@@ -502,6 +502,13 @@ button:disabled {
   box-shadow: inset -3px 0 0 0 var(--mint-600);
 }
 
+/* A single line of Arabic with no descenders fills only the upper part of its
+   line box, so centring the box leaves the words sitting high in a row. The
+   nudge is measured from rendered pixels, like .badge-numeral. */
+.label-optical {
+  transform: translateY(0.37em);
+}
+
 /* The same asymmetry seen from the other side. Tajawal reserves ascent for
    Arabic marks and descent for tails, so a numeral, which uses neither, has
    its ink well above the middle of its own line box. Centring the box leaves
