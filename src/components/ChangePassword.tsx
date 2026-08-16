@@ -56,14 +56,12 @@ export default function ChangePassword() {
   if (!open) {
     return (
       <div className="card p-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <Icon name="lock" size={15} className="icon-inline" /> كلمة المرور
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {done ? "تم تغيير كلمة المرور" : "غيّرها متى شئت"}
-          </p>
-        </div>
+        <p
+          className="text-sm font-bold min-w-0 label-optical"
+          style={{ color: "var(--text-main)" }}
+        >
+          <IconLabel name="lock">{done ? "تم تغيير كلمة المرور" : "كلمة المرور"}</IconLabel>
+        </p>
         <button
           onClick={() => {
             setDone(false);
@@ -81,7 +79,7 @@ export default function ChangePassword() {
   return (
     <form onSubmit={submit} className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <Icon name="lock" size={15} className="icon-inline" /> تغيير كلمة المرور
+        <IconLabel name="lock">تغيير كلمة المرور</IconLabel>
       </p>
 
       <Field
