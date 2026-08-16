@@ -11,6 +11,8 @@ import { syncMembershipDonation } from "@/lib/donationsServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
+import { ConflictError } from "@/lib/errors";
+import { members } from "@/lib/messages";
 import { adminMemberCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
@@ -53,15 +55,25 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
   let userId: string | null = null;
   let tempPassword: string | undefined;
   if (!phoneUnknown) {
-    let user = await prisma.user.findUnique({ where: { phone: accountPhone!.trim() } });
-    if (!user) {
+    const found = await prisma.user.findUnique({
+      where: { phone: accountPhone!.trim() },
+      select: { id: true, members: { select: { id: true }, take: 1 } },
+    });
+    // One membership per account. Without this the admin would be told the
+    // number is taken by a unique-index error rather than by a sentence.
+    if (found?.members.length) {
+      throw new ConflictError(members.accountAlreadyHasMember);
+    }
+    if (found) {
+      userId = found.id;
+    } else {
       tempPassword = generateTempPassword();
       const hashed = await bcrypt.hash(tempPassword, 12);
-      user = await prisma.user.create({
+      const user = await prisma.user.create({
         data: { phone: accountPhone!.trim(), password: hashed },
       });
+      userId = user.id;
     }
-    userId = user.id;
   }
 
   const issued = status === "ACTIVE" ? await issueMembership() : undefined;

@@ -22,6 +22,14 @@ export function post(url: string, body: unknown): NextRequest {
   });
 }
 
+export function patch(url: string, body: unknown): NextRequest {
+  return new NextRequest(`http://localhost${url}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export function get(url: string, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }
