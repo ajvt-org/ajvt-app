@@ -18,13 +18,16 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
     throw new ValidationError();
   }
-  if (
-    action === "REJECTED" &&
-    rejectionReason !== undefined &&
-    rejectionReason !== null &&
-    !REJECTION_REASONS.includes(rejectionReason)
-  ) {
-    throw new ValidationError("سبب الرفض غير صالح");
+  // A refusal the member cannot act on is the same as no answer at all, and
+  // two of them went out with nothing written in this field. The picker has
+  // always sent one; now nothing can refuse without it.
+  if (action === "REJECTED") {
+    if (rejectionReason === undefined || rejectionReason === null || rejectionReason === "") {
+      throw new ValidationError(members.rejectionReasonRequired);
+    }
+    if (!REJECTION_REASONS.includes(rejectionReason)) {
+      throw new ValidationError("سبب الرفض غير صالح");
+    }
   }
 
   const existing = await prisma.member.findUnique({
