@@ -1,26 +1,44 @@
-import { test, expect } from "@playwright/test";
-import { renderToStaticMarkup } from "react-dom/server";
-import NumericRanges from "../../src/components/NumericRanges";
+import { test, expect, type Page } from "@playwright/test";
+import { tokenizeRanges } from "../../src/lib/bidiRanges";
 
 // The one thing jsdom cannot check. A range is written first-value-first, and
 // Arabic reads right to left, so the first value has to land on the right of
 // the screen. Getting that wrong is invisible to any assertion about markup —
-// "24 - 29 أغسطس" shipped reading as 29 then 24 — so the real component is
-// rendered here and the browser is asked where the numbers actually are.
-async function order(page: import("@playwright/test").Page, text: string, needles: string[]) {
-  const html = renderToStaticMarkup(<NumericRanges>{text}</NumericRanges>);
+// "24 - 29 أغسطس" shipped reading as 29 then 24 — so a real browser is asked
+// where the numbers actually ended up.
+//
+// The markup is built from the same tokenizer the component draws from, which
+// is why that lives in a .ts of its own: Playwright compiles JSX with its own
+// factory, so importing the component itself yields no React elements.
+function markup(text: string): string {
+  return tokenizeRanges(text)
+    .map((token) => {
+      if (token.kind === "text") return token.text;
+      if (token.kind === "fraction") {
+        return `<span dir="ltr" style="unicode-bidi:isolate">${token.text}</span>`;
+      }
+      return (
+        `<span dir="rtl" style="unicode-bidi:isolate">` +
+        `<bdi>${token.from}</bdi>${token.separator}<bdi>${token.to}</bdi>` +
+        `</span>`
+      );
+    })
+    .join("");
+}
+
+async function order(page: Page, text: string, needles: string[]) {
   await page.setContent(
     `<!doctype html><html dir="rtl"><body style="font-family:sans-serif;font-size:20px">` +
-      `<p id="subject">${html}</p></body></html>`,
+      `<p id="subject">${markup(text)}</p></body></html>`,
   );
-  return page.evaluate((needles: string[]) => {
+  return page.evaluate((wanted: string[]) => {
     const root = document.getElementById("subject")!;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const found: { needle: string; x: number }[] = [];
     let node: Node | null;
     while ((node = walker.nextNode())) {
       const value = node.textContent ?? "";
-      for (const needle of needles) {
+      for (const needle of wanted) {
         const at = value.indexOf(needle);
         if (at === -1) continue;
         const range = document.createRange();
