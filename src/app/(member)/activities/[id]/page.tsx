@@ -197,9 +197,18 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
                 <IconLabel name="handshake">انضم كمتطوع الآن — واتساب</IconLabel>
               </a>
             ) : (
-              <Link href="/form" className="btn btn-copper">
-                <IconLabel name="pencil">سجّل الآن — أنشئ حسابك للمشاركة</IconLabel>
-              </Link>
+              <div className="space-y-2.5">
+                <Link href={`/form?from=/activities/${id}`} className="btn btn-copper">
+                  <IconLabel name="pencil">سجّل الآن — أنشئ حسابك للمشاركة</IconLabel>
+                </Link>
+                <Link
+                  href={`/login?next=${encodeURIComponent(`/activities/${id}`)}`}
+                  className="text-sm font-bold block text-center"
+                  style={{ color: "var(--mint-600)" }}
+                >
+                  لديك حساب؟ تسجيل الدخول
+                </Link>
+              </div>
             )}
           </div>
         </div>
