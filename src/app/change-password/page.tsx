@@ -48,6 +48,7 @@ export default function ChangePasswordPage() {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.replace("/");
+    router.refresh();
   }
 
   return (
