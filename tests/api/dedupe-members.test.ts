@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { findDuplicateAccounts, applyDuplicatePlans } from "@/lib/duplicateMembersServer";
 import { resetDb, createUser } from "./helpers";
@@ -6,6 +6,28 @@ import { resetDb, createUser } from "./helpers";
 // The cleanup writes Member rows and nothing else. An account is what the
 // person signs in with, so it survives whatever happens to the memberships
 // hanging off it.
+//
+// It only ever runs against data made before the unique index, so these set
+// up that world: the index goes for the duration and comes back after, which
+// is safe because the api config runs test files one at a time. Recreated
+// only if it was there to begin with, so this reads the same on a branch that
+// predates the index.
+
+const INDEX = "Member_userId_key";
+let hadIndex = false;
+
+beforeAll(async () => {
+  const rows = await prisma.$queryRaw<{ indexname: string }[]>`
+    SELECT indexname FROM pg_indexes WHERE tablename = 'Member' AND indexname = ${INDEX}`;
+  hadIndex = rows.length > 0;
+  await prisma.$executeRawUnsafe(`DROP INDEX IF EXISTS "${INDEX}"`);
+});
+
+afterAll(async () => {
+  if (hadIndex) {
+    await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX "${INDEX}" ON "Member"("userId")`);
+  }
+});
 
 async function member(
   userId: string | null,
