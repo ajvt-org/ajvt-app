@@ -345,6 +345,18 @@ model ExpenseTag {
 // /api/track-visit and never tied to a User/Member/Admin. pageViews counts
 // repeat navigations within the same day for that visitor; the row count
 // per day is the daily unique-visitor count.
+// The fingerprint of a stored proof image, keyed by the filename the records
+// point at. One table rather than a column per model: Member.paymentProof,
+// Donation.proof and Expense.proof all hold a filename, so "who else sent
+// this exact image" is one query instead of three.
+model ProofImage {
+  filename  String   @id
+  sha256    String
+  createdAt DateTime @default(now())
+
+  @@index([sha256])
+}
+
 model SiteVisit {
   id        String   @id @default(cuid())
   date      String // YYYY-MM-DD (UTC day bucket)
