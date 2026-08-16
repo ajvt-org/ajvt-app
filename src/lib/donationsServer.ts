@@ -49,6 +49,26 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
   }
 }
 
+// How many rows the board sends before asking for more. Ranking has to
+// aggregate every donation whatever happens, so this saves markup rather than
+// database work.
+export const SUPPORTERS_PAGE_SIZE = 20;
+
+// What the browser is allowed to see. memberIds stays on the server: it is how
+// an anonymous row is tied to an account, which is the one thing that row
+// exists to hide.
+export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "memberIds">;
+
+export function toPublicEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
+  return {
+    rank: e.rank,
+    name: e.name,
+    photoUrl: e.photoUrl,
+    total: e.total,
+    anonymous: e.anonymous,
+  };
+}
+
 interface LeaderboardEntry {
   rank: number;
   name: string;
