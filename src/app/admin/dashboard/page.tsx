@@ -654,7 +654,7 @@ export default function AdminDashboard() {
                               : "var(--copper-500)",
                       }}
                     >
-                      {m.fullName.charAt(0)}
+                      <Icon name="user" size={20} />
                     </div>
                   )}
                   <div className="min-w-0">
@@ -779,7 +779,7 @@ export default function AdminDashboard() {
                             className="w-full h-full flex items-center justify-center text-xl font-black text-white"
                             style={{ background: "var(--mint-600)" }}
                           >
-                            {editName.charAt(0) || "?"}
+                            <Icon name="user" size={26} />
                           </div>
                         )}
                       </div>
@@ -810,7 +810,7 @@ export default function AdminDashboard() {
                       className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-black text-white"
                       style={{ background: "var(--mint-600)" }}
                     >
-                      {selected.fullName.charAt(0)}
+                      <Icon name="user" size={26} />
                     </div>
                   )}
                 </div>

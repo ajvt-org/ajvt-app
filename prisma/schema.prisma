@@ -64,6 +64,9 @@ model Member {
   status          ReviewStatus           @default(PENDING)
   rejectionReason String? // one of src/lib/rejectionReasons.ts, set on REJECTED, cleared on resubmit/approval
   memberNumber    String?                @unique
+  // What the membership card's QR points at. memberNumber is sequential, so a
+  // URL built from it can be counted through; this cannot be guessed.
+  verifyToken     String?                @unique
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   registrations   ActivityRegistration[]

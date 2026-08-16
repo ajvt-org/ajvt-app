@@ -10,6 +10,7 @@ export type Tab = { href: string; label: string; icon: IconName; also?: string[]
 export const MEMBER_TABS: Tab[] = [
   { href: "/profile", label: "حسابي", icon: "user" },
   { href: "/home", label: "الأنشطة", icon: "trophy", also: ["/activities"] },
+  { href: "/leaderboard", label: "الداعمون", icon: "medal" },
   { href: "/donate", label: "ادعم", icon: "heart" },
   { href: "/quiz", label: "المسابقة", icon: "quiz" },
 ];
@@ -21,6 +22,7 @@ export const MEMBER_TABS: Tab[] = [
 export const VISITOR_TABS: Tab[] = [
   { href: "/", label: "دخول", icon: "user" },
   { href: "/activities", label: "الأنشطة", icon: "trophy" },
+  { href: "/leaderboard", label: "الداعمون", icon: "medal" },
   { href: "/donate", label: "ادعم", icon: "heart" },
   { href: "/quiz", label: "المسابقة", icon: "quiz" },
 ];

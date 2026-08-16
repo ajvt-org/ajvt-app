@@ -7,3 +7,11 @@ export function hoursLabel(hours: number): string {
   if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
   return `${hours} ساعة`;
 }
+
+// Arabic marks one, two, and many as three different forms, so a label that
+// counts has to be given all three rather than switched on a plural flag.
+export function countedLabel(count: number, one: string, two: string, many: string): string {
+  if (count === 1) return one;
+  if (count === 2) return two;
+  return many;
+}

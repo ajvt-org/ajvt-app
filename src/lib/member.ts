@@ -1,5 +1,16 @@
 import { randomInt } from "crypto";
 import { prisma } from "./prisma";
+import { generateVerifyToken } from "./verifyToken";
+
+// Both are handed out at the same moment, when a request is approved, so they
+// are handed out together. A member with a number and no token has a card whose
+// QR points nowhere.
+export async function issueMembership(): Promise<{
+  memberNumber: string;
+  verifyToken: string;
+}> {
+  return { memberNumber: await generateMemberNumber(), verifyToken: generateVerifyToken() };
+}
 
 export async function generateMemberNumber(): Promise<string> {
   const year = new Date().getFullYear();

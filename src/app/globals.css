@@ -479,17 +479,42 @@ select:focus-visible,
   transform: translateY(-0.14em);
 }
 
+/* Your own rows on the supporters board. box-shadow has no logical direction,
+   so the bar is placed physically and mirrored for right-to-left, the same way
+   the toggle knob is. */
+.row-mine {
+  background: var(--mint-50);
+  box-shadow: inset 3px 0 0 0 var(--mint-600);
+}
+
+[dir="rtl"] .row-mine {
+  box-shadow: inset -3px 0 0 0 var(--mint-600);
+}
+
+/* The same asymmetry seen from the other side. Tajawal reserves ascent for
+   Arabic marks and descent for tails, so a numeral, which uses neither, has
+   its ink well above the middle of its own line box. Centring the box leaves
+   the digit looking high inside a round badge. Measured at 0.2em from the
+   rendered pixels, not from the font metrics, which disagree. */
+.badge-numeral {
+  display: block;
+  line-height: 1;
+  transform: translateY(0.2em);
+}
+
 /* A button that lays its content out inline sets the icon-and-label box on
    the text baseline. That box takes its own baseline from its first item,
    the icon, which has none, so the browser uses the icon's bottom edge and
    the line box still reserves descender room below it. Making the button a
    flex container takes the baseline out of the question. */
-:where(button, a):has(> .icon-label) {
+:where(button, a):has(> .icon-label),
+:where(button, a):has(> .arrow-label) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-.btn:has(> .icon-label) {
+.btn:has(> .icon-label),
+.btn:has(> .arrow-label) {
   display: flex;
 }
 
