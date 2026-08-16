@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
-import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
 import { memberPhone } from "@/lib/memberPhone";
@@ -21,7 +21,6 @@ import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
-import { uploadFile } from "@/lib/upload";
 import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
 import { initialFilterTab } from "./initialTab";
@@ -71,16 +70,6 @@ function AdminDashboardInner() {
   const [attachAccountError, setAttachAccountError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showStats, setShowStats] = useState(false);
-
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editAge, setEditAge] = useState("");
-  const [editPhoto, setEditPhoto] = useState<string | null>(null);
-  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
-  const [editPhotoUploading, setEditPhotoUploading] = useState(false);
-  const [editPaidAmount, setEditPaidAmount] = useState("");
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState("");
 
   const [showManualAdd, setShowManualAdd] = useState(false);
 
@@ -213,65 +202,6 @@ function AdminDashboardInner() {
       alert(errorMessage(e));
     } finally {
       setDeleteLoading(false);
-    }
-  }
-
-  function startEdit() {
-    if (!selected) return;
-    setEditName(selected.fullName);
-    setEditAge(selected.age);
-    setEditPhoto(selected.photo);
-    setEditPhotoPreview(selected.photo ? `/api/files/${selected.photo}` : null);
-    setEditPaidAmount(selected.paidAmount != null ? String(selected.paidAmount) : "");
-    setEditError("");
-    setEditing(true);
-  }
-
-  async function handleEditPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setEditPhotoPreview(URL.createObjectURL(file));
-    setEditPhotoUploading(true);
-    try {
-      setEditPhoto(await uploadFile(file));
-    } catch (err) {
-      setEditError(err instanceof Error ? err.message : "فشل رفع الملف");
-    } finally {
-      setEditPhotoUploading(false);
-    }
-  }
-
-  async function saveEdit() {
-    if (!selected) return;
-    if (!editName.trim()) {
-      setEditError("الاسم الكامل مطلوب");
-      return;
-    }
-    let paidAmountValue: number | null = null;
-    if (editPaidAmount.trim()) {
-      const paidAmountError = validatePaidAmount(editPaidAmount);
-      if (paidAmountError) {
-        setEditError(paidAmountError);
-        return;
-      }
-      paidAmountValue = Number(editPaidAmount);
-    }
-    setEditSaving(true);
-    setEditError("");
-    try {
-      const data = await api.patch<{ member: Member }>(`/api/admin/members/${selected.id}`, {
-        fullName: editName.trim(),
-        age: editAge,
-        photo: editPhoto,
-        paidAmount: paidAmountValue,
-      });
-      setMembers((prev) => prev.map((m) => (m.id === selected.id ? { ...m, ...data.member } : m)));
-      setSelected((prev) => (prev ? { ...prev, ...data.member } : prev));
-      setEditing(false);
-    } catch (err) {
-      setEditError(errorMessage(err));
-    } finally {
-      setEditSaving(false);
     }
   }
 
@@ -441,7 +371,6 @@ function AdminDashboardInner() {
           setSelected(paginated[idx + 1]);
           setProofZoom(false);
           setTempPassword(null);
-          setEditing(false);
         }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
@@ -450,7 +379,6 @@ function AdminDashboardInner() {
           setSelected(paginated[idx - 1]);
           setProofZoom(false);
           setTempPassword(null);
-          setEditing(false);
         }
       }
     }
@@ -759,7 +687,6 @@ function AdminDashboardInner() {
                 setSelected(m);
                 setProofZoom(false);
                 setTempPassword(null);
-                setEditing(false);
                 setShowRejectPicker(false);
               }}
               className="card w-full p-4 text-right transition-all hover:shadow-md cursor-pointer"
@@ -893,7 +820,6 @@ function AdminDashboardInner() {
                   setSelected(null);
                   setProofZoom(false);
                   setTempPassword(null);
-                  setEditing(false);
                   setShowRejectPicker(false);
                 }}
                 aria-label="إغلاق"
@@ -905,45 +831,10 @@ function AdminDashboardInner() {
             </div>
 
             <div className="p-5 space-y-4">
-              {/* Photo + name (editable) */}
+              {/* Photo + name */}
               <div className="card p-4 flex items-center gap-4">
                 <div className="relative shrink-0">
-                  {editing ? (
-                    <label className="cursor-pointer block">
-                      <div
-                        className="w-16 h-16 rounded-full overflow-hidden border-2"
-                        style={{ borderColor: "var(--mint-300)" }}
-                      >
-                        {editPhotoPreview ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={editPhotoPreview}
-                            alt={editName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center text-xl font-black text-white"
-                            style={{ background: "var(--mint-600)" }}
-                          >
-                            <Icon name="user" size={26} />
-                          </div>
-                        )}
-                      </div>
-                      <span
-                        className="absolute -bottom-1 -left-1 text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center text-white"
-                        style={{ background: "var(--mint-700)" }}
-                      >
-                        📷
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleEditPhotoChange}
-                        style={{ display: "none" }}
-                      />
-                    </label>
-                  ) : selected.photo ? (
+                  {selected.photo ? (
                     <div className="w-16 h-16 rounded-full overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -962,101 +853,18 @@ function AdminDashboardInner() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  {editing ? (
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      maxLength={30}
-                      className="input"
-                    />
-                  ) : (
-                    <p
-                      className="font-black text-lg truncate"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      {selected.fullName}
-                    </p>
-                  )}
+                  <p className="font-black text-lg truncate" style={{ color: "var(--text-main)" }}>
+                    {selected.fullName}
+                  </p>
                 </div>
-                <button
-                  onClick={() => (editing ? setEditing(false) : startEdit())}
+                <Link
+                  href={`/admin/members/${selected.id}`}
                   className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
                   style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
                 >
-                  {editing ? "إلغاء" : <IconLabel name="pencil">تعديل</IconLabel>}
-                </button>
+                  <IconLabel name="pencil">تعديل</IconLabel>
+                </Link>
               </div>
-
-              {editing && (
-                <div className="card p-3 space-y-2">
-                  <div>
-                    <label
-                      className="block text-xs font-bold mb-1"
-                      style={{ color: "var(--text-main)" }}
-                      htmlFor="dash-field-1"
-                    >
-                      العصر
-                    </label>
-                    <select
-                      id="dash-field-1"
-                      value={editAge}
-                      onChange={(e) => setEditAge(e.target.value)}
-                      className="input"
-                    >
-                      {!ageGroups.some((g) => g.name === editAge) && editAge && (
-                        <option value={editAge}>{editAge}</option>
-                      )}
-                      {ageGroups.map((g) => (
-                        <option key={g.id} value={g.name}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      className="block text-xs font-bold mb-1"
-                      style={{ color: "var(--text-main)" }}
-                      htmlFor="dash-field-2"
-                    >
-                      المبلغ المسدد (أوقية)
-                    </label>
-                    <input
-                      id="dash-field-2"
-                      type="number"
-                      inputMode="numeric"
-                      min={MEMBERSHIP_FEE}
-                      value={editPaidAmount}
-                      onChange={(e) => setEditPaidAmount(e.target.value)}
-                      placeholder={String(MEMBERSHIP_FEE)}
-                      className="input"
-                      dir="ltr"
-                    />
-                  </div>
-                  {editError && (
-                    <div
-                      className="p-2 rounded-lg text-xs font-semibold mb-2"
-                      style={{ background: "#fee2e2", color: "#991b1b" }}
-                    >
-                      <Icon name="warning" size={13} className="icon-inline" /> {editError}
-                    </div>
-                  )}
-                  <button
-                    onClick={saveEdit}
-                    disabled={editSaving || editPhotoUploading}
-                    className="btn btn-primary text-sm w-full"
-                  >
-                    {editPhotoUploading ? (
-                      "جاري رفع الصورة..."
-                    ) : editSaving ? (
-                      "..."
-                    ) : (
-                      <IconLabel name="save">حفظ التعديلات</IconLabel>
-                    )}
-                  </button>
-                </div>
-              )}
 
               {/* Info */}
               <div className="card p-4 space-y-3">
