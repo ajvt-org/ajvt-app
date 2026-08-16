@@ -10,22 +10,36 @@ import type { DuplicateRow } from "../src/lib/duplicateMembersServer";
 // No account is ever deleted. The same rule runs in the migration that adds
 // the unique index, so an account settled here is a no-op there.
 
+// The name first: two people sharing a phone read as a duplicate until you
+// see that the names differ, and that is the case worth stopping on.
 function describe(row: DuplicateRow): string {
   const records = [
-    row.memberNumber ? `carte ${row.memberNumber}` : null,
-    row.registrations ? `${row.registrations} inscriptions` : null,
-    row.teamMemberships ? `${row.teamMemberships} équipes` : null,
-    row.donations ? `${row.donations} dons` : null,
+    row.memberNumber ? `card ${row.memberNumber}` : null,
+    row.registrations ? `${row.registrations} registrations` : null,
+    row.teamMemberships ? `${row.teamMemberships} teams` : null,
+    row.donations ? `${row.donations} donations` : null,
   ]
     .filter(Boolean)
     .join(", ");
-  return `${row.id} ${row.status} ${row.createdAt.toISOString().slice(0, 10)}${
+  return `${row.fullName} — ${row.status} ${row.createdAt.toISOString().slice(0, 10)}${
     records ? ` (${records})` : ""
-  }`;
+  } [${row.id}]`;
+}
+
+async function overview() {
+  const [accounts, memberships, unattached] = await Promise.all([
+    prisma.user.count(),
+    prisma.member.count(),
+    prisma.member.count({ where: { userId: null } }),
+  ]);
+  console.log(
+    `${accounts} accounts, ${memberships} memberships, ${unattached} of them with no account`,
+  );
 }
 
 async function main() {
   const apply = process.argv.includes("--apply");
+  await overview();
   const plans = await findDuplicateAccounts();
 
   if (plans.length === 0) {
@@ -33,9 +47,13 @@ async function main() {
     return;
   }
 
-  console.log(`${plans.length} accounts hold more than one membership`);
+  console.log(`\n${plans.length} accounts hold more than one membership`);
   for (const plan of plans) {
-    console.log(`\naccount ${plan.keep.userId}`);
+    const account = await prisma.user.findUnique({
+      where: { id: plan.keep.userId },
+      select: { phone: true },
+    });
+    console.log(`\naccount ${account?.phone ?? plan.keep.userId}`);
     console.log(`  keep    ${describe(plan.keep)}`);
     for (const row of plan.remove) console.log(`  delete  ${describe(row)}`);
     for (const row of plan.detach) console.log(`  detach  ${describe(row)}`);
