@@ -10,6 +10,8 @@ export const members = {
   rejectionReasonRequired: "سبب الرفض مطلوب",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
+  accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",
+  noAccountToCorrect: "لا يوجد حساب لهذا العضو",
 } as const;
 
 export const ageGroups = {
