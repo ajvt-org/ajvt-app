@@ -18,6 +18,7 @@ import {
   matchesFilters,
 } from "@/lib/memberFilters";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
+import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
@@ -896,6 +897,8 @@ function AdminDashboardInner() {
             </div>
 
             <div className="p-5 space-y-4">
+              <SamePersonWarning memberId={selected.id} />
+
               {/* Photo + name */}
               <div className="card p-4 flex items-center gap-4">
                 <div className="relative shrink-0">
