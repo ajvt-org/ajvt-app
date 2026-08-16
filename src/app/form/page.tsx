@@ -184,6 +184,7 @@ function FormPageInner() {
           router.push(loginPathWithNext("/login"));
           return;
         }
+        const me = await meRes.json();
         const memberRes = await fetch(`/api/members/${editId}`);
         if (!memberRes.ok) {
           router.push("/profile");
@@ -196,7 +197,9 @@ function FormPageInner() {
         }
         setForm({
           fullName: member.fullName || "",
-          phone: member.phone || "",
+          // The account's number, not the copy on the member: it is the one
+          // the association calls, and the only one still asked for.
+          phone: me?.phone || member.phone || "",
           age: member.age || "",
           paymentMethod: member.paymentMethod || "",
           paidAmount: member.paidAmount != null ? String(member.paidAmount) : "",
@@ -221,13 +224,27 @@ function FormPageInner() {
         const me = await meRes.json();
         setAuthenticated(true);
         initialPhone = me?.phone || "";
+        // An account holds one request. Filling this in again would only be
+        // refused on submit, so an account that already has one is sent to
+        // where it can be corrected, or to the profile once it is approved.
+        const mine = me?.members?.[0];
+        if (mine) {
+          router.replace(mine.status === "ACTIVE" ? "/profile" : `/form?id=${mine.id}`);
+          return;
+        }
       }
 
       const draft = localStorage.getItem(DRAFT_KEY);
       if (draft) {
         try {
           const parsed = JSON.parse(draft);
-          setForm({ ...parsed, referenceCode: parsed.referenceCode || generateReferenceCode() });
+          setForm({
+            ...parsed,
+            // A draft can carry a number typed before signing in. The account's
+            // is the one that counts, and the one the server will store.
+            phone: initialPhone || parsed.phone || "",
+            referenceCode: parsed.referenceCode || generateReferenceCode(),
+          });
           setDraftRestored(true);
         } catch {
           setForm((p) => ({ ...p, phone: initialPhone, referenceCode: generateReferenceCode() }));
@@ -642,14 +659,27 @@ function FormPageInner() {
               >
                 رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
-              <PhoneInput
-                id="member-phone"
-                value={form.phone}
-                onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
-              />
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                8 أرقام — يبدأ بـ 2 أو 3 أو 4
-              </p>
+              {authenticated ? (
+                <>
+                  <p className="input flex items-center" dir="ltr" id="member-phone">
+                    {form.phone}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                    رقم حسابك — لتغييره تواصل مع المشرف
+                  </p>
+                </>
+              ) : (
+                <>
+                  <PhoneInput
+                    id="member-phone"
+                    value={form.phone}
+                    onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                    8 أرقام — يبدأ بـ 2 أو 3 أو 4
+                  </p>
+                </>
+              )}
             </div>
 
             <div>

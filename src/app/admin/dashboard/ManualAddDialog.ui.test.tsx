@@ -31,20 +31,19 @@ afterEach(() => {
 });
 
 describe("ManualAddDialog", () => {
-  it("asks for both phone numbers by default", () => {
+  it("asks for the account number, and only that one", () => {
     setup();
 
     expect(screen.getByLabelText(/رقم هاتف الحساب/)).toBeDefined();
-    expect(screen.getByLabelText("رقم هاتف العضو")).toBeDefined();
+    expect(screen.queryByLabelText("رقم هاتف العضو")).toBeNull();
   });
 
-  it("drops the phone fields when the phone is unknown", async () => {
+  it("drops the phone field when the phone is unknown", async () => {
     setup();
 
     await userEvent.click(screen.getByLabelText(/رقم الهاتف غير معروف/));
 
     expect(screen.queryByLabelText(/رقم هاتف الحساب/)).toBeNull();
-    expect(screen.queryByLabelText("رقم هاتف العضو")).toBeNull();
   });
 
   it("offers every age group it is given", () => {

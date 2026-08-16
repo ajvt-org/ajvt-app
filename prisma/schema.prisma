@@ -51,7 +51,10 @@ model User {
 
 model Member {
   id              String                 @id @default(cuid())
-  userId          String? // null = admin-added with an unknown phone number; an account + phone are attached later
+  // One membership per account. Null = admin-added with an unknown phone
+  // number, an account attached later; Postgres treats nulls as distinct, so
+  // any number of those may sit unattached at once.
+  userId          String?                @unique
   user            User?                  @relation(fields: [userId], references: [id])
   fullName        String
   phone           String? // null alongside userId — see above

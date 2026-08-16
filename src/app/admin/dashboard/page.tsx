@@ -7,6 +7,7 @@ import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl }
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
+import { memberPhone } from "@/lib/memberPhone";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
 import {
@@ -323,7 +324,6 @@ function AdminDashboardInner() {
     const headers = [
       "الاسم الكامل",
       "رقم الهاتف",
-      "حساب التطبيق",
       "العصر",
       "طريقة الدفع",
       "الحالة",
@@ -332,8 +332,7 @@ function AdminDashboardInner() {
     ];
     const rows = members.map((m) => [
       m.fullName,
-      m.phone || "",
-      m.user?.phone || "",
+      memberPhone(m) || "",
       m.age,
       m.paymentMethod,
       STATUS_LABEL[m.status],
@@ -810,7 +809,7 @@ function AdminDashboardInner() {
                       {m.fullName}
                     </p>
                     <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
-                      {m.phone || "غير معروف"}
+                      {memberPhone(m) || "غير معروف"}
                     </p>
                   </div>
                 </div>
@@ -1063,8 +1062,7 @@ function AdminDashboardInner() {
               <div className="card p-4 space-y-3">
                 {(
                   [
-                    ["رقم الهاتف", selected.phone || "غير معروف", "ltr"],
-                    ["حساب التطبيق", selected.user?.phone || "—", "ltr"],
+                    ["رقم الهاتف", memberPhone(selected) || "غير معروف", "ltr"],
                     ["العصر", selected.age, undefined],
                     ["طريقة الدفع", selected.paymentMethod, undefined],
                     [

@@ -1,6 +1,6 @@
 import Icon from "@/components/Icon";
 import { STATUS } from "@/lib/memberStatus";
-import type { Status } from "@/lib/useMembers";
+import type { Status } from "@/lib/useMember";
 
 export default function MemberStatusCard({ status }: { status: Status }) {
   const cfg = STATUS[status];

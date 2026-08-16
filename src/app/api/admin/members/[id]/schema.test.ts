@@ -32,10 +32,6 @@ describe("adminMemberUpdateSchema", () => {
     );
   });
 
-  it("rejects a phone that is not text, which used to reach validatePhone", () => {
-    expect(rejectionOf(adminMemberUpdateSchema, { phone: 22334455 })).toBe("بيانات غير صالحة");
-  });
-
   it("rejects an account phone that is not text", () => {
     expect(rejectionOf(adminMemberUpdateSchema, { accountPhone: 22334455 })).toBe(
       "بيانات غير صالحة",

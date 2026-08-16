@@ -54,4 +54,9 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
     adminPage.locator("text=" + MEMBER.fullName).locator("xpath=ancestor::*[3]"),
   ).toContainText("مقبول");
   await admin.close();
+
+  // The account now holds a membership, so the join form has nothing left to
+  // ask: a second request is what put a rejection on an approved account.
+  await page.goto("/form");
+  await page.waitForURL("**/profile");
 });
