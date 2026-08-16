@@ -9,6 +9,10 @@ import type { PublicLeaderboardEntry } from "@/lib/donationsServer";
 // The board grows with every gift, so the page arrives with the first stretch
 // and asks for the rest only if the reader wants it. The rows it is given
 // carry no account, so nothing here can say who an anonymous giver is.
+//
+// The button carries no number. It used to show how many rows were left, which
+// is not what it loads: one press brings a page, not the remainder, so past
+// forty supporters it promised more than it gave.
 const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 
 export default function SupportersTable({
@@ -104,11 +108,7 @@ export default function SupportersTable({
           className="btn"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {loading ? (
-            "جاري التحميل..."
-          ) : (
-            <IconLabel name="chevronDown">عرض المزيد ({total - rows.length})</IconLabel>
-          )}
+          {loading ? "جاري التحميل..." : <IconLabel name="chevronDown">عرض المزيد</IconLabel>}
         </button>
       )}
 

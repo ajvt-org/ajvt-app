@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { getLeaderboardData, toPublicEntry } from "@/lib/donationsServer";
+import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
+import { GET as BOARD } from "@/app/api/leaderboard/route";
+import { get } from "./helpers";
 import { resetDb } from "./helpers";
 
 async function member(fullName: string) {
@@ -124,5 +126,29 @@ describe("the supporters board", () => {
     expect(leaderboard[0].memberIds).toEqual([m.id]);
     expect(Object.keys(sent[0])).toEqual(["rank", "name", "photoUrl", "total", "anonymous"]);
     expect(JSON.stringify(sent)).not.toContain(m.id);
+  });
+
+  it("hands back one page at a time, however many supporters there are", async () => {
+    const extra = SUPPORTERS_PAGE_SIZE + 5;
+    for (let i = 0; i < extra; i++) await gift(100 + i, { name: `داعم ${i}` });
+
+    const body = await (await BOARD(get("/api/leaderboard"))).json();
+
+    expect(body.total).toBe(extra);
+    // The button that asks for more loads a page, not the remainder. It used to
+    // print the remainder next to itself and promise more than it delivered.
+    expect(body.rows).toHaveLength(SUPPORTERS_PAGE_SIZE);
+  });
+
+  it("keeps paging from an offset until the rows run out", async () => {
+    const extra = SUPPORTERS_PAGE_SIZE + 5;
+    for (let i = 0; i < extra; i++) await gift(100 + i, { name: `داعم ${i}` });
+
+    const second = await (
+      await BOARD(get(`/api/leaderboard?offset=${SUPPORTERS_PAGE_SIZE}`))
+    ).json();
+
+    expect(second.rows).toHaveLength(5);
+    expect(second.rows[0].rank).toBe(SUPPORTERS_PAGE_SIZE + 1);
   });
 });
