@@ -3,11 +3,19 @@
 
 name: Node.js CI
 
+# A commit on dev is usually also the head of a pull request into master, and
+# listing dev under both triggers ran the same commit twice. Pull requests
+# cover dev; push covers master, which is what gets deployed.
 on:
   push:
-    branches: [ "master", "dev" ]
+    branches: [ "master" ]
   pull_request:
     branches: [ "master", "dev" ]
+
+# A new push supersedes the run it interrupts rather than queueing behind it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
