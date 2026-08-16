@@ -42,7 +42,6 @@ async function member(
     data: {
       userId,
       fullName: "عضو",
-      phone: "22334455",
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "REJECTED",

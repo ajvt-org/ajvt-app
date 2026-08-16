@@ -20,7 +20,9 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
           paymentProof: true,
           rejectionReason: true,
           createdAt: true,
-          member: { select: { id: true, fullName: true, phone: true, age: true } },
+          member: {
+            select: { id: true, fullName: true, age: true, user: { select: { phone: true } } },
+          },
         },
         orderBy: { createdAt: "asc" },
       },

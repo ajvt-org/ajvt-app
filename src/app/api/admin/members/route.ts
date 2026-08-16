@@ -82,9 +82,6 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
       data: {
         userId,
         fullName,
-        // A copy of the account number: the member no longer carries one of
-        // their own.
-        phone: phoneUnknown ? null : accountPhone!.trim(),
         age,
         paymentMethod,
         paymentProof: paymentProof || null,
@@ -104,7 +101,6 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     targetId: member.id,
     after: {
       fullName: member.fullName,
-      phone: member.phone,
       age: member.age,
       paymentMethod: member.paymentMethod,
       paidAmount: member.paidAmount,

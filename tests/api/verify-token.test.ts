@@ -8,7 +8,6 @@ async function pendingMember(name: string) {
   return prisma.member.create({
     data: {
       fullName: name,
-      phone: "22334455",
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "PENDING",
@@ -56,7 +55,6 @@ describe("membership verification", () => {
     await prisma.member.create({
       data: {
         fullName: "محمد",
-        phone: "22334455",
         age: "البدريين",
         paymentMethod: "بنكيلي",
         status: "ACTIVE",

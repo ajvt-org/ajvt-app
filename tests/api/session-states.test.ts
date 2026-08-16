@@ -36,7 +36,6 @@ async function addMember(userId: string, phone: string, status: string, name: st
   return prisma.member.create({
     data: {
       userId,
-      phone,
       fullName: name,
       age: "البدريين",
       paymentMethod: "بنكيلي",
