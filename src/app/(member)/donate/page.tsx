@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
 import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import PageHeader from "@/components/PageHeader";
@@ -11,6 +10,7 @@ import { errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import SupportersLink from "@/components/SupportersLink";
 
 export default function DonatePage() {
   return (
@@ -147,9 +147,7 @@ function DonatePageInner() {
           <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
             تم استلام تبرعك وسيتم مراجعته من طرف الرابطة. جزاك الله خيراً.
           </p>
-          <Link href="/leaderboard" className="btn btn-primary">
-            <IconLabel name="trophy">شاهد لوحة شرف المتبرعين</IconLabel>
-          </Link>
+          <SupportersLink className="btn btn-primary" style={{}} />
         </div>
       </div>
     );
@@ -226,13 +224,6 @@ function DonatePageInner() {
               ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
               : "تتابع الآن كمتبرع بدون حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
           </p>
-          <Link
-            href="/leaderboard"
-            className="text-xs font-bold mt-2 inline-block"
-            style={{ color: "var(--mint-600)" }}
-          >
-            <IconLabel name="trophy">شاهد لوحة شرف المتبرعين</IconLabel>
-          </Link>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">

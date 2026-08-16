@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { validatePhone, loginPathWithNext } from "@/lib/utils";
+import { validatePhone, loginPathWithNext, safeNextPath } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
@@ -125,6 +125,9 @@ function FormPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
+  // Set by whatever sent you here, so the way back is the page you left and
+  // not whichever home your session implies.
+  const cameFrom = safeNextPath(searchParams.get("from"), "");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -542,7 +545,7 @@ function FormPageInner() {
       >
         {/* The form is reached from the landing page or from an activity, and
             it is long: without this there is no way out but the browser. */}
-        <BackButton href={authenticated ? "/profile" : "/"} />
+        <BackButton href={cameFrom || (authenticated ? "/profile" : "/")} />
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>

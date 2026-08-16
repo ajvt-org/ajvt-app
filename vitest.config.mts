@@ -13,6 +13,9 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     env: {
       JWT_SECRET: "test-secret",
+      // Vitest reads .env, CI has none. Without this a unit test that reaches
+      // a database passes here and fails there, which is how this was found.
+      DATABASE_URL: "",
     },
   },
 });

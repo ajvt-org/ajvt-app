@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { generateMemberNumber } from "@/lib/member";
+import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
 import { syncMembershipDonation } from "@/lib/donationsServer";
@@ -31,9 +31,9 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     where: { id },
     select: { status: true, memberNumber: true, rejectionReason: true },
   });
-  let memberNumber: string | undefined;
+  let issued: { memberNumber: string; verifyToken: string } | undefined;
   if (action === "ACTIVE" && !existing?.memberNumber) {
-    memberNumber = await generateMemberNumber();
+    issued = await issueMembership();
   }
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -41,7 +41,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       where: { id },
       data: {
         status: action,
-        ...(memberNumber ? { memberNumber } : {}),
+        ...(issued ?? {}),
         // A stale reason from a past rejection shouldn't linger once approved.
         rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
       },
