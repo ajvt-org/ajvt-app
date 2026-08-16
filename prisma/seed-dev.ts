@@ -455,6 +455,42 @@ async function main() {
     });
   }
 
+  // Two kinds of anonymous giver, because the leaderboard treats them
+  // differently: a walk-in with nothing to group on is one row per gift, while
+  // a member who asked not to be named is one row for the account, however
+  // many times they gave.
+  for (let i = 0; i < 4; i++) {
+    await prisma.donation.create({
+      data: {
+        donorName: null,
+        amount: [3000, 7500, 12000, 20000][i],
+        proof: placeholder(`seed-donation-${next()}.webp`),
+        status: "ACTIVE",
+        source: "PUBLIC",
+        paymentMethod: pick(PAYMENT_METHODS, i),
+        createdAt: daysAgo(50 - i * 3),
+      },
+    });
+  }
+
+  const shyGivers = active.slice(0, 2);
+  for (let i = 0; i < shyGivers.length; i++) {
+    for (const amount of [4000, 6000]) {
+      await prisma.donation.create({
+        data: {
+          donorName: null,
+          amount,
+          proof: placeholder(`seed-donation-${next()}.webp`),
+          status: "ACTIVE",
+          source: "SELF",
+          paymentMethod: pick(PAYMENT_METHODS, i),
+          memberId: shyGivers[i].id,
+          createdAt: daysAgo(30 - i * 2),
+        },
+      });
+    }
+  }
+
   const expenses = [
     ["كرات وتجهيزات رياضية", 18000],
     ["أدوات النظافة للحملة التطوعية", 7500],
@@ -563,7 +599,7 @@ async function main() {
     activities: 3,
     teams: teams.length,
     matches: pairs.length,
-    donations: active.length + 10,
+    donations: active.length + 10 + 4 + shyGivers.length * 2,
     expenses: expenses.length,
     questions: created.length,
   };
