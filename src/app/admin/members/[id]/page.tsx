@@ -13,6 +13,7 @@ import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
+import AccountPhoneForm from "./AccountPhoneForm";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -145,6 +146,14 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         />
       ) : (
         <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
+      )}
+
+      {member.user && (
+        <ProfileSection icon="user" title="الحساب">
+          <div className="text-sm">
+            <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
+          </div>
+        </ProfileSection>
       )}
 
       <ProfileSection icon="wallet" title="الدفع">
