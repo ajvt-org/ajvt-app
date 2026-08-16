@@ -80,6 +80,55 @@ describe("admin membership is one per account", () => {
     expect(updated.userId).not.toBeNull();
   });
 
+  it("changes the age group and the payment method, and records both", async () => {
+    await signIn();
+    const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
+
+    const res = await PATCH(
+      patch(`/api/admin/members/${member.id}`, {
+        age: "الفائزين",
+        paymentMethod: "السداد",
+      }),
+      params(member.id),
+    );
+
+    expect(res.status).toBe(200);
+    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(updated.age).toBe("الفائزين");
+    expect(updated.paymentMethod).toBe("السداد");
+
+    const log = await prisma.auditLog.findFirstOrThrow({
+      where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER" },
+    });
+    expect(log.before).toMatchObject({ age: "البدريين", paymentMethod: "بنكيلي" });
+    expect(log.after).toMatchObject({ age: "الفائزين", paymentMethod: "السداد" });
+  });
+
+  it("leaves untouched fields alone", async () => {
+    await signIn();
+    const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
+
+    await PATCH(patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }), params(member.id));
+
+    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(updated.paymentMethod).toBe("بنكيلي");
+    expect(updated.fullName).toBe("عضو");
+  });
+
+  it("refuses an empty payment method rather than blanking it", async () => {
+    await signIn();
+    const member = await memberFor(null, { paymentMethod: "بنكيلي" });
+
+    const res = await PATCH(
+      patch(`/api/admin/members/${member.id}`, { paymentMethod: "   " }),
+      params(member.id),
+    );
+
+    expect(res.status).toBe(400);
+    const untouched = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(untouched.paymentMethod).toBe("بنكيلي");
+  });
+
   it("refuses to attach an account that already carries a member", async () => {
     await signIn();
     const taken = await createUser("22334455");
