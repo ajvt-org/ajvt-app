@@ -37,15 +37,15 @@ describe("POST /api/members", () => {
     expect(member?.memberNumber).toBeNull();
   });
 
-  it("takes the number off the account rather than asking for one", async () => {
+  it("ignores a number the client sends, since the account carries it", async () => {
     const user = await createUser("33445566");
     await signInAs(user);
 
     const res = await POST(post("/api/members", { ...validBody, phone: "22119988" }));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow();
-    expect(member.phone).toBe("33445566");
+    const member = await prisma.member.findFirstOrThrow({ include: { user: true } });
+    expect(member.user?.phone).toBe("33445566");
   });
 
   it("refuses a session whose tokenVersion is stale", async () => {

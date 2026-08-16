@@ -215,7 +215,6 @@ async function main() {
       data: {
         userId: i % 9 === 8 ? null : user.id,
         fullName: fullName(i),
-        phone: i % 9 === 8 ? null : user.phone,
         age: pick(AGE_GROUPS, i),
         paymentMethod: pick(PAYMENT_METHODS, i),
         paymentProof: i % 7 === 6 ? null : placeholder(`seed-proof-${next()}.webp`),

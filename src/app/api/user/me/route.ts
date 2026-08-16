@@ -9,10 +9,7 @@ import { logger } from "@/lib/logger";
 const MEMBER_SELECT = {
   id: true,
   fullName: true,
-  // The account's number is the one the association calls; the member's own
-  // copy is on its way out of the schema.
   user: { select: { phone: true } },
-  phone: true,
   age: true,
   paymentMethod: true,
   paymentProof: true,

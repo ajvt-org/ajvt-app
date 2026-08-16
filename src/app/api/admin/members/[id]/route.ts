@@ -23,14 +23,20 @@ export const PATCH = withRoute(
     // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, photo, paidAmount, accountPhone } = parse(
+    const { fullName, age, paymentMethod, photo, paidAmount, accountPhone } = parse(
       adminMemberUpdateSchema,
       await req.json(),
     );
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, userId: true, phone: true, age: true, paidAmount: true },
+      select: {
+        fullName: true,
+        userId: true,
+        age: true,
+        paymentMethod: true,
+        paidAmount: true,
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
@@ -38,8 +44,8 @@ export const PATCH = withRoute(
 
     const data: {
       fullName?: string;
-      phone?: string | null;
       age?: string;
+      paymentMethod?: string;
       photo?: string | null;
       paidAmount?: number | null;
       userId?: string;
@@ -86,11 +92,10 @@ export const PATCH = withRoute(
         userId = created.id;
       }
       data.userId = userId;
-      // The member's number is the account's, so attaching one sets it.
-      data.phone = accountPhone.trim();
     }
 
     if (age !== undefined) data.age = age;
+    if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
     if (photo !== undefined) data.photo = photo;
     if (paidAmount !== undefined) {
       if (paidAmount === null) {
@@ -121,8 +126,8 @@ export const PATCH = withRoute(
         before: existing,
         after: {
           fullName: member.fullName,
-          phone: member.phone,
           age: member.age,
+          paymentMethod: member.paymentMethod,
           paidAmount: member.paidAmount,
         },
       },
@@ -137,7 +142,7 @@ export const PATCH = withRoute(
           targetType: "Member",
           targetId: member.id,
           before: { userId: null },
-          after: { userId: data.userId, phone: accountPhone!.trim() },
+          after: { userId: data.userId, account: accountPhone!.trim() },
         },
       );
     }
@@ -154,7 +159,7 @@ export const DELETE = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, phone: true, age: true, status: true, memberNumber: true },
+      select: { fullName: true, age: true, status: true, memberNumber: true },
     });
     if (!member) {
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
