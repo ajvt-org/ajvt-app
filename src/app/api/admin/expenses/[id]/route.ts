@@ -11,7 +11,10 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
-    const { label, amount, note, date, proof } = parse(expenseUpdateSchema, await req.json());
+    const { label, amount, note, date, proof, tagIds } = parse(
+      expenseUpdateSchema,
+      await req.json(),
+    );
 
     const existing = await prisma.expense.findUnique({ where: { id } });
     if (!existing) {
@@ -24,6 +27,7 @@ export const PATCH = withRoute(
       note?: string | null;
       date?: Date;
       proof?: string | null;
+      tags?: { set: { id: string }[] };
     } = {};
 
     if (label !== undefined) data.label = label;
@@ -35,8 +39,15 @@ export const PATCH = withRoute(
 
     if (date !== undefined) data.date = new Date(date as string);
     if (proof !== undefined) data.proof = proof;
+    // set, not connect: the list sent is the whole list, so dropping a tag
+    // in the form has to drop it here.
+    if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
 
-    const expense = await prisma.expense.update({ where: { id }, data });
+    const expense = await prisma.expense.update({
+      where: { id },
+      data,
+      include: { tags: { select: { id: true, name: true } } },
+    });
     await logAction(
       session.username,
       "UPDATE_EXPENSE",
