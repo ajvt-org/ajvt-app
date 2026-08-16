@@ -15,9 +15,9 @@ type Row = {
   gd: number;
 };
 
-const COLUMNS: { label: string; detail: boolean }[] = [
+const COLUMNS: { label: string; detail: boolean; start?: boolean }[] = [
   { label: "#", detail: false },
-  { label: "الفريق", detail: false },
+  { label: "الفريق", detail: false, start: true },
   { label: "نقاط", detail: false },
   { label: "لعب", detail: false },
   { label: "فاز", detail: true },
@@ -53,7 +53,7 @@ export default function StandingsTable({
             {COLUMNS.map((column) => (
               <th
                 key={column.label}
-                className={`px-2 py-2 text-center font-bold${column.detail ? " col-detail" : ""}`}
+                className={`px-2 py-2 font-bold${column.start ? " text-start" : " text-center"}${column.detail ? " col-detail" : ""}`}
                 style={{ color: "var(--mint-700)" }}
               >
                 {column.label}
@@ -67,7 +67,7 @@ export default function StandingsTable({
             <tr key={row.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
               <td className="px-2 py-2 text-center">{i + 1}</td>
               <td className="px-2 py-2 font-bold" style={{ color: "var(--text-main)" }}>
-                <span className="flex items-center gap-1.5 justify-center">
+                <span className="flex items-center gap-1.5 justify-start whitespace-nowrap">
                   <TeamLogo logo={row.logo} name={row.name} size={18} />
                   {row.name}
                 </span>
