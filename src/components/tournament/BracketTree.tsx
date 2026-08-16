@@ -1,3 +1,4 @@
+import Icon from "@/components/Icon";
 import TeamLogo from "@/components/tournament/TeamLogo";
 
 interface BracketMatch {
@@ -14,6 +15,8 @@ interface BracketMatch {
   status: "SCHEDULED" | "PLAYED";
 }
 
+// A shootout is shown in brackets beside the score it settled, otherwise a
+// tie carries a trophy with nothing on the card explaining it.
 const CARD_HEIGHT = 64;
 const CARD_GAP = 16;
 
@@ -65,12 +68,19 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                     >
                       <span className="flex items-center gap-1 truncate">
                         <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={16} />
+                        {homeWinner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
                         <span className="truncate" style={{ color: "var(--text-main)" }}>
-                          {homeWinner ? "🏆 " : ""}
                           {m.homeTeam.name}
                         </span>
                       </span>
-                      {m.status === "PLAYED" && <span>{m.homeScore}</span>}
+                      {m.status === "PLAYED" && (
+                        <span className="shrink-0">
+                          {m.homeScore}
+                          {m.homePenalties !== null && (
+                            <span style={{ color: "var(--text-muted)" }}> ({m.homePenalties})</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <div
                       className="flex items-center justify-between gap-1 px-2 text-xs"
@@ -83,12 +93,19 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                     >
                       <span className="flex items-center gap-1 truncate">
                         <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={16} />
+                        {awayWinner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
                         <span className="truncate" style={{ color: "var(--text-main)" }}>
-                          {awayWinner ? "🏆 " : ""}
                           {m.awayTeam.name}
                         </span>
                       </span>
-                      {m.status === "PLAYED" && <span>{m.awayScore}</span>}
+                      {m.status === "PLAYED" && (
+                        <span className="shrink-0">
+                          {m.awayScore}
+                          {m.awayPenalties !== null && (
+                            <span style={{ color: "var(--text-muted)" }}> ({m.awayPenalties})</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
