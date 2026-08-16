@@ -6,6 +6,7 @@ import BarChart from "@/components/admin/BarChart";
 import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
+import { allSelected, toggleAll } from "@/lib/selection";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
   const [proofZoom, setProofZoom] = useState(false);
   const [showRejectPicker, setShowRejectPicker] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkReason, setBulkReason] = useState<string>(REJECTION_REASONS[0]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [search, setSearch] = useState("");
@@ -131,27 +133,45 @@ export default function AdminDashboard() {
     });
   }
 
-  // Batch action is approve-only on purpose — a rejection should always get
-  // an individually chosen reason (B3), so it stays a per-row action.
-  async function bulkApprove() {
+  // A batch used to be approve-only, so that a rejection always carried a
+  // reason the member could act on. Rejecting in a batch keeps that: the
+  // reason is picked for the batch before anything is sent, and the same one
+  // reaches every member in it. What it does not allow is a blank reason.
+  async function runOnSelection(action: "ACTIVE" | "REJECTED", reason: string | null, ask: string) {
     if (selectedIds.size === 0) return;
-    if (!confirm(`قبول ${selectedIds.size} طلب دفعة واحدة؟`)) return;
+    if (!confirm(ask)) return;
     setBulkLoading(true);
     try {
       const results = await Promise.allSettled(
         Array.from(selectedIds).map((id) =>
-          api.post("/api/admin/validate", { id, action: "ACTIVE" }),
+          api.post("/api/admin/validate", {
+            id,
+            action,
+            ...(reason ? { rejectionReason: reason } : {}),
+          }),
         ),
       );
       const failed = results.filter((r) => r.status === "rejected").length;
       setSelectedIds(new Set());
       await fetchMembers();
-      if (failed > 0) alert(`تعذّر قبول ${failed} من الطلبات`);
+      if (failed > 0) alert(`تعذّر تنفيذ ${failed} من الطلبات`);
     } catch {
-      alert("حدث خطأ أثناء القبول الجماعي");
+      alert("حدث خطأ أثناء التنفيذ الجماعي");
     } finally {
       setBulkLoading(false);
     }
+  }
+
+  function bulkApprove() {
+    return runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`);
+  }
+
+  function bulkReject() {
+    return runOnSelection(
+      "REJECTED",
+      bulkReason,
+      `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
+    );
   }
 
   async function deleteMember(id: string) {
@@ -355,6 +375,12 @@ export default function AdminDashboard() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const visibleIds = paginated.map((m) => m.id);
+  const allOnPageSelected = allSelected(visibleIds, selectedIds);
+
+  function toggleAllOnPage() {
+    setSelectedIds((prev) => toggleAll(visibleIds, prev));
+  }
 
   // Keyboard-driven review: a/r/n so a straightforward case (proof already
   // visible in the drawer) can be resolved without touching the mouse —
@@ -556,38 +582,82 @@ export default function AdminDashboard() {
         </button>
       </div>
 
+      {filter === "PENDING" && paginated.length > 0 && (
+        <label className="flex items-center gap-2 mb-2 text-xs font-bold cursor-pointer">
+          <input
+            type="checkbox"
+            className="w-4 h-4"
+            checked={allOnPageSelected}
+            onChange={toggleAllOnPage}
+            aria-label="تحديد كل الطلبات المعروضة"
+          />
+          <span style={{ color: "var(--text-muted)" }}>تحديد كل المعروض ({paginated.length})</span>
+        </label>
+      )}
+
       {filter === "PENDING" && selectedIds.size > 0 && (
         <div
-          className="card p-3 mb-3 flex items-center justify-between gap-3"
+          className="card p-3 mb-3 space-y-2"
           style={{ background: "var(--mint-50)", border: "1px solid var(--mint-300)" }}
         >
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            {selectedIds.size} محدد
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedIds(new Set())}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{
-                background: "white",
-                color: "var(--text-muted)",
-                border: "1px solid var(--mint-200)",
-              }}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+              {selectedIds.size} محدد
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{
+                  background: "white",
+                  color: "var(--text-muted)",
+                  border: "1px solid var(--mint-200)",
+                }}
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={bulkReject}
+                disabled={bulkLoading}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: "#fee2e2", color: "#991b1b" }}
+              >
+                {bulkLoading ? "..." : <IconLabel name="close">رفض الكل</IconLabel>}
+              </button>
+              <button
+                onClick={bulkApprove}
+                disabled={bulkLoading}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: "var(--mint-600)", color: "white" }}
+              >
+                {bulkLoading ? (
+                  "..."
+                ) : (
+                  <IconLabel name="check">قبول الكل ({selectedIds.size})</IconLabel>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="bulk-reason"
+              className="text-xs font-bold shrink-0"
+              style={{ color: "var(--text-muted)" }}
             >
-              إلغاء
-            </button>
-            <button
-              onClick={bulkApprove}
-              disabled={bulkLoading}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "var(--mint-600)", color: "white" }}
+              سبب الرفض
+            </label>
+            <select
+              id="bulk-reason"
+              value={bulkReason}
+              onChange={(e) => setBulkReason(e.target.value)}
+              className="input text-xs flex-1 min-w-0"
             >
-              {bulkLoading ? (
-                "..."
-              ) : (
-                <IconLabel name="check">قبول الكل ({selectedIds.size})</IconLabel>
-              )}
-            </button>
+              {REJECTION_REASONS.map((reason) => (
+                <option key={reason} value={reason}>
+                  {reason}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       )}
