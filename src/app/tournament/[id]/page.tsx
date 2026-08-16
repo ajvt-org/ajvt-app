@@ -162,42 +162,53 @@ export default async function PublicTournamentPage({
     motmLeaders.length > 0 ||
     teamAdvancedStats.length > 0;
 
+  // A knockout match counts towards nobody's points, so a cup with no group
+  // stage would open on a table of zeros for every team. It leads with the
+  // bracket instead. A tournament with neither still shows the table, which
+  // is the only thing that says who is in which group.
+  const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
+  const bracket = (
+    <div className="card p-3">
+      <BracketTree
+        matches={bracketMatches.map((m) => ({
+          ...m,
+          status: m.status as "SCHEDULED" | "PLAYED",
+        }))}
+      />
+    </div>
+  );
+
   const panels: TournamentPanel[] = [
-    {
-      key: "standings",
-      label: "الترتيب",
-      icon: "trophy",
-      content: (
-        <>
-          {standingsByGroup.map((group) => (
-            <StandingsTable
-              key={group.groupId ?? "none"}
-              title={
-                singleFlatTable
-                  ? null
-                  : group.groupId
-                    ? groupNameById.get(group.groupId) || "مجموعة"
-                    : "بدون مجموعة"
-              }
-              rows={group.standings}
-              showFollow={!!userId}
-            />
-          ))}
-          {bracketMatches.length > 0 && (
-            <TournamentSection icon="target" title="الدور الإقصائي">
-              <div className="card p-3">
-                <BracketTree
-                  matches={bracketMatches.map((m) => ({
-                    ...m,
-                    status: m.status as "SCHEDULED" | "PLAYED",
-                  }))}
+    hasLeagueStage || bracketMatches.length === 0
+      ? {
+          key: "standings",
+          label: "الترتيب",
+          icon: "trophy",
+          content: (
+            <>
+              {standingsByGroup.map((group) => (
+                <StandingsTable
+                  key={group.groupId ?? "none"}
+                  title={
+                    singleFlatTable
+                      ? null
+                      : group.groupId
+                        ? groupNameById.get(group.groupId) || "مجموعة"
+                        : "بدون مجموعة"
+                  }
+                  rows={group.standings}
+                  showFollow={!!userId}
                 />
-              </div>
-            </TournamentSection>
-          )}
-        </>
-      ),
-    },
+              ))}
+              {bracketMatches.length > 0 && (
+                <TournamentSection icon="target" title="الدور الإقصائي">
+                  {bracket}
+                </TournamentSection>
+              )}
+            </>
+          ),
+        }
+      : { key: "bracket", label: "الدور الإقصائي", icon: "target", content: bracket },
     {
       key: "matches",
       label: "المباريات",
@@ -251,6 +262,104 @@ export default async function PublicTournamentPage({
   ];
 
   if (hasStats) {
+    const statPanels: TournamentPanel[] = [];
+    if (topScorers.length > 0) {
+      statPanels.push({
+        key: "scorers",
+        label: "الهدافون",
+        icon: "ball",
+        content: (
+          <RankedList
+            rows={topScorers.map((s) => ({
+              id: s.memberId,
+              name: s.fullName,
+              photo: s.photo,
+              sub: s.teamName,
+              value: (
+                <>
+                  <Icon name="ball" size={14} className="icon-inline" /> {s.goals}
+                </>
+              ),
+            }))}
+          />
+        ),
+      });
+    }
+    if (discipline.length > 0) {
+      statPanels.push({
+        key: "discipline",
+        label: "الانضباط",
+        icon: "flag",
+        content: (
+          <RankedList
+            rows={discipline.map((d) => ({
+              id: d.memberId,
+              name: d.fullName,
+              photo: d.photo,
+              sub: d.teamName,
+              value: (
+                <span className="flex items-center gap-2">
+                  {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}
+                  {d.red > 0 && <CardChip type="RED" count={d.red} />}
+                </span>
+              ),
+            }))}
+          />
+        ),
+      });
+    }
+    if (cleanSheets.length > 0) {
+      statPanels.push({
+        key: "defence",
+        label: "أفضل دفاع",
+        icon: "shield",
+        content: (
+          <RankedList
+            rows={cleanSheets.map((c) => ({
+              id: c.teamId,
+              name: c.name,
+              avatar: false,
+              value: (
+                <span dir="ltr">
+                  {c.cleanSheets}/{c.played}
+                </span>
+              ),
+            }))}
+          />
+        ),
+      });
+    }
+    if (motmLeaders.length > 0) {
+      statPanels.push({
+        key: "motm",
+        label: "رجل المباراة",
+        icon: "star",
+        content: (
+          <RankedList
+            rows={motmLeaders.map((m) => ({
+              id: m.memberId,
+              name: m.fullName,
+              photo: m.photo,
+              sub: m.teamName,
+              value: (
+                <>
+                  <Icon name="star" size={14} className="icon-inline" filled /> {m.count}
+                </>
+              ),
+            }))}
+          />
+        ),
+      });
+    }
+    if (teamAdvancedStats.length > 0) {
+      statPanels.push({
+        key: "teamStats",
+        label: "الفرق",
+        icon: "chart",
+        content: <TeamFormList teams={teamAdvancedStats} />,
+      });
+    }
+
     panels.push({
       key: "stats",
       label: "الإحصائيات",
@@ -262,82 +371,10 @@ export default async function PublicTournamentPage({
             totalGoals={stats.totalGoals}
             avgGoalsPerMatch={stats.avgGoalsPerMatch}
             bestAttack={
-              stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"
+              stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "\u2014"
             }
           />
-          {topScorers.length > 0 && (
-            <TournamentSection icon="ball" title="الهدافون">
-              <RankedList
-                rows={topScorers.slice(0, 15).map((s) => ({
-                  id: s.memberId,
-                  name: s.fullName,
-                  photo: s.photo,
-                  sub: s.teamName,
-                  value: (
-                    <>
-                      <Icon name="ball" size={14} className="icon-inline" /> {s.goals}
-                    </>
-                  ),
-                }))}
-              />
-            </TournamentSection>
-          )}
-          {discipline.length > 0 && (
-            <TournamentSection icon="flag" title="الانضباط">
-              <RankedList
-                rows={discipline.slice(0, 15).map((d) => ({
-                  id: d.memberId,
-                  name: d.fullName,
-                  photo: d.photo,
-                  sub: d.teamName,
-                  value: (
-                    <span className="flex items-center gap-2">
-                      {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}
-                      {d.red > 0 && <CardChip type="RED" count={d.red} />}
-                    </span>
-                  ),
-                }))}
-              />
-            </TournamentSection>
-          )}
-          {cleanSheets.length > 0 && (
-            <TournamentSection icon="shield" title="أفضل دفاع">
-              <RankedList
-                rows={cleanSheets.slice(0, 10).map((c) => ({
-                  id: c.teamId,
-                  name: c.name,
-                  avatar: false,
-                  value: (
-                    <span dir="ltr">
-                      {c.cleanSheets}/{c.played}
-                    </span>
-                  ),
-                }))}
-              />
-            </TournamentSection>
-          )}
-          {motmLeaders.length > 0 && (
-            <TournamentSection icon="star" title="رجل المباراة">
-              <RankedList
-                rows={motmLeaders.slice(0, 10).map((m) => ({
-                  id: m.memberId,
-                  name: m.fullName,
-                  photo: m.photo,
-                  sub: m.teamName,
-                  value: (
-                    <>
-                      <Icon name="star" size={14} className="icon-inline" filled /> {m.count}
-                    </>
-                  ),
-                }))}
-              />
-            </TournamentSection>
-          )}
-          {teamAdvancedStats.length > 0 && (
-            <TournamentSection icon="chart" title="إحصائيات الفرق">
-              <TeamFormList teams={teamAdvancedStats} />
-            </TournamentSection>
-          )}
+          <TournamentTabs panels={statPanels} variant="sub" />
         </>
       ),
     });

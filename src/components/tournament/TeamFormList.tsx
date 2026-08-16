@@ -1,7 +1,15 @@
-const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; color: string }> = {
-  W: { bg: "#d1fae5", color: "#065f46" },
-  D: { bg: "var(--mint-100)", color: "var(--text-muted)" },
-  L: { bg: "#fee2e2", color: "#991b1b" },
+import PagedList from "./PagedList";
+
+// A run of results, said in the language the page is written in. W/D/L is an
+// English-league convention, and the pale fills it was drawn in left the three
+// outcomes reading as one grey row.
+const FORM_STYLE: Record<
+  "W" | "D" | "L",
+  { bg: string; color: string; letter: string; label: string }
+> = {
+  W: { bg: "#059669", color: "#fff", letter: "ف", label: "فوز" },
+  D: { bg: "var(--mint-300)", color: "var(--text-main)", letter: "ت", label: "تعادل" },
+  L: { bg: "#dc2626", color: "#fff", letter: "خ", label: "خسارة" },
 };
 
 type TeamStats = {
@@ -14,7 +22,7 @@ type TeamStats = {
 
 export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
   return (
-    <div className="space-y-2">
+    <PagedList>
       {teams.map((team) => (
         <div key={team.teamId} className="card p-3 space-y-1">
           <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
@@ -39,16 +47,18 @@ export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
               {team.form.map((result, i) => (
                 <span
                   key={i}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
+                  className="form-pip"
+                  title={FORM_STYLE[result].label}
+                  aria-label={FORM_STYLE[result].label}
                   style={{ background: FORM_STYLE[result].bg, color: FORM_STYLE[result].color }}
                 >
-                  {result}
+                  {FORM_STYLE[result].letter}
                 </span>
               ))}
             </div>
           )}
         </div>
       ))}
-    </div>
+    </PagedList>
   );
 }
