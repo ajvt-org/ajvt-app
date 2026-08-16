@@ -115,72 +115,94 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
     <div className="app-shell">
       <PageHeader title={activity.title} backHref={signedIn ? "/home" : "/activities"} />
 
-      <div className="px-5 py-5 space-y-4">
-        <div className="card overflow-hidden">
-          {activity.photo && (
-            <div className="pt-4 flex justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
-                alt={activity.title}
-                width={96}
-                height={96}
-                decoding="async"
-                className="w-24 h-24 rounded-full object-cover"
-                style={{ border: "2px solid var(--mint-200)" }}
-              />
-            </div>
+      {/* The picture leads, at whatever shape it was uploaded. */}
+      <div className="activity-hero">
+        {activity.photo ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
+              alt=""
+              aria-hidden="true"
+              className="activity-hero-blur"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/files/activity/${activity.photo}`}
+              alt={activity.title}
+              decoding="async"
+              className="activity-hero-img"
+            />
+          </>
+        ) : (
+          <span className="activity-hero-empty">
+            <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={72} />
+          </span>
+        )}
+        <span className="activity-hero-badge">
+          {activity.isOpen ? (
+            <span className="badge badge-open font-bold">
+              <span className="badge-dot" aria-hidden="true" />
+              التسجيل مفتوح
+            </span>
+          ) : (
+            <span className="badge badge-rejected">مغلق</span>
           )}
+        </span>
+      </div>
 
-          <div className="p-4">
-            <div className="flex items-start justify-between gap-3 mb-1.5">
-              <h2 className="font-bold" style={{ color: "var(--text-main)" }}>
-                {activity.title}
-              </h2>
-              {activity.isOpen ? (
-                <span className="badge badge-open shrink-0 font-bold">
-                  <span className="badge-dot" aria-hidden="true" />
-                  التسجيل مفتوح
-                </span>
-              ) : (
-                <span className="badge badge-rejected shrink-0">مغلق</span>
-              )}
-            </div>
-
-            <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
-              {activity.description}
-            </p>
-
+      <div className="px-5 py-5 space-y-4">
+        {(activity.when || activity.capacity !== null) && (
+          <div className="space-y-2">
             <div
-              className="flex items-center gap-3 text-xs mb-3"
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
               style={{ color: "var(--text-muted)" }}
             >
               {activity.when && (
                 <span>
-                  <Icon name="calendar" size={13} className="icon-inline" />{" "}
+                  <Icon name="calendar" size={14} className="icon-inline" />{" "}
                   <NumericRanges>{activity.when}</NumericRanges>
                 </span>
               )}
               {activity.capacity !== null && (
                 <span>
-                  <Icon name="users" size={13} className="icon-inline" /> {activity.registrantCount}
-                  /{activity.capacity}
+                  <Icon name="users" size={14} className="icon-inline" /> {activity.registrantCount}
+                  {" / "}
+                  {activity.capacity} مشارك
                 </span>
               )}
             </div>
 
-            {activity.isTournament && (
-              <Link
-                href={`/tournament/${activity.id}`}
-                className="text-xs px-4 py-2.5 rounded-xl font-bold inline-block mb-3"
-                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-              >
-                <ArrowLabel>
-                  <IconLabel name="trophy">عرض الترتيب</IconLabel>
-                </ArrowLabel>
-              </Link>
+            {activity.capacity !== null && (
+              <div className="capacity-bar" aria-hidden="true">
+                <span
+                  style={{
+                    width: `${Math.min(100, Math.round((activity.registrantCount / activity.capacity) * 100))}%`,
+                  }}
+                />
+              </div>
             )}
+          </div>
+        )}
 
+        <p className="text-sm" style={{ color: "var(--text-main)", lineHeight: 1.8 }}>
+          {activity.description}
+        </p>
+
+        {activity.isTournament && (
+          <Link
+            href={`/tournament/${activity.id}`}
+            className="btn"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <ArrowLabel>
+              <IconLabel name="trophy">عرض الترتيب</IconLabel>
+            </ArrowLabel>
+          </Link>
+        )}
+
+        <div className="pt-1" style={{ borderTop: "1px solid var(--mint-100)" }}>
+          <div className="pt-3">
             {signedIn ? (
               <ActivityRegistrations
                 activity={activity}
