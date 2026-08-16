@@ -73,11 +73,6 @@ export default function ProfilePage() {
           <div className="space-y-3 pt-2">
             <NotificationsToggle awaitingDecision={members.some((m) => m.status === "PENDING")} />
             <ChangePassword />
-            {members.length > 0 && (
-              <button onClick={() => router.push("/form")} className="btn btn-outline">
-                <IconLabel name="plus">إضافة عضو آخر</IconLabel>
-              </button>
-            )}
             <button
               onClick={logout}
               className="btn"
