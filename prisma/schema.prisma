@@ -317,17 +317,28 @@ model Donation {
 // Manually-entered outgoing spending (association expenses) — no in-app
 // source generates these; an admin logs and edits every row by hand.
 model Expense {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   label     String
   amount    Int
   note      String?
   proof     String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
-  date      DateTime @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
+  date      DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
   createdBy String // admin username, plain string like AuditLog.adminUsername — not a relation
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  tags      ExpenseTag[]
 
   @@index([date])
+}
+
+// What the money was for, as a list an admin keeps rather than free text, so
+// spending can be totalled by tag. Many per expense: one payment can be both
+// transport and a tournament.
+model ExpenseTag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
 }
 
 // One row per (day, anonymous visitor) — the visitor cookie is set by

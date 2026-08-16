@@ -794,3 +794,15 @@ details[open] > .team-summary .team-chevron {
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
+
+/* A tag on an expense: the same pill whether it is being read, picked in a
+   form, or used to filter the list. */
+.expense-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
