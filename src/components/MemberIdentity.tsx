@@ -2,7 +2,7 @@
 
 import PhotoUpload from "@/components/PhotoUpload";
 import { STATUS } from "@/lib/memberStatus";
-import type { MemberData } from "@/lib/useMembers";
+import type { MemberData } from "@/lib/useMember";
 
 export default function MemberIdentity({
   member,
