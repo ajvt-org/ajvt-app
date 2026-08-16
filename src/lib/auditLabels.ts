@@ -29,6 +29,7 @@ export const ACTION_LABELS: Record<string, string> = {
   APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
   DELETE_DONATION: "حذف تبرع نهائياً",
   ATTACH_MEMBER_ACCOUNT: "إنشاء حساب لعضو",
+  CHANGE_ACCOUNT_PHONE: "تغيير رقم حساب عضو",
   CREATE_EXPENSE: "إضافة مصروف",
   UPDATE_EXPENSE: "تعديل مصروف",
   DELETE_EXPENSE: "حذف مصروف",

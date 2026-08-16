@@ -3,14 +3,17 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memberPhone } from "@/lib/memberPhone";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { auditActionLabel } from "@/lib/auditLabels";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
+import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
+import MemberEditForm from "./MemberEditForm";
+import MemberDecision from "./MemberDecision";
+import AccountPhoneForm from "./AccountPhoneForm";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -30,9 +33,10 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
   const [data, setData] = useState<MemberProfile | null>(null);
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
 
-  useEffect(() => {
-    fetch(`/api/admin/members/${id}/profile`)
+  function load() {
+    return fetch(`/api/admin/members/${id}/profile`)
       .then((r) => {
         if (r.status === 401) {
           router.push(loginPathWithNext("/admin/login"));
@@ -47,8 +51,12 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
       .then((json) => {
         if (json) setData(json);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
+  }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, router]);
 
   if (loading) {
@@ -109,12 +117,44 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {member.fullName}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <span dir="ltr">{memberPhone(member) || "—"}</span> · {member.age}
+            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.age}
             {member.memberNumber ? ` · ${member.memberNumber}` : ""}
           </p>
         </div>
-        <span className="text-xs font-bold shrink-0">{STATUS_LABEL[member.status]}</span>
+        <div className="shrink-0 flex items-center gap-2">
+          <span className="text-xs font-bold">{STATUS_LABEL[member.status]}</span>
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            {editing ? "إلغاء" : <IconLabel name="pencil">تعديل</IconLabel>}
+          </button>
+        </div>
       </div>
+
+      <SamePersonWarning memberId={member.id} />
+
+      {editing ? (
+        <MemberEditForm
+          member={member}
+          onSaved={() => {
+            setEditing(false);
+            load();
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
+      )}
+
+      {member.user && (
+        <ProfileSection icon="user" title="الحساب">
+          <div className="text-sm">
+            <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
+          </div>
+        </ProfileSection>
+      )}
 
       <ProfileSection icon="wallet" title="الدفع">
         <dl className="text-sm space-y-1">

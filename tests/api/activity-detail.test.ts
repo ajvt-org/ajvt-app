@@ -36,7 +36,6 @@ describe("one activity with everything hanging off it", () => {
     const member = await prisma.member.create({
       data: {
         fullName: "محمد",
-        phone: "22334455",
         age: "البدريين",
         paymentMethod: "بنكيلي",
         status: "ACTIVE",

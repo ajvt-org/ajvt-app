@@ -51,12 +51,9 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   // both approved and rejected: the duplicate was refused, and the refusal is
   // what the profile showed. Correcting the one that exists is the only way in,
   // whatever state it is in.
-  //
-  // The same read carries the account's phone number, which is the one the
-  // membership is stored with.
   const account = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { phone: true, members: { select: { id: true }, take: 1 } },
+    select: { members: { select: { id: true }, take: 1 } },
   });
   if (account?.members.length) {
     throw new ConflictError(members.alreadyHasRequest);
@@ -70,8 +67,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         data: {
           userId: session.userId,
           fullName: fullName.trim(),
-          // A copy of the account number, which is the only one asked for.
-          phone: account?.phone ?? null,
           age: age.trim(),
           paymentMethod,
           paymentProof,

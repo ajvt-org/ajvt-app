@@ -14,12 +14,11 @@ function member(over: Partial<FilterableMember> = {}): FilterableMember {
   return {
     status: "ACTIVE",
     fullName: "محمد ولد أحمد",
-    phone: "22334455",
     referenceCode: "AJVT-12",
     age: "البدريين",
     paymentMethod: "بنكيلي",
     paidAmount: 100,
-    user: null,
+    user: { phone: "22334455" },
     ...over,
   };
 }
@@ -96,12 +95,13 @@ describe("narrowing a list of members", () => {
     );
   });
 
-  it("searches the name, both phones and the reference", () => {
+  it("searches the name, the account number and the reference", () => {
     const q = (text: string) => ({ ...NO_FILTERS, q: text });
     expect(matchesFilters(member(), q("محمد"), FEE)).toBe(true);
     expect(matchesFilters(member(), q("2233"), FEE)).toBe(true);
     expect(matchesFilters(member(), q("ajvt-12"), FEE)).toBe(true);
     expect(matchesFilters(member({ user: { phone: "49999999" } }), q("4999"), FEE)).toBe(true);
+    expect(matchesFilters(member({ user: null }), q("2233"), FEE)).toBe(false);
     expect(matchesFilters(member(), q("لا يوجد"), FEE)).toBe(false);
   });
 });
