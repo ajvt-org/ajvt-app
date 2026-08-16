@@ -7,6 +7,7 @@ import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl }
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
+import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
@@ -1127,7 +1128,7 @@ export default function AdminDashboard() {
               {/* Proof image */}
               <div>
                 <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-                  📸 صورة الكابتير
+                  <IconLabel name="camera">صورة الكابتير</IconLabel>
                 </p>
                 {selected.paymentProof ? (
                   <>
@@ -1147,6 +1148,11 @@ export default function AdminDashboard() {
                     <p className="text-xs text-center mt-1" style={{ color: "var(--text-muted)" }}>
                       انقر للتكبير
                     </p>
+                    <ProofReuseWarning
+                      filename={selected.paymentProof}
+                      kind="member"
+                      id={selected.id}
+                    />
                   </>
                 ) : (
                   <p
