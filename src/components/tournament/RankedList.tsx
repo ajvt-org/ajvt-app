@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import PlayerAvatar from "./PlayerAvatar";
+import PagedList from "./PagedList";
 
 // Every leaderboard on the page is the same row: a place, who it is, and one
 // number. The value is passed in already phrased so a scorer can carry a ball
@@ -13,20 +14,17 @@ export type RankedRow = {
   avatar?: boolean;
 };
 
-export default function RankedList({ rows }: { rows: RankedRow[] }) {
+export default function RankedList({ rows, pageSize }: { rows: RankedRow[]; pageSize?: number }) {
   return (
-    <div className="space-y-2">
+    <PagedList pageSize={pageSize}>
       {rows.map((row, i) => (
         <div key={row.id} className="card p-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <span
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-              style={{
-                background: i === 0 ? "#fde68a" : "var(--mint-100)",
-                color: i === 0 ? "#92400e" : "var(--mint-700)",
-              }}
+              className="rank-numeral"
+              style={{ color: i === 0 ? "var(--copper-700)" : "var(--text-muted)" }}
             >
-              <span className="badge-numeral">{i + 1}</span>
+              {i + 1}
             </span>
             {row.avatar !== false && (
               <PlayerAvatar photo={row.photo} fullName={row.name} size={32} />
@@ -50,6 +48,6 @@ export default function RankedList({ rows }: { rows: RankedRow[] }) {
           </span>
         </div>
       ))}
-    </div>
+    </PagedList>
   );
 }
