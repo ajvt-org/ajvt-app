@@ -58,6 +58,7 @@ function AdminDashboardInner() {
   const [showRejectPicker, setShowRejectPicker] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkReason, setBulkReason] = useState<string>(REJECTION_REASONS[0]);
+  const [bulkAge, setBulkAge] = useState("");
   const [bulkLoading, setBulkLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
   const [page, setPage] = useState(1);
@@ -172,6 +173,31 @@ function AdminDashboardInner() {
       setSelectedIds(new Set());
       await fetchMembers();
       if (failed > 0) alert(`تعذّر تنفيذ ${failed} من الطلبات`);
+    } catch {
+      alert("حدث خطأ أثناء التنفيذ الجماعي");
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  // Moving a batch to another عصر is the one correction the list can do on its
+  // own: it changes nothing a member sees except the group they compete in, and
+  // it is the field most of them get wrong on the form.
+  async function bulkMoveAge() {
+    if (selectedIds.size === 0 || !bulkAge) return;
+    if (!confirm(`نقل ${selectedIds.size} عضو إلى عصر ${bulkAge}؟`)) return;
+    setBulkLoading(true);
+    try {
+      const results = await Promise.allSettled(
+        Array.from(selectedIds).map((id) =>
+          api.patch(`/api/admin/members/${id}`, { age: bulkAge }),
+        ),
+      );
+      const failed = results.filter((r) => r.status === "rejected").length;
+      setSelectedIds(new Set());
+      setBulkAge("");
+      await fetchMembers();
+      if (failed > 0) alert(`تعذّر نقل ${failed} من الأعضاء`);
     } catch {
       alert("حدث خطأ أثناء التنفيذ الجماعي");
     } finally {
@@ -587,7 +613,7 @@ function AdminDashboardInner() {
         )}
       </div>
 
-      {filter === "PENDING" && paginated.length > 0 && (
+      {paginated.length > 0 && (
         <label className="flex items-center gap-2 mb-2 text-xs font-bold cursor-pointer">
           <input
             type="checkbox"
@@ -600,7 +626,7 @@ function AdminDashboardInner() {
         </label>
       )}
 
-      {filter === "PENDING" && selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (
         <div
           className="card p-3 mb-3 space-y-2"
           style={{ background: "var(--mint-50)", border: "1px solid var(--mint-300)" }}
@@ -621,48 +647,87 @@ function AdminDashboardInner() {
               >
                 إلغاء
               </button>
-              <button
-                onClick={bulkReject}
-                disabled={bulkLoading}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                {bulkLoading ? "..." : <IconLabel name="close">رفض الكل</IconLabel>}
-              </button>
-              <button
-                onClick={bulkApprove}
-                disabled={bulkLoading}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: "var(--mint-600)", color: "white" }}
-              >
-                {bulkLoading ? (
-                  "..."
-                ) : (
-                  <IconLabel name="check">قبول الكل ({selectedIds.size})</IconLabel>
-                )}
-              </button>
+              {filter === "PENDING" && (
+                <>
+                  <button
+                    onClick={bulkReject}
+                    disabled={bulkLoading}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                    style={{ background: "#fee2e2", color: "#991b1b" }}
+                  >
+                    {bulkLoading ? "..." : <IconLabel name="close">رفض الكل</IconLabel>}
+                  </button>
+                  <button
+                    onClick={bulkApprove}
+                    disabled={bulkLoading}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                    style={{ background: "var(--mint-600)", color: "white" }}
+                  >
+                    {bulkLoading ? (
+                      "..."
+                    ) : (
+                      <IconLabel name="check">قبول الكل ({selectedIds.size})</IconLabel>
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
+          {filter === "PENDING" && (
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="bulk-reason"
+                className="text-xs font-bold shrink-0"
+                style={{ color: "var(--text-muted)" }}
+              >
+                سبب الرفض
+              </label>
+              <select
+                id="bulk-reason"
+                value={bulkReason}
+                onChange={(e) => setBulkReason(e.target.value)}
+                className="input text-xs flex-1 min-w-0"
+              >
+                {REJECTION_REASONS.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {reason}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* The one correction that is worth doing in a batch: a whole group
+              of members picked the wrong عصر on their own form. */}
           <div className="flex items-center gap-2">
             <label
-              htmlFor="bulk-reason"
+              htmlFor="bulk-age"
               className="text-xs font-bold shrink-0"
               style={{ color: "var(--text-muted)" }}
             >
-              سبب الرفض
+              نقل إلى عصر
             </label>
             <select
-              id="bulk-reason"
-              value={bulkReason}
-              onChange={(e) => setBulkReason(e.target.value)}
+              id="bulk-age"
+              value={bulkAge}
+              onChange={(e) => setBulkAge(e.target.value)}
               className="input text-xs flex-1 min-w-0"
             >
-              {REJECTION_REASONS.map((reason) => (
-                <option key={reason} value={reason}>
-                  {reason}
+              <option value="">اختر العصر</option>
+              {ageGroups.map((g) => (
+                <option key={g.id} value={g.name}>
+                  {g.name}
                 </option>
               ))}
             </select>
+            <button
+              onClick={bulkMoveAge}
+              disabled={bulkLoading || !bulkAge}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0 disabled:opacity-40"
+              style={{ background: "var(--mint-600)", color: "white" }}
+            >
+              {bulkLoading ? "..." : <IconLabel name="check">نقل ({selectedIds.size})</IconLabel>}
+            </button>
           </div>
         </div>
       )}
@@ -693,7 +758,7 @@ function AdminDashboardInner() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  {filter === "PENDING" && (
+                  {
                     <input
                       type="checkbox"
                       checked={selectedIds.has(m.id)}
@@ -702,7 +767,7 @@ function AdminDashboardInner() {
                       className="w-4 h-4 shrink-0"
                       aria-label={`تحديد ${m.fullName}`}
                     />
-                  )}
+                  }
                   {m.photo ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
