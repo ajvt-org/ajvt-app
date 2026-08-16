@@ -17,7 +17,6 @@ export const adminMemberUpdateSchema = z.object({
     .refine((v) => v.trim().length <= NAME_MAX, NAME_TOO_LONG)
     .transform((v) => v.trim())
     .optional(),
-  phone: z.string(INVALID).nullish(),
   age: z
     .string(AGE_REQUIRED)
     .refine((v) => v.trim().length > 0, AGE_REQUIRED)
