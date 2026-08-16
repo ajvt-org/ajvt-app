@@ -27,7 +27,6 @@ export const adminMemberCreateSchema = z
   .object({
     accountPhone: z.string(ALL_REQUIRED).nullish(),
     fullName: name,
-    memberPhone: z.string(ALL_REQUIRED).nullish(),
     phoneUnknown: z.unknown().optional(),
     age,
     paymentMethod: z.string(ALL_REQUIRED).refine((v) => v.trim().length > 0, ALL_REQUIRED),
@@ -39,9 +38,5 @@ export const adminMemberCreateSchema = z
   .superRefine((v, ctx) => {
     if (v.phoneUnknown) return;
     const phoneError = validatePhone(v.accountPhone ?? "");
-    if (phoneError) {
-      ctx.addIssue({ code: "custom", message: phoneError });
-      return;
-    }
-    if (!v.memberPhone?.trim()) ctx.addIssue({ code: "custom", message: ALL_REQUIRED });
+    if (phoneError) ctx.addIssue({ code: "custom", message: phoneError });
   });

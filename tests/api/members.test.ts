@@ -6,7 +6,6 @@ import { saveAppSettings } from "@/lib/settingsServer";
 
 const validBody = {
   fullName: "محمد ولد أحمد",
-  phone: "22334455",
   age: "البدريين",
   paymentMethod: "بنكيلي",
   paymentProof: "proof.webp",
@@ -38,6 +37,17 @@ describe("POST /api/members", () => {
     expect(member?.memberNumber).toBeNull();
   });
 
+  it("takes the number off the account rather than asking for one", async () => {
+    const user = await createUser("33445566");
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", { ...validBody, phone: "22119988" }));
+
+    expect(res.status).toBe(201);
+    const member = await prisma.member.findFirstOrThrow();
+    expect(member.phone).toBe("33445566");
+  });
+
   it("refuses a session whose tokenVersion is stale", async () => {
     const user = await createUser();
     await signInAs(user);
@@ -55,7 +65,6 @@ describe("POST /api/members", () => {
 
     const expected: Record<string, string> = {
       fullName: "الاسم الكامل مطلوب",
-      phone: "رقم الهاتف مطلوب",
       age: "يرجى اختيار العصر",
       paymentMethod: "يرجى اختيار طريقة الدفع",
       paymentProof: "يرجى إرفاق صورة الكابتير",

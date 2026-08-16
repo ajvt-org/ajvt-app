@@ -23,7 +23,7 @@ export const PATCH = withRoute(
     // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, phone, age, photo, paidAmount, accountPhone } = parse(
+    const { fullName, age, photo, paidAmount, accountPhone } = parse(
       adminMemberUpdateSchema,
       await req.json(),
     );
@@ -46,11 +46,6 @@ export const PATCH = withRoute(
     } = {};
 
     if (fullName !== undefined) data.fullName = fullName;
-    if (phone !== undefined && phone !== null) {
-      const phoneError = validatePhone(phone);
-      if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-      data.phone = phone.trim();
-    }
 
     let tempPassword: string | undefined;
     if (accountPhone !== undefined) {
@@ -91,7 +86,8 @@ export const PATCH = withRoute(
         userId = created.id;
       }
       data.userId = userId;
-      if (phone === undefined) data.phone = accountPhone.trim();
+      // The member's number is the account's, so attaching one sets it.
+      data.phone = accountPhone.trim();
     }
 
     if (age !== undefined) data.age = age;

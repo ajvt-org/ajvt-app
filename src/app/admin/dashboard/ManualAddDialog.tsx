@@ -160,7 +160,6 @@ export default function ManualAddDialog({
                       ...p,
                       phoneUnknown: e.target.checked,
                       accountPhone: "",
-                      memberPhone: "",
                     }))
                   }
                   className="w-4 h-4"
@@ -251,32 +250,6 @@ export default function ManualAddDialog({
                   />
                 </label>
               </div>
-              {!form.phoneUnknown && (
-                <div>
-                  <label
-                    className="block text-sm font-bold mb-1.5"
-                    style={{ color: "var(--text-main)" }}
-                    htmlFor="memberPhone"
-                  >
-                    رقم هاتف العضو
-                  </label>
-                  <input
-                    id="memberPhone"
-                    type="tel"
-                    dir="ltr"
-                    value={form.memberPhone}
-                    onChange={(e) =>
-                      setForm((p) => ({
-                        ...p,
-                        memberPhone: e.target.value.replace(/\D/g, "").slice(0, 8),
-                      }))
-                    }
-                    maxLength={8}
-                    required
-                    className="input"
-                  />
-                </div>
-              )}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label

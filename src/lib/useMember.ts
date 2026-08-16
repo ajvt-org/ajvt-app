@@ -31,7 +31,8 @@ export interface TeamMembershipData {
 export interface MemberData {
   id: string;
   fullName: string;
-  phone: string;
+  phone: string | null;
+  user: { phone: string } | null;
   age: string;
   paymentMethod: string;
   paymentProof: string | null;
