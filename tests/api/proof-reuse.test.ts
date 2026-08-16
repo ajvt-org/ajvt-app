@@ -14,7 +14,6 @@ async function memberWithProof(fullName: string, paymentProof: string) {
   return prisma.member.create({
     data: {
       fullName,
-      phone: "22334455",
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "PENDING",

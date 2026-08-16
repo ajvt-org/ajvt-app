@@ -33,7 +33,6 @@ export const PATCH = withRoute(
       select: {
         fullName: true,
         userId: true,
-        phone: true,
         age: true,
         paymentMethod: true,
         paidAmount: true,
@@ -45,7 +44,6 @@ export const PATCH = withRoute(
 
     const data: {
       fullName?: string;
-      phone?: string | null;
       age?: string;
       paymentMethod?: string;
       photo?: string | null;
@@ -94,8 +92,6 @@ export const PATCH = withRoute(
         userId = created.id;
       }
       data.userId = userId;
-      // The member's number is the account's, so attaching one sets it.
-      data.phone = accountPhone.trim();
     }
 
     if (age !== undefined) data.age = age;
@@ -130,7 +126,6 @@ export const PATCH = withRoute(
         before: existing,
         after: {
           fullName: member.fullName,
-          phone: member.phone,
           age: member.age,
           paymentMethod: member.paymentMethod,
           paidAmount: member.paidAmount,
@@ -147,7 +142,7 @@ export const PATCH = withRoute(
           targetType: "Member",
           targetId: member.id,
           before: { userId: null },
-          after: { userId: data.userId, phone: accountPhone!.trim() },
+          after: { userId: data.userId, account: accountPhone!.trim() },
         },
       );
     }
@@ -164,7 +159,7 @@ export const DELETE = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, phone: true, age: true, status: true, memberNumber: true },
+      select: { fullName: true, age: true, status: true, memberNumber: true },
     });
     if (!member) {
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });

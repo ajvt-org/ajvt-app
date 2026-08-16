@@ -18,7 +18,6 @@ export const NO_FILTERS: MemberFilters = { status: "ALL", q: "", age: "", method
 export type FilterableMember = {
   status: string;
   fullName: string;
-  phone: string | null;
   referenceCode: string | null;
   age: string;
   paymentMethod: string;
@@ -64,7 +63,6 @@ function matchesText(member: FilterableMember, q: string): boolean {
   if (!needle) return true;
   return (
     member.fullName.toLowerCase().includes(needle) ||
-    (member.phone || "").includes(needle) ||
     (member.user?.phone || "").includes(needle) ||
     (member.referenceCode || "").toLowerCase().includes(needle)
   );
