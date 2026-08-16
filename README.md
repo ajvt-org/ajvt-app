@@ -85,11 +85,11 @@ Both branches are protected. Neither takes a direct push, both need the build to
 A release is a pull request too, from `dev` into `master`:
 
 ```bash
-gh pr create --base master --head dev --title "Release 0.19.0"
+gh pr create --base master --head dev --title "Release 0.21.0"
 # merge once the build passes, then tag what was deployed
 git checkout master && git pull
-git tag -a 0.19.0 -m "what changed"
-git push origin 0.19.0
+git tag -a 0.21.0 -m "what changed"
+git push origin 0.21.0
 ```
 
 Tags live on `master` only, so a tag always means the version was deployed. `git log --tags master` is the deployment history.
