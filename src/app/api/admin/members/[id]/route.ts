@@ -10,6 +10,7 @@ import { generateTempPassword } from "@/lib/member";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { ConflictError } from "@/lib/errors";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
 import { common, members } from "@/lib/messages";
@@ -69,9 +70,10 @@ export const PATCH = withRoute(
         select: { id: true, members: { select: { id: true }, take: 1 } },
       });
       // One membership per account, so an account that already carries one
-      // cannot take this member as well.
+      // cannot take this member as well. Same sentence and same status as the
+      // manual add, which can hit the same wall.
       if (found?.members.length) {
-        return NextResponse.json({ error: members.accountAlreadyHasMember }, { status: 400 });
+        throw new ConflictError(members.accountAlreadyHasMember);
       }
       let userId = found?.id;
       if (!userId) {

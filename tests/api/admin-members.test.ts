@@ -91,7 +91,7 @@ describe("admin membership is one per account", () => {
       params(orphan.id),
     );
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: ALREADY });
     const untouched = await prisma.member.findUniqueOrThrow({ where: { id: orphan.id } });
     expect(untouched.userId).toBeNull();
