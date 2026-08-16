@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 // The people on the signed-in account, for the two tabs that need them: the
 // activities list, which asks who may register, and the profile, which shows
@@ -57,7 +58,7 @@ export function useMembers() {
   function signOutAndReturnToLogin() {
     return fetch("/api/auth/logout", { method: "POST" })
       .catch(() => {})
-      .finally(() => router.push(loginPathWithNext("/login")));
+      .finally(() => goAfterAuthChange(router, loginPathWithNext("/login")));
   }
 
   function reload() {
@@ -86,7 +87,7 @@ export function useMembers() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
+    goAfterAuthChange(router, "/");
   }
 
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
