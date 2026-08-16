@@ -742,12 +742,9 @@ export default function AdminExpensesPage() {
 
             <form onSubmit={submitForm} className="p-5 space-y-3">
               <div>
-                <label
-                  className="block text-sm font-bold mb-1.5"
-                  style={{ color: "var(--text-main)" }}
-                >
+                <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
                   صورة الفاتورة / الإيصال (اختياري)
-                </label>
+                </p>
                 <PhotoUpload
                   photo={form.proof || null}
                   imageUrlPrefix="/api/files"
@@ -761,10 +758,12 @@ export default function AdminExpensesPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="expense-field-1"
                 >
                   الوصف <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="expense-field-1"
                   type="text"
                   value={form.label}
                   onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
@@ -777,10 +776,12 @@ export default function AdminExpensesPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="expense-field-2"
                 >
                   المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="expense-field-2"
                   type="number"
                   dir="ltr"
                   min={1}
@@ -794,10 +795,12 @@ export default function AdminExpensesPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="expense-field-3"
                 >
                   التاريخ
                 </label>
                 <input
+                  id="expense-field-3"
                   type="date"
                   dir="ltr"
                   value={form.date}
@@ -809,10 +812,12 @@ export default function AdminExpensesPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="expense-field-4"
                 >
                   ملاحظة (اختياري)
                 </label>
                 <input
+                  id="expense-field-4"
                   type="text"
                   value={form.note}
                   onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}

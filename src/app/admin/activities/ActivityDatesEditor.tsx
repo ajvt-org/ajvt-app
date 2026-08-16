@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatActivityDates } from "@/lib/activityDates";
 import IconLabel from "@/components/IconLabel";
@@ -35,6 +35,9 @@ export default function ActivityDatesEditor({
   };
   onSaved: () => void;
 }) {
+  // One editor is drawn per activity in the list, so the ids have to be unique
+  // per instance or a label would focus another activity's field.
+  const uid = useId();
   const [startDay, setStartDay] = useState(dayValue(activity.startsAt));
   const [endDay, setEndDay] = useState(dayValue(activity.endsAt));
   const [withTime, setWithTime] = useState(activity.withTime);
@@ -76,19 +79,29 @@ export default function ActivityDatesEditor({
       )}
 
       <div className="flex items-center gap-2 flex-wrap">
-        <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+        <label
+          htmlFor={`${uid}-from`}
+          className="text-xs shrink-0"
+          style={{ color: "var(--text-muted)" }}
+        >
           من
         </label>
         <input
+          id={`${uid}-from`}
           type="date"
           value={startDay}
           onChange={(e) => setStartDay(e.target.value)}
           className="input text-sm flex-1 min-w-0"
         />
-        <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+        <label
+          htmlFor={`${uid}-to`}
+          className="text-xs shrink-0"
+          style={{ color: "var(--text-muted)" }}
+        >
           إلى
         </label>
         <input
+          id={`${uid}-to`}
           type="date"
           value={endDay}
           min={startDay || undefined}
