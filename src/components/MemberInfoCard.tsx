@@ -1,6 +1,6 @@
 import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
-import type { MemberData } from "@/lib/useMembers";
+import type { MemberData } from "@/lib/useMember";
 
 // The name is not repeated here — it is the heading directly above. The
 // acceptance date is, because an accepted request no longer shows the stages.

@@ -10,24 +10,13 @@ import ArrowLabel from "@/components/ArrowLabel";
 import NumericRanges from "@/components/NumericRanges";
 import ActivityRegistrations from "@/components/ActivityRegistrations";
 import { toThumbUrl } from "@/lib/utils";
+import { toEligibleMember } from "@/components/activityTypes";
 import type { Activity, EligibleMember } from "@/components/activityTypes";
-
-type MemberFromApi = {
-  id: string;
-  fullName: string;
-  photo: string | null;
-  status: string;
-  registrations: { activityId: string; status: string; rejectionReason: string | null }[];
-  teamMemberships: {
-    status: string;
-    team: { id: string; name: string; activityId: string };
-  }[];
-};
 
 export default function ActivityPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [eligibleMembers, setEligibleMembers] = useState<EligibleMember[]>([]);
+  const [member, setMember] = useState<EligibleMember | null>(null);
   const [signedIn, setSignedIn] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -44,30 +33,11 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
       // register, and that is where they are asked to create one.
       if (meRes.status === 401) {
         setSignedIn(false);
-        setEligibleMembers([]);
+        setMember(null);
         return;
       }
       const { members } = await meRes.json();
-      setEligibleMembers(
-        (members || [])
-          .filter((m: MemberFromApi) => m.status === "ACTIVE")
-          .map((m: MemberFromApi) => ({
-            id: m.id,
-            fullName: m.fullName,
-            photo: m.photo,
-            registrations: m.registrations.map((r) => ({
-              activityId: r.activityId,
-              status: r.status,
-              rejectionReason: r.rejectionReason,
-            })),
-            teamMemberships: m.teamMemberships.map((tm) => ({
-              teamId: tm.team.id,
-              teamName: tm.team.name,
-              activityId: tm.team.activityId,
-              status: tm.status,
-            })),
-          })),
-      );
+      setMember(toEligibleMember(members?.[0]));
     } catch {
       setSignedIn(false);
     }
@@ -204,11 +174,9 @@ export default function ActivityPage({ params }: { params: Promise<{ id: string 
         <div className="pt-1" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <div className="pt-3">
             {signedIn ? (
-              <ActivityRegistrations
-                activity={activity}
-                eligibleMembers={eligibleMembers}
-                onReload={load}
-              />
+              member && (
+                <ActivityRegistrations activity={activity} member={member} onReload={load} />
+              )
             ) : activity.isVolunteer && activity.whatsappLink ? (
               <a
                 href={activity.whatsappLink}
