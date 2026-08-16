@@ -6,6 +6,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
 import { pgAdapterOptions } from "../src/lib/db-url";
+import { generateVerifyToken } from "../src/lib/verifyToken";
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) throw new Error("DATABASE_URL is not set");
@@ -225,6 +226,7 @@ async function main() {
         status,
         rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
         memberNumber: isActive ? `AJVT-2026-${String(memberNumber).padStart(4, "0")}` : null,
+        verifyToken: isActive ? generateVerifyToken() : null,
         createdAt: daysAgo(100 - i * 2),
       },
     });

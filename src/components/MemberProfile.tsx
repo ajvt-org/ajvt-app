@@ -57,6 +57,7 @@ export default function MemberProfile({
             fullName={member.fullName}
             age={member.age}
             memberNumber={member.memberNumber}
+            verifyToken={member.verifyToken}
             createdAt={member.createdAt}
             photo={member.photo}
           />
