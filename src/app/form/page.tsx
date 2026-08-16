@@ -224,6 +224,14 @@ function FormPageInner() {
         const me = await meRes.json();
         setAuthenticated(true);
         initialPhone = me?.phone || "";
+        // An account holds one request. Filling this in again would only be
+        // refused on submit, so an account that already has one is sent to
+        // where it can be corrected, or to the profile once it is approved.
+        const mine = me?.members?.[0];
+        if (mine) {
+          router.replace(mine.status === "ACTIVE" ? "/profile" : `/form?id=${mine.id}`);
+          return;
+        }
       }
 
       const draft = localStorage.getItem(DRAFT_KEY);

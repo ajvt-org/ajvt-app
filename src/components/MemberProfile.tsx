@@ -8,7 +8,7 @@ import MemberInfoCard from "@/components/MemberInfoCard";
 import MemberRejected from "@/components/MemberRejected";
 import MemberStatusCard from "@/components/MemberStatusCard";
 import StatusTimeline from "@/components/StatusTimeline";
-import type { MemberData } from "@/lib/useMembers";
+import type { MemberData } from "@/lib/useMember";
 
 // Everything about one person on the account, in the order they need it.
 //

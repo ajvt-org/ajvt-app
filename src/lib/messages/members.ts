@@ -7,6 +7,8 @@ export const members = {
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
   approved: "مقبول",
   rejected: "غير مقبول",
+  alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
+  accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
 } as const;
 
 export const ageGroups = {

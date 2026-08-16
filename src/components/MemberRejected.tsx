@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofUpload from "@/components/ProofUpload";
 import { errorMessage } from "@/lib/api";
-import type { MemberData } from "@/lib/useMembers";
+import type { MemberData } from "@/lib/useMember";
 
 // A rejected request is almost always a bad payment proof, so the shortest
 // path back is a new photo and one button, without walking the whole form
