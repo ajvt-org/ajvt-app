@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import PageHeader from "@/components/PageHeader";
+import Link from "next/link";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import { getUserSession } from "@/lib/auth";
 import { formatDate } from "@/lib/utils";
 
@@ -60,6 +62,10 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
             <Row label="العصر" value={member.age} />
             <Row label="عضو منذ" value={formatDate(member.createdAt)} />
           </dl>
+
+          <div className="px-5 pb-8">
+            <HomeLink />
+          </div>
         </>
       ) : (
         <div className="flex-1 px-5 py-16 text-center space-y-3">
@@ -72,9 +78,22 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             رقم العضوية غير موجود أو العضوية غير سارية المفعول
           </p>
+          <div className="pt-3">
+            <HomeLink />
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+// Not a back button: whoever scanned this arrived from a camera, from outside
+// the app entirely. This is the way in rather than the way back.
+function HomeLink() {
+  return (
+    <Link href="/" className="btn btn-ghost">
+      <IconLabel name="home">الصفحة الرئيسية للرابطة</IconLabel>
+    </Link>
   );
 }
 
