@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { SignJWT } from "jose";
 import { proxy, config } from "@/proxy";
@@ -175,5 +175,85 @@ describe("the proxy matcher", () => {
     "/uploads/photo.webp",
   ])("leaves %s alone", (path) => {
     expect(pattern.test(path)).toBe(false);
+  });
+});
+
+// One service answers on two hostnames: the admin screens on theirs, the
+// member app on the public one. Without ADMIN_HOST set, neither is separated
+// and every case above still describes what happens.
+describe("splitting the admin app onto its own hostname", () => {
+  const ADMIN = "admin.ajvt.net";
+  const PUBLIC = "ajvt.net";
+
+  async function ask(host: string, path: string) {
+    const res = await proxy(new NextRequest(`https://${host}${path}`, { headers: { host } }));
+    const location = res.headers.get("location");
+    return {
+      status: res.status,
+      to: location ? new URL(location).pathname : null,
+    };
+  }
+
+  describe("with no ADMIN_HOST, which is how it deploys until the domain exists", () => {
+    it("still serves the admin area on the only host there is", async () => {
+      expect((await ask(PUBLIC, "/admin/login")).status).toBe(200);
+      expect((await ask(PUBLIC, "/api/admin/members")).status).toBe(200);
+    });
+  });
+
+  describe("with ADMIN_HOST set", () => {
+    beforeEach(() => {
+      vi.stubEnv("ADMIN_HOST", ADMIN);
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("has no admin area on the public host at all", async () => {
+      expect((await ask(PUBLIC, "/admin")).status).toBe(404);
+      expect((await ask(PUBLIC, "/admin/dashboard")).status).toBe(404);
+      expect((await ask(PUBLIC, "/api/admin/members")).status).toBe(404);
+    });
+
+    it("leaves the member app on the public host untouched", async () => {
+      expect((await ask(PUBLIC, "/")).status).toBe(200);
+      expect((await ask(PUBLIC, "/activities")).status).toBe(200);
+      expect((await ask(PUBLIC, "/api/leaderboard")).status).toBe(200);
+    });
+
+    it("serves the admin area on the admin host", async () => {
+      expect((await ask(ADMIN, "/admin")).status).toBe(200);
+      expect((await ask(ADMIN, "/admin/login")).status).toBe(200);
+      expect((await ask(ADMIN, "/api/admin/members")).status).toBe(200);
+    });
+
+    // Photos, receipts and the age list are drawn by the admin screens and are
+    // not under /api/admin.
+    it.each(["/api/files/proof.webp", "/api/ages", "/api/upload"])(
+      "keeps %s, which the admin screens need",
+      async (path) => {
+        expect((await ask(ADMIN, path)).status).toBe(200);
+      },
+    );
+
+    it("sends anything else on the admin host back to the admin area", async () => {
+      expect(await ask(ADMIN, "/")).toEqual({ status: 307, to: "/admin" });
+      expect(await ask(ADMIN, "/home")).toEqual({ status: 307, to: "/admin" });
+    });
+
+    it("refuses a member API on the admin host rather than redirecting a fetch", async () => {
+      expect((await ask(ADMIN, "/api/leaderboard")).status).toBe(404);
+    });
+
+    it("ignores the port and the casing of the host", async () => {
+      expect((await ask(`${ADMIN}:443`, "/admin")).status).toBe(200);
+      expect((await ask(ADMIN.toUpperCase(), "/admin")).status).toBe(200);
+    });
+
+    // /administrators is not under /admin, and a prefix test without a segment
+    // boundary would have said it was.
+    it("matches on whole segments", async () => {
+      expect((await ask(PUBLIC, "/administrators")).status).toBe(200);
+    });
   });
 });
