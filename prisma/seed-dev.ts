@@ -6,7 +6,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import sharp from "sharp";
 import { pgAdapterOptions } from "../src/lib/db-url";
-import { generateVerifyToken } from "../src/lib/member";
+import { generateVerifyToken } from "../src/lib/verifyToken";
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) throw new Error("DATABASE_URL is not set");

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateVerifyToken } from "@/lib/member";
+import { generateVerifyToken } from "@/lib/verifyToken";
 
 describe("generateVerifyToken", () => {
   it("is long enough that guessing one is not worth trying", () => {
