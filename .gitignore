@@ -57,3 +57,7 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# throwaway scripts run against a local database
+*.tmp.ts
+*.tmp.tsx
