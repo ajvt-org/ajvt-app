@@ -79,8 +79,14 @@ function AdminLoginForm() {
         >
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">اسم المستخدم</label>
+              <label
+                className="block text-sm font-bold mb-1.5 text-white"
+                htmlFor="adminlogin-field-1"
+              >
+                اسم المستخدم
+              </label>
               <input
+                id="adminlogin-field-1"
                 type="text"
                 value={creds.username}
                 onChange={(e) => setCreds((p) => ({ ...p, username: e.target.value }))}
@@ -99,8 +105,14 @@ function AdminLoginForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">كلمة المرور</label>
+              <label
+                className="block text-sm font-bold mb-1.5 text-white"
+                htmlFor="adminlogin-field-2"
+              >
+                كلمة المرور
+              </label>
               <input
+                id="adminlogin-field-2"
                 type="password"
                 value={creds.password}
                 onChange={(e) => setCreds((p) => ({ ...p, password: e.target.value }))}

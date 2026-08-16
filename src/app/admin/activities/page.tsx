@@ -721,19 +721,29 @@ export default function AdminActivitiesPage() {
           className="input"
         />
         <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+          <label
+            className="text-xs shrink-0"
+            style={{ color: "var(--text-muted)" }}
+            htmlFor="activity-field-1"
+          >
             من
           </label>
           <input
+            id="activity-field-1"
             type="date"
             value={newActivity.startsAt}
             onChange={(e) => setNewActivity((p) => ({ ...p, startsAt: e.target.value }))}
             className="input flex-1 min-w-0"
           />
-          <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+          <label
+            className="text-xs shrink-0"
+            style={{ color: "var(--text-muted)" }}
+            htmlFor="activity-field-2"
+          >
             إلى
           </label>
           <input
+            id="activity-field-2"
             type="date"
             value={newActivity.endsAt}
             min={newActivity.startsAt || undefined}

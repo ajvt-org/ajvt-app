@@ -222,12 +222,9 @@ export default function ManualAddDialog({
                 />
               </div>
               <div>
-                <label
-                  className="block text-sm font-bold mb-1.5"
-                  style={{ color: "var(--text-main)" }}
-                >
+                <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
                   صورة العضو (اختياري)
-                </label>
+                </p>
                 <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
                   {photoPreview ? (
                     <div>
@@ -384,12 +381,9 @@ export default function ManualAddDialog({
                 </select>
               </div>
               <div>
-                <label
-                  className="block text-sm font-bold mb-1.5"
-                  style={{ color: "var(--text-main)" }}
-                >
+                <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
                   صورة إثبات الدفع (اختياري)
-                </label>
+                </p>
                 <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
                   {proofPreview ? (
                     <div>

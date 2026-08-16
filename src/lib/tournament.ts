@@ -329,7 +329,7 @@ export function bracketRoundLabel(matchCount: number): string {
 // The app has no per-user timezone setting, so match times are always
 // entered/displayed in the club's local timezone (Morocco, fixed UTC+1 —
 // no DST since 2018).
-const CLUB_TIMEZONE = "Africa/Casablanca";
+export const CLUB_TIMEZONE = "Africa/Casablanca";
 
 // <input type="datetime-local"> values (YYYY-MM-DDTHH:mm[:ss]) carry no
 // timezone — interpret them as club-local time rather than the server's.
@@ -366,6 +366,18 @@ export function formatMatchDateTime(date: string | Date): string {
   const part = (type: Intl.DateTimeFormatPartTypes) =>
     parts.find((p) => p.type === type)?.value ?? "";
   return `${part("year")}/${part("month")}/${part("day")} ${part("hour")}:${part("minute")}`;
+}
+
+export function formatMatchTime(date: string | Date): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: CLUB_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(date));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("hour")}:${part("minute")}`;
 }
 
 // Club-local (YYYY-MM-DD) calendar day for a match date — used to find

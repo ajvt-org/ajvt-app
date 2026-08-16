@@ -20,6 +20,7 @@ import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -59,17 +60,21 @@ function isArabicName(value: string): boolean {
 }
 
 function PhoneInput({
+  id,
   value,
   onChange,
   placeholder = "2XXXXXXX",
 }: {
+  id?: string;
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
 }) {
   return (
     <input
+      id={id}
       type="tel"
+      autoComplete="tel"
       inputMode="numeric"
       value={value}
       onChange={(e) => {
@@ -428,7 +433,7 @@ function FormPageInner() {
 
   async function handleIdleTimeout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    goAfterAuthChange(router, "/login");
   }
 
   // Anonymous visitors on steps 1-2 have no session to lose — only arm the
@@ -525,7 +530,7 @@ function FormPageInner() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/profile")}
+            onClick={() => goAfterAuthChange(router, "/profile")}
             className="btn fade-up delay-2"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
@@ -605,12 +610,14 @@ function FormPageInner() {
           <div className="space-y-5 fade-up delay-1">
             <div>
               <label
+                htmlFor="member-fullname"
                 className="block text-sm font-bold mb-1.5"
                 style={{ color: "var(--text-main)" }}
               >
                 الاسم الكامل (بالحروف العربية) <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
+                id="member-fullname"
                 name="fullName"
                 value={form.fullName}
                 onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
@@ -629,12 +636,14 @@ function FormPageInner() {
 
             <div>
               <label
+                htmlFor="member-phone"
                 className="block text-sm font-bold mb-1.5"
                 style={{ color: "var(--text-main)" }}
               >
                 رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <PhoneInput
+                id="member-phone"
                 value={form.phone}
                 onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
               />
@@ -645,12 +654,14 @@ function FormPageInner() {
 
             <div>
               <label
+                htmlFor="member-age"
                 className="block text-sm font-bold mb-1.5"
                 style={{ color: "var(--text-main)" }}
               >
                 العصر <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <select
+                id="member-age"
                 value={showAddAge ? "__add__" : form.age}
                 onChange={handleAgeSelect}
                 className="input"
@@ -739,13 +750,16 @@ function FormPageInner() {
 
             <div>
               <label
+                htmlFor="member-password"
                 className="block text-sm font-bold mb-1.5"
                 style={{ color: "var(--text-main)" }}
               >
                 كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
+                id="member-password"
                 type="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -757,13 +771,16 @@ function FormPageInner() {
 
             <div>
               <label
+                htmlFor="member-password-confirm"
                 className="block text-sm font-bold mb-1.5"
                 style={{ color: "var(--text-main)" }}
               >
                 تأكيد كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
               </label>
               <input
+                id="member-password-confirm"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -827,14 +844,24 @@ function FormPageInner() {
             </div>
 
             <div className="fade-up">
-              <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+              <p
+                id="member-method-label"
+                className="block text-sm font-bold mb-2"
+                style={{ color: "var(--text-main)" }}
+              >
                 طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-2">
+              </p>
+              <div
+                className="grid grid-cols-3 gap-2"
+                role="radiogroup"
+                aria-labelledby="member-method-label"
+              >
                 {PAYMENT_METHODS.map((method) => (
                   <button
                     key={method}
                     type="button"
+                    role="radio"
+                    aria-checked={form.paymentMethod === method}
                     onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
                     className="py-3 rounded-xl text-sm font-bold transition-all border-2"
                     style={{
@@ -973,12 +1000,14 @@ function FormPageInner() {
             <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
               <div>
                 <label
+                  htmlFor="member-paid"
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
                 >
                   المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="member-paid"
                   type="number"
                   inputMode="numeric"
                   min={MEMBERSHIP_FEE}

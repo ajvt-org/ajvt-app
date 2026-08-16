@@ -8,6 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import Link from "next/link";
 import IconLabel from "@/components/IconLabel";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -96,7 +97,7 @@ export default function QuizPage() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
+    goAfterAuthChange(router, "/");
   }
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 

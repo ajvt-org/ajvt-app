@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
+import IconLabel from "@/components/IconLabel";
+import Icon from "@/components/Icon";
 
 interface Candidate {
   id: string;
@@ -52,7 +54,9 @@ export default function MvpVoteWidget({
   return (
     <div className="mt-2.5 pt-2.5" style={{ borderTop: "1px dashed var(--mint-200)" }}>
       <p className="text-xs font-bold mb-1.5" style={{ color: "var(--mint-700)" }}>
-        🌟 {closed ? "نتيجة تصويت أفضل لاعب" : "صوّت لأفضل لاعب في المباراة"}
+        <IconLabel name="star" filled>
+          {closed ? "نتيجة تصويت أفضل لاعب" : "صوّت لأفضل لاعب في المباراة"}
+        </IconLabel>
       </p>
 
       {closed ? (
@@ -66,8 +70,13 @@ export default function MvpVoteWidget({
               return (
                 <div key={c.id}>
                   <div className="flex items-center justify-between text-xs mb-0.5">
-                    <span style={{ color: "var(--text-main)", fontWeight: isWinner ? 700 : 400 }}>
-                      {isWinner ? "🏅 " : ""}
+                    <span
+                      className="flex items-center gap-1"
+                      style={{ color: "var(--text-main)", fontWeight: isWinner ? 700 : 400 }}
+                    >
+                      {isWinner && (
+                        <Icon name="medal" size={13} className="icon-inline" color="#d4af37" />
+                      )}
                       {c.fullName}
                     </span>
                     <span style={{ color: "var(--text-muted)" }}>
@@ -105,7 +114,9 @@ export default function MvpVoteWidget({
         </div>
       ) : myVote ? (
         <p className="text-xs font-semibold" style={{ color: "var(--mint-600)" }}>
-          ✅ صوّتَّ لـ {candidates.find((c) => c.id === myVote)?.fullName}
+          <IconLabel name="check">
+            صوّتَّ لـ {candidates.find((c) => c.id === myVote)?.fullName}
+          </IconLabel>
         </p>
       ) : (
         <div className="flex flex-wrap gap-1.5">

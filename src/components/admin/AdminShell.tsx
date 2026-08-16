@@ -498,10 +498,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="shell-field-1"
                 >
                   كلمة المرور الحالية
                 </label>
                 <input
+                  id="shell-field-1"
                   type="password"
                   value={cpForm.current}
                   onChange={(e) => setCpForm((p) => ({ ...p, current: e.target.value }))}
@@ -513,10 +515,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="shell-field-2"
                 >
                   كلمة المرور الجديدة
                 </label>
                 <input
+                  id="shell-field-2"
                   type="password"
                   value={cpForm.next}
                   onChange={(e) => setCpForm((p) => ({ ...p, next: e.target.value }))}
@@ -528,10 +532,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="shell-field-3"
                 >
                   تأكيد كلمة المرور الجديدة
                 </label>
                 <input
+                  id="shell-field-3"
                   type="password"
                   value={cpForm.confirm}
                   onChange={(e) => setCpForm((p) => ({ ...p, confirm: e.target.value }))}
@@ -703,10 +709,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="shell-field-4"
                 >
                   المستلمون
                 </label>
                 <select
+                  id="shell-field-4"
                   value={broadcastForm.target}
                   onChange={(e) => setBroadcastForm((p) => ({ ...p, target: e.target.value }))}
                   className="input"

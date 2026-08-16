@@ -230,10 +230,15 @@ function DonatePageInner() {
           <PaymentInfoBanner />
 
           <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+            <label
+              htmlFor="donate-amount"
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
               المبلغ (MRU)<span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <input
+              id="donate-amount"
               type="number"
               min={1}
               inputMode="numeric"
@@ -248,14 +253,24 @@ function DonatePageInner() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+            <p
+              id="donate-method-label"
+              className="block text-sm font-bold mb-2"
+              style={{ color: "var(--text-main)" }}
+            >
               طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+            </p>
+            <div
+              className="grid grid-cols-3 gap-2"
+              role="radiogroup"
+              aria-labelledby="donate-method-label"
+            >
               {PAYMENT_METHODS.map((method) => (
                 <button
                   key={method}
                   type="button"
+                  role="radio"
+                  aria-checked={paymentMethod === method}
                   onClick={() => setPaymentMethod(method)}
                   className="py-3 rounded-xl text-sm font-bold transition-all border-2"
                   style={{
@@ -271,12 +286,22 @@ function DonatePageInner() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+            <p
+              id="donate-named-label"
+              className="block text-sm font-bold mb-2"
+              style={{ color: "var(--text-main)" }}
+            >
               هل تريد ذكر اسمك مع التبرع؟
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+            </p>
+            <div
+              className="grid grid-cols-2 gap-2"
+              role="radiogroup"
+              aria-labelledby="donate-named-label"
+            >
               <button
                 type="button"
+                role="radio"
+                aria-checked={wantsName === true}
                 onClick={() => setWantsName(true)}
                 className="py-3 rounded-xl text-sm font-bold transition-all border-2"
                 style={{
@@ -291,6 +316,8 @@ function DonatePageInner() {
               </button>
               <button
                 type="button"
+                role="radio"
+                aria-checked={wantsName === false}
                 onClick={() => {
                   setWantsName(false);
                   setDonorName("");

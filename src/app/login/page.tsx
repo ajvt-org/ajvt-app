@@ -8,6 +8,7 @@ import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import PageHeader from "@/components/PageHeader";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 export default function LoginPage() {
   return (
@@ -36,7 +37,7 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل تسجيل الدخول");
-      router.push(safeNextPath(searchParams.get("next"), "/home"));
+      goAfterAuthChange(router, safeNextPath(searchParams.get("next"), "/home"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "بيانات غير صحيحة");
     } finally {
@@ -57,12 +58,18 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4 fade-up delay-1">
           <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+            <label
+              htmlFor="login-phone"
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
               رقم الهاتف
             </label>
             <input
+              id="login-phone"
               name="phone"
               type="tel"
+              autoComplete="tel"
               inputMode="numeric"
               value={form.phone}
               onChange={(e) => {
@@ -80,12 +87,18 @@ function LoginForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+            <label
+              htmlFor="login-password"
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
               كلمة المرور
             </label>
             <input
+              id="login-password"
               name="password"
               type="password"
+              autoComplete="current-password"
               value={form.password}
               onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
               required
