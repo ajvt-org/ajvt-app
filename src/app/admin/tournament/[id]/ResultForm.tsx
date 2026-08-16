@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -15,6 +15,9 @@ export default function ResultForm({
   teams: Team[];
   onSaved: () => void;
 }) {
+  // A result form is drawn per match, so ids come from useId rather than the
+  // match, which would repeat if the same two teams meet twice.
+  const uid = useId();
   const homeRoster =
     teams.find((t) => t.id === match.homeTeam.id)?.members.map((m) => m.member) || [];
   const awayRoster =
@@ -94,10 +97,15 @@ export default function ResultForm({
     >
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+          <label
+            htmlFor={`${uid}-home`}
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-muted)" }}
+          >
             {match.homeTeam.name}
           </label>
           <input
+            id={`${uid}-home`}
             type="number"
             min={0}
             value={homeScore}
@@ -107,10 +115,15 @@ export default function ResultForm({
           />
         </div>
         <div>
-          <label className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+          <label
+            htmlFor={`${uid}-away`}
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-muted)" }}
+          >
             {match.awayTeam.name}
           </label>
           <input
+            id={`${uid}-away`}
             type="number"
             min={0}
             value={awayScore}
@@ -161,10 +174,17 @@ export default function ResultForm({
       />
 
       <div>
-        <label className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-          🌟 رجل المباراة (اختياري)
+        <label
+          htmlFor={`${uid}-motm`}
+          className="text-xs font-semibold"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <IconLabel name="star" filled>
+            رجل المباراة (اختياري)
+          </IconLabel>
         </label>
         <select
+          id={`${uid}-motm`}
           value={manOfTheMatchId}
           onChange={(e) => setManOfTheMatchId(e.target.value)}
           className="input"

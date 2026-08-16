@@ -19,8 +19,10 @@ afterEach(() => {
 
 async function signIn() {
   render(<LoginPage />);
-  await userEvent.type(screen.getByPlaceholderText("2XXXXXXX"), "22334455");
-  await userEvent.type(screen.getByPlaceholderText("••••••••"), "secret123");
+  // By label, not by placeholder: this passes only while the label is really
+  // tied to its field, which is also what lets a tap on the label focus it.
+  await userEvent.type(screen.getByLabelText("رقم الهاتف"), "22334455");
+  await userEvent.type(screen.getByLabelText("كلمة المرور"), "secret123");
   await userEvent.click(screen.getByRole("button", { name: /دخول/ }));
 }
 

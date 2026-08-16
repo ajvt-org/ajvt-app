@@ -348,10 +348,15 @@ export default function AdminQuizPage() {
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+            <label
+              className="block text-xs font-bold mb-1"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="quiz-field-1"
+            >
               عدد الإجابات الافتراضي
             </label>
             <input
+              id="quiz-field-1"
               type="number"
               dir="ltr"
               min={2}
@@ -363,10 +368,15 @@ export default function AdminQuizPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+            <label
+              className="block text-xs font-bold mb-1"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="quiz-field-2"
+            >
               عدد الإجابات الصحيحة الافتراضي
             </label>
             <input
+              id="quiz-field-2"
               type="number"
               dir="ltr"
               min={1}
@@ -378,10 +388,15 @@ export default function AdminQuizPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+            <label
+              className="block text-xs font-bold mb-1"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="quiz-field-3"
+            >
               النقاط الافتراضية للسؤال
             </label>
             <input
+              id="quiz-field-3"
               type="number"
               dir="ltr"
               min={1}
@@ -391,10 +406,15 @@ export default function AdminQuizPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold mb-1" style={{ color: "var(--text-main)" }}>
+            <label
+              className="block text-xs font-bold mb-1"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="quiz-field-4"
+            >
               عدد الأسئلة المرسلة يومياً
             </label>
             <input
+              id="quiz-field-4"
               type="number"
               dir="ltr"
               min={1}
@@ -629,10 +649,12 @@ export default function AdminQuizPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="quiz-field-5"
                 >
                   نص السؤال <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <textarea
+                  id="quiz-field-5"
                   value={formText}
                   onChange={(e) => setFormText(e.target.value)}
                   rows={2}
@@ -644,10 +666,12 @@ export default function AdminQuizPage() {
                 <label
                   className="block text-sm font-bold mb-1.5"
                   style={{ color: "var(--text-main)" }}
+                  htmlFor="quiz-field-6"
                 >
                   التصنيف <span style={{ color: "var(--copper-500)" }}>*</span>
                 </label>
                 <input
+                  id="quiz-field-6"
                   type="text"
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value)}
@@ -661,10 +685,12 @@ export default function AdminQuizPage() {
                   <label
                     className="block text-sm font-bold mb-1.5"
                     style={{ color: "var(--text-main)" }}
+                    htmlFor="quiz-field-7"
                   >
                     النقاط
                   </label>
                   <input
+                    id="quiz-field-7"
                     type="number"
                     dir="ltr"
                     min={1}
@@ -677,10 +703,12 @@ export default function AdminQuizPage() {
                   <label
                     className="block text-sm font-bold mb-1.5"
                     style={{ color: "var(--text-main)" }}
+                    htmlFor="quiz-field-8"
                   >
                     عدد الإجابات الصحيحة
                   </label>
                   <input
+                    id="quiz-field-8"
                     type="number"
                     dir="ltr"
                     min={1}
@@ -693,9 +721,9 @@ export default function AdminQuizPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                  <p className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
                     الإجابات
-                  </label>
+                  </p>
                   <button
                     type="button"
                     onClick={addAnswerRow}
