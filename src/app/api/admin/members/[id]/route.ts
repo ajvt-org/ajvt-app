@@ -7,6 +7,7 @@ import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
 import { generateTempPassword } from "@/lib/member";
+import { tempPasswordExpiry } from "@/lib/tempPassword";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -65,9 +66,17 @@ export const PATCH = withRoute(
 
       let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
       if (!user) {
+        // The same deal as a reset: the admin reads this password out over the
+        // phone, so it expires and the member has to replace it on first use.
         tempPassword = generateTempPassword();
-        const hashed = await bcrypt.hash(tempPassword, 12);
-        user = await prisma.user.create({ data: { phone: accountPhone.trim(), password: hashed } });
+        const { tempPasswordHours } = await getAppSettings();
+        user = await prisma.user.create({
+          data: {
+            phone: accountPhone.trim(),
+            password: await bcrypt.hash(tempPassword, 12),
+            tempPasswordExpiresAt: tempPasswordExpiry(tempPasswordHours),
+          },
+        });
       }
       data.userId = user.id;
       if (phone === undefined) data.phone = accountPhone.trim();
