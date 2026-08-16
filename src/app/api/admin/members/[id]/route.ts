@@ -64,21 +64,31 @@ export const PATCH = withRoute(
       const phoneError = validatePhone(accountPhone);
       if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
 
-      let user = await prisma.user.findUnique({ where: { phone: accountPhone.trim() } });
-      if (!user) {
+      const found = await prisma.user.findUnique({
+        where: { phone: accountPhone.trim() },
+        select: { id: true, members: { select: { id: true }, take: 1 } },
+      });
+      // One membership per account, so an account that already carries one
+      // cannot take this member as well.
+      if (found?.members.length) {
+        return NextResponse.json({ error: members.accountAlreadyHasMember }, { status: 400 });
+      }
+      let userId = found?.id;
+      if (!userId) {
         // The same deal as a reset: the admin reads this password out over the
         // phone, so it expires and the member has to replace it on first use.
         tempPassword = generateTempPassword();
         const { tempPasswordHours } = await getAppSettings();
-        user = await prisma.user.create({
+        const created = await prisma.user.create({
           data: {
             phone: accountPhone.trim(),
             password: await bcrypt.hash(tempPassword, 12),
             tempPasswordExpiresAt: tempPasswordExpiry(tempPasswordHours),
           },
         });
+        userId = created.id;
       }
-      data.userId = user.id;
+      data.userId = userId;
       if (phone === undefined) data.phone = accountPhone.trim();
     }
 

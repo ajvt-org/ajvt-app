@@ -24,7 +24,7 @@ type StateName =
   | "memberPending"
   | "memberActive"
   | "memberRejected"
-  | "family"
+  | "detachedMember"
   | "revoked"
   | "tempPassword";
 
@@ -54,9 +54,11 @@ async function enter(state: StateName) {
   if (state === "memberPending") await addMember(user.id, user.phone, "PENDING", "أحمد");
   if (state === "memberActive") await addMember(user.id, user.phone, "ACTIVE", "محمد");
   if (state === "memberRejected") await addMember(user.id, user.phone, "REJECTED", "سالم");
-  if (state === "family") {
-    await addMember(user.id, user.phone, "ACTIVE", "الأب");
-    await addMember(user.id, user.phone, "PENDING", "الابن");
+  // An account holds one membership, so the second one an account can see is
+  // none: a member detached from it, which /api/user/me must not hand back.
+  if (state === "detachedMember") {
+    const member = await addMember(user.id, user.phone, "REJECTED", "منفصل");
+    await prisma.member.update({ where: { id: member.id }, data: { userId: null } });
   }
 
   const tokenVersion = user.tokenVersion;
@@ -78,7 +80,7 @@ const SIGNED_IN: StateName[] = [
   "memberPending",
   "memberActive",
   "memberRejected",
-  "family",
+  "detachedMember",
 ];
 const ALL: StateName[] = [...SIGNED_IN, "visitor", "revoked", "tempPassword"];
 
@@ -108,9 +110,9 @@ describe("who the API serves", () => {
       expect((await (await ME()).json()).members).toEqual([]);
     });
 
-    it("returns every member on a family account", async () => {
-      await enter("family");
-      expect((await (await ME()).json()).members).toHaveLength(2);
+    it("does not return a member detached from the account", async () => {
+      await enter("detachedMember");
+      expect((await (await ME()).json()).members).toEqual([]);
     });
   });
 
