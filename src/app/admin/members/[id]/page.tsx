@@ -12,6 +12,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import MemberEditForm from "./MemberEditForm";
+import MemberDecision from "./MemberDecision";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -131,7 +132,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      {editing && (
+      {editing ? (
         <MemberEditForm
           member={member}
           onSaved={() => {
@@ -140,6 +141,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           }}
           onCancel={() => setEditing(false)}
         />
+      ) : (
+        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
       )}
 
       <ProfileSection icon="wallet" title="الدفع">
