@@ -8,6 +8,7 @@ import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import PageHeader from "@/components/PageHeader";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 export default function LoginPage() {
   return (
@@ -36,7 +37,7 @@ function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل تسجيل الدخول");
-      router.push(safeNextPath(searchParams.get("next"), "/home"));
+      goAfterAuthChange(router, safeNextPath(searchParams.get("next"), "/home"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "بيانات غير صحيحة");
     } finally {

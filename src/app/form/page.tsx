@@ -20,6 +20,7 @@ import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
+import { goAfterAuthChange } from "@/lib/authNav";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -428,7 +429,7 @@ function FormPageInner() {
 
   async function handleIdleTimeout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    goAfterAuthChange(router, "/login");
   }
 
   // Anonymous visitors on steps 1-2 have no session to lose — only arm the
@@ -525,7 +526,7 @@ function FormPageInner() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/profile")}
+            onClick={() => goAfterAuthChange(router, "/profile")}
             className="btn fade-up delay-2"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
