@@ -9,31 +9,29 @@ import {
   computeCleanSheets,
   computeMotmLeaders,
   computeTeamAdvancedStats,
-  getHeadToHead,
-  formatMatchDateTime,
   matchDateKey,
   todayClubDateKey,
 } from "@/lib/tournament";
-import FollowTeamButton from "@/components/tournament/FollowTeamButton";
-import ShareResultButton from "@/components/tournament/ShareResultButton";
-import MvpVoteWidget from "@/components/tournament/MvpVoteWidget";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
-import TeamLogo from "@/components/tournament/TeamLogo";
 import BracketTree from "@/components/tournament/BracketTree";
-import StatsToggle from "@/components/tournament/StatsToggle";
+import CardChip from "@/components/tournament/CardChip";
+import MatchDayList from "@/components/tournament/MatchDayList";
+import MatchFixture from "@/components/tournament/MatchFixture";
+import MatchResult from "@/components/tournament/MatchResult";
+import RankedList from "@/components/tournament/RankedList";
+import StandingsTable from "@/components/tournament/StandingsTable";
+import TeamFormList from "@/components/tournament/TeamFormList";
+import TeamsGrid from "@/components/tournament/TeamsGrid";
+import TodayBand from "@/components/tournament/TodayBand";
+import TournamentSection from "@/components/tournament/TournamentSection";
+import TournamentSummary from "@/components/tournament/TournamentSummary";
+import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import PageHeader from "@/components/PageHeader";
 import NumericRanges from "@/components/NumericRanges";
-import { formatActivityDates } from "@/lib/activityDates";
 import Icon from "@/components/Icon";
+import { formatActivityDates } from "@/lib/activityDates";
+import type { PublicMatch } from "@/components/tournament/publicTypes";
 
 export const dynamic = "force-dynamic";
-
-const CARD_LABEL: Record<string, string> = { YELLOW: "🟨", RED: "🟥" };
-const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; color: string }> = {
-  W: { bg: "#d1fae5", color: "#065f46" },
-  D: { bg: "var(--mint-100)", color: "var(--text-muted)" },
-  L: { bg: "#fee2e2", color: "#991b1b" },
-};
 
 export default async function PublicTournamentPage({
   params,
@@ -134,6 +132,7 @@ export default async function PublicTournamentPage({
       : [];
   const myVoteByVoteId = new Map(myVotes.map((v) => [v.voteId, v.candidateId]));
 
+  const matches = activity.matches as PublicMatch[];
   const standingsByGroup = groupStandings(activity.teams, activity.matches);
   const topScorers = computeTopScorers(activity.teams, activity.matches);
   const stats = computeStats(activity.teams, activity.matches);
@@ -146,15 +145,203 @@ export default async function PublicTournamentPage({
   const groupNameById = new Map(activity.groups.map((g) => [g.id, g.name]));
   const singleFlatTable = standingsByGroup.length === 1 && standingsByGroup[0].groupId === null;
 
-  const played = activity.matches.filter((m) => m.status === "PLAYED");
-  const scheduled = activity.matches.filter((m) => m.status === "SCHEDULED");
+  const played = matches.filter((m) => m.status === "PLAYED");
+  const scheduled = matches.filter((m) => m.status === "SCHEDULED");
   const bracketMatches = activity.matches.filter(
     (m): m is typeof m & { bracketRound: number } => m.bracketRound !== null,
   );
   const todayKey = todayClubDateKey();
-  const todayMatches = activity.matches
+  const todayMatches = matches
     .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
+
+  const hasStats =
+    topScorers.length > 0 ||
+    discipline.length > 0 ||
+    cleanSheets.length > 0 ||
+    motmLeaders.length > 0 ||
+    teamAdvancedStats.length > 0;
+
+  const panels: TournamentPanel[] = [
+    {
+      key: "standings",
+      label: "الترتيب",
+      icon: "trophy",
+      content: (
+        <>
+          {standingsByGroup.map((group) => (
+            <StandingsTable
+              key={group.groupId ?? "none"}
+              title={
+                singleFlatTable
+                  ? null
+                  : group.groupId
+                    ? groupNameById.get(group.groupId) || "مجموعة"
+                    : "بدون مجموعة"
+              }
+              rows={group.standings}
+              showFollow={!!userId}
+            />
+          ))}
+          {bracketMatches.length > 0 && (
+            <TournamentSection icon="target" title="الدور الإقصائي">
+              <div className="card p-3">
+                <BracketTree
+                  matches={bracketMatches.map((m) => ({
+                    ...m,
+                    status: m.status as "SCHEDULED" | "PLAYED",
+                  }))}
+                />
+              </div>
+            </TournamentSection>
+          )}
+        </>
+      ),
+    },
+    {
+      key: "matches",
+      label: "المباريات",
+      icon: "calendar",
+      content: (
+        <>
+          {scheduled.length === 0 && played.length === 0 && (
+            <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+              لم تُحدَّد المباريات بعد
+            </p>
+          )}
+          {scheduled.length > 0 && (
+            <TournamentSection icon="calendar" title="مباريات قادمة">
+              <MatchDayList
+                matches={scheduled}
+                renderMatch={(match, day) => (
+                  <MatchFixture key={match.id} match={match} day={day} />
+                )}
+              />
+            </TournamentSection>
+          )}
+          {played.length > 0 && (
+            <TournamentSection icon="check" title="النتائج">
+              <MatchDayList
+                matches={played}
+                renderMatch={(match, day) => (
+                  <MatchResult
+                    key={match.id}
+                    match={match}
+                    day={day}
+                    allMatches={matches}
+                    tournamentTitle={activity.title}
+                    loggedIn={!!userId}
+                    myVoteCandidateId={
+                      match.mvpVote ? (myVoteByVoteId.get(match.mvpVote.id) ?? null) : null
+                    }
+                  />
+                )}
+              />
+            </TournamentSection>
+          )}
+        </>
+      ),
+    },
+    {
+      key: "teams",
+      label: "الفرق",
+      icon: "users",
+      content: <TeamsGrid teams={activity.teams} />,
+    },
+  ];
+
+  if (hasStats) {
+    panels.push({
+      key: "stats",
+      label: "الإحصائيات",
+      icon: "chart",
+      content: (
+        <>
+          <TournamentSummary
+            matchesPlayed={stats.matchesPlayed}
+            totalGoals={stats.totalGoals}
+            avgGoalsPerMatch={stats.avgGoalsPerMatch}
+            bestAttack={
+              stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"
+            }
+          />
+          {topScorers.length > 0 && (
+            <TournamentSection icon="ball" title="الهدافون">
+              <RankedList
+                rows={topScorers.slice(0, 15).map((s) => ({
+                  id: s.memberId,
+                  name: s.fullName,
+                  photo: s.photo,
+                  sub: s.teamName,
+                  value: (
+                    <>
+                      <Icon name="ball" size={14} className="icon-inline" /> {s.goals}
+                    </>
+                  ),
+                }))}
+              />
+            </TournamentSection>
+          )}
+          {discipline.length > 0 && (
+            <TournamentSection icon="flag" title="الانضباط">
+              <RankedList
+                rows={discipline.slice(0, 15).map((d) => ({
+                  id: d.memberId,
+                  name: d.fullName,
+                  photo: d.photo,
+                  sub: d.teamName,
+                  value: (
+                    <span className="flex items-center gap-2">
+                      {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}
+                      {d.red > 0 && <CardChip type="RED" count={d.red} />}
+                    </span>
+                  ),
+                }))}
+              />
+            </TournamentSection>
+          )}
+          {cleanSheets.length > 0 && (
+            <TournamentSection icon="shield" title="أفضل دفاع">
+              <RankedList
+                rows={cleanSheets.slice(0, 10).map((c) => ({
+                  id: c.teamId,
+                  name: c.name,
+                  avatar: false,
+                  value: (
+                    <span dir="ltr">
+                      {c.cleanSheets}/{c.played}
+                    </span>
+                  ),
+                }))}
+              />
+            </TournamentSection>
+          )}
+          {motmLeaders.length > 0 && (
+            <TournamentSection icon="star" title="رجل المباراة">
+              <RankedList
+                rows={motmLeaders.slice(0, 10).map((m) => ({
+                  id: m.memberId,
+                  name: m.fullName,
+                  photo: m.photo,
+                  sub: m.teamName,
+                  value: (
+                    <>
+                      <Icon name="star" size={14} className="icon-inline" filled /> {m.count}
+                    </>
+                  ),
+                }))}
+              />
+            </TournamentSection>
+          )}
+          {teamAdvancedStats.length > 0 && (
+            <TournamentSection icon="chart" title="إحصائيات الفرق">
+              <TeamFormList teams={teamAdvancedStats} />
+            </TournamentSection>
+          )}
+        </>
+      ),
+    });
+  }
 
   return (
     <div className="app-shell">
@@ -182,549 +369,8 @@ export default async function PublicTournamentPage({
           </p>
         ) : (
           <>
-            {todayMatches.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  ⚡ مباريات اليوم
-                </h2>
-                {todayMatches.map((m) => (
-                  <div
-                    key={m.id}
-                    className="card p-4"
-                    style={{
-                      background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))",
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-2" dir="rtl">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={28} />
-                        <span className="font-bold text-sm text-white truncate">
-                          {m.homeTeam.name}
-                        </span>
-                      </div>
-                      <span className="font-black text-white text-lg shrink-0 px-2">
-                        {m.status === "PLAYED" ? `${m.homeScore} - ${m.awayScore}` : "×"}
-                      </span>
-                      <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                        <span className="font-bold text-sm text-white truncate">
-                          {m.awayTeam.name}
-                        </span>
-                        <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={28} />
-                      </div>
-                    </div>
-                    <div
-                      className="flex items-center gap-2 text-xs mt-2 flex-wrap"
-                      style={{ color: "rgba(255,255,255,0.85)" }}
-                    >
-                      {m.round && <span>{m.round}</span>}
-                      {m.venue && <span>📍 {m.venue}</span>}
-                      {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <StatsToggle
-              matchesPlayed={stats.matchesPlayed}
-              totalGoals={stats.totalGoals}
-              avgGoalsPerMatch={stats.avgGoalsPerMatch}
-              bestAttack={
-                stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"
-              }
-            />
-
-            <div className="space-y-2">
-              <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                🧍 الفرق واللاعبون
-              </h2>
-              <div className="grid grid-cols-2 items-start gap-2">
-                {activity.teams.map((team) => (
-                  <details key={team.id} className="card p-3">
-                    <summary
-                      className="font-bold text-sm cursor-pointer flex items-center gap-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      <TeamLogo logo={team.logo} name={team.name} size={20} />
-                      {team.name}{" "}
-                      <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
-                        ({team.members.length})
-                      </span>
-                    </summary>
-                    {team.members.length === 0 ? (
-                      <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-                        لا يوجد لاعبون بعد
-                      </p>
-                    ) : (
-                      <ul className="mt-2 space-y-1.5">
-                        {team.members.map(({ member }) => (
-                          <li
-                            key={member.id}
-                            className="flex items-center gap-2 text-xs"
-                            style={{ color: "var(--text-muted)" }}
-                          >
-                            <PlayerAvatar
-                              photo={member.photo}
-                              fullName={member.fullName}
-                              size={22}
-                            />
-                            {member.fullName}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </details>
-                ))}
-              </div>
-            </div>
-
-            {bracketMatches.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  🏆 الدور الإقصائي
-                </h2>
-                <div className="card p-3">
-                  <BracketTree
-                    matches={bracketMatches.map((m) => ({
-                      ...m,
-                      status: m.status as "SCHEDULED" | "PLAYED",
-                    }))}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                🏆 الترتيب
-              </h2>
-              {standingsByGroup.map((group) => (
-                <div key={group.groupId ?? "none"} className="card table-fit overflow-x-auto">
-                  {!singleFlatTable && (
-                    <p
-                      className="text-sm font-bold px-3 pt-3"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      {group.groupId ? groupNameById.get(group.groupId) || "مجموعة" : "بدون مجموعة"}
-                    </p>
-                  )}
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr style={{ background: "var(--mint-100)" }}>
-                        {[
-                          { label: "#", detail: false },
-                          { label: "الفريق", detail: false },
-                          { label: "نقاط", detail: false },
-                          { label: "لعب", detail: false },
-                          { label: "فاز", detail: true },
-                          { label: "تعادل", detail: true },
-                          { label: "خسر", detail: true },
-                          { label: "له", detail: true },
-                          { label: "عليه", detail: true },
-                          { label: "الفرق", detail: false },
-                          { label: "", detail: false },
-                        ].map((h) => (
-                          <th
-                            key={h.label}
-                            className={`px-2 py-2 text-center font-bold${h.detail ? " col-detail" : ""}`}
-                            style={{ color: "var(--mint-700)" }}
-                          >
-                            {h.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.standings.map((r, i) => (
-                        <tr key={r.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
-                          <td className="px-2 py-2 text-center">{i + 1}</td>
-                          <td className="px-2 py-2 font-bold" style={{ color: "var(--text-main)" }}>
-                            <span className="flex items-center gap-1.5 justify-center">
-                              <TeamLogo logo={r.logo} name={r.name} size={18} />
-                              {r.name}
-                            </span>
-                          </td>
-                          <td
-                            className="px-2 py-2 text-center font-black"
-                            style={{ color: "var(--mint-700)" }}
-                          >
-                            {r.points}
-                          </td>
-                          <td className="px-2 py-2 text-center">{r.played}</td>
-                          <td className="px-2 py-2 text-center col-detail">{r.won}</td>
-                          <td className="px-2 py-2 text-center col-detail">{r.drawn}</td>
-                          <td className="px-2 py-2 text-center col-detail">{r.lost}</td>
-                          <td className="px-2 py-2 text-center col-detail">{r.gf}</td>
-                          <td className="px-2 py-2 text-center col-detail">{r.ga}</td>
-                          <td className="px-2 py-2 text-center">{r.gd}</td>
-                          <td className="px-2 py-2 text-center">
-                            <FollowTeamButton teamId={r.teamId} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </div>
-
-            {played.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  ✅ النتائج
-                </h2>
-                {played.map((m) => {
-                  const priorMeetings = getHeadToHead(
-                    activity.matches,
-                    m.homeTeam.id,
-                    m.awayTeam.id,
-                    m.id,
-                  );
-                  return (
-                    <div key={m.id} className="card p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <p
-                          className="font-bold text-sm flex items-center gap-1.5 flex-wrap"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={20} />
-                          {m.homeTeam.name} {m.homeScore} - {m.awayScore} {m.awayTeam.name}
-                          <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={20} />
-                          {m.homePenalties !== null && m.awayPenalties !== null && (
-                            <span
-                              className="text-xs font-semibold"
-                              style={{ color: "var(--text-muted)" }}
-                            >
-                              {" "}
-                              (ركلات ترجيح {m.homePenalties}-{m.awayPenalties})
-                            </span>
-                          )}
-                        </p>
-                        <ShareResultButton
-                          homeTeamName={m.homeTeam.name}
-                          awayTeamName={m.awayTeam.name}
-                          homeTeamLogo={m.homeTeam.logo}
-                          awayTeamLogo={m.awayTeam.logo}
-                          homeScore={m.homeScore ?? 0}
-                          awayScore={m.awayScore ?? 0}
-                          round={m.round}
-                          tournamentTitle={activity.title}
-                          goals={m.goals.map((g) => ({
-                            fullName: g.member.fullName,
-                            photo: g.member.photo,
-                            count: g.count,
-                            minute: g.minute,
-                            isHome: g.teamId === m.homeTeam.id,
-                          }))}
-                          bookings={m.bookings.map((b) => ({
-                            fullName: b.member.fullName,
-                            photo: b.member.photo,
-                            cardType: b.cardType as "YELLOW" | "RED",
-                            minute: b.minute,
-                            isHome: b.teamId === m.homeTeam.id,
-                          }))}
-                        />
-                      </div>
-                      <div
-                        className="flex items-center gap-2 text-xs mt-1 flex-wrap"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {m.round && <span>{m.round}</span>}
-                        {m.venue && <span>📍 {m.venue}</span>}
-                        {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
-                      </div>
-                      {priorMeetings.length > 0 && (
-                        <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
-                          🔁 مواجهات سابقة:{" "}
-                          {priorMeetings
-                            .map((pm) =>
-                              pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة",
-                            )
-                            .join("، ")}
-                        </p>
-                      )}
-                      {m.goals.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {m.goals.map((g, i) => (
-                            <span
-                              key={i}
-                              className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs font-bold"
-                              style={{ background: "#d1fae5", color: "#065f46" }}
-                            >
-                              <PlayerAvatar
-                                photo={g.member.photo}
-                                fullName={g.member.fullName}
-                                size={18}
-                              />
-                              ⚽ {g.member.fullName}
-                              {g.minute ? ` ${g.minute}'` : ""}
-                              {g.count > 1 ? ` (${g.count})` : ""}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {m.bookings.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap gap-2">
-                          {m.bookings.map((b, i) => (
-                            <span
-                              key={i}
-                              className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs font-bold"
-                              style={{ background: "#fee2e2", color: "#991b1b" }}
-                            >
-                              <PlayerAvatar
-                                photo={b.member.photo}
-                                fullName={b.member.fullName}
-                                size={18}
-                              />
-                              {CARD_LABEL[b.cardType]} {b.member.fullName}
-                              {b.minute ? ` (${b.minute}')` : ""}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {m.manOfTheMatch && (
-                        <p
-                          className="text-xs mt-1.5 font-semibold flex items-center gap-1.5"
-                          style={{ color: "var(--mint-700)" }}
-                        >
-                          <PlayerAvatar
-                            photo={m.manOfTheMatch.photo}
-                            fullName={m.manOfTheMatch.fullName}
-                            size={20}
-                          />
-                          🌟 رجل المباراة: {m.manOfTheMatch.fullName}
-                        </p>
-                      )}
-                      {m.mvpVote && (
-                        <MvpVoteWidget
-                          matchId={m.id}
-                          status={m.mvpVote.status as "OPEN" | "CLOSED"}
-                          candidates={m.mvpVote.candidates.map((c) => ({
-                            id: c.id,
-                            fullName: c.member.fullName,
-                            voteCount: c._count.votes,
-                          }))}
-                          loggedIn={!!userId}
-                          initialMyVoteCandidateId={myVoteByVoteId.get(m.mvpVote.id) || null}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {scheduled.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  📅 مباريات قادمة
-                </h2>
-                {scheduled.map((m) => (
-                  <div key={m.id} className="card p-3">
-                    <p
-                      className="font-bold text-sm flex items-center gap-1.5"
-                      style={{ color: "var(--text-main)" }}
-                    >
-                      <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={18} />
-                      {m.homeTeam.name} × {m.awayTeam.name}
-                      <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={18} />
-                    </p>
-                    <div
-                      className="flex items-center gap-2 text-xs mt-1 flex-wrap"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {m.round && <span>{m.round}</span>}
-                      {m.venue && <span>📍 {m.venue}</span>}
-                      {m.matchDate && <span dir="ltr">{formatMatchDateTime(m.matchDate)}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {topScorers.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  ⚽ الهدافون
-                </h2>
-                {topScorers.slice(0, 15).map((s, i) => (
-                  <div
-                    key={s.memberId}
-                    className="card p-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-                        style={{
-                          background: i === 0 ? "#fde68a" : "var(--mint-100)",
-                          color: i === 0 ? "#92400e" : "var(--mint-700)",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      <PlayerAvatar photo={s.photo} fullName={s.fullName} size={32} />
-                      <div>
-                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                          {s.fullName}
-                        </p>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {s.teamName}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                      ⚽ {s.goals}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {discipline.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  🟨🟥 الانضباط
-                </h2>
-                {discipline.slice(0, 15).map((d, i) => (
-                  <div
-                    key={d.memberId}
-                    className="card p-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-                        style={{
-                          background: i === 0 ? "#fde68a" : "var(--mint-100)",
-                          color: i === 0 ? "#92400e" : "var(--mint-700)",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      <PlayerAvatar photo={d.photo} fullName={d.fullName} size={32} />
-                      <div>
-                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                          {d.fullName}
-                        </p>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {d.teamName}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
-                      {d.yellow > 0 && `🟨${d.yellow}`} {d.red > 0 && `🟥${d.red}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {cleanSheets.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  🧤 أفضل دفاع
-                </h2>
-                {cleanSheets.slice(0, 10).map((c, i) => (
-                  <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-                        style={{
-                          background: i === 0 ? "#fde68a" : "var(--mint-100)",
-                          color: i === 0 ? "#92400e" : "var(--mint-700)",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                        {c.name}
-                      </p>
-                    </div>
-                    <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                      🧤 {c.cleanSheets}/{c.played}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {motmLeaders.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  🌟 رجل المباراة
-                </h2>
-                {motmLeaders.slice(0, 10).map((m, i) => (
-                  <div
-                    key={m.memberId}
-                    className="card p-3 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
-                        style={{
-                          background: i === 0 ? "#fde68a" : "var(--mint-100)",
-                          color: i === 0 ? "#92400e" : "var(--mint-700)",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      <PlayerAvatar photo={m.photo} fullName={m.fullName} size={32} />
-                      <div>
-                        <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                          {m.fullName}
-                        </p>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          {m.teamName}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                      🌟 {m.count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {teamAdvancedStats.length > 0 && (
-              <div className="space-y-2">
-                <h2 className="font-black text-base" style={{ color: "var(--text-main)" }}>
-                  📊 إحصائيات الفرق
-                </h2>
-                {teamAdvancedStats.map((t) => (
-                  <div key={t.teamId} className="card p-3 space-y-1">
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                      {t.name}
-                    </p>
-                    {t.biggestWin && (
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        🔥 أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
-                      </p>
-                    )}
-                    {t.unbeatenStreak > 0 && (
-                      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        🛡️ سلسلة بدون هزيمة: {t.unbeatenStreak}
-                      </p>
-                    )}
-                    {t.form.length > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                          آخر {t.form.length} مباريات:
-                        </span>
-                        {t.form.map((f, i) => (
-                          <span
-                            key={i}
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
-                            style={{ background: FORM_STYLE[f].bg, color: FORM_STYLE[f].color }}
-                          >
-                            {f}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {todayMatches.length > 0 && <TodayBand matches={todayMatches} />}
+            <TournamentTabs panels={panels} />
           </>
         )}
       </div>

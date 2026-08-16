@@ -688,3 +688,67 @@ body {
   border-radius: 999px;
   background: var(--mint-600);
 }
+
+/* The tournament's own tabs. A scrolling strip clipped the last one, and a
+   half-visible tab reads as a rendering fault rather than an invitation to
+   scroll, so all four share the width and stack their label under the icon —
+   which fits whatever the longest label happens to be. */
+.tournament-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.375rem;
+}
+
+.tournament-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+}
+
+.tournament-tab-label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+/* A kickoff time leads its row, so the rows line up on the fixture rather
+   than on however wide the hour happens to render. */
+.fixture-time {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--mint-700);
+  background: var(--mint-100);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* The day a round is played on, with whatever the whole day shares. */
+.match-day-head {
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--mint-100);
+}
+
+/* A team card opens onto its squad. Preflight drops the disclosure triangle,
+   so without a chevron nothing says the card opens at all. */
+.team-summary {
+  list-style: none;
+}
+
+.team-summary::-webkit-details-marker {
+  display: none;
+}
+
+.team-chevron {
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+}
+
+details[open] > .team-summary .team-chevron {
+  transform: rotate(180deg);
+}
