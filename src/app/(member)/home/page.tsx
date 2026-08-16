@@ -3,14 +3,15 @@
 import ActivitiesSection from "@/components/ActivitiesSection";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
+import { toEligibleMember } from "@/components/activityTypes";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { useMembers } from "@/lib/useMembers";
+import { useMember } from "@/lib/useMember";
 
-// The activities tab for a signed-in account. It knows the people on the
-// account only well enough to say who may register; everything about them
+// The activities tab for a signed-in account. It knows the membership on the
+// account only well enough to say whether it may register; everything about it
 // lives in the profile tab.
 export default function HomePage() {
-  const { members, loading } = useMembers();
+  const { member, loading } = useMember();
 
   if (loading) {
     return (
@@ -27,33 +28,17 @@ export default function HomePage() {
 
       <div className="flex-1 px-5 py-6">
         <ActivitiesSection
-          hasAnyMember={members.length > 0}
-          hasPendingMember={members.some((m) => m.status === "PENDING")}
+          memberStatus={member?.status ?? null}
           // The quiz is a paid-membership perk — same "منتسب" bar as anything
           // else gated behind an approved, fee-paid membership.
-          quizAccess={members.some(
-            (m) => m.status === "ACTIVE" && m.paidAmount !== null && m.paidAmount >= MEMBERSHIP_FEE,
-          )}
-          // Only fully-approved members can register for events — the
+          quizAccess={
+            member?.status === "ACTIVE" &&
+            member.paidAmount !== null &&
+            member.paidAmount >= MEMBERSHIP_FEE
+          }
+          // Only a fully-approved member can register for events — the
           // membership fee/review comes first, activities come after.
-          eligibleMembers={members
-            .filter((m) => m.status === "ACTIVE")
-            .map((m) => ({
-              id: m.id,
-              fullName: m.fullName,
-              photo: m.photo,
-              registrations: m.registrations.map((r) => ({
-                activityId: r.activityId,
-                status: r.status,
-                rejectionReason: r.rejectionReason,
-              })),
-              teamMemberships: m.teamMemberships.map((tm) => ({
-                teamId: tm.team.id,
-                teamName: tm.team.name,
-                activityId: tm.team.activityId,
-                status: tm.status,
-              })),
-            }))}
+          eligibleMember={toEligibleMember(member)}
         />
       </div>
     </div>
