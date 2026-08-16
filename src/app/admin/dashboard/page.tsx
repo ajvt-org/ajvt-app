@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import BarChart from "@/components/admin/BarChart";
 import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
+import Link from "next/link";
+import ArrowLabel from "@/components/ArrowLabel";
+import {
+  NO_FILTERS,
+  readFilters,
+  writeFilters,
+  activeFilterCount,
+  matchesFilters,
+} from "@/lib/memberFilters";
+import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { STATUS_LABEL, STATUS_BADGE, PAGE_SIZE } from "./constants";
 import { toCsv, downloadCsv } from "@/lib/csv";
@@ -20,11 +30,27 @@ import IconLabel from "@/components/IconLabel";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import { hoursLabel } from "@/lib/arabicPlural";
 
-export default function AdminDashboard() {
+function AdminDashboardInner() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterTab>("PENDING");
+  // The address is the state: a narrowed list survives a reload and can be
+  // sent to someone else. `filter` is kept as a name because the tabs and the
+  // default-tab logic already speak it.
+  const searchParams = useSearchParams();
+  const urlFilters = readFilters(new URLSearchParams(searchParams.toString()));
+  const [filters, setFiltersState] = useState(urlFilters);
+  const filter = filters.status as FilterTab;
+  const search = filters.q;
+
+  function setFilters(next: typeof filters, nextPage = 1) {
+    setFiltersState(next);
+    const query = writeFilters(next, nextPage).toString();
+    router.replace(query ? `/admin/dashboard?${query}` : "/admin/dashboard", { scroll: false });
+  }
+
+  const setFilter = (status: FilterTab) => setFilters({ ...filters, status });
+  const setSearch = (q: string) => setFilters({ ...filters, q });
   const tabPicked = useRef(false);
   const [selected, setSelected] = useState<Member | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -34,7 +60,6 @@ export default function AdminDashboard() {
   const [bulkReason, setBulkReason] = useState<string>(REJECTION_REASONS[0]);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState<string>(REJECTION_REASONS[0]);
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
   const [resetLoading, setResetLoading] = useState(false);
@@ -72,9 +97,11 @@ export default function AdminDashboard() {
       const data = await api.get<{ members: Member[] }>("/api/admin/members");
       const loaded = data.members || [];
       setMembers(loaded);
+      // The default tab is a guess about what needs attention. An address that
+      // already names a status is not a guess, so it wins.
       if (!tabPicked.current) {
         tabPicked.current = true;
-        setFilter(initialFilterTab(loaded));
+        if (!searchParams.get("status")) setFilter(initialFilterTab(loaded));
       }
     } catch (e) {
       const status = e instanceof ApiError ? e.status : 0;
@@ -355,18 +382,8 @@ export default function AdminDashboard() {
     return days;
   }, [members]);
 
-  const filtered = members.filter((m) => {
-    const matchFilter = filter === "ALL" || m.status === filter;
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      m.fullName.includes(q) ||
-      (m.phone || "").includes(q) ||
-      (m.user?.phone || "").includes(q) ||
-      (m.referenceCode || "").toLowerCase().includes(q);
-    return matchFilter && matchSearch;
-  });
-  const filterKey = `${filter}|${search}`;
+  const filtered = members.filter((m) => matchesFilters(m, filters, MEMBERSHIP_FEE));
+  const filterKey = JSON.stringify(filters);
   if (filterKey !== lastFilterKey) {
     setLastFilterKey(filterKey);
     setPage(1);
@@ -580,6 +597,67 @@ export default function AdminDashboard() {
         >
           <IconLabel name="plus">إضافة عضو يدوياً</IconLabel>
         </button>
+      </div>
+
+      {/* Criteria that could not be combined before: an age, a payment method
+          and how much has actually been paid, on top of the status tab. */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <select
+          value={filters.age}
+          onChange={(e) => setFilters({ ...filters, age: e.target.value })}
+          className="input text-xs"
+          style={{ width: "auto" }}
+          aria-label="تصفية حسب العصر"
+        >
+          <option value="">كل الأعصار</option>
+          {ageGroups.map((g) => (
+            <option key={g.id} value={g.name}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.method}
+          onChange={(e) => setFilters({ ...filters, method: e.target.value })}
+          className="input text-xs"
+          style={{ width: "auto" }}
+          aria-label="تصفية حسب طريقة الدفع"
+        >
+          <option value="">كل طرق الدفع</option>
+          {[...new Set(members.map((m) => m.paymentMethod).filter(Boolean))].map((method) => (
+            <option key={method} value={method}>
+              {method}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.paid}
+          onChange={(e) => setFilters({ ...filters, paid: e.target.value })}
+          className="input text-xs"
+          style={{ width: "auto" }}
+          aria-label="تصفية حسب المبلغ المدفوع"
+        >
+          <option value="">كل المبالغ</option>
+          <option value="full">دفع كامل</option>
+          <option value="partial">دفع ناقص</option>
+          <option value="none">لم يدفع</option>
+        </select>
+
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {filtered.length} نتيجة
+        </span>
+
+        {activeFilterCount(filters) > 0 && (
+          <button
+            onClick={() => setFilters(NO_FILTERS)}
+            className="text-xs font-bold"
+            style={{ color: "var(--mint-700)" }}
+          >
+            <IconLabel name="close">إزالة التصفية ({activeFilterCount(filters)})</IconLabel>
+          </button>
+        )}
       </div>
 
       {filter === "PENDING" && paginated.length > 0 && (
@@ -1124,10 +1202,18 @@ export default function AdminDashboard() {
                 )}
               </div>
 
+              <Link
+                href={`/admin/members/${selected.id}`}
+                className="text-xs font-bold block"
+                style={{ color: "var(--mint-600)" }}
+              >
+                <ArrowLabel>الملف الكامل للعضو</ArrowLabel>
+              </Link>
+
               {/* Proof image */}
               <div>
                 <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-                  📸 صورة الكابتير
+                  <IconLabel name="camera">صورة الكابتير</IconLabel>
                 </p>
                 {selected.paymentProof ? (
                   <>
@@ -1147,6 +1233,11 @@ export default function AdminDashboard() {
                     <p className="text-xs text-center mt-1" style={{ color: "var(--text-muted)" }}>
                       انقر للتكبير
                     </p>
+                    <ProofReuseWarning
+                      filename={selected.paymentProof}
+                      kind="member"
+                      id={selected.id}
+                    />
                   </>
                 ) : (
                   <p
@@ -1319,5 +1410,13 @@ export default function AdminDashboard() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDashboardInner />
+    </Suspense>
   );
 }

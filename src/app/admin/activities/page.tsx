@@ -12,6 +12,7 @@ import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import ActivityDatesEditor from "./ActivityDatesEditor";
 import { formatActivityDates } from "@/lib/activityDates";
+import Link from "next/link";
 
 interface Registration {
   id: string;
@@ -360,9 +361,13 @@ export default function AdminActivitiesPage() {
                 </div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                    <Link
+                      href={`/admin/activities/${a.id}`}
+                      className="font-bold text-sm block"
+                      style={{ color: "var(--mint-700)" }}
+                    >
                       {a.title}
-                    </p>
+                    </Link>
                     <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
                       {a.description}
                     </p>
