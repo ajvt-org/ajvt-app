@@ -1,26 +1,29 @@
 import { Fragment } from "react";
+import { tokenizeRanges } from "@/lib/bidiRanges";
 
-// Admin-typed text like "24 - 29 أغسطس" reads backwards. A hyphen sitting
-// directly between two digits binds them into one left-to-right run, but put
-// spaces around it, or use an en dash, and the separator turns neutral and
-// takes the paragraph's right-to-left direction with the numbers following
-// it. Each range is isolated so it keeps its own direction whatever the
-// author typed around it.
-const RANGE = /(\d+\s*[-–—/]\s*\d+)/g;
-
+// Draws what bidiRanges decided: a range in a right-to-left box with each
+// number isolated inside it, so the pair orders by the sentence while each
+// number keeps its own digits in order; a count out of a total left to right.
 export default function NumericRanges({ children }: { children: string }) {
-  const parts = children.split(RANGE);
   return (
     <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <span key={i} dir="ltr" style={{ unicodeBidi: "isolate" }}>
-            {part}
+      {tokenizeRanges(children).map((token, i) => {
+        if (token.kind === "text") return <Fragment key={i}>{token.text}</Fragment>;
+        if (token.kind === "fraction") {
+          return (
+            <span key={i} dir="ltr" style={{ unicodeBidi: "isolate" }}>
+              {token.text}
+            </span>
+          );
+        }
+        return (
+          <span key={i} dir="rtl" style={{ unicodeBidi: "isolate" }}>
+            <bdi>{token.from}</bdi>
+            {token.separator}
+            <bdi>{token.to}</bdi>
           </span>
-        ) : (
-          <Fragment key={i}>{part}</Fragment>
-        ),
-      )}
+        );
+      })}
     </>
   );
 }
