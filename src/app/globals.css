@@ -134,6 +134,17 @@ select:focus-visible,
 }
 
 /* ---- Buttons ---- */
+/* A link gets a pointer cursor from the browser, a button does not, so most of
+   the app read as unclickable to anyone on a mouse. Only .btn set it, and most
+   buttons here are not .btn. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 .btn {
   display: flex;
   align-items: center;
