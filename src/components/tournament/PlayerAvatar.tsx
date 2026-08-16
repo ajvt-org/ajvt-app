@@ -1,8 +1,13 @@
 import { toThumbUrl } from "@/lib/utils";
 import Icon from "@/components/Icon";
 
+// A face or a person icon, never an initial: a letter reads as an identity the
+// person did not choose, and says nothing at all for an anonymous giver.
 interface PlayerAvatarProps {
-  photo: string | null;
+  photo?: string | null;
+  // For photos that do not live under /api/files/member, such as a donation
+  // proof photo or a leaderboard row already carrying its own path.
+  photoUrl?: string | null;
   fullName: string;
   size?: number;
   bg?: "mint" | "copper";
@@ -15,12 +20,14 @@ const BG_COLORS: Record<string, { placeholder: string; border: string }> = {
 
 export default function PlayerAvatar({
   photo,
+  photoUrl,
   fullName,
   size = 28,
   bg = "mint",
 }: PlayerAvatarProps) {
   const colors = BG_COLORS[bg];
-  if (!photo) {
+  const src = photoUrl ?? (photo ? `/api/files/member/${photo}` : null);
+  if (!src) {
     return (
       <span
         className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
@@ -33,7 +40,7 @@ export default function PlayerAvatar({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={toThumbUrl(`/api/files/member/${photo}`)}
+      src={toThumbUrl(src)}
       alt={fullName}
       width={size}
       height={size}

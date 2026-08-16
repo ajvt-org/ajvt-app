@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { money } from "@/lib/messages";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -53,15 +54,20 @@ interface LeaderboardEntry {
   name: string;
   photoUrl: string | null;
   total: number;
+  memberIds: string[];
+  anonymous: boolean;
 }
 
-export async function getLeaderboardData(): Promise<{
-  leaderboard: LeaderboardEntry[];
-  anonymousTotal: number;
-}> {
+// Everyone who gave appears, anonymous givers included, listed as "فاعل خير"
+// rather than collapsed into a footnote under the table. A member who chose to
+// stay anonymous is still one row: their donations are grouped by account, so
+// they are counted as one supporter without being named. A gift from someone
+// with no account carries nothing to group on, so each one stands alone.
+export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[] }> {
   const donations = await prisma.donation.findMany({
     where: { status: "ACTIVE" },
     select: {
+      id: true,
       amount: true,
       donorName: true,
       donorPhoto: true,
@@ -70,38 +76,63 @@ export async function getLeaderboardData(): Promise<{
     },
   });
 
-  const byKey = new Map<string, { name: string; photoUrl: string | null; total: number }>();
-  let anonymousTotal = 0;
+  type Row = {
+    name: string;
+    photoUrl: string | null;
+    total: number;
+    memberIds: Set<string>;
+    anonymous: boolean;
+  };
+  const byKey = new Map<string, Row>();
+
+  function add(
+    key: string,
+    row: Omit<Row, "memberIds" | "total">,
+    amount: number,
+    memberId?: string | null,
+  ) {
+    const entry = byKey.get(key) ?? { ...row, total: 0, memberIds: new Set<string>() };
+    entry.total += amount;
+    if (!entry.photoUrl && row.photoUrl) entry.photoUrl = row.photoUrl;
+    if (memberId) entry.memberIds.add(memberId);
+    byKey.set(key, entry);
+  }
 
   for (const d of donations) {
     const amount = d.amount ?? 0;
-    // memberId set + donorName present -> attributed & shown with the
-    // member's own account photo (whether from the automatic membership
-    // surplus or a logged-in donation they chose to attribute to themselves).
-    // memberId set + donorName null -> the member explicitly chose to stay
-    // anonymous for this donation; don't out them just because we know who
-    // they are internally.
-    if (d.memberId && d.donorName) {
-      const key = `m:${d.memberId}`;
+    const named = d.donorName?.trim();
+
+    if (d.memberId && named) {
+      // Attributed to an account, shown with that account's photo.
       const photoUrl = d.member?.photo ? `/api/files/member/${d.member.photo}` : null;
-      const entry = byKey.get(key) ?? { name: d.donorName, photoUrl, total: 0 };
-      entry.total += amount;
-      byKey.set(key, entry);
-    } else if (!d.memberId && d.donorName?.trim()) {
-      const key = `n:${d.donorName.trim()}`;
+      add(`m:${d.memberId}`, { name: named, photoUrl, anonymous: false }, amount, d.memberId);
+    } else if (!d.memberId && named) {
       const photoUrl = d.donorPhoto ? `/api/files/donation/${d.donorPhoto}` : null;
-      const entry = byKey.get(key) ?? { name: d.donorName.trim(), photoUrl, total: 0 };
-      if (!entry.photoUrl && photoUrl) entry.photoUrl = photoUrl;
-      entry.total += amount;
-      byKey.set(key, entry);
+      add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount);
+    } else if (d.memberId) {
+      // Known to us, but they asked not to be named. One row per account, no
+      // photo and no name, so the total is theirs without saying whose.
+      add(
+        `a:${d.memberId}`,
+        { name: money.anonymousDonor, photoUrl: null, anonymous: true },
+        amount,
+        d.memberId,
+      );
     } else {
-      anonymousTotal += amount;
+      add(`a:${d.id}`, { name: money.anonymousDonor, photoUrl: null, anonymous: true }, amount);
     }
   }
 
   const leaderboard = [...byKey.values()]
     .sort((a, b) => b.total - a.total)
-    .map((e, i) => ({ rank: i + 1, ...e }));
+    .map((e, i) => ({
+      rank: i + 1,
+      name: e.name,
+      photoUrl: e.photoUrl,
+      total: e.total,
+      memberIds: [...e.memberIds],
+      anonymous: e.anonymous,
+    }));
 
-  return { leaderboard, anonymousTotal };
+  return { leaderboard };
 }
