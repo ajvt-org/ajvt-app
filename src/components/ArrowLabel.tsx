@@ -11,7 +11,7 @@ export default function ArrowLabel({
   direction?: "forward" | "back";
 }) {
   return (
-    <span className="inline-flex items-center justify-center gap-1.5">
+    <span className="arrow-label inline-flex items-center justify-center gap-1.5">
       {direction === "back" && <Icon name="chevronRight" size={14} className="icon-inline" />}
       {children}
       {direction === "forward" && <Icon name="chevronLeft" size={14} className="icon-inline" />}

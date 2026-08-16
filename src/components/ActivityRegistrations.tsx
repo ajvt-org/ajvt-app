@@ -101,6 +101,11 @@ export default function ActivityRegistrations({
     }
   }
 
+  // An account carries one member, so naming them on their own activity page
+  // says nothing they do not know. Older accounts hold several, and there the
+  // name is the only thing telling the rows apart.
+  const named = eligibleMembers.length > 1;
+
   return (
     <>
       {/* One tap per person — no payment, no form: membership already covers it */}
@@ -110,13 +115,17 @@ export default function ActivityRegistrations({
           const settled = r && r.status !== "REJECTED";
           return (
             <div key={m.id}>
-              <div className="flex items-center justify-between gap-3 text-xs py-0.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  <PlayerAvatar photo={m.photo} fullName={m.fullName} size={26} bg="copper" />
-                  <span className="truncate" style={{ color: "var(--text-main)" }}>
-                    {m.fullName}
-                  </span>
-                </div>
+              <div
+                className={`flex items-center gap-3 text-xs py-0.5 ${named ? "justify-between" : "justify-end"}`}
+              >
+                {named && (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PlayerAvatar photo={m.photo} fullName={m.fullName} size={26} bg="copper" />
+                    <span className="truncate" style={{ color: "var(--text-main)" }}>
+                      {m.fullName}
+                    </span>
+                  </div>
+                )}
                 {settled ? (
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`badge ${STATUS_CLASS[r!.status]}`}>
@@ -160,7 +169,7 @@ export default function ActivityRegistrations({
                 )}
               </div>
               {r?.status === "REJECTED" && r.rejectionReason && (
-                <p className="text-xs mr-8" style={{ color: "#991b1b" }}>
+                <p className={`text-xs ${named ? "mr-8" : ""}`} style={{ color: "#991b1b" }}>
                   سبب الرفض السابق: {r.rejectionReason}
                 </p>
               )}
@@ -171,7 +180,7 @@ export default function ActivityRegistrations({
                   const myTeam = teamFor(m);
                   const locked = myTeam?.status === "ACTIVE";
                   return (
-                    <div className="mr-8 mt-1.5">
+                    <div className={`mt-1.5 ${named ? "mr-8" : ""}`}>
                       <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
                         <Icon name="flag" size={12} className="icon-inline" />{" "}
                         {locked ? "فريقك:" : "اختر فريقك (اختياري):"}
