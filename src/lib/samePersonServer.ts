@@ -8,8 +8,8 @@ import { nameKey } from "@/lib/nameKey";
 // showed.
 //
 // The proof fingerprint answers it when the same screenshot is sent twice.
-// This answers the rest: the same name, however it was spelled, or the same
-// number written on both forms.
+// This answers the rest: the same name, however it was spelled. A number
+// cannot help — an account is its number, so two accounts never share one.
 //
 // The scan is over every member because the key is computed, not stored. At
 // this size that is one small query; if the roll ever grows enough to feel it,
@@ -21,13 +21,12 @@ export type SamePerson = {
   memberNumber: string | null;
   createdAt: Date;
   accountPhone: string | null;
-  matchedOn: "name" | "phone";
 };
 
 export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
   const mine = await prisma.member.findUnique({
     where: { id: memberId },
-    select: { id: true, fullName: true, phone: true, userId: true },
+    select: { id: true, fullName: true, userId: true },
   });
   if (!mine) return [];
 
@@ -37,7 +36,6 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
     select: {
       id: true,
       fullName: true,
-      phone: true,
       status: true,
       memberNumber: true,
       createdAt: true,
@@ -53,9 +51,7 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
     // detached row left behind is the admin's own doing.
     if (mine.userId && other.userId === mine.userId) continue;
 
-    const samePhone = !!mine.phone && mine.phone === other.phone;
-    const sameName = key.length > 0 && key === nameKey(other.fullName);
-    if (!samePhone && !sameName) continue;
+    if (key.length === 0 || key !== nameKey(other.fullName)) continue;
 
     found.push({
       id: other.id,
@@ -63,8 +59,7 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
       status: other.status,
       memberNumber: other.memberNumber,
       createdAt: other.createdAt,
-      accountPhone: other.user?.phone ?? other.phone,
-      matchedOn: samePhone ? "phone" : "name",
+      accountPhone: other.user?.phone ?? null,
     });
   }
   return found;

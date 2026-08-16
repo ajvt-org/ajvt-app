@@ -18,7 +18,6 @@ export const GET = withRoute(
         id: true,
         userId: true,
         fullName: true,
-        phone: true,
         age: true,
         paymentMethod: true,
         paymentProof: true,

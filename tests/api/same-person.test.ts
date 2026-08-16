@@ -21,7 +21,6 @@ async function member(
     data: {
       userId: user?.id ?? null,
       fullName,
-      phone: over.phone ?? user?.phone ?? null,
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: over.status ?? "PENDING",
@@ -32,7 +31,7 @@ async function member(
 async function others(id: string) {
   const res = await GET(get(`/api/admin/members/${id}/same-person`), params(id));
   expect(res.status).toBe(200);
-  return (await res.json()).others as { fullName: string; matchedOn: string }[];
+  return (await res.json()).others as { fullName: string; accountPhone: string }[];
 }
 
 describe("GET /api/admin/members/[id]/same-person", () => {
@@ -57,17 +56,14 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     const found = await others(second.id);
 
     expect(found).toHaveLength(1);
-    expect(found[0]).toMatchObject({ fullName: "أحمد ولد سالم", matchedOn: "name" });
+    expect(found[0]).toMatchObject({ fullName: "أحمد ولد سالم" });
   });
 
-  it("finds it by the number written on both forms when the names differ", async () => {
-    await member("سيدي محمد", { accountPhone: "22334455", phone: "47777777", status: "ACTIVE" });
-    const second = await member("سيد محمد", { accountPhone: "33445566", phone: "47777777" });
+  it("says nothing about two names that only look alike", async () => {
+    await member("سيدي محمد", { accountPhone: "22334455", status: "ACTIVE" });
+    const second = await member("سيد محمد", { accountPhone: "33445566" });
 
-    const found = await others(second.id);
-
-    expect(found).toHaveLength(1);
-    expect(found[0]).toMatchObject({ matchedOn: "phone" });
+    expect(await others(second.id)).toEqual([]);
   });
 
   it("says nothing about two brothers", async () => {
@@ -94,7 +90,7 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     await member("مراد وجاه", { accountPhone: "43262978", status: "ACTIVE" });
     const second = await member("مراد ولد وجاه", { accountPhone: "22119988" });
 
-    const found = (await others(second.id)) as unknown as { accountPhone: string }[];
+    const found = await others(second.id);
 
     expect(found[0].accountPhone).toBe("43262978");
   });

@@ -54,7 +54,9 @@ export const POST = withRoute(
       data: { teamId, memberId },
       select: {
         id: true,
-        member: { select: { id: true, fullName: true, phone: true, age: true } },
+        member: {
+          select: { id: true, fullName: true, age: true, user: { select: { phone: true } } },
+        },
       },
     });
 

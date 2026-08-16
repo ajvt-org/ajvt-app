@@ -7,7 +7,6 @@ import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl }
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { allSelected, toggleAll } from "@/lib/selection";
-import { memberPhone } from "@/lib/memberPhone";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
 import {
@@ -289,7 +288,7 @@ function AdminDashboardInner() {
     ];
     const rows = members.map((m) => [
       m.fullName,
-      memberPhone(m) || "",
+      m.user?.phone || "",
       m.age,
       m.paymentMethod,
       STATUS_LABEL[m.status],
@@ -802,7 +801,7 @@ function AdminDashboardInner() {
                       {m.fullName}
                     </p>
                     <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
-                      {memberPhone(m) || "غير معروف"}
+                      {m.user?.phone || "غير معروف"}
                     </p>
                   </div>
                 </div>
@@ -938,7 +937,7 @@ function AdminDashboardInner() {
               <div className="card p-4 space-y-3">
                 {(
                   [
-                    ["رقم الهاتف", memberPhone(selected) || "غير معروف", "ltr"],
+                    ["رقم الهاتف", selected.user?.phone || "غير معروف", "ltr"],
                     ["العصر", selected.age, undefined],
                     ["طريقة الدفع", selected.paymentMethod, undefined],
                     [
