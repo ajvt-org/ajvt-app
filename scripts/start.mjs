@@ -16,5 +16,16 @@ try {
   console.log("  Seed skipped or already done.");
 }
 
+// The reuse check only sees a proof it has fingerprinted, and the fingerprints
+// of everything uploaded before it shipped come from this. Left as a manual
+// step it went unrun, so the feature went out blind to the whole history.
+// Skips what is already done, so every deploy after the first costs one query.
+console.log("→ Fingerprinting payment proofs (skipped if done)...");
+try {
+  execSync("npx tsx prisma/backfillProofHashes.ts", { stdio: "inherit" });
+} catch {
+  console.log("  Fingerprinting skipped.");
+}
+
 console.log("→ Starting Next.js...");
 execSync("npx next start", { stdio: "inherit" });
