@@ -115,22 +115,15 @@ export default function ChangePassword() {
         <button
           type="submit"
           disabled={saving || !form.current || !form.next}
-          className="btn btn-primary flex-1 disabled:opacity-40"
+          className="btn btn-primary btn-sm flex-1 disabled:opacity-40"
         >
           {saving ? "جاري الحفظ..." : <IconLabel name="save">حفظ</IconLabel>}
         </button>
         <button
           type="button"
           onClick={close}
-          className="btn"
-          style={{
-            background: "var(--mint-100)",
-            color: "var(--mint-700)",
-            // .btn is width:100%, which a flex item takes as its basis and then
-            // refuses to shrink below. Sized to its label instead.
-            width: "auto",
-            flex: "0 0 auto",
-          }}
+          className="btn btn-sm"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
           إلغاء
         </button>
