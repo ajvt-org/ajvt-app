@@ -69,6 +69,7 @@ export default function AdminActivitiesPage() {
     capacity: "",
     photo: "",
     isTournament: false,
+    format: "KNOCKOUT",
     isVolunteer: false,
     whatsappLink: "",
   });
@@ -137,6 +138,7 @@ export default function AdminActivitiesPage() {
         capacity: "",
         photo: "",
         isTournament: false,
+        format: "KNOCKOUT",
         isVolunteer: false,
         whatsappLink: "",
       });
@@ -787,6 +789,29 @@ export default function AdminActivitiesPage() {
           />
           <IconLabel name="ball">هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)</IconLabel>
         </label>
+        {newActivity.isTournament && (
+          <div>
+            <label
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="activity-format"
+            >
+              نظام البطولة
+            </label>
+            <select
+              id="activity-format"
+              value={newActivity.format}
+              onChange={(e) => setNewActivity((p) => ({ ...p, format: e.target.value }))}
+              className="input"
+            >
+              <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
+              <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
+            </select>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              لا يمكن تغييره بعد إنشاء المباريات
+            </p>
+          </div>
+        )}
         <label
           className="flex items-center gap-2 text-sm font-semibold"
           style={{ color: "var(--text-main)" }}

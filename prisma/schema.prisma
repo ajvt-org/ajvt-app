@@ -92,6 +92,7 @@ model Activity {
   capacity      Int?
   isOpen        Boolean                @default(true)
   isTournament  Boolean                @default(false)
+  format        TournamentFormat?
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
   order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
@@ -496,4 +497,9 @@ model DeletedRecord {
 
   @@index([kind])
   @@index([expiresAt])
+}
+
+enum TournamentFormat {
+  KNOCKOUT
+  GROUPS_THEN_KNOCKOUT
 }

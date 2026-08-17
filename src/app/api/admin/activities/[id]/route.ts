@@ -5,7 +5,8 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
-import { activities } from "@/lib/messages";
+import { activities, tournament } from "@/lib/messages";
+import type { TournamentFormat } from "@prisma/client";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]",
@@ -20,6 +21,7 @@ export const PATCH = withRoute(
       isOpen,
       photo,
       isTournament,
+      format,
       isVolunteer,
       whatsappLink,
       order,
@@ -41,6 +43,7 @@ export const PATCH = withRoute(
       isOpen?: boolean;
       photo?: string | null;
       isTournament?: boolean;
+      format?: TournamentFormat | null;
       isVolunteer?: boolean;
       whatsappLink?: string | null;
       order?: number;
@@ -56,6 +59,13 @@ export const PATCH = withRoute(
     if (isOpen !== undefined) data.isOpen = !!isOpen;
     if (photo !== undefined) data.photo = photo;
     if (isTournament !== undefined) data.isTournament = !!isTournament;
+    if (format !== undefined) {
+      const played = await prisma.match.count({ where: { activityId: id } });
+      if (played > 0 && format !== existing.format) {
+        return NextResponse.json({ error: tournament.formatLocked }, { status: 409 });
+      }
+      data.format = format ?? null;
+    }
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
     if (order !== undefined) data.order = Number(order);
@@ -86,6 +96,7 @@ export const PATCH = withRoute(
         capacity: activity.capacity,
         isOpen: activity.isOpen,
         isTournament: activity.isTournament,
+        format: activity.format,
         isVolunteer: activity.isVolunteer,
         whatsappLink: activity.whatsappLink,
         startsAt: activity.startsAt,

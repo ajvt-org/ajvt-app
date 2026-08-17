@@ -12,7 +12,7 @@ import {
 import { loginPathWithNext } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import type { Group, Match, RosterMember, Tab, Team } from "./types";
+import type { Group, Match, RosterMember, Tab, Team, TournamentFormat } from "./types";
 import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
@@ -30,6 +30,7 @@ export default function TournamentPage() {
   const [loading, setLoading] = useState(true);
   const [roster, setRoster] = useState<RosterMember[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [format, setFormat] = useState<TournamentFormat>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState("");
@@ -52,6 +53,7 @@ export default function TournamentPage() {
       const matchesData = await matchesRes.json();
       setRoster(rosterData.roster || []);
       setGroups(groupsData.groups || []);
+      setFormat(groupsData.format ?? null);
       setTeams(teamsData.teams || []);
       setMatches(matchesData.matches || []);
     } catch {
@@ -154,6 +156,7 @@ export default function TournamentPage() {
             activityId={activityId}
             teams={teams}
             groups={groups}
+            format={format}
             roster={roster}
             onChange={loadAll}
           />
@@ -163,6 +166,7 @@ export default function TournamentPage() {
             activityId={activityId}
             teams={teams}
             groups={groups}
+            format={format}
             matches={matches}
             onChange={loadAll}
           />
