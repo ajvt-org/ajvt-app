@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup, OrphanAge } from "./types";
 import OrphanAgeGroups from "./OrphanAgeGroups";
 import MoveAgeGroupMembers from "./MoveAgeGroupMembers";
+import AgeGroupTotal from "./AgeGroupTotal";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -211,6 +212,7 @@ export default function AgeGroupsDialog({
                       </>
                     )}
                   </div>
+                  {renamingAgeGroupId !== g.id && <AgeGroupTotal group={g} onChanged={onChanged} />}
                   {movingId === g.id && (
                     <MoveAgeGroupMembers
                       group={g}

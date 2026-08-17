@@ -605,14 +605,15 @@ button:disabled {
   font-weight: 900;
 }
 
-/* The install prompt floats above the fold of the page. Where the tab bar is
-   on screen it has to clear it, otherwise it lands on top of a tab. */
+/* The install prompt sits at the top, clear of the tab bar and of whatever
+   call to action ends the page. Where a page header is on screen it drops
+   below it rather than covering the title. */
 .install-prompt {
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  top: calc(1rem + env(safe-area-inset-top, 0px));
 }
 
-body:has(.tab-bar) .install-prompt {
-  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+body:has(.page-header) .install-prompt {
+  top: calc(5.5rem + env(safe-area-inset-top, 0px));
 }
 
 /* The shell asks for a whole viewport, and the bar's spacer is added after

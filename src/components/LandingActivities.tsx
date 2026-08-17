@@ -35,7 +35,14 @@ export default function LandingActivities({
       )}
 
       <div className="max-w-md mx-auto space-y-3">
-        <Link href="/quiz" className="card p-3.5 flex items-center gap-3">
+        <Link
+          href="/quiz"
+          className="card p-3.5 flex items-center gap-3"
+          style={{
+            background: "linear-gradient(160deg, var(--mint-100), #fff 65%)",
+            border: "1.5px solid var(--mint-500)",
+          }}
+        >
           <span
             className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center"
             style={{
@@ -55,6 +62,8 @@ export default function LandingActivities({
           </span>
           <Icon name="chevronLeft" size={16} className="shrink-0" />
         </Link>
+
+        <div className="pb-1" style={{ borderBottom: "1px solid var(--mint-200)" }} />
 
         {activities.map((activity) => (
           <Link
