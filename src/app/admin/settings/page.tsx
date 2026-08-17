@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { DEFAULT_SETTINGS, type AppSettingsValues } from "@/lib/settings";
 import { arabicValidity } from "@/lib/validationMessage";
+import DataExport from "./DataExport";
 
 export default function AdminSettingsPage() {
   const [values, setValues] = useState<AppSettingsValues>(DEFAULT_SETTINGS);
@@ -56,6 +57,8 @@ export default function AdminSettingsPage() {
       <h1 className="text-lg font-black" style={{ color: "var(--text-main)" }}>
         إعدادات الرابطة
       </h1>
+
+      <DataExport />
 
       <form onSubmit={save} className="card p-5 space-y-4">
         <div>
