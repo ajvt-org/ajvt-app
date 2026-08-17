@@ -4,7 +4,8 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
-import type { Group, RosterMember, Team } from "./types";
+import type { Group, RosterMember, Team, TournamentFormat } from "./types";
+import { displayTeamName } from "@/lib/teamSize";
 import GroupsPanel from "./GroupsPanel";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -14,12 +15,16 @@ export default function TeamsTab({
   activityId,
   teams,
   groups,
+  format,
+  teamSize,
   roster,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
   groups: Group[];
+  format: TournamentFormat;
+  teamSize: number | null;
   roster: RosterMember[];
   onChange: () => void;
 }) {
@@ -27,6 +32,18 @@ export default function TeamsTab({
   const [newTeamGroup, setNewTeamGroup] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
+
+  function shownName(team: Team): string {
+    return displayTeamName(
+      {
+        id: team.id,
+        name: team.name,
+        autoNamed: team.autoNamed,
+        memberNames: team.members.map((m) => m.member.fullName),
+      },
+      teamSize,
+    );
+  }
   const [error, setError] = useState("");
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<Record<string, string>>({});
@@ -168,13 +185,15 @@ export default function TeamsTab({
         </div>
       )}
 
-      <GroupsPanel
-        activityId={activityId}
-        groups={groups}
-        teams={teams}
-        onChange={onChange}
-        onError={setError}
-      />
+      {format !== "KNOCKOUT" && (
+        <GroupsPanel
+          activityId={activityId}
+          groups={groups}
+          teams={teams}
+          onChange={onChange}
+          onError={setError}
+        />
+      )}
 
       {groups.length > 0 && teams.some((t) => !t.groupId) && (
         <div className="card p-4">
@@ -254,9 +273,14 @@ export default function TeamsTab({
                 className="font-bold flex items-center gap-1.5"
                 style={{ color: "var(--text-main)" }}
               >
-                <TeamLogo logo={team.logo} name={team.name} size={22} />
-                {team.name} <Icon name="pencil" size={12} className="icon-inline" />
+                <TeamLogo logo={team.logo} name={shownName(team)} size={22} />
+                {shownName(team)} <Icon name="pencil" size={12} className="icon-inline" />
               </button>
+            )}
+            {teamSize !== null && team.members.length !== teamSize && (
+              <span className="badge shrink-0" style={{ background: "#fef3c7", color: "#92400e" }}>
+                {team.members.length} / {teamSize}
+              </span>
             )}
             <button
               onClick={() => deleteTeam(team.id)}

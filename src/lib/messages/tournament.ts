@@ -10,4 +10,7 @@ export const tournament = {
   teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
   teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
+  formatLocked: "لا يمكن تغيير نظام البطولة بعد إنشاء المباريات",
+  groupsNotInKnockout: "هذه بطولة خروج المغلوب — لا يمكن إنشاء مجموعات فيها",
+  teamSizeLocked: "لا يمكن تغيير حجم الفريق بعد إنشاء المباريات",
 } as const;

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import {
+  expireStaleAssignments,
+  getQuizSettings,
   touchUserActivity,
   runDailyQuizAutoSend,
   getPendingAssignments,
@@ -20,10 +22,9 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   }
 
   await touchUserActivity(session.userId);
-  // Unlike sendMatchReminders() (fire-and-forget in /api/user/me), this is
-  // awaited: if this is the first visit of the day, the freshly-generated
-  // question(s) must show up in this very response, not on the next visit.
   await runDailyQuizAutoSend().catch((err) => logger.error("quiz.autosend.error", err));
+  const { answerWindowSeconds } = await getQuizSettings();
+  await expireStaleAssignments(session.userId, answerWindowSeconds);
 
   const [pending, standing, user] = await Promise.all([
     getPendingAssignments(session.userId),
@@ -35,11 +36,17 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   ]);
 
   return NextResponse.json({
-    pending: pending.map((p) => ({ id: p.id, sentAt: p.sentAt, question: p.question })),
+    pending: pending.map((p) => ({
+      id: p.id,
+      sentAt: p.sentAt,
+      revealedAt: p.revealedAt,
+      question: p.question,
+    })),
     totalPoints: standing.totalPoints,
     rank: standing.rank,
     totalParticipants: standing.totalParticipants,
     top10: standing.top10,
     streak: { current: user?.currentStreak ?? 0, longest: user?.longestStreak ?? 0 },
+    answerWindowSeconds,
   });
 });

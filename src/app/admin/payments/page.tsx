@@ -310,9 +310,6 @@ export default function AdminPaymentsPage() {
     ? byKind.filter((p) => p.memberName.includes(q) || (p.activityTitle || "").includes(q))
     : byKind;
 
-  // Reset to page 1 whenever the filter/search changes shape — adjusted
-  // during render (not an effect) so it takes effect in the same pass
-  // instead of causing an extra render.
   const filterKey = `${kindFilter}|${q}`;
   if (filterKey !== lastFilterKey) {
     setLastFilterKey(filterKey);
@@ -731,7 +728,6 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
-      {/* Manual donation add */}
       {showManualDonation && (
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"

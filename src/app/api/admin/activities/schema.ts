@@ -22,9 +22,6 @@ export const capacity = z
 const DATE_INVALID = common.invalidDate;
 const ORDER_INVALID = "تاريخ النهاية قبل تاريخ البداية";
 
-// The admin form sends "YYYY-MM-DD" and an optional "HH:MM". Both are read as
-// UTC so the stored day is the calendar day the admin picked, whatever zone
-// the browser is in.
 export const activityDate = z
   .unknown()
   .superRefine((v, ctx) => {
@@ -58,6 +55,8 @@ export const activityCreateSchema = z
     photo: z.string(INVALID).nullish(),
     capacity: capacity.optional(),
     isTournament: z.unknown().optional(),
+    format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
+    teamSize: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),
     startsAt: activityDate.optional(),

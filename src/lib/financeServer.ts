@@ -41,17 +41,23 @@ function sortedEntries(map: Map<string, number>): NamedEntry[] {
 // mirror a member's surplus over the fee (see syncMembershipDonation) and are
 // exactly the amount that should count as دعم rather than انتساب, matching
 // the public leaderboard's own attribution.
-export async function getFinanceSummary(recentDays = 30) {
+export async function getFinanceSummary(recentDays = 30, activityId?: string) {
+  const scoped = activityId !== undefined;
   const [members, donations, expenses] = await Promise.all([
-    prisma.member.findMany({
-      where: { status: "ACTIVE", paidAmount: { not: null } },
-      select: { fullName: true, paidAmount: true, paymentMethod: true, createdAt: true },
-    }),
+    scoped
+      ? Promise.resolve([])
+      : prisma.member.findMany({
+          where: { status: "ACTIVE", paidAmount: { not: null } },
+          select: { fullName: true, paidAmount: true, paymentMethod: true, createdAt: true },
+        }),
     prisma.donation.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", ...(scoped ? { activityId } : {}) },
       select: { id: true, amount: true, paymentMethod: true, createdAt: true, donorName: true },
     }),
-    prisma.expense.findMany({ select: { amount: true } }),
+    prisma.expense.findMany({
+      where: scoped ? { activityId } : {},
+      select: { amount: true },
+    }),
   ]);
 
   const byMethod: Record<string, number> = {};

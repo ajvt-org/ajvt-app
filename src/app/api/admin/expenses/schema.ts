@@ -27,7 +27,10 @@ const date = z.unknown().superRefine((v, ctx) => {
 
 const tagIds = z.array(z.string(INVALID)).optional();
 
+const activityId = z.string(INVALID).nullish();
+
 export const expenseCreateSchema = z.object({
+  activityId,
   label,
   amount,
   note: z.string(INVALID).nullish(),
@@ -38,6 +41,7 @@ export const expenseCreateSchema = z.object({
 
 export const expenseUpdateSchema = z
   .object({
+    activityId,
     label: label.optional(),
     amount: amount.optional(),
     note: z.string(INVALID).nullish(),
@@ -47,6 +51,8 @@ export const expenseUpdateSchema = z
   })
   .refine(
     (v) =>
-      [v.label, v.amount, v.note, v.date, v.proof, v.tagIds].some((field) => field !== undefined),
+      [v.label, v.amount, v.note, v.date, v.proof, v.tagIds, v.activityId].some(
+        (field) => field !== undefined,
+      ),
     INVALID,
   );

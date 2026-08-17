@@ -145,7 +145,12 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
+        <MemberDecision
+          memberId={member.id}
+          fullName={member.fullName}
+          status={member.status}
+          onDecided={load}
+        />
       )}
 
       {member.user && (
@@ -244,8 +249,6 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      {/* The trail was already written on every change; nothing could read a
-          single record's share of it until now. */}
       <ProfileSection icon="list" title={`سجل التغييرات (${history.length})`}>
         {history.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>

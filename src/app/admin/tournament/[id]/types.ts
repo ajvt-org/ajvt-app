@@ -1,3 +1,5 @@
+export type TournamentFormat = "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
+
 export interface RosterMember {
   id: string;
   fullName: string;
@@ -21,6 +23,7 @@ export interface TeamMemberEntry {
 export interface Team {
   id: string;
   name: string;
+  autoNamed: boolean;
   logo: string | null;
   groupId: string | null;
   group: Group | null;

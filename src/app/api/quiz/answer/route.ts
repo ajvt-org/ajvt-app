@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { computeIsCorrect, isQuizEligible } from "@/lib/quiz";
+import { computeIsCorrect, isQuizEligible, getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { quizAnswerSchema } from "./schema";
 import { quiz } from "@/lib/messages";
+import { windowExpired, elapsedMs } from "@/lib/quizWindow";
+import { timeScore } from "@/lib/quizScore";
 
 export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) => {
   const session = await requireUser();
@@ -22,6 +24,7 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
       id: true,
       userId: true,
       answeredAt: true,
+      revealedAt: true,
       question: { select: { points: true, answers: { select: { id: true, isCorrect: true } } } },
     },
   });
@@ -30,7 +33,10 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
     return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
   }
   if (assignment.answeredAt) {
-    return NextResponse.json({ error: "تمت الإجابة على هذا السؤال من قبل" }, { status: 400 });
+    return NextResponse.json({ error: quiz.alreadyAnswered }, { status: 400 });
+  }
+  if (!assignment.revealedAt) {
+    return NextResponse.json({ error: quiz.optionsNotRevealed }, { status: 400 });
   }
 
   const validAnswerIds = new Set(assignment.question.answers.map((a) => a.id));
@@ -38,14 +44,35 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
     return NextResponse.json({ error: "إجابة غير صالحة" }, { status: 400 });
   }
 
+  const { answerWindowSeconds, minScorePercent } = await getQuizSettings();
   const correctAnswerIds = assignment.question.answers.filter((a) => a.isCorrect).map((a) => a.id);
-  const isCorrect = computeIsCorrect(correctAnswerIds, selectedAnswerIds);
-  const pointsAwarded = isCorrect ? assignment.question.points : 0;
+  const now = new Date();
+  const expired = windowExpired(assignment.revealedAt, now, answerWindowSeconds);
+  const isCorrect = !expired && computeIsCorrect(correctAnswerIds, selectedAnswerIds);
+  const answeredInMs = elapsedMs(assignment.revealedAt, now);
+  const pointsAwarded = isCorrect
+    ? timeScore({
+        points: assignment.question.points,
+        elapsedMs: answeredInMs,
+        windowSeconds: answerWindowSeconds,
+        minShare: minScorePercent / 100,
+      })
+    : 0;
 
-  await prisma.quizAssignment.update({
-    where: { id: assignment.id },
-    data: { answeredAt: new Date(), selectedAnswerIds, isCorrect, pointsAwarded },
+  const closed = await prisma.quizAssignment.updateMany({
+    where: { id: assignment.id, answeredAt: null },
+    data: { answeredAt: now, selectedAnswerIds, isCorrect, pointsAwarded },
   });
+  if (closed.count === 0) {
+    return NextResponse.json({ error: quiz.alreadyAnswered }, { status: 400 });
+  }
 
-  return NextResponse.json({ isCorrect, pointsAwarded, correctAnswerIds });
+  return NextResponse.json({
+    isCorrect,
+    pointsAwarded,
+    correctAnswerIds,
+    expired,
+    answeredInMs,
+    maxPoints: assignment.question.points,
+  });
 });

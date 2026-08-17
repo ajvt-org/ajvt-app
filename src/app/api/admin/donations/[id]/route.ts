@@ -13,11 +13,6 @@ import { members, money } from "@/lib/messages";
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    // Donations are only visible to SUPER admins today (see payment-proofs'
-    // includeDonations gate) — management follows the same scope: the admin
-    // needs to be able to fix any real-world edge case (typo'd name, wrong
-    // amount, wrong attribution, a donor who wants out) without being
-    // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
     const {
@@ -30,19 +25,13 @@ export const PATCH = withRoute(
       paymentMethod,
       proof,
       tagIds,
+      activityId,
     } = parse(donationUpdateSchema, await req.json());
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
-    // MEMBERSHIP-source rows are derived from Member.paidAmount/status/
-    // paymentMethod/paymentProof and kept in sync automatically (see
-    // syncMembershipDonation) — amount/name/proof edits here would be
-    // silently overwritten the next time that sync runs. paymentMethod is
-    // the one field it also propagates automatically going forward, but an
-    // admin may still need to fix it by hand for rows synced before that
-    // existed.
     if (
       existing.source === "MEMBERSHIP" &&
       [status, memberId, donorName, donorPhone, donorPhoto, amount, proof].some(
@@ -65,6 +54,7 @@ export const PATCH = withRoute(
       paymentMethod?: string | null;
       proof?: string | null;
       tags?: { set: { id: string }[] };
+      activityId?: string | null;
     } = {};
     if (status !== undefined) data.status = status;
 
@@ -127,6 +117,7 @@ export const PATCH = withRoute(
     if (tagIds !== undefined) {
       data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
     }
+    if (activityId !== undefined) data.activityId = activityId || null;
 
     const donation = await prisma.donation.update({
       where: { id },
@@ -203,9 +194,6 @@ export const DELETE = withRoute(
     if (!existing) {
       return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
     }
-    // MEMBERSHIP-source rows are derived automatically (see syncMembershipDonation)
-    // — deleting one here would just have it recreated the next time the
-    // linked member's paidAmount/status is touched.
     if (existing.source === "MEMBERSHIP") {
       return NextResponse.json(
         { error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" },

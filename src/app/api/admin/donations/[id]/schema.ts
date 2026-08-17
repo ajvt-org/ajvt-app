@@ -15,5 +15,6 @@ export const donationUpdateSchema = z
     paymentMethod: paymentMethod.nullish(),
     proof: z.string(INVALID).nullish(),
     tagIds: z.array(z.string(INVALID), INVALID).optional(),
+    activityId: z.string(INVALID).nullish(),
   })
   .refine((v) => Object.values(v).some((field) => field !== undefined), INVALID);

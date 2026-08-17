@@ -34,6 +34,8 @@ export const activityUpdateSchema = z
     isOpen: z.unknown().optional(),
     photo: z.string(INVALID).nullish(),
     isTournament: z.unknown().optional(),
+    format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
+    teamSize: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),
     order: order.optional(),

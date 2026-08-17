@@ -92,6 +92,8 @@ model Activity {
   capacity      Int?
   isOpen        Boolean                @default(true)
   isTournament  Boolean                @default(false)
+  format        TournamentFormat?
+  teamSize      Int?
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
   order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
@@ -101,6 +103,8 @@ model Activity {
   teams         Team[]
   matches       Match[]
   groups        Group[]
+  expenses      Expense[]
+  donations     Donation[]
 }
 
 model Group {
@@ -122,6 +126,7 @@ model Team {
   groupId     String?
   group       Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name        String
+  autoNamed   Boolean        @default(false)
   logo        String?
   createdAt   DateTime       @default(now())
   members     TeamMember[]
@@ -313,9 +318,12 @@ model Donation {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
   @@index([memberId])
   @@index([status])
+  @@index([activityId])
 }
 
 // Manually-entered outgoing spending (association expenses) — no in-app
@@ -331,8 +339,11 @@ model Expense {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   tags      FinanceTag[]
+  activityId String?
+  activity   Activity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
   @@index([date])
+  @@index([activityId])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so
@@ -447,6 +458,7 @@ model QuizAssignment {
   batchId           String
   mode              String // "SAME" | "RANDOM"
   sentAt            DateTime     @default(now())
+  revealedAt        DateTime?
   answeredAt        DateTime?
   selectedAnswerIds String[]     @default([])
   isCorrect         Boolean?
@@ -465,6 +477,8 @@ model QuizSettings {
   defaultCorrectCount Int       @default(1)
   defaultPoints       Int       @default(10)
   questionsPerDay     Int       @default(1)
+  answerWindowSeconds Int       @default(10)
+  minScorePercent     Int       @default(40)
   lastAutoSendDate    DateTime?
   updatedAt           DateTime  @updatedAt
 }
@@ -493,4 +507,9 @@ model DeletedRecord {
 
   @@index([kind])
   @@index([expiresAt])
+}
+
+enum TournamentFormat {
+  KNOCKOUT
+  GROUPS_THEN_KNOCKOUT
 }

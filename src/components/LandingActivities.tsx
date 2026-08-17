@@ -4,9 +4,6 @@ import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import { toThumbUrl } from "@/lib/utils";
 
-// The same short rows a signed-in member sees, so the two sides of the app
-// read alike. Everything else about an activity lives on its own page, which
-// a visitor can open without an account.
 export type LandingActivity = {
   id: string;
   title: string;

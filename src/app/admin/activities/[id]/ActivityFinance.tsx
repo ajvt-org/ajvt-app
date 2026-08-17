@@ -1,0 +1,83 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import ProfileSection from "@/components/admin/ProfileSection";
+import { formatDate } from "@/lib/utils";
+import { withRunningBalance, type LedgerInput, type LedgerTotals } from "@/lib/activityLedger";
+
+interface FinanceResponse {
+  rows: LedgerInput[];
+  totals: LedgerTotals;
+}
+
+function Total({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="card p-3 text-center">
+      <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+        {label}
+      </p>
+      <p className="text-base font-black" style={{ color }}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+export default function ActivityFinance({ activityId }: { activityId: string }) {
+  const [data, setData] = useState<FinanceResponse | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/admin/activities/${activityId}/finance`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setData)
+      .catch(() => setData(null));
+  }, [activityId]);
+
+  if (!data) return null;
+
+  const entries = withRunningBalance(data.rows);
+
+  return (
+    <ProfileSection icon="wallet" title={`المالية (${entries.length})`}>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <Total label="الإيرادات" value={data.totals.income} color="var(--mint-600)" />
+        <Total label="المصاريف" value={data.totals.expenses} color="var(--copper-500)" />
+        <Total label="الرصيد" value={data.totals.balance} color="var(--text-main)" />
+      </div>
+
+      {entries.length === 0 ? (
+        <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>
+          لا توجد حركات مالية على هذا النشاط
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {entries.map((entry) => (
+            <div key={entry.id} className="flex items-center justify-between gap-3 text-xs">
+              <div className="min-w-0">
+                <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
+                  {entry.label}
+                </p>
+                <p style={{ color: "var(--text-muted)" }}>{formatDate(entry.date)}</p>
+              </div>
+              <div className="shrink-0 text-left">
+                <p
+                  className="font-black"
+                  style={{
+                    color: entry.kind === "income" ? "var(--mint-600)" : "var(--copper-500)",
+                  }}
+                  dir="ltr"
+                >
+                  {entry.kind === "income" ? "+" : "-"}
+                  {entry.amount}
+                </p>
+                <p style={{ color: "var(--text-muted)" }} dir="ltr">
+                  {entry.balance}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </ProfileSection>
+  );
+}

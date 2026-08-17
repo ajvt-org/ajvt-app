@@ -4,6 +4,7 @@ import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
+import { GRACE_MS } from "./quizWindow";
 
 const SETTINGS_ID = "singleton";
 
@@ -44,6 +45,8 @@ export async function updateQuizSettings(data: {
   defaultCorrectCount?: number;
   defaultPoints?: number;
   questionsPerDay?: number;
+  answerWindowSeconds?: number;
+  minScorePercent?: number;
 }) {
   return prisma.quizSettings.upsert({
     where: { id: SETTINGS_ID },
@@ -151,13 +154,27 @@ export async function getUserQuizStanding(userId: string) {
   };
 }
 
+export async function expireStaleAssignments(
+  userId: string,
+  windowSeconds: number,
+  now = new Date(),
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - (windowSeconds * 1000 + GRACE_MS));
+  const { count } = await prisma.quizAssignment.updateMany({
+    where: { userId, answeredAt: null, revealedAt: { lt: cutoff } },
+    data: { answeredAt: now, isCorrect: false, pointsAwarded: 0 },
+  });
+  return count;
+}
+
 export async function getPendingAssignments(userId: string) {
-  return prisma.quizAssignment.findMany({
+  const assignments = await prisma.quizAssignment.findMany({
     where: { userId, answeredAt: null },
     orderBy: { sentAt: "asc" },
     select: {
       id: true,
       sentAt: true,
+      revealedAt: true,
       question: {
         select: {
           id: true,
@@ -170,6 +187,39 @@ export async function getPendingAssignments(userId: string) {
       },
     },
   });
+
+  return assignments.map((a) => ({
+    id: a.id,
+    sentAt: a.sentAt,
+    revealedAt: a.revealedAt,
+    question: {
+      ...a.question,
+      answers: a.revealedAt ? a.question.answers : [],
+    },
+  }));
+}
+
+export async function revealOptions(assignmentId: string, userId: string, now = new Date()) {
+  const claimed = await prisma.quizAssignment.updateMany({
+    where: { id: assignmentId, userId, answeredAt: null, revealedAt: null },
+    data: { revealedAt: now },
+  });
+
+  const assignment = await prisma.quizAssignment.findFirst({
+    where: { id: assignmentId, userId },
+    select: {
+      id: true,
+      revealedAt: true,
+      answeredAt: true,
+      question: {
+        select: {
+          answers: { select: { id: true, text: true, order: true }, orderBy: { order: "asc" } },
+        },
+      },
+    },
+  });
+
+  return { assignment, justRevealed: claimed.count === 1 };
 }
 
 export function computeIsCorrect(correctAnswerIds: string[], selectedAnswerIds: string[]): boolean {
