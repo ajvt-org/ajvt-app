@@ -61,3 +61,6 @@ next-env.d.ts
 # throwaway scripts run against a local database
 *.tmp.ts
 *.tmp.tsx
+
+# agent tooling, machine-specific
+.claude/
