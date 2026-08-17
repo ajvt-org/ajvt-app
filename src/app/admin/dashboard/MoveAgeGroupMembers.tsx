@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { MEMBER } from "@/lib/messages";
 
 // Two groups that mean the same thing end up side by side when a name is
 // added twice. Renaming one into the other is refused, the names collide,
@@ -43,7 +45,7 @@ export default function MoveAgeGroupMembers({
   return (
     <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        نقل {group.count ?? 0} عضو إلى عصر آخر
+        نقل {counted(group.count ?? 0, MEMBER)} إلى عصر آخر
       </p>
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
