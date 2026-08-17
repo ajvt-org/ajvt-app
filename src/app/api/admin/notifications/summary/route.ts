@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 
 export const GET = withRoute("GET /api/admin/notifications/summary", async () => {
-  const session = await requireAdmin();
+  const session = await requireUnscopedAdmin();
   // Donations are only visible/actionable on the payments page for SUPER
   // admins (see payment-proofs' includeDonations gate) — skip the count
   // for other roles so their badge doesn't promise something they can't act on.

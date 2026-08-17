@@ -3,6 +3,7 @@ export const ROLE_LABELS: Record<string, string> = {
   MEMBERS: "الأعضاء فقط",
   ACTIVITIES: "الأنشطة فقط",
   QUIZ: "المسابقة الثقافية فقط",
+  ACTIVITY: "أنشطة محددة فقط",
 };
 
 export function adminRoleLabel(role: string): string {

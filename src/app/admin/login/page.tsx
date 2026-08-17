@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import IconLabel from "@/components/IconLabel";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -139,7 +140,7 @@ function AdminLoginForm() {
                   border: "1px solid rgba(239,68,68,0.3)",
                 }}
               >
-                ⚠️ {error}
+                <IconLabel name="warning">{error}</IconLabel>
               </div>
             )}
             <button type="submit" disabled={loading} className="btn btn-copper">

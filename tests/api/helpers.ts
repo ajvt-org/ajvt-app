@@ -30,6 +30,14 @@ export function patch(url: string, body: unknown): NextRequest {
   });
 }
 
+export function put(url: string, body: unknown): NextRequest {
+  return new NextRequest(`http://localhost${url}`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export function get(url: string, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }

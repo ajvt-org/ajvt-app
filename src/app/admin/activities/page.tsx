@@ -363,7 +363,7 @@ export default function AdminActivitiesPage() {
                     imageUrlPrefix="/api/files/activity"
                     variant="avatar"
                     label={a.isTournament ? "شعار البطولة" : "صورة النشاط"}
-                    placeholderIcon="🖼️"
+                    placeholderIcon="image"
                     onUpload={(filename) => updateActivityPhoto(a.id, filename)}
                   />
                 </div>
@@ -712,7 +712,7 @@ export default function AdminActivitiesPage() {
           imageUrlPrefix="/api/files/activity"
           variant="avatar"
           label={newActivity.isTournament ? "شعار البطولة" : "صورة النشاط"}
-          placeholderIcon="🖼️"
+          placeholderIcon="image"
           onUpload={(filename) => setNewActivity((p) => ({ ...p, photo: filename }))}
         />
         <input

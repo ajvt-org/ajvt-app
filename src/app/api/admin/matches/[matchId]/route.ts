@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
@@ -53,8 +53,8 @@ const MATCH_INCLUDE = {
 export const PATCH = withRoute(
   "PATCH /api/admin/matches/[matchId]",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
     const {
       homeScore,
       awayScore,
@@ -343,8 +343,8 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/matches/[matchId]",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon";
+import IconLabel from "./IconLabel";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -200,14 +202,14 @@ export default function ProofUpload({
               className="mt-2 text-xs text-center font-semibold"
               style={{ color: "var(--mint-600)" }}
             >
-              ✓ تم رفع الصورة
+              <IconLabel name="check">تم رفع الصورة</IconLabel>
             </p>
           )}
 
           {status === "error" && (
             <div className="mt-2 text-center">
               <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>
-                ⚠️ {error}
+                <IconLabel name="warning">{error}</IconLabel>
               </p>
               <button
                 type="button"
@@ -228,7 +230,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                📷 صورة جديدة
+                <IconLabel name="camera">صورة جديدة</IconLabel>
               </button>
               <button
                 type="button"
@@ -236,7 +238,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                🖼️ من المعرض
+                <IconLabel name="image">من المعرض</IconLabel>
               </button>
             </div>
           )}
@@ -244,7 +246,9 @@ export default function ProofUpload({
       ) : (
         <div className="upload-zone" style={{ display: "block" }}>
           <div className="text-center">
-            <div className="text-4xl mb-2">📸</div>
+            <div className="flex justify-center mb-2" style={{ color: "var(--mint-500)" }}>
+              <Icon name="camera" size={40} />
+            </div>
             <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
               التقط صورة أو اختر واحدة من هاتفك
             </p>
@@ -258,7 +262,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-2 rounded-lg font-bold"
                 style={{ background: "var(--mint-600)", color: "white" }}
               >
-                📷 التقط صورة
+                <IconLabel name="camera">التقط صورة</IconLabel>
               </button>
               <button
                 type="button"
@@ -266,7 +270,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-2 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                🖼️ اختر من المعرض
+                <IconLabel name="image">اختر من المعرض</IconLabel>
               </button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { teamIsFull } from "@/lib/teamSize";
 import { logAction, auditContext } from "@/lib/audit";
@@ -11,8 +11,8 @@ import { members, tournament } from "@/lib/messages";
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { teamId } = await params;
+    const session = await requireTeamAccess(teamId);
     const { memberId } = parse(teamMemberSchema, await req.json());
 
     const team = await prisma.team.findUnique({

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { auth, common, money } from "@/lib/messages";
+import { auth, common, members, money } from "@/lib/messages";
+import { isMembershipYear } from "@/lib/membershipYear";
 
 const INVALID = common.invalidBody;
 
@@ -10,6 +11,14 @@ export const appSettingsSchema = z.object({
       const n = Number(v);
       if (!Number.isInteger(n) || n <= 0) {
         ctx.addIssue({ code: "custom", message: money.amountInvalid });
+      }
+    })
+    .transform((v) => Number(v)),
+  membershipYear: z
+    .unknown()
+    .superRefine((v, ctx) => {
+      if (!isMembershipYear(Number(v))) {
+        ctx.addIssue({ code: "custom", message: members.yearInvalid });
       }
     })
     .transform((v) => Number(v)),

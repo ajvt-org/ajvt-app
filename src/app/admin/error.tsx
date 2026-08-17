@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Icon from "@/components/Icon";
 import Link from "next/link";
 
 export default function AdminError({
@@ -16,7 +17,9 @@ export default function AdminError({
 
   return (
     <div className="flex flex-col items-center justify-center px-6 py-20 text-center gap-5">
-      <div className="text-5xl">⚠️</div>
+      <div style={{ color: "#dc2626" }}>
+        <Icon name="warning" size={48} />
+      </div>
       <div>
         <h1 className="text-lg font-black" style={{ color: "var(--text-main)" }}>
           حدث خطأ في لوحة التحكم

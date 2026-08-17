@@ -13,13 +13,19 @@ export const GET = withRoute("GET /api/admin/admins", async () => {
       id: true,
       username: true,
       role: true,
+      activities: { select: { activity: { select: { id: true, title: true } } } },
       lastLoginAt: true,
       lastLoginIp: true,
       createdAt: true,
     },
     orderBy: { createdAt: "asc" },
   });
-  return NextResponse.json({ admins });
+  return NextResponse.json({
+    admins: admins.map(({ activities, ...admin }) => ({
+      ...admin,
+      activities: activities.map((link) => link.activity),
+    })),
+  });
 });
 
 export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest) => {
@@ -38,7 +44,9 @@ export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest)
   if (password.length < 3) {
     return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
-  const roleValue = ["SUPER", "MEMBERS", "ACTIVITIES"].includes(role) ? role : "SUPER";
+  const roleValue = ["SUPER", "MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"].includes(role)
+    ? role
+    : "SUPER";
 
   const existing = await prisma.admin.findUnique({ where: { username: username.trim() } });
   if (existing) {

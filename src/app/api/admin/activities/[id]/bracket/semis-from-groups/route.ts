@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { computeStandings, bracketRoundLabel } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
@@ -10,8 +10,8 @@ import { withRoute } from "@/lib/route";
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/bracket/semis-from-groups",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
 
     const groups = await prisma.group.findMany({
       where: { activityId: id },

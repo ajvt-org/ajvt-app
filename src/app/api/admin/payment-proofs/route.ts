@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { money } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
-  const session = await requireAdmin();
+  const session = await requireUnscopedAdmin();
   const role = (session as { role: string }).role;
   const includeMembership = role === "SUPER" || role === "MEMBERS";
   const includeActivity = role === "SUPER" || role === "ACTIVITIES";
@@ -55,6 +55,8 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
             source: true,
             paymentMethod: true,
             memberId: true,
+            activityId: true,
+            activity: { select: { title: true } },
             member: { select: { fullName: true } },
             tags: { select: { id: true, name: true } },
             createdAt: true,
@@ -93,7 +95,8 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       kind: "DONATION" as const,
       proof: d.proof as string | null,
       memberName: d.member?.fullName || d.donorName || money.anonymousDonor,
-      activityTitle: null as string | null,
+      activityId: d.activityId,
+      activityTitle: d.activity?.title ?? null,
       amount: d.amount,
       status: d.status,
       source: d.source,
