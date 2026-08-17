@@ -32,9 +32,6 @@ export async function notifyTeams(
   );
 }
 
-// No cron on this deployment (see railway.toml) — reminders are sent
-// opportunistically the first time someone hits a hot endpoint after the
-// match's reminder window opens, not at a fixed time before kickoff.
 const REMINDER_WINDOW_MS = 36 * 60 * 60 * 1000;
 
 export async function sendMatchReminders() {
@@ -58,14 +55,20 @@ export async function sendMatchReminders() {
   });
 
   for (const m of matches) {
+    if (!(await claimReminder(m.id, now))) continue;
+
     await notifyTeams(m.homeTeamId, m.awayTeamId, {
       title: push.title,
       body: `تذكير: مباراة فريقك غداً — ${m.homeTeam.name} × ${m.awayTeam.name}`,
       url: `/tournament/${m.activityId}`,
     }).catch((err) => logger.error("match.reminder.push.error", err));
-
-    await prisma.match
-      .update({ where: { id: m.id }, data: { reminderSentAt: now } })
-      .catch((err) => logger.error("match.reminder.stamp.error", err));
   }
+}
+
+async function claimReminder(matchId: string, now: Date): Promise<boolean> {
+  const claimed = await prisma.match.updateMany({
+    where: { id: matchId, reminderSentAt: null },
+    data: { reminderSentAt: now },
+  });
+  return claimed.count === 1;
 }

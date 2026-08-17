@@ -20,8 +20,17 @@ export const PATCH = withRoute(
     // blocked, so every editable field lives behind this one endpoint.
     const session = await requireAdminRole("SUPER");
     const { id } = await params;
-    const { status, memberId, donorName, donorPhone, donorPhoto, amount, paymentMethod, proof } =
-      parse(donationUpdateSchema, await req.json());
+    const {
+      status,
+      memberId,
+      donorName,
+      donorPhone,
+      donorPhoto,
+      amount,
+      paymentMethod,
+      proof,
+      tagIds,
+    } = parse(donationUpdateSchema, await req.json());
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
@@ -55,6 +64,7 @@ export const PATCH = withRoute(
       amount?: number;
       paymentMethod?: string | null;
       proof?: string | null;
+      tags?: { set: { id: string }[] };
     } = {};
     if (status !== undefined) data.status = status;
 
@@ -112,6 +122,10 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: money.paymentMethodInvalid }, { status: 400 });
       }
       data.paymentMethod = paymentMethod;
+    }
+
+    if (tagIds !== undefined) {
+      data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
     }
 
     const donation = await prisma.donation.update({
