@@ -7,7 +7,7 @@ import type { IconName } from "@/components/Icon";
 import type { Panel } from "./panels";
 
 const ITEMS: { panel: Panel; label: string; icon: IconName; superOnly: boolean }[] = [
-  { panel: "password", label: "تغيير كلمة المرور", icon: "key", superOnly: false },
+  { panel: "password", label: "تغيير كلمة المرور", icon: "lock", superOnly: false },
   { panel: "accounts", label: "إدارة حسابات المشرفين", icon: "users", superOnly: true },
   { panel: "audit", label: "سجل الإجراءات", icon: "list", superOnly: false },
   { panel: "broadcast", label: "إرسال إشعار جماعي", icon: "megaphone", superOnly: true },

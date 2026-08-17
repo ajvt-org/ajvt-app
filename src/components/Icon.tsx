@@ -12,7 +12,6 @@ const PATHS = {
   chevronRight: "M9 18l6-6-6-6",
   chevronLeft: "M15 18l-6-6 6-6",
   chevronUp: "M18 15l-6-6-6 6",
-  key: "M14 7a5 5 0 1 1-4.9 6L7 15H5v2H3v2H1v-3l8.1-8.1A5 5 0 0 1 14 7zM16 10h.01",
   lock: "M5 11h14v10H5V11zM8 11V7a4 4 0 0 1 8 0v4",
   save: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8",
   download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
