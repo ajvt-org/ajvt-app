@@ -13,8 +13,6 @@ updates:
         update-types:
           - minor
           - patch
-    commit-message:
-      prefix: Bump
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,5 +25,3 @@ updates:
       actions:
         patterns:
           - "*"
-    commit-message:
-      prefix: Bump
