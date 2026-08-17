@@ -59,3 +59,33 @@ describe("the age leaderboard", () => {
     expect(screen.getByText("عصرك")).toBeDefined();
   });
 });
+
+describe("the counted nouns", () => {
+  const forms: AgeStanding[] = [
+    { rank: 1, name: "واحد", members: 1, users: 2, total: 10, rate: 10, userRate: 20 },
+    { rank: 2, name: "قليل", members: 9, users: 5, total: 20, rate: 45, userRate: 25 },
+    { rank: 3, name: "كثير", members: 24, users: 11, total: 40, rate: 60, userRate: 27 },
+  ];
+
+  it("puts three to ten with the plural and eleven upwards with the singular", () => {
+    render(<AgeStandingsTable standings={forms} />);
+
+    expect(screen.getByText("5 حسابات على التطبيق")).toBeTruthy();
+    expect(screen.getByText("11 حساباً على التطبيق")).toBeTruthy();
+  });
+
+  it("carries the count in the word for two, without a digit", () => {
+    render(<AgeStandingsTable standings={forms} />);
+
+    expect(screen.getByText("حسابان على التطبيق")).toBeTruthy();
+  });
+
+  it("applies the same rule to the member counts", async () => {
+    render(<AgeStandingsTable standings={forms} />);
+    await userEvent.selectOptions(screen.getByLabelText("الترتيب حسب"), "users");
+
+    expect(screen.getByText("منتسب من أصل 10")).toBeTruthy();
+    expect(screen.getByText("9 منتسبين من أصل 20")).toBeTruthy();
+    expect(screen.getByText("24 منتسباً من أصل 40")).toBeTruthy();
+  });
+});
