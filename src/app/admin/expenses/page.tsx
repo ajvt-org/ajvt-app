@@ -114,8 +114,6 @@ export default function AdminExpensesPage() {
     });
   }
 
-  // Groups a day's records into kind -> method -> records, so a busy day
-  // (30+ transactions) reads as sections instead of one long flat list.
   function groupDayRecords(records: DayRecord[]) {
     const groups: Record<string, Record<string, DayRecord[]>> = { دعم: {}, انتساب: {} };
     for (const r of records) {
@@ -282,8 +280,6 @@ export default function AdminExpensesPage() {
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const days = summary?.days || [];
-  // Any of the picked tags, not all of them: picking two asks for both kinds
-  // of spending, which is what a reader of a filter row expects.
   const shownExpenses =
     tagFilter.length === 0
       ? expenses
@@ -314,7 +310,6 @@ export default function AdminExpensesPage() {
         </button>
       </div>
 
-      {/* Summary stats */}
       <div className="grid grid-cols-3 gap-2">
         <div className="card p-3 text-center">
           <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
@@ -342,7 +337,6 @@ export default function AdminExpensesPage() {
         </div>
       </div>
 
-      {/* By payment method */}
       <div className="card p-4">
         <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
           حسب طريقة الدفع (كل الإيرادات)
@@ -454,7 +448,6 @@ export default function AdminExpensesPage() {
         )}
       </div>
 
-      {/* Reassign donations with no payment method set — SUPER only, same scope as donation management */}
       {role === "SUPER" && summary && summary.unassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
@@ -500,7 +493,6 @@ export default function AdminExpensesPage() {
         </div>
       )}
 
-      {/* Daily revenue, last 30 days */}
       <div className="card p-4">
         <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
           الإيرادات اليومية (آخر 30 يوماً)
@@ -618,7 +610,6 @@ export default function AdminExpensesPage() {
         )}
       </div>
 
-      {/* Expenses list */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="banknote">سجل المصاريف ({shownExpenses.length})</IconLabel>
@@ -780,7 +771,6 @@ export default function AdminExpensesPage() {
         </div>
       )}
 
-      {/* Add/edit expense */}
       {showForm && (
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"

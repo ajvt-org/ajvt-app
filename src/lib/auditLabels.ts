@@ -1,6 +1,3 @@
-// Every action passed to logAction() needs an entry here, otherwise the
-// log shows the raw English code next to translated rows.
-// auditLabels.test.ts reads the source and fails when one is missing.
 export const ACTION_LABELS: Record<string, string> = {
   APPROVE_MEMBER: "قبول طلب",
   REJECT_MEMBER: "رفض طلب",

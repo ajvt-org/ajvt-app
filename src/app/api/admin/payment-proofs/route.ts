@@ -43,9 +43,6 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       : Promise.resolve([]),
     includeDonations
       ? prisma.donation.findMany({
-          // MEMBERSHIP-source rows are the surplus of an already-reviewed
-          // membership payment (same proof, same admin action) — showing
-          // them again here would duplicate the MEMBERSHIP-kind card above.
           where: { source: { not: "MEMBERSHIP" } },
           select: {
             id: true,

@@ -6,8 +6,6 @@ import { bracketRoundLabel, shuffleArray, isPowerOfTwo } from "@/lib/tournament"
 import { withRoute } from "@/lib/route";
 import { incompleteTeams, displayTeamName } from "@/lib/teamSize";
 
-// Random draw for a pure knockout tournament (chess, PlayStation, or any
-// activity without groups) — pairs up every team attached to the activity.
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/bracket/draw",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -69,10 +67,6 @@ export const POST = withRoute(
       );
     }
 
-    // If the activity uses groups, the knockout stage can't start until the
-    // group stage is fully played — otherwise a random draw could pit two
-    // teams from the same group against each other before it's decided who
-    // actually qualifies.
     const groupsCount = await prisma.group.count({ where: { activityId: id } });
     if (groupsCount > 0) {
       const leagueMatches = await prisma.match.findMany({

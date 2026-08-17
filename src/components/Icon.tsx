@@ -1,10 +1,3 @@
-// Icons on a 24x24 viewBox. Unlike an emoji, a viewBox has no baseline or side
-// bearings, so the glyph sits exactly in the middle of a round button instead
-// of a little low and to one side.
-//
-// Stroked by default. `filled` paints the path instead, which is what an emoji
-// the colour stands in for needs — a green heart drawn as an outline says
-// something else. Paths in SOLID are only ever filled.
 const PATHS = {
   shield: "M12 3l7 3v6c0 4-3 6.5-7 9-4-2.5-7-5-7-9V6l7-3z",
   user: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
