@@ -2,11 +2,12 @@ import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import AgeStandingsTable from "@/components/AgeStandingsTable";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
+import { getViewerAge } from "@/lib/viewerAge";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgeStandingsPage() {
-  const standings = await getAgeStandings();
+  const [standings, mine] = await Promise.all([getAgeStandings(), getViewerAge()]);
   const joined = standings.reduce((sum, s) => sum + s.members, 0);
 
   return (
@@ -37,7 +38,7 @@ export default async function AgeStandingsPage() {
               </p>
             </div>
 
-            <AgeStandingsTable standings={standings} />
+            <AgeStandingsTable standings={standings} mine={mine} />
           </>
         )}
       </div>
