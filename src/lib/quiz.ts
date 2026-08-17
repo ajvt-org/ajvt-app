@@ -9,7 +9,7 @@ const SETTINGS_ID = "singleton";
 
 const QUIZ_PUSH_PAYLOAD = {
   title: push.title,
-  body: "🧠 سؤال ثقافي جديد بانتظارك!",
+  body: "سؤال ثقافي جديد بانتظارك!",
   url: "/quiz",
 };
 

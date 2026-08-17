@@ -16,7 +16,13 @@ interface ActivitiesSectionProps {
 
 function QuizCard({ quizAccess }: { quizAccess: boolean }) {
   return (
-    <div className="card overflow-hidden">
+    <div
+      className="card overflow-hidden"
+      style={{
+        background: "linear-gradient(160deg, var(--mint-100), #fff 65%)",
+        border: "1.5px solid var(--mint-500)",
+      }}
+    >
       <div className="p-4 flex items-center gap-3">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
@@ -35,7 +41,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
             {quizAccess
-              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥"
+              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين"
               : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
           </p>
         </div>
