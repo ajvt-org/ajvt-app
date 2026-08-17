@@ -8,4 +8,5 @@ export const quiz = {
   paidMembersOnly: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
   alreadyAnswered: "تمت الإجابة على هذا السؤال من قبل",
   optionsNotRevealed: "أظهر الخيارات أولاً",
+  timeUp: "انتهى الوقت",
 } as const;
