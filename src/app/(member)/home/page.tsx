@@ -1,6 +1,7 @@
 "use client";
 
 import ActivitiesSection from "@/components/ActivitiesSection";
+import MyFixtures from "@/components/MyFixtures";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
 import { toEligibleMember } from "@/components/activityTypes";
@@ -26,7 +27,9 @@ export default function HomePage() {
     <div className="app-shell">
       <PageHeader title="الأنشطة" />
 
-      <div className="flex-1 px-5 py-6">
+      <div className="flex-1 px-5 py-6 space-y-6">
+        <MyFixtures />
+
         <ActivitiesSection
           memberStatus={member?.status ?? null}
           // The quiz is a paid-membership perk — same "منتسب" bar as anything
