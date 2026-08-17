@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { normalizeTeamSize } from "@/lib/teamSize";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
 import { activities } from "@/lib/messages";
@@ -42,6 +43,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
     photo,
     isTournament,
     format,
+    teamSize,
     isVolunteer,
     whatsappLink,
     startsAt,
@@ -70,6 +72,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       capacity: capacity ?? null,
       isTournament: !!isTournament,
       format: isTournament ? (format ?? "KNOCKOUT") : null,
+      teamSize: isTournament ? normalizeTeamSize(teamSize) : null,
       isVolunteer: !!isVolunteer,
       whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
       order: (_max.order ?? -1) + 1,
