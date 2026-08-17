@@ -9,8 +9,7 @@ import { seedQuizSettings, seedQuestions, seedAssignments } from "./seed/quiz";
 import { seedSiteVisits, seedAuditLog, seedDeletedRecords } from "./seed/history";
 import { writePlaceholders } from "./seed/images";
 
-const USERS = 118;
-const MEMBERS = 118;
+const USERS = 246;
 
 async function main() {
   await wipe();
@@ -18,7 +17,7 @@ async function main() {
   await seedAgeGroups();
 
   const users = await seedUsers(USERS);
-  const members = await seedMembers(users, MEMBERS);
+  const members = await seedMembers(users);
 
   const activities = await seedActivities();
   await seedRegistrations(activities, members.active, members.pending);
