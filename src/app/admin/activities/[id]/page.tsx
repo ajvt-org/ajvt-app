@@ -11,6 +11,7 @@ import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import ProfileSection from "@/components/admin/ProfileSection";
+import ActivityFinance from "./ActivityFinance";
 import ActivityDatesEditor from "../ActivityDatesEditor";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 
@@ -316,6 +317,8 @@ function AdminActivityPageInner({ id }: { id: string }) {
           </p>
         </ProfileSection>
       )}
+
+      <ActivityFinance activityId={activity.id} />
 
       <ProfileSection icon="list" title={`سجل التغييرات (${history.length})`}>
         {history.length === 0 ? (
