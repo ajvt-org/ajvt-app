@@ -4,6 +4,8 @@ export type MemberFilters = {
   age: string;
   method: string;
   paid: string;
+  year: string;
+  standing: string;
   from: string;
   to: string;
 };
@@ -14,6 +16,8 @@ export const NO_FILTERS: MemberFilters = {
   age: "",
   method: "",
   paid: "",
+  year: "",
+  standing: "",
   from: "",
   to: "",
 };
@@ -25,6 +29,7 @@ export type FilterableMember = {
   age: string;
   paymentMethod: string;
   paidAmount: number | null;
+  membershipYear: number;
   createdAt?: string;
   user?: { phone: string } | null;
 };
@@ -36,6 +41,8 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     age: params.get("age") || "",
     method: params.get("method") || "",
     paid: params.get("paid") || "",
+    year: params.get("year") || "",
+    standing: params.get("standing") || "",
     from: params.get("from") || "",
     to: params.get("to") || "",
   };
@@ -48,6 +55,8 @@ export function writeFilters(filters: MemberFilters, page = 1): URLSearchParams 
   if (filters.age) params.set("age", filters.age);
   if (filters.method) params.set("method", filters.method);
   if (filters.paid) params.set("paid", filters.paid);
+  if (filters.year) params.set("year", filters.year);
+  if (filters.standing) params.set("standing", filters.standing);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   if (page > 1) params.set("page", String(page));
@@ -61,6 +70,8 @@ export function activeFilterCount(filters: MemberFilters): number {
     !!filters.age,
     !!filters.method,
     !!filters.paid,
+    !!filters.year,
+    !!filters.standing,
     !!filters.from,
     !!filters.to,
   ].filter(Boolean).length;
@@ -98,15 +109,40 @@ function matchesDateRange(member: FilterableMember, from: string, to: string): b
   return true;
 }
 
+export interface Membership {
+  fee: number;
+  year: number;
+}
+
+function matchesStanding(member: FilterableMember, standing: string, m: Membership): boolean {
+  if (!standing) return true;
+  const current = member.membershipYear === m.year && (member.paidAmount ?? 0) >= m.fee;
+  if (standing === "paid") return current;
+  if (standing === "behind") return !current;
+  return true;
+}
+
 export function matchesFilters(
   member: FilterableMember,
   filters: MemberFilters,
-  fee: number,
+  membership: Membership,
 ): boolean {
   if (filters.status && filters.status !== "ALL" && member.status !== filters.status) return false;
   if (filters.age && member.age !== filters.age) return false;
   if (filters.method && member.paymentMethod !== filters.method) return false;
-  if (!matchesPaid(member, filters.paid, fee)) return false;
+  if (filters.year && String(member.membershipYear) !== filters.year) return false;
+  if (!matchesPaid(member, filters.paid, membership.fee)) return false;
+  if (!matchesStanding(member, filters.standing, membership)) return false;
   if (!matchesDateRange(member, filters.from, filters.to)) return false;
   return matchesText(member, filters.q);
+}
+
+export function membershipYearsPresent(members: FilterableMember[]): number[] {
+  return [...new Set(members.map((m) => m.membershipYear))].sort((a, b) => b - a);
+}
+
+export function upToDate(members: FilterableMember[], membership: Membership) {
+  const active = members.filter((m) => m.status === "ACTIVE");
+  const paid = active.filter((m) => matchesStanding(m, "paid", membership));
+  return { paid: paid.length, active: active.length };
 }
