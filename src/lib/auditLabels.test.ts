@@ -13,7 +13,7 @@ function sourceFiles(dir: string): string[] {
 
 function loggedActions(): string[] {
   const found = new Set<string>();
-  for (const file of sourceFiles("src")) {
+  for (const file of [...sourceFiles("src"), ...sourceFiles("prisma")]) {
     const source = readFileSync(file, "utf8");
     for (const [, action] of source.matchAll(/logAction\(\s*[^,]+,\s*"([A-Z_]+)"/g)) {
       found.add(action);
@@ -23,6 +23,9 @@ function loggedActions(): string[] {
     )) {
       found.add(a);
       found.add(b);
+    }
+    for (const [, action] of source.matchAll(/\baction:\s*"([A-Z]+(?:_[A-Z]+)+)"/g)) {
+      found.add(action);
     }
   }
   return [...found].sort();

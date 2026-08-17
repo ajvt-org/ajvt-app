@@ -13,10 +13,17 @@ const BADGE_KEY: Record<string, keyof PendingCounts> = {
 function Badge({ count }: { count: number }) {
   return (
     <span
+      dir="ltr"
       className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
-      style={{ background: "#dc2626", fontSize: "9px", width: "16px", height: "16px" }}
+      style={{
+        background: "#dc2626",
+        fontSize: "9px",
+        minWidth: "16px",
+        height: "16px",
+        padding: "0 3px",
+      }}
     >
-      {count > 9 ? "9+" : count}
+      <span className="badge-numeral">{count > 9 ? "+9" : count}</span>
     </span>
   );
 }
