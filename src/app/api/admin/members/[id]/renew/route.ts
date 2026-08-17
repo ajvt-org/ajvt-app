@@ -1,0 +1,73 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAdminRole } from "@/lib/auth";
+import { logAction, auditContext } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { getAppSettings } from "@/lib/settingsServer";
+import { syncMembershipDonation } from "@/lib/donationsServer";
+import { validatePaidAmount } from "@/lib/donations";
+import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
+import { members as messages } from "@/lib/messages";
+import { renewSchema } from "./schema";
+
+const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
+  notActive: messages.renewNotActive,
+  notIssued: messages.renewNotIssued,
+  alreadyRenewed: messages.renewAlreadyDone,
+  yearBehind: messages.renewYearBehind,
+};
+
+export const POST = withRoute(
+  "POST /api/admin/members/[id]/renew",
+  async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const session = await requireAdminRole("MEMBERS");
+    const { id } = await params;
+    const { paidAmount, paymentMethod, paymentProof } = parse(renewSchema, await req.json());
+    const { membershipFee, membershipYear } = await getAppSettings();
+
+    const paidAmountError = validatePaidAmount(paidAmount, membershipFee);
+    if (paidAmountError) throw new ValidationError(paidAmountError);
+
+    const member = await prisma.member.findUnique({ where: { id } });
+    if (!member) throw new NotFoundError(messages.notFound);
+
+    const refusal = renewalRefusal(member, membershipYear);
+    if (refusal) throw new ConflictError(REFUSALS[refusal]);
+
+    const renewed = await prisma.$transaction(async (tx) => {
+      await tx.membership.create({
+        data: {
+          memberId: id,
+          year: membershipYear,
+          paidAmount: Number(paidAmount),
+          paymentMethod,
+          paymentProof: paymentProof || null,
+          recordedBy: session.username,
+        },
+      });
+      const updated = await tx.member.update({
+        where: { id },
+        data: {
+          membershipYear,
+          paidAmount: Number(paidAmount),
+          paymentMethod,
+          paymentProof: paymentProof || member.paymentProof,
+        },
+      });
+      await syncMembershipDonation(tx, id);
+      return updated;
+    });
+
+    await logAction(session.username, "RENEW_MEMBER", `${member.fullName} — ${membershipYear}`, {
+      ...auditContext(session, req),
+      targetType: "Member",
+      targetId: id,
+      before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
+      after: { membershipYear, paidAmount: Number(paidAmount) },
+    });
+
+    return NextResponse.json({ member: renewed }, { status: 201 });
+  },
+);

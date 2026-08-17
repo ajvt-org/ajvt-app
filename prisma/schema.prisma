@@ -79,8 +79,24 @@ model Member {
   motmMatches     Match[]                @relation("ManOfTheMatch")
   mvpCandidacies  MvpCandidate[]
   donations       Donation[]
+  memberships     Membership[]
 
   @@index([membershipYear])
+}
+
+model Membership {
+  id            String   @id @default(cuid())
+  memberId      String
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  year          Int
+  paidAmount    Int?
+  paymentMethod String?
+  paymentProof  String?
+  recordedBy    String?
+  createdAt     DateTime @default(now())
+
+  @@unique([memberId, year])
+  @@index([year])
 }
 
 model Activity {
