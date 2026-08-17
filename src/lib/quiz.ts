@@ -5,17 +5,13 @@ import { MEMBERSHIP_FEE } from "./donations";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
 
+const SETTINGS_ID = "singleton";
+
 const QUIZ_PUSH_PAYLOAD = {
   title: push.title,
   body: "🧠 سؤال ثقافي جديد بانتظارك!",
   url: "/quiz",
 };
-
-// --- Eligibility ---
-// Only paid-up members ("منتسب") can play: a User needs at least one Member
-// that's ACTIVE (admin-approved) with paidAmount covering the membership fee.
-// Someone who never joined, is still pending, was rejected, or is active
-// without having paid can't play or be sent questions.
 
 export async function isQuizEligible(userId: string): Promise<boolean> {
   const member = await prisma.member.findFirst({
@@ -34,14 +30,13 @@ async function getEligibleUserIds(): Promise<string[]> {
   return members.map((m) => m.userId as string);
 }
 
-// --- Settings (singleton row, same idiom as Counter) ---
-
 export async function getQuizSettings() {
-  return prisma.quizSettings.upsert({
-    where: { id: "singleton" },
-    update: {},
-    create: { id: "singleton" },
-  });
+  const existing = await prisma.quizSettings.findUnique({ where: { id: SETTINGS_ID } });
+  if (existing) return existing;
+
+  return prisma.quizSettings
+    .create({ data: { id: SETTINGS_ID } })
+    .catch(() => prisma.quizSettings.findUniqueOrThrow({ where: { id: SETTINGS_ID } }));
 }
 
 export async function updateQuizSettings(data: {
@@ -51,15 +46,11 @@ export async function updateQuizSettings(data: {
   questionsPerDay?: number;
 }) {
   return prisma.quizSettings.upsert({
-    where: { id: "singleton" },
+    where: { id: SETTINGS_ID },
     update: data,
-    create: { id: "singleton", ...data },
+    create: { id: SETTINGS_ID, ...data },
   });
 }
-
-// --- Streak ("flame") ---
-// The association is based in Mauritania (UTC+0 year-round, no DST), so
-// comparing calendar days in UTC matches local days with no offset math.
 
 function todayUTC(): Date {
   const now = new Date();
@@ -82,7 +73,7 @@ export async function touchUserActivity(userId: string): Promise<void> {
   if (!user) return;
 
   const today = todayUTC();
-  if (user.lastActiveDate && isSameUTCDay(user.lastActiveDate, today)) return; // already counted today
+  if (user.lastActiveDate && isSameUTCDay(user.lastActiveDate, today)) return;
 
   const yesterday = new Date(today);
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
@@ -98,11 +89,6 @@ export async function touchUserActivity(userId: string): Promise<void> {
     data: { lastActiveDate: today, currentStreak, longestStreak },
   });
 }
-
-// --- Leaderboard / rank ---
-// Ranks every quiz-eligible User (not just those with assignments so far) —
-// someone who hasn't received a question yet still has a rank (last place).
-// Users who aren't eligible (not a paid-up member) never appear here.
 
 interface QuizLeaderboardEntry {
   rank: number;
@@ -165,8 +151,6 @@ export async function getUserQuizStanding(userId: string) {
   };
 }
 
-// --- Pending questions for a user ---
-
 export async function getPendingAssignments(userId: string) {
   return prisma.quizAssignment.findMany({
     where: { userId, answeredAt: null },
@@ -188,15 +172,11 @@ export async function getPendingAssignments(userId: string) {
   });
 }
 
-// --- Scoring ---
-
 export function computeIsCorrect(correctAnswerIds: string[], selectedAnswerIds: string[]): boolean {
   const correctSet = new Set(correctAnswerIds);
   const selectedSet = new Set(selectedAnswerIds);
   return correctSet.size === selectedSet.size && [...correctSet].every((id) => selectedSet.has(id));
 }
-
-// --- Sending ---
 
 function shuffle<T>(input: T[]): T[] {
   const arr = [...input];
@@ -215,7 +195,6 @@ async function pushToAssignedUsers(userIds: string[]) {
   );
 }
 
-// Sends the same question to every eligible user who hasn't already received it.
 export async function sendSameQuestionToAll(
   questionId: string,
 ): Promise<{ sentCount: number; skippedCount: number }> {
@@ -246,11 +225,6 @@ export async function sendSameQuestionToAll(
   return { sentCount: targets.length, skippedCount: users.length - targets.length };
 }
 
-// Sends up to `count` distinct, never-before-seen active questions to every
-// eligible user, picked independently per user so no two users necessarily
-// get the same set — and no user ever receives a question twice (enforced both by
-// the in-memory "seen" filter here and, belt-and-suspenders, by the
-// @@unique([userId, questionId]) constraint via skipDuplicates).
 export async function sendRandomBatch(
   count: number,
 ): Promise<{ sentCount: number; skippedCount: number }> {
@@ -291,28 +265,26 @@ export async function sendRandomBatch(
   return { sentCount: assignedUserIds.length, skippedCount: users.length - assignedUserIds.length };
 }
 
-// Opportunistic daily auto-send — mirrors sendMatchReminders() in
-// tournamentNotify.ts. No cron on this deployment (see railway.toml), so the
-// first user to hit /api/quiz/me on a given day triggers that day's batch.
 export async function runDailyQuizAutoSend(): Promise<void> {
   const settings = await getQuizSettings();
   const today = todayUTC();
   if (settings.lastAutoSendDate && isSameUTCDay(settings.lastAutoSendDate, today)) return;
 
-  // Don't burn today's slot if there's nothing active to send yet (e.g. the
-  // admin hasn't authored any questions this early in the day) — otherwise
-  // the first visit of the day claims the run with zero results and no one
-  // gets a question until tomorrow, even after questions are added later.
   const activeCount = await prisma.quizQuestion.count({ where: { active: true } });
   if (activeCount === 0) return;
 
-  // Claim today's run before the heavy lifting so a second near-simultaneous
-  // request (a different user opening the app around the same moment)
-  // doesn't trigger a duplicate batch.
-  await prisma.quizSettings.update({
-    where: { id: "singleton" },
-    data: { lastAutoSendDate: today },
-  });
+  if (!(await claimAutoSend(today))) return;
 
   await sendRandomBatch(settings.questionsPerDay);
+}
+
+async function claimAutoSend(today: Date): Promise<boolean> {
+  const claimed = await prisma.quizSettings.updateMany({
+    where: {
+      id: SETTINGS_ID,
+      OR: [{ lastAutoSendDate: null }, { lastAutoSendDate: { lt: today } }],
+    },
+    data: { lastAutoSendDate: today },
+  });
+  return claimed.count === 1;
 }
