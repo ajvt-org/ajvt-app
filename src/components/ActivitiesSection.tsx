@@ -18,7 +18,10 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
   return (
     <div
       className="card overflow-hidden"
-      style={{ background: "var(--mint-50)", border: "1.5px solid var(--mint-500)" }}
+      style={{
+        background: "linear-gradient(160deg, var(--mint-100), #fff 65%)",
+        border: "1.5px solid var(--mint-500)",
+      }}
     >
       <div className="p-4 flex items-center gap-3">
         <div
@@ -33,11 +36,8 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
           <Icon name="quiz" size={28} />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold flex items-center gap-1.5" style={{ color: "var(--text-main)" }}>
+          <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
             المسابقة الثقافية
-            <span className="expense-tag" style={{ background: "var(--mint-600)", color: "white" }}>
-              مميزة
-            </span>
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
             {quizAccess
