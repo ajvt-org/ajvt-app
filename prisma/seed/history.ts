@@ -1,8 +1,9 @@
 import { prisma } from "./client";
 import { retentionExpiry } from "../../src/lib/deletedRecords";
 import { daysAgo, fullName, pick } from "./random";
+import { ACTION_LABELS } from "../../src/lib/auditLabels";
 
-const ACTIONS = ["VALIDATE_MEMBER", "REJECT_MEMBER", "CREATE_EXPENSE", "UPDATE_MATCH"];
+const ACTIONS = Object.keys(ACTION_LABELS);
 
 export async function seedSiteVisits(days: number) {
   for (let d = 0; d < days; d++) {
