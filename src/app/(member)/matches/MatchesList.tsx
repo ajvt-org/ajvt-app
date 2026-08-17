@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import FixtureRow from "@/components/FixtureRow";
-import { FixturesEmpty, type FixturesResponse } from "@/components/MyFixtures";
+import FixturesEmpty from "@/components/FixturesEmpty";
+import type { FixturesResponse } from "@/lib/memberFixtures";
 
 function Section({ title, fixtures }: { title: string; fixtures: FixturesResponse["upcoming"] }) {
   if (fixtures.length === 0) return null;
