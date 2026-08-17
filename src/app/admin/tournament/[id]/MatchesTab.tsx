@@ -3,7 +3,7 @@
 import BracketTree from "@/components/tournament/BracketTree";
 import { getMatchWinnerTeamId } from "@/lib/tournament";
 import { useState } from "react";
-import type { Group, Match, Team } from "./types";
+import type { Group, Match, Team, TournamentFormat } from "./types";
 import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
@@ -14,15 +14,18 @@ export default function MatchesTab({
   activityId,
   teams,
   groups,
+  format,
   matches,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
   groups: Group[];
+  format: TournamentFormat;
   matches: Match[];
   onChange: () => void;
 }) {
+  const hasGroupStage = format === "GROUPS_THEN_KNOCKOUT";
   const [form, setForm] = useState({
     homeTeamId: "",
     awayTeamId: "",
@@ -86,6 +89,7 @@ export default function MatchesTab({
 
   // Poules "remplies" : chaque groupe a atteint sa taille cible et aucun calendrier n'a encore été généré.
   const poolsReady =
+    hasGroupStage &&
     groups.length > 0 &&
     groups.every(
       (g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity,
@@ -96,12 +100,12 @@ export default function MatchesTab({
   const leagueMatches = matches.filter((m) => !m.isKnockout);
   const groupStageDone =
     leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "PLAYED");
-  const groupStageComplete = groups.length === 2 && groupStageDone && bracketMatches.length === 0;
+  const groupStageComplete = hasGroupStage && groupStageDone && bracketMatches.length === 0;
   // Tant qu'il y a des groupes, le tirage/bracket ne doit pas apparaître avant la fin du tour des poules.
-  const knockoutLocked = groups.length > 0 && !groupStageDone;
+  const knockoutLocked = hasGroupStage && groups.length > 0 && !groupStageDone;
   // Format foot standard du club : toujours 2 poules de 4 → demi-finale puis finale,
   // donc pas de tirage aléatoire générique (réservé aux tournois sans poules, ex. échecs/PlayStation).
-  const isTwoGroupFormat = groups.length === 2;
+  const isTwoGroupFormat = hasGroupStage && groups.length === 2;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;

@@ -58,6 +58,7 @@ export const activityCreateSchema = z
     photo: z.string(INVALID).nullish(),
     capacity: capacity.optional(),
     isTournament: z.unknown().optional(),
+    format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),
     startsAt: activityDate.optional(),
