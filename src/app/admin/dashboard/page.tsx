@@ -26,6 +26,7 @@ import MemberList from "./MemberList";
 import Pagination from "./Pagination";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 
 function AdminDashboardInner() {
   const router = useRouter();
@@ -59,6 +60,7 @@ function AdminDashboardInner() {
   const [attachAccountLoading, setAttachAccountLoading] = useState(false);
   const [attachAccountError, setAttachAccountError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Member | null>(null);
 
   const [showStats, setShowStats] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
@@ -190,11 +192,11 @@ function AdminDashboardInner() {
     }
   }
 
-  async function deleteMember(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+  async function deleteMember(id: string, confirmName: string) {
     setDeleteLoading(true);
     try {
-      await api.del(`/api/admin/members/${id}`);
+      await api.del(`/api/admin/members/${id}`, { confirmName });
+      setConfirmDelete(null);
       await fetchMembers();
       setSelected(null);
     } catch (e) {
@@ -376,7 +378,16 @@ function AdminDashboardInner() {
           onCloseRejectPicker={() => setShowRejectPicker(false)}
           onApprove={() => validate(selected.id, "ACTIVE")}
           onReject={() => validate(selected.id, "REJECTED", rejectReason)}
-          onDelete={() => deleteMember(selected.id)}
+          onDelete={() => setConfirmDelete(selected)}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmDeleteDialog
+          name={confirmDelete.fullName}
+          loading={deleteLoading}
+          onConfirm={(confirmName) => deleteMember(confirmDelete.id, confirmName)}
+          onClose={() => setConfirmDelete(null)}
         />
       )}
 

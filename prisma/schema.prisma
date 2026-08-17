@@ -480,3 +480,17 @@ model AppSettings {
   whatsappGroup     String?
   updatedAt         DateTime @updatedAt
 }
+
+model DeletedRecord {
+  id        String   @id @default(cuid())
+  kind      String
+  recordId  String
+  label     String
+  data      Json
+  deletedBy String
+  deletedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([kind])
+  @@index([expiresAt])
+}
