@@ -1,8 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import { localDatabase } from "./tests/localDatabase";
 
-const DATABASE_URL =
-  process.env.E2E_DATABASE_URL ?? "postgresql://ajvt:ajvt@localhost:5433/ajvt_e2e";
+const DATABASE_URL = process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e");
 const PORT = 3100;
+const PRODUCTION = process.env.E2E_PRODUCTION === "1";
 
 process.env.E2E_DATABASE_URL = DATABASE_URL;
 
@@ -20,7 +21,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `npx next dev --port ${PORT}`,
+    command: PRODUCTION ? `npx next start --port ${PORT}` : `npx next dev --port ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
     timeout: 240_000,
@@ -29,7 +30,7 @@ export default defineConfig({
     env: {
       DATABASE_URL,
       JWT_SECRET: process.env.JWT_SECRET ?? "e2e-secret-not-a-real-one",
-      NODE_ENV: "development",
+      NODE_ENV: PRODUCTION ? "production" : "development",
     },
   },
 });

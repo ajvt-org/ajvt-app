@@ -13,6 +13,10 @@ export const members = {
   accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",
   noAccountToCorrect: "لا يوجد حساب لهذا العضو",
   yearInvalid: "سنة العضوية غير صالحة",
+  renewNotActive: "لا يمكن تجديد عضوية غير مقبولة",
+  renewNotIssued: "لا يوجد رقم عضوية لتجديده",
+  renewAlreadyDone: "العضوية مجددة لهذه السنة بالفعل",
+  renewYearBehind: "عضوية هذا العضو تتجاوز السنة الجارية",
 } as const;
 
 export const ageGroups = {

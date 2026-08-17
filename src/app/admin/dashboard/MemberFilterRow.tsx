@@ -12,12 +12,14 @@ export default function MemberFilterRow({
   filters,
   ageGroups,
   paymentMethods,
+  years,
   resultCount,
   onChange,
 }: {
   filters: MemberFilters;
   ageGroups: AgeGroup[];
   paymentMethods: string[];
+  years: number[];
   resultCount: number;
   onChange: (next: MemberFilters) => void;
 }) {
@@ -67,6 +69,23 @@ export default function MemberFilterRow({
         <option value="partial">دفع ناقص</option>
         <option value="none">لم يدفع</option>
       </select>
+
+      {years.length > 1 && (
+        <select
+          value={filters.year}
+          onChange={(e) => onChange({ ...filters, year: e.target.value })}
+          className={SELECT}
+          style={SELECT_STYLE}
+          aria-label="تصفية حسب سنة العضوية"
+        >
+          <option value="">كل السنوات</option>
+          {years.map((year) => (
+            <option key={year} value={String(year)}>
+              عضوية {year}
+            </option>
+          ))}
+        </select>
+      )}
 
       <DateRangeFilter
         from={filters.from}

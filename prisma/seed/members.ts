@@ -1,9 +1,10 @@
 import { prisma } from "./client";
 import { generateVerifyToken } from "../../src/lib/verifyToken";
-import { AGE_GROUPS, PAYMENT_METHODS, REJECTION_REASONS } from "./data";
+import { PAYMENT_METHOD_SHARE, REJECTION_REASONS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, pick, referenceCode } from "./random";
 import { runningYear } from "../../src/lib/membershipYear";
+import { rosterSlots } from "./roster";
 
 export type SeededUser = { id: string; phone: string };
 export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>>;
@@ -15,37 +16,49 @@ export interface SeededMembers {
   memberNumber: number;
 }
 
-function statusFor(i: number, count: number): "ACTIVE" | "PENDING" | "REJECTED" {
-  if (i < Math.round(count * 0.65)) return "ACTIVE";
-  if (i < Math.round(count * 0.88)) return "PENDING";
-  return "REJECTED";
+const NO_ACCOUNT_EVERY = 33;
+const NO_PROOF_EVERY = 4;
+const PHOTO_EVERY = 2;
+
+function paymentMethod(i: number): string {
+  const total = PAYMENT_METHOD_SHARE.reduce((sum, [, share]) => sum + share, 0);
+  let at = i % total;
+  for (const [method, share] of PAYMENT_METHOD_SHARE) {
+    if (at < share) return method;
+    at -= share;
+  }
+  return PAYMENT_METHOD_SHARE[0][0];
 }
 
 function yearFor(i: number, count: number, current: number): number {
   return i < Math.round(count * 0.2) ? current - 1 : current;
 }
 
-export async function seedMembers(users: SeededUser[], count: number): Promise<SeededMembers> {
+export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
+  const slots = rosterSlots();
   const all: SeededMember[] = [];
   const active: SeededMember[] = [];
   const pending: SeededMember[] = [];
   let memberNumber = 0;
   const current = runningYear();
 
-  for (let i = 0; i < count; i++) {
-    const status = statusFor(i, count);
+  for (let i = 0; i < slots.length; i++) {
+    const { age, status } = slots[i];
     const isActive = status === "ACTIVE";
-    const membershipYear = yearFor(i, count, current);
+    const membershipYear = yearFor(i, slots.length, current);
     if (isActive) memberNumber += 1;
 
     const member = await prisma.member.create({
       data: {
-        userId: i % 9 === 8 ? null : users[i].id,
+        userId: i % NO_ACCOUNT_EVERY === NO_ACCOUNT_EVERY - 1 ? null : users[i].id,
         fullName: fullName(i),
-        age: pick(AGE_GROUPS, i),
-        paymentMethod: pick(PAYMENT_METHODS, i),
-        paymentProof: i % 7 === 6 ? null : placeholder(`seed-proof-${next()}.webp`),
-        photo: i % 3 === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
+        age,
+        paymentMethod: paymentMethod(i),
+        paymentProof:
+          i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1
+            ? null
+            : placeholder(`seed-proof-${next()}.webp`),
+        photo: i % PHOTO_EVERY === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
         paidAmount: [500, 1000, 1500, 2000, 3000][i % 5],
         referenceCode: referenceCode(i),
         status,
@@ -55,7 +68,7 @@ export async function seedMembers(users: SeededUser[], count: number): Promise<S
           ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
           : null,
         verifyToken: isActive ? generateVerifyToken() : null,
-        createdAt: daysAgo(100 - i * 2),
+        createdAt: daysAgo(Math.max(1, 130 - i)),
       },
     });
 

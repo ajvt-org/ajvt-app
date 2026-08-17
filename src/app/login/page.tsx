@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
+import { backFromNext } from "@/lib/authPaths";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import PageHeader from "@/components/PageHeader";
@@ -48,9 +49,7 @@ function LoginForm() {
 
   return (
     <div className="app-shell">
-      {/* Back goes where `next` points, which is the page that sent you here
-          and the page you land on after signing in. */}
-      <PageHeader title="تسجيل الدخول" backHref={safeNextPath(searchParams.get("next"), "/")} />
+      <PageHeader title="تسجيل الدخول" backHref={backFromNext(searchParams.get("next"), "/")} />
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="flex justify-center fade-up mb-4">

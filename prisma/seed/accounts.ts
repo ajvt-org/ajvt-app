@@ -1,6 +1,6 @@
 import * as bcrypt from "bcryptjs";
 import { prisma } from "./client";
-import { AGE_GROUPS } from "./data";
+import { AGE_GROUP_ROSTER } from "./data";
 import { daysAgo, phone } from "./random";
 
 const ADMINS: [string, string][] = [
@@ -21,8 +21,12 @@ export async function seedAdmins() {
 }
 
 export async function seedAgeGroups() {
-  for (const name of AGE_GROUPS) {
-    await prisma.ageGroup.upsert({ where: { name }, update: {}, create: { name } });
+  for (const { name, total } of AGE_GROUP_ROSTER) {
+    await prisma.ageGroup.upsert({
+      where: { name },
+      update: { totalCount: total },
+      create: { name, totalCount: total },
+    });
   }
 }
 

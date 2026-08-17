@@ -84,7 +84,9 @@ describe("donationRows", () => {
 
 describe("ageRows", () => {
   it("writes the rate as a percentage", () => {
-    const rows = ageRows([{ rank: 1, name: "البدريين", members: 15, total: 30, rate: 50 }]);
+    const rows = ageRows([
+      { rank: 1, name: "البدريين", members: 15, users: 18, total: 30, rate: 50, userRate: 60 },
+    ]);
     expect(rows[0]).toEqual(["البدريين", 15, 30, "50%"]);
   });
 });

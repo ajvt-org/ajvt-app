@@ -13,6 +13,7 @@ export interface Member {
   paidAmount: number | null;
   status: Status;
   rejectionReason: string | null;
+  membershipYear: number;
   referenceCode: string | null;
   memberNumber: string | null;
   createdAt: string;

@@ -11,6 +11,7 @@ import { STATUS_LABEL, STATUS_BADGE } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
+import MembershipPanel from "./MembershipPanel";
 
 function Header({ onClose }: { onClose: () => void }) {
   return (
@@ -202,6 +203,7 @@ export default function MemberDrawer({
           <SamePersonWarning memberId={member.id} />
           <Identity member={member} />
           <Facts member={member} />
+          <MembershipPanel memberId={member.id} />
 
           <div className="flex items-center justify-between card p-4">
             <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>

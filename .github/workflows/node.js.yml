@@ -1,27 +1,63 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+name: CI
 
-name: Node.js CI
-
-# A commit on dev is usually also the head of a pull request into master, and
-# listing dev under both triggers ran the same commit twice. Pull requests
-# cover dev; push covers master, which is what gets deployed.
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
-    branches: [ "master", "dev" ]
+    branches: ["master", "dev"]
 
-# A new push supersedes the run it interrupts rather than queueing behind it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  BUILD_DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+  BUILD_JWT_SECRET: "ci-build-only-not-a-real-secret"
+
 jobs:
-  build:
-
+  static:
+    name: static
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
 
+  build:
+    name: build
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run build
+        env:
+          DATABASE_URL: ${{ env.BUILD_DATABASE_URL }}
+          JWT_SECRET: ${{ env.BUILD_JWT_SECRET }}
+
+  unit:
+    name: unit
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm test
+      - run: npm run test:ui
+
+  api:
+    name: api
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:17-alpine
@@ -36,54 +72,62 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-
     steps:
-    - uses: actions/checkout@v7
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v7
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run lint --if-present
-    - run: npm run typecheck
-    - run: npm run format:check
-    - run: npm run build --if-present
-      env:
-        # prisma generate + next build never touch a live database (every
-        # route that reads/writes data is marked `dynamic`, so nothing runs
-        # at build time) — a syntactically valid but unreachable URL is
-        # enough. Keeps CI independent of the real production database.
-        DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
-        JWT_SECRET: "ci-build-only-not-a-real-secret"
-    - run: npm test --if-present
-    - run: npm run test:ui
-    - run: npm run test:api
-      env:
-        TEST_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_test"
-    # The browser download is the slowest step in the job and never changes
-    # between runs, so it is cached. The apt packages it needs are not, and
-    # have to be installed on every run whether the cache hit or not.
-    - uses: actions/cache@v6
-      id: playwright-cache
-      with:
-        path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-    - run: npx playwright install --with-deps chromium
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
-    - run: npx playwright install-deps chromium
-      if: steps.playwright-cache.outputs.cache-hit == 'true'
-    - run: npm run test:e2e
-      env:
-        E2E_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_e2e"
-        JWT_SECRET: "ci-e2e-not-a-real-secret"
-    - uses: actions/upload-artifact@v7
-      if: failure()
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 7
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run test:api
+        env:
+          TEST_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_test"
+
+  e2e:
+    name: e2e
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ajvt
+          POSTGRES_PASSWORD: ajvt
+          POSTGRES_DB: ajvt
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ajvt"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      - uses: actions/cache@v6
+        id: playwright
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.playwright.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - if: steps.playwright.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npm run build
+        env:
+          DATABASE_URL: ${{ env.BUILD_DATABASE_URL }}
+          JWT_SECRET: ${{ env.BUILD_JWT_SECRET }}
+
+      - run: npm run test:e2e
+        env:
+          E2E_PRODUCTION: "1"
+          E2E_DATABASE_URL: "postgresql://ajvt:ajvt@localhost:5432/ajvt_e2e"
+          JWT_SECRET: "ci-e2e-not-a-real-secret"
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
