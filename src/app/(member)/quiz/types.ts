@@ -43,4 +43,6 @@ export interface AnswerResult {
   pointsAwarded: number;
   correctAnswerIds: string[];
   expired?: boolean;
+  answeredInMs?: number;
+  maxPoints?: number;
 }

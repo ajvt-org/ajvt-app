@@ -35,7 +35,12 @@ function Outcome({ result, onContinue }: { result: AnswerResult; onContinue: () 
         }}
       >
         {result.isCorrect ? (
-          <IconLabel name="check">إجابة صحيحة! +{result.pointsAwarded} نقطة</IconLabel>
+          <IconLabel name="check">
+            إجابة صحيحة! +{result.pointsAwarded} من {result.maxPoints} نقطة
+            {typeof result.answeredInMs === "number"
+              ? ` — ${(result.answeredInMs / 1000).toFixed(1)} ثانية`
+              : ""}
+          </IconLabel>
         ) : result.expired ? (
           <IconLabel name="clock">انتهى الوقت</IconLabel>
         ) : (
@@ -102,7 +107,7 @@ export default function QuestionCard({
       {!revealed ? (
         <>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            اقرأ السؤال، ثم أظهر الخيارات — الوقت يبدأ من تلك اللحظة.
+            اقرأ السؤال، ثم أظهر الخيارات — الوقت يبدأ من تلك اللحظة، وكلما أسرعت زادت نقاطك.
           </p>
           <button className="btn btn-primary" disabled={revealing} onClick={onReveal}>
             {revealing ? "..." : "أظهر الخيارات"}
