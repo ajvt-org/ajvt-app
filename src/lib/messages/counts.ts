@@ -97,3 +97,17 @@ export const EXPENSE: CountedNoun = {
   few: "مصاريف",
   many: "مصروفاً",
 };
+
+export const POINT: CountedNoun = {
+  one: "نقطة",
+  two: "نقطتان",
+  few: "نقاط",
+  many: "نقطةً",
+};
+
+export const RESULT: CountedNoun = {
+  one: "نتيجة",
+  two: "نتيجتان",
+  few: "نتائج",
+  many: "نتيجةً",
+};

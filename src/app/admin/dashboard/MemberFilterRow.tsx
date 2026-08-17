@@ -1,6 +1,8 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { counted } from "@/lib/arabicCount";
+import { RESULT } from "@/lib/messages";
 import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
 import DateRangeFilter from "./DateRangeFilter";
 import type { AgeGroup } from "./types";
@@ -94,7 +96,7 @@ export default function MemberFilterRow({
       />
 
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {resultCount} نتيجة
+        {counted(resultCount, RESULT)}
       </span>
 
       {cleared > 0 && (
