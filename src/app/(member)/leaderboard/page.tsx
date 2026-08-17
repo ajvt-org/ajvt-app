@@ -10,8 +10,6 @@ import IconLabel from "@/components/IconLabel";
 
 export const dynamic = "force-dynamic";
 
-// A tab of its own, so there is no back button and nothing to guess about
-// where the reader came from.
 async function getViewer() {
   const session = await getUserSession();
   if (!session) return null;
@@ -33,15 +31,9 @@ export default async function LeaderboardPage() {
   const viewer = await getViewer();
   const donateHref = viewer?.donateHref ?? "/donate";
 
-  // Your own standing, lifted out of a list that can run long. Giving under
-  // your name and giving without it are two different rows on the board, and
-  // both are yours, so both are shown here. Nobody else can tell they belong
-  // to the same person; only the account looking at it can.
   const mine = viewer
     ? leaderboard.filter((e) => e.memberIds.some((id) => viewer.memberIds.includes(id)))
     : [];
-  // Ranks are unique, so they identify a row without carrying the account down
-  // into the table. Only the person looking sees their own rows marked.
 
   return (
     <div className="app-shell">

@@ -22,9 +22,6 @@ import { common, members } from "@/lib/messages";
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    // Renaming a player often happens while managing a tournament roster,
-    // so either admin scope may do it — not just "MEMBERS". Attaching an
-    // account (accountPhone) is a membership concern though, checked below.
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
     const { fullName, age, paymentMethod, photo, paidAmount, accountPhone } = parse(
@@ -59,8 +56,6 @@ export const PATCH = withRoute(
 
     let tempPassword: string | undefined;
     if (accountPhone !== undefined) {
-      // Attaching a login account to a member added without one — a
-      // membership concern, not something a tournament-only admin needs.
       if (session.role === "ACTIVITIES") {
         return NextResponse.json({ error: common.forbidden }, { status: 403 });
       }
@@ -74,16 +69,11 @@ export const PATCH = withRoute(
         where: { phone: accountPhone.trim() },
         select: { id: true, members: { select: { id: true }, take: 1 } },
       });
-      // One membership per account, so an account that already carries one
-      // cannot take this member as well. Same sentence and same status as the
-      // manual add, which can hit the same wall.
       if (found?.members.length) {
         throw new ConflictError(members.accountAlreadyHasMember);
       }
       let userId = found?.id;
       if (!userId) {
-        // The same deal as a reset: the admin reads this password out over the
-        // phone, so it expires and the member has to replace it on first use.
         tempPassword = generateTempPassword();
         const { tempPasswordHours } = await getAppSettings();
         const created = await prisma.user.create({

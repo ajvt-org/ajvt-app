@@ -1,7 +1,5 @@
 export type FinanceTag = { id: string; name: string };
 
-// One shape for a tag wherever it appears: on an expense, in the picker, in
-// the filter row. `onClick` turns it into a control; without it, it is a label.
 export default function FinanceTagChips({
   tags,
   selected,

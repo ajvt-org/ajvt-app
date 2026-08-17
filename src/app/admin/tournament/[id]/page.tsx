@@ -66,8 +66,6 @@ export default function TournamentPage() {
   }
 
   useEffect(() => {
-    // Initial fetch on mount — loadAll is also called directly from child
-    // tabs after mutations (team/match changes) to refresh this page's state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

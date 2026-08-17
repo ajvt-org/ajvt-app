@@ -39,7 +39,6 @@ export const PATCH = withRoute(
   },
 );
 
-// The expenses stay; only the tag goes, and with it the rows joining the two.
 export const DELETE = withRoute(
   "DELETE /api/admin/finance-tags/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
