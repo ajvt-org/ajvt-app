@@ -1,8 +1,8 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import { localDatabase } from "./tests/localDatabase";
 
-const DATABASE_URL =
-  process.env.TEST_DATABASE_URL ?? "postgresql://ajvt:ajvt@localhost:5433/ajvt_test";
+const DATABASE_URL = process.env.TEST_DATABASE_URL ?? localDatabase("ajvt_test");
 
 process.env.DATABASE_URL = DATABASE_URL;
 
