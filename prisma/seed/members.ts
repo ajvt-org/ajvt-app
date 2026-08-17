@@ -3,6 +3,7 @@ import { generateVerifyToken } from "../../src/lib/verifyToken";
 import { AGE_GROUPS, PAYMENT_METHODS, REJECTION_REASONS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, pick, referenceCode } from "./random";
+import { runningYear } from "../../src/lib/membershipYear";
 
 export type SeededUser = { id: string; phone: string };
 export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>>;
@@ -20,15 +21,21 @@ function statusFor(i: number, count: number): "ACTIVE" | "PENDING" | "REJECTED" 
   return "REJECTED";
 }
 
+function yearFor(i: number, count: number, current: number): number {
+  return i < Math.round(count * 0.2) ? current - 1 : current;
+}
+
 export async function seedMembers(users: SeededUser[], count: number): Promise<SeededMembers> {
   const all: SeededMember[] = [];
   const active: SeededMember[] = [];
   const pending: SeededMember[] = [];
   let memberNumber = 0;
+  const current = runningYear();
 
   for (let i = 0; i < count; i++) {
     const status = statusFor(i, count);
     const isActive = status === "ACTIVE";
+    const membershipYear = yearFor(i, count, current);
     if (isActive) memberNumber += 1;
 
     const member = await prisma.member.create({
@@ -43,7 +50,10 @@ export async function seedMembers(users: SeededUser[], count: number): Promise<S
         referenceCode: referenceCode(i),
         status,
         rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
-        memberNumber: isActive ? `AJVT-2026-${String(memberNumber).padStart(4, "0")}` : null,
+        membershipYear,
+        memberNumber: isActive
+          ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
+          : null,
         verifyToken: isActive ? generateVerifyToken() : null,
         createdAt: daysAgo(100 - i * 2),
       },

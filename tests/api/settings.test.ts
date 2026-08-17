@@ -2,11 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET as publicGet } from "@/app/api/settings/route";
 import { GET as adminGet, PATCH } from "@/app/api/admin/settings/route";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { defaultSettings } from "@/lib/settings";
+import { runningYear } from "@/lib/membershipYear";
 import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
 
 const valid = {
   membershipFee: 250,
+  membershipYear: runningYear(),
   supportWhatsapp: "22299887766",
   tempPasswordHours: 12,
   whatsappGroup: "https://chat.whatsapp.com/abc",
@@ -21,7 +23,7 @@ describe("GET /api/settings", () => {
     const res = await publicGet();
 
     expect(res.status).toBe(200);
-    expect((await res.json()).settings).toEqual(DEFAULT_SETTINGS);
+    expect((await res.json()).settings).toEqual(defaultSettings());
   });
 
   it("returns the saved values once an admin changes them", async () => {
@@ -92,6 +94,27 @@ describe("PATCH /api/admin/settings", () => {
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "رقم الواتساب غير صالح" });
+  });
+
+  it("rejects a membership year outside the bounds", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    for (const membershipYear of [2019, runningYear() + 2, 2026.5, "abc"]) {
+      const res = await PATCH(post("/api/admin/settings", { ...valid, membershipYear }));
+      expect(res.status, String(membershipYear)).toBe(400);
+      expect(await res.json()).toEqual({ error: "سنة العضوية غير صالحة" });
+    }
+    expect(await prisma.appSettings.count()).toBe(0);
+  });
+
+  it("lets the association pin next year before it starts", async () => {
+    await signInAsAdmin(await createAdmin());
+    const next = runningYear() + 1;
+
+    const res = await PATCH(post("/api/admin/settings", { ...valid, membershipYear: next }));
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).settings.membershipYear).toBe(next);
   });
 
   it("rejects a group link that is not https", async () => {

@@ -12,6 +12,7 @@ export const members = {
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
   accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",
   noAccountToCorrect: "لا يوجد حساب لهذا العضو",
+  yearInvalid: "سنة العضوية غير صالحة",
 } as const;
 
 export const ageGroups = {
