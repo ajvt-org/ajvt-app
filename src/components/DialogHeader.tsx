@@ -24,7 +24,7 @@ export default function DialogHeader({
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
       {onBack && <DialogBack onClick={onBack} />}
-      <h2 className="font-black text-white text-base">{title}</h2>
+      <h2 className="font-black text-white text-base label-optical">{title}</h2>
       {onClose && <DialogClose onClick={onClose} />}
     </div>
   );
