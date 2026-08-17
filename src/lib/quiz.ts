@@ -4,6 +4,7 @@ import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
+import { GRACE_MS } from "./quizWindow";
 
 const SETTINGS_ID = "singleton";
 
@@ -149,6 +150,19 @@ export async function getUserQuizStanding(userId: string) {
     totalParticipants,
     top10: leaderboard.slice(0, 10),
   };
+}
+
+export async function expireStaleAssignments(
+  userId: string,
+  windowSeconds: number,
+  now = new Date(),
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - (windowSeconds * 1000 + GRACE_MS));
+  const { count } = await prisma.quizAssignment.updateMany({
+    where: { userId, answeredAt: null, revealedAt: { lt: cutoff } },
+    data: { answeredAt: now, isCorrect: false, pointsAwarded: 0 },
+  });
+  return count;
 }
 
 export async function getPendingAssignments(userId: string) {

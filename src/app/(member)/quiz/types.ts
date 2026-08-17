@@ -35,10 +35,12 @@ export interface QuizMeData {
   totalParticipants: number;
   top10: LeaderboardEntry[];
   streak: { current: number; longest: number };
+  answerWindowSeconds: number;
 }
 
 export interface AnswerResult {
   isCorrect: boolean;
   pointsAwarded: number;
   correctAnswerIds: string[];
+  expired?: boolean;
 }
