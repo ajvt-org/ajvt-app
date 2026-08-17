@@ -38,6 +38,7 @@ export const api = {
   get: <T>(url: string) => request<T>(url),
   post: <T>(url: string, body?: unknown) => request<T>(url, json("POST", body)),
   patch: <T>(url: string, body?: unknown) => request<T>(url, json("PATCH", body)),
+  put: <T>(url: string, body?: unknown) => request<T>(url, json("PUT", body)),
   del: <T>(url: string, body?: unknown) =>
     request<T>(url, body === undefined ? { method: "DELETE" } : json("DELETE", body)),
 };

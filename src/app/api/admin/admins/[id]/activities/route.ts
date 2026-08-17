@@ -16,6 +16,12 @@ export const PUT = withRoute(
     if (!Array.isArray(activityIds) || activityIds.some((v) => typeof v !== "string")) {
       throw new ValidationError();
     }
+    if (activityIds.length === 0) {
+      throw new ValidationError("اختر نشاطاً واحداً على الأقل");
+    }
+    if (id === session.adminId) {
+      throw new ValidationError("لا يمكنك حصر حسابك الخاص في نشاط");
+    }
 
     const admin = await prisma.admin.findUnique({ where: { id }, select: { username: true } });
     if (!admin) throw new NotFoundError("المشرف غير موجود");
