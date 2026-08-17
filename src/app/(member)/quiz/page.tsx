@@ -25,6 +25,7 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState<string | null>(null);
   const [answered, setAnswered] = useState<Record<string, AnswerResult>>({});
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -68,6 +69,38 @@ export default function QuizPage() {
         : [...current, answerId];
       return { ...prev, [assignment.id]: next };
     });
+  }
+
+  async function revealOptions(assignment: PendingAssignment) {
+    setRevealing(assignment.id);
+    try {
+      const res = await fetch(`/api/quiz/assignments/${assignment.id}/reveal`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.error || "حدث خطأ", "error");
+        return;
+      }
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              pending: prev.pending.map((p) =>
+                p.id === assignment.id
+                  ? {
+                      ...p,
+                      revealedAt: json.revealedAt,
+                      question: { ...p.question, answers: json.answers },
+                    }
+                  : p,
+              ),
+            }
+          : prev,
+      );
+    } catch {
+      showToast("تعذر الاتصال بالخادم", "error");
+    } finally {
+      setRevealing(null);
+    }
   }
 
   async function submitAnswer(assignment: PendingAssignment) {
@@ -174,6 +207,8 @@ export default function QuizPage() {
               selected={selections[assignment.id] || []}
               result={answered[assignment.id]}
               submitting={submitting === assignment.id}
+              revealing={revealing === assignment.id}
+              onReveal={() => revealOptions(assignment)}
               onToggle={(answerId) => toggleAnswer(assignment, answerId)}
               onSubmit={() => submitAnswer(assignment)}
               onContinue={() => dismissAssignment(assignment.id)}

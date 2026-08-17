@@ -35,7 +35,12 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   ]);
 
   return NextResponse.json({
-    pending: pending.map((p) => ({ id: p.id, sentAt: p.sentAt, question: p.question })),
+    pending: pending.map((p) => ({
+      id: p.id,
+      sentAt: p.sentAt,
+      revealedAt: p.revealedAt,
+      question: p.question,
+    })),
     totalPoints: standing.totalPoints,
     rank: standing.rank,
     totalParticipants: standing.totalParticipants,
