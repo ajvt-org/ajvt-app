@@ -28,7 +28,7 @@ export default function AuditLogEntryCard({ log }: { log: AuditLogEntry }) {
       </div>
 
       {log.targetLabel && (
-        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+        <p className="text-xs mt-1" dir="auto" style={{ color: "var(--text-muted)" }}>
           {log.targetLabel}
         </p>
       )}
