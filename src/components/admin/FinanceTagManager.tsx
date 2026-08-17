@@ -4,6 +4,8 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { counted } from "@/lib/arabicCount";
+import { EXPENSE } from "@/lib/messages";
 
 export type FinanceTagRow = { id: string; name: string; count: number; total: number };
 
@@ -55,7 +57,7 @@ export default function FinanceTagManager({
   async function remove(tag: FinanceTagRow) {
     const warning =
       tag.count > 0
-        ? `سيُزال هذا التصنيف من ${tag.count} مصروف. المصاريف نفسها تبقى. متابعة؟`
+        ? `سيُزال هذا التصنيف من ${counted(tag.count, EXPENSE)}. المصاريف نفسها تبقى. متابعة؟`
         : "حذف هذا التصنيف؟";
     if (!confirm(warning)) return;
     await run(() => api.del(`/api/admin/finance-tags/${tag.id}`));
