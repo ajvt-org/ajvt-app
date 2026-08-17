@@ -6,6 +6,7 @@ export const ACTION_LABELS: Record<string, string> = {
   REJECT_MEMBER: "رفض طلب",
   DELETE_MEMBER: "حذف طلب",
   RESTORE_MEMBER: "استرجاع عضو",
+  EXPORT_DATA: "تصدير بيانات",
   CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",
   RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
   CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
