@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { members } from "@/lib/messages";
@@ -11,8 +11,8 @@ export const PATCH = withRoute(
     req: NextRequest,
     { params }: { params: Promise<{ teamId: string; memberId: string }> },
   ) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { teamId, memberId } = await params;
+    const session = await requireTeamAccess(teamId);
 
     const existing = await prisma.teamMember.findUnique({
       where: { teamId_memberId: { teamId, memberId } },
@@ -54,8 +54,8 @@ export const DELETE = withRoute(
     req: NextRequest,
     { params }: { params: Promise<{ teamId: string; memberId: string }> },
   ) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { teamId, memberId } = await params;
+    const session = await requireTeamAccess(teamId);
 
     const existing = await prisma.teamMember.findUnique({
       where: { teamId_memberId: { teamId, memberId } },

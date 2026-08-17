@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireAdmin, requireAdminRole } from "@/lib/auth";
+import { scopedActivityIds } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { normalizeTeamSize } from "@/lib/teamSize";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
 import { activities } from "@/lib/messages";
+import { ForbiddenError } from "@/lib/errors";
 
 export const GET = withRoute("GET /api/admin/activities", async () => {
-  await requireAdminRole("ACTIVITIES");
+  const session = await requireAdmin();
+  const scoped = await scopedActivityIds(session);
+  if (scoped === null && session.role !== "SUPER" && session.role !== "ACTIVITIES") {
+    throw new ForbiddenError();
+  }
 
   const activities = await prisma.activity.findMany({
+    where: scoped ? { id: { in: scoped } } : {},
     orderBy: { order: "asc" },
     include: {
       registrations: {

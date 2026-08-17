@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { money } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
-  const session = await requireAdmin();
+  const session = await requireUnscopedAdmin();
   const role = (session as { role: string }).role;
   const includeMembership = role === "SUPER" || role === "MEMBERS";
   const includeActivity = role === "SUPER" || role === "ACTIVITIES";

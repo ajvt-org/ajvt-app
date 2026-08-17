@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireGroupAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { tournament } from "@/lib/messages";
@@ -8,8 +8,8 @@ import { tournament } from "@/lib/messages";
 export const PATCH = withRoute(
   "PATCH /api/admin/groups/[groupId]",
   async (req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
+    const session = await requireGroupAccess(groupId);
     const { name, capacity } = await req.json();
 
     if (!name?.trim()) {
@@ -51,8 +51,8 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/groups/[groupId]",
   async (_req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { groupId } = await params;
+    const session = await requireGroupAccess(groupId);
 
     const group = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } });
     if (!group) {

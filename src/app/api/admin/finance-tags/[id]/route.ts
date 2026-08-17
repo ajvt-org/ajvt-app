@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { expenses as messages } from "@/lib/messages";
@@ -8,7 +8,7 @@ import { expenses as messages } from "@/lib/messages";
 export const PATCH = withRoute(
   "PATCH /api/admin/finance-tags/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdmin();
+    const session = await requireUnscopedAdmin();
     const { id } = await params;
     const { name } = await req.json();
     const trimmed = typeof name === "string" ? name.trim() : "";
@@ -42,7 +42,7 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/finance-tags/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdmin();
+    const session = await requireUnscopedAdmin();
     const { id } = await params;
 
     const existing = await prisma.financeTag.findUnique({ where: { id } });

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/roster",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    await requireActivityAccess(id);
 
     const registrations = await prisma.activityRegistration.findMany({
       where: { activityId: id, status: "ACTIVE", member: { status: { not: "REJECTED" } } },

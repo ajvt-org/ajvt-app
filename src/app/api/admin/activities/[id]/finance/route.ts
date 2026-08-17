@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityFinanceAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { ledgerTotals, type LedgerInput } from "@/lib/activityLedger";
@@ -9,8 +9,8 @@ import { activities, money } from "@/lib/messages";
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/finance",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("SUPER");
     const { id } = await params;
+    await requireActivityFinanceAccess(id);
 
     const activity = await prisma.activity.findUnique({ where: { id }, select: { id: true } });
     if (!activity) throw new NotFoundError(activities.notFound);
