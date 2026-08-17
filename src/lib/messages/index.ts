@@ -8,3 +8,4 @@ export { quiz } from "./quiz";
 export { auth } from "./auth";
 export { push } from "./push";
 export { expenses } from "./expenses";
+export { AGE_GROUP, MEMBER, ACCOUNT } from "./counts";
