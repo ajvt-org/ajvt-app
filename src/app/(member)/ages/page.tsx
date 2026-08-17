@@ -4,7 +4,7 @@ import AgeStandingsTable from "@/components/AgeStandingsTable";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
 import { getViewerAge } from "@/lib/viewerAge";
 import { counted, countedNoun } from "@/lib/arabicCount";
-import { AGE_GROUP, MEMBER } from "@/lib/messages";
+import { AGE_GROUP, SUBSCRIBER } from "@/lib/messages";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export default async function AgeStandingsPage() {
                 {joined}
               </p>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {countedNoun(joined, MEMBER)} في {counted(standings.length, AGE_GROUP)}
+                {countedNoun(joined, SUBSCRIBER)} في {counted(standings.length, AGE_GROUP)}
               </p>
             </div>
 

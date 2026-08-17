@@ -4,6 +4,8 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { generateMatchSchedule } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
+import { counted } from "@/lib/arabicCount";
+import { MATCH } from "@/lib/messages";
 
 const TARGET_PER_TEAM = 3;
 
@@ -89,7 +91,11 @@ export const POST = withRoute(
       })),
     });
 
-    await logAction(session.username, "GENERATE_MATCH_SCHEDULE", `${allFixtures.length} مباراة`);
+    await logAction(
+      session.username,
+      "GENERATE_MATCH_SCHEDULE",
+      `${counted(allFixtures.length, MATCH)}`,
+    );
 
     return NextResponse.json({ ok: true, created: allFixtures.length });
   },

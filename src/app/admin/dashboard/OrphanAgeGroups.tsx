@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup, OrphanAge } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { MEMBER } from "@/lib/messages";
 
 // An orphan is an age value members still carry that matches no group. They
 // exist because renaming a group used to leave the members behind. Nothing
@@ -64,7 +66,7 @@ export default function OrphanAgeGroups({
               {orphan.name}
             </span>
             <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-              {orphan.count} عضو
+              {counted(orphan.count, MEMBER)}
             </span>
           </div>
           <div className="flex items-center gap-2">

@@ -3,6 +3,8 @@
 import IconLabel from "@/components/IconLabel";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { AgeGroup } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { MEMBER } from "@/lib/messages";
 
 const CHIP = "text-xs px-3 py-1.5 rounded-lg font-bold";
 
@@ -40,7 +42,7 @@ export default function BulkActionsBar({
     >
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          {count} محدد
+          تم تحديد {counted(count, MEMBER)}
         </p>
         <div className="flex gap-2 flex-wrap">
           <button

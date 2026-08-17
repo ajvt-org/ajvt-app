@@ -1,4 +1,6 @@
 import PagedList from "./PagedList";
+import { counted } from "@/lib/arabicCount";
+import { MATCH } from "@/lib/messages";
 
 // A run of results, said in the language the page is written in. W/D/L is an
 // English-league convention, and the pale fills it was drawn in left the three
@@ -42,7 +44,7 @@ export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
           {team.form.length > 0 && (
             <div className="flex items-center gap-1 mt-1">
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                آخر {team.form.length} مباريات:
+                آخر {counted(team.form.length, MATCH)}:
               </span>
               {team.form.map((result, i) => (
                 <span
