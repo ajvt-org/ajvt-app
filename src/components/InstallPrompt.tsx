@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 import { SNOOZE_KEY, SESSION_KEY, shouldOffer, snoozeUntil } from "@/lib/installPrompt";
 
@@ -11,6 +12,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const pathname = usePathname();
+  const shownOn = useRef<string | null>(null);
 
   useEffect(() => {
     const allowed = shouldOffer({
@@ -28,6 +31,15 @@ export default function InstallPrompt() {
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
+  useEffect(() => {
+    if (!deferredPrompt) return;
+    if (shownOn.current === null) {
+      shownOn.current = pathname;
+      return;
+    }
+    if (pathname !== shownOn.current) setDeferredPrompt(null);
+  }, [pathname, deferredPrompt]);
 
   if (!deferredPrompt) return null;
 
