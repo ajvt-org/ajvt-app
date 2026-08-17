@@ -8,6 +8,8 @@ import {
   type AgeSortKey,
   type AgeStanding,
 } from "@/lib/ageStandings";
+import { counted } from "@/lib/arabicCount";
+import { ACCOUNT, MEMBER } from "@/lib/messages";
 
 const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 
@@ -78,8 +80,8 @@ function Row({ entry, mine, sort }: { entry: AgeStanding; mine: boolean; sort: A
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {accounts
-          ? `${entry.members} منتسبا من أصل ${entry.total}`
-          : `${entry.users} حسابا على التطبيق`}
+          ? `${counted(entry.members, MEMBER)} من أصل ${entry.total}`
+          : `${counted(entry.users, ACCOUNT)} على التطبيق`}
       </p>
     </div>
   );
