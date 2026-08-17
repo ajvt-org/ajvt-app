@@ -1,0 +1,24 @@
+name: Setup
+description: Node, dependencies and a generated Prisma client
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 22.x
+        cache: npm
+
+    - uses: actions/cache@v6
+      id: modules
+      with:
+        path: node_modules
+        key: modules-${{ runner.os }}-${{ hashFiles('package-lock.json', 'prisma/schema.prisma') }}
+
+    - if: steps.modules.outputs.cache-hit != 'true'
+      run: npm ci
+      shell: bash
+
+    - if: steps.modules.outputs.cache-hit == 'true'
+      run: npx prisma generate
+      shell: bash
