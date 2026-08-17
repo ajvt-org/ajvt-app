@@ -94,10 +94,6 @@ export default async function LeaderboardPage() {
           </IconLabel>
         </Link>
 
-        <Link href="/ages" className="btn btn-ghost fade-up">
-          <IconLabel name="users">ترتيب الأعصار بالانتساب</IconLabel>
-        </Link>
-
         {leaderboard.length === 0 ? (
           <div className="card p-8 text-center fade-up">
             <div className="mb-3 flex justify-center">
