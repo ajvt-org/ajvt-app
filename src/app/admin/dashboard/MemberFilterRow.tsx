@@ -2,6 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
+import DateRangeFilter from "./DateRangeFilter";
 import type { AgeGroup } from "./types";
 
 const SELECT = "input text-xs";
@@ -66,6 +67,12 @@ export default function MemberFilterRow({
         <option value="partial">دفع ناقص</option>
         <option value="none">لم يدفع</option>
       </select>
+
+      <DateRangeFilter
+        from={filters.from}
+        to={filters.to}
+        onChange={(range) => onChange({ ...filters, ...range })}
+      />
 
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
         {resultCount} نتيجة
