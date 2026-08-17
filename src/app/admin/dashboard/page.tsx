@@ -3,9 +3,15 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
-import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
-import { readFilters, writeFilters, matchesFilters } from "@/lib/memberFilters";
+import {
+  readFilters,
+  writeFilters,
+  matchesFilters,
+  membershipYearsPresent,
+  upToDate,
+  NO_FILTERS,
+} from "@/lib/memberFilters";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
@@ -21,6 +27,8 @@ import StatsPanel from "./StatsPanel";
 import DashboardToolbar from "./DashboardToolbar";
 import MemberSearch from "./MemberSearch";
 import MemberFilterRow from "./MemberFilterRow";
+import UpToDateSummary from "./UpToDateSummary";
+import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
 import Pagination from "./Pagination";
@@ -31,6 +39,7 @@ import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 function AdminDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const membership = useMembershipSettings();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFiltersState] = useState(
@@ -259,8 +268,16 @@ function AdminDashboardInner() {
     () => [...new Set(members.map((m) => m.paymentMethod).filter(Boolean))],
     [members],
   );
+  const years = useMemo(() => membershipYearsPresent(members), [members]);
+  const standing = useMemo(() => upToDate(members, membership), [members, membership]);
 
-  const filtered = members.filter((m) => matchesFilters(m, filters, MEMBERSHIP_FEE));
+  const withStanding = (want: string) => ({
+    ...NO_FILTERS,
+    status: "ACTIVE",
+    standing: filters.standing === want ? "" : want,
+  });
+
+  const filtered = members.filter((m) => matchesFilters(m, filters, membership));
   const filterKey = JSON.stringify(filters);
   if (filterKey !== lastFilterKey) {
     setLastFilterKey(filterKey);
@@ -299,6 +316,17 @@ function AdminDashboardInner() {
 
       {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
 
+      <UpToDateSummary
+        year={membership.year}
+        paid={standing.paid}
+        active={standing.active}
+        showing={
+          filters.standing === "paid" || filters.standing === "behind" ? filters.standing : null
+        }
+        onShowPaid={() => setFilters(withStanding("paid"))}
+        onShowBehind={() => setFilters(withStanding("behind"))}
+      />
+
       <MemberSearch
         value={filters.q}
         onChange={(q) => setFilters({ ...filters, q })}
@@ -310,6 +338,7 @@ function AdminDashboardInner() {
         filters={filters}
         ageGroups={ageGroups}
         paymentMethods={paymentMethods}
+        years={years}
         resultCount={filtered.length}
         onChange={setFilters}
       />
