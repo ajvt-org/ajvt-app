@@ -40,9 +40,6 @@ async function main() {
   for (const name of DEFAULT_AGE_GROUPS) {
     await prisma.ageGroup.upsert({ where: { name }, update: {}, create: { name } });
   }
-  // Carry over any age already in use by a member (e.g. free-typed on the
-  // membership form) that isn't part of the default list yet, so the
-  // admin-managed list never misses a value real members already have.
   const usedAges = await prisma.member.findMany({ distinct: ["age"], select: { age: true } });
   for (const { age } of usedAges) {
     if (age)

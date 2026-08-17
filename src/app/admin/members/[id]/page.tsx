@@ -249,8 +249,6 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      {/* The trail was already written on every change; nothing could read a
-          single record's share of it until now. */}
       <ProfileSection icon="list" title={`سجل التغييرات (${history.length})`}>
         {history.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>

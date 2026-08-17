@@ -7,9 +7,6 @@ import IconLabel from "@/components/IconLabel";
 
 export type FinanceTagRow = { id: string; name: string; count: number; total: number };
 
-// Where the tags themselves are kept. Each row carries what has been spent
-// under it, which is the question the tags were added to answer; deleting one
-// leaves the expenses alone, so the totals move but no record is lost.
 export default function FinanceTagManager({
   tags,
   onChanged,

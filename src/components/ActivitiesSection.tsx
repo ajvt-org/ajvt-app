@@ -134,8 +134,6 @@ export default function ActivitiesSection({
 }
 
 function ActivityCard({ activity, member }: { activity: Activity; member: EligibleMember | null }) {
-  // A row says what the activity is and where this account stands with it.
-  // Anything more waits for the activity's own page.
   const registered = !!member?.registrations.some(
     (r) => r.activityId === activity.id && r.status !== "REJECTED",
   );
