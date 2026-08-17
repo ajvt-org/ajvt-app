@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
-import type { MemberOption, Proof } from "./paymentTypes";
+import type { ActivityOption, MemberOption, Proof } from "./paymentTypes";
 
 interface Loaded {
   proofs: Proof[];
   members: MemberOption[];
+  activities: ActivityOption[];
   tags: FinanceTag[];
 }
 
-const EMPTY: Loaded = { proofs: [], members: [], tags: [] };
+const EMPTY: Loaded = { proofs: [], members: [], activities: [], tags: [] };
 
 function readJson(url: string) {
   return fetch(url)
@@ -36,14 +37,19 @@ export function usePaymentsData() {
       }),
       readJson("/api/admin/members"),
       readJson("/api/admin/finance-tags"),
+      readJson("/api/admin/activities"),
     ])
-      .then(([proofsData, membersData, tagsData]) =>
+      .then(([proofsData, membersData, tagsData, activitiesData]) =>
         setData({
           proofs: proofsData?.proofs ?? [],
           tags: tagsData?.tags ?? [],
           members: (membersData?.members ?? []).map((m: MemberOption) => ({
             id: m.id,
             fullName: m.fullName,
+          })),
+          activities: (activitiesData?.activities ?? []).map((a: ActivityOption) => ({
+            id: a.id,
+            title: a.title,
           })),
         }),
       )

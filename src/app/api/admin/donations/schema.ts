@@ -39,4 +39,5 @@ export const donationCreateSchema = z.object({
   proof: z.string(INVALID).nullish(),
   donorPhoto: z.string(INVALID).nullish(),
   paymentMethod: paymentMethod.nullish(),
+  activityId: z.string(INVALID).nullish(),
 });

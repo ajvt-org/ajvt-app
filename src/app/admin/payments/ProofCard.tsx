@@ -10,11 +10,17 @@ import DonationActions from "./DonationActions";
 import DonationEditForm from "./DonationEditForm";
 import LinkMemberPanel from "./LinkMemberPanel";
 import ProofThumb from "./ProofThumb";
-import { STATUS_CLASS, STATUS_LABEL, type MemberOption, type Proof } from "./paymentTypes";
+import {
+  STATUS_CLASS,
+  STATUS_LABEL,
+  type ActivityOption,
+  type MemberOption,
+  type Proof,
+} from "./paymentTypes";
 
 function Origin({ proof }: { proof: Proof }) {
   if (proof.kind === "MEMBERSHIP") return <IconLabel name="card">عضوية الرابطة</IconLabel>;
-  if (proof.kind === "ACTIVITY") return <IconLabel name="trophy">{proof.activityTitle}</IconLabel>;
+  if (proof.activityTitle) return <IconLabel name="trophy">{proof.activityTitle}</IconLabel>;
   return <IconLabel name="heart">دعم عام للرابطة</IconLabel>;
 }
 
@@ -26,6 +32,7 @@ function statusText(proof: Proof) {
 export default function ProofCard({
   proof,
   members,
+  activities,
   financeTags,
   busy,
   onReview,
@@ -35,6 +42,7 @@ export default function ProofCard({
 }: {
   proof: Proof;
   members: MemberOption[];
+  activities: ActivityOption[];
   financeTags: FinanceTag[];
   busy: boolean;
   onReview: (status: "ACTIVE" | "REJECTED") => void;
@@ -108,6 +116,7 @@ export default function ProofCard({
               {editing && (
                 <DonationEditForm
                   proof={proof}
+                  activities={activities}
                   onCancel={() => setEditing(false)}
                   onSaved={(changes) => {
                     onPatch(changes);
