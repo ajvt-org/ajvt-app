@@ -9,8 +9,8 @@ import { api, errorMessage } from "@/lib/api";
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import ExpenseTagChips from "@/components/admin/ExpenseTagChips";
-import ExpenseTagManager, { type ExpenseTagRow } from "@/components/admin/ExpenseTagManager";
+import FinanceTagChips from "@/components/admin/FinanceTagChips";
+import FinanceTagManager, { type FinanceTagRow } from "@/components/admin/FinanceTagManager";
 
 interface Expense {
   id: string;
@@ -86,7 +86,7 @@ export default function AdminExpensesPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [tags, setTags] = useState<ExpenseTagRow[]>([]);
+  const [tags, setTags] = useState<FinanceTagRow[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState(emptyExpenseForm);
@@ -170,7 +170,7 @@ export default function AdminExpensesPage() {
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/admin/expense-tags").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/admin/finance-tags").then((r) => (r.ok ? r.json() : null)),
     ]).then(([summaryData, expensesData, tagsData]) => {
       if (summaryData) setSummary(summaryData);
       if (expensesData?.expenses) setExpenses(expensesData.expenses);
@@ -642,7 +642,7 @@ export default function AdminExpensesPage() {
       </div>
 
       {showTagManager && (
-        <ExpenseTagManager tags={tags} onChanged={load} onClose={() => setShowTagManager(false)} />
+        <FinanceTagManager tags={tags} onChanged={load} onClose={() => setShowTagManager(false)} />
       )}
 
       {tags.length > 0 && (
@@ -650,7 +650,7 @@ export default function AdminExpensesPage() {
           <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
             تصفية:
           </span>
-          <ExpenseTagChips
+          <FinanceTagChips
             tags={tags}
             selected={tagFilter}
             onToggle={(id) =>
@@ -722,7 +722,7 @@ export default function AdminExpensesPage() {
                     )}
                     {e.tags.length > 0 && (
                       <div className="mt-1.5">
-                        <ExpenseTagChips tags={e.tags} />
+                        <FinanceTagChips tags={e.tags} />
                       </div>
                     )}
                   </div>
@@ -896,7 +896,7 @@ export default function AdminExpensesPage() {
                 <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
                   التصنيفات
                 </p>
-                <ExpenseTagChips
+                <FinanceTagChips
                   tags={tags}
                   selected={form.tagIds}
                   onToggle={(id) =>

@@ -311,6 +311,7 @@ model Donation {
   member        Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  tags          FinanceTag[]
 
   @@index([memberId])
   @@index([status])
@@ -328,7 +329,7 @@ model Expense {
   createdBy String // admin username, plain string like AuditLog.adminUsername — not a relation
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
-  tags      ExpenseTag[]
+  tags      FinanceTag[]
 
   @@index([date])
 }
@@ -336,11 +337,12 @@ model Expense {
 // What the money was for, as a list an admin keeps rather than free text, so
 // spending can be totalled by tag. Many per expense: one payment can be both
 // transport and a tournament.
-model ExpenseTag {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  createdAt DateTime  @default(now())
+model FinanceTag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  createdAt DateTime   @default(now())
   expenses  Expense[]
+  donations Donation[]
 }
 
 // One row per (day, anonymous visitor) — the visitor cookie is set by

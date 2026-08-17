@@ -1,17 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { GET as LIST_TAGS, POST as CREATE_TAG } from "@/app/api/admin/expense-tags/route";
-import { PATCH as RENAME_TAG, DELETE as DELETE_TAG } from "@/app/api/admin/expense-tags/[id]/route";
+import { GET as LIST_TAGS, POST as CREATE_TAG } from "@/app/api/admin/finance-tags/route";
+import { PATCH as RENAME_TAG, DELETE as DELETE_TAG } from "@/app/api/admin/finance-tags/[id]/route";
 import { POST as CREATE_EXPENSE, GET as LIST_EXPENSES } from "@/app/api/admin/expenses/route";
 import { PATCH as UPDATE_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { PATCH as UPDATE_DONATION } from "@/app/api/admin/donations/[id]/route";
+import { resetDb, post, patch, createAdmin, signInAsAdmin } from "./helpers";
 
 function withId(url: string, id: string, body?: unknown) {
   return [post(`${url}/${id}`, body ?? {}), { params: Promise.resolve({ id }) }] as const;
 }
 
 async function aTag(name: string) {
-  return prisma.expenseTag.create({ data: { name } });
+  return prisma.financeTag.create({ data: { name } });
 }
 
 describe("expense tags", () => {
@@ -24,29 +25,29 @@ describe("expense tags", () => {
     await resetDb();
 
     expect((await LIST_TAGS()).status).toBe(401);
-    expect((await CREATE_TAG(post("/api/admin/expense-tags", { name: "نقل" }))).status).toBe(401);
-    expect(await prisma.expenseTag.count()).toBe(0);
+    expect((await CREATE_TAG(post("/api/admin/finance-tags", { name: "نقل" }))).status).toBe(401);
+    expect(await prisma.financeTag.count()).toBe(0);
   });
 
   it("creates a tag", async () => {
-    const res = await CREATE_TAG(post("/api/admin/expense-tags", { name: "نقل" }));
+    const res = await CREATE_TAG(post("/api/admin/finance-tags", { name: "نقل" }));
 
     expect(res.status).toBe(201);
-    expect(await prisma.expenseTag.count()).toBe(1);
+    expect(await prisma.financeTag.count()).toBe(1);
   });
 
   it("will not take a blank name", async () => {
-    expect((await CREATE_TAG(post("/api/admin/expense-tags", { name: "   " }))).status).toBe(400);
-    expect(await prisma.expenseTag.count()).toBe(0);
+    expect((await CREATE_TAG(post("/api/admin/finance-tags", { name: "   " }))).status).toBe(400);
+    expect(await prisma.financeTag.count()).toBe(0);
   });
 
   it("will not take the same name twice", async () => {
     await aTag("نقل");
 
-    const res = await CREATE_TAG(post("/api/admin/expense-tags", { name: "نقل" }));
+    const res = await CREATE_TAG(post("/api/admin/finance-tags", { name: "نقل" }));
 
     expect(res.status).toBe(409);
-    expect(await prisma.expenseTag.count()).toBe(1);
+    expect(await prisma.financeTag.count()).toBe(1);
   });
 
   it("renames a tag without touching what it is on", async () => {
@@ -55,7 +56,7 @@ describe("expense tags", () => {
       data: { label: "حافلة", amount: 5000, createdBy: "admin", tags: { connect: { id: tag.id } } },
     });
 
-    const res = await RENAME_TAG(...withId("/api/admin/expense-tags", tag.id, { name: "مواصلات" }));
+    const res = await RENAME_TAG(...withId("/api/admin/finance-tags", tag.id, { name: "مواصلات" }));
 
     expect(res.status).toBe(200);
     const after = await prisma.expense.findFirstOrThrow({ include: { tags: true } });
@@ -69,11 +70,11 @@ describe("expense tags", () => {
       data: { label: "حافلة", amount: 5000, createdBy: "admin", tags: { connect: { id: tag.id } } },
     });
 
-    const res = await DELETE_TAG(...withId("/api/admin/expense-tags", tag.id));
+    const res = await DELETE_TAG(...withId("/api/admin/finance-tags", tag.id));
 
     expect(res.status).toBe(200);
     expect(await prisma.expense.count()).toBe(1);
-    expect(await prisma.expenseTag.count()).toBe(0);
+    expect(await prisma.financeTag.count()).toBe(0);
   });
 
   it("totals what has been spent under each tag", async () => {
@@ -178,5 +179,42 @@ describe("tagging an expense", () => {
     const after = await prisma.expense.findFirstOrThrow({ include: { tags: true } });
     expect(after.amount).toBe(6000);
     expect(after.tags.map((t) => t.name)).toEqual(["نقل"]);
+  });
+});
+
+describe("tagging income", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("puts a tag on a donation and totals it as income", async () => {
+    await signInAsAdmin(await createAdmin());
+    const tag = await prisma.financeTag.create({ data: { name: "القافلة الصحية" } });
+    const donation = await prisma.donation.create({
+      data: { donorName: "فاعل خير", amount: 500, status: "ACTIVE" },
+    });
+
+    const res = await UPDATE_DONATION(
+      patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }),
+      { params: Promise.resolve({ id: donation.id }) },
+    );
+    expect(res.status).toBe(200);
+
+    const { tags } = await (await LIST_TAGS()).json();
+    expect(tags[0]).toMatchObject({ name: "القافلة الصحية", income: 500, incomeCount: 1 });
+  });
+
+  it("leaves a rejected donation out of the income total", async () => {
+    await signInAsAdmin(await createAdmin());
+    const tag = await prisma.financeTag.create({ data: { name: "مصاريف عامة" } });
+    const donation = await prisma.donation.create({
+      data: { donorName: "فاعل خير", amount: 500, status: "REJECTED" },
+    });
+    await UPDATE_DONATION(patch(`/api/admin/donations/${donation.id}`, { tagIds: [tag.id] }), {
+      params: Promise.resolve({ id: donation.id }),
+    });
+
+    const { tags } = await (await LIST_TAGS()).json();
+    expect(tags[0]).toMatchObject({ income: 0, incomeCount: 0 });
   });
 });
