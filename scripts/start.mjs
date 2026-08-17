@@ -1,4 +1,6 @@
-// Production start: run migrations → seed admin if needed → start Next.js
+// Production start: run migrations, seed the admin if there is none, start Next.js.
+// The seed is not wrapped: it refuses to create an admin with a known password,
+// and that refusal has to stop the boot rather than be logged and passed over.
 import { execSync } from "child_process";
 import { mkdirSync } from "fs";
 
@@ -10,11 +12,7 @@ console.log("→ Running database migrations...");
 execSync("npx prisma migrate deploy", { stdio: "inherit" });
 
 console.log("→ Seeding admin (skipped if exists)...");
-try {
-  execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
-} catch {
-  console.log("  Seed skipped or already done.");
-}
+execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
 
 // The reuse check only sees a proof it has fingerprinted, and the fingerprints
 // of everything uploaded before it shipped come from this. Left as a manual

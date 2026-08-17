@@ -42,7 +42,7 @@ After `npm run db:seed:dev`:
 
 Admins sign in at `/admin/login`, members at `/login`. The exact member phone numbers are printed when the seed finishes.
 
-Plain `npm run db:seed` only creates the `admin` account and the age groups. That is the one that runs in production, so keep the fake data out of it.
+Plain `npm run db:seed` only creates the `admin` account and the age groups. That is the one that runs in production, so keep the fake data out of it. In production it takes the first password from `ADMIN_INITIAL_PASSWORD` and refuses to boot without it, rather than falling back to a value written down here. Once the account exists the seed leaves its password alone, so changing the variable later does nothing.
 
 ## Scripts
 
@@ -116,6 +116,10 @@ Copy `.env.example` to `.env`. Two variables are required:
 
 - `DATABASE_URL` points at the container from `docker-compose.dev.yml`, on port 5433 so it does not clash with a Postgres you may already run
 - `JWT_SECRET` signs the session cookies. The app throws on startup without it. Use any string locally, a real random value in production
+
+One more is required in production only:
+
+- `ADMIN_INITIAL_PASSWORD` is the password the first `admin` account is created with. The boot fails without it in production, so no deployment ever comes up with a password that is public knowledge. Locally it falls back to `admin123`. It is read once, when there is no admin yet — rotating the real password is done from the admin panel
 
 The rest are optional and the app works without them:
 
