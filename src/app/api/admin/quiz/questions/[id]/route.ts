@@ -4,6 +4,8 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { quiz } from "@/lib/messages";
+import { counted } from "@/lib/arabicCount";
+import { ANSWER } from "@/lib/messages";
 
 interface AnswerInput {
   text: string;
@@ -74,7 +76,7 @@ export const PATCH = withRoute(
       const correctGiven = (answers as AnswerInput[]).filter((a) => a.isCorrect).length;
       if (correctGiven !== finalCorrectCount) {
         return NextResponse.json(
-          { error: `يجب تحديد ${finalCorrectCount} إجابة (إجابات) صحيحة بالضبط` },
+          { error: `يجب تحديد ${counted(finalCorrectCount, ANSWER)} (إجابات) صحيحة بالضبط` },
           { status: 400 },
         );
       }

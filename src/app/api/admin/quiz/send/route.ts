@@ -5,6 +5,8 @@ import { getQuizSettings, sendSameQuestionToAll, sendRandomBatch } from "@/lib/q
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { quiz } from "@/lib/messages";
+import { counted } from "@/lib/arabicCount";
+import { USER } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/quiz/send", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
@@ -26,7 +28,7 @@ export const POST = withRoute("POST /api/admin/quiz/send", async (req: NextReque
     await logAction(
       session.username,
       "SEND_QUIZ_QUESTION",
-      `نفس السؤال للجميع — ${question.text.slice(0, 40)} (${result.sentCount} مستخدم)`,
+      `نفس السؤال للجميع — ${question.text.slice(0, 40)} (${counted(result.sentCount, USER)})`,
     );
     return NextResponse.json(result);
   }
@@ -39,7 +41,7 @@ export const POST = withRoute("POST /api/admin/quiz/send", async (req: NextReque
     await logAction(
       session.username,
       "SEND_QUIZ_QUESTION",
-      `دفعة عشوائية (${result.sentCount} مستخدم)`,
+      `دفعة عشوائية (${counted(result.sentCount, USER)})`,
     );
     return NextResponse.json(result);
   }
