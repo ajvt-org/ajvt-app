@@ -90,7 +90,7 @@ export default function ExpenseFormDialog({
               imageUrlPrefix="/api/files"
               variant="cover"
               label="صورة الفاتورة"
-              placeholderIcon="🧾"
+              placeholderIcon="receipt"
               onUpload={(filename) => onChange({ proof: filename })}
             />
           </div>

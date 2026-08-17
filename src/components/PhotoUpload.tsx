@@ -1,14 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Icon from "./Icon";
+import Icon, { type IconName } from "./Icon";
+import IconLabel from "./IconLabel";
 
 interface PhotoUploadProps {
   photo: string | null;
   onUpload: (filename: string) => Promise<void> | void;
   imageUrlPrefix?: string;
   label?: string;
-  placeholderIcon?: string;
+  placeholderIcon?: IconName;
   variant?: "avatar" | "cover" | "hero";
 }
 
@@ -17,7 +18,7 @@ export default function PhotoUpload({
   onUpload,
   imageUrlPrefix = "/api/files",
   label = "الصورة الشخصية",
-  placeholderIcon = "👤",
+  placeholderIcon = "user",
   variant = "avatar",
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -113,15 +114,15 @@ export default function PhotoUpload({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-3xl" style={{ color: "var(--mint-500)" }}>
-              {placeholderIcon}
+            <span style={{ color: "var(--mint-500)" }}>
+              <Icon name={placeholderIcon} size={30} />
             </span>
           )}
           <div
             className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1 text-xs py-1 font-semibold"
             style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
           >
-            {uploading ? "..." : `📷 ${hint}`}
+            {uploading ? "..." : <IconLabel name="camera">{hint}</IconLabel>}
           </div>
         </button>
         {error && (
@@ -153,15 +154,15 @@ export default function PhotoUpload({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={displayUrl} alt={label} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-2xl" style={{ color: "var(--mint-500)" }}>
-            {placeholderIcon}
+          <span style={{ color: "var(--mint-500)" }}>
+            <Icon name={placeholderIcon} size={24} />
           </span>
         )}
         <div
           className="absolute bottom-0 inset-x-0 flex items-center justify-center text-[10px] py-0.5"
           style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
         >
-          {uploading ? "..." : "📷"}
+          {uploading ? "..." : <Icon name="camera" size={11} />}
         </div>
       </button>
       <div className="min-w-0">

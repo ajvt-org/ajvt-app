@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Icon from "@/components/Icon";
 import Link from "next/link";
 
 export default function Error({
@@ -17,7 +18,9 @@ export default function Error({
   return (
     <div className="app-shell">
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center gap-5">
-        <div className="text-5xl">⚠️</div>
+        <div style={{ color: "#dc2626" }}>
+          <Icon name="warning" size={48} />
+        </div>
         <div>
           <h1 className="text-lg font-black" style={{ color: "var(--text-main)" }}>
             حدث خطأ غير متوقع

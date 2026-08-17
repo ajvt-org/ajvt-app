@@ -24,7 +24,19 @@ export default function GlobalError({
         }}
       >
         <div>
-          <div style={{ fontSize: "3rem" }}>⚠️</div>
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#dc2626"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3l9.5 17H2.5L12 3zM12 10v4M12 17.5h.01" />
+          </svg>
           <h1 style={{ fontSize: "1.125rem", fontWeight: 900, margin: "0.75rem 0 0" }}>
             حدث خطأ غير متوقع
           </h1>

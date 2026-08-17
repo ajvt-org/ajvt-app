@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import IconLabel from "@/components/IconLabel";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -113,7 +114,7 @@ function LoginForm() {
               className="p-3 rounded-xl text-sm font-semibold"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              ⚠️ {error}
+              <IconLabel name="warning">{error}</IconLabel>
             </div>
           )}
 

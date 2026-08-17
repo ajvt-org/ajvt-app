@@ -95,7 +95,7 @@ export default function DonationEditForm({
         photo={form.proof}
         variant="cover"
         label="إثبات الدفع"
-        placeholderIcon="🧾"
+        placeholderIcon="receipt"
         onUpload={(filename) => set({ proof: filename })}
       />
 
@@ -106,7 +106,7 @@ export default function DonationEditForm({
             imageUrlPrefix="/api/files/donation"
             variant="avatar"
             label="صورة المتبرع"
-            placeholderIcon="👤"
+            placeholderIcon="user"
             onUpload={(filename) => set({ donorPhoto: filename })}
           />
           <input

@@ -297,7 +297,7 @@ export default function TeamsTab({
             imageUrlPrefix="/api/files/team"
             variant="avatar"
             label="شعار الفريق"
-            placeholderIcon="🛡️"
+            placeholderIcon="shield"
             onUpload={(filename) => setTeamLogo(team.id, filename)}
           />
 
@@ -440,7 +440,7 @@ export default function TeamsTab({
           imageUrlPrefix="/api/files/team"
           variant="avatar"
           label="شعار الفريق"
-          placeholderIcon="🛡️"
+          placeholderIcon="shield"
           onUpload={(filename) => setNewTeamLogo(filename)}
         />
         <input
