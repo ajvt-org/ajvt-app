@@ -6,16 +6,16 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
+import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
-// Deciding on the file rather than back on the list. The file is what an admin
-// opens to answer "should this one be accepted", and until now it could show
-// the proof, the history and the payment without being able to say yes or no.
 export default function MemberDecision({
   memberId,
+  fullName,
   status,
   onDecided,
 }: {
   memberId: string;
+  fullName: string;
   status: string;
   onDecided: () => void;
 }) {
@@ -23,6 +23,7 @@ export default function MemberDecision({
   const [picking, setPicking] = useState(false);
   const [reason, setReason] = useState<string>(REJECTION_REASONS[0]);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
 
   async function decide(action: "ACTIVE" | "REJECTED", rejectionReason?: string) {
@@ -43,16 +44,16 @@ export default function MemberDecision({
     }
   }
 
-  async function remove() {
-    if (!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+  async function remove(confirmName: string) {
     setBusy(true);
     setError("");
     try {
-      await api.del(`/api/admin/members/${memberId}`);
+      await api.del(`/api/admin/members/${memberId}`, { confirmName });
       router.push("/admin/dashboard");
     } catch (e) {
       setError(errorMessage(e));
       setBusy(false);
+      setConfirming(false);
     }
   }
 
@@ -108,9 +109,6 @@ export default function MemberDecision({
             <button
               onClick={() => setPicking(true)}
               disabled={busy}
-              // Full width only when it sits beside the accept button. Alone on
-              // an accepted member's file, a wide red bar reads as the thing to
-              // press, which it is not.
               className={`btn text-sm ${status === "PENDING" ? "flex-1" : ""}`}
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
@@ -118,7 +116,7 @@ export default function MemberDecision({
             </button>
           )}
           <button
-            onClick={remove}
+            onClick={() => setConfirming(true)}
             disabled={busy}
             className="btn text-sm"
             style={{ background: "transparent", color: "var(--text-muted)" }}
@@ -132,6 +130,15 @@ export default function MemberDecision({
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
           <Icon name="warning" size={13} className="icon-inline" /> {error}
         </p>
+      )}
+
+      {confirming && (
+        <ConfirmDeleteDialog
+          name={fullName}
+          loading={busy}
+          onConfirm={remove}
+          onClose={() => setConfirming(false)}
+        />
       )}
     </div>
   );

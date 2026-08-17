@@ -26,7 +26,7 @@ import MemberList from "./MemberList";
 import Pagination from "./Pagination";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
-import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
 function AdminDashboardInner() {
   const router = useRouter();
