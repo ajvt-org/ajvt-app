@@ -1,9 +1,40 @@
-import type { AgeStanding } from "@/lib/ageStandings";
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  AGE_SORTS,
+  DEFAULT_AGE_SORT,
+  sortStandings,
+  type AgeSortKey,
+  type AgeStanding,
+} from "@/lib/ageStandings";
 
 const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 
-function Row({ entry, mine }: { entry: AgeStanding; mine: boolean }) {
+function Bar({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="space-y-1">
+      <div
+        className="h-2 rounded-full overflow-hidden"
+        style={{ background: "var(--mint-100)" }}
+        role="img"
+        aria-label={`${label} ${value}٪`}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${value}%`, background: "var(--mint-600)" }}
+        />
+      </div>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {label} {value}٪
+      </p>
+    </div>
+  );
+}
+
+function Row({ entry, mine, sort }: { entry: AgeStanding; mine: boolean; sort: AgeSortKey }) {
   const medal = MEDALS[entry.rank - 1];
+  const accounts = sort === "users" || sort === "userRate";
 
   return (
     <div
@@ -36,24 +67,19 @@ function Row({ entry, mine }: { entry: AgeStanding; mine: boolean }) {
           </p>
         </div>
         <span className="font-black shrink-0" style={{ color: "var(--mint-700)" }}>
-          {entry.members} / {entry.total}
+          {accounts ? entry.users : entry.members} / {entry.total}
         </span>
       </div>
 
-      <div
-        className="h-2 rounded-full overflow-hidden"
-        style={{ background: "var(--mint-100)" }}
-        role="img"
-        aria-label={`نسبة الانتساب ${entry.rate}٪`}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${entry.rate}%`, background: "var(--mint-600)" }}
-        />
-      </div>
+      <Bar
+        value={accounts ? entry.userRate : entry.rate}
+        label={accounts ? "نسبة الحسابات" : "نسبة الانتساب"}
+      />
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        نسبة الانتساب {entry.rate}٪
+        {accounts
+          ? `${entry.members} منتسبا من أصل ${entry.total}`
+          : `${entry.users} حسابا على التطبيق`}
       </p>
     </div>
   );
@@ -66,10 +92,35 @@ export default function AgeStandingsTable({
   standings: AgeStanding[];
   mine?: string | null;
 }) {
+  const [sort, setSort] = useState<AgeSortKey>(DEFAULT_AGE_SORT);
+  const rows = useMemo(() => sortStandings(standings, sort), [standings, sort]);
+
   return (
     <div className="space-y-3">
-      {standings.map((entry) => (
-        <Row key={entry.name} entry={entry} mine={!!mine && entry.name === mine} />
+      <div>
+        <label
+          htmlFor="age-sort"
+          className="block text-xs font-bold mb-1.5"
+          style={{ color: "var(--text-muted)" }}
+        >
+          الترتيب حسب
+        </label>
+        <select
+          id="age-sort"
+          className="input"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as AgeSortKey)}
+        >
+          {AGE_SORTS.map((option) => (
+            <option key={option.key} value={option.key}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {rows.map((entry) => (
+        <Row key={entry.name} entry={entry} mine={!!mine && entry.name === mine} sort={sort} />
       ))}
     </div>
   );
