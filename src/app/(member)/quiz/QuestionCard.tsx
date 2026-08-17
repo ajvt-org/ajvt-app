@@ -2,6 +2,7 @@
 
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Countdown from "./Countdown";
 import type { AnswerData, AnswerResult, PendingAssignment } from "./types";
 
 const NEUTRAL = {
@@ -35,6 +36,8 @@ function Outcome({ result, onContinue }: { result: AnswerResult; onContinue: () 
       >
         {result.isCorrect ? (
           <IconLabel name="check">إجابة صحيحة! +{result.pointsAwarded} نقطة</IconLabel>
+        ) : result.expired ? (
+          <IconLabel name="clock">انتهى الوقت</IconLabel>
         ) : (
           <IconLabel name="close">إجابة خاطئة</IconLabel>
         )}
@@ -52,7 +55,10 @@ export default function QuestionCard({
   result,
   submitting,
   revealing,
+  windowSeconds,
+  timedOut,
   onReveal,
+  onExpire,
   onToggle,
   onSubmit,
   onContinue,
@@ -62,13 +68,17 @@ export default function QuestionCard({
   result?: AnswerResult;
   submitting: boolean;
   revealing: boolean;
+  windowSeconds: number;
+  timedOut: boolean;
   onReveal: () => void;
+  onExpire: () => void;
   onToggle: (answerId: string) => void;
   onSubmit: () => void;
   onContinue: () => void;
 }) {
   const question = assignment.question;
   const revealed = assignment.revealedAt !== null;
+  const locked = !!result || timedOut;
 
   return (
     <div className="card p-5 space-y-4 fade-up delay-1">
@@ -100,6 +110,14 @@ export default function QuestionCard({
         </>
       ) : (
         <>
+          {!result && assignment.revealedAt && !timedOut && (
+            <Countdown
+              revealedAt={assignment.revealedAt}
+              windowSeconds={windowSeconds}
+              onExpire={onExpire}
+            />
+          )}
+
           {!result && question.correctCount > 1 && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               اختر {question.correctCount} إجابات صحيحة
@@ -111,12 +129,12 @@ export default function QuestionCard({
               <button
                 key={answer.id}
                 type="button"
-                disabled={!!result}
+                disabled={locked}
                 onClick={() => onToggle(answer.id)}
                 className="w-full text-right px-4 py-3 rounded-xl font-semibold text-sm transition-all"
                 style={{
                   ...answerStyle(answer, selected.includes(answer.id), result),
-                  cursor: result ? "default" : "pointer",
+                  cursor: locked ? "default" : "pointer",
                 }}
               >
                 {answer.text}
@@ -129,10 +147,10 @@ export default function QuestionCard({
           ) : (
             <button
               className="btn btn-primary"
-              disabled={selected.length === 0 || submitting}
+              disabled={selected.length === 0 || submitting || timedOut}
               onClick={onSubmit}
             >
-              {submitting ? "..." : "إرسال الإجابة"}
+              {timedOut ? "انتهى الوقت" : submitting ? "..." : "إرسال الإجابة"}
             </button>
           )}
         </>

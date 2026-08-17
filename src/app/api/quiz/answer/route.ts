@@ -6,6 +6,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { quizAnswerSchema } from "./schema";
 import { quiz } from "@/lib/messages";
+import { windowExpired, DEFAULT_ANSWER_WINDOW_SECONDS } from "@/lib/quizWindow";
 
 export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) => {
   const session = await requireUser();
@@ -43,13 +44,18 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
   }
 
   const correctAnswerIds = assignment.question.answers.filter((a) => a.isCorrect).map((a) => a.id);
-  const isCorrect = computeIsCorrect(correctAnswerIds, selectedAnswerIds);
+  const now = new Date();
+  const expired = windowExpired(assignment.revealedAt, now, DEFAULT_ANSWER_WINDOW_SECONDS);
+  const isCorrect = !expired && computeIsCorrect(correctAnswerIds, selectedAnswerIds);
   const pointsAwarded = isCorrect ? assignment.question.points : 0;
 
-  await prisma.quizAssignment.update({
-    where: { id: assignment.id },
-    data: { answeredAt: new Date(), selectedAnswerIds, isCorrect, pointsAwarded },
+  const closed = await prisma.quizAssignment.updateMany({
+    where: { id: assignment.id, answeredAt: null },
+    data: { answeredAt: now, selectedAnswerIds, isCorrect, pointsAwarded },
   });
+  if (closed.count === 0) {
+    return NextResponse.json({ error: quiz.alreadyAnswered }, { status: 400 });
+  }
 
-  return NextResponse.json({ isCorrect, pointsAwarded, correctAnswerIds });
+  return NextResponse.json({ isCorrect, pointsAwarded, correctAnswerIds, expired });
 });
