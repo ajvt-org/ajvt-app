@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
+import { GET as LIST_YEARS } from "@/app/api/admin/members/[id]/memberships/route";
 
 const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 const YEAR = runningYear();
@@ -30,6 +31,8 @@ function member(over: Record<string, unknown> = {}) {
 
 const renew = (id: string, body: unknown = payment) =>
   RENEW(post(`/api/admin/members/${id}/renew`, body), withId(id));
+
+const YEARS = (id: string) => LIST_YEARS(get(`/api/admin/members/${id}/memberships`), withId(id));
 
 describe("renewing a membership", () => {
   beforeEach(async () => {
@@ -136,5 +139,44 @@ describe("renewing a membership", () => {
       where: { memberId: existing.id, source: "MEMBERSHIP" },
     });
     expect(donation.amount).toBe(1000 - MEMBERSHIP_FEE);
+  });
+});
+
+describe("reading a member's years", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await saveAppSettings({ membershipYear: YEAR, membershipFee: 100 });
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+  });
+
+  it("lists the years newest first, with who took each payment", async () => {
+    const existing = await member();
+    await prisma.membership.create({
+      data: { memberId: existing.id, year: LAST, paidAmount: 500 },
+    });
+    await renew(existing.id);
+
+    const { memberships } = await (await YEARS(existing.id)).json();
+
+    expect(memberships.map((m: { year: number }) => m.year)).toEqual([YEAR, LAST]);
+    expect(memberships[0].recordedBy).toBe("boss");
+    expect(memberships[1].recordedBy).toBeNull();
+  });
+
+  it("says why a member cannot be renewed, so the panel need not guess", async () => {
+    const owing = await member();
+    const done = await member({ membershipYear: YEAR, memberNumber: "AJVT-2026-0002" });
+    const pending = await member({ status: "PENDING", memberNumber: null });
+
+    expect((await (await YEARS(owing.id)).json()).refusal).toBeNull();
+    expect((await (await YEARS(done.id)).json()).refusal).toBe("alreadyRenewed");
+    expect((await (await YEARS(pending.id)).json()).refusal).toBe("notActive");
+  });
+
+  it("is closed to an admin without the members section", async () => {
+    const existing = await member();
+    await signInAsAdmin(await createAdmin("quiz", "QUIZ"));
+
+    expect((await YEARS(existing.id)).status).toBe(403);
   });
 });
