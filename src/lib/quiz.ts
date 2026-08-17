@@ -45,6 +45,8 @@ export async function updateQuizSettings(data: {
   defaultCorrectCount?: number;
   defaultPoints?: number;
   questionsPerDay?: number;
+  answerWindowSeconds?: number;
+  minScorePercent?: number;
 }) {
   return prisma.quizSettings.upsert({
     where: { id: SETTINGS_ID },
