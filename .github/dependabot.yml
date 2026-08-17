@@ -13,8 +13,10 @@ updates:
         update-types:
           - minor
           - patch
-    commit-message:
-      prefix: Bump
+    ignore:
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,5 +29,3 @@ updates:
       actions:
         patterns:
           - "*"
-    commit-message:
-      prefix: Bump
