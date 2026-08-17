@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
-
-const DISMISSED_KEY = "ajvt_install_dismissed";
+import { SNOOZE_KEY, SESSION_KEY, shouldOffer, snoozeUntil } from "@/lib/installPrompt";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,10 +13,16 @@ export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISSED_KEY)) return;
+    const allowed = shouldOffer({
+      snoozedUntil: localStorage.getItem(SNOOZE_KEY),
+      seenThisSession: sessionStorage.getItem(SESSION_KEY) === "1",
+      now: new Date(),
+    });
+    if (!allowed) return;
 
     function handler(e: Event) {
       e.preventDefault();
+      sessionStorage.setItem(SESSION_KEY, "1");
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     }
     window.addEventListener("beforeinstallprompt", handler);
@@ -29,21 +34,28 @@ export default function InstallPrompt() {
   async function install() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "dismissed") snooze();
     setDeferredPrompt(null);
   }
 
+  function snooze() {
+    localStorage.setItem(SNOOZE_KEY, String(snoozeUntil(new Date())));
+  }
+
   function dismiss() {
-    localStorage.setItem(DISMISSED_KEY, "1");
+    snooze();
     setDeferredPrompt(null);
   }
 
   return (
     <div
-      className="install-prompt fixed inset-x-4 z-50 card p-3 flex items-center gap-3 fade-up"
+      className="install-prompt fixed inset-x-4 z-30 card p-3 flex items-center gap-3 fade-up"
       style={{ maxWidth: "420px", margin: "0 auto", border: "1px solid var(--mint-200)" }}
     >
-      <span className="text-2xl shrink-0">📲</span>
+      <span className="shrink-0" style={{ color: "var(--mint-700)" }}>
+        <Icon name="phone" size={22} />
+      </span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           أضف التطبيق لشاشتك الرئيسية
