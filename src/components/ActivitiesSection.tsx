@@ -84,7 +84,9 @@ export default function ActivitiesSection({
   if (loading) {
     return (
       <div className="space-y-3" id="activities">
-        <QuizCard quizAccess={quizAccess} />
+        <div className="pb-4 mb-1" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+          <QuizCard quizAccess={quizAccess} />
+        </div>
         <div className="card p-4 animate-pulse space-y-3">
           <div className="h-4 rounded-lg w-2/3" style={{ background: "var(--mint-100)" }} />
           <div className="h-3 rounded-lg w-full" style={{ background: "var(--mint-100)" }} />
@@ -96,7 +98,9 @@ export default function ActivitiesSection({
 
   return (
     <div className="space-y-3 fade-up" id="activities">
-      <QuizCard quizAccess={quizAccess} />
+      <div className="pb-4 mb-1" style={{ borderBottom: "1px solid var(--mint-200)" }}>
+        <QuizCard quizAccess={quizAccess} />
+      </div>
 
       {activities.length > 0 && (
         <>
