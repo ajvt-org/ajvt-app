@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { formatDateTime, loginPathWithNext } from "@/lib/utils";
 import { api, errorMessage } from "@/lib/api";
+import { canOpen, landingFor } from "@/lib/adminNav";
 import DialogHeader from "@/components/DialogHeader";
 import Icon, { type IconName } from "@/components/Icon";
 import AuditLogDialog from "./AuditLogDialog";
@@ -113,18 +114,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [isLoginPage]);
 
   useEffect(() => {
-    if (!role || isLoginPage) return;
-    const allowedPrefixes =
-      role === "MEMBERS"
-        ? ["/admin/dashboard", "/admin/payments", "/admin/expenses"]
-        : role === "ACTIVITIES"
-          ? ["/admin/activities", "/admin/payments", "/admin/expenses"]
-          : role === "QUIZ"
-            ? ["/admin/quiz"]
-            : null;
-    if (allowedPrefixes && pathname && !allowedPrefixes.some((p) => pathname.startsWith(p))) {
-      router.push(`${allowedPrefixes[0]}?denied=1`);
-    }
+    if (!role || isLoginPage || !pathname) return;
+    if (canOpen(role, pathname)) return;
+    const landing = landingFor(role);
+    if (landing) router.push(`${landing}?denied=1`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, pathname, isLoginPage]);
 
@@ -146,23 +139,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     return <>{children}</>;
   }
 
-  const visibleTabs = NAV_TABS.filter((tab) => {
-    if (!role || role === "SUPER") return true;
-    if (role === "MEMBERS")
-      return (
-        tab.href === "/admin/dashboard" ||
-        tab.href === "/admin/payments" ||
-        tab.href === "/admin/expenses"
-      );
-    if (role === "ACTIVITIES")
-      return (
-        tab.href === "/admin/activities" ||
-        tab.href === "/admin/payments" ||
-        tab.href === "/admin/expenses"
-      );
-    if (role === "QUIZ") return tab.href === "/admin/quiz";
-    return true;
-  });
+  const visibleTabs = NAV_TABS.filter((tab) => canOpen(role, tab.href));
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
