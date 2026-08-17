@@ -3,12 +3,27 @@
 import IconLabel from "@/components/IconLabel";
 import type { SettingsForm as FormValues } from "./types";
 
-const FIELDS: { key: keyof FormValues; label: string; min: number }[] = [
-  { key: "defaultAnswerCount", label: "عدد الإجابات الافتراضي", min: 2 },
-  { key: "defaultCorrectCount", label: "عدد الإجابات الصحيحة الافتراضي", min: 1 },
-  { key: "defaultPoints", label: "النقاط الافتراضية للسؤال", min: 1 },
-  { key: "questionsPerDay", label: "عدد الأسئلة المرسلة يومياً", min: 1 },
-];
+const FIELDS: { key: keyof FormValues; label: string; min: number; max?: number; hint?: string }[] =
+  [
+    { key: "defaultAnswerCount", label: "عدد الإجابات الافتراضي", min: 2 },
+    { key: "defaultCorrectCount", label: "عدد الإجابات الصحيحة الافتراضي", min: 1 },
+    { key: "defaultPoints", label: "النقاط الافتراضية للسؤال", min: 1 },
+    { key: "questionsPerDay", label: "عدد الأسئلة المرسلة يومياً", min: 1 },
+    {
+      key: "answerWindowSeconds",
+      label: "مدة الإجابة بالثواني",
+      min: 3,
+      max: 300,
+      hint: "تبدأ من لحظة إظهار الخيارات",
+    },
+    {
+      key: "minScorePercent",
+      label: "أقل نسبة للنقاط (%)",
+      min: 0,
+      max: 100,
+      hint: "ما يناله من أجاب صحيحاً في آخر لحظة",
+    },
+  ];
 
 export default function SettingsForm({
   values,
@@ -44,10 +59,16 @@ export default function SettingsForm({
               type="number"
               dir="ltr"
               min={field.min}
+              max={field.max}
               className="input text-sm"
               value={values[field.key]}
               onChange={(e) => onChange(field.key, e.target.value)}
             />
+            {field.hint && (
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                {field.hint}
+              </p>
+            )}
           </div>
         ))}
       </div>

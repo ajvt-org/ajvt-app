@@ -78,6 +78,8 @@ export default function AdminQuizPage() {
           defaultCorrectCount: String(s.settings.defaultCorrectCount),
           defaultPoints: String(s.settings.defaultPoints),
           questionsPerDay: String(s.settings.questionsPerDay),
+          answerWindowSeconds: String(s.settings.answerWindowSeconds),
+          minScorePercent: String(s.settings.minScorePercent),
         });
       }
       if (q?.questions) setQuestions(q.questions);
@@ -96,7 +98,8 @@ export default function AdminQuizPage() {
     const body: Record<string, number> = {};
     for (const [key, val] of Object.entries(settingsForm)) {
       const n = Number(val);
-      if (!Number.isInteger(n) || n <= 0) {
+      const floorAllowed = key === "minScorePercent";
+      if (!Number.isInteger(n) || (floorAllowed ? n < 0 : n <= 0)) {
         setSettingsError("كل القيم يجب أن تكون أرقاماً صحيحة موجبة");
         return;
       }
@@ -104,6 +107,10 @@ export default function AdminQuizPage() {
     }
     if (body.defaultCorrectCount > body.defaultAnswerCount) {
       setSettingsError("عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات");
+      return;
+    }
+    if (body.minScorePercent > 100) {
+      setSettingsError("أقل نسبة للنقاط يجب أن تكون بين 0 و 100");
       return;
     }
     setSavingSettings(true);

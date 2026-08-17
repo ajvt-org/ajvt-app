@@ -12,14 +12,22 @@ export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
 
 export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  const { defaultAnswerCount, defaultCorrectCount, defaultPoints, questionsPerDay } =
-    await req.json();
+  const {
+    defaultAnswerCount,
+    defaultCorrectCount,
+    defaultPoints,
+    questionsPerDay,
+    answerWindowSeconds,
+    minScorePercent,
+  } = await req.json();
 
   const data: {
     defaultAnswerCount?: number;
     defaultCorrectCount?: number;
     defaultPoints?: number;
     questionsPerDay?: number;
+    answerWindowSeconds?: number;
+    minScorePercent?: number;
   } = {};
 
   for (const [key, value] of Object.entries({
@@ -27,12 +35,30 @@ export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: Nex
     defaultCorrectCount,
     defaultPoints,
     questionsPerDay,
+    answerWindowSeconds,
   })) {
     if (value === undefined) continue;
     if (!Number.isInteger(value) || value <= 0) {
       return NextResponse.json({ error: "القيم يجب أن تكون أرقاماً صحيحة موجبة" }, { status: 400 });
     }
     (data as Record<string, number>)[key] = value;
+  }
+
+  if (answerWindowSeconds !== undefined && (answerWindowSeconds < 3 || answerWindowSeconds > 300)) {
+    return NextResponse.json(
+      { error: "مدة الإجابة يجب أن تكون بين 3 و 300 ثانية" },
+      { status: 400 },
+    );
+  }
+
+  if (minScorePercent !== undefined) {
+    if (!Number.isInteger(minScorePercent) || minScorePercent < 0 || minScorePercent > 100) {
+      return NextResponse.json(
+        { error: "أقل نسبة للنقاط يجب أن تكون بين 0 و 100" },
+        { status: 400 },
+      );
+    }
+    data.minScorePercent = minScorePercent;
   }
   if (
     data.defaultCorrectCount !== undefined &&

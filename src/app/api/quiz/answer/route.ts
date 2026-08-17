@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { computeIsCorrect, isQuizEligible } from "@/lib/quiz";
+import { computeIsCorrect, isQuizEligible, getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { quizAnswerSchema } from "./schema";
 import { quiz } from "@/lib/messages";
-import { windowExpired, elapsedMs, DEFAULT_ANSWER_WINDOW_SECONDS } from "@/lib/quizWindow";
+import { windowExpired, elapsedMs } from "@/lib/quizWindow";
 import { timeScore } from "@/lib/quizScore";
 
 export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) => {
@@ -44,16 +44,18 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
     return NextResponse.json({ error: "إجابة غير صالحة" }, { status: 400 });
   }
 
+  const { answerWindowSeconds, minScorePercent } = await getQuizSettings();
   const correctAnswerIds = assignment.question.answers.filter((a) => a.isCorrect).map((a) => a.id);
   const now = new Date();
-  const expired = windowExpired(assignment.revealedAt, now, DEFAULT_ANSWER_WINDOW_SECONDS);
+  const expired = windowExpired(assignment.revealedAt, now, answerWindowSeconds);
   const isCorrect = !expired && computeIsCorrect(correctAnswerIds, selectedAnswerIds);
   const answeredInMs = elapsedMs(assignment.revealedAt, now);
   const pointsAwarded = isCorrect
     ? timeScore({
         points: assignment.question.points,
         elapsedMs: answeredInMs,
-        windowSeconds: DEFAULT_ANSWER_WINDOW_SECONDS,
+        windowSeconds: answerWindowSeconds,
+        minShare: minScorePercent / 100,
       })
     : 0;
 
