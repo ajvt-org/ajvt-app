@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { bracketRoundLabel, shuffleArray, isPowerOfTwo } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
+import { incompleteTeams, displayTeamName } from "@/lib/teamSize";
 
 // Random draw for a pure knockout tournament (chess, PlayStation, or any
 // activity without groups) — pairs up every team attached to the activity.
@@ -13,10 +14,39 @@ export const POST = withRoute(
     const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      select: { teamSize: true },
+    });
     const teams = await prisma.team.findMany({
       where: { activityId: id },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        autoNamed: true,
+        members: { select: { member: { select: { fullName: true } } } },
+      },
     });
+
+    const short = incompleteTeams(
+      teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        autoNamed: t.autoNamed,
+        memberNames: t.members.map((m) => m.member.fullName),
+      })),
+      activity?.teamSize ?? null,
+    );
+    if (short.length > 0) {
+      const names = short.map((t) => displayTeamName(t, activity?.teamSize ?? null)).join("، ");
+      return NextResponse.json(
+        {
+          error: `فرق غير مكتملة (${activity?.teamSize} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
+        },
+        { status: 400 },
+      );
+    }
+
     if (!isPowerOfTwo(teams.length)) {
       return NextResponse.json(
         {

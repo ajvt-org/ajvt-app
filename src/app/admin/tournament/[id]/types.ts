@@ -23,6 +23,7 @@ export interface TeamMemberEntry {
 export interface Team {
   id: string;
   name: string;
+  autoNamed: boolean;
   logo: string | null;
   groupId: string | null;
   group: Group | null;

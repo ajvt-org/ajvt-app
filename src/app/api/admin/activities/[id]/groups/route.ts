@@ -13,10 +13,14 @@ export const GET = withRoute(
 
     const [groups, activity] = await Promise.all([
       prisma.group.findMany({ where: { activityId: id }, orderBy: { createdAt: "asc" } }),
-      prisma.activity.findUnique({ where: { id }, select: { format: true } }),
+      prisma.activity.findUnique({ where: { id }, select: { format: true, teamSize: true } }),
     ]);
 
-    return NextResponse.json({ groups, format: activity?.format ?? null });
+    return NextResponse.json({
+      groups,
+      format: activity?.format ?? null,
+      teamSize: activity?.teamSize ?? null,
+    });
   },
 );
 
