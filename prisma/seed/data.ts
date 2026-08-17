@@ -3,33 +3,34 @@ export interface AgeGroupRoster {
   active: number;
   pending: number;
   rejected: number;
+  total: number;
 }
 
 export const AGE_GROUP_ROSTER: AgeGroupRoster[] = [
-  { name: "البدريين", active: 24, pending: 0, rejected: 0 },
-  { name: "المحسنين", active: 22, pending: 0, rejected: 0 },
-  { name: "المجاهدين", active: 13, pending: 0, rejected: 0 },
-  { name: "المتقين", active: 12, pending: 0, rejected: 0 },
-  { name: "الساجدين", active: 0, pending: 12, rejected: 0 },
-  { name: "الفائزين", active: 6, pending: 0, rejected: 1 },
-  { name: "الشنقيطيين", active: 6, pending: 0, rejected: 0 },
-  { name: "الصادقين", active: 5, pending: 0, rejected: 0 },
-  { name: "المتحدين", active: 4, pending: 0, rejected: 0 },
-  { name: "البارين", active: 3, pending: 0, rejected: 0 },
-  { name: "التائبين", active: 3, pending: 0, rejected: 0 },
-  { name: "المبشرين", active: 3, pending: 0, rejected: 0 },
-  { name: "الخاشعين", active: 2, pending: 0, rejected: 0 },
-  { name: "المتحالفين", active: 2, pending: 0, rejected: 0 },
-  { name: "المنتصرين", active: 2, pending: 0, rejected: 0 },
-  { name: "المنصورين", active: 2, pending: 0, rejected: 1 },
-  { name: "الناجحين", active: 2, pending: 0, rejected: 0 },
-  { name: "الدستوريين", active: 1, pending: 0, rejected: 0 },
-  { name: "الذهبيين", active: 1, pending: 0, rejected: 0 },
-  { name: "الشمسيين", active: 1, pending: 0, rejected: 0 },
-  { name: "الصابرين", active: 1, pending: 0, rejected: 0 },
-  { name: "الممدوحين", active: 1, pending: 0, rejected: 0 },
-  { name: "النجميين", active: 1, pending: 0, rejected: 0 },
-  { name: "الحافظين", active: 0, pending: 0, rejected: 0 },
+  { name: "البدريين", active: 24, pending: 0, rejected: 0, total: 40 },
+  { name: "المحسنين", active: 22, pending: 0, rejected: 0, total: 30 },
+  { name: "المجاهدين", active: 13, pending: 0, rejected: 0, total: 50 },
+  { name: "المتقين", active: 12, pending: 0, rejected: 0, total: 33 },
+  { name: "الساجدين", active: 0, pending: 12, rejected: 0, total: 30 },
+  { name: "الفائزين", active: 6, pending: 0, rejected: 1, total: 42 },
+  { name: "الشنقيطيين", active: 6, pending: 0, rejected: 0, total: 46 },
+  { name: "الصادقين", active: 5, pending: 0, rejected: 0, total: 30 },
+  { name: "المتحدين", active: 4, pending: 0, rejected: 0, total: 30 },
+  { name: "البارين", active: 3, pending: 0, rejected: 0, total: 32 },
+  { name: "التائبين", active: 3, pending: 0, rejected: 0, total: 23 },
+  { name: "المبشرين", active: 3, pending: 0, rejected: 0, total: 26 },
+  { name: "الخاشعين", active: 2, pending: 0, rejected: 0, total: 31 },
+  { name: "المتحالفين", active: 2, pending: 0, rejected: 0, total: 30 },
+  { name: "المنتصرين", active: 2, pending: 0, rejected: 0, total: 30 },
+  { name: "المنصورين", active: 2, pending: 0, rejected: 1, total: 32 },
+  { name: "الناجحين", active: 2, pending: 0, rejected: 0, total: 30 },
+  { name: "الدستوريين", active: 1, pending: 0, rejected: 0, total: 30 },
+  { name: "الذهبيين", active: 1, pending: 0, rejected: 0, total: 25 },
+  { name: "الشمسيين", active: 1, pending: 0, rejected: 0, total: 38 },
+  { name: "الصابرين", active: 1, pending: 0, rejected: 0, total: 30 },
+  { name: "الممدوحين", active: 1, pending: 0, rejected: 0, total: 30 },
+  { name: "النجميين", active: 1, pending: 0, rejected: 0, total: 44 },
+  { name: "الحافظين", active: 0, pending: 0, rejected: 0, total: 30 },
 ];
 
 export const AGE_GROUPS = AGE_GROUP_ROSTER.map((group) => group.name);
