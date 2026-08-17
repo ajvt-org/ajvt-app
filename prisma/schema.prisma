@@ -466,6 +466,8 @@ model QuizSettings {
   defaultCorrectCount Int       @default(1)
   defaultPoints       Int       @default(10)
   questionsPerDay     Int       @default(1)
+  answerWindowSeconds Int       @default(10)
+  minScorePercent     Int       @default(40)
   lastAutoSendDate    DateTime?
   updatedAt           DateTime  @updatedAt
 }

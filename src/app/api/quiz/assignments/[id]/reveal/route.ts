@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { isQuizEligible, revealOptions } from "@/lib/quiz";
+import { isQuizEligible, revealOptions, getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { ForbiddenError, NotFoundError, ConflictError } from "@/lib/errors";
 import { quiz } from "@/lib/messages";
-import { DEFAULT_ANSWER_WINDOW_SECONDS } from "@/lib/quizWindow";
 
 export const POST = withRoute(
   "POST /api/quiz/assignments/[id]/reveal",
@@ -21,7 +20,7 @@ export const POST = withRoute(
     return NextResponse.json({
       revealedAt: assignment.revealedAt,
       answers: assignment.question.answers,
-      answerWindowSeconds: DEFAULT_ANSWER_WINDOW_SECONDS,
+      answerWindowSeconds: (await getQuizSettings()).answerWindowSeconds,
     });
   },
 );
