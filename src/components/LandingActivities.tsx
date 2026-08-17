@@ -35,7 +35,11 @@ export default function LandingActivities({
       )}
 
       <div className="max-w-md mx-auto space-y-3">
-        <Link href="/quiz" className="card p-3.5 flex items-center gap-3">
+        <Link
+          href="/quiz"
+          className="card p-3.5 flex items-center gap-3"
+          style={{ background: "white", border: "1.5px solid var(--mint-500)" }}
+        >
           <span
             className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center"
             style={{
@@ -46,8 +50,17 @@ export default function LandingActivities({
             <Icon name="quiz" size={20} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="font-bold block" style={{ color: "var(--text-main)" }}>
+            <span
+              className="font-bold flex items-center gap-1.5"
+              style={{ color: "var(--text-main)" }}
+            >
               المسابقة الثقافية
+              <span
+                className="expense-tag"
+                style={{ background: "var(--mint-600)", color: "white" }}
+              >
+                مميزة
+              </span>
             </span>
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>
               أسئلة يومية، نقاط، وترتيب بين المنتسبين
