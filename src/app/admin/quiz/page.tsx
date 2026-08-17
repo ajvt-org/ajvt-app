@@ -13,6 +13,8 @@ import QuestionList from "./QuestionList";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { ANSWER, USER } from "@/lib/messages";
 import type {
   AnswerFormRow,
   LeaderboardRow,
@@ -168,7 +170,7 @@ export default function AdminQuizPage() {
     if (form.answers.some((a) => !a.text.trim())) return "كل الإجابات يجب أن تحتوي على نص";
     if (correctCount > form.answers.length) return "عدد الإجابات الصحيحة أكبر من عدد الإجابات";
     if (form.answers.filter((a) => a.isCorrect).length !== correctCount) {
-      return `يجب تحديد ${correctCount} إجابة (إجابات) صحيحة بالضبط`;
+      return `يجب تحديد ${counted(correctCount, ANSWER)} صحيحة بالضبط`;
     }
     return null;
   }
@@ -247,8 +249,10 @@ export default function AdminQuizPage() {
       await send(
         { mode: "SAME", questionId },
         (data) =>
-          `تم الإرسال إلى ${data.sentCount} مستخدم` +
-          (data.skippedCount ? ` (تم تخطي ${data.skippedCount} استلموه من قبل)` : ""),
+          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
+          (data.skippedCount
+            ? ` (تم تخطي ${counted(data.skippedCount, USER)} ممن استلم السؤال سابقاً)`
+            : ""),
       );
     } catch (e) {
       showToast(errorMessage(e), "error");
@@ -265,8 +269,10 @@ export default function AdminQuizPage() {
       await send(
         body,
         (data) =>
-          `تم الإرسال إلى ${data.sentCount} مستخدم` +
-          (data.skippedCount ? ` (${data.skippedCount} لم يتبق لهم أسئلة كافية)` : ""),
+          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
+          (data.skippedCount
+            ? ` (تم تخطي ${counted(data.skippedCount, USER)} لعدم توفر أسئلة كافية)`
+            : ""),
       );
     } catch (e) {
       showToast(errorMessage(e), "error");

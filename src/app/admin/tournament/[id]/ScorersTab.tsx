@@ -1,5 +1,8 @@
 "use client";
 
+import { counted } from "@/lib/arabicCount";
+import { MATCH } from "@/lib/messages";
+
 import {
   type TopScorerRow,
   type DisciplineRow,
@@ -179,7 +182,7 @@ export default function ScorersTab({
               {t.form.length > 0 && (
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    آخر {t.form.length} مباريات:
+                    آخر {counted(t.form.length, MATCH)}:
                   </span>
                   {t.form.map((f, i) => (
                     <span

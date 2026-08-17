@@ -5,6 +5,8 @@ import { logAction } from "@/lib/audit";
 import { bracketRoundLabel, shuffleArray, isPowerOfTwo } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
 import { incompleteTeams, displayTeamName } from "@/lib/teamSize";
+import { counted } from "@/lib/arabicCount";
+import { MATCH } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/bracket/draw",
@@ -104,7 +106,11 @@ export const POST = withRoute(
     }
 
     await prisma.match.createMany({ data });
-    await logAction(session.username, "GENERATE_BRACKET_DRAW", `${data.length} مباراة — ${label}`);
+    await logAction(
+      session.username,
+      "GENERATE_BRACKET_DRAW",
+      `${counted(data.length, MATCH)} — ${label}`,
+    );
 
     return NextResponse.json({ ok: true, created: data.length });
   },

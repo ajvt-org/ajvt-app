@@ -8,6 +8,8 @@ import { parse } from "@/lib/validation";
 import { broadcastSchema } from "./schema";
 import { logger } from "@/lib/logger";
 import type { ReviewStatus } from "@prisma/client";
+import { counted } from "@/lib/arabicCount";
+import { RECIPIENT } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/notifications/broadcast",
@@ -39,7 +41,7 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "SEND_BROADCAST",
-      `${title.trim()} → ${userIds.length} مستلم`,
+      `${title.trim()} → ${counted(userIds.length, RECIPIENT)}`,
     );
 
     return NextResponse.json({ ok: true, recipientCount: userIds.length });

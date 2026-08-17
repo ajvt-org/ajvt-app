@@ -4,6 +4,8 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { getMatchWinnerTeamId, bracketRoundLabel } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
+import { counted } from "@/lib/arabicCount";
+import { MATCH } from "@/lib/messages";
 
 // Advances the bracket by one round: takes the winners of the current
 // (fully-played) round and pairs them up. Works the same whether the
@@ -96,7 +98,7 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "GENERATE_BRACKET_NEXT_ROUND",
-      `${label} — ${data.length} مباراة`,
+      `${label} — ${counted(data.length, MATCH)}`,
     );
 
     return NextResponse.json({ ok: true, created: data.length });

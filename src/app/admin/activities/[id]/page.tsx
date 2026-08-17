@@ -14,6 +14,8 @@ import ProfileSection from "@/components/admin/ProfileSection";
 import ActivityFinance from "./ActivityFinance";
 import ActivityDatesEditor from "../ActivityDatesEditor";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
+import { counted, countedNoun } from "@/lib/arabicCount";
+import { ACCEPTED, GROUP, MATCH, PLAYER, REQUEST } from "@/lib/messages";
 
 const REG_STATUS: Record<string, string> = {
   PENDING: "قيد الانتظار",
@@ -157,7 +159,8 @@ function AdminActivityPageInner({ id }: { id: string }) {
             {activity.title}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {accepted} مقبول من {activity.registrations.length} طلب
+            {accepted} {countedNoun(accepted, ACCEPTED)} من {activity.registrations.length}{" "}
+            {countedNoun(activity.registrations.length, REQUEST)}
             {activity.capacity !== null ? ` · السعة ${activity.capacity}` : ""}
           </p>
         </div>
@@ -307,13 +310,13 @@ function AdminActivityPageInner({ id }: { id: string }) {
               <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate">{t.name}</span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {t._count.members} لاعب
+                  {counted(t._count.members, PLAYER)}
                 </span>
               </li>
             ))}
           </ul>
           <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-            {activity._count.matches} مباراة · {activity._count.groups} مجموعة
+            {counted(activity._count.matches, MATCH)} · {counted(activity._count.groups, GROUP)}
           </p>
         </ProfileSection>
       )}
