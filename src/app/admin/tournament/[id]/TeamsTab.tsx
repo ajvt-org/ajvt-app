@@ -4,7 +4,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
-import type { Group, RosterMember, Team } from "./types";
+import type { Group, RosterMember, Team, TournamentFormat } from "./types";
 import GroupsPanel from "./GroupsPanel";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
@@ -14,12 +14,14 @@ export default function TeamsTab({
   activityId,
   teams,
   groups,
+  format,
   roster,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
   groups: Group[];
+  format: TournamentFormat;
   roster: RosterMember[];
   onChange: () => void;
 }) {
@@ -168,13 +170,15 @@ export default function TeamsTab({
         </div>
       )}
 
-      <GroupsPanel
-        activityId={activityId}
-        groups={groups}
-        teams={teams}
-        onChange={onChange}
-        onError={setError}
-      />
+      {format !== "KNOCKOUT" && (
+        <GroupsPanel
+          activityId={activityId}
+          groups={groups}
+          teams={teams}
+          onChange={onChange}
+          onError={setError}
+        />
+      )}
 
       {groups.length > 0 && teams.some((t) => !t.groupId) && (
         <div className="card p-4">
