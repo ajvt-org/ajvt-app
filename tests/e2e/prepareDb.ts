@@ -1,10 +1,9 @@
 import { execSync } from "node:child_process";
 import { Client } from "pg";
+import { localDatabase } from "../localDatabase";
 
 async function prepare() {
-  const url = new URL(
-    process.env.E2E_DATABASE_URL ?? "postgresql://ajvt:ajvt@localhost:5433/ajvt_e2e",
-  );
+  const url = new URL(process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e"));
   const database = url.pathname.slice(1);
 
   const maintenance = new URL(url.toString());
