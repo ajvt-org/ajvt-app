@@ -9,6 +9,7 @@ const HEADERS = [
   "العصر",
   "طريقة الدفع",
   "الحالة",
+  "سنة العضوية",
   "رقم العضوية",
   "تاريخ الطلب",
 ];
@@ -20,6 +21,7 @@ export function exportMembers(members: Member[]) {
     m.age,
     m.paymentMethod,
     STATUS_LABEL[m.status],
+    String(m.membershipYear),
     m.memberNumber || "",
     formatDateTime(m.createdAt),
   ]);
