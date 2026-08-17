@@ -45,7 +45,14 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
     where: { id: admin.id },
     data: { lastLoginAt: new Date(), lastLoginIp: getClientIp(req) },
   });
-  await logAction(admin.username, "ADMIN_LOGIN", getClientIp(req) || undefined);
+  await logAction(admin.username, "ADMIN_LOGIN", undefined, {
+    adminId: admin.id,
+    adminRole: admin.role,
+    targetType: "Admin",
+    targetId: admin.id,
+    ip: getClientIp(req),
+    userAgent: req.headers.get("user-agent") ?? undefined,
+  });
 
   const token = await signToken({
     adminId: admin.id,
