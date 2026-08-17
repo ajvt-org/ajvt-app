@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
+import IconLabel from "./IconLabel";
 
 interface ToastItem {
   id: number;
@@ -43,8 +44,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               maxWidth: "90vw",
             }}
           >
-            {t.kind === "success" ? "✅ " : "⚠️ "}
-            {t.message}
+            <IconLabel name={t.kind === "success" ? "check" : "warning"}>{t.message}</IconLabel>
           </div>
         ))}
       </div>

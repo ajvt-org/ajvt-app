@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
+import Icon from "@/components/Icon";
 
 export default function NotFound() {
   const pathname = usePathname();
@@ -25,7 +26,9 @@ export default function NotFound() {
       </div>
 
       <div className="flex-1 px-5 py-10 flex flex-col items-center justify-center text-center space-y-4">
-        <p className="text-5xl">🔍</p>
+        <p style={{ color: "var(--mint-500)" }}>
+          <Icon name="search" size={48} />
+        </p>
         <p className="font-bold text-lg" style={{ color: "var(--text-main)" }}>
           لم نجد هذه الصفحة
         </p>

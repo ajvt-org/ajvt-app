@@ -72,7 +72,7 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
                   minWidth: "52px",
                 }}
               >
-                {copied === PAYMENT_CODES[method] ? "✓ تم" : "نسخ"}
+                {copied === PAYMENT_CODES[method] ? <IconLabel name="check">تم</IconLabel> : "نسخ"}
               </button>
             </div>
           </div>

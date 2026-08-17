@@ -106,14 +106,14 @@ export default function ManualDonationDialog({
           imageUrlPrefix="/api/files/donation"
           variant="avatar"
           label="صورة المتبرع (اختياري)"
-          placeholderIcon="👤"
+          placeholderIcon="user"
           onUpload={(filename) => set({ donorPhoto: filename })}
         />
         <PhotoUpload
           photo={form.proof || null}
           variant="cover"
           label="إثبات الدفع (اختياري — يمكن إضافته لاحقاً)"
-          placeholderIcon="🧾"
+          placeholderIcon="receipt"
           onUpload={(filename) => set({ proof: filename })}
         />
 

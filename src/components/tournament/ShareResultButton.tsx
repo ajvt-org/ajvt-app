@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import IconLabel from "@/components/IconLabel";
+import Icon from "@/components/Icon";
+import CardChip from "@/components/tournament/CardChip";
 
 interface GoalEntry {
   fullName: string;
@@ -35,20 +37,18 @@ interface ShareResultButtonProps {
 }
 
 interface EventLine {
-  icon: string;
+  icon: React.ReactNode;
   label: string;
   photo: string | null;
   minute: number | null;
 }
-
-const CARD_ICON: Record<string, string> = { YELLOW: "🟨", RED: "🟥" };
 
 function buildEvents(goals: GoalEntry[], bookings: BookingEntry[], isHome: boolean): EventLine[] {
   const lines: EventLine[] = [];
   for (const g of goals.filter((x) => x.isHome === isHome)) {
     for (let i = 0; i < Math.max(g.count, 1); i++) {
       lines.push({
-        icon: "⚽",
+        icon: <Icon name="ball" size={13} className="icon-inline" />,
         label: g.fullName,
         photo: g.photo,
         minute: i === 0 ? g.minute : null,
@@ -57,7 +57,7 @@ function buildEvents(goals: GoalEntry[], bookings: BookingEntry[], isHome: boole
   }
   for (const b of bookings.filter((x) => x.isHome === isHome)) {
     lines.push({
-      icon: CARD_ICON[b.cardType],
+      icon: <CardChip type={b.cardType as "YELLOW" | "RED"} />,
       label: b.fullName,
       photo: b.photo,
       minute: b.minute,

@@ -866,7 +866,7 @@ function FormPageInner() {
                 photo={photo}
                 onUpload={(filename) => setPhoto(filename)}
                 label="الصورة الشخصية (اختياري)"
-                placeholderIcon="👤"
+                placeholderIcon="user"
               />
               <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
                 يمكنك إضافتها الآن أو لاحقاً من صفحتك الشخصية

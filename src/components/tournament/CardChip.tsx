@@ -1,5 +1,3 @@
-// A booking drawn as the card itself. 🟨 and 🟥 are squares in most fonts and
-// carry the reader's emoji style, so they stop looking like cards at all.
 export default function CardChip({ type, count }: { type: "YELLOW" | "RED"; count?: number }) {
   const yellow = type === "YELLOW";
   return (

@@ -59,7 +59,7 @@ export default function ActivityRegistrations({
   function register() {
     return run(
       () => api.post("/api/activities/register", { activityId: activity.id, memberId: member.id }),
-      activity.isVolunteer ? "تم تسجيلك كمتطوع 💚" : "تم التسجيل في النشاط",
+      activity.isVolunteer ? "تم تسجيلك كمتطوع" : "تم التسجيل في النشاط",
     );
   }
 
