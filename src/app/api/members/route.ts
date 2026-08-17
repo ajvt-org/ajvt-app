@@ -14,7 +14,7 @@ const CODE_ATTEMPTS = 5;
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
-  const { membershipFee } = await getAppSettings();
+  const { membershipFee, membershipYear } = await getAppSettings();
   const { id, fullName, age, paymentMethod, paymentProof, photo, paidAmount, referenceCode } =
     parse(memberSubmissionSchema(membershipFee), await req.json());
 
@@ -74,6 +74,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           paidAmount: Number(paidAmount),
           referenceCode: code,
           status: "PENDING",
+          membershipYear,
         },
       });
       return NextResponse.json(

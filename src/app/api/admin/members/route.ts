@@ -44,9 +44,11 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     paidAmount,
   } = parse(adminMemberCreateSchema, await req.json());
 
+  const { membershipFee, membershipYear } = await getAppSettings();
+
   let paidAmountValue: number | null = null;
   if (paidAmount !== undefined && paidAmount !== null && String(paidAmount).trim() !== "") {
-    const paidAmountError = validatePaidAmount(paidAmount, (await getAppSettings()).membershipFee);
+    const paidAmountError = validatePaidAmount(paidAmount, membershipFee);
     if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
     paidAmountValue = Number(paidAmount);
   }
@@ -88,6 +90,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         photo: photo || null,
         paidAmount: paidAmountValue,
         status,
+        membershipYear,
         ...(issued ?? {}),
       },
     });
