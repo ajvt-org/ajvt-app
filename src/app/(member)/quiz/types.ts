@@ -16,6 +16,7 @@ export interface QuestionData {
 export interface PendingAssignment {
   id: string;
   sentAt: string;
+  revealedAt: string | null;
   question: QuestionData;
 }
 

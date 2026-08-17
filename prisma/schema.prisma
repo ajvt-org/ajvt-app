@@ -447,6 +447,7 @@ model QuizAssignment {
   batchId           String
   mode              String // "SAME" | "RANDOM"
   sentAt            DateTime     @default(now())
+  revealedAt        DateTime?
   answeredAt        DateTime?
   selectedAnswerIds String[]     @default([])
   isCorrect         Boolean?
