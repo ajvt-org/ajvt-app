@@ -6,7 +6,7 @@ import { withRoute } from "@/lib/route";
 import { expenses as messages } from "@/lib/messages";
 
 export const PATCH = withRoute(
-  "PATCH /api/admin/expense-tags/[id]",
+  "PATCH /api/admin/finance-tags/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
@@ -18,18 +18,18 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: messages.tagNameTooLong }, { status: 400 });
     }
 
-    const existing = await prisma.expenseTag.findUnique({ where: { id } });
+    const existing = await prisma.financeTag.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: messages.tagNotFound }, { status: 404 });
 
-    const clash = await prisma.expenseTag.findUnique({ where: { name: trimmed } });
+    const clash = await prisma.financeTag.findUnique({ where: { name: trimmed } });
     if (clash && clash.id !== id) {
       return NextResponse.json({ error: messages.tagExists }, { status: 409 });
     }
 
-    const tag = await prisma.expenseTag.update({ where: { id }, data: { name: trimmed } });
+    const tag = await prisma.financeTag.update({ where: { id }, data: { name: trimmed } });
     await logAction(session.username, "UPDATE_EXPENSE_TAG", `${existing.name} → ${tag.name}`, {
       ...auditContext(session, req),
-      targetType: "ExpenseTag",
+      targetType: "FinanceTag",
       targetId: tag.id,
       before: { name: existing.name },
       after: { name: tag.name },
@@ -41,18 +41,18 @@ export const PATCH = withRoute(
 
 // The expenses stay; only the tag goes, and with it the rows joining the two.
 export const DELETE = withRoute(
-  "DELETE /api/admin/expense-tags/[id]",
+  "DELETE /api/admin/finance-tags/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
 
-    const existing = await prisma.expenseTag.findUnique({ where: { id } });
+    const existing = await prisma.financeTag.findUnique({ where: { id } });
     if (!existing) return NextResponse.json({ error: messages.tagNotFound }, { status: 404 });
 
-    await prisma.expenseTag.delete({ where: { id } });
+    await prisma.financeTag.delete({ where: { id } });
     await logAction(session.username, "DELETE_EXPENSE_TAG", existing.name, {
       ...auditContext(session, req),
-      targetType: "ExpenseTag",
+      targetType: "FinanceTag",
       targetId: id,
       before: { name: existing.name },
     });
