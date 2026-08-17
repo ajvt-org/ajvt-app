@@ -3,6 +3,12 @@ export interface FixtureTeam {
   name: string;
 }
 
+export interface FixturesResponse {
+  teamCount: number;
+  upcoming: Fixture[];
+  past: Fixture[];
+}
+
 export interface Fixture {
   id: string;
   matchDate: string | null;
