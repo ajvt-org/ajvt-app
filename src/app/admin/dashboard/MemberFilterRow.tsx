@@ -7,6 +7,11 @@ import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberF
 import DateRangeFilter from "./DateRangeFilter";
 import type { AgeGroup } from "./types";
 
+const STANDING_LABEL: Record<string, string> = {
+  paid: "مسدّدون",
+  behind: "متأخرون",
+};
+
 const SELECT = "input text-xs";
 const SELECT_STYLE = { width: "auto" };
 
@@ -94,6 +99,16 @@ export default function MemberFilterRow({
         to={filters.to}
         onChange={(range) => onChange({ ...filters, ...range })}
       />
+
+      {filters.standing && STANDING_LABEL[filters.standing] && (
+        <button
+          onClick={() => onChange({ ...filters, standing: "" })}
+          className="text-xs px-2.5 py-1 rounded-lg font-bold"
+          style={{ background: "var(--mint-600)", color: "white" }}
+        >
+          <IconLabel name="close">{STANDING_LABEL[filters.standing]}</IconLabel>
+        </button>
+      )}
 
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
         {counted(resultCount, RESULT)}
