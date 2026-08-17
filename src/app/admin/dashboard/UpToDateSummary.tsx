@@ -1,6 +1,8 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { counted } from "@/lib/arabicCount";
+import { ACTIVE_MEMBER, OVERDUE, SETTLED } from "@/lib/messages";
 
 export default function UpToDateSummary({
   year,
@@ -35,17 +37,17 @@ export default function UpToDateSummary({
         className="text-xs px-2.5 py-1 rounded-lg font-bold"
         style={chip(showing === "paid")}
       >
-        <IconLabel name="check">مسدّدون {paid}</IconLabel>
+        <IconLabel name="check">{counted(paid, SETTLED)}</IconLabel>
       </button>
       <button
         onClick={onShowBehind}
         className="text-xs px-2.5 py-1 rounded-lg font-bold"
         style={chip(showing === "behind")}
       >
-        <IconLabel name="clock">متأخرون {behind}</IconLabel>
+        <IconLabel name="clock">{counted(behind, OVERDUE)}</IconLabel>
       </button>
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-        من {active} عضواً نشطاً
+        من {counted(active, ACTIVE_MEMBER)}
       </span>
     </div>
   );
