@@ -9,6 +9,8 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
+import { counted } from "@/lib/arabicCount";
+import { REQUEST, VOLUNTEER } from "@/lib/messages";
 import NumericRanges from "@/components/NumericRanges";
 import ActivityDatesEditor from "./ActivityDatesEditor";
 import { formatActivityDates } from "@/lib/activityDates";
@@ -398,13 +400,15 @@ export default function AdminActivitiesPage() {
                       {a.isVolunteer && confirmedCount > 0 && (
                         <span className="badge badge-active">
                           <IconLabel name="heart" size={11}>
-                            {confirmedCount} متطوعين
+                            {counted(confirmedCount, VOLUNTEER)}
                           </IconLabel>
                         </span>
                       )}
                       {!a.isVolunteer && pending.length > 0 && (
                         <span className="badge badge-pending">
-                          ⏳ {pending.length} بانتظار المراجعة
+                          <IconLabel name="clock" size={11}>
+                            {counted(pending.length, REQUEST)} بانتظار المراجعة
+                          </IconLabel>
                         </span>
                       )}
                       <span className={`badge ${a.isOpen ? "badge-active" : "badge-rejected"}`}>
