@@ -51,6 +51,8 @@ export default function QuestionCard({
   selected,
   result,
   submitting,
+  revealing,
+  onReveal,
   onToggle,
   onSubmit,
   onContinue,
@@ -59,11 +61,14 @@ export default function QuestionCard({
   selected: string[];
   result?: AnswerResult;
   submitting: boolean;
+  revealing: boolean;
+  onReveal: () => void;
   onToggle: (answerId: string) => void;
   onSubmit: () => void;
   onContinue: () => void;
 }) {
   const question = assignment.question;
+  const revealed = assignment.revealedAt !== null;
 
   return (
     <div className="card p-5 space-y-4 fade-up delay-1">
@@ -84,40 +89,53 @@ export default function QuestionCard({
         {question.text}
       </p>
 
-      {!result && question.correctCount > 1 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          اختر {question.correctCount} إجابات صحيحة
-        </p>
-      )}
-
-      <div className="space-y-2">
-        {question.answers.map((answer) => (
-          <button
-            key={answer.id}
-            type="button"
-            disabled={!!result}
-            onClick={() => onToggle(answer.id)}
-            className="w-full text-right px-4 py-3 rounded-xl font-semibold text-sm transition-all"
-            style={{
-              ...answerStyle(answer, selected.includes(answer.id), result),
-              cursor: result ? "default" : "pointer",
-            }}
-          >
-            {answer.text}
+      {!revealed ? (
+        <>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            اقرأ السؤال، ثم أظهر الخيارات — الوقت يبدأ من تلك اللحظة.
+          </p>
+          <button className="btn btn-primary" disabled={revealing} onClick={onReveal}>
+            {revealing ? "..." : "أظهر الخيارات"}
           </button>
-        ))}
-      </div>
-
-      {result ? (
-        <Outcome result={result} onContinue={onContinue} />
+        </>
       ) : (
-        <button
-          className="btn btn-primary"
-          disabled={selected.length === 0 || submitting}
-          onClick={onSubmit}
-        >
-          {submitting ? "..." : "إرسال الإجابة"}
-        </button>
+        <>
+          {!result && question.correctCount > 1 && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              اختر {question.correctCount} إجابات صحيحة
+            </p>
+          )}
+
+          <div className="space-y-2">
+            {question.answers.map((answer) => (
+              <button
+                key={answer.id}
+                type="button"
+                disabled={!!result}
+                onClick={() => onToggle(answer.id)}
+                className="w-full text-right px-4 py-3 rounded-xl font-semibold text-sm transition-all"
+                style={{
+                  ...answerStyle(answer, selected.includes(answer.id), result),
+                  cursor: result ? "default" : "pointer",
+                }}
+              >
+                {answer.text}
+              </button>
+            ))}
+          </div>
+
+          {result ? (
+            <Outcome result={result} onContinue={onContinue} />
+          ) : (
+            <button
+              className="btn btn-primary"
+              disabled={selected.length === 0 || submitting}
+              onClick={onSubmit}
+            >
+              {submitting ? "..." : "إرسال الإجابة"}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

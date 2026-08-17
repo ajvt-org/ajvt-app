@@ -22,6 +22,7 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
       id: true,
       userId: true,
       answeredAt: true,
+      revealedAt: true,
       question: { select: { points: true, answers: { select: { id: true, isCorrect: true } } } },
     },
   });
@@ -30,7 +31,10 @@ export const POST = withRoute("POST /api/quiz/answer", async (req: NextRequest) 
     return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
   }
   if (assignment.answeredAt) {
-    return NextResponse.json({ error: "تمت الإجابة على هذا السؤال من قبل" }, { status: 400 });
+    return NextResponse.json({ error: quiz.alreadyAnswered }, { status: 400 });
+  }
+  if (!assignment.revealedAt) {
+    return NextResponse.json({ error: quiz.optionsNotRevealed }, { status: 400 });
   }
 
   const validAnswerIds = new Set(assignment.question.answers.map((a) => a.id));
