@@ -5,17 +5,17 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
-export type ExpenseTagRow = { id: string; name: string; count: number; total: number };
+export type FinanceTagRow = { id: string; name: string; count: number; total: number };
 
 // Where the tags themselves are kept. Each row carries what has been spent
 // under it, which is the question the tags were added to answer; deleting one
 // leaves the expenses alone, so the totals move but no record is lost.
-export default function ExpenseTagManager({
+export default function FinanceTagManager({
   tags,
   onChanged,
   onClose,
 }: {
-  tags: ExpenseTagRow[];
+  tags: FinanceTagRow[];
   onChanged: () => Promise<void> | void;
   onClose: () => void;
 }) {
@@ -42,7 +42,7 @@ export default function ExpenseTagManager({
     ev.preventDefault();
     if (!name.trim()) return;
     await run(async () => {
-      await api.post("/api/admin/expense-tags", { name: name.trim() });
+      await api.post("/api/admin/finance-tags", { name: name.trim() });
       setName("");
     });
   }
@@ -50,18 +50,18 @@ export default function ExpenseTagManager({
   async function rename(id: string) {
     if (!editingName.trim()) return;
     await run(async () => {
-      await api.patch(`/api/admin/expense-tags/${id}`, { name: editingName.trim() });
+      await api.patch(`/api/admin/finance-tags/${id}`, { name: editingName.trim() });
       setEditingId(null);
     });
   }
 
-  async function remove(tag: ExpenseTagRow) {
+  async function remove(tag: FinanceTagRow) {
     const warning =
       tag.count > 0
         ? `سيُزال هذا التصنيف من ${tag.count} مصروف. المصاريف نفسها تبقى. متابعة؟`
         : "حذف هذا التصنيف؟";
     if (!confirm(warning)) return;
-    await run(() => api.del(`/api/admin/expense-tags/${tag.id}`));
+    await run(() => api.del(`/api/admin/finance-tags/${tag.id}`));
   }
 
   return (
