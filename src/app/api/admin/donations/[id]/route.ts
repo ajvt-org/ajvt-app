@@ -25,6 +25,7 @@ export const PATCH = withRoute(
       paymentMethod,
       proof,
       tagIds,
+      activityId,
     } = parse(donationUpdateSchema, await req.json());
 
     const existing = await prisma.donation.findUnique({ where: { id } });
@@ -53,6 +54,7 @@ export const PATCH = withRoute(
       paymentMethod?: string | null;
       proof?: string | null;
       tags?: { set: { id: string }[] };
+      activityId?: string | null;
     } = {};
     if (status !== undefined) data.status = status;
 
@@ -115,6 +117,7 @@ export const PATCH = withRoute(
     if (tagIds !== undefined) {
       data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
     }
+    if (activityId !== undefined) data.activityId = activityId || null;
 
     const donation = await prisma.donation.update({
       where: { id },
