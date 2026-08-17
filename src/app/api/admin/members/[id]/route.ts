@@ -10,6 +10,10 @@ import { generateTempPassword } from "@/lib/member";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { ValidationError } from "@/lib/errors";
+import { confirmationMatches } from "@/lib/deletedRecords";
+import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
+import type { Prisma } from "@prisma/client";
 import { ConflictError } from "@/lib/errors";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
@@ -157,20 +161,30 @@ export const DELETE = withRoute(
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({
-      where: { id },
-      select: { fullName: true, age: true, status: true, memberNumber: true },
-    });
+    const member = await prisma.member.findUnique({ where: { id } });
     if (!member) {
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
+    const { confirmName } = await req.json().catch(() => ({ confirmName: undefined }));
+    if (!confirmationMatches(String(confirmName ?? ""), member.fullName)) {
+      throw new ValidationError("اكتب اسم العضو كما هو للتأكيد");
+    }
+
+    await archive(
+      "Member",
+      id,
+      member.fullName,
+      member as unknown as Prisma.InputJsonValue,
+      session.username,
+    );
     await prisma.member.delete({ where: { id } });
+    await purgeExpired();
     await logAction(session.username, "DELETE_MEMBER", member.fullName, {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: member,
+      before: { fullName: member.fullName, age: member.age, status: member.status },
     });
 
     return NextResponse.json({ ok: true });
