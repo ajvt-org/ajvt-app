@@ -13,14 +13,19 @@ export const GET = withRoute("GET /api/admin/admins", async () => {
       id: true,
       username: true,
       role: true,
-      activities: { select: { activityId: true } },
+      activities: { select: { activity: { select: { id: true, title: true } } } },
       lastLoginAt: true,
       lastLoginIp: true,
       createdAt: true,
     },
     orderBy: { createdAt: "asc" },
   });
-  return NextResponse.json({ admins });
+  return NextResponse.json({
+    admins: admins.map(({ activities, ...admin }) => ({
+      ...admin,
+      activities: activities.map((link) => link.activity),
+    })),
+  });
 });
 
 export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest) => {

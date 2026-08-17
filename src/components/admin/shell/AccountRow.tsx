@@ -2,13 +2,16 @@
 
 import { formatDateTime } from "@/lib/utils";
 import { adminRoleLabel } from "@/lib/adminRoles";
+import Icon from "@/components/Icon";
 import type { AdminAccount } from "./accountTypes";
 
 export default function AccountRow({
   account,
+  onScope,
   onDelete,
 }: {
   account: AdminAccount;
+  onScope: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -20,6 +23,11 @@ export default function AccountRow({
           </p>
           <span className="badge badge-pending">{adminRoleLabel(account.role)}</span>
         </div>
+        {account.activities.length > 0 && (
+          <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
+            {account.activities.map((a) => a.title).join("، ")}
+          </p>
+        )}
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           منذ {formatDateTime(account.createdAt)}
         </p>
@@ -29,13 +37,23 @@ export default function AccountRow({
             : "لم يسجّل الدخول بعد"}
         </p>
       </div>
-      <button
-        onClick={onDelete}
-        className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-        style={{ background: "#fee2e2", color: "#991b1b" }}
-      >
-        حذف
-      </button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={onScope}
+          aria-label="تحديد الأنشطة"
+          className="p-1.5 rounded-lg"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <Icon name="trophy" size={16} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+          style={{ background: "#fee2e2", color: "#991b1b" }}
+        >
+          حذف
+        </button>
+      </div>
     </div>
   );
 }
