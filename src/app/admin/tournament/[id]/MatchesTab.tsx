@@ -4,6 +4,7 @@ import BracketTree from "@/components/tournament/BracketTree";
 import { getMatchWinnerTeamId } from "@/lib/tournament";
 import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
+import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
@@ -25,7 +26,6 @@ export default function MatchesTab({
   matches: Match[];
   onChange: () => void;
 }) {
-  const hasGroupStage = format === "GROUPS_THEN_KNOCKOUT";
   const [form, setForm] = useState({
     homeTeamId: "",
     awayTeamId: "",
@@ -75,37 +75,16 @@ export default function MatchesTab({
     }
   }
 
-  const bracketMatches = matches.filter((m) => m.bracketRound !== null) as (Match & {
-    bracketRound: number;
-  })[];
-  const maxBracketRound =
-    bracketMatches.length > 0 ? Math.max(...bracketMatches.map((m) => m.bracketRound)) : 0;
-  const currentBracketRoundMatches = bracketMatches.filter(
-    (m) => m.bracketRound === maxBracketRound,
-  );
-  const bracketIsFinalDone =
-    currentBracketRoundMatches.length === 1 && currentBracketRoundMatches[0].status === "PLAYED";
-  const canAdvanceBracket = bracketMatches.length > 0 && !bracketIsFinalDone;
-
-  // Poules "remplies" : chaque groupe a atteint sa taille cible et aucun calendrier n'a encore été généré.
-  const poolsReady =
-    hasGroupStage &&
-    groups.length > 0 &&
-    groups.every(
-      (g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity,
-    ) &&
-    matches.length === 0;
-
-  // Phase de poules terminée : tous les matchs de poule joués (s'il y a des groupes).
-  const leagueMatches = matches.filter((m) => !m.isKnockout);
-  const groupStageDone =
-    leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "PLAYED");
-  const groupStageComplete = hasGroupStage && groupStageDone && bracketMatches.length === 0;
-  // Tant qu'il y a des groupes, le tirage/bracket ne doit pas apparaître avant la fin du tour des poules.
-  const knockoutLocked = hasGroupStage && groups.length > 0 && !groupStageDone;
-  // Format foot standard du club : toujours 2 poules de 4 → demi-finale puis finale,
-  // donc pas de tirage aléatoire générique (réservé aux tournois sans poules, ex. échecs/PlayStation).
-  const isTwoGroupFormat = hasGroupStage && groups.length === 2;
+  const {
+    bracketMatches,
+    finalRound,
+    bracketIsFinalDone,
+    canAdvanceBracket,
+    poolsReady,
+    knockoutLocked,
+    isTwoGroupFormat,
+    groupStageComplete,
+  } = matchesState({ format, groups, teams, matches });
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -173,8 +152,6 @@ export default function MatchesTab({
     }
   }
 
-  // Same-group teams only for a league match — cross-group pairings are only
-  // valid once "مباراة خروج المغلوب" (knockout) is checked.
   const homeTeamForForm = teams.find((t) => t.id === form.homeTeamId);
   const awayTeamOptions = teams.filter((t) => {
     if (t.id === form.homeTeamId) return false;
@@ -307,7 +284,7 @@ export default function MatchesTab({
               )}
               {bracketIsFinalDone &&
                 (() => {
-                  const finalMatch = currentBracketRoundMatches[0];
+                  const finalMatch = finalRound[0];
                   const winnerId = getMatchWinnerTeamId({
                     ...finalMatch,
                     homeTeamId: finalMatch.homeTeam.id,
