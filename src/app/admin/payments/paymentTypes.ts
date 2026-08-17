@@ -13,6 +13,7 @@ export interface Proof {
   source?: "PUBLIC" | "SELF";
   paymentMethod?: string | null;
   memberId?: string | null;
+  activityId?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
   donorPhoto?: string | null;
@@ -33,6 +34,7 @@ export interface DonationResponse {
     paymentMethod: string | null;
     proof: string | null;
     memberId: string | null;
+    activityId: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -41,6 +43,11 @@ export interface DonationResponse {
 export interface MemberOption {
   id: string;
   fullName: string;
+}
+
+export interface ActivityOption {
+  id: string;
+  title: string;
 }
 
 export const STATUS_LABEL: Record<string, string> = {

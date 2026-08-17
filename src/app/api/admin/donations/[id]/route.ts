@@ -9,6 +9,7 @@ import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
+import { resolveDonationActivity } from "@/lib/donationActivity";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -117,7 +118,7 @@ export const PATCH = withRoute(
     if (tagIds !== undefined) {
       data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
     }
-    if (activityId !== undefined) data.activityId = activityId || null;
+    if (activityId !== undefined) data.activityId = await resolveDonationActivity(activityId);
 
     const donation = await prisma.donation.update({
       where: { id },

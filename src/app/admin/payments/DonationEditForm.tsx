@@ -6,7 +6,8 @@ import { PAYMENT_METHODS } from "@/lib/donations";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
-import type { DonationResponse, Proof } from "./paymentTypes";
+import ActivitySelect from "./ActivitySelect";
+import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
 
 const WHITE = { background: "white" };
 
@@ -17,16 +18,19 @@ function initial(proof: Proof) {
     donorPhoto: proof.donorPhoto || null,
     amount: proof.amount != null ? String(proof.amount) : "",
     paymentMethod: proof.paymentMethod || "",
+    activityId: proof.activityId || "",
     proof: proof.proof || null,
   };
 }
 
 export default function DonationEditForm({
   proof,
+  activities,
   onCancel,
   onSaved,
 }: {
   proof: Proof;
+  activities: ActivityOption[];
   onCancel: () => void;
   onSaved: (changes: Partial<Proof>) => void;
 }) {
@@ -51,6 +55,7 @@ export default function DonationEditForm({
       const body: Record<string, unknown> = {
         donorPhone: form.donorPhone.trim() || null,
         paymentMethod: form.paymentMethod || null,
+        activityId: form.activityId || null,
         proof: form.proof,
       };
       if (!linked) {
@@ -69,6 +74,8 @@ export default function DonationEditForm({
         donorPhoto: donation.donorPhoto,
         amount: donation.amount,
         paymentMethod: donation.paymentMethod,
+        activityId: donation.activityId,
+        activityTitle: activities.find((a) => a.id === donation.activityId)?.title ?? null,
         proof: donation.proof,
         memberName: linked ? proof.memberName : donation.donorName || "فاعل خير",
       });
@@ -146,6 +153,13 @@ export default function DonationEditForm({
           </option>
         ))}
       </select>
+
+      <ActivitySelect
+        activities={activities}
+        value={form.activityId}
+        onChange={(activityId) => set({ activityId })}
+        style={WHITE}
+      />
 
       {error && (
         <div

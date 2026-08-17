@@ -18,7 +18,7 @@ function match(proof: Proof, kind: KindFilter, query: string) {
 }
 
 export default function AdminPaymentsPage() {
-  const { proofs, members, tags, loading, setProofs } = usePaymentsData();
+  const { proofs, members, activities, tags, loading, setProofs } = usePaymentsData();
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState<KindFilter>("ALL");
   const [page, setPage] = useState(1);
@@ -82,6 +82,7 @@ export default function AdminPaymentsPage() {
               key={`${proof.kind}-${proof.id}`}
               proof={proof}
               members={members}
+              activities={activities}
               financeTags={tags}
               busy={actions.busyId === proof.id}
               onReview={(status) => actions.review(proof.id, status)}
@@ -103,6 +104,7 @@ export default function AdminPaymentsPage() {
 
       {adding && (
         <ManualDonationDialog
+          activities={activities}
           onClose={() => setAdding(false)}
           onCreated={(proof) => setProofs((prev) => [proof, ...prev])}
         />

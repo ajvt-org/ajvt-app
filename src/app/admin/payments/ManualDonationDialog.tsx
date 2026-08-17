@@ -9,7 +9,8 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
-import type { DonationResponse, Proof } from "./paymentTypes";
+import ActivitySelect from "./ActivitySelect";
+import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
 
 const EMPTY = {
   donorName: "",
@@ -17,16 +18,18 @@ const EMPTY = {
   amount: "",
   donorPhoto: "",
   paymentMethod: "",
+  activityId: "",
   proof: "",
 };
 
-function toProof(d: DonationResponse["donation"]): Proof {
+function toProof(d: DonationResponse["donation"], activities: ActivityOption[]): Proof {
   return {
     id: d.id,
     kind: "DONATION",
     proof: d.proof,
     memberName: d.donorName || "فاعل خير",
-    activityTitle: null,
+    activityId: d.activityId,
+    activityTitle: activities.find((a) => a.id === d.activityId)?.title ?? null,
     amount: d.amount,
     status: d.status,
     source: d.source,
@@ -52,9 +55,11 @@ function validate(form: typeof EMPTY): string {
 }
 
 export default function ManualDonationDialog({
+  activities,
   onClose,
   onCreated,
 }: {
+  activities: ActivityOption[];
   onClose: () => void;
   onCreated: (proof: Proof) => void;
 }) {
@@ -78,9 +83,10 @@ export default function ManualDonationDialog({
         donorPhoto: form.donorPhoto || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
+        activityId: form.activityId || null,
         proof: form.proof || null,
       });
-      onCreated(toProof(donation));
+      onCreated(toProof(donation, activities));
       onClose();
     } catch (e) {
       setError(errorMessage(e));
@@ -197,6 +203,23 @@ export default function ManualDonationDialog({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="manual-activity"
+          >
+            وجهة الدعم
+          </label>
+          <ActivitySelect
+            id="manual-activity"
+            activities={activities}
+            value={form.activityId}
+            onChange={(activityId) => set({ activityId })}
+            className="input"
+          />
         </div>
 
         {error && (

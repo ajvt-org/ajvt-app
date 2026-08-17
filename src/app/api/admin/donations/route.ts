@@ -5,6 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
+import { resolveDonationActivity } from "@/lib/donationActivity";
 
 // Records a donation the admin collected outside the app (cash in hand,
 // bank transfer confirmed by phone, etc.) — no proof screenshot required,
@@ -12,7 +13,7 @@ import { donationCreateSchema } from "./schema";
 // confirmed it happened), same as manually-added members.
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
-  const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod } = parse(
+  const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod, activityId } = parse(
     donationCreateSchema,
     await req.json(),
   );
@@ -26,6 +27,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       proof: proof || null,
       donorPhoto: donorPhoto || null,
       paymentMethod: paymentMethod || null,
+      activityId: await resolveDonationActivity(activityId),
       source: "PUBLIC",
       status: "ACTIVE",
     },
