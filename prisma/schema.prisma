@@ -93,6 +93,7 @@ model Activity {
   isOpen        Boolean                @default(true)
   isTournament  Boolean                @default(false)
   format        TournamentFormat?
+  teamSize      Int?
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
   order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
@@ -123,6 +124,7 @@ model Team {
   groupId     String?
   group       Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name        String
+  autoNamed   Boolean        @default(false)
   logo        String?
   createdAt   DateTime       @default(now())
   members     TeamMember[]

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { normalizeTeamSize } from "@/lib/teamSize";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
@@ -22,6 +23,7 @@ export const PATCH = withRoute(
       photo,
       isTournament,
       format,
+      teamSize,
       isVolunteer,
       whatsappLink,
       order,
@@ -44,6 +46,7 @@ export const PATCH = withRoute(
       photo?: string | null;
       isTournament?: boolean;
       format?: TournamentFormat | null;
+      teamSize?: number | null;
       isVolunteer?: boolean;
       whatsappLink?: string | null;
       order?: number;
@@ -65,6 +68,13 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: tournament.formatLocked }, { status: 409 });
       }
       data.format = format ?? null;
+    }
+    if (teamSize !== undefined) {
+      const played = await prisma.match.count({ where: { activityId: id } });
+      if (played > 0) {
+        return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
+      }
+      data.teamSize = normalizeTeamSize(teamSize);
     }
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;

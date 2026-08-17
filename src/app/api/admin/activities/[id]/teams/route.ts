@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { placeholderTeamName } from "@/lib/teamSize";
 import { activities, tournament } from "@/lib/messages";
 
 export const GET = withRoute(
@@ -45,19 +46,19 @@ export const POST = withRoute(
     const { id } = await params;
     const { name, groupId, logo } = await req.json();
 
-    if (!name?.trim()) {
-      return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
-    }
-    if (name.trim().length > 40) {
+    if (name?.trim() && name.trim().length > 40) {
       return NextResponse.json({ error: tournament.teamNameTooLong }, { status: 400 });
     }
 
     const activity = await prisma.activity.findUnique({
       where: { id },
-      select: { isTournament: true },
+      select: { isTournament: true, teamSize: true },
     });
     if (!activity?.isTournament) {
       return NextResponse.json({ error: activities.notATournament }, { status: 400 });
+    }
+    if (!name?.trim() && activity.teamSize === null) {
+      return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
     }
 
     if (groupId) {
@@ -67,8 +68,15 @@ export const POST = withRoute(
       }
     }
 
+    const teamCount = await prisma.team.count({ where: { activityId: id } });
     const team = await prisma.team.create({
-      data: { activityId: id, name: name.trim(), groupId: groupId || null, logo: logo || null },
+      data: {
+        activityId: id,
+        name: name?.trim() || placeholderTeamName(teamCount + 1),
+        autoNamed: !name?.trim(),
+        groupId: groupId || null,
+        logo: logo || null,
+      },
     });
 
     await logAction(session.username, "CREATE_TEAM", team.name, {

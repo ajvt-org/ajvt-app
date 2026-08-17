@@ -31,6 +31,7 @@ export default function TournamentPage() {
   const [roster, setRoster] = useState<RosterMember[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [format, setFormat] = useState<TournamentFormat>(null);
+  const [teamSize, setTeamSize] = useState<number | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [error, setError] = useState("");
@@ -54,6 +55,7 @@ export default function TournamentPage() {
       setRoster(rosterData.roster || []);
       setGroups(groupsData.groups || []);
       setFormat(groupsData.format ?? null);
+      setTeamSize(groupsData.teamSize ?? null);
       setTeams(teamsData.teams || []);
       setMatches(matchesData.matches || []);
     } catch {
@@ -157,6 +159,7 @@ export default function TournamentPage() {
             teams={teams}
             groups={groups}
             format={format}
+            teamSize={teamSize}
             roster={roster}
             onChange={loadAll}
           />
