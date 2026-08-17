@@ -6,7 +6,6 @@ import BarChart from "@/components/admin/BarChart";
 import { formatDateTime, formatDate, formatTime, loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
-import { allSelected, toggleAll } from "@/lib/selection";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
 import {
@@ -34,9 +33,6 @@ function AdminDashboardInner() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  // The address is the state: a narrowed list survives a reload and can be
-  // sent to someone else. `filter` is kept as a name because the tabs and the
-  // default-tab logic already speak it.
   const searchParams = useSearchParams();
   const urlFilters = readFilters(new URLSearchParams(searchParams.toString()));
   const [filters, setFiltersState] = useState(urlFilters);
@@ -88,8 +84,6 @@ function AdminDashboardInner() {
       const data = await api.get<{ members: Member[] }>("/api/admin/members");
       const loaded = data.members || [];
       setMembers(loaded);
-      // The default tab is a guess about what needs attention. An address that
-      // already names a status is not a guess, so it wins.
       if (!tabPicked.current) {
         tabPicked.current = true;
         if (!searchParams.get("status")) setFilter(initialFilterTab(loaded));
@@ -109,14 +103,9 @@ function AdminDashboardInner() {
       );
       setAgeGroups(data.ageGroups || []);
       setOrphanAges(data.orphans || []);
-    } catch {
-      // non-critical — the age select just falls back to an empty list
-    }
+    } catch {}
   }
 
-  // Advances to the next row on the current page instead of just closing —
-  // lets an admin work through a queue of obvious cases without returning
-  // to the list after every single decision (cf. AGENTS.md UX TODO, F).
   async function validate(id: string, action: "ACTIVE" | "REJECTED", reason?: string) {
     setActionLoading(true);
     try {
@@ -151,10 +140,6 @@ function AdminDashboardInner() {
     });
   }
 
-  // A batch used to be approve-only, so that a rejection always carried a
-  // reason the member could act on. Rejecting in a batch keeps that: the
-  // reason is picked for the batch before anything is sent, and the same one
-  // reaches every member in it. What it does not allow is a blank reason.
   async function runOnSelection(action: "ACTIVE" | "REJECTED", reason: string | null, ask: string) {
     if (selectedIds.size === 0) return;
     if (!confirm(ask)) return;
@@ -180,9 +165,6 @@ function AdminDashboardInner() {
     }
   }
 
-  // Moving a batch to another عصر is the one correction the list can do on its
-  // own: it changes nothing a member sees except the group they compete in, and
-  // it is the field most of them get wrong on the form.
   async function bulkMoveAge() {
     if (selectedIds.size === 0 || !bulkAge) return;
     if (!confirm(`نقل ${selectedIds.size} عضو إلى عصر ${bulkAge}؟`)) return;
@@ -347,17 +329,6 @@ function AdminDashboardInner() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const visibleIds = paginated.map((m) => m.id);
-  const allOnPageSelected = allSelected(visibleIds, selectedIds);
-
-  function toggleAllOnPage() {
-    setSelectedIds((prev) => toggleAll(visibleIds, prev));
-  }
-
-  // Keyboard-driven review: a/r/n so a straightforward case (proof already
-  // visible in the drawer) can be resolved without touching the mouse —
-  // 1-5 pick a rejection reason once the picker is open. Ignored while
-  // typing in a field, and while any request is in flight.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (!selected || actionLoading) return;
@@ -410,15 +381,11 @@ function AdminDashboardInner() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-    // validate is recreated every render; omitted below (re-subscribing the
-    // listener each render would be harmless but pointless) — same pattern
-    // already tolerated for fetchMembers above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, showRejectPicker, actionLoading, paginated]);
 
   return (
     <div className="admin-page">
-      {/* Stat chips */}
       <div className="grid grid-cols-4 gap-2 mb-5">
         {(["ALL", "PENDING", "ACTIVE", "REJECTED"] as FilterTab[]).map((s) => (
           <button
@@ -522,7 +489,6 @@ function AdminDashboardInner() {
         </div>
       )}
 
-      {/* Search + manual add */}
       <div className="flex gap-2 mb-4">
         <input
           type="text"
@@ -552,8 +518,6 @@ function AdminDashboardInner() {
         </button>
       </div>
 
-      {/* Criteria that could not be combined before: an age, a payment method
-          and how much has actually been paid, on top of the status tab. */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <select
           value={filters.age}
@@ -612,19 +576,6 @@ function AdminDashboardInner() {
           </button>
         )}
       </div>
-
-      {paginated.length > 0 && (
-        <label className="flex items-center gap-2 mb-2 text-xs font-bold cursor-pointer">
-          <input
-            type="checkbox"
-            className="w-4 h-4"
-            checked={allOnPageSelected}
-            onChange={toggleAllOnPage}
-            aria-label="تحديد كل الطلبات المعروضة"
-          />
-          <span style={{ color: "var(--text-muted)" }}>تحديد كل المعروض ({paginated.length})</span>
-        </label>
-      )}
 
       {selectedIds.size > 0 && (
         <div
@@ -697,8 +648,6 @@ function AdminDashboardInner() {
             </div>
           )}
 
-          {/* The one correction that is worth doing in a batch: a whole group
-              of members picked the wrong عصر on their own form. */}
           <div className="flex items-center gap-2">
             <label
               htmlFor="bulk-age"
@@ -732,7 +681,6 @@ function AdminDashboardInner() {
         </div>
       )}
 
-      {/* List */}
       {loading ? (
         <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
           <div className="text-4xl animate-pulse mb-3">⏳</div>
@@ -853,7 +801,6 @@ function AdminDashboardInner() {
         </div>
       )}
 
-      {/* Detail drawer */}
       {selected && (
         <div
           className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -898,7 +845,6 @@ function AdminDashboardInner() {
             <div className="p-5 space-y-4">
               <SamePersonWarning memberId={selected.id} />
 
-              {/* Photo + name */}
               <div className="card p-4 flex items-center gap-4">
                 <div className="relative shrink-0">
                   {selected.photo ? (
@@ -933,7 +879,6 @@ function AdminDashboardInner() {
                 </Link>
               </div>
 
-              {/* Info */}
               <div className="card p-4 space-y-3">
                 {(
                   [
@@ -965,7 +910,6 @@ function AdminDashboardInner() {
                 ))}
               </div>
 
-              {/* Status */}
               <div className="flex items-center justify-between card p-4">
                 <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
                   الحالة
@@ -975,7 +919,6 @@ function AdminDashboardInner() {
                 </span>
               </div>
 
-              {/* Registered activities */}
               {selected.registrations && selected.registrations.length > 0 && (
                 <div className="card p-4">
                   <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
@@ -991,7 +934,6 @@ function AdminDashboardInner() {
                 </div>
               )}
 
-              {/* Reset password / attach account */}
               <div className="card p-4">
                 {selected.userId ? (
                   <div className="flex items-center justify-between gap-3">
@@ -1083,7 +1025,6 @@ function AdminDashboardInner() {
                 <ArrowLabel>الملف الكامل للعضو</ArrowLabel>
               </Link>
 
-              {/* Proof image */}
               <div>
                 <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
                   <IconLabel name="camera">صورة الكابتير</IconLabel>
@@ -1122,7 +1063,6 @@ function AdminDashboardInner() {
                 )}
               </div>
 
-              {/* Actions */}
               {(selected.status === "PENDING" || selected.status === "ACTIVE") && (
                 <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
                   ⌨️ اختصارات: A قبول — R رفض — N التالي
@@ -1235,7 +1175,6 @@ function AdminDashboardInner() {
         </div>
       )}
 
-      {/* Proof fullscreen zoom */}
       {proofZoom && selected?.paymentProof && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
