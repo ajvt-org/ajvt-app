@@ -1,3 +1,5 @@
+export type TournamentFormat = "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
+
 export interface RosterMember {
   id: string;
   fullName: string;

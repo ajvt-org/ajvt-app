@@ -11,12 +11,12 @@ export const GET = withRoute(
     await requireAdminRole("ACTIVITIES");
     const { id } = await params;
 
-    const groups = await prisma.group.findMany({
-      where: { activityId: id },
-      orderBy: { createdAt: "asc" },
-    });
+    const [groups, activity] = await Promise.all([
+      prisma.group.findMany({ where: { activityId: id }, orderBy: { createdAt: "asc" } }),
+      prisma.activity.findUnique({ where: { id }, select: { format: true } }),
+    ]);
 
-    return NextResponse.json({ groups });
+    return NextResponse.json({ groups, format: activity?.format ?? null });
   },
 );
 
@@ -43,10 +43,13 @@ export const POST = withRoute(
 
     const activity = await prisma.activity.findUnique({
       where: { id },
-      select: { isTournament: true },
+      select: { isTournament: true, format: true },
     });
     if (!activity?.isTournament) {
       return NextResponse.json({ error: activities.notATournament }, { status: 400 });
+    }
+    if (activity.format === "KNOCKOUT") {
+      return NextResponse.json({ error: tournament.groupsNotInKnockout }, { status: 409 });
     }
 
     const group = await prisma.group.create({
