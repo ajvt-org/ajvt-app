@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import {
+  expireStaleAssignments,
   touchUserActivity,
   runDailyQuizAutoSend,
   getPendingAssignments,
@@ -11,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { quiz } from "@/lib/messages";
+import { DEFAULT_ANSWER_WINDOW_SECONDS } from "@/lib/quizWindow";
 
 export const GET = withRoute("GET /api/quiz/me", async () => {
   const session = await requireUser();
@@ -24,6 +26,7 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   // awaited: if this is the first visit of the day, the freshly-generated
   // question(s) must show up in this very response, not on the next visit.
   await runDailyQuizAutoSend().catch((err) => logger.error("quiz.autosend.error", err));
+  await expireStaleAssignments(session.userId, DEFAULT_ANSWER_WINDOW_SECONDS);
 
   const [pending, standing, user] = await Promise.all([
     getPendingAssignments(session.userId),
@@ -46,5 +49,6 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
     totalParticipants: standing.totalParticipants,
     top10: standing.top10,
     streak: { current: user?.currentStreak ?? 0, longest: user?.longestStreak ?? 0 },
+    answerWindowSeconds: DEFAULT_ANSWER_WINDOW_SECONDS,
   });
 });

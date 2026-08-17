@@ -26,6 +26,7 @@ export default function QuizPage() {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [revealing, setRevealing] = useState<string | null>(null);
+  const [timedOut, setTimedOut] = useState<Set<string>>(new Set());
   const [answered, setAnswered] = useState<Record<string, AnswerResult>>({});
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -208,7 +209,10 @@ export default function QuizPage() {
               result={answered[assignment.id]}
               submitting={submitting === assignment.id}
               revealing={revealing === assignment.id}
+              windowSeconds={data.answerWindowSeconds}
+              timedOut={timedOut.has(assignment.id)}
               onReveal={() => revealOptions(assignment)}
+              onExpire={() => setTimedOut((prev) => new Set(prev).add(assignment.id))}
               onToggle={(answerId) => toggleAnswer(assignment, answerId)}
               onSubmit={() => submitAnswer(assignment)}
               onContinue={() => dismissAssignment(assignment.id)}
