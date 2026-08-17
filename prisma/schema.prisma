@@ -103,6 +103,8 @@ model Activity {
   teams         Team[]
   matches       Match[]
   groups        Group[]
+  expenses      Expense[]
+  donations     Donation[]
 }
 
 model Group {
@@ -316,9 +318,12 @@ model Donation {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
   @@index([memberId])
   @@index([status])
+  @@index([activityId])
 }
 
 // Manually-entered outgoing spending (association expenses) — no in-app
@@ -334,8 +339,11 @@ model Expense {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   tags      FinanceTag[]
+  activityId String?
+  activity   Activity?   @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
   @@index([date])
+  @@index([activityId])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so

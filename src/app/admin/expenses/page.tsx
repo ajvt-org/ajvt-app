@@ -16,7 +16,7 @@ import ExpenseList from "./ExpenseList";
 import ExpenseFormDialog from "./ExpenseFormDialog";
 import { exportFinance } from "./exportFinance";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
-import type { Expense, ExpenseForm, FinanceSummary } from "./types";
+import type { ActivityOption, Expense, ExpenseForm, FinanceSummary } from "./types";
 
 function toggleIn(set: Set<string>, key: string): Set<string> {
   const next = new Set(set);
@@ -39,6 +39,7 @@ export default function AdminExpensesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tags, setTags] = useState<FinanceTagRow[]>([]);
+  const [activities, setActivities] = useState<ActivityOption[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
@@ -59,10 +60,12 @@ export default function AdminExpensesPage() {
       }),
       fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/admin/finance-tags").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([summaryData, expensesData, tagsData]) => {
+      fetch("/api/admin/activities").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([summaryData, expensesData, tagsData, activitiesData]) => {
       if (summaryData) setSummary(summaryData);
       if (expensesData?.expenses) setExpenses(expensesData.expenses);
       if (tagsData?.tags) setTags(tagsData.tags);
+      if (activitiesData?.activities) setActivities(activitiesData.activities);
     });
   }
 
@@ -107,6 +110,7 @@ export default function AdminExpensesPage() {
       date: expense.date.slice(0, 10),
       proof: expense.proof || "",
       tagIds: expense.tags.map((t) => t.id),
+      activityId: expense.activity?.id || "",
     });
     setFormError("");
     setShowForm(true);
@@ -134,6 +138,7 @@ export default function AdminExpensesPage() {
         date: form.date || undefined,
         proof: form.proof || null,
         tagIds: form.tagIds,
+        activityId: form.activityId || null,
       };
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
@@ -315,6 +320,7 @@ export default function AdminExpensesPage() {
         <ExpenseFormDialog
           form={form}
           tags={tags}
+          activities={activities}
           editing={!!editingId}
           error={formError}
           saving={saving}

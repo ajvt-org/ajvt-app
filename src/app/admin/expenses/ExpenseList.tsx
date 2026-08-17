@@ -68,6 +68,13 @@ function Row({
                 {expense.note}
               </p>
             )}
+            {expense.activity && (
+              <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
+                <IconLabel name="trophy" size={11}>
+                  {expense.activity.title}
+                </IconLabel>
+              </p>
+            )}
             {expense.tags.length > 0 && (
               <div className="mt-1.5">
                 <FinanceTagChips tags={expense.tags} />

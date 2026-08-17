@@ -11,7 +11,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     const { id } = await params;
-    const { label, amount, note, date, proof, tagIds } = parse(
+    const { label, amount, note, date, proof, tagIds, activityId } = parse(
       expenseUpdateSchema,
       await req.json(),
     );
@@ -28,6 +28,7 @@ export const PATCH = withRoute(
       date?: Date;
       proof?: string | null;
       tags?: { set: { id: string }[] };
+      activityId?: string | null;
     } = {};
 
     if (label !== undefined) data.label = label;
@@ -39,14 +40,16 @@ export const PATCH = withRoute(
 
     if (date !== undefined) data.date = new Date(date as string);
     if (proof !== undefined) data.proof = proof;
-    // set, not connect: the list sent is the whole list, so dropping a tag
-    // in the form has to drop it here.
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
+    if (activityId !== undefined) data.activityId = activityId || null;
 
     const expense = await prisma.expense.update({
       where: { id },
       data,
-      include: { tags: { select: { id: true, name: true } } },
+      include: {
+        tags: { select: { id: true, name: true } },
+        activity: { select: { id: true, title: true } },
+      },
     });
     await logAction(
       session.username,

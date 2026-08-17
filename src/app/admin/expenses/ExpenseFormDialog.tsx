@@ -6,7 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
-import type { ExpenseForm } from "./types";
+import type { ActivityOption, ExpenseForm } from "./types";
 
 function Field({
   id,
@@ -36,6 +36,7 @@ function Field({
 export default function ExpenseFormDialog({
   form,
   tags,
+  activities,
   editing,
   error,
   saving,
@@ -45,6 +46,7 @@ export default function ExpenseFormDialog({
 }: {
   form: ExpenseForm;
   tags: FinanceTagRow[];
+  activities: ActivityOption[];
   editing: boolean;
   error: string;
   saving: boolean;
@@ -138,6 +140,22 @@ export default function ExpenseFormDialog({
               maxLength={200}
               className="input"
             />
+          </Field>
+
+          <Field id="expense-activity" label="النشاط (اختياري)">
+            <select
+              id="expense-activity"
+              value={form.activityId}
+              onChange={(e) => onChange({ activityId: e.target.value })}
+              className="input"
+            >
+              <option value="">بدون نشاط</option>
+              {activities.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.title}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <div>
