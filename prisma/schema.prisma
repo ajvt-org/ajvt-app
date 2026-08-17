@@ -292,9 +292,10 @@ model Counter {
 // foreign key, so renaming an entry rewrites every member carrying the old
 // name in the same transaction. Deleting one leaves those members alone.
 model AgeGroup {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  name       String   @unique
+  totalCount Int      @default(30)
+  createdAt  DateTime @default(now())
 }
 
 model Donation {
