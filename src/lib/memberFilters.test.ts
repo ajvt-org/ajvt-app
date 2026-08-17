@@ -46,6 +46,8 @@ describe("carrying the filters in the address", () => {
       age: "التائبين",
       method: "نقداً",
       paid: "partial",
+      from: "2026-03-01",
+      to: "2026-03-31",
     };
     expect(readFilters(new URLSearchParams(writeFilters(chosen).toString()))).toEqual(chosen);
   });
@@ -103,5 +105,57 @@ describe("narrowing a list of members", () => {
     expect(matchesFilters(member({ user: { phone: "49999999" } }), q("4999"), FEE)).toBe(true);
     expect(matchesFilters(member({ user: null }), q("2233"), FEE)).toBe(false);
     expect(matchesFilters(member(), q("لا يوجد"), FEE)).toBe(false);
+  });
+});
+
+describe("narrowing to a period", () => {
+  const joined = (createdAt: string) => member({ createdAt });
+
+  it("keeps everyone when no period is chosen", () => {
+    expect(matchesFilters(joined("2026-03-04T09:00:00.000Z"), NO_FILTERS, FEE)).toBe(true);
+  });
+
+  it("includes both ends of the range", () => {
+    const range = { ...NO_FILTERS, from: "2026-03-01", to: "2026-03-31" };
+    expect(matchesFilters(joined("2026-03-01T00:00:00.000Z"), range, FEE)).toBe(true);
+    expect(matchesFilters(joined("2026-03-31T23:59:00.000Z"), range, FEE)).toBe(true);
+  });
+
+  it("drops what falls outside", () => {
+    const range = { ...NO_FILTERS, from: "2026-03-01", to: "2026-03-31" };
+    expect(matchesFilters(joined("2026-02-28T12:00:00.000Z"), range, FEE)).toBe(false);
+    expect(matchesFilters(joined("2026-04-01T00:00:00.000Z"), range, FEE)).toBe(false);
+  });
+
+  it("takes an open-ended range from either side", () => {
+    expect(
+      matchesFilters(
+        joined("2026-05-09T12:00:00.000Z"),
+        { ...NO_FILTERS, from: "2026-05-01" },
+        FEE,
+      ),
+    ).toBe(true);
+    expect(
+      matchesFilters(
+        joined("2026-04-09T12:00:00.000Z"),
+        { ...NO_FILTERS, from: "2026-05-01" },
+        FEE,
+      ),
+    ).toBe(false);
+    expect(
+      matchesFilters(joined("2026-04-09T12:00:00.000Z"), { ...NO_FILTERS, to: "2026-05-01" }, FEE),
+    ).toBe(true);
+  });
+
+  it("counts each end as its own active filter", () => {
+    expect(activeFilterCount({ ...NO_FILTERS, from: "2026-03-01" })).toBe(1);
+    expect(activeFilterCount({ ...NO_FILTERS, from: "2026-03-01", to: "2026-03-31" })).toBe(2);
+  });
+
+  it("carries the period in the address", () => {
+    const params = writeFilters({ ...NO_FILTERS, from: "2026-03-01", to: "2026-03-31" });
+    expect(params.get("from")).toBe("2026-03-01");
+    expect(params.get("to")).toBe("2026-03-31");
+    expect(readFilters(params)).toMatchObject({ from: "2026-03-01", to: "2026-03-31" });
   });
 });
