@@ -51,8 +51,46 @@ async function tempPasswordRedirect(req: NextRequest): Promise<NextResponse | nu
   return NextResponse.redirect(new URL(CHANGE_PASSWORD_PATH, req.url));
 }
 
+// The admin screens answer on their own hostname. One service serves both, so
+// the separation is made here: the public host does not have an /admin at all,
+// and the admin host carries nothing else.
+//
+// Read per request rather than at import, so a test can set it and so a deploy
+// without the variable behaves exactly as before — one host, everything on it.
+// The session cookies are already host-only (neither login sets `domain`), so
+// splitting the hostnames splits the sessions with it.
+const ADMIN_ONLY = ["/admin", "/api/admin"];
+const ADMIN_ALSO_NEEDS = ["/api/ages", "/api/files", "/api/upload"];
+
+function underAny(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function wrongHost(req: NextRequest): NextResponse | null {
+  const adminHost = process.env.ADMIN_HOST?.trim().toLowerCase();
+  if (!adminHost) return null;
+
+  const host = (req.headers.get("host") ?? "").toLowerCase().split(":")[0];
+  const { pathname } = req.nextUrl;
+  const isAdminPath = underAny(pathname, ADMIN_ONLY);
+
+  if (host !== adminHost) {
+    // Not found rather than forbidden: the public site has no admin area.
+    return isAdminPath ? new NextResponse(null, { status: 404 }) : null;
+  }
+  if (isAdminPath || underAny(pathname, ADMIN_ALSO_NEEDS)) return null;
+  if (pathname.startsWith("/api/")) return new NextResponse(null, { status: 404 });
+  return NextResponse.redirect(new URL("/admin", req.url));
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  const misrouted = wrongHost(req);
+  if (misrouted) return misrouted;
+
+  // The rest is about sessions, which API routes settle for themselves.
+  if (pathname.startsWith("/api/")) return NextResponse.next();
 
   const locked = await tempPasswordRedirect(req);
   if (locked) return locked;
@@ -90,8 +128,11 @@ export async function proxy(req: NextRequest) {
 // member area. API routes are excluded: requireUser already refuses them, and a
 // redirect is no answer to fetch. Static files and the service worker are
 // excluded so the shell still loads while locked.
+// The admin API is matched as well, so the public host can refuse it. Nothing
+// else about /api/ is decided here — proxy returns straight away for those.
 export const config = {
   matcher: [
     "/((?!api/|_next/|uploads/|sw\\.js|manifest\\.json|offline\\.html|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|txt|xml|woff2?|ttf)$).*)",
+    "/api/admin/:path*",
   ],
 };
