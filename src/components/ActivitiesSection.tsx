@@ -41,7 +41,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
             {quizAccess
-              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين 🔥"
+              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين"
               : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
           </p>
         </div>
