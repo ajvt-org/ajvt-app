@@ -105,6 +105,7 @@ model Activity {
   groups        Group[]
   expenses      Expense[]
   donations     Donation[]
+  admins        AdminActivity[]
 }
 
 model Group {
@@ -277,14 +278,27 @@ model ActivityRegistration {
 }
 
 model Admin {
-  id           String    @id @default(cuid())
-  username     String    @unique
+  id           String          @id @default(cuid())
+  username     String          @unique
   password     String
-  role         String    @default("SUPER")
-  tokenVersion Int       @default(0)
+  role         String          @default("SUPER")
+  tokenVersion Int             @default(0)
   lastLoginAt  DateTime?
   lastLoginIp  String?
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime        @default(now())
+  activities   AdminActivity[]
+}
+
+model AdminActivity {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([adminId, activityId])
+  @@index([activityId])
 }
 
 model Counter {

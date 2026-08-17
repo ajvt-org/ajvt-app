@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
@@ -10,8 +10,8 @@ import { tournament } from "@/lib/messages";
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
     const { memberId, teamId, cardType, minute } = parse(bookingCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({

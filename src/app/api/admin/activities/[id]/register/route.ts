@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
 import { withRoute } from "@/lib/route";
@@ -12,8 +12,8 @@ import { activities, members, push } from "@/lib/messages";
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const [member, activity] = await Promise.all([
@@ -66,8 +66,8 @@ export const POST = withRoute(
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]/register",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
     const { registrationId, status, reason } = parse(registrationReviewSchema, await req.json());
 
     const registration = await prisma.activityRegistration.findUnique({
@@ -123,8 +123,8 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/activities/[id]/register",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const existing = await prisma.activityRegistration.findUnique({

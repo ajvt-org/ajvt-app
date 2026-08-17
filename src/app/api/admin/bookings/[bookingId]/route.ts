@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireBookingAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
 
 export const DELETE = withRoute(
   "DELETE /api/admin/bookings/[bookingId]",
   async (req: NextRequest, { params }: { params: Promise<{ bookingId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { bookingId } = await params;
+    const session = await requireBookingAccess(bookingId);
 
     const booking = await prisma.matchBooking.findUnique({
       where: { id: bookingId },

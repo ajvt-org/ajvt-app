@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { activities, tournament } from "@/lib/messages";
@@ -8,8 +8,8 @@ import { activities, tournament } from "@/lib/messages";
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/groups",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    await requireActivityAccess(id);
 
     const [groups, activity] = await Promise.all([
       prisma.group.findMany({ where: { activityId: id }, orderBy: { createdAt: "asc" } }),
@@ -27,8 +27,8 @@ export const GET = withRoute(
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/groups",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
     const { name, capacity } = await req.json();
 
     if (!name?.trim()) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { bracketRoundLabel, shuffleArray, isPowerOfTwo } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
@@ -9,8 +9,8 @@ import { incompleteTeams, displayTeamName } from "@/lib/teamSize";
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/bracket/draw",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    const session = await requireActivityAccess(id);
 
     const activity = await prisma.activity.findUnique({
       where: { id },

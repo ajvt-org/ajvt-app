@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
@@ -23,8 +23,8 @@ const VOTE_INCLUDE = {
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/mvp-vote",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
     const { candidateMemberIds } = parse(mvpVoteCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
@@ -86,8 +86,8 @@ export const POST = withRoute(
 export const PATCH = withRoute(
   "PATCH /api/admin/matches/[matchId]/mvp-vote",
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
     const { status } = parse(mvpVoteStatusSchema, await req.json());
 
     const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
@@ -114,8 +114,8 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/matches/[matchId]/mvp-vote",
   async (_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
-    const session = await requireAdminRole("ACTIVITIES");
     const { matchId } = await params;
+    const session = await requireMatchAccess(matchId);
 
     const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
     if (!existing) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { activities as messages } from "@/lib/messages";
 
@@ -10,8 +10,8 @@ import { activities as messages } from "@/lib/messages";
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/detail",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("ACTIVITIES");
     const { id } = await params;
+    await requireActivityAccess(id);
 
     const activity = await prisma.activity.findUnique({
       where: { id },
