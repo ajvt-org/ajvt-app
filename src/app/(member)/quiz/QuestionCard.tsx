@@ -4,6 +4,8 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Countdown from "./Countdown";
 import type { AnswerData, AnswerResult, PendingAssignment } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { ANSWER } from "@/lib/messages";
 
 const NEUTRAL = {
   border: "1.5px solid var(--mint-200)",
@@ -125,7 +127,7 @@ export default function QuestionCard({
 
           {!result && question.correctCount > 1 && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              اختر {question.correctCount} إجابات صحيحة
+              اختر {counted(question.correctCount, ANSWER)} صحيحة
             </p>
           )}
 
