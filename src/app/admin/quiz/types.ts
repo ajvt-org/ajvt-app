@@ -24,6 +24,8 @@ export interface QuizSettings {
   defaultCorrectCount: number;
   defaultPoints: number;
   questionsPerDay: number;
+  answerWindowSeconds: number;
+  minScorePercent: number;
 }
 
 export interface LeaderboardRow {
@@ -48,4 +50,6 @@ export const emptySettingsForm: SettingsForm = {
   defaultCorrectCount: "1",
   defaultPoints: "10",
   questionsPerDay: "1",
+  answerWindowSeconds: "10",
+  minScorePercent: "40",
 };

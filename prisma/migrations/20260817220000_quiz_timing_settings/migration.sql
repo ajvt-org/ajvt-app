@@ -1,0 +1,2 @@
+ALTER TABLE "QuizSettings" ADD COLUMN "answerWindowSeconds" INTEGER NOT NULL DEFAULT 10;
+ALTER TABLE "QuizSettings" ADD COLUMN "minScorePercent" INTEGER NOT NULL DEFAULT 40;
