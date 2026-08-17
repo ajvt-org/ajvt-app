@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate, formatTime, loginPathWithNext, toThumbUrl, validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
+import DonationTags from "./DonationTags";
+import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import PhotoUpload from "@/components/PhotoUpload";
 import { api, errorMessage } from "@/lib/api";
 import DialogHeader from "@/components/DialogHeader";
@@ -24,6 +26,7 @@ interface Proof {
   donorName?: string | null;
   donorPhone?: string | null;
   donorPhoto?: string | null;
+  tags?: FinanceTag[];
   uploadedAt: string;
   submittedAt: string;
 }
@@ -95,6 +98,7 @@ export default function AdminPaymentsPage() {
   const [editProof, setEditProof] = useState<string | null>(null);
   const [editError, setEditError] = useState("");
 
+  const [financeTags, setFinanceTags] = useState<FinanceTag[]>([]);
   const [showManualDonation, setShowManualDonation] = useState(false);
   const [manualDonation, setManualDonation] = useState(emptyManualDonation);
   const [manualError, setManualError] = useState("");
@@ -112,8 +116,12 @@ export default function AdminPaymentsPage() {
       fetch("/api/admin/members")
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
+      fetch("/api/admin/finance-tags")
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
     ])
-      .then(([proofsData, membersData]) => {
+      .then(([proofsData, membersData, tagsData]) => {
+        if (tagsData?.tags) setFinanceTags(tagsData.tags);
         if (proofsData?.proofs) setProofs(proofsData.proofs);
         if (membersData?.members)
           setMembers(
@@ -453,6 +461,25 @@ export default function AdminPaymentsPage() {
                     {" — "}
                     {formatTime(p.uploadedAt)}
                   </p>
+
+                  {p.kind === "DONATION" && (
+                    <div className="mt-2">
+                      <DonationTags
+                        donationId={p.id}
+                        tags={p.tags ?? []}
+                        allTags={financeTags}
+                        onSaved={(tags) =>
+                          setProofs((prev) =>
+                            prev.map((item) =>
+                              item.id === p.id && item.kind === "DONATION"
+                                ? { ...item, tags }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                  )}
 
                   {p.kind === "DONATION" && (
                     <div className="flex flex-wrap gap-2 mt-2">

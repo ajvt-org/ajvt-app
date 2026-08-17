@@ -1,14 +1,14 @@
-export type ExpenseTag = { id: string; name: string };
+export type FinanceTag = { id: string; name: string };
 
 // One shape for a tag wherever it appears: on an expense, in the picker, in
 // the filter row. `onClick` turns it into a control; without it, it is a label.
-export default function ExpenseTagChips({
+export default function FinanceTagChips({
   tags,
   selected,
   onToggle,
   empty,
 }: {
-  tags: ExpenseTag[];
+  tags: FinanceTag[];
   selected?: string[];
   onToggle?: (id: string) => void;
   empty?: string;
