@@ -145,7 +145,12 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
+        <MemberDecision
+          memberId={member.id}
+          fullName={member.fullName}
+          status={member.status}
+          onDecided={load}
+        />
       )}
 
       {member.user && (
