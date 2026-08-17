@@ -149,7 +149,9 @@ export default function QuizPage() {
     return (
       <div className="app-shell flex items-center justify-center">
         <div className="text-center" style={{ color: "var(--mint-500)" }}>
-          <div className="text-4xl mb-3 animate-pulse">🧠</div>
+          <div className="mb-3 flex justify-center animate-pulse">
+            <Icon name="quiz" size={40} />
+          </div>
           <p className="text-sm font-semibold">جاري التحميل...</p>
         </div>
       </div>
@@ -225,7 +227,9 @@ export default function QuizPage() {
         {/* Stats bar: streak, points, rank */}
         <div className="grid grid-cols-3 gap-2 fade-up">
           <div className="card p-3 text-center">
-            <div className="text-2xl">🔥</div>
+            <div className="flex justify-center" style={{ color: "var(--copper-600)" }}>
+              <Icon name="flame" size={22} />
+            </div>
             <p className="text-lg font-black" style={{ color: "var(--copper-600)" }}>
               {data.streak.current}
             </p>
