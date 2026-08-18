@@ -22,5 +22,16 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://ajvt.net/manifest.json"
+    },
+    {
+      "platform": "webapp",
+      "url": "https://ajvt-app.onrender.com/manifest.json"
+    }
   ]
 }
