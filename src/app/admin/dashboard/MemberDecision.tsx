@@ -91,7 +91,7 @@ export default function MemberDecision({
     <>
       {decidable && (
         <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          ⌨️ اختصارات: A قبول — R رفض — N التالي
+          <IconLabel name="list">اختصارات: A قبول — R رفض — N التالي</IconLabel>
         </p>
       )}
 
@@ -106,7 +106,7 @@ export default function MemberDecision({
             className="btn text-sm font-bold"
             style={{ background: "#dc2626", color: "white" }}
           >
-            ❌ رفض
+            <IconLabel name="close">رفض</IconLabel>
           </button>
         </div>
       )}

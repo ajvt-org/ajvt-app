@@ -122,7 +122,9 @@ export default function MemberList({
   if (empty) {
     return (
       <div className="card p-12 text-center" style={{ color: "var(--text-muted)" }}>
-        <div className="text-4xl mb-3">📭</div>
+        <div className="mb-3 flex justify-center">
+          <Icon name="file" size={40} color="var(--mint-400)" />
+        </div>
         <p className="font-semibold">لا توجد طلبات في هذا القسم</p>
       </div>
     );

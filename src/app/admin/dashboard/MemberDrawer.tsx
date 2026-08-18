@@ -270,7 +270,7 @@ export default function MemberDrawer({
             className="btn w-full text-sm font-bold"
             style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
           >
-            {deleteLoading ? "..." : "🗑 حذف الطلب نهائياً"}
+            {deleteLoading ? "..." : <IconLabel name="trash">حذف الطلب نهائياً</IconLabel>}
           </button>
 
           <div className="pb-2" />

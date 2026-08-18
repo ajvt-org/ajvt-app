@@ -48,7 +48,7 @@ function AttachAccount({
   return (
     <div>
       <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
-        📵 لا يوجد حساب مرتبط — رقم الهاتف غير معروف
+        <IconLabel name="ban">لا يوجد حساب مرتبط — رقم الهاتف غير معروف</IconLabel>
       </p>
       <div className="flex items-center gap-2">
         <input
