@@ -38,6 +38,10 @@ export function put(url: string, body: unknown): NextRequest {
   });
 }
 
+export function del(url: string): NextRequest {
+  return new NextRequest(`http://localhost${url}`, { method: "DELETE" });
+}
+
 export function get(url: string, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }
@@ -46,6 +50,17 @@ export async function createUser(phone = "22334455", password = "secret") {
   return prisma.user.create({
     data: { phone, password: await bcrypt.hash(password, 4) },
   });
+}
+
+let phoneSeq = 0;
+
+export async function createUsers(count: number, password = "secret") {
+  const made = [];
+  for (let i = 0; i < count; i++) {
+    phoneSeq += 1;
+    made.push(await createUser(`3${String(phoneSeq).padStart(7, "0")}`, password));
+  }
+  return made;
 }
 
 export async function createAdmin(username = "admin", role = "SUPER", password = "secret") {
