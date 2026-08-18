@@ -1,6 +1,8 @@
 "use client";
 
 import DialogClose from "@/components/DialogClose";
+import DifficultyHint from "./DifficultyHint";
+import { POINTS_MIN, POINTS_MAX } from "@/lib/quizDifficulty";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import type { AnswerFormRow } from "./types";
@@ -169,11 +171,14 @@ export default function QuestionFormDialog({
                 id="quiz-points"
                 type="number"
                 dir="ltr"
-                min={1}
+                min={POINTS_MIN}
+                max={POINTS_MAX}
+                required
                 value={values.points}
                 onChange={(e) => onChange({ points: e.target.value })}
                 className="input"
               />
+              <DifficultyHint points={values.points} />
             </div>
             <div>
               <label

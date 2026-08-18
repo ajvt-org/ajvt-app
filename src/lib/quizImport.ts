@@ -1,4 +1,5 @@
 import { quiz } from "./messages/quiz";
+import { normalisePoints, pointsInRange, POINTS_MIN, POINTS_MAX } from "./quizDifficulty";
 
 export const IMPORT_MAX = 500;
 
@@ -95,7 +96,13 @@ export function reviewImport(raw: unknown, defaults: ImportDefaults): ImportRevi
     const answerKeys = new Set(answers.map((a) => normalise(a.text)));
     if (answerKeys.size !== answers.length) return fail(quiz.importAnswersDuplicate);
 
-    const points = asCount(row.points, defaults.points);
+    if (row.points !== undefined && row.points !== null && !pointsInRange(row.points)) {
+      return fail(`النقاط يجب أن تكون بين ${POINTS_MIN} و ${POINTS_MAX}`);
+    }
+    const points =
+      row.points === undefined || row.points === null
+        ? defaults.points
+        : normalisePoints(row.points);
     const correctCount = asCount(row.correctCount, defaults.correctCount);
     if (correctCount > answers.length) return fail(quiz.tooManyCorrect);
 
