@@ -10,6 +10,7 @@ import IconLabel from "@/components/IconLabel";
 import SettingsForm from "./SettingsForm";
 import RandomSend from "./RandomSend";
 import QuestionList from "./QuestionList";
+import ImportDialog from "./ImportDialog";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
@@ -49,6 +50,7 @@ export default function AdminQuizPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -319,6 +321,7 @@ export default function AdminQuizPage() {
         sendingId={sendingId}
         busyId={busyId}
         onCreate={openCreate}
+        onImport={() => setShowImport(true)}
         onSend={sendSame}
         onEdit={openEdit}
         onToggle={toggleActive}
@@ -330,6 +333,10 @@ export default function AdminQuizPage() {
         open={showLeaderboard}
         onToggle={() => setShowLeaderboard((v) => !v)}
       />
+
+      {showImport && (
+        <ImportDialog onImported={() => load()} onClose={() => setShowImport(false)} />
+      )}
 
       {showForm && (
         <QuestionFormDialog
