@@ -5,7 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { getAppSettings } from "@/lib/settingsServer";
-import { syncMembershipDonation } from "@/lib/donationsServer";
+import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { validatePaidAmount } from "@/lib/donations";
 import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
@@ -41,23 +41,22 @@ export const POST = withRoute(
         data: {
           memberId: id,
           year: membershipYear,
-          paidAmount: Number(paidAmount),
+          paidAmount: Math.min(Number(paidAmount), membershipFee),
           paymentMethod,
           paymentProof: paymentProof || null,
           recordedBy: session.username,
         },
       });
-      const updated = await tx.member.update({
+      await tx.member.update({
         where: { id },
         data: {
           membershipYear,
-          paidAmount: Number(paidAmount),
           paymentMethod,
           paymentProof: paymentProof || member.paymentProof,
         },
       });
-      await syncMembershipDonation(tx, id);
-      return updated;
+      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
     await logAction(session.username, "RENEW_MEMBER", `${member.fullName} — ${membershipYear}`, {

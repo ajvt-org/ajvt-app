@@ -9,16 +9,25 @@ import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { members } from "@/lib/messages";
+import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 
 const CODE_ATTEMPTS = 5;
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
-  const { id, fullName, age, paymentMethod, paymentProof, photo, paidAmount, referenceCode } =
-    parse(memberSubmissionSchema(membershipFee), await req.json());
+  const {
+    id,
+    fullName,
+    age,
+    paymentMethod,
+    paymentProof,
+    photo,
+    paidAmount,
+    referenceCode,
+    surplusAnonymous,
+  } = parse(memberSubmissionSchema(membershipFee), await req.json());
 
-  // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
   if (id) {
     const existing = await prisma.member.findUnique({ where: { id } });
     if (!existing || existing.userId !== session.userId) {
@@ -28,29 +37,27 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       throw new ConflictError("هذا العضو مقبول بالفعل");
     }
 
-    const updated = await prisma.member.update({
-      where: { id },
-      data: {
-        fullName: fullName.trim(),
-        age: age.trim(),
-        paymentMethod,
-        paymentProof,
-        ...(photo !== undefined ? { photo } : {}),
-        // Never overwrite an existing code — the member may already have
-        // written it on a real bank transfer note.
-        ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
-        paidAmount: Number(paidAmount),
-        status: "PENDING",
-        rejectionReason: null,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const m = await tx.member.update({
+        where: { id },
+        data: {
+          fullName: fullName.trim(),
+          age: age.trim(),
+          paymentMethod,
+          paymentProof,
+          ...(photo !== undefined ? { photo } : {}),
+          ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
+          ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
+          status: "PENDING",
+          rejectionReason: null,
+        },
+      });
+      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      return m;
     });
     return NextResponse.json({ id: updated.id }, { status: 200 });
   }
 
-  // One membership per account. A second form is how the same person ended up
-  // both approved and rejected: the duplicate was refused, and the refusal is
-  // what the profile showed. Correcting the one that exists is the only way in,
-  // whatever state it is in.
   const account = await prisma.user.findUnique({
     where: { id: session.userId },
     select: { members: { select: { id: true }, take: 1 } },
@@ -63,19 +70,23 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
   for (let attempt = 0; ; attempt++) {
     try {
-      const member = await prisma.member.create({
-        data: {
-          userId: session.userId,
-          fullName: fullName.trim(),
-          age: age.trim(),
-          paymentMethod,
-          paymentProof,
-          photo: photo || null,
-          paidAmount: Number(paidAmount),
-          referenceCode: code,
-          status: "PENDING",
-          membershipYear,
-        },
+      const member = await prisma.$transaction(async (tx) => {
+        const created = await tx.member.create({
+          data: {
+            userId: session.userId,
+            fullName: fullName.trim(),
+            age: age.trim(),
+            paymentMethod,
+            paymentProof,
+            photo: photo || null,
+            surplusAnonymous: surplusAnonymous ?? false,
+            referenceCode: code,
+            status: "PENDING",
+            membershipYear,
+          },
+        });
+        await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
+        return created;
       });
       return NextResponse.json(
         { id: member.id, referenceCode: member.referenceCode },
@@ -83,8 +94,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       );
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
-      // Two submissions at once: the second loses the userId index, and no
-      // fresh reference code would settle that.
       if (uniqueViolationFields(err).includes("userId")) {
         throw new ConflictError(members.alreadyHasRequest);
       }
