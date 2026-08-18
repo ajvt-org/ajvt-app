@@ -1,11 +1,13 @@
 export const ALL_AREAS = null;
 
+const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
+
 const ROLE_AREAS: Record<string, string[] | null> = {
   SUPER: ALL_AREAS,
-  MEMBERS: ["/admin/dashboard", "/admin/payments", "/admin/expenses"],
-  ACTIVITIES: ["/admin/activities", "/admin/payments", "/admin/expenses"],
-  QUIZ: ["/admin/quiz"],
-  ACTIVITY: ["/admin/activities"],
+  MEMBERS: ["/admin/dashboard", "/admin/payments", "/admin/expenses", ...OWN_ACCOUNT],
+  ACTIVITIES: ["/admin/activities", "/admin/payments", "/admin/expenses", ...OWN_ACCOUNT],
+  QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
+  ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
 };
 
 export function allowedAreas(role: string | null | undefined): string[] | null {

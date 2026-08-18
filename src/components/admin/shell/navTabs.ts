@@ -14,4 +14,5 @@ export const NAV_TABS: NavTab[] = [
   { href: "/admin/quiz", label: "المسابقة الثقافية", icon: "quiz" },
   { href: "/admin/stats", label: "الإحصائيات", icon: "chart" },
   { href: "/admin/settings", label: "الإعدادات", icon: "gear" },
+  { href: "/admin/tools", label: "أدوات المشرف", icon: "shield" },
 ];

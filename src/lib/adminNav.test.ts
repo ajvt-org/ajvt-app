@@ -6,8 +6,12 @@ describe("allowedAreas", () => {
     expect(allowedAreas("SUPER")).toBeNull();
   });
 
-  it("gives a scoped activity admin only the activities area", () => {
-    expect(allowedAreas("ACTIVITY")).toEqual(["/admin/activities"]);
+  it("gives a scoped activity admin its activities and its own account", () => {
+    expect(allowedAreas("ACTIVITY")).toEqual([
+      "/admin/activities",
+      "/admin/tools",
+      "/admin/password",
+    ]);
   });
 
   it("gives a role it has never heard of nothing at all", () => {
@@ -26,6 +30,22 @@ describe("canOpen", () => {
     expect(canOpen("MEMBERS", "/admin/payments")).toBe(true);
     expect(canOpen("MEMBERS", "/admin/activities")).toBe(false);
     expect(canOpen("MEMBERS", "/admin/quiz")).toBe(false);
+  });
+
+  it("lets every role change its own password from the tools tab", () => {
+    for (const role of ["MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"]) {
+      expect(canOpen(role, "/admin/tools"), role).toBe(true);
+      expect(canOpen(role, "/admin/password"), role).toBe(true);
+    }
+  });
+
+  it("keeps the tools that belong to a full admin out of every other role", () => {
+    for (const role of ["MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"]) {
+      expect(canOpen(role, "/admin/admins"), role).toBe(false);
+      expect(canOpen(role, "/admin/audit-log"), role).toBe(false);
+      expect(canOpen(role, "/admin/broadcast"), role).toBe(false);
+    }
+    expect(canOpen("SUPER", "/admin/admins")).toBe(true);
   });
 
   it("keeps a scoped activity admin out of members, finance and the quiz", () => {
