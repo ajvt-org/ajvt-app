@@ -1,0 +1,1 @@
+ALTER TABLE "Member" ADD COLUMN "surplusAnonymous" BOOLEAN NOT NULL DEFAULT false;

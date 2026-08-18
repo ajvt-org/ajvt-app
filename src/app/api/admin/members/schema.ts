@@ -34,6 +34,7 @@ export const adminMemberCreateSchema = z
     photo: z.string(INVALID).nullish(),
     status: z.enum(["PENDING", "ACTIVE"], STATUS_INVALID),
     paidAmount: z.unknown().optional(),
+    surplusAnonymous: z.boolean(INVALID).optional(),
   })
   .superRefine((v, ctx) => {
     if (v.phoneUnknown) return;

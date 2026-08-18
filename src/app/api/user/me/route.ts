@@ -5,6 +5,7 @@ import { issueMembership } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
+import { surplusForYear } from "@/lib/paidBreakdown";
 
 const MEMBER_SELECT = {
   id: true,
@@ -15,6 +16,11 @@ const MEMBER_SELECT = {
   paymentProof: true,
   photo: true,
   paidAmount: true,
+  membershipYear: true,
+  donations: {
+    where: { source: "MEMBERSHIP" },
+    select: { amount: true, membershipYear: true },
+  },
   status: true,
   rejectionReason: true,
   createdAt: true,
@@ -64,6 +70,9 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   return NextResponse.json({
     phone: user.phone,
-    members,
+    members: members.map(({ donations, ...member }) => ({
+      ...member,
+      supportAmount: surplusForYear(donations, member.membershipYear),
+    })),
   });
 });

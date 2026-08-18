@@ -1,19 +1,34 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { loginPathWithNext } from "@/lib/utils";
+import { useToast } from "@/components/Toast";
+import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import SettingsForm from "./SettingsForm";
 import RandomSend from "./RandomSend";
 import QuestionList from "./QuestionList";
+import ImportDialog from "./ImportDialog";
+import CompetitionPanel from "./CompetitionPanel";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
-import { useQuizData } from "./useQuizData";
-import { useQuizActions } from "./useQuizActions";
-import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
-import { QUIZ_FILTER_KEYS, readQuizFilters, writeQuizFilters } from "./quizFilters";
-import type { AnswerFormRow, QuestionRow } from "./types";
+import { emptySettingsForm } from "./types";
+import { counted } from "@/lib/arabicCount";
+import { ANSWER, USER } from "@/lib/messages";
+import type {
+  AnswerFormRow,
+  LeaderboardRow,
+  QuestionRow,
+  QuizSettings,
+  SettingsForm as SettingsFormValues,
+} from "./types";
+
+interface SendResult {
+  sentCount: number;
+  skippedCount: number;
+}
 
 const emptyQuestionForm: QuestionFormValues = {
   text: "",
@@ -23,31 +38,97 @@ const emptyQuestionForm: QuestionFormValues = {
   answers: [],
 };
 
-function AdminQuizPageInner() {
-  const {
-    settings,
-    setSettings,
-    settingsForm,
-    setSettingsForm,
-    questions,
-    leaderboard,
-    loading,
-    reload,
-  } = useQuizData();
-  const actions = useQuizActions(reload, setSettings);
-  const { filters, go } = useAdminListUrlState("/admin/quiz", {
-    keys: QUIZ_FILTER_KEYS,
-    readFilters: readQuizFilters,
-    writeFilters: writeQuizFilters,
-  });
+export default function AdminQuizPage() {
+  const router = useRouter();
+  const showToast = useToast();
 
+  const [settings, setSettings] = useState<QuizSettings | null>(null);
+  const [settingsForm, setSettingsForm] = useState<SettingsFormValues>(emptySettingsForm);
+  const [settingsError, setSettingsError] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const filteredQuestions = questions.filter((q) => q.text.includes(filters.q.trim()));
+  const [showImport, setShowImport] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<QuestionFormValues>(emptyQuestionForm);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [randomCount, setRandomCount] = useState("");
+  const [sendingRandom, setSendingRandom] = useState(false);
+
+  function load() {
+    return Promise.all([
+      fetch("/api/admin/quiz/settings").then((r) => {
+        if (r.status === 401) {
+          router.push(loginPathWithNext("/admin/login"));
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      }),
+      fetch("/api/admin/quiz/questions").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/admin/quiz/leaderboard").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([s, q, l]) => {
+      if (s?.settings) {
+        setSettings(s.settings);
+        setSettingsForm({
+          defaultAnswerCount: String(s.settings.defaultAnswerCount),
+          defaultCorrectCount: String(s.settings.defaultCorrectCount),
+          defaultPoints: String(s.settings.defaultPoints),
+          questionsPerDay: String(s.settings.questionsPerDay),
+          answerWindowSeconds: String(s.settings.answerWindowSeconds),
+          minScorePercent: String(s.settings.minScorePercent),
+        });
+      }
+      if (q?.questions) setQuestions(q.questions);
+      if (l?.leaderboard) setLeaderboard(l.leaderboard);
+    });
+  }
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveSettings(ev: React.SubmitEvent<HTMLFormElement>) {
+    ev.preventDefault();
+    setSettingsError("");
+    const body: Record<string, number> = {};
+    for (const [key, val] of Object.entries(settingsForm)) {
+      const n = Number(val);
+      const floorAllowed = key === "minScorePercent";
+      if (!Number.isInteger(n) || (floorAllowed ? n < 0 : n <= 0)) {
+        setSettingsError("كل القيم يجب أن تكون أرقاماً صحيحة موجبة");
+        return;
+      }
+      body[key] = n;
+    }
+    if (body.defaultCorrectCount > body.defaultAnswerCount) {
+      setSettingsError("عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات");
+      return;
+    }
+    if (body.minScorePercent > 100) {
+      setSettingsError("أقل نسبة للنقاط يجب أن تكون بين 0 و 100");
+      return;
+    }
+    setSavingSettings(true);
+    try {
+      const data = await api.patch<{ settings: QuizSettings }>("/api/admin/quiz/settings", body);
+      setSettings(data.settings);
+      showToast("تم حفظ الإعدادات");
+    } catch (e) {
+      setSettingsError(errorMessage(e));
+    } finally {
+      setSavingSettings(false);
+    }
+  }
 
   function openCreate() {
     setEditingId(null);
@@ -61,7 +142,7 @@ function AdminQuizPageInner() {
         isCorrect: false,
       })),
     });
-    actions.setFormError("");
+    setFormError("");
     setShowForm(true);
   }
 
@@ -74,19 +155,133 @@ function AdminQuizPageInner() {
       correctCount: String(question.correctCount),
       answers: question.answers.map((a) => ({ text: a.text, isCorrect: a.isCorrect })),
     });
-    actions.setFormError("");
+    setFormError("");
     setShowForm(true);
   }
 
-  async function handleSubmitQuestionForm(ev: React.SubmitEvent<HTMLFormElement>) {
-    ev.preventDefault();
-    const ok = await actions.submitQuestionForm(form, editingId);
-    if (ok) setShowForm(false);
+  function validateQuestion(): string | null {
+    if (!form.text.trim()) return "نص السؤال مطلوب";
+    if (!form.category.trim()) return "التصنيف مطلوب";
+
+    const points = Number(form.points);
+    if (!Number.isInteger(points) || points <= 0) return "النقاط يجب أن تكون رقماً صحيحاً موجباً";
+
+    const correctCount = Number(form.correctCount);
+    if (!Number.isInteger(correctCount) || correctCount <= 0)
+      return "عدد الإجابات الصحيحة غير صالح";
+    if (form.answers.length < 2) return "يجب إضافة إجابتين على الأقل";
+    if (form.answers.some((a) => !a.text.trim())) return "كل الإجابات يجب أن تحتوي على نص";
+    if (correctCount > form.answers.length) return "عدد الإجابات الصحيحة أكبر من عدد الإجابات";
+    if (form.answers.filter((a) => a.isCorrect).length !== correctCount) {
+      return `يجب تحديد ${counted(correctCount, ANSWER)} صحيحة بالضبط`;
+    }
+    return null;
   }
 
-  async function handleSaveSettings(ev: React.SubmitEvent<HTMLFormElement>) {
+  async function submitQuestionForm(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
-    await actions.saveSettings(settingsForm);
+    const invalid = validateQuestion();
+    setFormError(invalid ?? "");
+    if (invalid) return;
+
+    setSaving(true);
+    try {
+      const body = {
+        text: form.text.trim(),
+        category: form.category.trim(),
+        points: Number(form.points),
+        correctCount: Number(form.correctCount),
+        answers: form.answers.map((a) => ({ text: a.text.trim(), isCorrect: a.isCorrect })),
+      };
+      if (editingId) {
+        await api.patch(`/api/admin/quiz/questions/${editingId}`, body);
+      } else {
+        await api.post("/api/admin/quiz/questions", body);
+      }
+      setShowForm(false);
+      showToast(editingId ? "تم حفظ التعديل" : "تمت إضافة السؤال");
+      await load();
+    } catch (e) {
+      setFormError(errorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleActive(question: QuestionRow) {
+    setBusyId(question.id);
+    try {
+      await api.patch(`/api/admin/quiz/questions/${question.id}`, { active: !question.active });
+      await load();
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteQuestion(id: string) {
+    if (!confirm("هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به.")) return;
+    setBusyId(id);
+    try {
+      await api.del(`/api/admin/quiz/questions/${id}`);
+      showToast("تم حذف السؤال");
+      await load();
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function send(body: Record<string, unknown>, describe: (data: SendResult) => string) {
+    const res = await fetch("/api/admin/quiz/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "فشل الإرسال");
+    showToast(describe(data));
+    await load();
+  }
+
+  async function sendSame(questionId: string) {
+    setSendingId(questionId);
+    try {
+      await send(
+        { mode: "SAME", questionId },
+        (data) =>
+          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
+          (data.skippedCount
+            ? ` (تم تخطي ${counted(data.skippedCount, USER)} ممن استلم السؤال سابقاً)`
+            : ""),
+      );
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setSendingId(null);
+    }
+  }
+
+  async function sendRandom() {
+    setSendingRandom(true);
+    try {
+      const body: { mode: string; count?: number } = { mode: "RANDOM" };
+      if (randomCount.trim()) body.count = Number(randomCount);
+      await send(
+        body,
+        (data) =>
+          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
+          (data.skippedCount
+            ? ` (تم تخطي ${counted(data.skippedCount, USER)} لعدم توفر أسئلة كافية)`
+            : ""),
+      );
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setSendingRandom(false);
+    }
   }
 
   if (loading) {
@@ -108,50 +303,32 @@ function AdminQuizPageInner() {
 
       <SettingsForm
         values={settingsForm}
-        error={actions.settingsError}
-        saving={actions.savingSettings}
+        error={settingsError}
+        saving={savingSettings}
         onChange={(key, value) => setSettingsForm((p) => ({ ...p, [key]: value }))}
-        onSubmit={handleSaveSettings}
+        onSubmit={saveSettings}
       />
+
+      <CompetitionPanel />
 
       <RandomSend
         count={randomCount}
         fallback={settings?.questionsPerDay ?? 1}
-        sending={actions.sendingRandom}
+        sending={sendingRandom}
         onCount={setRandomCount}
-        onSend={() => actions.sendRandom(randomCount)}
-      />
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="quiz">الأسئلة ({filteredQuestions.length})</IconLabel>
-        </p>
-        <button
-          onClick={openCreate}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          <IconLabel name="plus">سؤال جديد</IconLabel>
-        </button>
-      </div>
-
-      <input
-        type="text"
-        placeholder="بحث بنص السؤال..."
-        value={filters.q}
-        onChange={(e) => go({ q: e.target.value })}
-        className="input text-sm"
+        onSend={sendRandom}
       />
 
       <QuestionList
-        questions={filteredQuestions}
-        filtered={filters.q.trim().length > 0}
-        sendingId={actions.sendingId}
-        busyId={actions.busyId}
-        onSend={actions.sendSame}
+        questions={questions}
+        sendingId={sendingId}
+        busyId={busyId}
+        onCreate={openCreate}
+        onImport={() => setShowImport(true)}
+        onSend={sendSame}
         onEdit={openEdit}
-        onToggle={actions.toggleActive}
-        onDelete={actions.requestDeleteQuestion}
+        onToggle={toggleActive}
+        onDelete={deleteQuestion}
       />
 
       <LeaderboardPanel
@@ -160,47 +337,22 @@ function AdminQuizPageInner() {
         onToggle={() => setShowLeaderboard((v) => !v)}
       />
 
+      {showImport && (
+        <ImportDialog onImported={() => load()} onClose={() => setShowImport(false)} />
+      )}
+
       {showForm && (
         <QuestionFormDialog
           values={form}
           editing={!!editingId}
-          error={actions.formError}
-          saving={actions.saving}
+          error={formError}
+          saving={saving}
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}
           onAnswers={(answers: AnswerFormRow[]) => setForm((p) => ({ ...p, answers }))}
-          onSubmit={handleSubmitQuestionForm}
+          onSubmit={submitQuestionForm}
           onClose={() => setShowForm(false)}
         />
       )}
-
-      {actions.deletingId && (
-        <ConfirmDialog
-          title="حذف السؤال"
-          message="هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به."
-          confirmLabel="حذف نهائي"
-          danger
-          loading={actions.busyId === actions.deletingId}
-          onConfirm={actions.confirmDeleteQuestion}
-          onClose={actions.cancelDeleteQuestion}
-        />
-      )}
     </div>
-  );
-}
-
-export default function AdminQuizPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
-          <div className="mb-3 flex justify-center animate-pulse">
-            <Icon name="quiz" size={36} />
-          </div>
-          <p className="text-sm font-semibold">جاري التحميل...</p>
-        </div>
-      }
-    >
-      <AdminQuizPageInner />
-    </Suspense>
   );
 }

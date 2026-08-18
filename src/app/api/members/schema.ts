@@ -23,6 +23,7 @@ export function memberSubmissionSchema(fee: number) {
       const message = validatePaidAmount(v, fee);
       if (message) ctx.addIssue({ code: "custom", message });
     }),
+    surplusAnonymous: z.boolean(INVALID).optional(),
     id: z.string().optional(),
   });
 }

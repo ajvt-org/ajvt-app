@@ -50,7 +50,7 @@ describe("renewing a membership", () => {
     const after = await prisma.member.findUniqueOrThrow({ where: { id: existing.id } });
     expect(after.membershipYear).toBe(YEAR);
     expect(after.memberNumber).toBe("AJVT-2025-0001");
-    expect(after.paidAmount).toBe(1000);
+    expect(after.paidAmount).toBe(100);
   });
 
   it("leaves the previous year readable beside the new one", async () => {
@@ -66,7 +66,7 @@ describe("renewing a membership", () => {
       orderBy: { year: "asc" },
     });
     expect(years.map((m) => m.year)).toEqual([LAST, YEAR]);
-    expect(years.map((m) => m.paidAmount)).toEqual([500, 1000]);
+    expect(years.map((m) => m.paidAmount)).toEqual([500, 100]);
   });
 
   it("records who took the payment", async () => {

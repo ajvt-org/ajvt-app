@@ -12,13 +12,12 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
+import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
+import { mirrorDonation } from "@/lib/paymentMirror";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
-// Public, unauthenticated endpoint (donors don't have an account) — handles
-// its own upload instead of going through /api/upload, which requires a
-// session. Rate-limited by IP since anyone can call this.
 export const POST = withRoute("POST /api/donations", async (req: NextRequest) => {
   const key = `donate:${getClientIp(req)}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
@@ -26,9 +25,6 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
   recordFailedAttempt(key, WINDOW_MS);
 
-  // The endpoint is public, so a request that is not a form arrives sooner or
-  // later. formData() throws on one, which surfaced as a 500 and logged as a
-  // fault of ours rather than of the caller.
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -50,11 +46,6 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     return NextResponse.json({ error: uploads.tooLarge }, { status: 400 });
   }
 
-  // A logged-in ACTIVE member donating from /home is identified — always
-  // linked to their account (memberId), but they can still choose to have
-  // their name withheld on the public leaderboard (donorName stays null).
-  // Anyone else (no session, or memberId omitted) stays on the
-  // public/anonymous flow this route was originally built for.
   let memberId: string | null = null;
   let selfName: string | null = null;
   let selfAnonymous = false;
@@ -75,11 +66,15 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
 
   let donorName: string | null = selfAnonymous ? null : selfName;
-  if (!memberId && typeof donorNameRaw === "string" && donorNameRaw.trim()) {
-    if (donorNameRaw.trim().length > 50) {
-      return NextResponse.json({ error: money.nameTooLong }, { status: 400 });
+  if (!memberId) {
+    const anonymousRaw = formData.get("anonymous");
+    const anonymous = anonymousRaw === "true" ? true : anonymousRaw === "false" ? false : null;
+    const typed = typeof donorNameRaw === "string" ? donorNameRaw : "";
+    const choiceError = validateDonorChoice(anonymous, typed);
+    if (choiceError || anonymous === null) {
+      return NextResponse.json({ error: choiceError ?? money.nameChoiceRequired }, { status: 400 });
     }
-    donorName = donorNameRaw.trim();
+    donorName = donorNameFor(anonymous, typed);
   }
 
   const n = Number(amountRaw);
@@ -109,7 +104,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
   ]);
 
-  await prisma.donation.create({
+  const donation = await prisma.donation.create({
     data: {
       donorName,
       amount,
@@ -119,6 +114,16 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       source: memberId ? "SELF" : "PUBLIC",
       status: "PENDING",
     },
+  });
+  await mirrorDonation(prisma, {
+    donationId: donation.id,
+    amount,
+    method: paymentMethod,
+    proof: filename,
+    status: "PENDING",
+    donorName,
+    memberId,
+    activityId: null,
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });

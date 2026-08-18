@@ -1,4 +1,6 @@
+import { randomUUID } from "crypto";
 import { prisma } from "./client";
+import { questionBank } from "./questionBank";
 import { daysAgo, minutesAgo } from "./random";
 import type { SeededUser } from "./members";
 
@@ -20,36 +22,42 @@ export async function seedQuizSettings() {
 }
 
 export async function seedQuestions() {
-  const created = [];
+  const handwritten = QUESTIONS.map(([text, category, answers, correctIndex], i) => ({
+    spec: [text, category, answers, correctIndex] as QuestionSpec,
+    active: i !== QUESTIONS.length - 1,
+  }));
+  const generated = questionBank().map((spec) => ({ spec, active: true }));
 
-  for (let q = 0; q < QUESTIONS.length; q++) {
-    const [text, category, answers, correctIndex] = QUESTIONS[q];
-    const question = await prisma.quizQuestion.create({
-      data: {
-        text,
-        category,
-        points: 10,
-        correctCount: 1,
-        active: q !== QUESTIONS.length - 1,
-        createdBy: "admin",
-      },
-    });
+  const seen = new Set<string>();
+  const unique = [...handwritten, ...generated].filter(({ spec }) => {
+    const key = spec[0].replace(/\s+/g, " ").trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
-    for (let i = 0; i < answers.length; i++) {
-      await prisma.quizAnswer.create({
-        data: {
-          questionId: question.id,
-          text: answers[i],
-          isCorrect: i === correctIndex,
-          order: i,
-        },
-      });
-    }
+  const rows = unique.map(({ spec, active }) => ({
+    id: randomUUID(),
+    text: spec[0],
+    category: spec[1],
+    points: 10,
+    correctCount: 1,
+    active,
+    createdBy: "admin",
+    answers: spec[2].map((text, order) => ({ text, isCorrect: order === spec[3], order })),
+  }));
 
-    created.push(question);
-  }
+  await prisma.quizQuestion.createMany({
+    data: rows.map(({ answers, ...q }) => {
+      void answers;
+      return q;
+    }),
+  });
+  await prisma.quizAnswer.createMany({
+    data: rows.flatMap((q) => q.answers.map((a) => ({ ...a, questionId: q.id }))),
+  });
 
-  return created;
+  return rows.map((q) => ({ id: q.id }));
 }
 
 export async function seedAssignments(users: SeededUser[], questions: { id: string }[]) {

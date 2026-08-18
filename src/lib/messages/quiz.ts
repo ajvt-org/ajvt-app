@@ -9,4 +9,10 @@ export const quiz = {
   alreadyAnswered: "تمت الإجابة على هذا السؤال من قبل",
   optionsNotRevealed: "أظهر الخيارات أولاً",
   timeUp: "انتهى الوقت",
+  importNotArray: "الملف يجب أن يحتوي على قائمة أسئلة",
+  importEmpty: "لا توجد أسئلة في الملف",
+  importBadJson: "الملف ليس بصيغة JSON صالحة",
+  importTooMany: "عدد الأسئلة أكبر من الحد المسموح في المرة الواحدة",
+  importDuplicate: "سؤال مكرر داخل الملف",
+  importAnswersDuplicate: "إجابات مكررة داخل السؤال",
 } as const;

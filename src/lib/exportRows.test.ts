@@ -39,7 +39,7 @@ describe("memberRows", () => {
   it("writes the account phone and a plain day", () => {
     const [row] = memberRows([member]);
     expect(row[1]).toBe("22334455");
-    expect(row[8]).toBe("2026-03-04");
+    expect(row[10]).toBe("2026-03-04");
   });
 
   it("survives a member with no account and nothing paid", () => {
@@ -48,11 +48,21 @@ describe("memberRows", () => {
     ]);
     expect(row[1]).toBe("");
     expect(row[4]).toBe(0);
-    expect(row[6]).toBe("");
+    expect(row[8]).toBe("");
   });
 
   it("writes the status in arabic", () => {
-    expect(memberRows([{ ...member, status: "PENDING" }])[0][5]).toBe("قيد الانتظار");
+    expect(memberRows([{ ...member, status: "PENDING" }])[0][7]).toBe("قيد الانتظار");
+  });
+
+  it("splits the fee from the support and totals them", () => {
+    const [row] = memberRows([{ ...member, paidAmount: 100, supportAmount: 2000 }]);
+    expect(row.slice(4, 7)).toEqual([100, 2000, 2100]);
+  });
+
+  it("shows no support for a member who paid only the fee", () => {
+    const [row] = memberRows([{ ...member, paidAmount: 100 }]);
+    expect(row.slice(4, 7)).toEqual([100, 0, 100]);
   });
 });
 
