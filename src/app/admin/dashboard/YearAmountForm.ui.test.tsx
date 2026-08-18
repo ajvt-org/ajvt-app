@@ -3,16 +3,16 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import YearAmountForm from "./YearAmountForm";
 
-const patch = vi.fn();
+const put = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { patch: (...args: unknown[]) => patch(...args) },
+  api: { put: (...args: unknown[]) => put(...args) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
 beforeEach(() => {
-  patch.mockReset();
-  patch.mockResolvedValue({});
+  put.mockReset();
+  put.mockResolvedValue({});
 });
 
 afterEach(() => {
@@ -40,7 +40,9 @@ describe("YearAmountForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /حفظ/ }));
 
     await waitFor(() =>
-      expect(patch).toHaveBeenCalledWith("/api/admin/members/m1", { paidAmount: 500 }),
+      expect(put).toHaveBeenCalledWith("/api/admin/members/m1/payment", {
+        amountTransferred: 500,
+      }),
     );
     expect(onSaved).toHaveBeenCalled();
   });
@@ -54,6 +56,6 @@ describe("YearAmountForm", () => {
     fireEvent.submit(container.querySelector("form")!);
 
     await waitFor(() => expect(screen.getByText(/100 أوقية على الأقل/)).toBeDefined());
-    expect(patch).not.toHaveBeenCalled();
+    expect(put).not.toHaveBeenCalled();
   });
 });

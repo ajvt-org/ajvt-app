@@ -44,7 +44,7 @@ export default function MembershipPanel({ memberId }: { memberId: string }) {
         <YearAmountForm
           memberId={memberId}
           year={history.currentYear}
-          amount={current?.paidAmount ?? null}
+          amount={current?.paidAmount == null ? null : current.paidAmount + current.supportAmount}
           onSaved={reload}
         />
       ) : history.refusal ? (

@@ -34,6 +34,7 @@ export const ACTION_LABELS: Record<string, string> = {
   UPDATE_EXPENSE: "تعديل مصروف",
   DELETE_EXPENSE: "حذف مصروف",
   UPDATE_MEMBER: "تعديل بيانات عضو",
+  UPDATE_MEMBER_PAYMENT: "تعديل مبلغ عضو",
   RENEW_MEMBER: "تجديد عضوية",
   CREATE_AGE_GROUP: "إضافة عصر",
   UPDATE_AGE_GROUP: "تعديل اسم عصر",

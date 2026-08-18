@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
-import { validatePaidAmount } from "@/lib/donations";
-import { getAppSettings } from "@/lib/settingsServer";
-import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { syncMembershipRecord } from "@/lib/membershipRecord";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { confirmationMatches } from "@/lib/deletedRecords";
@@ -21,10 +17,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, paymentMethod, photo, paidAmount, accountPhone } = parse(
-      adminMemberUpdateSchema,
-      await req.json(),
-    );
+    const { fullName, age, photo, accountPhone } = parse(adminMemberUpdateSchema, await req.json());
 
     const existing = await prisma.member.findUnique({
       where: { id },
@@ -43,9 +36,7 @@ export const PATCH = withRoute(
     const data: {
       fullName?: string;
       age?: string;
-      paymentMethod?: string;
       photo?: string | null;
-      paidAmount?: number | null;
       userId?: string;
     } = {};
 
@@ -62,33 +53,8 @@ export const PATCH = withRoute(
     }
 
     if (age !== undefined) data.age = age;
-    if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
     if (photo !== undefined) data.photo = photo;
-    const { membershipFee } = await getAppSettings();
-    let newTotal: number | null | undefined;
-    if (paidAmount !== undefined) {
-      if (paidAmount === null) {
-        newTotal = null;
-      } else {
-        const paidAmountError = validatePaidAmount(paidAmount, membershipFee);
-        if (paidAmountError) return NextResponse.json({ error: paidAmountError }, { status: 400 });
-        newTotal = Number(paidAmount);
-      }
-    }
-
-    const member = await prisma.$transaction(async (tx) => {
-      const m = await tx.member.update({ where: { id }, data });
-      if (newTotal !== undefined) {
-        await recordMembershipPayment(tx, id, newTotal, membershipFee);
-      }
-      await syncMembershipRecord(tx, id, m.membershipYear, {
-        ...data,
-        ...(newTotal !== undefined
-          ? { paidAmount: newTotal === null ? null : Math.min(newTotal, membershipFee) }
-          : {}),
-      });
-      return tx.member.findUniqueOrThrow({ where: { id } });
-    });
+    const member = await prisma.member.update({ where: { id }, data });
     await logAction(
       session.username,
       "UPDATE_MEMBER",
