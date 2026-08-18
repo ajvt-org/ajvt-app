@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { shouldOffer, snoozeActive, snoozeUntil, SNOOZE_DAYS } from "@/lib/installPrompt";
+import { flagSet, shouldOffer, snoozeActive, snoozeUntil, SNOOZE_DAYS } from "@/lib/installPrompt";
 
 const now = new Date("2026-03-01T10:00:00.000Z");
 
@@ -25,18 +25,45 @@ describe("snoozeActive", () => {
   });
 });
 
+describe("flagSet", () => {
+  it("reads a flag the app has written", () => {
+    expect(flagSet("1")).toBe(true);
+  });
+
+  it("treats nothing stored, or junk, as unset", () => {
+    expect(flagSet(null)).toBe(false);
+    expect(flagSet("0")).toBe(false);
+    expect(flagSet("abc")).toBe(false);
+  });
+});
+
 describe("shouldOffer", () => {
   it("offers on a fresh session with no snooze", () => {
-    expect(shouldOffer({ snoozedUntil: null, seenThisSession: false, now })).toBe(true);
+    expect(shouldOffer({ snoozedUntil: null, seenThisSession: false, installed: false, now })).toBe(
+      true,
+    );
   });
 
   it("stays quiet for the rest of the session once shown", () => {
-    expect(shouldOffer({ snoozedUntil: null, seenThisSession: true, now })).toBe(false);
+    expect(shouldOffer({ snoozedUntil: null, seenThisSession: true, installed: false, now })).toBe(
+      false,
+    );
   });
 
   it("stays quiet while snoozed, even in a new session", () => {
     expect(
-      shouldOffer({ snoozedUntil: String(snoozeUntil(now)), seenThisSession: false, now }),
+      shouldOffer({
+        snoozedUntil: String(snoozeUntil(now)),
+        seenThisSession: false,
+        installed: false,
+        now,
+      }),
     ).toBe(false);
+  });
+
+  it("never offers once the app is installed", () => {
+    expect(shouldOffer({ snoozedUntil: null, seenThisSession: false, installed: true, now })).toBe(
+      false,
+    );
   });
 });
