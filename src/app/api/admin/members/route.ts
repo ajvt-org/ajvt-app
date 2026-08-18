@@ -43,6 +43,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     photo,
     status,
     paidAmount,
+    surplusAnonymous,
   } = parse(adminMemberCreateSchema, await req.json());
 
   const { membershipFee, membershipYear } = await getAppSettings();
@@ -90,6 +91,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         paymentProof: paymentProof || null,
         photo: photo || null,
         paidAmount: paidAmountValue,
+        surplusAnonymous: surplusAnonymous ?? false,
         status,
         membershipYear,
         ...(issued ?? {}),

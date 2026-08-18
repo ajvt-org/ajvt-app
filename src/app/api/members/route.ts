@@ -15,8 +15,17 @@ const CODE_ATTEMPTS = 5;
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
-  const { id, fullName, age, paymentMethod, paymentProof, photo, paidAmount, referenceCode } =
-    parse(memberSubmissionSchema(membershipFee), await req.json());
+  const {
+    id,
+    fullName,
+    age,
+    paymentMethod,
+    paymentProof,
+    photo,
+    paidAmount,
+    referenceCode,
+    surplusAnonymous,
+  } = parse(memberSubmissionSchema(membershipFee), await req.json());
 
   // Editing an existing entry (fix a typo while PENDING, or resubmit after REJECTED)
   if (id) {
@@ -40,6 +49,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         // written it on a real bank transfer note.
         ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
         paidAmount: Number(paidAmount),
+        ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
         status: "PENDING",
         rejectionReason: null,
       },
@@ -72,6 +82,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           paymentProof,
           photo: photo || null,
           paidAmount: Number(paidAmount),
+          surplusAnonymous: surplusAnonymous ?? false,
           referenceCode: code,
           status: "PENDING",
           membershipYear,

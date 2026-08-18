@@ -9,6 +9,8 @@ type Db = PrismaClient | Prisma.TransactionClient;
 // MEMBERSHIP) in sync with a Member's current status/paidAmount. Call after
 // every write that touches either field. Idempotent, safe to call
 // unconditionally — creates/updates/deletes as needed.
+// The published name is written once, from the member's own answer, and never
+// touched again: a later sync moves the amount, not who it is credited to.
 export async function syncMembershipDonation(db: Db, memberId: string) {
   const member = await db.member.findUnique({
     where: { id: memberId },
@@ -18,6 +20,7 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
       fullName: true,
       paymentProof: true,
       paymentMethod: true,
+      surplusAnonymous: true,
     },
   });
   if (!member) return;
@@ -33,7 +36,6 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
   if (surplus > 0) {
     const data = {
       amount: surplus,
-      donorName: member.fullName,
       proof: member.paymentProof,
       paymentMethod: member.paymentMethod,
     };
@@ -41,7 +43,13 @@ export async function syncMembershipDonation(db: Db, memberId: string) {
       await db.donation.update({ where: { id: existing.id }, data });
     } else {
       await db.donation.create({
-        data: { ...data, memberId, source: "MEMBERSHIP", status: "ACTIVE" },
+        data: {
+          ...data,
+          donorName: member.surplusAnonymous ? null : member.fullName,
+          memberId,
+          source: "MEMBERSHIP",
+          status: "ACTIVE",
+        },
       });
     }
   } else if (existing) {
