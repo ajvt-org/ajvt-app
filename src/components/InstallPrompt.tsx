@@ -3,11 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Icon from "./Icon";
-import { SNOOZE_KEY, SESSION_KEY, shouldOffer, snoozeUntil } from "@/lib/installPrompt";
+import {
+  SNOOZE_KEY,
+  SESSION_KEY,
+  INSTALLED_KEY,
+  alreadyInstalled,
+  shouldOffer,
+  snoozeUntil,
+} from "@/lib/installPrompt";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+function runningInstalled(): boolean {
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  if (window.matchMedia("(display-mode: minimal-ui)").matches) return true;
+  return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
 export default function InstallPrompt() {
@@ -19,6 +32,7 @@ export default function InstallPrompt() {
     const allowed = shouldOffer({
       snoozedUntil: localStorage.getItem(SNOOZE_KEY),
       seenThisSession: sessionStorage.getItem(SESSION_KEY) === "1",
+      installed: runningInstalled() || alreadyInstalled(localStorage.getItem(INSTALLED_KEY)),
       now: new Date(),
     });
     if (!allowed) return;
