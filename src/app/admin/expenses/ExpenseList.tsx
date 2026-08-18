@@ -3,6 +3,7 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
+import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { formatDate, toThumbUrl } from "@/lib/utils";
 import type { Expense } from "./types";
 
@@ -115,32 +116,31 @@ export default function ExpenseList({
   busyId,
   onEdit,
   onDelete,
+  pagination,
 }: {
   expenses: Expense[];
   filtered: boolean;
   busyId: string | null;
   onEdit: (expense: Expense) => void;
   onDelete: (id: string) => void;
+  pagination?: AdminListPagination;
 }) {
-  if (expenses.length === 0) {
-    return (
-      <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-        {filtered ? "لا توجد مصاريف بهذا التصنيف" : "لا توجد مصاريف مسجلة بعد"}
-      </p>
-    );
-  }
-
   return (
-    <div className="space-y-2">
-      {expenses.map((expense) => (
+    <AdminList
+      items={expenses}
+      getKey={(expense) => expense.id}
+      renderRow={(expense) => (
         <Row
-          key={expense.id}
           expense={expense}
           busy={busyId === expense.id}
           onEdit={() => onEdit(expense)}
           onDelete={() => onDelete(expense.id)}
         />
-      ))}
-    </div>
+      )}
+      emptyMessage="لا توجد مصاريف مسجلة بعد"
+      emptyFilteredMessage="لا توجد نتائج مطابقة"
+      isFiltered={filtered}
+      pagination={pagination}
+    />
   );
 }

@@ -1,0 +1,42 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { readPage } from "@/lib/listUrlState";
+
+export interface AdminListUrlAdapter<F> {
+  keys: string[];
+  readFilters: (params: URLSearchParams) => F;
+  writeFilters: (filters: F) => URLSearchParams;
+}
+
+export function useAdminListUrlState<F>(basePath: string, adapter: AdminListUrlAdapter<F>) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [filters, setFiltersState] = useState<F>(() =>
+    adapter.readFilters(new URLSearchParams(searchParams.toString())),
+  );
+  const [page, setPageState] = useState<number>(() =>
+    readPage(new URLSearchParams(searchParams.toString())),
+  );
+
+  function go(nextFilters: F, nextPage = 1) {
+    setFiltersState(nextFilters);
+    setPageState(nextPage);
+
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of adapter.keys) params.delete(key);
+    params.delete("page");
+    for (const [key, value] of adapter.writeFilters(nextFilters)) params.set(key, value);
+    if (nextPage > 1) params.set("page", String(nextPage));
+
+    const query = params.toString();
+    router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
+  }
+
+  function goToPage(nextPage: number) {
+    go(filters, nextPage);
+  }
+
+  return { filters, page, go, goToPage };
+}

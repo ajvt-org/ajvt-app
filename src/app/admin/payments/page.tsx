@@ -1,27 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
-import KindTabs, { type KindFilter } from "./KindTabs";
+import KindTabs from "./KindTabs";
 import ManualDonationDialog from "./ManualDonationDialog";
-import Pagination from "@/components/admin/Pagination";
-import ProofCard from "./ProofCard";
+import PaymentsList from "./PaymentsList";
 import { usePaymentsData } from "./usePaymentsData";
 import { useDonationActions } from "./useDonationActions";
+import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
+import { paginate, pageCount } from "@/lib/listUrlState";
+import {
+  PAYMENTS_FILTER_KEYS,
+  readPaymentsFilters,
+  writePaymentsFilters,
+  type PaymentsFilters,
+} from "./paymentsFilters";
 import { PAGE_SIZE, type Proof } from "./paymentTypes";
 
-function match(proof: Proof, kind: KindFilter, query: string) {
-  if (kind !== "ALL" && proof.kind !== kind) return false;
+function match(proof: Proof, filters: PaymentsFilters) {
+  if (filters.kind !== "ALL" && proof.kind !== filters.kind) return false;
+  const query = filters.q.trim();
   if (!query) return true;
   return proof.memberName.includes(query) || (proof.activityTitle || "").includes(query);
 }
 
-export default function AdminPaymentsPage() {
+function AdminPaymentsPageInner() {
   const { proofs, members, activities, tags, loading, setProofs } = usePaymentsData();
-  const [search, setSearch] = useState("");
-  const [kind, setKind] = useState<KindFilter>("ALL");
-  const [page, setPage] = useState(1);
+  const { filters, page, go, goToPage } = useAdminListUrlState("/admin/payments", {
+    keys: PAYMENTS_FILTER_KEYS,
+    readFilters: readPaymentsFilters,
+    writeFilters: writePaymentsFilters,
+  });
   const [adding, setAdding] = useState(false);
 
   const actions = useDonationActions({
@@ -36,15 +46,10 @@ export default function AdminPaymentsPage() {
 
   if (loading) return <PageLoading />;
 
-  const filtered = proofs.filter((p) => match(p, kind, search.trim()));
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const filtered = proofs.filter((p) => match(p, filters));
+  const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const current = Math.min(page, totalPages);
-  const shown = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
-
-  function refilter(next: () => void) {
-    next();
-    setPage(1);
-  }
+  const shown = paginate(filtered, page, PAGE_SIZE);
 
   return (
     <div className="admin-page space-y-3">
@@ -61,46 +66,34 @@ export default function AdminPaymentsPage() {
         </button>
       </div>
 
-      <KindTabs active={kind} onPick={(next) => refilter(() => setKind(next))} />
+      <KindTabs active={filters.kind} onPick={(next) => go({ ...filters, kind: next })} />
 
       <input
         type="text"
         placeholder="بحث بالاسم أو النشاط..."
-        value={search}
-        onChange={(e) => refilter(() => setSearch(e.target.value))}
+        value={filters.q}
+        onChange={(e) => go({ ...filters, q: e.target.value })}
         className="input text-sm"
       />
 
-      {filtered.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          لا توجد نتائج
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {shown.map((proof) => (
-            <ProofCard
-              key={`${proof.kind}-${proof.id}`}
-              proof={proof}
-              members={members}
-              activities={activities}
-              financeTags={tags}
-              busy={actions.busyId === proof.id}
-              onReview={(status) => actions.review(proof.id, status)}
-              onDelete={() => actions.destroy(proof.id)}
-              onLink={(memberId) => actions.link(proof.id, memberId)}
-              onPatch={(changes) =>
-                setProofs((prev) =>
-                  prev.map((p) =>
-                    p.id === proof.id && p.kind === "DONATION" ? { ...p, ...changes } : p,
-                  ),
-                )
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      <Pagination page={current} totalPages={totalPages} onGo={setPage} />
+      <PaymentsList
+        proofs={shown}
+        members={members}
+        activities={activities}
+        financeTags={tags}
+        busyId={actions.busyId}
+        onReview={(proof, status) => actions.review(proof.id, status)}
+        onDelete={(proof) => actions.destroy(proof.id)}
+        onLink={(proof, memberId) => actions.link(proof.id, memberId)}
+        onPatch={(proof, changes) =>
+          setProofs((prev) =>
+            prev.map((p) =>
+              p.id === proof.id && p.kind === "DONATION" ? { ...p, ...changes } : p,
+            ),
+          )
+        }
+        pagination={{ page: current, totalPages, onGo: goToPage }}
+      />
 
       {adding && (
         <ManualDonationDialog
@@ -110,5 +103,13 @@ export default function AdminPaymentsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminPaymentsPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <AdminPaymentsPageInner />
+    </Suspense>
   );
 }
