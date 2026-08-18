@@ -11,6 +11,7 @@ import {
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
 import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { drawQuestions } from "@/lib/quizDay";
 import type { HttpError } from "@/lib/errors";
 
 async function refusal(run: () => Promise<unknown>): Promise<string> {
@@ -36,7 +37,7 @@ async function competition(over: Record<string, unknown> = {}) {
       servedCount: 3,
       poolSize: 5,
       weeklyCountingDays: 6,
-      speedBands: DEFAULT_BANDS,
+      speedBands: DEFAULT_BANDS as unknown as object,
       startedAt: new Date(`${DAY}T00:00:00.000Z`),
       ...over,
     },
@@ -136,19 +137,41 @@ describe("starting a daily attempt", () => {
     expect(row.optionOrder).toHaveLength(3);
   });
 
-  it("gives two members different draws", async () => {
+  it("seeds each member's draw with their own account", async () => {
     const c = await competition();
-    await pool(c.id, 5);
-    const [a, b] = [await user(), await user()];
+    const day = await pool(c.id, 5);
+    const u = await user();
 
-    const one = await startOrResumeAttempt(a.id, openAt);
-    const two = await startOrResumeAttempt(b.id, openAt);
+    const attempt = await startOrResumeAttempt(u.id, openAt);
 
-    const rowsA = await prisma.quizAttemptAnswer.findMany({ where: { attemptId: one.id } });
-    const rowsB = await prisma.quizAttemptAnswer.findMany({ where: { attemptId: two.id } });
-    expect(rowsA.map((r) => r.questionId).sort()).not.toEqual(
-      rowsB.map((r) => r.questionId).sort(),
+    const poolIds = (await prisma.quizDayQuestion.findMany({ where: { dayId: day.id } })).map(
+      (q) => q.questionId,
     );
+    const rows = await prisma.quizAttemptAnswer.findMany({
+      where: { attemptId: attempt.id },
+      orderBy: { position: "asc" },
+    });
+    expect(rows.map((r) => r.questionId)).toEqual(drawQuestions(poolIds, 3, `${day.id}:${u.id}`));
+  });
+
+  it("only ever draws from that day's pool", async () => {
+    const c = await competition();
+    const day = await pool(c.id, 5);
+    const stray = await prisma.quizQuestion.create({
+      data: { text: "سؤال خارج اليوم", category: "عام", createdBy: "admin" },
+    });
+    const u = await user();
+
+    const attempt = await startOrResumeAttempt(u.id, openAt);
+
+    const poolIds = new Set(
+      (await prisma.quizDayQuestion.findMany({ where: { dayId: day.id } })).map(
+        (q) => q.questionId,
+      ),
+    );
+    const rows = await prisma.quizAttemptAnswer.findMany({ where: { attemptId: attempt.id } });
+    expect(rows.every((r) => poolIds.has(r.questionId))).toBe(true);
+    expect(rows.some((r) => r.questionId === stray.id)).toBe(false);
   });
 
   it("resumes the same attempt rather than starting a second", async () => {
