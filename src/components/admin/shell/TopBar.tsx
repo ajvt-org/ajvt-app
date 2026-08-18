@@ -1,16 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
-export default function TopBar({
-  onOpenTools,
-  onLogout,
-}: {
-  onOpenTools: () => void;
-  onLogout: () => void;
-}) {
+export default function TopBar({ onLogout }: { onLogout: () => void }) {
   return (
     <div
       className="px-4 py-3 flex items-center justify-between"
@@ -24,14 +17,6 @@ export default function TopBar({
         <p className="text-sm font-black text-white leading-none">لوحة تحكم المشرف</p>
       </div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={onOpenTools}
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5"
-          style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
-        >
-          <Icon name="shield" size={14} />
-          أدوات المشرف
-        </button>
         <button
           onClick={onLogout}
           className="text-xs px-3 py-1.5 rounded-lg font-semibold"
