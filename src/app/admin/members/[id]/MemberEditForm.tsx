@@ -20,6 +20,7 @@ type Member = {
   age: string;
   paymentMethod: string | null;
   paidAmount: number | null;
+  supportAmount: number;
   photo: string | null;
 };
 
@@ -35,7 +36,9 @@ export default function MemberEditForm({
   const [fullName, setFullName] = useState(member.fullName);
   const [age, setAge] = useState(member.age);
   const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
-  const [paidAmount, setPaidAmount] = useState(member.paidAmount?.toString() ?? "");
+  const [paidAmount, setPaidAmount] = useState(
+    member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
+  );
   const [photo, setPhoto] = useState(member.photo);
   const [ageGroups, setAgeGroups] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -79,9 +82,11 @@ export default function MemberEditForm({
       await api.patch(`/api/admin/members/${member.id}`, {
         fullName: fullName.trim(),
         age,
-        ...(paymentMethod ? { paymentMethod } : {}),
         photo,
-        paidAmount: paidAmount.trim() ? Number(paidAmount) : null,
+      });
+      await api.put(`/api/admin/members/${member.id}/payment`, {
+        amountTransferred: paidAmount.trim() ? Number(paidAmount) : null,
+        ...(paymentMethod ? { paymentMethod } : {}),
       });
       onSaved();
     } catch (err) {

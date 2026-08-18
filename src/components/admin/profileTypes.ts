@@ -8,6 +8,7 @@ export type MemberProfile = {
     status: string;
     memberNumber: string | null;
     paidAmount: number | null;
+    supportAmount: number;
     paymentMethod: string | null;
     paymentProof: string | null;
     createdAt: string;

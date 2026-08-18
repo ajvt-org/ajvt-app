@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { resetDb, patch, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, patch, put, createAdmin, signInAsAdmin } from "./helpers";
 
 import { PATCH as UPDATE } from "@/app/api/admin/members/[id]/route";
+import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 
 const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 const YEAR = runningYear();
@@ -37,8 +38,8 @@ describe("entering an amount that was never recorded", () => {
   it("writes the amount onto the year it belongs to", async () => {
     const m = await memberMissingAmount();
 
-    const res = await UPDATE(
-      patch(`/api/admin/members/${m.id}`, { paidAmount: 100 }),
+    const res = await PAY(
+      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }),
       withId(m.id),
     );
     expect(res.status).toBe(200);
@@ -50,7 +51,7 @@ describe("entering an amount that was never recorded", () => {
   it("turns an amount above the fee into support for that member", async () => {
     const m = await memberMissingAmount();
 
-    await UPDATE(patch(`/api/admin/members/${m.id}`, { paidAmount: 300 }), withId(m.id));
+    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
 
     const year = await prisma.membership.findFirst({ where: { memberId: m.id, year: YEAR } });
     expect(year?.paidAmount).toBe(100);
@@ -64,7 +65,7 @@ describe("entering an amount that was never recorded", () => {
   it("keeps the fee off the member row once the surplus is split out", async () => {
     const m = await memberMissingAmount();
 
-    await UPDATE(patch(`/api/admin/members/${m.id}`, { paidAmount: 300 }), withId(m.id));
+    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
 
     expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
   });

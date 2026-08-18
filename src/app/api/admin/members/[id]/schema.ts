@@ -17,11 +17,6 @@ export const adminMemberUpdateSchema = z.object({
     .refine((v) => v.trim().length <= NAME_MAX, NAME_TOO_LONG)
     .transform((v) => v.trim())
     .optional(),
-  paymentMethod: z
-    .string(INVALID)
-    .refine((v) => v.trim().length > 0, INVALID)
-    .transform((v) => v.trim())
-    .optional(),
   age: z
     .string(AGE_REQUIRED)
     .refine((v) => v.trim().length > 0, AGE_REQUIRED)
@@ -29,6 +24,5 @@ export const adminMemberUpdateSchema = z.object({
     .transform((v) => v.trim())
     .optional(),
   photo: z.string(INVALID).nullish(),
-  paidAmount: z.unknown().optional(),
   accountPhone: z.string(INVALID).optional(),
 });

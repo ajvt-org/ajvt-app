@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/members/route";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
+import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import { resetDb, post, patch, put, createAdmin, createUser, signInAsAdmin } from "./helpers";
 
 const ALREADY = "لهذا الحساب عضو مسبقاً";
 
@@ -83,8 +84,12 @@ describe("admin membership is one per account", () => {
     const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, {
-        age: "الفائزين",
+      patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }),
+      params(member.id),
+    );
+    await PAY(
+      put(`/api/admin/members/${member.id}/payment`, {
+        amountTransferred: null,
         paymentMethod: "السداد",
       }),
       params(member.id),
@@ -98,8 +103,13 @@ describe("admin membership is one per account", () => {
     const log = await prisma.auditLog.findFirstOrThrow({
       where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER" },
     });
-    expect(log.before).toMatchObject({ age: "البدريين", paymentMethod: "بنكيلي" });
-    expect(log.after).toMatchObject({ age: "الفائزين", paymentMethod: "السداد" });
+    expect(log.before).toMatchObject({ age: "البدريين" });
+    expect(log.after).toMatchObject({ age: "الفائزين" });
+
+    const paymentLog = await prisma.auditLog.findFirstOrThrow({
+      where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER_PAYMENT" },
+    });
+    expect(paymentLog.adminUsername).toBe("admin");
   });
 
   it("leaves untouched fields alone", async () => {
@@ -117,8 +127,11 @@ describe("admin membership is one per account", () => {
     await signIn();
     const member = await memberFor(null, { paymentMethod: "بنكيلي" });
 
-    const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { paymentMethod: "   " }),
+    const res = await PAY(
+      put(`/api/admin/members/${member.id}/payment`, {
+        amountTransferred: null,
+        paymentMethod: "   ",
+      }),
       params(member.id),
     );
 

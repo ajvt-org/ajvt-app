@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import { resetDb, post, put, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
-import { PATCH as EDIT_MEMBER } from "@/app/api/admin/members/[id]/route";
+import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -92,7 +92,7 @@ describe("the fee and the surplus live in one place each", () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await EDIT_MEMBER(patch(`/api/admin/members/${member.id}`, { paidAmount: 100 }), {
+    await PAY(put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 100 }), {
       params: Promise.resolve({ id: member.id }),
     });
 
@@ -106,7 +106,7 @@ describe("the fee and the surplus live in one place each", () => {
     const member = await join({ paidAmount: 100 });
     await signInAsAdmin(await createAdmin());
 
-    await EDIT_MEMBER(patch(`/api/admin/members/${member.id}`, { paidAmount: 600 }), {
+    await PAY(put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 600 }), {
       params: Promise.resolve({ id: member.id }),
     });
 
