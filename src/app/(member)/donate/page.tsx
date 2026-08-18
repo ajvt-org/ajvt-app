@@ -7,10 +7,12 @@ import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
+import { validateDonorChoice } from "@/lib/donorChoice";
+import DonorNameChoice from "./DonorNameChoice";
+import DonateThanks from "./DonateThanks";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
-import SupportersLink from "@/components/SupportersLink";
 
 export default function DonatePage() {
   return (
@@ -45,12 +47,6 @@ function DonatePageInner() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  // Arriving from /home carries the member in the URL. Arriving from the tab
-  // bar carries nothing, so the session is asked instead — otherwise a
-  // signed-in member is told they are about to donate without an account.
-  // A donation belongs to the account, not to one of its members, and an
-  // account has no name of its own; the first active member is the name it
-  // goes under, which is what the leaderboard link already assumes.
   useEffect(() => {
     const lookup = memberId
       ? fetch(`/api/members/${memberId}`)
@@ -101,6 +97,14 @@ function DonatePageInner() {
       setError("يرجى اختيار طريقة الدفع");
       return;
     }
+    const choiceError = validateDonorChoice(
+      wantsName === null ? null : !wantsName,
+      lockedMember ? lockedMember.fullName : donorName,
+    );
+    if (choiceError) {
+      setError(choiceError);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -111,8 +115,9 @@ function DonatePageInner() {
       if (lockedMember) {
         fd.append("memberId", lockedMember.id);
         if (wantsName === false) fd.append("anonymous", "true");
-      } else if (donorName.trim()) {
-        fd.append("donorName", donorName.trim());
+      } else {
+        fd.append("anonymous", wantsName === false ? "true" : "false");
+        if (wantsName === true) fd.append("donorName", donorName.trim());
       }
 
       const res = await fetch("/api/donations", { method: "POST", body: fd });
@@ -135,28 +140,9 @@ function DonatePageInner() {
   }
 
   if (done) {
-    return (
-      <div className="app-shell flex items-center justify-center">
-        <div className="card p-8 text-center max-w-sm mx-4 fade-up">
-          <div className="mb-4 flex justify-center">
-            <Icon name="heart" filled size={48} color="var(--mint-600)" />
-          </div>
-          <h1 className="text-lg font-black mb-2" style={{ color: "var(--text-main)" }}>
-            شكراً لدعمك!
-          </h1>
-          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
-            تم استلام تبرعك وسيتم مراجعته من طرف الرابطة. جزاك الله خيراً.
-          </p>
-          <SupportersLink className="btn btn-primary" style={{}} />
-        </div>
-      </div>
-    );
+    return <DonateThanks />;
   }
 
-  // Anonymous visitor (no account, not donating as a known ACTIVE member) —
-  // make sure they know a donation isn't membership before they proceed:
-  // no account, no membership card, no activities. Skipped entirely for a
-  // signed-in ACTIVE member donating from /home (lockedMember already set).
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
@@ -285,74 +271,16 @@ function DonatePageInner() {
             </div>
           </div>
 
-          <div>
-            <p
-              id="donate-named-label"
-              className="block text-sm font-bold mb-2"
-              style={{ color: "var(--text-main)" }}
-            >
-              هل تريد ذكر اسمك مع التبرع؟
-            </p>
-            <div
-              className="grid grid-cols-2 gap-2"
-              role="radiogroup"
-              aria-labelledby="donate-named-label"
-            >
-              <button
-                type="button"
-                role="radio"
-                aria-checked={wantsName === true}
-                onClick={() => setWantsName(true)}
-                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                style={{
-                  background: wantsName === true ? "var(--mint-600)" : "white",
-                  color: wantsName === true ? "white" : "var(--mint-700)",
-                  borderColor: wantsName === true ? "var(--mint-600)" : "var(--mint-200)",
-                }}
-              >
-                <IconLabel name="pencil">
-                  نعم{lockedMember ? ` — ${lockedMember.fullName}` : "، باسمي"}
-                </IconLabel>
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked={wantsName === false}
-                onClick={() => {
-                  setWantsName(false);
-                  setDonorName("");
-                }}
-                className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                style={{
-                  background: wantsName === false ? "var(--mint-600)" : "white",
-                  color: wantsName === false ? "white" : "var(--mint-700)",
-                  borderColor: wantsName === false ? "var(--mint-600)" : "var(--mint-200)",
-                }}
-              >
-                <IconLabel name="lock">أفضّل أن أبقى مجهولاً</IconLabel>
-              </button>
-            </div>
-
-            {!lockedMember && wantsName === true && (
-              <input
-                type="text"
-                value={donorName}
-                onChange={(e) => setDonorName(e.target.value)}
-                placeholder="اكتب اسمك هنا"
-                maxLength={50}
-                className="input mt-2"
-                autoFocus
-              />
-            )}
-
-            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-              {wantsName === false
-                ? 'سيُسجَّل تبرعك باسم "فاعل خير"، فيظهر في لوحة شرف المتبرعين دون اسمك ويُحتسب ضمن مجموع الدعم.'
-                : wantsName === true
-                  ? "سنذكر اسمك تقديراً لدعمك، وسيظهر في لوحة شرف المتبرعين."
-                  : "كلا الخيارين متاحان بنفس القدر، ويظهر تبرعك في لوحة شرف المتبرعين إما باسمك أو باسم فاعل خير."}
-            </p>
-          </div>
+          <DonorNameChoice
+            wantsName={wantsName}
+            onPick={(wants) => {
+              setWantsName(wants);
+              if (!wants) setDonorName("");
+            }}
+            donorName={donorName}
+            onDonorName={setDonorName}
+            memberName={lockedMember?.fullName}
+          />
 
           <div>
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>

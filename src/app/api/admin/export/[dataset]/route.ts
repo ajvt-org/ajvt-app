@@ -5,6 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { toCsv } from "@/lib/csv";
+import { surplusForYear } from "@/lib/paidBreakdown";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
 import {
   isDataset,
@@ -22,9 +23,23 @@ async function buildCsv(dataset: Dataset): Promise<string> {
   if (dataset === "members") {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
-      include: { user: { select: { phone: true } } },
+      include: {
+        user: { select: { phone: true } },
+        donations: {
+          where: { source: "MEMBERSHIP" },
+          select: { amount: true, membershipYear: true },
+        },
+      },
     });
-    return toCsv(MEMBER_HEADERS, memberRows(members));
+    return toCsv(
+      MEMBER_HEADERS,
+      memberRows(
+        members.map((m) => ({
+          ...m,
+          supportAmount: surplusForYear(m.donations, m.membershipYear),
+        })),
+      ),
+    );
   }
 
   if (dataset === "donations") {

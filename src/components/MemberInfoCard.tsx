@@ -1,9 +1,8 @@
 import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMember";
+import PaidAmountRows from "@/components/PaidAmountRows";
 
-// The name is not repeated here — it is the heading directly above. The
-// acceptance date is, because an accepted request no longer shows the stages.
 export default function MemberInfoCard({
   member,
   onEdit,
@@ -34,9 +33,11 @@ export default function MemberInfoCard({
         <InfoRow label="رقم الهاتف" value={member.user?.phone ?? "—"} dir="ltr" />
         <InfoRow label="العصر" value={member.age} />
         <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
-        {member.paidAmount != null && (
-          <InfoRow label="المبلغ المسدد" value={`${member.paidAmount} أوقية`} />
-        )}
+        <PaidAmountRows
+          paidAmount={member.paidAmount}
+          supportAmount={member.supportAmount}
+          Row={InfoRow}
+        />
         <InfoRow label="تاريخ الطلب" value={formatDate(member.createdAt)} />
         <InfoRow label="وقت الطلب" value={formatTime(member.createdAt)} dir="ltr" />
         {member.status === "ACTIVE" && (

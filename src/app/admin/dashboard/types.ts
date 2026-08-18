@@ -11,6 +11,7 @@ export interface Member {
   paymentProof: string | null;
   photo: string | null;
   paidAmount: number | null;
+  supportAmount: number;
   status: Status;
   rejectionReason: string | null;
   membershipYear: number;

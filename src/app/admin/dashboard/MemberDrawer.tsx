@@ -70,12 +70,26 @@ function Identity({ member }: { member: Member }) {
   );
 }
 
+type Row = [string, string, string | undefined];
+
+function paidRows(member: Member): Row[] {
+  const fee = member.paidAmount ?? 0;
+  if (member.supportAmount <= 0) {
+    return [["المبلغ المسدد", member.paidAmount ? `${fee} أوقية` : "—", undefined]];
+  }
+  return [
+    ["رسوم الاشتراك", `${fee} أوقية`, undefined],
+    ["مبلغ الدعم", `${member.supportAmount} أوقية`, undefined],
+    ["إجمالي ما دُفع", `${fee + member.supportAmount} أوقية`, undefined],
+  ];
+}
+
 function Facts({ member }: { member: Member }) {
-  const rows: [string, string, string | undefined][] = [
+  const rows: Row[] = [
     ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
     ["العصر", member.age, undefined],
     ["طريقة الدفع", member.paymentMethod, undefined],
-    ["المبلغ المسدد", member.paidAmount ? `${member.paidAmount} أوقية` : "—", undefined],
+    ...paidRows(member),
     ["رقم العضوية", member.memberNumber || "—", "ltr"],
     ["تاريخ الطلب", formatDate(member.createdAt), undefined],
     ["وقت الطلب", formatTime(member.createdAt), "ltr"],
