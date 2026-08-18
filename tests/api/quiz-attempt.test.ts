@@ -11,7 +11,7 @@ import {
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
 import { DEFAULT_BANDS } from "@/lib/competitionConfig";
-import { drawQuestions } from "@/lib/quizDay";
+import { drawQuestions, seededShuffle } from "@/lib/quizDay";
 import type { HttpError } from "@/lib/errors";
 
 async function refusal(run: () => Promise<unknown>): Promise<string> {
@@ -68,8 +68,11 @@ async function pool(competitionId: string, size = 5) {
   return day;
 }
 
+let phoneSeq = 0;
 const user = () =>
-  prisma.user.create({ data: { phone: `2${Date.now() % 9999999}`, password: "x" } });
+  prisma.user.create({
+    data: { phone: `2${String(++phoneSeq).padStart(7, "0")}`, password: "x" },
+  });
 
 describe("starting a daily attempt", () => {
   beforeEach(async () => {
@@ -137,7 +140,7 @@ describe("starting a daily attempt", () => {
     expect(row.optionOrder).toHaveLength(3);
   });
 
-  it("seeds each member's draw with their own account", async () => {
+  it("draws the day's set from the day, not from the account", async () => {
     const c = await competition();
     const day = await pool(c.id, 5);
     const u = await user();
@@ -151,7 +154,97 @@ describe("starting a daily attempt", () => {
       where: { attemptId: attempt.id },
       orderBy: { position: "asc" },
     });
-    expect(rows.map((r) => r.questionId)).toEqual(drawQuestions(poolIds, 3, `${day.id}:${u.id}`));
+    expect(rows.map((r) => r.questionId).sort()).toEqual(drawQuestions(poolIds, 3, day.id).sort());
+  });
+
+  it("gives every member the same questions on a given day", async () => {
+    const c = await competition();
+    await pool(c.id, 5);
+    const [a, b, third] = [await user(), await user(), await user()];
+
+    const attempts = [];
+    for (const u of [a, b, third]) attempts.push(await startOrResumeAttempt(u.id, openAt));
+
+    const sets = await Promise.all(
+      attempts.map(async (attempt) =>
+        (
+          await prisma.quizAttemptAnswer.findMany({
+            where: { attemptId: attempt.id },
+            orderBy: { position: "asc" },
+          })
+        ).map((r) => r.questionId),
+      ),
+    );
+    expect([...sets[1]].sort()).toEqual([...sets[0]].sort());
+    expect([...sets[2]].sort()).toEqual([...sets[0]].sort());
+  });
+
+  it("puts them in a different order for each member", async () => {
+    const c = await competition();
+    const day = await pool(c.id, 5);
+    const members = await Promise.all(Array.from({ length: 8 }, () => user()));
+
+    const attempts = [];
+    for (const u of members) attempts.push(await startOrResumeAttempt(u.id, openAt));
+
+    const orders = await Promise.all(
+      attempts.map(async (attempt) =>
+        (
+          await prisma.quizAttemptAnswer.findMany({
+            where: { attemptId: attempt.id },
+            orderBy: { position: "asc" },
+          })
+        )
+          .map((r) => r.questionId)
+          .join(),
+      ),
+    );
+    expect(new Set(orders).size).toBeGreaterThan(1);
+    expect(orders[0]).toBe(
+      seededShuffle(
+        drawQuestions(
+          (await prisma.quizDayQuestion.findMany({ where: { dayId: day.id } })).map(
+            (q) => q.questionId,
+          ),
+          3,
+          day.id,
+        ),
+        `${day.id}:${members[0].id}`,
+      ).join(),
+    );
+  });
+
+  it("still shuffles the options separately for each member", async () => {
+    const c = await competition();
+    await pool(c.id, 5);
+    const members = await Promise.all([user(), user(), user(), user(), user(), user()]);
+
+    const attempts = [];
+    for (const u of members) attempts.push(await startOrResumeAttempt(u.id, openAt));
+
+    const firstRows = await Promise.all(
+      attempts.map((attempt) =>
+        prisma.quizAttemptAnswer.findFirstOrThrow({
+          where: { attemptId: attempt.id, position: 0 },
+        }),
+      ),
+    );
+    expect(new Set(firstRows.map((r) => r.optionOrder.join())).size).toBeGreaterThan(1);
+  });
+
+  it("serves a different set on a different day", async () => {
+    const c = await competition();
+    const dayOne = await pool(c.id, 5);
+    const later = await prisma.quizDay.create({
+      data: { competitionId: c.id, day: "2026-08-21" },
+    });
+    const all = await prisma.quizQuestion.findMany({ select: { id: true } });
+    await prisma.quizDayQuestion.createMany({
+      data: all.map((q) => ({ dayId: later.id, questionId: q.id })),
+    });
+    const poolIds = all.map((q) => q.id);
+
+    expect(drawQuestions(poolIds, 3, later.id)).not.toEqual(drawQuestions(poolIds, 3, dayOne.id));
   });
 
   it("only ever draws from that day's pool", async () => {
