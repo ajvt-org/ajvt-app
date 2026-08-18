@@ -11,6 +11,7 @@ import SettingsForm from "./SettingsForm";
 import RandomSend from "./RandomSend";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
+import CompetitionPanel from "./CompetitionPanel";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
@@ -307,6 +308,8 @@ export default function AdminQuizPage() {
         onChange={(key, value) => setSettingsForm((p) => ({ ...p, [key]: value }))}
         onSubmit={saveSettings}
       />
+
+      <CompetitionPanel />
 
       <RandomSend
         count={randomCount}

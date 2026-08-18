@@ -1,0 +1,17 @@
+CREATE TABLE "Competition" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "startsOn" TEXT NOT NULL,
+  "days" INTEGER NOT NULL DEFAULT 30,
+  "publishMinutes" INTEGER NOT NULL DEFAULT 480,
+  "cutoffMinutes" INTEGER NOT NULL DEFAULT 1320,
+  "servedCount" INTEGER NOT NULL DEFAULT 10,
+  "poolSize" INTEGER NOT NULL DEFAULT 30,
+  "weeklyCountingDays" INTEGER NOT NULL DEFAULT 6,
+  "speedBands" JSONB NOT NULL,
+  "startedAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+
+  CONSTRAINT "Competition_pkey" PRIMARY KEY ("id")
+);

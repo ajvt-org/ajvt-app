@@ -38,6 +38,10 @@ export function put(url: string, body: unknown): NextRequest {
   });
 }
 
+export function del(url: string): NextRequest {
+  return new NextRequest(`http://localhost${url}`, { method: "DELETE" });
+}
+
 export function get(url: string, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }

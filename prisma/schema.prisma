@@ -550,6 +550,22 @@ model DeletedRecord {
   @@index([expiresAt])
 }
 
+model Competition {
+  id                 String    @id @default(cuid())
+  name               String
+  startsOn           String
+  days               Int       @default(30)
+  publishMinutes     Int       @default(480)
+  cutoffMinutes      Int       @default(1320)
+  servedCount        Int       @default(10)
+  poolSize           Int       @default(30)
+  weeklyCountingDays Int       @default(6)
+  speedBands         Json
+  startedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
 enum PaymentPurpose {
   MEMBERSHIP
   DONATION
