@@ -13,6 +13,7 @@ import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
+import { mirrorDonation } from "@/lib/paymentMirror";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -103,7 +104,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     writeFile(join(/* turbopackIgnore: true */ uploadDir, `${id}-thumb.webp`), processed.thumbnail),
   ]);
 
-  await prisma.donation.create({
+  const donation = await prisma.donation.create({
     data: {
       donorName,
       amount,
@@ -113,6 +114,16 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       source: memberId ? "SELF" : "PUBLIC",
       status: "PENDING",
     },
+  });
+  await mirrorDonation(prisma, {
+    donationId: donation.id,
+    amount,
+    method: paymentMethod,
+    proof: filename,
+    status: "PENDING",
+    donorName,
+    memberId,
+    activityId: null,
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });

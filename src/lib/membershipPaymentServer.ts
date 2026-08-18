@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
+import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -31,11 +32,33 @@ export async function recordMembershipPayment(
   if (total === null) {
     await db.member.update({ where: { id: memberId }, data: { paidAmount: null } });
     if (existing) await db.donation.delete({ where: { id: existing.id } });
+    await mirrorMembershipPayment(db, {
+      memberId,
+      year: membershipYear,
+      amount: null,
+      feeApplied: fee,
+      method: member.paymentMethod,
+      proof: member.paymentProof,
+      status: member.status,
+      anonymous: member.surplusAnonymous,
+      donorName: member.surplusAnonymous ? null : member.fullName,
+    });
     return;
   }
 
   const { fee: banked, surplus } = splitPayment(total, fee);
   await db.member.update({ where: { id: memberId }, data: { paidAmount: banked } });
+  await mirrorMembershipPayment(db, {
+    memberId,
+    year: membershipYear,
+    amount: total,
+    feeApplied: fee,
+    method: member.paymentMethod,
+    proof: member.paymentProof,
+    status: member.status,
+    anonymous: member.surplusAnonymous,
+    donorName: member.surplusAnonymous ? null : member.fullName,
+  });
 
   if (surplus === 0) {
     if (existing) await db.donation.delete({ where: { id: existing.id } });
@@ -73,6 +96,7 @@ export async function syncSurplusStatus(db: Db, memberId: string) {
     where: { memberId, source: "MEMBERSHIP", membershipYear: member.membershipYear },
     data: { status: member.status },
   });
+  await mirrorMembershipStatus(db, memberId, member.membershipYear, member.status);
 }
 
 export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
