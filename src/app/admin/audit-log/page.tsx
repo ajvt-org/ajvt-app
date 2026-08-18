@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Pagination from "@/components/admin/Pagination";
 import AuditLogEntryCard from "@/components/admin/AuditLogEntryCard";
 import { counted } from "@/lib/arabicCount";
@@ -34,13 +34,8 @@ function AuditLogInner() {
 
   return (
     <div className="admin-page">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="list">سجل الإجراءات</IconLabel>
-        </p>
-        <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-          {counted(total, RESULT)}
-        </span>
+      <div className="mb-3">
+        <AdminToolHeader icon="list" title="سجل الإجراءات" note={counted(total, RESULT)} />
       </div>
 
       <AuditFilterRow
