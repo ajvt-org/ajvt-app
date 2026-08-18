@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import type { RenewalRefusal } from "@/lib/renewal";
 import MembershipYears from "./MembershipYears";
 import RenewForm from "./RenewForm";
+import YearAmountForm from "./YearAmountForm";
 import type { MembershipHistory } from "./membershipTypes";
 
 const REFUSAL_NOTE: Record<NonNullable<RenewalRefusal>, string> = {
@@ -28,6 +29,9 @@ export default function MembershipPanel({ memberId }: { memberId: string }) {
 
   if (!history) return null;
 
+  const reload = () => fetchHistory(memberId).then(setHistory);
+  const current = history.memberships.find((y) => y.year === history.currentYear);
+
   return (
     <div className="card p-4 space-y-2">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
@@ -36,16 +40,19 @@ export default function MembershipPanel({ memberId }: { memberId: string }) {
 
       <MembershipYears years={history.memberships} currentYear={history.currentYear} />
 
-      {history.refusal ? (
+      {history.refusal === "alreadyRenewed" ? (
+        <YearAmountForm
+          memberId={memberId}
+          year={history.currentYear}
+          amount={current?.paidAmount ?? null}
+          onSaved={reload}
+        />
+      ) : history.refusal ? (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {REFUSAL_NOTE[history.refusal]}
         </p>
       ) : (
-        <RenewForm
-          memberId={memberId}
-          year={history.currentYear}
-          onRenewed={() => fetchHistory(memberId).then(setHistory)}
-        />
+        <RenewForm memberId={memberId} year={history.currentYear} onRenewed={reload} />
       )}
     </div>
   );
