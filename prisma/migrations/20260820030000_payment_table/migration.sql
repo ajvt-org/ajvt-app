@@ -63,7 +63,7 @@ INSERT INTO "Payment" (
   "status", "anonymous", "donorName", "memberId", "activityId", "createdAt", "updatedAt"
 )
 SELECT
-  gen_random_uuid()::TEXT,
+  d."id",
   CASE WHEN d."activityId" IS NOT NULL THEN 'ACTIVITY'::"PaymentPurpose" ELSE 'DONATION'::"PaymentPurpose" END,
   d."amount",
   NULL,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { mirrorDonation } from "@/lib/paymentMirror";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -31,6 +32,16 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       source: "PUBLIC",
       status: "ACTIVE",
     },
+  });
+  await mirrorDonation(prisma, {
+    donationId: donation.id,
+    amount: donation.amount,
+    method: donation.paymentMethod,
+    proof: donation.proof,
+    status: donation.status,
+    donorName: donation.donorName,
+    memberId: donation.memberId,
+    activityId: donation.activityId,
   });
   await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${n} أوقية`, {
     ...auditContext(session, req),

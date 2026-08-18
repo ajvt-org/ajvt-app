@@ -39,7 +39,7 @@ async function backfill() {
   `);
   await prisma.$executeRawUnsafe(`
     INSERT INTO "Payment" ("id","purpose","amount","feeApplied","year","method","proof","status","anonymous","donorName","memberId","activityId","createdAt","updatedAt")
-    SELECT gen_random_uuid()::TEXT,
+    SELECT d."id",
       CASE WHEN d."activityId" IS NOT NULL THEN 'ACTIVITY'::"PaymentPurpose" ELSE 'DONATION'::"PaymentPurpose" END,
       d."amount", NULL, NULL, d."paymentMethod", d."proof", d."status",
       (d."donorName" IS NULL), d."donorName", d."memberId", d."activityId", d."createdAt", now()
@@ -154,9 +154,7 @@ describe("the backfill onto the payment table", () => {
     await backfill();
 
     const r = await reconcilePayments();
-    expect(r.membershipFees).toEqual({ old: 100, new: 100 });
-    expect(r.membershipSupport).toEqual({ old: 2000, new: 2000 });
-    expect(r.otherDonations).toEqual({ old: 3000, new: 3000 });
+    expect(r.mismatches).toEqual([]);
     expect(r.agrees).toBe(true);
   });
 
@@ -167,7 +165,10 @@ describe("the backfill onto the payment table", () => {
 
     await prisma.payment.updateMany({ data: { amount: 999 } });
 
-    expect((await reconcilePayments()).agrees).toBe(false);
+    const r = await reconcilePayments();
+    expect(r.agrees).toBe(false);
+    expect(r.mismatches).toHaveLength(1);
+    expect(r.mismatches[0]).toMatchObject({ kind: "MEMBERSHIP", old: 100, now: 999 });
   });
 
   it("writes nothing for a year that carries no money", async () => {

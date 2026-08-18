@@ -1,60 +1,77 @@
 import { prisma } from "./prisma";
-import { splitPayment } from "./membershipPayment";
+
+export interface Mismatch {
+  memberId: string | null;
+  year: number | null;
+  kind: "MEMBERSHIP" | "DONATION";
+  old: number;
+  now: number;
+}
 
 export interface Reconciliation {
   agrees: boolean;
-  membershipFees: { old: number; new: number };
-  membershipSupport: { old: number; new: number };
-  otherDonations: { old: number; new: number };
+  mismatches: Mismatch[];
 }
 
-function equal(a: number, b: number) {
-  return a === b;
+type Totals = Map<string, number>;
+
+function add(map: Totals, key: string, amount: number) {
+  map.set(key, (map.get(key) ?? 0) + amount);
 }
 
 export async function reconcilePayments(): Promise<Reconciliation> {
-  const [members, surplus, others, payments] = await Promise.all([
-    prisma.membership.findMany({ select: { paidAmount: true } }),
+  const [members, memberships, surplus, others, payments] = await Promise.all([
+    prisma.member.findMany({ select: { id: true, membershipYear: true, paidAmount: true } }),
+    prisma.membership.findMany({ select: { memberId: true, year: true, paidAmount: true } }),
     prisma.donation.findMany({
       where: { source: "MEMBERSHIP" },
-      select: { amount: true },
+      select: { memberId: true, membershipYear: true, amount: true },
     }),
     prisma.donation.findMany({
       where: { source: { not: "MEMBERSHIP" }, amount: { not: null } },
-      select: { amount: true },
+      select: { id: true, amount: true },
     }),
     prisma.payment.findMany({
-      select: { purpose: true, amount: true, feeApplied: true },
+      select: { id: true, purpose: true, memberId: true, year: true, amount: true },
     }),
   ]);
 
-  const sum = (rows: { amount: number | null }[]) => rows.reduce((t, r) => t + (r.amount ?? 0), 0);
+  const old: Totals = new Map();
+  const byMember = new Map(members.map((m) => [m.id, m]));
 
-  const membershipPayments = payments.filter((p) => p.purpose === "MEMBERSHIP");
-  const newFees = membershipPayments.reduce(
-    (t, p) => t + splitPayment(p.amount, p.feeApplied ?? 0).fee,
-    0,
-  );
-  const newSupport = membershipPayments.reduce(
-    (t, p) => t + splitPayment(p.amount, p.feeApplied ?? 0).surplus,
-    0,
-  );
-  const newOthers = payments
-    .filter((p) => p.purpose !== "MEMBERSHIP")
-    .reduce((t, p) => t + p.amount, 0);
+  for (const m of members) {
+    if (m.paidAmount) add(old, `m:${m.id}:${m.membershipYear}`, m.paidAmount);
+  }
+  for (const ms of memberships) {
+    const member = byMember.get(ms.memberId);
+    if (member && member.membershipYear === ms.year) continue;
+    if (ms.paidAmount) add(old, `m:${ms.memberId}:${ms.year}`, ms.paidAmount);
+  }
+  for (const d of surplus) {
+    if (d.amount && d.memberId) add(old, `m:${d.memberId}:${d.membershipYear}`, d.amount);
+  }
+  for (const d of others) add(old, `d:${d.id}`, d.amount ?? 0);
 
-  const result: Reconciliation = {
-    agrees: false,
-    membershipFees: {
-      old: members.reduce((t, r) => t + (r.paidAmount ?? 0), 0),
-      new: newFees,
-    },
-    membershipSupport: { old: sum(surplus), new: newSupport },
-    otherDonations: { old: sum(others), new: newOthers },
-  };
-  result.agrees =
-    equal(result.membershipFees.old, result.membershipFees.new) &&
-    equal(result.membershipSupport.old, result.membershipSupport.new) &&
-    equal(result.otherDonations.old, result.otherDonations.new);
-  return result;
+  const now: Totals = new Map();
+  for (const p of payments) {
+    if (p.purpose === "MEMBERSHIP") add(now, `m:${p.memberId}:${p.year}`, p.amount);
+    else add(now, `d:${p.id}`, p.amount);
+  }
+
+  const mismatches: Mismatch[] = [];
+  for (const key of new Set([...old.keys(), ...now.keys()])) {
+    const a = old.get(key) ?? 0;
+    const b = now.get(key) ?? 0;
+    if (a === b) continue;
+    const [kind, first, second] = key.split(":");
+    mismatches.push({
+      kind: kind === "m" ? "MEMBERSHIP" : "DONATION",
+      memberId: kind === "m" ? first : null,
+      year: kind === "m" ? Number(second) : null,
+      old: a,
+      now: b,
+    });
+  }
+
+  return { agrees: mismatches.length === 0, mismatches };
 }
