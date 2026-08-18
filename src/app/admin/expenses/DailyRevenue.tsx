@@ -101,11 +101,12 @@ export default function DailyRevenue({
                   type="button"
                   onClick={() => onToggle(day.date)}
                   className="w-full flex items-center justify-between text-xs"
-                  dir="ltr"
                 >
                   <span className="flex items-center gap-1.5">
                     <Icon name={open ? "chevronDown" : "chevronLeft"} size={14} />
-                    <span style={{ color: "var(--text-main)" }}>{formatDayKey(day.date)}</span>
+                    <span dir="ltr" style={{ color: "var(--text-main)" }}>
+                      {formatDayKey(day.date)}
+                    </span>
                   </span>
                   <span className="font-black" style={{ color: "var(--mint-600)" }}>
                     {day.total} أوقية
