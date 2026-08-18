@@ -31,7 +31,9 @@ export default function YearAmountForm({
     }
     setSaving(true);
     try {
-      await api.patch(`/api/admin/members/${memberId}`, { paidAmount: Number(value) });
+      await api.put(`/api/admin/members/${memberId}/payment`, {
+        amountTransferred: Number(value),
+      });
       onSaved();
     } catch (err) {
       setError(errorMessage(err));

@@ -82,9 +82,11 @@ export default function MemberEditForm({
       await api.patch(`/api/admin/members/${member.id}`, {
         fullName: fullName.trim(),
         age,
-        ...(paymentMethod ? { paymentMethod } : {}),
         photo,
-        paidAmount: paidAmount.trim() ? Number(paidAmount) : null,
+      });
+      await api.put(`/api/admin/members/${member.id}/payment`, {
+        amountTransferred: paidAmount.trim() ? Number(paidAmount) : null,
+        ...(paymentMethod ? { paymentMethod } : {}),
       });
       onSaved();
     } catch (err) {

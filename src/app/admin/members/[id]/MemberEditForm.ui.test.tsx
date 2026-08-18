@@ -60,11 +60,14 @@ describe("MemberEditForm", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
     expect(patchCall?.[0]).toBe("/api/admin/members/m1");
+    const putCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PUT");
+    expect(putCall?.[0]).toBe("/api/admin/members/m1/payment");
+    expect(JSON.parse(putCall![1].body)).toMatchObject({ paymentMethod: "السداد" });
     expect(JSON.parse(patchCall![1].body)).toMatchObject({
       age: "الفائزين",
-      paymentMethod: "السداد",
       fullName: "محمد ولد أحمد",
     });
+    expect(JSON.parse(patchCall![1].body)).not.toHaveProperty("paidAmount");
   });
 
   it("refuses to save an empty name", async () => {

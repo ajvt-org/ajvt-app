@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { surplusForYear } from "@/lib/paidBreakdown";
-import { resetDb, get, patch, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, patch, put, createAdmin, signInAsAdmin } from "./helpers";
 
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { GET as YEARS } from "@/app/api/admin/members/[id]/memberships/route";
 import { PATCH as EDIT } from "@/app/api/admin/members/[id]/route";
+import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 
 const YEAR = runningYear();
 const withId = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -73,11 +74,13 @@ describe("a form that sends back what it was given changes nothing", () => {
     ).json();
 
     await EDIT(
-      patch(`/api/admin/members/${m.id}`, {
-        fullName: member.fullName,
-        age: member.age,
+      patch(`/api/admin/members/${m.id}`, { fullName: member.fullName, age: member.age }),
+      withId(m.id),
+    );
+    await PAY(
+      put(`/api/admin/members/${m.id}/payment`, {
+        amountTransferred: member.paidAmount + member.supportAmount,
         paymentMethod: member.paymentMethod,
-        paidAmount: member.paidAmount + member.supportAmount,
       }),
       withId(m.id),
     );
@@ -86,21 +89,10 @@ describe("a form that sends back what it was given changes nothing", () => {
     expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
   });
 
-  it("keeps the surplus when only the name is corrected", async () => {
+  it("cannot touch the money at all through the identity endpoint", async () => {
     const m = await overpaidMember();
-    const { member } = await (
-      await PROFILE(get(`/api/admin/members/${m.id}/profile`), withId(m.id))
-    ).json();
 
-    await EDIT(
-      patch(`/api/admin/members/${m.id}`, {
-        fullName: "محمد ولد أحمدُ",
-        age: member.age,
-        paymentMethod: member.paymentMethod,
-        paidAmount: member.paidAmount + member.supportAmount,
-      }),
-      withId(m.id),
-    );
+    await EDIT(patch(`/api/admin/members/${m.id}`, { fullName: "محمد ولد أحمدُ" }), withId(m.id));
 
     expect(await surplusOf(m.id)).toBe(2000);
   });
@@ -119,7 +111,7 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("still lets an admin genuinely lower the amount", async () => {
     const m = await overpaidMember();
 
-    await EDIT(patch(`/api/admin/members/${m.id}`, { paidAmount: 500 }), withId(m.id));
+    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 500 }), withId(m.id));
 
     expect(await surplusOf(m.id)).toBe(400);
     expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
@@ -128,8 +120,51 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("still lets an admin drop the surplus on purpose", async () => {
     const m = await overpaidMember();
 
-    await EDIT(patch(`/api/admin/members/${m.id}`, { paidAmount: 100 }), withId(m.id));
+    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }), withId(m.id));
 
     expect(await surplusOf(m.id)).toBe(0);
+  });
+});
+
+describe("the identity endpoint owns no money", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await saveAppSettings({ membershipYear: YEAR, membershipFee: 100 });
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+  });
+
+  it("ignores an amount smuggled into a member edit", async () => {
+    const m = await overpaidMember();
+
+    await EDIT(
+      patch(`/api/admin/members/${m.id}`, { fullName: "اسم آخر", paidAmount: 100 }),
+      withId(m.id),
+    );
+
+    expect(await surplusOf(m.id)).toBe(2000);
+  });
+
+  it("still refuses a payment below the fee", async () => {
+    const m = await overpaidMember();
+
+    const res = await PAY(
+      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 40 }),
+      withId(m.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await surplusOf(m.id)).toBe(2000);
+  });
+
+  it("is closed to an admin without the members section", async () => {
+    const m = await overpaidMember();
+    await signInAsAdmin(await createAdmin("quiz", "QUIZ"));
+
+    const res = await PAY(
+      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 500 }),
+      withId(m.id),
+    );
+
+    expect(res.status).toBe(403);
   });
 });
