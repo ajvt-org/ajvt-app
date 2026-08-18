@@ -19,10 +19,10 @@ export default function DashboardToolbar({
   onExport: () => void;
 }) {
   return (
-    <div className="flex gap-2 mb-4">
+    <div className="flex gap-2 mb-3 sm:mb-4">
       <button
         onClick={onToggleStats}
-        className="flex-1 text-sm font-bold px-4 py-2.5 rounded-xl flex items-center justify-between"
+        className="flex-1 text-xs sm:text-sm font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl flex items-center justify-between"
         style={OUTLINE}
       >
         <IconLabel name="chart">الإحصائيات</IconLabel>
@@ -32,7 +32,7 @@ export default function DashboardToolbar({
         onClick={onExport}
         aria-label="تصدير CSV"
         title="تصدير CSV"
-        className="text-sm font-bold px-4 py-2.5 rounded-xl flex items-center"
+        className="text-xs sm:text-sm font-bold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl flex items-center"
         style={OUTLINE}
       >
         <Icon name="download" size={18} />

@@ -12,7 +12,7 @@ const STANDING_LABEL: Record<string, string> = {
   behind: "متأخرون",
 };
 
-const SELECT = "input text-xs";
+const SELECT = "input input-sm";
 const SELECT_STYLE = { width: "auto" };
 
 export default function MemberFilterRow({
@@ -33,7 +33,7 @@ export default function MemberFilterRow({
   const cleared = activeFilterCount(filters);
 
   return (
-    <div className="flex items-center gap-2 mb-3 flex-wrap">
+    <div className="flex items-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
       <select
         value={filters.age}
         onChange={(e) => onChange({ ...filters, age: e.target.value })}

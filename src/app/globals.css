@@ -216,7 +216,12 @@ button:disabled {
 .admin-page {
   max-width: 42rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.75rem;
+}
+@media (min-width: 640px) {
+  .admin-page {
+    padding: 1.5rem 1rem;
+  }
 }
 @media (min-width: 1024px) {
   .admin-page {
@@ -232,6 +237,12 @@ button:disabled {
   min-height: 40px;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+  border-radius: 0.625rem;
+}
+
+.input-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
   border-radius: 0.625rem;
 }
 
