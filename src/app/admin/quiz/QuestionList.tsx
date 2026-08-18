@@ -5,6 +5,7 @@ import { ANSWER, POINT } from "@/lib/messages";
 
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import AdminList from "@/components/admin/AdminList";
 import type { QuestionRow } from "./types";
 
 const CHIP = "text-xs px-3 py-1.5 rounded-lg font-bold";
@@ -91,58 +92,41 @@ function QuestionCard({
 
 export default function QuestionList({
   questions,
+  filtered,
   sendingId,
   busyId,
-  onCreate,
   onSend,
   onEdit,
   onToggle,
   onDelete,
 }: {
   questions: QuestionRow[];
+  filtered?: boolean;
   sendingId: string | null;
   busyId: string | null;
-  onCreate: () => void;
   onSend: (id: string) => void;
   onEdit: (question: QuestionRow) => void;
   onToggle: (question: QuestionRow) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="quiz">الأسئلة ({questions.length})</IconLabel>
-        </p>
-        <button
-          onClick={onCreate}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          <IconLabel name="plus">سؤال جديد</IconLabel>
-        </button>
-      </div>
-
-      {questions.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          لا توجد أسئلة مسجلة بعد
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {questions.map((question) => (
-            <QuestionCard
-              key={question.id}
-              question={question}
-              sending={sendingId === question.id}
-              busy={busyId === question.id}
-              onSend={() => onSend(question.id)}
-              onEdit={() => onEdit(question)}
-              onToggle={() => onToggle(question)}
-              onDelete={() => onDelete(question.id)}
-            />
-          ))}
-        </div>
+    <AdminList
+      items={questions}
+      getKey={(question) => question.id}
+      renderRow={(question) => (
+        <QuestionCard
+          question={question}
+          sending={sendingId === question.id}
+          busy={busyId === question.id}
+          onSend={() => onSend(question.id)}
+          onEdit={() => onEdit(question)}
+          onToggle={() => onToggle(question)}
+          onDelete={() => onDelete(question.id)}
+        />
       )}
-    </>
+      emptyMessage="لا توجد أسئلة مسجلة بعد"
+      emptyFilteredMessage="لا توجد أسئلة مطابقة"
+      isFiltered={filtered}
+    />
   );
 }

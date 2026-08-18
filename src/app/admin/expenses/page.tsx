@@ -1,22 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { loginPathWithNext } from "@/lib/utils";
+import { Suspense, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import PageLoading from "@/components/PageLoading";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
-import FinanceTagManager, { type FinanceTagRow } from "@/components/admin/FinanceTagManager";
+import FinanceTagManager from "@/components/admin/FinanceTagManager";
 import FinanceTotals from "./FinanceTotals";
 import ByPaymentMethod from "./ByPaymentMethod";
 import UnassignedDonations from "./UnassignedDonations";
 import DailyRevenue from "./DailyRevenue";
 import ExpenseList from "./ExpenseList";
+import ExpenseFiltersBar from "./ExpenseFiltersBar";
 import ExpenseFormDialog from "./ExpenseFormDialog";
 import { exportFinance } from "./exportFinance";
+import { useExpensesData } from "./useExpensesData";
+import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
+import { paginate, pageCount } from "@/lib/listUrlState";
+import { readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
-import type { ActivityOption, Expense, ExpenseForm, FinanceSummary } from "./types";
+import type { Expense, ExpenseForm } from "./types";
 
 function toggleIn(set: Set<string>, key: string): Set<string> {
   const next = new Set(set);
@@ -25,22 +28,22 @@ function toggleIn(set: Set<string>, key: string): Set<string> {
   return next;
 }
 
-export default function AdminExpensesPage() {
-  const router = useRouter();
-  const [role, setRole] = useState<string | null>(null);
-  const [summary, setSummary] = useState<FinanceSummary | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+function matchesExpense(expense: Expense, query: string) {
+  return expense.label.includes(query) || String(expense.amount).includes(query);
+}
+
+function AdminExpensesPageInner() {
+  const { role, summary, expenses, tags, activities, loading, reload } = useExpensesData();
+  const { filters, page, go, goToPage } = useAdminListUrlState("/admin/expenses", {
+    readFilters: readExpensesFilters,
+    writeFilters: writeExpensesFilters,
+  });
 
   const [reassignValue, setReassignValue] = useState<Record<string, string>>({});
   const [reassigningId, setReassigningId] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [tags, setTags] = useState<FinanceTagRow[]>([]);
-  const [activities, setActivities] = useState<ActivityOption[]>([]);
-  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
   const [formError, setFormError] = useState("");
@@ -49,44 +52,13 @@ export default function AdminExpensesPage() {
   const [expandedMethods, setExpandedMethods] = useState<Set<string>>(new Set());
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
-  function load() {
-    return Promise.all([
-      fetch("/api/admin/finance/summary").then((r) => {
-        if (r.status === 401) {
-          router.push(loginPathWithNext("/admin/login"));
-          return null;
-        }
-        return r.ok ? r.json() : null;
-      }),
-      fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/admin/finance-tags").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/admin/activities").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([summaryData, expensesData, tagsData, activitiesData]) => {
-      if (summaryData) setSummary(summaryData);
-      if (expensesData?.expenses) setExpenses(expensesData.expenses);
-      if (tagsData?.tags) setTags(tagsData.tags);
-      if (activitiesData?.activities) setActivities(activitiesData.activities);
-    });
-  }
-
-  useEffect(() => {
-    load().finally(() => setLoading(false));
-    fetch("/api/admin/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.role) setRole(data.role);
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function reassignPaymentMethod(id: string) {
     const method = reassignValue[id];
     if (!method) return;
     setReassigningId(id);
     try {
       await api.patch(`/api/admin/donations/${id}`, { paymentMethod: method });
-      await load();
+      await reload();
     } catch (e) {
       alert(errorMessage(e));
     } finally {
@@ -143,7 +115,7 @@ export default function AdminExpensesPage() {
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
       setShowForm(false);
-      await load();
+      await reload();
     } catch (e) {
       setFormError(errorMessage(e));
     } finally {
@@ -156,7 +128,7 @@ export default function AdminExpensesPage() {
     setBusyId(id);
     try {
       await api.del(`/api/admin/expenses/${id}`);
-      await load();
+      await reload();
     } catch (e) {
       alert(errorMessage(e));
     } finally {
@@ -174,13 +146,25 @@ export default function AdminExpensesPage() {
   }
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
-  const shownExpenses =
-    tagFilter.length === 0
-      ? expenses
-      : expenses.filter((e) => e.tags.some((t) => tagFilter.includes(t.id)));
-  const totalPages = Math.max(1, Math.ceil(shownExpenses.length / PAGE_SIZE));
+  const query = filters.q.trim();
+  const shownExpenses = expenses.filter((e) => {
+    if (filters.tagIds.length > 0 && !e.tags.some((t) => filters.tagIds.includes(t.id))) return false;
+    if (query && !matchesExpense(e, query)) return false;
+    if (filters.activityId && e.activity?.id !== filters.activityId) return false;
+    const day = e.date.slice(0, 10);
+    if (filters.dateFrom && day < filters.dateFrom) return false;
+    if (filters.dateTo && day > filters.dateTo) return false;
+    return true;
+  });
+  const isFiltered =
+    filters.tagIds.length > 0 ||
+    query.length > 0 ||
+    !!filters.activityId ||
+    !!filters.dateFrom ||
+    !!filters.dateTo;
+  const totalPages = pageCount(shownExpenses.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
-  const paginated = shownExpenses.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginated = paginate(shownExpenses, page, PAGE_SIZE);
 
   return (
     <div className="admin-page space-y-5">
@@ -253,8 +237,24 @@ export default function AdminExpensesPage() {
       </div>
 
       {showTagManager && (
-        <FinanceTagManager tags={tags} onChanged={load} onClose={() => setShowTagManager(false)} />
+        <FinanceTagManager tags={tags} onChanged={reload} onClose={() => setShowTagManager(false)} />
       )}
+
+      <input
+        type="text"
+        placeholder="بحث بالوصف أو المبلغ..."
+        value={filters.q}
+        onChange={(e) => go({ ...filters, q: e.target.value })}
+        className="input text-sm"
+      />
+
+      <ExpenseFiltersBar
+        filters={filters}
+        activities={activities}
+        isFiltered={isFiltered}
+        onChange={go}
+        onReset={() => go({ q: "", tagIds: [], activityId: "", dateFrom: "", dateTo: "" })}
+      />
 
       {tags.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
@@ -263,16 +263,19 @@ export default function AdminExpensesPage() {
           </span>
           <FinanceTagChips
             tags={tags}
-            selected={tagFilter}
+            selected={filters.tagIds}
             onToggle={(id) =>
-              setTagFilter((prev) =>
-                prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
-              )
+              go({
+                ...filters,
+                tagIds: filters.tagIds.includes(id)
+                  ? filters.tagIds.filter((t) => t !== id)
+                  : [...filters.tagIds, id],
+              })
             }
           />
-          {tagFilter.length > 0 && (
+          {filters.tagIds.length > 0 && (
             <button
-              onClick={() => setTagFilter([])}
+              onClick={() => go({ ...filters, tagIds: [] })}
               className="text-xs font-bold"
               style={{ color: "var(--mint-700)" }}
             >
@@ -284,37 +287,12 @@ export default function AdminExpensesPage() {
 
       <ExpenseList
         expenses={paginated}
-        filtered={tagFilter.length > 0}
+        filtered={isFiltered}
         busyId={busyId}
         onEdit={openEdit}
         onDelete={deleteExpense}
+        pagination={{ page: currentPage, totalPages, onGo: goToPage }}
       />
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-1">
-          <button
-            onClick={() => setPage(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <Icon name="chevronRight" size={14} />
-            السابق
-          </button>
-          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-            صفحة {currentPage} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40 inline-flex items-center gap-1"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            التالي
-            <Icon name="chevronLeft" size={14} />
-          </button>
-        </div>
-      )}
 
       {showForm && (
         <ExpenseFormDialog
@@ -330,5 +308,13 @@ export default function AdminExpensesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function AdminExpensesPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <AdminExpensesPageInner />
+    </Suspense>
   );
 }
