@@ -74,10 +74,13 @@ describe("the year record written when a membership is approved", () => {
       post("/api/admin/validate", {
         id: member.id,
         action: "REJECTED",
-        rejectionReason: "إثبات الدفع غير واضح",
+        rejectionReason: "الصورة غير واضحة",
       }),
     );
 
+    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).status).toBe(
+      "REJECTED",
+    );
     expect(await prisma.membership.count({ where: { memberId: member.id } })).toBe(0);
   });
 

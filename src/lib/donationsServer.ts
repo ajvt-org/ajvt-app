@@ -1,70 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { MEMBERSHIP_FEE } from "@/lib/donations";
-import type { Prisma, PrismaClient } from "@prisma/client";
 import { money } from "@/lib/messages";
 
-type Db = PrismaClient | Prisma.TransactionClient;
-
-// Keeps the auto-generated "membership surplus" Donation row (source:
-// MEMBERSHIP) in sync with a Member's current status/paidAmount. Call after
-// every write that touches either field. Idempotent, safe to call
-// unconditionally — creates/updates/deletes as needed.
-// The published name is written once, from the member's own answer, and never
-// touched again: a later sync moves the amount, not who it is credited to.
-export async function syncMembershipDonation(db: Db, memberId: string) {
-  const member = await db.member.findUnique({
-    where: { id: memberId },
-    select: {
-      status: true,
-      paidAmount: true,
-      fullName: true,
-      paymentProof: true,
-      paymentMethod: true,
-      surplusAnonymous: true,
-    },
-  });
-  if (!member) return;
-
-  const surplus =
-    member.status === "ACTIVE" && member.paidAmount ? member.paidAmount - MEMBERSHIP_FEE : 0;
-
-  const existing = await db.donation.findFirst({
-    where: { memberId, source: "MEMBERSHIP" },
-    select: { id: true },
-  });
-
-  if (surplus > 0) {
-    const data = {
-      amount: surplus,
-      proof: member.paymentProof,
-      paymentMethod: member.paymentMethod,
-    };
-    if (existing) {
-      await db.donation.update({ where: { id: existing.id }, data });
-    } else {
-      await db.donation.create({
-        data: {
-          ...data,
-          donorName: member.surplusAnonymous ? null : member.fullName,
-          memberId,
-          source: "MEMBERSHIP",
-          status: "ACTIVE",
-        },
-      });
-    }
-  } else if (existing) {
-    await db.donation.delete({ where: { id: existing.id } });
-  }
-}
-
-// How many rows the board sends before asking for more. Ranking has to
-// aggregate every donation whatever happens, so this saves markup rather than
-// database work.
 export const SUPPORTERS_PAGE_SIZE = 20;
 
-// What the browser is allowed to see. memberIds stays on the server: it is how
-// an anonymous row is tied to an account, which is the one thing that row
-// exists to hide.
 export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "memberIds">;
 
 export function toPublicEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
@@ -86,11 +24,6 @@ interface LeaderboardEntry {
   anonymous: boolean;
 }
 
-// Everyone who gave appears, anonymous givers included, listed as "فاعل خير"
-// rather than collapsed into a footnote under the table. A member who chose to
-// stay anonymous is still one row: their donations are grouped by account, so
-// they are counted as one supporter without being named. A gift from someone
-// with no account carries nothing to group on, so each one stands alone.
 export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[] }> {
   const donations = await prisma.donation.findMany({
     where: { status: "ACTIVE" },
@@ -131,15 +64,12 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     const named = d.donorName?.trim();
 
     if (d.memberId && named) {
-      // Attributed to an account, shown with that account's photo.
       const photoUrl = d.member?.photo ? `/api/files/member/${d.member.photo}` : null;
       add(`m:${d.memberId}`, { name: named, photoUrl, anonymous: false }, amount, d.memberId);
     } else if (!d.memberId && named) {
       const photoUrl = d.donorPhoto ? `/api/files/donation/${d.donorPhoto}` : null;
       add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount);
     } else if (d.memberId) {
-      // Known to us, but they asked not to be named. One row per account, no
-      // photo and no name, so the total is theirs without saying whose.
       add(
         `a:${d.memberId}`,
         { name: money.anonymousDonor, photoUrl: null, anonymous: true },

@@ -66,10 +66,9 @@ describe("who the membership surplus is credited to", () => {
 
   it("does not rename an anonymous surplus when the amount is corrected later", async () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
-    const { syncMembershipDonation } = await import("@/lib/donationsServer");
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
-    await prisma.member.update({ where: { id: member.id }, data: { paidAmount: 900 } });
-    await syncMembershipDonation(prisma, member.id);
+    await recordMembershipPayment(prisma, member.id, 900, 100);
 
     const donation = await surplusOf(member.id);
     expect(donation.amount).toBe(800);
@@ -78,13 +77,10 @@ describe("who the membership surplus is credited to", () => {
 
   it("does not rename a named surplus either, once it is published", async () => {
     const member = await joinAndApprove({ surplusAnonymous: false });
-    const { syncMembershipDonation } = await import("@/lib/donationsServer");
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
-    await prisma.member.update({
-      where: { id: member.id },
-      data: { fullName: "اسم آخر", paidAmount: 700 },
-    });
-    await syncMembershipDonation(prisma, member.id);
+    await prisma.member.update({ where: { id: member.id }, data: { fullName: "اسم آخر" } });
+    await recordMembershipPayment(prisma, member.id, 700, 100);
 
     const donation = await surplusOf(member.id);
     expect(donation.amount).toBe(600);

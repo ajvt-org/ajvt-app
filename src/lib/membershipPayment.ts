@@ -1,8 +1,3 @@
-// A membership payment is one transfer that covers two different things. The
-// fee belongs to the membership year and lives on Member and Membership. What
-// the member paid above it is a donation and lives only in Donation, so the
-// same money is never written twice.
-
 export interface PaymentSplit {
   fee: number;
   surplus: number;

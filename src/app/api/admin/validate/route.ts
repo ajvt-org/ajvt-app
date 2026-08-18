@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
-import { syncMembershipDonation } from "@/lib/donationsServer";
+import { syncSurplusStatus } from "@/lib/membershipPaymentServer";
 import { recordMembershipYear } from "@/lib/membershipRecord";
 import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
@@ -20,9 +20,6 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
     throw new ValidationError();
   }
-  // A refusal the member cannot act on is the same as no answer at all, and
-  // two of them went out with nothing written in this field. The picker has
-  // always sent one; now nothing can refuse without it.
   if (action === "REJECTED") {
     if (rejectionReason === undefined || rejectionReason === null || rejectionReason === "") {
       throw new ValidationError(members.rejectionReasonRequired);
@@ -48,7 +45,6 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       data: {
         status: action,
         ...(issued ?? {}),
-        // A stale reason from a past rejection shouldn't linger once approved.
         rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
       },
     });
@@ -60,7 +56,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         recordedBy: session.username,
       });
     }
-    await syncMembershipDonation(tx, id);
+    await syncSurplusStatus(tx, id);
     return m;
   });
 

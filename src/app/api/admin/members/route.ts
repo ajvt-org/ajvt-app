@@ -7,8 +7,8 @@ import * as bcrypt from "bcryptjs";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
-import { syncMembershipDonation } from "@/lib/donationsServer";
 import { recordMembershipYear } from "@/lib/membershipRecord";
+import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
@@ -62,8 +62,6 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
       where: { phone: accountPhone!.trim() },
       select: { id: true, members: { select: { id: true }, take: 1 } },
     });
-    // One membership per account. Without this the admin would be told the
-    // number is taken by a unique-index error rather than by a sentence.
     if (found?.members.length) {
       throw new ConflictError(members.accountAlreadyHasMember);
     }
@@ -90,23 +88,22 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         paymentMethod,
         paymentProof: paymentProof || null,
         photo: photo || null,
-        paidAmount: paidAmountValue,
         surplusAnonymous: surplusAnonymous ?? false,
         status,
         membershipYear,
         ...(issued ?? {}),
       },
     });
+    await recordMembershipPayment(tx, m.id, paidAmountValue, membershipFee);
     if (status === "ACTIVE") {
       await recordMembershipYear(tx, m.id, m.membershipYear, membershipFee, {
-        paidAmount: m.paidAmount,
+        paidAmount: paidAmountValue,
         paymentMethod: m.paymentMethod,
         paymentProof: m.paymentProof,
         recordedBy: session.username,
       });
     }
-    await syncMembershipDonation(tx, m.id);
-    return m;
+    return tx.member.findUniqueOrThrow({ where: { id: m.id } });
   });
 
   await logAction(session.username, "CREATE_MEMBER_MANUAL", member.fullName, {

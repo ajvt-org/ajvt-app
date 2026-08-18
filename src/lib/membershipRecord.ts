@@ -33,11 +33,6 @@ export interface MembershipYearPayment {
   recordedBy?: string | null;
 }
 
-// The year a membership covers gets its row the moment the membership is
-// approved, not only when it is renewed. Only the fee lands here, whatever was
-// paid above it is a donation. Idempotent: a year already on record is left
-// alone rather than rewritten, so approving twice cannot change what was
-// banked.
 export async function recordMembershipYear(
   db: Db,
   memberId: string,
