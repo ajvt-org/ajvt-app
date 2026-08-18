@@ -1,0 +1,160 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { prisma } from "@/lib/prisma";
+import { resetDb, post, createUsers, signInAs } from "./helpers";
+import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+
+import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
+import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+async function setup(paid = 100) {
+  const c = await prisma.competition.create({
+    data: {
+      name: "مسابقة",
+      startsOn: today(),
+      days: 3,
+      publishMinutes: 0,
+      cutoffMinutes: 1439,
+      servedCount: 2,
+      poolSize: 3,
+      weeklyCountingDays: 6,
+      speedBands: DEFAULT_BANDS as unknown as object,
+      startedAt: new Date(),
+    },
+  });
+  const day = await prisma.quizDay.create({
+    data: { competitionId: c.id, day: today() },
+  });
+  for (let i = 0; i < 3; i++) {
+    const q = await prisma.quizQuestion.create({
+      data: {
+        text: `سؤال ${i}`,
+        category: "عام",
+        createdBy: "admin",
+        answers: {
+          create: [
+            { text: "صحيح", isCorrect: true, order: 0 },
+            { text: "خطأ", isCorrect: false, order: 1 },
+          ],
+        },
+      },
+    });
+    await prisma.quizDayQuestion.create({ data: { dayId: day.id, questionId: q.id } });
+  }
+  const [user] = await createUsers(1);
+  await prisma.member.create({
+    data: {
+      userId: user.id,
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: paid,
+    },
+  });
+  await signInAs(user);
+  return { user, day };
+}
+
+const startAttempt = () => ATTEMPT();
+const answer = (answerId: string, selectedAnswerIds: string[]) =>
+  ANSWER(post("/api/quiz/attempt/answer", { answerId, selectedAnswerIds }));
+
+describe("a member playing the daily attempt", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("is served the first question and nothing beyond it", async () => {
+    await setup();
+
+    const body = await (await startAttempt()).json();
+
+    expect(body.done).toBe(false);
+    expect(body.position).toBe(0);
+    expect(body.total).toBe(2);
+    expect(body.question.options).toHaveLength(2);
+    expect(body.question).not.toHaveProperty("isCorrect");
+  });
+
+  it("returns the same attempt when the app is reopened", async () => {
+    await setup();
+    const first = await (await startAttempt()).json();
+
+    const again = await (await startAttempt()).json();
+
+    expect(again.attemptId).toBe(first.attemptId);
+    expect(again.position).toBe(0);
+  });
+
+  it("moves on and reports the score after an answer", async () => {
+    await setup();
+    const view = await (await startAttempt()).json();
+    const right = await prisma.quizAnswer.findFirstOrThrow({
+      where: {
+        id: { in: view.question.options.map((o: { id: string }) => o.id) },
+        isCorrect: true,
+      },
+    });
+
+    const body = await (await answer(view.question.answerId, [right.id])).json();
+
+    expect(body.isCorrect).toBe(true);
+    expect(body.points).toBeGreaterThan(0);
+    expect(body.score).toBe(body.points);
+    expect(body.position).toBe(1);
+    expect(body.done).toBe(false);
+  });
+
+  it("says when the attempt is finished", async () => {
+    await setup();
+    for (let i = 0; i < 2; i++) {
+      const view = await (await startAttempt()).json();
+      const right = await prisma.quizAnswer.findFirstOrThrow({
+        where: {
+          id: { in: view.question.options.map((o: { id: string }) => o.id) },
+          isCorrect: true,
+        },
+      });
+      const body = await (await answer(view.question.answerId, [right.id])).json();
+      if (i === 1) expect(body.done).toBe(true);
+    }
+
+    const after = await (await startAttempt()).json();
+    expect(after.done).toBe(true);
+    expect(after.question).toBeNull();
+  });
+
+  it("refuses a second answer to the same question", async () => {
+    await setup();
+    const view = await (await startAttempt()).json();
+    const option = view.question.options[0].id;
+    await answer(view.question.answerId, [option]);
+
+    expect((await answer(view.question.answerId, [option])).status).toBe(409);
+  });
+
+  it("refuses an empty answer", async () => {
+    await setup();
+    const view = await (await startAttempt()).json();
+
+    expect((await answer(view.question.answerId, [])).status).toBe(400);
+  });
+
+  it("is closed to a member who has not paid", async () => {
+    await setup(0);
+
+    expect((await startAttempt()).status).toBe(403);
+  });
+
+  it("counts towards the member's streak", async () => {
+    const { user } = await setup();
+    const view = await (await startAttempt()).json();
+
+    await answer(view.question.answerId, [view.question.options[0].id]);
+
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.currentStreak).toBeGreaterThan(0);
+  });
+});
