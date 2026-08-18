@@ -14,6 +14,7 @@ import {
 } from "@/lib/memberFilters";
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { pageCount, paginate } from "@/lib/listUrlState";
 import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
 import { PAGE_SIZE } from "./constants";
 import { initialFilterTab } from "./initialTab";
@@ -31,7 +32,7 @@ import UpToDateSummary from "./UpToDateSummary";
 import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
-import Pagination from "@/components/admin/Pagination";
+import PageLoading from "@/components/PageLoading";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
@@ -284,9 +285,9 @@ function AdminDashboardInner() {
     setPage(1);
   }
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const paginated = paginate(filtered, currentPage, PAGE_SIZE);
 
   useReviewShortcuts({
     selected,
@@ -368,21 +369,22 @@ function AdminDashboardInner() {
         />
       )}
 
-      <MemberList
-        members={paginated}
-        loading={loading}
-        empty={filtered.length === 0}
-        selectedIds={selectedIds}
-        onToggle={toggleSelected}
-        onOpen={(m) => {
-          setSelected(m);
-          setProofZoom(false);
-          setTempPassword(null);
-          setShowRejectPicker(false);
-        }}
-      />
-
-      <Pagination page={currentPage} totalPages={totalPages} onGo={setPage} />
+      {loading ? (
+        <PageLoading />
+      ) : (
+        <MemberList
+          members={paginated}
+          selectedIds={selectedIds}
+          onToggle={toggleSelected}
+          onOpen={(m) => {
+            setSelected(m);
+            setProofZoom(false);
+            setTempPassword(null);
+            setShowRejectPicker(false);
+          }}
+          pagination={{ page: currentPage, totalPages, onGo: setPage }}
+        />
+      )}
 
       {selected && (
         <MemberDrawer
