@@ -5,7 +5,7 @@ import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import KindTabs, { type KindFilter } from "./KindTabs";
 import ManualDonationDialog from "./ManualDonationDialog";
-import Pagination from "./Pagination";
+import Pagination from "@/components/admin/Pagination";
 import ProofCard from "./ProofCard";
 import { usePaymentsData } from "./usePaymentsData";
 import { useDonationActions } from "./useDonationActions";
