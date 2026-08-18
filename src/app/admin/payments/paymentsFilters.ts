@@ -1,5 +1,7 @@
 import type { KindFilter } from "./KindTabs";
 
+export const PAYMENTS_FILTER_KEYS = ["kind", "q"];
+
 export interface PaymentsFilters {
   kind: KindFilter;
   q: string;

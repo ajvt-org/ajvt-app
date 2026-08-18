@@ -1,3 +1,5 @@
+export const ACTIVITIES_VIEW_KEYS = ["activity"];
+
 export interface ActivitiesView {
   expanded: string;
 }

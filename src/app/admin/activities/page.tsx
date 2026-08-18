@@ -5,7 +5,7 @@ import BarChart from "@/components/admin/BarChart";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
-import { readActivitiesView, writeActivitiesView } from "./activitiesView";
+import { ACTIVITIES_VIEW_KEYS, readActivitiesView, writeActivitiesView } from "./activitiesView";
 import ActivityCard from "./ActivityCard";
 import NewActivityForm from "./NewActivityForm";
 
@@ -13,6 +13,7 @@ function AdminActivitiesPageInner() {
   const { activities, members, loading, reload } = useActivitiesData();
   const actions = useActivityActions(activities, reload);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
+    keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
     writeFilters: writeActivitiesView,
   });

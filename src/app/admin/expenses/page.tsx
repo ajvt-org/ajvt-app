@@ -17,7 +17,11 @@ import { exportFinance } from "./exportFinance";
 import { useExpensesData } from "./useExpensesData";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
-import { readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
+import {
+  EXPENSES_FILTER_KEYS,
+  readExpensesFilters,
+  writeExpensesFilters,
+} from "./expensesFilters";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
 
@@ -35,6 +39,7 @@ function matchesExpense(expense: Expense, query: string) {
 function AdminExpensesPageInner() {
   const { role, summary, expenses, tags, activities, loading, reload } = useExpensesData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/expenses", {
+    keys: EXPENSES_FILTER_KEYS,
     readFilters: readExpensesFilters,
     writeFilters: writeExpensesFilters,
   });

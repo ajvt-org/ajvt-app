@@ -12,7 +12,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useQuizData } from "./useQuizData";
 import { useQuizActions } from "./useQuizActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
-import { readQuizFilters, writeQuizFilters } from "./quizFilters";
+import { QUIZ_FILTER_KEYS, readQuizFilters, writeQuizFilters } from "./quizFilters";
 import type { AnswerFormRow, QuestionRow } from "./types";
 
 const emptyQuestionForm: QuestionFormValues = {
@@ -36,11 +36,13 @@ function AdminQuizPageInner() {
   } = useQuizData();
   const actions = useQuizActions(reload, setSettings);
   const { filters, go } = useAdminListUrlState("/admin/quiz", {
+    keys: QUIZ_FILTER_KEYS,
     readFilters: readQuizFilters,
     writeFilters: writeQuizFilters,
   });
 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const filteredQuestions = questions.filter((q) => q.text.includes(filters.q.trim()));
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -122,7 +124,7 @@ function AdminQuizPageInner() {
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="quiz">الأسئلة ({questions.length})</IconLabel>
+          <IconLabel name="quiz">الأسئلة ({filteredQuestions.length})</IconLabel>
         </p>
         <button
           onClick={openCreate}
@@ -142,7 +144,7 @@ function AdminQuizPageInner() {
       />
 
       <QuestionList
-        questions={questions.filter((q) => q.text.includes(filters.q.trim()))}
+        questions={filteredQuestions}
         filtered={filters.q.trim().length > 0}
         sendingId={actions.sendingId}
         busyId={actions.busyId}

@@ -1,3 +1,5 @@
+export const QUIZ_FILTER_KEYS = ["q"];
+
 export interface QuizFilters {
   q: string;
 }

@@ -1,3 +1,5 @@
+export const EXPENSES_FILTER_KEYS = ["q", "tags", "activity", "from", "to"];
+
 export interface ExpensesFilters {
   q: string;
   tagIds: string[];

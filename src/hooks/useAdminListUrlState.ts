@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { readPage } from "@/lib/listUrlState";
 
 export interface AdminListUrlAdapter<F> {
+  keys: string[];
   readFilters: (params: URLSearchParams) => F;
   writeFilters: (filters: F) => URLSearchParams;
 }
@@ -12,15 +13,23 @@ export interface AdminListUrlAdapter<F> {
 export function useAdminListUrlState<F>(basePath: string, adapter: AdminListUrlAdapter<F>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initial = new URLSearchParams(searchParams.toString());
-  const [filters, setFiltersState] = useState<F>(() => adapter.readFilters(initial));
-  const [page, setPageState] = useState<number>(() => readPage(initial));
+  const [filters, setFiltersState] = useState<F>(() =>
+    adapter.readFilters(new URLSearchParams(searchParams.toString())),
+  );
+  const [page, setPageState] = useState<number>(() =>
+    readPage(new URLSearchParams(searchParams.toString())),
+  );
 
   function go(nextFilters: F, nextPage = 1) {
     setFiltersState(nextFilters);
     setPageState(nextPage);
-    const params = adapter.writeFilters(nextFilters);
+
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of adapter.keys) params.delete(key);
+    params.delete("page");
+    for (const [key, value] of adapter.writeFilters(nextFilters)) params.set(key, value);
     if (nextPage > 1) params.set("page", String(nextPage));
+
     const query = params.toString();
     router.replace(query ? `${basePath}?${query}` : basePath, { scroll: false });
   }

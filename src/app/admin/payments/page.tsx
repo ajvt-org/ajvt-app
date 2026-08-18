@@ -10,7 +10,12 @@ import { usePaymentsData } from "./usePaymentsData";
 import { useDonationActions } from "./useDonationActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
-import { readPaymentsFilters, writePaymentsFilters, type PaymentsFilters } from "./paymentsFilters";
+import {
+  PAYMENTS_FILTER_KEYS,
+  readPaymentsFilters,
+  writePaymentsFilters,
+  type PaymentsFilters,
+} from "./paymentsFilters";
 import { PAGE_SIZE, type Proof } from "./paymentTypes";
 
 function match(proof: Proof, filters: PaymentsFilters) {
@@ -23,6 +28,7 @@ function match(proof: Proof, filters: PaymentsFilters) {
 function AdminPaymentsPageInner() {
   const { proofs, members, activities, tags, loading, setProofs } = usePaymentsData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/payments", {
+    keys: PAYMENTS_FILTER_KEYS,
     readFilters: readPaymentsFilters,
     writeFilters: writePaymentsFilters,
   });
