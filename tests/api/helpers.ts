@@ -54,8 +54,6 @@ export async function createUser(phone = "22334455", password = "secret") {
 
 let phoneSeq = 0;
 
-// The default phone is fixed, which several specs rely on, so creating more
-// than one member inside a single test collides. This numbers them instead.
 export async function createUsers(count: number, password = "secret") {
   const made = [];
   for (let i = 0; i < count; i++) {
