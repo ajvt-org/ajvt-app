@@ -42,7 +42,7 @@ function Tab({
   return (
     <button
       onClick={onOpen}
-      className="text-sm font-bold px-3 py-1.5 rounded-lg relative"
+      className="text-xs sm:text-sm font-bold px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg relative"
       style={{
         background: active ? "var(--mint-700)" : "transparent",
         color: active ? "white" : "var(--text-main)",
@@ -67,7 +67,7 @@ export default function TabStrip({
 }) {
   return (
     <div
-      className="tab-strip px-4 py-2"
+      className="tab-strip px-3 py-1.5 sm:px-4 sm:py-2"
       style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
     >
       {tabs.map((tab) => {

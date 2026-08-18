@@ -14,18 +14,18 @@ export default function MemberSearch({
   onManualAdd: () => void;
 }) {
   return (
-    <div className="flex gap-2 mb-4">
+    <div className="flex gap-2 mb-4 flex-wrap">
       <input
         type="text"
         placeholder="بحث بالاسم أو الهاتف أو رمز الطلب..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="input flex-1"
-        style={{ background: "white" }}
+        className="input input-sm flex-1"
+        style={{ background: "white", minWidth: "14rem" }}
       />
       <button
         onClick={onManageAgeGroups}
-        className="text-sm font-bold px-4 rounded-xl"
+        className="btn btn-sm text-xs"
         style={{
           background: "white",
           color: "var(--mint-700)",
@@ -34,11 +34,7 @@ export default function MemberSearch({
       >
         <IconLabel name="tag">الأعصار</IconLabel>
       </button>
-      <button
-        onClick={onManualAdd}
-        className="btn btn-primary text-sm px-4"
-        style={{ width: "auto" }}
-      >
+      <button onClick={onManualAdd} className="btn btn-primary btn-sm text-xs">
         <IconLabel name="plus">إضافة عضو يدوياً</IconLabel>
       </button>
     </div>
