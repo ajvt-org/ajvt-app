@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { mirrorDonation, removeMirroredDonation } from "@/lib/paymentMirror";
 import { requireAdminRole } from "@/lib/auth";
 import { validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
@@ -125,6 +126,16 @@ export const PATCH = withRoute(
       data,
       include: { member: { select: { fullName: true } } },
     });
+    await mirrorDonation(prisma, {
+      donationId: donation.id,
+      amount: donation.amount,
+      method: donation.paymentMethod,
+      proof: donation.proof,
+      status: donation.status,
+      donorName: donation.donorName,
+      memberId: donation.memberId,
+      activityId: donation.activityId,
+    });
 
     const target = {
       ...auditContext(session, req),
@@ -203,6 +214,7 @@ export const DELETE = withRoute(
     }
 
     await prisma.donation.delete({ where: { id } });
+    await removeMirroredDonation(prisma, id);
     await logAction(
       session.username,
       "DELETE_DONATION",

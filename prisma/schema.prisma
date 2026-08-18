@@ -84,6 +84,7 @@ model Member {
   mvpCandidacies   MvpCandidate[]
   donations        Donation[]
   memberships      Membership[]
+  payments         Payment[]
 
   @@index([membershipYear])
 }
@@ -129,6 +130,7 @@ model Activity {
   expenses      Expense[]
   donations     Donation[]
   admins        AdminActivity[]
+  payments      Payment[]
 }
 
 model Group {
@@ -546,6 +548,38 @@ model DeletedRecord {
 
   @@index([kind])
   @@index([expiresAt])
+}
+
+enum PaymentPurpose {
+  MEMBERSHIP
+  DONATION
+  ACTIVITY
+}
+
+model Payment {
+  id         String         @id @default(cuid())
+  purpose    PaymentPurpose
+  amount     Int
+  feeApplied Int?
+  year       Int?
+  method     String?
+  proof      String?
+  status     ReviewStatus   @default(PENDING)
+  anonymous  Boolean        @default(false)
+  donorName  String?
+  memberId   String?
+  member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  activityId String?
+  activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  recordedBy String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([memberId, year, purpose])
+  @@index([status])
+  @@index([activityId])
 }
 
 enum TournamentFormat {
