@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { requireCompetition } from "./competitionServer";
 import { bandScore, type SpeedBand } from "./competitionConfig";
-import { competitionDay, dayState, drawQuestions, shuffleOptions } from "./quizDay";
+import { competitionDay, dayState, drawQuestions, seededShuffle } from "./quizDay";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import { quiz } from "./messages";
 
@@ -39,7 +39,8 @@ export async function startOrResumeAttempt(userId: string, now = new Date()) {
   if (existing) return existing;
 
   const pool = day.questions.map((q) => q.questionId);
-  const drawn = drawQuestions(pool, competition.servedCount, `${day.id}:${userId}`);
+  const dayset = drawQuestions(pool, competition.servedCount, day.id);
+  const drawn = seededShuffle(dayset, `${day.id}:${userId}`);
 
   const answers = await prisma.quizAnswer.findMany({
     where: { questionId: { in: drawn } },
@@ -58,7 +59,7 @@ export async function startOrResumeAttempt(userId: string, now = new Date()) {
         create: drawn.map((questionId, position) => ({
           questionId,
           position,
-          optionOrder: shuffleOptions(
+          optionOrder: seededShuffle(
             byQuestion.get(questionId) ?? [],
             `${day.id}:${userId}:${questionId}`,
           ),

@@ -5,7 +5,7 @@ import {
   isOpen,
   weekOf,
   drawQuestions,
-  shuffleOptions,
+  seededShuffle,
   stampOf,
   minutesOf,
 } from "./quizDay";
@@ -120,26 +120,26 @@ describe("drawQuestions", () => {
   });
 });
 
-describe("shuffleOptions", () => {
+describe("seededShuffle", () => {
   const ids = ["a", "b", "c", "d"];
 
   it("keeps every option", () => {
-    expect([...shuffleOptions(ids, "seed-1")].sort()).toEqual(ids);
+    expect([...seededShuffle(ids, "seed-1")].sort()).toEqual(ids);
   });
 
   it("gives the same attempt the same order every time", () => {
-    expect(shuffleOptions(ids, "seed-1")).toEqual(shuffleOptions(ids, "seed-1"));
+    expect(seededShuffle(ids, "seed-1")).toEqual(seededShuffle(ids, "seed-1"));
   });
 
   it("gives different attempts different orders", () => {
     const orders = new Set(
-      Array.from({ length: 10 }, (_, i) => shuffleOptions(ids, `seed-${i}`).join()),
+      Array.from({ length: 10 }, (_, i) => seededShuffle(ids, `seed-${i}`).join()),
     );
     expect(orders.size).toBeGreaterThan(1);
   });
 
   it("copes with a single option", () => {
-    expect(shuffleOptions(["only"], "seed")).toEqual(["only"]);
+    expect(seededShuffle(["only"], "seed")).toEqual(["only"]);
   });
 });
 
