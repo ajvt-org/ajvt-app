@@ -18,52 +18,92 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+type RelatedApps = () => Promise<unknown[]>;
+
 function runningInstalled(): boolean {
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
-  if (window.matchMedia("(display-mode: minimal-ui)").matches) return true;
   return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+function remembered(): boolean {
+  return flagSet(localStorage.getItem(INSTALLED_KEY));
+}
+
+async function knownInstalled(): Promise<boolean> {
+  const related = (navigator as Navigator & { getInstalledRelatedApps?: RelatedApps })
+    .getInstalledRelatedApps;
+  if (!related) return remembered();
+  try {
+    return (await related.call(navigator)).length > 0;
+  } catch {
+    return remembered();
+  }
 }
 
 export default function InstallPrompt() {
   const [offer, setOffer] = useState<BeforeInstallPromptEvent | null>(null);
   const [hint, setHint] = useState(false);
+  const [installed, setInstalled] = useState<boolean | null>(null);
   const pathname = usePathname();
   const shownOn = useRef<string | null>(null);
 
   useEffect(() => {
-    const inApp = runningInstalled();
-    const installed = inApp || flagSet(localStorage.getItem(INSTALLED_KEY));
-
-    if (!inApp && installed && !flagSet(localStorage.getItem(HINTED_KEY))) {
-      localStorage.setItem(HINTED_KEY, "1");
+    if (runningInstalled()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setHint(true);
+      setInstalled(true);
+      return;
     }
+
+    let live = true;
+
+    knownInstalled().then((yes) => {
+      if (!live) return;
+      if (yes) {
+        localStorage.setItem(INSTALLED_KEY, "1");
+        if (!flagSet(localStorage.getItem(HINTED_KEY))) {
+          localStorage.setItem(HINTED_KEY, "1");
+          setHint(true);
+        }
+      } else {
+        localStorage.removeItem(INSTALLED_KEY);
+        localStorage.removeItem(HINTED_KEY);
+      }
+      setInstalled(yes);
+    });
 
     const allowed = shouldOffer({
       snoozedUntil: localStorage.getItem(SNOOZE_KEY),
       seenThisSession: sessionStorage.getItem(SESSION_KEY) === "1",
-      installed,
+      installed: false,
       now: new Date(),
     });
-    if (!allowed) return;
+    if (!allowed) {
+      return () => {
+        live = false;
+      };
+    }
 
     function handler(e: Event) {
       e.preventDefault();
       sessionStorage.setItem(SESSION_KEY, "1");
-      setOffer(e as BeforeInstallPromptEvent);
+      if (live) setOffer(e as BeforeInstallPromptEvent);
     }
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    return () => {
+      live = false;
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
 
   useEffect(() => {
-    function installed() {
+    function done() {
       localStorage.setItem(INSTALLED_KEY, "1");
+      setInstalled(true);
       setOffer(null);
     }
-    window.addEventListener("appinstalled", installed);
-    return () => window.removeEventListener("appinstalled", installed);
+    window.addEventListener("appinstalled", done);
+    return () => window.removeEventListener("appinstalled", done);
   }, []);
 
   useEffect(() => {
@@ -90,20 +130,7 @@ export default function InstallPrompt() {
     setOffer(null);
   }
 
-  if (offer) {
-    return (
-      <InstallBanner
-        icon="phone"
-        title="أضف التطبيق لشاشتك الرئيسية"
-        note="وصول أسرع، بدون فتح المتصفح في كل مرة"
-        action={{ label: "تثبيت", onClick: install }}
-        onDismiss={() => {
-          snooze();
-          setOffer(null);
-        }}
-      />
-    );
-  }
+  if (installed === null) return null;
 
   if (hint) {
     return (
@@ -116,5 +143,18 @@ export default function InstallPrompt() {
     );
   }
 
-  return null;
+  if (installed || !offer) return null;
+
+  return (
+    <InstallBanner
+      icon="phone"
+      title="أضف التطبيق لشاشتك الرئيسية"
+      note="وصول أسرع، بدون فتح المتصفح في كل مرة"
+      action={{ label: "تثبيت", onClick: install }}
+      onDismiss={() => {
+        snooze();
+        setOffer(null);
+      }}
+    />
+  );
 }
