@@ -21,12 +21,12 @@ export default function StatTabs({
   onPick: (tab: FilterTab) => void;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-2 mb-5">
+    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-5">
       {TABS.map((s) => (
         <button
           key={s}
           onClick={() => onPick(s)}
-          className="rounded-xl py-3 px-2 text-center transition-all"
+          className="rounded-xl py-2 px-1.5 sm:py-3 sm:px-2 text-center transition-all"
           style={{
             background: active === s ? "var(--mint-700)" : "white",
             color: active === s ? "white" : "var(--text-main)",
@@ -35,8 +35,8 @@ export default function StatTabs({
             border: active === s ? "none" : "1px solid var(--mint-100)",
           }}
         >
-          <div className="text-xl font-black leading-none mb-0.5">{counts[s]}</div>
-          <div className="text-xs font-semibold opacity-80">{TAB_LABEL[s]}</div>
+          <div className="text-lg sm:text-xl font-black leading-none mb-0.5">{counts[s]}</div>
+          <div className="text-[11px] sm:text-xs font-semibold opacity-80">{TAB_LABEL[s]}</div>
         </button>
       ))}
     </div>
