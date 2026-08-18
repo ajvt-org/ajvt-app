@@ -31,7 +31,7 @@ import UpToDateSummary from "./UpToDateSummary";
 import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
-import Pagination from "./Pagination";
+import Pagination from "@/components/admin/Pagination";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
@@ -382,7 +382,7 @@ function AdminDashboardInner() {
         }}
       />
 
-      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onGo={setPage} />
 
       {selected && (
         <MemberDrawer
