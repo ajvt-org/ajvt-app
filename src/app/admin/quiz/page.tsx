@@ -12,6 +12,7 @@ import RandomSend from "./RandomSend";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
 import CompetitionPanel from "./CompetitionPanel";
+import DaysPanel from "./DaysPanel";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
@@ -310,6 +311,8 @@ export default function AdminQuizPage() {
       />
 
       <CompetitionPanel />
+
+      <DaysPanel questionCount={questions.length} />
 
       <RandomSend
         count={randomCount}

@@ -38,6 +38,8 @@ export const ACTION_LABELS: Record<string, string> = {
   IMPORT_QUIZ_QUESTIONS: "استيراد أسئلة",
   SAVE_COMPETITION: "حفظ إعدادات المسابقة",
   START_COMPETITION: "إطلاق المسابقة",
+  SET_QUIZ_DAY_POOL: "تحديد أسئلة يوم",
+  FILL_QUIZ_DAYS: "توزيع الأسئلة على الأيام",
   RESET_QUIZ_SCORES: "تصفير نقاط المسابقة",
   RENEW_MEMBER: "تجديد عضوية",
   CREATE_AGE_GROUP: "إضافة عصر",
