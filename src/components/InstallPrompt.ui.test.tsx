@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import InstallPrompt from "./InstallPrompt";
-import { INSTALLED_KEY } from "@/lib/installPrompt";
+import { HINTED_KEY, INSTALLED_KEY } from "@/lib/installPrompt";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
@@ -36,6 +36,7 @@ afterEach(() => {
 });
 
 const BANNER = "أضف التطبيق لشاشتك الرئيسية";
+const HINT = "التطبيق مثبت على جهازك";
 
 describe("InstallPrompt", () => {
   it("offers the install in a browser that has not installed it", () => {
@@ -53,11 +54,30 @@ describe("InstallPrompt", () => {
     expect(screen.queryByText(BANNER)).toBeNull();
   });
 
-  it("stays away in the browser once the app has been installed", () => {
+  it("points at the installed app instead of offering it again", () => {
     localStorage.setItem(INSTALLED_KEY, "1");
     render(<InstallPrompt />);
     offerInstall();
 
+    expect(screen.queryByText(BANNER)).toBeNull();
+    expect(screen.getByText(HINT)).toBeDefined();
+    expect(localStorage.getItem(HINTED_KEY)).toBe("1");
+  });
+
+  it("points at the installed app only once", () => {
+    localStorage.setItem(INSTALLED_KEY, "1");
+    localStorage.setItem(HINTED_KEY, "1");
+    render(<InstallPrompt />);
+
+    expect(screen.queryByText(HINT)).toBeNull();
+  });
+
+  it("says nothing at all inside the installed app", () => {
+    localStorage.setItem(INSTALLED_KEY, "1");
+    displayMode(true);
+    render(<InstallPrompt />);
+
+    expect(screen.queryByText(HINT)).toBeNull();
     expect(screen.queryByText(BANNER)).toBeNull();
   });
 

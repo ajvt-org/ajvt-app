@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  alreadyInstalled,
-  shouldOffer,
-  snoozeActive,
-  snoozeUntil,
-  SNOOZE_DAYS,
-} from "@/lib/installPrompt";
+import { flagSet, shouldOffer, snoozeActive, snoozeUntil, SNOOZE_DAYS } from "@/lib/installPrompt";
 
 const now = new Date("2026-03-01T10:00:00.000Z");
 
@@ -31,15 +25,15 @@ describe("snoozeActive", () => {
   });
 });
 
-describe("alreadyInstalled", () => {
-  it("reads the flag left behind by an install", () => {
-    expect(alreadyInstalled("1")).toBe(true);
+describe("flagSet", () => {
+  it("reads a flag the app has written", () => {
+    expect(flagSet("1")).toBe(true);
   });
 
-  it("treats nothing stored, or junk, as not installed", () => {
-    expect(alreadyInstalled(null)).toBe(false);
-    expect(alreadyInstalled("0")).toBe(false);
-    expect(alreadyInstalled("abc")).toBe(false);
+  it("treats nothing stored, or junk, as unset", () => {
+    expect(flagSet(null)).toBe(false);
+    expect(flagSet("0")).toBe(false);
+    expect(flagSet("abc")).toBe(false);
   });
 });
 

@@ -1,6 +1,7 @@
 export const SNOOZE_KEY = "ajvt_install_snoozed_until";
 export const SESSION_KEY = "ajvt_install_seen";
 export const INSTALLED_KEY = "ajvt_install_done";
+export const HINTED_KEY = "ajvt_install_hinted";
 export const SNOOZE_DAYS = 14;
 
 export function snoozeUntil(now: Date, days = SNOOZE_DAYS): number {
@@ -13,7 +14,7 @@ export function snoozeActive(stored: string | null, now: Date): boolean {
   return Number.isFinite(until) && until > now.getTime();
 }
 
-export function alreadyInstalled(stored: string | null): boolean {
+export function flagSet(stored: string | null): boolean {
   return stored === "1";
 }
 
