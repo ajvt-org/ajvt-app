@@ -14,6 +14,7 @@ export async function recordMembershipPayment(
     select: {
       status: true,
       fullName: true,
+      membershipYear: true,
       paymentProof: true,
       paymentMethod: true,
       surplusAnonymous: true,
@@ -21,8 +22,9 @@ export async function recordMembershipPayment(
   });
   if (!member) return;
 
+  const membershipYear = member.membershipYear;
   const existing = await db.donation.findFirst({
-    where: { memberId, source: "MEMBERSHIP" },
+    where: { memberId, source: "MEMBERSHIP", membershipYear },
     select: { id: true },
   });
 
@@ -54,6 +56,7 @@ export async function recordMembershipPayment(
         ...data,
         donorName: member.surplusAnonymous ? null : member.fullName,
         memberId,
+        membershipYear,
         source: "MEMBERSHIP",
       },
     });
@@ -63,11 +66,11 @@ export async function recordMembershipPayment(
 export async function syncSurplusStatus(db: Db, memberId: string) {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { status: true },
+    select: { status: true, membershipYear: true },
   });
   if (!member) return;
   await db.donation.updateMany({
-    where: { memberId, source: "MEMBERSHIP" },
+    where: { memberId, source: "MEMBERSHIP", membershipYear: member.membershipYear },
     data: { status: member.status },
   });
 }
@@ -75,11 +78,11 @@ export async function syncSurplusStatus(db: Db, memberId: string) {
 export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { paidAmount: true },
+    select: { paidAmount: true, membershipYear: true },
   });
   if (!member || member.paidAmount === null) return null;
   const surplus = await db.donation.findFirst({
-    where: { memberId, source: "MEMBERSHIP" },
+    where: { memberId, source: "MEMBERSHIP", membershipYear: member.membershipYear },
     select: { amount: true },
   });
   return member.paidAmount + (surplus?.amount ?? 0);
