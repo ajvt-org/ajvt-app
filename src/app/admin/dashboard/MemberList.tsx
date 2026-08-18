@@ -52,7 +52,7 @@ function MemberRow({
   return (
     <div
       onClick={onOpen}
-      className="card w-full p-4 text-right transition-all hover:shadow-md cursor-pointer"
+      className="card w-full p-3 sm:p-4 text-right transition-all hover:shadow-md cursor-pointer"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -131,7 +131,7 @@ export default function MemberList({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {members.map((m) => (
         <MemberRow
           key={m.id}
