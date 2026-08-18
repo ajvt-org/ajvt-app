@@ -12,9 +12,9 @@ describe("carrying which activity card is open in the address", () => {
 
   it("survives a round trip, which is what a shared link is", () => {
     const chosen = { expanded: "activity-1" };
-    expect(
-      readActivitiesView(new URLSearchParams(writeActivitiesView(chosen).toString())),
-    ).toEqual(chosen);
+    expect(readActivitiesView(new URLSearchParams(writeActivitiesView(chosen).toString()))).toEqual(
+      chosen,
+    );
   });
 
   it("lists exactly the key it owns in the address", () => {

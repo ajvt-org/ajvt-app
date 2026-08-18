@@ -18,9 +18,7 @@ describe("ConfirmDialog", () => {
   });
 
   it("labels the confirm button تأكيد when none is given", () => {
-    render(
-      <ConfirmDialog title="t" message="m" onConfirm={() => {}} onClose={() => {}} />,
-    );
+    render(<ConfirmDialog title="t" message="m" onConfirm={() => {}} onClose={() => {}} />);
 
     expect(screen.getByRole("button", { name: "تأكيد" })).toBeDefined();
   });
@@ -41,9 +39,7 @@ describe("ConfirmDialog", () => {
 
   it("calls onConfirm when the confirm button is clicked", () => {
     const onConfirm = vi.fn();
-    render(
-      <ConfirmDialog title="t" message="m" onConfirm={onConfirm} onClose={() => {}} />,
-    );
+    render(<ConfirmDialog title="t" message="m" onConfirm={onConfirm} onClose={() => {}} />);
 
     fireEvent.click(screen.getByRole("button", { name: "تأكيد" }));
 
@@ -71,9 +67,7 @@ describe("ConfirmDialog", () => {
   });
 
   it("disables the confirm button and shows a busy state while loading", () => {
-    render(
-      <ConfirmDialog title="t" message="m" loading onConfirm={() => {}} onClose={() => {}} />,
-    );
+    render(<ConfirmDialog title="t" message="m" loading onConfirm={() => {}} onClose={() => {}} />);
 
     const button = screen.getByText("...").closest("button");
     expect(button?.disabled).toBe(true);

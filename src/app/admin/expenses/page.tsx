@@ -17,11 +17,7 @@ import { exportFinance } from "./exportFinance";
 import { useExpensesData } from "./useExpensesData";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
-import {
-  EXPENSES_FILTER_KEYS,
-  readExpensesFilters,
-  writeExpensesFilters,
-} from "./expensesFilters";
+import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
 
