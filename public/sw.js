@@ -1,25 +1,29 @@
-// Only the offline fallback page (and its icon) are cached — this app's
-// data changes constantly (membership status, activities, tournaments), so
-// caching anything else risks silently serving stale content. This just
-// keeps a lost connection from showing the browser's bare error page.
-const OFFLINE_CACHE = "ajvt-offline-v1";
+const OFFLINE_CACHE = "ajvt-offline-v2";
 const OFFLINE_URL = "/offline.html";
+const OFFLINE_ASSETS = [OFFLINE_URL, "/version-final.png"];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(OFFLINE_CACHE).then((cache) => cache.addAll([OFFLINE_URL, "/icon-192.png"]))
-  );
+  event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) =>
+        Promise.all(names.filter((name) => name !== OFFLINE_CACHE).map((name) => caches.delete(name)))
+      )
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return;
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+    fetch(event.request).catch(() =>
+      caches.match(OFFLINE_URL).then((cached) => cached || Response.error())
+    )
   );
 });
 
@@ -42,9 +46,9 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(title, options),
-      // App-icon badge (e.g. shows "1" when a membership gets accepted) —
-      // cleared client-side once the member actually opens the app.
-      "setAppBadge" in self.navigator ? self.navigator.setAppBadge(1).catch(() => {}) : Promise.resolve(),
+      "setAppBadge" in self.navigator
+        ? self.navigator.setAppBadge(1).catch(() => {})
+        : Promise.resolve(),
     ])
   );
 });
