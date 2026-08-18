@@ -213,7 +213,6 @@ function AdminActivityPageInner({ id }: { id: string }) {
                 id="activity-capacity"
                 type="number"
                 min={1}
-                dir="ltr"
                 value={form.capacity}
                 onChange={(e) => setForm((p) => ({ ...p, capacity: e.target.value }))}
                 placeholder="بدون حد"

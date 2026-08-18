@@ -37,7 +37,7 @@ export default function SettingsFieldInput({
         required={!field.optional}
         {...(field.optional ? {} : arabicValidity())}
         className="input"
-        dir="ltr"
+        dir={field.kind === "number" ? undefined : "ltr"}
       />
       {field.hint && (
         <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
