@@ -276,15 +276,6 @@ function AdminExpensesPageInner() {
               })
             }
           />
-          {filters.tagIds.length > 0 && (
-            <button
-              onClick={() => go({ ...filters, tagIds: [] })}
-              className="text-xs font-bold"
-              style={{ color: "var(--mint-700)" }}
-            >
-              الكل
-            </button>
-          )}
         </div>
       )}
 
