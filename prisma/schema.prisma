@@ -575,6 +575,7 @@ model QuizDay {
   competitionId String
   competition   Competition       @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   day           String
+  announcedAt   DateTime?
   createdAt     DateTime          @default(now())
   questions     QuizDayQuestion[]
   attempts      QuizAttempt[]
