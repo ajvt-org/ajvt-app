@@ -47,6 +47,15 @@ export default function InstallPrompt() {
   }, []);
 
   useEffect(() => {
+    function installed() {
+      localStorage.setItem(INSTALLED_KEY, "1");
+      setDeferredPrompt(null);
+    }
+    window.addEventListener("appinstalled", installed);
+    return () => window.removeEventListener("appinstalled", installed);
+  }, []);
+
+  useEffect(() => {
     if (!deferredPrompt) return;
     if (shownOn.current === null) {
       shownOn.current = pathname;
@@ -61,7 +70,8 @@ export default function InstallPrompt() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "dismissed") snooze();
+    if (outcome === "accepted") localStorage.setItem(INSTALLED_KEY, "1");
+    else snooze();
     setDeferredPrompt(null);
   }
 
