@@ -27,6 +27,10 @@
   "related_applications": [
     {
       "platform": "webapp",
+      "url": "https://ajvt.net/manifest.json"
+    },
+    {
+      "platform": "webapp",
       "url": "https://ajvt-app.onrender.com/manifest.json"
     }
   ]
