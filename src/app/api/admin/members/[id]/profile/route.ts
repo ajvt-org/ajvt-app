@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
+import { surplusForYear } from "@/lib/paidBreakdown";
 
 // Everything the association knows about one person, in one answer. The facts
 // live in five tables — the member, their activity registrations, their teams,
@@ -43,6 +44,7 @@ export const GET = withRoute(
             amount: true,
             status: true,
             source: true,
+            membershipYear: true,
             paymentMethod: true,
             createdAt: true,
           },
@@ -61,6 +63,15 @@ export const GET = withRoute(
       select: { id: true, action: true, adminUsername: true, createdAt: true, targetLabel: true },
     });
 
-    return NextResponse.json({ member, history });
+    return NextResponse.json({
+      member: {
+        ...member,
+        supportAmount: surplusForYear(
+          member.donations.filter((d) => d.source === "MEMBERSHIP"),
+          member.membershipYear,
+        ),
+      },
+      history,
+    });
   },
 );

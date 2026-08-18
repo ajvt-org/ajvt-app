@@ -202,7 +202,10 @@ function FormPageInner() {
           phone: me?.phone || member.phone || "",
           age: member.age || "",
           paymentMethod: member.paymentMethod || "",
-          paidAmount: member.paidAmount != null ? String(member.paidAmount) : "",
+          paidAmount:
+            member.paidAmount != null
+              ? String(member.paidAmount + (member.supportAmount ?? 0))
+              : "",
           // Older members predate this field — fall back to a fresh code
           // rather than leaving the reconciliation field blank.
           referenceCode: member.referenceCode || generateReferenceCode(),

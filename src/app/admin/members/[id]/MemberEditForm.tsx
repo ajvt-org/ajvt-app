@@ -20,6 +20,7 @@ type Member = {
   age: string;
   paymentMethod: string | null;
   paidAmount: number | null;
+  supportAmount: number;
   photo: string | null;
 };
 
@@ -35,7 +36,9 @@ export default function MemberEditForm({
   const [fullName, setFullName] = useState(member.fullName);
   const [age, setAge] = useState(member.age);
   const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
-  const [paidAmount, setPaidAmount] = useState(member.paidAmount?.toString() ?? "");
+  const [paidAmount, setPaidAmount] = useState(
+    member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
+  );
   const [photo, setPhoto] = useState(member.photo);
   const [ageGroups, setAgeGroups] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);

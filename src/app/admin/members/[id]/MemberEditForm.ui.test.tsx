@@ -9,6 +9,7 @@ const member = {
   age: "البدريين",
   paymentMethod: "بنكيلي",
   paidAmount: 100,
+  supportAmount: 0,
   photo: null,
 };
 

@@ -4,6 +4,7 @@ export interface MembershipYear {
   id: string;
   year: number;
   paidAmount: number | null;
+  supportAmount: number;
   paymentMethod: string | null;
   recordedBy: string | null;
   createdAt: string;
