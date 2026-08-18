@@ -141,14 +141,7 @@ function AdminExpensesPageInner() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
-        <div className="text-4xl animate-pulse mb-3">⏳</div>
-        <p className="text-sm font-semibold">جاري التحميل...</p>
-      </div>
-    );
-  }
+  if (loading) return <PageLoading />;
 
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const query = filters.q.trim();

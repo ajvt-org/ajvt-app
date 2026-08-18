@@ -37,7 +37,7 @@ export default function ActivityRegistrationsPanel({
       {pending.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-            ⏳ طلبات قيد المراجعة
+            <IconLabel name="clock">طلبات قيد المراجعة</IconLabel>
           </p>
           {pending.map((r) => (
             <PendingRegistrationCard

@@ -84,7 +84,7 @@ export default function ActivityActionsRow({
         className="text-xs px-3 py-1.5 rounded-lg font-bold mr-auto"
         style={{ background: "#fee2e2", color: "#991b1b" }}
       >
-        🗑 حذف
+        <IconLabel name="trash">حذف</IconLabel>
       </button>
     </div>
   );

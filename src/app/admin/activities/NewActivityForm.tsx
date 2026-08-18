@@ -154,7 +154,9 @@ export default function NewActivityForm({
             }))
           }
         />
-        🤝 هذا النشاط حملة تطوعية (بدون تسجيل داخل التطبيق — رابط واتساب مباشر)
+        <IconLabel name="handshake">
+          هذا النشاط حملة تطوعية (بدون تسجيل داخل التطبيق — رابط واتساب مباشر)
+        </IconLabel>
       </label>
       {draft.isVolunteer && (
         <input
@@ -172,7 +174,7 @@ export default function NewActivityForm({
           className="p-3 rounded-xl text-sm font-semibold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          ⚠️ {error}
+          <IconLabel name="warning">{error}</IconLabel>
         </div>
       )}
       <button type="submit" disabled={saving} className="btn btn-primary text-sm">
