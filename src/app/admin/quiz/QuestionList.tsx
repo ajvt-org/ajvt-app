@@ -94,6 +94,7 @@ export default function QuestionList({
   sendingId,
   busyId,
   onCreate,
+  onImport,
   onSend,
   onEdit,
   onToggle,
@@ -103,6 +104,7 @@ export default function QuestionList({
   sendingId: string | null;
   busyId: string | null;
   onCreate: () => void;
+  onImport: () => void;
   onSend: (id: string) => void;
   onEdit: (question: QuestionRow) => void;
   onToggle: (question: QuestionRow) => void;
@@ -114,13 +116,26 @@ export default function QuestionList({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="quiz">الأسئلة ({questions.length})</IconLabel>
         </p>
-        <button
-          onClick={onCreate}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          <IconLabel name="plus">سؤال جديد</IconLabel>
-        </button>
+        <div className="flex gap-2 shrink-0">
+          <button
+            onClick={onImport}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-200)",
+            }}
+          >
+            <IconLabel name="upload">استيراد</IconLabel>
+          </button>
+          <button
+            onClick={onCreate}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold"
+            style={{ background: "var(--mint-600)", color: "white" }}
+          >
+            <IconLabel name="plus">سؤال جديد</IconLabel>
+          </button>
+        </div>
       </div>
 
       {questions.length === 0 ? (
