@@ -10,14 +10,9 @@ const LABEL: Record<Dataset, string> = {
 export default function DataExport() {
   return (
     <div className="card p-4 space-y-3">
-      <div>
-        <p className="font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="download">تصدير البيانات</IconLabel>
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-          ملف CSV يفتح في Excel، يحتوي كل السجلات لا ما هو معروض على الشاشة فقط.
-        </p>
-      </div>
+      <p className="font-bold" style={{ color: "var(--text-main)" }}>
+        <IconLabel name="download">تصدير البيانات</IconLabel>
+      </p>
 
       <div className="flex flex-wrap gap-2">
         {DATASETS.map((dataset) => (
