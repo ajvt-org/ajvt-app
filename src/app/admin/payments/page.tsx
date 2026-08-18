@@ -81,7 +81,9 @@ function AdminPaymentsPageInner() {
         onLink={(proof, memberId) => actions.link(proof.id, memberId)}
         onPatch={(proof, changes) =>
           setProofs((prev) =>
-            prev.map((p) => (p.id === proof.id && p.kind === "DONATION" ? { ...p, ...changes } : p)),
+            prev.map((p) =>
+              p.id === proof.id && p.kind === "DONATION" ? { ...p, ...changes } : p,
+            ),
           )
         }
         pagination={{ page: current, totalPages, onGo: goToPage }}

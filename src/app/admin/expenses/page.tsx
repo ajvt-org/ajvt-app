@@ -148,7 +148,8 @@ function AdminExpensesPageInner() {
   const byMethod = Object.entries(summary?.byMethod || {}).sort((a, b) => b[1] - a[1]);
   const query = filters.q.trim();
   const shownExpenses = expenses.filter((e) => {
-    if (filters.tagIds.length > 0 && !e.tags.some((t) => filters.tagIds.includes(t.id))) return false;
+    if (filters.tagIds.length > 0 && !e.tags.some((t) => filters.tagIds.includes(t.id)))
+      return false;
     if (query && !matchesExpense(e, query)) return false;
     if (filters.activityId && e.activity?.id !== filters.activityId) return false;
     const day = e.date.slice(0, 10);
@@ -237,7 +238,11 @@ function AdminExpensesPageInner() {
       </div>
 
       {showTagManager && (
-        <FinanceTagManager tags={tags} onChanged={reload} onClose={() => setShowTagManager(false)} />
+        <FinanceTagManager
+          tags={tags}
+          onChanged={reload}
+          onClose={() => setShowTagManager(false)}
+        />
       )}
 
       <input

@@ -31,7 +31,10 @@ function validateQuestion(form: QuestionFormValues): string | null {
   return null;
 }
 
-export function useQuizActions(reload: () => Promise<void>, setSettings: (s: QuizSettings) => void) {
+export function useQuizActions(
+  reload: () => Promise<void>,
+  setSettings: (s: QuizSettings) => void,
+) {
   const showToast = useToast();
 
   const [settingsError, setSettingsError] = useState("");

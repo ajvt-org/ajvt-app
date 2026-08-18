@@ -24,8 +24,16 @@ const emptyQuestionForm: QuestionFormValues = {
 };
 
 function AdminQuizPageInner() {
-  const { settings, setSettings, settingsForm, setSettingsForm, questions, leaderboard, loading, reload } =
-    useQuizData();
+  const {
+    settings,
+    setSettings,
+    settingsForm,
+    setSettingsForm,
+    questions,
+    leaderboard,
+    loading,
+    reload,
+  } = useQuizData();
   const actions = useQuizActions(reload, setSettings);
   const { filters, go } = useAdminListUrlState("/admin/quiz", {
     readFilters: readQuizFilters,

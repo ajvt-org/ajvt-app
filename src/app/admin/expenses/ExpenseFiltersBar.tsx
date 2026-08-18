@@ -30,7 +30,11 @@ export default function ExpenseFiltersBar({
           </option>
         ))}
       </select>
-      <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} htmlFor="expense-date-from">
+      <label
+        className="text-xs shrink-0"
+        style={{ color: "var(--text-muted)" }}
+        htmlFor="expense-date-from"
+      >
         من
       </label>
       <input
@@ -40,7 +44,11 @@ export default function ExpenseFiltersBar({
         onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
         className="input text-sm flex-1 min-w-0"
       />
-      <label className="text-xs shrink-0" style={{ color: "var(--text-muted)" }} htmlFor="expense-date-to">
+      <label
+        className="text-xs shrink-0"
+        style={{ color: "var(--text-muted)" }}
+        htmlFor="expense-date-to"
+      >
         إلى
       </label>
       <input
