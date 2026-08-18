@@ -8,6 +8,7 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
+import { recordMembershipYear } from "@/lib/membershipRecord";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
@@ -94,6 +95,14 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         ...(issued ?? {}),
       },
     });
+    if (status === "ACTIVE") {
+      await recordMembershipYear(tx, m.id, m.membershipYear, membershipFee, {
+        paidAmount: m.paidAmount,
+        paymentMethod: m.paymentMethod,
+        paymentProof: m.paymentProof,
+        recordedBy: session.username,
+      });
+    }
     await syncMembershipDonation(tx, m.id);
     return m;
   });
