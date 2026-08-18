@@ -18,13 +18,19 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+function fallback(path) {
+  return caches.match(path).then((cached) => cached || Response.error());
+}
+
 self.addEventListener("fetch", (event) => {
-  if (event.request.mode !== "navigate") return;
-  event.respondWith(
-    fetch(event.request).catch(() =>
-      caches.match(OFFLINE_URL).then((cached) => cached || Response.error())
-    )
-  );
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request).catch(() => fallback(OFFLINE_URL)));
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || !OFFLINE_ASSETS.includes(url.pathname)) return;
+  event.respondWith(fetch(event.request).catch(() => fallback(url.pathname)));
 });
 
 self.addEventListener("push", (event) => {
