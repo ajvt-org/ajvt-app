@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 
 export default function TopBar({
   onOpenTools,
@@ -40,7 +41,7 @@ export default function TopBar({
             border: "1px solid rgba(239,68,68,0.3)",
           }}
         >
-          خروج
+          <IconLabel name="logout">خروج</IconLabel>
         </button>
       </div>
     </div>
