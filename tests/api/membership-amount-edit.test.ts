@@ -53,12 +53,20 @@ describe("entering an amount that was never recorded", () => {
     await UPDATE(patch(`/api/admin/members/${m.id}`, { paidAmount: 300 }), withId(m.id));
 
     const year = await prisma.membership.findFirst({ where: { memberId: m.id, year: YEAR } });
-    expect(year?.paidAmount).toBe(300);
+    expect(year?.paidAmount).toBe(100);
 
     const support = await prisma.donation.findFirst({
       where: { memberId: m.id, source: "MEMBERSHIP" },
     });
     expect(support?.amount).toBe(200);
+  });
+
+  it("keeps the fee off the member row once the surplus is split out", async () => {
+    const m = await memberMissingAmount();
+
+    await UPDATE(patch(`/api/admin/members/${m.id}`, { paidAmount: 300 }), withId(m.id));
+
+    expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
   });
 
   it("leaves the year alone when the edit does not touch the payment", async () => {

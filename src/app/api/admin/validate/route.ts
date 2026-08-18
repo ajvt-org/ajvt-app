@@ -4,7 +4,9 @@ import { requireAdminRole } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
-import { syncMembershipDonation } from "@/lib/donationsServer";
+import { syncSurplusStatus } from "@/lib/membershipPaymentServer";
+import { recordMembershipYear } from "@/lib/membershipRecord";
+import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
@@ -18,9 +20,6 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   if (!id || !["ACTIVE", "REJECTED"].includes(action)) {
     throw new ValidationError();
   }
-  // A refusal the member cannot act on is the same as no answer at all, and
-  // two of them went out with nothing written in this field. The picker has
-  // always sent one; now nothing can refuse without it.
   if (action === "REJECTED") {
     if (rejectionReason === undefined || rejectionReason === null || rejectionReason === "") {
       throw new ValidationError(members.rejectionReasonRequired);
@@ -30,6 +29,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     }
   }
 
+  const { membershipFee } = await getAppSettings();
   const existing = await prisma.member.findUnique({
     where: { id },
     select: { status: true, memberNumber: true, rejectionReason: true },
@@ -45,11 +45,18 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       data: {
         status: action,
         ...(issued ?? {}),
-        // A stale reason from a past rejection shouldn't linger once approved.
         rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
       },
     });
-    await syncMembershipDonation(tx, id);
+    if (action === "ACTIVE") {
+      await recordMembershipYear(tx, id, m.membershipYear, membershipFee, {
+        paidAmount: m.paidAmount,
+        paymentMethod: m.paymentMethod,
+        paymentProof: m.paymentProof,
+        recordedBy: session.username,
+      });
+    }
+    await syncSurplusStatus(tx, id);
     return m;
   });
 

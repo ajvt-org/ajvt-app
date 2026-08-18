@@ -24,6 +24,7 @@ export interface ExportableMember {
   age: string;
   paymentMethod: string;
   paidAmount: number | null;
+  supportAmount?: number;
   status: string;
   memberNumber: string | null;
   referenceCode: string | null;
@@ -52,7 +53,9 @@ export const MEMBER_HEADERS = [
   "رقم الهاتف",
   "العصر",
   "طريقة الدفع",
-  "المبلغ المسدد",
+  "رسوم الاشتراك",
+  "مبلغ الدعم",
+  "إجمالي ما دُفع",
   "الحالة",
   "رقم العضوية",
   "رمز الطلب",
@@ -66,6 +69,8 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
     m.age,
     m.paymentMethod,
     m.paidAmount ?? 0,
+    m.supportAmount ?? 0,
+    (m.paidAmount ?? 0) + (m.supportAmount ?? 0),
     STATUS_LABEL[m.status] ?? m.status,
     m.memberNumber ?? "",
     m.referenceCode ?? "",

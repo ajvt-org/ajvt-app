@@ -1,12 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { money } from "@/lib/messages";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
 interface DayRecord {
-  date: string; // YYYY-MM-DD
-  time: string; // full ISO timestamp, for sorting/export
+  date: string;
+  time: string;
   name: string;
   amount: number;
   method: string;
@@ -14,7 +13,7 @@ interface DayRecord {
 }
 
 interface DayTotal {
-  date: string; // YYYY-MM-DD
+  date: string;
   total: number;
   byMethod: Record<string, number>;
 }
@@ -25,9 +24,9 @@ interface NamedEntry {
 }
 
 interface MethodDetail {
-  intisab: NamedEntry[]; // membership fees, by member name
-  daem: NamedEntry[]; // named donations, by donor name
-  anonymousTotal: number; // donations with no donor name (money.anonymousDonor)
+  intisab: NamedEntry[];
+  daem: NamedEntry[];
+  anonymousTotal: number;
 }
 
 function sortedEntries(map: Map<string, number>): NamedEntry[] {
@@ -36,11 +35,6 @@ function sortedEntries(map: Map<string, number>): NamedEntry[] {
     .sort((a, b) => b.amount - a.amount);
 }
 
-// Revenue = membership fees (capped at MEMBERSHIP_FEE per member — "انتساب")
-// + all confirmed donations ("دعم"), including MEMBERSHIP-source rows: those
-// mirror a member's surplus over the fee (see syncMembershipDonation) and are
-// exactly the amount that should count as دعم rather than انتساب, matching
-// the public leaderboard's own attribution.
 export async function getFinanceSummary(recentDays = 30, activityId?: string) {
   const scoped = activityId !== undefined;
   const [members, donations, expenses] = await Promise.all([
@@ -102,7 +96,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
   }
 
   for (const m of members) {
-    const fee = Math.min(m.paidAmount ?? 0, MEMBERSHIP_FEE);
+    const fee = m.paidAmount ?? 0;
     const key = addRevenue(fee, m.paymentMethod, m.createdAt, m.fullName, "انتساب");
     addNamed(intisabByMethod, key, m.fullName, fee);
   }
@@ -158,8 +152,6 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
     byMethodDetail,
     unassigned,
     days,
-    // Full, un-windowed record list (unlike `days`, not limited to recentDays)
-    // — used for CSV export so it covers the whole history, not just the UI window.
     allRecords: [...allRecords].sort((a, b) => b.time.localeCompare(a.time)),
     totalRevenue,
     totalExpenses,
