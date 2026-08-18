@@ -84,9 +84,14 @@ async function createMember(page: Page, phone: string) {
   await page.waitForTimeout(2000);
 }
 
+let phoneSeq = 0;
+
 // Unique per run, so the spec can be repeated without truncating the database.
+// The counter matters as much as the clock, since parallel workers can land in
+// the same millisecond.
 function freshPhone() {
-  return "2" + String(Date.now() % 10_000_000).padStart(7, "0");
+  phoneSeq += 1;
+  return "2" + String((Date.now() + phoneSeq * 1_000) % 10_000_000).padStart(7, "0");
 }
 
 test.use({ viewport: { width: 390, height: 844 } });
