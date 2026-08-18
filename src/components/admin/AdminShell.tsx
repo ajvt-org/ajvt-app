@@ -14,7 +14,6 @@ import DeniedNotice from "./shell/DeniedNotice";
 import ToolsMenu from "./shell/ToolsMenu";
 import PasswordDialog from "./shell/PasswordDialog";
 import AccountsDialog from "./shell/AccountsDialog";
-import AuditLogPanel from "./shell/AuditLogPanel";
 import BroadcastDialog from "./shell/BroadcastDialog";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -64,10 +63,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       {children}
 
-      {panel === "menu" && <ToolsMenu role={role} onPick={setPanel} onClose={close} />}
+      {panel === "menu" && (
+        <ToolsMenu
+          role={role}
+          onPick={setPanel}
+          onOpen={(href) => {
+            close();
+            router.push(href);
+          }}
+          onClose={close}
+        />
+      )}
       {panel === "password" && <PasswordDialog onBack={back} onClose={close} />}
       {panel === "accounts" && <AccountsDialog onBack={back} onClose={close} />}
-      {panel === "audit" && <AuditLogPanel onBack={back} onClose={close} />}
       {panel === "broadcast" && <BroadcastDialog onBack={back} onClose={close} />}
     </div>
   );
