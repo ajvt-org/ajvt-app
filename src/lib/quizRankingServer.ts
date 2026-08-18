@@ -56,6 +56,7 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
 
 export interface Standings {
   running: boolean;
+  meId: string | null;
   day: string | null;
   week: number | null;
   today: Board[];
@@ -72,6 +73,7 @@ export async function getStandings(
   const competition = await getCompetition();
   const empty: Standings = {
     running: false,
+    meId: userId ?? null,
     day: null,
     week: null,
     today: [],
@@ -94,6 +96,7 @@ export async function getStandings(
 
   return {
     running: true,
+    meId: userId ?? null,
     day: today?.day ?? null,
     week,
     today: await named(dayRows, limit),
