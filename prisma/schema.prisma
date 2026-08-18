@@ -44,6 +44,7 @@ model User {
   teamFollows           TeamFollow[]
   mvpVotes              MvpVote[]
   quizAssignments       QuizAssignment[]
+  quizAttempts          QuizAttempt[]
   currentStreak         Int                @default(0) // consecutive days of app activity ("flame")
   longestStreak         Int                @default(0)
   lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
@@ -459,17 +460,19 @@ model AuditLog {
 }
 
 model QuizQuestion {
-  id           String           @id @default(cuid())
+  id           String              @id @default(cuid())
   text         String
   category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
-  points       Int              @default(10)
-  correctCount Int              @default(1) // number of answers that must be selected to earn credit
-  active       Boolean          @default(true) // soft-disable without losing send history
+  points       Int                 @default(10)
+  correctCount Int                 @default(1) // number of answers that must be selected to earn credit
+  active       Boolean             @default(true) // soft-disable without losing send history
   createdBy    String // admin username
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   answers      QuizAnswer[]
   assignments  QuizAssignment[]
+  dayEntries   QuizDayQuestion[]
+  attemptRows  QuizAttemptAnswer[]
 
   @@index([active])
 }
@@ -561,9 +564,68 @@ model Competition {
   poolSize           Int       @default(30)
   weeklyCountingDays Int       @default(6)
   speedBands         Json
+  quizDays           QuizDay[]
   startedAt          DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+}
+
+model QuizDay {
+  id            String            @id @default(cuid())
+  competitionId String
+  competition   Competition       @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  day           String
+  createdAt     DateTime          @default(now())
+  questions     QuizDayQuestion[]
+  attempts      QuizAttempt[]
+
+  @@unique([competitionId, day])
+  @@index([day])
+}
+
+model QuizDayQuestion {
+  id         String       @id @default(cuid())
+  dayId      String
+  quizDay    QuizDay      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([dayId, questionId])
+  @@index([dayId])
+}
+
+model QuizAttempt {
+  id         String              @id @default(cuid())
+  dayId      String
+  quizDay    QuizDay             @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt  DateTime            @default(now())
+  finishedAt DateTime?
+  score      Int                 @default(0)
+  answers    QuizAttemptAnswer[]
+
+  @@unique([dayId, userId])
+  @@index([userId])
+}
+
+model QuizAttemptAnswer {
+  id                String       @id @default(cuid())
+  attemptId         String
+  attempt           QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId        String
+  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  position          Int
+  optionOrder       String[]     @default([])
+  shownAt           DateTime?
+  answeredAt        DateTime?
+  selectedAnswerIds String[]     @default([])
+  isCorrect         Boolean?
+  elapsedMs         Int?
+  points            Int          @default(0)
+
+  @@unique([attemptId, position])
+  @@index([attemptId])
 }
 
 enum PaymentPurpose {
