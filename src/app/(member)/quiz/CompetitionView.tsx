@@ -1,0 +1,164 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { api, errorMessage } from "@/lib/api";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
+import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
+import AttemptResult from "./AttemptResult";
+import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+
+interface AttemptState {
+  attemptId: string;
+  score: number;
+  done: boolean;
+  total: number;
+  position: number;
+  question: AttemptView | null;
+}
+
+interface AnswerState extends AttemptState {
+  isCorrect: boolean;
+  points: number;
+}
+
+interface Place {
+  rank: number;
+  total: number;
+}
+
+export interface StandingsState {
+  running: boolean;
+  meId: string | null;
+  today: BoardRow[];
+  thisWeek: BoardRow[];
+  overall: BoardRow[];
+  mine: { today: Place | null; thisWeek: Place | null; overall: Place | null } | null;
+}
+
+export default function CompetitionView({
+  standings,
+  backHref,
+  onReloadStandings,
+}: {
+  standings: StandingsState;
+  backHref: string;
+  onReloadStandings: () => void;
+}) {
+  const [attempt, setAttempt] = useState<AttemptState | null>(null);
+  const [result, setResult] = useState<AnswerState | null>(null);
+  const [closed, setClosed] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .post<AttemptState>("/api/quiz/attempt", {})
+      .then((state) => {
+        if (alive) setAttempt(state);
+      })
+      .catch((e) => {
+        if (alive) setClosed(errorMessage(e));
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function answer(selected: string[]) {
+    if (!attempt?.question) return;
+    setBusy(true);
+    try {
+      const next = await api.post<AnswerState>("/api/quiz/attempt/answer", {
+        answerId: attempt.question.answerId,
+        selectedAnswerIds: selected,
+      });
+      setResult(next);
+    } catch (e) {
+      setClosed(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function continueOn() {
+    if (!result) return;
+    setAttempt({
+      attemptId: result.attemptId,
+      score: result.score,
+      done: result.done,
+      total: result.total,
+      position: result.position,
+      question: result.question,
+    });
+    setResult(null);
+    if (result.done) onReloadStandings();
+  }
+
+  if (result) {
+    return (
+      <AttemptResult
+        isCorrect={result.isCorrect}
+        points={result.points}
+        score={result.score}
+        last={result.done}
+        onContinue={continueOn}
+      />
+    );
+  }
+
+  if (attempt && !attempt.done && attempt.question) {
+    return (
+      <AttemptQuestion
+        question={attempt.question}
+        position={attempt.position}
+        total={attempt.total}
+        busy={busy}
+        onSubmit={answer}
+      />
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <PageHeader title="المسابقة الثقافية" backHref={backHref} />
+      <div className="px-5 py-6 pb-10 space-y-5">
+        <div className="card p-6 text-center">
+          <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
+            <Icon name={closed ? "clock" : "check"} size={36} />
+          </div>
+          <p className="font-semibold" style={{ color: "var(--text-main)" }}>
+            {closed || "أنهيت أسئلة اليوم"}
+          </p>
+          {!closed && attempt && (
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+              مجموعك اليوم {attempt.score}
+            </p>
+          )}
+        </div>
+
+        <StandingsBoard
+          title="ترتيب اليوم"
+          rows={standings.today}
+          mine={standings.mine?.today ?? null}
+          meId={standings.meId}
+          empty="لم يشارك أحد بعد اليوم"
+        />
+        <StandingsBoard
+          title="ترتيب الأسبوع"
+          rows={standings.thisWeek}
+          mine={standings.mine?.thisWeek ?? null}
+          meId={standings.meId}
+          empty="لا ترتيب لهذا الأسبوع بعد"
+        />
+        <StandingsBoard
+          title="الترتيب العام"
+          rows={standings.overall}
+          mine={standings.mine?.overall ?? null}
+          meId={standings.meId}
+          empty="لا ترتيب عام بعد"
+        />
+      </div>
+    </div>
+  );
+}
