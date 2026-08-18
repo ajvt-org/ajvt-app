@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import type { Activity, NewActivityDraft } from "./activityTypes";
 
 export function useActivityActions(activities: Activity[], reload: () => Promise<void>) {
   const router = useRouter();
+  const showToast = useToast();
   const [actionLoading, setActionLoading] = useState(false);
   const [reorderLoading, setReorderLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function createActivity(draft: NewActivityDraft) {
     const data = await api.post<{ activity: Activity }>("/api/admin/activities", draft);
@@ -33,7 +36,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       });
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
     }
@@ -45,7 +48,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       await api.patch(`/api/admin/activities/${activity.id}`, { isOpen: !activity.isOpen });
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
     }
@@ -64,7 +67,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       ]);
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
     } finally {
       setReorderLoading(false);
     }
@@ -77,23 +80,33 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       await reload();
       return true;
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
       return false;
     } finally {
       setActionLoading(false);
     }
   }
 
-  async function deleteActivity(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه.")) return;
+  function requestDeleteActivity(id: string) {
+    setDeletingId(id);
+  }
+
+  function cancelDeleteActivity() {
+    setDeletingId(null);
+  }
+
+  async function confirmDeleteActivity() {
+    const id = deletingId;
+    if (!id) return;
     setActionLoading(true);
     try {
       await api.del(`/api/admin/activities/${id}`);
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
+      setDeletingId(null);
     }
   }
 
@@ -104,7 +117,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       await reload();
       return true;
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
       return false;
     } finally {
       setActionLoading(false);
@@ -127,7 +140,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       await reload();
       return true;
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
       return false;
     } finally {
       setActionLoading(false);
@@ -140,7 +153,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       await api.del(`/api/admin/activities/${activityId}/register`, { memberId });
       await reload();
     } catch (e) {
-      alert(errorMessage(e));
+      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
     }
@@ -149,13 +162,16 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
   return {
     actionLoading,
     reorderLoading,
+    deletingId,
     createActivity,
     updateActivityPhoto,
     toggleActivityTournament,
     toggleActivityOpen,
     moveActivity,
     saveWhatsappLink,
-    deleteActivity,
+    requestDeleteActivity,
+    cancelDeleteActivity,
+    confirmDeleteActivity,
     registerMember,
     reviewRegistration,
     unregisterMember,

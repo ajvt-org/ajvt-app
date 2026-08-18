@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import PageLoading from "@/components/PageLoading";
 import BarChart from "@/components/admin/BarChart";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
@@ -55,7 +56,7 @@ function AdminActivitiesPageInner() {
               onUpdatePhoto={(photo) => actions.updateActivityPhoto(a.id, photo)}
               onToggleTournament={() => actions.toggleActivityTournament(a)}
               onToggleOpen={() => actions.toggleActivityOpen(a)}
-              onDelete={() => actions.deleteActivity(a.id)}
+              onDelete={() => actions.requestDeleteActivity(a.id)}
               onSaveWhatsappLink={actions.saveWhatsappLink}
               onDatesSaved={reload}
               onReview={actions.reviewRegistration}
@@ -67,6 +68,18 @@ function AdminActivitiesPageInner() {
       )}
 
       <NewActivityForm onCreate={actions.createActivity} />
+
+      {actions.deletingId && (
+        <ConfirmDialog
+          title="حذف النشاط"
+          message="هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه."
+          confirmLabel="حذف نهائي"
+          danger
+          loading={actions.actionLoading}
+          onConfirm={actions.confirmDeleteActivity}
+          onClose={actions.cancelDeleteActivity}
+        />
+      )}
     </div>
   );
 }
