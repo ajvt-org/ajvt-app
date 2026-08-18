@@ -52,6 +52,17 @@ export async function createUser(phone = "22334455", password = "secret") {
   });
 }
 
+let phoneSeq = 0;
+
+export async function createUsers(count: number, password = "secret") {
+  const made = [];
+  for (let i = 0; i < count; i++) {
+    phoneSeq += 1;
+    made.push(await createUser(`3${String(phoneSeq).padStart(7, "0")}`, password));
+  }
+  return made;
+}
+
 export async function createAdmin(username = "admin", role = "SUPER", password = "secret") {
   return prisma.admin.create({
     data: { username, password: await bcrypt.hash(password, 4), role },
