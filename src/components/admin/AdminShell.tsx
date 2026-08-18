@@ -1,20 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { canOpen, landingFor } from "@/lib/adminNav";
 import { NAV_TABS } from "./shell/navTabs";
 import { useAdminSession } from "./shell/useAdminSession";
 import { useDeniedNotice } from "./shell/useDeniedNotice";
-import type { Panel } from "./shell/panels";
 import TopBar from "./shell/TopBar";
 import TabStrip from "./shell/TabStrip";
 import DeniedNotice from "./shell/DeniedNotice";
-import ToolsMenu from "./shell/ToolsMenu";
-import PasswordDialog from "./shell/PasswordDialog";
-import AccountsDialog from "./shell/AccountsDialog";
-import BroadcastDialog from "./shell/BroadcastDialog";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -25,7 +20,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const { role, pending } = useAdminSession(!isLoginPage);
   const { denied, dismiss } = useDeniedNotice();
-  const [panel, setPanel] = useState<Panel>(null);
 
   useEffect(() => {
     if (!role || isLoginPage || !pathname) return;
@@ -44,13 +38,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   if (isLoginPage) return <>{children}</>;
 
-  const close = () => setPanel(null);
-  const back = () => setPanel("menu");
-
   return (
     <div className="min-h-screen" style={{ background: "var(--mint-50)", direction: "rtl" }}>
       <div className="sticky top-0 z-30">
-        <TopBar onOpenTools={() => setPanel("menu")} onLogout={logout} />
+        <TopBar onLogout={logout} />
         <TabStrip
           tabs={NAV_TABS.filter((tab) => canOpen(role, tab.href))}
           pathname={pathname}
@@ -62,21 +53,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       {denied && <DeniedNotice onDismiss={dismiss} />}
 
       {children}
-
-      {panel === "menu" && (
-        <ToolsMenu
-          role={role}
-          onPick={setPanel}
-          onOpen={(href) => {
-            close();
-            router.push(href);
-          }}
-          onClose={close}
-        />
-      )}
-      {panel === "password" && <PasswordDialog onBack={back} onClose={close} />}
-      {panel === "accounts" && <AccountsDialog onBack={back} onClose={close} />}
-      {panel === "broadcast" && <BroadcastDialog onBack={back} onClose={close} />}
     </div>
   );
 }

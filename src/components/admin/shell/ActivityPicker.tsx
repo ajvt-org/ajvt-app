@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
 import type { ActivityOption, AdminAccount } from "./accountTypes";
@@ -52,12 +51,20 @@ export default function ActivityPicker({
 
   return (
     <>
-      <DialogHeader
-        title={<IconLabel name="trophy">أنشطة {account.username}</IconLabel>}
-        onBack={onBack}
-      />
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          <IconLabel name="trophy">أنشطة {account.username}</IconLabel>
+        </p>
+        <button
+          onClick={onBack}
+          className="text-xs font-bold shrink-0"
+          style={{ color: "var(--mint-700)" }}
+        >
+          <IconLabel name="chevronLeft">رجوع</IconLabel>
+        </button>
+      </div>
 
-      <div className="p-5 space-y-4">
+      <div className="space-y-4">
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           الحساب سيرى الأنشطة المختارة فقط، ولن يصل إلى بقية لوحة التحكم.
         </p>
