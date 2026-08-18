@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { syncMembershipDonation } from "@/lib/donationsServer";
+import { syncMembershipRecord } from "@/lib/membershipRecord";
 import { generateTempPassword } from "@/lib/member";
 import { tempPasswordExpiry } from "@/lib/tempPassword";
 import * as bcrypt from "bcryptjs";
@@ -106,6 +107,7 @@ export const PATCH = withRoute(
 
     const member = await prisma.$transaction(async (tx) => {
       const m = await tx.member.update({ where: { id }, data });
+      await syncMembershipRecord(tx, id, m.membershipYear, data);
       await syncMembershipDonation(tx, id);
       return m;
     });
