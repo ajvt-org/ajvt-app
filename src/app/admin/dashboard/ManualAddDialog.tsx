@@ -112,7 +112,7 @@ export default function ManualAddDialog({
                 className="p-3 rounded-xl text-sm font-semibold"
                 style={{ background: "#d1fae5", color: "#065f46" }}
               >
-                ✅ تم إنشاء العضو بنجاح
+                <IconLabel name="check">تم إنشاء العضو بنجاح</IconLabel>
               </div>
               {result.tempPassword && (
                 <div
@@ -169,7 +169,7 @@ export default function ManualAddDialog({
                   className="text-sm font-bold"
                   style={{ color: "var(--mint-700)" }}
                 >
-                  📵 رقم الهاتف غير معروف — يُضاف لاحقاً
+                  <IconLabel name="ban">رقم الهاتف غير معروف — يُضاف لاحقاً</IconLabel>
                 </label>
               </div>
               {!form.phoneUnknown && (
@@ -239,7 +239,7 @@ export default function ManualAddDialog({
                     </div>
                   ) : (
                     <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
-                      📷 انقر لإرفاق صورة العضو (اختياري)
+                      <IconLabel name="camera">انقر لإرفاق صورة العضو (اختياري)</IconLabel>
                     </p>
                   )}
                   <input
@@ -372,7 +372,7 @@ export default function ManualAddDialog({
                     </div>
                   ) : (
                     <p className="text-xs text-center py-3" style={{ color: "var(--text-muted)" }}>
-                      📸 انقر لإرفاق صورة (اختياري)
+                      <IconLabel name="camera">انقر لإرفاق صورة (اختياري)</IconLabel>
                     </p>
                   )}
                   <input
@@ -389,7 +389,7 @@ export default function ManualAddDialog({
                   className="p-3 rounded-xl text-sm font-semibold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  ⚠️ {error}
+                  <IconLabel name="warning">{error}</IconLabel>
                 </div>
               )}
 

@@ -32,9 +32,14 @@ export default function AccountRow({
           منذ {formatDateTime(account.createdAt)}
         </p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {account.lastLoginAt
-            ? `آخر دخول: ${formatDateTime(account.lastLoginAt)} — ${account.lastLoginIp || "—"}`
-            : "لم يسجّل الدخول بعد"}
+          {account.lastLoginAt ? (
+            <>
+              آخر دخول {formatDateTime(account.lastLoginAt)}
+              {account.lastLoginIp && <span dir="auto"> — {account.lastLoginIp}</span>}
+            </>
+          ) : (
+            "لم يسجّل الدخول بعد"
+          )}
         </p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">

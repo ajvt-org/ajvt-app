@@ -1,1 +1,1 @@
-export type Panel = "menu" | "password" | "accounts" | "audit" | "broadcast" | null;
+export type Panel = "menu" | "password" | "accounts" | "broadcast" | null;

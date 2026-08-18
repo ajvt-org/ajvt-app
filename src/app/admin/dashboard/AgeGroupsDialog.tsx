@@ -130,7 +130,7 @@ export default function AgeGroupsDialog({
               className="p-2.5 rounded-lg text-xs font-semibold"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              ⚠️ {ageGroupError}
+              <IconLabel name="warning">{ageGroupError}</IconLabel>
             </div>
           )}
 

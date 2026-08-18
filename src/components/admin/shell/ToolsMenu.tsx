@@ -6,20 +6,32 @@ import Sheet from "@/components/Sheet";
 import type { IconName } from "@/components/Icon";
 import type { Panel } from "./panels";
 
-const ITEMS: { panel: Panel; label: string; icon: IconName; superOnly: boolean }[] = [
-  { panel: "password", label: "تغيير كلمة المرور", icon: "key", superOnly: false },
+interface ToolItem {
+  label: string;
+  icon: IconName;
+  superOnly: boolean;
+  panel?: Panel;
+  href?: string;
+}
+
+const ITEMS: ToolItem[] = [
+  { panel: "password", label: "تغيير كلمة المرور", icon: "lock", superOnly: false },
   { panel: "accounts", label: "إدارة حسابات المشرفين", icon: "users", superOnly: true },
-  { panel: "audit", label: "سجل الإجراءات", icon: "list", superOnly: false },
+  { href: "/admin/audit-log", label: "سجل الإجراءات", icon: "list", superOnly: true },
   { panel: "broadcast", label: "إرسال إشعار جماعي", icon: "megaphone", superOnly: true },
 ];
+
+const ITEM_CLASS = "w-full text-right p-3 rounded-xl font-semibold text-sm card block";
 
 export default function ToolsMenu({
   role,
   onPick,
+  onOpen,
   onClose,
 }: {
   role: string | null;
   onPick: (panel: Panel) => void;
+  onOpen: (href: string) => void;
   onClose: () => void;
 }) {
   const items = ITEMS.filter((item) => !item.superOnly || role === "SUPER");
@@ -33,9 +45,9 @@ export default function ToolsMenu({
       <div className="p-4 space-y-2">
         {items.map((item) => (
           <button
-            key={item.panel}
-            onClick={() => onPick(item.panel)}
-            className="w-full text-right p-3 rounded-xl font-semibold text-sm card"
+            key={item.href ?? item.panel}
+            onClick={() => (item.href ? onOpen(item.href) : onPick(item.panel ?? null))}
+            className={ITEM_CLASS}
           >
             <IconLabel name={item.icon}>{item.label}</IconLabel>
           </button>
