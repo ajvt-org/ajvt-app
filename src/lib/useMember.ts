@@ -36,6 +36,7 @@ export interface MemberData {
   paymentMethod: string;
   paymentProof: string | null;
   paidAmount: number | null;
+  supportAmount: number;
   status: Status;
   rejectionReason: string | null;
   createdAt: string;
