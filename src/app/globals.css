@@ -121,6 +121,9 @@ body {
 .input::placeholder {
   color: #a0b8ae;
 }
+.input[dir="ltr"] {
+  text-align: right;
+}
 
 /* Visible keyboard-navigation indicator — was missing everywhere except
    .input, so tabbing through the app gave no clue where focus was. */
