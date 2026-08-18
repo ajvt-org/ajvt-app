@@ -42,21 +42,28 @@
   .header h1 { margin: 0; font-size: 1rem; font-weight: 900; color: #fff; }
   main {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.25rem;
+    padding: 1.5rem 1.25rem;
   }
   .card {
     width: 100%;
-    padding: 2rem 1.25rem;
+    padding: 2rem 1.5rem;
     text-align: center;
     background: #fff;
     border-radius: 1.25rem;
     box-shadow: 0 2px 16px rgba(26, 63, 51, 0.08), 0 1px 4px rgba(26, 63, 51, 0.05);
   }
-  .card > svg { color: var(--mint-600); }
-  .card h2 { margin: 0.75rem 0 0.5rem; font-size: 1rem; font-weight: 800; }
+  .halo {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--mint-600);
+    background: var(--mint-50);
+  }
+  .card h2 { margin: 0 0 0.5rem; font-size: 1.0625rem; font-weight: 800; }
   .card p { margin: 0 0 1.5rem; font-size: 0.875rem; color: var(--text-muted); }
   .btn {
     display: inline-flex;
@@ -93,9 +100,11 @@
 
     <main>
       <div class="card">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM5.6 5.6l12.8 12.8" />
-        </svg>
+        <span class="halo">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM5.6 5.6l12.8 12.8" />
+          </svg>
+        </span>
         <h2>تعذر تحميل الصفحة</h2>
         <p>تحقق من اتصالك بالشبكة. ستفتح الصفحة من جديد بمجرد عودة الاتصال.</p>
         <button class="btn" type="button">
