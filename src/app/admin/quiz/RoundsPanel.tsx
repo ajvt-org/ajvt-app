@@ -87,7 +87,7 @@ export default function RoundsPanel({ competitionId }: { competitionId: string }
           return (
             <span
               key={d.index}
-              title={`${new Date(d.opensAt).toISOString().slice(0, 16).replace("T", " ")} · ${d.category ?? "كل التصنيفات"} · ${d.loaded}`}
+              title={`${new Date(d.opensAt).toLocaleString("ar", { dateStyle: "short", timeStyle: "short" })} · ${d.category ?? "كل التصنيفات"} · ${d.loaded}`}
               className="text-xs px-2 py-1 rounded-lg font-semibold"
               style={{
                 background: ok ? "var(--mint-100)" : "#fee2e2",

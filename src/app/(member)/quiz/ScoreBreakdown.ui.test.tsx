@@ -11,7 +11,7 @@ const detail: AttemptDetailView = {
   curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   boards: [
     { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
-    { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true },
+    { title: "الترتيب العام", blockRounds: 1, counting: 1, wholeRun: true },
   ],
   breakdown: {
     rows: [
@@ -96,6 +96,6 @@ describe("ScoreBreakdown", () => {
     render(<ScoreBreakdown detail={detail} />);
 
     expect(screen.getByText(/حتى 10 ثانية، كل النقاط/)).toBeDefined();
-    expect(screen.getByText(/الترتيب العام، مجموع كل الفترات/)).toBeDefined();
+    expect(screen.getByText(/الترتيب العام، مجموع كل جولات المسابقة/)).toBeDefined();
   });
 });

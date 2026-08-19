@@ -33,7 +33,7 @@ export interface CompetitionConfig extends ScoreCurve {
 export const DEFAULT_BOARDS: BoardConfig[] = [
   { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
   { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false },
-  { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true },
+  { title: "الترتيب العام", blockRounds: 1, counting: 1, wholeRun: true },
 ];
 
 export const MAX_BOARDS = 6;

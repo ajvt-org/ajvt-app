@@ -82,7 +82,7 @@ jobs:
     name: e2e
     needs: static
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:17-alpine
@@ -106,12 +106,12 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
 
-      - if: steps.playwright.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - if: steps.playwright.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+      # Without --with-deps: the runner image already carries what chromium
+      # needs, and the apt step it adds has taken longer than the whole job.
+      - run: npx playwright install chromium
+        timeout-minutes: 8
 
       - run: npm run build
         env:

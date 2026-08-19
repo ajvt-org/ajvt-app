@@ -45,13 +45,13 @@ async function competition(over: Record<string, unknown> = {}) {
   });
 }
 
-async function pool(competitionId: string, size = 5) {
+async function pool(competitionId: string, size = 5, opensAt = START) {
   const day = await prisma.quizRound.create({
     data: {
       competitionId,
       index: 0,
-      opensAt: START,
-      closesAt: new Date(START.getTime() + 840 * 60_000),
+      opensAt,
+      closesAt: new Date(opensAt.getTime() + 840 * 60_000),
     },
   });
   for (let i = 0; i < size; i++) {
@@ -501,7 +501,7 @@ describe("closing the round", () => {
     await resetDb();
   });
 
-  it("scores whatever is unanswered as wrong once the cutoff passes", async () => {
+  it("counts whatever is unanswered as left once the cutoff passes", async () => {
     const c = await competition();
     await pool(c.id);
     const u = await user();
@@ -511,10 +511,33 @@ describe("closing the round", () => {
 
     expect(closed).toBe(3);
     const rows = await prisma.quizAttemptAnswer.findMany({ where: { attemptId: attempt.id } });
-    expect(rows.every((r) => r.isCorrect === false && r.points === 0)).toBe(true);
+    expect(rows.every((r) => r.isCorrect === null && r.points === 0)).toBe(true);
     expect(
       (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: attempt.id } })).finishedAt,
     ).not.toBeNull();
+  });
+
+  it("closes a round of one competition without touching another", async () => {
+    const one = await competition();
+    await pool(one.id);
+    const other = await competition({
+      name: "مسابقة أخرى",
+      startsAt: new Date(`${DAY}T20:00:00.000Z`),
+    });
+    await pool(other.id, 5, new Date(`${DAY}T20:00:00.000Z`));
+    const a = await user();
+    const b = await user();
+    const mine = await startOrResumeAttempt(one.id, a.id, openAt);
+    const theirs = await startOrResumeAttempt(other.id, b.id, new Date(`${DAY}T20:30:00.000Z`));
+
+    await closeExpiredAttempts(new Date(`${DAY}T23:00:00.000Z`));
+
+    expect(
+      (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: mine.id } })).finishedAt,
+    ).not.toBeNull();
+    expect(
+      (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: theirs.id } })).finishedAt,
+    ).toBeNull();
   });
 
   it("does nothing while the round is still open", async () => {
