@@ -8,7 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
 import { validateDonorChoice } from "@/lib/donorChoice";
-import DonorNameChoice from "./DonorNameChoice";
+import DonorNameChoice from "@/components/DonorNameChoice";
 import DonateThanks from "./DonateThanks";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
