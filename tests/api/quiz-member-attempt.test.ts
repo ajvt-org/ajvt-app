@@ -6,13 +6,17 @@ import { DEFAULT_BANDS } from "@/lib/competitionConfig";
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
 import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
 
-const today = () => new Date().toISOString().slice(0, 10);
+function stampAt(offsetDays: number) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
 
 async function setup(paid = 100) {
   const c = await prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsOn: today(),
+      startsOn: stampAt(-1),
       days: 3,
       publishMinutes: 0,
       cutoffMinutes: 1439,
@@ -23,9 +27,11 @@ async function setup(paid = 100) {
       startedAt: new Date(),
     },
   });
-  const day = await prisma.quizDay.create({
-    data: { competitionId: c.id, day: today() },
-  });
+  const days = await Promise.all(
+    [-1, 0, 1].map((offset) =>
+      prisma.quizDay.create({ data: { competitionId: c.id, day: stampAt(offset) } }),
+    ),
+  );
   for (let i = 0; i < 3; i++) {
     const q = await prisma.quizQuestion.create({
       data: {
@@ -40,7 +46,9 @@ async function setup(paid = 100) {
         },
       },
     });
-    await prisma.quizDayQuestion.create({ data: { dayId: day.id, questionId: q.id } });
+    await prisma.quizDayQuestion.createMany({
+      data: days.map((d) => ({ dayId: d.id, questionId: q.id })),
+    });
   }
   const [user] = await createUsers(1);
   await prisma.member.create({
@@ -54,7 +62,7 @@ async function setup(paid = 100) {
     },
   });
   await signInAs(user);
-  return { user, day };
+  return { user, days };
 }
 
 const startAttempt = () => ATTEMPT();
