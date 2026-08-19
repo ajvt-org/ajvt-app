@@ -131,7 +131,7 @@ describe("CompetitionView", () => {
     expect(screen.queryByRole("button", { name: "السؤال التالي" })).toBeNull();
   });
 
-  it("carries the running score into the next question", async () => {
+  it("keeps the score off the question screen", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -154,7 +154,36 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 
-    await waitFor(() => expect(screen.getByText(/مجموعك 10/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    expect(screen.queryByText(/مجموعك/)).toBeNull();
+  });
+
+  it("hands the member back to the quiz list when the last answer lands", async () => {
+    const onBack = vi.fn();
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 0,
+      done: false,
+      total: 1,
+      position: 0,
+      question,
+    });
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 10,
+      done: true,
+      total: 1,
+      position: 1,
+      question: null,
+    });
+    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
+
+    await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
+    await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
+
+    await waitFor(() => expect(onBack).toHaveBeenCalled());
+    expect(screen.queryByText("أنهيت أسئلة الجولة")).toBeNull();
   });
 
   it("shows the standings once the attempt is finished", async () => {

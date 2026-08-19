@@ -32,11 +32,10 @@ describe("TutorialQuiz", () => {
     expect(screen.getByText(/لا تحتسب نقاطها/)).toBeDefined();
   });
 
-  it("starts on the first question of three", () => {
+  it("starts on the first question", () => {
     render(<TutorialQuiz onExit={() => {}} />);
 
     expect(screen.getByText(first.text)).toBeDefined();
-    expect(screen.getByText(/1 \/ 3/)).toBeDefined();
   });
 
   it("goes straight to the next question when an answer is confirmed", async () => {
@@ -47,12 +46,13 @@ describe("TutorialQuiz", () => {
     await waitFor(() => expect(screen.getByText(second.text)).toBeDefined());
   });
 
-  it("carries the running score into the next question", async () => {
+  it("keeps the score off the question screen", async () => {
     render(<TutorialQuiz onExit={() => {}} />);
 
     await answerRight(first);
 
-    await waitFor(() => expect(screen.getByText(/مجموعك/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText(second.text)).toBeDefined());
+    expect(screen.queryByText(/مجموعك/)).toBeNull();
   });
 
   it("pays nothing for a wrong answer and still moves on", async () => {
@@ -62,7 +62,6 @@ describe("TutorialQuiz", () => {
     await confirm();
 
     await waitFor(() => expect(screen.getByText(second.text)).toBeDefined());
-    expect(screen.getByText(/مجموعك 0/)).toBeDefined();
   });
 
   it("wants every right option of the last question", async () => {
@@ -95,7 +94,6 @@ describe("TutorialQuiz", () => {
     await carryOn(/إعادة التجربة/);
 
     await waitFor(() => expect(screen.getByText(first.text)).toBeDefined());
-    expect(screen.getByText(/1 \/ 3/)).toBeDefined();
   });
 
   it("hands the member back to the competition", async () => {
