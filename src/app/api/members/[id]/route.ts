@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { memberPhotoSchema } from "./schema";
+import { memberSelfSchema } from "./schema";
+import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
 
 export const GET = withRoute(
@@ -23,6 +24,7 @@ export const GET = withRoute(
         paymentProof: true,
         photo: true,
         paidAmount: true,
+        surplusAnonymous: true,
         referenceCode: true,
         status: true,
         createdAt: true,
@@ -44,17 +46,23 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireUser();
     const { id } = await params;
-    const { photo } = parse(memberPhotoSchema, await req.json());
+    const { photo, surplusAnonymous } = parse(memberSelfSchema, await req.json());
 
     const existing = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
     if (!existing || existing.userId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const member = await prisma.member.update({
+    if (surplusAnonymous !== undefined) {
+      await prisma.$transaction((tx) => setSurplusVisibility(tx, id, surplusAnonymous));
+    }
+    if (photo !== undefined) {
+      await prisma.member.update({ where: { id }, data: { photo } });
+    }
+
+    const member = await prisma.member.findUnique({
       where: { id },
-      data: { photo },
-      select: { id: true, photo: true },
+      select: { id: true, photo: true, surplusAnonymous: true },
     });
 
     return NextResponse.json(member);

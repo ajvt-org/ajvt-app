@@ -15,6 +15,9 @@ import {
   validatePaidAmount,
 } from "@/lib/donations";
 import { arabicValidity } from "@/lib/validationMessage";
+import { surplusOf } from "@/lib/membershipSurplus";
+import { validateDonorChoice } from "@/lib/donorChoice";
+import DonorNameChoice from "@/components/DonorNameChoice";
 import { api } from "@/lib/api";
 import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
@@ -164,6 +167,8 @@ function FormPageInner() {
   const [showAddAge, setShowAddAge] = useState(false);
   const [newAge, setNewAge] = useState("");
 
+  const [wantsName, setWantsName] = useState<boolean | null>(null);
+
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -172,6 +177,8 @@ function FormPageInner() {
     paidAmount: "",
     referenceCode: "",
   });
+
+  const surplus = surplusOf(form.paidAmount, membershipFee);
 
   const steps = editId ? STEPS_AUTHENTICATED : authenticated ? STEPS_AUTHENTICATED : STEPS_NEW;
   const currentStep = steps[Math.min(stepIndex, steps.length - 1)];
@@ -210,6 +217,7 @@ function FormPageInner() {
           // rather than leaving the reconciliation field blank.
           referenceCode: member.referenceCode || generateReferenceCode(),
         });
+        if (member.surplusAnonymous) setWantsName(false);
         if (member.paymentProof) setProofFilename(member.paymentProof);
         if (member.photo) setPhoto(member.photo);
         setAuthenticated(true);
@@ -415,6 +423,14 @@ function FormPageInner() {
       setError(paidAmountError);
       return;
     }
+    const nameChoiceError =
+      surplus > 0
+        ? validateDonorChoice(wantsName === null ? null : !wantsName, form.fullName)
+        : null;
+    if (nameChoiceError) {
+      setError(nameChoiceError);
+      return;
+    }
     if (proofUploading) {
       setError("يرجى الانتظار حتى انتهاء رفع الصورة");
       return;
@@ -433,6 +449,7 @@ function FormPageInner() {
           ...(editId ? { id: editId } : {}),
           ...form,
           paidAmount: Number(form.paidAmount),
+          surplusAnonymous: surplus > 0 && wantsName === false,
           paymentProof: proofFilename,
           photo,
         }),
@@ -1051,10 +1068,18 @@ function FormPageInner() {
                   dir="ltr"
                 />
                 <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                  الحد الأدنى {MEMBERSHIP_FEE} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل تلقائياً
-                  كتبرّع باسمك بعد قبول الطلب
+                  الحد الأدنى {membershipFee} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل كتبرّع بعد
+                  قبول الطلب، وتختار أنت كيف يظهر
                 </p>
               </div>
+
+              {surplus > 0 && (
+                <DonorNameChoice
+                  wantsName={wantsName}
+                  onPick={setWantsName}
+                  memberName={form.fullName.trim() || undefined}
+                />
+              )}
 
               <ProofUpload
                 existingProof={proofFilename}

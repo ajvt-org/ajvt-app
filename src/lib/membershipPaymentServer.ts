@@ -99,6 +99,30 @@ export async function syncSurplusStatus(db: Db, memberId: string) {
   await mirrorMembershipStatus(db, memberId, member.membershipYear, member.status);
 }
 
+// The one path that rewrites a year already published: the member asking for
+// their own surplus to change name. Both shapes are written, so the mirror
+// cannot drift from the donation it copies.
+export async function setSurplusVisibility(db: Db, memberId: string, anonymous: boolean) {
+  const member = await db.member.findUnique({
+    where: { id: memberId },
+    select: { fullName: true, membershipYear: true },
+  });
+  if (!member) return;
+
+  const donorName = anonymous ? null : member.fullName;
+  const year = member.membershipYear;
+
+  await db.member.update({ where: { id: memberId }, data: { surplusAnonymous: anonymous } });
+  await db.donation.updateMany({
+    where: { memberId, source: "MEMBERSHIP", membershipYear: year },
+    data: { donorName },
+  });
+  await db.payment.updateMany({
+    where: { memberId, year, purpose: "MEMBERSHIP" },
+    data: { anonymous, donorName },
+  });
+}
+
 export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
   const member = await db.member.findUnique({
     where: { id: memberId },

@@ -1,12 +1,12 @@
 import { prisma } from "./prisma";
-import { getCompetition } from "./competitionServer";
-import { competitionDay, weekOf } from "./quizDay";
+import { getCompetition, shapeOf } from "./competitionServer";
+import { currentRound, groupOf, endsAt } from "./quizRound";
 import {
-  dailyRanking,
-  weeklyRanking,
+  roundRanking,
+  groupRanking,
   finalRanking,
   standingOf,
-  type DayScore,
+  type RoundScore,
   type Ranked,
 } from "./quizRanking";
 
@@ -18,14 +18,14 @@ export interface Board {
   total: number;
 }
 
-async function dayScores(competitionId: string): Promise<DayScore[]> {
+async function roundScores(competitionId: string): Promise<RoundScore[]> {
   const attempts = await prisma.quizAttempt.findMany({
-    where: { quizDay: { competitionId } },
-    select: { userId: true, score: true, finishedAt: true, quizDay: { select: { day: true } } },
+    where: { round: { competitionId } },
+    select: { userId: true, score: true, finishedAt: true, round: { select: { index: true } } },
   });
   return attempts.map((a) => ({
     userId: a.userId,
-    day: a.quizDay.day,
+    index: a.round.index,
     score: a.score,
     finishedAt: a.finishedAt,
   }));
@@ -56,8 +56,11 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
 
 export interface Standings {
   running: boolean;
-  day: string | null;
-  week: number | null;
+  competitionId: string | null;
+  name: string | null;
+  meId: string | null;
+  round: number | null;
+  group: number | null;
   today: Board[];
   thisWeek: Board[];
   overall: Board[];
@@ -65,15 +68,19 @@ export interface Standings {
 }
 
 export async function getStandings(
+  competitionId: string | null,
   userId?: string,
   limit = 10,
   now = new Date(),
 ): Promise<Standings> {
-  const competition = await getCompetition();
+  const competition = competitionId ? await getCompetition(competitionId) : null;
   const empty: Standings = {
     running: false,
-    day: null,
-    week: null,
+    competitionId: competition?.id ?? null,
+    name: competition?.name ?? null,
+    meId: userId ?? null,
+    round: null,
+    group: null,
     today: [],
     thisWeek: [],
     overall: [],
@@ -81,21 +88,24 @@ export async function getStandings(
   };
   if (!competition?.startedAt) return empty;
 
-  const scores = await dayScores(competition.id);
-  const today = competitionDay(competition.startsOn, competition.days, now);
-  const week = today ? weekOf(competition.startsOn, today.day) : null;
+  const scores = await roundScores(competition.id);
+  const open = currentRound(shapeOf(competition), now);
+  const group = open ? groupOf(open.index, competition.groupSize) : null;
 
-  const dayRows = today ? dailyRanking(scores, today.day) : [];
+  const dayRows = open ? roundRanking(scores, open.index) : [];
   const weekRows =
-    week !== null
-      ? weeklyRanking(scores, competition.startsOn, competition.weeklyCountingDays, week)
+    group !== null
+      ? groupRanking(scores, competition.groupSize, competition.countingRounds, group)
       : [];
-  const allRows = finalRanking(scores, competition.startsOn, competition.weeklyCountingDays);
+  const allRows = finalRanking(scores, competition.groupSize, competition.countingRounds);
 
   return {
     running: true,
-    day: today?.day ?? null,
-    week,
+    competitionId: competition.id,
+    name: competition.name,
+    meId: userId ?? null,
+    round: open?.index ?? null,
+    group,
     today: await named(dayRows, limit),
     thisWeek: await named(weekRows, limit),
     overall: await named(allRows, limit),
@@ -109,32 +119,32 @@ export async function getStandings(
   };
 }
 
-export async function getWinners(now = new Date()) {
-  const competition = await getCompetition();
-  if (!competition?.startedAt) return { days: [], weeks: [], overall: null };
+export async function getWinners(competitionId: string, now = new Date()) {
+  const competition = await getCompetition(competitionId);
+  if (!competition?.startedAt) return { rounds: [], groups: [], overall: null };
 
-  const scores = await dayScores(competition.id);
-  const played = [...new Set(scores.map((s) => s.day))].sort();
-  const weeks = [...new Set(played.map((d) => weekOf(competition.startsOn, d)))]
-    .filter((w) => w >= 0)
+  const scores = await roundScores(competition.id);
+  const played = [...new Set(scores.map((s) => s.index))].sort((a, b) => a - b);
+  const groups = [...new Set(played.map((i) => groupOf(i, competition.groupSize)))]
+    .filter((g) => g >= 0)
     .sort((a, b) => a - b);
 
-  const finished = competitionDay(competition.startsOn, competition.days, now) === null;
+  const finished = now >= endsAt(shapeOf(competition));
 
   return {
-    days: await Promise.all(
-      played.map(async (day) => ({
-        day,
-        winner: (await named(dailyRanking(scores, day), 1))[0] ?? null,
+    rounds: await Promise.all(
+      played.map(async (index) => ({
+        round: index,
+        winner: (await named(roundRanking(scores, index), 1))[0] ?? null,
       })),
     ),
-    weeks: await Promise.all(
-      weeks.map(async (week) => ({
-        week,
+    groups: await Promise.all(
+      groups.map(async (group) => ({
+        group,
         winner:
           (
             await named(
-              weeklyRanking(scores, competition.startsOn, competition.weeklyCountingDays, week),
+              groupRanking(scores, competition.groupSize, competition.countingRounds, group),
               1,
             )
           )[0] ?? null,
@@ -142,7 +152,7 @@ export async function getWinners(now = new Date()) {
     ),
     overall: finished
       ? ((
-          await named(finalRanking(scores, competition.startsOn, competition.weeklyCountingDays), 1)
+          await named(finalRanking(scores, competition.groupSize, competition.countingRounds), 1)
         )[0] ?? null)
       : null,
   };

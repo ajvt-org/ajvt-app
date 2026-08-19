@@ -1,0 +1,1 @@
+ALTER TABLE "QuizDay" ADD COLUMN "announcedAt" TIMESTAMP(3);

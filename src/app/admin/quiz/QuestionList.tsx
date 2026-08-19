@@ -12,17 +12,13 @@ const MINT = { background: "var(--mint-100)", color: "var(--mint-700)" };
 
 function QuestionCard({
   question,
-  sending,
   busy,
-  onSend,
   onEdit,
   onToggle,
   onDelete,
 }: {
   question: QuestionRow;
-  sending: boolean;
   busy: boolean;
-  onSend: () => void;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
@@ -58,14 +54,6 @@ function QuestionCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={onSend}
-          disabled={sending || !question.active}
-          className={CHIP}
-          style={{ background: "var(--mint-600)", color: "white" }}
-        >
-          {sending ? "..." : <IconLabel name="upload">إرسال للجميع</IconLabel>}
-        </button>
         <button onClick={onEdit} disabled={busy} className={CHIP} style={MINT}>
           <IconLabel name="pencil">تعديل</IconLabel>
         </button>
@@ -91,21 +79,17 @@ function QuestionCard({
 
 export default function QuestionList({
   questions,
-  sendingId,
   busyId,
   onCreate,
   onImport,
-  onSend,
   onEdit,
   onToggle,
   onDelete,
 }: {
   questions: QuestionRow[];
-  sendingId: string | null;
   busyId: string | null;
   onCreate: () => void;
   onImport: () => void;
-  onSend: (id: string) => void;
   onEdit: (question: QuestionRow) => void;
   onToggle: (question: QuestionRow) => void;
   onDelete: (id: string) => void;
@@ -148,9 +132,7 @@ export default function QuestionList({
             <QuestionCard
               key={question.id}
               question={question}
-              sending={sendingId === question.id}
               busy={busyId === question.id}
-              onSend={() => onSend(question.id)}
               onEdit={() => onEdit(question)}
               onToggle={() => onToggle(question)}
               onDelete={() => onDelete(question.id)}

@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import { getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { quiz } from "@/lib/messages";
+import { pointsInRange, normalisePoints } from "@/lib/quizDifficulty";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
 
@@ -77,8 +78,12 @@ export const POST = withRoute("POST /api/admin/quiz/questions", async (req: Next
     return NextResponse.json({ error: quiz.answersNeedText }, { status: 400 });
   }
 
+  if (points !== undefined && points !== null && !pointsInRange(points)) {
+    return NextResponse.json({ error: quiz.pointsOutOfRange }, { status: 400 });
+  }
   const settings = await getQuizSettings();
-  const finalPoints = Number.isInteger(points) && points > 0 ? points : settings.defaultPoints;
+  const finalPoints =
+    points === undefined || points === null ? settings.defaultPoints : normalisePoints(points);
   const finalCorrectCount =
     Number.isInteger(correctCount) && correctCount > 0
       ? correctCount

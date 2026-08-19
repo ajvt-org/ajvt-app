@@ -4,14 +4,12 @@ import {
   expireStaleAssignments,
   getQuizSettings,
   touchUserActivity,
-  runDailyQuizAutoSend,
   getPendingAssignments,
   getUserQuizStanding,
   isQuizEligible,
 } from "@/lib/quiz";
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
-import { logger } from "@/lib/logger";
 import { quiz } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/quiz/me", async () => {
@@ -22,7 +20,6 @@ export const GET = withRoute("GET /api/quiz/me", async () => {
   }
 
   await touchUserActivity(session.userId);
-  await runDailyQuizAutoSend().catch((err) => logger.error("quiz.autosend.error", err));
   const { answerWindowSeconds } = await getQuizSettings();
   await expireStaleAssignments(session.userId, answerWindowSeconds);
 

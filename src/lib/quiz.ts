@@ -1,18 +1,8 @@
-import { randomUUID } from "crypto";
 import { prisma } from "./prisma";
-import { sendPushToUser } from "./push";
 import { MEMBERSHIP_FEE } from "./donations";
-import { logger } from "./logger";
-import { push } from "@/lib/messages";
 import { GRACE_MS } from "./quizWindow";
 
 const SETTINGS_ID = "singleton";
-
-const QUIZ_PUSH_PAYLOAD = {
-  title: push.title,
-  body: "سؤال ثقافي جديد بانتظارك!",
-  url: "/quiz",
-};
 
 export async function isQuizEligible(userId: string): Promise<boolean> {
   const member = await prisma.member.findFirst({
@@ -22,13 +12,18 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
   return !!member;
 }
 
-async function getEligibleUserIds(): Promise<string[]> {
+export async function eligibleMembers() {
   const members = await prisma.member.findMany({
     where: { status: "ACTIVE", paidAmount: { gte: MEMBERSHIP_FEE }, userId: { not: null } },
-    select: { userId: true },
+    select: { userId: true, fullName: true },
+    orderBy: { fullName: "asc" },
     distinct: ["userId"],
   });
-  return members.map((m) => m.userId as string);
+  return members.map((m) => ({ userId: m.userId as string, fullName: m.fullName }));
+}
+
+async function getEligibleUserIds(): Promise<string[]> {
+  return (await eligibleMembers()).map((m) => m.userId);
 }
 
 export async function getQuizSettings() {
@@ -226,115 +221,4 @@ export function computeIsCorrect(correctAnswerIds: string[], selectedAnswerIds: 
   const correctSet = new Set(correctAnswerIds);
   const selectedSet = new Set(selectedAnswerIds);
   return correctSet.size === selectedSet.size && [...correctSet].every((id) => selectedSet.has(id));
-}
-
-function shuffle<T>(input: T[]): T[] {
-  const arr = [...input];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-async function pushToAssignedUsers(userIds: string[]) {
-  await Promise.all(
-    userIds.map((uid) =>
-      sendPushToUser(uid, QUIZ_PUSH_PAYLOAD).catch((err) => logger.error("quiz.push.error", err)),
-    ),
-  );
-}
-
-export async function sendSameQuestionToAll(
-  questionId: string,
-): Promise<{ sentCount: number; skippedCount: number }> {
-  const question = await prisma.quizQuestion.findUnique({
-    where: { id: questionId },
-    select: { id: true },
-  });
-  if (!question) throw new Error("QUESTION_NOT_FOUND");
-
-  const eligibleUserIds = await getEligibleUserIds();
-  const [users, alreadySent] = await Promise.all([
-    prisma.user.findMany({ where: { id: { in: eligibleUserIds } }, select: { id: true } }),
-    prisma.quizAssignment.findMany({ where: { questionId }, select: { userId: true } }),
-  ]);
-  const alreadySentIds = new Set(alreadySent.map((a) => a.userId));
-  const targets = users.filter((u) => !alreadySentIds.has(u.id));
-
-  if (targets.length === 0) {
-    return { sentCount: 0, skippedCount: users.length };
-  }
-
-  const batchId = randomUUID();
-  await prisma.quizAssignment.createMany({
-    data: targets.map((u) => ({ userId: u.id, questionId, batchId, mode: "SAME" })),
-  });
-  await pushToAssignedUsers(targets.map((u) => u.id));
-
-  return { sentCount: targets.length, skippedCount: users.length - targets.length };
-}
-
-export async function sendRandomBatch(
-  count: number,
-): Promise<{ sentCount: number; skippedCount: number }> {
-  const eligibleUserIds = await getEligibleUserIds();
-  const [users, activeQuestions, existingAssignments] = await Promise.all([
-    prisma.user.findMany({ where: { id: { in: eligibleUserIds } }, select: { id: true } }),
-    prisma.quizQuestion.findMany({ where: { active: true }, select: { id: true } }),
-    prisma.quizAssignment.findMany({ select: { userId: true, questionId: true } }),
-  ]);
-
-  const seenByUser = new Map<string, Set<string>>();
-  for (const a of existingAssignments) {
-    if (!seenByUser.has(a.userId)) seenByUser.set(a.userId, new Set());
-    seenByUser.get(a.userId)!.add(a.questionId);
-  }
-
-  const allQuestionIds = activeQuestions.map((q) => q.id);
-  const batchId = randomUUID();
-  const rows: { userId: string; questionId: string; batchId: string; mode: string }[] = [];
-
-  for (const user of users) {
-    const seen = seenByUser.get(user.id) ?? new Set<string>();
-    const pool = shuffle(allQuestionIds.filter((id) => !seen.has(id)));
-    for (const questionId of pool.slice(0, count)) {
-      rows.push({ userId: user.id, questionId, batchId, mode: "RANDOM" });
-    }
-  }
-
-  if (rows.length === 0) {
-    return { sentCount: 0, skippedCount: users.length };
-  }
-
-  await prisma.quizAssignment.createMany({ data: rows, skipDuplicates: true });
-
-  const assignedUserIds = Array.from(new Set(rows.map((r) => r.userId)));
-  await pushToAssignedUsers(assignedUserIds);
-
-  return { sentCount: assignedUserIds.length, skippedCount: users.length - assignedUserIds.length };
-}
-
-export async function runDailyQuizAutoSend(): Promise<void> {
-  const settings = await getQuizSettings();
-  const today = todayUTC();
-  if (settings.lastAutoSendDate && isSameUTCDay(settings.lastAutoSendDate, today)) return;
-
-  const activeCount = await prisma.quizQuestion.count({ where: { active: true } });
-  if (activeCount === 0) return;
-
-  if (!(await claimAutoSend(today))) return;
-
-  await sendRandomBatch(settings.questionsPerDay);
-}
-
-async function claimAutoSend(today: Date): Promise<boolean> {
-  const claimed = await prisma.quizSettings.updateMany({
-    where: {
-      id: SETTINGS_ID,
-      OR: [{ lastAutoSendDate: null }, { lastAutoSendDate: { lt: today } }],
-    },
-    data: { lastAutoSendDate: today },
-  });
-  return claimed.count === 1;
 }

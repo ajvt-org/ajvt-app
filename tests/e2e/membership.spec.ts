@@ -50,9 +50,9 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
 
   await adminPage.getByRole("button", { name: "الكل" }).click();
-  await expect(
-    adminPage.locator("text=" + MEMBER.fullName).locator("xpath=ancestor::*[3]"),
-  ).toContainText("مقبول");
+  await expect(adminPage.locator(".card", { hasText: MEMBER.fullName }).first()).toContainText(
+    "مقبول",
+  );
   await admin.close();
 
   // The account now holds a membership, so the join form has nothing left to

@@ -6,6 +6,8 @@ export const quiz = {
   answersNeedText: "كل الإجابات يجب أن تحتوي على نص",
   tooManyCorrect: "عدد الإجابات الصحيحة أكبر من عدد الإجابات",
   paidMembersOnly: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
+  notYourAttempt: "هذه المحاولة ليست لك",
+  notInvited: "هذه المسابقة خاصة ولست من المشاركين فيها",
   alreadyAnswered: "تمت الإجابة على هذا السؤال من قبل",
   optionsNotRevealed: "أظهر الخيارات أولاً",
   timeUp: "انتهى الوقت",
@@ -14,5 +16,6 @@ export const quiz = {
   importBadJson: "الملف ليس بصيغة JSON صالحة",
   importTooMany: "عدد الأسئلة أكبر من الحد المسموح في المرة الواحدة",
   importDuplicate: "سؤال مكرر داخل الملف",
+  pointsOutOfRange: "النقاط يجب أن تكون بين 1 و 20",
   importAnswersDuplicate: "إجابات مكررة داخل السؤال",
 } as const;

@@ -8,16 +8,14 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import SettingsForm from "./SettingsForm";
-import RandomSend from "./RandomSend";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
-import CompetitionPanel from "./CompetitionPanel";
-import DaysPanel from "./DaysPanel";
+import CompetitionsSection from "./CompetitionsSection";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
 import { counted } from "@/lib/arabicCount";
-import { ANSWER, USER } from "@/lib/messages";
+import { ANSWER } from "@/lib/messages";
 import type {
   AnswerFormRow,
   LeaderboardRow,
@@ -25,11 +23,6 @@ import type {
   QuizSettings,
   SettingsForm as SettingsFormValues,
 } from "./types";
-
-interface SendResult {
-  sentCount: number;
-  skippedCount: number;
-}
 
 const emptyQuestionForm: QuestionFormValues = {
   text: "",
@@ -60,10 +53,6 @@ export default function AdminQuizPage() {
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  const [sendingId, setSendingId] = useState<string | null>(null);
-  const [randomCount, setRandomCount] = useState("");
-  const [sendingRandom, setSendingRandom] = useState(false);
 
   function load() {
     return Promise.all([
@@ -235,56 +224,6 @@ export default function AdminQuizPage() {
     }
   }
 
-  async function send(body: Record<string, unknown>, describe: (data: SendResult) => string) {
-    const res = await fetch("/api/admin/quiz/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "فشل الإرسال");
-    showToast(describe(data));
-    await load();
-  }
-
-  async function sendSame(questionId: string) {
-    setSendingId(questionId);
-    try {
-      await send(
-        { mode: "SAME", questionId },
-        (data) =>
-          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
-          (data.skippedCount
-            ? ` (تم تخطي ${counted(data.skippedCount, USER)} ممن استلم السؤال سابقاً)`
-            : ""),
-      );
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setSendingId(null);
-    }
-  }
-
-  async function sendRandom() {
-    setSendingRandom(true);
-    try {
-      const body: { mode: string; count?: number } = { mode: "RANDOM" };
-      if (randomCount.trim()) body.count = Number(randomCount);
-      await send(
-        body,
-        (data) =>
-          `تم الإرسال إلى ${counted(data.sentCount, USER)}` +
-          (data.skippedCount
-            ? ` (تم تخطي ${counted(data.skippedCount, USER)} لعدم توفر أسئلة كافية)`
-            : ""),
-      );
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setSendingRandom(false);
-    }
-  }
-
   if (loading) {
     return (
       <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
@@ -310,25 +249,13 @@ export default function AdminQuizPage() {
         onSubmit={saveSettings}
       />
 
-      <CompetitionPanel />
-
-      <DaysPanel questionCount={questions.length} />
-
-      <RandomSend
-        count={randomCount}
-        fallback={settings?.questionsPerDay ?? 1}
-        sending={sendingRandom}
-        onCount={setRandomCount}
-        onSend={sendRandom}
-      />
+      <CompetitionsSection questionCount={questions.length} />
 
       <QuestionList
         questions={questions}
-        sendingId={sendingId}
         busyId={busyId}
         onCreate={openCreate}
         onImport={() => setShowImport(true)}
-        onSend={sendSame}
         onEdit={openEdit}
         onToggle={toggleActive}
         onDelete={deleteQuestion}

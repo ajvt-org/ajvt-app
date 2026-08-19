@@ -4,58 +4,53 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ConfirmAction from "./ConfirmAction";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CONFIG } from "@/lib/competitionConfig";
 import type { Competition } from "./competitionTypes";
 import CompetitionFields, { type Draft } from "./CompetitionFields";
 
-const EMPTY: Draft = {
-  name: "",
-  startsOn: "",
-  days: 30,
-  publishMinutes: 480,
-  cutoffMinutes: 1320,
-  servedCount: 10,
-  poolSize: 30,
-  weeklyCountingDays: 6,
-  speedBands: DEFAULT_BANDS,
-};
+export const EMPTY: Draft = { name: "", startsAt: "", ...DEFAULT_CONFIG };
 
-export default function CompetitionPanel() {
+function draftOf(competition: Competition): Draft {
+  const { id, startedAt, ...rest } = competition;
+  void id;
+  void startedAt;
+  return rest;
+}
+
+export default function CompetitionPanel({
+  competitionId,
+  onSaved,
+  onChanged,
+}: {
+  competitionId: string | null;
+  onSaved: (id: string) => void;
+  onChanged: () => void;
+}) {
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [startedAt, setStartedAt] = useState<string | null>(null);
-  const [exists, setExists] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState<"start" | "reset" | null>(null);
 
   const locked = startedAt !== null;
-
-  function apply(competition: Competition) {
-    const { id, startedAt: at, ...rest } = competition;
-    void id;
-    setDraft(rest);
-    setStartedAt(at);
-    setExists(true);
-  }
-
-  async function load() {
-    const data = await api.get<{ competition: Competition | null }>("/api/admin/quiz/competition");
-    if (data.competition) apply(data.competition);
-  }
+  const path = `/api/admin/quiz/competitions/${competitionId}`;
 
   useEffect(() => {
+    if (!competitionId) return;
     let alive = true;
     api
-      .get<{ competition: Competition | null }>("/api/admin/quiz/competition")
+      .get<{ competition: Competition }>(`/api/admin/quiz/competitions/${competitionId}`)
       .then((data) => {
-        if (alive && data.competition) apply(data.competition);
+        if (!alive) return;
+        setDraft(draftOf(data.competition));
+        setStartedAt(data.competition.startedAt);
       })
       .catch(() => {});
     return () => {
       alive = false;
     };
-  }, []);
+  }, [competitionId]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -67,9 +62,12 @@ export default function CompetitionPanel() {
     setError("");
     setNotice("");
     try {
-      await api.put("/api/admin/quiz/competition", draft);
-      setExists(true);
+      const data = competitionId
+        ? await api.put<{ competition: Competition }>(path, draft)
+        : await api.post<{ competition: Competition }>("/api/admin/quiz/competitions", draft);
       setNotice("تم الحفظ");
+      onSaved(data.competition.id);
+      onChanged();
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -82,12 +80,13 @@ export default function CompetitionPanel() {
     setError("");
     try {
       if (what === "start") {
-        await api.post("/api/admin/quiz/competition/start", {});
+        const data = await api.post<{ competition: Competition }>(`${path}/start`, {});
+        setStartedAt(data.competition.startedAt);
       } else {
-        await api.del("/api/admin/quiz/competition");
+        await api.del(path);
         setNotice("تم تصفير النقاط");
       }
-      await load();
+      onChanged();
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -99,7 +98,7 @@ export default function CompetitionPanel() {
   return (
     <div className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="trophy">المسابقة</IconLabel>
+        <IconLabel name="gear">{competitionId ? "إعدادات المسابقة" : "مسابقة جديدة"}</IconLabel>
       </p>
 
       {locked && (
@@ -129,7 +128,7 @@ export default function CompetitionPanel() {
           <button onClick={save} disabled={busy} className="btn btn-primary btn-sm text-xs">
             <IconLabel name="save">حفظ الإعدادات</IconLabel>
           </button>
-          {exists && (
+          {competitionId && (
             <>
               <button
                 onClick={() => setConfirming("start")}

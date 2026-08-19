@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseImport, reviewImport, IMPORT_MAX } from "./quizImport";
 import { quiz } from "./messages/quiz";
+import { difficultyOf } from "./quizDifficulty";
 
 const defaults = { points: 10, correctCount: 1 };
 
@@ -29,9 +30,9 @@ describe("reviewImport", () => {
   });
 
   it("keeps the values a question states for itself", () => {
-    const r = review([{ ...good, points: 25, correctCount: 1 }]);
+    const r = review([{ ...good, points: 18, correctCount: 1 }]);
 
-    expect(r.questions[0].points).toBe(25);
+    expect(r.questions[0].points).toBe(18);
   });
 
   it("accepts answers written as plain strings with the correct one marked", () => {
@@ -130,5 +131,29 @@ describe("parseImport", () => {
 
   it("says so when the file is not json", () => {
     expect(parseImport("{ broken", defaults).problems[0].message).toBe(quiz.importBadJson);
+  });
+});
+
+describe("points and difficulty on import", () => {
+  it("takes points inside the range", () => {
+    const r = review([{ ...good, points: 15 }]);
+
+    expect(r.problems).toEqual([]);
+    expect(r.questions[0].points).toBe(15);
+  });
+
+  it("refuses points outside the range rather than quietly clamping", () => {
+    expect(review([{ ...good, points: 0 }]).problems[0].message).toContain("بين 1 و 20");
+    expect(review([{ ...good, points: 50 }]).problems[0].message).toContain("بين 1 و 20");
+  });
+
+  it("refuses points that are not a whole number", () => {
+    expect(review([{ ...good, points: 5.5 }]).problems[0].message).toContain("بين 1 و 20");
+  });
+
+  it("makes a question with no points an easy one", () => {
+    const r = review([good]);
+
+    expect(difficultyOf(r.questions[0].points)).toBe("EASY");
   });
 });

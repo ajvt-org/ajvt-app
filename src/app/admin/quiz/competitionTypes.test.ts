@@ -1,27 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { toTimeValue, fromTimeValue } from "./competitionTypes";
+import { toLocalInput, fromLocalInput } from "./competitionTypes";
 
-describe("time values on the competition form", () => {
-  it("shows minutes past midnight as a clock time", () => {
-    expect(toTimeValue(0)).toBe("00:00");
-    expect(toTimeValue(480)).toBe("08:00");
-    expect(toTimeValue(1320)).toBe("22:00");
-    expect(toTimeValue(1439)).toBe("23:59");
+describe("the start field on the competition form", () => {
+  it("shows a moment as a value the input accepts", () => {
+    expect(toLocalInput("2026-08-20T08:30:00.000Z")).toBe("2026-08-20T08:30");
   });
 
-  it("reads a clock time back to minutes", () => {
-    expect(fromTimeValue("08:00")).toBe(480);
-    expect(fromTimeValue("22:30")).toBe(1350);
+  it("reads it back as a moment", () => {
+    expect(fromLocalInput("2026-08-20T08:30")).toBe("2026-08-20T08:30:00.000Z");
   });
 
   it("round trips", () => {
-    for (const m of [0, 75, 480, 1320, 1439]) {
-      expect(fromTimeValue(toTimeValue(m))).toBe(m);
+    for (const iso of ["2026-01-01T00:00:00.000Z", "2026-12-31T23:59:00.000Z"]) {
+      expect(fromLocalInput(toLocalInput(iso))).toBe(iso);
     }
   });
 
-  it("treats an unreadable time as midnight rather than throwing", () => {
-    expect(fromTimeValue("")).toBe(0);
-    expect(fromTimeValue("nonsense")).toBe(0);
+  it("shows nothing for a value it cannot read", () => {
+    expect(toLocalInput("")).toBe("");
+    expect(toLocalInput("nonsense")).toBe("");
+    expect(fromLocalInput("")).toBe("");
   });
 });
