@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { NotFoundError } from "./errors";
-import { breakdownOf, type AnswerRow, type Breakdown } from "./quizBreakdown";
+import { breakdownOf, roundEntries, type AnswerRow, type Breakdown } from "./quizBreakdown";
 import { getCompetition, shapeOf } from "./competitionServer";
 import { roundWindows } from "./quizRound";
 import type { ScoreCurve } from "./competitionConfig";
@@ -99,37 +99,32 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
   const byRound = new Map(attempts.map((a) => [a.round.index, a]));
   const categoryOf = new Map(rounds.map((r) => [r.index, r.category]));
 
-  const rows = [];
-  for (const window of roundWindows(shapeOf(competition))) {
-    if (now < window.opensAt) break;
-    const a = byRound.get(window.index);
-    if (a) {
-      rows.push({
-        attemptId: a.id as string | null,
-        round: window.index,
-        category: a.round.category,
-        score: a.score,
-        correct: a.answers.filter((x) => x.isCorrect === true).length,
-        total: a.answers.length,
-        possible: a.answers.length,
-        finishedAt: a.finishedAt,
-        missed: false,
-      });
-    } else if (now >= window.closesAt) {
-      rows.push({
-        attemptId: null,
-        round: window.index,
-        category: categoryOf.get(window.index) ?? null,
-        score: 0,
-        correct: 0,
-        total: 0,
-        possible: 0,
-        finishedAt: null,
-        missed: true,
-      });
-    }
-  }
-  return rows;
+  return roundEntries(roundWindows(shapeOf(competition)), byRound, now).map(
+    ({ window, attempt }) =>
+      attempt
+        ? {
+            attemptId: attempt.id as string | null,
+            round: window.index,
+            category: attempt.round.category,
+            score: attempt.score,
+            correct: attempt.answers.filter((x) => x.isCorrect === true).length,
+            total: attempt.answers.length,
+            possible: attempt.answers.length,
+            finishedAt: attempt.finishedAt,
+            missed: false,
+          }
+        : {
+            attemptId: null,
+            round: window.index,
+            category: categoryOf.get(window.index) ?? null,
+            score: 0,
+            correct: 0,
+            total: 0,
+            possible: 0,
+            finishedAt: null,
+            missed: true,
+          },
+  );
 }
 
 export async function attemptsInRound(competitionId: string, index: number) {
