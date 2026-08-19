@@ -100,6 +100,15 @@ To roll back, redeploy the previous commit from the Render dashboard. That is fa
 
 Admins are not covered by the rules, so there is a way through if the build is broken and something has to ship. Use it knowingly.
 
+## Dependencies
+
+`npm audit --audit-level=high` runs on every pull request and weekly against the lockfile as it
+stands. One dependency is pinned past what its parent asks for; [docs/dependency-overrides.md](docs/dependency-overrides.md)
+says which, why, what was tested, and when it can go.
+
+`package-lock.json` is written by npm 11. An older npm drops fields from it and produces churn
+unrelated to whatever is being changed.
+
 ## Formatting
 
 Prettier owns formatting, CI checks it. Run `npm run format` before pushing, or set your editor to format on save.
