@@ -75,6 +75,18 @@ export default function CompetitionView({
     };
   }, [competitionId]);
 
+  async function skip() {
+    if (!competitionId || busy) return;
+    setBusy(true);
+    try {
+      setAttempt(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
+    } catch (e) {
+      setClosed(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function answer(selected: string[]) {
     if (!attempt?.question) return;
     setBusy(true);
@@ -102,6 +114,7 @@ export default function CompetitionView({
         score={attempt.score}
         busy={busy}
         onSubmit={answer}
+        onExpire={skip}
       />
     );
   }

@@ -31,7 +31,9 @@ export default function ScoreFormula({
           </NumericRanges>
         </li>
         <li>
-          <NumericRanges>{`بعد ${curve.maxSeconds} ثانية، ${curve.floorPercent} بالمئة`}</NumericRanges>
+          <NumericRanges>
+            {`بعد ${curve.maxSeconds} ثانية يُغلق السؤال ويحتسب متروكاً بصفر`}
+          </NumericRanges>
         </li>
       </ul>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>

@@ -53,6 +53,37 @@ describe("QuestionTimer", () => {
     expect(screen.getByLabelText("نسبة النقاط").textContent).toContain("75%");
   });
 
+  it("says the time is up as soon as it runs out", () => {
+    const onExpire = vi.fn();
+    render(<QuestionTimer shownAt={at(0)} curve={curve} onExpire={onExpire} />);
+
+    expect(onExpire).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+
+    expect(onExpire).toHaveBeenCalledTimes(1);
+  });
+
+  it("says it only once however long it waits", () => {
+    const onExpire = vi.fn();
+    render(<QuestionTimer shownAt={at(0)} curve={curve} onExpire={onExpire} />);
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(onExpire).toHaveBeenCalledTimes(1);
+  });
+
+  it("says it at once for a question that was already over", () => {
+    const onExpire = vi.fn();
+    render(<QuestionTimer shownAt={at(45)} curve={curve} onExpire={onExpire} />);
+
+    expect(onExpire).toHaveBeenCalledTimes(1);
+  });
+
   it("counts from the moment it appears when nothing was stamped", () => {
     render(<QuestionTimer shownAt="" curve={curve} />);
 

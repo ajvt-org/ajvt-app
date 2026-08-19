@@ -53,8 +53,15 @@ describe("gradeTutorial", () => {
     expect(gradeTutorial(single, single.correctIds, 2_000, DEFAULT_CURVE).points).toBe(10);
   });
 
-  it("pays less for a slow right answer", () => {
-    expect(gradeTutorial(single, single.correctIds, 60_000, DEFAULT_CURVE).points).toBe(5);
+  it("pays less for a slower right answer", () => {
+    expect(gradeTutorial(single, single.correctIds, 20_000, DEFAULT_CURVE).points).toBe(8);
+  });
+
+  it("pays nothing once the question time is up", () => {
+    const out = gradeTutorial(single, single.correctIds, 60_000, DEFAULT_CURVE);
+
+    expect(out.isCorrect).toBe(false);
+    expect(out.points).toBe(0);
   });
 
   it("pays nothing for a wrong answer", () => {

@@ -27,8 +27,12 @@ export default function TutorialQuiz({
 
   function answer(selected: string[]) {
     const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
-    const graded = gradeTutorial(question, selected, elapsed, curve);
+    const graded = gradeTutorial(question, selected, elapsed, curve ?? DEFAULT_CURVE);
     setScore((s) => s + graded.points);
+    setPosition((p) => p + 1);
+  }
+
+  function skip() {
     setPosition((p) => p + 1);
   }
 
@@ -88,6 +92,7 @@ export default function TutorialQuiz({
         score={score}
         busy={false}
         onSubmit={answer}
+        onExpire={skip}
       />
     </div>
   );

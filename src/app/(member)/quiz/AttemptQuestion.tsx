@@ -29,6 +29,7 @@ export default function AttemptQuestion({
   score,
   busy,
   onSubmit,
+  onExpire,
 }: {
   question: AttemptView;
   curve?: ScoreCurve;
@@ -37,6 +38,7 @@ export default function AttemptQuestion({
   score?: number;
   busy: boolean;
   onSubmit: (selected: string[]) => void;
+  onExpire?: () => void;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
   const many = question.correctCount > 1;
@@ -88,7 +90,7 @@ export default function AttemptQuestion({
           />
         </div>
 
-        {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} />}
+        {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} onExpire={onExpire} />}
 
         <h1 className="text-lg font-black leading-relaxed" style={{ color: "var(--text-main)" }}>
           {question.text}

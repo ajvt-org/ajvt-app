@@ -73,6 +73,7 @@ export function gradeTutorial(
   elapsedMs: number,
   curve: ScoreCurve = DEFAULT_CURVE,
 ): { isCorrect: boolean; points: number } {
-  const isCorrect = isRight(question, selected);
+  const late = elapsedMs > curve.maxSeconds * 1000;
+  const isCorrect = !late && isRight(question, selected);
   return { isCorrect, points: isCorrect ? curveScore(question.points, curve, elapsedMs) : 0 };
 }
