@@ -7,14 +7,15 @@ const PROOF = Buffer.from(
 );
 
 const MEMBER = {
-  fullName: "محمد ولد اختبار",
-  phone: "22119988",
+  fullName: "سالم ولد اختبار",
+  corrected: "سالم ولد اختبارو",
+  phone: "22115544",
   password: "test1234",
   age: "البدريين",
   paymentMethod: "بنكيلي",
 };
 
-test("a visitor joins and an admin approves them", async ({ page }) => {
+test("an admin corrects a name from the list and the log keeps it", async ({ page }) => {
   await page.goto("/form");
 
   await page.fill('input[name="fullName"]', MEMBER.fullName);
@@ -33,7 +34,6 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
     .last()
     .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
   await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
-
   await expect(page.getByText(MEMBER.fullName).first()).toBeVisible();
 
   const admin = await page.context().browser()!.newContext();
@@ -42,21 +42,21 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await adminPage.fill('input[type="text"]', "admin");
   await adminPage.fill('input[type="password"]', "admin123");
   await adminPage.click('button[type="submit"]');
-
   await adminPage.waitForURL("**/admin/dashboard");
-  await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
 
-  await adminPage.getByText(MEMBER.fullName).first().click();
-  await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
+  await adminPage.getByRole("button", { name: `تعديل اسم ${MEMBER.fullName}` }).click();
+  const field = adminPage.getByRole("textbox", { name: "الاسم", exact: true });
+  await field.fill(MEMBER.corrected);
+  await adminPage.getByRole("button", { name: "حفظ" }).click();
 
-  await adminPage.getByRole("button", { name: "الكل" }).click();
-  await expect(adminPage.locator(".card", { hasText: MEMBER.fullName }).first()).toContainText(
-    "مقبول",
-  );
+  await expect(adminPage.getByText(MEMBER.corrected).first()).toBeVisible();
+  await expect(adminPage.getByText("تفاصيل الطلب")).toHaveCount(0);
+
+  await adminPage.reload();
+  await expect(adminPage.getByText(MEMBER.corrected).first()).toBeVisible();
+
+  await adminPage.goto("/admin/audit-log");
+  await expect(adminPage.getByText(`${MEMBER.fullName} → ${MEMBER.corrected}`)).toBeVisible();
+
   await admin.close();
-
-  // The account now holds a membership, so the join form has nothing left to
-  // ask: a second request is what put a rejection on an approved account.
-  await page.goto("/form");
-  await page.waitForURL("**/profile");
 });
