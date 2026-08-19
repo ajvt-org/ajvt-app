@@ -1,0 +1,70 @@
+import { describe, it, expect } from "vitest";
+import { TUTORIAL_QUESTIONS, isRight, gradeTutorial } from "./quizTutorial";
+import { DEFAULT_BANDS } from "./competitionConfig";
+
+const [single, , multi] = TUTORIAL_QUESTIONS;
+
+describe("the tutorial bank", () => {
+  it("holds exactly three questions", () => {
+    expect(TUTORIAL_QUESTIONS).toHaveLength(3);
+  });
+
+  it("gives every question at least two options", () => {
+    expect(TUTORIAL_QUESTIONS.every((q) => q.options.length >= 2)).toBe(true);
+  });
+
+  it("marks as many right answers as it asks for", () => {
+    expect(TUTORIAL_QUESTIONS.every((q) => q.correctIds.length === q.correctCount)).toBe(true);
+  });
+
+  it("only marks options that exist", () => {
+    for (const question of TUTORIAL_QUESTIONS) {
+      const ids = new Set(question.options.map((o) => o.id));
+      expect(question.correctIds.every((id) => ids.has(id))).toBe(true);
+    }
+  });
+});
+
+describe("isRight", () => {
+  it("takes the one right option", () => {
+    expect(isRight(single, single.correctIds)).toBe(true);
+  });
+
+  it("refuses a wrong option", () => {
+    expect(isRight(single, ["t1b"])).toBe(false);
+  });
+
+  it("wants every right option of a multiple answer question", () => {
+    expect(isRight(multi, [multi.correctIds[0]])).toBe(false);
+    expect(isRight(multi, multi.correctIds)).toBe(true);
+  });
+
+  it("refuses a right option padded with a wrong one", () => {
+    expect(isRight(multi, [...multi.correctIds, "t3b"])).toBe(false);
+  });
+
+  it("refuses an empty answer", () => {
+    expect(isRight(single, [])).toBe(false);
+  });
+});
+
+describe("gradeTutorial", () => {
+  it("pays the full points for a quick right answer", () => {
+    expect(gradeTutorial(single, single.correctIds, 2_000, DEFAULT_BANDS).points).toBe(10);
+  });
+
+  it("pays less for a slow right answer", () => {
+    expect(gradeTutorial(single, single.correctIds, 60_000, DEFAULT_BANDS).points).toBe(5);
+  });
+
+  it("pays nothing for a wrong answer", () => {
+    const out = gradeTutorial(single, ["t1b"], 2_000, DEFAULT_BANDS);
+
+    expect(out.isCorrect).toBe(false);
+    expect(out.points).toBe(0);
+  });
+
+  it("falls back to the default bands", () => {
+    expect(gradeTutorial(single, single.correctIds, 2_000).points).toBe(10);
+  });
+});
