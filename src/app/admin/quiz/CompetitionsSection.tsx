@@ -53,6 +53,7 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
           setSelectedId(id);
         }}
         onChanged={() => setReload((n) => n + 1)}
+        onDeleted={() => setSelectedId(null)}
       />
 
       {editing && selected?.visibility === "PRIVATE" && (

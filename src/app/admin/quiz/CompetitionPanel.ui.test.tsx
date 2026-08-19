@@ -51,7 +51,14 @@ beforeEach(() => {
 
 describe("CompetitionPanel", () => {
   it("starts empty for a competition that does not exist yet", async () => {
-    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await waitFor(() => expect(screen.getByText(/مسابقة جديدة/)).toBeDefined());
     expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).value).toBe("");
@@ -61,7 +68,14 @@ describe("CompetitionPanel", () => {
 
   it("posts a brand new competition instead of updating one", async () => {
     const onSaved = vi.fn();
-    render(<CompetitionPanel competitionId={null} onSaved={onSaved} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId={null}
+        onSaved={onSaved}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await userEvent.type(screen.getByLabelText("اسم المسابقة"), "مسابقة");
     await userEvent.click(screen.getByRole("button", { name: /حفظ الإعدادات/ }));
@@ -72,7 +86,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("keeps a competition private when that is what was chosen", async () => {
-    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await userEvent.selectOptions(screen.getByLabelText("نوع المسابقة"), "PRIVATE");
     await userEvent.type(screen.getByLabelText("اسم المسابقة"), "خاصة");
@@ -83,7 +104,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("saves the one category a round rule when it is ticked", async () => {
-    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await userEvent.type(screen.getByLabelText("اسم المسابقة"), "مسابقة");
     await userEvent.click(screen.getByLabelText(/كل جولة من تصنيف واحد/));
@@ -94,7 +122,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("leaves the one category a round rule off by default", async () => {
-    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     expect((screen.getByLabelText(/كل جولة من تصنيف واحد/) as HTMLInputElement).checked).toBe(
       false,
@@ -102,7 +137,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("loads what was already saved", async () => {
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await waitFor(() =>
       expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).value).toBe(
@@ -116,7 +158,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("saves what was typed", async () => {
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
     await waitFor(() => expect(get).toHaveBeenCalled());
 
     await userEvent.clear(screen.getByLabelText("اسم المسابقة"));
@@ -130,7 +179,14 @@ describe("CompetitionPanel", () => {
 
   it("shows what the server refused", async () => {
     put.mockRejectedValue(new Error("وقت الإغلاق يجب أن يكون بعد وقت الفتح"));
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
     await waitFor(() => expect(get).toHaveBeenCalled());
 
     await userEvent.click(screen.getByRole("button", { name: /حفظ الإعدادات/ }));
@@ -141,7 +197,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("asks before launching, because it cannot be undone", async () => {
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
     await waitFor(() => screen.getByRole("button", { name: /إطلاق المسابقة/ }));
 
     await userEvent.click(screen.getByRole("button", { name: /إطلاق المسابقة/ }));
@@ -151,7 +214,14 @@ describe("CompetitionPanel", () => {
   });
 
   it("launches once confirmed", async () => {
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
     await waitFor(() => screen.getByRole("button", { name: /إطلاق المسابقة/ }));
 
     await userEvent.click(screen.getByRole("button", { name: /إطلاق المسابقة/ }));
@@ -164,7 +234,14 @@ describe("CompetitionPanel", () => {
 
   it("locks every field once it has started", async () => {
     get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
 
     await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
     expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).disabled).toBe(true);
@@ -174,13 +251,59 @@ describe("CompetitionPanel", () => {
   });
 
   it("clears the scores only after confirming", async () => {
-    render(<CompetitionPanel competitionId="c1" onSaved={() => {}} onChanged={() => {}} />);
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
     await waitFor(() => screen.getByRole("button", { name: /تصفير النقاط/ }));
 
     await userEvent.click(screen.getByRole("button", { name: /تصفير النقاط/ }));
     expect(del).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole("button", { name: "تصفير" }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/reset", {}),
+    );
+  });
+
+  it("deletes the competition only after confirming", async () => {
+    const onDeleted = vi.fn();
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={onDeleted}
+      />,
+    );
+    await waitFor(() => screen.getByRole("button", { name: /حذف المسابقة/ }));
+
+    await userEvent.click(screen.getByRole("button", { name: /حذف المسابقة/ }));
+    expect(del).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "حذف" }));
     await waitFor(() => expect(del).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1"));
+    expect(onDeleted).toHaveBeenCalled();
+  });
+
+  it("still offers to delete a competition that has started", async () => {
+    get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
+    render(
+      <CompetitionPanel
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
+    await userEvent.click(screen.getByRole("button", { name: /حذف المسابقة/ }));
+
+    expect(screen.getByText(/يمحو جولاتها ومحاولات المشاركين/)).toBeDefined();
   });
 });

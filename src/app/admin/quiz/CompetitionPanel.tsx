@@ -21,17 +21,19 @@ export default function CompetitionPanel({
   competitionId,
   onSaved,
   onChanged,
+  onDeleted,
 }: {
   competitionId: string | null;
   onSaved: (id: string) => void;
   onChanged: () => void;
+  onDeleted: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [confirming, setConfirming] = useState<"start" | "reset" | null>(null);
+  const [confirming, setConfirming] = useState<"start" | "reset" | "delete" | null>(null);
 
   const locked = startedAt !== null;
   const path = `/api/admin/quiz/competitions/${competitionId}`;
@@ -75,16 +77,19 @@ export default function CompetitionPanel({
     }
   }
 
-  async function act(what: "start" | "reset") {
+  async function act(what: "start" | "reset" | "delete") {
     setBusy(true);
     setError("");
     try {
       if (what === "start") {
         const data = await api.post<{ competition: Competition }>(`${path}/start`, {});
         setStartedAt(data.competition.startedAt);
+      } else if (what === "reset") {
+        await api.post(`${path}/reset`, {});
+        setNotice("تم تصفير النقاط");
       } else {
         await api.del(path);
-        setNotice("تم تصفير النقاط");
+        onDeleted();
       }
       onChanged();
     } catch (e) {
@@ -151,6 +156,17 @@ export default function CompetitionPanel({
         </div>
       )}
 
+      {competitionId && (
+        <button
+          onClick={() => setConfirming("delete")}
+          disabled={busy}
+          className="btn btn-sm text-xs"
+          style={{ background: "#fee2e2", color: "#991b1b" }}
+        >
+          حذف المسابقة
+        </button>
+      )}
+
       {confirming === "start" && (
         <ConfirmAction
           title="إطلاق المسابقة"
@@ -158,6 +174,21 @@ export default function CompetitionPanel({
           confirmLabel="إطلاق"
           loading={busy}
           onConfirm={() => act("start")}
+          onClose={() => setConfirming(null)}
+        />
+      )}
+      {confirming === "delete" && (
+        <ConfirmAction
+          title="حذف المسابقة"
+          message={
+            locked
+              ? "المسابقة انطلقت، وحذفها يمحو جولاتها ومحاولات المشاركين ونقاطهم نهائياً."
+              : "سيتم حذف المسابقة وجولاتها وأسئلتها المحملة."
+          }
+          confirmLabel="حذف"
+          danger
+          loading={busy}
+          onConfirm={() => act("delete")}
           onClose={() => setConfirming(null)}
         />
       )}
