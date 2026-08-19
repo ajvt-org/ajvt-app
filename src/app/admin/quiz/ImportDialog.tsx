@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import { IMPORT_MAX, type ImportProblem, type ImportQuestion } from "@/lib/quizImport";
+import { countedNoun, QUESTIONS } from "@/lib/arabicPlural";
 
 const SAMPLE = `[
   {
@@ -106,7 +107,8 @@ export default function ImportDialog({
 
         <div className="p-5 space-y-3">
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            ألصق قائمة الأسئلة بصيغة JSON. الحد الأقصى {IMPORT_MAX} سؤالاً في المرة الواحدة.
+            ألصق قائمة الأسئلة بصيغة JSON. الحد الأقصى {countedNoun(IMPORT_MAX, QUESTIONS)} في المرة
+            الواحدة.
           </p>
 
           <label htmlFor="import-source" className="sr-only">

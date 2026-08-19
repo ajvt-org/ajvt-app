@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
 export interface AttemptDetail {
   attemptId: string;
@@ -51,7 +52,7 @@ export default function AttemptBreakdown({
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {breakdown.correct} صحيحة من {breakdown.total}، المجموع {breakdown.score} من{" "}
-        {breakdown.possible} نقطة، الوقت {seconds(breakdown.elapsedMs)}
+        {countedNoun(breakdown.possible, POINTS)}، الوقت {seconds(breakdown.elapsedMs)}
       </p>
 
       <div className="overflow-x-auto">

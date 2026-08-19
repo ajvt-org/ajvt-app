@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import type { CompetitionState, RunningCompetition } from "./types";
+import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
 
 const STATE_LABEL: Record<CompetitionState, string> = {
   before: "لم تنطلق بعد",
@@ -58,7 +59,7 @@ export default function QuizPicker({
                 </span>
                 <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
                   <NumericRanges>
-                    {`${STATE_LABEL[competition.state]} · ${competition.playedRounds} من ${competition.roundCount} جولة`}
+                    {`${STATE_LABEL[competition.state]} · ${competition.playedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
                   </NumericRanges>
                 </span>
               </span>

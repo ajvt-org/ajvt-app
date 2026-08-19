@@ -6,6 +6,7 @@ import NumericRanges from "@/components/NumericRanges";
 import AttemptQuestion from "./AttemptQuestion";
 import { TUTORIAL_QUESTIONS, gradeTutorial } from "@/lib/quizTutorial";
 import { DEFAULT_CURVE, type ScoreCurve } from "@/lib/competitionConfig";
+import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
 export default function TutorialQuiz({
   curve,
@@ -55,7 +56,7 @@ export default function TutorialQuiz({
           أنهيت الجولة التجريبية
         </p>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          <NumericRanges>{`مجموعك ${score} نقطة، وهي لا تحتسب في المسابقة`}</NumericRanges>
+          <NumericRanges>{`مجموعك ${countedNoun(score, POINTS)}، وهي لا تحتسب في المسابقة`}</NumericRanges>
         </p>
         <button onClick={again} className="btn btn-primary w-full max-w-xs text-sm font-bold">
           إعادة التجربة

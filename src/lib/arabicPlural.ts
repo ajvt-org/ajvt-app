@@ -1,15 +1,72 @@
-// Arabic counts a noun in four shapes, not two: one, a pair, a few (3 to 10),
-// and many (11 and up). "1 ساعة" is what a naive template produces and what a
-// reader notices immediately.
-export function hoursLabel(hours: number): string {
-  if (hours === 1) return "ساعة واحدة";
-  if (hours === 2) return "ساعتين";
-  if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
-  return `${hours} ساعة`;
+export interface NounForms {
+  one: string;
+  two: string;
+  few: string;
+  many: string;
+  other: string;
 }
 
-// Arabic marks one, two, and many as three different forms, so a label that
-// counts has to be given all three rather than switched on a plural flag.
+export function countedNoun(count: number, forms: NounForms): string {
+  if (count === 1) return forms.one;
+  if (count === 2) return forms.two;
+  const tail = count % 100;
+  if (tail >= 3 && tail <= 10) return `${count} ${forms.few}`;
+  if (tail >= 11) return `${count} ${forms.many}`;
+  return `${count} ${forms.other}`;
+}
+
+export const QUESTIONS: NounForms = {
+  one: "سؤال واحد",
+  two: "سؤالين",
+  few: "أسئلة",
+  many: "سؤالاً",
+  other: "سؤال",
+};
+
+export const POINTS: NounForms = {
+  one: "نقطة واحدة",
+  two: "نقطتين",
+  few: "نقاط",
+  many: "نقطة",
+  other: "نقطة",
+};
+
+export const SECONDS: NounForms = {
+  one: "ثانية واحدة",
+  two: "ثانيتين",
+  few: "ثوانٍ",
+  many: "ثانية",
+  other: "ثانية",
+};
+
+export const ROUNDS: NounForms = {
+  one: "جولة واحدة",
+  two: "جولتين",
+  few: "جولات",
+  many: "جولة",
+  other: "جولة",
+};
+
+export const ANSWERS: NounForms = {
+  one: "إجابة واحدة",
+  two: "إجابتين",
+  few: "إجابات",
+  many: "إجابة",
+  other: "إجابة",
+};
+
+export const HOURS: NounForms = {
+  one: "ساعة واحدة",
+  two: "ساعتين",
+  few: "ساعات",
+  many: "ساعة",
+  other: "ساعة",
+};
+
+export function hoursLabel(hours: number): string {
+  return countedNoun(hours, HOURS);
+}
+
 export function countedLabel(count: number, one: string, two: string, many: string): string {
   if (count === 1) return one;
   if (count === 2) return two;
