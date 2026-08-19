@@ -637,6 +637,13 @@ body:has(.tab-bar) .app-shell {
   min-height: calc(100svh - 4rem - env(safe-area-inset-bottom, 0px));
 }
 
+/* A question on screen means a ticking timer, so the bar goes away with the
+   rest of the chrome rather than offering four ways to wander off mid-answer. */
+body:has(.question-screen) .tab-bar,
+body:has(.question-screen) .tab-bar-spacer {
+  display: none;
+}
+
 /* The pull-to-refresh gesture is ours, so the browser's own must not fire
    underneath it and reload the page twice. */
 body {
