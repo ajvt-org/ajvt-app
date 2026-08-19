@@ -14,16 +14,11 @@ const FUNCTION_HANDLER =
 // them changes what a failure looks like to an <img> tag. They come last.
 // docs/route-migration.md has the order and the reasoning.
 const NOT_YET_WRAPPED = [
-  "admin/logout/route.ts POST",
-  "auth/logout/route.ts POST",
   "files/[filename]/route.ts GET",
   "files/activity/[filename]/route.ts GET",
   "files/donation/[filename]/route.ts GET",
   "files/member/[filename]/route.ts GET",
   "files/team/[filename]/route.ts GET",
-  "teams/[teamId]/follow/route.ts GET",
-  "upload/route.ts POST",
-  "verify/[memberNumber]/route.ts GET",
 ];
 
 function routeFiles(dir: string): string[] {

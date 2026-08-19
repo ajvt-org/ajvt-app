@@ -2,18 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, getUserSession } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
+import { NotFoundError } from "@/lib/errors";
 import { tournament } from "@/lib/messages";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) {
-  const session = await getUserSession();
-  if (!session) return NextResponse.json({ following: false, loggedIn: false });
-  const { teamId } = await params;
-  const { userId } = session as { userId: string };
-  const follow = await prisma.teamFollow.findUnique({
-    where: { userId_teamId: { userId, teamId } },
-  });
-  return NextResponse.json({ following: !!follow, loggedIn: true });
-}
+export const GET = withRoute(
+  "GET /api/teams/[teamId]/follow",
+  async (_req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
+    const session = await getUserSession();
+    if (!session) return NextResponse.json({ following: false, loggedIn: false });
+    const { teamId } = await params;
+    const { userId } = session as { userId: string };
+    const follow = await prisma.teamFollow.findUnique({
+      where: { userId_teamId: { userId, teamId } },
+    });
+    return NextResponse.json({ following: !!follow, loggedIn: true });
+  },
+);
 
 export const POST = withRoute(
   "POST /api/teams/[teamId]/follow",
@@ -22,9 +26,7 @@ export const POST = withRoute(
     const { teamId } = await params;
 
     const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true } });
-    if (!team) {
-      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
-    }
+    if (!team) throw new NotFoundError(tournament.teamNotFound);
 
     await prisma.teamFollow.upsert({
       where: { userId_teamId: { userId: session.userId, teamId } },
