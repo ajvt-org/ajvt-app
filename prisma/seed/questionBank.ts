@@ -73,35 +73,29 @@ function arithmetic(): QuestionSpec[] {
     const a = 12 + ((i * 17) % 88);
     const b = 3 + ((i * 29) % 60);
     const { options, correctIndex } = numberOptions(a + b, i + 1);
-    out.push([`كم يساوي ${a} + ${b}؟`, "حساب", options, correctIndex, 10 + (i % 4) * 10]);
+    out.push([`كم يساوي ${a} + ${b}؟`, "حساب", options, correctIndex, 1 + (i % 4) * 3]);
   }
   for (let i = 0; i < 22; i++) {
     const a = 60 + ((i * 23) % 140);
     const b = 5 + ((i * 13) % 50);
     const { options, correctIndex } = numberOptions(a - b, i + 3);
-    out.push([`كم يساوي ${a} - ${b}؟`, "حساب", options, correctIndex, 20 + (i % 3) * 10]);
+    out.push([`كم يساوي ${a} - ${b}؟`, "حساب", options, correctIndex, 4 + (i % 3) * 3]);
   }
   for (let i = 0; i < 22; i++) {
     const a = 3 + (i % 15);
     const b = 4 + ((i * 7) % 17);
     const { options, correctIndex } = numberOptions(a * b, i + 5);
-    out.push([`كم يساوي ${a} × ${b}؟`, "حساب", options, correctIndex, 50 + (i % 3) * 10]);
+    out.push([`كم يساوي ${a} × ${b}؟`, "حساب", options, correctIndex, 11 + (i % 3) * 2]);
   }
   for (let i = 0; i < 18; i++) {
     const base = 200 + i * 20;
     const pct = [10, 20, 25, 50][i % 4];
     const { options, correctIndex } = numberOptions((base * pct) / 100, i + 9);
-    out.push([`كم يساوي ${pct}٪ من ${base}؟`, "حساب", options, correctIndex, 80 + (i % 3) * 10]);
+    out.push([`كم يساوي ${pct}٪ من ${base}؟`, "حساب", options, correctIndex, 17 + (i % 3)]);
   }
   for (let i = 2; i <= 30; i++) {
     const { options, correctIndex } = numberOptions(i * i, i);
-    out.push([
-      `ما مربع العدد ${i}؟`,
-      "حساب",
-      options,
-      correctIndex,
-      i < 12 ? 30 : i < 22 ? 60 : 85,
-    ]);
+    out.push([`ما مربع العدد ${i}؟`, "حساب", options, correctIndex, i < 12 ? 6 : i < 22 ? 13 : 18]);
   }
   return out;
 }
@@ -112,13 +106,13 @@ export function questionBank(): QuestionSpec[] {
       "جغرافيا",
       CAPITALS,
       (c) => `ما عاصمة ${c}؟`,
-      (i) => (i < 20 ? 15 : i < 36 ? 55 : 85),
+      (i) => (i < 20 ? 3 : i < 36 ? 12 : 18),
     ),
     ...pairs(
       "عملات",
       CURRENCIES,
       (c) => `ما عملة ${c}؟`,
-      (i) => (i < 6 ? 20 : i < 12 ? 60 : 85),
+      (i) => (i < 6 ? 4 : i < 12 ? 13 : 18),
     ),
     ...fromFacts("علوم", SCIENCE),
     ...fromFacts("دين", RELIGION),

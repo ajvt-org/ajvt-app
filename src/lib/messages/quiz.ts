@@ -14,6 +14,6 @@ export const quiz = {
   importBadJson: "الملف ليس بصيغة JSON صالحة",
   importTooMany: "عدد الأسئلة أكبر من الحد المسموح في المرة الواحدة",
   importDuplicate: "سؤال مكرر داخل الملف",
-  pointsOutOfRange: "النقاط يجب أن تكون بين 10 و 100",
+  pointsOutOfRange: "النقاط يجب أن تكون بين 1 و 20",
   importAnswersDuplicate: "إجابات مكررة داخل السؤال",
 } as const;

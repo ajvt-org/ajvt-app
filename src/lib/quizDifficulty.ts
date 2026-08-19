@@ -1,16 +1,16 @@
 export const DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const POINTS_MIN = 10;
-export const POINTS_MAX = 100;
+export const POINTS_MIN = 1;
+export const POINTS_MAX = 20;
 
 export const BANDS: { difficulty: Difficulty; from: number; to: number }[] = [
-  { difficulty: "EASY", from: 10, to: 49 },
-  { difficulty: "MEDIUM", from: 50, to: 79 },
-  { difficulty: "HARD", from: 80, to: 100 },
+  { difficulty: "EASY", from: 1, to: 10 },
+  { difficulty: "MEDIUM", from: 11, to: 16 },
+  { difficulty: "HARD", from: 17, to: 20 },
 ];
 
-export const DEFAULT_POINTS = POINTS_MIN;
+export const DEFAULT_POINTS = 10;
 
 export function difficultyOf(points: number): Difficulty {
   if (!Number.isInteger(points)) return "EASY";

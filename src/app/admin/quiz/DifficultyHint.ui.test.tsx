@@ -6,35 +6,35 @@ describe("DifficultyHint", () => {
   it("lists the bands while nothing usable is typed", () => {
     render(<DifficultyHint points="" />);
 
-    expect(screen.getByText(/سهل 10 إلى 49/)).toBeDefined();
-    expect(screen.getByText(/صعب 80 إلى 100/)).toBeDefined();
+    expect(screen.getByText(/سهل 1 إلى 10/)).toBeDefined();
+    expect(screen.getByText(/صعب 17 إلى 20/)).toBeDefined();
   });
 
   it("names the band the points fall in", () => {
-    const { unmount } = render(<DifficultyHint points="30" />);
+    const { unmount } = render(<DifficultyHint points="5" />);
     expect(screen.getByText("سهل")).toBeDefined();
     unmount();
 
-    const second = render(<DifficultyHint points="60" />);
+    const second = render(<DifficultyHint points="13" />);
     expect(screen.getByText("متوسط")).toBeDefined();
     second.unmount();
 
-    render(<DifficultyHint points="90" />);
+    render(<DifficultyHint points="19" />);
     expect(screen.getByText("صعب")).toBeDefined();
   });
 
-  it("gives a boundary to the harder band", () => {
-    const { unmount } = render(<DifficultyHint points="49" />);
+  it("keeps each band top inside that band", () => {
+    const { unmount } = render(<DifficultyHint points="10" />);
     expect(screen.getByText("سهل")).toBeDefined();
     unmount();
 
-    render(<DifficultyHint points="50" />);
+    render(<DifficultyHint points="11" />);
     expect(screen.getByText("متوسط")).toBeDefined();
   });
 
   it("falls back to the bands when the points are outside the range", () => {
-    render(<DifficultyHint points="500" />);
+    render(<DifficultyHint points="50" />);
 
-    expect(screen.getByText(/سهل 10 إلى 49/)).toBeDefined();
+    expect(screen.getByText(/سهل 1 إلى 10/)).toBeDefined();
   });
 });
