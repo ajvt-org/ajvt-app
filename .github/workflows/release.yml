@@ -1,7 +1,7 @@
-# Merging a "Release X.Y.Z" pull request into master is the whole release: this
-# tags the merge commit, publishes the release with the pull request body as its
-# notes, and fast-forwards dev onto master so the two branches sit on the same
-# commit. Every step is skipped if it was already done, so a re-run is safe.
+# Merging a "Release X.Y.Z" pull request into master tags the merge commit and
+# publishes the release with the pull request body as its notes. Every step is
+# skipped if it was already done, so a re-run is safe. dev is protected and is
+# fast-forwarded onto master by hand.
 name: Release
 
 on:
@@ -81,14 +81,3 @@ jobs:
             --title "Release $VERSION" \
             --notes-file notes.md \
             --verify-tag
-
-      - name: Pin dev to master
-        env:
-          SHA: ${{ steps.release.outputs.sha }}
-        run: |
-          git fetch --no-tags origin dev
-          if [ "$(git rev-parse FETCH_HEAD)" = "$SHA" ]; then
-            echo "dev already sits on the release"
-            exit 0
-          fi
-          git push origin "$SHA:refs/heads/dev"
