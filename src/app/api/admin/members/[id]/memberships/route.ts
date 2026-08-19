@@ -6,7 +6,7 @@ import { getAppSettings } from "@/lib/settingsServer";
 import { renewalRefusal } from "@/lib/renewal";
 import { NotFoundError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
-import { surplusForYear } from "@/lib/paidBreakdown";
+import { paidForYear } from "@/lib/paidBreakdown";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/memberships",
@@ -34,16 +34,16 @@ export const GET = withRoute(
       },
     });
 
-    const support = await prisma.donation.findMany({
-      where: { memberId: id, source: "MEMBERSHIP" },
-      select: { amount: true, membershipYear: true },
+    const payments = await prisma.payment.findMany({
+      where: { memberId: id, purpose: "MEMBERSHIP" },
+      select: { amount: true, feeApplied: true, year: true },
     });
 
     return NextResponse.json({
-      memberships: memberships.map((m) => ({
-        ...m,
-        supportAmount: surplusForYear(support, m.year),
-      })),
+      memberships: memberships.map((m) => {
+        const paid = paidForYear(payments, m.year);
+        return { ...m, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+      }),
       currentYear: membershipYear,
       refusal: renewalRefusal(member, membershipYear),
     });

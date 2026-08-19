@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { surplusForYear, paidBreakdown } from "./paidBreakdown";
+import { surplusForYear, paidBreakdown, paidForYear } from "./paidBreakdown";
 
 describe("surplusForYear", () => {
   it("counts only the rows belonging to that year", () => {
@@ -41,5 +41,38 @@ describe("paidBreakdown", () => {
 
   it("refuses to report a negative amount", () => {
     expect(paidBreakdown(-5, -5)).toEqual({ fee: 0, support: 0, total: 0 });
+  });
+});
+
+describe("paidForYear", () => {
+  const rows = [
+    { amount: 500, feeApplied: 100, year: 2025 },
+    { amount: 1000, feeApplied: 100, year: 2026 },
+  ];
+
+  it("splits the payment covering that year into the fee and the rest", () => {
+    expect(paidForYear(rows, 2026)).toEqual({ fee: 100, support: 900, total: 1000 });
+    expect(paidForYear(rows, 2025)).toEqual({ fee: 100, support: 400, total: 500 });
+  });
+
+  it("says nothing at all when no payment covers the year", () => {
+    expect(paidForYear(rows, 2024)).toBeNull();
+    expect(paidForYear([], 2026)).toBeNull();
+  });
+
+  it("keeps a payment that fell short of the fee as fee alone", () => {
+    expect(paidForYear([{ amount: 60, feeApplied: 100, year: 2026 }], 2026)).toEqual({
+      fee: 60,
+      support: 0,
+      total: 60,
+    });
+  });
+
+  it("splits by the fee pinned to the payment, not by today's fee", () => {
+    expect(paidForYear([{ amount: 1000, feeApplied: 500, year: 2026 }], 2026)).toEqual({
+      fee: 500,
+      support: 500,
+      total: 1000,
+    });
   });
 });

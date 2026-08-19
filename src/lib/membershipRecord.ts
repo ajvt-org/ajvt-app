@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
+import { stampRecordedBy } from "./paymentMirror";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -54,4 +55,6 @@ export async function recordMembershipYear(
       recordedBy: payment.recordedBy ?? null,
     },
   });
+
+  if (payment.recordedBy) await stampRecordedBy(db, memberId, year, payment.recordedBy);
 }

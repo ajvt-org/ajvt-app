@@ -121,3 +121,13 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
 export async function removeMirroredDonation(db: Db, donationId: string) {
   await db.payment.deleteMany({ where: { id: donationId } });
 }
+
+// The admin who recorded a year is stamped on the membership row after the
+// payment itself was written, and only the first time: a later edit does not
+// take the year away from whoever took it.
+export async function stampRecordedBy(db: Db, memberId: string, year: number, username: string) {
+  await db.payment.updateMany({
+    where: { memberId, year, purpose: "MEMBERSHIP", recordedBy: null },
+    data: { recordedBy: username },
+  });
+}

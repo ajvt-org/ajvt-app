@@ -1,3 +1,5 @@
+import { splitPayment } from "./membershipPayment";
+
 export interface SurplusRow {
   amount: number | null;
   membershipYear: number | null;
@@ -18,4 +20,19 @@ export function paidBreakdown(fee: number | null, support: number): PaidBreakdow
   const banked = Math.max(0, fee);
   const extra = Math.max(0, support);
   return { fee: banked, support: extra, total: banked + extra };
+}
+
+export interface MembershipPaymentRow {
+  amount: number;
+  feeApplied: number | null;
+  year: number | null;
+}
+
+// What a member paid for one year, read off the payment that covers it: the fee
+// is what it met of the fee in force when it was taken, the support the rest.
+export function paidForYear(rows: MembershipPaymentRow[], year: number): PaidBreakdown | null {
+  const row = rows.find((r) => r.year === year);
+  if (!row) return null;
+  const { fee, surplus } = splitPayment(row.amount, row.feeApplied ?? 0);
+  return { fee, support: surplus, total: fee + surplus };
 }

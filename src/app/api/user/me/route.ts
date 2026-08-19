@@ -5,7 +5,7 @@ import { issueMembership } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { surplusForYear } from "@/lib/paidBreakdown";
+import { paidForYear } from "@/lib/paidBreakdown";
 
 const MEMBER_SELECT = {
   id: true,
@@ -18,9 +18,9 @@ const MEMBER_SELECT = {
   paidAmount: true,
   surplusAnonymous: true,
   membershipYear: true,
-  donations: {
-    where: { source: "MEMBERSHIP" },
-    select: { amount: true, membershipYear: true },
+  payments: {
+    where: { purpose: "MEMBERSHIP" },
+    select: { amount: true, feeApplied: true, year: true },
   },
   status: true,
   rejectionReason: true,
@@ -71,9 +71,9 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   return NextResponse.json({
     phone: user.phone,
-    members: members.map(({ donations, ...member }) => ({
-      ...member,
-      supportAmount: surplusForYear(donations, member.membershipYear),
-    })),
+    members: members.map(({ payments, ...member }) => {
+      const paid = paidForYear(payments, member.membershipYear);
+      return { ...member, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+    }),
   });
 });
