@@ -73,13 +73,17 @@ export default function MatchCard({
             style={{ color: "var(--text-muted)" }}
           >
             {match.round && <span>{match.round}</span>}
-            {match.venue && <span>📍 {match.venue}</span>}
+            {match.venue && (
+              <span>
+                <IconLabel name="pin">{match.venue}</IconLabel>
+              </span>
+            )}
             {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
             {match.isKnockout && <span className="badge badge-pending">إقصائية</span>}
           </div>
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              🔁 مواجهات سابقة:{" "}
+              <IconLabel name="refresh">مواجهات سابقة:</IconLabel>{" "}
               {priorMeetings
                 .map((pm) => (pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"))
                 .join("، ")}
@@ -121,7 +125,7 @@ export default function MatchCard({
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            🗑
+            <Icon name="trash" size={13} />
           </button>
         </div>
       </div>
@@ -133,8 +137,8 @@ export default function MatchCard({
         >
           {match.goals.map((g) => (
             <span key={g.id} className="badge badge-active flex items-center gap-1.5">
-              <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />⚽{" "}
-              {g.member.fullName}
+              <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
+              <Icon name="ball" size={12} /> {g.member.fullName}
               {g.minute ? ` ${g.minute}'` : ""}
               {g.count > 1 ? ` (${g.count})` : ""}
             </span>
@@ -152,7 +156,7 @@ export default function MatchCard({
             fullName={match.manOfTheMatch.fullName}
             size={20}
           />
-          🌟 رجل المباراة: {match.manOfTheMatch.fullName}
+          <IconLabel name="star">رجل المباراة: {match.manOfTheMatch.fullName}</IconLabel>
         </p>
       )}
 
@@ -189,7 +193,7 @@ export default function MatchCard({
             border: "1px solid var(--mint-200)",
           }}
         >
-          {showMvp ? "إخفاء التصويت" : "🌟 أفضل لاعب"}
+          {showMvp ? "إخفاء التصويت" : <IconLabel name="star">أفضل لاعب</IconLabel>}
         </button>
         <button
           onClick={onToggleDetails}

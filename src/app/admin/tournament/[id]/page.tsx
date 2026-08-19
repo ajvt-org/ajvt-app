@@ -18,6 +18,8 @@ import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
 import BackButton from "@/components/BackButton";
+import IconLabel from "@/components/IconLabel";
+import PageLoading from "@/components/PageLoading";
 
 export default function TournamentPage() {
   const router = useRouter();
@@ -82,13 +84,7 @@ export default function TournamentPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-4xl animate-pulse" style={{ color: "var(--mint-500)" }}>
-          ⏳
-        </div>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (
@@ -101,7 +97,7 @@ export default function TournamentPage() {
           <BackButton href="/admin/activities" />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              ⚽ إدارة البطولة
+              <IconLabel name="ball">إدارة البطولة</IconLabel>
             </p>
             <p className="text-sm font-black text-white leading-none">{title}</p>
           </div>
@@ -113,7 +109,7 @@ export default function TournamentPage() {
           className="text-xs px-3 py-1.5 rounded-lg font-semibold"
           style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
         >
-          🌐 الصفحة العامة
+          <IconLabel name="link">الصفحة العامة</IconLabel>
         </a>
       </div>
 
@@ -123,7 +119,7 @@ export default function TournamentPage() {
             className="p-3 rounded-xl text-sm font-semibold mb-4"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            ⚠️ {error}
+            <IconLabel name="warning">{error}</IconLabel>
           </div>
         )}
 

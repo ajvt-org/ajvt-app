@@ -203,7 +203,7 @@ export default function ResultForm({
           className="p-2.5 rounded-xl text-xs font-semibold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          ⚠️ {error}
+          <IconLabel name="warning">{error}</IconLabel>
         </div>
       )}
 

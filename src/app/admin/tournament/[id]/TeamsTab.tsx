@@ -181,7 +181,7 @@ export default function TeamsTab({
           className="p-3 rounded-xl text-sm font-semibold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          ⚠️ {error}
+          <IconLabel name="warning">{error}</IconLabel>
         </div>
       )}
 
@@ -198,7 +198,9 @@ export default function TeamsTab({
       {groups.length > 0 && teams.some((t) => !t.groupId) && (
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            🏳️ فرق بدون مجموعة ({teams.filter((t) => !t.groupId).length})
+            <IconLabel name="flag">
+              فرق بدون مجموعة ({teams.filter((t) => !t.groupId).length})
+            </IconLabel>
           </p>
           <div className="space-y-1.5">
             {teams
@@ -288,7 +290,7 @@ export default function TeamsTab({
               className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              🗑 حذف الفريق
+              <IconLabel name="trash">حذف الفريق</IconLabel>
             </button>
           </div>
 
@@ -367,7 +369,7 @@ export default function TeamsTab({
                       {member.fullName} <Icon name="pencil" size={12} className="icon-inline" />
                       {status === "PENDING" && (
                         <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                          ⏳ بانتظار الموافقة
+                          <IconLabel name="clock">بانتظار الموافقة</IconLabel>
                         </span>
                       )}
                     </button>
@@ -380,7 +382,7 @@ export default function TeamsTab({
                         className="text-xs px-2 py-1 rounded-lg font-bold"
                         style={{ background: "var(--mint-600)", color: "white" }}
                       >
-                        ✓ قبول
+                        <IconLabel name="check">قبول</IconLabel>
                       </button>
                     )}
                     <button
@@ -474,7 +476,7 @@ export default function TeamsTab({
       {unassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            🧍 لاعبون غير مصنّفين ({unassigned.length})
+            <IconLabel name="user">لاعبون غير مصنّفين ({unassigned.length})</IconLabel>
           </p>
           <div className="flex flex-wrap gap-1.5">
             {unassigned.map((m) =>

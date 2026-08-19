@@ -21,9 +21,11 @@ import DonorNameChoice from "@/components/DonorNameChoice";
 import { api } from "@/lib/api";
 import { errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
 import { goAfterAuthChange } from "@/lib/authNav";
+import PageLoading from "@/components/PageLoading";
 
 // Auto-logout after this long with no click/keypress/scroll/touch.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -119,8 +121,8 @@ export default function FormPage() {
   return (
     <Suspense
       fallback={
-        <div className="app-shell flex items-center justify-center">
-          <div className="text-3xl animate-pulse">⏳</div>
+        <div className="app-shell flex">
+          <PageLoading />
         </div>
       }
     >
@@ -479,8 +481,8 @@ function FormPageInner() {
 
   if (checkingAuth) {
     return (
-      <div className="app-shell flex items-center justify-center">
-        <div className="text-3xl animate-pulse">⏳</div>
+      <div className="app-shell flex">
+        <PageLoading />
       </div>
     );
   }
@@ -492,7 +494,9 @@ function FormPageInner() {
           className="px-5 py-8 text-center"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          <div className="text-5xl mb-2">✅</div>
+          <div className="mb-2 flex justify-center">
+            <Icon name="check" size={48} color="white" />
+          </div>
           <h1 className="text-lg font-black text-white">
             {editId ? "تم إرسال التعديلات بنجاح" : "تم إرسال طلبك بنجاح"}
           </h1>
@@ -527,7 +531,11 @@ function FormPageInner() {
                   border: "1px solid var(--mint-200)",
                 }}
               >
-                {copied === form.referenceCode ? "✓ تم النسخ" : "نسخ"}
+                {copied === form.referenceCode ? (
+                  <IconLabel name="check">تم النسخ</IconLabel>
+                ) : (
+                  "نسخ"
+                )}
               </button>
             </div>
           </div>
@@ -631,7 +639,9 @@ function FormPageInner() {
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
           >
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-              🏆 الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
+              <IconLabel name="trophy">
+                الاشتراك في الرابطة هو ما يتيح لك المشاركة في الأنشطة والفعاليات
+              </IconLabel>
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               تريد فقط دعم الرابطة دون الانضمام كعضو؟{" "}
@@ -732,7 +742,7 @@ function FormPageInner() {
                     {a}
                   </option>
                 ))}
-                <option value="__add__">➕ إضافة عصر جديد</option>
+                <option value="__add__">+ إضافة عصر جديد</option>
               </select>
 
               {showAddAge && (
@@ -766,7 +776,7 @@ function FormPageInner() {
 
               {form.age && !showAddAge && (
                 <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
-                  ✓ {form.age}
+                  <IconLabel name="check">{form.age}</IconLabel>
                 </p>
               )}
             </div>
@@ -776,7 +786,7 @@ function FormPageInner() {
                 className="p-4 rounded-xl text-sm font-semibold"
                 style={{ background: "#fee2e2", color: "#991b1b" }}
               >
-                ⚠️ {error}
+                <IconLabel name="warning">{error}</IconLabel>
               </div>
             )}
 
@@ -845,7 +855,7 @@ function FormPageInner() {
                 className="p-4 rounded-xl text-sm font-semibold"
                 style={{ background: "#fee2e2", color: "#991b1b" }}
               >
-                ⚠️ {error}
+                <IconLabel name="warning">{error}</IconLabel>
                 {error === "رقم الهاتف مسجّل مسبقاً" && (
                   <>
                     {" — "}
@@ -936,7 +946,7 @@ function FormPageInner() {
                 }}
               >
                 <p className="text-sm font-bold mb-3 text-white">
-                  💳 الدفع عبر {form.paymentMethod}
+                  <IconLabel name="card">الدفع عبر {form.paymentMethod}</IconLabel>
                 </p>
                 <div className="space-y-2">
                   <div
@@ -966,7 +976,11 @@ function FormPageInner() {
                           minWidth: "52px",
                         }}
                       >
-                        {copied === PAYMENT_CODES[form.paymentMethod] ? "✓ تم" : "نسخ"}
+                        {copied === PAYMENT_CODES[form.paymentMethod] ? (
+                          <IconLabel name="check">تم</IconLabel>
+                        ) : (
+                          "نسخ"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1001,7 +1015,11 @@ function FormPageInner() {
                           minWidth: "52px",
                         }}
                       >
-                        {copied === String(form.paidAmount || membershipFee) ? "✓ تم" : "نسخ"}
+                        {copied === String(form.paidAmount || membershipFee) ? (
+                          <IconLabel name="check">تم</IconLabel>
+                        ) : (
+                          "نسخ"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1035,7 +1053,11 @@ function FormPageInner() {
                           minWidth: "52px",
                         }}
                       >
-                        {copied === form.referenceCode ? "✓ تم" : "نسخ"}
+                        {copied === form.referenceCode ? (
+                          <IconLabel name="check">تم</IconLabel>
+                        ) : (
+                          "نسخ"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1092,7 +1114,7 @@ function FormPageInner() {
                   className="p-4 rounded-xl text-sm font-semibold"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  ⚠️ {error}
+                  <IconLabel name="warning">{error}</IconLabel>
                 </div>
               )}
 
