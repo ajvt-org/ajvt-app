@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
 import { getStandings } from "@/lib/quizRankingServer";
@@ -34,7 +34,7 @@ async function competition(over: Record<string, unknown> = {}) {
       poolSize: 3,
       groupSize: 7,
       countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
       ...over,
     },

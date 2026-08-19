@@ -1,4 +1,4 @@
-import { bandScore, DEFAULT_BANDS, type SpeedBand } from "./competitionConfig";
+import { curveScore, DEFAULT_CURVE, type ScoreCurve } from "./competitionConfig";
 
 export interface TutorialOption {
   id: string;
@@ -71,8 +71,8 @@ export function gradeTutorial(
   question: TutorialQuestion,
   selected: string[],
   elapsedMs: number,
-  bands: SpeedBand[] = DEFAULT_BANDS,
+  curve: ScoreCurve = DEFAULT_CURVE,
 ): { isCorrect: boolean; points: number } {
   const isCorrect = isRight(question, selected);
-  return { isCorrect, points: isCorrect ? bandScore(question.points, bands, elapsedMs) : 0 };
+  return { isCorrect, points: isCorrect ? curveScore(question.points, curve, elapsedMs) : 0 };
 }

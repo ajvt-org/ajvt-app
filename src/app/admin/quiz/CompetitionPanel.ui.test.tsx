@@ -32,10 +32,9 @@ const saved = {
   countingRounds: 6,
   categoryRounds: false,
   bankId: "general",
-  speedBands: [
-    { maxSeconds: 10, percent: 100 },
-    { maxSeconds: null, percent: 50 },
-  ],
+  fullSeconds: 10,
+  maxSeconds: 30,
+  floorPercent: 50,
   startedAt: null as string | null,
 };
 

@@ -559,7 +559,9 @@ model Competition {
   categoryRounds     Boolean           @default(false)
   bankId             String            @default("general")
   bank               QuestionBank      @relation(fields: [bankId], references: [id])
-  speedBands         Json
+  fullSeconds        Int               @default(10)
+  maxSeconds         Int               @default(30)
+  floorPercent       Int               @default(50)
   rounds             QuizRound[]
   participants       QuizParticipant[]
   startedAt          DateTime?

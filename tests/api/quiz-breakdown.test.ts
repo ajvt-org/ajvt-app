@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MY_ROUNDS } from "@/app/api/quiz/breakdown/route";
 import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
@@ -22,7 +22,7 @@ async function competition(over: Record<string, unknown> = {}) {
       poolSize: 2,
       groupSize: 7,
       countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
       ...over,
     },
@@ -150,7 +150,7 @@ describe("a member reading their own score", () => {
 
     const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
 
-    expect(body.detail.speedBands).toEqual(DEFAULT_BANDS);
+    expect(body.detail.curve).toEqual(DEFAULT_CURVE);
     expect(body.detail.round).toBe(0);
     expect(body.detail.competitionName).toBe("مسابقة");
   });

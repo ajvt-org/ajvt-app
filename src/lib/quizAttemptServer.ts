@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { requireCompetition, shapeOf } from "./competitionServer";
-import { bandScore, type SpeedBand } from "./competitionConfig";
+import { curveScore, type ScoreCurve } from "./competitionConfig";
 import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import { isUniqueViolation } from "./prismaError";
@@ -9,6 +9,14 @@ import { quiz } from "./messages";
 export const NOT_OPEN = "المسابقة ليست مفتوحة الآن";
 export const NO_POOL = "لا توجد أسئلة لهذه الجولة";
 export const NOT_STARTED = "لم تنطلق المسابقة بعد";
+
+export function curveOf(competition: ScoreCurve): ScoreCurve {
+  return {
+    fullSeconds: competition.fullSeconds,
+    maxSeconds: competition.maxSeconds,
+    floorPercent: competition.floorPercent,
+  };
+}
 
 export async function openCompetitionRound(competitionId: string, now = new Date()) {
   const competition = await requireCompetition(competitionId);
@@ -80,6 +88,7 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
   const attempt = await prisma.quizAttempt.findUnique({
     where: { id: attemptId },
     include: {
+      round: { include: { competition: true } },
       answers: {
         orderBy: { position: "asc" },
         include: {
@@ -101,8 +110,11 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
   if (attempt.userId !== userId) throw new ForbiddenError();
 
   const total = attempt.answers.length;
+  const curve = curveOf(attempt.round.competition);
   const next = attempt.answers.find((a) => a.answeredAt === null);
-  if (!next) return { attempt, done: true as const, total, position: total, question: null };
+  if (!next) {
+    return { attempt, done: true as const, total, position: total, curve, question: null };
+  }
 
   if (!next.shownAt) {
     await prisma.quizAttemptAnswer.update({
@@ -120,6 +132,7 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
     attempt,
     done: false as const,
     total,
+    curve,
     position: next.position,
     question: {
       answerId: next.id,
@@ -170,9 +183,7 @@ export async function submitAnswer(
     picked.length === correctIds.length && picked.every((id) => correctIds.includes(id));
 
   const elapsedMs = row.shownAt ? Math.max(0, now.getTime() - row.shownAt.getTime()) : 0;
-  const points = isCorrect
-    ? bandScore(row.question.points, competition.speedBands as unknown as SpeedBand[], elapsedMs)
-    : 0;
+  const points = isCorrect ? curveScore(row.question.points, curveOf(competition), elapsedMs) : 0;
 
   await prisma.$transaction(async (tx) => {
     await tx.quizAttemptAnswer.update({

@@ -36,7 +36,7 @@ export interface AttemptDetailView {
   round: number;
   category: string | null;
   competitionName: string;
-  speedBands: { maxSeconds: number | null; percent: number }[];
+  curve: { fullSeconds: number; maxSeconds: number; floorPercent: number };
   groupSize: number;
   countingRounds: number;
   breakdown: {

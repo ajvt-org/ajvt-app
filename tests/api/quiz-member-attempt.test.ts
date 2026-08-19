@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createUsers, signInAs } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
 import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
@@ -25,7 +25,7 @@ async function setup(paid = 100) {
       poolSize: 3,
       groupSize: 7,
       countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
     },
   });
@@ -202,6 +202,30 @@ describe("a member playing the daily attempt", () => {
     expect(two.status).toBe(200);
     expect((await one.json()).attemptId).toBe((await two.json()).attemptId);
     expect(await prisma.quizAttempt.count()).toBe(1);
+  });
+
+  it("pays the whole question for a fast right answer", async () => {
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
+    const right = await prisma.quizAnswer.findFirstOrThrow({
+      where: {
+        id: { in: view.question.options.map((o: { id: string }) => o.id) },
+        isCorrect: true,
+      },
+    });
+
+    const body = await (await answer(view.question.answerId, [right.id])).json();
+
+    expect(body.points).toBe(view.question.points);
+  });
+
+  it("hands the member the curve so the timer knows what to show", async () => {
+    const { competition } = await setup();
+
+    const body = await (await startAttempt(competition.id)).json();
+
+    expect(body.curve).toEqual({ fullSeconds: 10, maxSeconds: 30, floorPercent: 50 });
+    expect(body.question.shownAt).toBeDefined();
   });
 
   it("refuses an attempt with no competition named", async () => {

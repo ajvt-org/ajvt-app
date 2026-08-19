@@ -1,4 +1,4 @@
-import { bandPercent, type SpeedBand } from "./competitionConfig";
+import { curvePercent, type ScoreCurve } from "./competitionConfig";
 
 export interface AnswerRow {
   position: number;
@@ -24,15 +24,15 @@ export interface Breakdown {
   elapsedMs: number;
 }
 
-export function rowPercent(row: AnswerRow, bands: SpeedBand[]): number {
+export function rowPercent(row: AnswerRow, curve: ScoreCurve): number {
   if (!row.isCorrect || row.elapsedMs === null) return 0;
-  return bandPercent(bands, row.elapsedMs);
+  return Math.round(curvePercent(curve, row.elapsedMs));
 }
 
-export function breakdownOf(answers: AnswerRow[], bands: SpeedBand[]): Breakdown {
+export function breakdownOf(answers: AnswerRow[], curve: ScoreCurve): Breakdown {
   const rows = [...answers]
     .sort((a, b) => a.position - b.position)
-    .map((row) => ({ ...row, percent: rowPercent(row, bands) }));
+    .map((row) => ({ ...row, percent: rowPercent(row, curve) }));
 
   return {
     rows,
@@ -43,8 +43,4 @@ export function breakdownOf(answers: AnswerRow[], bands: SpeedBand[]): Breakdown
     possible: rows.reduce((sum, r) => sum + r.maxPoints, 0),
     elapsedMs: rows.reduce((sum, r) => sum + (r.elapsedMs ?? 0), 0),
   };
-}
-
-export function bandLabels(bands: SpeedBand[]): { limit: number | null; percent: number }[] {
-  return bands.map((band) => ({ limit: band.maxSeconds, percent: band.percent }));
 }

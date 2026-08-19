@@ -58,7 +58,7 @@ export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }
       </div>
 
       <ScoreFormula
-        bands={detail.speedBands}
+        curve={detail.curve}
         groupSize={detail.groupSize}
         countingRounds={detail.countingRounds}
       />

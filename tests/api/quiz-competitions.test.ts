@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, put, post, del, createUsers, createAdmin, signInAsAdmin } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { ALREADY_STARTED } from "@/lib/competitionServer";
 
 import { GET as LIST, POST as CREATE } from "@/app/api/admin/quiz/competitions/route";
@@ -49,7 +49,7 @@ describe("configuring a competition before it starts", () => {
 
     expect(body.competitions).toEqual([]);
     expect(body.defaults.servedCount).toBe(10);
-    expect(body.defaults.speedBands).toEqual(DEFAULT_BANDS);
+    expect(body.defaults.fullSeconds).toBe(DEFAULT_CURVE.fullSeconds);
   });
 
   it("creates one from a name and a date, filling the rest with defaults", async () => {
@@ -128,33 +128,28 @@ describe("configuring a competition before it starts", () => {
     expect((await save(c.id, { servedCount: 20, poolSize: 10 })).status).toBe(400);
   });
 
-  it("refuses speed bands that do not fall", async () => {
+  it("refuses a question time that does not outlast the full points window", async () => {
     const c = await made();
 
-    const res = await save(c.id, {
-      speedBands: [
-        { maxSeconds: 10, percent: 50 },
-        { maxSeconds: null, percent: 100 },
-      ],
-    });
+    const res = await save(c.id, { fullSeconds: 30, maxSeconds: 30 });
 
     expect(res.status).toBe(400);
   });
 
-  it("keeps custom bands once they are valid", async () => {
-    const c = await made({
-      ...config,
-      speedBands: [
-        { maxSeconds: 5, percent: 100 },
-        { maxSeconds: null, percent: 40 },
-      ],
-    });
+  it("refuses a floor outside 0 to 100", async () => {
+    const c = await made();
+
+    expect((await save(c.id, { floorPercent: 140 })).status).toBe(400);
+    expect((await save(c.id, { floorPercent: -1 })).status).toBe(400);
+  });
+
+  it("keeps the curve it was given", async () => {
+    const c = await made({ ...config, fullSeconds: 5, maxSeconds: 45, floorPercent: 20 });
 
     const row = await prisma.competition.findUniqueOrThrow({ where: { id: c.id } });
-    expect(row.speedBands).toEqual([
-      { maxSeconds: 5, percent: 100 },
-      { maxSeconds: null, percent: 40 },
-    ]);
+    expect(row.fullSeconds).toBe(5);
+    expect(row.maxSeconds).toBe(45);
+    expect(row.floorPercent).toBe(20);
   });
 
   it("keeps a round to one category only when that was asked for", async () => {

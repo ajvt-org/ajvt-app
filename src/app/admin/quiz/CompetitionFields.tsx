@@ -1,7 +1,6 @@
 "use client";
 
-import SpeedBandsEditor from "./SpeedBandsEditor";
-import type { SpeedBand, Visibility } from "@/lib/competitionConfig";
+import type { Visibility } from "@/lib/competitionConfig";
 import {
   toLocalInput,
   fromLocalInput,
@@ -22,7 +21,9 @@ export interface Draft {
   groupSize: number;
   countingRounds: number;
   categoryRounds: boolean;
-  speedBands: SpeedBand[];
+  fullSeconds: number;
+  maxSeconds: number;
+  floorPercent: number;
 }
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
@@ -166,11 +167,20 @@ export default function CompetitionFields({
         <span style={{ color: "var(--text-main)" }}>كل جولة من تصنيف واحد</span>
       </label>
 
-      <SpeedBandsEditor
-        bands={draft.speedBands}
-        disabled={locked}
-        onChange={(speedBands) => onChange("speedBands", speedBands)}
-      />
+      <p className="text-xs font-bold mt-1" style={{ color: "var(--text-main)" }}>
+        احتساب السرعة
+      </p>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        الإجابة الصحيحة تأخذ كل نقاط السؤال حتى مهلة النقاط الكاملة، ثم تنزل في خط مستقيم إلى أقل
+        نسبة عند انتهاء مدة السؤال.
+      </p>
+
+      <div className="flex gap-2">
+        {number("fullSeconds", "c-full", "مهلة النقاط الكاملة بالثواني", 0)}
+        {number("maxSeconds", "c-max", "مدة السؤال بالثواني")}
+      </div>
+
+      {number("floorPercent", "c-floor", "أقل نسبة بالمئة", 0, 100)}
     </>
   );
 }

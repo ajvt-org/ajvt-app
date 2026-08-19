@@ -1,4 +1,4 @@
-import type { SpeedBand, Visibility } from "@/lib/competitionConfig";
+import type { Visibility } from "@/lib/competitionConfig";
 
 export interface Competition {
   id: string;
@@ -14,7 +14,9 @@ export interface Competition {
   countingRounds: number;
   categoryRounds: boolean;
   bankId: string;
-  speedBands: SpeedBand[];
+  fullSeconds: number;
+  maxSeconds: number;
+  floorPercent: number;
   startedAt: string | null;
 }
 
@@ -33,7 +35,9 @@ export interface CompetitionDefaults {
   poolSize: number;
   groupSize: number;
   countingRounds: number;
-  speedBands: SpeedBand[];
+  fullSeconds: number;
+  maxSeconds: number;
+  floorPercent: number;
 }
 
 export function toLocalInput(iso: string): string {

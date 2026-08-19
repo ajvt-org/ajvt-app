@@ -10,7 +10,7 @@ import {
   NO_POOL,
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { drawQuestions, seededShuffle } from "@/lib/quizRound";
 import type { HttpError } from "@/lib/errors";
 
@@ -39,7 +39,7 @@ async function competition(over: Record<string, unknown> = {}) {
       poolSize: 5,
       groupSize: 7,
       countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      ...DEFAULT_CURVE,
       startedAt: new Date(`${DAY}T00:00:00.000Z`),
       ...over,
     },

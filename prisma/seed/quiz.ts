@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "./client";
 import { questionBank } from "./questionBank";
 import { daysAgo, daysFromNow, minutesAgo } from "./random";
-import { DEFAULT_BANDS } from "../../src/lib/competitionConfig";
+import { DEFAULT_CURVE } from "../../src/lib/competitionConfig";
 import type { SeededUser } from "./members";
 
 export async function seedQuizSettings() {
@@ -63,7 +63,7 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     groupSize: 7,
     countingRounds: 6,
     bankId: bank.id,
-    speedBands: DEFAULT_BANDS as unknown as object,
+    ...DEFAULT_CURVE,
   };
 
   const open = await prisma.competition.create({
