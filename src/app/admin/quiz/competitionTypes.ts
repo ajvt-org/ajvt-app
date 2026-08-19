@@ -12,6 +12,7 @@ export interface Competition {
   poolSize: number;
   groupSize: number;
   countingRounds: number;
+  categoryRounds: boolean;
   speedBands: SpeedBand[];
   startedAt: string | null;
 }
@@ -22,6 +23,7 @@ export interface CompetitionRow extends Competition {
 
 export interface CompetitionDefaults {
   visibility: Visibility;
+  categoryRounds: boolean;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;

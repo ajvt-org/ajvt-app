@@ -16,6 +16,7 @@ export interface CompetitionConfig {
   poolSize: number;
   groupSize: number;
   countingRounds: number;
+  categoryRounds: boolean;
   speedBands: SpeedBand[];
 }
 
@@ -34,6 +35,7 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   poolSize: 30,
   groupSize: 7,
   countingRounds: 6,
+  categoryRounds: false,
   speedBands: DEFAULT_BANDS,
 };
 
@@ -92,6 +94,7 @@ export function validateConfig(config: CompetitionConfig): string | null {
   ) {
     return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات المجموعة";
   }
+  if (typeof config.categoryRounds !== "boolean") return "خيار تصنيف الجولة غير صالح";
   return validateBands(config.speedBands);
 }
 

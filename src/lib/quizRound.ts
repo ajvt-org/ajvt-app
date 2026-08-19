@@ -85,7 +85,7 @@ export function drawQuestions(pool: string[], count: number, seed: string): stri
   return picked;
 }
 
-export function seededShuffle(items: string[], seed: string): string[] {
+export function seededShuffle<T>(items: T[], seed: string): T[] {
   const out = [...items];
   let hash = 7;
   for (const ch of seed) hash = (hash * 33 + ch.charCodeAt(0)) % 2_147_483_647;

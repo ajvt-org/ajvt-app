@@ -20,6 +20,7 @@ export interface Draft {
   poolSize: number;
   groupSize: number;
   countingRounds: number;
+  categoryRounds: boolean;
   speedBands: SpeedBand[];
 }
 
@@ -134,6 +135,17 @@ export default function CompetitionFields({
         {number("groupSize", "c-group", "جولات المجموعة")}
         {number("countingRounds", "c-counting", "الجولات المحتسبة")}
       </div>
+
+      <label className="flex items-center gap-2 text-xs font-bold">
+        <input
+          id="c-category-rounds"
+          type="checkbox"
+          checked={draft.categoryRounds}
+          disabled={locked}
+          onChange={(e) => onChange("categoryRounds", e.target.checked)}
+        />
+        <span style={{ color: "var(--text-main)" }}>كل جولة من تصنيف واحد</span>
+      </label>
 
       <SpeedBandsEditor
         bands={draft.speedBands}

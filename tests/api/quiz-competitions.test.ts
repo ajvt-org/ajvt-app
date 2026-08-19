@@ -154,6 +154,18 @@ describe("configuring a competition before it starts", () => {
     ]);
   });
 
+  it("keeps a round to one category only when that was asked for", async () => {
+    const off = await made();
+    const on = await made({ ...config, name: "بالتصنيف", categoryRounds: true });
+
+    expect(
+      (await prisma.competition.findUniqueOrThrow({ where: { id: off.id } })).categoryRounds,
+    ).toBe(false);
+    expect(
+      (await prisma.competition.findUniqueOrThrow({ where: { id: on.id } })).categoryRounds,
+    ).toBe(true);
+  });
+
   it("refuses a visibility that is neither public nor private", async () => {
     expect((await create({ ...config, visibility: "SECRET" })).status).toBe(400);
   });

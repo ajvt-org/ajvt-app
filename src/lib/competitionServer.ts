@@ -77,6 +77,7 @@ function asConfig(row: Competition): CompetitionConfig {
     poolSize: row.poolSize,
     groupSize: row.groupSize,
     countingRounds: row.countingRounds,
+    categoryRounds: row.categoryRounds,
     speedBands: row.speedBands as unknown as SpeedBand[],
   };
 }
