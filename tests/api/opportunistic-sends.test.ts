@@ -181,6 +181,45 @@ describe("announceOpenDay", () => {
     expect(await announceOpenDay()).toBe(0);
   });
 
+  it("announces each running competition on its own", async () => {
+    await eligibleUserWithQuestion();
+    await openDayWithQuestions();
+    await openDayWithQuestions();
+
+    expect(await announceOpenDay()).toBe(2);
+    expect(sendPushToUser).toHaveBeenCalledTimes(2);
+  });
+
+  it("tells only the listed members about a private competition", async () => {
+    const listed = await eligibleUserWithQuestion();
+    await createUser("22000003");
+    const { competition } = await openDayWithQuestions();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { visibility: "PRIVATE" },
+    });
+    await prisma.quizParticipant.create({
+      data: { competitionId: competition.id, userId: listed.id },
+    });
+
+    expect(await announceOpenDay()).toBe(1);
+    expect(sendPushToUser).toHaveBeenCalledWith(listed.id, expect.anything());
+  });
+
+  it("skips a listed member who is no longer a paid member", async () => {
+    const user = await createUser("22000004");
+    const { competition } = await openDayWithQuestions();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { visibility: "PRIVATE" },
+    });
+    await prisma.quizParticipant.create({
+      data: { competitionId: competition.id, userId: user.id },
+    });
+
+    expect(await announceOpenDay()).toBe(0);
+  });
+
   it("says nothing once the round has closed", async () => {
     await eligibleUserWithQuestion();
     await openDayWithQuestions();

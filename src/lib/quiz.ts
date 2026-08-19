@@ -12,13 +12,18 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
   return !!member;
 }
 
-async function getEligibleUserIds(): Promise<string[]> {
+export async function eligibleMembers() {
   const members = await prisma.member.findMany({
     where: { status: "ACTIVE", paidAmount: { gte: MEMBERSHIP_FEE }, userId: { not: null } },
-    select: { userId: true },
+    select: { userId: true, fullName: true },
+    orderBy: { fullName: "asc" },
     distinct: ["userId"],
   });
-  return members.map((m) => m.userId as string);
+  return members.map((m) => ({ userId: m.userId as string, fullName: m.fullName }));
+}
+
+async function getEligibleUserIds(): Promise<string[]> {
+  return (await eligibleMembers()).map((m) => m.userId);
 }
 
 export async function getQuizSettings() {

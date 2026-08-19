@@ -12,6 +12,8 @@ vi.mock("@/lib/api", () => ({
 
 const standings: StandingsState = {
   running: true,
+  competitionId: "c1",
+  name: "مسابقة الصيف",
   meId: "u1",
   today: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
   thisWeek: [],

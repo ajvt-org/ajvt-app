@@ -2,7 +2,8 @@ import { prisma } from "./prisma";
 import { sendPushToUser } from "./push";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
-import { getCompetition, shapeOf } from "./competitionServer";
+import { eligibleMembers } from "./quiz";
+import { shapeOf } from "./competitionServer";
 import { currentRound } from "./quizRound";
 
 export const RETIRED = "الإرسال اليدوي توقف، الأسئلة تُنشر تلقائياً عند فتح يوم المسابقة";
@@ -14,18 +15,27 @@ export const DAY_OPEN_PAYLOAD = {
 };
 
 export async function eligibleUserIds(): Promise<string[]> {
-  const members = await prisma.member.findMany({
-    where: { status: "ACTIVE", userId: { not: null } },
-    select: { userId: true },
-    distinct: ["userId"],
-  });
-  return members.map((m) => m.userId as string);
+  return (await eligibleMembers()).map((m) => m.userId);
 }
 
 export async function announceOpenDay(now = new Date()): Promise<number> {
-  const competition = await getCompetition();
-  if (!competition?.startedAt) return 0;
+  const running = await prisma.competition.findMany({ where: { startedAt: { not: null } } });
+  let sent = 0;
+  for (const competition of running) sent += await announceFor(competition, now);
+  return sent;
+}
 
+async function announceFor(
+  competition: {
+    id: string;
+    visibility: string;
+    startsAt: Date;
+    roundCount: number;
+    roundPeriodMinutes: number;
+    roundWindowMinutes: number;
+  },
+  now: Date,
+): Promise<number> {
   const open = currentRound(shapeOf(competition), now);
   if (!open) return 0;
 
@@ -41,7 +51,19 @@ export async function announceOpenDay(now = new Date()): Promise<number> {
   });
   if (claimed.count === 0) return 0;
 
-  const targets = await eligibleUserIds();
+  const eligible = await eligibleUserIds();
+  let targets = eligible;
+  if (competition.visibility !== "PUBLIC") {
+    const listed = new Set(
+      (
+        await prisma.quizParticipant.findMany({
+          where: { competitionId: competition.id },
+          select: { userId: true },
+        })
+      ).map((p) => p.userId),
+    );
+    targets = eligible.filter((userId) => listed.has(userId));
+  }
   await Promise.all(
     targets.map((userId) =>
       sendPushToUser(userId, DAY_OPEN_PAYLOAD).catch((err) =>

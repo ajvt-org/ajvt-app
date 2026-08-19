@@ -56,6 +56,8 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
 
 export interface Standings {
   running: boolean;
+  competitionId: string | null;
+  name: string | null;
   meId: string | null;
   round: number | null;
   group: number | null;
@@ -66,13 +68,16 @@ export interface Standings {
 }
 
 export async function getStandings(
+  competitionId: string | null,
   userId?: string,
   limit = 10,
   now = new Date(),
 ): Promise<Standings> {
-  const competition = await getCompetition();
+  const competition = competitionId ? await getCompetition(competitionId) : null;
   const empty: Standings = {
     running: false,
+    competitionId: competition?.id ?? null,
+    name: competition?.name ?? null,
     meId: userId ?? null,
     round: null,
     group: null,
@@ -96,6 +101,8 @@ export async function getStandings(
 
   return {
     running: true,
+    competitionId: competition.id,
+    name: competition.name,
     meId: userId ?? null,
     round: open?.index ?? null,
     group,
@@ -112,8 +119,8 @@ export async function getStandings(
   };
 }
 
-export async function getWinners(now = new Date()) {
-  const competition = await getCompetition();
+export async function getWinners(competitionId: string, now = new Date()) {
+  const competition = await getCompetition(competitionId);
   if (!competition?.startedAt) return { rounds: [], groups: [], overall: null };
 
   const scores = await roundScores(competition.id);

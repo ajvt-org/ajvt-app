@@ -46,3 +46,11 @@ export interface AnswerResult {
   answeredInMs?: number;
   maxPoints?: number;
 }
+
+export interface RunningCompetition {
+  id: string;
+  name: string;
+  visibility: "PUBLIC" | "PRIVATE";
+  roundCount: number;
+  startsAt: string;
+}

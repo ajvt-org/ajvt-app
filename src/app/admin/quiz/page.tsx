@@ -10,8 +10,7 @@ import IconLabel from "@/components/IconLabel";
 import SettingsForm from "./SettingsForm";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
-import CompetitionPanel from "./CompetitionPanel";
-import RoundsPanel from "./RoundsPanel";
+import CompetitionsSection from "./CompetitionsSection";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
@@ -250,9 +249,7 @@ export default function AdminQuizPage() {
         onSubmit={saveSettings}
       />
 
-      <CompetitionPanel />
-
-      <RoundsPanel questionCount={questions.length} />
+      <CompetitionsSection questionCount={questions.length} />
 
       <QuestionList
         questions={questions}

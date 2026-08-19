@@ -3,9 +3,12 @@ export interface SpeedBand {
   percent: number;
 }
 
+export type Visibility = "PUBLIC" | "PRIVATE";
+
 export interface CompetitionConfig {
   name: string;
   startsAt: string;
+  visibility: Visibility;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -23,6 +26,7 @@ export const DEFAULT_BANDS: SpeedBand[] = [
 ];
 
 export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
+  visibility: "PUBLIC",
   roundCount: 30,
   roundPeriodMinutes: 1440,
   roundWindowMinutes: 840,
@@ -65,6 +69,8 @@ export function validateBands(bands: SpeedBand[]): string | null {
 export function validateConfig(config: CompetitionConfig): string | null {
   if (!config.name.trim()) return "اسم المسابقة مطلوب";
   if (!isTimestamp(config.startsAt)) return "وقت البداية غير صالح";
+  if (config.visibility !== "PUBLIC" && config.visibility !== "PRIVATE")
+    return "نوع المسابقة غير صالح";
   if (!Number.isInteger(config.roundCount) || config.roundCount < 1) return "عدد الجولات غير صالح";
   if (config.roundCount > MAX_ROUNDS) return `عدد الجولات يجب ألا يتجاوز ${MAX_ROUNDS}`;
   if (!Number.isInteger(config.roundPeriodMinutes) || config.roundPeriodMinutes < 1)

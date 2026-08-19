@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
 import { DEFAULT_BANDS } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
 import { getStandings } from "@/lib/quizRankingServer";
-import { GET as WINNERS } from "@/app/api/admin/quiz/winners/route";
+import { GET as WINNERS } from "@/app/api/admin/quiz/competitions/[id]/winners/route";
 
 const START = (() => {
   const d = new Date();
@@ -18,6 +18,9 @@ const PERIOD = 1440 * 60_000;
 const roundIndex = (offset: number) => offset;
 const atNoon = (index: number) => new Date(START.getTime() + index * PERIOD + 12 * 3_600_000);
 const today = () => 1;
+const winners = (id: string) =>
+  WINNERS(get(`/api/admin/quiz/competitions/${id}/winners`), { params: Promise.resolve({ id }) });
+const standings = () => STANDINGS(get("/api/quiz/standings"));
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
@@ -85,7 +88,7 @@ describe("standings a member can see", () => {
     const [u] = await createUsers(1);
     await signInAs(u);
 
-    const body = await (await STANDINGS()).json();
+    const body = await (await standings()).json();
 
     expect(body.running).toBe(false);
     expect(body.today).toEqual([]);
@@ -98,7 +101,7 @@ describe("standings a member can see", () => {
     await member(b.id, "محمد");
     await attempt(c.id, a.id, today(), 30);
     await attempt(c.id, b.id, today(), 50);
-    const body = await getStandings(a.id, 10, atNoon(today()));
+    const body = await getStandings(c.id, a.id, 10, atNoon(today()));
 
     expect(body.running).toBe(true);
     expect(body.today.map((r) => r.name)).toEqual(["محمد", "أحمد"]);
@@ -112,7 +115,7 @@ describe("standings a member can see", () => {
       await member(u.id, `عضو ${i}`);
       await attempt(c.id, u.id, today(), (3 - i) * 10);
     }
-    const body = await getStandings(users[2].id, 10, atNoon(today()));
+    const body = await getStandings(c.id, users[2].id, 10, atNoon(today()));
 
     expect(body.mine?.today?.rank).toBe(3);
     expect(body.mine?.today?.total).toBe(10);
@@ -123,7 +126,7 @@ describe("standings a member can see", () => {
     const [u] = await createUsers(1);
     await member(u.id, "أحمد");
     for (let i = 0; i < 7; i++) await attempt(c.id, u.id, roundIndex(i), i === 0 ? 1 : 10);
-    const body = await getStandings(u.id, 10, atNoon(roundIndex(1)));
+    const body = await getStandings(c.id, u.id, 10, atNoon(roundIndex(1)));
 
     expect(body.thisWeek[0].total).toBe(60);
   });
@@ -135,11 +138,48 @@ describe("standings a member can see", () => {
     await member(late.id, "متأخر");
     for (let i = 0; i < 3; i++) await attempt(c.id, early.id, roundIndex(i), 10);
     await attempt(c.id, late.id, roundIndex(2), 10);
-    const body = await getStandings(late.id, 10, atNoon(roundIndex(2)));
+    const body = await getStandings(c.id, late.id, 10, atNoon(roundIndex(2)));
 
     expect(body.overall[0].name).toBe("مبكر");
     expect(body.overall[0].total).toBe(30);
     expect(body.mine?.overall?.total).toBe(10);
+  });
+
+  it("skips a private competition the member was not invited to", async () => {
+    await competition({ visibility: "PRIVATE" });
+    const [u] = await createUsers(1);
+    await member(u.id, "أحمد");
+    await signInAs(u);
+
+    const body = await (await standings()).json();
+
+    expect(body.running).toBe(false);
+    expect(body.competitionId).toBeNull();
+  });
+
+  it("shows a private competition to the member who was invited", async () => {
+    const c = await competition({ visibility: "PRIVATE" });
+    const [u] = await createUsers(1);
+    await member(u.id, "أحمد");
+    await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: u.id } });
+    await signInAs(u);
+
+    const body = await (await standings()).json();
+
+    expect(body.running).toBe(true);
+    expect(body.competitionId).toBe(c.id);
+  });
+
+  it("falls back to a competition the member may play when asked for one they may not", async () => {
+    const open = await competition();
+    const shut = await competition({ visibility: "PRIVATE", name: "خاصة" });
+    const [u] = await createUsers(1);
+    await member(u.id, "أحمد");
+    await signInAs(u);
+
+    const body = await (await STANDINGS(get(`/api/quiz/standings?competition=${shut.id}`))).json();
+
+    expect(body.competitionId).toBe(open.id);
   });
 
   it("shows a member with no attempt as having no place", async () => {
@@ -148,7 +188,7 @@ describe("standings a member can see", () => {
     await member(u.id, "أحمد");
     await signInAs(u);
 
-    const body = await (await STANDINGS()).json();
+    const body = await (await standings()).json();
 
     expect(body.mine.today).toBeNull();
   });
@@ -169,7 +209,7 @@ describe("winners an admin can read", () => {
     await attempt(c.id, b.id, roundIndex(0), 30);
     await attempt(c.id, b.id, roundIndex(1), 40);
 
-    const body = await (await WINNERS()).json();
+    const body = await (await winners(c.id)).json();
 
     expect(body.rounds).toHaveLength(2);
     expect(body.rounds[0].winner.name).toBe("أحمد");
@@ -182,7 +222,7 @@ describe("winners an admin can read", () => {
     await member(a.id, "أحمد");
     await attempt(c.id, a.id, roundIndex(0), 50);
 
-    const body = await (await WINNERS()).json();
+    const body = await (await winners(c.id)).json();
 
     expect(body.groups[0].group).toBe(0);
     expect(body.groups[0].winner.name).toBe("أحمد");
@@ -194,7 +234,7 @@ describe("winners an admin can read", () => {
     await member(a.id, "أحمد");
     await attempt(c.id, a.id, roundIndex(0), 50);
 
-    expect((await (await WINNERS()).json()).overall).toBeNull();
+    expect((await (await winners(c.id)).json()).overall).toBeNull();
   });
 
   it("names the overall winner once the run is over", async () => {
@@ -214,15 +254,15 @@ describe("winners an admin can read", () => {
       data: { roundId: round.id, userId: a.id, score: 50, finishedAt: new Date() },
     });
 
-    const body = await (await WINNERS()).json();
+    const body = await (await winners(c.id)).json();
 
     expect(body.overall.name).toBe("أحمد");
   });
 
   it("is closed to an admin without the quiz section", async () => {
-    await competition();
+    const c = await competition();
     await signInAsAdmin(await createAdmin("members", "MEMBERS"));
 
-    expect((await WINNERS()).status).toBe(403);
+    expect((await winners(c.id)).status).toBe(403);
   });
 });

@@ -6,8 +6,8 @@ import { ConflictError, ValidationError } from "./errors";
 export const NOT_A_ROUND = "هذه الجولة ليست من جولات المسابقة";
 export const POOL_TOO_SMALL = "عدد الأسئلة أقل من العدد المطلوب لكل مشارك";
 
-export async function listRounds() {
-  const competition = await requireCompetition();
+export async function listRounds(competitionId: string) {
+  const competition = await requireCompetition(competitionId);
   const windows = roundWindows(shapeOf(competition));
   const rounds = await prisma.quizRound.findMany({
     where: { competitionId: competition.id },
@@ -26,8 +26,8 @@ export async function listRounds() {
   };
 }
 
-export async function setRoundPool(index: number, questionIds: string[]) {
-  const competition = await requireCompetition();
+export async function setRoundPool(competitionId: string, index: number, questionIds: string[]) {
+  const competition = await requireCompetition(competitionId);
   const window = roundWindows(shapeOf(competition)).find((w) => w.index === index);
   if (!window) throw new ValidationError(NOT_A_ROUND);
 
@@ -71,8 +71,8 @@ export async function setRoundPool(index: number, questionIds: string[]) {
   return { index, loaded: valid.length, skipped: unique.length - valid.length };
 }
 
-export async function fillRoundsFromBank() {
-  const competition = await requireCompetition();
+export async function fillRoundsFromBank(competitionId: string) {
+  const competition = await requireCompetition(competitionId);
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
 
   const questions = await prisma.quizQuestion.findMany({
@@ -95,6 +95,7 @@ export async function fillRoundsFromBank() {
       (window.index + 1) * competition.poolSize,
     );
     await setRoundPool(
+      competitionId,
       window.index,
       slice.map((q) => q.id),
     );

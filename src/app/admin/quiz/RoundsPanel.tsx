@@ -19,28 +19,30 @@ interface RoundsBody {
   startedAt: string | null;
 }
 
-export default function RoundsPanel({ questionCount }: { questionCount: number }) {
+export default function RoundsPanel({
+  competitionId,
+  questionCount,
+}: {
+  competitionId: string;
+  questionCount: number;
+}) {
   const [body, setBody] = useState<RoundsBody | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [reload, setReload] = useState(0);
 
-  async function load() {
-    try {
-      setBody(await api.get<RoundsBody>("/api/admin/quiz/rounds"));
-      setMissing(false);
-    } catch {
-      setMissing(true);
-    }
-  }
+  const path = `/api/admin/quiz/competitions/${competitionId}/rounds`;
 
   useEffect(() => {
     let alive = true;
     api
-      .get<RoundsBody>("/api/admin/quiz/days")
+      .get<RoundsBody>(path)
       .then((data) => {
-        if (alive) setBody(data);
+        if (!alive) return;
+        setBody(data);
+        setMissing(false);
       })
       .catch(() => {
         if (alive) setMissing(true);
@@ -48,16 +50,16 @@ export default function RoundsPanel({ questionCount }: { questionCount: number }
     return () => {
       alive = false;
     };
-  }, []);
+  }, [path, reload]);
 
   async function fill() {
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      const { filled } = await api.post<{ filled: number }>("/api/admin/quiz/rounds/fill", {});
+      const { filled } = await api.post<{ filled: number }>(`${path}/fill`, {});
       setNotice(`تم توزيع الأسئلة على ${filled} جولة`);
-      await load();
+      setReload((n) => n + 1);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -116,7 +118,7 @@ export default function RoundsPanel({ questionCount }: { questionCount: number }
 
       {body && !body.startedAt && (
         <button onClick={fill} disabled={busy} className="btn btn-primary btn-sm text-xs">
-          <IconLabel name="shuffle">{busy ? "..." : "توزيع الأسئلة على الأيام"}</IconLabel>
+          <IconLabel name="shuffle">{busy ? "..." : "توزيع الأسئلة على الجولات"}</IconLabel>
         </button>
       )}
 

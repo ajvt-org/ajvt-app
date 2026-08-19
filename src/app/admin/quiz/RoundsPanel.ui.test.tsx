@@ -47,36 +47,38 @@ beforeEach(() => {
 describe("RoundsPanel", () => {
   it("shows nothing when there is no competition to speak of", async () => {
     get.mockRejectedValue(new Error("لا توجد مسابقة"));
-    const { container } = render(<RoundsPanel questionCount={0} />);
+    const { container } = render(<RoundsPanel competitionId="c1" questionCount={0} />);
 
     await waitFor(() => expect(container.textContent).toBe(""));
   });
 
   it("says how many rounds are ready against how many there are", async () => {
-    render(<RoundsPanel questionCount={100} />);
+    render(<RoundsPanel competitionId="c1" questionCount={100} />);
 
     await waitFor(() => expect(screen.getByText(/جاهزة 2 من 3 جولة/)).toBeDefined());
   });
 
   it("says what the bank still needs", async () => {
-    render(<RoundsPanel questionCount={100} />);
+    render(<RoundsPanel competitionId="c1" questionCount={100} />);
 
     await waitFor(() => expect(screen.getByText(/المطلوب 12 سؤالاً والمتوفر 100/)).toBeDefined());
   });
 
   it("spreads the bank when asked", async () => {
-    render(<RoundsPanel questionCount={100} />);
+    render(<RoundsPanel competitionId="c1" questionCount={100} />);
     await waitFor(() => screen.getByRole("button", { name: /توزيع الأسئلة/ }));
 
     await userEvent.click(screen.getByRole("button", { name: /توزيع الأسئلة/ }));
 
-    await waitFor(() => expect(post).toHaveBeenCalledWith("/api/admin/quiz/rounds/fill", {}));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/rounds/fill", {}),
+    );
     expect(screen.getByText(/تم توزيع الأسئلة على 3 جولة/)).toBeDefined();
   });
 
   it("shows what the server refused", async () => {
     post.mockRejectedValue(new Error("المخزون لا يكفي"));
-    render(<RoundsPanel questionCount={5} />);
+    render(<RoundsPanel competitionId="c1" questionCount={5} />);
     await waitFor(() => screen.getByRole("button", { name: /توزيع الأسئلة/ }));
 
     await userEvent.click(screen.getByRole("button", { name: /توزيع الأسئلة/ }));
@@ -86,7 +88,7 @@ describe("RoundsPanel", () => {
 
   it("stops offering to change the rounds once it has started", async () => {
     get.mockResolvedValue({ ...body, startedAt: "2026-08-20T00:00:00.000Z" });
-    render(<RoundsPanel questionCount={100} />);
+    render(<RoundsPanel competitionId="c1" questionCount={100} />);
 
     await waitFor(() => expect(screen.getByText(/لا يمكن تغيير/)).toBeDefined());
     expect(screen.queryByRole("button", { name: /توزيع الأسئلة/ })).toBeNull();

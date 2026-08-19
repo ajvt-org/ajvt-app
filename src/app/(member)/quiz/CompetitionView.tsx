@@ -29,6 +29,8 @@ interface Place {
 
 export interface StandingsState {
   running: boolean;
+  competitionId: string | null;
+  name: string | null;
   meId: string | null;
   today: BoardRow[];
   thisWeek: BoardRow[];
@@ -40,11 +42,14 @@ export default function CompetitionView({
   standings,
   backHref,
   onReloadStandings,
+  onSwitch,
 }: {
   standings: StandingsState;
   backHref: string;
   onReloadStandings: () => void;
+  onSwitch?: () => void;
 }) {
+  const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [result, setResult] = useState<AnswerState | null>(null);
   const [closed, setClosed] = useState("");
@@ -53,7 +58,7 @@ export default function CompetitionView({
   useEffect(() => {
     let alive = true;
     api
-      .post<AttemptState>("/api/quiz/attempt", {})
+      .post<AttemptState>("/api/quiz/attempt", { competitionId })
       .then((state) => {
         if (alive) setAttempt(state);
       })
@@ -63,7 +68,7 @@ export default function CompetitionView({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [competitionId]);
 
   async function answer(selected: string[]) {
     if (!attempt?.question) return;
@@ -121,7 +126,7 @@ export default function CompetitionView({
 
   return (
     <div className="app-shell">
-      <PageHeader title="المسابقة الثقافية" backHref={backHref} />
+      <PageHeader title={standings.name ?? "المسابقة الثقافية"} backHref={backHref} />
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-6 text-center">
           <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
@@ -134,6 +139,11 @@ export default function CompetitionView({
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
               مجموعك في الجولة {attempt.score}
             </p>
+          )}
+          {onSwitch && (
+            <button onClick={onSwitch} className="btn btn-sm text-xs mt-3">
+              تغيير المسابقة
+            </button>
           )}
         </div>
 
