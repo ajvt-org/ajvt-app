@@ -114,9 +114,8 @@ export default function QuizPage() {
     return (
       <CompetitionView
         standings={standings}
-        backHref={backHref}
+        onBack={() => setChosen(null)}
         onReloadStandings={loadStandings}
-        onSwitch={() => setChosen(null)}
         onTutorial={() => setTutorial(true)}
       />
     );

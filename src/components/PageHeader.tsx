@@ -4,10 +4,12 @@ import BackButton from "./BackButton";
 export default function PageHeader({
   title,
   backHref,
+  onBack,
   actions,
 }: {
   title: string;
   backHref?: string;
+  onBack?: () => void;
   actions?: React.ReactNode;
 }) {
   return (
@@ -15,7 +17,7 @@ export default function PageHeader({
       className="page-header px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
-      {backHref ? <BackButton href={backHref} /> : null}
+      {onBack || backHref ? <BackButton href={backHref} onBack={onBack} /> : null}
       <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>

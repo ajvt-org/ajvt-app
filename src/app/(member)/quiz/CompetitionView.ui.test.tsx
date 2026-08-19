@@ -34,7 +34,7 @@ const question = {
 };
 
 const setup = () =>
-  render(<CompetitionView standings={standings} backHref="/home" onReloadStandings={vi.fn()} />);
+  render(<CompetitionView standings={standings} onBack={vi.fn()} onReloadStandings={vi.fn()} />);
 
 beforeEach(() => {
   post.mockReset();
@@ -150,5 +150,16 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10/)).toBeDefined());
+  });
+
+  it("goes back to the list of quizzes rather than out of the section", async () => {
+    const onBack = vi.fn();
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    await waitFor(() => screen.getByRole("button", { name: "رجوع" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
+
+    expect(onBack).toHaveBeenCalled();
   });
 });

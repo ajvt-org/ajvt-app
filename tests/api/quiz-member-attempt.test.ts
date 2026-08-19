@@ -190,6 +190,20 @@ describe("a member playing the daily attempt", () => {
     expect((await startAttempt(competition.id)).status).toBe(200);
   });
 
+  it("hands back one attempt when two requests race", async () => {
+    const { competition } = await setup();
+
+    const [one, two] = await Promise.all([
+      startAttempt(competition.id),
+      startAttempt(competition.id),
+    ]);
+
+    expect(one.status).toBe(200);
+    expect(two.status).toBe(200);
+    expect((await one.json()).attemptId).toBe((await two.json()).attemptId);
+    expect(await prisma.quizAttempt.count()).toBe(1);
+  });
+
   it("refuses an attempt with no competition named", async () => {
     await setup();
 

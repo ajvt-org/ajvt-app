@@ -41,15 +41,13 @@ export interface StandingsState {
 
 export default function CompetitionView({
   standings,
-  backHref,
+  onBack,
   onReloadStandings,
-  onSwitch,
   onTutorial,
 }: {
   standings: StandingsState;
-  backHref: string;
+  onBack: () => void;
   onReloadStandings: () => void;
-  onSwitch?: () => void;
   onTutorial?: () => void;
 }) {
   const competitionId = standings.competitionId;
@@ -130,7 +128,7 @@ export default function CompetitionView({
 
   return (
     <div className="app-shell">
-      <PageHeader title={standings.name ?? "المسابقة الثقافية"} backHref={backHref} />
+      <PageHeader title={standings.name ?? "المسابقات الثقافية"} onBack={onBack} />
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-6 text-center">
           <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
@@ -150,11 +148,6 @@ export default function CompetitionView({
           {onTutorial && (
             <button onClick={onTutorial} className="btn btn-sm text-xs mt-3 ms-2">
               جولة تجريبية
-            </button>
-          )}
-          {onSwitch && (
-            <button onClick={onSwitch} className="btn btn-sm text-xs mt-3">
-              تغيير المسابقة
             </button>
           )}
         </div>

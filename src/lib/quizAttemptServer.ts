@@ -3,6 +3,7 @@ import { requireCompetition, shapeOf } from "./competitionServer";
 import { bandScore, type SpeedBand } from "./competitionConfig";
 import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
+import { isUniqueViolation } from "./prismaError";
 import { quiz } from "./messages";
 
 export const NOT_OPEN = "المسابقة ليست مفتوحة الآن";
@@ -50,22 +51,29 @@ export async function startOrResumeAttempt(
     byQuestion.set(a.questionId, [...(byQuestion.get(a.questionId) ?? []), a.id]);
   }
 
-  return prisma.quizAttempt.create({
-    data: {
-      roundId: round.id,
-      userId,
-      answers: {
-        create: drawn.map((questionId, position) => ({
-          questionId,
-          position,
-          optionOrder: seededShuffle(
-            byQuestion.get(questionId) ?? [],
-            `${round.id}:${userId}:${questionId}`,
-          ),
-        })),
+  try {
+    return await prisma.quizAttempt.create({
+      data: {
+        roundId: round.id,
+        userId,
+        answers: {
+          create: drawn.map((questionId, position) => ({
+            questionId,
+            position,
+            optionOrder: seededShuffle(
+              byQuestion.get(questionId) ?? [],
+              `${round.id}:${userId}:${questionId}`,
+            ),
+          })),
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    return prisma.quizAttempt.findUniqueOrThrow({
+      where: { roundId_userId: { roundId: round.id, userId } },
+    });
+  }
 }
 
 export async function currentQuestion(attemptId: string, userId: string, now = new Date()) {
