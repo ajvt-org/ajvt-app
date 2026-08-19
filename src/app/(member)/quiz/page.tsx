@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import PageHeader from "@/components/PageHeader";
@@ -9,7 +9,8 @@ import { goAfterAuthChange } from "@/lib/authNav";
 import AssignmentsView from "./AssignmentsView";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 import QuizLocked, { CreateAccountAction } from "./QuizLocked";
-import type { QuizMeData } from "./types";
+import QuizPicker from "./QuizPicker";
+import type { QuizMeData, RunningCompetition } from "./types";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -17,6 +18,8 @@ export default function QuizPage() {
   const router = useRouter();
 
   const [data, setData] = useState<QuizMeData | null>(null);
+  const [running, setRunning] = useState<RunningCompetition[]>([]);
+  const [chosen, setChosen] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingsState | null>(null);
   const [ineligible, setIneligible] = useState(false);
   const [visitor, setVisitor] = useState(false);
@@ -41,18 +44,32 @@ export default function QuizPage() {
       .catch(() => setVisitor(true));
   }
 
-  function loadStandings() {
-    return fetch("/api/quiz/standings")
+  const loadStandings = useCallback(() => {
+    const query = chosen ? `?competition=${chosen}` : "";
+    return fetch(`/api/quiz/standings${query}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         if (json) setStandings(json);
       })
       .catch(() => {});
+  }, [chosen]);
+
+  function loadRunning() {
+    return fetch("/api/quiz/competitions")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (json) setRunning(json.competitions);
+      })
+      .catch(() => {});
   }
 
   useEffect(() => {
-    Promise.all([loadData(), loadStandings()]).finally(() => setLoading(false));
+    Promise.all([loadData(), loadRunning()]).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadStandings();
+  }, [loadStandings]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -99,12 +116,17 @@ export default function QuizPage() {
     );
   }
 
+  if (running.length > 1 && !chosen) {
+    return <QuizPicker competitions={running} backHref={backHref} onPick={setChosen} />;
+  }
+
   if (standings?.running) {
     return (
       <CompetitionView
         standings={standings}
         backHref={backHref}
         onReloadStandings={loadStandings}
+        onSwitch={running.length > 1 ? () => setChosen(null) : undefined}
       />
     );
   }
