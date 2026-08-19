@@ -397,6 +397,7 @@ model FinanceTag {
   createdAt DateTime   @default(now())
   expenses  Expense[]
   donations Donation[]
+  payments  Payment[]
 }
 
 // One row per (day, anonymous visitor) — the visitor cookie is set by
@@ -676,8 +677,10 @@ model Payment {
   anonymous  Boolean        @default(false)
   donorName  String?
   donorPhoto String? // donor with no linked Member — shown on the honour board
+  donorPhone String? // contact note for a manually entered donor with no account
   memberId   String?
   member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tags       FinanceTag[]
   activityId String?
   activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
   recordedBy String?

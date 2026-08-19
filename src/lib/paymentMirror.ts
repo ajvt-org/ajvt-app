@@ -71,8 +71,10 @@ export interface DonationMirror {
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
   donorPhoto: string | null;
+  donorPhone: string | null;
   memberId: string | null;
   activityId: string | null;
+  tagIds?: string[];
 }
 
 export async function mirrorDonation(db: Db, d: DonationMirror) {
@@ -95,15 +97,25 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     anonymous: d.donorName === null,
     donorName: d.donorName,
     donorPhoto: d.donorPhoto,
+    donorPhone: d.donorPhone,
     memberId: d.memberId,
     activityId: d.activityId,
   };
 
   if (existing) {
-    await db.payment.update({ where: { id: existing.id }, data });
+    await db.payment.update({
+      where: { id: existing.id },
+      data: { ...data, ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}) },
+    });
     return;
   }
-  await db.payment.create({ data: { ...data, id: d.donationId } });
+  await db.payment.create({
+    data: {
+      ...data,
+      id: d.donationId,
+      ...(d.tagIds ? { tags: { connect: d.tagIds.map((id) => ({ id })) } } : {}),
+    },
+  });
 }
 
 export async function removeMirroredDonation(db: Db, donationId: string) {

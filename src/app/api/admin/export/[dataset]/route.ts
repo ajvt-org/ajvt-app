@@ -5,13 +5,14 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { toCsv } from "@/lib/csv";
-import { surplusForYear } from "@/lib/paidBreakdown";
+import { splitPayment } from "@/lib/membershipPayment";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
 import {
   isDataset,
   memberRows,
   donationRows,
   ageRows,
+  sourceOf,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
@@ -25,32 +26,52 @@ async function buildCsv(dataset: Dataset): Promise<string> {
       orderBy: { createdAt: "asc" },
       include: {
         user: { select: { phone: true } },
-        donations: {
-          where: { source: "MEMBERSHIP" },
-          select: { amount: true, membershipYear: true },
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true },
         },
       },
     });
     return toCsv(
       MEMBER_HEADERS,
       memberRows(
-        members.map((m) => ({
-          ...m,
-          supportAmount: surplusForYear(m.donations, m.membershipYear),
-        })),
+        members.map((m) => {
+          const paid = m.payments.find((p) => p.year === m.membershipYear);
+          const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
+          return {
+            ...m,
+            paidAmount: split ? split.fee : null,
+            supportAmount: split ? split.surplus : 0,
+          };
+        }),
       ),
     );
   }
 
   if (dataset === "donations") {
-    const donations = await prisma.donation.findMany({
+    const payments = await prisma.payment.findMany({
       orderBy: { createdAt: "asc" },
       include: {
         member: { select: { fullName: true } },
         tags: { select: { name: true } },
       },
     });
-    return toCsv(DONATION_HEADERS, donationRows(donations));
+    return toCsv(
+      DONATION_HEADERS,
+      donationRows(
+        payments
+          .map((p) => ({
+            ...p,
+            amount:
+              p.purpose === "MEMBERSHIP"
+                ? splitPayment(p.amount, p.feeApplied ?? 0).surplus
+                : p.amount,
+            paymentMethod: p.method,
+            source: sourceOf(p.purpose, p.memberId),
+          }))
+          .filter((p) => p.purpose !== "MEMBERSHIP" || p.amount > 0),
+      ),
+    );
   }
 
   return toCsv(AGE_HEADERS, ageRows(await getAgeStandings()));

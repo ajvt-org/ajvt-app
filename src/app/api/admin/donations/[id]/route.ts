@@ -134,6 +134,8 @@ export const PATCH = withRoute(
       status: donation.status,
       donorName: donation.donorName,
       donorPhoto: donation.donorPhoto,
+      donorPhone: donation.donorPhone,
+      tagIds,
       memberId: donation.memberId,
       activityId: donation.activityId,
     });

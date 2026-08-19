@@ -123,6 +123,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     status: "PENDING",
     donorName,
     donorPhoto: null,
+    donorPhone: null,
     memberId,
     activityId: null,
   });

@@ -39,6 +39,7 @@ async function gift(
     status,
     donorName: donation.donorName,
     donorPhoto: null,
+    donorPhone: null,
     memberId: donation.memberId,
     activityId: null,
   });
@@ -175,6 +176,7 @@ describe("the supporters board", () => {
       status: "ACTIVE",
       donorName: "زائر",
       donorPhoto: "guest.webp",
+      donorPhone: null,
       memberId: null,
       activityId: null,
     });
