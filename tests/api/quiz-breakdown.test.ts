@@ -17,7 +17,6 @@ async function competition(over: Record<string, unknown> = {}) {
       roundPeriodMinutes: 1440,
       roundWindowMinutes: 840,
       servedCount: 2,
-      poolSize: 2,
       boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       startedAt: new Date(),

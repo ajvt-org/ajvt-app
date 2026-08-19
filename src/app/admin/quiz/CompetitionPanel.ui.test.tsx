@@ -28,7 +28,6 @@ const saved = {
   roundPeriodMinutes: 1440,
   roundWindowMinutes: 840,
   servedCount: 10,
-  poolSize: 30,
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,

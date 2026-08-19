@@ -5,6 +5,7 @@ import {
   curvePercent,
   curveScore,
   isTimestamp,
+  pickConfig,
   MAX_ROUNDS,
   DEFAULT_CURVE,
   DEFAULT_CONFIG,
@@ -60,12 +61,19 @@ describe("validateConfig", () => {
     ).toBeNull();
   });
 
-  it("refuses a pool smaller than a round serves", () => {
-    expect(with_({ servedCount: 10, poolSize: 5 })).toContain("حجم المخزون");
+  it("keeps only the keys a competition knows", () => {
+    const picked = pickConfig({
+      name: "مسابقة",
+      servedCount: 5,
+      poolSize: 30,
+      stray: true,
+    } as Record<string, unknown>);
+
+    expect(picked).toEqual({ name: "مسابقة", servedCount: 5 });
   });
 
-  it("allows a pool exactly the size of the round", () => {
-    expect(with_({ servedCount: 10, poolSize: 10 })).toBeNull();
+  it("passes a full config through untouched", () => {
+    expect(pickConfig(config)).toEqual(config);
   });
 
   it("needs at least one ranking", () => {

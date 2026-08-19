@@ -13,7 +13,6 @@ const row = (over: Partial<CompetitionRow> = {}): CompetitionRow => ({
   roundPeriodMinutes: 1440,
   roundWindowMinutes: 840,
   servedCount: 10,
-  poolSize: 30,
   boards: [],
   categoryRounds: false,
   bankId: "general",

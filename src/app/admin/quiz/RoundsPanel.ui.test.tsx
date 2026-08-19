@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import RoundsPanel from "./RoundsPanel";
 
 const get = vi.fn();
-const post = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { get: (...a: unknown[]) => get(...a), post: (...a: unknown[]) => post(...a) },
+  api: { get: (...a: unknown[]) => get(...a) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -18,7 +16,7 @@ const body = {
       opensAt: "2026-08-20T08:00:00.000Z",
       closesAt: "2026-08-20T22:00:00.000Z",
       category: null,
-      loaded: 4,
+      loaded: 0,
     },
     {
       index: 1,
@@ -32,20 +30,18 @@ const body = {
       opensAt: "2026-08-22T08:00:00.000Z",
       closesAt: "2026-08-22T22:00:00.000Z",
       category: null,
-      loaded: 4,
+      loaded: 0,
     },
   ],
   bankSize: 100,
+  plannable: 3,
   servedCount: 3,
-  poolSize: 4,
   startedAt: null as string | null,
 };
 
 beforeEach(() => {
   get.mockReset();
-  post.mockReset();
   get.mockResolvedValue(body);
-  post.mockResolvedValue({ filled: 3 });
 });
 
 describe("RoundsPanel", () => {
@@ -56,40 +52,25 @@ describe("RoundsPanel", () => {
     await waitFor(() => expect(container.textContent).toBe(""));
   });
 
-  it("says how many rounds are ready against how many there are", async () => {
+  it("says how far the bank goes before the start", async () => {
     render(<RoundsPanel competitionId="c1" />);
 
-    await waitFor(() => expect(screen.getByText(/جاهزة 2 من 3 جولة/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText(/البنك يغطي 3 من 3 جولة/)).toBeDefined());
+    expect(screen.getByText(/المطلوب 9 سؤالاً والمتوفر 100/)).toBeDefined();
   });
 
-  it("says what the bank still needs", async () => {
+  it("flags a bank that cannot cover every round", async () => {
+    get.mockResolvedValue({ ...body, plannable: 1, bankSize: 4 });
     render(<RoundsPanel competitionId="c1" />);
 
-    await waitFor(() =>
-      expect(screen.getByText(/المطلوب 12 سؤالاً والمتوفر في البنك 100/)).toBeDefined(),
-    );
+    await waitFor(() => expect(screen.getByText(/البنك لا يكفي لكل الجولات/)).toBeDefined());
   });
 
-  it("spreads the bank when asked", async () => {
+  it("keeps quiet about coverage when every round is planned", async () => {
     render(<RoundsPanel competitionId="c1" />);
-    await waitFor(() => screen.getByRole("button", { name: /توزيع الأسئلة/ }));
 
-    await userEvent.click(screen.getByRole("button", { name: /توزيع الأسئلة/ }));
-
-    await waitFor(() =>
-      expect(post).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/rounds/fill", {}),
-    );
-    expect(screen.getByText(/تم توزيع الأسئلة على 3 جولة/)).toBeDefined();
-  });
-
-  it("shows what the server refused", async () => {
-    post.mockRejectedValue(new Error("المخزون لا يكفي"));
-    render(<RoundsPanel competitionId="c1" />);
-    await waitFor(() => screen.getByRole("button", { name: /توزيع الأسئلة/ }));
-
-    await userEvent.click(screen.getByRole("button", { name: /توزيع الأسئلة/ }));
-
-    await waitFor(() => expect(screen.getByText(/المخزون لا يكفي/)).toBeDefined());
+    await waitFor(() => screen.getByText(/جولات المسابقة/));
+    expect(screen.queryByText(/البنك لا يكفي/)).toBeNull();
   });
 
   it("names the category of a round drawn from one", async () => {
@@ -102,11 +83,15 @@ describe("RoundsPanel", () => {
     await waitFor(() => expect(screen.getByText(/جغرافيا/)).toBeDefined());
   });
 
-  it("stops offering to change the rounds once it has started", async () => {
-    get.mockResolvedValue({ ...body, startedAt: "2026-08-20T00:00:00.000Z" });
+  it("locks the rounds once the run has started", async () => {
+    get.mockResolvedValue({
+      ...body,
+      startedAt: "2026-08-20T00:00:00.000Z",
+      rounds: body.rounds.map((r) => ({ ...r, loaded: 3 })),
+    });
     render(<RoundsPanel competitionId="c1" />);
 
     await waitFor(() => expect(screen.getByText(/لا يمكن تغيير/)).toBeDefined());
-    expect(screen.queryByRole("button", { name: /توزيع الأسئلة/ })).toBeNull();
+    expect(screen.queryByText(/البنك يغطي/)).toBeNull();
   });
 });
