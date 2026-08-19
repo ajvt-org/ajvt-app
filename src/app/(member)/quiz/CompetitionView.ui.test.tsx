@@ -158,6 +158,34 @@ describe("CompetitionView", () => {
     expect(screen.queryByText(/مجموعك/)).toBeNull();
   });
 
+  it("hands the member back to the quiz list when the last answer lands", async () => {
+    const onBack = vi.fn();
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 0,
+      done: false,
+      total: 1,
+      position: 0,
+      question,
+    });
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 10,
+      done: true,
+      total: 1,
+      position: 1,
+      question: null,
+    });
+    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
+
+    await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
+    await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
+
+    await waitFor(() => expect(onBack).toHaveBeenCalled());
+    expect(screen.queryByText("أنهيت أسئلة الجولة")).toBeNull();
+  });
+
   it("shows the standings once the attempt is finished", async () => {
     post.mockResolvedValue({
       attemptId: "at1",

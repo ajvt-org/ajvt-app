@@ -79,11 +79,20 @@ export default function CompetitionView({
     };
   }, [competitionId]);
 
+  function land(next: AttemptState) {
+    if (next.done) {
+      onReloadStandings();
+      onBack();
+      return;
+    }
+    setAttempt(next);
+  }
+
   async function skip() {
     if (!competitionId || busy) return;
     setBusy(true);
     try {
-      setAttempt(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
+      land(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
@@ -95,12 +104,12 @@ export default function CompetitionView({
     if (!attempt?.question) return;
     setBusy(true);
     try {
-      const next = await api.post<AttemptState>("/api/quiz/attempt/answer", {
-        answerId: attempt.question.answerId,
-        selectedAnswerIds: selected,
-      });
-      setAttempt(next);
-      if (next.done) onReloadStandings();
+      land(
+        await api.post<AttemptState>("/api/quiz/attempt/answer", {
+          answerId: attempt.question.answerId,
+          selectedAnswerIds: selected,
+        }),
+      );
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
