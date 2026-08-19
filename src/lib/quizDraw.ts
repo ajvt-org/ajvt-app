@@ -15,7 +15,7 @@ export interface RoundPlan {
 
 export interface DrawShape {
   roundCount: number;
-  poolSize: number;
+  questionCount: number;
   categoryRounds: boolean;
 }
 
@@ -54,16 +54,24 @@ function byCategory(questions: BankQuestion[]): Map<string, BankQuestion[]> {
   return out;
 }
 
-function deepestCategory(left: Map<string, BankQuestion[]>, poolSize: number): string | null {
+function deepestCategory(left: Map<string, BankQuestion[]>, questionCount: number): string | null {
   let best: string | null = null;
   let depth = 0;
   for (const [category, questions] of [...left].sort((a, b) => a[0].localeCompare(b[0]))) {
-    if (questions.length >= poolSize && questions.length > depth) {
+    if (questions.length >= questionCount && questions.length > depth) {
       best = category;
       depth = questions.length;
     }
   }
   return best;
+}
+
+export function drawShortfall(shape: DrawShape, planned: number, bankSize: number): string | null {
+  if (planned >= shape.roundCount) return null;
+  const needed = shape.roundCount * shape.questionCount;
+  return shape.categoryRounds
+    ? `التصنيفات لا تكفي، كل جولة تحتاج ${shape.questionCount} سؤالاً من تصنيف واحد، وأمكن تجهيز ${planned} جولة من ${shape.roundCount}`
+    : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bankSize}`;
 }
 
 export function planRounds(bank: BankQuestion[], shape: DrawShape, seed: string): RoundPlan[] {
@@ -72,12 +80,12 @@ export function planRounds(bank: BankQuestion[], shape: DrawShape, seed: string)
   const groups = byCategory(bank);
 
   for (let index = 0; index < shape.roundCount; index++) {
-    const category = shape.categoryRounds ? deepestCategory(groups, shape.poolSize) : null;
+    const category = shape.categoryRounds ? deepestCategory(groups, shape.questionCount) : null;
     if (shape.categoryRounds && !category) break;
 
     const from = category ? groups.get(category)! : left;
-    const drawn = spreadByDifficulty(from, shape.poolSize, `${seed}:${index}`);
-    if (drawn.length < shape.poolSize) break;
+    const drawn = spreadByDifficulty(from, shape.questionCount, `${seed}:${index}`);
+    if (drawn.length < shape.questionCount) break;
 
     const taken = new Set(drawn.map((q) => q.id));
     if (category)

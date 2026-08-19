@@ -13,12 +13,12 @@ export const GET = withRoute(
   async (_req: NextRequest, { params }: Params) => {
     await requireAdminRole("QUIZ");
     const { id } = await params;
-    const { competition, rounds, bankSize } = await listRounds(id);
+    const { competition, rounds, bankSize, plannable } = await listRounds(id);
     return NextResponse.json({
       rounds,
       bankSize,
+      plannable,
       servedCount: competition.servedCount,
-      poolSize: competition.poolSize,
       startedAt: competition.startedAt,
     });
   },

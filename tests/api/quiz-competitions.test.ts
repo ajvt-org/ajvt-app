@@ -47,6 +47,20 @@ async function made(body: unknown = config) {
   return (await (await create(body)).json()).competition as { id: string };
 }
 
+const small = { ...config, roundCount: 2, servedCount: 2 };
+
+async function stocked(body: unknown = small) {
+  const c = await made(body);
+  await prisma.quizQuestion.createMany({
+    data: Array.from({ length: 4 }, (_, i) => ({
+      text: `سؤال ${i}`,
+      category: "عام",
+      createdBy: "admin",
+    })),
+  });
+  return c;
+}
+
 describe("configuring a competition before it starts", () => {
   beforeEach(async () => {
     await resetDb();
@@ -170,12 +184,6 @@ describe("configuring a competition before it starts", () => {
     expect(res.status).toBe(400);
   });
 
-  it("refuses a pool smaller than the round set", async () => {
-    const c = await made();
-
-    expect((await save(c.id, { servedCount: 20, poolSize: 10 })).status).toBe(400);
-  });
-
   it("refuses a question time that does not outlast the full points window", async () => {
     const c = await made();
 
@@ -236,7 +244,7 @@ describe("configuring a competition before it starts", () => {
 
   it("freezes the bank once the competition has started", async () => {
     const bank = await prisma.questionBank.create({ data: { name: "بنك آخر" } });
-    const c = await made();
+    const c = await stocked();
     await start(c.id);
 
     expect((await save(c.id, { bankId: bank.id })).status).toBe(409);
@@ -358,7 +366,7 @@ describe("deleting a competition", () => {
   });
 
   it("removes one that has already started", async () => {
-    const c = await made();
+    const c = await stocked();
     await start(c.id);
 
     const res = await remove(c.id);
@@ -368,28 +376,23 @@ describe("deleting a competition", () => {
   });
 
   it("takes the scores of a started competition with it", async () => {
-    const c = await made();
+    const c = await stocked();
     const [user] = await createUsers(1);
-    const round = await prisma.quizRound.create({
-      data: {
-        competitionId: c.id,
-        index: 0,
-        opensAt: new Date("2026-08-20T08:00:00.000Z"),
-        closesAt: new Date("2026-08-20T22:00:00.000Z"),
-      },
-    });
-    const question = await prisma.quizQuestion.create({
-      data: { text: "س", category: "ع", createdBy: "admin" },
+    await start(c.id);
+    const round = await prisma.quizRound.findFirstOrThrow({
+      where: { competitionId: c.id },
+      include: { questions: true },
     });
     await prisma.quizAttempt.create({
       data: {
         roundId: round.id,
         userId: user.id,
         score: 30,
-        answers: { create: [{ questionId: question.id, position: 0, points: 30 }] },
+        answers: {
+          create: [{ questionId: round.questions[0].questionId, position: 0, points: 30 }],
+        },
       },
     });
-    await start(c.id);
 
     const body = await (await remove(c.id)).json();
 
@@ -492,7 +495,7 @@ describe("who may play a private competition", () => {
   });
 
   it("freezes the list once the competition has started", async () => {
-    const c = await made({ ...config, visibility: "PRIVATE" });
+    const c = await stocked({ ...small, visibility: "PRIVATE" });
     const one = await paidMember("أحمد");
     await start(c.id);
 
@@ -506,7 +509,7 @@ describe("once a competition has started", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
-    id = (await made()).id;
+    id = (await stocked()).id;
     await start(id);
   });
 
@@ -521,7 +524,7 @@ describe("once a competition has started", () => {
 
     expect(res.status).toBe(409);
     expect((await res.json()).error).toBe(ALREADY_STARTED);
-    expect((await prisma.competition.findUniqueOrThrow({ where: { id } })).servedCount).toBe(10);
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id } })).servedCount).toBe(2);
   });
 
   it("refuses to start twice", async () => {

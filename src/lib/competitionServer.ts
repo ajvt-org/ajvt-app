@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import {
   DEFAULT_BOARDS,
   DEFAULT_CONFIG,
+  pickConfig,
   validateConfig,
   type CompetitionConfig,
 } from "./competitionConfig";
@@ -102,7 +103,6 @@ function asConfig(row: CompetitionRow): CompetitionConfig {
     roundPeriodMinutes: row.roundPeriodMinutes,
     roundWindowMinutes: row.roundWindowMinutes,
     servedCount: row.servedCount,
-    poolSize: row.poolSize,
     boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
       title: b.title,
       blockRounds: b.blockRounds,
@@ -123,7 +123,8 @@ function asRow(config: CompetitionConfig) {
   return { ...rest, startsAt: new Date(config.startsAt) };
 }
 
-export async function saveCompetition(input: Partial<CompetitionConfig>, id?: string) {
+export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: string) {
+  const input = pickConfig(raw);
   const existing = id
     ? await prisma.competition.findUnique({
         where: { id },

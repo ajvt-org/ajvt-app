@@ -1,8 +1,5 @@
 export type Visibility = "PUBLIC" | "PRIVATE";
 
-// A correct answer keeps every point until fullSeconds, then falls in a straight
-// line to floorPercent at maxSeconds and stays there. maxSeconds is what one
-// question allows, so every question of a quiz decays on the same curve.
 export interface ScoreCurve {
   fullSeconds: number;
   maxSeconds: number;
@@ -26,7 +23,6 @@ export interface CompetitionConfig extends ScoreCurve {
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
   servedCount: number;
-  poolSize: number;
   categoryRounds: boolean;
 }
 
@@ -51,13 +47,20 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   roundPeriodMinutes: 1440,
   roundWindowMinutes: 840,
   servedCount: 10,
-  poolSize: 30,
   boards: DEFAULT_BOARDS,
   categoryRounds: false,
   ...DEFAULT_CURVE,
 };
 
 export const MAX_ROUNDS = 400;
+
+const CONFIG_KEYS = new Set(["name", "startsAt", ...Object.keys(DEFAULT_CONFIG)]);
+
+export function pickConfig(input: Partial<CompetitionConfig>): Partial<CompetitionConfig> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([key]) => CONFIG_KEYS.has(key)),
+  ) as Partial<CompetitionConfig>;
+}
 
 export function isTimestamp(value: string): boolean {
   const date = new Date(value);
@@ -90,8 +93,6 @@ export function validateConfig(config: CompetitionConfig): string | null {
     return "مدة الجولة يجب ألا تتجاوز المدة بين الجولات";
   if (!Number.isInteger(config.servedCount) || config.servedCount < 1)
     return "عدد أسئلة الجولة غير صالح";
-  if (!Number.isInteger(config.poolSize) || config.poolSize < config.servedCount)
-    return "حجم المخزون يجب أن يساوي عدد أسئلة الجولة أو يزيد عنه";
   const boards = validateBoards(config.boards);
   if (boards) return boards;
   if (typeof config.categoryRounds !== "boolean") return "خيار تصنيف الجولة غير صالح";

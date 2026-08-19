@@ -9,7 +9,6 @@ export interface Competition {
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
   servedCount: number;
-  poolSize: number;
   boards: BoardConfig[];
   categoryRounds: boolean;
   bankId: string;
@@ -31,15 +30,12 @@ export interface CompetitionDefaults {
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
   servedCount: number;
-  poolSize: number;
   boards: BoardConfig[];
   fullSeconds: number;
   maxSeconds: number;
   floorPercent: number;
 }
 
-// The admin picks a wall clock time on their own device, so the field reads and
-// writes local time and the instant is stored in UTC.
 export function toLocalInput(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
