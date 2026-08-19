@@ -8,12 +8,14 @@ export default function AttemptResult({
   points,
   score,
   last,
+  practice,
   onContinue,
 }: {
   isCorrect: boolean;
   points: number;
   score: number;
   last: boolean;
+  practice?: boolean;
   onContinue: () => void;
 }) {
   return (
@@ -21,6 +23,8 @@ export default function AttemptResult({
       className="flex flex-col min-h-[100svh] p-5 gap-4 items-center justify-center text-center"
       style={{ background: "var(--mint-50)" }}
     >
+      {practice && <span className="badge badge-pending text-xs">جولة تجريبية</span>}
+
       <div style={{ color: isCorrect ? "var(--mint-600)" : "#991b1b" }}>
         <Icon name={isCorrect ? "check" : "close"} size={56} />
       </div>

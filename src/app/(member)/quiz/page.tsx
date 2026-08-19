@@ -10,6 +10,7 @@ import AssignmentsView from "./AssignmentsView";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 import QuizLocked, { CreateAccountAction } from "./QuizLocked";
 import QuizPicker from "./QuizPicker";
+import TutorialQuiz from "./TutorialQuiz";
 import type { QuizMeData, RunningCompetition } from "./types";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -20,6 +21,7 @@ export default function QuizPage() {
   const [data, setData] = useState<QuizMeData | null>(null);
   const [running, setRunning] = useState<RunningCompetition[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
+  const [tutorial, setTutorial] = useState(false);
   const [standings, setStandings] = useState<StandingsState | null>(null);
   const [ineligible, setIneligible] = useState(false);
   const [visitor, setVisitor] = useState(false);
@@ -116,6 +118,10 @@ export default function QuizPage() {
     );
   }
 
+  if (tutorial) {
+    return <TutorialQuiz onExit={() => setTutorial(false)} />;
+  }
+
   if (running.length > 1 && !chosen) {
     return <QuizPicker competitions={running} backHref={backHref} onPick={setChosen} />;
   }
@@ -127,17 +133,25 @@ export default function QuizPage() {
         backHref={backHref}
         onReloadStandings={loadStandings}
         onSwitch={running.length > 1 ? () => setChosen(null) : undefined}
+        onTutorial={() => setTutorial(true)}
       />
     );
   }
 
-  if (!data) {
-    return (
-      <div className="app-shell">
-        <PageHeader title="المسابقة الثقافية" backHref={backHref} />
+  return (
+    <>
+      {data ? (
+        <AssignmentsView data={data} backHref={backHref} onReload={loadData} />
+      ) : (
+        <div className="app-shell">
+          <PageHeader title="المسابقة الثقافية" backHref={backHref} />
+        </div>
+      )}
+      <div className="px-5 pb-8">
+        <button onClick={() => setTutorial(true)} className="btn btn-sm text-xs">
+          جولة تجريبية
+        </button>
       </div>
-    );
-  }
-
-  return <AssignmentsView data={data} backHref={backHref} onReload={loadData} />;
+    </>
+  );
 }

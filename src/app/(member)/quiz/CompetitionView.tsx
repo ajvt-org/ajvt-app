@@ -44,11 +44,13 @@ export default function CompetitionView({
   backHref,
   onReloadStandings,
   onSwitch,
+  onTutorial,
 }: {
   standings: StandingsState;
   backHref: string;
   onReloadStandings: () => void;
   onSwitch?: () => void;
+  onTutorial?: () => void;
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
@@ -145,6 +147,11 @@ export default function CompetitionView({
           <button onClick={() => setShowScores((v) => !v)} className="btn btn-sm text-xs mt-3 ms-2">
             {showScores ? "إخفاء التفاصيل" : "تفاصيل نقاطي"}
           </button>
+          {onTutorial && (
+            <button onClick={onTutorial} className="btn btn-sm text-xs mt-3 ms-2">
+              جولة تجريبية
+            </button>
+          )}
           {onSwitch && (
             <button onClick={onSwitch} className="btn btn-sm text-xs mt-3">
               تغيير المسابقة
