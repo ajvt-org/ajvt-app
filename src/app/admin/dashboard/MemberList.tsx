@@ -2,6 +2,7 @@
 
 import Icon from "@/components/Icon";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
+import InlineName from "./InlineName";
 import { formatDateTime, toThumbUrl } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_BADGE } from "./constants";
 import type { Member } from "./types";
@@ -44,11 +45,13 @@ function MemberRow({
   checked,
   onToggle,
   onOpen,
+  onRenamed,
 }: {
   member: Member;
   checked: boolean;
   onToggle: () => void;
   onOpen: () => void;
+  onRenamed: (fullName: string) => void;
 }) {
   return (
     <div
@@ -67,9 +70,7 @@ function MemberRow({
           />
           <Avatar member={member} />
           <div className="min-w-0">
-            <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
-              {member.fullName}
-            </p>
+            <InlineName memberId={member.id} fullName={member.fullName} onRenamed={onRenamed} />
             <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
               {member.user?.phone || "غير معروف"}
             </p>
@@ -101,12 +102,14 @@ export default function MemberList({
   selectedIds,
   onToggle,
   onOpen,
+  onRenamed,
   pagination,
 }: {
   members: Member[];
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
   onOpen: (member: Member) => void;
+  onRenamed: (id: string, fullName: string) => void;
   pagination?: AdminListPagination;
 }) {
   return (
@@ -119,6 +122,7 @@ export default function MemberList({
           checked={selectedIds.has(m.id)}
           onToggle={() => onToggle(m.id)}
           onOpen={() => onOpen(m)}
+          onRenamed={(fullName) => onRenamed(m.id, fullName)}
         />
       )}
       emptyMessage="لا توجد طلبات في هذا القسم"

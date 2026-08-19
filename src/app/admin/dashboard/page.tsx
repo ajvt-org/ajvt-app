@@ -382,6 +382,10 @@ function AdminDashboardInner() {
             setTempPassword(null);
             setShowRejectPicker(false);
           }}
+          onRenamed={(id, fullName) => {
+            setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
+            setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
+          }}
           pagination={{ page: currentPage, totalPages, onGo: setPage }}
         />
       )}
