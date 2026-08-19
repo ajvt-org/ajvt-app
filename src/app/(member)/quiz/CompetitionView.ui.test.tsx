@@ -198,8 +198,24 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText("أنهيت أسئلة الجولة")).toBeDefined());
-    expect(screen.getByText(/مجموعك في الجولة 40/)).toBeDefined();
+    expect(screen.getByText(/مجموعك 40 نقطة/)).toBeDefined();
     expect(screen.getByText("الترتيب العام")).toBeDefined();
+  });
+
+  it("never puts a number after the round word, even at zero", async () => {
+    post.mockResolvedValue({
+      attemptId: "at1",
+      score: 0,
+      done: true,
+      total: 2,
+      position: 2,
+      question: null,
+    });
+    setup();
+
+    await waitFor(() => expect(screen.getByText("أنهيت أسئلة الجولة")).toBeDefined());
+    expect(screen.queryByText(/الجولة 0/)).toBeNull();
+    expect(screen.getByText(/مجموعك 0 نقطة/)).toBeDefined();
   });
 
   it("shows the member their place when they are off the board", async () => {
