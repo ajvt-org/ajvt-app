@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { countedNoun, QUESTIONS, ROUNDS } from "@/lib/arabicPlural";
 
 interface RoundRow {
   index: number;
@@ -58,8 +59,9 @@ export default function RoundsPanel({ competitionId }: { competitionId: string }
 
       {!body.startedAt && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          تُسحب أسئلة كل جولة من البنك عند الانطلاق. البنك يغطي {body.plannable} من {total} جولة،
-          المطلوب {needed} سؤالاً والمتوفر {body.bankSize}.
+          تُسحب أسئلة كل جولة من البنك عند الانطلاق. البنك يغطي {body.plannable} من{" "}
+          {countedNoun(total, ROUNDS)}، المطلوب {countedNoun(needed, QUESTIONS)} والمتوفر{" "}
+          {body.bankSize}.
         </p>
       )}
 

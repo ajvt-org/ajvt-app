@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { breakdownOf, rowPercent, type AnswerRow } from "./quizBreakdown";
+import { breakdownOf, roundEntries, rowPercent, type AnswerRow } from "./quizBreakdown";
 import { DEFAULT_CURVE } from "./competitionConfig";
 
 const row = (over: Partial<AnswerRow> = {}): AnswerRow => ({
@@ -95,5 +95,48 @@ describe("breakdownOf", () => {
     expect(out.rows).toEqual([]);
     expect(out.total).toBe(0);
     expect(out.score).toBe(0);
+  });
+});
+
+describe("roundEntries", () => {
+  const MINUTE = 60_000;
+  const at = (t: number) => new Date(t);
+  const windows = [0, 1, 2].map((index) => ({
+    index,
+    opensAt: at(index * 100 * MINUTE),
+    closesAt: at(index * 100 * MINUTE + 50 * MINUTE),
+  }));
+
+  it("marks a closed window without an attempt as missed", () => {
+    const entries = roundEntries(windows, new Map([[2, "a2"]]), at(250 * MINUTE));
+
+    expect(entries.map((e) => e.window.index)).toEqual([0, 1, 2]);
+    expect(entries[0].attempt).toBeNull();
+    expect(entries[1].attempt).toBeNull();
+    expect(entries[2].attempt).toBe("a2");
+  });
+
+  it("stops at the first window still ahead", () => {
+    const entries = roundEntries(windows, new Map([[0, "a0"]]), at(60 * MINUTE));
+
+    expect(entries.map((e) => e.window.index)).toEqual([0]);
+  });
+
+  it("skips an open window with nothing played yet", () => {
+    const entries = roundEntries(windows, new Map(), at(120 * MINUTE));
+
+    expect(entries.map((e) => e.window.index)).toEqual([0]);
+    expect(entries[0].attempt).toBeNull();
+  });
+
+  it("keeps an open window once it holds an attempt", () => {
+    const entries = roundEntries(windows, new Map([[1, "a1"]]), at(120 * MINUTE));
+
+    expect(entries.map((e) => e.window.index)).toEqual([0, 1]);
+    expect(entries[1].attempt).toBe("a1");
+  });
+
+  it("is empty before anything opens", () => {
+    expect(roundEntries(windows, new Map([[0, "a0"]]), at(-MINUTE))).toEqual([]);
   });
 });

@@ -60,7 +60,7 @@ describe("ScoreBreakdown", () => {
   it("says what was right against the round total", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/1 صحيحة من 2/)).toBeDefined();
+    expect(screen.getByText(/1 صحيحة من سؤالين/)).toBeDefined();
     expect(screen.getByText(/10 من 30/)).toBeDefined();
   });
 
@@ -74,7 +74,7 @@ describe("ScoreBreakdown", () => {
   it("shows the speed share each answer earned", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/10 من 10 نقطة .* 100%/)).toBeDefined();
+    expect(screen.getByText(/10 من 10 نقاط .* 100%/)).toBeDefined();
     expect(screen.getByText(/0 من 20 نقطة .* 0%/)).toBeDefined();
   });
 
@@ -95,7 +95,7 @@ describe("ScoreBreakdown", () => {
   it("explains the formula from the bands the quiz uses", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/حتى 10 ثانية، كل النقاط/)).toBeDefined();
+    expect(screen.getByText(/حتى 10 ثوانٍ، كل النقاط/)).toBeDefined();
     expect(screen.getByText(/الترتيب العام، مجموع كل جولات المسابقة/)).toBeDefined();
   });
 });

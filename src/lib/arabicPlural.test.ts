@@ -1,5 +1,42 @@
 import { describe, it, expect } from "vitest";
-import { countedLabel, hoursLabel } from "@/lib/arabicPlural";
+import {
+  countedLabel,
+  countedNoun,
+  hoursLabel,
+  QUESTIONS,
+  POINTS,
+  SECONDS,
+} from "@/lib/arabicPlural";
+
+describe("countedNoun", () => {
+  it("names one and two rather than counting them", () => {
+    expect(countedNoun(1, QUESTIONS)).toBe("سؤال واحد");
+    expect(countedNoun(2, QUESTIONS)).toBe("سؤالين");
+  });
+
+  it("uses the plural from three to ten", () => {
+    expect(countedNoun(3, QUESTIONS)).toBe("3 أسئلة");
+    expect(countedNoun(10, POINTS)).toBe("10 نقاط");
+    expect(countedNoun(10, SECONDS)).toBe("10 ثوانٍ");
+  });
+
+  it("returns to the accusative singular from eleven to ninety nine", () => {
+    expect(countedNoun(11, QUESTIONS)).toBe("11 سؤالاً");
+    expect(countedNoun(46, POINTS)).toBe("46 نقطة");
+    expect(countedNoun(99, QUESTIONS)).toBe("99 سؤالاً");
+  });
+
+  it("gives zero and the round hundreds the bare singular", () => {
+    expect(countedNoun(0, QUESTIONS)).toBe("0 سؤال");
+    expect(countedNoun(100, QUESTIONS)).toBe("100 سؤال");
+    expect(countedNoun(200, POINTS)).toBe("200 نقطة");
+  });
+
+  it("reads the shape off the last two digits", () => {
+    expect(countedNoun(103, QUESTIONS)).toBe("103 أسئلة");
+    expect(countedNoun(146, QUESTIONS)).toBe("146 سؤالاً");
+  });
+});
 
 describe("hoursLabel", () => {
   it("names one hour rather than counting it", () => {

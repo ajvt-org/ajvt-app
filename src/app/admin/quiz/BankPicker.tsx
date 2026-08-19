@@ -4,6 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ConfirmAction from "./ConfirmAction";
+import { countedNoun, QUESTIONS } from "@/lib/arabicPlural";
 
 export interface BankRow {
   id: string;
@@ -127,7 +128,7 @@ export default function BankPicker({
                   {bank.name}
                 </span>
                 <span className="ms-2" style={{ color: "var(--text-muted)" }}>
-                  {bank._count.questions} سؤالاً
+                  {countedNoun(bank._count.questions, QUESTIONS)}
                 </span>
               </button>
               <button

@@ -19,8 +19,28 @@ const rounds = [
     correct: 2,
     total: 3,
     finishedAt: null,
+    missed: false,
   },
-  { attemptId: "a2", round: 1, category: null, score: 10, correct: 1, total: 3, finishedAt: null },
+  {
+    attemptId: null,
+    round: 1,
+    category: null,
+    score: 0,
+    correct: 0,
+    total: 0,
+    finishedAt: null,
+    missed: true,
+  },
+  {
+    attemptId: "a2",
+    round: 2,
+    category: null,
+    score: 10,
+    correct: 1,
+    total: 3,
+    finishedAt: null,
+    missed: false,
+  },
 ];
 
 const detail = {
@@ -88,6 +108,18 @@ describe("MyScores", () => {
     await userEvent.click(screen.getByRole("button", { name: /كل الجولات/ }));
 
     await waitFor(() => expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull());
+  });
+
+  it("keeps a missed round on the list without a way in", async () => {
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 2/));
+
+    expect(screen.getByText("لم تشارك")).toBeDefined();
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+
+    await userEvent.click(screen.getByText(/الجولة 2/));
+
+    expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull();
   });
 
   it("says so when the member has played nothing", async () => {

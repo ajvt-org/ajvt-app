@@ -8,11 +8,13 @@ import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
 import { GET as ADMIN_DETAIL } from "@/app/api/admin/quiz/attempts/[id]/route";
 import { GET as ADMIN_ROUND } from "@/app/api/admin/quiz/competitions/[id]/attempts/route";
 
+const DAY = 86_400_000;
+
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsAt: new Date("2026-08-20T08:00:00.000Z"),
+      startsAt: new Date(Date.now() - 4 * DAY),
       roundCount: 3,
       roundPeriodMinutes: 1440,
       roundWindowMinutes: 840,
@@ -117,10 +119,35 @@ describe("a member reading their own score", () => {
 
     const body = await (await MY_ROUNDS(get(`/api/quiz/breakdown?competition=${c.id}`))).json();
 
-    expect(body.rounds).toHaveLength(1);
+    expect(body.rounds.filter((r: { missed: boolean }) => !r.missed)).toHaveLength(1);
     expect(body.rounds[0].round).toBe(0);
     expect(body.rounds[0].score).toBe(10);
     expect(body.rounds[0].category).toBe("جغرافيا");
+  });
+
+  it("keeps a missed round on the list with nothing scored", async () => {
+    const c = await competition();
+    const user = await paidUser();
+    await attempt(c.id, user.id, 2);
+    await signInAs(user);
+
+    const body = await (await MY_ROUNDS(get(`/api/quiz/breakdown?competition=${c.id}`))).json();
+
+    expect(body.rounds.map((r: { round: number }) => r.round)).toEqual([0, 1, 2]);
+    expect(body.rounds[0].missed).toBe(true);
+    expect(body.rounds[0].attemptId).toBeNull();
+    expect(body.rounds[0].score).toBe(0);
+    expect(body.rounds[2].missed).toBe(false);
+  });
+
+  it("does not call a round missed while it is still open", async () => {
+    const c = await competition({ startsAt: new Date(Date.now() - 60 * 60 * 1000) });
+    const user = await paidUser();
+    await signInAs(user);
+
+    const body = await (await MY_ROUNDS(get(`/api/quiz/breakdown?competition=${c.id}`))).json();
+
+    expect(body.rounds).toEqual([]);
   });
 
   it("breaks an attempt down question by question", async () => {
@@ -252,6 +279,30 @@ describe("an admin reading anyone's score", () => {
     ).json();
 
     expect(body.attempts).toEqual([]);
+  });
+
+  it("says whether the round's window has opened", async () => {
+    const running = await competition({ startsAt: new Date(Date.now() - 3_600_000) });
+    const ahead = await competition({
+      name: "مسابقة قادمة",
+      startsAt: new Date(Date.now() + 86_400_000),
+    });
+
+    const now = await (
+      await ADMIN_ROUND(
+        get(`/api/admin/quiz/competitions/${running.id}/attempts?round=0`),
+        withId(running.id),
+      )
+    ).json();
+    const later = await (
+      await ADMIN_ROUND(
+        get(`/api/admin/quiz/competitions/${ahead.id}/attempts?round=0`),
+        withId(ahead.id),
+      )
+    ).json();
+
+    expect(now.opened).toBe(true);
+    expect(later.opened).toBe(false);
   });
 
   it("opens any member's breakdown", async () => {

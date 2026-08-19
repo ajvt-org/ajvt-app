@@ -1,4 +1,25 @@
 import { curvePercent, type ScoreCurve } from "./competitionConfig";
+import type { RoundWindow } from "./quizRound";
+
+export interface RoundEntry<T> {
+  window: RoundWindow;
+  attempt: T | null;
+}
+
+export function roundEntries<T>(
+  windows: RoundWindow[],
+  attemptAt: Map<number, T>,
+  now: Date,
+): RoundEntry<T>[] {
+  const entries: RoundEntry<T>[] = [];
+  for (const window of windows) {
+    if (now < window.opensAt) break;
+    const attempt = attemptAt.get(window.index) ?? null;
+    if (!attempt && now < window.closesAt) continue;
+    entries.push({ window, attempt });
+  }
+  return entries;
+}
 
 export interface AnswerRow {
   position: number;

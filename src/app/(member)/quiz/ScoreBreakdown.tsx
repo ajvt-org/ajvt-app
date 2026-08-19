@@ -3,6 +3,7 @@
 import NumericRanges from "@/components/NumericRanges";
 import ScoreFormula from "./ScoreFormula";
 import type { AttemptDetailView, BreakdownRowView } from "./types";
+import { countedNoun, POINTS, QUESTIONS } from "@/lib/arabicPlural";
 
 const seconds = (ms: number | null) => (ms === null ? "" : `${Math.round(ms / 100) / 10} ث`);
 
@@ -44,7 +45,7 @@ function Row({ row }: { row: BreakdownRowView }) {
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         <NumericRanges>
-          {`${row.points} من ${row.maxPoints} نقطة${row.elapsedMs === null ? "" : ` · ${seconds(row.elapsedMs)} · ${row.percent}%`}`}
+          {`${row.points} من ${countedNoun(row.maxPoints, POINTS)}${row.elapsedMs === null ? "" : ` · ${seconds(row.elapsedMs)} · ${row.percent}%`}`}
         </NumericRanges>
       </p>
     </div>
@@ -63,7 +64,7 @@ export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }
         </p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           <NumericRanges>
-            {`${breakdown.correct} صحيحة من ${breakdown.total} سؤالاً، المجموع ${breakdown.score} من ${breakdown.possible} نقطة، الوقت ${seconds(breakdown.elapsedMs)}`}
+            {`${breakdown.correct} صحيحة من ${countedNoun(breakdown.total, QUESTIONS)}، المجموع ${breakdown.score} من ${countedNoun(breakdown.possible, POINTS)}، الوقت ${seconds(breakdown.elapsedMs)}`}
           </NumericRanges>
         </p>
       </div>
