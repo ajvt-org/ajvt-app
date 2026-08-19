@@ -128,28 +128,28 @@ export default function CompetitionView({
             <Icon name={closed ? "clock" : "check"} size={36} />
           </div>
           <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-            {closed || "أنهيت أسئلة اليوم"}
+            {closed || "أنهيت أسئلة الجولة"}
           </p>
           {!closed && attempt && (
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك اليوم {attempt.score}
+              مجموعك في الجولة {attempt.score}
             </p>
           )}
         </div>
 
         <StandingsBoard
-          title="ترتيب اليوم"
+          title="ترتيب الجولة"
           rows={standings.today}
           mine={standings.mine?.today ?? null}
           meId={standings.meId}
-          empty="لم يشارك أحد بعد اليوم"
+          empty="لم يشارك أحد في هذه الجولة"
         />
         <StandingsBoard
-          title="ترتيب الأسبوع"
+          title="ترتيب المجموعة"
           rows={standings.thisWeek}
           mine={standings.mine?.thisWeek ?? null}
           meId={standings.meId}
-          empty="لا ترتيب لهذا الأسبوع بعد"
+          empty="لا ترتيب لهذه المجموعة بعد"
         />
         <StandingsBoard
           title="الترتيب العام"

@@ -4,17 +4,21 @@ import {
   validateBands,
   bandPercent,
   bandScore,
-  dayStamps,
-  isDayStamp,
+  isTimestamp,
+  MAX_ROUNDS,
   DEFAULT_BANDS,
   DEFAULT_CONFIG,
 } from "./competitionConfig";
 
-const config = { name: "مسابقة رمضان", startsOn: "2026-08-20", ...DEFAULT_CONFIG };
+const config = {
+  name: "مسابقة رمضان",
+  startsAt: "2026-08-20T08:00:00.000Z",
+  ...DEFAULT_CONFIG,
+};
 const with_ = (over: Partial<typeof config>) => validateConfig({ ...config, ...over });
 
 describe("validateConfig", () => {
-  it("accepts the defaults with a name and a date", () => {
+  it("accepts the defaults with a name and a start", () => {
     expect(validateConfig(config)).toBeNull();
   });
 
@@ -22,36 +26,59 @@ describe("validateConfig", () => {
     expect(with_({ name: "   " })).toBe("اسم المسابقة مطلوب");
   });
 
-  it("refuses a date that is not a real day", () => {
-    expect(with_({ startsOn: "2026-02-30" })).toBe("تاريخ البداية غير صالح");
-    expect(with_({ startsOn: "20/08/2026" })).toBe("تاريخ البداية غير صالح");
+  it("refuses a start that is not a real moment", () => {
+    expect(with_({ startsAt: "not a time" })).toBe("وقت البداية غير صالح");
+    expect(with_({ startsAt: "" })).toBe("وقت البداية غير صالح");
   });
 
-  it("refuses a closing time at or before the opening time", () => {
-    expect(with_({ publishMinutes: 600, cutoffMinutes: 600 })).toBe(
-      "وقت الإغلاق يجب أن يكون بعد وقت الفتح",
-    );
-    expect(with_({ publishMinutes: 600, cutoffMinutes: 300 })).toBe(
-      "وقت الإغلاق يجب أن يكون بعد وقت الفتح",
+  it("refuses a run of no rounds", () => {
+    expect(with_({ roundCount: 0 })).toBe("عدد الجولات غير صالح");
+  });
+
+  it("refuses more rounds than it will ever lay out", () => {
+    expect(with_({ roundCount: MAX_ROUNDS + 1 })).toContain(String(MAX_ROUNDS));
+  });
+
+  it("refuses a round longer than the gap between rounds", () => {
+    expect(with_({ roundPeriodMinutes: 60, roundWindowMinutes: 90 })).toContain(
+      "مدة الجولة يجب ألا تتجاوز",
     );
   });
 
-  it("refuses a pool smaller than the number of questions served", () => {
+  it("accepts a round exactly as long as the gap", () => {
+    expect(with_({ roundPeriodMinutes: 60, roundWindowMinutes: 60 })).toBeNull();
+  });
+
+  it("accepts an hourly run", () => {
+    expect(
+      with_({
+        roundCount: 20,
+        roundPeriodMinutes: 60,
+        roundWindowMinutes: 45,
+        groupSize: 5,
+        countingRounds: 4,
+      }),
+    ).toBeNull();
+  });
+
+  it("refuses a pool smaller than a round serves", () => {
     expect(with_({ servedCount: 10, poolSize: 5 })).toContain("حجم المخزون");
   });
 
-  it("allows a pool exactly the size of the served set", () => {
+  it("allows a pool exactly the size of the round", () => {
     expect(with_({ servedCount: 10, poolSize: 10 })).toBeNull();
   });
 
-  it("keeps the weekly counting days inside a week", () => {
-    expect(with_({ weeklyCountingDays: 0 })).toContain("بين 1 و 7");
-    expect(with_({ weeklyCountingDays: 8 })).toContain("بين 1 و 7");
-    expect(with_({ weeklyCountingDays: 7 })).toBeNull();
+  it("refuses counting more rounds than a group holds", () => {
+    expect(with_({ groupSize: 5, countingRounds: 6 })).toContain("الجولات المحتسبة");
   });
 
-  it("refuses a run of no days", () => {
-    expect(with_({ days: 0 })).toBe("عدد الأيام غير صالح");
+  it("allows counting every round of a group", () => {
+    expect(with_({ groupSize: 5, countingRounds: 5 })).toBeNull();
+  });
+
+  it("refuses a group of no rounds", () => {
+    expect(with_({ groupSize: 0 })).toBe("عدد جولات المجموعة غير صالح");
   });
 });
 
@@ -133,27 +160,13 @@ describe("bandScore", () => {
   });
 });
 
-describe("dayStamps", () => {
-  it("lists each day of the run", () => {
-    expect(dayStamps("2026-08-20", 3)).toEqual(["2026-08-20", "2026-08-21", "2026-08-22"]);
+describe("isTimestamp", () => {
+  it("takes a real moment", () => {
+    expect(isTimestamp("2026-08-20T08:00:00.000Z")).toBe(true);
   });
 
-  it("crosses a month end", () => {
-    expect(dayStamps("2026-08-30", 3)).toEqual(["2026-08-30", "2026-08-31", "2026-09-01"]);
-  });
-
-  it("crosses a year end", () => {
-    expect(dayStamps("2026-12-31", 2)).toEqual(["2026-12-31", "2027-01-01"]);
-  });
-});
-
-describe("isDayStamp", () => {
-  it("takes a real day", () => {
-    expect(isDayStamp("2026-08-20")).toBe(true);
-  });
-
-  it("refuses a day that does not exist", () => {
-    expect(isDayStamp("2026-02-30")).toBe(false);
-    expect(isDayStamp("2026-13-01")).toBe(false);
+  it("refuses anything it cannot read as a time", () => {
+    expect(isTimestamp("nonsense")).toBe(false);
+    expect(isTimestamp("")).toBe(false);
   });
 });

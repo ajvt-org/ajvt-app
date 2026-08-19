@@ -78,29 +78,39 @@ async function eligibleUserWithQuestion() {
   return user;
 }
 
+function openedAnHourAgo() {
+  return new Date(Date.now() - 3_600_000);
+}
+
 async function openDayWithQuestions() {
-  const today = new Date().toISOString().slice(0, 10);
+  const startsAt = openedAnHourAgo();
   const competition = await prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsOn: today,
-      days: 3,
-      publishMinutes: 0,
-      cutoffMinutes: 1439,
+      startsAt,
+      roundCount: 3,
+      roundPeriodMinutes: 1440,
+      roundWindowMinutes: 1440,
       servedCount: 1,
       poolSize: 1,
-      weeklyCountingDays: 6,
+      groupSize: 7,
+      countingRounds: 6,
       speedBands: DEFAULT_BANDS as unknown as object,
       startedAt: new Date(),
     },
   });
-  const day = await prisma.quizDay.create({
-    data: { competitionId: competition.id, day: today },
+  const day = await prisma.quizRound.create({
+    data: {
+      competitionId: competition.id,
+      index: 0,
+      opensAt: startsAt,
+      closesAt: new Date(startsAt.getTime() + 1440 * 60_000),
+    },
   });
   const question = await prisma.quizQuestion.create({
     data: { text: "سؤال", category: "عام", createdBy: "admin" },
   });
-  await prisma.quizDayQuestion.create({ data: { dayId: day.id, questionId: question.id } });
+  await prisma.quizRoundQuestion.create({ data: { roundId: day.id, questionId: question.id } });
   return { competition, day };
 }
 
@@ -110,7 +120,7 @@ describe("announceOpenDay", () => {
     sendPushToUser.mockClear();
   });
 
-  it("tells every eligible member once the day is open", async () => {
+  it("tells every eligible member once the round is open", async () => {
     await eligibleUserWithQuestion();
     await openDayWithQuestions();
 
@@ -120,7 +130,7 @@ describe("announceOpenDay", () => {
     expect(sendPushToUser).toHaveBeenCalledTimes(1);
   });
 
-  it("does not announce the same day twice when two requests race", async () => {
+  it("does not announce the same round twice when two requests race", async () => {
     await eligibleUserWithQuestion();
     await openDayWithQuestions();
 
@@ -129,24 +139,32 @@ describe("announceOpenDay", () => {
     expect(sendPushToUser).toHaveBeenCalledTimes(1);
   });
 
-  it("says nothing when the day has no questions loaded", async () => {
+  it("says nothing when the round has no questions loaded", async () => {
     await eligibleUserWithQuestion();
-    const today = new Date().toISOString().slice(0, 10);
+    const startsAt = openedAnHourAgo();
     const competition = await prisma.competition.create({
       data: {
         name: "مسابقة",
-        startsOn: today,
-        days: 3,
-        publishMinutes: 0,
-        cutoffMinutes: 1439,
+        startsAt,
+        roundCount: 3,
+        roundPeriodMinutes: 1440,
+        roundWindowMinutes: 1440,
         servedCount: 1,
         poolSize: 1,
-        weeklyCountingDays: 6,
+        groupSize: 7,
+        countingRounds: 6,
         speedBands: DEFAULT_BANDS as unknown as object,
         startedAt: new Date(),
       },
     });
-    await prisma.quizDay.create({ data: { competitionId: competition.id, day: today } });
+    await prisma.quizRound.create({
+      data: {
+        competitionId: competition.id,
+        index: 0,
+        opensAt: startsAt,
+        closesAt: new Date(startsAt.getTime() + 1440 * 60_000),
+      },
+    });
 
     expect(await announceOpenDay()).toBe(0);
     expect(sendPushToUser).not.toHaveBeenCalled();
@@ -163,14 +181,10 @@ describe("announceOpenDay", () => {
     expect(await announceOpenDay()).toBe(0);
   });
 
-  it("says nothing once the day has closed", async () => {
+  it("says nothing once the round has closed", async () => {
     await eligibleUserWithQuestion();
-    const { competition } = await openDayWithQuestions();
-    await prisma.competition.update({
-      where: { id: competition.id },
-      data: { publishMinutes: 0, cutoffMinutes: 1 },
-    });
+    await openDayWithQuestions();
 
-    expect(await announceOpenDay(new Date(`${competition.startsOn}T12:00:00.000Z`))).toBe(0);
+    expect(await announceOpenDay(new Date(Date.now() + 3 * 1440 * 60_000))).toBe(0);
   });
 });

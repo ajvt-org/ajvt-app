@@ -10,13 +10,14 @@ import CompetitionFields, { type Draft } from "./CompetitionFields";
 
 const EMPTY: Draft = {
   name: "",
-  startsOn: "",
-  days: 30,
-  publishMinutes: 480,
-  cutoffMinutes: 1320,
+  startsAt: "",
+  roundCount: 30,
+  roundPeriodMinutes: 1440,
+  roundWindowMinutes: 840,
   servedCount: 10,
   poolSize: 30,
-  weeklyCountingDays: 6,
+  groupSize: 7,
+  countingRounds: 6,
   speedBands: DEFAULT_BANDS,
 };
 

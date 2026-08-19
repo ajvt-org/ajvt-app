@@ -58,7 +58,7 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText("المسابقة ليست مفتوحة الآن")).toBeDefined());
-    expect(screen.getByText("ترتيب اليوم")).toBeDefined();
+    expect(screen.getByText("ترتيب الجولة")).toBeDefined();
   });
 
   it("shows the result of an answer before moving on", async () => {
@@ -131,8 +131,8 @@ describe("CompetitionView", () => {
     });
     setup();
 
-    await waitFor(() => expect(screen.getByText("أنهيت أسئلة اليوم")).toBeDefined());
-    expect(screen.getByText(/مجموعك اليوم 40/)).toBeDefined();
+    await waitFor(() => expect(screen.getByText("أنهيت أسئلة الجولة")).toBeDefined());
+    expect(screen.getByText(/مجموعك في الجولة 40/)).toBeDefined();
     expect(screen.getByText("الترتيب العام")).toBeDefined();
   });
 

@@ -7,7 +7,7 @@ import { ALREADY_STARTED } from "@/lib/competitionServer";
 import { GET as READ, PUT as SAVE, DELETE as RESET } from "@/app/api/admin/quiz/competition/route";
 import { POST as START } from "@/app/api/admin/quiz/competition/start/route";
 
-const config = { name: "مسابقة الصيف", startsOn: "2026-08-20" };
+const config = { name: "مسابقة الصيف", startsAt: "2026-08-20T08:00:00.000Z" };
 
 const save = (body: unknown) => SAVE(put("/api/admin/quiz/competition", body));
 const read = () => READ();
@@ -32,8 +32,8 @@ describe("configuring a competition before it starts", () => {
 
     const c = await prisma.competition.findFirstOrThrow();
     expect(c.name).toBe("مسابقة الصيف");
-    expect(c.startsOn).toBe("2026-08-20");
-    expect(c.days).toBe(30);
+    expect(c.startsAt.toISOString()).toBe("2026-08-20T08:00:00.000Z");
+    expect(c.roundCount).toBe(30);
     expect(c.servedCount).toBe(10);
     expect(c.startedAt).toBeNull();
   });
@@ -41,22 +41,38 @@ describe("configuring a competition before it starts", () => {
   it("edits the one that exists rather than making a second", async () => {
     await save(config);
 
-    await save({ servedCount: 5, days: 14 });
+    await save({ servedCount: 5, roundCount: 14 });
 
     const all = await prisma.competition.findMany();
     expect(all).toHaveLength(1);
     expect(all[0].servedCount).toBe(5);
-    expect(all[0].days).toBe(14);
+    expect(all[0].roundCount).toBe(14);
     expect(all[0].name).toBe("مسابقة الصيف");
   });
 
-  it("refuses a closing time before the opening time", async () => {
+  it("refuses a round longer than the gap between rounds", async () => {
     await save(config);
 
-    const res = await save({ publishMinutes: 600, cutoffMinutes: 300 });
+    const res = await save({ roundPeriodMinutes: 60, roundWindowMinutes: 120 });
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toContain("وقت الإغلاق");
+    expect((await res.json()).error).toContain("مدة الجولة");
+  });
+
+  it("takes an hourly run of twenty rounds", async () => {
+    await save({
+      ...config,
+      roundCount: 20,
+      roundPeriodMinutes: 60,
+      roundWindowMinutes: 60,
+      groupSize: 5,
+      countingRounds: 4,
+    });
+
+    const c = await prisma.competition.findFirstOrThrow();
+    expect(c.roundCount).toBe(20);
+    expect(c.roundPeriodMinutes).toBe(60);
+    expect(c.groupSize).toBe(5);
   });
 
   it("refuses a pool smaller than the daily set", async () => {

@@ -1,46 +1,41 @@
 import { prisma } from "./prisma";
-import { requireCompetition } from "./competitionServer";
+import { requireCompetition, shapeOf } from "./competitionServer";
 import { bandScore, type SpeedBand } from "./competitionConfig";
-import { competitionDay, dayState, drawQuestions, seededShuffle } from "./quizDay";
+import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import { quiz } from "./messages";
 
 export const NOT_OPEN = "المسابقة ليست مفتوحة الآن";
-export const NO_POOL = "لا توجد أسئلة لهذا اليوم";
+export const NO_POOL = "لا توجد أسئلة لهذه الجولة";
 export const NOT_STARTED = "لم تنطلق المسابقة بعد";
 
-export async function openCompetitionDay(now = new Date()) {
+export async function openCompetitionRound(now = new Date()) {
   const competition = await requireCompetition();
   if (!competition.startedAt) throw new ConflictError(NOT_STARTED);
 
-  const window = {
-    publishMinutes: competition.publishMinutes,
-    cutoffMinutes: competition.cutoffMinutes,
-  };
-  const state = dayState(competition.startsOn, competition.days, window, now);
-  if (state !== "open") throw new ConflictError(NOT_OPEN);
+  const open = currentRound(shapeOf(competition), now);
+  if (!open) throw new ConflictError(NOT_OPEN);
 
-  const today = competitionDay(competition.startsOn, competition.days, now)!;
-  const day = await prisma.quizDay.findUnique({
-    where: { competitionId_day: { competitionId: competition.id, day: today.day } },
+  const round = await prisma.quizRound.findUnique({
+    where: { competitionId_index: { competitionId: competition.id, index: open.index } },
     include: { questions: { select: { questionId: true } } },
   });
-  if (!day || day.questions.length === 0) throw new NotFoundError(NO_POOL);
+  if (!round || round.questions.length === 0) throw new NotFoundError(NO_POOL);
 
-  return { competition, day, index: today.index };
+  return { competition, round, index: open.index };
 }
 
 export async function startOrResumeAttempt(userId: string, now = new Date()) {
-  const { competition, day } = await openCompetitionDay(now);
+  const { competition, round } = await openCompetitionRound(now);
 
   const existing = await prisma.quizAttempt.findUnique({
-    where: { dayId_userId: { dayId: day.id, userId } },
+    where: { roundId_userId: { roundId: round.id, userId } },
   });
   if (existing) return existing;
 
-  const pool = day.questions.map((q) => q.questionId);
-  const dayset = drawQuestions(pool, competition.servedCount, day.id);
-  const drawn = seededShuffle(dayset, `${day.id}:${userId}`);
+  const pool = round.questions.map((q) => q.questionId);
+  const roundSet = drawQuestions(pool, competition.servedCount, round.id);
+  const drawn = seededShuffle(roundSet, `${round.id}:${userId}`);
 
   const answers = await prisma.quizAnswer.findMany({
     where: { questionId: { in: drawn } },
@@ -53,7 +48,7 @@ export async function startOrResumeAttempt(userId: string, now = new Date()) {
 
   return prisma.quizAttempt.create({
     data: {
-      dayId: day.id,
+      roundId: round.id,
       userId,
       answers: {
         create: drawn.map((questionId, position) => ({
@@ -61,7 +56,7 @@ export async function startOrResumeAttempt(userId: string, now = new Date()) {
           position,
           optionOrder: seededShuffle(
             byQuestion.get(questionId) ?? [],
-            `${day.id}:${userId}:${questionId}`,
+            `${round.id}:${userId}:${questionId}`,
           ),
         })),
       },
@@ -132,7 +127,7 @@ export async function submitAnswer(
   selectedAnswerIds: string[],
   now = new Date(),
 ) {
-  const { competition } = await openCompetitionDay(now);
+  const { competition } = await openCompetitionRound(now);
 
   const row = await prisma.quizAttemptAnswer.findUnique({
     where: { id: attemptAnswerId },
@@ -191,26 +186,23 @@ export async function closeExpiredAttempts(now = new Date()) {
   const competition = await prisma.competition.findFirst({ orderBy: { createdAt: "desc" } });
   if (!competition?.startedAt) return 0;
 
-  const window = {
-    publishMinutes: competition.publishMinutes,
-    cutoffMinutes: competition.cutoffMinutes,
-  };
-  const today = competitionDay(competition.startsOn, competition.days, now);
-  const state = dayState(competition.startsOn, competition.days, window, now);
-  if (state !== "closed" || !today) return 0;
-
-  const day = await prisma.quizDay.findUnique({
-    where: { competitionId_day: { competitionId: competition.id, day: today.day } },
+  const stale = await prisma.quizRound.findMany({
+    where: {
+      competitionId: competition.id,
+      closesAt: { lte: now },
+      attempts: { some: { finishedAt: null } },
+    },
     select: { id: true },
   });
-  if (!day) return 0;
+  if (stale.length === 0) return 0;
+  const roundIds = stale.map((r) => r.id);
 
   const { count } = await prisma.quizAttemptAnswer.updateMany({
-    where: { answeredAt: null, attempt: { dayId: day.id } },
+    where: { answeredAt: null, attempt: { roundId: { in: roundIds } } },
     data: { answeredAt: now, isCorrect: false, points: 0 },
   });
   await prisma.quizAttempt.updateMany({
-    where: { dayId: day.id, finishedAt: null },
+    where: { roundId: { in: roundIds }, finishedAt: null },
     data: { finishedAt: now },
   });
   return count;

@@ -2,17 +2,18 @@
 
 import SpeedBandsEditor from "./SpeedBandsEditor";
 import type { SpeedBand } from "@/lib/competitionConfig";
-import { toTimeValue, fromTimeValue } from "./competitionTypes";
+import { toLocalInput, fromLocalInput, PERIOD_CHOICES } from "./competitionTypes";
 
 export interface Draft {
   name: string;
-  startsOn: string;
-  days: number;
-  publishMinutes: number;
-  cutoffMinutes: number;
+  startsAt: string;
+  roundCount: number;
+  roundPeriodMinutes: number;
+  roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  weeklyCountingDays: number;
+  groupSize: number;
+  countingRounds: number;
   speedBands: SpeedBand[];
 }
 
@@ -70,46 +71,46 @@ export default function CompetitionFields({
       </Field>
 
       <div className="flex gap-2">
-        <Field label="تاريخ البداية" id="c-start">
+        <Field label="بداية الجولة الأولى" id="c-start">
           <input
             id="c-start"
-            type="date"
-            value={draft.startsOn}
+            type="datetime-local"
+            value={toLocalInput(draft.startsAt)}
             disabled={locked}
-            onChange={(e) => onChange("startsOn", e.target.value)}
+            onChange={(e) => onChange("startsAt", fromLocalInput(e.target.value))}
             className="input input-sm"
           />
         </Field>
-        {number("days", "c-days", "عدد الأيام")}
+        {number("roundCount", "c-rounds", "عدد الجولات")}
       </div>
 
       <div className="flex gap-2">
-        <Field label="يفتح عند" id="c-open">
-          <input
-            id="c-open"
-            type="time"
-            value={toTimeValue(draft.publishMinutes)}
+        <Field label="جولة كل" id="c-period">
+          <select
+            id="c-period"
+            value={draft.roundPeriodMinutes}
             disabled={locked}
-            onChange={(e) => onChange("publishMinutes", fromTimeValue(e.target.value))}
+            onChange={(e) => onChange("roundPeriodMinutes", Number(e.target.value))}
             className="input input-sm"
-          />
+          >
+            {PERIOD_CHOICES.map((choice) => (
+              <option key={choice.minutes} value={choice.minutes}>
+                {choice.label}
+              </option>
+            ))}
+          </select>
         </Field>
-        <Field label="يغلق عند" id="c-close">
-          <input
-            id="c-close"
-            type="time"
-            value={toTimeValue(draft.cutoffMinutes)}
-            disabled={locked}
-            onChange={(e) => onChange("cutoffMinutes", fromTimeValue(e.target.value))}
-            className="input input-sm"
-          />
-        </Field>
+        {number("roundWindowMinutes", "c-window", "مدة الجولة بالدقائق")}
       </div>
 
       <div className="flex gap-2">
         {number("servedCount", "c-served", "أسئلة لكل مشارك")}
-        {number("poolSize", "c-pool", "مخزون اليوم")}
-        {number("weeklyCountingDays", "c-weekly", "أيام تُحتسب أسبوعياً", 1, 7)}
+        {number("poolSize", "c-pool", "مخزون الجولة")}
+      </div>
+
+      <div className="flex gap-2">
+        {number("groupSize", "c-group", "جولات المجموعة")}
+        {number("countingRounds", "c-counting", "الجولات المحتسبة")}
       </div>
 
       <SpeedBandsEditor
