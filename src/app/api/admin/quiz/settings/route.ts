@@ -3,6 +3,8 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { getQuizSettings, updateQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
+import { pointsInRange } from "@/lib/quizDifficulty";
+import { quiz } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
   await requireAdminRole("QUIZ");
@@ -12,30 +14,18 @@ export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
 
 export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  const {
-    defaultAnswerCount,
-    defaultCorrectCount,
-    defaultPoints,
-    questionsPerDay,
-    answerWindowSeconds,
-    minScorePercent,
-  } = await req.json();
+  const { defaultAnswerCount, defaultCorrectCount, defaultPoints } = await req.json();
 
   const data: {
     defaultAnswerCount?: number;
     defaultCorrectCount?: number;
     defaultPoints?: number;
-    questionsPerDay?: number;
-    answerWindowSeconds?: number;
-    minScorePercent?: number;
   } = {};
 
   for (const [key, value] of Object.entries({
     defaultAnswerCount,
     defaultCorrectCount,
     defaultPoints,
-    questionsPerDay,
-    answerWindowSeconds,
   })) {
     if (value === undefined) continue;
     if (!Number.isInteger(value) || value <= 0) {
@@ -44,22 +34,10 @@ export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: Nex
     (data as Record<string, number>)[key] = value;
   }
 
-  if (answerWindowSeconds !== undefined && (answerWindowSeconds < 3 || answerWindowSeconds > 300)) {
-    return NextResponse.json(
-      { error: "مدة الإجابة يجب أن تكون بين 3 و 300 ثانية" },
-      { status: 400 },
-    );
+  if (data.defaultPoints !== undefined && !pointsInRange(data.defaultPoints)) {
+    return NextResponse.json({ error: quiz.pointsOutOfRange }, { status: 400 });
   }
 
-  if (minScorePercent !== undefined) {
-    if (!Number.isInteger(minScorePercent) || minScorePercent < 0 || minScorePercent > 100) {
-      return NextResponse.json(
-        { error: "أقل نسبة للنقاط يجب أن تكون بين 0 و 100" },
-        { status: 400 },
-      );
-    }
-    data.minScorePercent = minScorePercent;
-  }
   if (
     data.defaultCorrectCount !== undefined &&
     data.defaultAnswerCount !== undefined &&

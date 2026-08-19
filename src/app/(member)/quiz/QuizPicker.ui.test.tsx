@@ -11,6 +11,9 @@ const rows: RunningCompetition[] = [
     visibility: "PUBLIC",
     roundCount: 30,
     startsAt: "2026-08-20T08:00:00.000Z",
+    state: "open",
+    playedRounds: 2,
+    myScore: 40,
   },
   {
     id: "c2",
@@ -18,6 +21,9 @@ const rows: RunningCompetition[] = [
     visibility: "PRIVATE",
     roundCount: 7,
     startsAt: "2026-08-20T08:00:00.000Z",
+    state: "closed",
+    playedRounds: 0,
+    myScore: 0,
   },
 ];
 
@@ -29,11 +35,11 @@ describe("QuizPicker", () => {
     expect(screen.getByText("مسابقة البدريين")).toBeDefined();
   });
 
-  it("says how many rounds each one runs", () => {
+  it("says how far the member is through each one", () => {
     render(<QuizPicker competitions={rows} backHref="/home" onPick={() => {}} />);
 
-    expect(screen.getByText("30 جولة")).toBeDefined();
-    expect(screen.getByText("7 جولة")).toBeDefined();
+    expect(screen.getByText(/2 من 30 جولة/)).toBeDefined();
+    expect(screen.getByText(/0 من 7 جولة/)).toBeDefined();
   });
 
   it("hands back the one that was picked", async () => {

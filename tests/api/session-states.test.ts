@@ -8,7 +8,7 @@ import { setCookie, clearCookies } from "./cookieJar";
 import { GET as ME } from "@/app/api/user/me/route";
 import { POST as PASSWORD } from "@/app/api/user/password/route";
 import { POST as SUBSCRIBE } from "@/app/api/push/subscribe/route";
-import { GET as QUIZ_ME } from "@/app/api/quiz/me/route";
+import { GET as QUIZ_MINE } from "@/app/api/quiz/competitions/route";
 import { POST as MEMBERS } from "@/app/api/members/route";
 import { GET as ADMIN_MEMBERS } from "@/app/api/admin/members/route";
 import { GET as SETTINGS } from "@/app/api/settings/route";
@@ -124,7 +124,7 @@ describe("who the API serves", () => {
             keys: { p256dh: "a", auth: "b" },
           }),
         ),
-      "quiz/me": () => QUIZ_ME(),
+      "quiz/competitions": () => QUIZ_MINE(),
       members: () => MEMBERS(post("/api/members", {})),
     };
 

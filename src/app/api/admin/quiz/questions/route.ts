@@ -34,13 +34,13 @@ export const GET = withRoute("GET /api/admin/quiz/questions", async () => {
         },
       },
     }),
-    prisma.quizAssignment.groupBy({ by: ["questionId"], _count: true }),
-    prisma.quizAssignment.groupBy({
+    prisma.quizAttemptAnswer.groupBy({ by: ["questionId"], _count: true }),
+    prisma.quizAttemptAnswer.groupBy({
       by: ["questionId"],
       where: { answeredAt: { not: null } },
       _count: true,
     }),
-    prisma.quizAssignment.groupBy({
+    prisma.quizAttemptAnswer.groupBy({
       by: ["questionId"],
       where: { isCorrect: true },
       _count: true,

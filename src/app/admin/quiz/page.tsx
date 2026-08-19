@@ -11,14 +11,12 @@ import SettingsForm from "./SettingsForm";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
 import CompetitionsSection from "./CompetitionsSection";
-import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
 import type {
   AnswerFormRow,
-  LeaderboardRow,
   QuestionRow,
   QuizSettings,
   SettingsForm as SettingsFormValues,
@@ -42,9 +40,7 @@ export default function AdminQuizPage() {
   const [savingSettings, setSavingSettings] = useState(false);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
@@ -64,8 +60,7 @@ export default function AdminQuizPage() {
         return r.ok ? r.json() : null;
       }),
       fetch("/api/admin/quiz/questions").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/admin/quiz/leaderboard").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([s, q, l]) => {
+    ]).then(([s, q]) => {
       if (s?.settings) {
         setSettings(s.settings);
         setSettingsForm({
@@ -75,7 +70,6 @@ export default function AdminQuizPage() {
         });
       }
       if (q?.questions) setQuestions(q.questions);
-      if (l?.leaderboard) setLeaderboard(l.leaderboard);
     });
   }
 
@@ -251,12 +245,6 @@ export default function AdminQuizPage() {
         onEdit={openEdit}
         onToggle={toggleActive}
         onDelete={deleteQuestion}
-      />
-
-      <LeaderboardPanel
-        rows={leaderboard}
-        open={showLeaderboard}
-        onToggle={() => setShowLeaderboard((v) => !v)}
       />
 
       {showImport && (
