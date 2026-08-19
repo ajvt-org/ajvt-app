@@ -23,6 +23,7 @@ export const GET = withRoute(
         paymentProof: true,
         photo: true,
         paidAmount: true,
+        surplusAnonymous: true,
         referenceCode: true,
         status: true,
         createdAt: true,
