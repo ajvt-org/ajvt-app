@@ -1,12 +1,18 @@
 "use client";
 
 import SpeedBandsEditor from "./SpeedBandsEditor";
-import type { SpeedBand } from "@/lib/competitionConfig";
-import { toLocalInput, fromLocalInput, PERIOD_CHOICES } from "./competitionTypes";
+import type { SpeedBand, Visibility } from "@/lib/competitionConfig";
+import {
+  toLocalInput,
+  fromLocalInput,
+  PERIOD_CHOICES,
+  VISIBILITY_CHOICES,
+} from "./competitionTypes";
 
 export interface Draft {
   name: string;
   startsAt: string;
+  visibility: Visibility;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -68,6 +74,22 @@ export default function CompetitionFields({
           onChange={(e) => onChange("name", e.target.value)}
           className="input input-sm"
         />
+      </Field>
+
+      <Field label="نوع المسابقة" id="c-visibility">
+        <select
+          id="c-visibility"
+          value={draft.visibility}
+          disabled={locked}
+          onChange={(e) => onChange("visibility", e.target.value as Visibility)}
+          className="input input-sm"
+        >
+          {VISIBILITY_CHOICES.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </select>
       </Field>
 
       <div className="flex gap-2">

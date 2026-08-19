@@ -1,9 +1,10 @@
-import type { SpeedBand } from "@/lib/competitionConfig";
+import type { SpeedBand, Visibility } from "@/lib/competitionConfig";
 
 export interface Competition {
   id: string;
   name: string;
   startsAt: string;
+  visibility: Visibility;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -15,7 +16,12 @@ export interface Competition {
   startedAt: string | null;
 }
 
+export interface CompetitionRow extends Competition {
+  _count: { participants: number; rounds: number };
+}
+
 export interface CompetitionDefaults {
+  visibility: Visibility;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -46,4 +52,9 @@ export const PERIOD_CHOICES = [
   { minutes: 360, label: "كل ست ساعات" },
   { minutes: 720, label: "كل اثنتي عشرة ساعة" },
   { minutes: 1440, label: "كل يوم" },
+];
+
+export const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
+  { value: "PUBLIC", label: "عامة لكل المنتسبين" },
+  { value: "PRIVATE", label: "خاصة بمشاركين محددين" },
 ];
