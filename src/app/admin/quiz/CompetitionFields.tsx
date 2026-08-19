@@ -13,6 +13,7 @@ export interface Draft {
   name: string;
   startsAt: string;
   visibility: Visibility;
+  bankId: string;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -41,10 +42,12 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 
 export default function CompetitionFields({
   draft,
+  banks,
   locked,
   onChange,
 }: {
   draft: Draft;
+  banks: { id: string; name: string }[];
   locked: boolean;
   onChange: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
 }) {
@@ -88,6 +91,22 @@ export default function CompetitionFields({
           {VISIBILITY_CHOICES.map((choice) => (
             <option key={choice.value} value={choice.value}>
               {choice.label}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="بنك الأسئلة" id="c-bank">
+        <select
+          id="c-bank"
+          value={draft.bankId}
+          disabled={locked}
+          onChange={(e) => onChange("bankId", e.target.value)}
+          className="input input-sm"
+        >
+          {banks.map((bank) => (
+            <option key={bank.id} value={bank.id}>
+              {bank.name}
             </option>
           ))}
         </select>

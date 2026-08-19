@@ -19,11 +19,13 @@ function draftOf(competition: Competition): Draft {
 
 export default function CompetitionPanel({
   competitionId,
+  banks,
   onSaved,
   onChanged,
   onDeleted,
 }: {
   competitionId: string | null;
+  banks: { id: string; name: string }[];
   onSaved: (id: string) => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -115,7 +117,7 @@ export default function CompetitionPanel({
         </p>
       )}
 
-      <CompetitionFields draft={draft} locked={locked} onChange={set} />
+      <CompetitionFields draft={draft} banks={banks} locked={locked} onChange={set} />
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>

@@ -10,11 +10,25 @@ import ScoresPanel from "./ScoresPanel";
 import StandingsPanel from "./StandingsPanel";
 import type { CompetitionRow } from "./competitionTypes";
 
-export default function CompetitionsSection({ questionCount }: { questionCount: number }) {
+export default function CompetitionsSection() {
   const [rows, setRows] = useState<CompetitionRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [reload, setReload] = useState(0);
+  const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ banks: { id: string; name: string }[] }>("/api/admin/quiz/banks")
+      .then((data) => {
+        if (alive) setBanks(data.banks);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [reload]);
 
   useEffect(() => {
     let alive = true;
@@ -50,6 +64,7 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
       {open && (
         <CompetitionPanel
           key={editing ?? "new"}
+          banks={banks}
           competitionId={editing}
           onSaved={(id) => {
             setCreating(false);
@@ -67,7 +82,7 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
         <ParticipantsPanel competitionId={editing} locked={selected.startedAt !== null} />
       )}
 
-      {editing && <RoundsPanel competitionId={editing} questionCount={questionCount} />}
+      {editing && <RoundsPanel competitionId={editing} />}
 
       {editing && selected?.startedAt && (
         <>

@@ -17,6 +17,7 @@ export interface CompetitionConfig {
   groupSize: number;
   countingRounds: number;
   categoryRounds: boolean;
+  bankId: string;
   speedBands: SpeedBand[];
 }
 
@@ -36,6 +37,7 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
+  bankId: "general",
   speedBands: DEFAULT_BANDS,
 };
 
@@ -95,6 +97,7 @@ export function validateConfig(config: CompetitionConfig): string | null {
     return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات المجموعة";
   }
   if (typeof config.categoryRounds !== "boolean") return "خيار تصنيف الجولة غير صالح";
+  if (typeof config.bankId !== "string" || !config.bankId) return "بنك الأسئلة مطلوب";
   return validateBands(config.speedBands);
 }
 
