@@ -39,6 +39,25 @@ export async function runningCompetitionsFor(userId: string) {
   return all.filter((c) => c.visibility === "PUBLIC" || c.participants.length > 0);
 }
 
+export async function myCompetitions(userId: string) {
+  const all = await prisma.competition.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      participants: { where: { userId }, select: { id: true }, take: 1 },
+      rounds: {
+        select: { attempts: { where: { userId }, select: { score: true } } },
+      },
+    },
+  });
+
+  return all
+    .filter((c) => (c.visibility === "PUBLIC" ? c.startedAt !== null : c.participants.length > 0))
+    .map((c) => ({
+      competition: c,
+      mine: c.rounds.flatMap((r) => r.attempts),
+    }));
+}
+
 export async function canPlay(competitionId: string, userId: string): Promise<boolean> {
   const competition = await prisma.competition.findUnique({
     where: { id: competitionId },

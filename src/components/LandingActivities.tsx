@@ -51,10 +51,10 @@ export default function LandingActivities({
           </span>
           <span className="min-w-0 flex-1">
             <span className="font-bold block" style={{ color: "var(--text-main)" }}>
-              المسابقة الثقافية
+              المسابقات الثقافية
             </span>
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              أسئلة يومية، نقاط، وترتيب بين المنتسبين
+              جولات بأسئلة ونقاط، وترتيب خاص بكل مسابقة
             </span>
           </span>
           <Icon name="chevronLeft" size={16} className="shrink-0" />

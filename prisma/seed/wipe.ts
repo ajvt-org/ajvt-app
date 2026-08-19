@@ -13,7 +13,12 @@ export async function wipe() {
   await prisma.group.deleteMany();
   await prisma.activityRegistration.deleteMany();
   await prisma.activity.deleteMany();
-  await prisma.quizAssignment.deleteMany();
+  await prisma.quizAttemptAnswer.deleteMany();
+  await prisma.quizAttempt.deleteMany();
+  await prisma.quizRoundQuestion.deleteMany();
+  await prisma.quizRound.deleteMany();
+  await prisma.quizParticipant.deleteMany();
+  await prisma.competition.deleteMany();
   await prisma.quizAnswer.deleteMany();
   await prisma.quizQuestion.deleteMany();
   await prisma.quizSettings.deleteMany();

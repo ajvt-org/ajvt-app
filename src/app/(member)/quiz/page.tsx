@@ -3,23 +3,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
-import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import { goAfterAuthChange } from "@/lib/authNav";
-import AssignmentsView from "./AssignmentsView";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 import QuizLocked, { CreateAccountAction } from "./QuizLocked";
 import QuizPicker from "./QuizPicker";
 import TutorialQuiz from "./TutorialQuiz";
-import type { QuizMeData, RunningCompetition } from "./types";
+import type { RunningCompetition } from "./types";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function QuizPage() {
   const router = useRouter();
 
-  const [data, setData] = useState<QuizMeData | null>(null);
-  const [running, setRunning] = useState<RunningCompetition[]>([]);
+  const [mine, setMine] = useState<RunningCompetition[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
   const [tutorial, setTutorial] = useState(false);
   const [standings, setStandings] = useState<StandingsState | null>(null);
@@ -27,8 +24,8 @@ export default function QuizPage() {
   const [visitor, setVisitor] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  function loadData() {
-    return fetch("/api/quiz/me")
+  function loadMine() {
+    return fetch("/api/quiz/competitions")
       .then((r) => {
         if (r.status === 401) {
           setVisitor(true);
@@ -41,14 +38,14 @@ export default function QuizPage() {
         return r.json();
       })
       .then((json) => {
-        if (json) setData(json);
+        if (json) setMine(json.competitions);
       })
       .catch(() => setVisitor(true));
   }
 
   const loadStandings = useCallback(() => {
-    const query = chosen ? `?competition=${chosen}` : "";
-    return fetch(`/api/quiz/standings${query}`)
+    if (!chosen) return Promise.resolve();
+    return fetch(`/api/quiz/standings?competition=${chosen}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((json) => {
         if (json) setStandings(json);
@@ -56,17 +53,8 @@ export default function QuizPage() {
       .catch(() => {});
   }, [chosen]);
 
-  function loadRunning() {
-    return fetch("/api/quiz/competitions")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (json) setRunning(json.competitions);
-      })
-      .catch(() => {});
-  }
-
   useEffect(() => {
-    Promise.all([loadData(), loadRunning()]).finally(() => setLoading(false));
+    loadMine().finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -98,7 +86,7 @@ export default function QuizPage() {
     return (
       <QuizLocked
         backHref={backHref}
-        message="أنشئ حساباً وأكمل استمارة الانضمام للمشاركة في المسابقة الثقافية."
+        message="أنشئ حساباً وأكمل استمارة الانضمام للمشاركة في المسابقات الثقافية."
         action={<CreateAccountAction />}
       />
     );
@@ -108,7 +96,7 @@ export default function QuizPage() {
     return (
       <QuizLocked
         backHref={backHref}
-        message="يجب أن تكون منتسباً مقبولاً وقد دفعت رسوم الانتساب لتتمكن من المشاركة في المسابقة الثقافية."
+        message="يجب أن تكون منتسباً مقبولاً وقد دفعت رسوم الانتساب لتتمكن من المشاركة في المسابقات الثقافية."
         action={
           <button onClick={() => router.push("/home")} className="btn btn-primary">
             العودة للرئيسية
@@ -122,36 +110,23 @@ export default function QuizPage() {
     return <TutorialQuiz onExit={() => setTutorial(false)} />;
   }
 
-  if (running.length > 1 && !chosen) {
-    return <QuizPicker competitions={running} backHref={backHref} onPick={setChosen} />;
-  }
-
-  if (standings?.running) {
+  if (chosen && standings?.running) {
     return (
       <CompetitionView
         standings={standings}
-        backHref={backHref}
+        onBack={() => setChosen(null)}
         onReloadStandings={loadStandings}
-        onSwitch={running.length > 1 ? () => setChosen(null) : undefined}
         onTutorial={() => setTutorial(true)}
       />
     );
   }
 
   return (
-    <>
-      {data ? (
-        <AssignmentsView data={data} backHref={backHref} onReload={loadData} />
-      ) : (
-        <div className="app-shell">
-          <PageHeader title="المسابقة الثقافية" backHref={backHref} />
-        </div>
-      )}
-      <div className="px-5 pb-8">
-        <button onClick={() => setTutorial(true)} className="btn btn-sm text-xs">
-          جولة تجريبية
-        </button>
-      </div>
-    </>
+    <QuizPicker
+      competitions={mine}
+      backHref={backHref}
+      onPick={setChosen}
+      onTutorial={() => setTutorial(true)}
+    />
   );
 }
