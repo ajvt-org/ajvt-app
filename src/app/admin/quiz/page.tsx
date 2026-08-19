@@ -35,11 +35,7 @@ function AdminQuizPageInner() {
     <div className="admin-page space-y-5">
       <QuizTabs active={tab} onSelect={go} />
 
-      {tab === "competitions" ? (
-        <CompetitionsSection questionCount={state.questions.length} />
-      ) : (
-        <QuestionsSection state={state} />
-      )}
+      {tab === "competitions" ? <CompetitionsSection /> : <QuestionsSection state={state} />}
     </div>
   );
 }

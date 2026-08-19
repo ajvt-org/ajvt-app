@@ -51,6 +51,7 @@ export async function seedQuestions() {
 const TESTER_PHONE = "21000000";
 
 export async function seedCompetitions(users: SeededUser[], questions: { id: string }[]) {
+  const bank = await prisma.questionBank.findFirstOrThrow({ orderBy: { createdAt: "asc" } });
   const start = daysAgo(2);
   const shape = {
     startsAt: start,
@@ -61,6 +62,7 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     poolSize: 6,
     groupSize: 7,
     countingRounds: 6,
+    bankId: bank.id,
     speedBands: DEFAULT_BANDS as unknown as object,
   };
 

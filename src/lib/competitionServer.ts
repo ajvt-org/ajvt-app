@@ -7,6 +7,7 @@ import {
   type SpeedBand,
 } from "./competitionConfig";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
+import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
@@ -97,6 +98,7 @@ function asConfig(row: Competition): CompetitionConfig {
     groupSize: row.groupSize,
     countingRounds: row.countingRounds,
     categoryRounds: row.categoryRounds,
+    bankId: row.bankId,
     speedBands: row.speedBands as unknown as SpeedBand[],
   };
 }
@@ -123,6 +125,7 @@ export async function saveCompetition(input: Partial<CompetitionConfig>, id?: st
 
   const problem = validateConfig(merged);
   if (problem) throw new ValidationError(problem);
+  merged.bankId = (await requireBank(merged.bankId)).id;
 
   const data = asRow(merged);
   if (existing) return prisma.competition.update({ where: { id: existing.id }, data });

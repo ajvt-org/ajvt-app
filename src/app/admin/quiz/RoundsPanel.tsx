@@ -15,18 +15,13 @@ interface RoundRow {
 
 interface RoundsBody {
   rounds: RoundRow[];
+  bankSize: number;
   servedCount: number;
   poolSize: number;
   startedAt: string | null;
 }
 
-export default function RoundsPanel({
-  competitionId,
-  questionCount,
-}: {
-  competitionId: string;
-  questionCount: number;
-}) {
+export default function RoundsPanel({ competitionId }: { competitionId: string }) {
   const [body, setBody] = useState<RoundsBody | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -81,8 +76,8 @@ export default function RoundsPanel({
 
       {body && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          جاهزة {ready} من {body.rounds.length} جولة. المخزون المطلوب {needed} سؤالاً والمتوفر{" "}
-          {questionCount}.
+          جاهزة {ready} من {body.rounds.length} جولة. المخزون المطلوب {needed} سؤالاً والمتوفر في
+          البنك {body.bankSize}.
         </p>
       )}
 

@@ -293,6 +293,34 @@ describe("filling every round from the bank at once", () => {
     expect(new Set(rows.map((r) => r.questionId)).size).toBe(rows.length);
   });
 
+  it("fills only from the bank the quiz names", async () => {
+    const bank = await prisma.questionBank.create({ data: { name: "بنك البدريين" } });
+    const c = await competition({ bankId: bank.id });
+    await questions(12, "عام");
+    const mine = await questions(12, "خاص");
+    await prisma.quizQuestion.updateMany({
+      where: { id: { in: mine.map((q) => q.id) } },
+      data: { bankId: bank.id },
+    });
+
+    await fill(c.id);
+
+    const rows = await prisma.quizRoundQuestion.findMany({ include: { question: true } });
+    expect(rows).toHaveLength(12);
+    expect(rows.every((r) => r.question.bankId === bank.id)).toBe(true);
+  });
+
+  it("refuses when the quiz's bank is too small even though another is not", async () => {
+    const bank = await prisma.questionBank.create({ data: { name: "بنك فقير" } });
+    const c = await competition({ bankId: bank.id });
+    await questions(40, "عام");
+
+    const res = await fill(c.id);
+
+    expect(res.status).toBe(400);
+    expect(await prisma.quizRound.count()).toBe(0);
+  });
+
   it("refuses when no category is deep enough for a round", async () => {
     const c = await competition({ categoryRounds: true });
     await questions(3, "حساب");

@@ -17,6 +17,7 @@ const row = (over: Partial<CompetitionRow> = {}): CompetitionRow => ({
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
+  bankId: "general",
   speedBands: [{ maxSeconds: null, percent: 50 }],
   startedAt: null,
   _count: { participants: 0, rounds: 0 },

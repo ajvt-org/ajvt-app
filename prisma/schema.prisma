@@ -463,11 +463,12 @@ model AuditLog {
 // A named pile of questions. A quiz draws from exactly one, so two quizzes can
 // be about different things without keeping their questions apart by hand.
 model QuestionBank {
-  id        String         @id @default(cuid())
-  name      String         @unique
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  questions QuizQuestion[]
+  id           String         @id @default(cuid())
+  name         String         @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  questions    QuizQuestion[]
+  competitions Competition[]
 }
 
 model QuizQuestion {
@@ -556,6 +557,8 @@ model Competition {
   groupSize          Int               @default(7)
   countingRounds     Int               @default(6)
   categoryRounds     Boolean           @default(false)
+  bankId             String            @default("general")
+  bank               QuestionBank      @relation(fields: [bankId], references: [id])
   speedBands         Json
   rounds             QuizRound[]
   participants       QuizParticipant[]

@@ -169,6 +169,36 @@ describe("configuring a competition before it starts", () => {
     ).toBe(true);
   });
 
+  it("draws from the general bank when none is named", async () => {
+    const c = await made();
+
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).bankId).toBe(
+      "general",
+    );
+  });
+
+  it("keeps the bank it was given", async () => {
+    const bank = await prisma.questionBank.create({ data: { name: "بنك البدريين" } });
+
+    const c = await made({ ...config, bankId: bank.id });
+
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).bankId).toBe(
+      bank.id,
+    );
+  });
+
+  it("refuses a bank that does not exist", async () => {
+    expect((await create({ ...config, bankId: "nope" })).status).toBe(404);
+  });
+
+  it("freezes the bank once the competition has started", async () => {
+    const bank = await prisma.questionBank.create({ data: { name: "بنك آخر" } });
+    const c = await made();
+    await start(c.id);
+
+    expect((await save(c.id, { bankId: bank.id })).status).toBe(409);
+  });
+
   it("refuses a visibility that is neither public nor private", async () => {
     expect((await create({ ...config, visibility: "SECRET" })).status).toBe(400);
   });
