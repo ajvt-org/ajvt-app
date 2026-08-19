@@ -54,7 +54,7 @@ export const ACTION_LABELS: Record<string, string> = {
   UPDATE_QUIZ_QUESTION: "تعديل سؤال ",
   DELETE_QUIZ_QUESTION: "حذف سؤال ",
   SEND_QUIZ_QUESTION: "إرسال سؤال ",
-  UPDATE_QUIZ_SETTINGS: "تعديل إعدادات المسابقة الثقافية ",
+  UPDATE_QUIZ_SETTINGS: "تعديل إعدادات الأسئلة",
   APPROVE_DONATION: "قبول تبرع",
   REJECT_DONATION: "رفض تبرع",
   UPDATE_DONATION: "تعديل تبرع",
