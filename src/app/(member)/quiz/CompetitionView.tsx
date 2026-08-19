@@ -25,8 +25,6 @@ interface Place {
   total: number;
 }
 
-const MINE = "mine";
-
 export interface StandingsBoard {
   id: string;
   title: string;
@@ -57,11 +55,8 @@ export default function CompetitionView({
   const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const tabs = [
-    ...standings.boards.map((b) => ({ id: b.id, title: b.title })),
-    { id: MINE, title: "نقاطي" },
-  ];
-  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? MINE);
+  const tabs = standings.boards.map((b) => ({ id: b.id, title: b.title }));
+  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? "");
   const open = standings.boards.find((b) => b.id === openTab) ?? null;
 
   useEffect(() => {
@@ -149,7 +144,7 @@ export default function CompetitionView({
 
         <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
 
-        {open ? (
+        {open && (
           <StandingsBoard
             title={open.title}
             rows={open.rows}
@@ -157,9 +152,9 @@ export default function CompetitionView({
             meId={standings.meId}
             empty="لا ترتيب بعد"
           />
-        ) : (
-          competitionId && <MyScores competitionId={competitionId} />
         )}
+
+        {competitionId && <MyScores competitionId={competitionId} />}
       </div>
     </div>
   );
