@@ -6,7 +6,8 @@ const sendPushToUser = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@/lib/push", () => ({ sendPushToUser }));
 
 const { sendMatchReminders } = await import("@/lib/tournamentNotify");
-const { runDailyQuizAutoSend } = await import("@/lib/quiz");
+const { announceOpenDay } = await import("@/lib/quizNotify");
+const { DEFAULT_BANDS } = await import("@/lib/competitionConfig");
 
 async function scheduledMatch() {
   const activity = await prisma.activity.create({
@@ -77,28 +78,99 @@ async function eligibleUserWithQuestion() {
   return user;
 }
 
-describe("runDailyQuizAutoSend", () => {
+async function openDayWithQuestions() {
+  const today = new Date().toISOString().slice(0, 10);
+  const competition = await prisma.competition.create({
+    data: {
+      name: "مسابقة",
+      startsOn: today,
+      days: 3,
+      publishMinutes: 0,
+      cutoffMinutes: 1439,
+      servedCount: 1,
+      poolSize: 1,
+      weeklyCountingDays: 6,
+      speedBands: DEFAULT_BANDS as unknown as object,
+      startedAt: new Date(),
+    },
+  });
+  const day = await prisma.quizDay.create({
+    data: { competitionId: competition.id, day: today },
+  });
+  const question = await prisma.quizQuestion.create({
+    data: { text: "سؤال", category: "عام", createdBy: "admin" },
+  });
+  await prisma.quizDayQuestion.create({ data: { dayId: day.id, questionId: question.id } });
+  return { competition, day };
+}
+
+describe("announceOpenDay", () => {
   beforeEach(async () => {
     await resetDb();
     sendPushToUser.mockClear();
   });
 
-  it("sends the day's batch once", async () => {
-    const user = await eligibleUserWithQuestion();
+  it("tells every eligible member once the day is open", async () => {
+    await eligibleUserWithQuestion();
+    await openDayWithQuestions();
 
-    await runDailyQuizAutoSend();
+    const sent = await announceOpenDay();
 
-    expect(await prisma.quizAssignment.count({ where: { userId: user.id } })).toBe(1);
+    expect(sent).toBe(1);
+    expect(sendPushToUser).toHaveBeenCalledTimes(1);
   });
 
-  it("does not send a second batch when two requests race", async () => {
-    const user = await eligibleUserWithQuestion();
-    await prisma.quizQuestion.create({
-      data: { text: "سؤال آخر", category: "عام", createdBy: "admin" },
+  it("does not announce the same day twice when two requests race", async () => {
+    await eligibleUserWithQuestion();
+    await openDayWithQuestions();
+
+    await Promise.all([announceOpenDay(), announceOpenDay()]);
+
+    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("says nothing when the day has no questions loaded", async () => {
+    await eligibleUserWithQuestion();
+    const today = new Date().toISOString().slice(0, 10);
+    const competition = await prisma.competition.create({
+      data: {
+        name: "مسابقة",
+        startsOn: today,
+        days: 3,
+        publishMinutes: 0,
+        cutoffMinutes: 1439,
+        servedCount: 1,
+        poolSize: 1,
+        weeklyCountingDays: 6,
+        speedBands: DEFAULT_BANDS as unknown as object,
+        startedAt: new Date(),
+      },
+    });
+    await prisma.quizDay.create({ data: { competitionId: competition.id, day: today } });
+
+    expect(await announceOpenDay()).toBe(0);
+    expect(sendPushToUser).not.toHaveBeenCalled();
+  });
+
+  it("says nothing before the competition is launched", async () => {
+    await eligibleUserWithQuestion();
+    const { competition } = await openDayWithQuestions();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { startedAt: null },
     });
 
-    await Promise.all([runDailyQuizAutoSend(), runDailyQuizAutoSend()]);
+    expect(await announceOpenDay()).toBe(0);
+  });
 
-    expect(await prisma.quizAssignment.count({ where: { userId: user.id } })).toBe(1);
+  it("says nothing once the day has closed", async () => {
+    await eligibleUserWithQuestion();
+    const { competition } = await openDayWithQuestions();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { publishMinutes: 0, cutoffMinutes: 1 },
+    });
+
+    expect(await announceOpenDay(new Date(`${competition.startsOn}T12:00:00.000Z`))).toBe(0);
   });
 });
