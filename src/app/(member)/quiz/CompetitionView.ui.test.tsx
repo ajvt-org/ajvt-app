@@ -74,6 +74,22 @@ describe("CompetitionView", () => {
     expect(screen.getByText("محمد")).toBeDefined();
   });
 
+  it("keeps my own scores behind their own tab", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+
+    expect(screen.queryByText(/تفاصيل نقاطي/)).toBeNull();
+  });
+
+  it("offers no practice round from inside a quiz", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+
+    expect(screen.queryByText("جولة تجريبية")).toBeNull();
+  });
+
   it("shows one ranking at a time and switches on the tab", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     setup();

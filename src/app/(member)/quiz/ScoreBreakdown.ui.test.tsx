@@ -24,6 +24,8 @@ const detail: AttemptDetailView = {
         elapsedMs: 5_000,
         points: 10,
         percent: 100,
+        correct: ["نواكشوط"],
+        chosen: ["نواكشوط"],
       },
       {
         position: 1,
@@ -34,6 +36,8 @@ const detail: AttemptDetailView = {
         elapsedMs: 40_000,
         points: 0,
         percent: 0,
+        correct: ["خمس عشرة"],
+        chosen: ["اثنتا عشرة"],
       },
     ],
     correct: 1,
@@ -70,8 +74,22 @@ describe("ScoreBreakdown", () => {
   it("shows the speed share each answer earned", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText("100%")).toBeDefined();
-    expect(screen.getByText("0%")).toBeDefined();
+    expect(screen.getByText(/10 من 10 نقطة .* 100%/)).toBeDefined();
+    expect(screen.getByText(/0 من 20 نقطة .* 0%/)).toBeDefined();
+  });
+
+  it("says whether each answer was right", () => {
+    render(<ScoreBreakdown detail={detail} />);
+
+    expect(screen.getByText("صحيحة")).toBeDefined();
+    expect(screen.getByText("خاطئة")).toBeDefined();
+  });
+
+  it("gives the right answer for a question that was missed", () => {
+    render(<ScoreBreakdown detail={detail} />);
+
+    expect(screen.getByText(/الصحيح خمس عشرة/)).toBeDefined();
+    expect(screen.getByText(/اخترت اثنتا عشرة/)).toBeDefined();
   });
 
   it("explains the formula from the bands the quiz uses", () => {

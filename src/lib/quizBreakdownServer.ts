@@ -24,7 +24,7 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     where: { id: attemptId },
     include: {
       round: { include: { competition: { include: { boards: { orderBy: { order: "asc" } } } } } },
-      answers: { include: { question: true } },
+      answers: { include: { question: { include: { answers: true } } } },
     },
   });
   if (!attempt) throw new NotFoundError(NO_ATTEMPT);
@@ -39,15 +39,20 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     maxSeconds: attempt.round.competition.maxSeconds,
     floorPercent: attempt.round.competition.floorPercent,
   };
-  const rows: AnswerRow[] = attempt.answers.map((answer) => ({
-    position: answer.position,
-    question: answer.question.text,
-    category: answer.question.category,
-    maxPoints: answer.question.points,
-    isCorrect: answer.isCorrect,
-    elapsedMs: answer.elapsedMs,
-    points: answer.points,
-  }));
+  const rows: AnswerRow[] = attempt.answers.map((answer) => {
+    const picked = new Set(answer.selectedAnswerIds);
+    return {
+      position: answer.position,
+      question: answer.question.text,
+      category: answer.question.category,
+      maxPoints: answer.question.points,
+      isCorrect: answer.isCorrect,
+      elapsedMs: answer.elapsedMs,
+      points: answer.points,
+      correct: answer.question.answers.filter((a) => a.isCorrect).map((a) => a.text),
+      chosen: answer.question.answers.filter((a) => picked.has(a.id)).map((a) => a.text),
+    };
+  });
 
   return {
     attemptId: attempt.id,
@@ -77,6 +82,7 @@ export async function attemptsOf(competitionId: string, userId: string) {
       score: true,
       finishedAt: true,
       round: { select: { index: true, category: true } },
+      answers: { select: { isCorrect: true, points: true } },
     },
     orderBy: { round: { index: "asc" } },
   });
@@ -85,6 +91,9 @@ export async function attemptsOf(competitionId: string, userId: string) {
     round: a.round.index,
     category: a.round.category,
     score: a.score,
+    correct: a.answers.filter((x) => x.isCorrect === true).length,
+    total: a.answers.length,
+    possible: a.answers.length,
     finishedAt: a.finishedAt,
   }));
 }

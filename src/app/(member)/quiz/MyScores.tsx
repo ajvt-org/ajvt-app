@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import NumericRanges from "@/components/NumericRanges";
 import ScoreBreakdown from "./ScoreBreakdown";
 import type { AttemptDetailView, AttemptSummary } from "./types";
 
@@ -68,15 +69,20 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
         <button
           key={round.attemptId}
           onClick={() => open(round.attemptId)}
-          className="w-full flex items-center justify-between rounded-lg p-2 text-xs"
+          className="w-full flex items-center justify-between gap-2 rounded-lg p-2 text-xs"
           style={{ background: "var(--surface-2)" }}
         >
-          <span style={{ color: "var(--text-main)" }}>
-            الجولة {round.round + 1}
-            {round.category ? ` · ${round.category}` : ""}
+          <span className="text-start">
+            <span className="block font-bold" style={{ color: "var(--text-main)" }}>
+              <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
+              {round.category ? ` · ${round.category}` : ""}
+            </span>
+            <span style={{ color: "var(--text-muted)" }}>
+              <NumericRanges>{`${round.correct} صحيحة من ${round.total}`}</NumericRanges>
+            </span>
           </span>
           <span className="font-bold" style={{ color: "var(--mint-700)" }}>
-            {round.score}
+            <NumericRanges>{`${round.score}`}</NumericRanges>
           </span>
         </button>
       ))}

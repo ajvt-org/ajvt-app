@@ -1,35 +1,38 @@
 "use client";
 
-import type { StandingsBoard } from "./CompetitionView";
+export interface QuizTab {
+  id: string;
+  title: string;
+}
 
 export default function BoardTabs({
-  boards,
+  tabs,
   active,
   onSelect,
 }: {
-  boards: StandingsBoard[];
+  tabs: QuizTab[];
   active: string | null;
   onSelect: (id: string) => void;
 }) {
-  if (boards.length < 2) return null;
-  const open = boards.some((b) => b.id === active) ? active : boards[0]?.id;
+  if (tabs.length < 2) return null;
+  const open = tabs.some((t) => t.id === active) ? active : tabs[0]?.id;
 
   return (
     <div className="flex gap-2 overflow-x-auto" role="tablist">
-      {boards.map((board) => (
+      {tabs.map((tab) => (
         <button
-          key={board.id}
+          key={tab.id}
           role="tab"
-          aria-selected={board.id === open}
-          onClick={() => onSelect(board.id)}
+          aria-selected={tab.id === open}
+          onClick={() => onSelect(tab.id)}
           className="btn btn-sm text-xs font-bold shrink-0"
           style={
-            board.id === open
+            tab.id === open
               ? { background: "var(--mint-600)", color: "white" }
               : { background: "white", color: "var(--text-main)" }
           }
         >
-          {board.title}
+          {tab.title}
         </button>
       ))}
     </div>

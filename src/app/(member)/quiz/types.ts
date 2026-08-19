@@ -29,6 +29,8 @@ export interface BreakdownRowView {
   elapsedMs: number | null;
   points: number;
   percent: number;
+  correct: string[];
+  chosen: string[];
 }
 
 export interface AttemptDetailView {
@@ -54,5 +56,7 @@ export interface AttemptSummary {
   round: number;
   category: string | null;
   score: number;
+  correct: number;
+  total: number;
   finishedAt: string | null;
 }

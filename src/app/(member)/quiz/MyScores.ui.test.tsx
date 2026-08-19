@@ -11,8 +11,16 @@ vi.mock("@/lib/api", () => ({
 }));
 
 const rounds = [
-  { attemptId: "a1", round: 0, category: "جغرافيا", score: 30, finishedAt: null },
-  { attemptId: "a2", round: 1, category: null, score: 10, finishedAt: null },
+  {
+    attemptId: "a1",
+    round: 0,
+    category: "جغرافيا",
+    score: 30,
+    correct: 2,
+    total: 3,
+    finishedAt: null,
+  },
+  { attemptId: "a2", round: 1, category: null, score: 10, correct: 1, total: 3, finishedAt: null },
 ];
 
 const detail = {
@@ -33,6 +41,8 @@ const detail = {
         elapsedMs: 5_000,
         points: 10,
         percent: 50,
+        correct: ["نواكشوط"],
+        chosen: ["نواكشوط"],
       },
     ],
     correct: 1,

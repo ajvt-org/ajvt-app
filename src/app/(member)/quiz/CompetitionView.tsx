@@ -25,6 +25,8 @@ interface Place {
   total: number;
 }
 
+const MINE = "mine";
+
 export interface StandingsBoard {
   id: string;
   title: string;
@@ -44,21 +46,23 @@ export default function CompetitionView({
   standings,
   onBack,
   onReloadStandings,
-  onTutorial,
 }: {
   standings: StandingsState;
   onBack: () => void;
   onReloadStandings: () => void;
-  onTutorial?: () => void;
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [closed, setClosed] = useState("");
-  const [showScores, setShowScores] = useState(false);
-  const [board, setBoard] = useState<string | null>(null);
+  const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const open = standings.boards.find((b) => b.id === board) ?? standings.boards[0] ?? null;
+  const tabs = [
+    ...standings.boards.map((b) => ({ id: b.id, title: b.title })),
+    { id: MINE, title: "نقاطي" },
+  ];
+  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? MINE);
+  const open = standings.boards.find((b) => b.id === openTab) ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -135,21 +139,11 @@ export default function CompetitionView({
               مجموعك في الجولة {attempt.score}
             </p>
           )}
-          <button onClick={() => setShowScores((v) => !v)} className="btn btn-sm text-xs mt-3 ms-2">
-            {showScores ? "إخفاء التفاصيل" : "تفاصيل نقاطي"}
-          </button>
-          {onTutorial && (
-            <button onClick={onTutorial} className="btn btn-sm text-xs mt-3 ms-2">
-              جولة تجريبية
-            </button>
-          )}
         </div>
 
-        {showScores && competitionId && <MyScores competitionId={competitionId} />}
+        <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
 
-        <BoardTabs boards={standings.boards} active={board} onSelect={setBoard} />
-
-        {open && (
+        {open ? (
           <StandingsBoard
             title={open.title}
             rows={open.rows}
@@ -157,6 +151,8 @@ export default function CompetitionView({
             meId={standings.meId}
             empty="لا ترتيب بعد"
           />
+        ) : (
+          competitionId && <MyScores competitionId={competitionId} />
         )}
       </div>
     </div>
