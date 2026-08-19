@@ -281,6 +281,30 @@ describe("an admin reading anyone's score", () => {
     expect(body.attempts).toEqual([]);
   });
 
+  it("says whether the round's window has opened", async () => {
+    const running = await competition({ startsAt: new Date(Date.now() - 3_600_000) });
+    const ahead = await competition({
+      name: "مسابقة قادمة",
+      startsAt: new Date(Date.now() + 86_400_000),
+    });
+
+    const now = await (
+      await ADMIN_ROUND(
+        get(`/api/admin/quiz/competitions/${running.id}/attempts?round=0`),
+        withId(running.id),
+      )
+    ).json();
+    const later = await (
+      await ADMIN_ROUND(
+        get(`/api/admin/quiz/competitions/${ahead.id}/attempts?round=0`),
+        withId(ahead.id),
+      )
+    ).json();
+
+    expect(now.opened).toBe(true);
+    expect(later.opened).toBe(false);
+  });
+
   it("opens any member's breakdown", async () => {
     const c = await competition();
     const user = await paidUser();

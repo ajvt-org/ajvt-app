@@ -44,7 +44,9 @@ const detail = {
 beforeEach(() => {
   get.mockReset();
   get.mockImplementation((url: string) =>
-    url.includes("/attempts?round=") ? Promise.resolve({ attempts }) : Promise.resolve({ detail }),
+    url.includes("/attempts?round=")
+      ? Promise.resolve({ attempts, opened: true })
+      : Promise.resolve({ detail }),
   );
 });
 
@@ -89,9 +91,17 @@ describe("ScoresPanel", () => {
   });
 
   it("says so when nobody played the round", async () => {
-    get.mockResolvedValue({ attempts: [] });
+    get.mockResolvedValue({ attempts: [], opened: true });
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
 
     await waitFor(() => expect(screen.getByText(/لم يشارك أحد/)).toBeDefined());
+  });
+
+  it("tells a round that has not opened apart from an empty one", async () => {
+    get.mockResolvedValue({ attempts: [], opened: false });
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+
+    await waitFor(() => expect(screen.getByText("لم تبدأ هذه الجولة بعد")).toBeDefined());
+    expect(screen.queryByText(/لم يشارك أحد/)).toBeNull();
   });
 });

@@ -21,17 +21,20 @@ export default function ScoresPanel({
 }) {
   const [round, setRound] = useState(0);
   const [rows, setRows] = useState<AttemptRow[]>([]);
+  const [opened, setOpened] = useState(true);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
     api
-      .get<{ attempts: AttemptRow[] }>(
+      .get<{ attempts: AttemptRow[]; opened: boolean }>(
         `/api/admin/quiz/competitions/${competitionId}/attempts?round=${round}`,
       )
       .then((data) => {
-        if (alive) setRows(data.attempts);
+        if (!alive) return;
+        setRows(data.attempts);
+        setOpened(data.opened);
       })
       .catch(() => {
         if (alive) setRows([]);
@@ -86,7 +89,7 @@ export default function ScoresPanel({
 
       {rows.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          لم يشارك أحد في هذه الجولة
+          {opened ? "لم يشارك أحد في هذه الجولة" : "لم تبدأ هذه الجولة بعد"}
         </p>
       )}
 
