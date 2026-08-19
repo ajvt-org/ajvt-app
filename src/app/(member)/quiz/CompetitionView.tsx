@@ -113,9 +113,6 @@ export default function CompetitionView({
       <AttemptQuestion
         question={attempt.question}
         curve={attempt.curve}
-        position={attempt.position}
-        total={attempt.total}
-        score={attempt.score}
         busy={busy}
         onSubmit={answer}
         onExpire={skip}

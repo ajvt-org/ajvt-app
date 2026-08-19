@@ -19,16 +19,7 @@ const single: AttemptView = {
 
 function setup(over: Partial<React.ComponentProps<typeof AttemptQuestion>> = {}) {
   const onSubmit = vi.fn();
-  render(
-    <AttemptQuestion
-      question={single}
-      position={0}
-      total={10}
-      busy={false}
-      onSubmit={onSubmit}
-      {...over}
-    />,
-  );
+  render(<AttemptQuestion question={single} busy={false} onSubmit={onSubmit} {...over} />);
   return { onSubmit };
 }
 
@@ -42,10 +33,13 @@ describe("AttemptQuestion", () => {
     expect(screen.getAllByRole("radio")).toHaveLength(3);
   });
 
-  it("says where the member is in the attempt", () => {
-    setup({ position: 3, total: 10 });
+  it("shows nothing beyond the question, its answers and the confirmation", () => {
+    setup();
 
-    expect(screen.getByRole("progressbar").getAttribute("aria-valuenow")).toBe("4");
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(screen.queryByText("جغرافيا")).toBeNull();
+    expect(screen.queryByText(/نقطة/)).toBeNull();
+    expect(screen.queryByText(/مجموعك/)).toBeNull();
   });
 
   it("cannot be confirmed before something is picked", () => {
