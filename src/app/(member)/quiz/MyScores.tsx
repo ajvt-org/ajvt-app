@@ -65,27 +65,46 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
           لم تشارك في أي جولة بعد
         </p>
       )}
-      {rounds?.map((round) => (
-        <button
-          key={round.attemptId}
-          onClick={() => open(round.attemptId)}
-          className="w-full flex items-center justify-between gap-2 rounded-lg p-2 text-xs"
-          style={{ background: "var(--surface-2)" }}
-        >
-          <span className="text-start">
-            <span className="block font-bold" style={{ color: "var(--text-main)" }}>
-              <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
-              {round.category ? ` · ${round.category}` : ""}
+      {rounds?.map((round) =>
+        round.attemptId ? (
+          <button
+            key={round.round}
+            onClick={() => open(round.attemptId as string)}
+            className="w-full flex items-center justify-between gap-2 rounded-lg p-2 text-xs"
+            style={{ background: "var(--surface-2)" }}
+          >
+            <span className="text-start">
+              <span className="block font-bold" style={{ color: "var(--text-main)" }}>
+                <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
+                {round.category ? ` · ${round.category}` : ""}
+              </span>
+              <span style={{ color: "var(--text-muted)" }}>
+                <NumericRanges>{`${round.correct} صحيحة من ${round.total}`}</NumericRanges>
+              </span>
             </span>
-            <span style={{ color: "var(--text-muted)" }}>
-              <NumericRanges>{`${round.correct} صحيحة من ${round.total}`}</NumericRanges>
+            <span className="font-bold" style={{ color: "var(--mint-700)" }}>
+              <NumericRanges>{`${round.score}`}</NumericRanges>
             </span>
-          </span>
-          <span className="font-bold" style={{ color: "var(--mint-700)" }}>
-            <NumericRanges>{`${round.score}`}</NumericRanges>
-          </span>
-        </button>
-      ))}
+          </button>
+        ) : (
+          <div
+            key={round.round}
+            className="flex items-center justify-between gap-2 rounded-lg p-2 text-xs"
+            style={{ background: "var(--surface-2)", opacity: 0.7 }}
+          >
+            <span className="text-start">
+              <span className="block font-bold" style={{ color: "var(--text-main)" }}>
+                <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
+                {round.category ? ` · ${round.category}` : ""}
+              </span>
+              <span style={{ color: "var(--text-muted)" }}>لم تشارك</span>
+            </span>
+            <span className="font-bold" style={{ color: "var(--text-muted)" }}>
+              <NumericRanges>0</NumericRanges>
+            </span>
+          </div>
+        ),
+      )}
     </div>
   );
 }
