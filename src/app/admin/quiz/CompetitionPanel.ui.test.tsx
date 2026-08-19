@@ -30,6 +30,7 @@ const saved = {
   poolSize: 30,
   groupSize: 7,
   countingRounds: 6,
+  categoryRounds: false,
   speedBands: [
     { maxSeconds: 10, percent: 100 },
     { maxSeconds: null, percent: 50 },
@@ -79,6 +80,25 @@ describe("CompetitionPanel", () => {
 
     await waitFor(() => expect(post).toHaveBeenCalled());
     expect(post.mock.calls[0][1]).toMatchObject({ visibility: "PRIVATE" });
+  });
+
+  it("saves the one category a round rule when it is ticked", async () => {
+    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+
+    await userEvent.type(screen.getByLabelText("اسم المسابقة"), "مسابقة");
+    await userEvent.click(screen.getByLabelText(/كل جولة من تصنيف واحد/));
+    await userEvent.click(screen.getByRole("button", { name: /حفظ الإعدادات/ }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(post.mock.calls[0][1]).toMatchObject({ categoryRounds: true });
+  });
+
+  it("leaves the one category a round rule off by default", async () => {
+    render(<CompetitionPanel competitionId={null} onSaved={() => {}} onChanged={() => {}} />);
+
+    expect((screen.getByLabelText(/كل جولة من تصنيف واحد/) as HTMLInputElement).checked).toBe(
+      false,
+    );
   });
 
   it("loads what was already saved", async () => {

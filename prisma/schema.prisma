@@ -572,6 +572,7 @@ model Competition {
   poolSize           Int               @default(30)
   groupSize          Int               @default(7)
   countingRounds     Int               @default(6)
+  categoryRounds     Boolean           @default(false)
   speedBands         Json
   rounds             QuizRound[]
   participants       QuizParticipant[]
@@ -585,6 +586,7 @@ model QuizRound {
   competitionId String
   competition   Competition         @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   index         Int
+  category      String?
   opensAt       DateTime
   closesAt      DateTime
   announcedAt   DateTime?

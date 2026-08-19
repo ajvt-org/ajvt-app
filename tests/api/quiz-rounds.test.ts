@@ -31,14 +31,15 @@ async function competition(over: Record<string, unknown> = {}) {
   });
 }
 
-async function questions(n: number) {
+async function questions(n: number, category = "عام", points = 10) {
   const made = [];
   for (let i = 0; i < n; i++) {
     made.push(
       await prisma.quizQuestion.create({
         data: {
-          text: `سؤال ${i}`,
-          category: "عام",
+          text: `سؤال ${category} ${i}`,
+          category,
+          points,
           createdBy: "admin",
           answers: {
             create: [
@@ -245,6 +246,76 @@ describe("filling every round from the bank at once", () => {
     await fill(other.id);
 
     expect(await prisma.quizRoundQuestion.count()).toBe(24);
+  });
+
+  it("keeps each round to one category when that is the rule", async () => {
+    const c = await competition({ categoryRounds: true });
+    await questions(6, "حساب", 5);
+    await questions(6, "حساب", 13);
+    await questions(6, "دين", 5);
+    await questions(6, "دين", 19);
+
+    await fill(c.id);
+
+    const rows = await prisma.quizRound.findMany({
+      include: { questions: { include: { question: true } } },
+    });
+    expect(rows).toHaveLength(3);
+    for (const round of rows) {
+      const seen = new Set(round.questions.map((q) => q.question.category));
+      expect([...seen]).toEqual([round.category]);
+    }
+  });
+
+  it("spreads a category round across its difficulties", async () => {
+    const c = await competition({ categoryRounds: true, roundCount: 1 });
+    await questions(4, "حساب", 5);
+    await questions(4, "حساب", 13);
+    await questions(4, "حساب", 19);
+
+    await fill(c.id);
+
+    const round = await prisma.quizRound.findFirstOrThrow({
+      include: { questions: { include: { question: true } } },
+    });
+    const points = new Set(round.questions.map((q) => q.question.points));
+    expect(points.size).toBeGreaterThan(1);
+  });
+
+  it("never repeats a question across the rounds of one category run", async () => {
+    const c = await competition({ categoryRounds: true });
+    await questions(8, "حساب", 5);
+    await questions(8, "دين", 13);
+
+    await fill(c.id);
+
+    const rows = await prisma.quizRoundQuestion.findMany();
+    expect(new Set(rows.map((r) => r.questionId)).size).toBe(rows.length);
+  });
+
+  it("refuses when no category is deep enough for a round", async () => {
+    const c = await competition({ categoryRounds: true });
+    await questions(3, "حساب");
+    await questions(3, "دين");
+    await questions(3, "تاريخ");
+    await questions(3, "علوم");
+
+    const res = await fill(c.id);
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toContain("التصنيفات لا تكفي");
+    expect(await prisma.quizRound.count()).toBe(0);
+  });
+
+  it("still mixes categories when the rule is off", async () => {
+    const c = await competition();
+    await questions(6, "حساب");
+    await questions(6, "دين");
+
+    await fill(c.id);
+
+    const rows = await prisma.quizRound.findMany();
+    expect(rows.every((r) => r.category === null)).toBe(true);
   });
 
   it("refuses when the bank is too small for the whole run", async () => {

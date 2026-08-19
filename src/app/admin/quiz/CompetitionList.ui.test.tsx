@@ -16,6 +16,7 @@ const row = (over: Partial<CompetitionRow> = {}): CompetitionRow => ({
   poolSize: 30,
   groupSize: 7,
   countingRounds: 6,
+  categoryRounds: false,
   speedBands: [{ maxSeconds: null, percent: 50 }],
   startedAt: null,
   _count: { participants: 0, rounds: 0 },

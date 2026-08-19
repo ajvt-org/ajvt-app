@@ -9,6 +9,7 @@ interface RoundRow {
   index: number;
   opensAt: string;
   closesAt: string;
+  category: string | null;
   loaded: number;
 }
 
@@ -91,7 +92,7 @@ export default function RoundsPanel({
           return (
             <span
               key={d.index}
-              title={`${new Date(d.opensAt).toISOString().slice(0, 16).replace("T", " ")} · ${d.loaded}`}
+              title={`${new Date(d.opensAt).toISOString().slice(0, 16).replace("T", " ")} · ${d.category ?? "كل التصنيفات"} · ${d.loaded}`}
               className="text-xs px-2 py-1 rounded-lg font-semibold"
               style={{
                 background: ok ? "var(--mint-100)" : "#fee2e2",
@@ -99,6 +100,7 @@ export default function RoundsPanel({
               }}
             >
               {d.index + 1}
+              {d.category && <span style={{ opacity: 0.7 }}> · {d.category}</span>}
               <span style={{ opacity: 0.7 }}> · {d.loaded}</span>
             </span>
           );

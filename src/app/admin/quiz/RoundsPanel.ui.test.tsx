@@ -17,18 +17,21 @@ const body = {
       index: 0,
       opensAt: "2026-08-20T08:00:00.000Z",
       closesAt: "2026-08-20T22:00:00.000Z",
+      category: null,
       loaded: 4,
     },
     {
       index: 1,
       opensAt: "2026-08-21T08:00:00.000Z",
       closesAt: "2026-08-21T22:00:00.000Z",
+      category: null,
       loaded: 0,
     },
     {
       index: 2,
       opensAt: "2026-08-22T08:00:00.000Z",
       closesAt: "2026-08-22T22:00:00.000Z",
+      category: null,
       loaded: 4,
     },
   ],
@@ -84,6 +87,16 @@ describe("RoundsPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: /توزيع الأسئلة/ }));
 
     await waitFor(() => expect(screen.getByText(/المخزون لا يكفي/)).toBeDefined());
+  });
+
+  it("names the category of a round drawn from one", async () => {
+    get.mockResolvedValue({
+      ...body,
+      rounds: [{ ...body.rounds[0], category: "جغرافيا" }],
+    });
+    render(<RoundsPanel competitionId="c1" questionCount={100} />);
+
+    await waitFor(() => expect(screen.getByText(/جغرافيا/)).toBeDefined());
   });
 
   it("stops offering to change the rounds once it has started", async () => {

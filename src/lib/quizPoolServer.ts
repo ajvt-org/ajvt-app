@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { roundWindows } from "./quizRound";
 import { requireCompetition, shapeOf, ALREADY_STARTED } from "./competitionServer";
+import { planRounds } from "./quizDraw";
 import { ConflictError, ValidationError } from "./errors";
 
 export const NOT_A_ROUND = "هذه الجولة ليست من جولات المسابقة";
@@ -11,9 +12,9 @@ export async function listRounds(competitionId: string) {
   const windows = roundWindows(shapeOf(competition));
   const rounds = await prisma.quizRound.findMany({
     where: { competitionId: competition.id },
-    select: { index: true, _count: { select: { questions: true } } },
+    select: { index: true, category: true, _count: { select: { questions: true } } },
   });
-  const loaded = new Map(rounds.map((r) => [r.index, r._count.questions]));
+  const known = new Map(rounds.map((r) => [r.index, r]));
 
   return {
     competition,
@@ -21,12 +22,18 @@ export async function listRounds(competitionId: string) {
       index: w.index,
       opensAt: w.opensAt,
       closesAt: w.closesAt,
-      loaded: loaded.get(w.index) ?? 0,
+      category: known.get(w.index)?.category ?? null,
+      loaded: known.get(w.index)?._count.questions ?? 0,
     })),
   };
 }
 
-export async function setRoundPool(competitionId: string, index: number, questionIds: string[]) {
+export async function setRoundPool(
+  competitionId: string,
+  index: number,
+  questionIds: string[],
+  category: string | null = null,
+) {
   const competition = await requireCompetition(competitionId);
   const window = roundWindows(shapeOf(competition)).find((w) => w.index === index);
   if (!window) throw new ValidationError(NOT_A_ROUND);
@@ -50,16 +57,17 @@ export async function setRoundPool(competitionId: string, index: number, questio
     throw new ConflictError("بدأ المشاركون هذه الجولة، لا يمكن تغييرها");
   }
 
-  const round =
-    existing ??
-    (await prisma.quizRound.create({
-      data: {
-        competitionId: competition.id,
-        index,
-        opensAt: window.opensAt,
-        closesAt: window.closesAt,
-      },
-    }));
+  const round = existing
+    ? await prisma.quizRound.update({ where: { id: existing.id }, data: { category } })
+    : await prisma.quizRound.create({
+        data: {
+          competitionId: competition.id,
+          index,
+          category,
+          opensAt: window.opensAt,
+          closesAt: window.closesAt,
+        },
+      });
 
   await prisma.$transaction([
     prisma.quizRoundQuestion.deleteMany({ where: { roundId: round.id } }),
@@ -75,31 +83,33 @@ export async function fillRoundsFromBank(competitionId: string) {
   const competition = await requireCompetition(competitionId);
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
 
-  const questions = await prisma.quizQuestion.findMany({
+  const bank = await prisma.quizQuestion.findMany({
     where: { active: true },
-    select: { id: true },
+    select: { id: true, category: true, points: true },
     orderBy: { createdAt: "asc" },
   });
   const windows = roundWindows(shapeOf(competition));
-  const needed = windows.length * competition.poolSize;
-  if (questions.length < needed) {
+  const plans = planRounds(
+    bank,
+    {
+      roundCount: windows.length,
+      poolSize: competition.poolSize,
+      categoryRounds: competition.categoryRounds,
+    },
+    competition.id,
+  );
+
+  if (plans.length < windows.length) {
+    const needed = windows.length * competition.poolSize;
     throw new ValidationError(
-      `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${questions.length}`,
+      competition.categoryRounds
+        ? `التصنيفات لا تكفي، كل جولة تحتاج ${competition.poolSize} سؤالاً من تصنيف واحد، وأمكن تجهيز ${plans.length} جولة من ${windows.length}`
+        : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bank.length}`,
     );
   }
 
-  let filled = 0;
-  for (const window of windows) {
-    const slice = questions.slice(
-      window.index * competition.poolSize,
-      (window.index + 1) * competition.poolSize,
-    );
-    await setRoundPool(
-      competitionId,
-      window.index,
-      slice.map((q) => q.id),
-    );
-    filled += 1;
+  for (const plan of plans) {
+    await setRoundPool(competitionId, plan.index, plan.questionIds, plan.category);
   }
-  return filled;
+  return plans.length;
 }
