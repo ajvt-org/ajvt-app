@@ -32,9 +32,11 @@ interface Result {
 }
 
 export default function ImportDialog({
+  bankId,
   onImported,
   onClose,
 }: {
+  bankId: string | null;
   onImported: () => void;
   onClose: () => void;
 }) {
@@ -61,7 +63,7 @@ export default function ImportDialog({
     }
     setBusy(true);
     try {
-      setReview(await api.post<Review>("/api/admin/quiz/questions/import", { questions }));
+      setReview(await api.post<Review>("/api/admin/quiz/questions/import", { questions, bankId }));
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -75,6 +77,7 @@ export default function ImportDialog({
     try {
       const done = await api.post<Result>("/api/admin/quiz/questions/import", {
         questions: parsed(),
+        bankId,
         commit: true,
       });
       setResult(done);

@@ -8,6 +8,7 @@ import { api, errorMessage } from "@/lib/api";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
 import { emptySettingsForm } from "./types";
+import type { BankRow } from "./BankPicker";
 import type { QuestionFormValues } from "./QuestionFormDialog";
 import type { QuestionRow, QuizSettings, SettingsForm as SettingsFormValues } from "./types";
 
@@ -29,6 +30,10 @@ export function useQuizQuestions() {
   const [savingSettings, setSavingSettings] = useState(false);
 
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [banks, setBanks] = useState<BankRow[]>([]);
+  const [bankId, setBankId] = useState<string | null>(null);
+  const [bankBusy, setBankBusy] = useState(false);
+  const [bankError, setBankError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [showImport, setShowImport] = useState(false);
@@ -39,7 +44,8 @@ export function useQuizQuestions() {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  function load() {
+  function load(bank: string | null = bankId) {
+    const query = bank ? `?bank=${bank}` : "";
     return Promise.all([
       fetch("/api/admin/quiz/settings").then((r) => {
         if (r.status === 401) {
@@ -48,8 +54,9 @@ export function useQuizQuestions() {
         }
         return r.ok ? r.json() : null;
       }),
-      fetch("/api/admin/quiz/questions").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([s, q]) => {
+      fetch(`/api/admin/quiz/questions${query}`).then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/admin/quiz/banks").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([s, q, b]) => {
       if (s?.settings) {
         setSettings(s.settings);
         setSettingsForm({
@@ -59,8 +66,38 @@ export function useQuizQuestions() {
         });
       }
       if (q?.questions) setQuestions(q.questions);
+      if (q?.bank) setBankId(q.bank.id);
+      if (b?.banks) setBanks(b.banks);
     });
   }
+
+  async function bankAction(run: () => Promise<unknown>) {
+    setBankBusy(true);
+    setBankError("");
+    try {
+      await run();
+      await load();
+    } catch (e) {
+      setBankError(errorMessage(e));
+    } finally {
+      setBankBusy(false);
+    }
+  }
+
+  function openBank(id: string) {
+    setBankId(id);
+    load(id);
+  }
+
+  const createBank = (name: string) =>
+    bankAction(() => api.post("/api/admin/quiz/banks", { name }));
+  const renameBank = (id: string, name: string) =>
+    bankAction(() => api.patch(`/api/admin/quiz/banks/${id}`, { name }));
+  const deleteBank = (id: string) =>
+    bankAction(async () => {
+      await api.del(`/api/admin/quiz/banks/${id}`);
+      if (id === bankId) setBankId(null);
+    });
 
   useEffect(() => {
     load().finally(() => setLoading(false));
@@ -161,7 +198,7 @@ export function useQuizQuestions() {
       if (editingId) {
         await api.patch(`/api/admin/quiz/questions/${editingId}`, body);
       } else {
-        await api.post("/api/admin/quiz/questions", body);
+        await api.post("/api/admin/quiz/questions", { ...body, bankId });
       }
       setShowForm(false);
       showToast(editingId ? "تم حفظ التعديل" : "تمت إضافة السؤال");
@@ -202,6 +239,14 @@ export function useQuizQuestions() {
   return {
     loading,
     questions,
+    banks,
+    bankId,
+    bankBusy,
+    bankError,
+    openBank,
+    createBank,
+    renameBank,
+    deleteBank,
     settingsForm,
     settingsError,
     savingSettings,

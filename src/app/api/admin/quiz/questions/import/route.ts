@@ -6,18 +6,20 @@ import { getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { reviewImport } from "@/lib/quizImport";
+import { requireBank } from "@/lib/questionBankServer";
 import { common } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/quiz/questions/import", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
 
-  let body: { questions?: unknown; commit?: unknown };
+  let body: { questions?: unknown; commit?: unknown; bankId?: unknown };
   try {
     body = await req.json();
   } catch {
     throw new ValidationError(common.invalidBody);
   }
 
+  const bank = await requireBank(typeof body.bankId === "string" ? body.bankId : null);
   const settings = await getQuizSettings();
   const review = reviewImport(body.questions, {
     points: settings.defaultPoints,
@@ -36,7 +38,10 @@ export const POST = withRoute("POST /api/admin/quiz/questions/import", async (re
     return NextResponse.json({ imported: 0, problems: review.problems });
   }
 
-  const existing = await prisma.quizQuestion.findMany({ select: { text: true } });
+  const existing = await prisma.quizQuestion.findMany({
+    where: { bankId: bank.id },
+    select: { text: true },
+  });
   const seen = new Set(existing.map((q) => q.text.replace(/\s+/g, " ").trim().toLowerCase()));
 
   const fresh = review.questions.filter(
@@ -52,6 +57,7 @@ export const POST = withRoute("POST /api/admin/quiz/questions/import", async (re
           category: q.category,
           points: q.points,
           correctCount: q.correctCount,
+          bankId: bank.id,
           createdBy: session.username,
           answers: {
             create: q.answers.map((a, i) => ({

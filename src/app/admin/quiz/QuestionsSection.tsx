@@ -1,5 +1,6 @@
 "use client";
 
+import BankPicker from "./BankPicker";
 import SettingsForm from "./SettingsForm";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
@@ -10,6 +11,17 @@ import type { QuizQuestionsState } from "./useQuizQuestions";
 export default function QuestionsSection({ state }: { state: QuizQuestionsState }) {
   return (
     <div className="space-y-5">
+      <BankPicker
+        banks={state.banks}
+        openId={state.bankId}
+        busy={state.bankBusy}
+        error={state.bankError}
+        onOpen={state.openBank}
+        onCreate={state.createBank}
+        onRename={state.renameBank}
+        onDelete={state.deleteBank}
+      />
+
       <SettingsForm
         values={state.settingsForm}
         error={state.settingsError}
@@ -29,7 +41,11 @@ export default function QuestionsSection({ state }: { state: QuizQuestionsState 
       />
 
       {state.showImport && (
-        <ImportDialog onImported={() => state.load()} onClose={() => state.setShowImport(false)} />
+        <ImportDialog
+          bankId={state.bankId}
+          onImported={() => state.load()}
+          onClose={() => state.setShowImport(false)}
+        />
       )}
 
       {state.showForm && (

@@ -14,6 +14,11 @@ export async function seedQuizSettings() {
 }
 
 export async function seedQuestions() {
+  const bank = await prisma.questionBank.upsert({
+    where: { id: "general" },
+    update: {},
+    create: { id: "general", name: "البنك العام" },
+  });
   const rows = questionBank().map(([text, category, answers, correctIndex, points]) => ({
     id: randomUUID(),
     text,
@@ -21,6 +26,7 @@ export async function seedQuestions() {
     points,
     correctCount: 1,
     active: true,
+    bankId: bank.id,
     createdBy: "admin",
     answers: answers.map((answer, order) => ({
       text: answer,
