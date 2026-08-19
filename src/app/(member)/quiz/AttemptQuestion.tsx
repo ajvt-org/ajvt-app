@@ -26,6 +26,7 @@ export default function AttemptQuestion({
   curve,
   position,
   total,
+  score,
   busy,
   onSubmit,
 }: {
@@ -33,6 +34,7 @@ export default function AttemptQuestion({
   curve?: ScoreCurve;
   position: number;
   total: number;
+  score?: number;
   busy: boolean;
   onSubmit: (selected: string[]) => void;
 }) {
@@ -50,14 +52,19 @@ export default function AttemptQuestion({
   const ready = many ? picked.length === question.correctCount : picked.length === 1;
 
   return (
-    <div className="min-h-[100svh] p-5" style={{ background: "var(--mint-50)" }}>
-      <div className="mx-auto w-full max-w-md flex flex-col gap-4 min-h-[calc(100svh-2.5rem)]">
+    <div className="min-h-[100svh] p-5 pb-28" style={{ background: "var(--mint-50)" }}>
+      <div className="mx-auto w-full max-w-md flex flex-col gap-4">
         <div
           className="flex items-center justify-between text-xs"
           style={{ color: "var(--text-muted)" }}
         >
           <span className="font-bold">
             <NumericRanges>{`${position + 1} / ${total}`}</NumericRanges>
+            {score !== undefined && (
+              <span className="ms-2" style={{ color: "var(--mint-700)" }}>
+                <NumericRanges>{`مجموعك ${score}`}</NumericRanges>
+              </span>
+            )}
           </span>
           <span className="flex items-center gap-2">
             <span className="badge badge-pending">{question.category}</span>
@@ -122,7 +129,7 @@ export default function AttemptQuestion({
           aria-label="تأكيد الإجابة"
           disabled={!ready || busy}
           onClick={() => onSubmit(picked)}
-          className="btn btn-primary w-full text-sm font-bold disabled:opacity-40 mt-auto"
+          className="btn btn-primary w-full text-sm font-bold disabled:opacity-40"
         >
           {busy ? (
             "..."

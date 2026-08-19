@@ -6,7 +6,6 @@ import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
-import AttemptResult from "./AttemptResult";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import MyScores from "./MyScores";
 
@@ -18,11 +17,6 @@ interface AttemptState {
   position: number;
   curve?: ScoreCurve;
   question: AttemptView | null;
-}
-
-interface AnswerState extends AttemptState {
-  isCorrect: boolean;
-  points: number;
 }
 
 interface Place {
@@ -54,7 +48,6 @@ export default function CompetitionView({
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
-  const [result, setResult] = useState<AnswerState | null>(null);
   const [closed, setClosed] = useState("");
   const [showScores, setShowScores] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -78,43 +71,17 @@ export default function CompetitionView({
     if (!attempt?.question) return;
     setBusy(true);
     try {
-      const next = await api.post<AnswerState>("/api/quiz/attempt/answer", {
+      const next = await api.post<AttemptState>("/api/quiz/attempt/answer", {
         answerId: attempt.question.answerId,
         selectedAnswerIds: selected,
       });
-      setResult(next);
+      setAttempt(next);
+      if (next.done) onReloadStandings();
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
       setBusy(false);
     }
-  }
-
-  function continueOn() {
-    if (!result) return;
-    setAttempt({
-      attemptId: result.attemptId,
-      score: result.score,
-      done: result.done,
-      total: result.total,
-      position: result.position,
-      curve: result.curve,
-      question: result.question,
-    });
-    setResult(null);
-    if (result.done) onReloadStandings();
-  }
-
-  if (result) {
-    return (
-      <AttemptResult
-        isCorrect={result.isCorrect}
-        points={result.points}
-        score={result.score}
-        last={result.done}
-        onContinue={continueOn}
-      />
-    );
   }
 
   if (attempt && !attempt.done && attempt.question) {
@@ -124,6 +91,7 @@ export default function CompetitionView({
         curve={attempt.curve}
         position={attempt.position}
         total={attempt.total}
+        score={attempt.score}
         busy={busy}
         onSubmit={answer}
       />

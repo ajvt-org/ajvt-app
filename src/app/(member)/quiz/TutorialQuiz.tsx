@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import AttemptQuestion from "./AttemptQuestion";
-import AttemptResult from "./AttemptResult";
 import { TUTORIAL_QUESTIONS, gradeTutorial } from "@/lib/quizTutorial";
 import { DEFAULT_CURVE, type ScoreCurve } from "@/lib/competitionConfig";
 
@@ -17,7 +16,6 @@ export default function TutorialQuiz({
 }) {
   const [position, setPosition] = useState(0);
   const [score, setScore] = useState(0);
-  const [result, setResult] = useState<{ isCorrect: boolean; points: number } | null>(null);
   const startedAt = useRef(0);
 
   useEffect(() => {
@@ -25,38 +23,18 @@ export default function TutorialQuiz({
   }, [position]);
 
   const question = TUTORIAL_QUESTIONS[position];
-  const last = position === TUTORIAL_QUESTIONS.length - 1;
   const done = position >= TUTORIAL_QUESTIONS.length;
 
   function answer(selected: string[]) {
     const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
     const graded = gradeTutorial(question, selected, elapsed, curve);
     setScore((s) => s + graded.points);
-    setResult(graded);
-  }
-
-  function next() {
-    setResult(null);
     setPosition((p) => p + 1);
   }
 
   function again() {
     setPosition(0);
     setScore(0);
-    setResult(null);
-  }
-
-  if (result) {
-    return (
-      <AttemptResult
-        isCorrect={result.isCorrect}
-        points={result.points}
-        score={score}
-        last={last}
-        practice
-        onContinue={next}
-      />
-    );
   }
 
   if (done) {
@@ -107,6 +85,7 @@ export default function TutorialQuiz({
         curve={curve ?? DEFAULT_CURVE}
         position={position}
         total={TUTORIAL_QUESTIONS.length}
+        score={score}
         busy={false}
         onSubmit={answer}
       />

@@ -63,7 +63,7 @@ describe("CompetitionView", () => {
     expect(screen.getByText("ترتيب الجولة")).toBeDefined();
   });
 
-  it("shows the result of an answer before moving on", async () => {
+  it("goes straight to the next question when an answer is confirmed", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -74,8 +74,6 @@ describe("CompetitionView", () => {
     });
     post.mockResolvedValueOnce({
       attemptId: "at1",
-      isCorrect: true,
-      points: 10,
       score: 10,
       done: false,
       total: 2,
@@ -88,11 +86,11 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 
-    await waitFor(() => expect(screen.getByText("إجابة صحيحة")).toBeDefined());
-    expect(screen.getByText("+10")).toBeDefined();
+    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    expect(screen.queryByRole("button", { name: "السؤال التالي" })).toBeNull();
   });
 
-  it("moves to the next question when the member continues", async () => {
+  it("carries the running score into the next question", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -103,9 +101,7 @@ describe("CompetitionView", () => {
     });
     post.mockResolvedValueOnce({
       attemptId: "at1",
-      isCorrect: false,
-      points: 0,
-      score: 0,
+      score: 10,
       done: false,
       total: 2,
       position: 1,
@@ -116,10 +112,8 @@ describe("CompetitionView", () => {
 
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
-    await waitFor(() => screen.getByText("إجابة خاطئة"));
-    await userEvent.click(screen.getByRole("button", { name: "السؤال التالي" }));
 
-    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    await waitFor(() => expect(screen.getByText(/مجموعك 10/)).toBeDefined());
   });
 
   it("shows the standings once the attempt is finished", async () => {
