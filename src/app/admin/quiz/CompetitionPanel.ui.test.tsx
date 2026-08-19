@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CompetitionPanel from "./CompetitionPanel";
+import { toLocalInput } from "./competitionTypes";
 
 const get = vi.fn();
 const put = vi.fn();
@@ -164,6 +165,43 @@ describe("CompetitionPanel", () => {
     expect(post.mock.calls[0][1]).toMatchObject({ bankId: "b2" });
   });
 
+  it("asks for a length in minutes when the rhythm is not one of the choices", async () => {
+    render(
+      <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
+
+    expect(screen.queryByLabelText("المدة بين الجولات بالدقائق")).toBeNull();
+
+    await userEvent.selectOptions(screen.getByLabelText("جولة كل"), "مدة أخرى");
+
+    expect(screen.getByLabelText("المدة بين الجولات بالدقائق")).toBeDefined();
+  });
+
+  it("keeps a length that is not one of the choices on the custom field", async () => {
+    get.mockResolvedValue({ competition: { ...saved, roundPeriodMinutes: 45 } });
+    render(
+      <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
+        competitionId="c1"
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
+
+    await waitFor(() =>
+      expect((screen.getByLabelText("المدة بين الجولات بالدقائق") as HTMLInputElement).value).toBe(
+        "45",
+      ),
+    );
+  });
+
   it("loads what was already saved", async () => {
     render(
       <CompetitionPanel
@@ -181,7 +219,7 @@ describe("CompetitionPanel", () => {
       ),
     );
     expect((screen.getByLabelText("بداية الجولة الأولى") as HTMLInputElement).value).toBe(
-      "2026-08-20T08:00",
+      toLocalInput(saved.startsAt),
     );
     expect((screen.getByLabelText("عدد الجولات") as HTMLInputElement).value).toBe("30");
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "@/components/Icon";
+import NumberField from "@/components/NumberField";
 import { MAX_BOARDS, type BoardConfig } from "@/lib/competitionConfig";
 
 export default function BoardsEditor({
@@ -13,7 +14,16 @@ export default function BoardsEditor({
   onChange: (boards: BoardConfig[]) => void;
 }) {
   function set(index: number, patch: Partial<BoardConfig>) {
-    onChange(boards.map((board, i) => (i === index ? { ...board, ...patch } : board)));
+    onChange(
+      boards.map((board, i) => {
+        if (i !== index) return board;
+        const next = { ...board, ...patch };
+        if (patch.blockRounds !== undefined && next.blockRounds >= 1) {
+          next.counting = Math.min(next.counting, next.blockRounds);
+        }
+        return next;
+      }),
+    );
   }
 
   return (
@@ -23,7 +33,7 @@ export default function BoardsEditor({
       </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         كل ترتيب يظهر للمشارك في لسان خاص به. عدد الجولات هو ما يغطيه الترتيب، والمحتسبة كم جولة
-        منها تجمع، والعام يجمع كل الفترات بدل الفترة الجارية.
+        منها تجمع. الترتيب العام يجمع كل جولات المسابقة فلا يحتاج عدداً.
       </p>
 
       {boards.map((board, index) => (
@@ -54,41 +64,51 @@ export default function BoardsEditor({
           </div>
 
           <div className="flex gap-2 items-end">
-            <label className="flex-1 text-xs">
-              <span className="block font-bold mb-1">الجولات</span>
-              <input
-                type="number"
-                min={1}
-                dir="ltr"
-                aria-label={`جولات الترتيب ${index + 1}`}
-                value={board.blockRounds}
-                disabled={disabled}
-                onChange={(e) => set(index, { blockRounds: Number(e.target.value) })}
-                className="input input-sm"
-              />
-            </label>
-            <label className="flex-1 text-xs">
-              <span className="block font-bold mb-1">المحتسبة</span>
-              <input
-                type="number"
-                min={1}
-                dir="ltr"
-                aria-label={`المحتسبة في الترتيب ${index + 1}`}
-                value={board.counting}
-                disabled={disabled}
-                onChange={(e) => set(index, { counting: Number(e.target.value) })}
-                className="input input-sm"
-              />
-            </label>
+            {!board.wholeRun && (
+              <>
+                <label className="flex-1 text-xs">
+                  <span className="block font-bold mb-1">الجولات</span>
+                  <NumberField
+                    min={1}
+                    ariaLabel={`جولات الترتيب ${index + 1}`}
+                    value={board.blockRounds}
+                    disabled={disabled}
+                    onChange={(blockRounds) => set(index, { blockRounds })}
+                  />
+                </label>
+                <label className="flex-1 text-xs">
+                  <span className="block font-bold mb-1">المحتسبة</span>
+                  <NumberField
+                    min={1}
+                    ariaLabel={`المحتسبة في الترتيب ${index + 1}`}
+                    value={board.counting}
+                    disabled={disabled}
+                    onChange={(counting) => set(index, { counting })}
+                  />
+                </label>
+              </>
+            )}
             <label className="flex items-center gap-1.5 text-xs font-bold pb-2">
               <input
                 type="checkbox"
                 checked={board.wholeRun}
                 disabled={disabled}
-                onChange={(e) => set(index, { wholeRun: e.target.checked })}
+                onChange={(e) =>
+                  set(
+                    index,
+                    e.target.checked
+                      ? { wholeRun: true, blockRounds: 1, counting: 1 }
+                      : { wholeRun: false },
+                  )
+                }
               />
               <span>عام</span>
             </label>
+            {board.wholeRun && (
+              <span className="text-xs flex-1 pb-2" style={{ color: "var(--text-muted)" }}>
+                يجمع كل جولات المسابقة
+              </span>
+            )}
           </div>
         </div>
       ))}

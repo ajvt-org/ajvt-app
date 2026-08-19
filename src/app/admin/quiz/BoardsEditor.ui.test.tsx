@@ -1,8 +1,23 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import BoardsEditor from "./BoardsEditor";
-import { DEFAULT_BOARDS } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, type BoardConfig } from "@/lib/competitionConfig";
+
+function Held({ start, onChange }: { start: BoardConfig[]; onChange: (b: BoardConfig[]) => void }) {
+  const [boards, setBoards] = useState(start);
+  return (
+    <BoardsEditor
+      boards={boards}
+      disabled={false}
+      onChange={(next) => {
+        setBoards(next);
+        onChange(next);
+      }}
+    />
+  );
+}
 
 const setup = (over: { boards?: typeof DEFAULT_BOARDS; disabled?: boolean } = {}) => {
   const onChange = vi.fn();
@@ -39,6 +54,44 @@ describe("BoardsEditor", () => {
     await userEvent.clear(screen.getByLabelText("جولات الترتيب 2"));
 
     expect(onChange.mock.calls[0][0][1].blockRounds).toBe(0);
+  });
+
+  it("never counts more rounds than a ranking covers", async () => {
+    const onChange = vi.fn();
+    render(
+      <Held
+        start={[{ title: "أسبوعي", blockRounds: 7, counting: 6, wholeRun: false }]}
+        onChange={onChange}
+      />,
+    );
+
+    await userEvent.clear(screen.getByLabelText("جولات الترتيب 1"));
+    await userEvent.type(screen.getByLabelText("جولات الترتيب 1"), "3");
+
+    expect(onChange.mock.calls[onChange.mock.calls.length - 1][0][0]).toMatchObject({
+      blockRounds: 3,
+      counting: 3,
+    });
+  });
+
+  it("asks nothing about rounds for the overall ranking", () => {
+    setup();
+
+    expect(screen.queryByLabelText("جولات الترتيب 3")).toBeNull();
+    expect(screen.queryByLabelText("المحتسبة في الترتيب 3")).toBeNull();
+    expect(screen.getByText("يجمع كل جولات المسابقة")).toBeDefined();
+  });
+
+  it("turns a ranking into an overall one that counts every round", async () => {
+    const { onChange } = setup();
+
+    await userEvent.click(screen.getAllByRole("checkbox")[1]);
+
+    expect(onChange.mock.calls[0][0][1]).toMatchObject({
+      wholeRun: true,
+      blockRounds: 1,
+      counting: 1,
+    });
   });
 
   it("adds a ranking", async () => {
