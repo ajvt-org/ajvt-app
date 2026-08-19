@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { NextRequest } from "next/server";
-import { isRateLimited, recordFailedAttempt, clearAttempts, getClientIp } from "./rateLimit";
+import {
+  isRateLimited,
+  recordFailedAttempt,
+  clearAttempts,
+  getClientIp,
+  bucketKeys,
+} from "./rateLimit";
 
 const WINDOW = 60_000;
 
@@ -63,6 +69,86 @@ describe("rate limit buckets", () => {
     for (let i = 0; i < 5; i++) recordFailedAttempt("login:a", WINDOW);
     expect(isRateLimited("login:a", 3)).toBe(true);
     expect(isRateLimited("login:b", 3)).toBe(false);
+  });
+});
+
+describe("what the map holds", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("never holds the phone number it was given", () => {
+    recordFailedAttempt("login:22334455", WINDOW);
+
+    const keys = bucketKeys();
+    expect(keys.some((k) => k.includes("22334455"))).toBe(false);
+    expect(keys.join(" ")).not.toMatch(/\d{8}/);
+    expect(keys).toContainEqual(expect.stringMatching(/^login:[0-9a-f]{16}$/));
+  });
+
+  it("still tells two members apart once their numbers are hashed", () => {
+    for (let i = 0; i < 5; i++) recordFailedAttempt("login:22334455", WINDOW);
+
+    expect(isRateLimited("login:22334455", 3)).toBe(true);
+    expect(isRateLimited("login:33445566", 3)).toBe(false);
+  });
+
+  it("keeps the same member in the same bucket across calls", () => {
+    recordFailedAttempt("login:2299887766", WINDOW);
+    recordFailedAttempt("login:2299887766", WINDOW);
+    recordFailedAttempt("login:2299887766", WINDOW);
+
+    expect(isRateLimited("login:2299887766", 3)).toBe(true);
+  });
+
+  it("keeps two scopes apart even for the same identifier", () => {
+    for (let i = 0; i < 5; i++) recordFailedAttempt("login:22001100", WINDOW);
+
+    expect(isRateLimited("donate:22001100", 3)).toBe(false);
+  });
+
+  it("clears the bucket it was asked about and not another", () => {
+    recordFailedAttempt("login:22112211", WINDOW);
+    const before = bucketKeys().length;
+
+    clearAttempts("login:22112211");
+
+    expect(bucketKeys()).toHaveLength(before - 1);
+  });
+});
+
+describe("sweeping what has expired", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("drops what has expired once the map has grown past the threshold", () => {
+    for (let i = 0; i < 10_001; i++) recordFailedAttempt(`sweep:${i}`, WINDOW);
+    expect(bucketKeys().length).toBeGreaterThan(10_000);
+
+    vi.advanceTimersByTime(WINDOW + 1);
+    recordFailedAttempt("after:1", WINDOW);
+
+    expect(bucketKeys().some((k) => k.startsWith("sweep:"))).toBe(false);
+    expect(bucketKeys().some((k) => k.startsWith("after:"))).toBe(true);
+  });
+
+  it("leaves a window that is still running alone", () => {
+    for (let i = 0; i < 10_001; i++) recordFailedAttempt(`live:${i}`, WINDOW);
+
+    recordFailedAttempt("live:0", WINDOW);
+
+    expect(isRateLimited("live:0", 2)).toBe(true);
   });
 });
 
