@@ -52,11 +52,12 @@ export interface AttemptDetailView {
 }
 
 export interface AttemptSummary {
-  attemptId: string;
+  attemptId: string | null;
   round: number;
   category: string | null;
   score: number;
   correct: number;
   total: number;
   finishedAt: string | null;
+  missed: boolean;
 }

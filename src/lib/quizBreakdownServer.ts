@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { NotFoundError } from "./errors";
 import { breakdownOf, type AnswerRow, type Breakdown } from "./quizBreakdown";
+import { getCompetition, shapeOf } from "./competitionServer";
+import { roundWindows } from "./quizRound";
 import type { ScoreCurve } from "./competitionConfig";
 
 export const NO_ATTEMPT = "لا توجد محاولة";
@@ -74,28 +76,60 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
   };
 }
 
-export async function attemptsOf(competitionId: string, userId: string) {
-  const attempts = await prisma.quizAttempt.findMany({
-    where: { userId, round: { competitionId } },
-    select: {
-      id: true,
-      score: true,
-      finishedAt: true,
-      round: { select: { index: true, category: true } },
-      answers: { select: { isCorrect: true, points: true } },
-    },
-    orderBy: { round: { index: "asc" } },
-  });
-  return attempts.map((a) => ({
-    attemptId: a.id,
-    round: a.round.index,
-    category: a.round.category,
-    score: a.score,
-    correct: a.answers.filter((x) => x.isCorrect === true).length,
-    total: a.answers.length,
-    possible: a.answers.length,
-    finishedAt: a.finishedAt,
-  }));
+export async function attemptsOf(competitionId: string, userId: string, now = new Date()) {
+  const competition = await getCompetition(competitionId);
+  if (!competition?.startedAt) return [];
+
+  const [attempts, rounds] = await Promise.all([
+    prisma.quizAttempt.findMany({
+      where: { userId, round: { competitionId } },
+      select: {
+        id: true,
+        score: true,
+        finishedAt: true,
+        round: { select: { index: true, category: true } },
+        answers: { select: { isCorrect: true, points: true } },
+      },
+    }),
+    prisma.quizRound.findMany({
+      where: { competitionId },
+      select: { index: true, category: true },
+    }),
+  ]);
+  const byRound = new Map(attempts.map((a) => [a.round.index, a]));
+  const categoryOf = new Map(rounds.map((r) => [r.index, r.category]));
+
+  const rows = [];
+  for (const window of roundWindows(shapeOf(competition))) {
+    if (now < window.opensAt) break;
+    const a = byRound.get(window.index);
+    if (a) {
+      rows.push({
+        attemptId: a.id as string | null,
+        round: window.index,
+        category: a.round.category,
+        score: a.score,
+        correct: a.answers.filter((x) => x.isCorrect === true).length,
+        total: a.answers.length,
+        possible: a.answers.length,
+        finishedAt: a.finishedAt,
+        missed: false,
+      });
+    } else if (now >= window.closesAt) {
+      rows.push({
+        attemptId: null,
+        round: window.index,
+        category: categoryOf.get(window.index) ?? null,
+        score: 0,
+        correct: 0,
+        total: 0,
+        possible: 0,
+        finishedAt: null,
+        missed: true,
+      });
+    }
+  }
+  return rows;
 }
 
 export async function attemptsInRound(competitionId: string, index: number) {
