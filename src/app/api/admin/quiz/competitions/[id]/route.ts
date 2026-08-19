@@ -3,11 +3,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
-import {
-  requireCompetition,
-  saveCompetition,
-  resetCompetitionScores,
-} from "@/lib/competitionServer";
+import { requireCompetition, saveCompetition, deleteCompetition } from "@/lib/competitionServer";
 import { common } from "@/lib/messages";
 
 type Params = { params: Promise<{ id: string }> };
@@ -51,14 +47,15 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: Params) => {
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
-    const cleared = await resetCompetitionScores(id);
+    const competition = await deleteCompetition(id);
 
-    await logAction(session.username, "RESET_QUIZ_SCORES", `${cleared}`, {
+    await logAction(session.username, "DELETE_COMPETITION", competition.name, {
       ...auditContext(session, req),
       targetType: "Competition",
       targetId: id,
+      before: { name: competition.name, startsAt: competition.startsAt },
     });
 
-    return NextResponse.json({ cleared });
+    return NextResponse.json({ deleted: true });
   },
 );
