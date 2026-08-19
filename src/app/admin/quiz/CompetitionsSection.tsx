@@ -32,6 +32,7 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
 
   const selected = rows.find((r) => r.id === selectedId) ?? null;
   const editing = creating ? null : selectedId;
+  const open = creating || selectedId !== null;
 
   return (
     <div className="space-y-5">
@@ -45,16 +46,21 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
         onCreate={() => setCreating(true)}
       />
 
-      <CompetitionPanel
-        key={editing ?? "new"}
-        competitionId={editing}
-        onSaved={(id) => {
-          setCreating(false);
-          setSelectedId(id);
-        }}
-        onChanged={() => setReload((n) => n + 1)}
-        onDeleted={() => setSelectedId(null)}
-      />
+      {open && (
+        <CompetitionPanel
+          key={editing ?? "new"}
+          competitionId={editing}
+          onSaved={(id) => {
+            setCreating(false);
+            setSelectedId(id);
+          }}
+          onChanged={() => setReload((n) => n + 1)}
+          onDeleted={() => {
+            setCreating(false);
+            setSelectedId(null);
+          }}
+        />
+      )}
 
       {editing && selected?.visibility === "PRIVATE" && (
         <ParticipantsPanel competitionId={editing} locked={selected.startedAt !== null} />
