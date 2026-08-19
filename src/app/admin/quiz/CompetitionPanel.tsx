@@ -151,17 +151,20 @@ export default function CompetitionPanel({
               >
                 تصفير النقاط
               </button>
-              <button
-                onClick={() => setConfirming("delete")}
-                disabled={busy}
-                className="btn btn-sm text-xs"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                حذف المسابقة
-              </button>
             </>
           )}
         </div>
+      )}
+
+      {competitionId && (
+        <button
+          onClick={() => setConfirming("delete")}
+          disabled={busy}
+          className="btn btn-sm text-xs"
+          style={{ background: "#fee2e2", color: "#991b1b" }}
+        >
+          حذف المسابقة
+        </button>
       )}
 
       {confirming === "start" && (
@@ -177,7 +180,11 @@ export default function CompetitionPanel({
       {confirming === "delete" && (
         <ConfirmAction
           title="حذف المسابقة"
-          message="سيتم حذف المسابقة وجولاتها وأسئلتها المحملة. هذا ممكن فقط قبل انطلاقها."
+          message={
+            locked
+              ? "المسابقة انطلقت، وحذفها يمحو جولاتها ومحاولات المشاركين ونقاطهم نهائياً."
+              : "سيتم حذف المسابقة وجولاتها وأسئلتها المحملة."
+          }
           confirmLabel="حذف"
           danger
           loading={busy}

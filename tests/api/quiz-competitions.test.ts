@@ -284,14 +284,63 @@ describe("deleting a competition", () => {
     expect((await prisma.competition.findMany()).map((c) => c.id)).toEqual([kept.id]);
   });
 
-  it("refuses to delete one that has started", async () => {
+  it("removes one that has already started", async () => {
     const c = await made();
     await start(c.id);
 
     const res = await remove(c.id);
 
-    expect(res.status).toBe(409);
-    expect(await prisma.competition.count()).toBe(1);
+    expect(res.status).toBe(200);
+    expect(await prisma.competition.count()).toBe(0);
+  });
+
+  it("takes the scores of a started competition with it", async () => {
+    const c = await made();
+    const [user] = await createUsers(1);
+    const round = await prisma.quizRound.create({
+      data: {
+        competitionId: c.id,
+        index: 0,
+        opensAt: new Date("2026-08-20T08:00:00.000Z"),
+        closesAt: new Date("2026-08-20T22:00:00.000Z"),
+      },
+    });
+    const question = await prisma.quizQuestion.create({
+      data: { text: "س", category: "ع", createdBy: "admin" },
+    });
+    await prisma.quizAttempt.create({
+      data: {
+        roundId: round.id,
+        userId: user.id,
+        score: 30,
+        answers: { create: [{ questionId: question.id, position: 0, points: 30 }] },
+      },
+    });
+    await start(c.id);
+
+    const body = await (await remove(c.id)).json();
+
+    expect(body.attempts).toBe(1);
+    expect(await prisma.quizAttempt.count()).toBe(0);
+    expect(await prisma.quizAttemptAnswer.count()).toBe(0);
+  });
+
+  it("says what it removed along with the competition", async () => {
+    const c = await made({ ...config, visibility: "PRIVATE" });
+    const [user] = await createUsers(1);
+    await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: user.id } });
+    await prisma.quizRound.create({
+      data: {
+        competitionId: c.id,
+        index: 0,
+        opensAt: new Date("2026-08-20T08:00:00.000Z"),
+        closesAt: new Date("2026-08-20T22:00:00.000Z"),
+      },
+    });
+
+    const body = await (await remove(c.id)).json();
+
+    expect(body).toMatchObject({ deleted: true, rounds: 1, attempts: 0, participants: 1 });
   });
 
   it("says nothing found for one that does not exist", async () => {

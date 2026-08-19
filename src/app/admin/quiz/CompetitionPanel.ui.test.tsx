@@ -290,7 +290,7 @@ describe("CompetitionPanel", () => {
     expect(onDeleted).toHaveBeenCalled();
   });
 
-  it("does not offer to delete a competition that has started", async () => {
+  it("still offers to delete a competition that has started", async () => {
     get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
     render(
       <CompetitionPanel
@@ -302,6 +302,8 @@ describe("CompetitionPanel", () => {
     );
 
     await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
-    expect(screen.queryByRole("button", { name: /حذف المسابقة/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /حذف المسابقة/ }));
+
+    expect(screen.getByText(/يمحو جولاتها ومحاولات المشاركين/)).toBeDefined();
   });
 });

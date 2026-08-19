@@ -135,9 +135,13 @@ export async function resetCompetitionScores(id: string) {
 
 export async function deleteCompetition(id: string) {
   const competition = await requireCompetition(id);
-  if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
+  const [rounds, attempts, participants] = await Promise.all([
+    prisma.quizRound.count({ where: { competitionId: id } }),
+    prisma.quizAttempt.count({ where: { round: { competitionId: id } } }),
+    prisma.quizParticipant.count({ where: { competitionId: id } }),
+  ]);
   await prisma.competition.delete({ where: { id: competition.id } });
-  return competition;
+  return { competition, rounds, attempts, participants };
 }
 
 export function shapeOf(competition: {

@@ -47,15 +47,20 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: Params) => {
     const session = await requireAdminRole("QUIZ");
     const { id } = await params;
-    const competition = await deleteCompetition(id);
+    const { competition, rounds, attempts, participants } = await deleteCompetition(id);
 
     await logAction(session.username, "DELETE_COMPETITION", competition.name, {
       ...auditContext(session, req),
       targetType: "Competition",
       targetId: id,
-      before: { name: competition.name, startsAt: competition.startsAt },
+      before: {
+        name: competition.name,
+        startsAt: competition.startsAt,
+        startedAt: competition.startedAt,
+      },
+      meta: { rounds, attempts, participants },
     });
 
-    return NextResponse.json({ deleted: true });
+    return NextResponse.json({ deleted: true, rounds, attempts, participants });
   },
 );
