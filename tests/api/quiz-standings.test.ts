@@ -4,21 +4,29 @@ import { resetDb, createUsers, createAdmin, signInAs, signInAsAdmin } from "./he
 import { DEFAULT_BANDS } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
+import { getStandings } from "@/lib/quizRankingServer";
 import { GET as WINNERS } from "@/app/api/admin/quiz/winners/route";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const START = (() => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+})();
 
 function dayStamp(offset: number) {
-  const d = new Date(`${today()}T00:00:00.000Z`);
+  const d = new Date(`${START}T00:00:00.000Z`);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
+
+const today = () => dayStamp(1);
+const atNoon = (day: string) => new Date(`${day}T12:00:00.000Z`);
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsOn: today(),
+      startsOn: START,
       days: 30,
       publishMinutes: 0,
       cutoffMinutes: 1439,
@@ -83,12 +91,10 @@ describe("standings a member can see", () => {
     await member(b.id, "محمد");
     await attempt(c.id, a.id, today(), 30);
     await attempt(c.id, b.id, today(), 50);
-    await signInAs(a);
-
-    const body = await (await STANDINGS()).json();
+    const body = await getStandings(a.id, 10, atNoon(today()));
 
     expect(body.running).toBe(true);
-    expect(body.today.map((r: { name: string }) => r.name)).toEqual(["محمد", "أحمد"]);
+    expect(body.today.map((r) => r.name)).toEqual(["محمد", "أحمد"]);
     expect(body.today[0].rank).toBe(1);
   });
 
@@ -99,12 +105,10 @@ describe("standings a member can see", () => {
       await member(u.id, `عضو ${i}`);
       await attempt(c.id, u.id, today(), (3 - i) * 10);
     }
-    await signInAs(users[2]);
+    const body = await getStandings(users[2].id, 10, atNoon(today()));
 
-    const body = await (await STANDINGS()).json();
-
-    expect(body.mine.today.rank).toBe(3);
-    expect(body.mine.today.total).toBe(10);
+    expect(body.mine?.today?.rank).toBe(3);
+    expect(body.mine?.today?.total).toBe(10);
   });
 
   it("drops the worst day from the week once the allowance is passed", async () => {
@@ -112,9 +116,7 @@ describe("standings a member can see", () => {
     const [u] = await createUsers(1);
     await member(u.id, "أحمد");
     for (let i = 0; i < 7; i++) await attempt(c.id, u.id, dayStamp(i), i === 0 ? 1 : 10);
-    await signInAs(u);
-
-    const body = await (await STANDINGS()).json();
+    const body = await getStandings(u.id, 10, atNoon(dayStamp(1)));
 
     expect(body.thisWeek[0].total).toBe(60);
   });
@@ -126,13 +128,11 @@ describe("standings a member can see", () => {
     await member(late.id, "متأخر");
     for (let i = 0; i < 3; i++) await attempt(c.id, early.id, dayStamp(i), 10);
     await attempt(c.id, late.id, dayStamp(2), 10);
-    await signInAs(late);
-
-    const body = await (await STANDINGS()).json();
+    const body = await getStandings(late.id, 10, atNoon(dayStamp(2)));
 
     expect(body.overall[0].name).toBe("مبكر");
     expect(body.overall[0].total).toBe(30);
-    expect(body.mine.overall.total).toBe(10);
+    expect(body.mine?.overall?.total).toBe(10);
   });
 
   it("shows a member with no attempt as having no place", async () => {
