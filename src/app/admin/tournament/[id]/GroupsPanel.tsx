@@ -4,6 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import type { Group, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
+import IconLabel from "@/components/IconLabel";
 
 export default function GroupsPanel({
   activityId,
@@ -75,7 +76,9 @@ export default function GroupsPanel({
   return (
     <div className="card p-4">
       <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-        🗂️ المجموعات (اختياري — للبطولات بنظام الدوري ثم خروج المغلوب)
+        <IconLabel name="list">
+          المجموعات (اختياري — للبطولات بنظام الدوري ثم خروج المغلوب)
+        </IconLabel>
       </p>
       {groups.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
@@ -111,7 +114,7 @@ export default function GroupsPanel({
                       autoFocus
                     />
                     <button onClick={() => saveCapacity(g)} className="font-bold">
-                      ✓
+                      <Icon name="check" size={13} />
                     </button>
                   </span>
                 ) : (

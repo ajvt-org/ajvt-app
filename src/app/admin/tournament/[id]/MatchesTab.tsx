@@ -170,7 +170,7 @@ export default function MatchesTab({
           className="p-3 rounded-xl text-sm font-semibold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          ⚠️ {error}
+          <IconLabel name="warning">{error}</IconLabel>
         </div>
       )}
 
@@ -180,7 +180,7 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            ✅ كل المجموعات مكتملة!
+            <IconLabel name="check">كل المجموعات مكتملة!</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
             يمكنك الآن توليد جدول مباريات دور المجموعات (3 مباريات لكل فريق).
@@ -191,7 +191,11 @@ export default function MatchesTab({
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? "..." : "🎲 توليد جدول مباريات دور المجموعات"}
+            {generating ? (
+              "..."
+            ) : (
+              <IconLabel name="dice">توليد جدول مباريات دور المجموعات</IconLabel>
+            )}
           </button>
         </div>
       )}
@@ -202,7 +206,7 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            ✅ انتهى دور المجموعات!
+            <IconLabel name="check">انتهى دور المجموعات!</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
             كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.
@@ -215,7 +219,7 @@ export default function MatchesTab({
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? "..." : "⚔️ توليد نصف النهائي"}
+            {generating ? "..." : <IconLabel name="swords">توليد نصف النهائي</IconLabel>}
           </button>
         </div>
       )}
@@ -223,9 +227,11 @@ export default function MatchesTab({
       {teams.length >= 2 && (
         <div className="card p-4 space-y-3">
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            {isTwoGroupFormat
-              ? "🏆 نصف النهائي والنهائي"
-              : "🏆 القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)"}
+            <IconLabel name="trophy">
+              {isTwoGroupFormat
+                ? "نصف النهائي والنهائي"
+                : "القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)"}
+            </IconLabel>
           </p>
           {bracketMatches.length === 0 ? (
             knockoutLocked ? (
@@ -247,7 +253,7 @@ export default function MatchesTab({
                   className="btn btn-primary text-sm"
                   style={{ width: "auto" }}
                 >
-                  ⚔️ توليد نصف النهائي
+                  <IconLabel name="swords">توليد نصف النهائي</IconLabel>
                 </button>
               </>
             ) : (
@@ -264,7 +270,7 @@ export default function MatchesTab({
                   className="btn btn-primary text-sm"
                   style={{ width: "auto" }}
                 >
-                  🎲 قرعة عشوائية
+                  <IconLabel name="dice">قرعة عشوائية</IconLabel>
                 </button>
               </>
             )
@@ -299,7 +305,7 @@ export default function MatchesTab({
                       className="text-sm font-black text-center"
                       style={{ color: "var(--mint-700)" }}
                     >
-                      🏆 البطل: {winnerName}
+                      <IconLabel name="trophy">البطل: {winnerName}</IconLabel>
                     </p>
                   );
                 })()}
@@ -315,7 +321,11 @@ export default function MatchesTab({
           className="btn btn-primary text-sm"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          {generating ? "..." : "🎲 اقترح جدول المباريات (3 مباريات لكل فريق)"}
+          {generating ? (
+            "..."
+          ) : (
+            <IconLabel name="dice">اقترح جدول المباريات (3 مباريات لكل فريق)</IconLabel>
+          )}
         </button>
       )}
 
@@ -384,7 +394,7 @@ export default function MatchesTab({
               setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))
             }
           />
-          🏆 مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)
+          <IconLabel name="trophy">مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)</IconLabel>
         </label>
         <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
           {loadingAction ? "..." : "إضافة المباراة"}
@@ -394,7 +404,7 @@ export default function MatchesTab({
       {scheduled.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            📅 مباريات قادمة
+            <IconLabel name="calendar">مباريات قادمة</IconLabel>
           </p>
           <div className="space-y-3">
             {scheduled.map((m, i) => (
@@ -430,7 +440,7 @@ export default function MatchesTab({
       {played.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            ✅ نتائج
+            <IconLabel name="check">نتائج</IconLabel>
           </p>
           <div className="space-y-3">
             {played.map((m) => (

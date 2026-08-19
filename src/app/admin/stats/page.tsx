@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDayKey, loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
+import PageLoading from "@/components/PageLoading";
 
 interface DayVisits {
   date: string;
@@ -98,12 +99,7 @@ export default function AdminStatsPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
-        <div className="text-4xl animate-pulse mb-3">⏳</div>
-        <p className="text-sm font-semibold">جاري التحميل...</p>
-      </div>
-    );
+    return <PageLoading />;
   }
 
   const days = stats?.days || [];
