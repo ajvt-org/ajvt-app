@@ -1,3 +1,7 @@
+# CI runs the same audit on every pull request, but only against the lockfile as
+# that pull request leaves it. This one catches an advisory published against a
+# lockfile nobody has touched, which is the case a per-pull-request run cannot
+# see. Overrides in place and why: docs/dependency-overrides.md.
 name: Audit
 
 on:

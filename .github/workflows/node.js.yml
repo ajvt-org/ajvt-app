@@ -28,6 +28,24 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
 
+  # Separate from static, and allowed to fail, on purpose. An advisory is
+  # published against a lockfile that has not changed, so it can turn red on a
+  # pull request that has nothing to do with it — including the one release that
+  # has to go out now. This makes it visible on every pull request; the weekly
+  # Audit workflow is the one that is meant to be acted on.
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - run: npm audit --audit-level=high
+
   build:
     name: build
     needs: static
