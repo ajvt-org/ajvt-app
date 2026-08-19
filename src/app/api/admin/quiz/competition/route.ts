@@ -30,7 +30,7 @@ export const PUT = withRoute("PUT /api/admin/quiz/competition", async (req: Next
     ...auditContext(session, req),
     targetType: "Competition",
     targetId: competition.id,
-    after: { startsOn: competition.startsOn, days: competition.days },
+    after: { startsAt: competition.startsAt, roundCount: competition.roundCount },
   });
 
   return NextResponse.json({ competition });

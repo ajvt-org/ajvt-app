@@ -471,7 +471,7 @@ model QuizQuestion {
   updatedAt    DateTime            @updatedAt
   answers      QuizAnswer[]
   assignments  QuizAssignment[]
-  dayEntries   QuizDayQuestion[]
+  roundEntries QuizRoundQuestion[]
   attemptRows  QuizAttemptAnswer[]
 
   @@index([active])
@@ -554,51 +554,54 @@ model DeletedRecord {
 }
 
 model Competition {
-  id                 String    @id @default(cuid())
+  id                 String      @id @default(cuid())
   name               String
-  startsOn           String
-  days               Int       @default(30)
-  publishMinutes     Int       @default(480)
-  cutoffMinutes      Int       @default(1320)
-  servedCount        Int       @default(10)
-  poolSize           Int       @default(30)
-  weeklyCountingDays Int       @default(6)
+  startsAt           DateTime
+  roundCount         Int         @default(30)
+  roundPeriodMinutes Int         @default(1440)
+  roundWindowMinutes Int         @default(840)
+  servedCount        Int         @default(10)
+  poolSize           Int         @default(30)
+  groupSize          Int         @default(7)
+  countingRounds     Int         @default(6)
   speedBands         Json
-  quizDays           QuizDay[]
+  rounds             QuizRound[]
   startedAt          DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
-model QuizDay {
-  id            String            @id @default(cuid())
+model QuizRound {
+  id            String              @id @default(cuid())
   competitionId String
-  competition   Competition       @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  day           String
+  competition   Competition         @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  index         Int
+  opensAt       DateTime
+  closesAt      DateTime
   announcedAt   DateTime?
-  createdAt     DateTime          @default(now())
-  questions     QuizDayQuestion[]
+  createdAt     DateTime            @default(now())
+  questions     QuizRoundQuestion[]
   attempts      QuizAttempt[]
 
-  @@unique([competitionId, day])
-  @@index([day])
+  @@unique([competitionId, index])
+  @@index([opensAt])
 }
 
-model QuizDayQuestion {
+model QuizRoundQuestion {
   id         String       @id @default(cuid())
-  dayId      String
-  quizDay    QuizDay      @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  roundId    String
+  round      QuizRound    @relation(fields: [roundId], references: [id], onDelete: Cascade)
   questionId String
   question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@unique([dayId, questionId])
-  @@index([dayId])
+  @@unique([roundId, questionId])
+  @@index([roundId])
 }
 
 model QuizAttempt {
   id         String              @id @default(cuid())
-  dayId      String
-  quizDay    QuizDay             @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  roundId    String
+  round      QuizRound           @relation(fields: [roundId], references: [id], onDelete: Cascade)
   userId     String
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   startedAt  DateTime            @default(now())
@@ -606,7 +609,7 @@ model QuizAttempt {
   score      Int                 @default(0)
   answers    QuizAttemptAnswer[]
 
-  @@unique([dayId, userId])
+  @@unique([roundId, userId])
   @@index([userId])
 }
 

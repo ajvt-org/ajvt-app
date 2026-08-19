@@ -5,21 +5,22 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
-interface DayRow {
-  day: string;
+interface RoundRow {
   index: number;
+  opensAt: string;
+  closesAt: string;
   loaded: number;
 }
 
-interface DaysBody {
-  days: DayRow[];
+interface RoundsBody {
+  rounds: RoundRow[];
   servedCount: number;
   poolSize: number;
   startedAt: string | null;
 }
 
-export default function DaysPanel({ questionCount }: { questionCount: number }) {
-  const [body, setBody] = useState<DaysBody | null>(null);
+export default function RoundsPanel({ questionCount }: { questionCount: number }) {
+  const [body, setBody] = useState<RoundsBody | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,7 +28,7 @@ export default function DaysPanel({ questionCount }: { questionCount: number }) 
 
   async function load() {
     try {
-      setBody(await api.get<DaysBody>("/api/admin/quiz/days"));
+      setBody(await api.get<RoundsBody>("/api/admin/quiz/rounds"));
       setMissing(false);
     } catch {
       setMissing(true);
@@ -37,7 +38,7 @@ export default function DaysPanel({ questionCount }: { questionCount: number }) 
   useEffect(() => {
     let alive = true;
     api
-      .get<DaysBody>("/api/admin/quiz/days")
+      .get<RoundsBody>("/api/admin/quiz/days")
       .then((data) => {
         if (alive) setBody(data);
       })
@@ -54,8 +55,8 @@ export default function DaysPanel({ questionCount }: { questionCount: number }) 
     setError("");
     setNotice("");
     try {
-      const { filled } = await api.post<{ filled: number }>("/api/admin/quiz/days/fill", {});
-      setNotice(`تم توزيع الأسئلة على ${filled} يوماً`);
+      const { filled } = await api.post<{ filled: number }>("/api/admin/quiz/rounds/fill", {});
+      setNotice(`تم توزيع الأسئلة على ${filled} جولة`);
       await load();
     } catch (e) {
       setError(errorMessage(e));
@@ -66,29 +67,29 @@ export default function DaysPanel({ questionCount }: { questionCount: number }) 
 
   if (missing) return null;
 
-  const ready = body ? body.days.filter((d) => d.loaded >= body.servedCount).length : 0;
-  const needed = body ? body.days.length * body.poolSize : 0;
+  const ready = body ? body.rounds.filter((r) => r.loaded >= body.servedCount).length : 0;
+  const needed = body ? body.rounds.length * body.poolSize : 0;
 
   return (
     <div className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="calendar">أيام المسابقة</IconLabel>
+        <IconLabel name="calendar">جولات المسابقة</IconLabel>
       </p>
 
       {body && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          جاهز {ready} من {body.days.length} يوماً. المخزون المطلوب {needed} سؤالاً والمتوفر{" "}
+          جاهزة {ready} من {body.rounds.length} جولة. المخزون المطلوب {needed} سؤالاً والمتوفر{" "}
           {questionCount}.
         </p>
       )}
 
       <div className="flex flex-wrap gap-1.5">
-        {body?.days.map((d) => {
+        {body?.rounds.map((d) => {
           const ok = d.loaded >= body.servedCount;
           return (
             <span
-              key={d.day}
-              title={`${d.day} — ${d.loaded}`}
+              key={d.index}
+              title={`${new Date(d.opensAt).toISOString().slice(0, 16).replace("T", " ")} · ${d.loaded}`}
               className="text-xs px-2 py-1 rounded-lg font-semibold"
               style={{
                 background: ok ? "var(--mint-100)" : "#fee2e2",
@@ -122,7 +123,7 @@ export default function DaysPanel({ questionCount }: { questionCount: number }) 
       {body?.startedAt && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           <Icon name="lock" size={12} className="icon-inline" /> المسابقة انطلقت، لا يمكن تغيير
-          أيامها
+          جولاتها
         </p>
       )}
     </div>

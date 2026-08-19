@@ -1,8 +1,8 @@
-import { weekOf } from "./quizDay";
+import { groupOf } from "./quizRound";
 
-export interface DayScore {
+export interface RoundScore {
   userId: string;
-  day: string;
+  index: number;
   score: number;
   finishedAt: Date | null;
 }
@@ -26,48 +26,48 @@ function ranked(rows: Omit<Ranked, "rank">[]): Ranked[] {
   return [...rows].sort(order).map((row, i) => ({ rank: i + 1, ...row }));
 }
 
-export function dailyRanking(scores: DayScore[], day: string): Ranked[] {
+export function roundRanking(scores: RoundScore[], index: number): Ranked[] {
   return ranked(
     scores
-      .filter((s) => s.day === day)
+      .filter((s) => s.index === index)
       .map((s) => ({ userId: s.userId, total: s.score, settledAt: s.finishedAt })),
   );
 }
 
-export function countingDays(days: DayScore[], allowance: number): DayScore[] {
-  return [...days].sort((a, b) => b.score - a.score).slice(0, Math.max(0, allowance));
+export function bestRounds(rounds: RoundScore[], allowance: number): RoundScore[] {
+  return [...rounds].sort((a, b) => b.score - a.score).slice(0, Math.max(0, allowance));
 }
 
-interface WeekTotal {
+interface GroupTotal {
   total: number;
   settledAt: Date | null;
 }
 
 function totalsByUser(
-  scores: DayScore[],
-  startsOn: string,
+  scores: RoundScore[],
+  groupSize: number,
   allowance: number,
-  week: number | null,
-): Map<string, WeekTotal> {
-  const byUserWeek = new Map<string, Map<number, DayScore[]>>();
+  group: number | null,
+): Map<string, GroupTotal> {
+  const byUserGroup = new Map<string, Map<number, RoundScore[]>>();
   for (const score of scores) {
-    const at = weekOf(startsOn, score.day);
+    const at = groupOf(score.index, groupSize);
     if (at < 0) continue;
-    if (week !== null && at !== week) continue;
-    const weeks = byUserWeek.get(score.userId) ?? new Map<number, DayScore[]>();
-    weeks.set(at, [...(weeks.get(at) ?? []), score]);
-    byUserWeek.set(score.userId, weeks);
+    if (group !== null && at !== group) continue;
+    const groups = byUserGroup.get(score.userId) ?? new Map<number, RoundScore[]>();
+    groups.set(at, [...(groups.get(at) ?? []), score]);
+    byUserGroup.set(score.userId, groups);
   }
 
-  const out = new Map<string, WeekTotal>();
-  for (const [userId, weeks] of byUserWeek) {
+  const out = new Map<string, GroupTotal>();
+  for (const [userId, byGroup] of byUserGroup) {
     let total = 0;
     let settledAt: Date | null = null;
-    for (const days of weeks.values()) {
-      for (const day of countingDays(days, allowance)) {
-        total += day.score;
-        if (day.finishedAt && (!settledAt || day.finishedAt > settledAt)) {
-          settledAt = day.finishedAt;
+    for (const rounds of byGroup.values()) {
+      for (const round of bestRounds(rounds, allowance)) {
+        total += round.score;
+        if (round.finishedAt && (!settledAt || round.finishedAt > settledAt)) {
+          settledAt = round.finishedAt;
         }
       }
     }
@@ -76,20 +76,20 @@ function totalsByUser(
   return out;
 }
 
-export function weeklyRanking(
-  scores: DayScore[],
-  startsOn: string,
+export function groupRanking(
+  scores: RoundScore[],
+  groupSize: number,
   allowance: number,
-  week: number,
+  group: number,
 ): Ranked[] {
-  const totals = totalsByUser(scores, startsOn, allowance, week);
+  const totals = totalsByUser(scores, groupSize, allowance, group);
   return ranked(
     [...totals].map(([userId, t]) => ({ userId, total: t.total, settledAt: t.settledAt })),
   );
 }
 
-export function finalRanking(scores: DayScore[], startsOn: string, allowance: number): Ranked[] {
-  const totals = totalsByUser(scores, startsOn, allowance, null);
+export function finalRanking(scores: RoundScore[], groupSize: number, allowance: number): Ranked[] {
+  const totals = totalsByUser(scores, groupSize, allowance, null);
   return ranked(
     [...totals].map(([userId, t]) => ({ userId, total: t.total, settledAt: t.settledAt })),
   );

@@ -6,6 +6,7 @@ import {
   type SpeedBand,
 } from "./competitionConfig";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
+import type { RoundShape } from "./quizRound";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
 export const NO_COMPETITION = "لا توجد مسابقة";
@@ -22,16 +23,21 @@ export async function requireCompetition() {
 
 function asConfig(row: {
   name: string;
-  startsOn: string;
-  days: number;
-  publishMinutes: number;
-  cutoffMinutes: number;
+  startsAt: Date;
+  roundCount: number;
+  roundPeriodMinutes: number;
+  roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  weeklyCountingDays: number;
+  groupSize: number;
+  countingRounds: number;
   speedBands: unknown;
 }): CompetitionConfig {
-  return { ...row, speedBands: row.speedBands as SpeedBand[] };
+  return {
+    ...row,
+    startsAt: row.startsAt.toISOString(),
+    speedBands: row.speedBands as SpeedBand[],
+  };
 }
 
 export async function saveCompetition(input: Partial<CompetitionConfig>) {
@@ -41,7 +47,7 @@ export async function saveCompetition(input: Partial<CompetitionConfig>) {
   const merged: CompetitionConfig = {
     ...DEFAULT_CONFIG,
     name: "",
-    startsOn: "",
+    startsAt: "",
     ...(existing ? asConfig(existing) : {}),
     ...input,
   };
@@ -49,7 +55,11 @@ export async function saveCompetition(input: Partial<CompetitionConfig>) {
   const problem = validateConfig(merged);
   if (problem) throw new ValidationError(problem);
 
-  const data = { ...merged, speedBands: merged.speedBands as unknown as object };
+  const data = {
+    ...merged,
+    startsAt: new Date(merged.startsAt),
+    speedBands: merged.speedBands as unknown as object,
+  };
   if (existing) return prisma.competition.update({ where: { id: existing.id }, data });
   return prisma.competition.create({ data });
 }
@@ -71,4 +81,18 @@ export async function resetCompetitionScores() {
     data: { pointsAwarded: 0 },
   });
   return count;
+}
+
+export function shapeOf(competition: {
+  startsAt: Date;
+  roundCount: number;
+  roundPeriodMinutes: number;
+  roundWindowMinutes: number;
+}): RoundShape {
+  return {
+    startsAt: competition.startsAt,
+    roundCount: competition.roundCount,
+    roundPeriodMinutes: competition.roundPeriodMinutes,
+    roundWindowMinutes: competition.roundWindowMinutes,
+  };
 }

@@ -11,7 +11,7 @@ import SettingsForm from "./SettingsForm";
 import QuestionList from "./QuestionList";
 import ImportDialog from "./ImportDialog";
 import CompetitionPanel from "./CompetitionPanel";
-import DaysPanel from "./DaysPanel";
+import RoundsPanel from "./RoundsPanel";
 import LeaderboardPanel from "./LeaderboardPanel";
 import QuestionFormDialog, { type QuestionFormValues } from "./QuestionFormDialog";
 import { emptySettingsForm } from "./types";
@@ -252,7 +252,7 @@ export default function AdminQuizPage() {
 
       <CompetitionPanel />
 
-      <DaysPanel questionCount={questions.length} />
+      <RoundsPanel questionCount={questions.length} />
 
       <QuestionList
         questions={questions}

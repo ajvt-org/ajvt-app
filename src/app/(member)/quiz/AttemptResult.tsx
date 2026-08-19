@@ -36,7 +36,7 @@ export default function AttemptResult({
       )}
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        <NumericRanges>{`مجموعك اليوم ${score}`}</NumericRanges>
+        <NumericRanges>{`مجموعك في الجولة ${score}`}</NumericRanges>
       </p>
 
       <button onClick={onContinue} className="btn btn-primary w-full max-w-xs text-sm font-bold">

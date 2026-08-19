@@ -3,37 +3,37 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
-import { listDays, setDayPool } from "@/lib/quizPoolServer";
+import { listRounds, setRoundPool } from "@/lib/quizPoolServer";
 import { common } from "@/lib/messages";
 
-export const GET = withRoute("GET /api/admin/quiz/days", async () => {
+export const GET = withRoute("GET /api/admin/quiz/rounds", async () => {
   await requireAdminRole("QUIZ");
-  const { competition, days } = await listDays();
+  const { competition, rounds } = await listRounds();
   return NextResponse.json({
-    days,
+    rounds,
     servedCount: competition.servedCount,
     poolSize: competition.poolSize,
     startedAt: competition.startedAt,
   });
 });
 
-export const PUT = withRoute("PUT /api/admin/quiz/days", async (req: NextRequest) => {
+export const PUT = withRoute("PUT /api/admin/quiz/rounds", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  let body: { day?: unknown; questionIds?: unknown };
+  let body: { index?: unknown; questionIds?: unknown };
   try {
     body = await req.json();
   } catch {
     throw new ValidationError(common.invalidBody);
   }
-  if (typeof body.day !== "string" || !Array.isArray(body.questionIds)) {
+  if (!Number.isInteger(body.index) || !Array.isArray(body.questionIds)) {
     throw new ValidationError(common.invalidBody);
   }
 
-  const result = await setDayPool(body.day, body.questionIds as string[]);
+  const result = await setRoundPool(body.index as number, body.questionIds as string[]);
 
-  await logAction(session.username, "SET_QUIZ_DAY_POOL", result.day, {
+  await logAction(session.username, "SET_QUIZ_ROUND_POOL", String(result.index), {
     ...auditContext(session, req),
-    targetType: "QuizDay",
+    targetType: "QuizRound",
     after: { loaded: result.loaded },
   });
 

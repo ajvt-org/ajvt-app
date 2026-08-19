@@ -21,13 +21,14 @@ vi.mock("@/lib/api", () => ({
 const saved = {
   id: "c1",
   name: "مسابقة الصيف",
-  startsOn: "2026-08-20",
-  days: 30,
-  publishMinutes: 480,
-  cutoffMinutes: 1320,
+  startsAt: "2026-08-20T08:00:00.000Z",
+  roundCount: 30,
+  roundPeriodMinutes: 1440,
+  roundWindowMinutes: 840,
   servedCount: 10,
   poolSize: 30,
-  weeklyCountingDays: 6,
+  groupSize: 7,
+  countingRounds: 6,
   speedBands: [
     { maxSeconds: 10, percent: 100 },
     { maxSeconds: null, percent: 50 },
@@ -64,8 +65,10 @@ describe("CompetitionPanel", () => {
         "مسابقة الصيف",
       ),
     );
-    expect((screen.getByLabelText("يفتح عند") as HTMLInputElement).value).toBe("08:00");
-    expect((screen.getByLabelText("يغلق عند") as HTMLInputElement).value).toBe("22:00");
+    expect((screen.getByLabelText("بداية الجولة الأولى") as HTMLInputElement).value).toBe(
+      "2026-08-20T08:00",
+    );
+    expect((screen.getByLabelText("عدد الجولات") as HTMLInputElement).value).toBe("30");
   });
 
   it("saves what was typed", async () => {
@@ -119,7 +122,7 @@ describe("CompetitionPanel", () => {
 
     await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
     expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).disabled).toBe(true);
-    expect((screen.getByLabelText("عدد الأيام") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("عدد الجولات") as HTMLInputElement).disabled).toBe(true);
     expect(screen.queryByRole("button", { name: /حفظ الإعدادات/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /تصفير النقاط/ })).toBeNull();
   });

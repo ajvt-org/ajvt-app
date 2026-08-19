@@ -6,30 +6,40 @@ import { DEFAULT_BANDS } from "@/lib/competitionConfig";
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
 import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
 
-function stampAt(offsetDays: number) {
+function startOfYesterday() {
   const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+  d.setUTCDate(d.getUTCDate() - 1);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
 }
 
 async function setup(paid = 100) {
   const c = await prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsOn: stampAt(-1),
-      days: 3,
-      publishMinutes: 0,
-      cutoffMinutes: 1439,
+      startsAt: startOfYesterday(),
+      roundCount: 3,
+      roundPeriodMinutes: 1440,
+      roundWindowMinutes: 1440,
       servedCount: 2,
       poolSize: 3,
-      weeklyCountingDays: 6,
+      groupSize: 7,
+      countingRounds: 6,
       speedBands: DEFAULT_BANDS as unknown as object,
       startedAt: new Date(),
     },
   });
+  const start = startOfYesterday();
   const days = await Promise.all(
-    [-1, 0, 1].map((offset) =>
-      prisma.quizDay.create({ data: { competitionId: c.id, day: stampAt(offset) } }),
+    [0, 1, 2].map((index) =>
+      prisma.quizRound.create({
+        data: {
+          competitionId: c.id,
+          index,
+          opensAt: new Date(start.getTime() + index * 1440 * 60_000),
+          closesAt: new Date(start.getTime() + (index + 1) * 1440 * 60_000),
+        },
+      }),
     ),
   );
   for (let i = 0; i < 3; i++) {
@@ -46,8 +56,8 @@ async function setup(paid = 100) {
         },
       },
     });
-    await prisma.quizDayQuestion.createMany({
-      data: days.map((d) => ({ dayId: d.id, questionId: q.id })),
+    await prisma.quizRoundQuestion.createMany({
+      data: days.map((d) => ({ roundId: d.id, questionId: q.id })),
     });
   }
   const [user] = await createUsers(1);

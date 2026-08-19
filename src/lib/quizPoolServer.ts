@@ -1,34 +1,35 @@
 import { prisma } from "./prisma";
-import { dayStamps } from "./competitionConfig";
-import { requireCompetition, ALREADY_STARTED } from "./competitionServer";
+import { roundWindows } from "./quizRound";
+import { requireCompetition, shapeOf, ALREADY_STARTED } from "./competitionServer";
 import { ConflictError, ValidationError } from "./errors";
 
-export const NOT_A_DAY = "هذا اليوم ليس من أيام المسابقة";
+export const NOT_A_ROUND = "هذه الجولة ليست من جولات المسابقة";
 export const POOL_TOO_SMALL = "عدد الأسئلة أقل من العدد المطلوب لكل مشارك";
 
-export async function listDays() {
+export async function listRounds() {
   const competition = await requireCompetition();
-  const stamps = dayStamps(competition.startsOn, competition.days);
-  const days = await prisma.quizDay.findMany({
+  const windows = roundWindows(shapeOf(competition));
+  const rounds = await prisma.quizRound.findMany({
     where: { competitionId: competition.id },
-    select: { day: true, _count: { select: { questions: true } } },
+    select: { index: true, _count: { select: { questions: true } } },
   });
-  const loaded = new Map(days.map((d) => [d.day, d._count.questions]));
+  const loaded = new Map(rounds.map((r) => [r.index, r._count.questions]));
 
   return {
     competition,
-    days: stamps.map((day, index) => ({
-      day,
-      index,
-      loaded: loaded.get(day) ?? 0,
+    rounds: windows.map((w) => ({
+      index: w.index,
+      opensAt: w.opensAt,
+      closesAt: w.closesAt,
+      loaded: loaded.get(w.index) ?? 0,
     })),
   };
 }
 
-export async function setDayPool(day: string, questionIds: string[]) {
+export async function setRoundPool(index: number, questionIds: string[]) {
   const competition = await requireCompetition();
-  const stamps = dayStamps(competition.startsOn, competition.days);
-  if (!stamps.includes(day)) throw new ValidationError(NOT_A_DAY);
+  const window = roundWindows(shapeOf(competition)).find((w) => w.index === index);
+  if (!window) throw new ValidationError(NOT_A_ROUND);
 
   const unique = [...new Set(questionIds)];
   if (unique.length > 0 && unique.length < competition.servedCount) {
@@ -41,26 +42,36 @@ export async function setDayPool(day: string, questionIds: string[]) {
   });
   const valid = known.map((q) => q.id);
 
-  const existing = await prisma.quizDay.findUnique({
-    where: { competitionId_day: { competitionId: competition.id, day } },
+  const existing = await prisma.quizRound.findUnique({
+    where: { competitionId_index: { competitionId: competition.id, index } },
     include: { attempts: { select: { id: true }, take: 1 } },
   });
-  if (existing?.attempts.length) throw new ConflictError("بدأ المشاركون هذا اليوم، لا يمكن تغييره");
+  if (existing?.attempts.length) {
+    throw new ConflictError("بدأ المشاركون هذه الجولة، لا يمكن تغييرها");
+  }
 
-  const quizDay =
-    existing ?? (await prisma.quizDay.create({ data: { competitionId: competition.id, day } }));
+  const round =
+    existing ??
+    (await prisma.quizRound.create({
+      data: {
+        competitionId: competition.id,
+        index,
+        opensAt: window.opensAt,
+        closesAt: window.closesAt,
+      },
+    }));
 
   await prisma.$transaction([
-    prisma.quizDayQuestion.deleteMany({ where: { dayId: quizDay.id } }),
-    prisma.quizDayQuestion.createMany({
-      data: valid.map((questionId) => ({ dayId: quizDay.id, questionId })),
+    prisma.quizRoundQuestion.deleteMany({ where: { roundId: round.id } }),
+    prisma.quizRoundQuestion.createMany({
+      data: valid.map((questionId) => ({ roundId: round.id, questionId })),
     }),
   ]);
 
-  return { day, loaded: valid.length, skipped: unique.length - valid.length };
+  return { index, loaded: valid.length, skipped: unique.length - valid.length };
 }
 
-export async function fillDaysFromBank() {
+export async function fillRoundsFromBank() {
   const competition = await requireCompetition();
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
 
@@ -69,22 +80,25 @@ export async function fillDaysFromBank() {
     select: { id: true },
     orderBy: { createdAt: "asc" },
   });
-  const stamps = dayStamps(competition.startsOn, competition.days);
-  const needed = stamps.length * competition.poolSize;
+  const windows = roundWindows(shapeOf(competition));
+  const needed = windows.length * competition.poolSize;
   if (questions.length < needed) {
     throw new ValidationError(
       `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${questions.length}`,
     );
   }
 
-  const filled: string[] = [];
-  for (let i = 0; i < stamps.length; i++) {
-    const slice = questions.slice(i * competition.poolSize, (i + 1) * competition.poolSize);
-    await setDayPool(
-      stamps[i],
+  let filled = 0;
+  for (const window of windows) {
+    const slice = questions.slice(
+      window.index * competition.poolSize,
+      (window.index + 1) * competition.poolSize,
+    );
+    await setRoundPool(
+      window.index,
       slice.map((q) => q.id),
     );
-    filled.push(stamps[i]);
+    filled += 1;
   }
-  return filled.length;
+  return filled;
 }

@@ -2,25 +2,26 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, put, post, createAdmin, signInAsAdmin } from "./helpers";
 import { DEFAULT_BANDS } from "@/lib/competitionConfig";
-import { NOT_A_DAY, POOL_TOO_SMALL } from "@/lib/quizPoolServer";
+import { NOT_A_ROUND, POOL_TOO_SMALL } from "@/lib/quizPoolServer";
 import { startOrResumeAttempt } from "@/lib/quizAttemptServer";
 
-import { GET as DAYS, PUT as SET_POOL } from "@/app/api/admin/quiz/days/route";
-import { POST as FILL } from "@/app/api/admin/quiz/days/fill/route";
+import { GET as ROUNDS, PUT as SET_POOL } from "@/app/api/admin/quiz/rounds/route";
+import { POST as FILL } from "@/app/api/admin/quiz/rounds/fill/route";
 
-const START = "2026-08-20";
+const START = "2026-08-20T08:00:00.000Z";
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsOn: START,
-      days: 3,
-      publishMinutes: 480,
-      cutoffMinutes: 1320,
+      startsAt: new Date(START),
+      roundCount: 3,
+      roundPeriodMinutes: 1440,
+      roundWindowMinutes: 840,
       servedCount: 3,
       poolSize: 4,
-      weeklyCountingDays: 6,
+      groupSize: 7,
+      countingRounds: 6,
       speedBands: DEFAULT_BANDS as unknown as object,
       ...over,
     },
@@ -49,56 +50,52 @@ async function questions(n: number) {
   return made;
 }
 
-const setPool = (day: string, questionIds: string[]) =>
-  SET_POOL(put("/api/admin/quiz/days", { day, questionIds }));
+const setPool = (index: number, questionIds: string[]) =>
+  SET_POOL(put("/api/admin/quiz/rounds", { index, questionIds }));
 
-describe("loading the questions for a day", () => {
+describe("loading the questions for a round", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
   });
 
-  it("lists every day of the run with nothing loaded", async () => {
+  it("lists every round of the run with nothing loaded", async () => {
     await competition();
 
-    const body = await (await DAYS()).json();
+    const body = await (await ROUNDS()).json();
 
-    expect(body.days.map((d: { day: string }) => d.day)).toEqual([
-      "2026-08-20",
-      "2026-08-21",
-      "2026-08-22",
-    ]);
-    expect(body.days.every((d: { loaded: number }) => d.loaded === 0)).toBe(true);
+    expect(body.rounds.map((r: { index: number }) => r.index)).toEqual([0, 1, 2]);
+    expect(body.rounds.every((r: { loaded: number }) => r.loaded === 0)).toBe(true);
   });
 
-  it("stores the questions chosen for a day", async () => {
+  it("stores the questions chosen for a round", async () => {
     await competition();
     const qs = await questions(4);
 
     const res = await setPool(
-      START,
+      0,
       qs.map((q) => q.id),
     );
 
     expect((await res.json()).loaded).toBe(4);
-    const body = await (await DAYS()).json();
-    expect(body.days[0].loaded).toBe(4);
+    const body = await (await ROUNDS()).json();
+    expect(body.rounds[0].loaded).toBe(4);
   });
 
-  it("replaces the day's questions rather than adding to them", async () => {
+  it("replaces the round's questions rather than adding to them", async () => {
     await competition();
     const qs = await questions(8);
     await setPool(
-      START,
+      0,
       qs.slice(0, 4).map((q) => q.id),
     );
 
     await setPool(
-      START,
+      0,
       qs.slice(4).map((q) => q.id),
     );
 
-    const day = await prisma.quizDay.findFirstOrThrow({ include: { questions: true } });
+    const day = await prisma.quizRound.findFirstOrThrow({ include: { questions: true } });
     expect(day.questions).toHaveLength(4);
     expect(day.questions.map((q) => q.questionId).sort()).toEqual(
       qs
@@ -108,17 +105,17 @@ describe("loading the questions for a day", () => {
     );
   });
 
-  it("refuses a day outside the run", async () => {
+  it("refuses a round outside the run", async () => {
     await competition();
     const qs = await questions(4);
 
     const res = await setPool(
-      "2026-09-01",
+      9,
       qs.map((q) => q.id),
     );
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(NOT_A_DAY);
+    expect((await res.json()).error).toBe(NOT_A_ROUND);
   });
 
   it("refuses a pool smaller than what each member is served", async () => {
@@ -126,7 +123,7 @@ describe("loading the questions for a day", () => {
     const qs = await questions(2);
 
     const res = await setPool(
-      START,
+      0,
       qs.map((q) => q.id),
     );
 
@@ -134,15 +131,15 @@ describe("loading the questions for a day", () => {
     expect((await res.json()).error).toBe(POOL_TOO_SMALL);
   });
 
-  it("lets a day be emptied", async () => {
+  it("lets a round be emptied", async () => {
     await competition();
     const qs = await questions(4);
     await setPool(
-      START,
+      0,
       qs.map((q) => q.id),
     );
 
-    const res = await setPool(START, []);
+    const res = await setPool(0, []);
 
     expect((await res.json()).loaded).toBe(0);
   });
@@ -153,7 +150,7 @@ describe("loading the questions for a day", () => {
     await prisma.quizQuestion.update({ where: { id: qs[0].id }, data: { active: false } });
 
     const res = await setPool(
-      START,
+      0,
       qs.map((q) => q.id),
     );
 
@@ -162,19 +159,19 @@ describe("loading the questions for a day", () => {
     expect(body.skipped).toBe(1);
   });
 
-  it("refuses to change a day people have already played", async () => {
-    const c = await competition({ startedAt: new Date(`${START}T00:00:00.000Z`) });
+  it("refuses to change a round people have already played", async () => {
+    const c = await competition({ startedAt: new Date("2026-08-20T00:00:00.000Z") });
     const qs = await questions(4);
     await setPool(
-      START,
+      0,
       qs.map((q) => q.id),
     );
     const u = await prisma.user.create({ data: { phone: "22334455", password: "x" } });
-    await startOrResumeAttempt(u.id, new Date(`${START}T10:00:00.000Z`));
+    await startOrResumeAttempt(u.id, new Date("2026-08-20T10:00:00.000Z"));
     void c;
 
     const res = await setPool(
-      START,
+      0,
       qs.slice(0, 3).map((q) => q.id),
     );
 
@@ -182,7 +179,7 @@ describe("loading the questions for a day", () => {
   });
 });
 
-describe("filling every day from the bank at once", () => {
+describe("filling every round from the bank at once", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
@@ -192,20 +189,20 @@ describe("filling every day from the bank at once", () => {
     await competition();
     await questions(12);
 
-    const res = await FILL(post("/api/admin/quiz/days/fill", {}));
+    const res = await FILL(post("/api/admin/quiz/rounds/fill", {}));
 
     expect((await res.json()).filled).toBe(3);
-    const days = await prisma.quizDay.findMany({ include: { questions: true } });
+    const days = await prisma.quizRound.findMany({ include: { questions: true } });
     expect(days).toHaveLength(3);
     expect(days.every((d) => d.questions.length === 4)).toBe(true);
   });
 
-  it("gives each day a different set", async () => {
+  it("gives each round a different set", async () => {
     await competition();
     await questions(12);
-    await FILL(post("/api/admin/quiz/days/fill", {}));
+    await FILL(post("/api/admin/quiz/rounds/fill", {}));
 
-    const rows = await prisma.quizDayQuestion.findMany();
+    const rows = await prisma.quizRoundQuestion.findMany();
     expect(new Set(rows.map((r) => r.questionId)).size).toBe(12);
   });
 
@@ -213,22 +210,22 @@ describe("filling every day from the bank at once", () => {
     await competition();
     await questions(7);
 
-    const res = await FILL(post("/api/admin/quiz/days/fill", {}));
+    const res = await FILL(post("/api/admin/quiz/rounds/fill", {}));
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("12");
-    expect(await prisma.quizDay.count()).toBe(0);
+    expect(await prisma.quizRound.count()).toBe(0);
   });
 
   it("refuses once the competition has started", async () => {
     await competition({ startedAt: new Date() });
     await questions(12);
 
-    expect((await FILL(post("/api/admin/quiz/days/fill", {}))).status).toBe(409);
+    expect((await FILL(post("/api/admin/quiz/rounds/fill", {}))).status).toBe(409);
   });
 });
 
-describe("who may load a day", () => {
+describe("who may load a round", () => {
   beforeEach(async () => {
     await resetDb();
     await competition();
@@ -237,7 +234,7 @@ describe("who may load a day", () => {
   it("is closed to an admin without the quiz section", async () => {
     await signInAsAdmin(await createAdmin("members", "MEMBERS"));
 
-    expect((await DAYS()).status).toBe(403);
-    expect((await setPool(START, [])).status).toBe(403);
+    expect((await ROUNDS()).status).toBe(403);
+    expect((await setPool(0, [])).status).toBe(403);
   });
 });

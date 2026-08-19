@@ -5,13 +5,14 @@ export interface SpeedBand {
 
 export interface CompetitionConfig {
   name: string;
-  startsOn: string;
-  days: number;
-  publishMinutes: number;
-  cutoffMinutes: number;
+  startsAt: string;
+  roundCount: number;
+  roundPeriodMinutes: number;
+  roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  weeklyCountingDays: number;
+  groupSize: number;
+  countingRounds: number;
   speedBands: SpeedBand[];
 }
 
@@ -21,22 +22,22 @@ export const DEFAULT_BANDS: SpeedBand[] = [
   { maxSeconds: null, percent: 50 },
 ];
 
-export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsOn"> = {
-  days: 30,
-  publishMinutes: 8 * 60,
-  cutoffMinutes: 22 * 60,
+export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
+  roundCount: 30,
+  roundPeriodMinutes: 1440,
+  roundWindowMinutes: 840,
   servedCount: 10,
   poolSize: 30,
-  weeklyCountingDays: 6,
+  groupSize: 7,
+  countingRounds: 6,
   speedBands: DEFAULT_BANDS,
 };
 
-const DAY_MINUTES = 24 * 60;
+export const MAX_ROUNDS = 400;
 
-export function isDayStamp(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+export function isTimestamp(value: string): boolean {
+  const date = new Date(value);
+  return typeof value === "string" && value.length > 0 && !Number.isNaN(date.getTime());
 }
 
 export function validateBands(bands: SpeedBand[]): string | null {
@@ -63,23 +64,27 @@ export function validateBands(bands: SpeedBand[]): string | null {
 
 export function validateConfig(config: CompetitionConfig): string | null {
   if (!config.name.trim()) return "اسم المسابقة مطلوب";
-  if (!isDayStamp(config.startsOn)) return "تاريخ البداية غير صالح";
-  if (!Number.isInteger(config.days) || config.days < 1) return "عدد الأيام غير صالح";
-  if (!Number.isInteger(config.publishMinutes) || config.publishMinutes < 0)
-    return "وقت الفتح غير صالح";
-  if (!Number.isInteger(config.cutoffMinutes) || config.cutoffMinutes > DAY_MINUTES)
-    return "وقت الإغلاق غير صالح";
-  if (config.cutoffMinutes <= config.publishMinutes) return "وقت الإغلاق يجب أن يكون بعد وقت الفتح";
+  if (!isTimestamp(config.startsAt)) return "وقت البداية غير صالح";
+  if (!Number.isInteger(config.roundCount) || config.roundCount < 1) return "عدد الجولات غير صالح";
+  if (config.roundCount > MAX_ROUNDS) return `عدد الجولات يجب ألا يتجاوز ${MAX_ROUNDS}`;
+  if (!Number.isInteger(config.roundPeriodMinutes) || config.roundPeriodMinutes < 1)
+    return "المدة بين الجولات غير صالحة";
+  if (!Number.isInteger(config.roundWindowMinutes) || config.roundWindowMinutes < 1)
+    return "مدة الجولة غير صالحة";
+  if (config.roundWindowMinutes > config.roundPeriodMinutes)
+    return "مدة الجولة يجب ألا تتجاوز المدة بين الجولات";
   if (!Number.isInteger(config.servedCount) || config.servedCount < 1)
-    return "عدد الأسئلة اليومية غير صالح";
+    return "عدد أسئلة الجولة غير صالح";
   if (!Number.isInteger(config.poolSize) || config.poolSize < config.servedCount)
-    return "حجم المخزون يجب أن يساوي عدد الأسئلة اليومية أو يزيد عنه";
+    return "حجم المخزون يجب أن يساوي عدد أسئلة الجولة أو يزيد عنه";
+  if (!Number.isInteger(config.groupSize) || config.groupSize < 1)
+    return "عدد جولات المجموعة غير صالح";
   if (
-    !Number.isInteger(config.weeklyCountingDays) ||
-    config.weeklyCountingDays < 1 ||
-    config.weeklyCountingDays > 7
+    !Number.isInteger(config.countingRounds) ||
+    config.countingRounds < 1 ||
+    config.countingRounds > config.groupSize
   ) {
-    return "عدد الأيام المحتسبة في الأسبوع يجب أن يكون بين 1 و 7";
+    return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات المجموعة";
   }
   return validateBands(config.speedBands);
 }
@@ -96,13 +101,4 @@ export function bandScore(points: number, bands: SpeedBand[], elapsedMs: number)
   if (points <= 0) return 0;
   const percent = bandPercent(bands, elapsedMs);
   return Math.max(percent > 0 ? 1 : 0, Math.round((points * percent) / 100));
-}
-
-export function dayStamps(startsOn: string, days: number): string[] {
-  const start = new Date(`${startsOn}T00:00:00.000Z`);
-  return Array.from({ length: days }, (_, i) => {
-    const d = new Date(start);
-    d.setUTCDate(d.getUTCDate() + i);
-    return d.toISOString().slice(0, 10);
-  });
 }
