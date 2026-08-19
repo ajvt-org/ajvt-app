@@ -38,19 +38,23 @@ export interface CompetitionDefaults {
   floorPercent: number;
 }
 
+// The admin picks a wall clock time on their own device, so the field reads and
+// writes local time and the instant is stored in UTC.
 export function toLocalInput(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export function fromLocalInput(value: string): string {
   if (!value) return "";
-  const d = new Date(`${value}:00.000Z`);
+  const d = new Date(value);
   return Number.isNaN(d.getTime()) ? "" : d.toISOString();
 }
+
+export const CUSTOM_PERIOD = -1;
 
 export const PERIOD_CHOICES = [
   { minutes: 60, label: "كل ساعة" },
@@ -58,7 +62,13 @@ export const PERIOD_CHOICES = [
   { minutes: 360, label: "كل ست ساعات" },
   { minutes: 720, label: "كل اثنتي عشرة ساعة" },
   { minutes: 1440, label: "كل يوم" },
+  { minutes: 10080, label: "كل أسبوع" },
+  { minutes: CUSTOM_PERIOD, label: "مدة أخرى" },
 ];
+
+export function isPresetPeriod(minutes: number): boolean {
+  return PERIOD_CHOICES.some((c) => c.minutes !== CUSTOM_PERIOD && c.minutes === minutes);
+}
 
 export const VISIBILITY_CHOICES: { value: Visibility; label: string }[] = [
   { value: "PUBLIC", label: "عامة لكل المنتسبين" },

@@ -2,9 +2,12 @@
 
 import BoardsEditor from "./BoardsEditor";
 import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
+import NumberField from "@/components/NumberField";
 import {
   toLocalInput,
   fromLocalInput,
+  isPresetPeriod,
+  CUSTOM_PERIOD,
   PERIOD_CHOICES,
   VISIBILITY_CHOICES,
 } from "./competitionTypes";
@@ -54,19 +57,18 @@ export default function CompetitionFields({
 }) {
   const number = (key: keyof Draft, id: string, label: string, min = 1, max?: number) => (
     <Field label={label} id={id}>
-      <input
+      <NumberField
         id={id}
-        type="number"
         min={min}
         max={max}
-        dir="ltr"
         value={draft[key] as number}
         disabled={locked}
-        onChange={(e) => onChange(key, Number(e.target.value) as Draft[typeof key])}
-        className="input input-sm"
+        onChange={(value) => onChange(key, value as Draft[typeof key])}
       />
     </Field>
   );
+
+  const custom = !isPresetPeriod(draft.roundPeriodMinutes);
 
   return (
     <>
@@ -131,9 +133,14 @@ export default function CompetitionFields({
         <Field label="جولة كل" id="c-period">
           <select
             id="c-period"
-            value={draft.roundPeriodMinutes}
+            value={custom ? CUSTOM_PERIOD : draft.roundPeriodMinutes}
             disabled={locked}
-            onChange={(e) => onChange("roundPeriodMinutes", Number(e.target.value))}
+            onChange={(e) => {
+              const picked = Number(e.target.value);
+              const period = picked === CUSTOM_PERIOD ? 30 : picked;
+              onChange("roundPeriodMinutes", period);
+              if (draft.roundWindowMinutes > period) onChange("roundWindowMinutes", period);
+            }}
             className="input input-sm"
           >
             {PERIOD_CHOICES.map((choice) => (
@@ -146,10 +153,29 @@ export default function CompetitionFields({
         {number("roundWindowMinutes", "c-window", "مدة الجولة بالدقائق")}
       </div>
 
+      {custom && (
+        <Field label="المدة بين الجولات بالدقائق" id="c-period-minutes">
+          <NumberField
+            id="c-period-minutes"
+            min={1}
+            value={draft.roundPeriodMinutes}
+            disabled={locked}
+            onChange={(period) => {
+              onChange("roundPeriodMinutes", period);
+              if (draft.roundWindowMinutes > period) onChange("roundWindowMinutes", period);
+            }}
+          />
+        </Field>
+      )}
+
       <div className="flex gap-2">
         {number("servedCount", "c-served", "أسئلة لكل مشارك")}
         {number("poolSize", "c-pool", "مخزون الجولة")}
       </div>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        مخزون الجولة هو ما تُحمّل به الجولة، وتُسحب منه أسئلة كل مشارك. كلما زاد عن أسئلة المشارك
+        اختلفت الأسئلة بين المشاركين، وإذا تساويا رأى الجميع نفس الأسئلة.
+      </p>
 
       <label className="flex items-center gap-2 text-xs font-bold">
         <input

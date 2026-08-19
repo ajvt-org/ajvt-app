@@ -46,7 +46,7 @@ export default function ScoreFormula({
           <li key={board.title}>
             <NumericRanges>
               {board.wholeRun
-                ? `${board.title}، مجموع كل الفترات، أفضل ${board.counting} جولة من كل ${board.blockRounds}`
+                ? `${board.title}، مجموع كل جولات المسابقة`
                 : `${board.title}، أفضل ${board.counting} جولة من ${board.blockRounds}`}
             </NumericRanges>
           </li>

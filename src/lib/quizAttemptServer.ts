@@ -266,12 +266,9 @@ export async function submitAnswer(
 }
 
 export async function closeExpiredAttempts(now = new Date()) {
-  const competition = await prisma.competition.findFirst({ orderBy: { createdAt: "desc" } });
-  if (!competition?.startedAt) return 0;
-
   const stale = await prisma.quizRound.findMany({
     where: {
-      competitionId: competition.id,
+      competition: { startedAt: { not: null } },
       closesAt: { lte: now },
       attempts: { some: { finishedAt: null } },
     },
@@ -282,7 +279,7 @@ export async function closeExpiredAttempts(now = new Date()) {
 
   const { count } = await prisma.quizAttemptAnswer.updateMany({
     where: { answeredAt: null, attempt: { roundId: { in: roundIds } } },
-    data: { answeredAt: now, isCorrect: false, points: 0 },
+    data: { answeredAt: now, isCorrect: null, points: 0 },
   });
   await prisma.quizAttempt.updateMany({
     where: { roundId: { in: roundIds }, finishedAt: null },
