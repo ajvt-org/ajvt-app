@@ -12,24 +12,21 @@ interface BoardRow {
   total: number;
 }
 
+interface Board {
+  id: string;
+  title: string;
+  rows: BoardRow[];
+}
+
 interface Standings {
   running: boolean;
   round: number | null;
-  group: number | null;
-  today: BoardRow[];
-  thisWeek: BoardRow[];
-  overall: BoardRow[];
+  boards: Board[];
 }
-
-const TABS = [
-  { key: "overall", label: "الترتيب العام" },
-  { key: "thisWeek", label: "المجموعة" },
-  { key: "today", label: "الجولة" },
-] as const;
 
 export default function StandingsPanel({ competitionId }: { competitionId: string }) {
   const [body, setBody] = useState<Standings | null>(null);
-  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("overall");
+  const [tab, setTab] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -45,7 +42,8 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
     };
   }, [competitionId]);
 
-  const rows = body?.[tab] ?? [];
+  const boards = body?.boards ?? [];
+  const openBoard = boards.find((b) => b.id === tab) ?? boards[0] ?? null;
 
   return (
     <div className="card overflow-hidden">
@@ -61,31 +59,31 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
 
       {open && (
         <div className="px-4 pb-4 space-y-3">
-          <div className="flex gap-2">
-            {TABS.map((one) => (
+          <div className="flex flex-wrap gap-2">
+            {boards.map((board) => (
               <button
-                key={one.key}
-                onClick={() => setTab(one.key)}
+                key={board.id}
+                onClick={() => setTab(board.id)}
                 className="btn btn-sm text-xs"
                 style={
-                  tab === one.key
+                  openBoard?.id === board.id
                     ? { background: "var(--mint-600)", color: "white" }
                     : { background: "var(--surface-2)" }
                 }
               >
-                {one.label}
+                {board.title}
               </button>
             ))}
           </div>
 
-          {rows.length === 0 && (
+          {(!openBoard || openBoard.rows.length === 0) && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               لا ترتيب بعد
             </p>
           )}
 
           <div className="space-y-1">
-            {rows.map((row) => (
+            {openBoard?.rows.map((row) => (
               <div
                 key={row.userId}
                 className="flex items-center justify-between rounded-lg p-2 text-xs"
