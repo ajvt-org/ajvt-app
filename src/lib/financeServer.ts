@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
+import { splitPayment } from "@/lib/membershipPayment";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -37,16 +38,19 @@ function sortedEntries(map: Map<string, number>): NamedEntry[] {
 
 export async function getFinanceSummary(recentDays = 30, activityId?: string) {
   const scoped = activityId !== undefined;
-  const [members, donations, expenses] = await Promise.all([
-    scoped
-      ? Promise.resolve([])
-      : prisma.member.findMany({
-          where: { status: "ACTIVE", paidAmount: { not: null } },
-          select: { fullName: true, paidAmount: true, paymentMethod: true, createdAt: true },
-        }),
-    prisma.donation.findMany({
+  const [payments, expenses] = await Promise.all([
+    prisma.payment.findMany({
       where: { status: "ACTIVE", ...(scoped ? { activityId } : {}) },
-      select: { id: true, amount: true, paymentMethod: true, createdAt: true, donorName: true },
+      select: {
+        id: true,
+        purpose: true,
+        amount: true,
+        feeApplied: true,
+        method: true,
+        createdAt: true,
+        donorName: true,
+        member: { select: { fullName: true } },
+      },
     }),
     prisma.expense.findMany({
       where: scoped ? { activityId } : {},
@@ -95,31 +99,34 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
     byMethodMap.set(method, perName);
   }
 
-  for (const m of members) {
-    const fee = m.paidAmount ?? 0;
-    const key = addRevenue(fee, m.paymentMethod, m.createdAt, m.fullName, "انتساب");
-    addNamed(intisabByMethod, key, m.fullName, fee);
-  }
-
   const unassigned: { id: string; name: string; amount: number }[] = [];
 
-  for (const d of donations) {
-    const name = d.donorName?.trim();
-    const key = addRevenue(
-      d.amount ?? 0,
-      d.paymentMethod,
-      d.createdAt,
-      name || money.anonymousDonor,
-      "دعم",
-    );
-    if (name) {
-      addNamed(daemByMethod, key, name, d.amount ?? 0);
-    } else {
-      anonymousByMethod.set(key, (anonymousByMethod.get(key) || 0) + (d.amount ?? 0));
+  function addSupport(amount: number, method: string | null, date: Date, donorName: string | null) {
+    const name = donorName?.trim();
+    const key = addRevenue(amount, method, date, name || money.anonymousDonor, "دعم");
+    if (name) addNamed(daemByMethod, key, name, amount);
+    else anonymousByMethod.set(key, (anonymousByMethod.get(key) || 0) + amount);
+    return key;
+  }
+
+  for (const p of payments) {
+    if (p.purpose !== "MEMBERSHIP") {
+      addSupport(p.amount, p.method, p.createdAt, p.donorName);
+      if (!p.method) {
+        unassigned.push({
+          id: p.id,
+          name: p.donorName?.trim() || money.anonymousDonor,
+          amount: p.amount,
+        });
+      }
+      continue;
     }
-    if (!d.paymentMethod) {
-      unassigned.push({ id: d.id, name: name || money.anonymousDonor, amount: d.amount ?? 0 });
-    }
+
+    const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
+    const fullName = p.member?.fullName ?? "";
+    const key = addRevenue(fee, p.method, p.createdAt, fullName, "انتساب");
+    addNamed(intisabByMethod, key, fullName, fee);
+    if (surplus > 0) addSupport(surplus, p.method, p.createdAt, p.donorName);
   }
 
   const byMethodDetail: Record<string, MethodDetail> = {};

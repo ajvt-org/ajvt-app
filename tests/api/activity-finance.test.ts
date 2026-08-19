@@ -121,15 +121,16 @@ describe("attaching finance to an activity", () => {
 
   it("keeps membership fees out of an activity summary", async () => {
     const a = await activity("القافلة الصحية");
-    await prisma.member.create({
+    const m = await prisma.member.create({
       data: {
         fullName: "عضو",
         age: "البدريين",
         paymentMethod: "بنكيلي",
         status: "ACTIVE",
-        paidAmount: 100,
       },
     });
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+    await recordMembershipPayment(prisma, m.id, 100, 100);
 
     expect((await summaryFor(a.id)).totalRevenue).toBe(0);
     expect((await summaryFor()).totalRevenue).toBe(100);
