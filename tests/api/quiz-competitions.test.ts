@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, put, post, del, createUsers, createAdmin, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  put,
+  post,
+  del,
+  createUsers,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+} from "./helpers";
 import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { ALREADY_STARTED } from "@/lib/competitionServer";
 
@@ -18,21 +27,21 @@ import {
 } from "@/app/api/admin/quiz/competitions/[id]/participants/route";
 
 const config = { name: "مسابقة الصيف", startsAt: "2026-08-20T08:00:00.000Z" };
-const at = (id: string) => ({ params: Promise.resolve({ id }) });
 
 const list = () => LIST();
 const create = (body: unknown) => CREATE(post("/api/admin/quiz/competitions", body));
-const read = (id: string) => READ(post(`/api/admin/quiz/competitions/${id}`, {}), at(id));
+const read = (id: string) => READ(post(`/api/admin/quiz/competitions/${id}`, {}), withId(id));
 const save = (id: string, body: unknown) =>
-  SAVE(put(`/api/admin/quiz/competitions/${id}`, body), at(id));
-const start = (id: string) => START(post(`/api/admin/quiz/competitions/${id}/start`, {}), at(id));
+  SAVE(put(`/api/admin/quiz/competitions/${id}`, body), withId(id));
+const start = (id: string) =>
+  START(post(`/api/admin/quiz/competitions/${id}/start`, {}), withId(id));
 const reset = (id: string) =>
-  RESET_SCORES(post(`/api/admin/quiz/competitions/${id}/reset`, {}), at(id));
-const remove = (id: string) => RESET(del(`/api/admin/quiz/competitions/${id}`), at(id));
+  RESET_SCORES(post(`/api/admin/quiz/competitions/${id}/reset`, {}), withId(id));
+const remove = (id: string) => RESET(del(`/api/admin/quiz/competitions/${id}`), withId(id));
 const participants = (id: string) =>
-  READ_PARTS(post(`/api/admin/quiz/competitions/${id}/participants`, {}), at(id));
+  READ_PARTS(post(`/api/admin/quiz/competitions/${id}/participants`, {}), withId(id));
 const setParticipants = (id: string, userIds: string[]) =>
-  SET_PARTS(put(`/api/admin/quiz/competitions/${id}/participants`, { userIds }), at(id));
+  SET_PARTS(put(`/api/admin/quiz/competitions/${id}/participants`, { userIds }), withId(id));
 
 async function made(body: unknown = config) {
   return (await (await create(body)).json()).competition as { id: string };

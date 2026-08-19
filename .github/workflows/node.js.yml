@@ -28,6 +28,24 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
 
+  # Separate from static, and allowed to fail, on purpose. An advisory is
+  # published against a lockfile that has not changed, so it can turn red on a
+  # pull request that has nothing to do with it — including the one release that
+  # has to go out now. This makes it visible on every pull request; the weekly
+  # Audit workflow is the one that is meant to be acted on.
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - run: npm audit --audit-level=high
+
   build:
     name: build
     needs: static
@@ -49,8 +67,29 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - run: npm test
-      - run: npm run test:ui
+      - run: npm test -- --coverage
+      - run: npm run test:ui -- --coverage
+
+      # The floors live in the vitest configs and fail the step above on their
+      # own. This only puts the numbers where they can be read without opening
+      # the log.
+      - if: always()
+        run: |
+          {
+            echo "## Coverage"
+            echo
+            echo "| suite | statements | branches | functions | lines |"
+            echo "| --- | --- | --- | --- | --- |"
+            for suite in unit ui; do
+              file="coverage/$suite/coverage-summary.json"
+              [ -f "$file" ] || continue
+              node -e '
+                const t = require("./" + process.argv[1]).total;
+                const pct = (k) => t[k].pct + "% (" + t[k].covered + "/" + t[k].total + ")";
+                console.log("| " + process.argv[2] + " | " + ["statements","branches","functions","lines"].map(pct).join(" | ") + " |");
+              ' "$file" "$suite"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
   api:
     name: api

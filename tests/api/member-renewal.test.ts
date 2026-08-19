@@ -3,12 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { resetDb, get, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 import { GET as LIST_YEARS } from "@/app/api/admin/members/[id]/memberships/route";
 
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 const YEAR = runningYear();
 const LAST = YEAR - 1;
 

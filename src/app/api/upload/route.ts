@@ -7,7 +7,9 @@ import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/image
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { proofHash } from "@/lib/proofHash";
-import { common, uploads } from "@/lib/messages";
+import { uploads } from "@/lib/messages";
+import { withRoute } from "@/lib/route";
+import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
 
 export function getUploadDir(): string {
   // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
@@ -15,24 +17,21 @@ export function getUploadDir(): string {
   return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
   try {
     // Open (unauthenticated) uploads would let anyone flood disk space with
     // arbitrary files — every legitimate caller (member form, admin panel)
     // is already signed in.
     const [admin, user] = await Promise.all([getAdminSession(), getUserSession()]);
-    if (!admin && !user) {
-      return NextResponse.json({ error: common.unauthorized }, { status: 401 });
-    }
+    if (!admin && !user) throw new UnauthorizedError();
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
-    if (!file) return NextResponse.json({ error: "لم يتم إرفاق ملف" }, { status: 400 });
+    if (!file) throw new ValidationError(uploads.noFile);
     if (!ALLOWED_UPLOAD_TYPES.includes(file.type))
-      return NextResponse.json({ error: uploads.unsupportedType }, { status: 400 });
-    if (file.size > MAX_UPLOAD_SIZE)
-      return NextResponse.json({ error: uploads.tooLarge }, { status: 400 });
+      throw new ValidationError(uploads.unsupportedType);
+    if (file.size > MAX_UPLOAD_SIZE) throw new ValidationError(uploads.tooLarge);
 
     const id = uuidv4();
     const filename = `${id}.webp`;
@@ -43,7 +42,7 @@ export async function POST(req: NextRequest) {
       processed = await processImage(Buffer.from(await file.arrayBuffer()));
     } catch (err) {
       logger.error("image.processing.error", err);
-      return NextResponse.json({ error: uploads.processingFailed }, { status: 400 });
+      throw new ValidationError(uploads.processingFailed);
     }
 
     await mkdir(uploadDir, { recursive: true });
@@ -68,7 +67,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ filename, thumbnailFilename }, { status: 200 });
   } catch (err) {
+    // withRoute would answer a failure here with the generic server message.
+    // The upload dialog shows whatever comes back, so it keeps its own
+    // sentence, thrown rather than returned so the shape matches the rest.
+    if (err instanceof HttpError) throw err;
     logger.error("upload.error", err);
-    return NextResponse.json({ error: uploads.failed }, { status: 500 });
+    throw new HttpError("UPLOAD_FAILED", 500, uploads.failed);
   }
-}
+});

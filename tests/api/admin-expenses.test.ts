@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST, GET } from "@/app/api/admin/expenses/route";
 import { PATCH, DELETE } from "@/app/api/admin/expenses/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, get, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, get, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 const validExpense = {
   label: "كرات وتجهيزات رياضية",
@@ -12,7 +12,7 @@ const validExpense = {
 };
 
 function patch(id: string, body: unknown) {
-  return [post(`/api/admin/expenses/${id}`, body), { params: Promise.resolve({ id }) }] as const;
+  return [post(`/api/admin/expenses/${id}`, body), withId(id)] as const;
 }
 
 async function anExpense() {
@@ -183,7 +183,7 @@ describe("DELETE /api/admin/expenses/[id]", () => {
   it("refuses an anonymous caller", async () => {
     const expense = await anExpense();
 
-    const res = await DELETE(get("/x"), { params: Promise.resolve({ id: expense.id }) });
+    const res = await DELETE(get("/x"), withId(expense.id));
 
     expect(res.status).toBe(401);
     expect(await prisma.expense.count()).toBe(1);
@@ -193,7 +193,7 @@ describe("DELETE /api/admin/expenses/[id]", () => {
     await signInAsAdmin(await createAdmin());
     const expense = await anExpense();
 
-    const res = await DELETE(get("/x"), { params: Promise.resolve({ id: expense.id }) });
+    const res = await DELETE(get("/x"), withId(expense.id));
 
     expect(res.status).toBe(200);
     expect(await prisma.expense.count()).toBe(0);
@@ -202,7 +202,7 @@ describe("DELETE /api/admin/expenses/[id]", () => {
   it("answers 404 for an unknown expense", async () => {
     await signInAsAdmin(await createAdmin());
 
-    const res = await DELETE(get("/x"), { params: Promise.resolve({ id: "nope" }) });
+    const res = await DELETE(get("/x"), withId("nope"));
 
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "المصروف غير موجود" });

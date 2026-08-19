@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as DETAIL } from "@/app/api/admin/activities/[id]/detail/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 function ask(id: string) {
-  return [get(`/api/admin/activities/${id}/detail`), { params: Promise.resolve({ id }) }] as const;
+  return [get(`/api/admin/activities/${id}/detail`), withId(id)] as const;
 }
 
 async function anActivity() {

@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
@@ -13,6 +12,8 @@ import {
   createAdmin,
   signInAs,
   signInAsAdmin,
+  withId,
+  postForm,
 } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
@@ -33,7 +34,6 @@ import { POST as ADMIN_DONATION } from "@/app/api/admin/donations/route";
 import { PATCH as EDIT_DONATION } from "@/app/api/admin/donations/[id]/route";
 
 const YEAR = runningYear();
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -48,11 +48,7 @@ function donateForm(fields: Record<string, string>) {
   const fd = new FormData();
   fd.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
   for (const [k, v] of Object.entries(fields)) fd.append(k, v);
-  return new NextRequest("http://localhost/api/donations", {
-    method: "POST",
-    body: fd,
-    headers: { "x-forwarded-for": `10.1.0.${++ip}` },
-  });
+  return postForm("/api/donations", fd, { "x-forwarded-for": `10.1.0.${++ip}` });
 }
 
 async function bothShapesAgree() {

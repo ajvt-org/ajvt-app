@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/members/[id]/account/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import { resetDb, patch, createAdmin, createUser, signInAsAdmin, withId } from "./helpers";
 import { clearCookies } from "./cookieJar";
-
-function params(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
 
 async function memberOn(accountPhone: string | null, fullName = "محمد ولد أحمد") {
   const user = accountPhone ? await createUser(accountPhone) : null;
@@ -22,7 +18,7 @@ async function memberOn(accountPhone: string | null, fullName = "محمد ولد
 }
 
 function change(id: string, phone: string) {
-  return PATCH(patch(`/api/admin/members/${id}/account`, { phone }), params(id));
+  return PATCH(patch(`/api/admin/members/${id}/account`, { phone }), withId(id));
 }
 
 describe("PATCH /api/admin/members/[id]/account", () => {

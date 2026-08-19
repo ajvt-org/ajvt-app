@@ -4,17 +4,10 @@ import { GET as LIST_DELETED } from "@/app/api/admin/deleted/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
 import { RETENTION_DAYS } from "@/lib/deletedRecords";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, del, createAdmin, signInAsAdmin, withId } from "./helpers";
 
-function del(id: string, body: unknown) {
-  return [
-    new Request(`http://localhost/api/admin/members/${id}`, {
-      method: "DELETE",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    }) as never,
-    { params: Promise.resolve({ id }) },
-  ] as const;
+function asDelete(id: string, body: unknown) {
+  return [del(`/api/admin/members/${id}`, body), withId(id)] as const;
 }
 
 async function member(fullName = "محمد ولد أحمد") {
@@ -32,7 +25,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("refuses without the typed name", async () => {
     const m = await member();
 
-    const res = await DELETE(...del(m.id, {}));
+    const res = await DELETE(...asDelete(m.id, {}));
 
     expect(res.status).toBe(400);
     expect(await prisma.member.count()).toBe(1);
@@ -41,7 +34,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("refuses when the typed name is wrong", async () => {
     const m = await member();
 
-    const res = await DELETE(...del(m.id, { confirmName: "محمد" }));
+    const res = await DELETE(...asDelete(m.id, { confirmName: "محمد" }));
 
     expect(res.status).toBe(400);
     expect(await prisma.member.count()).toBe(1);
@@ -50,7 +43,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("deletes and keeps a restorable copy when the name matches", async () => {
     const m = await member();
 
-    const res = await DELETE(...del(m.id, { confirmName: "محمد ولد أحمد" }));
+    const res = await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
 
     expect(res.status).toBe(200);
     expect(await prisma.member.count()).toBe(0);
@@ -63,12 +56,13 @@ describe("DELETE /api/admin/members/[id]", () => {
 
   it("brings the member back on restore", async () => {
     const m = await member();
-    await DELETE(...del(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
     const record = await prisma.deletedRecord.findFirstOrThrow();
 
-    const res = await RESTORE(post(`/api/admin/deleted/${record.id}/restore`, {}), {
-      params: Promise.resolve({ id: record.id }),
-    });
+    const res = await RESTORE(
+      post(`/api/admin/deleted/${record.id}/restore`, {}),
+      withId(record.id),
+    );
 
     expect(res.status).toBe(200);
     const restored = await prisma.member.findUnique({ where: { id: m.id } });
@@ -78,7 +72,7 @@ describe("DELETE /api/admin/members/[id]", () => {
 
   it("drops a backup once its window has passed", async () => {
     const m = await member();
-    await DELETE(...del(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
     await prisma.deletedRecord.updateMany({ data: { expiresAt: new Date("2020-01-01") } });
 
     const { records } = await (await LIST_DELETED()).json();

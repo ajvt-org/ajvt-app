@@ -2,12 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/export/[dataset]/route";
 import { prisma } from "@/lib/prisma";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withParams } from "./helpers";
 
 function download(dataset: string) {
-  return GET(get(`/api/admin/export/${dataset}`), {
-    params: Promise.resolve({ dataset }),
-  });
+  return GET(get(`/api/admin/export/${dataset}`), withParams({ dataset }));
 }
 
 describe("GET /api/admin/export/[dataset]", () => {

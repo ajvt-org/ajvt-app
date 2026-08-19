@@ -1,13 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { POST as CREATE } from "@/app/api/admin/donations/route";
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
 import { GET as PROOFS } from "@/app/api/admin/payment-proofs/route";
 import { GET as FINANCE } from "@/app/api/admin/activities/[id]/finance/route";
-
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 function activity(title = "القافلة الصحية") {
   return prisma.activity.create({ data: { title, description: "وصف" } });

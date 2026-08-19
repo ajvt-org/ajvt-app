@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
-import { resetDb, get, post, patch, createAdmin, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  patch,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  withParams,
+} from "./helpers";
 
 import { GET as LIST_ACTIVITIES } from "@/app/api/admin/activities/route";
 import { GET as DETAIL } from "@/app/api/admin/activities/[id]/detail/route";
@@ -22,8 +31,6 @@ import { PATCH as UPDATE_TEAM } from "@/app/api/admin/teams/[teamId]/route";
 import { PATCH as UPDATE_GROUP } from "@/app/api/admin/groups/[groupId]/route";
 import { GET as LIST_MEMBERS } from "@/app/api/admin/members/route";
 import { GET as FINANCE_SUMMARY } from "@/app/api/admin/finance/summary/route";
-
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 async function activity(title: string) {
   return prisma.activity.create({
@@ -129,19 +136,22 @@ describe("a scoped admin", () => {
     const group = await prisma.group.create({ data: { activityId: theirs.id, name: "المجموعة" } });
     await scopedAdmin(mine.id);
 
-    const byMatch = await UPDATE_MATCH(patch(`/api/admin/matches/${match.id}`, { venue: "x" }), {
-      params: Promise.resolve({ matchId: match.id }),
-    });
+    const byMatch = await UPDATE_MATCH(
+      patch(`/api/admin/matches/${match.id}`, { venue: "x" }),
+      withParams({ matchId: match.id }),
+    );
     expect(byMatch.status).toBe(403);
 
-    const byTeam = await UPDATE_TEAM(patch(`/api/admin/teams/${home.id}`, { name: "z" }), {
-      params: Promise.resolve({ teamId: home.id }),
-    });
+    const byTeam = await UPDATE_TEAM(
+      patch(`/api/admin/teams/${home.id}`, { name: "z" }),
+      withParams({ teamId: home.id }),
+    );
     expect(byTeam.status).toBe(403);
 
-    const byGroup = await UPDATE_GROUP(patch(`/api/admin/groups/${group.id}`, { name: "z" }), {
-      params: Promise.resolve({ groupId: group.id }),
-    });
+    const byGroup = await UPDATE_GROUP(
+      patch(`/api/admin/groups/${group.id}`, { name: "z" }),
+      withParams({ groupId: group.id }),
+    );
     expect(byGroup.status).toBe(403);
   });
 

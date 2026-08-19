@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { surplusForYear } from "@/lib/paidBreakdown";
-import { resetDb, get, patch, put, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, patch, put, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { GET as YEARS } from "@/app/api/admin/members/[id]/memberships/route";
@@ -11,7 +11,6 @@ import { PATCH as EDIT } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 
 const YEAR = runningYear();
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 async function overpaidMember() {
   const m = await prisma.member.create({
