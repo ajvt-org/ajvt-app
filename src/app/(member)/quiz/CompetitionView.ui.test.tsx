@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 
 const post = vi.fn();
+const get = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { post: (...a: unknown[]) => post(...a) },
+  api: { post: (...a: unknown[]) => post(...a), get: (...a: unknown[]) => get(...a) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -48,6 +49,8 @@ const setup = () =>
 
 beforeEach(() => {
   post.mockReset();
+  get.mockReset();
+  get.mockResolvedValue({ rounds: [] });
 });
 
 describe("CompetitionView", () => {
@@ -74,18 +77,20 @@ describe("CompetitionView", () => {
     expect(screen.getByText("محمد")).toBeDefined();
   });
 
-  it("keeps my own scores behind their own tab", async () => {
+  it("puts my own scores below the standings, not among the tabs", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     setup();
-    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
 
-    expect(screen.queryByText(/تفاصيل نقاطي/)).toBeNull();
+    expect(screen.queryByRole("tab", { name: "نقاطي" })).toBeNull();
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.getByText(/تفاصيل نقاطي/)).toBeDefined();
   });
 
   it("offers no practice round from inside a quiz", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     setup();
-    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
 
     expect(screen.queryByText("جولة تجريبية")).toBeNull();
   });
