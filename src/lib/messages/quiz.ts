@@ -6,6 +6,7 @@ export const quiz = {
   answersNeedText: "كل الإجابات يجب أن تحتوي على نص",
   tooManyCorrect: "عدد الإجابات الصحيحة أكبر من عدد الإجابات",
   paidMembersOnly: "المسابقة متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
+  notInvited: "هذه المسابقة خاصة ولست من المشاركين فيها",
   alreadyAnswered: "تمت الإجابة على هذا السؤال من قبل",
   optionsNotRevealed: "أظهر الخيارات أولاً",
   timeUp: "انتهى الوقت",

@@ -45,6 +45,7 @@ model User {
   mvpVotes              MvpVote[]
   quizAssignments       QuizAssignment[]
   quizAttempts          QuizAttempt[]
+  quizParticipations    QuizParticipant[]
   currentStreak         Int                @default(0) // consecutive days of app activity ("flame")
   longestStreak         Int                @default(0)
   lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
@@ -554,22 +555,29 @@ model DeletedRecord {
   @@index([expiresAt])
 }
 
+enum QuizVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 model Competition {
-  id                 String      @id @default(cuid())
+  id                 String            @id @default(cuid())
   name               String
+  visibility         QuizVisibility    @default(PUBLIC)
   startsAt           DateTime
-  roundCount         Int         @default(30)
-  roundPeriodMinutes Int         @default(1440)
-  roundWindowMinutes Int         @default(840)
-  servedCount        Int         @default(10)
-  poolSize           Int         @default(30)
-  groupSize          Int         @default(7)
-  countingRounds     Int         @default(6)
+  roundCount         Int               @default(30)
+  roundPeriodMinutes Int               @default(1440)
+  roundWindowMinutes Int               @default(840)
+  servedCount        Int               @default(10)
+  poolSize           Int               @default(30)
+  groupSize          Int               @default(7)
+  countingRounds     Int               @default(6)
   speedBands         Json
   rounds             QuizRound[]
+  participants       QuizParticipant[]
   startedAt          DateTime?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 }
 
 model QuizRound {
@@ -631,6 +639,18 @@ model QuizAttemptAnswer {
 
   @@unique([attemptId, position])
   @@index([attemptId])
+}
+
+model QuizParticipant {
+  id            String      @id @default(cuid())
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([competitionId, userId])
+  @@index([userId])
 }
 
 enum PaymentPurpose {

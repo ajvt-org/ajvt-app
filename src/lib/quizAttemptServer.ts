@@ -9,8 +9,8 @@ export const NOT_OPEN = "المسابقة ليست مفتوحة الآن";
 export const NO_POOL = "لا توجد أسئلة لهذه الجولة";
 export const NOT_STARTED = "لم تنطلق المسابقة بعد";
 
-export async function openCompetitionRound(now = new Date()) {
-  const competition = await requireCompetition();
+export async function openCompetitionRound(competitionId: string, now = new Date()) {
+  const competition = await requireCompetition(competitionId);
   if (!competition.startedAt) throw new ConflictError(NOT_STARTED);
 
   const open = currentRound(shapeOf(competition), now);
@@ -25,8 +25,12 @@ export async function openCompetitionRound(now = new Date()) {
   return { competition, round, index: open.index };
 }
 
-export async function startOrResumeAttempt(userId: string, now = new Date()) {
-  const { competition, round } = await openCompetitionRound(now);
+export async function startOrResumeAttempt(
+  competitionId: string,
+  userId: string,
+  now = new Date(),
+) {
+  const { competition, round } = await openCompetitionRound(competitionId, now);
 
   const existing = await prisma.quizAttempt.findUnique({
     where: { roundId_userId: { roundId: round.id, userId } },
@@ -127,7 +131,12 @@ export async function submitAnswer(
   selectedAnswerIds: string[],
   now = new Date(),
 ) {
-  const { competition } = await openCompetitionRound(now);
+  const owner = await prisma.quizAttemptAnswer.findUnique({
+    where: { id: attemptAnswerId },
+    select: { attempt: { select: { round: { select: { competitionId: true } } } } },
+  });
+  if (!owner) throw new NotFoundError(quiz.questionNotFound);
+  const { competition } = await openCompetitionRound(owner.attempt.round.competitionId, now);
 
   const row = await prisma.quizAttemptAnswer.findUnique({
     where: { id: attemptAnswerId },

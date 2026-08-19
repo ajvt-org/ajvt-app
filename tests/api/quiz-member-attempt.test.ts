@@ -72,10 +72,11 @@ async function setup(paid = 100) {
     },
   });
   await signInAs(user);
-  return { user, days };
+  return { competition: c, user, days };
 }
 
-const startAttempt = () => ATTEMPT();
+const startAttempt = (competitionId: string) =>
+  ATTEMPT(post("/api/quiz/attempt", { competitionId }));
 const answer = (answerId: string, selectedAnswerIds: string[]) =>
   ANSWER(post("/api/quiz/attempt/answer", { answerId, selectedAnswerIds }));
 
@@ -85,9 +86,9 @@ describe("a member playing the daily attempt", () => {
   });
 
   it("is served the first question and nothing beyond it", async () => {
-    await setup();
+    const { competition } = await setup();
 
-    const body = await (await startAttempt()).json();
+    const body = await (await startAttempt(competition.id)).json();
 
     expect(body.done).toBe(false);
     expect(body.position).toBe(0);
@@ -97,18 +98,18 @@ describe("a member playing the daily attempt", () => {
   });
 
   it("returns the same attempt when the app is reopened", async () => {
-    await setup();
-    const first = await (await startAttempt()).json();
+    const { competition } = await setup();
+    const first = await (await startAttempt(competition.id)).json();
 
-    const again = await (await startAttempt()).json();
+    const again = await (await startAttempt(competition.id)).json();
 
     expect(again.attemptId).toBe(first.attemptId);
     expect(again.position).toBe(0);
   });
 
   it("moves on and reports the score after an answer", async () => {
-    await setup();
-    const view = await (await startAttempt()).json();
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
     const right = await prisma.quizAnswer.findFirstOrThrow({
       where: {
         id: { in: view.question.options.map((o: { id: string }) => o.id) },
@@ -126,9 +127,9 @@ describe("a member playing the daily attempt", () => {
   });
 
   it("says when the attempt is finished", async () => {
-    await setup();
+    const { competition } = await setup();
     for (let i = 0; i < 2; i++) {
-      const view = await (await startAttempt()).json();
+      const view = await (await startAttempt(competition.id)).json();
       const right = await prisma.quizAnswer.findFirstOrThrow({
         where: {
           id: { in: view.question.options.map((o: { id: string }) => o.id) },
@@ -139,14 +140,14 @@ describe("a member playing the daily attempt", () => {
       if (i === 1) expect(body.done).toBe(true);
     }
 
-    const after = await (await startAttempt()).json();
+    const after = await (await startAttempt(competition.id)).json();
     expect(after.done).toBe(true);
     expect(after.question).toBeNull();
   });
 
   it("refuses a second answer to the same question", async () => {
-    await setup();
-    const view = await (await startAttempt()).json();
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
     const option = view.question.options[0].id;
     await answer(view.question.answerId, [option]);
 
@@ -154,21 +155,50 @@ describe("a member playing the daily attempt", () => {
   });
 
   it("refuses an empty answer", async () => {
-    await setup();
-    const view = await (await startAttempt()).json();
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
 
     expect((await answer(view.question.answerId, [])).status).toBe(400);
   });
 
   it("is closed to a member who has not paid", async () => {
-    await setup(0);
+    const { competition } = await setup(0);
 
-    expect((await startAttempt()).status).toBe(403);
+    expect((await startAttempt(competition.id)).status).toBe(403);
+  });
+
+  it("is closed to a member who was not invited to a private competition", async () => {
+    const { competition } = await setup();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { visibility: "PRIVATE" },
+    });
+
+    expect((await startAttempt(competition.id)).status).toBe(403);
+  });
+
+  it("opens once the member is on the private list", async () => {
+    const { competition, user } = await setup();
+    await prisma.competition.update({
+      where: { id: competition.id },
+      data: { visibility: "PRIVATE" },
+    });
+    await prisma.quizParticipant.create({
+      data: { competitionId: competition.id, userId: user.id },
+    });
+
+    expect((await startAttempt(competition.id)).status).toBe(200);
+  });
+
+  it("refuses an attempt with no competition named", async () => {
+    await setup();
+
+    expect((await ATTEMPT(post("/api/quiz/attempt", {}))).status).toBe(400);
   });
 
   it("counts towards the member's streak", async () => {
-    const { user } = await setup();
-    const view = await (await startAttempt()).json();
+    const { competition, user } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
 
     await answer(view.question.answerId, [view.question.options[0].id]);
 

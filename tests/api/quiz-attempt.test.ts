@@ -93,7 +93,7 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    expect(await refusal(() => startOrResumeAttempt(u.id, openAt))).toBe(NOT_STARTED);
+    expect(await refusal(() => startOrResumeAttempt(c.id, u.id, openAt))).toBe(NOT_STARTED);
   });
 
   it("refuses before the round opens", async () => {
@@ -101,9 +101,9 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    expect(await refusal(() => startOrResumeAttempt(u.id, new Date(`${DAY}T07:00:00.000Z`)))).toBe(
-      NOT_OPEN,
-    );
+    expect(
+      await refusal(() => startOrResumeAttempt(c.id, u.id, new Date(`${DAY}T07:00:00.000Z`))),
+    ).toBe(NOT_OPEN);
   });
 
   it("refuses after the cutoff", async () => {
@@ -111,9 +111,9 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    expect(await refusal(() => startOrResumeAttempt(u.id, new Date(`${DAY}T23:00:00.000Z`)))).toBe(
-      NOT_OPEN,
-    );
+    expect(
+      await refusal(() => startOrResumeAttempt(c.id, u.id, new Date(`${DAY}T23:00:00.000Z`))),
+    ).toBe(NOT_OPEN);
   });
 
   it("refuses on a round with no pool loaded", async () => {
@@ -128,7 +128,7 @@ describe("starting a daily attempt", () => {
     });
     const u = await user();
 
-    expect(await refusal(() => startOrResumeAttempt(u.id, openAt))).toBe(NO_POOL);
+    expect(await refusal(() => startOrResumeAttempt(c.id, u.id, openAt))).toBe(NO_POOL);
   });
 
   it("draws the number of questions the competition serves", async () => {
@@ -136,7 +136,7 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
 
     const rows = await prisma.quizAttemptAnswer.findMany({ where: { attemptId: attempt.id } });
     expect(rows).toHaveLength(3);
@@ -148,7 +148,7 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
 
     const row = await prisma.quizAttemptAnswer.findFirstOrThrow({
       where: { attemptId: attempt.id },
@@ -161,7 +161,7 @@ describe("starting a daily attempt", () => {
     const day = await pool(c.id, 5);
     const u = await user();
 
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
 
     const poolIds = (await prisma.quizRoundQuestion.findMany({ where: { roundId: day.id } })).map(
       (q) => q.questionId,
@@ -179,7 +179,7 @@ describe("starting a daily attempt", () => {
     const [a, b, third] = [await user(), await user(), await user()];
 
     const attempts = [];
-    for (const u of [a, b, third]) attempts.push(await startOrResumeAttempt(u.id, openAt));
+    for (const u of [a, b, third]) attempts.push(await startOrResumeAttempt(c.id, u.id, openAt));
 
     const sets = await Promise.all(
       attempts.map(async (attempt) =>
@@ -201,7 +201,7 @@ describe("starting a daily attempt", () => {
     const members = await Promise.all(Array.from({ length: 8 }, () => user()));
 
     const attempts = [];
-    for (const u of members) attempts.push(await startOrResumeAttempt(u.id, openAt));
+    for (const u of members) attempts.push(await startOrResumeAttempt(c.id, u.id, openAt));
 
     const orders = await Promise.all(
       attempts.map(async (attempt) =>
@@ -236,7 +236,7 @@ describe("starting a daily attempt", () => {
     const members = await Promise.all([user(), user(), user(), user(), user(), user()]);
 
     const attempts = [];
-    for (const u of members) attempts.push(await startOrResumeAttempt(u.id, openAt));
+    for (const u of members) attempts.push(await startOrResumeAttempt(c.id, u.id, openAt));
 
     const firstRows = await Promise.all(
       attempts.map((attempt) =>
@@ -276,7 +276,7 @@ describe("starting a daily attempt", () => {
     });
     const u = await user();
 
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
 
     const poolIds = new Set(
       (await prisma.quizRoundQuestion.findMany({ where: { roundId: day.id } })).map(
@@ -293,8 +293,8 @@ describe("starting a daily attempt", () => {
     await pool(c.id);
     const u = await user();
 
-    const first = await startOrResumeAttempt(u.id, openAt);
-    const again = await startOrResumeAttempt(u.id, new Date(`${DAY}T11:00:00.000Z`));
+    const first = await startOrResumeAttempt(c.id, u.id, openAt);
+    const again = await startOrResumeAttempt(c.id, u.id, new Date(`${DAY}T11:00:00.000Z`));
 
     expect(again.id).toBe(first.id);
     expect(await prisma.quizAttempt.count()).toBe(1);
@@ -311,7 +311,7 @@ describe("working through an attempt", () => {
     const c = await competition();
     await pool(c.id);
     const u = await user();
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
     return { c, u, attempt };
   }
 
@@ -484,7 +484,7 @@ describe("closing the round", () => {
     const c = await competition();
     await pool(c.id);
     const u = await user();
-    const attempt = await startOrResumeAttempt(u.id, openAt);
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
 
     const closed = await closeExpiredAttempts(new Date(`${DAY}T23:00:00.000Z`));
 
@@ -500,7 +500,7 @@ describe("closing the round", () => {
     const c = await competition();
     await pool(c.id);
     const u = await user();
-    await startOrResumeAttempt(u.id, openAt);
+    await startOrResumeAttempt(c.id, u.id, openAt);
 
     expect(await closeExpiredAttempts(openAt)).toBe(0);
   });
