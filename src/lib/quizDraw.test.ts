@@ -70,7 +70,7 @@ describe("spreadByDifficulty", () => {
 });
 
 describe("planRounds mixing categories", () => {
-  const shape = { roundCount: 3, poolSize: 4, categoryRounds: false };
+  const shape = { roundCount: 3, questionCount: 4, categoryRounds: false };
 
   it("fills every round of the run", () => {
     const plans = planRounds(
@@ -114,7 +114,7 @@ describe("planRounds mixing categories", () => {
 });
 
 describe("planRounds keeping a round to one category", () => {
-  const shape = { roundCount: 3, poolSize: 4, categoryRounds: true };
+  const shape = { roundCount: 3, questionCount: 4, categoryRounds: true };
 
   it("gives each round a single category", () => {
     const plans = planRounds(
@@ -161,7 +161,7 @@ describe("planRounds keeping a round to one category", () => {
         ...bank("حساب", { easy: 10, medium: 0, hard: 0 }),
         ...bank("دين", { easy: 4, medium: 0, hard: 0 }),
       ],
-      { roundCount: 1, poolSize: 4, categoryRounds: true },
+      { roundCount: 1, questionCount: 4, categoryRounds: true },
       "c1",
     );
 
@@ -174,7 +174,7 @@ describe("planRounds keeping a round to one category", () => {
         ...bank("حساب", { easy: 5, medium: 0, hard: 0 }),
         ...bank("دين", { easy: 5, medium: 0, hard: 0 }),
       ],
-      { roundCount: 2, poolSize: 4, categoryRounds: true },
+      { roundCount: 2, questionCount: 4, categoryRounds: true },
       "c1",
     );
 

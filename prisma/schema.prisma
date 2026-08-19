@@ -554,7 +554,6 @@ model Competition {
   roundPeriodMinutes Int               @default(1440)
   roundWindowMinutes Int               @default(840)
   servedCount        Int               @default(10)
-  poolSize           Int               @default(30)
   categoryRounds     Boolean           @default(false)
   bankId             String            @default("general")
   bank               QuestionBank      @relation(fields: [bankId], references: [id])

@@ -21,7 +21,6 @@ export interface Draft {
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
   servedCount: number;
-  poolSize: number;
   categoryRounds: boolean;
   boards: BoardConfig[];
   fullSeconds: number;
@@ -168,13 +167,10 @@ export default function CompetitionFields({
         </Field>
       )}
 
-      <div className="flex gap-2">
-        {number("servedCount", "c-served", "أسئلة لكل مشارك")}
-        {number("poolSize", "c-pool", "مخزون الجولة")}
-      </div>
+      {number("servedCount", "c-served", "أسئلة الجولة")}
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        مخزون الجولة هو ما تُحمّل به الجولة، وتُسحب منه أسئلة كل مشارك. كلما زاد عن أسئلة المشارك
-        اختلفت الأسئلة بين المشاركين، وإذا تساويا رأى الجميع نفس الأسئلة.
+        تُسحب أسئلة كل جولة من البنك عند انطلاق المسابقة، ويرى كل المشاركين نفس الأسئلة بترتيب
+        مختلف.
       </p>
 
       <label className="flex items-center gap-2 text-xs font-bold">

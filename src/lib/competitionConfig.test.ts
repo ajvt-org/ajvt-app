@@ -60,14 +60,6 @@ describe("validateConfig", () => {
     ).toBeNull();
   });
 
-  it("refuses a pool smaller than a round serves", () => {
-    expect(with_({ servedCount: 10, poolSize: 5 })).toContain("حجم المخزون");
-  });
-
-  it("allows a pool exactly the size of the round", () => {
-    expect(with_({ servedCount: 10, poolSize: 10 })).toBeNull();
-  });
-
   it("needs at least one ranking", () => {
     expect(with_({ boards: [] })).toContain("ترتيب واحد على الأقل");
   });

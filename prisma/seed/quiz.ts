@@ -59,7 +59,6 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     roundPeriodMinutes: 1440,
     roundWindowMinutes: 1440,
     servedCount: 3,
-    poolSize: 6,
     bankId: bank.id,
     boards: {
       create: [
@@ -100,7 +99,7 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
   for (const competition of [open, second, invited]) {
     for (let index = 0; index < shape.roundCount; index++) {
       const opensAt = new Date(start.getTime() + index * shape.roundPeriodMinutes * 60_000);
-      const pool = questions.slice(index * shape.poolSize, (index + 1) * shape.poolSize);
+      const pool = questions.slice(index * shape.servedCount, (index + 1) * shape.servedCount);
       await prisma.quizRound.create({
         data: {
           competitionId: competition.id,

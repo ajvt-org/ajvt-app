@@ -2,27 +2,26 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, put, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { NOT_A_ROUND, POOL_TOO_SMALL } from "@/lib/quizPoolServer";
+import { NOT_A_ROUND, WRONG_POOL_SIZE } from "@/lib/quizPoolServer";
 import { startOrResumeAttempt } from "@/lib/quizAttemptServer";
 
 import {
   GET as ROUNDS,
   PUT as SET_POOL,
 } from "@/app/api/admin/quiz/competitions/[id]/rounds/route";
-import { POST as FILL } from "@/app/api/admin/quiz/competitions/[id]/rounds/fill/route";
+import { POST as START } from "@/app/api/admin/quiz/competitions/[id]/start/route";
 
-const START = "2026-08-20T08:00:00.000Z";
+const START_AT = "2026-08-20T08:00:00.000Z";
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
     data: {
       name: "مسابقة",
-      startsAt: new Date(START),
+      startsAt: new Date(START_AT),
       roundCount: 3,
       roundPeriodMinutes: 1440,
       roundWindowMinutes: 840,
       servedCount: 3,
-      poolSize: 4,
       boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       ...over,
@@ -57,8 +56,8 @@ const rounds = (id: string) =>
   ROUNDS(put(`/api/admin/quiz/competitions/${id}/rounds`, {}), withId(id));
 const setPool = (id: string, index: number, questionIds: string[]) =>
   SET_POOL(put(`/api/admin/quiz/competitions/${id}/rounds`, { index, questionIds }), withId(id));
-const fill = (id: string) =>
-  FILL(post(`/api/admin/quiz/competitions/${id}/rounds/fill`, {}), withId(id));
+const start = (id: string) =>
+  START(post(`/api/admin/quiz/competitions/${id}/start`, {}), withId(id));
 
 describe("loading the questions for a round", () => {
   beforeEach(async () => {
@@ -73,11 +72,22 @@ describe("loading the questions for a round", () => {
 
     expect(body.rounds.map((r: { index: number }) => r.index)).toEqual([0, 1, 2]);
     expect(body.rounds.every((r: { loaded: number }) => r.loaded === 0)).toBe(true);
+    expect(body.plannable).toBe(0);
+  });
+
+  it("says how many rounds the bank can cover", async () => {
+    const c = await competition();
+    await questions(7);
+
+    const body = await (await rounds(c.id)).json();
+
+    expect(body.plannable).toBe(2);
+    expect(body.bankSize).toBe(7);
   });
 
   it("stores the questions chosen for a round", async () => {
     const c = await competition();
-    const qs = await questions(4);
+    const qs = await questions(3);
 
     const res = await setPool(
       c.id,
@@ -85,31 +95,31 @@ describe("loading the questions for a round", () => {
       qs.map((q) => q.id),
     );
 
-    expect((await res.json()).loaded).toBe(4);
+    expect((await res.json()).loaded).toBe(3);
     const body = await (await rounds(c.id)).json();
-    expect(body.rounds[0].loaded).toBe(4);
+    expect(body.rounds[0].loaded).toBe(3);
   });
 
   it("replaces the round's questions rather than adding to them", async () => {
     const c = await competition();
-    const qs = await questions(8);
+    const qs = await questions(6);
     await setPool(
       c.id,
       0,
-      qs.slice(0, 4).map((q) => q.id),
+      qs.slice(0, 3).map((q) => q.id),
     );
 
     await setPool(
       c.id,
       0,
-      qs.slice(4).map((q) => q.id),
+      qs.slice(3).map((q) => q.id),
     );
 
     const round = await prisma.quizRound.findFirstOrThrow({ include: { questions: true } });
-    expect(round.questions).toHaveLength(4);
+    expect(round.questions).toHaveLength(3);
     expect(round.questions.map((q) => q.questionId).sort()).toEqual(
       qs
-        .slice(4)
+        .slice(3)
         .map((q) => q.id)
         .sort(),
     );
@@ -118,7 +128,7 @@ describe("loading the questions for a round", () => {
   it("keeps each competition's rounds apart", async () => {
     const one = await competition();
     const other = await competition({ name: "مسابقة أخرى" });
-    const qs = await questions(4);
+    const qs = await questions(3);
 
     await setPool(
       one.id,
@@ -126,13 +136,13 @@ describe("loading the questions for a round", () => {
       qs.map((q) => q.id),
     );
 
-    expect((await (await rounds(one.id)).json()).rounds[0].loaded).toBe(4);
+    expect((await (await rounds(one.id)).json()).rounds[0].loaded).toBe(3);
     expect((await (await rounds(other.id)).json()).rounds[0].loaded).toBe(0);
   });
 
   it("refuses a round outside the run", async () => {
     const c = await competition();
-    const qs = await questions(4);
+    const qs = await questions(3);
 
     const res = await setPool(
       c.id,
@@ -144,23 +154,29 @@ describe("loading the questions for a round", () => {
     expect((await res.json()).error).toBe(NOT_A_ROUND);
   });
 
-  it("refuses a pool smaller than what each member is served", async () => {
+  it("refuses a set that is not exactly what a round serves", async () => {
     const c = await competition();
-    const qs = await questions(2);
+    const qs = await questions(4);
 
-    const res = await setPool(
+    const small = await setPool(
+      c.id,
+      0,
+      qs.slice(0, 2).map((q) => q.id),
+    );
+    const big = await setPool(
       c.id,
       0,
       qs.map((q) => q.id),
     );
 
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(POOL_TOO_SMALL);
+    expect(small.status).toBe(400);
+    expect((await small.json()).error).toBe(WRONG_POOL_SIZE);
+    expect(big.status).toBe(400);
   });
 
   it("lets a round be emptied", async () => {
     const c = await competition();
-    const qs = await questions(4);
+    const qs = await questions(3);
     await setPool(
       c.id,
       0,
@@ -174,7 +190,7 @@ describe("loading the questions for a round", () => {
 
   it("ignores a question that is switched off", async () => {
     const c = await competition();
-    const qs = await questions(5);
+    const qs = await questions(4);
     await prisma.quizQuestion.update({ where: { id: qs[0].id }, data: { active: false } });
 
     const res = await setPool(
@@ -184,13 +200,13 @@ describe("loading the questions for a round", () => {
     );
 
     const body = await res.json();
-    expect(body.loaded).toBe(4);
+    expect(body.loaded).toBe(3);
     expect(body.skipped).toBe(1);
   });
 
   it("refuses to change a round people have already played", async () => {
     const c = await competition({ startedAt: new Date("2026-08-20T00:00:00.000Z") });
-    const qs = await questions(4);
+    const qs = await questions(3);
     await setPool(
       c.id,
       0,
@@ -202,14 +218,14 @@ describe("loading the questions for a round", () => {
     const res = await setPool(
       c.id,
       0,
-      qs.slice(0, 3).map((q) => q.id),
+      qs.map((q) => q.id),
     );
 
     expect(res.status).toBe(409);
   });
 });
 
-describe("filling every round from the bank at once", () => {
+describe("drawing the rounds when the competition starts", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
@@ -219,21 +235,25 @@ describe("filling every round from the bank at once", () => {
     const c = await competition();
     await questions(12);
 
-    const res = await fill(c.id);
+    const res = await start(c.id);
 
-    expect((await res.json()).filled).toBe(3);
+    expect(res.status).toBe(200);
     const rows = await prisma.quizRound.findMany({ include: { questions: true } });
     expect(rows).toHaveLength(3);
-    expect(rows.every((r) => r.questions.length === 4)).toBe(true);
+    expect(rows.every((r) => r.questions.length === 3)).toBe(true);
+    expect(
+      (await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).startedAt,
+    ).not.toBeNull();
   });
 
   it("gives each round a different set", async () => {
     const c = await competition();
     await questions(12);
-    await fill(c.id);
+    await start(c.id);
 
     const rows = await prisma.quizRoundQuestion.findMany();
-    expect(new Set(rows.map((r) => r.questionId)).size).toBe(12);
+    expect(rows).toHaveLength(9);
+    expect(new Set(rows.map((r) => r.questionId)).size).toBe(9);
   });
 
   it("lets the same question serve two competitions", async () => {
@@ -241,10 +261,10 @@ describe("filling every round from the bank at once", () => {
     const other = await competition({ name: "مسابقة أخرى" });
     await questions(12);
 
-    await fill(one.id);
-    await fill(other.id);
+    await start(one.id);
+    await start(other.id);
 
-    expect(await prisma.quizRoundQuestion.count()).toBe(24);
+    expect(await prisma.quizRoundQuestion.count()).toBe(18);
   });
 
   it("keeps each round to one category when that is the rule", async () => {
@@ -254,7 +274,7 @@ describe("filling every round from the bank at once", () => {
     await questions(6, "دين", 5);
     await questions(6, "دين", 19);
 
-    await fill(c.id);
+    await start(c.id);
 
     const rows = await prisma.quizRound.findMany({
       include: { questions: { include: { question: true } } },
@@ -272,7 +292,7 @@ describe("filling every round from the bank at once", () => {
     await questions(4, "حساب", 13);
     await questions(4, "حساب", 19);
 
-    await fill(c.id);
+    await start(c.id);
 
     const round = await prisma.quizRound.findFirstOrThrow({
       include: { questions: { include: { question: true } } },
@@ -286,13 +306,13 @@ describe("filling every round from the bank at once", () => {
     await questions(8, "حساب", 5);
     await questions(8, "دين", 13);
 
-    await fill(c.id);
+    await start(c.id);
 
     const rows = await prisma.quizRoundQuestion.findMany();
     expect(new Set(rows.map((r) => r.questionId)).size).toBe(rows.length);
   });
 
-  it("fills only from the bank the quiz names", async () => {
+  it("draws only from the bank the quiz names", async () => {
     const bank = await prisma.questionBank.create({ data: { name: "بنك البدريين" } });
     const c = await competition({ bankId: bank.id });
     await questions(12, "عام");
@@ -302,10 +322,10 @@ describe("filling every round from the bank at once", () => {
       data: { bankId: bank.id },
     });
 
-    await fill(c.id);
+    await start(c.id);
 
     const rows = await prisma.quizRoundQuestion.findMany({ include: { question: true } });
-    expect(rows).toHaveLength(12);
+    expect(rows).toHaveLength(9);
     expect(rows.every((r) => r.question.bankId === bank.id)).toBe(true);
   });
 
@@ -314,20 +334,23 @@ describe("filling every round from the bank at once", () => {
     const c = await competition({ bankId: bank.id });
     await questions(40, "عام");
 
-    const res = await fill(c.id);
+    const res = await start(c.id);
 
     expect(res.status).toBe(400);
     expect(await prisma.quizRound.count()).toBe(0);
+    expect(
+      (await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).startedAt,
+    ).toBeNull();
   });
 
   it("refuses when no category is deep enough for a round", async () => {
     const c = await competition({ categoryRounds: true });
-    await questions(3, "حساب");
-    await questions(3, "دين");
-    await questions(3, "تاريخ");
-    await questions(3, "علوم");
+    await questions(2, "حساب");
+    await questions(2, "دين");
+    await questions(2, "تاريخ");
+    await questions(2, "علوم");
 
-    const res = await fill(c.id);
+    const res = await start(c.id);
 
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("التصنيفات لا تكفي");
@@ -339,7 +362,7 @@ describe("filling every round from the bank at once", () => {
     await questions(6, "حساب");
     await questions(6, "دين");
 
-    await fill(c.id);
+    await start(c.id);
 
     const rows = await prisma.quizRound.findMany();
     expect(rows.every((r) => r.category === null)).toBe(true);
@@ -349,18 +372,18 @@ describe("filling every round from the bank at once", () => {
     const c = await competition();
     await questions(7);
 
-    const res = await fill(c.id);
+    const res = await start(c.id);
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toContain("12");
+    expect((await res.json()).error).toContain("9");
     expect(await prisma.quizRound.count()).toBe(0);
   });
 
-  it("refuses once the competition has started", async () => {
+  it("refuses to start twice", async () => {
     const c = await competition({ startedAt: new Date() });
     await questions(12);
 
-    expect((await fill(c.id)).status).toBe(409);
+    expect((await start(c.id)).status).toBe(409);
   });
 });
 

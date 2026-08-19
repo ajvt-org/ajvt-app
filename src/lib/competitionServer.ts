@@ -102,7 +102,6 @@ function asConfig(row: CompetitionRow): CompetitionConfig {
     roundPeriodMinutes: row.roundPeriodMinutes,
     roundWindowMinutes: row.roundWindowMinutes,
     servedCount: row.servedCount,
-    poolSize: row.poolSize,
     boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
       title: b.title,
       blockRounds: b.blockRounds,
@@ -123,7 +122,20 @@ function asRow(config: CompetitionConfig) {
   return { ...rest, startsAt: new Date(config.startsAt) };
 }
 
-export async function saveCompetition(input: Partial<CompetitionConfig>, id?: string) {
+const CONFIG_KEYS = [
+  "name",
+  "startsAt",
+  ...Object.keys(DEFAULT_CONFIG),
+] as (keyof CompetitionConfig)[];
+
+function pickConfig(input: Partial<CompetitionConfig>): Partial<CompetitionConfig> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([key]) => CONFIG_KEYS.includes(key as keyof CompetitionConfig)),
+  ) as Partial<CompetitionConfig>;
+}
+
+export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: string) {
+  const input = pickConfig(raw);
   const existing = id
     ? await prisma.competition.findUnique({
         where: { id },

@@ -1,32 +1,58 @@
 import { prisma } from "./prisma";
 import { roundWindows } from "./quizRound";
 import { requireCompetition, shapeOf, ALREADY_STARTED } from "./competitionServer";
-import { planRounds } from "./quizDraw";
+import { planRounds, type RoundPlan } from "./quizDraw";
 import { ConflictError, ValidationError } from "./errors";
 
 export const NOT_A_ROUND = "هذه الجولة ليست من جولات المسابقة";
-export const POOL_TOO_SMALL = "عدد الأسئلة أقل من العدد المطلوب لكل مشارك";
+export const WRONG_POOL_SIZE = "عدد الأسئلة يجب أن يساوي عدد أسئلة الجولة";
+
+async function bankPlans(competition: {
+  id: string;
+  bankId: string;
+  roundCount: number;
+  servedCount: number;
+  categoryRounds: boolean;
+}): Promise<{ bankSize: number; plans: RoundPlan[] }> {
+  const bank = await prisma.quizQuestion.findMany({
+    where: { active: true, bankId: competition.bankId },
+    select: { id: true, category: true, points: true },
+    orderBy: { createdAt: "asc" },
+  });
+  const plans = planRounds(
+    bank,
+    {
+      roundCount: competition.roundCount,
+      questionCount: competition.servedCount,
+      categoryRounds: competition.categoryRounds,
+    },
+    competition.id,
+  );
+  return { bankSize: bank.length, plans };
+}
 
 export async function listRounds(competitionId: string) {
   const competition = await requireCompetition(competitionId);
   const windows = roundWindows(shapeOf(competition));
-  const [rounds, bankSize] = await Promise.all([
+  const [rounds, { bankSize, plans }] = await Promise.all([
     prisma.quizRound.findMany({
       where: { competitionId: competition.id },
       select: { index: true, category: true, _count: { select: { questions: true } } },
     }),
-    prisma.quizQuestion.count({ where: { active: true, bankId: competition.bankId } }),
+    bankPlans(competition),
   ]);
   const known = new Map(rounds.map((r) => [r.index, r]));
+  const planned = new Map(plans.map((p) => [p.index, p]));
 
   return {
     competition,
     bankSize,
+    plannable: plans.length,
     rounds: windows.map((w) => ({
       index: w.index,
       opensAt: w.opensAt,
       closesAt: w.closesAt,
-      category: known.get(w.index)?.category ?? null,
+      category: known.get(w.index)?.category ?? planned.get(w.index)?.category ?? null,
       loaded: known.get(w.index)?._count.questions ?? 0,
     })),
   };
@@ -43,15 +69,14 @@ export async function setRoundPool(
   if (!window) throw new ValidationError(NOT_A_ROUND);
 
   const unique = [...new Set(questionIds)];
-  if (unique.length > 0 && unique.length < competition.servedCount) {
-    throw new ValidationError(POOL_TOO_SMALL);
-  }
-
   const known = await prisma.quizQuestion.findMany({
     where: { id: { in: unique }, active: true },
     select: { id: true },
   });
   const valid = known.map((q) => q.id);
+  if (unique.length > 0 && valid.length !== competition.servedCount) {
+    throw new ValidationError(WRONG_POOL_SIZE);
+  }
 
   const existing = await prisma.quizRound.findUnique({
     where: { competitionId_index: { competitionId: competition.id, index } },
@@ -87,28 +112,15 @@ export async function fillRoundsFromBank(competitionId: string) {
   const competition = await requireCompetition(competitionId);
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
 
-  const bank = await prisma.quizQuestion.findMany({
-    where: { active: true, bankId: competition.bankId },
-    select: { id: true, category: true, points: true },
-    orderBy: { createdAt: "asc" },
-  });
   const windows = roundWindows(shapeOf(competition));
-  const plans = planRounds(
-    bank,
-    {
-      roundCount: windows.length,
-      poolSize: competition.poolSize,
-      categoryRounds: competition.categoryRounds,
-    },
-    competition.id,
-  );
+  const { bankSize, plans } = await bankPlans(competition);
 
   if (plans.length < windows.length) {
-    const needed = windows.length * competition.poolSize;
+    const needed = windows.length * competition.servedCount;
     throw new ValidationError(
       competition.categoryRounds
-        ? `التصنيفات لا تكفي، كل جولة تحتاج ${competition.poolSize} سؤالاً من تصنيف واحد، وأمكن تجهيز ${plans.length} جولة من ${windows.length}`
-        : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bank.length}`,
+        ? `التصنيفات لا تكفي، كل جولة تحتاج ${competition.servedCount} سؤالاً من تصنيف واحد، وأمكن تجهيز ${plans.length} جولة من ${windows.length}`
+        : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bankSize}`,
     );
   }
 
