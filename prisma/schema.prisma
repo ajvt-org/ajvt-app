@@ -675,6 +675,7 @@ model Payment {
   status     ReviewStatus   @default(PENDING)
   anonymous  Boolean        @default(false)
   donorName  String?
+  donorPhoto String? // donor with no linked Member — shown on the honour board
   memberId   String?
   member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
   activityId String?

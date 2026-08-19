@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
+import { splitPayment } from "@/lib/membershipPayment";
 
 export const SUPPORTERS_PAGE_SIZE = 20;
 
@@ -24,12 +25,16 @@ interface LeaderboardEntry {
   anonymous: boolean;
 }
 
+// The board counts support, not membership: a membership payment contributes only
+// what it carried past the fee in force when it was taken.
 export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[] }> {
-  const donations = await prisma.donation.findMany({
+  const payments = await prisma.payment.findMany({
     where: { status: "ACTIVE" },
     select: {
       id: true,
+      purpose: true,
       amount: true,
+      feeApplied: true,
       donorName: true,
       donorPhoto: true,
       memberId: true,
@@ -59,25 +64,27 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     byKey.set(key, entry);
   }
 
-  for (const d of donations) {
-    const amount = d.amount ?? 0;
-    const named = d.donorName?.trim();
+  for (const p of payments) {
+    const amount =
+      p.purpose === "MEMBERSHIP" ? splitPayment(p.amount, p.feeApplied ?? 0).surplus : p.amount;
+    if (p.purpose === "MEMBERSHIP" && amount === 0) continue;
+    const named = p.donorName?.trim();
 
-    if (d.memberId && named) {
-      const photoUrl = d.member?.photo ? `/api/files/member/${d.member.photo}` : null;
-      add(`m:${d.memberId}`, { name: named, photoUrl, anonymous: false }, amount, d.memberId);
-    } else if (!d.memberId && named) {
-      const photoUrl = d.donorPhoto ? `/api/files/donation/${d.donorPhoto}` : null;
+    if (p.memberId && named) {
+      const photoUrl = p.member?.photo ? `/api/files/member/${p.member.photo}` : null;
+      add(`m:${p.memberId}`, { name: named, photoUrl, anonymous: false }, amount, p.memberId);
+    } else if (!p.memberId && named) {
+      const photoUrl = p.donorPhoto ? `/api/files/donation/${p.donorPhoto}` : null;
       add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount);
-    } else if (d.memberId) {
+    } else if (p.memberId) {
       add(
-        `a:${d.memberId}`,
+        `a:${p.memberId}`,
         { name: money.anonymousDonor, photoUrl: null, anonymous: true },
         amount,
-        d.memberId,
+        p.memberId,
       );
     } else {
-      add(`a:${d.id}`, { name: money.anonymousDonor, photoUrl: null, anonymous: true }, amount);
+      add(`a:${p.id}`, { name: money.anonymousDonor, photoUrl: null, anonymous: true }, amount);
     }
   }
 

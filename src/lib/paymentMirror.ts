@@ -70,6 +70,7 @@ export interface DonationMirror {
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
+  donorPhoto: string | null;
   memberId: string | null;
   activityId: string | null;
 }
@@ -93,6 +94,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     status: d.status,
     anonymous: d.donorName === null,
     donorName: d.donorName,
+    donorPhoto: d.donorPhoto,
     memberId: d.memberId,
     activityId: d.activityId,
   };

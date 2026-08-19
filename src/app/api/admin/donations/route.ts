@@ -40,6 +40,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     proof: donation.proof,
     status: donation.status,
     donorName: donation.donorName,
+    donorPhoto: donation.donorPhoto,
     memberId: donation.memberId,
     activityId: donation.activityId,
   });
