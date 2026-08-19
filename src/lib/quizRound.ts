@@ -39,6 +39,15 @@ export function currentRound(shape: RoundShape, now: Date): RoundWindow | null {
   return now < window.closesAt ? window : null;
 }
 
+// The round a member is "in" even when the window is shut, so a ranking still
+// knows which block to show between rounds.
+export function roundIndexAt(shape: RoundShape, now: Date): number {
+  const elapsed = now.getTime() - shape.startsAt.getTime();
+  if (elapsed < 0) return 0;
+  const index = Math.floor(elapsed / (shape.roundPeriodMinutes * MINUTE));
+  return Math.min(Math.max(0, shape.roundCount - 1), index);
+}
+
 export function roundState(shape: RoundShape, now: Date): RoundState {
   if (now < shape.startsAt) return "before";
   const last = windowAt(shape, shape.roundCount - 1);

@@ -1,12 +1,13 @@
 import type { Competition } from "@prisma/client";
 import { prisma } from "./prisma";
 import {
+  DEFAULT_BOARDS,
   DEFAULT_CONFIG,
   validateConfig,
   type CompetitionConfig,
-  type SpeedBand,
 } from "./competitionConfig";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
+import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
@@ -15,13 +16,17 @@ export const NO_COMPETITION = "لا توجد مسابقة";
 export async function listCompetitions() {
   return prisma.competition.findMany({
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { participants: true, rounds: true } } },
+    include: {
+      _count: { select: { participants: true, rounds: true } },
+      boards: { orderBy: { order: "asc" } },
+    },
   });
 }
 
 export async function getCompetition(id?: string) {
-  if (id) return prisma.competition.findUnique({ where: { id } });
-  return prisma.competition.findFirst({ orderBy: { createdAt: "desc" } });
+  const boards = { boards: { orderBy: { order: "asc" as const } } };
+  if (id) return prisma.competition.findUnique({ where: { id }, include: boards });
+  return prisma.competition.findFirst({ orderBy: { createdAt: "desc" }, include: boards });
 }
 
 export async function requireCompetition(id?: string) {
@@ -37,6 +42,25 @@ export async function runningCompetitionsFor(userId: string) {
     include: { participants: { where: { userId }, select: { id: true }, take: 1 } },
   });
   return all.filter((c) => c.visibility === "PUBLIC" || c.participants.length > 0);
+}
+
+export async function myCompetitions(userId: string) {
+  const all = await prisma.competition.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      participants: { where: { userId }, select: { id: true }, take: 1 },
+      rounds: {
+        select: { attempts: { where: { userId }, select: { score: true } } },
+      },
+    },
+  });
+
+  return all
+    .filter((c) => (c.visibility === "PUBLIC" ? c.startedAt !== null : c.participants.length > 0))
+    .map((c) => ({
+      competition: c,
+      mine: c.rounds.flatMap((r) => r.attempts),
+    }));
 }
 
 export async function canPlay(competitionId: string, userId: string): Promise<boolean> {
@@ -65,7 +89,11 @@ export async function setParticipants(competitionId: string, userIds: string[]) 
   return known.length;
 }
 
-function asConfig(row: Competition): CompetitionConfig {
+type CompetitionRow = Competition & {
+  boards?: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
+};
+
+function asConfig(row: CompetitionRow): CompetitionConfig {
   return {
     name: row.name,
     startsAt: row.startsAt.toISOString(),
@@ -75,23 +103,33 @@ function asConfig(row: Competition): CompetitionConfig {
     roundWindowMinutes: row.roundWindowMinutes,
     servedCount: row.servedCount,
     poolSize: row.poolSize,
-    groupSize: row.groupSize,
-    countingRounds: row.countingRounds,
+    boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
+      title: b.title,
+      blockRounds: b.blockRounds,
+      counting: b.counting,
+      wholeRun: b.wholeRun,
+    })),
     categoryRounds: row.categoryRounds,
-    speedBands: row.speedBands as unknown as SpeedBand[],
+    bankId: row.bankId,
+    fullSeconds: row.fullSeconds,
+    maxSeconds: row.maxSeconds,
+    floorPercent: row.floorPercent,
   };
 }
 
 function asRow(config: CompetitionConfig) {
-  return {
-    ...config,
-    startsAt: new Date(config.startsAt),
-    speedBands: config.speedBands as unknown as object,
-  };
+  const { boards, ...rest } = config;
+  void boards;
+  return { ...rest, startsAt: new Date(config.startsAt) };
 }
 
 export async function saveCompetition(input: Partial<CompetitionConfig>, id?: string) {
-  const existing = id ? await getCompetition(id) : null;
+  const existing = id
+    ? await prisma.competition.findUnique({
+        where: { id },
+        include: { boards: { orderBy: { order: "asc" } } },
+      })
+    : null;
   if (existing?.startedAt) throw new ConflictError(ALREADY_STARTED);
 
   const merged: CompetitionConfig = {
@@ -104,10 +142,25 @@ export async function saveCompetition(input: Partial<CompetitionConfig>, id?: st
 
   const problem = validateConfig(merged);
   if (problem) throw new ValidationError(problem);
+  merged.bankId = (await requireBank(merged.bankId)).id;
 
   const data = asRow(merged);
-  if (existing) return prisma.competition.update({ where: { id: existing.id }, data });
-  return prisma.competition.create({ data });
+  const boards = merged.boards.map((board, order) => ({
+    title: board.title.trim(),
+    blockRounds: board.blockRounds,
+    counting: board.counting,
+    wholeRun: board.wholeRun,
+    order,
+  }));
+
+  if (existing) {
+    await prisma.quizBoard.deleteMany({ where: { competitionId: existing.id } });
+    return prisma.competition.update({
+      where: { id: existing.id },
+      data: { ...data, boards: { create: boards } },
+    });
+  }
+  return prisma.competition.create({ data: { ...data, boards: { create: boards } } });
 }
 
 export async function startCompetition(id: string, now = new Date()) {

@@ -38,32 +38,45 @@ export function bestRounds(rounds: RoundScore[], allowance: number): RoundScore[
   return [...rounds].sort((a, b) => b.score - a.score).slice(0, Math.max(0, allowance));
 }
 
-interface GroupTotal {
+interface BlockTotal {
   total: number;
   settledAt: Date | null;
 }
 
+export interface BoardShape {
+  blockRounds: number;
+  counting: number;
+  wholeRun: boolean;
+}
+
+function blockOf(index: number, blockRounds: number): number {
+  return groupOf(index, Math.max(1, blockRounds));
+}
+
 function totalsByUser(
   scores: RoundScore[],
-  groupSize: number,
-  allowance: number,
-  group: number | null,
-): Map<string, GroupTotal> {
-  const byUserGroup = new Map<string, Map<number, RoundScore[]>>();
+  board: BoardShape,
+  at: number,
+): Map<string, BlockTotal> {
+  const size = Math.max(1, board.blockRounds);
+  const only = board.wholeRun ? null : blockOf(at, size);
+  const allowance = board.counting > 0 ? board.counting : size;
+
+  const byUserBlock = new Map<string, Map<number, RoundScore[]>>();
   for (const score of scores) {
-    const at = groupOf(score.index, groupSize);
-    if (at < 0) continue;
-    if (group !== null && at !== group) continue;
-    const groups = byUserGroup.get(score.userId) ?? new Map<number, RoundScore[]>();
-    groups.set(at, [...(groups.get(at) ?? []), score]);
-    byUserGroup.set(score.userId, groups);
+    const block = blockOf(score.index, size);
+    if (block < 0) continue;
+    if (only !== null && block !== only) continue;
+    const blocks = byUserBlock.get(score.userId) ?? new Map<number, RoundScore[]>();
+    blocks.set(block, [...(blocks.get(block) ?? []), score]);
+    byUserBlock.set(score.userId, blocks);
   }
 
-  const out = new Map<string, GroupTotal>();
-  for (const [userId, byGroup] of byUserGroup) {
+  const out = new Map<string, BlockTotal>();
+  for (const [userId, blocks] of byUserBlock) {
     let total = 0;
     let settledAt: Date | null = null;
-    for (const rounds of byGroup.values()) {
+    for (const rounds of blocks.values()) {
       for (const round of bestRounds(rounds, allowance)) {
         total += round.score;
         if (round.finishedAt && (!settledAt || round.finishedAt > settledAt)) {
@@ -76,20 +89,8 @@ function totalsByUser(
   return out;
 }
 
-export function groupRanking(
-  scores: RoundScore[],
-  groupSize: number,
-  allowance: number,
-  group: number,
-): Ranked[] {
-  const totals = totalsByUser(scores, groupSize, allowance, group);
-  return ranked(
-    [...totals].map(([userId, t]) => ({ userId, total: t.total, settledAt: t.settledAt })),
-  );
-}
-
-export function finalRanking(scores: RoundScore[], groupSize: number, allowance: number): Ranked[] {
-  const totals = totalsByUser(scores, groupSize, allowance, null);
+export function boardRanking(scores: RoundScore[], board: BoardShape, at: number): Ranked[] {
+  const totals = totalsByUser(scores, board, at);
   return ranked(
     [...totals].map(([userId, t]) => ({ userId, total: t.total, settledAt: t.settledAt })),
   );

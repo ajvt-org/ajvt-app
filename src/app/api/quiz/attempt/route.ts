@@ -30,6 +30,7 @@ export const POST = withRoute("POST /api/quiz/attempt", async (req: NextRequest)
     done: view.done,
     total: view.total,
     position: view.position,
+    curve: view.curve,
     question: view.question,
   });
 });

@@ -31,10 +31,11 @@ const saved = {
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
-  speedBands: [
-    { maxSeconds: 10, percent: 100 },
-    { maxSeconds: null, percent: 50 },
-  ],
+  boards: [{ title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
+  bankId: "general",
+  fullSeconds: 10,
+  maxSeconds: 30,
+  floorPercent: 50,
   startedAt: null as string | null,
 };
 
@@ -53,6 +54,7 @@ describe("CompetitionPanel", () => {
   it("starts empty for a competition that does not exist yet", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId={null}
         onSaved={() => {}}
         onChanged={() => {}}
@@ -70,6 +72,7 @@ describe("CompetitionPanel", () => {
     const onSaved = vi.fn();
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId={null}
         onSaved={onSaved}
         onChanged={() => {}}
@@ -88,6 +91,7 @@ describe("CompetitionPanel", () => {
   it("keeps a competition private when that is what was chosen", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId={null}
         onSaved={() => {}}
         onChanged={() => {}}
@@ -106,6 +110,7 @@ describe("CompetitionPanel", () => {
   it("saves the one category a round rule when it is ticked", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId={null}
         onSaved={() => {}}
         onChanged={() => {}}
@@ -124,6 +129,7 @@ describe("CompetitionPanel", () => {
   it("leaves the one category a round rule off by default", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId={null}
         onSaved={() => {}}
         onChanged={() => {}}
@@ -136,9 +142,32 @@ describe("CompetitionPanel", () => {
     );
   });
 
+  it("names the bank the quiz draws from", async () => {
+    render(
+      <CompetitionPanel
+        banks={[
+          { id: "general", name: "البنك العام" },
+          { id: "b2", name: "بنك البدريين" },
+        ]}
+        competitionId={null}
+        onSaved={() => {}}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText("بنك الأسئلة"), "b2");
+    await userEvent.type(screen.getByLabelText("اسم المسابقة"), "مسابقة");
+    await userEvent.click(screen.getByRole("button", { name: /حفظ الإعدادات/ }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(post.mock.calls[0][1]).toMatchObject({ bankId: "b2" });
+  });
+
   it("loads what was already saved", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -160,6 +189,7 @@ describe("CompetitionPanel", () => {
   it("saves what was typed", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -181,6 +211,7 @@ describe("CompetitionPanel", () => {
     put.mockRejectedValue(new Error("وقت الإغلاق يجب أن يكون بعد وقت الفتح"));
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -199,6 +230,7 @@ describe("CompetitionPanel", () => {
   it("asks before launching, because it cannot be undone", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -216,6 +248,7 @@ describe("CompetitionPanel", () => {
   it("launches once confirmed", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -236,6 +269,7 @@ describe("CompetitionPanel", () => {
     get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -253,6 +287,7 @@ describe("CompetitionPanel", () => {
   it("clears the scores only after confirming", async () => {
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -274,6 +309,7 @@ describe("CompetitionPanel", () => {
     const onDeleted = vi.fn();
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}
@@ -294,6 +330,7 @@ describe("CompetitionPanel", () => {
     get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
     render(
       <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
         competitionId="c1"
         onSaved={() => {}}
         onChanged={() => {}}

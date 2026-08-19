@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
 import { getStandings } from "@/lib/quizRankingServer";
@@ -32,9 +32,8 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 1440,
       servedCount: 2,
       poolSize: 3,
-      groupSize: 7,
-      countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
       ...over,
     },
@@ -91,7 +90,7 @@ describe("standings a member can see", () => {
     const body = await (await standings()).json();
 
     expect(body.running).toBe(false);
-    expect(body.today).toEqual([]);
+    expect(body.boards).toEqual([]);
   });
 
   it("ranks the open round by score", async () => {
@@ -104,8 +103,9 @@ describe("standings a member can see", () => {
     const body = await getStandings(c.id, a.id, 10, atNoon(today()));
 
     expect(body.running).toBe(true);
-    expect(body.today.map((r) => r.name)).toEqual(["محمد", "أحمد"]);
-    expect(body.today[0].rank).toBe(1);
+    expect(body.boards[0].title).toBe("ترتيب الجولة");
+    expect(body.boards[0].rows.map((r) => r.name)).toEqual(["محمد", "أحمد"]);
+    expect(body.boards[0].rows[0].rank).toBe(1);
   });
 
   it("tells the member their own place even outside the top", async () => {
@@ -117,8 +117,8 @@ describe("standings a member can see", () => {
     }
     const body = await getStandings(c.id, users[2].id, 10, atNoon(today()));
 
-    expect(body.mine?.today?.rank).toBe(3);
-    expect(body.mine?.today?.total).toBe(10);
+    expect(body.boards[0].mine?.rank).toBe(3);
+    expect(body.boards[0].mine?.total).toBe(10);
   });
 
   it("drops the worst round from the group once the allowance is passed", async () => {
@@ -128,7 +128,7 @@ describe("standings a member can see", () => {
     for (let i = 0; i < 7; i++) await attempt(c.id, u.id, roundIndex(i), i === 0 ? 1 : 10);
     const body = await getStandings(c.id, u.id, 10, atNoon(roundIndex(1)));
 
-    expect(body.thisWeek[0].total).toBe(60);
+    expect(body.boards[1].rows[0].total).toBe(60);
   });
 
   it("counts nothing for the rounds a member joined too late for", async () => {
@@ -140,9 +140,9 @@ describe("standings a member can see", () => {
     await attempt(c.id, late.id, roundIndex(2), 10);
     const body = await getStandings(c.id, late.id, 10, atNoon(roundIndex(2)));
 
-    expect(body.overall[0].name).toBe("مبكر");
-    expect(body.overall[0].total).toBe(30);
-    expect(body.mine?.overall?.total).toBe(10);
+    expect(body.boards[2].rows[0].name).toBe("مبكر");
+    expect(body.boards[2].rows[0].total).toBe(30);
+    expect(body.boards[2].mine?.total).toBe(10);
   });
 
   it("skips a private competition the member was not invited to", async () => {
@@ -190,7 +190,7 @@ describe("standings a member can see", () => {
 
     const body = await (await standings()).json();
 
-    expect(body.mine.today).toBeNull();
+    expect(body.boards[0].mine).toBeNull();
   });
 });
 
@@ -211,12 +211,14 @@ describe("winners an admin can read", () => {
 
     const body = await (await winners(c.id)).json();
 
-    expect(body.rounds).toHaveLength(2);
-    expect(body.rounds[0].winner.name).toBe("أحمد");
-    expect(body.rounds[1].winner.name).toBe("محمد");
+    const daily = body.boards[0];
+    expect(daily.title).toBe("ترتيب الجولة");
+    expect(daily.winners).toHaveLength(2);
+    expect(daily.winners[0].winner.name).toBe("أحمد");
+    expect(daily.winners[1].winner.name).toBe("محمد");
   });
 
-  it("names a group winner", async () => {
+  it("names a block winner", async () => {
     const c = await competition();
     const [a] = await createUsers(1);
     await member(a.id, "أحمد");
@@ -224,8 +226,9 @@ describe("winners an admin can read", () => {
 
     const body = await (await winners(c.id)).json();
 
-    expect(body.groups[0].group).toBe(0);
-    expect(body.groups[0].winner.name).toBe("أحمد");
+    const weekly = body.boards[1];
+    expect(weekly.winners[0].block).toBe(0);
+    expect(weekly.winners[0].winner.name).toBe("أحمد");
   });
 
   it("holds back the overall winner while the run is still going", async () => {
@@ -234,7 +237,9 @@ describe("winners an admin can read", () => {
     await member(a.id, "أحمد");
     await attempt(c.id, a.id, roundIndex(0), 50);
 
-    expect((await (await winners(c.id)).json()).overall).toBeNull();
+    const body = await (await winners(c.id)).json();
+    expect(body.boards[2].wholeRun).toBe(true);
+    expect(body.boards[2].winners[0].winner).toBeNull();
   });
 
   it("names the overall winner once the run is over", async () => {
@@ -256,7 +261,7 @@ describe("winners an admin can read", () => {
 
     const body = await (await winners(c.id)).json();
 
-    expect(body.overall.name).toBe("أحمد");
+    expect(body.boards[2].winners[0].winner.name).toBe("أحمد");
   });
 
   it("is closed to an admin without the quiz section", async () => {

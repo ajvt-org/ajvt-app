@@ -1,42 +1,57 @@
 "use client";
 
-import type { SpeedBand } from "@/lib/competitionConfig";
+import NumericRanges from "@/components/NumericRanges";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 
 export default function ScoreFormula({
-  bands,
-  groupSize,
-  countingRounds,
+  curve,
+  boards,
 }: {
-  bands: SpeedBand[];
-  groupSize: number;
-  countingRounds: number;
+  curve: ScoreCurve;
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
 }) {
+  const example = Math.round((20 * (100 + curve.floorPercent)) / 200);
+
   return (
     <div className="card p-4 space-y-2">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         كيف تُحتسب النقاط
       </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        الإجابة الصحيحة تأخذ نقاط السؤال مضروبة في نسبة السرعة. الإجابة الخاطئة أو المتروكة تأخذ
-        صفراً.
+        الإجابة الخاطئة أو المتروكة تأخذ صفراً. الإجابة الصحيحة تأخذ نقاط السؤال كاملة إذا جاءت خلال
+        الثواني الأولى، ثم تنزل تدريجياً حتى أقل نسبة عند انتهاء وقت السؤال.
       </p>
       <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
-        {bands.map((band, i) => (
-          <li key={i}>
-            {band.maxSeconds === null
-              ? `بعد ذلك ${band.percent} بالمئة`
-              : `خلال ${band.maxSeconds} ثانية ${band.percent} بالمئة`}
+        <li>
+          <NumericRanges>{`حتى ${curve.fullSeconds} ثانية، كل النقاط`}</NumericRanges>
+        </li>
+        <li>
+          <NumericRanges>
+            {`من ${curve.fullSeconds} إلى ${curve.maxSeconds} ثانية، تنزل من 100 بالمئة إلى ${curve.floorPercent} بالمئة`}
+          </NumericRanges>
+        </li>
+        <li>
+          <NumericRanges>
+            {`بعد ${curve.maxSeconds} ثانية يُغلق السؤال ويحتسب متروكاً بصفر`}
+          </NumericRanges>
+        </li>
+      </ul>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <NumericRanges>
+          {`مثال، سؤال من 20 نقطة أُجيب صحيحاً في منتصف المدة يأخذ ${example} نقطة.`}
+        </NumericRanges>
+      </p>
+      <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
+        {boards.map((board) => (
+          <li key={board.title}>
+            <NumericRanges>
+              {board.wholeRun
+                ? `${board.title}، مجموع كل الفترات، أفضل ${board.counting} جولة من كل ${board.blockRounds}`
+                : `${board.title}، أفضل ${board.counting} جولة من ${board.blockRounds}`}
+            </NumericRanges>
           </li>
         ))}
       </ul>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        مثال، سؤال من 20 نقطة أُجيب صحيحاً في {bands[0]?.maxSeconds ?? 10} ثانية يأخذ{" "}
-        {Math.round((20 * (bands[0]?.percent ?? 100)) / 100)} نقطة.
-      </p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        مجموع المجموعة يحتسب أفضل {countingRounds} جولة من {groupSize}، والمجموع العام هو حاصل جمع
-        المجموعات.
-      </p>
     </div>
   );
 }

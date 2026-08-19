@@ -43,13 +43,12 @@ export interface AnswerFormRow {
   isCorrect: boolean;
 }
 
-export type SettingsForm = Record<keyof QuizSettings, string>;
+export type SettingsKey = "defaultAnswerCount" | "defaultCorrectCount" | "defaultPoints";
+
+export type SettingsForm = Record<SettingsKey, string>;
 
 export const emptySettingsForm: SettingsForm = {
   defaultAnswerCount: "4",
   defaultCorrectCount: "1",
   defaultPoints: "10",
-  questionsPerDay: "1",
-  answerWindowSeconds: "10",
-  minScorePercent: "40",
 };

@@ -3,27 +3,11 @@
 import IconLabel from "@/components/IconLabel";
 import type { SettingsForm as FormValues } from "./types";
 
-const FIELDS: { key: keyof FormValues; label: string; min: number; max?: number; hint?: string }[] =
-  [
-    { key: "defaultAnswerCount", label: "عدد الإجابات الافتراضي", min: 2 },
-    { key: "defaultCorrectCount", label: "عدد الإجابات الصحيحة الافتراضي", min: 1 },
-    { key: "defaultPoints", label: "النقاط الافتراضية للسؤال", min: 1 },
-    { key: "questionsPerDay", label: "عدد الأسئلة المرسلة يومياً", min: 1 },
-    {
-      key: "answerWindowSeconds",
-      label: "مدة الإجابة بالثواني",
-      min: 3,
-      max: 300,
-      hint: "تبدأ من لحظة إظهار الخيارات",
-    },
-    {
-      key: "minScorePercent",
-      label: "أقل نسبة للنقاط (%)",
-      min: 0,
-      max: 100,
-      hint: "ما يناله من أجاب صحيحاً في آخر لحظة",
-    },
-  ];
+const FIELDS: { key: keyof FormValues; label: string; min: number; max?: number }[] = [
+  { key: "defaultAnswerCount", label: "عدد الإجابات الافتراضي", min: 2 },
+  { key: "defaultCorrectCount", label: "عدد الإجابات الصحيحة الافتراضي", min: 1 },
+  { key: "defaultPoints", label: "النقاط الافتراضية للسؤال", min: 1, max: 20 },
+];
 
 export default function SettingsForm({
   values,
@@ -41,7 +25,11 @@ export default function SettingsForm({
   return (
     <form onSubmit={onSubmit} className="card p-4 space-y-3">
       <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
-        <IconLabel name="target">الإعدادات الافتراضية</IconLabel>
+        <IconLabel name="target">إعدادات الأسئلة</IconLabel>
+      </p>
+
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        ما يظهر جاهزاً عند إضافة سؤال جديد. كل ما يخص سير المسابقة يضبط داخل المسابقة نفسها.
       </p>
 
       <div className="grid grid-cols-2 gap-3">
@@ -64,11 +52,6 @@ export default function SettingsForm({
               value={values[field.key]}
               onChange={(e) => onChange(field.key, e.target.value)}
             />
-            {field.hint && (
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                {field.hint}
-              </p>
-            )}
           </div>
         ))}
       </div>

@@ -43,7 +43,6 @@ model User {
   pushSubscriptions     PushSubscription[]
   teamFollows           TeamFollow[]
   mvpVotes              MvpVote[]
-  quizAssignments       QuizAssignment[]
   quizAttempts          QuizAttempt[]
   quizParticipations    QuizParticipant[]
   currentStreak         Int                @default(0) // consecutive days of app activity ("flame")
@@ -461,22 +460,35 @@ model AuditLog {
   @@index([targetType, targetId])
 }
 
+// A named pile of questions. A quiz draws from exactly one, so two quizzes can
+// be about different things without keeping their questions apart by hand.
+model QuestionBank {
+  id           String         @id @default(cuid())
+  name         String         @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  questions    QuizQuestion[]
+  competitions Competition[]
+}
+
 model QuizQuestion {
   id           String              @id @default(cuid())
   text         String
   category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
   points       Int                 @default(10)
   correctCount Int                 @default(1) // number of answers that must be selected to earn credit
+  bankId       String              @default("general")
+  bank         QuestionBank        @relation(fields: [bankId], references: [id])
   active       Boolean             @default(true) // soft-disable without losing send history
   createdBy    String // admin username
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
   answers      QuizAnswer[]
-  assignments  QuizAssignment[]
   roundEntries QuizRoundQuestion[]
   attemptRows  QuizAttemptAnswer[]
 
   @@index([active])
+  @@index([bankId])
 }
 
 model QuizAnswer {
@@ -490,42 +502,14 @@ model QuizAnswer {
   @@index([questionId])
 }
 
-// One row = one question sent to one user. The unique constraint is what
-// guarantees a user never receives the same question twice, in either send
-// mode. batchId groups the rows created by a single send action (manual
-// SAME/RANDOM or the daily auto-send) for admin reporting.
-model QuizAssignment {
-  id                String       @id @default(cuid())
-  userId            String
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questionId        String
-  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  batchId           String
-  mode              String // "SAME" | "RANDOM"
-  sentAt            DateTime     @default(now())
-  revealedAt        DateTime?
-  answeredAt        DateTime?
-  selectedAnswerIds String[]     @default([])
-  isCorrect         Boolean?
-  pointsAwarded     Int          @default(0)
-
-  @@unique([userId, questionId])
-  @@index([userId])
-  @@index([batchId])
-}
-
-// Singleton row (id fixed to "singleton", same idiom as Counter) holding the
-// quiz's global defaults plus the daily auto-send marker.
+// Singleton row (id fixed to "singleton", same idiom as Counter) holding what a
+// new question starts from. Everything about how a quiz runs lives on the quiz.
 model QuizSettings {
-  id                  String    @id
-  defaultAnswerCount  Int       @default(4)
-  defaultCorrectCount Int       @default(1)
-  defaultPoints       Int       @default(10)
-  questionsPerDay     Int       @default(1)
-  answerWindowSeconds Int       @default(10)
-  minScorePercent     Int       @default(40)
-  lastAutoSendDate    DateTime?
-  updatedAt           DateTime  @updatedAt
+  id                  String   @id
+  defaultAnswerCount  Int      @default(4)
+  defaultCorrectCount Int      @default(1)
+  defaultPoints       Int      @default(10)
+  updatedAt           DateTime @updatedAt
 }
 
 // Singleton row (id fixed to "singleton", same idiom as QuizSettings) holding
@@ -570,15 +554,34 @@ model Competition {
   roundWindowMinutes Int               @default(840)
   servedCount        Int               @default(10)
   poolSize           Int               @default(30)
-  groupSize          Int               @default(7)
-  countingRounds     Int               @default(6)
   categoryRounds     Boolean           @default(false)
-  speedBands         Json
+  bankId             String            @default("general")
+  bank               QuestionBank      @relation(fields: [bankId], references: [id])
+  fullSeconds        Int               @default(10)
+  maxSeconds         Int               @default(30)
+  floorPercent       Int               @default(50)
   rounds             QuizRound[]
+  boards             QuizBoard[]
   participants       QuizParticipant[]
   startedAt          DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+}
+
+// One ranking a member can look at. blockRounds is how many rounds it covers,
+// counting how many of them are added up, and wholeRun says whether it reads
+// every block of the run or only the block the open round sits in.
+model QuizBoard {
+  id            String      @id @default(cuid())
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  title         String
+  blockRounds   Int         @default(1)
+  counting      Int         @default(1)
+  wholeRun      Boolean     @default(false)
+  order         Int         @default(0)
+
+  @@index([competitionId])
 }
 
 model QuizRound {

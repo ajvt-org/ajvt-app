@@ -10,7 +10,7 @@ import {
   NO_POOL,
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { drawQuestions, seededShuffle } from "@/lib/quizRound";
 import type { HttpError } from "@/lib/errors";
 
@@ -37,9 +37,8 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 840,
       servedCount: 3,
       poolSize: 5,
-      groupSize: 7,
-      countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
+      ...DEFAULT_CURVE,
       startedAt: new Date(`${DAY}T00:00:00.000Z`),
       ...over,
     },
@@ -384,7 +383,26 @@ describe("working through an attempt", () => {
     expect(result.elapsedMs).toBe(5_000);
   });
 
-  it("pays a lower band for a slower answer", async () => {
+  it("pays a smaller share for a slower answer", async () => {
+    const { u, attempt } = await ready();
+    const view = await currentQuestion(attempt.id, u.id, openAt);
+    const row = await prisma.quizAttemptAnswer.findFirstOrThrow({
+      where: { attemptId: attempt.id, position: 0 },
+      include: { question: { select: { answers: true } } },
+    });
+    const right = row.question.answers.find((a) => a.isCorrect)!;
+
+    const result = await submitAnswer(
+      view.question!.answerId,
+      u.id,
+      [right.id],
+      new Date(openAt.getTime() + 20_000),
+    );
+
+    expect(result.points).toBe(8);
+  });
+
+  it("pays nothing and marks the question unanswered once its time is up", async () => {
     const { u, attempt } = await ready();
     const view = await currentQuestion(attempt.id, u.id, openAt);
     const row = await prisma.quizAttemptAnswer.findFirstOrThrow({
@@ -400,7 +418,10 @@ describe("working through an attempt", () => {
       new Date(openAt.getTime() + 45_000),
     );
 
-    expect(result.points).toBe(5);
+    expect(result.points).toBe(0);
+    expect(result.expired).toBe(true);
+    const after = await prisma.quizAttemptAnswer.findUniqueOrThrow({ where: { id: row.id } });
+    expect(after.isCorrect).toBeNull();
   });
 
   it("pays nothing for a wrong answer", async () => {

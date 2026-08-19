@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
-import { DEFAULT_BANDS } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MY_ROUNDS } from "@/app/api/quiz/breakdown/route";
 import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
@@ -20,9 +20,8 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 840,
       servedCount: 2,
       poolSize: 2,
-      groupSize: 7,
-      countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
       ...over,
     },
@@ -43,7 +42,20 @@ async function member(userId: string, fullName: string) {
 }
 
 async function question(text: string, points: number, category = "جغرافيا") {
-  return prisma.quizQuestion.create({ data: { text, category, points, createdBy: "admin" } });
+  return prisma.quizQuestion.create({
+    data: {
+      text,
+      category,
+      points,
+      createdBy: "admin",
+      answers: {
+        create: [
+          { text: "صحيح", isCorrect: true, order: 0 },
+          { text: "خطأ", isCorrect: false, order: 1 },
+        ],
+      },
+    },
+  });
 }
 
 async function attempt(competitionId: string, userId: string, index = 0) {
@@ -130,6 +142,30 @@ describe("a member reading their own score", () => {
     expect(body.detail.breakdown.possible).toBe(45);
   });
 
+  it("says how much of each round was right", async () => {
+    const c = await competition();
+    const user = await paidUser();
+    await attempt(c.id, user.id);
+    await signInAs(user);
+
+    const body = await (await MY_ROUNDS(get(`/api/quiz/breakdown?competition=${c.id}`))).json();
+
+    expect(body.rounds[0].correct).toBe(1);
+    expect(body.rounds[0].total).toBe(3);
+  });
+
+  it("gives the right answer and what the member chose", async () => {
+    const c = await competition();
+    const user = await paidUser();
+    const made = await attempt(c.id, user.id);
+    await signInAs(user);
+
+    const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
+
+    expect(body.detail.breakdown.rows[0].correct).toEqual(["صحيح"]);
+    expect(body.detail.breakdown.rows[0].chosen).toEqual([]);
+  });
+
   it("says which speed band each answer earned", async () => {
     const c = await competition();
     const user = await paidUser();
@@ -150,7 +186,7 @@ describe("a member reading their own score", () => {
 
     const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
 
-    expect(body.detail.speedBands).toEqual(DEFAULT_BANDS);
+    expect(body.detail.curve).toEqual(DEFAULT_CURVE);
     expect(body.detail.round).toBe(0);
     expect(body.detail.competitionName).toBe("مسابقة");
   });

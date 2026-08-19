@@ -31,6 +31,7 @@ export const POST = withRoute("POST /api/quiz/attempt/answer", async (req: NextR
     done: view.done,
     total: view.total,
     position: view.position,
+    curve: view.curve,
     question: view.question,
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import SpeedBandsEditor from "./SpeedBandsEditor";
-import type { SpeedBand, Visibility } from "@/lib/competitionConfig";
+import BoardsEditor from "./BoardsEditor";
+import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 import {
   toLocalInput,
   fromLocalInput,
@@ -13,15 +13,17 @@ export interface Draft {
   name: string;
   startsAt: string;
   visibility: Visibility;
+  bankId: string;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  groupSize: number;
-  countingRounds: number;
   categoryRounds: boolean;
-  speedBands: SpeedBand[];
+  boards: BoardConfig[];
+  fullSeconds: number;
+  maxSeconds: number;
+  floorPercent: number;
 }
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
@@ -41,10 +43,12 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 
 export default function CompetitionFields({
   draft,
+  banks,
   locked,
   onChange,
 }: {
   draft: Draft;
+  banks: { id: string; name: string }[];
   locked: boolean;
   onChange: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
 }) {
@@ -93,6 +97,22 @@ export default function CompetitionFields({
         </select>
       </Field>
 
+      <Field label="بنك الأسئلة" id="c-bank">
+        <select
+          id="c-bank"
+          value={draft.bankId}
+          disabled={locked}
+          onChange={(e) => onChange("bankId", e.target.value)}
+          className="input input-sm"
+        >
+          {banks.map((bank) => (
+            <option key={bank.id} value={bank.id}>
+              {bank.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
       <div className="flex gap-2">
         <Field label="بداية الجولة الأولى" id="c-start">
           <input
@@ -131,11 +151,6 @@ export default function CompetitionFields({
         {number("poolSize", "c-pool", "مخزون الجولة")}
       </div>
 
-      <div className="flex gap-2">
-        {number("groupSize", "c-group", "جولات المجموعة")}
-        {number("countingRounds", "c-counting", "الجولات المحتسبة")}
-      </div>
-
       <label className="flex items-center gap-2 text-xs font-bold">
         <input
           id="c-category-rounds"
@@ -147,11 +162,26 @@ export default function CompetitionFields({
         <span style={{ color: "var(--text-main)" }}>كل جولة من تصنيف واحد</span>
       </label>
 
-      <SpeedBandsEditor
-        bands={draft.speedBands}
+      <BoardsEditor
+        boards={draft.boards}
         disabled={locked}
-        onChange={(speedBands) => onChange("speedBands", speedBands)}
+        onChange={(boards) => onChange("boards", boards)}
       />
+
+      <p className="text-xs font-bold mt-1" style={{ color: "var(--text-main)" }}>
+        احتساب السرعة
+      </p>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        الإجابة الصحيحة تأخذ كل نقاط السؤال حتى مهلة النقاط الكاملة، ثم تنزل في خط مستقيم إلى أقل
+        نسبة عند انتهاء مدة السؤال.
+      </p>
+
+      <div className="flex gap-2">
+        {number("fullSeconds", "c-full", "مهلة النقاط الكاملة بالثواني", 0)}
+        {number("maxSeconds", "c-max", "مدة السؤال بالثواني")}
+      </div>
+
+      {number("floorPercent", "c-floor", "أقل نسبة بالمئة", 0, 100)}
     </>
   );
 }

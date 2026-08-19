@@ -15,10 +15,20 @@ const standings: StandingsState = {
   competitionId: "c1",
   name: "مسابقة الصيف",
   meId: "u1",
-  today: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
-  thisWeek: [],
-  overall: [],
-  mine: { today: { rank: 4, total: 10 }, thisWeek: null, overall: null },
+  boards: [
+    {
+      id: "b1",
+      title: "ترتيب الجولة",
+      rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
+      mine: { rank: 4, total: 10 },
+    },
+    {
+      id: "b2",
+      title: "الترتيب العام",
+      rows: [{ rank: 1, userId: "u1", name: "أنا", photoUrl: null, total: 90 }],
+      mine: { rank: 1, total: 90 },
+    },
+  ],
 };
 
 const question = {
@@ -34,7 +44,7 @@ const question = {
 };
 
 const setup = () =>
-  render(<CompetitionView standings={standings} backHref="/home" onReloadStandings={vi.fn()} />);
+  render(<CompetitionView standings={standings} onBack={vi.fn()} onReloadStandings={vi.fn()} />);
 
 beforeEach(() => {
   post.mockReset();
@@ -60,10 +70,41 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText("المسابقة ليست مفتوحة الآن")).toBeDefined());
-    expect(screen.getByText("ترتيب الجولة")).toBeDefined();
+    expect(screen.getByRole("tab", { name: "ترتيب الجولة" })).toBeDefined();
+    expect(screen.getByText("محمد")).toBeDefined();
   });
 
-  it("shows the result of an answer before moving on", async () => {
+  it("keeps my own scores behind their own tab", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+
+    expect(screen.queryByText(/تفاصيل نقاطي/)).toBeNull();
+  });
+
+  it("offers no practice round from inside a quiz", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+
+    expect(screen.queryByText("جولة تجريبية")).toBeNull();
+  });
+
+  it("shows one ranking at a time and switches on the tab", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.queryByText("أنا")).toBeNull();
+
+    await userEvent.click(screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(screen.getByText("أنا")).toBeDefined();
+    expect(screen.queryByText("محمد")).toBeNull();
+  });
+
+  it("goes straight to the next question when an answer is confirmed", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -74,8 +115,6 @@ describe("CompetitionView", () => {
     });
     post.mockResolvedValueOnce({
       attemptId: "at1",
-      isCorrect: true,
-      points: 10,
       score: 10,
       done: false,
       total: 2,
@@ -88,11 +127,11 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 
-    await waitFor(() => expect(screen.getByText("إجابة صحيحة")).toBeDefined());
-    expect(screen.getByText("+10")).toBeDefined();
+    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    expect(screen.queryByRole("button", { name: "السؤال التالي" })).toBeNull();
   });
 
-  it("moves to the next question when the member continues", async () => {
+  it("carries the running score into the next question", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -103,9 +142,7 @@ describe("CompetitionView", () => {
     });
     post.mockResolvedValueOnce({
       attemptId: "at1",
-      isCorrect: false,
-      points: 0,
-      score: 0,
+      score: 10,
       done: false,
       total: 2,
       position: 1,
@@ -116,10 +153,8 @@ describe("CompetitionView", () => {
 
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
-    await waitFor(() => screen.getByText("إجابة خاطئة"));
-    await userEvent.click(screen.getByRole("button", { name: "السؤال التالي" }));
 
-    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    await waitFor(() => expect(screen.getByText(/مجموعك 10/)).toBeDefined());
   });
 
   it("shows the standings once the attempt is finished", async () => {
@@ -150,5 +185,16 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10/)).toBeDefined());
+  });
+
+  it("goes back to the list of quizzes rather than out of the section", async () => {
+    const onBack = vi.fn();
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    await waitFor(() => screen.getByRole("button", { name: "رجوع" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
+
+    expect(onBack).toHaveBeenCalled();
   });
 });

@@ -1,43 +1,3 @@
-export interface AnswerData {
-  id: string;
-  text: string;
-  order: number;
-}
-
-export interface QuestionData {
-  id: string;
-  text: string;
-  category: string;
-  points: number;
-  correctCount: number;
-  answers: AnswerData[];
-}
-
-export interface PendingAssignment {
-  id: string;
-  sentAt: string;
-  revealedAt: string | null;
-  question: QuestionData;
-}
-
-export interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  name: string;
-  photoUrl: string | null;
-  total: number;
-}
-
-export interface QuizMeData {
-  pending: PendingAssignment[];
-  totalPoints: number;
-  rank: number;
-  totalParticipants: number;
-  top10: LeaderboardEntry[];
-  streak: { current: number; longest: number };
-  answerWindowSeconds: number;
-}
-
 export interface AnswerResult {
   isCorrect: boolean;
   pointsAwarded: number;
@@ -47,12 +7,17 @@ export interface AnswerResult {
   maxPoints?: number;
 }
 
+export type CompetitionState = "before" | "open" | "closed" | "over";
+
 export interface RunningCompetition {
   id: string;
   name: string;
   visibility: "PUBLIC" | "PRIVATE";
   roundCount: number;
   startsAt: string;
+  state: CompetitionState;
+  playedRounds: number;
+  myScore: number;
 }
 
 export interface BreakdownRowView {
@@ -64,6 +29,8 @@ export interface BreakdownRowView {
   elapsedMs: number | null;
   points: number;
   percent: number;
+  correct: string[];
+  chosen: string[];
 }
 
 export interface AttemptDetailView {
@@ -71,9 +38,8 @@ export interface AttemptDetailView {
   round: number;
   category: string | null;
   competitionName: string;
-  speedBands: { maxSeconds: number | null; percent: number }[];
-  groupSize: number;
-  countingRounds: number;
+  curve: { fullSeconds: number; maxSeconds: number; floorPercent: number };
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   breakdown: {
     rows: BreakdownRowView[];
     correct: number;
@@ -90,5 +56,7 @@ export interface AttemptSummary {
   round: number;
   category: string | null;
   score: number;
+  correct: number;
+  total: number;
   finishedAt: string | null;
 }

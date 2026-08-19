@@ -7,13 +7,28 @@ import CompetitionPanel from "./CompetitionPanel";
 import ParticipantsPanel from "./ParticipantsPanel";
 import RoundsPanel from "./RoundsPanel";
 import ScoresPanel from "./ScoresPanel";
+import StandingsPanel from "./StandingsPanel";
 import type { CompetitionRow } from "./competitionTypes";
 
-export default function CompetitionsSection({ questionCount }: { questionCount: number }) {
+export default function CompetitionsSection() {
   const [rows, setRows] = useState<CompetitionRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [reload, setReload] = useState(0);
+  const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ banks: { id: string; name: string }[] }>("/api/admin/quiz/banks")
+      .then((data) => {
+        if (alive) setBanks(data.banks);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [reload]);
 
   useEffect(() => {
     let alive = true;
@@ -32,6 +47,7 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
 
   const selected = rows.find((r) => r.id === selectedId) ?? null;
   const editing = creating ? null : selectedId;
+  const open = creating || selectedId !== null;
 
   return (
     <div className="space-y-5">
@@ -45,25 +61,34 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
         onCreate={() => setCreating(true)}
       />
 
-      <CompetitionPanel
-        key={editing ?? "new"}
-        competitionId={editing}
-        onSaved={(id) => {
-          setCreating(false);
-          setSelectedId(id);
-        }}
-        onChanged={() => setReload((n) => n + 1)}
-        onDeleted={() => setSelectedId(null)}
-      />
+      {open && (
+        <CompetitionPanel
+          key={editing ?? "new"}
+          banks={banks}
+          competitionId={editing}
+          onSaved={(id) => {
+            setCreating(false);
+            setSelectedId(id);
+          }}
+          onChanged={() => setReload((n) => n + 1)}
+          onDeleted={() => {
+            setCreating(false);
+            setSelectedId(null);
+          }}
+        />
+      )}
 
       {editing && selected?.visibility === "PRIVATE" && (
         <ParticipantsPanel competitionId={editing} locked={selected.startedAt !== null} />
       )}
 
-      {editing && <RoundsPanel competitionId={editing} questionCount={questionCount} />}
+      {editing && <RoundsPanel competitionId={editing} />}
 
       {editing && selected?.startedAt && (
-        <ScoresPanel competitionId={editing} roundCount={selected.roundCount} />
+        <>
+          <StandingsPanel competitionId={editing} />
+          <ScoresPanel competitionId={editing} roundCount={selected.roundCount} />
+        </>
       )}
     </div>
   );

@@ -16,7 +16,7 @@ export default function QuizLocked({
 }) {
   return (
     <div className="app-shell">
-      <PageHeader title="المسابقة الثقافية" backHref={backHref} />
+      <PageHeader title="المسابقات الثقافية" backHref={backHref} />
       <div className="px-5 py-10">
         <div className="card p-8 text-center fade-up">
           <div className="mb-3 flex justify-center">

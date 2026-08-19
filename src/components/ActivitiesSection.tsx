@@ -37,11 +37,11 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-bold" style={{ color: "var(--text-main)" }}>
-            المسابقة الثقافية
+            المسابقات الثقافية
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
             {quizAccess
-              ? "أسئلة يومية، نقاط، وترتيب بين المنتسبين"
+              ? "جولات بأسئلة ونقاط، وترتيب خاص بكل مسابقة"
               : "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب"}
           </p>
         </div>

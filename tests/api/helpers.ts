@@ -11,6 +11,7 @@ export async function resetDb() {
   `;
   const list = tables.map((t) => `"${t.tablename}"`).join(", ");
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+  await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
   clearCookies();
 }
 

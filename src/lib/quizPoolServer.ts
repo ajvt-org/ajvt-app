@@ -10,14 +10,18 @@ export const POOL_TOO_SMALL = "عدد الأسئلة أقل من العدد ال
 export async function listRounds(competitionId: string) {
   const competition = await requireCompetition(competitionId);
   const windows = roundWindows(shapeOf(competition));
-  const rounds = await prisma.quizRound.findMany({
-    where: { competitionId: competition.id },
-    select: { index: true, category: true, _count: { select: { questions: true } } },
-  });
+  const [rounds, bankSize] = await Promise.all([
+    prisma.quizRound.findMany({
+      where: { competitionId: competition.id },
+      select: { index: true, category: true, _count: { select: { questions: true } } },
+    }),
+    prisma.quizQuestion.count({ where: { active: true, bankId: competition.bankId } }),
+  ]);
   const known = new Map(rounds.map((r) => [r.index, r]));
 
   return {
     competition,
+    bankSize,
     rounds: windows.map((w) => ({
       index: w.index,
       opensAt: w.opensAt,
@@ -84,7 +88,7 @@ export async function fillRoundsFromBank(competitionId: string) {
   if (competition.startedAt) throw new ConflictError(ALREADY_STARTED);
 
   const bank = await prisma.quizQuestion.findMany({
-    where: { active: true },
+    where: { active: true, bankId: competition.bankId },
     select: { id: true, category: true, points: true },
     orderBy: { createdAt: "asc" },
   });

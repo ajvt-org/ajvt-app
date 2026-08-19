@@ -5,8 +5,9 @@ import { api, errorMessage } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
-import AttemptResult from "./AttemptResult";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 
 interface AttemptState {
@@ -15,12 +16,8 @@ interface AttemptState {
   done: boolean;
   total: number;
   position: number;
+  curve?: ScoreCurve;
   question: AttemptView | null;
-}
-
-interface AnswerState extends AttemptState {
-  isCorrect: boolean;
-  points: number;
 }
 
 interface Place {
@@ -28,36 +25,44 @@ interface Place {
   total: number;
 }
 
+const MINE = "mine";
+
+export interface StandingsBoard {
+  id: string;
+  title: string;
+  rows: BoardRow[];
+  mine: Place | null;
+}
+
 export interface StandingsState {
   running: boolean;
   competitionId: string | null;
   name: string | null;
   meId: string | null;
-  today: BoardRow[];
-  thisWeek: BoardRow[];
-  overall: BoardRow[];
-  mine: { today: Place | null; thisWeek: Place | null; overall: Place | null } | null;
+  boards: StandingsBoard[];
 }
 
 export default function CompetitionView({
   standings,
-  backHref,
+  onBack,
   onReloadStandings,
-  onSwitch,
-  onTutorial,
 }: {
   standings: StandingsState;
-  backHref: string;
+  onBack: () => void;
   onReloadStandings: () => void;
-  onSwitch?: () => void;
-  onTutorial?: () => void;
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
-  const [result, setResult] = useState<AnswerState | null>(null);
   const [closed, setClosed] = useState("");
-  const [showScores, setShowScores] = useState(false);
+  const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const tabs = [
+    ...standings.boards.map((b) => ({ id: b.id, title: b.title })),
+    { id: MINE, title: "نقاطي" },
+  ];
+  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? MINE);
+  const open = standings.boards.find((b) => b.id === openTab) ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -74,15 +79,11 @@ export default function CompetitionView({
     };
   }, [competitionId]);
 
-  async function answer(selected: string[]) {
-    if (!attempt?.question) return;
+  async function skip() {
+    if (!competitionId || busy) return;
     setBusy(true);
     try {
-      const next = await api.post<AnswerState>("/api/quiz/attempt/answer", {
-        answerId: attempt.question.answerId,
-        selectedAnswerIds: selected,
-      });
-      setResult(next);
+      setAttempt(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
@@ -90,47 +91,41 @@ export default function CompetitionView({
     }
   }
 
-  function continueOn() {
-    if (!result) return;
-    setAttempt({
-      attemptId: result.attemptId,
-      score: result.score,
-      done: result.done,
-      total: result.total,
-      position: result.position,
-      question: result.question,
-    });
-    setResult(null);
-    if (result.done) onReloadStandings();
-  }
-
-  if (result) {
-    return (
-      <AttemptResult
-        isCorrect={result.isCorrect}
-        points={result.points}
-        score={result.score}
-        last={result.done}
-        onContinue={continueOn}
-      />
-    );
+  async function answer(selected: string[]) {
+    if (!attempt?.question) return;
+    setBusy(true);
+    try {
+      const next = await api.post<AttemptState>("/api/quiz/attempt/answer", {
+        answerId: attempt.question.answerId,
+        selectedAnswerIds: selected,
+      });
+      setAttempt(next);
+      if (next.done) onReloadStandings();
+    } catch (e) {
+      setClosed(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (attempt && !attempt.done && attempt.question) {
     return (
       <AttemptQuestion
         question={attempt.question}
+        curve={attempt.curve}
         position={attempt.position}
         total={attempt.total}
+        score={attempt.score}
         busy={busy}
         onSubmit={answer}
+        onExpire={skip}
       />
     );
   }
 
   return (
     <div className="app-shell">
-      <PageHeader title={standings.name ?? "المسابقة الثقافية"} backHref={backHref} />
+      <PageHeader title={standings.name ?? "المسابقات الثقافية"} onBack={onBack} />
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-6 text-center">
           <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
@@ -144,44 +139,21 @@ export default function CompetitionView({
               مجموعك في الجولة {attempt.score}
             </p>
           )}
-          <button onClick={() => setShowScores((v) => !v)} className="btn btn-sm text-xs mt-3 ms-2">
-            {showScores ? "إخفاء التفاصيل" : "تفاصيل نقاطي"}
-          </button>
-          {onTutorial && (
-            <button onClick={onTutorial} className="btn btn-sm text-xs mt-3 ms-2">
-              جولة تجريبية
-            </button>
-          )}
-          {onSwitch && (
-            <button onClick={onSwitch} className="btn btn-sm text-xs mt-3">
-              تغيير المسابقة
-            </button>
-          )}
         </div>
 
-        {showScores && competitionId && <MyScores competitionId={competitionId} />}
+        <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
 
-        <StandingsBoard
-          title="ترتيب الجولة"
-          rows={standings.today}
-          mine={standings.mine?.today ?? null}
-          meId={standings.meId}
-          empty="لم يشارك أحد في هذه الجولة"
-        />
-        <StandingsBoard
-          title="ترتيب المجموعة"
-          rows={standings.thisWeek}
-          mine={standings.mine?.thisWeek ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب لهذه المجموعة بعد"
-        />
-        <StandingsBoard
-          title="الترتيب العام"
-          rows={standings.overall}
-          mine={standings.mine?.overall ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب عام بعد"
-        />
+        {open ? (
+          <StandingsBoard
+            title={open.title}
+            rows={open.rows}
+            mine={open.mine}
+            meId={standings.meId}
+            empty="لا ترتيب بعد"
+          />
+        ) : (
+          competitionId && <MyScores competitionId={competitionId} />
+        )}
       </div>
     </div>
   );

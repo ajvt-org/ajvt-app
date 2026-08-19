@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { NotFoundError } from "./errors";
 import { breakdownOf, type AnswerRow, type Breakdown } from "./quizBreakdown";
-import type { SpeedBand } from "./competitionConfig";
+import type { ScoreCurve } from "./competitionConfig";
 
 export const NO_ATTEMPT = "لا توجد محاولة";
 
@@ -13,9 +13,8 @@ export interface AttemptDetail {
   category: string | null;
   competitionId: string;
   competitionName: string;
-  speedBands: SpeedBand[];
-  groupSize: number;
-  countingRounds: number;
+  curve: ScoreCurve;
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   finishedAt: Date | null;
   breakdown: Breakdown;
 }
@@ -24,8 +23,8 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
   const attempt = await prisma.quizAttempt.findUnique({
     where: { id: attemptId },
     include: {
-      round: { include: { competition: true } },
-      answers: { include: { question: true } },
+      round: { include: { competition: { include: { boards: { orderBy: { order: "asc" } } } } } },
+      answers: { include: { question: { include: { answers: true } } } },
     },
   });
   if (!attempt) throw new NotFoundError(NO_ATTEMPT);
@@ -34,16 +33,26 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     where: { userId: attempt.userId },
     select: { fullName: true },
   });
-  const bands = attempt.round.competition.speedBands as unknown as SpeedBand[];
-  const rows: AnswerRow[] = attempt.answers.map((answer) => ({
-    position: answer.position,
-    question: answer.question.text,
-    category: answer.question.category,
-    maxPoints: answer.question.points,
-    isCorrect: answer.isCorrect,
-    elapsedMs: answer.elapsedMs,
-    points: answer.points,
-  }));
+  const boards = attempt.round.competition.boards;
+  const curve: ScoreCurve = {
+    fullSeconds: attempt.round.competition.fullSeconds,
+    maxSeconds: attempt.round.competition.maxSeconds,
+    floorPercent: attempt.round.competition.floorPercent,
+  };
+  const rows: AnswerRow[] = attempt.answers.map((answer) => {
+    const picked = new Set(answer.selectedAnswerIds);
+    return {
+      position: answer.position,
+      question: answer.question.text,
+      category: answer.question.category,
+      maxPoints: answer.question.points,
+      isCorrect: answer.isCorrect,
+      elapsedMs: answer.elapsedMs,
+      points: answer.points,
+      correct: answer.question.answers.filter((a) => a.isCorrect).map((a) => a.text),
+      chosen: answer.question.answers.filter((a) => picked.has(a.id)).map((a) => a.text),
+    };
+  });
 
   return {
     attemptId: attempt.id,
@@ -53,11 +62,15 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     category: attempt.round.category,
     competitionId: attempt.round.competitionId,
     competitionName: attempt.round.competition.name,
-    speedBands: bands,
-    groupSize: attempt.round.competition.groupSize,
-    countingRounds: attempt.round.competition.countingRounds,
+    curve,
+    boards: boards.map((b) => ({
+      title: b.title,
+      blockRounds: b.blockRounds,
+      counting: b.counting,
+      wholeRun: b.wholeRun,
+    })),
     finishedAt: attempt.finishedAt,
-    breakdown: breakdownOf(rows, bands),
+    breakdown: breakdownOf(rows, curve),
   };
 }
 
@@ -69,6 +82,7 @@ export async function attemptsOf(competitionId: string, userId: string) {
       score: true,
       finishedAt: true,
       round: { select: { index: true, category: true } },
+      answers: { select: { isCorrect: true, points: true } },
     },
     orderBy: { round: { index: "asc" } },
   });
@@ -77,6 +91,9 @@ export async function attemptsOf(competitionId: string, userId: string) {
     round: a.round.index,
     category: a.round.category,
     score: a.score,
+    correct: a.answers.filter((x) => x.isCorrect === true).length,
+    total: a.answers.length,
+    possible: a.answers.length,
     finishedAt: a.finishedAt,
   }));
 }
