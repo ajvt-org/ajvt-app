@@ -27,13 +27,6 @@ export async function seedQuestions() {
     correctCount: 1,
     active: true,
     bankId: bank.id,
-    boards: {
-      create: [
-        { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false, order: 0 },
-        { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false, order: 1 },
-        { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true, order: 2 },
-      ],
-    },
     createdBy: "admin",
     answers: answers.map((answer, order) => ({
       text: answer,
