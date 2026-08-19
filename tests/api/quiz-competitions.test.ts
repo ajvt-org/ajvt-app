@@ -11,6 +11,7 @@ import {
   DELETE as RESET,
 } from "@/app/api/admin/quiz/competitions/[id]/route";
 import { POST as START } from "@/app/api/admin/quiz/competitions/[id]/start/route";
+import { POST as RESET_SCORES } from "@/app/api/admin/quiz/competitions/[id]/reset/route";
 import {
   GET as READ_PARTS,
   PUT as SET_PARTS,
@@ -25,7 +26,9 @@ const read = (id: string) => READ(post(`/api/admin/quiz/competitions/${id}`, {})
 const save = (id: string, body: unknown) =>
   SAVE(put(`/api/admin/quiz/competitions/${id}`, body), at(id));
 const start = (id: string) => START(post(`/api/admin/quiz/competitions/${id}/start`, {}), at(id));
-const reset = (id: string) => RESET(del(`/api/admin/quiz/competitions/${id}`), at(id));
+const reset = (id: string) =>
+  RESET_SCORES(post(`/api/admin/quiz/competitions/${id}/reset`, {}), at(id));
+const remove = (id: string) => RESET(del(`/api/admin/quiz/competitions/${id}`), at(id));
 const participants = (id: string) =>
   READ_PARTS(post(`/api/admin/quiz/competitions/${id}/participants`, {}), at(id));
 const setParticipants = (id: string, userIds: string[]) =>
@@ -221,6 +224,134 @@ describe("clearing what has been scored", () => {
     await reset(mine.id);
 
     expect((await prisma.quizAttempt.findUniqueOrThrow({ where: { id: kept.id } })).score).toBe(30);
+  });
+});
+
+describe("deleting a competition", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
+  });
+
+  it("removes one that has not started", async () => {
+    const c = await made();
+
+    const res = await remove(c.id);
+
+    expect(res.status).toBe(200);
+    expect(await prisma.competition.count()).toBe(0);
+  });
+
+  it("takes its rounds and their questions with it", async () => {
+    const c = await made();
+    const question = await prisma.quizQuestion.create({
+      data: { text: "س", category: "ع", createdBy: "admin" },
+    });
+    const round = await prisma.quizRound.create({
+      data: {
+        competitionId: c.id,
+        index: 0,
+        opensAt: new Date("2026-08-20T08:00:00.000Z"),
+        closesAt: new Date("2026-08-20T22:00:00.000Z"),
+        questions: { create: [{ questionId: question.id }] },
+      },
+    });
+    void round;
+
+    await remove(c.id);
+
+    expect(await prisma.quizRound.count()).toBe(0);
+    expect(await prisma.quizRoundQuestion.count()).toBe(0);
+    expect(await prisma.quizQuestion.count()).toBe(1);
+  });
+
+  it("drops its participants", async () => {
+    const c = await made({ ...config, visibility: "PRIVATE" });
+    const [user] = await createUsers(1);
+    await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: user.id } });
+
+    await remove(c.id);
+
+    expect(await prisma.quizParticipant.count()).toBe(0);
+  });
+
+  it("leaves another competition alone", async () => {
+    const gone = await made();
+    const kept = await made({ ...config, name: "مسابقة الشتاء" });
+
+    await remove(gone.id);
+
+    expect((await prisma.competition.findMany()).map((c) => c.id)).toEqual([kept.id]);
+  });
+
+  it("removes one that has already started", async () => {
+    const c = await made();
+    await start(c.id);
+
+    const res = await remove(c.id);
+
+    expect(res.status).toBe(200);
+    expect(await prisma.competition.count()).toBe(0);
+  });
+
+  it("takes the scores of a started competition with it", async () => {
+    const c = await made();
+    const [user] = await createUsers(1);
+    const round = await prisma.quizRound.create({
+      data: {
+        competitionId: c.id,
+        index: 0,
+        opensAt: new Date("2026-08-20T08:00:00.000Z"),
+        closesAt: new Date("2026-08-20T22:00:00.000Z"),
+      },
+    });
+    const question = await prisma.quizQuestion.create({
+      data: { text: "س", category: "ع", createdBy: "admin" },
+    });
+    await prisma.quizAttempt.create({
+      data: {
+        roundId: round.id,
+        userId: user.id,
+        score: 30,
+        answers: { create: [{ questionId: question.id, position: 0, points: 30 }] },
+      },
+    });
+    await start(c.id);
+
+    const body = await (await remove(c.id)).json();
+
+    expect(body.attempts).toBe(1);
+    expect(await prisma.quizAttempt.count()).toBe(0);
+    expect(await prisma.quizAttemptAnswer.count()).toBe(0);
+  });
+
+  it("says what it removed along with the competition", async () => {
+    const c = await made({ ...config, visibility: "PRIVATE" });
+    const [user] = await createUsers(1);
+    await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: user.id } });
+    await prisma.quizRound.create({
+      data: {
+        competitionId: c.id,
+        index: 0,
+        opensAt: new Date("2026-08-20T08:00:00.000Z"),
+        closesAt: new Date("2026-08-20T22:00:00.000Z"),
+      },
+    });
+
+    const body = await (await remove(c.id)).json();
+
+    expect(body).toMatchObject({ deleted: true, rounds: 1, attempts: 0, participants: 1 });
+  });
+
+  it("says nothing found for one that does not exist", async () => {
+    expect((await remove("nope")).status).toBe(404);
+  });
+
+  it("is closed to an admin without the quiz section", async () => {
+    const c = await made();
+    await signInAsAdmin(await createAdmin("members", "MEMBERS"));
+
+    expect((await remove(c.id)).status).toBe(403);
   });
 });
 
