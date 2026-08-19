@@ -15,32 +15,47 @@ export async function resetDb() {
   clearCookies();
 }
 
-export function post(url: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost${url}`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
+// withRoute() rejects a mutating request that does not say where it came from,
+// so every builder here says it, once, rather than 45 test files each saying it.
+const ORIGIN = "http://localhost";
+
+function sending(url: string, method: string, body: unknown): NextRequest {
+  return new NextRequest(`${ORIGIN}${url}`, {
+    method,
+    headers: { "content-type": "application/json", origin: ORIGIN },
     body: JSON.stringify(body),
   });
+}
+
+export function post(url: string, body: unknown): NextRequest {
+  return sending(url, "POST", body);
 }
 
 export function patch(url: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost${url}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return sending(url, "PATCH", body);
 }
 
 export function put(url: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost${url}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return sending(url, "PUT", body);
 }
 
-export function del(url: string): NextRequest {
-  return new NextRequest(`http://localhost${url}`, { method: "DELETE" });
+export function del(url: string, body?: unknown): NextRequest {
+  if (body === undefined) {
+    return new NextRequest(`${ORIGIN}${url}`, { method: "DELETE", headers: { origin: ORIGIN } });
+  }
+  return sending(url, "DELETE", body);
+}
+
+export function postForm(
+  url: string,
+  form: FormData,
+  headers: Record<string, string> = {},
+): NextRequest {
+  return new NextRequest(`${ORIGIN}${url}`, {
+    method: "POST",
+    body: form,
+    headers: { origin: ORIGIN, ...headers },
+  });
 }
 
 export function get(url: string, headers: Record<string, string> = {}): NextRequest {

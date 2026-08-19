@@ -27,6 +27,15 @@ export class ForbiddenError extends HttpError {
   }
 }
 
+// Separate from ForbiddenError, whose message is about the caller's role: this
+// one is about where the request came from, and the caller may well have the
+// role. Same status, different sentence.
+export class CrossOriginError extends HttpError {
+  constructor(clientMessage: string = common.crossOrigin) {
+    super("CROSS_ORIGIN", 403, clientMessage);
+  }
+}
+
 export class NotFoundError extends HttpError {
   constructor(clientMessage: string = "غير موجود") {
     super("NOT_FOUND", 404, clientMessage);
