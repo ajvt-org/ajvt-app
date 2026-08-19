@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "@/components/Icon";
+import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { formatDateTime, toThumbUrl } from "@/lib/utils";
 import { STATUS_LABEL, STATUS_BADGE } from "./constants";
 import type { Member } from "./types";
@@ -97,50 +98,31 @@ function MemberRow({
 
 export default function MemberList({
   members,
-  loading,
-  empty,
   selectedIds,
   onToggle,
   onOpen,
+  pagination,
 }: {
   members: Member[];
-  loading: boolean;
-  empty: boolean;
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
   onOpen: (member: Member) => void;
+  pagination?: AdminListPagination;
 }) {
-  if (loading) {
-    return (
-      <div className="text-center py-16" style={{ color: "var(--mint-500)" }}>
-        <div className="text-4xl animate-pulse mb-3">⏳</div>
-        <p className="text-sm font-semibold">جاري التحميل...</p>
-      </div>
-    );
-  }
-
-  if (empty) {
-    return (
-      <div className="card p-12 text-center" style={{ color: "var(--text-muted)" }}>
-        <div className="mb-3 flex justify-center">
-          <Icon name="file" size={40} color="var(--mint-400)" />
-        </div>
-        <p className="font-semibold">لا توجد طلبات في هذا القسم</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-2 sm:space-y-3">
-      {members.map((m) => (
+    <AdminList
+      items={members}
+      getKey={(m) => m.id}
+      renderRow={(m) => (
         <MemberRow
-          key={m.id}
           member={m}
           checked={selectedIds.has(m.id)}
           onToggle={() => onToggle(m.id)}
           onOpen={() => onOpen(m)}
         />
-      ))}
-    </div>
+      )}
+      emptyMessage="لا توجد طلبات في هذا القسم"
+      pagination={pagination}
+    />
   );
 }

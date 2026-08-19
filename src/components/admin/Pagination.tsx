@@ -14,7 +14,7 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-3 pt-1">
+    <div className="flex items-center justify-center gap-3 mt-3">
       <button
         onClick={() => onGo(page - 1)}
         disabled={page <= 1}

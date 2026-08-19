@@ -14,13 +14,18 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function createActivity(draft: NewActivityDraft) {
-    const data = await api.post<{ activity: Activity }>("/api/admin/activities", draft);
-    const created = data.activity;
-    if (created?.isTournament) {
-      router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
-      return;
+    setActionLoading(true);
+    try {
+      const data = await api.post<{ activity: Activity }>("/api/admin/activities", draft);
+      const created = data.activity;
+      if (created?.isTournament) {
+        router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
+        return;
+      }
+      await reload();
+    } finally {
+      setActionLoading(false);
     }
-    await reload();
   }
 
   async function updateActivityPhoto(id: string, photo: string) {
