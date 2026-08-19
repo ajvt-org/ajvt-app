@@ -5,6 +5,7 @@ import {
   curvePercent,
   curveScore,
   isTimestamp,
+  pickConfig,
   MAX_ROUNDS,
   DEFAULT_CURVE,
   DEFAULT_CONFIG,
@@ -58,6 +59,21 @@ describe("validateConfig", () => {
         boards: [{ title: "كل خمس جولات", blockRounds: 5, counting: 4, wholeRun: false }],
       }),
     ).toBeNull();
+  });
+
+  it("keeps only the keys a competition knows", () => {
+    const picked = pickConfig({
+      name: "مسابقة",
+      servedCount: 5,
+      poolSize: 30,
+      stray: true,
+    } as Record<string, unknown>);
+
+    expect(picked).toEqual({ name: "مسابقة", servedCount: 5 });
+  });
+
+  it("passes a full config through untouched", () => {
+    expect(pickConfig(config)).toEqual(config);
   });
 
   it("needs at least one ranking", () => {

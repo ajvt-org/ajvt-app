@@ -66,6 +66,14 @@ function deepestCategory(left: Map<string, BankQuestion[]>, questionCount: numbe
   return best;
 }
 
+export function drawShortfall(shape: DrawShape, planned: number, bankSize: number): string | null {
+  if (planned >= shape.roundCount) return null;
+  const needed = shape.roundCount * shape.questionCount;
+  return shape.categoryRounds
+    ? `التصنيفات لا تكفي، كل جولة تحتاج ${shape.questionCount} سؤالاً من تصنيف واحد، وأمكن تجهيز ${planned} جولة من ${shape.roundCount}`
+    : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bankSize}`;
+}
+
 export function planRounds(bank: BankQuestion[], shape: DrawShape, seed: string): RoundPlan[] {
   const plans: RoundPlan[] = [];
   let left = bank;

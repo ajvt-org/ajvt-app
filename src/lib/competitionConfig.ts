@@ -54,6 +54,14 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
 
 export const MAX_ROUNDS = 400;
 
+const CONFIG_KEYS = new Set(["name", "startsAt", ...Object.keys(DEFAULT_CONFIG)]);
+
+export function pickConfig(input: Partial<CompetitionConfig>): Partial<CompetitionConfig> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([key]) => CONFIG_KEYS.has(key)),
+  ) as Partial<CompetitionConfig>;
+}
+
 export function isTimestamp(value: string): boolean {
   const date = new Date(value);
   return typeof value === "string" && value.length > 0 && !Number.isNaN(date.getTime());

@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { roundWindows } from "./quizRound";
 import { requireCompetition, shapeOf, ALREADY_STARTED } from "./competitionServer";
-import { planRounds, type RoundPlan } from "./quizDraw";
+import { drawShortfall, planRounds, type RoundPlan } from "./quizDraw";
 import { ConflictError, ValidationError } from "./errors";
 
 export const NOT_A_ROUND = "هذه الجولة ليست من جولات المسابقة";
@@ -114,15 +114,16 @@ export async function fillRoundsFromBank(competitionId: string) {
 
   const windows = roundWindows(shapeOf(competition));
   const { bankSize, plans } = await bankPlans(competition);
-
-  if (plans.length < windows.length) {
-    const needed = windows.length * competition.servedCount;
-    throw new ValidationError(
-      competition.categoryRounds
-        ? `التصنيفات لا تكفي، كل جولة تحتاج ${competition.servedCount} سؤالاً من تصنيف واحد، وأمكن تجهيز ${plans.length} جولة من ${windows.length}`
-        : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bankSize}`,
-    );
-  }
+  const shortfall = drawShortfall(
+    {
+      roundCount: windows.length,
+      questionCount: competition.servedCount,
+      categoryRounds: competition.categoryRounds,
+    },
+    plans.length,
+    bankSize,
+  );
+  if (shortfall) throw new ValidationError(shortfall);
 
   for (const plan of plans) {
     await setRoundPool(competitionId, plan.index, plan.questionIds, plan.category);

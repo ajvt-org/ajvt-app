@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import {
   DEFAULT_BOARDS,
   DEFAULT_CONFIG,
+  pickConfig,
   validateConfig,
   type CompetitionConfig,
 } from "./competitionConfig";
@@ -120,18 +121,6 @@ function asRow(config: CompetitionConfig) {
   const { boards, ...rest } = config;
   void boards;
   return { ...rest, startsAt: new Date(config.startsAt) };
-}
-
-const CONFIG_KEYS = [
-  "name",
-  "startsAt",
-  ...Object.keys(DEFAULT_CONFIG),
-] as (keyof CompetitionConfig)[];
-
-function pickConfig(input: Partial<CompetitionConfig>): Partial<CompetitionConfig> {
-  return Object.fromEntries(
-    Object.entries(input).filter(([key]) => CONFIG_KEYS.includes(key as keyof CompetitionConfig)),
-  ) as Partial<CompetitionConfig>;
 }
 
 export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: string) {

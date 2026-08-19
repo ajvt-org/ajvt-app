@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { spreadByDifficulty, planRounds, type BankQuestion } from "./quizDraw";
+import { spreadByDifficulty, planRounds, drawShortfall, type BankQuestion } from "./quizDraw";
 import { difficultyOf } from "./quizDifficulty";
 
 const q = (id: string, category: string, points: number): BankQuestion => ({
@@ -202,5 +202,27 @@ describe("planRounds keeping a round to one category", () => {
 
     expect(planRounds(thin, shape, "c1")).toHaveLength(0);
     expect(planRounds(thin, { ...shape, categoryRounds: false }, "c1").length).toBeGreaterThan(0);
+  });
+});
+
+describe("drawShortfall", () => {
+  it("stays quiet when the bank covers the run", () => {
+    expect(
+      drawShortfall({ roundCount: 3, questionCount: 4, categoryRounds: false }, 3, 20),
+    ).toBeNull();
+  });
+
+  it("names what is missing when the bank runs short", () => {
+    const message = drawShortfall({ roundCount: 3, questionCount: 4, categoryRounds: false }, 1, 7);
+
+    expect(message).toContain("12");
+    expect(message).toContain("7");
+  });
+
+  it("blames the categories when rounds are drawn from one each", () => {
+    const message = drawShortfall({ roundCount: 3, questionCount: 4, categoryRounds: true }, 2, 40);
+
+    expect(message).toContain("التصنيفات لا تكفي");
+    expect(message).toContain("2");
   });
 });
