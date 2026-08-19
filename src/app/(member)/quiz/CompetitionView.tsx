@@ -136,7 +136,7 @@ export default function CompetitionView({
           </p>
           {!closed && attempt && (
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك في الجولة {attempt.score}
+              مجموعك {attempt.score} نقطة في هذه الجولة
             </p>
           )}
         </div>
