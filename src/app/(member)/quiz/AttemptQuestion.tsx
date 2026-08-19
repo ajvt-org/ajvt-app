@@ -24,18 +24,12 @@ export interface AttemptView {
 export default function AttemptQuestion({
   question,
   curve,
-  position,
-  total,
-  score,
   busy,
   onSubmit,
   onExpire,
 }: {
   question: AttemptView;
   curve?: ScoreCurve;
-  position: number;
-  total: number;
-  score?: number;
   busy: boolean;
   onSubmit: (selected: string[]) => void;
   onExpire?: () => void;
@@ -54,42 +48,8 @@ export default function AttemptQuestion({
   const ready = many ? picked.length === question.correctCount : picked.length === 1;
 
   return (
-    <div className="min-h-[100svh] p-5 pb-28" style={{ background: "var(--mint-50)" }}>
+    <div className="question-screen min-h-[100svh] p-5" style={{ background: "var(--mint-50)" }}>
       <div className="mx-auto w-full max-w-md flex flex-col gap-4">
-        <div
-          className="flex items-center justify-between text-xs"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <span className="font-bold">
-            <NumericRanges>{`${position + 1} / ${total}`}</NumericRanges>
-            {score !== undefined && (
-              <span className="ms-2" style={{ color: "var(--mint-700)" }}>
-                <NumericRanges>{`مجموعك ${score}`}</NumericRanges>
-              </span>
-            )}
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="badge badge-pending">{question.category}</span>
-            <span className="font-bold" style={{ color: "var(--mint-700)" }}>
-              <NumericRanges>{`${question.points} نقطة`}</NumericRanges>
-            </span>
-          </span>
-        </div>
-
-        <div
-          className="h-1 rounded-full overflow-hidden"
-          style={{ background: "var(--mint-100)" }}
-          role="progressbar"
-          aria-valuenow={position + 1}
-          aria-valuemin={1}
-          aria-valuemax={total}
-        >
-          <div
-            className="h-full"
-            style={{ width: `${((position + 1) / total) * 100}%`, background: "var(--mint-600)" }}
-          />
-        </div>
-
         {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} onExpire={onExpire} />}
 
         <h1 className="text-lg font-black leading-relaxed" style={{ color: "var(--text-main)" }}>

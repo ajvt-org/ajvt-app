@@ -87,9 +87,6 @@ export default function TutorialQuiz({
           options: question.options,
         }}
         curve={curve ?? DEFAULT_CURVE}
-        position={position}
-        total={TUTORIAL_QUESTIONS.length}
-        score={score}
         busy={false}
         onSubmit={answer}
         onExpire={skip}

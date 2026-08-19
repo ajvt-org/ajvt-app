@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 
 const post = vi.fn();
+const get = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { post: (...a: unknown[]) => post(...a) },
+  api: { post: (...a: unknown[]) => post(...a), get: (...a: unknown[]) => get(...a) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -48,6 +49,8 @@ const setup = () =>
 
 beforeEach(() => {
   post.mockReset();
+  get.mockReset();
+  get.mockResolvedValue({ rounds: [] });
 });
 
 describe("CompetitionView", () => {
@@ -74,18 +77,20 @@ describe("CompetitionView", () => {
     expect(screen.getByText("محمد")).toBeDefined();
   });
 
-  it("keeps my own scores behind their own tab", async () => {
+  it("puts my own scores below the standings, not among the tabs", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     setup();
-    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
 
-    expect(screen.queryByText(/تفاصيل نقاطي/)).toBeNull();
+    expect(screen.queryByRole("tab", { name: "نقاطي" })).toBeNull();
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.getByText(/تفاصيل نقاطي/)).toBeDefined();
   });
 
   it("offers no practice round from inside a quiz", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     setup();
-    await waitFor(() => screen.getByRole("tab", { name: "نقاطي" }));
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
 
     expect(screen.queryByText("جولة تجريبية")).toBeNull();
   });
@@ -131,7 +136,7 @@ describe("CompetitionView", () => {
     expect(screen.queryByRole("button", { name: "السؤال التالي" })).toBeNull();
   });
 
-  it("carries the running score into the next question", async () => {
+  it("keeps the score off the question screen", async () => {
     post.mockResolvedValueOnce({
       attemptId: "at1",
       score: 0,
@@ -154,7 +159,36 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 
-    await waitFor(() => expect(screen.getByText(/مجموعك 10/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText("سؤال ثان")).toBeDefined());
+    expect(screen.queryByText(/مجموعك/)).toBeNull();
+  });
+
+  it("hands the member back to the quiz list when the last answer lands", async () => {
+    const onBack = vi.fn();
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 0,
+      done: false,
+      total: 1,
+      position: 0,
+      question,
+    });
+    post.mockResolvedValueOnce({
+      attemptId: "at1",
+      score: 10,
+      done: true,
+      total: 1,
+      position: 1,
+      question: null,
+    });
+    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
+
+    await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
+    await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
+
+    await waitFor(() => expect(onBack).toHaveBeenCalled());
+    expect(screen.queryByText("أنهيت أسئلة الجولة")).toBeNull();
   });
 
   it("shows the standings once the attempt is finished", async () => {
@@ -169,8 +203,24 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText("أنهيت أسئلة الجولة")).toBeDefined());
-    expect(screen.getByText(/مجموعك في الجولة 40/)).toBeDefined();
+    expect(screen.getByText(/مجموعك 40 نقطة/)).toBeDefined();
     expect(screen.getByText("الترتيب العام")).toBeDefined();
+  });
+
+  it("never puts a number after the round word, even at zero", async () => {
+    post.mockResolvedValue({
+      attemptId: "at1",
+      score: 0,
+      done: true,
+      total: 2,
+      position: 2,
+      question: null,
+    });
+    setup();
+
+    await waitFor(() => expect(screen.getByText("أنهيت أسئلة الجولة")).toBeDefined());
+    expect(screen.queryByText(/الجولة 0/)).toBeNull();
+    expect(screen.getByText(/مجموعك 0 نقطة/)).toBeDefined();
   });
 
   it("shows the member their place when they are off the board", async () => {

@@ -25,8 +25,6 @@ interface Place {
   total: number;
 }
 
-const MINE = "mine";
-
 export interface StandingsBoard {
   id: string;
   title: string;
@@ -57,11 +55,8 @@ export default function CompetitionView({
   const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const tabs = [
-    ...standings.boards.map((b) => ({ id: b.id, title: b.title })),
-    { id: MINE, title: "نقاطي" },
-  ];
-  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? MINE);
+  const tabs = standings.boards.map((b) => ({ id: b.id, title: b.title }));
+  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? "");
   const open = standings.boards.find((b) => b.id === openTab) ?? null;
 
   useEffect(() => {
@@ -79,11 +74,20 @@ export default function CompetitionView({
     };
   }, [competitionId]);
 
+  function land(next: AttemptState) {
+    if (next.done) {
+      onReloadStandings();
+      onBack();
+      return;
+    }
+    setAttempt(next);
+  }
+
   async function skip() {
     if (!competitionId || busy) return;
     setBusy(true);
     try {
-      setAttempt(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
+      land(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
@@ -95,12 +99,12 @@ export default function CompetitionView({
     if (!attempt?.question) return;
     setBusy(true);
     try {
-      const next = await api.post<AttemptState>("/api/quiz/attempt/answer", {
-        answerId: attempt.question.answerId,
-        selectedAnswerIds: selected,
-      });
-      setAttempt(next);
-      if (next.done) onReloadStandings();
+      land(
+        await api.post<AttemptState>("/api/quiz/attempt/answer", {
+          answerId: attempt.question.answerId,
+          selectedAnswerIds: selected,
+        }),
+      );
     } catch (e) {
       setClosed(errorMessage(e));
     } finally {
@@ -113,9 +117,6 @@ export default function CompetitionView({
       <AttemptQuestion
         question={attempt.question}
         curve={attempt.curve}
-        position={attempt.position}
-        total={attempt.total}
-        score={attempt.score}
         busy={busy}
         onSubmit={answer}
         onExpire={skip}
@@ -136,14 +137,14 @@ export default function CompetitionView({
           </p>
           {!closed && attempt && (
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك في الجولة {attempt.score}
+              مجموعك {attempt.score} نقطة في هذه الجولة
             </p>
           )}
         </div>
 
         <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
 
-        {open ? (
+        {open && (
           <StandingsBoard
             title={open.title}
             rows={open.rows}
@@ -151,9 +152,9 @@ export default function CompetitionView({
             meId={standings.meId}
             empty="لا ترتيب بعد"
           />
-        ) : (
-          competitionId && <MyScores competitionId={competitionId} />
         )}
+
+        {competitionId && <MyScores competitionId={competitionId} />}
       </div>
     </div>
   );
