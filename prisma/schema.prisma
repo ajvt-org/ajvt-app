@@ -460,12 +460,24 @@ model AuditLog {
   @@index([targetType, targetId])
 }
 
+// A named pile of questions. A quiz draws from exactly one, so two quizzes can
+// be about different things without keeping their questions apart by hand.
+model QuestionBank {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  questions QuizQuestion[]
+}
+
 model QuizQuestion {
   id           String              @id @default(cuid())
   text         String
   category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
   points       Int                 @default(10)
   correctCount Int                 @default(1) // number of answers that must be selected to earn credit
+  bankId       String              @default("general")
+  bank         QuestionBank        @relation(fields: [bankId], references: [id])
   active       Boolean             @default(true) // soft-disable without losing send history
   createdBy    String // admin username
   createdAt    DateTime            @default(now())
@@ -475,6 +487,7 @@ model QuizQuestion {
   attemptRows  QuizAttemptAnswer[]
 
   @@index([active])
+  @@index([bankId])
 }
 
 model QuizAnswer {

@@ -6,6 +6,7 @@ import { getQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { quiz } from "@/lib/messages";
 import { pointsInRange, normalisePoints } from "@/lib/quizDifficulty";
+import { requireBank } from "@/lib/questionBankServer";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
 
@@ -14,11 +15,13 @@ interface AnswerInput {
   isCorrect?: boolean;
 }
 
-export const GET = withRoute("GET /api/admin/quiz/questions", async () => {
+export const GET = withRoute("GET /api/admin/quiz/questions", async (req: NextRequest) => {
   await requireAdminRole("QUIZ");
+  const bank = await requireBank(req.nextUrl.searchParams.get("bank"));
 
   const [questions, sentCounts, answeredCounts, correctCounts] = await Promise.all([
     prisma.quizQuestion.findMany({
+      where: { bankId: bank.id },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -58,12 +61,13 @@ export const GET = withRoute("GET /api/admin/quiz/questions", async () => {
     correctSubmissions: correctMap.get(q.id) ?? 0,
   }));
 
-  return NextResponse.json({ questions: result });
+  return NextResponse.json({ questions: result, bank });
 });
 
 export const POST = withRoute("POST /api/admin/quiz/questions", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  const { text, category, points, correctCount, answers } = await req.json();
+  const { text, category, points, correctCount, answers, bankId } = await req.json();
+  const bank = await requireBank(bankId);
 
   if (!text?.trim()) {
     return NextResponse.json({ error: quiz.textRequired }, { status: 400 });
@@ -106,6 +110,7 @@ export const POST = withRoute("POST /api/admin/quiz/questions", async (req: Next
       category: category.trim(),
       points: finalPoints,
       correctCount: finalCorrectCount,
+      bankId: bank.id,
       createdBy: session.username,
       answers: {
         create: (answers as AnswerInput[]).map((a, i) => ({

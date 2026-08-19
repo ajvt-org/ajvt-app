@@ -24,7 +24,7 @@ const valid = JSON.stringify([
 function setup() {
   const onImported = vi.fn();
   const onClose = vi.fn();
-  render(<ImportDialog onImported={onImported} onClose={onClose} />);
+  render(<ImportDialog bankId="general" onImported={onImported} onClose={onClose} />);
   return { onImported, onClose };
 }
 
