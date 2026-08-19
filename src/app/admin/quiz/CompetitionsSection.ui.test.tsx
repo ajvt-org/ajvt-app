@@ -29,7 +29,9 @@ const competition = {
   countingRounds: 6,
   categoryRounds: false,
   bankId: "general",
-  speedBands: [{ maxSeconds: null, percent: 50 }],
+  fullSeconds: 10,
+  maxSeconds: 30,
+  floorPercent: 50,
   startedAt: null,
   _count: { participants: 0, rounds: 0 },
 };

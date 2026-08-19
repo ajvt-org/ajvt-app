@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
   validateConfig,
-  validateBands,
-  bandPercent,
-  bandScore,
+  validateCurve,
+  curvePercent,
+  curveScore,
   isTimestamp,
   MAX_ROUNDS,
-  DEFAULT_BANDS,
+  DEFAULT_CURVE,
   DEFAULT_CONFIG,
 } from "./competitionConfig";
 
@@ -82,81 +82,94 @@ describe("validateConfig", () => {
   });
 });
 
-describe("validateBands", () => {
-  it("accepts the defaults", () => {
-    expect(validateBands(DEFAULT_BANDS)).toBeNull();
+describe("validateCurve", () => {
+  const curve = (over: Partial<typeof DEFAULT_CURVE>) =>
+    validateCurve({ ...DEFAULT_CURVE, ...over });
+
+  it("accepts the default curve", () => {
+    expect(validateCurve(DEFAULT_CURVE)).toBeNull();
   });
 
-  it("needs the last band to cover everything after it", () => {
-    expect(validateBands([{ maxSeconds: 10, percent: 100 }])).toContain("الشريحة الأخيرة");
+  it("lets the full points window be zero", () => {
+    expect(curve({ fullSeconds: 0 })).toBeNull();
   });
 
-  it("needs the bounds to climb", () => {
-    expect(
-      validateBands([
-        { maxSeconds: 30, percent: 100 },
-        { maxSeconds: 10, percent: 75 },
-        { maxSeconds: null, percent: 50 },
-      ]),
-    ).toContain("تصاعدية");
+  it("refuses a negative full points window", () => {
+    expect(curve({ fullSeconds: -1 })).toContain("مهلة النقاط الكاملة");
   });
 
-  it("needs the rewards to fall", () => {
-    expect(
-      validateBands([
-        { maxSeconds: 10, percent: 50 },
-        { maxSeconds: null, percent: 100 },
-      ]),
-    ).toContain("تنازلية");
+  it("refuses a question time that does not outlast the full points window", () => {
+    expect(curve({ fullSeconds: 30, maxSeconds: 30 })).toContain("مدة السؤال");
+    expect(curve({ fullSeconds: 30, maxSeconds: 20 })).toContain("مدة السؤال");
   });
 
-  it("keeps a percentage a percentage", () => {
-    expect(validateBands([{ maxSeconds: null, percent: 120 }])).toContain("بين 0 و 100");
+  it("refuses a floor outside 0 to 100", () => {
+    expect(curve({ floorPercent: -1 })).toContain("أقل نسبة");
+    expect(curve({ floorPercent: 101 })).toContain("أقل نسبة");
   });
 
-  it("refuses an empty set", () => {
-    expect(validateBands([])).toContain("شريحة سرعة واحدة");
+  it("lets the floor be zero", () => {
+    expect(curve({ floorPercent: 0 })).toBeNull();
+  });
+
+  it("refuses a value that is not a whole number", () => {
+    expect(curve({ maxSeconds: 30.5 })).toContain("مدة السؤال");
   });
 });
 
-describe("bandPercent", () => {
-  it("gives the fastest band inside its bound", () => {
-    expect(bandPercent(DEFAULT_BANDS, 0)).toBe(100);
-    expect(bandPercent(DEFAULT_BANDS, 9_999)).toBe(100);
-    expect(bandPercent(DEFAULT_BANDS, 10_000)).toBe(100);
+describe("curvePercent", () => {
+  const curve = { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 };
+
+  it("pays everything inside the full points window", () => {
+    expect(curvePercent(curve, 0)).toBe(100);
+    expect(curvePercent(curve, 10_000)).toBe(100);
   });
 
-  it("drops a band once the bound is passed", () => {
-    expect(bandPercent(DEFAULT_BANDS, 10_001)).toBe(75);
-    expect(bandPercent(DEFAULT_BANDS, 30_000)).toBe(75);
-    expect(bandPercent(DEFAULT_BANDS, 30_001)).toBe(50);
+  it("falls in a straight line after it", () => {
+    expect(curvePercent(curve, 20_000)).toBe(75);
+    expect(curvePercent(curve, 25_000)).toBe(62.5);
   });
 
-  it("gives two members at a similar pace the same band", () => {
-    expect(bandPercent(DEFAULT_BANDS, 3_000)).toBe(bandPercent(DEFAULT_BANDS, 7_400));
+  it("reaches the floor at the end of the question", () => {
+    expect(curvePercent(curve, 30_000)).toBe(50);
+  });
+
+  it("stays on the floor after that", () => {
+    expect(curvePercent(curve, 600_000)).toBe(50);
+  });
+
+  it("treats a negative elapsed as nothing spent", () => {
+    expect(curvePercent(curve, -5_000)).toBe(100);
+  });
+
+  it("pays everything up to the end when the floor is 100", () => {
+    expect(curvePercent({ ...curve, floorPercent: 100 }, 25_000)).toBe(100);
   });
 });
 
-describe("bandScore", () => {
-  it("pays the full points in the fastest band", () => {
-    expect(bandScore(10, DEFAULT_BANDS, 1_000)).toBe(10);
+describe("curveScore", () => {
+  const curve = { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 };
+
+  it("pays the whole question inside the window", () => {
+    expect(curveScore(10, curve, 1_000)).toBe(10);
   });
 
-  it("pays the band's share otherwise", () => {
-    expect(bandScore(10, DEFAULT_BANDS, 20_000)).toBe(8);
-    expect(bandScore(10, DEFAULT_BANDS, 60_000)).toBe(5);
+  it("rounds to the nearest point", () => {
+    expect(curveScore(10, curve, 20_000)).toBe(8);
+    expect(curveScore(15, curve, 25_000)).toBe(9);
   });
 
-  it("never rounds a scoring answer down to nothing", () => {
-    expect(bandScore(1, DEFAULT_BANDS, 60_000)).toBe(1);
+  it("pays the floor share once the question time is up", () => {
+    expect(curveScore(10, curve, 60_000)).toBe(5);
+    expect(curveScore(7, curve, 60_000)).toBe(4);
   });
 
   it("pays nothing for a question worth nothing", () => {
-    expect(bandScore(0, DEFAULT_BANDS, 0)).toBe(0);
+    expect(curveScore(0, curve, 0)).toBe(0);
   });
 
-  it("pays nothing when the band is worth nothing", () => {
-    expect(bandScore(10, [{ maxSeconds: null, percent: 0 }], 0)).toBe(0);
+  it("pays nothing when the floor is zero and the time is up", () => {
+    expect(curveScore(10, { ...curve, floorPercent: 0 }, 60_000)).toBe(0);
   });
 });
 

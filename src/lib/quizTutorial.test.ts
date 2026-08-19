@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TUTORIAL_QUESTIONS, isRight, gradeTutorial } from "./quizTutorial";
-import { DEFAULT_BANDS } from "./competitionConfig";
+import { DEFAULT_CURVE } from "./competitionConfig";
 
 const [single, , multi] = TUTORIAL_QUESTIONS;
 
@@ -50,15 +50,15 @@ describe("isRight", () => {
 
 describe("gradeTutorial", () => {
   it("pays the full points for a quick right answer", () => {
-    expect(gradeTutorial(single, single.correctIds, 2_000, DEFAULT_BANDS).points).toBe(10);
+    expect(gradeTutorial(single, single.correctIds, 2_000, DEFAULT_CURVE).points).toBe(10);
   });
 
   it("pays less for a slow right answer", () => {
-    expect(gradeTutorial(single, single.correctIds, 60_000, DEFAULT_BANDS).points).toBe(5);
+    expect(gradeTutorial(single, single.correctIds, 60_000, DEFAULT_CURVE).points).toBe(5);
   });
 
   it("pays nothing for a wrong answer", () => {
-    const out = gradeTutorial(single, ["t1b"], 2_000, DEFAULT_BANDS);
+    const out = gradeTutorial(single, ["t1b"], 2_000, DEFAULT_CURVE);
 
     expect(out.isCorrect).toBe(false);
     expect(out.points).toBe(0);

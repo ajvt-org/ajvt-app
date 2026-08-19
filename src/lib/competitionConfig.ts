@@ -1,14 +1,19 @@
-export interface SpeedBand {
-  maxSeconds: number | null;
-  percent: number;
-}
-
 export type Visibility = "PUBLIC" | "PRIVATE";
 
-export interface CompetitionConfig {
+// A correct answer keeps every point until fullSeconds, then falls in a straight
+// line to floorPercent at maxSeconds and stays there. maxSeconds is what one
+// question allows, so every question of a quiz decays on the same curve.
+export interface ScoreCurve {
+  fullSeconds: number;
+  maxSeconds: number;
+  floorPercent: number;
+}
+
+export interface CompetitionConfig extends ScoreCurve {
   name: string;
   startsAt: string;
   visibility: Visibility;
+  bankId: string;
   roundCount: number;
   roundPeriodMinutes: number;
   roundWindowMinutes: number;
@@ -17,18 +22,17 @@ export interface CompetitionConfig {
   groupSize: number;
   countingRounds: number;
   categoryRounds: boolean;
-  bankId: string;
-  speedBands: SpeedBand[];
 }
 
-export const DEFAULT_BANDS: SpeedBand[] = [
-  { maxSeconds: 10, percent: 100 },
-  { maxSeconds: 30, percent: 75 },
-  { maxSeconds: null, percent: 50 },
-];
+export const DEFAULT_CURVE: ScoreCurve = {
+  fullSeconds: 10,
+  maxSeconds: 30,
+  floorPercent: 50,
+};
 
 export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   visibility: "PUBLIC",
+  bankId: "general",
   roundCount: 30,
   roundPeriodMinutes: 1440,
   roundWindowMinutes: 840,
@@ -37,8 +41,7 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
-  bankId: "general",
-  speedBands: DEFAULT_BANDS,
+  ...DEFAULT_CURVE,
 };
 
 export const MAX_ROUNDS = 400;
@@ -48,25 +51,13 @@ export function isTimestamp(value: string): boolean {
   return typeof value === "string" && value.length > 0 && !Number.isNaN(date.getTime());
 }
 
-export function validateBands(bands: SpeedBand[]): string | null {
-  if (!Array.isArray(bands) || bands.length === 0) return "يجب تحديد شريحة سرعة واحدة على الأقل";
-  if (bands.some((b) => !Number.isInteger(b.percent) || b.percent < 0 || b.percent > 100)) {
-    return "نسبة الشريحة يجب أن تكون بين 0 و 100";
-  }
-  const last = bands[bands.length - 1];
-  if (last.maxSeconds !== null) return "الشريحة الأخيرة يجب أن تغطي ما بعد ذلك";
-  const bounded = bands.slice(0, -1);
-  if (bounded.some((b) => !Number.isInteger(b.maxSeconds) || (b.maxSeconds as number) <= 0)) {
-    return "حد الشريحة يجب أن يكون عدد ثوانٍ موجباً";
-  }
-  for (let i = 1; i < bounded.length; i++) {
-    if ((bounded[i].maxSeconds as number) <= (bounded[i - 1].maxSeconds as number)) {
-      return "حدود الشرائح يجب أن تكون تصاعدية";
-    }
-  }
-  for (let i = 1; i < bands.length; i++) {
-    if (bands[i].percent > bands[i - 1].percent) return "نسب الشرائح يجب أن تكون تنازلية";
-  }
+export function validateCurve(curve: ScoreCurve): string | null {
+  if (!Number.isInteger(curve.fullSeconds) || curve.fullSeconds < 0)
+    return "مهلة النقاط الكاملة يجب أن تكون عدد ثوانٍ صحيحاً";
+  if (!Number.isInteger(curve.maxSeconds) || curve.maxSeconds <= curve.fullSeconds)
+    return "مدة السؤال يجب أن تتجاوز مهلة النقاط الكاملة";
+  if (!Number.isInteger(curve.floorPercent) || curve.floorPercent < 0 || curve.floorPercent > 100)
+    return "أقل نسبة يجب أن تكون بين 0 و 100";
   return null;
 }
 
@@ -75,6 +66,7 @@ export function validateConfig(config: CompetitionConfig): string | null {
   if (!isTimestamp(config.startsAt)) return "وقت البداية غير صالح";
   if (config.visibility !== "PUBLIC" && config.visibility !== "PRIVATE")
     return "نوع المسابقة غير صالح";
+  if (typeof config.bankId !== "string" || !config.bankId) return "بنك الأسئلة مطلوب";
   if (!Number.isInteger(config.roundCount) || config.roundCount < 1) return "عدد الجولات غير صالح";
   if (config.roundCount > MAX_ROUNDS) return `عدد الجولات يجب ألا يتجاوز ${MAX_ROUNDS}`;
   if (!Number.isInteger(config.roundPeriodMinutes) || config.roundPeriodMinutes < 1)
@@ -97,20 +89,18 @@ export function validateConfig(config: CompetitionConfig): string | null {
     return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات المجموعة";
   }
   if (typeof config.categoryRounds !== "boolean") return "خيار تصنيف الجولة غير صالح";
-  if (typeof config.bankId !== "string" || !config.bankId) return "بنك الأسئلة مطلوب";
-  return validateBands(config.speedBands);
+  return validateCurve(config);
 }
 
-export function bandPercent(bands: SpeedBand[], elapsedMs: number): number {
+export function curvePercent(curve: ScoreCurve, elapsedMs: number): number {
   const seconds = Math.max(0, elapsedMs) / 1000;
-  for (const band of bands) {
-    if (band.maxSeconds === null || seconds <= band.maxSeconds) return band.percent;
-  }
-  return bands[bands.length - 1]?.percent ?? 0;
+  if (seconds <= curve.fullSeconds) return 100;
+  if (seconds >= curve.maxSeconds) return curve.floorPercent;
+  const share = (seconds - curve.fullSeconds) / (curve.maxSeconds - curve.fullSeconds);
+  return (1 - share) * (100 - curve.floorPercent) + curve.floorPercent;
 }
 
-export function bandScore(points: number, bands: SpeedBand[], elapsedMs: number): number {
+export function curveScore(points: number, curve: ScoreCurve, elapsedMs: number): number {
   if (points <= 0) return 0;
-  const percent = bandPercent(bands, elapsedMs);
-  return Math.max(percent > 0 ? 1 : 0, Math.round((points * percent) / 100));
+  return Math.round((points * curvePercent(curve, elapsedMs)) / 100);
 }

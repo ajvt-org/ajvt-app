@@ -7,7 +7,7 @@ vi.mock("@/lib/push", () => ({ sendPushToUser }));
 
 const { sendMatchReminders } = await import("@/lib/tournamentNotify");
 const { announceOpenDay } = await import("@/lib/quizNotify");
-const { DEFAULT_BANDS } = await import("@/lib/competitionConfig");
+const { DEFAULT_CURVE } = await import("@/lib/competitionConfig");
 
 async function scheduledMatch() {
   const activity = await prisma.activity.create({
@@ -95,7 +95,7 @@ async function openDayWithQuestions() {
       poolSize: 1,
       groupSize: 7,
       countingRounds: 6,
-      speedBands: DEFAULT_BANDS as unknown as object,
+      ...DEFAULT_CURVE,
       startedAt: new Date(),
     },
   });
@@ -153,7 +153,7 @@ describe("announceOpenDay", () => {
         poolSize: 1,
         groupSize: 7,
         countingRounds: 6,
-        speedBands: DEFAULT_BANDS as unknown as object,
+        ...DEFAULT_CURVE,
         startedAt: new Date(),
       },
     });

@@ -1,11 +1,6 @@
 import type { Competition } from "@prisma/client";
 import { prisma } from "./prisma";
-import {
-  DEFAULT_CONFIG,
-  validateConfig,
-  type CompetitionConfig,
-  type SpeedBand,
-} from "./competitionConfig";
+import { DEFAULT_CONFIG, validateConfig, type CompetitionConfig } from "./competitionConfig";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
@@ -99,16 +94,14 @@ function asConfig(row: Competition): CompetitionConfig {
     countingRounds: row.countingRounds,
     categoryRounds: row.categoryRounds,
     bankId: row.bankId,
-    speedBands: row.speedBands as unknown as SpeedBand[],
+    fullSeconds: row.fullSeconds,
+    maxSeconds: row.maxSeconds,
+    floorPercent: row.floorPercent,
   };
 }
 
 function asRow(config: CompetitionConfig) {
-  return {
-    ...config,
-    startsAt: new Date(config.startsAt),
-    speedBands: config.speedBands as unknown as object,
-  };
+  return { ...config, startsAt: new Date(config.startsAt) };
 }
 
 export async function saveCompetition(input: Partial<CompetitionConfig>, id?: string) {

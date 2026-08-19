@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 import AttemptResult from "./AttemptResult";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import MyScores from "./MyScores";
@@ -15,6 +16,7 @@ interface AttemptState {
   done: boolean;
   total: number;
   position: number;
+  curve?: ScoreCurve;
   question: AttemptView | null;
 }
 
@@ -96,6 +98,7 @@ export default function CompetitionView({
       done: result.done,
       total: result.total,
       position: result.position,
+      curve: result.curve,
       question: result.question,
     });
     setResult(null);
@@ -118,6 +121,7 @@ export default function CompetitionView({
     return (
       <AttemptQuestion
         question={attempt.question}
+        curve={attempt.curve}
         position={attempt.position}
         total={attempt.total}
         busy={busy}

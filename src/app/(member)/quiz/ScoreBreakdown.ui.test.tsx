@@ -8,10 +8,7 @@ const detail: AttemptDetailView = {
   round: 2,
   category: "جغرافيا",
   competitionName: "مسابقة الصيف",
-  speedBands: [
-    { maxSeconds: 10, percent: 100 },
-    { maxSeconds: null, percent: 50 },
-  ],
+  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   groupSize: 7,
   countingRounds: 6,
   breakdown: {
@@ -78,7 +75,7 @@ describe("ScoreBreakdown", () => {
   it("explains the formula from the bands the quiz uses", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/خلال 10 ثانية 100 بالمئة/)).toBeDefined();
+    expect(screen.getByText(/حتى 10 ثانية، كل النقاط/)).toBeDefined();
     expect(screen.getByText(/أفضل 6 جولة من 7/)).toBeDefined();
   });
 });

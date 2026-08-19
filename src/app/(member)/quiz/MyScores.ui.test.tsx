@@ -20,7 +20,7 @@ const detail = {
   round: 0,
   category: "جغرافيا",
   competitionName: "مسابقة",
-  speedBands: [{ maxSeconds: null, percent: 50 }],
+  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   groupSize: 7,
   countingRounds: 6,
   breakdown: {

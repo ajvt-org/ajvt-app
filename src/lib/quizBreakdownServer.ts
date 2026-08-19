@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { NotFoundError } from "./errors";
 import { breakdownOf, type AnswerRow, type Breakdown } from "./quizBreakdown";
-import type { SpeedBand } from "./competitionConfig";
+import type { ScoreCurve } from "./competitionConfig";
 
 export const NO_ATTEMPT = "لا توجد محاولة";
 
@@ -13,7 +13,7 @@ export interface AttemptDetail {
   category: string | null;
   competitionId: string;
   competitionName: string;
-  speedBands: SpeedBand[];
+  curve: ScoreCurve;
   groupSize: number;
   countingRounds: number;
   finishedAt: Date | null;
@@ -34,7 +34,11 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     where: { userId: attempt.userId },
     select: { fullName: true },
   });
-  const bands = attempt.round.competition.speedBands as unknown as SpeedBand[];
+  const curve: ScoreCurve = {
+    fullSeconds: attempt.round.competition.fullSeconds,
+    maxSeconds: attempt.round.competition.maxSeconds,
+    floorPercent: attempt.round.competition.floorPercent,
+  };
   const rows: AnswerRow[] = attempt.answers.map((answer) => ({
     position: answer.position,
     question: answer.question.text,
@@ -53,11 +57,11 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     category: attempt.round.category,
     competitionId: attempt.round.competitionId,
     competitionName: attempt.round.competition.name,
-    speedBands: bands,
+    curve,
     groupSize: attempt.round.competition.groupSize,
     countingRounds: attempt.round.competition.countingRounds,
     finishedAt: attempt.finishedAt,
-    breakdown: breakdownOf(rows, bands),
+    breakdown: breakdownOf(rows, curve),
   };
 }
 

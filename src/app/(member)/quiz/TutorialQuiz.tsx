@@ -6,22 +6,22 @@ import NumericRanges from "@/components/NumericRanges";
 import AttemptQuestion from "./AttemptQuestion";
 import AttemptResult from "./AttemptResult";
 import { TUTORIAL_QUESTIONS, gradeTutorial } from "@/lib/quizTutorial";
-import type { SpeedBand } from "@/lib/competitionConfig";
+import { DEFAULT_CURVE, type ScoreCurve } from "@/lib/competitionConfig";
 
 export default function TutorialQuiz({
-  bands,
+  curve,
   onExit,
 }: {
-  bands?: SpeedBand[];
+  curve?: ScoreCurve;
   onExit: () => void;
 }) {
   const [position, setPosition] = useState(0);
   const [score, setScore] = useState(0);
   const [result, setResult] = useState<{ isCorrect: boolean; points: number } | null>(null);
-  const shownAt = useRef(0);
+  const startedAt = useRef(0);
 
   useEffect(() => {
-    shownAt.current = performance.now();
+    startedAt.current = performance.now();
   }, [position]);
 
   const question = TUTORIAL_QUESTIONS[position];
@@ -29,8 +29,8 @@ export default function TutorialQuiz({
   const done = position >= TUTORIAL_QUESTIONS.length;
 
   function answer(selected: string[]) {
-    const elapsed = shownAt.current ? performance.now() - shownAt.current : 0;
-    const graded = gradeTutorial(question, selected, elapsed, bands);
+    const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
+    const graded = gradeTutorial(question, selected, elapsed, curve);
     setScore((s) => s + graded.points);
     setResult(graded);
   }
@@ -44,7 +44,6 @@ export default function TutorialQuiz({
     setPosition(0);
     setScore(0);
     setResult(null);
-    shownAt.current = performance.now();
   }
 
   if (result) {
@@ -95,14 +94,17 @@ export default function TutorialQuiz({
         جولة تجريبية، لا تحتسب نقاطها
       </div>
       <AttemptQuestion
+        key={position}
         question={{
           answerId: question.id,
           text: question.text,
           category: question.category,
           points: question.points,
           correctCount: question.correctCount,
+          shownAt: "",
           options: question.options,
         }}
+        curve={curve ?? DEFAULT_CURVE}
         position={position}
         total={TUTORIAL_QUESTIONS.length}
         busy={false}

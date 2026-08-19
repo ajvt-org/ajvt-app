@@ -9,6 +9,7 @@ const single: AttemptView = {
   category: "جغرافيا",
   points: 10,
   correctCount: 1,
+  shownAt: "2026-08-20T09:00:00.000Z",
   options: [
     { id: "o1", text: "نواكشوط" },
     { id: "o2", text: "نواذيبو" },
