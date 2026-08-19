@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
-import { resetDb } from "./helpers";
+import { resetDb, postForm } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
   const actual = await orig<typeof import("@/lib/imageProcessing")>();
@@ -18,11 +17,7 @@ function form(fields: Record<string, string>, ip: string) {
   const fd = new FormData();
   fd.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
   for (const [k, v] of Object.entries(fields)) fd.append(k, v);
-  return new NextRequest("http://localhost/api/donations", {
-    method: "POST",
-    body: fd,
-    headers: { "x-forwarded-for": ip },
-  });
+  return postForm("/api/donations", fd, { "x-forwarded-for": ip });
 }
 
 const base = { amount: "5000", paymentMethod: "بنكيلي" };

@@ -9,4 +9,5 @@ export const common = {
   allFieldsRequired: "يرجى ملء جميع الحقول",
   tooManyAttempts: "محاولات كثيرة جداً، حاول بعد قليل",
   invalidDate: "تاريخ غير صالح",
+  crossOrigin: "طلب صادر من موقع غير موثوق",
 } as const;
