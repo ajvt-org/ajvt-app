@@ -6,116 +6,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { validatePhone, loginPathWithNext, safeNextPath } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
-import PhotoUpload from "@/components/PhotoUpload";
-import ProofUpload from "@/components/ProofUpload";
 import { generateReferenceCode } from "@/lib/referenceCode";
-import {
-  MEMBERSHIP_FEE,
-  ONLINE_PAYMENT_METHODS as PAYMENT_METHODS,
-  validatePaidAmount,
-} from "@/lib/donations";
-import { arabicValidity } from "@/lib/validationMessage";
+import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { surplusOf } from "@/lib/membershipSurplus";
 import { validateDonorChoice } from "@/lib/donorChoice";
-import DonorNameChoice from "@/components/DonorNameChoice";
-import { api } from "@/lib/api";
-import { errorMessage } from "@/lib/api";
-import ArrowLabel from "@/components/ArrowLabel";
-import Icon from "@/components/Icon";
+import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
-
-// Auto-logout after this long with no click/keypress/scroll/touch.
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
-
-const PAYMENT_CODES: Record<string, string> = {
-  بنكيلي: "027217",
-  السداد: "08493",
-  مصرفي: "037940",
-};
-
-// Filling this form legitimately means leaving the app to pay, then coming
-// back — long enough to trip the 30-minute idle logout. Autosaving the text
-// fields (not the proof photo, too large for localStorage, nor the
-// password, too sensitive) means that doesn't silently wipe out what the
-// member already typed.
-const DRAFT_KEY = "ajvt_form_draft";
-
-const DEFAULT_AGES = [
-  "البدريين",
-  "الفائزين",
-  "النجميين",
-  "المجاهدين",
-  "المنصورين",
-  "الخاشعين",
-  "التائبين",
-];
-
-// New registrations walk 3 steps (info → account → payment). Someone who
-// already has an account (returning to add another member, or resuming
-// mid-flow right after step 2 created one) skips straight past step 2 —
-// there's nothing left to create.
-const STEPS_NEW = [1, 2, 3] as const;
-const STEPS_AUTHENTICATED = [1, 3] as const;
-
-function isArabicName(value: string): boolean {
-  return /^[؀-ۿ\s]+$/.test(value.trim());
-}
-
-function PhoneInput({
-  id,
-  value,
-  onChange,
-  placeholder = "2XXXXXXX",
-}: {
-  id?: string;
-  value: string;
-  onChange: (val: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <input
-      id={id}
-      type="tel"
-      autoComplete="tel"
-      inputMode="numeric"
-      value={value}
-      onChange={(e) => {
-        const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
-        onChange(digits);
-      }}
-      placeholder={placeholder}
-      dir="ltr"
-      maxLength={8}
-      className="input"
-      style={{ letterSpacing: "0.15em" }}
-    />
-  );
-}
-
-function ProgressBar({ stepIndex, total }: { stepIndex: number; total: number }) {
-  return (
-    <div className="mb-5 fade-up">
-      <div className="flex items-center gap-1.5">
-        {Array.from({ length: total }).map((_, i) => (
-          <div
-            key={i}
-            className="flex-1 h-1.5 rounded-full transition-all"
-            style={{ background: i <= stepIndex ? "var(--mint-600)" : "var(--mint-100)" }}
-          />
-        ))}
-      </div>
-      <p
-        className="text-xs text-center mt-1.5 font-semibold"
-        style={{ color: "var(--text-muted)" }}
-      >
-        الخطوة {stepIndex + 1} من {total}
-      </p>
-    </div>
-  );
-}
+import ProgressBar from "./ProgressBar";
+import StepIdentity from "./StepIdentity";
+import StepAccount from "./StepAccount";
+import StepPayment from "./StepPayment";
+import SubmittedCard from "./SubmittedCard";
+import {
+  DEFAULT_AGES,
+  DRAFT_KEY,
+  IDLE_TIMEOUT_MS,
+  STEPS_AUTHENTICATED,
+  STEPS_NEW,
+  isArabicName,
+} from "./constants";
 
 export default function FormPage() {
   return (
@@ -489,100 +401,14 @@ function FormPageInner() {
 
   if (submitted) {
     return (
-      <div className="app-shell">
-        <div
-          className="px-5 py-8 text-center"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          <div className="mb-2 flex justify-center">
-            <Icon name="check" size={48} color="white" />
-          </div>
-          <h1 className="text-lg font-black text-white">
-            {editId ? "تم إرسال التعديلات بنجاح" : "تم إرسال طلبك بنجاح"}
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
-            سيراجع فريق الرابطة طلبك خلال أقل من ساعة
-          </p>
-        </div>
-
-        <div className="px-5 py-6 space-y-4">
-          <div className="card p-4 fade-up">
-            <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
-              رقم دفترك — احتفظ به للمتابعة
-            </p>
-            <div
-              className="flex items-center justify-between rounded-xl px-3 py-2.5"
-              style={{ background: "var(--mint-50)" }}
-            >
-              <span
-                className="font-mono font-black text-lg"
-                style={{ color: "var(--mint-700)" }}
-                dir="ltr"
-              >
-                {form.referenceCode}
-              </span>
-              <button
-                type="button"
-                onClick={() => copyCode(form.referenceCode)}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{
-                  background: copied === form.referenceCode ? "var(--mint-600)" : "white",
-                  color: copied === form.referenceCode ? "white" : "var(--mint-700)",
-                  border: "1px solid var(--mint-200)",
-                }}
-              >
-                {copied === form.referenceCode ? (
-                  <IconLabel name="check">تم النسخ</IconLabel>
-                ) : (
-                  "نسخ"
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="card p-4 fade-up delay-1">
-            <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
-              ملخص الطلب
-            </p>
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-muted)" }}>الاسم</span>
-                <span className="font-bold">{form.fullName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-muted)" }}>العصر</span>
-                <span className="font-bold">{form.age}</span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span>
-                <span className="font-bold">{form.paymentMethod}</span>
-              </div>
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-muted)" }}>المبلغ</span>
-                <span className="font-bold" dir="ltr">
-                  {form.paidAmount} أوقية
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={shareReferenceCode}
-            className="btn btn-primary fade-up delay-1"
-          >
-            <IconLabel name="upload">مشاركة رقم الدفتر</IconLabel>
-          </button>
-          <button
-            type="button"
-            onClick={() => goAfterAuthChange(router, "/profile")}
-            className="btn fade-up delay-2"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <ArrowLabel>الذهاب إلى حسابي</ArrowLabel>
-          </button>
-        </div>
-      </div>
+      <SubmittedCard
+        form={form}
+        editing={!!editId}
+        copied={copied}
+        onCopy={copyCode}
+        onShare={shareReferenceCode}
+        onProfile={() => goAfterAuthChange(router, "/profile")}
+      />
     );
   }
 
@@ -652,514 +478,59 @@ function FormPageInner() {
           </div>
         )}
 
-        {/* Step 1 — personal info */}
         {currentStep === 1 && (
-          <div className="space-y-5 fade-up delay-1">
-            <div>
-              <label
-                htmlFor="member-fullname"
-                className="block text-sm font-bold mb-1.5"
-                style={{ color: "var(--text-main)" }}
-              >
-                الاسم الكامل (بالحروف العربية) <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              <input
-                id="member-fullname"
-                name="fullName"
-                value={form.fullName}
-                onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
-                required
-                {...arabicValidity()}
-                maxLength={30}
-                placeholder="أدخل اسمك الكامل بالعربية"
-                className="input"
-              />
-              {form.fullName && !isArabicName(form.fullName) && (
-                <p className="text-xs mt-1" style={{ color: "#dc2626" }}>
-                  يرجى الكتابة بالحروف العربية فقط
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="member-phone"
-                className="block text-sm font-bold mb-1.5"
-                style={{ color: "var(--text-main)" }}
-              >
-                رقم الهاتف <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              {authenticated ? (
-                <>
-                  <p className="input flex items-center" dir="ltr" id="member-phone">
-                    {form.phone}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                    رقم حسابك — لتغييره تواصل مع المشرف
-                  </p>
-                </>
-              ) : (
-                <>
-                  <PhoneInput
-                    id="member-phone"
-                    value={form.phone}
-                    onChange={(val) => setForm((p) => ({ ...p, phone: val }))}
-                  />
-                  <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                    8 أرقام — يبدأ بـ 2 أو 3 أو 4
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="member-age"
-                className="block text-sm font-bold mb-1.5"
-                style={{ color: "var(--text-main)" }}
-              >
-                العصر <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              <select
-                id="member-age"
-                value={showAddAge ? "__add__" : form.age}
-                onChange={handleAgeSelect}
-                className="input"
-                style={{
-                  appearance: "none",
-                  backgroundImage:
-                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a9c7e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "left 12px center",
-                  paddingLeft: "36px",
-                }}
-              >
-                <option value="" disabled>
-                  اختر العصر...
-                </option>
-                {ages.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-                <option value="__add__">+ إضافة عصر جديد</option>
-              </select>
-
-              {showAddAge && (
-                <div className="mt-2 flex gap-2">
-                  <input
-                    type="text"
-                    value={newAge}
-                    onChange={(e) => setNewAge(e.target.value)}
-                    placeholder="اكتب اسم العصر..."
-                    maxLength={30}
-                    className="input flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomAge();
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomAge}
-                    disabled={!newAge.trim()}
-                    className="btn btn-primary px-4 py-2 text-sm font-bold disabled:opacity-40"
-                    style={{ width: "auto" }}
-                  >
-                    إضافة
-                  </button>
-                </div>
-              )}
-
-              {form.age && !showAddAge && (
-                <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
-                  <IconLabel name="check">{form.age}</IconLabel>
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <div
-                className="p-4 rounded-xl text-sm font-semibold"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                <IconLabel name="warning">{error}</IconLabel>
-              </div>
-            )}
-
-            <button type="button" onClick={goNextFromStep1} className="btn btn-primary mt-2">
-              <ArrowLabel>التالي</ArrowLabel>
-            </button>
-          </div>
+          <StepIdentity
+            form={form}
+            setForm={setForm}
+            authenticated={authenticated}
+            ages={ages}
+            showAddAge={showAddAge}
+            newAge={newAge}
+            setNewAge={setNewAge}
+            onAgeSelect={handleAgeSelect}
+            onAddCustomAge={addCustomAge}
+            error={error}
+            onNext={goNextFromStep1}
+          />
         )}
 
-        {/* Step 2 — account creation (skipped for members who already have one) */}
+        {/* Skipped for members who already have an account. */}
         {currentStep === 2 && (
-          <div className="space-y-5 fade-up delay-1">
-            <div className="card p-4 text-center">
-              <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                <IconLabel name="lock">أنشئ حساباً لحفظ طلبك ومتابعته لاحقاً</IconLabel>
-              </p>
-              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }} dir="ltr">
-                {form.phone}
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="member-password"
-                className="block text-sm font-bold mb-1.5"
-                style={{ color: "var(--text-main)" }}
-              >
-                كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              <input
-                id="member-password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                {...arabicValidity()}
-                placeholder="••••••••"
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="member-password-confirm"
-                className="block text-sm font-bold mb-1.5"
-                style={{ color: "var(--text-main)" }}
-              >
-                تأكيد كلمة المرور <span style={{ color: "var(--copper-500)" }}>*</span>
-              </label>
-              <input
-                id="member-password-confirm"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                {...arabicValidity()}
-                placeholder="••••••••"
-                className="input"
-              />
-            </div>
-
-            {error && (
-              <div
-                className="p-4 rounded-xl text-sm font-semibold"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                <IconLabel name="warning">{error}</IconLabel>
-                {error === "رقم الهاتف مسجّل مسبقاً" && (
-                  <>
-                    {" — "}
-                    <Link href={loginPathWithNext("/login")} className="underline font-bold">
-                      تسجيل الدخول
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-2 mt-2">
-              <button
-                type="button"
-                onClick={goBack}
-                className="btn px-4"
-                style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
-              >
-                <ArrowLabel direction="back">السابق</ArrowLabel>
-              </button>
-              <button
-                type="button"
-                onClick={createAccount}
-                disabled={accountLoading}
-                className="btn btn-primary flex-1"
-              >
-                {accountLoading ? "جاري إنشاء الحساب..." : <ArrowLabel>التالي</ArrowLabel>}
-              </button>
-            </div>
-          </div>
+          <StepAccount
+            phone={form.phone}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            error={error}
+            loading={accountLoading}
+            onBack={goBack}
+            onCreate={createAccount}
+          />
         )}
 
-        {/* Step 3 — payment and proof */}
         {currentStep === 3 && (
-          <>
-            <div className="card p-4 mb-4 fade-up">
-              <PhotoUpload
-                photo={photo}
-                onUpload={(filename) => setPhoto(filename)}
-                label="الصورة الشخصية (اختياري)"
-                placeholderIcon="user"
-              />
-              <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-                يمكنك إضافتها الآن أو لاحقاً من صفحتك الشخصية
-              </p>
-            </div>
-
-            <div className="fade-up">
-              <p
-                id="member-method-label"
-                className="block text-sm font-bold mb-2"
-                style={{ color: "var(--text-main)" }}
-              >
-                طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
-              </p>
-              <div
-                className="grid grid-cols-3 gap-2"
-                role="radiogroup"
-                aria-labelledby="member-method-label"
-              >
-                {PAYMENT_METHODS.map((method) => (
-                  <button
-                    key={method}
-                    type="button"
-                    role="radio"
-                    aria-checked={form.paymentMethod === method}
-                    onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
-                    className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                    style={{
-                      background: form.paymentMethod === method ? "var(--mint-600)" : "white",
-                      color: form.paymentMethod === method ? "white" : "var(--mint-700)",
-                      borderColor:
-                        form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
-                    }}
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {form.paymentMethod && (
-              <div
-                className="rounded-2xl p-4 mt-4 mb-6 fade-up"
-                style={{
-                  background: "linear-gradient(135deg, var(--mint-700), var(--mint-800))",
-                  border: "1px solid var(--copper-400)",
-                }}
-              >
-                <p className="text-sm font-bold mb-3 text-white">
-                  <IconLabel name="card">الدفع عبر {form.paymentMethod}</IconLabel>
-                </p>
-                <div className="space-y-2">
-                  <div
-                    className="flex items-center justify-between rounded-xl px-3 py-2"
-                    style={{ background: "rgba(255,255,255,0.1)" }}
-                  >
-                    <span className="text-sm font-semibold text-white">رقم المستلم</span>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="font-mono font-bold text-sm"
-                        style={{ color: "var(--mint-200)" }}
-                        dir="ltr"
-                      >
-                        {PAYMENT_CODES[form.paymentMethod]}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => copyCode(PAYMENT_CODES[form.paymentMethod])}
-                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                        style={{
-                          background:
-                            copied === PAYMENT_CODES[form.paymentMethod]
-                              ? "rgba(52,211,153,0.3)"
-                              : "rgba(255,255,255,0.15)",
-                          color: copied === PAYMENT_CODES[form.paymentMethod] ? "#6ee7b7" : "white",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          minWidth: "52px",
-                        }}
-                      >
-                        {copied === PAYMENT_CODES[form.paymentMethod] ? (
-                          <IconLabel name="check">تم</IconLabel>
-                        ) : (
-                          "نسخ"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex items-center justify-between rounded-xl px-3 py-2"
-                    style={{ background: "rgba(255,255,255,0.1)" }}
-                  >
-                    <span className="text-sm font-semibold text-white">المبلغ</span>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="font-mono font-bold text-sm"
-                        style={{ color: "var(--mint-200)" }}
-                        dir="ltr"
-                      >
-                        {form.paidAmount || membershipFee}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => copyCode(String(form.paidAmount || membershipFee))}
-                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                        style={{
-                          background:
-                            copied === String(form.paidAmount || membershipFee)
-                              ? "rgba(52,211,153,0.3)"
-                              : "rgba(255,255,255,0.15)",
-                          color:
-                            copied === String(form.paidAmount || membershipFee)
-                              ? "#6ee7b7"
-                              : "white",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          minWidth: "52px",
-                        }}
-                      >
-                        {copied === String(form.paidAmount || membershipFee) ? (
-                          <IconLabel name="check">تم</IconLabel>
-                        ) : (
-                          "نسخ"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex items-center justify-between rounded-xl px-3 py-2"
-                    style={{ background: "rgba(255,255,255,0.1)" }}
-                  >
-                    <span className="text-sm font-semibold text-white">
-                      رمز الطلب (اكتبه في سبب التحويل)
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="font-mono font-bold text-sm"
-                        style={{ color: "var(--mint-200)" }}
-                        dir="ltr"
-                      >
-                        {form.referenceCode}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => copyCode(form.referenceCode)}
-                        className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                        style={{
-                          background:
-                            copied === form.referenceCode
-                              ? "rgba(52,211,153,0.3)"
-                              : "rgba(255,255,255,0.15)",
-                          color: copied === form.referenceCode ? "#6ee7b7" : "white",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          minWidth: "52px",
-                        }}
-                      >
-                        {copied === form.referenceCode ? (
-                          <IconLabel name="check">تم</IconLabel>
-                        ) : (
-                          "نسخ"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها
-                  أدناه
-                </p>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
-              <div>
-                <label
-                  htmlFor="member-paid"
-                  className="block text-sm font-bold mb-1.5"
-                  style={{ color: "var(--text-main)" }}
-                >
-                  المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
-                </label>
-                <input
-                  id="member-paid"
-                  type="number"
-                  inputMode="numeric"
-                  min={MEMBERSHIP_FEE}
-                  value={form.paidAmount}
-                  onChange={(e) => setForm((p) => ({ ...p, paidAmount: e.target.value }))}
-                  placeholder={String(MEMBERSHIP_FEE)}
-                  className="input"
-                  dir="ltr"
-                />
-                <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                  الحد الأدنى {membershipFee} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل كتبرّع بعد
-                  قبول الطلب، وتختار أنت كيف يظهر
-                </p>
-              </div>
-
-              {surplus > 0 && (
-                <DonorNameChoice
-                  wantsName={wantsName}
-                  onPick={setWantsName}
-                  memberName={form.fullName.trim() || undefined}
-                />
-              )}
-
-              <ProofUpload
-                existingProof={proofFilename}
-                onUploaded={setProofFilename}
-                onUploadingChange={setProofUploading}
-              />
-
-              {error && (
-                <div
-                  className="p-4 rounded-xl text-sm font-semibold"
-                  style={{ background: "#fee2e2", color: "#991b1b" }}
-                >
-                  <IconLabel name="warning">{error}</IconLabel>
-                </div>
-              )}
-
-              <div className="flex gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="btn px-4"
-                  style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
-                >
-                  <ArrowLabel direction="back">السابق</ArrowLabel>
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || proofUploading}
-                  className="btn btn-primary flex-1"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
-                      </svg>
-                      جاري إرسال الطلب...
-                    </span>
-                  ) : editId ? (
-                    <ArrowLabel>حفظ التعديلات</ArrowLabel>
-                  ) : (
-                    <ArrowLabel>إرسال طلب الانضمام</ArrowLabel>
-                  )}
-                </button>
-              </div>
-            </form>
-          </>
+          <StepPayment
+            form={form}
+            setForm={setForm}
+            photo={photo}
+            setPhoto={setPhoto}
+            membershipFee={membershipFee}
+            copied={copied}
+            onCopy={copyCode}
+            surplus={surplus}
+            wantsName={wantsName}
+            setWantsName={setWantsName}
+            proofFilename={proofFilename}
+            setProofFilename={setProofFilename}
+            setProofUploading={setProofUploading}
+            error={error}
+            loading={loading}
+            proofUploading={proofUploading}
+            editing={!!editId}
+            onBack={goBack}
+            onSubmit={handleSubmit}
+          />
         )}
       </div>
     </div>
