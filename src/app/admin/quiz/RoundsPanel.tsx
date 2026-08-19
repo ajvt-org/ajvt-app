@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "@/lib/api";
+import { api } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
@@ -16,18 +16,14 @@ interface RoundRow {
 interface RoundsBody {
   rounds: RoundRow[];
   bankSize: number;
+  plannable: number;
   servedCount: number;
-  poolSize: number;
   startedAt: string | null;
 }
 
 export default function RoundsPanel({ competitionId }: { competitionId: string }) {
   const [body, setBody] = useState<RoundsBody | null>(null);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
-  const [reload, setReload] = useState(0);
 
   const path = `/api/admin/quiz/competitions/${competitionId}/rounds`;
 
@@ -46,27 +42,13 @@ export default function RoundsPanel({ competitionId }: { competitionId: string }
     return () => {
       alive = false;
     };
-  }, [path, reload]);
+  }, [path]);
 
-  async function fill() {
-    setBusy(true);
-    setError("");
-    setNotice("");
-    try {
-      const { filled } = await api.post<{ filled: number }>(`${path}/fill`, {});
-      setNotice(`تم توزيع الأسئلة على ${filled} جولة`);
-      setReload((n) => n + 1);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
-  }
+  if (missing || !body) return null;
 
-  if (missing) return null;
-
-  const ready = body ? body.rounds.filter((r) => r.loaded >= body.servedCount).length : 0;
-  const needed = body ? body.rounds.length * body.poolSize : 0;
+  const total = body.rounds.length;
+  const needed = total * body.servedCount;
+  const short = body.plannable < total;
 
   return (
     <div className="card p-4 space-y-3">
@@ -74,20 +56,20 @@ export default function RoundsPanel({ competitionId }: { competitionId: string }
         <IconLabel name="calendar">جولات المسابقة</IconLabel>
       </p>
 
-      {body && (
+      {!body.startedAt && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          جاهزة {ready} من {body.rounds.length} جولة. المخزون المطلوب {needed} سؤالاً والمتوفر في
-          البنك {body.bankSize}.
+          تُسحب أسئلة كل جولة من البنك عند الانطلاق. البنك يغطي {body.plannable} من {total} جولة،
+          المطلوب {needed} سؤالاً والمتوفر {body.bankSize}.
         </p>
       )}
 
       <div className="flex flex-wrap gap-1.5">
-        {body?.rounds.map((d) => {
-          const ok = d.loaded >= body.servedCount;
+        {body.rounds.map((d) => {
+          const ok = body.startedAt ? d.loaded >= body.servedCount : d.index < body.plannable;
           return (
             <span
               key={d.index}
-              title={`${new Date(d.opensAt).toLocaleString("ar", { dateStyle: "short", timeStyle: "short" })} · ${d.category ?? "كل التصنيفات"} · ${d.loaded}`}
+              title={`${new Date(d.opensAt).toLocaleString("ar", { dateStyle: "short", timeStyle: "short" })} · ${d.category ?? "كل التصنيفات"}`}
               className="text-xs px-2 py-1 rounded-lg font-semibold"
               style={{
                 background: ok ? "var(--mint-100)" : "#fee2e2",
@@ -96,30 +78,18 @@ export default function RoundsPanel({ competitionId }: { competitionId: string }
             >
               {d.index + 1}
               {d.category && <span style={{ opacity: 0.7 }}> · {d.category}</span>}
-              <span style={{ opacity: 0.7 }}> · {d.loaded}</span>
             </span>
           );
         })}
       </div>
 
-      {error && (
+      {!body.startedAt && short && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
-          {notice}
+          البنك لا يكفي لكل الجولات، لن تنطلق المسابقة قبل اكتمال المخزون
         </p>
       )}
 
-      {body && !body.startedAt && (
-        <button onClick={fill} disabled={busy} className="btn btn-primary btn-sm text-xs">
-          <IconLabel name="shuffle">{busy ? "..." : "توزيع الأسئلة على الجولات"}</IconLabel>
-        </button>
-      )}
-
-      {body?.startedAt && (
+      {body.startedAt && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           <Icon name="lock" size={12} className="icon-inline" /> المسابقة انطلقت، لا يمكن تغيير
           جولاتها
