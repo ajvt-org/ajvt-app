@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin, withId } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
@@ -19,7 +19,7 @@ const roundIndex = (offset: number) => offset;
 const atNoon = (index: number) => new Date(START.getTime() + index * PERIOD + 12 * 3_600_000);
 const today = () => 1;
 const winners = (id: string) =>
-  WINNERS(get(`/api/admin/quiz/competitions/${id}/winners`), { params: Promise.resolve({ id }) });
+  WINNERS(get(`/api/admin/quiz/competitions/${id}/winners`), withId(id));
 const standings = () => STANDINGS(get("/api/quiz/standings"));
 
 async function competition(over: Record<string, unknown> = {}) {

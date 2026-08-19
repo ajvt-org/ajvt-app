@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, put, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  put,
+  createUser,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  withId,
+} from "./helpers";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 
 import { POST as REGISTER } from "@/app/api/members/route";
@@ -92,9 +101,10 @@ describe("the fee and the surplus live in one place each", () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 100 }), {
-      params: Promise.resolve({ id: member.id }),
-    });
+    await PAY(
+      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 100 }),
+      withId(member.id),
+    );
 
     expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paidAmount).toBe(
       100,
@@ -106,9 +116,10 @@ describe("the fee and the surplus live in one place each", () => {
     const member = await join({ paidAmount: 100 });
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 600 }), {
-      params: Promise.resolve({ id: member.id }),
-    });
+    await PAY(
+      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 600 }),
+      withId(member.id),
+    );
 
     expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paidAmount).toBe(
       100,

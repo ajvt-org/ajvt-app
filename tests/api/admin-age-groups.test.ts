@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH, DELETE } from "@/app/api/admin/age-groups/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
-
-function withId(id: string, body: unknown) {
-  return [post(`/api/admin/age-groups/${id}`, body), { params: Promise.resolve({ id }) }] as const;
-}
+import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function aMember(fullName: string, age: string) {
   return prisma.member.create({
@@ -21,7 +17,10 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
   it("refuses an anonymous caller", async () => {
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
 
-    const res = await PATCH(...withId(group.id, { name: "المنصورون" }));
+    const res = await PATCH(
+      post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }),
+      withId(group.id),
+    );
 
     expect(res.status).toBe(401);
     expect((await prisma.ageGroup.findUniqueOrThrow({ where: { id: group.id } })).name).toBe(
@@ -36,7 +35,10 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     await aMember("أحمد", "المنصورين");
     await aMember("سالم", "المبشرين");
 
-    const res = await PATCH(...withId(group.id, { name: "المنصورون" }));
+    const res = await PATCH(
+      post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }),
+      withId(group.id),
+    );
 
     expect(res.status).toBe(200);
     expect(await prisma.member.count({ where: { age: "المنصورون" } })).toBe(2);
@@ -49,7 +51,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
     await aMember("محمد", "المنصورين");
 
-    await PATCH(...withId(group.id, { name: "المنصورون" }));
+    await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
     const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "UPDATE_AGE_GROUP" } });
     expect(entry.targetType).toBe("AgeGroup");
@@ -65,7 +67,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     const member = await aMember("محمد", "المنصورين");
     const before = member.updatedAt;
 
-    await PATCH(...withId(group.id, { name: "المنصورون" }));
+    await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.age).toBe("المنصورون");
@@ -82,7 +84,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
       data: { fullName: "أحمد", age: "المبشرين", paymentMethod: "بنكيلي", paymentProof: "b.webp" },
     });
 
-    await PATCH(...withId(group.id, { name: "المنصورون" }));
+    await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
     const rows = await prisma.member.findMany({
       where: { paymentProof: { not: null } },
@@ -99,7 +101,10 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     await prisma.ageGroup.create({ data: { name: "المبشرين" } });
     await aMember("محمد", "المنصورين");
 
-    const res = await PATCH(...withId(group.id, { name: "المبشرين" }));
+    const res = await PATCH(
+      post(`/api/admin/age-groups/${group.id}`, { name: "المبشرين" }),
+      withId(group.id),
+    );
 
     expect(res.status).toBe(409);
     expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);
@@ -116,7 +121,7 @@ describe("DELETE /api/admin/age-groups/[id]", () => {
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
     await aMember("محمد", "المنصورين");
 
-    const res = await DELETE(...withId(group.id, {}));
+    const res = await DELETE(post(`/api/admin/age-groups/${group.id}`, {}), withId(group.id));
 
     expect(res.status).toBe(200);
     expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);

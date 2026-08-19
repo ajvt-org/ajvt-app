@@ -6,7 +6,7 @@ import {
   POST as CREATE_GROUP,
 } from "@/app/api/admin/activities/[id]/groups/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 const activityBody = (over: Record<string, unknown> = {}) => ({
   title: "بطولة",
@@ -17,10 +17,6 @@ const activityBody = (over: Record<string, unknown> = {}) => ({
 
 function create(body: Record<string, unknown>) {
   return CREATE_ACTIVITY(post("/api/admin/activities", body));
-}
-
-function withId(id: string) {
-  return { params: Promise.resolve({ id }) };
 }
 
 async function team(activityId: string, name: string) {

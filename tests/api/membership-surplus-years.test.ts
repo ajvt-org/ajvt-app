@@ -3,13 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { mirrorMembershipPayment } from "@/lib/paymentMirror";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 
 const YEAR = runningYear();
 const LAST = YEAR - 1;
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 function memberOnLastYear() {
   return prisma.member.create({

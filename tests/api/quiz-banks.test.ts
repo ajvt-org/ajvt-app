@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { BANK_NOT_EMPTY, NAME_TAKEN } from "@/lib/questionBankServer";
 
 import { GET as LIST, POST as CREATE } from "@/app/api/admin/quiz/banks/route";
@@ -8,13 +8,11 @@ import { PATCH as RENAME, DELETE as REMOVE } from "@/app/api/admin/quiz/banks/[i
 import { GET as QUESTIONS, POST as ADD } from "@/app/api/admin/quiz/questions/route";
 import { POST as IMPORT } from "@/app/api/admin/quiz/questions/import/route";
 
-const at = (id: string) => ({ params: Promise.resolve({ id }) });
-
 const list = () => LIST();
 const create = (name: unknown) => CREATE(post("/api/admin/quiz/banks", { name }));
 const rename = (id: string, name: unknown) =>
-  RENAME(patch(`/api/admin/quiz/banks/${id}`, { name }), at(id));
-const remove = (id: string) => REMOVE(del(`/api/admin/quiz/banks/${id}`), at(id));
+  RENAME(patch(`/api/admin/quiz/banks/${id}`, { name }), withId(id));
+const remove = (id: string) => REMOVE(del(`/api/admin/quiz/banks/${id}`), withId(id));
 const questions = (bank?: string) =>
   QUESTIONS(get(`/api/admin/quiz/questions${bank ? `?bank=${bank}` : ""}`));
 

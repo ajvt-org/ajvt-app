@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/members/[id]/same-person/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import { resetDb, get, createAdmin, createUser, signInAsAdmin, withId } from "./helpers";
 import { clearCookies } from "./cookieJar";
-
-function params(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
 
 async function member(
   fullName: string,
@@ -29,7 +25,7 @@ async function member(
 }
 
 async function others(id: string) {
-  const res = await GET(get(`/api/admin/members/${id}/same-person`), params(id));
+  const res = await GET(get(`/api/admin/members/${id}/same-person`), withId(id));
   expect(res.status).toBe(200);
   return (await res.json()).others as { fullName: string; accountPhone: string }[];
 }
@@ -44,7 +40,7 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     const m = await member("محمد");
     clearCookies();
 
-    const res = await GET(get(`/api/admin/members/${m.id}/same-person`), params(m.id));
+    const res = await GET(get(`/api/admin/members/${m.id}/same-person`), withId(m.id));
 
     expect(res.status).toBe(401);
   });

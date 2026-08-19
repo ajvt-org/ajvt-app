@@ -12,6 +12,7 @@ import {
   createAdmin,
   signInAs,
   signInAsAdmin,
+  withId,
   postForm,
 } from "./helpers";
 
@@ -33,7 +34,6 @@ import { POST as ADMIN_DONATION } from "@/app/api/admin/donations/route";
 import { PATCH as EDIT_DONATION } from "@/app/api/admin/donations/[id]/route";
 
 const YEAR = runningYear();
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 const submission = {
   fullName: "محمد ولد أحمد",

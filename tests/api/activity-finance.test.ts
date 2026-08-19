@@ -4,11 +4,7 @@ import { PATCH as UPDATE_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { PATCH as UPDATE_DONATION } from "@/app/api/admin/donations/[id]/route";
 import { GET as SUMMARY } from "@/app/api/admin/finance/summary/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, createAdmin, signInAsAdmin } from "./helpers";
-
-function withId(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
+import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function activity(title: string) {
   return prisma.activity.create({ data: { title, description: "وصف" } });
