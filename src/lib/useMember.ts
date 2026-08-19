@@ -37,6 +37,7 @@ export interface MemberData {
   paymentProof: string | null;
   paidAmount: number | null;
   supportAmount: number;
+  surplusAnonymous: boolean;
   status: Status;
   rejectionReason: string | null;
   createdAt: string;

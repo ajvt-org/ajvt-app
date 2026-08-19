@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import { resetDb, post, patch, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
+import { PATCH as UPDATE_MEMBER } from "@/app/api/members/[id]/route";
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -24,6 +25,16 @@ async function joinAndApprove(body: Record<string, unknown> = {}) {
 
 function surplusOf(memberId: string) {
   return prisma.donation.findFirstOrThrow({ where: { memberId, source: "MEMBERSHIP" } });
+}
+
+function mirrorOf(memberId: string) {
+  return prisma.payment.findFirstOrThrow({ where: { memberId, purpose: "MEMBERSHIP" } });
+}
+
+function changeVisibility(memberId: string, anonymous: boolean) {
+  return UPDATE_MEMBER(patch(`/api/members/${memberId}`, { surplusAnonymous: anonymous }), {
+    params: Promise.resolve({ id: memberId }),
+  });
 }
 
 describe("who the membership surplus is credited to", () => {
@@ -73,6 +84,52 @@ describe("who the membership surplus is credited to", () => {
     const donation = await surplusOf(member.id);
     expect(donation.amount).toBe(800);
     expect(donation.donorName).toBeNull();
+  });
+
+  it("lets the member take their own name off a surplus already published", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await REGISTER(post("/api/members", { ...submission, surplusAnonymous: false }));
+    const member = await prisma.member.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin());
+    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await signInAs(user);
+
+    const res = await changeVisibility(member.id, true);
+
+    expect(res.status).toBe(200);
+    expect((await surplusOf(member.id)).donorName).toBeNull();
+    const mirrored = await mirrorOf(member.id);
+    expect(mirrored.anonymous).toBe(true);
+    expect(mirrored.donorName).toBeNull();
+  });
+
+  it("puts the name back when the member changes their mind again", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await REGISTER(post("/api/members", { ...submission, surplusAnonymous: true }));
+    const member = await prisma.member.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin());
+    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await signInAs(user);
+
+    await changeVisibility(member.id, false);
+
+    expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
+    expect((await mirrorOf(member.id)).anonymous).toBe(false);
+  });
+
+  it("refuses to change a surplus that belongs to another account", async () => {
+    const owner = await createUser();
+    await signInAs(owner);
+    await REGISTER(post("/api/members", { ...submission, surplusAnonymous: false }));
+    const member = await prisma.member.findFirstOrThrow();
+    await signInAs(await createUser("22119900"));
+
+    const res = await changeVisibility(member.id, true);
+
+    expect(res.status).toBe(404);
+    expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
   });
 
   it("does not rename a named surplus either, once it is published", async () => {

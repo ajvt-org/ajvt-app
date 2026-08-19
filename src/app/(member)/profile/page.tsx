@@ -10,6 +10,7 @@ import MemberProfile from "@/components/MemberProfile";
 import NotificationsToggle from "@/components/NotificationsToggle";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
+import SurplusVisibility from "@/components/SurplusVisibility";
 import { useMember } from "@/lib/useMember";
 import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 
@@ -59,6 +60,18 @@ export default function ProfilePage() {
                 <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
               </button>
             </div>
+          )}
+
+          {member && (
+            <SurplusVisibility
+              memberId={member.id}
+              memberName={member.fullName}
+              supportAmount={member.supportAmount}
+              anonymous={member.surplusAnonymous}
+              onChanged={(anonymous) =>
+                setMember((prev) => (prev ? { ...prev, surplusAnonymous: anonymous } : prev))
+              }
+            />
           )}
 
           <div className="space-y-3 pt-2">

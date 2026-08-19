@@ -68,5 +68,11 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
   await expect.poll(board).toContain("فاعل خير");
   expect(await board()).not.toContain(MEMBER.fullName);
 
+  await page.goto("/profile");
+  await page.getByRole("radio", { name: new RegExp(MEMBER.fullName) }).click();
+  await expect(page.getByText("تم الحفظ")).toBeVisible();
+
+  await expect.poll(board).toContain(MEMBER.fullName);
+
   await admin.close();
 });
