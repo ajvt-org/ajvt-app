@@ -116,7 +116,6 @@ export default function QuizPage() {
         standings={standings}
         onBack={() => setChosen(null)}
         onReloadStandings={loadStandings}
-        onTutorial={() => setTutorial(true)}
       />
     );
   }

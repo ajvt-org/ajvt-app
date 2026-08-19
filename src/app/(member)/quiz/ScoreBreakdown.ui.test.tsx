@@ -9,8 +9,10 @@ const detail: AttemptDetailView = {
   category: "جغرافيا",
   competitionName: "مسابقة الصيف",
   curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
-  groupSize: 7,
-  countingRounds: 6,
+  boards: [
+    { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
+    { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true },
+  ],
   breakdown: {
     rows: [
       {
@@ -22,6 +24,8 @@ const detail: AttemptDetailView = {
         elapsedMs: 5_000,
         points: 10,
         percent: 100,
+        correct: ["نواكشوط"],
+        chosen: ["نواكشوط"],
       },
       {
         position: 1,
@@ -32,6 +36,8 @@ const detail: AttemptDetailView = {
         elapsedMs: 40_000,
         points: 0,
         percent: 0,
+        correct: ["خمس عشرة"],
+        chosen: ["اثنتا عشرة"],
       },
     ],
     correct: 1,
@@ -68,14 +74,28 @@ describe("ScoreBreakdown", () => {
   it("shows the speed share each answer earned", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText("100%")).toBeDefined();
-    expect(screen.getByText("0%")).toBeDefined();
+    expect(screen.getByText(/10 من 10 نقطة .* 100%/)).toBeDefined();
+    expect(screen.getByText(/0 من 20 نقطة .* 0%/)).toBeDefined();
+  });
+
+  it("says whether each answer was right", () => {
+    render(<ScoreBreakdown detail={detail} />);
+
+    expect(screen.getByText("صحيحة")).toBeDefined();
+    expect(screen.getByText("خاطئة")).toBeDefined();
+  });
+
+  it("gives the right answer for a question that was missed", () => {
+    render(<ScoreBreakdown detail={detail} />);
+
+    expect(screen.getByText(/الصحيح خمس عشرة/)).toBeDefined();
+    expect(screen.getByText(/اخترت اثنتا عشرة/)).toBeDefined();
   });
 
   it("explains the formula from the bands the quiz uses", () => {
     render(<ScoreBreakdown detail={detail} />);
 
     expect(screen.getByText(/حتى 10 ثانية، كل النقاط/)).toBeDefined();
-    expect(screen.getByText(/أفضل 6 جولة من 7/)).toBeDefined();
+    expect(screen.getByText(/الترتيب العام، مجموع كل الفترات/)).toBeDefined();
   });
 });

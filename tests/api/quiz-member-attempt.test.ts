@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createUsers, signInAs } from "./helpers";
-import { DEFAULT_CURVE } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
 import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
@@ -23,8 +23,7 @@ async function setup(paid = 100) {
       roundWindowMinutes: 1440,
       servedCount: 2,
       poolSize: 3,
-      groupSize: 7,
-      countingRounds: 6,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       startedAt: new Date(),
     },
@@ -226,6 +225,63 @@ describe("a member playing the daily attempt", () => {
 
     expect(body.curve).toEqual({ fullSeconds: 10, maxSeconds: 30, floorPercent: 50 });
     expect(body.question.shownAt).toBeDefined();
+  });
+
+  it("closes a question whose time is up and moves to the next", async () => {
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
+    const late = new Date(Date.now() + 60_000);
+    await prisma.quizAttemptAnswer.update({
+      where: { id: view.question.answerId },
+      data: { shownAt: new Date(Date.now() - 60_000) },
+    });
+    void late;
+
+    const next = await (await startAttempt(competition.id)).json();
+
+    expect(next.position).toBe(1);
+    const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
+      where: { id: view.question.answerId },
+    });
+    expect(row.answeredAt).not.toBeNull();
+    expect(row.isCorrect).toBeNull();
+    expect(row.points).toBe(0);
+  });
+
+  it("pays nothing for an answer that arrives after the time is up", async () => {
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
+    await prisma.quizAttemptAnswer.update({
+      where: { id: view.question.answerId },
+      data: { shownAt: new Date(Date.now() - 60_000) },
+    });
+    const right = await prisma.quizAnswer.findFirstOrThrow({
+      where: {
+        id: { in: view.question.options.map((o: { id: string }) => o.id) },
+        isCorrect: true,
+      },
+    });
+
+    const body = await (await answer(view.question.answerId, [right.id])).json();
+
+    expect(body.points).toBe(0);
+    expect(body.score).toBe(0);
+  });
+
+  it("counts every question left to run out as unanswered", async () => {
+    const { competition, user } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
+    void view;
+    await prisma.quizAttemptAnswer.updateMany({
+      data: { shownAt: new Date(Date.now() - 60_000) },
+    });
+
+    const body = await (await startAttempt(competition.id)).json();
+
+    expect(body.done).toBe(true);
+    const attempt = await prisma.quizAttempt.findFirstOrThrow({ where: { userId: user.id } });
+    expect(attempt.score).toBe(0);
+    expect(attempt.finishedAt).not.toBeNull();
   });
 
   it("refuses an attempt with no competition named", async () => {

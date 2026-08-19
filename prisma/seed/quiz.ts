@@ -60,9 +60,14 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     roundWindowMinutes: 1440,
     servedCount: 3,
     poolSize: 6,
-    groupSize: 7,
-    countingRounds: 6,
     bankId: bank.id,
+    boards: {
+      create: [
+        { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false, order: 0 },
+        { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false, order: 1 },
+        { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true, order: 2 },
+      ],
+    },
     ...DEFAULT_CURVE,
   };
 

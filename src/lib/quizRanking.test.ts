@@ -1,12 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  roundRanking,
-  groupRanking,
-  finalRanking,
-  bestRounds,
-  standingOf,
-  type RoundScore,
-} from "./quizRanking";
+import { roundRanking, boardRanking, bestRounds, standingOf, type RoundScore } from "./quizRanking";
 
 const at = (iso: string) => new Date(iso);
 
@@ -68,21 +61,22 @@ describe("bestRounds", () => {
   });
 });
 
-describe("groupRanking", () => {
+describe("boardRanking over the block a round sits in", () => {
+  const board = { title: "أسبوعي", blockRounds: 7, counting: 6, wholeRun: false };
   const group = (userId: string, scores: number[], from = 0) =>
     scores.map((points, i) => score(userId, from + i, points));
 
-  it("counts only the best rounds of the group", () => {
-    const rows = groupRanking(group("a", [10, 10, 10, 10, 10, 10, 10]), 7, 6, 0);
+  it("counts only the best rounds of the block", () => {
+    const rows = boardRanking(group("a", [10, 10, 10, 10, 10, 10, 10]), board, 0);
 
     expect(rows[0].total).toBe(60);
   });
 
-  it("lets a missed round cost nothing when the allowance covers it", () => {
+  it("lets a missed round cost nothing while the allowance covers it", () => {
     const perfect = group("perfect", [10, 10, 10, 10, 10, 10, 10]);
     const missed = group("missed", [10, 10, 10, 10, 10, 10]);
 
-    const rows = groupRanking([...perfect, ...missed], 7, 6, 0);
+    const rows = boardRanking([...perfect, ...missed], board, 0);
 
     expect(rows[0].total).toBe(rows[1].total);
   });
@@ -91,36 +85,46 @@ describe("groupRanking", () => {
     const perfect = group("perfect", [10, 10, 10, 10, 10, 10, 10]);
     const missed = group("missed", [10, 10, 10, 10, 10]);
 
-    const rows = groupRanking([...perfect, ...missed], 7, 6, 0);
+    const rows = boardRanking([...perfect, ...missed], board, 0);
 
     expect(rows[0].userId).toBe("perfect");
     expect(rows[1].total).toBe(50);
   });
 
-  it("keeps the groups apart", () => {
+  it("reads the block the given round sits in", () => {
     const first = score("a", 0, 40);
     const second = score("a", 7, 90);
 
-    expect(groupRanking([first, second], 7, 6, 0)[0].total).toBe(40);
-    expect(groupRanking([first, second], 7, 6, 1)[0].total).toBe(90);
+    expect(boardRanking([first, second], board, 0)[0].total).toBe(40);
+    expect(boardRanking([first, second], board, 7)[0].total).toBe(90);
   });
 
-  it("groups by five when that is the size", () => {
-    expect(groupRanking([score("a", 4, 10), score("a", 5, 90)], 5, 5, 0)[0].total).toBe(10);
-    expect(groupRanking([score("a", 4, 10), score("a", 5, 90)], 5, 5, 1)[0].total).toBe(90);
+  it("blocks by whatever size the ranking names", () => {
+    const five = { title: "كل خمس", blockRounds: 5, counting: 5, wholeRun: false };
+
+    expect(boardRanking([score("a", 4, 10), score("a", 5, 90)], five, 4)[0].total).toBe(10);
+    expect(boardRanking([score("a", 4, 10), score("a", 5, 90)], five, 5)[0].total).toBe(90);
+  });
+
+  it("ranks a single round when that is the block", () => {
+    const daily = { title: "يومي", blockRounds: 1, counting: 1, wholeRun: false };
+    const rows = boardRanking([score("a", 3, 30), score("b", 3, 50), score("c", 4, 90)], daily, 3);
+
+    expect(rows.map((r) => r.userId)).toEqual(["b", "a"]);
   });
 
   it("ignores a round before the run began", () => {
-    expect(groupRanking([score("a", -1, 90)], 7, 6, 0)).toEqual([]);
+    expect(boardRanking([score("a", -1, 90)], board, 0)).toEqual([]);
   });
 });
 
-describe("finalRanking", () => {
+describe("boardRanking over the whole run", () => {
+  const board = { title: "عام", blockRounds: 7, counting: 6, wholeRun: true };
   const rounds = (userId: string, count: number, points: number, from = 0) =>
     Array.from({ length: count }, (_, i) => score(userId, from + i, points));
 
-  it("adds the groups together, each having dropped its worst round", () => {
-    const rows = finalRanking([...rounds("a", 7, 10), ...rounds("a", 7, 10, 7)], 7, 6);
+  it("adds the blocks together, each having dropped its worst round", () => {
+    const rows = boardRanking([...rounds("a", 7, 10), ...rounds("a", 7, 10, 7)], board, 0);
 
     expect(rows[0].total).toBe(120);
   });
@@ -129,15 +133,27 @@ describe("finalRanking", () => {
     const early = rounds("early", 7, 10);
     const late = [score("late", 5, 10), score("late", 6, 10)];
 
-    const rows = finalRanking([...early, ...late], 7, 6);
+    const rows = boardRanking([...early, ...late], board, 0);
 
     expect(rows[0].userId).toBe("early");
     expect(rows[0].total).toBe(60);
     expect(rows[1].total).toBe(20);
   });
 
+  it("does not care which round is open", () => {
+    const scores = [...rounds("a", 7, 10), ...rounds("a", 7, 10, 7)];
+
+    expect(boardRanking(scores, board, 0)[0].total).toBe(boardRanking(scores, board, 9)[0].total);
+  });
+
+  it("sums everything when the allowance covers the block", () => {
+    const plain = { title: "عام", blockRounds: 7, counting: 7, wholeRun: true };
+
+    expect(boardRanking(rounds("a", 14, 10), plain, 0)[0].total).toBe(140);
+  });
+
   it("is empty before anyone plays", () => {
-    expect(finalRanking([], 7, 6)).toEqual([]);
+    expect(boardRanking([], board, 0)).toEqual([]);
   });
 });
 

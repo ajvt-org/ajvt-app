@@ -1,10 +1,55 @@
 "use client";
 
-import Icon from "@/components/Icon";
+import NumericRanges from "@/components/NumericRanges";
 import ScoreFormula from "./ScoreFormula";
-import type { AttemptDetailView } from "./types";
+import type { AttemptDetailView, BreakdownRowView } from "./types";
 
 const seconds = (ms: number | null) => (ms === null ? "" : `${Math.round(ms / 100) / 10} ث`);
+
+function status(row: BreakdownRowView) {
+  if (row.isCorrect === null) return { label: "متروك", background: "#fef3c7", color: "#92400e" };
+  if (row.isCorrect)
+    return { label: "صحيحة", background: "var(--mint-100)", color: "var(--mint-700)" };
+  return { label: "خاطئة", background: "#fee2e2", color: "#991b1b" };
+}
+
+function Row({ row }: { row: BreakdownRowView }) {
+  const state = status(row);
+  const missed = row.isCorrect !== true;
+
+  return (
+    <div className="rounded-lg p-3 space-y-1.5" style={{ background: "var(--surface-2)" }}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-bold flex-1" style={{ color: "var(--text-main)" }}>
+          {row.question}
+        </p>
+        <span
+          className="text-xs font-bold px-2 py-0.5 rounded-lg shrink-0"
+          style={{ background: state.background, color: state.color }}
+        >
+          {state.label}
+        </span>
+      </div>
+
+      {missed && row.correct.length > 0 && (
+        <p className="text-xs" style={{ color: "var(--mint-700)" }}>
+          الصحيح {row.correct.join("، ")}
+        </p>
+      )}
+      {row.isCorrect === false && row.chosen.length > 0 && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          اخترت {row.chosen.join("، ")}
+        </p>
+      )}
+
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <NumericRanges>
+          {`${row.points} من ${row.maxPoints} نقطة${row.elapsedMs === null ? "" : ` · ${seconds(row.elapsedMs)} · ${row.percent}%`}`}
+        </NumericRanges>
+      </p>
+    </div>
+  );
+}
 
 export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }) {
   const { breakdown } = detail;
@@ -13,55 +58,23 @@ export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }
     <div className="space-y-3">
       <div className="card p-4 space-y-1">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          الجولة {detail.round + 1}
+          <NumericRanges>{`الجولة ${detail.round + 1}`}</NumericRanges>
           {detail.category ? ` · ${detail.category}` : ""}
         </p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {breakdown.correct} صحيحة من {breakdown.total} سؤالاً، المجموع {breakdown.score} من{" "}
-          {breakdown.possible} نقطة، الوقت {seconds(breakdown.elapsedMs)}
+          <NumericRanges>
+            {`${breakdown.correct} صحيحة من ${breakdown.total} سؤالاً، المجموع ${breakdown.score} من ${breakdown.possible} نقطة، الوقت ${seconds(breakdown.elapsedMs)}`}
+          </NumericRanges>
         </p>
       </div>
 
-      <div className="card p-2 overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr style={{ color: "var(--text-muted)" }}>
-              <th className="p-2 text-start">السؤال</th>
-              <th className="p-2">النقاط</th>
-              <th className="p-2">الوقت</th>
-              <th className="p-2">النسبة</th>
-              <th className="p-2">المحصلة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {breakdown.rows.map((row) => (
-              <tr key={row.position} style={{ color: "var(--text-main)" }}>
-                <td className="p-2">
-                  <span className="flex items-center gap-1">
-                    <Icon
-                      name={row.isCorrect ? "check" : row.isCorrect === null ? "clock" : "close"}
-                      size={12}
-                    />
-                    <span className="truncate">{row.question}</span>
-                  </span>
-                </td>
-                <td className="p-2 text-center">{row.maxPoints}</td>
-                <td className="p-2 text-center" dir="ltr">
-                  {seconds(row.elapsedMs)}
-                </td>
-                <td className="p-2 text-center">{row.percent}%</td>
-                <td className="p-2 text-center font-bold">{row.points}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="space-y-2">
+        {breakdown.rows.map((row) => (
+          <Row key={row.position} row={row} />
+        ))}
       </div>
 
-      <ScoreFormula
-        curve={detail.curve}
-        groupSize={detail.groupSize}
-        countingRounds={detail.countingRounds}
-      />
+      <ScoreFormula curve={detail.curve} boards={detail.boards} />
     </div>
   );
 }

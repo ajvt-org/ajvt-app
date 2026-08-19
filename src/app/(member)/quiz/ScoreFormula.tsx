@@ -5,12 +5,10 @@ import type { ScoreCurve } from "@/lib/competitionConfig";
 
 export default function ScoreFormula({
   curve,
-  groupSize,
-  countingRounds,
+  boards,
 }: {
   curve: ScoreCurve;
-  groupSize: number;
-  countingRounds: number;
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
 }) {
   const example = Math.round((20 * (100 + curve.floorPercent)) / 200);
 
@@ -33,7 +31,9 @@ export default function ScoreFormula({
           </NumericRanges>
         </li>
         <li>
-          <NumericRanges>{`بعد ${curve.maxSeconds} ثانية، ${curve.floorPercent} بالمئة`}</NumericRanges>
+          <NumericRanges>
+            {`بعد ${curve.maxSeconds} ثانية يُغلق السؤال ويحتسب متروكاً بصفر`}
+          </NumericRanges>
         </li>
       </ul>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -41,11 +41,17 @@ export default function ScoreFormula({
           {`مثال، سؤال من 20 نقطة أُجيب صحيحاً في منتصف المدة يأخذ ${example} نقطة.`}
         </NumericRanges>
       </p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        <NumericRanges>
-          {`مجموع المجموعة يحتسب أفضل ${countingRounds} جولة من ${groupSize}، والمجموع العام هو حاصل جمع المجموعات.`}
-        </NumericRanges>
-      </p>
+      <ul className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
+        {boards.map((board) => (
+          <li key={board.title}>
+            <NumericRanges>
+              {board.wholeRun
+                ? `${board.title}، مجموع كل الفترات، أفضل ${board.counting} جولة من كل ${board.blockRounds}`
+                : `${board.title}، أفضل ${board.counting} جولة من ${board.blockRounds}`}
+            </NumericRanges>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

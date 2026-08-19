@@ -9,7 +9,15 @@ export interface ScoreCurve {
   floorPercent: number;
 }
 
+export interface BoardConfig {
+  title: string;
+  blockRounds: number;
+  counting: number;
+  wholeRun: boolean;
+}
+
 export interface CompetitionConfig extends ScoreCurve {
+  boards: BoardConfig[];
   name: string;
   startsAt: string;
   visibility: Visibility;
@@ -19,10 +27,16 @@ export interface CompetitionConfig extends ScoreCurve {
   roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  groupSize: number;
-  countingRounds: number;
   categoryRounds: boolean;
 }
+
+export const DEFAULT_BOARDS: BoardConfig[] = [
+  { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
+  { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false },
+  { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true },
+];
+
+export const MAX_BOARDS = 6;
 
 export const DEFAULT_CURVE: ScoreCurve = {
   fullSeconds: 10,
@@ -38,8 +52,7 @@ export const DEFAULT_CONFIG: Omit<CompetitionConfig, "name" | "startsAt"> = {
   roundWindowMinutes: 840,
   servedCount: 10,
   poolSize: 30,
-  groupSize: 7,
-  countingRounds: 6,
+  boards: DEFAULT_BOARDS,
   categoryRounds: false,
   ...DEFAULT_CURVE,
 };
@@ -79,17 +92,29 @@ export function validateConfig(config: CompetitionConfig): string | null {
     return "عدد أسئلة الجولة غير صالح";
   if (!Number.isInteger(config.poolSize) || config.poolSize < config.servedCount)
     return "حجم المخزون يجب أن يساوي عدد أسئلة الجولة أو يزيد عنه";
-  if (!Number.isInteger(config.groupSize) || config.groupSize < 1)
-    return "عدد جولات المجموعة غير صالح";
-  if (
-    !Number.isInteger(config.countingRounds) ||
-    config.countingRounds < 1 ||
-    config.countingRounds > config.groupSize
-  ) {
-    return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات المجموعة";
-  }
+  const boards = validateBoards(config.boards);
+  if (boards) return boards;
   if (typeof config.categoryRounds !== "boolean") return "خيار تصنيف الجولة غير صالح";
   return validateCurve(config);
+}
+
+export function validateBoards(boards: BoardConfig[]): string | null {
+  if (!Array.isArray(boards) || boards.length === 0) return "يجب تحديد ترتيب واحد على الأقل";
+  if (boards.length > MAX_BOARDS) return `عدد الترتيبات يجب ألا يتجاوز ${MAX_BOARDS}`;
+  for (const board of boards) {
+    if (typeof board.title !== "string" || !board.title.trim()) return "عنوان الترتيب مطلوب";
+    if (!Number.isInteger(board.blockRounds) || board.blockRounds < 1)
+      return "عدد جولات الترتيب غير صالح";
+    if (
+      !Number.isInteger(board.counting) ||
+      board.counting < 1 ||
+      board.counting > board.blockRounds
+    ) {
+      return "الجولات المحتسبة يجب أن تكون بين 1 وعدد جولات الترتيب";
+    }
+    if (typeof board.wholeRun !== "boolean") return "مدى الترتيب غير صالح";
+  }
+  return null;
 }
 
 export function curvePercent(curve: ScoreCurve, elapsedMs: number): number {

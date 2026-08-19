@@ -70,9 +70,7 @@ export default function AttemptBreakdown({
               <tr key={row.position} style={{ color: "var(--text-main)" }}>
                 <td className="p-1">{row.question}</td>
                 <td className="p-1 text-center">{row.maxPoints}</td>
-                <td className="p-1 text-center" dir="ltr">
-                  {seconds(row.elapsedMs)}
-                </td>
+                <td className="p-1 text-center">{seconds(row.elapsedMs)}</td>
                 <td className="p-1 text-center">{row.percent}%</td>
                 <td className="p-1 text-center font-bold">{row.points}</td>
               </tr>

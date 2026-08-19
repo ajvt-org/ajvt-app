@@ -8,6 +8,8 @@ export interface AnswerRow {
   isCorrect: boolean | null;
   elapsedMs: number | null;
   points: number;
+  correct: string[];
+  chosen: string[];
 }
 
 export interface BreakdownRow extends AnswerRow {

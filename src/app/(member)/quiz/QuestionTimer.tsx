@@ -1,20 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NumericRanges from "@/components/NumericRanges";
 import { curvePercent, type ScoreCurve } from "@/lib/competitionConfig";
 
-export default function QuestionTimer({ shownAt, curve }: { shownAt: string; curve: ScoreCurve }) {
+export default function QuestionTimer({
+  shownAt,
+  curve,
+  onExpire,
+}: {
+  shownAt: string;
+  curve: ScoreCurve;
+  onExpire?: () => void;
+}) {
   const [elapsedMs, setElapsedMs] = useState(0);
+  const fired = useRef(false);
 
   useEffect(() => {
+    fired.current = false;
     const stamped = shownAt ? new Date(shownAt).getTime() : Number.NaN;
     const started = Number.isNaN(stamped) ? Date.now() : stamped;
-    const tick = () => setElapsedMs(Math.max(0, Date.now() - started));
+    const tick = () => {
+      const spent = Math.max(0, Date.now() - started);
+      setElapsedMs(spent);
+      if (spent >= curve.maxSeconds * 1000 && !fired.current) {
+        fired.current = true;
+        onExpire?.();
+      }
+    };
     tick();
     const id = setInterval(tick, 250);
     return () => clearInterval(id);
-  }, [shownAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shownAt, curve.maxSeconds]);
 
   const percent = Math.round(curvePercent(curve, elapsedMs));
   const left = Math.max(0, curve.maxSeconds - elapsedMs / 1000);

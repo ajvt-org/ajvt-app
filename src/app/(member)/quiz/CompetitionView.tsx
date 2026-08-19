@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 
 interface AttemptState {
@@ -24,33 +25,44 @@ interface Place {
   total: number;
 }
 
+const MINE = "mine";
+
+export interface StandingsBoard {
+  id: string;
+  title: string;
+  rows: BoardRow[];
+  mine: Place | null;
+}
+
 export interface StandingsState {
   running: boolean;
   competitionId: string | null;
   name: string | null;
   meId: string | null;
-  today: BoardRow[];
-  thisWeek: BoardRow[];
-  overall: BoardRow[];
-  mine: { today: Place | null; thisWeek: Place | null; overall: Place | null } | null;
+  boards: StandingsBoard[];
 }
 
 export default function CompetitionView({
   standings,
   onBack,
   onReloadStandings,
-  onTutorial,
 }: {
   standings: StandingsState;
   onBack: () => void;
   onReloadStandings: () => void;
-  onTutorial?: () => void;
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [closed, setClosed] = useState("");
-  const [showScores, setShowScores] = useState(false);
+  const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const tabs = [
+    ...standings.boards.map((b) => ({ id: b.id, title: b.title })),
+    { id: MINE, title: "نقاطي" },
+  ];
+  const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? MINE);
+  const open = standings.boards.find((b) => b.id === openTab) ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -66,6 +78,18 @@ export default function CompetitionView({
       alive = false;
     };
   }, [competitionId]);
+
+  async function skip() {
+    if (!competitionId || busy) return;
+    setBusy(true);
+    try {
+      setAttempt(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
+    } catch (e) {
+      setClosed(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function answer(selected: string[]) {
     if (!attempt?.question) return;
@@ -94,6 +118,7 @@ export default function CompetitionView({
         score={attempt.score}
         busy={busy}
         onSubmit={answer}
+        onExpire={skip}
       />
     );
   }
@@ -114,39 +139,21 @@ export default function CompetitionView({
               مجموعك في الجولة {attempt.score}
             </p>
           )}
-          <button onClick={() => setShowScores((v) => !v)} className="btn btn-sm text-xs mt-3 ms-2">
-            {showScores ? "إخفاء التفاصيل" : "تفاصيل نقاطي"}
-          </button>
-          {onTutorial && (
-            <button onClick={onTutorial} className="btn btn-sm text-xs mt-3 ms-2">
-              جولة تجريبية
-            </button>
-          )}
         </div>
 
-        {showScores && competitionId && <MyScores competitionId={competitionId} />}
+        <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
 
-        <StandingsBoard
-          title="ترتيب الجولة"
-          rows={standings.today}
-          mine={standings.mine?.today ?? null}
-          meId={standings.meId}
-          empty="لم يشارك أحد في هذه الجولة"
-        />
-        <StandingsBoard
-          title="ترتيب المجموعة"
-          rows={standings.thisWeek}
-          mine={standings.mine?.thisWeek ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب لهذه المجموعة بعد"
-        />
-        <StandingsBoard
-          title="الترتيب العام"
-          rows={standings.overall}
-          mine={standings.mine?.overall ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب عام بعد"
-        />
+        {open ? (
+          <StandingsBoard
+            title={open.title}
+            rows={open.rows}
+            mine={open.mine}
+            meId={standings.meId}
+            empty="لا ترتيب بعد"
+          />
+        ) : (
+          competitionId && <MyScores competitionId={competitionId} />
+        )}
       </div>
     </div>
   );

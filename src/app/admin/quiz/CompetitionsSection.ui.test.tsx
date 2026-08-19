@@ -28,6 +28,7 @@ const competition = {
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
+  boards: [{ title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
   bankId: "general",
   fullSeconds: 10,
   maxSeconds: 30,

@@ -55,8 +55,7 @@ describe("validateConfig", () => {
         roundCount: 20,
         roundPeriodMinutes: 60,
         roundWindowMinutes: 45,
-        groupSize: 5,
-        countingRounds: 4,
+        boards: [{ title: "كل خمس جولات", blockRounds: 5, counting: 4, wholeRun: false }],
       }),
     ).toBeNull();
   });
@@ -69,16 +68,43 @@ describe("validateConfig", () => {
     expect(with_({ servedCount: 10, poolSize: 10 })).toBeNull();
   });
 
-  it("refuses counting more rounds than a group holds", () => {
-    expect(with_({ groupSize: 5, countingRounds: 6 })).toContain("الجولات المحتسبة");
+  it("needs at least one ranking", () => {
+    expect(with_({ boards: [] })).toContain("ترتيب واحد على الأقل");
   });
 
-  it("allows counting every round of a group", () => {
-    expect(with_({ groupSize: 5, countingRounds: 5 })).toBeNull();
+  it("refuses a ranking with no title", () => {
+    expect(
+      with_({ boards: [{ title: "  ", blockRounds: 1, counting: 1, wholeRun: false }] }),
+    ).toContain("عنوان الترتيب");
   });
 
-  it("refuses a group of no rounds", () => {
-    expect(with_({ groupSize: 0 })).toBe("عدد جولات المجموعة غير صالح");
+  it("refuses counting more rounds than a ranking covers", () => {
+    expect(
+      with_({ boards: [{ title: "أسبوعي", blockRounds: 5, counting: 6, wholeRun: false }] }),
+    ).toContain("الجولات المحتسبة");
+  });
+
+  it("allows counting every round a ranking covers", () => {
+    expect(
+      with_({ boards: [{ title: "أسبوعي", blockRounds: 5, counting: 5, wholeRun: false }] }),
+    ).toBeNull();
+  });
+
+  it("refuses a ranking of no rounds", () => {
+    expect(
+      with_({ boards: [{ title: "فارغ", blockRounds: 0, counting: 1, wholeRun: false }] }),
+    ).toContain("عدد جولات الترتيب");
+  });
+
+  it("refuses more rankings than the app shows", () => {
+    const many = Array.from({ length: 7 }, (_, i) => ({
+      title: `ترتيب ${i}`,
+      blockRounds: 1,
+      counting: 1,
+      wholeRun: false,
+    }));
+
+    expect(with_({ boards: many })).toContain("عدد الترتيبات");
   });
 });
 

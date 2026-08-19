@@ -1,6 +1,7 @@
 "use client";
 
-import type { Visibility } from "@/lib/competitionConfig";
+import BoardsEditor from "./BoardsEditor";
+import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 import {
   toLocalInput,
   fromLocalInput,
@@ -18,9 +19,8 @@ export interface Draft {
   roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  groupSize: number;
-  countingRounds: number;
   categoryRounds: boolean;
+  boards: BoardConfig[];
   fullSeconds: number;
   maxSeconds: number;
   floorPercent: number;
@@ -151,11 +151,6 @@ export default function CompetitionFields({
         {number("poolSize", "c-pool", "مخزون الجولة")}
       </div>
 
-      <div className="flex gap-2">
-        {number("groupSize", "c-group", "جولات المجموعة")}
-        {number("countingRounds", "c-counting", "الجولات المحتسبة")}
-      </div>
-
       <label className="flex items-center gap-2 text-xs font-bold">
         <input
           id="c-category-rounds"
@@ -166,6 +161,12 @@ export default function CompetitionFields({
         />
         <span style={{ color: "var(--text-main)" }}>كل جولة من تصنيف واحد</span>
       </label>
+
+      <BoardsEditor
+        boards={draft.boards}
+        disabled={locked}
+        onChange={(boards) => onChange("boards", boards)}
+      />
 
       <p className="text-xs font-bold mt-1" style={{ color: "var(--text-main)" }}>
         احتساب السرعة

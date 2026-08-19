@@ -10,6 +10,8 @@ const row = (over: Partial<AnswerRow> = {}): AnswerRow => ({
   isCorrect: true,
   elapsedMs: 5_000,
   points: 10,
+  correct: ["نواكشوط"],
+  chosen: ["نواكشوط"],
   ...over,
 });
 

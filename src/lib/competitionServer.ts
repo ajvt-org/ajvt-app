@@ -1,6 +1,11 @@
 import type { Competition } from "@prisma/client";
 import { prisma } from "./prisma";
-import { DEFAULT_CONFIG, validateConfig, type CompetitionConfig } from "./competitionConfig";
+import {
+  DEFAULT_BOARDS,
+  DEFAULT_CONFIG,
+  validateConfig,
+  type CompetitionConfig,
+} from "./competitionConfig";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
@@ -11,13 +16,17 @@ export const NO_COMPETITION = "لا توجد مسابقة";
 export async function listCompetitions() {
   return prisma.competition.findMany({
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { participants: true, rounds: true } } },
+    include: {
+      _count: { select: { participants: true, rounds: true } },
+      boards: { orderBy: { order: "asc" } },
+    },
   });
 }
 
 export async function getCompetition(id?: string) {
-  if (id) return prisma.competition.findUnique({ where: { id } });
-  return prisma.competition.findFirst({ orderBy: { createdAt: "desc" } });
+  const boards = { boards: { orderBy: { order: "asc" as const } } };
+  if (id) return prisma.competition.findUnique({ where: { id }, include: boards });
+  return prisma.competition.findFirst({ orderBy: { createdAt: "desc" }, include: boards });
 }
 
 export async function requireCompetition(id?: string) {
@@ -80,7 +89,11 @@ export async function setParticipants(competitionId: string, userIds: string[]) 
   return known.length;
 }
 
-function asConfig(row: Competition): CompetitionConfig {
+type CompetitionRow = Competition & {
+  boards?: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
+};
+
+function asConfig(row: CompetitionRow): CompetitionConfig {
   return {
     name: row.name,
     startsAt: row.startsAt.toISOString(),
@@ -90,8 +103,12 @@ function asConfig(row: Competition): CompetitionConfig {
     roundWindowMinutes: row.roundWindowMinutes,
     servedCount: row.servedCount,
     poolSize: row.poolSize,
-    groupSize: row.groupSize,
-    countingRounds: row.countingRounds,
+    boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
+      title: b.title,
+      blockRounds: b.blockRounds,
+      counting: b.counting,
+      wholeRun: b.wholeRun,
+    })),
     categoryRounds: row.categoryRounds,
     bankId: row.bankId,
     fullSeconds: row.fullSeconds,
@@ -101,11 +118,18 @@ function asConfig(row: Competition): CompetitionConfig {
 }
 
 function asRow(config: CompetitionConfig) {
-  return { ...config, startsAt: new Date(config.startsAt) };
+  const { boards, ...rest } = config;
+  void boards;
+  return { ...rest, startsAt: new Date(config.startsAt) };
 }
 
 export async function saveCompetition(input: Partial<CompetitionConfig>, id?: string) {
-  const existing = id ? await getCompetition(id) : null;
+  const existing = id
+    ? await prisma.competition.findUnique({
+        where: { id },
+        include: { boards: { orderBy: { order: "asc" } } },
+      })
+    : null;
   if (existing?.startedAt) throw new ConflictError(ALREADY_STARTED);
 
   const merged: CompetitionConfig = {
@@ -121,8 +145,22 @@ export async function saveCompetition(input: Partial<CompetitionConfig>, id?: st
   merged.bankId = (await requireBank(merged.bankId)).id;
 
   const data = asRow(merged);
-  if (existing) return prisma.competition.update({ where: { id: existing.id }, data });
-  return prisma.competition.create({ data });
+  const boards = merged.boards.map((board, order) => ({
+    title: board.title.trim(),
+    blockRounds: board.blockRounds,
+    counting: board.counting,
+    wholeRun: board.wholeRun,
+    order,
+  }));
+
+  if (existing) {
+    await prisma.quizBoard.deleteMany({ where: { competitionId: existing.id } });
+    return prisma.competition.update({
+      where: { id: existing.id },
+      data: { ...data, boards: { create: boards } },
+    });
+  }
+  return prisma.competition.create({ data: { ...data, boards: { create: boards } } });
 }
 
 export async function startCompetition(id: string, now = new Date()) {
