@@ -94,6 +94,8 @@ git push origin 0.21.0
 
 Tags live on `master` only, so a tag always means the version was deployed. `git log --tags master` is the deployment history.
 
+There is no `CHANGELOG.md`, and this is deliberate. Every tag has a [release](https://github.com/ajvt-org/ajvt-app/releases) whose notes are written by hand when the release pull request is opened, and the workflow publishes the pull request body as those notes. A file in the repository would be a second copy of the same thing, kept up to date by whoever remembered. Commits here are plain imperative rather than Conventional Commits, so nothing can generate one either.
+
 Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge, and the reason the build has to pass before one can happen.
 
 To roll back, redeploy the previous commit from the Render dashboard. That is faster than a revert, and it does not undo a migration either way.

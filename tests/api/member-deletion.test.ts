@@ -4,7 +4,7 @@ import { GET as LIST_DELETED } from "@/app/api/admin/deleted/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
 import { RETENTION_DAYS } from "@/lib/deletedRecords";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 function del(id: string, body: unknown) {
   return [
@@ -13,7 +13,7 @@ function del(id: string, body: unknown) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     }) as never,
-    { params: Promise.resolve({ id }) },
+    withId(id),
   ] as const;
 }
 
@@ -66,9 +66,10 @@ describe("DELETE /api/admin/members/[id]", () => {
     await DELETE(...del(m.id, { confirmName: "محمد ولد أحمد" }));
     const record = await prisma.deletedRecord.findFirstOrThrow();
 
-    const res = await RESTORE(post(`/api/admin/deleted/${record.id}/restore`, {}), {
-      params: Promise.resolve({ id: record.id }),
-    });
+    const res = await RESTORE(
+      post(`/api/admin/deleted/${record.id}/restore`, {}),
+      withId(record.id),
+    );
 
     expect(res.status).toBe(200);
     const restored = await prisma.member.findUnique({ where: { id: m.id } });

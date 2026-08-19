@@ -3,7 +3,16 @@ import { POST } from "@/app/api/admin/members/route";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, put, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  patch,
+  put,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  withId,
+} from "./helpers";
 
 const ALREADY = "لهذا الحساب عضو مسبقاً";
 
@@ -15,10 +24,6 @@ const validBody = {
   status: "ACTIVE",
   paidAmount: 1000,
 };
-
-function params(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
 
 async function signIn() {
   await signInAsAdmin(await createAdmin());
@@ -71,7 +76,7 @@ describe("admin membership is one per account", () => {
 
     const res = await PATCH(
       patch(`/api/admin/members/${member.id}`, { accountPhone: "22334455" }),
-      params(member.id),
+      withId(member.id),
     );
 
     expect(res.status).toBe(200);
@@ -85,14 +90,14 @@ describe("admin membership is one per account", () => {
 
     const res = await PATCH(
       patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }),
-      params(member.id),
+      withId(member.id),
     );
     await PAY(
       put(`/api/admin/members/${member.id}/payment`, {
         amountTransferred: null,
         paymentMethod: "السداد",
       }),
-      params(member.id),
+      withId(member.id),
     );
 
     expect(res.status).toBe(200);
@@ -116,7 +121,7 @@ describe("admin membership is one per account", () => {
     await signIn();
     const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
 
-    await PATCH(patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }), params(member.id));
+    await PATCH(patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }), withId(member.id));
 
     const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(updated.paymentMethod).toBe("بنكيلي");
@@ -132,7 +137,7 @@ describe("admin membership is one per account", () => {
         amountTransferred: null,
         paymentMethod: "   ",
       }),
-      params(member.id),
+      withId(member.id),
     );
 
     expect(res.status).toBe(400);
@@ -148,7 +153,7 @@ describe("admin membership is one per account", () => {
 
     const res = await PATCH(
       patch(`/api/admin/members/${orphan.id}`, { accountPhone: "22334455" }),
-      params(orphan.id),
+      withId(orphan.id),
     );
 
     expect(res.status).toBe(409);

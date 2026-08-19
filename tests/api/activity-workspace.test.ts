@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as FINANCE } from "@/app/api/admin/activities/[id]/finance/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin } from "./helpers";
-
-function withId(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
+import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function activity(title = "القافلة الصحية") {
   return prisma.activity.create({ data: { title, description: "وصف" } });

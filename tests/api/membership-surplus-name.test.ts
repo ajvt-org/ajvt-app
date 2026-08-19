@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, patch, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  patch,
+  createUser,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  withId,
+} from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
@@ -32,9 +41,10 @@ function mirrorOf(memberId: string) {
 }
 
 function changeVisibility(memberId: string, anonymous: boolean) {
-  return UPDATE_MEMBER(patch(`/api/members/${memberId}`, { surplusAnonymous: anonymous }), {
-    params: Promise.resolve({ id: memberId }),
-  });
+  return UPDATE_MEMBER(
+    patch(`/api/members/${memberId}`, { surplusAnonymous: anonymous }),
+    withId(memberId),
+  );
 }
 
 describe("who the membership surplus is credited to", () => {

@@ -4,15 +4,7 @@ import { POST as CREATE_TEAM } from "@/app/api/admin/activities/[id]/teams/route
 import { POST as ADD_MEMBER } from "@/app/api/admin/teams/[teamId]/members/route";
 import { POST as DRAW } from "@/app/api/admin/activities/[id]/bracket/draw/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
-
-function withId(id: string) {
-  return { params: Promise.resolve({ id }) };
-}
-
-function withTeamId(teamId: string) {
-  return { params: Promise.resolve({ teamId }) };
-}
+import { resetDb, post, createAdmin, signInAsAdmin, withId, withParams } from "./helpers";
 
 async function doublesActivity(teamSize: number | null = 2) {
   const res = await CREATE_ACTIVITY(
@@ -46,7 +38,10 @@ async function makeTeam(activityId: string, name?: string) {
 }
 
 function addMember(teamId: string, memberId: string) {
-  return ADD_MEMBER(post(`/api/admin/teams/${teamId}/members`, { memberId }), withTeamId(teamId));
+  return ADD_MEMBER(
+    post(`/api/admin/teams/${teamId}/members`, { memberId }),
+    withParams({ teamId }),
+  );
 }
 
 describe("fixed-size teams", () => {

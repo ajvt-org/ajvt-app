@@ -2,12 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { resetDb, patch, put, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, patch, put, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { PATCH as UPDATE } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 const YEAR = runningYear();
 
 async function memberMissingAmount() {

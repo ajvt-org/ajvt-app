@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin, withId } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MY_ROUNDS } from "@/app/api/quiz/breakdown/route";
 import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
 import { GET as ADMIN_DETAIL } from "@/app/api/admin/quiz/attempts/[id]/route";
 import { GET as ADMIN_ROUND } from "@/app/api/admin/quiz/competitions/[id]/attempts/route";
-
-const at = (id: string) => ({ params: Promise.resolve({ id }) });
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
@@ -132,7 +130,9 @@ describe("a member reading their own score", () => {
     const made = await attempt(c.id, user.id);
     await signInAs(user);
 
-    const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
+    const body = await (
+      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
+    ).json();
 
     expect(body.detail.breakdown.rows).toHaveLength(3);
     expect(body.detail.breakdown.correct).toBe(1);
@@ -160,7 +160,9 @@ describe("a member reading their own score", () => {
     const made = await attempt(c.id, user.id);
     await signInAs(user);
 
-    const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
+    const body = await (
+      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
+    ).json();
 
     expect(body.detail.breakdown.rows[0].correct).toEqual(["صحيح"]);
     expect(body.detail.breakdown.rows[0].chosen).toEqual([]);
@@ -172,7 +174,9 @@ describe("a member reading their own score", () => {
     const made = await attempt(c.id, user.id);
     await signInAs(user);
 
-    const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
+    const body = await (
+      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
+    ).json();
 
     expect(body.detail.breakdown.rows[0].percent).toBe(100);
     expect(body.detail.breakdown.rows[1].percent).toBe(0);
@@ -184,7 +188,9 @@ describe("a member reading their own score", () => {
     const made = await attempt(c.id, user.id);
     await signInAs(user);
 
-    const body = await (await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id))).json();
+    const body = await (
+      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
+    ).json();
 
     expect(body.detail.curve).toEqual(DEFAULT_CURVE);
     expect(body.detail.round).toBe(0);
@@ -198,7 +204,7 @@ describe("a member reading their own score", () => {
     const made = await attempt(c.id, theirs.id);
     await signInAs(mine);
 
-    const res = await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), at(made.id));
+    const res = await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id));
 
     expect(res.status).toBe(403);
   });
@@ -207,7 +213,7 @@ describe("a member reading their own score", () => {
     const user = await paidUser();
     await signInAs(user);
 
-    expect((await MY_DETAIL(get("/api/quiz/breakdown/nope"), at("nope"))).status).toBe(404);
+    expect((await MY_DETAIL(get("/api/quiz/breakdown/nope"), withId("nope"))).status).toBe(404);
   });
 
   it("is closed to a member who has not paid", async () => {
@@ -231,7 +237,7 @@ describe("an admin reading anyone's score", () => {
     await attempt(c.id, user.id);
 
     const body = await (
-      await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=0`), at(c.id))
+      await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=0`), withId(c.id))
     ).json();
 
     expect(body.attempts).toHaveLength(1);
@@ -243,7 +249,7 @@ describe("an admin reading anyone's score", () => {
     const c = await competition();
 
     const body = await (
-      await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=2`), at(c.id))
+      await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=2`), withId(c.id))
     ).json();
 
     expect(body.attempts).toEqual([]);
@@ -255,7 +261,7 @@ describe("an admin reading anyone's score", () => {
     const made = await attempt(c.id, user.id);
 
     const body = await (
-      await ADMIN_DETAIL(get(`/api/admin/quiz/attempts/${made.id}`), at(made.id))
+      await ADMIN_DETAIL(get(`/api/admin/quiz/attempts/${made.id}`), withId(made.id))
     ).json();
 
     expect(body.detail.name).toBe("أحمد");
@@ -269,11 +275,15 @@ describe("an admin reading anyone's score", () => {
     await signInAsAdmin(await createAdmin("members", "MEMBERS"));
 
     expect(
-      (await ADMIN_DETAIL(get(`/api/admin/quiz/attempts/${made.id}`), at(made.id))).status,
+      (await ADMIN_DETAIL(get(`/api/admin/quiz/attempts/${made.id}`), withId(made.id))).status,
     ).toBe(403);
     expect(
-      (await ADMIN_ROUND(get(`/api/admin/quiz/competitions/${c.id}/attempts?round=0`), at(c.id)))
-        .status,
+      (
+        await ADMIN_ROUND(
+          get(`/api/admin/quiz/competitions/${c.id}/attempts?round=0`),
+          withId(c.id),
+        )
+      ).status,
     ).toBe(403);
   });
 });

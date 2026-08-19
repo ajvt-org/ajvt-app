@@ -2,11 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/activities/route";
 import { PATCH, DELETE } from "@/app/api/admin/activities/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
-
-function withId(id: string, body: unknown) {
-  return [post(`/api/admin/activities/${id}`, body), { params: Promise.resolve({ id }) }] as const;
-}
+import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function anActivity() {
   return prisma.activity.create({
@@ -47,7 +43,10 @@ describe("activity audit detail", () => {
     await signInAsAdmin(await createAdmin());
     const activity = await anActivity();
 
-    await PATCH(...withId(activity.id, { capacity: 64 }));
+    await PATCH(
+      post(`/api/admin/activities/${activity.id}`, { capacity: 64 }),
+      withId(activity.id),
+    );
 
     const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "UPDATE_ACTIVITY" } });
     expect(entry.before).toMatchObject({ capacity: 32 });
@@ -58,7 +57,7 @@ describe("activity audit detail", () => {
     await signInAsAdmin(await createAdmin());
     const activity = await anActivity();
 
-    await DELETE(...withId(activity.id, {}));
+    await DELETE(post(`/api/admin/activities/${activity.id}`, {}), withId(activity.id));
 
     const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "DELETE_ACTIVITY" } });
     expect(entry.targetId).toBe(activity.id);
@@ -68,7 +67,10 @@ describe("activity audit detail", () => {
   it("refuses an anonymous caller and writes nothing", async () => {
     const activity = await anActivity();
 
-    const res = await PATCH(...withId(activity.id, { capacity: 64 }));
+    const res = await PATCH(
+      post(`/api/admin/activities/${activity.id}`, { capacity: 64 }),
+      withId(activity.id),
+    );
 
     expect(res.status).toBe(401);
     expect(await prisma.auditLog.count()).toBe(0);

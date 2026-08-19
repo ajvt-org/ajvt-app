@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
-import { resetDb, put, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, put, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { GET as LIST } from "@/app/api/admin/admins/route";
 import { PUT as SET_ACTIVITIES } from "@/app/api/admin/admins/[id]/activities/route";
-
-const withId = (id: string) => ({ params: Promise.resolve({ id }) });
 
 function activity(title: string) {
   return prisma.activity.create({ data: { title, description: "وصف" } });

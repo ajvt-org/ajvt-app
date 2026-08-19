@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, put, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, put, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { NOT_A_ROUND, POOL_TOO_SMALL } from "@/lib/quizPoolServer";
 import { startOrResumeAttempt } from "@/lib/quizAttemptServer";
@@ -53,12 +53,12 @@ async function questions(n: number, category = "عام", points = 10) {
   return made;
 }
 
-const at = (id: string) => ({ params: Promise.resolve({ id }) });
-const rounds = (id: string) => ROUNDS(put(`/api/admin/quiz/competitions/${id}/rounds`, {}), at(id));
+const rounds = (id: string) =>
+  ROUNDS(put(`/api/admin/quiz/competitions/${id}/rounds`, {}), withId(id));
 const setPool = (id: string, index: number, questionIds: string[]) =>
-  SET_POOL(put(`/api/admin/quiz/competitions/${id}/rounds`, { index, questionIds }), at(id));
+  SET_POOL(put(`/api/admin/quiz/competitions/${id}/rounds`, { index, questionIds }), withId(id));
 const fill = (id: string) =>
-  FILL(post(`/api/admin/quiz/competitions/${id}/rounds/fill`, {}), at(id));
+  FILL(post(`/api/admin/quiz/competitions/${id}/rounds/fill`, {}), withId(id));
 
 describe("loading the questions for a round", () => {
   beforeEach(async () => {

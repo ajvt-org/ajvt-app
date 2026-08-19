@@ -85,3 +85,14 @@ export async function signInAsAdmin(admin: { id: string; username: string; token
   setCookie("admin_token", token);
   return token;
 }
+
+// The second argument Next hands a route handler. Every test built its own copy
+// of this, in two shapes, which is one more place for a request to be built by
+// hand and miss what the helpers above put on it.
+export function withParams<T extends Record<string, string>>(params: T) {
+  return { params: Promise.resolve(params) };
+}
+
+export function withId(id: string) {
+  return withParams({ id });
+}
