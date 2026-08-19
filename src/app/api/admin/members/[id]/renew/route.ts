@@ -11,6 +11,7 @@ import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
+import { stampRecordedBy } from "@/lib/paymentMirror";
 
 const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
   notActive: messages.renewNotActive,
@@ -56,6 +57,7 @@ export const POST = withRoute(
         },
       });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      await stampRecordedBy(tx, id, membershipYear, session.username);
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 

@@ -20,7 +20,6 @@ async function overpaidMember() {
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: "ACTIVE",
-      paidAmount: 100,
       membershipYear: YEAR,
       memberNumber: "AJVT-2026-0001",
     },
@@ -28,16 +27,8 @@ async function overpaidMember() {
   await prisma.membership.create({
     data: { memberId: m.id, year: YEAR, paidAmount: 100, paymentMethod: "بنكيلي" },
   });
-  await prisma.donation.create({
-    data: {
-      memberId: m.id,
-      membershipYear: YEAR,
-      source: "MEMBERSHIP",
-      amount: 2000,
-      status: "ACTIVE",
-      donorName: "محمد ولد أحمد",
-    },
-  });
+  const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+  await recordMembershipPayment(prisma, m.id, 2100, 100);
   return m;
 }
 

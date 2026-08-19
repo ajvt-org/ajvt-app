@@ -44,6 +44,14 @@ export interface ExportableDonation {
   tags: { name: string }[];
 }
 
+// A payment records what it was for, not where it came from, so the source
+// column is read back off it: a membership payment is a surplus, and anything
+// else is a member's own gift or a gift from outside.
+export function sourceOf(purpose: string, memberId: string | null): string {
+  if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
+  return memberId ? "SELF" : "PUBLIC";
+}
+
 function day(date: Date): string {
   return date.toISOString().slice(0, 10);
 }

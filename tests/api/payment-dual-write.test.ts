@@ -88,6 +88,41 @@ describe("every path that touches money writes both shapes", () => {
     expect(payment.status).toBe("ACTIVE");
   });
 
+  it("keeps the admin who recorded the year on the payment as well", async () => {
+    await signInAs(await createUser());
+    await REGISTER(post("/api/members", submission));
+    const m = await prisma.member.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+
+    const membership = await prisma.membership.findFirstOrThrow({ where: { memberId: m.id } });
+    const payment = await prisma.payment.findFirstOrThrow({ where: { memberId: m.id } });
+    expect(payment.recordedBy).toBe(membership.recordedBy);
+    expect(payment.recordedBy).toBe("boss");
+  });
+
+  it("leaves the first admin on the year when a second one edits it", async () => {
+    await signInAs(await createUser());
+    await REGISTER(post("/api/members", submission));
+    const m = await prisma.member.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+
+    await signInAsAdmin(await createAdmin("second", "SUPER"));
+    await PAY(
+      put(`/api/admin/members/${m.id}/payment`, {
+        amountTransferred: 3000,
+        paymentMethod: "بنكيلي",
+      }),
+      withId(m.id),
+    );
+
+    expect((await prisma.payment.findFirstOrThrow({ where: { memberId: m.id } })).recordedBy).toBe(
+      "boss",
+    );
+  });
+
   it("agrees after an admin refuses that member", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));

@@ -15,7 +15,7 @@ import { parse } from "@/lib/validation";
 import { ConflictError } from "@/lib/errors";
 import { members } from "@/lib/messages";
 import { adminMemberCreateSchema } from "./schema";
-import { surplusForYear } from "@/lib/paidBreakdown";
+import { paidForYear } from "@/lib/paidBreakdown";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
@@ -26,18 +26,18 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       registrations: {
         select: { activityId: true, activity: { select: { id: true, title: true } } },
       },
-      donations: {
-        where: { source: "MEMBERSHIP" },
-        select: { amount: true, membershipYear: true },
+      payments: {
+        where: { purpose: "MEMBERSHIP" },
+        select: { amount: true, feeApplied: true, year: true },
       },
     },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
   return NextResponse.json({
-    members: members.map(({ donations, ...member }) => ({
-      ...member,
-      supportAmount: surplusForYear(donations, member.membershipYear),
-    })),
+    members: members.map(({ payments, ...member }) => {
+      const paid = paidForYear(payments, member.membershipYear);
+      return { ...member, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+    }),
   });
 });
 

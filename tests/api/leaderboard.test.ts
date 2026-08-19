@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
+import { mirrorDonation } from "@/lib/paymentMirror";
 import { get } from "./helpers";
 import { resetDb } from "./helpers";
 
@@ -16,16 +17,33 @@ async function member(fullName: string) {
   });
 }
 
-async function gift(amount: number, opts: { name?: string | null; memberId?: string } = {}) {
-  return prisma.donation.create({
+async function gift(
+  amount: number,
+  opts: { name?: string | null; memberId?: string; status?: "ACTIVE" | "PENDING" } = {},
+) {
+  const status = opts.status ?? "ACTIVE";
+  const donation = await prisma.donation.create({
     data: {
       amount,
       donorName: opts.name ?? null,
       memberId: opts.memberId ?? null,
-      status: "ACTIVE",
+      status,
       source: opts.memberId ? "SELF" : "PUBLIC",
     },
   });
+  await mirrorDonation(prisma, {
+    donationId: donation.id,
+    amount,
+    method: null,
+    proof: null,
+    status,
+    donorName: donation.donorName,
+    donorPhoto: null,
+    donorPhone: null,
+    memberId: donation.memberId,
+    activityId: null,
+  });
+  return donation;
 }
 
 const ANON = "فاعل خير";
@@ -105,9 +123,7 @@ describe("the supporters board", () => {
   it("leaves out gifts still awaiting review", async () => {
     const m = await member("محمد");
     await gift(500, { memberId: m.id, name: "محمد" });
-    await prisma.donation.create({
-      data: { amount: 9999, donorName: "محمد", memberId: m.id, status: "PENDING", source: "SELF" },
-    });
+    await gift(9999, { memberId: m.id, name: "محمد", status: "PENDING" });
 
     const { leaderboard } = await getLeaderboardData();
 
@@ -125,6 +141,49 @@ describe("the supporters board", () => {
     expect(leaderboard[0].memberIds).toEqual([m.id]);
     expect(Object.keys(sent[0])).toEqual(["rank", "name", "photoUrl", "total", "anonymous"]);
     expect(JSON.stringify(sent)).not.toContain(m.id);
+  });
+
+  it("counts what a membership payment carried past the fee, and not the fee", async () => {
+    const m = await member("محمد");
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+    await recordMembershipPayment(prisma, m.id, 1000, 100);
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard).toHaveLength(1);
+    expect(leaderboard[0].total).toBe(900);
+  });
+
+  it("leaves a member who paid the fee and nothing more off the board", async () => {
+    const m = await member("محمد");
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+    await recordMembershipPayment(prisma, m.id, 100, 100);
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard).toHaveLength(0);
+  });
+
+  it("keeps the photo of a donor who has no account", async () => {
+    const donation = await prisma.donation.create({
+      data: { amount: 500, donorName: "زائر", donorPhoto: "guest.webp", status: "ACTIVE" },
+    });
+    await mirrorDonation(prisma, {
+      donationId: donation.id,
+      amount: 500,
+      method: null,
+      proof: null,
+      status: "ACTIVE",
+      donorName: "زائر",
+      donorPhoto: "guest.webp",
+      donorPhone: null,
+      memberId: null,
+      activityId: null,
+    });
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard[0].photoUrl).toBe("/api/files/donation/guest.webp");
   });
 
   it("hands back one page at a time, however many supporters there are", async () => {

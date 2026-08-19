@@ -122,6 +122,8 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     proof: filename,
     status: "PENDING",
     donorName,
+    donorPhoto: null,
+    donorPhone: null,
     memberId,
     activityId: null,
   });

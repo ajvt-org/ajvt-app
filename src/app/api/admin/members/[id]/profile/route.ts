@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
-import { surplusForYear } from "@/lib/paidBreakdown";
+import { paidForYear } from "@/lib/paidBreakdown";
 
 // Everything the association knows about one person, in one answer. The facts
 // live in five tables — the member, their activity registrations, their teams,
@@ -37,6 +37,10 @@ export const GET = withRoute(
             },
           },
         },
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true },
+        },
         donations: {
           orderBy: { createdAt: "desc" },
           select: {
@@ -66,10 +70,8 @@ export const GET = withRoute(
     return NextResponse.json({
       member: {
         ...member,
-        supportAmount: surplusForYear(
-          member.donations.filter((d) => d.source === "MEMBERSHIP"),
-          member.membershipYear,
-        ),
+        paidAmount: paidForYear(member.payments, member.membershipYear)?.fee ?? null,
+        supportAmount: paidForYear(member.payments, member.membershipYear)?.support ?? 0,
       },
       history,
     });
