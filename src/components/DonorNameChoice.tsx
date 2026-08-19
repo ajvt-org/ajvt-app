@@ -26,8 +26,8 @@ export default function DonorNameChoice({
 }: {
   wantsName: boolean | null;
   onPick: (wants: boolean) => void;
-  donorName: string;
-  onDonorName: (name: string) => void;
+  donorName?: string;
+  onDonorName?: (name: string) => void;
   memberName?: string;
 }) {
   return (
@@ -66,10 +66,10 @@ export default function DonorNameChoice({
         </button>
       </div>
 
-      {!memberName && wantsName === true && (
+      {!memberName && wantsName === true && onDonorName && (
         <input
           type="text"
-          value={donorName}
+          value={donorName ?? ""}
           onChange={(e) => onDonorName(e.target.value)}
           placeholder="اكتب اسمك هنا"
           maxLength={DONOR_NAME_MAX}

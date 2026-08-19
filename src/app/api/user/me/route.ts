@@ -16,6 +16,7 @@ const MEMBER_SELECT = {
   paymentProof: true,
   photo: true,
   paidAmount: true,
+  surplusAnonymous: true,
   membershipYear: true,
   donations: {
     where: { source: "MEMBERSHIP" },
