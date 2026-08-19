@@ -80,7 +80,11 @@ export function planRounds(bank: BankQuestion[], shape: DrawShape, seed: string)
     if (drawn.length < shape.poolSize) break;
 
     const taken = new Set(drawn.map((q) => q.id));
-    if (category) groups.set(category, from.filter((q) => !taken.has(q.id)));
+    if (category)
+      groups.set(
+        category,
+        from.filter((q) => !taken.has(q.id)),
+      );
     else left = left.filter((q) => !taken.has(q.id));
 
     plans.push({ index, category, questionIds: drawn.map((q) => q.id) });

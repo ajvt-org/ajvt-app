@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import AttemptResult from "./AttemptResult";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+import MyScores from "./MyScores";
 
 interface AttemptState {
   attemptId: string;
@@ -53,6 +54,7 @@ export default function CompetitionView({
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [result, setResult] = useState<AnswerState | null>(null);
   const [closed, setClosed] = useState("");
+  const [showScores, setShowScores] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -140,12 +142,17 @@ export default function CompetitionView({
               مجموعك في الجولة {attempt.score}
             </p>
           )}
+          <button onClick={() => setShowScores((v) => !v)} className="btn btn-sm text-xs mt-3 ms-2">
+            {showScores ? "إخفاء التفاصيل" : "تفاصيل نقاطي"}
+          </button>
           {onSwitch && (
             <button onClick={onSwitch} className="btn btn-sm text-xs mt-3">
               تغيير المسابقة
             </button>
           )}
         </div>
+
+        {showScores && competitionId && <MyScores competitionId={competitionId} />}
 
         <StandingsBoard
           title="ترتيب الجولة"

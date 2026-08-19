@@ -6,6 +6,7 @@ import CompetitionList from "./CompetitionList";
 import CompetitionPanel from "./CompetitionPanel";
 import ParticipantsPanel from "./ParticipantsPanel";
 import RoundsPanel from "./RoundsPanel";
+import ScoresPanel from "./ScoresPanel";
 import type { CompetitionRow } from "./competitionTypes";
 
 export default function CompetitionsSection({ questionCount }: { questionCount: number }) {
@@ -59,6 +60,10 @@ export default function CompetitionsSection({ questionCount }: { questionCount: 
       )}
 
       {editing && <RoundsPanel competitionId={editing} questionCount={questionCount} />}
+
+      {editing && selected?.startedAt && (
+        <ScoresPanel competitionId={editing} roundCount={selected.roundCount} />
+      )}
     </div>
   );
 }
