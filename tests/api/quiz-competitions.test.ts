@@ -112,14 +112,53 @@ describe("configuring a competition before it starts", () => {
       roundCount: 20,
       roundPeriodMinutes: 60,
       roundWindowMinutes: 60,
-      groupSize: 5,
-      countingRounds: 4,
+      boards: [{ title: "كل خمس جولات", blockRounds: 5, counting: 4, wholeRun: false }],
     });
 
-    const row = await prisma.competition.findUniqueOrThrow({ where: { id: c.id } });
+    const row = await prisma.competition.findUniqueOrThrow({
+      where: { id: c.id },
+      include: { boards: true },
+    });
     expect(row.roundCount).toBe(20);
     expect(row.roundPeriodMinutes).toBe(60);
-    expect(row.groupSize).toBe(5);
+    expect(row.boards).toHaveLength(1);
+    expect(row.boards[0].blockRounds).toBe(5);
+  });
+
+  it("gives a new competition the rankings it names", async () => {
+    const c = await made({
+      ...config,
+      boards: [
+        { title: "يومي", blockRounds: 1, counting: 1, wholeRun: false },
+        { title: "عام", blockRounds: 7, counting: 6, wholeRun: true },
+      ],
+    });
+
+    const boards = await prisma.quizBoard.findMany({
+      where: { competitionId: c.id },
+      orderBy: { order: "asc" },
+    });
+    expect(boards.map((b) => b.title)).toEqual(["يومي", "عام"]);
+    expect(boards[1].wholeRun).toBe(true);
+  });
+
+  it("replaces the rankings rather than adding to them", async () => {
+    const c = await made();
+
+    await save(c.id, { boards: [{ title: "واحد", blockRounds: 1, counting: 1, wholeRun: false }] });
+
+    const boards = await prisma.quizBoard.findMany({ where: { competitionId: c.id } });
+    expect(boards.map((b) => b.title)).toEqual(["واحد"]);
+  });
+
+  it("refuses a ranking that counts more rounds than it covers", async () => {
+    const c = await made();
+
+    const res = await save(c.id, {
+      boards: [{ title: "خطأ", blockRounds: 3, counting: 4, wholeRun: false }],
+    });
+
+    expect(res.status).toBe(400);
   });
 
   it("refuses a pool smaller than the round set", async () => {

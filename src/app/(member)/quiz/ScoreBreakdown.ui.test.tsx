@@ -9,8 +9,10 @@ const detail: AttemptDetailView = {
   category: "جغرافيا",
   competitionName: "مسابقة الصيف",
   curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
-  groupSize: 7,
-  countingRounds: 6,
+  boards: [
+    { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
+    { title: "الترتيب العام", blockRounds: 7, counting: 6, wholeRun: true },
+  ],
   breakdown: {
     rows: [
       {
@@ -76,6 +78,6 @@ describe("ScoreBreakdown", () => {
     render(<ScoreBreakdown detail={detail} />);
 
     expect(screen.getByText(/حتى 10 ثانية، كل النقاط/)).toBeDefined();
-    expect(screen.getByText(/أفضل 6 جولة من 7/)).toBeDefined();
+    expect(screen.getByText(/الترتيب العام، مجموع كل الفترات/)).toBeDefined();
   });
 });

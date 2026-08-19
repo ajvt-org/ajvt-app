@@ -46,9 +46,7 @@ export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }
                   </span>
                 </td>
                 <td className="p-2 text-center">{row.maxPoints}</td>
-                <td className="p-2 text-center" dir="ltr">
-                  {seconds(row.elapsedMs)}
-                </td>
+                <td className="p-2 text-center">{seconds(row.elapsedMs)}</td>
                 <td className="p-2 text-center">{row.percent}%</td>
                 <td className="p-2 text-center font-bold">{row.points}</td>
               </tr>
@@ -57,11 +55,7 @@ export default function ScoreBreakdown({ detail }: { detail: AttemptDetailView }
         </table>
       </div>
 
-      <ScoreFormula
-        curve={detail.curve}
-        groupSize={detail.groupSize}
-        countingRounds={detail.countingRounds}
-      />
+      <ScoreFormula curve={detail.curve} boards={detail.boards} />
     </div>
   );
 }

@@ -14,8 +14,7 @@ export interface AttemptDetail {
   competitionId: string;
   competitionName: string;
   curve: ScoreCurve;
-  groupSize: number;
-  countingRounds: number;
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   finishedAt: Date | null;
   breakdown: Breakdown;
 }
@@ -24,7 +23,7 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
   const attempt = await prisma.quizAttempt.findUnique({
     where: { id: attemptId },
     include: {
-      round: { include: { competition: true } },
+      round: { include: { competition: { include: { boards: { orderBy: { order: "asc" } } } } } },
       answers: { include: { question: true } },
     },
   });
@@ -34,6 +33,7 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     where: { userId: attempt.userId },
     select: { fullName: true },
   });
+  const boards = attempt.round.competition.boards;
   const curve: ScoreCurve = {
     fullSeconds: attempt.round.competition.fullSeconds,
     maxSeconds: attempt.round.competition.maxSeconds,
@@ -58,8 +58,12 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
     competitionId: attempt.round.competitionId,
     competitionName: attempt.round.competition.name,
     curve,
-    groupSize: attempt.round.competition.groupSize,
-    countingRounds: attempt.round.competition.countingRounds,
+    boards: boards.map((b) => ({
+      title: b.title,
+      blockRounds: b.blockRounds,
+      counting: b.counting,
+      wholeRun: b.wholeRun,
+    })),
     finishedAt: attempt.finishedAt,
     breakdown: breakdownOf(rows, curve),
   };

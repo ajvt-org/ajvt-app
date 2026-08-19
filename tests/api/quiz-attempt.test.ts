@@ -10,7 +10,7 @@ import {
   NO_POOL,
   NOT_STARTED,
 } from "@/lib/quizAttemptServer";
-import { DEFAULT_CURVE } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { drawQuestions, seededShuffle } from "@/lib/quizRound";
 import type { HttpError } from "@/lib/errors";
 
@@ -37,8 +37,7 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 840,
       servedCount: 3,
       poolSize: 5,
-      groupSize: 7,
-      countingRounds: 6,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       startedAt: new Date(`${DAY}T00:00:00.000Z`),
       ...over,

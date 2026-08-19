@@ -1,14 +1,7 @@
 import { prisma } from "./prisma";
 import { getCompetition, shapeOf } from "./competitionServer";
-import { currentRound, groupOf, endsAt } from "./quizRound";
-import {
-  roundRanking,
-  groupRanking,
-  finalRanking,
-  standingOf,
-  type RoundScore,
-  type Ranked,
-} from "./quizRanking";
+import { currentRound, endsAt, groupOf, roundIndexAt } from "./quizRound";
+import { boardRanking, standingOf, type RoundScore, type Ranked } from "./quizRanking";
 
 export interface Board {
   rank: number;
@@ -54,17 +47,20 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
   });
 }
 
+export interface StandingsBoard {
+  id: string;
+  title: string;
+  rows: Board[];
+  mine: Ranked | null;
+}
+
 export interface Standings {
   running: boolean;
   competitionId: string | null;
   name: string | null;
   meId: string | null;
   round: number | null;
-  group: number | null;
-  today: Board[];
-  thisWeek: Board[];
-  overall: Board[];
-  mine: { today: Ranked | null; thisWeek: Ranked | null; overall: Ranked | null } | null;
+  boards: StandingsBoard[];
 }
 
 export async function getStandings(
@@ -80,80 +76,75 @@ export async function getStandings(
     name: competition?.name ?? null,
     meId: userId ?? null,
     round: null,
-    group: null,
-    today: [],
-    thisWeek: [],
-    overall: [],
-    mine: null,
+    boards: [],
   };
   if (!competition?.startedAt) return empty;
 
   const scores = await roundScores(competition.id);
-  const open = currentRound(shapeOf(competition), now);
-  const group = open ? groupOf(open.index, competition.groupSize) : null;
+  const at =
+    currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
 
-  const dayRows = open ? roundRanking(scores, open.index) : [];
-  const weekRows =
-    group !== null
-      ? groupRanking(scores, competition.groupSize, competition.countingRounds, group)
-      : [];
-  const allRows = finalRanking(scores, competition.groupSize, competition.countingRounds);
+  const boards: StandingsBoard[] = [];
+  for (const board of competition.boards) {
+    const rows = boardRanking(scores, board, at);
+    boards.push({
+      id: board.id,
+      title: board.title,
+      rows: await named(rows, limit),
+      mine: userId ? standingOf(rows, userId) : null,
+    });
+  }
 
   return {
     running: true,
     competitionId: competition.id,
     name: competition.name,
     meId: userId ?? null,
-    round: open?.index ?? null,
-    group,
-    today: await named(dayRows, limit),
-    thisWeek: await named(weekRows, limit),
-    overall: await named(allRows, limit),
-    mine: userId
-      ? {
-          today: standingOf(dayRows, userId),
-          thisWeek: standingOf(weekRows, userId),
-          overall: standingOf(allRows, userId),
-        }
-      : null,
+    round: at,
+    boards,
   };
 }
 
 export async function getWinners(competitionId: string, now = new Date()) {
   const competition = await getCompetition(competitionId);
-  if (!competition?.startedAt) return { rounds: [], groups: [], overall: null };
+  if (!competition?.startedAt) return { boards: [] };
 
   const scores = await roundScores(competition.id);
   const played = [...new Set(scores.map((s) => s.index))].sort((a, b) => a - b);
-  const groups = [...new Set(played.map((i) => groupOf(i, competition.groupSize)))]
-    .filter((g) => g >= 0)
-    .sort((a, b) => a - b);
-
   const finished = now >= endsAt(shapeOf(competition));
 
-  return {
-    rounds: await Promise.all(
-      played.map(async (index) => ({
-        round: index,
-        winner: (await named(roundRanking(scores, index), 1))[0] ?? null,
-      })),
-    ),
-    groups: await Promise.all(
-      groups.map(async (group) => ({
-        group,
-        winner:
-          (
-            await named(
-              groupRanking(scores, competition.groupSize, competition.countingRounds, group),
-              1,
-            )
-          )[0] ?? null,
-      })),
-    ),
-    overall: finished
-      ? ((
-          await named(finalRanking(scores, competition.groupSize, competition.countingRounds), 1)
-        )[0] ?? null)
-      : null,
-  };
+  const boards = [];
+  for (const board of competition.boards) {
+    const size = Math.max(1, board.blockRounds);
+
+    if (board.wholeRun) {
+      const winner = finished
+        ? ((await named(boardRanking(scores, board, played[played.length - 1] ?? 0), 1))[0] ?? null)
+        : null;
+      boards.push({
+        id: board.id,
+        title: board.title,
+        wholeRun: true,
+        winners: [{ block: null, winner }],
+      });
+      continue;
+    }
+
+    const blocks = [...new Set(played.map((i) => groupOf(i, size)))]
+      .filter((b) => b >= 0)
+      .sort((a, b) => a - b);
+    boards.push({
+      id: board.id,
+      title: board.title,
+      wholeRun: false,
+      winners: await Promise.all(
+        blocks.map(async (block) => ({
+          block,
+          winner: (await named(boardRanking(scores, board, block * size), 1))[0] ?? null,
+        })),
+      ),
+    });
+  }
+
+  return { boards };
 }

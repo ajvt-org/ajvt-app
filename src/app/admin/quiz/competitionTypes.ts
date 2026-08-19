@@ -1,4 +1,4 @@
-import type { Visibility } from "@/lib/competitionConfig";
+import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 
 export interface Competition {
   id: string;
@@ -10,8 +10,7 @@ export interface Competition {
   roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  groupSize: number;
-  countingRounds: number;
+  boards: BoardConfig[];
   categoryRounds: boolean;
   bankId: string;
   fullSeconds: number;
@@ -33,8 +32,7 @@ export interface CompetitionDefaults {
   roundWindowMinutes: number;
   servedCount: number;
   poolSize: number;
-  groupSize: number;
-  countingRounds: number;
+  boards: BoardConfig[];
   fullSeconds: number;
   maxSeconds: number;
   floorPercent: number;

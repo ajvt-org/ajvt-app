@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, put, post, createAdmin, signInAsAdmin } from "./helpers";
-import { DEFAULT_CURVE } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { NOT_A_ROUND, POOL_TOO_SMALL } from "@/lib/quizPoolServer";
 import { startOrResumeAttempt } from "@/lib/quizAttemptServer";
 
@@ -23,8 +23,7 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 840,
       servedCount: 3,
       poolSize: 4,
-      groupSize: 7,
-      countingRounds: 6,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       ...over,
     },

@@ -15,10 +15,20 @@ const standings: StandingsState = {
   competitionId: "c1",
   name: "مسابقة الصيف",
   meId: "u1",
-  today: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
-  thisWeek: [],
-  overall: [],
-  mine: { today: { rank: 4, total: 10 }, thisWeek: null, overall: null },
+  boards: [
+    {
+      id: "b1",
+      title: "ترتيب الجولة",
+      rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
+      mine: { rank: 4, total: 10 },
+    },
+    {
+      id: "b2",
+      title: "الترتيب العام",
+      rows: [{ rank: 1, userId: "u1", name: "أنا", photoUrl: null, total: 90 }],
+      mine: { rank: 1, total: 90 },
+    },
+  ],
 };
 
 const question = {
@@ -60,7 +70,22 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText("المسابقة ليست مفتوحة الآن")).toBeDefined());
-    expect(screen.getByText("ترتيب الجولة")).toBeDefined();
+    expect(screen.getByRole("tab", { name: "ترتيب الجولة" })).toBeDefined();
+    expect(screen.getByText("محمد")).toBeDefined();
+  });
+
+  it("shows one ranking at a time and switches on the tab", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.queryByText("أنا")).toBeNull();
+
+    await userEvent.click(screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(screen.getByText("أنا")).toBeDefined();
+    expect(screen.queryByText("محمد")).toBeNull();
   });
 
   it("goes straight to the next question when an answer is confirmed", async () => {

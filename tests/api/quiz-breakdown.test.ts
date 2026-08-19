@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin } from "./helpers";
-import { DEFAULT_CURVE } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MY_ROUNDS } from "@/app/api/quiz/breakdown/route";
 import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
@@ -20,8 +20,7 @@ async function competition(over: Record<string, unknown> = {}) {
       roundWindowMinutes: 840,
       servedCount: 2,
       poolSize: 2,
-      groupSize: 7,
-      countingRounds: 6,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       startedAt: new Date(),
       ...over,

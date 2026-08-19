@@ -37,8 +37,7 @@ export interface AttemptDetailView {
   category: string | null;
   competitionName: string;
   curve: { fullSeconds: number; maxSeconds: number; floorPercent: number };
-  groupSize: number;
-  countingRounds: number;
+  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   breakdown: {
     rows: BreakdownRowView[];
     correct: number;

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createUsers, signInAs } from "./helpers";
-import { DEFAULT_CURVE } from "@/lib/competitionConfig";
+import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
 import { POST as ANSWER } from "@/app/api/quiz/attempt/answer/route";
@@ -23,8 +23,7 @@ async function setup(paid = 100) {
       roundWindowMinutes: 1440,
       servedCount: 2,
       poolSize: 3,
-      groupSize: 7,
-      countingRounds: 6,
+      boards: { create: DEFAULT_BOARDS.map((b, order) => ({ ...b, order })) },
       ...DEFAULT_CURVE,
       startedAt: new Date(),
     },

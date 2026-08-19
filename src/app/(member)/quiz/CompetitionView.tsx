@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
+import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 
 interface AttemptState {
@@ -24,15 +25,19 @@ interface Place {
   total: number;
 }
 
+export interface StandingsBoard {
+  id: string;
+  title: string;
+  rows: BoardRow[];
+  mine: Place | null;
+}
+
 export interface StandingsState {
   running: boolean;
   competitionId: string | null;
   name: string | null;
   meId: string | null;
-  today: BoardRow[];
-  thisWeek: BoardRow[];
-  overall: BoardRow[];
-  mine: { today: Place | null; thisWeek: Place | null; overall: Place | null } | null;
+  boards: StandingsBoard[];
 }
 
 export default function CompetitionView({
@@ -50,7 +55,10 @@ export default function CompetitionView({
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [closed, setClosed] = useState("");
   const [showScores, setShowScores] = useState(false);
+  const [board, setBoard] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const open = standings.boards.find((b) => b.id === board) ?? standings.boards[0] ?? null;
 
   useEffect(() => {
     let alive = true;
@@ -126,27 +134,17 @@ export default function CompetitionView({
 
         {showScores && competitionId && <MyScores competitionId={competitionId} />}
 
-        <StandingsBoard
-          title="ترتيب الجولة"
-          rows={standings.today}
-          mine={standings.mine?.today ?? null}
-          meId={standings.meId}
-          empty="لم يشارك أحد في هذه الجولة"
-        />
-        <StandingsBoard
-          title="ترتيب المجموعة"
-          rows={standings.thisWeek}
-          mine={standings.mine?.thisWeek ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب لهذه المجموعة بعد"
-        />
-        <StandingsBoard
-          title="الترتيب العام"
-          rows={standings.overall}
-          mine={standings.mine?.overall ?? null}
-          meId={standings.meId}
-          empty="لا ترتيب عام بعد"
-        />
+        <BoardTabs boards={standings.boards} active={board} onSelect={setBoard} />
+
+        {open && (
+          <StandingsBoard
+            title={open.title}
+            rows={open.rows}
+            mine={open.mine}
+            meId={standings.meId}
+            empty="لا ترتيب بعد"
+          />
+        )}
       </div>
     </div>
   );

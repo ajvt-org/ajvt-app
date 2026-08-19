@@ -21,8 +21,7 @@ const detail = {
   category: "جغرافيا",
   competitionName: "مسابقة",
   curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
-  groupSize: 7,
-  countingRounds: 6,
+  boards: [{ title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
   breakdown: {
     rows: [
       {

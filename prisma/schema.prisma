@@ -554,8 +554,6 @@ model Competition {
   roundWindowMinutes Int               @default(840)
   servedCount        Int               @default(10)
   poolSize           Int               @default(30)
-  groupSize          Int               @default(7)
-  countingRounds     Int               @default(6)
   categoryRounds     Boolean           @default(false)
   bankId             String            @default("general")
   bank               QuestionBank      @relation(fields: [bankId], references: [id])
@@ -563,10 +561,27 @@ model Competition {
   maxSeconds         Int               @default(30)
   floorPercent       Int               @default(50)
   rounds             QuizRound[]
+  boards             QuizBoard[]
   participants       QuizParticipant[]
   startedAt          DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+}
+
+// One ranking a member can look at. blockRounds is how many rounds it covers,
+// counting how many of them are added up, and wholeRun says whether it reads
+// every block of the run or only the block the open round sits in.
+model QuizBoard {
+  id            String      @id @default(cuid())
+  competitionId String
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  title         String
+  blockRounds   Int         @default(1)
+  counting      Int         @default(1)
+  wholeRun      Boolean     @default(false)
+  order         Int         @default(0)
+
+  @@index([competitionId])
 }
 
 model QuizRound {
