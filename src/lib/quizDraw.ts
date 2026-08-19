@@ -1,4 +1,5 @@
 import { DIFFICULTIES, difficultyOf, type Difficulty } from "./quizDifficulty";
+import { countedNoun, QUESTIONS, ROUNDS } from "./arabicPlural";
 import { seededShuffle } from "./quizRound";
 
 export interface BankQuestion {
@@ -70,8 +71,8 @@ export function drawShortfall(shape: DrawShape, planned: number, bankSize: numbe
   if (planned >= shape.roundCount) return null;
   const needed = shape.roundCount * shape.questionCount;
   return shape.categoryRounds
-    ? `التصنيفات لا تكفي، كل جولة تحتاج ${shape.questionCount} سؤالاً من تصنيف واحد، وأمكن تجهيز ${planned} جولة من ${shape.roundCount}`
-    : `المخزون لا يكفي، المطلوب ${needed} سؤالاً والمتوفر ${bankSize}`;
+    ? `التصنيفات لا تكفي، كل جولة تحتاج ${countedNoun(shape.questionCount, QUESTIONS)} من تصنيف واحد، وأمكن تجهيز ${countedNoun(planned, ROUNDS)} من ${shape.roundCount}`
+    : `المخزون لا يكفي، المطلوب ${countedNoun(needed, QUESTIONS)} والمتوفر ${bankSize}`;
 }
 
 export function planRounds(bank: BankQuestion[], shape: DrawShape, seed: string): RoundPlan[] {

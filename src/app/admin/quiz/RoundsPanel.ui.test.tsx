@@ -55,8 +55,8 @@ describe("RoundsPanel", () => {
   it("says how far the bank goes before the start", async () => {
     render(<RoundsPanel competitionId="c1" />);
 
-    await waitFor(() => expect(screen.getByText(/البنك يغطي 3 من 3 جولة/)).toBeDefined());
-    expect(screen.getByText(/المطلوب 9 سؤالاً والمتوفر 100/)).toBeDefined();
+    await waitFor(() => expect(screen.getByText(/البنك يغطي 3 من 3 جولات/)).toBeDefined());
+    expect(screen.getByText(/المطلوب 9 أسئلة والمتوفر 100/)).toBeDefined();
   });
 
   it("flags a bank that cannot cover every round", async () => {

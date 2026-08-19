@@ -9,6 +9,7 @@ import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
+import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
 interface AttemptState {
   attemptId: string;
@@ -137,7 +138,7 @@ export default function CompetitionView({
           </p>
           {!closed && attempt && (
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك {attempt.score} نقطة في هذه الجولة
+              مجموعك {countedNoun(attempt.score, POINTS)} في هذه الجولة
             </p>
           )}
         </div>

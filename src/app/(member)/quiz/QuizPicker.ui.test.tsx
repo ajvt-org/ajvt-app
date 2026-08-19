@@ -39,7 +39,7 @@ describe("QuizPicker", () => {
     render(<QuizPicker competitions={rows} backHref="/home" onPick={() => {}} />);
 
     expect(screen.getByText(/2 من 30 جولة/)).toBeDefined();
-    expect(screen.getByText(/0 من 7 جولة/)).toBeDefined();
+    expect(screen.getByText(/0 من 7 جولات/)).toBeDefined();
   });
 
   it("hands back the one that was picked", async () => {

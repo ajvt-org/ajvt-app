@@ -73,7 +73,7 @@ describe("AttemptQuestion", () => {
   it("says how many answers a multiple question wants", () => {
     setup({ question: { ...single, correctCount: 2 } });
 
-    expect(screen.getByText(/اختر 2 إجابات/)).toBeDefined();
+    expect(screen.getByText("اختر إجابتين")).toBeDefined();
   });
 
   it("lets a choice be taken back on a multiple question", async () => {
