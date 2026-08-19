@@ -4,6 +4,7 @@ import { matchDateToLocalInput } from "@/lib/tournament";
 import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
+import IconLabel from "@/components/IconLabel";
 
 export default function MatchDetailsForm({
   match,
@@ -132,7 +133,7 @@ export default function MatchDetailsForm({
             setAwayTeamId("");
           }}
         />
-        🏆 مباراة خروج المغلوب
+        <IconLabel name="trophy">مباراة خروج المغلوب</IconLabel>
       </label>
       {error && (
         <p className="text-xs" style={{ color: "#dc2626" }}>

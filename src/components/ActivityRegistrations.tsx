@@ -166,7 +166,7 @@ export default function ActivityRegistrations({
                           border: "1px solid var(--mint-200)",
                         }}
                       >
-                        {mine ? "⏳ " : ""}
+                        {mine && <Icon name="clock" size={11} className="icon-inline" />}
                         {t.name}
                       </button>
                     );
@@ -174,7 +174,7 @@ export default function ActivityRegistrations({
                   {team && (
                     <>
                       <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                        ⏳ بانتظار الموافقة
+                        <IconLabel name="clock">بانتظار الموافقة</IconLabel>
                       </span>
                       <button
                         onClick={() => leaveTeam(team.teamId)}

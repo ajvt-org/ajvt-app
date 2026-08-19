@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
+import IconLabel from "@/components/IconLabel";
 
 export default function MvpVoteAdmin({
   match,
@@ -114,7 +115,7 @@ export default function MvpVoteAdmin({
           className="btn btn-primary text-xs px-3"
           style={{ width: "auto" }}
         >
-          {loading ? "..." : `🌟 بدء التصويت (${selected.length})`}
+          {loading ? "..." : <IconLabel name="star">بدء التصويت ({selected.length})</IconLabel>}
         </button>
       </div>
     );

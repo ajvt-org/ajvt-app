@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
+import { mirrorMembershipPayment } from "@/lib/paymentMirror";
 import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
@@ -24,8 +25,8 @@ function memberOnLastYear() {
   });
 }
 
-function lastYearSurplus(memberId: string, amount: number) {
-  return prisma.donation.create({
+async function lastYearSurplus(memberId: string, amount: number) {
+  const donation = await prisma.donation.create({
     data: {
       memberId,
       membershipYear: LAST,
@@ -35,6 +36,18 @@ function lastYearSurplus(memberId: string, amount: number) {
       donorName: "محمد ولد أحمد",
     },
   });
+  await mirrorMembershipPayment(prisma, {
+    memberId,
+    year: LAST,
+    amount: 100 + amount,
+    feeApplied: 100,
+    method: "بنكيلي",
+    proof: null,
+    status: "ACTIVE",
+    anonymous: false,
+    donorName: "محمد ولد أحمد",
+  });
+  return donation;
 }
 
 const renew = (id: string, paidAmount: number) =>

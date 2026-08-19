@@ -12,6 +12,7 @@ import {
 } from "@/lib/tournament";
 import { RankBadge } from "./StandingsTab";
 import { FORM_STYLE } from "./constants";
+import IconLabel from "@/components/IconLabel";
 
 export default function ScorersTab({
   topScorers,
@@ -46,7 +47,7 @@ export default function ScorersTab({
     <div className="space-y-5">
       <div className="space-y-2">
         <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          ⚽ الهدافون
+          <IconLabel name="ball">الهدافون</IconLabel>
         </h3>
         {topScorers.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -67,7 +68,7 @@ export default function ScorersTab({
                 </div>
               </div>
               <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                ⚽ {s.goals}
+                <IconLabel name="ball">{s.goals}</IconLabel>
               </span>
             </div>
           ))
@@ -106,7 +107,7 @@ export default function ScorersTab({
 
       <div className="space-y-2">
         <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          🧤 أفضل دفاع (مباريات بدون استقبال أهداف)
+          <IconLabel name="glove">أفضل دفاع (مباريات بدون استقبال أهداف)</IconLabel>
         </h3>
         {cleanSheets.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -122,7 +123,9 @@ export default function ScorersTab({
                 </p>
               </div>
               <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                🧤 {c.cleanSheets}/{c.played}
+                <IconLabel name="glove">
+                  {c.cleanSheets}/{c.played}
+                </IconLabel>
               </span>
             </div>
           ))
@@ -131,7 +134,7 @@ export default function ScorersTab({
 
       <div className="space-y-2">
         <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          🌟 رجل المباراة
+          <IconLabel name="star">رجل المباراة</IconLabel>
         </h3>
         {motmLeaders.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -152,7 +155,7 @@ export default function ScorersTab({
                 </div>
               </div>
               <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                🌟 {m.count}
+                <IconLabel name="star">{m.count}</IconLabel>
               </span>
             </div>
           ))
@@ -162,7 +165,7 @@ export default function ScorersTab({
       {teamsWithStats.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            📊 إحصائيات الفرق
+            <IconLabel name="chart">إحصائيات الفرق</IconLabel>
           </h3>
           {teamsWithStats.map((t) => (
             <div key={t.teamId} className="card p-3 space-y-1">
@@ -171,12 +174,14 @@ export default function ScorersTab({
               </p>
               {t.biggestWin && (
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  🔥 أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
+                  <IconLabel name="flame">
+                    أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
+                  </IconLabel>
                 </p>
               )}
               {t.unbeatenStreak > 0 && (
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  🛡️ سلسلة بدون هزيمة: {t.unbeatenStreak}
+                  <IconLabel name="shield">سلسلة بدون هزيمة: {t.unbeatenStreak}</IconLabel>
                 </p>
               )}
               {t.form.length > 0 && (

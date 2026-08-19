@@ -1,14 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { counted, countedNoun } from "@/lib/arabicCount";
 import { ANSWER, POINT } from "@/lib/messages";
 
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import AdminList from "@/components/admin/AdminList";
 import type { QuestionRow } from "./types";
 
 const CHIP = "text-xs px-3 py-1.5 rounded-lg font-bold";
 const MINT = { background: "var(--mint-100)", color: "var(--mint-700)" };
+
+function matches(question: QuestionRow, needle: string) {
+  return (
+    question.text.toLowerCase().includes(needle) ||
+    question.category.toLowerCase().includes(needle) ||
+    question.answers.some((answer) => answer.text.toLowerCase().includes(needle))
+  );
+}
 
 function QuestionCard({
   question,
@@ -94,11 +104,17 @@ export default function QuestionList({
   onToggle: (question: QuestionRow) => void;
   onDelete: (id: string) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const needle = query.trim().toLowerCase();
+  const shown = needle ? questions.filter((question) => matches(question, needle)) : questions;
+
   return (
     <>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="quiz">الأسئلة ({questions.length})</IconLabel>
+          <IconLabel name="quiz">
+            الأسئلة ({needle ? `${shown.length}/${questions.length}` : questions.length})
+          </IconLabel>
         </p>
         <div className="flex gap-2 shrink-0">
           <button
@@ -122,24 +138,32 @@ export default function QuestionList({
         </div>
       </div>
 
-      {questions.length === 0 ? (
-        <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          لا توجد أسئلة مسجلة بعد
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {questions.map((question) => (
-            <QuestionCard
-              key={question.id}
-              question={question}
-              busy={busyId === question.id}
-              onEdit={() => onEdit(question)}
-              onToggle={() => onToggle(question)}
-              onDelete={() => onDelete(question.id)}
-            />
-          ))}
-        </div>
+      {questions.length > 0 && (
+        <input
+          type="text"
+          placeholder="بحث في السؤال أو التصنيف أو الأجوبة..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="input text-sm"
+        />
       )}
+
+      <AdminList
+        items={shown}
+        getKey={(question) => question.id}
+        emptyMessage="لا توجد أسئلة مسجلة بعد"
+        emptyFilteredMessage="لا يوجد سؤال يطابق البحث"
+        isFiltered={needle.length > 0}
+        renderRow={(question) => (
+          <QuestionCard
+            question={question}
+            busy={busyId === question.id}
+            onEdit={() => onEdit(question)}
+            onToggle={() => onToggle(question)}
+            onDelete={() => onDelete(question.id)}
+          />
+        )}
+      />
     </>
   );
 }
