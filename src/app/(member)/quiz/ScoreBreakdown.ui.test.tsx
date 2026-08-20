@@ -8,11 +8,6 @@ const detail: AttemptDetailView = {
   round: 2,
   category: "جغرافيا",
   competitionName: "مسابقة الصيف",
-  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
-  boards: [
-    { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
-    { title: "الترتيب العام", blockRounds: 1, counting: 1, wholeRun: true },
-  ],
   breakdown: {
     rows: [
       {
@@ -21,11 +16,7 @@ const detail: AttemptDetailView = {
         category: "جغرافيا",
         maxPoints: 10,
         isCorrect: true,
-        elapsedMs: 5_000,
         points: 10,
-        percent: 100,
-        correct: ["نواكشوط"],
-        chosen: ["نواكشوط"],
       },
       {
         position: 1,
@@ -33,11 +24,7 @@ const detail: AttemptDetailView = {
         category: "جغرافيا",
         maxPoints: 20,
         isCorrect: false,
-        elapsedMs: 40_000,
         points: 0,
-        percent: 0,
-        correct: ["خمس عشرة"],
-        chosen: ["اثنتا عشرة"],
       },
     ],
     correct: 1,
@@ -45,7 +32,6 @@ const detail: AttemptDetailView = {
     total: 2,
     score: 10,
     possible: 30,
-    elapsedMs: 45_000,
   },
 };
 
@@ -71,31 +57,27 @@ describe("ScoreBreakdown", () => {
     expect(screen.getByText("كم عدد الولايات؟")).toBeDefined();
   });
 
-  it("shows the speed share each answer earned", () => {
-    render(<ScoreBreakdown detail={detail} />);
-
-    expect(screen.getByText(/10 من 10 نقاط .* 100%/)).toBeDefined();
-    expect(screen.getByText(/0 من 20 نقطة .* 0%/)).toBeDefined();
-  });
-
-  it("says whether each answer was right", () => {
+  it("says whether each answer was right and what it paid", () => {
     render(<ScoreBreakdown detail={detail} />);
 
     expect(screen.getByText("صحيحة")).toBeDefined();
     expect(screen.getByText("خاطئة")).toBeDefined();
+    expect(screen.getByText(/0 من 20 نقطة/)).toBeDefined();
   });
 
-  it("gives the right answer for a question that was missed", () => {
+  it("keeps the right answers and the time to itself", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/الصحيح خمس عشرة/)).toBeDefined();
-    expect(screen.getByText(/اخترت اثنتا عشرة/)).toBeDefined();
+    expect(screen.queryByText(/الصحيح/)).toBeNull();
+    expect(screen.queryByText(/اخترت/)).toBeNull();
+    expect(screen.queryByText(/ث ·/)).toBeNull();
+    expect(screen.queryByText(/%/)).toBeNull();
+    expect(screen.queryByText(/الوقت/)).toBeNull();
   });
 
-  it("explains the formula from the bands the quiz uses", () => {
+  it("leaves the formula to the quiz page", () => {
     render(<ScoreBreakdown detail={detail} />);
 
-    expect(screen.getByText(/حتى 10 ثوانٍ، كل النقاط/)).toBeDefined();
-    expect(screen.getByText(/الترتيب العام، مجموع كل جولات المسابقة/)).toBeDefined();
+    expect(screen.queryByText(/كيف تُحتسب النقاط/)).toBeNull();
   });
 });

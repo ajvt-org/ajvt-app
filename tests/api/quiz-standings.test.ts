@@ -107,6 +107,39 @@ describe("standings a member can see", () => {
     expect(body.boards[0].rows[0].rank).toBe(1);
   });
 
+  it("says how many blocks each board has gathered", async () => {
+    const c = await competition();
+    const [a] = await createUsers(1);
+    await member(a.id, "أحمد");
+    await attempt(c.id, a.id, today(), 30);
+    const body = await getStandings(c.id, a.id, 10, atNoon(today()));
+
+    const round = body.boards.find((b) => b.title === "ترتيب الجولة");
+    const overall = body.boards.find((b) => b.title === "الترتيب العام");
+    expect(round?.block).toBe(today());
+    expect(round?.blocks).toBe(today() + 1);
+    expect(overall?.blocks).toBe(1);
+  });
+
+  it("hands back the ranking of a past block", async () => {
+    const { boardBlock } = await import("@/lib/quizRankingServer");
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    await attempt(c.id, b.id, 0, 50);
+    await attempt(c.id, a.id, today(), 70);
+    const board = (await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: c.id, title: "ترتيب الجولة" },
+    })) as { id: string };
+
+    const past = await boardBlock(c.id, board.id, 0, a.id, 10, atNoon(today()));
+
+    expect(past.rows.map((r) => r.name)).toEqual(["محمد", "أحمد"]);
+    expect(past.mine?.rank).toBe(2);
+  });
+
   it("tells the member their own place even outside the top", async () => {
     const c = await competition();
     const users = await createUsers(3);

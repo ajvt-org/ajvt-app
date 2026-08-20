@@ -26,11 +26,7 @@ export interface BreakdownRowView {
   category: string;
   maxPoints: number;
   isCorrect: boolean | null;
-  elapsedMs: number | null;
   points: number;
-  percent: number;
-  correct: string[];
-  chosen: string[];
 }
 
 export interface AttemptDetailView {
@@ -38,8 +34,6 @@ export interface AttemptDetailView {
   round: number;
   category: string | null;
   competitionName: string;
-  curve: { fullSeconds: number; maxSeconds: number; floorPercent: number };
-  boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   breakdown: {
     rows: BreakdownRowView[];
     correct: number;
@@ -47,7 +41,6 @@ export interface AttemptDetailView {
     total: number;
     score: number;
     possible: number;
-    elapsedMs: number;
   };
 }
 

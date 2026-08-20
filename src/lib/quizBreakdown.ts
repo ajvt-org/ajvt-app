@@ -47,6 +47,42 @@ export interface Breakdown {
   elapsedMs: number;
 }
 
+export interface MemberRow {
+  position: number;
+  question: string;
+  category: string;
+  maxPoints: number;
+  isCorrect: boolean | null;
+  points: number;
+}
+
+export interface MemberBreakdown {
+  rows: MemberRow[];
+  correct: number;
+  answered: number;
+  total: number;
+  score: number;
+  possible: number;
+}
+
+export function memberBreakdown(breakdown: Breakdown): MemberBreakdown {
+  return {
+    rows: breakdown.rows.map(({ position, question, category, maxPoints, isCorrect, points }) => ({
+      position,
+      question,
+      category,
+      maxPoints,
+      isCorrect,
+      points,
+    })),
+    correct: breakdown.correct,
+    answered: breakdown.answered,
+    total: breakdown.total,
+    score: breakdown.score,
+    possible: breakdown.possible,
+  };
+}
+
 export function rowPercent(row: AnswerRow, curve: ScoreCurve): number {
   if (!row.isCorrect || row.elapsedMs === null) return 0;
   return Math.round(curvePercent(curve, row.elapsedMs));

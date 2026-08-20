@@ -13,15 +13,24 @@ vi.mock("@/lib/api", () => ({
 const body = {
   running: true,
   round: 3,
+  roundCount: 5,
   boards: [
     {
       id: "b1",
       title: "ترتيب الجولة",
+      blockRounds: 1,
+      wholeRun: false,
+      block: 3,
+      blocks: 4,
       rows: [{ rank: 1, userId: "u1", name: "يوسف", total: 31 }],
     },
     {
       id: "b2",
       title: "الترتيب العام",
+      blockRounds: 1,
+      wholeRun: true,
+      block: 0,
+      blocks: 1,
       rows: [
         { rank: 1, userId: "u1", name: "يوسف", total: 41 },
         { rank: 2, userId: "u2", name: "محمد", total: 30 },
@@ -62,6 +71,21 @@ describe("StandingsPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "الترتيب العام" }));
 
     expect(screen.getByText(/2 · محمد/)).toBeDefined();
+  });
+
+  it("offers the board's past blocks and shows the one picked", async () => {
+    get.mockImplementation((url: string) =>
+      url.includes("board=")
+        ? Promise.resolve({ rows: [{ rank: 1, userId: "u2", name: "محمد", total: 12 }] })
+        : Promise.resolve(body),
+    );
+    await unfold();
+    await waitFor(() => screen.getByRole("combobox", { name: "فترة الترتيب" }));
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "فترة الترتيب" }), "1");
+
+    await waitFor(() => expect(screen.getByText(/1 · محمد/)).toBeDefined());
+    expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/standings?board=b1&block=1");
   });
 
   it("says there is no ranking only when the board is empty", async () => {

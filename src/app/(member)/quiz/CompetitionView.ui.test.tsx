@@ -16,16 +16,30 @@ const standings: StandingsState = {
   competitionId: "c1",
   name: "مسابقة الصيف",
   meId: "u1",
+  roundCount: 5,
+  state: "open",
+  next: null,
+  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   boards: [
     {
       id: "b1",
       title: "ترتيب الجولة",
+      blockRounds: 1,
+      counting: 1,
+      wholeRun: false,
+      block: 2,
+      blocks: 3,
       rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
       mine: { rank: 4, total: 10 },
     },
     {
       id: "b2",
       title: "الترتيب العام",
+      blockRounds: 1,
+      counting: 1,
+      wholeRun: true,
+      block: 0,
+      blocks: 1,
       rows: [{ rank: 1, userId: "u1", name: "أنا", photoUrl: null, total: 90 }],
       mine: { rank: 1, total: 90 },
     },
@@ -235,6 +249,79 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10/)).toBeDefined());
+  });
+
+  it("names the coming round and its time between two rounds", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{
+          ...standings,
+          state: "closed",
+          next: { index: 2, opensAt: "2026-08-23T08:00:00.000Z" },
+        }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/الجولة القادمة 3 من 5/)).toBeDefined());
+    expect(screen.getByText(/تبدأ/)).toBeDefined();
+    expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
+  });
+
+  it("says the competition is over instead of a shut door", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{ ...standings, state: "over", next: null }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("انتهت المسابقة")).toBeDefined());
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
+  });
+
+  it("offers the board's past blocks and shows the one picked", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    get.mockImplementation((url: string) =>
+      url.includes("board=")
+        ? Promise.resolve({
+            rows: [{ rank: 1, userId: "u3", name: "سالم", photoUrl: null, total: 22 }],
+            mine: null,
+          })
+        : Promise.resolve({ rounds: [] }),
+    );
+    setup();
+    await waitFor(() => screen.getByRole("combobox", { name: "فترة الترتيب" }));
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "فترة الترتيب" }), "0");
+
+    await waitFor(() => expect(screen.getByText("سالم")).toBeDefined());
+    expect(get).toHaveBeenCalledWith("/api/quiz/standings?competition=c1&board=b1&block=0");
+    expect(screen.queryByText("محمد")).toBeNull();
+  });
+
+  it("keeps the whole run board without a block picker", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    await userEvent.click(screen.getByRole("tab", { name: "الترتيب العام" }));
+
+    expect(screen.queryByRole("combobox", { name: "فترة الترتيب" })).toBeNull();
+  });
+
+  it("explains the points on the quiz page itself", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
+
+    expect(screen.getByText("كيف تُحتسب النقاط")).toBeDefined();
+    expect(screen.getByText(/حتى 10 ثوانٍ، كل النقاط/)).toBeDefined();
   });
 
   it("goes back to the list of quizzes rather than out of the section", async () => {

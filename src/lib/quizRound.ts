@@ -50,13 +50,14 @@ export function roundIndexAt(shape: RoundShape, now: Date): number {
 
 export function roundState(shape: RoundShape, now: Date): RoundState {
   if (now < shape.startsAt) return "before";
-  const last = windowAt(shape, shape.roundCount - 1);
-  if (last && now >= last.closesAt) {
-    const elapsed = now.getTime() - shape.startsAt.getTime();
-    const index = Math.floor(elapsed / (shape.roundPeriodMinutes * MINUTE));
-    if (index >= shape.roundCount) return "over";
-  }
+  if (now >= endsAt(shape)) return "over";
   return currentRound(shape, now) ? "open" : "closed";
+}
+
+export function nextWindow(shape: RoundShape, now: Date): RoundWindow | null {
+  if (now < shape.startsAt) return windowAt(shape, 0);
+  const elapsed = now.getTime() - shape.startsAt.getTime();
+  return windowAt(shape, Math.floor(elapsed / (shape.roundPeriodMinutes * MINUTE)) + 1);
 }
 
 export function endsAt(shape: RoundShape): Date {

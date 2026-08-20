@@ -3,6 +3,7 @@ import {
   roundWindows,
   windowAt,
   currentRound,
+  nextWindow,
   roundState,
   endsAt,
   groupOf,
@@ -60,6 +61,10 @@ describe("windowAt", () => {
     expect(windowAt(hourly, -1)).toBeNull();
     expect(windowAt(hourly, 20)).toBeNull();
   });
+
+  it("refuses a round that is not a whole number", () => {
+    expect(windowAt(hourly, 1.5)).toBeNull();
+  });
 });
 
 describe("currentRound", () => {
@@ -106,11 +111,41 @@ describe("roundState", () => {
   it("is over once the last window shuts", () => {
     expect(roundState(hourly, at("2026-08-21T05:00:00Z"))).toBe("over");
   });
+
+  it("is over as soon as the last window shuts, not when its period runs out", () => {
+    expect(roundState(daily, at("2026-09-18T23:00:00Z"))).toBe("over");
+    expect(roundState(daily, at("2026-09-18T21:00:00Z"))).toBe("open");
+  });
+});
+
+describe("nextWindow", () => {
+  it("is the first round before the run starts", () => {
+    expect(nextWindow(daily, at("2026-08-20T07:00:00Z"))?.index).toBe(0);
+  });
+
+  it("is the coming round between windows", () => {
+    const coming = nextWindow(daily, at("2026-08-20T23:00:00Z"));
+
+    expect(coming?.index).toBe(1);
+    expect(coming?.opensAt.toISOString()).toBe("2026-08-21T08:00:00.000Z");
+  });
+
+  it("is the following round while one is open", () => {
+    expect(nextWindow(daily, at("2026-08-20T09:00:00Z"))?.index).toBe(1);
+  });
+
+  it("is nothing after the last round", () => {
+    expect(nextWindow(daily, at("2026-09-18T23:00:00Z"))).toBeNull();
+  });
 });
 
 describe("endsAt", () => {
   it("is when the last window closes", () => {
     expect(endsAt(hourly).toISOString()).toBe("2026-08-21T04:00:00.000Z");
+  });
+
+  it("is the start for a run of no rounds", () => {
+    expect(endsAt({ ...hourly, roundCount: 0 })).toEqual(hourly.startsAt);
   });
 });
 

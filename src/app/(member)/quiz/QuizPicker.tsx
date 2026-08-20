@@ -44,7 +44,7 @@ export default function QuizPicker({
         )}
 
         {competitions.map((competition) => {
-          const playable = competition.state === "open" || competition.state === "closed";
+          const playable = competition.state !== "before";
           return (
             <button
               key={competition.id}
