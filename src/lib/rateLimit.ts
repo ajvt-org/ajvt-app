@@ -8,7 +8,7 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
-// Single Railway instance (WEB_CONCURRENCY=1) — an in-memory map is enough, no
+// Single Render instance (WEB_CONCURRENCY=1) — an in-memory map is enough, no
 // need for a shared store like Redis at this scale. Two consequences of that
 // choice, both accepted: a restart clears every lockout, so an attacker who can
 // force a deploy can also clear their own; and a second instance would each
