@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { roundRanking, boardRanking, bestRounds, standingOf, type RoundScore } from "./quizRanking";
+import {
+  roundRanking,
+  boardRanking,
+  bestRounds,
+  standingOf,
+  type RoundScore,
+  blockAnchor,
+  blockLabel,
+  boardBlocks,
+} from "./quizRanking";
 
 const at = (iso: string) => new Date(iso);
 
@@ -166,5 +175,78 @@ describe("standingOf", () => {
 
   it("says nothing for a member who has not played", () => {
     expect(standingOf(roundRanking([], 0), "a")).toBeNull();
+  });
+});
+
+describe("blockLabel", () => {
+  it("names a single round block by its round", () => {
+    expect(blockLabel(1, 0, 30)).toBe("الجولة 1");
+    expect(blockLabel(1, 6, 30)).toBe("الجولة 7");
+  });
+
+  it("names a span of rounds by its edges", () => {
+    expect(blockLabel(7, 0, 30)).toBe("الجولات 1 - 7");
+    expect(blockLabel(7, 1, 30)).toBe("الجولات 8 - 14");
+  });
+
+  it("cuts the last span at the run's end", () => {
+    expect(blockLabel(7, 4, 30)).toBe("الجولات 29 - 30");
+  });
+
+  it("names a span of one round as that round", () => {
+    expect(blockLabel(7, 4, 29)).toBe("الجولة 29");
+  });
+});
+
+describe("boardBlocks", () => {
+  it("keeps a whole run to one block", () => {
+    expect(boardBlocks({ blockRounds: 1, counting: 1, wholeRun: true }, 9)).toEqual({
+      block: 0,
+      blocks: 1,
+    });
+  });
+
+  it("counts the blocks up to the current round", () => {
+    expect(boardBlocks({ blockRounds: 7, counting: 6, wholeRun: false }, 15)).toEqual({
+      block: 2,
+      blocks: 3,
+    });
+  });
+});
+
+describe("blockAnchor", () => {
+  it("anchors a block at its first round", () => {
+    expect(blockAnchor({ blockRounds: 7, counting: 6, wholeRun: false }, 2, 20)).toBe(14);
+  });
+
+  it("anchors a whole run at the current round", () => {
+    expect(blockAnchor({ blockRounds: 1, counting: 1, wholeRun: true }, 3, 20)).toBe(20);
+  });
+});
+
+describe("breaking a tie", () => {
+  const settled = (userId: string, minute: number | null): RoundScore => ({
+    userId,
+    index: 0,
+    score: 10,
+    finishedAt: minute === null ? null : new Date(minute * 60_000),
+  });
+
+  it("puts the earlier finisher first on equal totals", () => {
+    const rows = roundRanking([settled("a", 9), settled("b", 3)], 0);
+
+    expect(rows.map((r) => r.userId)).toEqual(["b", "a"]);
+  });
+
+  it("puts a settled attempt above an unsettled one", () => {
+    const rows = roundRanking([settled("a", null), settled("b", 5)], 0);
+
+    expect(rows.map((r) => r.userId)).toEqual(["b", "a"]);
+  });
+
+  it("falls back to the user id when neither settled", () => {
+    const rows = roundRanking([settled("b", null), settled("a", null)], 0);
+
+    expect(rows.map((r) => r.userId)).toEqual(["a", "b"]);
   });
 });

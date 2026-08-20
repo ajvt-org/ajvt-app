@@ -61,6 +61,10 @@ describe("windowAt", () => {
     expect(windowAt(hourly, -1)).toBeNull();
     expect(windowAt(hourly, 20)).toBeNull();
   });
+
+  it("refuses a round that is not a whole number", () => {
+    expect(windowAt(hourly, 1.5)).toBeNull();
+  });
 });
 
 describe("currentRound", () => {
@@ -138,6 +142,10 @@ describe("nextWindow", () => {
 describe("endsAt", () => {
   it("is when the last window closes", () => {
     expect(endsAt(hourly).toISOString()).toBe("2026-08-21T04:00:00.000Z");
+  });
+
+  it("is the start for a run of no rounds", () => {
+    expect(endsAt({ ...hourly, roundCount: 0 })).toEqual(hourly.startsAt);
   });
 });
 

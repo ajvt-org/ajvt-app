@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { NotFoundError } from "./errors";
 import { getCompetition, shapeOf } from "./competitionServer";
 import {
   currentRound,
@@ -9,7 +10,14 @@ import {
   roundState,
   type RoundState,
 } from "./quizRound";
-import { boardRanking, standingOf, type RoundScore, type Ranked } from "./quizRanking";
+import {
+  blockAnchor,
+  boardBlocks,
+  boardRanking,
+  standingOf,
+  type RoundScore,
+  type Ranked,
+} from "./quizRanking";
 
 export interface Board {
   rank: number;
@@ -58,6 +66,10 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
 export interface StandingsBoard {
   id: string;
   title: string;
+  blockRounds: number;
+  wholeRun: boolean;
+  block: number;
+  blocks: number;
   rows: Board[];
   mine: Ranked | null;
 }
@@ -104,6 +116,9 @@ export async function getStandings(
     boards.push({
       id: board.id,
       title: board.title,
+      blockRounds: board.blockRounds,
+      wholeRun: board.wholeRun,
+      ...boardBlocks(board, at),
       rows: await named(rows, limit),
       mine: userId ? standingOf(rows, userId) : null,
     });
@@ -120,6 +135,31 @@ export async function getStandings(
     state: roundState(shapeOf(competition), now),
     next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
     boards,
+  };
+}
+
+export const NO_BOARD = "لا يوجد هذا الترتيب";
+
+export async function boardBlock(
+  competitionId: string,
+  boardId: string,
+  block: number,
+  userId?: string,
+  limit = 10,
+  now = new Date(),
+) {
+  const competition = await getCompetition(competitionId);
+  if (!competition?.startedAt) throw new NotFoundError(NO_BOARD);
+  const board = competition.boards.find((b) => b.id === boardId);
+  if (!board) throw new NotFoundError(NO_BOARD);
+
+  const scores = await roundScores(competition.id);
+  const current =
+    currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
+  const rows = boardRanking(scores, board, blockAnchor(board, block, current));
+  return {
+    rows: await named(rows, limit),
+    mine: userId ? standingOf(rows, userId) : null,
   };
 }
 
