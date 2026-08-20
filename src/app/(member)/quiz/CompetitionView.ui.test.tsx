@@ -324,7 +324,7 @@ describe("CompetitionView", () => {
   it("turns the clock urgent as the door starts to close", () => {
     setup({ closesAt: new Date(Date.now() + 10 * 60_000).toISOString() });
 
-    expect(screen.getByText(/يغلق الباب بعد/)).toBeDefined();
+    expect(screen.getByText(/تُغلق الجولة بعد/)).toBeDefined();
     expect(screen.queryByText(/يبقى من الجولة/)).toBeNull();
   });
 
@@ -332,7 +332,7 @@ describe("CompetitionView", () => {
     setup({ state: "closed", closesAt: null, next: { index: 3, opensAt: FUTURE } });
 
     expect(screen.queryByText(/يبقى من الجولة/)).toBeNull();
-    expect(screen.queryByText(/يغلق الباب/)).toBeNull();
+    expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
   });
 
   it("tells a member who has finished when the next round opens", () => {
