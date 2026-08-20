@@ -39,12 +39,15 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
   // Re-issue a fresh token for this session so the admin isn't logged
   // out on this device — other devices/sessions are invalidated since
   // their token still carries the old tokenVersion.
-  const token = await signToken({
-    typ: "admin",
-    adminId: updated.id,
-    username: updated.username,
-    tokenVersion: updated.tokenVersion,
-  });
+  const token = await signToken(
+    {
+      typ: "admin",
+      adminId: updated.id,
+      username: updated.username,
+      tokenVersion: updated.tokenVersion,
+    },
+    "8h",
+  );
   const res = NextResponse.json({ ok: true });
   res.cookies.set("admin_token", token, {
     httpOnly: true,

@@ -8,11 +8,11 @@ import { auth } from "./messages";
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
-export async function signToken(payload: Record<string, unknown>) {
+export async function signToken(payload: Record<string, unknown>, expiresIn = "30d") {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("30d")
+    .setExpirationTime(expiresIn)
     .sign(SECRET);
 }
 

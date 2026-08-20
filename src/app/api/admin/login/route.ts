@@ -58,12 +58,15 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
     userAgent: req.headers.get("user-agent") ?? undefined,
   });
 
-  const token = await signToken({
-    typ: "admin",
-    adminId: admin.id,
-    username: admin.username,
-    tokenVersion: admin.tokenVersion,
-  });
+  const token = await signToken(
+    {
+      typ: "admin",
+      adminId: admin.id,
+      username: admin.username,
+      tokenVersion: admin.tokenVersion,
+    },
+    "8h",
+  );
   const response = NextResponse.json({ ok: true });
   response.cookies.set("admin_token", token, {
     httpOnly: true,
