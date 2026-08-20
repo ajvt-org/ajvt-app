@@ -55,6 +55,14 @@ export const ANSWERS: NounForms = {
   other: "إجابة",
 };
 
+export const CORRECT_ANSWERS: NounForms = {
+  one: "إجابة صحيحة واحدة",
+  two: "إجابتين صحيحتين",
+  few: "إجابات صحيحة",
+  many: "إجابة صحيحة",
+  other: "إجابة صحيحة",
+};
+
 export const HOURS: NounForms = {
   one: "ساعة واحدة",
   two: "ساعتين",

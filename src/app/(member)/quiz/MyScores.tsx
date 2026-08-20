@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import type { AttemptSummary } from "./types";
+import { countedNoun, CORRECT_ANSWERS, QUESTIONS } from "@/lib/arabicPlural";
 
 export default function MyScores({ competitionId }: { competitionId: string }) {
   const [rounds, setRounds] = useState<AttemptSummary[] | null>(null);
@@ -58,7 +59,9 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
               {round.missed ? (
                 "لم تشارك"
               ) : (
-                <NumericRanges>{`${round.correct} صحيحة من ${round.total}`}</NumericRanges>
+                <NumericRanges>
+                  {`${countedNoun(round.correct, CORRECT_ANSWERS)} من ${countedNoun(round.total, QUESTIONS)}`}
+                </NumericRanges>
               )}
             </span>
           </span>

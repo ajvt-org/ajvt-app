@@ -3,6 +3,7 @@ import {
   countedLabel,
   countedNoun,
   hoursLabel,
+  CORRECT_ANSWERS,
   QUESTIONS,
   POINTS,
   SECONDS,
@@ -35,6 +36,16 @@ describe("countedNoun", () => {
   it("reads the shape off the last two digits", () => {
     expect(countedNoun(103, QUESTIONS)).toBe("103 أسئلة");
     expect(countedNoun(146, QUESTIONS)).toBe("146 سؤالاً");
+  });
+});
+
+describe("counting correct answers", () => {
+  it("binds the adjective to the noun in every shape", () => {
+    expect(countedNoun(0, CORRECT_ANSWERS)).toBe("0 إجابة صحيحة");
+    expect(countedNoun(1, CORRECT_ANSWERS)).toBe("إجابة صحيحة واحدة");
+    expect(countedNoun(2, CORRECT_ANSWERS)).toBe("إجابتين صحيحتين");
+    expect(countedNoun(3, CORRECT_ANSWERS)).toBe("3 إجابات صحيحة");
+    expect(countedNoun(11, CORRECT_ANSWERS)).toBe("11 إجابة صحيحة");
   });
 });
 

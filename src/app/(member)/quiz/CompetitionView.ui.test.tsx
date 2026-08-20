@@ -248,7 +248,7 @@ describe("CompetitionView", () => {
     });
     setup();
 
-    await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10 نقاط/)).toBeDefined());
   });
 
   it("names the coming round and its time between two rounds", async () => {

@@ -38,7 +38,7 @@ describe("StandingsBoard", () => {
   it("adds the member's own place when they are off the board", () => {
     setup({ mine: { rank: 14, total: 20 }, meId: "u9" });
 
-    expect(screen.getByText(/ترتيبك 14 بمجموع 20/)).toBeDefined();
+    expect(screen.getByText(/ترتيبك 14 بمجموع 20 نقطة/)).toBeDefined();
   });
 
   it("does not repeat the member's place when they are already listed", () => {
