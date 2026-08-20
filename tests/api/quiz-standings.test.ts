@@ -140,6 +140,32 @@ describe("standings a member can see", () => {
     expect(past.mine?.rank).toBe(2);
   });
 
+  it("counts a custom board's blocks off the quiz clock, not the member's play", async () => {
+    const { boardBlock } = await import("@/lib/quizRankingServer");
+    const c = await competition({
+      boards: {
+        create: [
+          { title: "ترتيب الجولة 2", blockTitle: "", blockRounds: 3, counting: 2, order: 0 },
+        ],
+      },
+    });
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, b.id, 0, 30);
+    await attempt(c.id, b.id, 4, 50);
+
+    const body = await getStandings(c.id, a.id, 10, atNoon(4));
+    const custom = body.boards.find((x) => x.title === "ترتيب الجولة 2");
+
+    expect(custom?.blocks).toBe(2);
+    expect(custom?.block).toBe(1);
+
+    const past = await boardBlock(c.id, custom!.id, 0, a.id, 10, atNoon(4));
+    expect(past.rows.map((r) => r.name)).toEqual(["محمد"]);
+    expect(past.rows[0].total).toBe(30);
+  });
+
   it("tells the member their own place even outside the top", async () => {
     const c = await competition();
     const users = await createUsers(3);
