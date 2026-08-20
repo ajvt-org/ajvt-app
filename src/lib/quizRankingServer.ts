@@ -14,6 +14,7 @@ import {
   blockAnchor,
   boardBlocks,
   boardRanking,
+  myRound,
   standingOf,
   type RoundScore,
   type Ranked,
@@ -86,6 +87,7 @@ export interface Standings {
   roundCount: number | null;
   state: RoundState | null;
   next: { index: number; opensAt: Date } | null;
+  me: { played: boolean; finished: boolean; score: number | null } | null;
   curve: ScoreCurve | null;
   boards: StandingsBoard[];
 }
@@ -106,6 +108,7 @@ export async function getStandings(
     roundCount: null,
     state: null,
     next: null,
+    me: null,
     curve: null,
     boards: [],
   };
@@ -141,6 +144,7 @@ export async function getStandings(
     roundCount: competition.roundCount,
     state: roundState(shapeOf(competition), now),
     next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
+    me: userId ? myRound(scores, userId, at) : null,
     curve: {
       fullSeconds: competition.fullSeconds,
       maxSeconds: competition.maxSeconds,

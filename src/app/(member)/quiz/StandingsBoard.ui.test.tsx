@@ -52,4 +52,26 @@ describe("StandingsBoard", () => {
 
     expect(screen.queryByText(/ترتيبك/)).toBeNull();
   });
+
+  it("raises the top three on a podium and lists the rest", () => {
+    render(
+      <StandingsBoard
+        title="ترتيب الجولة"
+        rows={[
+          { rank: 1, userId: "u1", name: "يوسف", photoUrl: null, total: 41 },
+          { rank: 2, userId: "u2", name: "أحمد", photoUrl: null, total: 27 },
+          { rank: 3, userId: "u3", name: "محمد", photoUrl: null, total: 21 },
+          { rank: 4, userId: "u4", name: "امبيريك", photoUrl: null, total: 18 },
+        ]}
+        mine={null}
+        meId="u9"
+        empty="لا ترتيب بعد"
+      />,
+    );
+
+    expect(screen.getByLabelText("المنصة")).toBeDefined();
+    expect(screen.getByText("يوسف")).toBeDefined();
+    expect(screen.getByRole("list").textContent).toContain("امبيريك");
+    expect(screen.getByRole("list").textContent).not.toContain("يوسف");
+  });
 });
