@@ -61,7 +61,11 @@ export default function StandingsBoard({
                       : "var(--mint-100)",
                   }}
                 >
-                  <PlayerAvatar photo={null} fullName={row.name} size={first ? 54 : 44} />
+                  <PlayerAvatar
+                    photoUrl={row.photoUrl}
+                    fullName={row.name}
+                    size={first ? 54 : 44}
+                  />
                 </div>
                 <p
                   className="text-[11px] font-extrabold text-center line-clamp-2 w-full"
@@ -70,18 +74,25 @@ export default function StandingsBoard({
                   {row.name}
                 </p>
                 <span
-                  className="rounded-full px-2.5 text-[11px] font-black"
+                  className="rounded-full inline-flex items-center justify-center text-[11px] font-black"
                   style={
                     first
                       ? {
+                          padding: "3px 10px",
                           background:
                             "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
                           color: "white",
                         }
-                      : { background: "var(--mint-50)", color: "var(--text-muted)" }
+                      : {
+                          padding: "3px 10px",
+                          background: "var(--mint-50)",
+                          color: "var(--text-muted)",
+                        }
                   }
                 >
-                  <NumericRanges>{String(row.total)}</NumericRanges>
+                  <span className="badge-numeral">
+                    <NumericRanges>{String(row.total)}</NumericRanges>
+                  </span>
                 </span>
                 <div
                   className="w-full rounded-t-xl flex items-center justify-center font-black"
@@ -96,7 +107,9 @@ export default function StandingsBoard({
                     fontSize: first ? 18 : 13,
                   }}
                 >
-                  <NumericRanges>{String(row.rank)}</NumericRanges>
+                  <span className="badge-numeral">
+                    <NumericRanges>{String(row.rank)}</NumericRanges>
+                  </span>
                 </div>
               </div>
             );
