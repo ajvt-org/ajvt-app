@@ -105,7 +105,7 @@ describe("a member playing the daily attempt", () => {
     expect(again.position).toBe(0);
   });
 
-  it("moves on and reports the score after an answer", async () => {
+  it("moves on without telling the result", async () => {
     const { competition } = await setup();
     const view = await (await startAttempt(competition.id)).json();
     const right = await prisma.quizAnswer.findFirstOrThrow({
@@ -117,11 +117,29 @@ describe("a member playing the daily attempt", () => {
 
     const body = await (await answer(view.question.answerId, [right.id])).json();
 
-    expect(body.isCorrect).toBe(true);
-    expect(body.points).toBeGreaterThan(0);
-    expect(body.score).toBe(body.points);
+    expect(body.isCorrect).toBeUndefined();
+    expect(body.points).toBeUndefined();
+    expect(body.correctIds).toBeUndefined();
+    expect(body.score).toBeUndefined();
     expect(body.position).toBe(1);
     expect(body.done).toBe(false);
+  });
+
+  it("keeps the running score to itself until the round is done", async () => {
+    const { competition } = await setup();
+    const view = await (await startAttempt(competition.id)).json();
+    const right = await prisma.quizAnswer.findFirstOrThrow({
+      where: {
+        id: { in: view.question.options.map((o: { id: string }) => o.id) },
+        isCorrect: true,
+      },
+    });
+    await answer(view.question.answerId, [right.id]);
+
+    const resumed = await (await startAttempt(competition.id)).json();
+
+    expect(resumed.done).toBe(false);
+    expect(resumed.score).toBeUndefined();
   });
 
   it("says when the attempt is finished", async () => {
@@ -212,9 +230,12 @@ describe("a member playing the daily attempt", () => {
       },
     });
 
-    const body = await (await answer(view.question.answerId, [right.id])).json();
+    await answer(view.question.answerId, [right.id]);
 
-    expect(body.points).toBe(view.question.points);
+    const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
+      where: { id: view.question.answerId },
+    });
+    expect(row.points).toBe(view.question.points);
   });
 
   it("hands the member the curve so the timer knows what to show", async () => {
@@ -263,8 +284,11 @@ describe("a member playing the daily attempt", () => {
 
     const body = await (await answer(view.question.answerId, [right.id])).json();
 
-    expect(body.points).toBe(0);
-    expect(body.score).toBe(0);
+    expect(body.score).toBeUndefined();
+    const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
+      where: { id: view.question.answerId },
+    });
+    expect(row.points).toBe(0);
   });
 
   it("counts every question left to run out as unanswered", async () => {

@@ -51,6 +51,19 @@ describe("QuizPicker", () => {
     expect(onPick).toHaveBeenCalledWith("c2");
   });
 
+  it("offers the tutorial as its own card with a clear start", async () => {
+    const onTutorial = vi.fn();
+    render(
+      <QuizPicker competitions={rows} backHref="/home" onPick={() => {}} onTutorial={onTutorial} />,
+    );
+
+    expect(screen.getByText("تعلّم اللعب في دقيقة")).toBeDefined();
+
+    await userEvent.click(screen.getByRole("button", { name: /ابدأ الجولة التجريبية/ }));
+
+    expect(onTutorial).toHaveBeenCalled();
+  });
+
   it("keeps a finished competition open to look at", async () => {
     const onPick = vi.fn();
     render(

@@ -5,6 +5,7 @@ const PATHS = {
   close: "M18 6L6 18M6 6l12 12",
   check: "M20 6L9 17l-5-5",
   copy: "M9 9h11v11H9zM5 15H4V4h11v1",
+  play: "M8 5.5l11 6.5-11 6.5z",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
   chevronDown: "M6 9l6 6 6-6",
   plus: "M12 5v14M5 12h14",
