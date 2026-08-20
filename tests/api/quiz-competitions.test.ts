@@ -11,7 +11,7 @@ import {
   withId,
 } from "./helpers";
 import { DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { ALREADY_STARTED } from "@/lib/competitionServer";
+import { ALREADY_STARTED, STARTS_IN_PAST } from "@/lib/competitionServer";
 
 import { GET as LIST, POST as CREATE } from "@/app/api/admin/quiz/competitions/route";
 import {
@@ -20,19 +20,22 @@ import {
   DELETE as RESET,
 } from "@/app/api/admin/quiz/competitions/[id]/route";
 import { POST as START } from "@/app/api/admin/quiz/competitions/[id]/start/route";
+import { POST as COPY } from "@/app/api/admin/quiz/competitions/[id]/copy/route";
 import { POST as RESET_SCORES } from "@/app/api/admin/quiz/competitions/[id]/reset/route";
 import {
   GET as READ_PARTS,
   PUT as SET_PARTS,
 } from "@/app/api/admin/quiz/competitions/[id]/participants/route";
 
-const config = { name: "مسابقة الصيف", startsAt: "2026-08-20T08:00:00.000Z" };
+const SOON = new Date(Date.now() + 2 * 86_400_000).toISOString();
+const config = { name: "مسابقة الصيف", startsAt: SOON };
 
 const list = () => LIST();
 const create = (body: unknown) => CREATE(post("/api/admin/quiz/competitions", body));
 const read = (id: string) => READ(post(`/api/admin/quiz/competitions/${id}`, {}), withId(id));
 const save = (id: string, body: unknown) =>
   SAVE(put(`/api/admin/quiz/competitions/${id}`, body), withId(id));
+const copy = (id: string) => COPY(post(`/api/admin/quiz/competitions/${id}/copy`, {}), withId(id));
 const start = (id: string) =>
   START(post(`/api/admin/quiz/competitions/${id}/start`, {}), withId(id));
 const reset = (id: string) =>
@@ -80,7 +83,7 @@ describe("configuring a competition before it starts", () => {
 
     const c = await prisma.competition.findFirstOrThrow();
     expect(c.name).toBe("مسابقة الصيف");
-    expect(c.startsAt.toISOString()).toBe("2026-08-20T08:00:00.000Z");
+    expect(c.startsAt.toISOString()).toBe(SOON);
     expect(c.roundCount).toBe(30);
     expect(c.servedCount).toBe(10);
     expect(c.visibility).toBe("PUBLIC");
@@ -118,6 +121,25 @@ describe("configuring a competition before it starts", () => {
     const body = await (await read(c.id)).json();
 
     expect(body.competition.name).toBe("مسابقة الصيف");
+  });
+
+  it("refuses a start already in the past", async () => {
+    const res = await create({
+      ...config,
+      startsAt: new Date(Date.now() - 3_600_000).toISOString(),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe(STARTS_IN_PAST);
+  });
+
+  it("refuses moving an existing start into the past", async () => {
+    const c = await made();
+
+    const res = await save(c.id, { startsAt: new Date(Date.now() - 3_600_000).toISOString() });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.competition.count()).toBe(1);
   });
 
   it("refuses a round longer than the gap between rounds", async () => {
@@ -539,6 +561,57 @@ describe("once a competition has started", () => {
     const other = await made({ ...config, name: "مسابقة الشتاء" });
 
     expect((await save(other.id, { servedCount: 3 })).status).toBe(200);
+  });
+});
+
+describe("copying a competition", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
+  });
+
+  it("clones the setup into a fresh run with a coming start", async () => {
+    const c = await stocked({ ...small, visibility: "PRIVATE" });
+    const [user] = await createUsers(1);
+    await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: user.id } });
+    await start(c.id);
+
+    const res = await copy(c.id);
+    const body = await res.json();
+
+    expect(res.status).toBe(201);
+    const clone = await prisma.competition.findUniqueOrThrow({
+      where: { id: body.competition.id },
+      include: { boards: true, participants: true, rounds: true },
+    });
+    expect(clone.name).toBe("نسخة من مسابقة الصيف");
+    expect(clone.startedAt).toBeNull();
+    expect(clone.startsAt.getTime()).toBeGreaterThan(Date.now());
+    expect(clone.visibility).toBe("PRIVATE");
+    expect(clone.roundCount).toBe(2);
+    expect(clone.boards.length).toBeGreaterThan(0);
+    expect(clone.participants).toHaveLength(1);
+    expect(clone.rounds).toHaveLength(0);
+  });
+
+  it("leaves the source untouched and the copy editable", async () => {
+    const c = await stocked();
+    await start(c.id);
+
+    const body = await (await copy(c.id)).json();
+    const res = await save(body.competition.id, { name: "مسابقة الشتاء" });
+
+    expect(res.status).toBe(200);
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).name).toBe(
+      "مسابقة الصيف",
+    );
+  });
+
+  it("is closed to an admin without the quiz section", async () => {
+    const c = await made();
+    await signInAsAdmin(await createAdmin("members", "MEMBERS"));
+
+    expect((await copy(c.id)).status).toBe(403);
   });
 });
 

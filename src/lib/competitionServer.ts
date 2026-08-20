@@ -12,6 +12,7 @@ import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
+export const STARTS_IN_PAST = "وقت البداية قد مضى";
 export const NO_COMPETITION = "لا توجد مسابقة";
 
 export async function listCompetitions() {
@@ -130,7 +131,11 @@ function asRow(config: CompetitionConfig) {
   return { ...rest, startsAt: new Date(config.startsAt) };
 }
 
-export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: string) {
+export async function saveCompetition(
+  raw: Partial<CompetitionConfig>,
+  id?: string,
+  now = new Date(),
+) {
   const input = pickConfig(raw);
   const existing = id
     ? await prisma.competition.findUnique({
@@ -150,6 +155,9 @@ export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: stri
 
   const problem = validateConfig(merged);
   if (problem) throw new ValidationError(problem);
+  if (new Date(merged.startsAt).getTime() < now.getTime() - 60_000) {
+    throw new ValidationError(STARTS_IN_PAST);
+  }
   merged.bankId = (await requireBank(merged.bankId)).id;
 
   const data = asRow(merged);
@@ -170,6 +178,48 @@ export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: stri
     });
   }
   return prisma.competition.create({ data: { ...data, boards: { create: boards } } });
+}
+
+export async function copyCompetition(id: string, now = new Date()) {
+  const source = await requireCompetition(id);
+  const participants = await prisma.quizParticipant.findMany({
+    where: { competitionId: source.id },
+    select: { userId: true },
+  });
+
+  const startsAt = new Date(now.getTime() + 24 * 60 * 60_000);
+  startsAt.setUTCHours(source.startsAt.getUTCHours(), source.startsAt.getUTCMinutes(), 0, 0);
+  if (startsAt.getTime() <= now.getTime()) {
+    startsAt.setUTCDate(startsAt.getUTCDate() + 1);
+  }
+
+  return prisma.competition.create({
+    data: {
+      name: `نسخة من ${source.name}`,
+      visibility: source.visibility,
+      bankId: source.bankId,
+      startsAt,
+      roundCount: source.roundCount,
+      roundPeriodMinutes: source.roundPeriodMinutes,
+      roundWindowMinutes: source.roundWindowMinutes,
+      servedCount: source.servedCount,
+      categoryRounds: source.categoryRounds,
+      fullSeconds: source.fullSeconds,
+      maxSeconds: source.maxSeconds,
+      floorPercent: source.floorPercent,
+      boards: {
+        create: source.boards.map((b, order) => ({
+          title: b.title,
+          blockTitle: b.blockTitle,
+          blockRounds: b.blockRounds,
+          counting: b.counting,
+          wholeRun: b.wholeRun,
+          order,
+        })),
+      },
+      participants: { create: participants.map((p) => ({ userId: p.userId })) },
+    },
+  });
 }
 
 export async function startCompetition(id: string, now = new Date()) {

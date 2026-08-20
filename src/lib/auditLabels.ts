@@ -41,6 +41,7 @@ export const ACTION_LABELS: Record<string, string> = {
   DELETE_QUESTION_BANK: "حذف بنك أسئلة",
   SAVE_COMPETITION: "حفظ إعدادات المسابقة",
   START_COMPETITION: "إطلاق المسابقة",
+  COPY_COMPETITION: "نسخ المسابقة",
   DELETE_COMPETITION: "حذف مسابقة",
   SET_QUIZ_PARTICIPANTS: "تحديد المشاركين في مسابقة",
   SET_QUIZ_ROUND_POOL: "تحديد أسئلة جولة",
