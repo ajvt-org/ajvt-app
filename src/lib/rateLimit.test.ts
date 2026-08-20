@@ -91,6 +91,16 @@ describe("what the map holds", () => {
     expect(keys).toContainEqual(expect.stringMatching(/^login:[0-9a-f]{16}$/));
   });
 
+  it("never holds the IP behind the login-ip buckets in the clear", () => {
+    recordFailedAttempt("login-ip:203.0.113.7", WINDOW);
+    recordFailedAttempt("admin-login-ip:203.0.113.7", WINDOW);
+
+    const keys = bucketKeys();
+    expect(keys.some((k) => k.includes("203.0.113.7"))).toBe(false);
+    expect(keys).toContainEqual(expect.stringMatching(/^login-ip:[0-9a-f]{16}$/));
+    expect(keys).toContainEqual(expect.stringMatching(/^admin-login-ip:[0-9a-f]{16}$/));
+  });
+
   it("still tells two members apart once their numbers are hashed", () => {
     for (let i = 0; i < 5; i++) recordFailedAttempt("login:22334455", WINDOW);
 

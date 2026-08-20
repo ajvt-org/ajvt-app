@@ -1,7 +1,7 @@
 # Where the API routes stand
 
 Every file under `src/app/api` that exports a handler, and what it does about wrapping,
-validation and errors. Read off the files on 2026-08-19, not estimated.
+validation and errors. Read off the files on 2026-08-20, not estimated.
 
 The target is the convention `src/app/api/admin/expenses/` already follows: a colocated
 `schema.ts` whose zod messages are Arabic strings from `@/lib/messages`, consumed through
@@ -14,37 +14,33 @@ response by `withRoute`.
 | --- | --- |
 | route files | 112 |
 | exported handlers | 151 |
-| handlers not wrapped in `withRoute` | 10 |
-| files with a colocated `schema.ts` | 26 |
-| files importing `@/lib/validation` | 28 |
-| files that still return a raw `NextResponse.json({ error })` | 46 |
-| files that throw typed errors and never return a raw body | 26 |
+| handlers not wrapped in `withRoute` | 5 |
+| files with a colocated `schema.ts` | 27 |
+| files importing `@/lib/validation` | 29 |
+| files that still return a raw `NextResponse.json({ error })` | 43 |
+| files that throw typed errors and never return a raw body | 27 |
 
 Three corrections to the figures this work started from:
 
 - **112 route files, not 95**, and 151 handlers rather than one per file.
-- **10 unwrapped handlers, not 9 files' worth of hand-rolled everything.** All ten are in the
-  list below, and none of them is a validation problem — they are logout, file serving, upload
-  and verify, written as `export async function` rather than `export const = withRoute(...)`.
+- **5 unwrapped handlers, not 9 files' worth of hand-rolled everything.** All five are in the
+  list below, and none of them is a validation problem — they are the `files/*` image routes,
+  written as `export async function` rather than `export const = withRoute(...)`. The logout,
+  upload, follow and verify handlers this list once held have since been wrapped.
 - **`admin/teams/[teamId]/route.ts` is already wrapped.** It was cited as an example of a route
   that hand-rolls its checks; it does hand-roll validation (`name.trim().length > 40`) but it goes
   through `withRoute`. Being unwrapped and lacking a schema are two different debts and the
   counts above keep them apart.
 
-## The ten unwrapped handlers
+## The five unwrapped handlers
 
 | route | handler | why it is like that |
 | --- | --- | --- |
-| `admin/logout/route.ts` | POST | four lines, deletes a cookie, no body and no failure |
-| `auth/logout/route.ts` | POST | same |
 | `files/[filename]/route.ts` | GET | streams a file; the DB-row lookup guarding it is deliberate |
 | `files/activity/[filename]/route.ts` | GET | same |
 | `files/donation/[filename]/route.ts` | GET | same |
 | `files/member/[filename]/route.ts` | GET | same |
 | `files/team/[filename]/route.ts` | GET | same |
-| `teams/[teamId]/follow/route.ts` | GET | reads a follow state |
-| `upload/route.ts` | POST | multipart, not JSON; also exports `getUploadDir` |
-| `verify/[memberNumber]/route.ts` | GET | public card check |
 
 The five `files/*` routes return image bytes rather than JSON, so wrapping them changes what a
 failure looks like to an `<img>` tag. They are the last ones to touch, not the first.
@@ -53,8 +49,9 @@ failure looks like to an `<img>` tag. They are the last ones to touch, not the f
 
 **A client component compares one error body character by character.**
 `src/app/form/page.tsx:859` tests `error === "رقم الهاتف مسجّل مسبقاً"` to decide whether to offer
-a sign-in link, and `src/app/api/auth/register/route.ts:35` is what produces that string. Moving
-that message into `@/lib/messages` is fine; changing its wording silently removes the link.
+a sign-in link, and `auth.phoneTaken` in `@/lib/messages` is what produces it, thrown as a
+`ConflictError` from `auth/register`. The comparison now lives in
+`src/app/form/StepAccount.tsx`; changing the wording silently removes the link.
 
 **Twenty routes have an exact error body pinned by a test.** Any migration that changes the
 sentence, not just where it is thrown from, breaks one of these:
@@ -90,9 +87,8 @@ untouched through all of this.
 2. Files with a colocated `schema.ts` that no route imports.
 3. Files with neither, one feature area at a time, so the messages that move into
    `@/lib/messages` land as a group rather than scattered.
-4. The two logout routes and `teams/[teamId]/follow`, which are trivial.
-5. `upload/` and the five `files/*` routes last: they do not answer with JSON, so wrapping them
-   is a change to what a failure looks like, not a refactor.
+4. The five `files/*` routes last: they do not answer with JSON, so wrapping them is a change
+   to what a failure looks like, not a refactor.
 
 ## The table
 
@@ -135,7 +131,7 @@ untouched through all of this.
 | `admin/finance/summary/route.ts` | GET | yes | no | none |
 | `admin/groups/[groupId]/route.ts` | DELETE, PATCH | yes | no | raw (4) |
 | `admin/login/route.ts` | POST | yes | no | raw (4) |
-| `admin/logout/route.ts` | POST | **no** | no | none |
+| `admin/logout/route.ts` | POST | yes | no | none |
 | `admin/matches/[matchId]/bookings/route.ts` | POST | yes | yes | raw (3) |
 | `admin/matches/[matchId]/mvp-vote/route.ts` | DELETE, PATCH, POST | yes | yes | raw (5) |
 | `admin/matches/[matchId]/route.ts` | DELETE, PATCH | yes | yes | raw (16) |
@@ -180,8 +176,8 @@ untouched through all of this.
 | `ages/route.ts` | GET | yes | no | none |
 | `ages/standings/route.ts` | GET | yes | no | none |
 | `auth/login/route.ts` | POST | yes | no | typed (5) |
-| `auth/logout/route.ts` | POST | **no** | no | none |
-| `auth/register/route.ts` | POST | yes | no | raw (5) |
+| `auth/logout/route.ts` | POST | yes | no | none |
+| `auth/register/route.ts` | POST | yes | yes | raw (1) |
 | `donations/route.ts` | POST | yes | no | mixed (1 typed, 10 raw) |
 | `files/[filename]/route.ts` | GET | **no** | no | none |
 | `files/activity/[filename]/route.ts` | GET | **no** | no | none |
@@ -200,12 +196,12 @@ untouched through all of this.
 | `quiz/competitions/route.ts` | GET | yes | no | typed (1) |
 | `quiz/standings/route.ts` | GET | yes | no | none |
 | `settings/route.ts` | GET | yes | no | none |
-| `teams/[teamId]/follow/route.ts` | DELETE, GET, POST | **no** | no | raw (1) |
+| `teams/[teamId]/follow/route.ts` | DELETE, GET, POST | yes | no | typed (1) |
 | `teams/[teamId]/join/route.ts` | DELETE, POST | yes | yes | raw (7) |
 | `track-visit/route.ts` | POST | yes | no | none |
-| `upload/route.ts` | POST | **no** | no | raw (6) |
+| `upload/route.ts` | POST | yes | no | typed (6) |
 | `user/activities/route.ts` | GET | yes | no | none |
 | `user/matches/route.ts` | GET | yes | no | none |
 | `user/me/route.ts` | GET | yes | no | raw (1) |
 | `user/password/route.ts` | POST | yes | yes | typed (5) |
-| `verify/[memberNumber]/route.ts` | GET | **no** | no | none |
+| `verify/[memberNumber]/route.ts` | GET | yes | no | none |

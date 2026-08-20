@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
+import { auth } from "@/lib/messages";
 import Notice from "@/components/Notice";
 
 const FIELDS = [
@@ -22,7 +24,7 @@ export default function PasswordForm({ onDone }: { onDone?: () => void }) {
     e.preventDefault();
     setError("");
     if (form.next !== form.confirm) return setError("كلمتا المرور غير متطابقتين");
-    if (form.next.length < 3) return setError("كلمة المرور يجب أن تكون 3 أحرف على الأقل");
+    if (form.next.length < MIN_PASSWORD_LENGTH) return setError(auth.passwordTooShort);
 
     setLoading(true);
     try {

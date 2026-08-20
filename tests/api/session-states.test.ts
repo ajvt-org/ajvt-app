@@ -71,7 +71,7 @@ async function enter(state: StateName) {
     });
   }
 
-  setCookie("user_token", await signToken({ userId: user.id, tokenVersion }));
+  setCookie("user_token", await signToken({ typ: "user", userId: user.id, tokenVersion }));
 }
 
 const SIGNED_IN: StateName[] = [
@@ -149,9 +149,9 @@ describe("who the API serves", () => {
   describe("changing a password", () => {
     it("is the one thing a locked account may still do", async () => {
       await enter("tempPassword");
-      expect((await PASSWORD(post("/api/user/password", { newPassword: "chosen" }))).status).toBe(
-        200,
-      );
+      expect(
+        (await PASSWORD(post("/api/user/password", { newPassword: "chosenwell" }))).status,
+      ).toBe(200);
     });
 
     it("is refused to a revoked session like everything else", async () => {
@@ -159,7 +159,7 @@ describe("who the API serves", () => {
       expect(
         (
           await PASSWORD(
-            post("/api/user/password", { currentPassword: "secret", newPassword: "x2" }),
+            post("/api/user/password", { currentPassword: "secret", newPassword: "x2x2x2x2" }),
           )
         ).status,
       ).toBe(401);
@@ -167,9 +167,9 @@ describe("who the API serves", () => {
 
     it.each(SIGNED_IN)("still needs the current password from %s", async (state) => {
       await enter(state);
-      expect((await PASSWORD(post("/api/user/password", { newPassword: "chosen" }))).status).toBe(
-        400,
-      );
+      expect(
+        (await PASSWORD(post("/api/user/password", { newPassword: "chosenwell" }))).status,
+      ).toBe(400);
     });
   });
 
