@@ -1,0 +1,1 @@
+ALTER TABLE "QuizBoard" ADD COLUMN "blockTitle" TEXT NOT NULL DEFAULT '';

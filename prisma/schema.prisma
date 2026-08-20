@@ -576,6 +576,7 @@ model QuizBoard {
   competitionId String
   competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
   title         String
+  blockTitle    String      @default("")
   blockRounds   Int         @default(1)
   counting      Int         @default(1)
   wholeRun      Boolean     @default(false)
