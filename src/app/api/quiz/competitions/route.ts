@@ -4,7 +4,7 @@ import { withRoute } from "@/lib/route";
 import { ForbiddenError } from "@/lib/errors";
 import { isQuizEligible } from "@/lib/quiz";
 import { myCompetitions, shapeOf } from "@/lib/competitionServer";
-import { roundState } from "@/lib/quizRound";
+import { roundsBegun, roundState } from "@/lib/quizRound";
 import { quiz } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/quiz/competitions", async () => {
@@ -27,7 +27,7 @@ function myCompetitionsView(
     roundCount: competition.roundCount,
     startsAt: competition.startsAt,
     state: competition.startedAt ? roundState(shapeOf(competition), now) : "before",
-    playedRounds: mine.length,
+    passedRounds: competition.startedAt ? roundsBegun(shapeOf(competition), now) : 0,
     myScore: mine.reduce((sum, a) => sum + a.score, 0),
   }));
 }

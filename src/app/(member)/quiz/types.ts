@@ -16,7 +16,7 @@ export interface RunningCompetition {
   roundCount: number;
   startsAt: string;
   state: CompetitionState;
-  playedRounds: number;
+  passedRounds: number;
   myScore: number;
 }
 

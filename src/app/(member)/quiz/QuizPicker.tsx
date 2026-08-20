@@ -1,6 +1,7 @@
 "use client";
 
-import PageHeader from "@/components/PageHeader";
+import Image from "next/image";
+import BackButton from "@/components/BackButton";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import type { CompetitionState, RunningCompetition } from "./types";
@@ -26,8 +27,36 @@ export default function QuizPicker({
 }) {
   return (
     <div className="app-shell">
-      <PageHeader title="المسابقات الثقافية" backHref={backHref} />
-      <div className="px-5 py-6 pb-10 space-y-3">
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(160deg, var(--mint-900), var(--mint-700))",
+          borderRadius: "0 0 28px 28px",
+          padding: "16px 20px 44px",
+        }}
+      >
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            top: -60,
+            insetInlineStart: -50,
+            width: 220,
+            height: 220,
+            background: "radial-gradient(circle, rgba(74,156,126,0.4), rgba(74,156,126,0))",
+          }}
+        />
+        <div className="relative flex items-center gap-3">
+          <BackButton href={backHref} />
+          <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+              رابطة شباب قرية التاكلالت
+            </p>
+            <h1 className="text-lg font-black text-white truncate">المسابقات الثقافية</h1>
+          </div>
+        </div>
+      </div>
+      <div className="px-5 pb-10 space-y-3 relative" style={{ marginTop: -24 }}>
         {competitions.length === 0 ? (
           <div className="card p-6 text-center space-y-2">
             <div className="flex justify-center" style={{ color: "var(--mint-500)" }}>
@@ -59,7 +88,7 @@ export default function QuizPicker({
                 </span>
                 <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
                   <NumericRanges>
-                    {`${STATE_LABEL[competition.state]} · ${competition.playedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
+                    {`${STATE_LABEL[competition.state]} · ${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
                   </NumericRanges>
                 </span>
               </span>

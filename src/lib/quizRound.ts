@@ -48,6 +48,12 @@ export function roundIndexAt(shape: RoundShape, now: Date): number {
   return Math.min(Math.max(0, shape.roundCount - 1), index);
 }
 
+export function roundsBegun(shape: RoundShape, now: Date): number {
+  if (now < shape.startsAt) return 0;
+  const elapsed = now.getTime() - shape.startsAt.getTime();
+  return Math.min(shape.roundCount, Math.floor(elapsed / (shape.roundPeriodMinutes * MINUTE)) + 1);
+}
+
 export function roundState(shape: RoundShape, now: Date): RoundState {
   if (now < shape.startsAt) return "before";
   if (now >= endsAt(shape)) return "over";
