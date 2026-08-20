@@ -110,7 +110,13 @@ export function blockAnchor(board: BoardShape, block: number, current: number): 
   return board.wholeRun ? current : block * Math.max(1, board.blockRounds);
 }
 
-export function blockLabel(blockRounds: number, block: number, roundCount: number): string {
+export function blockLabel(
+  blockRounds: number,
+  block: number,
+  roundCount: number,
+  blockTitle = "",
+): string {
+  if (blockTitle.trim()) return `${blockTitle.trim()} ${block + 1}`;
   if (blockRounds <= 1) return `الجولة ${block + 1}`;
   const first = block * blockRounds + 1;
   const last = Math.min((block + 1) * blockRounds, roundCount);

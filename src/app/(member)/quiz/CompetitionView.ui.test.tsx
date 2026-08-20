@@ -24,6 +24,7 @@ const standings: StandingsState = {
     {
       id: "b1",
       title: "ترتيب الجولة",
+      blockTitle: "",
       blockRounds: 1,
       counting: 1,
       wholeRun: false,
@@ -35,6 +36,7 @@ const standings: StandingsState = {
     {
       id: "b2",
       title: "الترتيب العام",
+      blockTitle: "",
       blockRounds: 1,
       counting: 1,
       wholeRun: true,
@@ -283,6 +285,42 @@ describe("CompetitionView", () => {
     await waitFor(() => expect(screen.getByText("انتهت المسابقة")).toBeDefined());
     expect(screen.getByText("محمد")).toBeDefined();
     expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
+  });
+
+  it("titles the round board with the round it shows", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
+
+    expect(screen.getByText("ترتيب الجولة · الجولة 3")).toBeDefined();
+  });
+
+  it("uses the board's own block word in the title and the picker", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{
+          ...standings,
+          roundCount: 28,
+          boards: [
+            {
+              ...standings.boards[0],
+              title: "الترتيب الأسبوعي",
+              blockTitle: "الأسبوع",
+              blockRounds: 7,
+              block: 1,
+              blocks: 2,
+            },
+          ],
+        }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+    await waitFor(() => screen.getByRole("combobox", { name: "فترة الترتيب" }));
+
+    expect(screen.getByText("الترتيب الأسبوعي · الأسبوع 2")).toBeDefined();
+    expect(screen.getByRole("option", { name: "الأسبوع 1" })).toBeDefined();
   });
 
   it("offers the board's past blocks and shows the one picked", async () => {

@@ -67,6 +67,7 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
 export interface StandingsBoard {
   id: string;
   title: string;
+  blockTitle: string;
   blockRounds: number;
   counting: number;
   wholeRun: boolean;
@@ -120,6 +121,7 @@ export async function getStandings(
     boards.push({
       id: board.id,
       title: board.title,
+      blockTitle: board.blockTitle,
       blockRounds: board.blockRounds,
       counting: board.counting,
       wholeRun: board.wholeRun,

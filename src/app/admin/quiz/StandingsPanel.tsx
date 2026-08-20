@@ -16,6 +16,7 @@ interface BoardRow {
 interface Board {
   id: string;
   title: string;
+  blockTitle: string;
   blockRounds: number;
   wholeRun: boolean;
   block: number;
@@ -116,7 +117,12 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
             >
               {Array.from({ length: openBoard.blocks }, (_, b) => (
                 <option key={b} value={b}>
-                  {blockLabel(openBoard.blockRounds, b, body?.roundCount ?? 0)}
+                  {blockLabel(
+                    openBoard.blockRounds,
+                    b,
+                    body?.roundCount ?? 0,
+                    openBoard.blockTitle,
+                  )}
                 </option>
               ))}
             </select>
