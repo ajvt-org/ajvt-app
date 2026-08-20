@@ -10,6 +10,7 @@ export interface QuestionTheme {
   optionSelected: CSSProperties;
   checkBubble: CSSProperties;
   confirm: CSSProperties;
+  confirmBar: CSSProperties;
   locked: CSSProperties;
   timer: {
     ring: boolean;
@@ -50,6 +51,7 @@ export const STAGE: QuestionTheme = {
     background: "linear-gradient(135deg, var(--mint-500), var(--mint-600))",
     boxShadow: "0 0 24px rgba(74,156,126,0.5)",
   },
+  confirmBar: { background: "linear-gradient(180deg, rgba(16,39,31,0), rgba(16,39,31,0.92) 45%)" },
   locked: { background: "rgba(255,255,255,0.12)", color: "var(--mint-100)" },
   timer: {
     ring: false,
@@ -94,6 +96,9 @@ export const ARCADE: QuestionTheme = {
   confirm: {
     background: "linear-gradient(135deg, var(--mint-600), var(--mint-700))",
     boxShadow: "0 4px 14px rgba(37,92,73,0.3)",
+  },
+  confirmBar: {
+    background: "linear-gradient(180deg, rgba(240,250,245,0), rgba(240,250,245,0.95) 45%)",
   },
   locked: { background: "var(--mint-100)", color: "var(--mint-700)" },
   timer: {
