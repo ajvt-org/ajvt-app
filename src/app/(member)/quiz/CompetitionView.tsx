@@ -10,6 +10,7 @@ import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
+import { blockLabel } from "@/lib/quizRanking";
 
 interface AttemptState {
   attemptId: string;
@@ -29,6 +30,10 @@ interface Place {
 export interface StandingsBoard {
   id: string;
   title: string;
+  blockRounds: number;
+  wholeRun: boolean;
+  block: number;
+  blocks: number;
   rows: BoardRow[];
   mine: Place | null;
 }
@@ -58,10 +63,35 @@ export default function CompetitionView({
   const [closed, setClosed] = useState("");
   const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [block, setBlock] = useState<number | null>(null);
+  const [past, setPast] = useState<{ rows: BoardRow[]; mine: Place | null } | null>(null);
 
   const tabs = standings.boards.map((b) => ({ id: b.id, title: b.title }));
   const openTab = tabs.some((t) => t.id === tab) ? (tab as string) : (tabs[0]?.id ?? "");
   const open = standings.boards.find((b) => b.id === openTab) ?? null;
+
+  function pickTab(id: string) {
+    setTab(id);
+    setBlock(null);
+    setPast(null);
+  }
+
+  async function pickBlock(picked: number) {
+    setBlock(picked);
+    if (!open || picked === open.block) {
+      setPast(null);
+      return;
+    }
+    try {
+      setPast(
+        await api.get(
+          `/api/quiz/standings?competition=${competitionId}&board=${open.id}&block=${picked}`,
+        ),
+      );
+    } catch {
+      setPast(null);
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -176,13 +206,32 @@ export default function CompetitionView({
           )}
         </div>
 
-        <BoardTabs tabs={tabs} active={openTab} onSelect={setTab} />
+        <BoardTabs tabs={tabs} active={openTab} onSelect={pickTab} />
+
+        {open && open.blocks > 1 && (
+          <select
+            aria-label="فترة الترتيب"
+            className="input input-sm"
+            value={block ?? open.block}
+            onChange={(e) => pickBlock(Number(e.target.value))}
+          >
+            {Array.from({ length: open.blocks }, (_, b) => (
+              <option key={b} value={b}>
+                {blockLabel(open.blockRounds, b, standings.roundCount ?? 0)}
+              </option>
+            ))}
+          </select>
+        )}
 
         {open && (
           <StandingsBoard
-            title={open.title}
-            rows={open.rows}
-            mine={open.mine}
+            title={
+              past && block !== null
+                ? `${open.title} · ${blockLabel(open.blockRounds, block, standings.roundCount ?? 0)}`
+                : open.title
+            }
+            rows={past ? past.rows : open.rows}
+            mine={past ? past.mine : open.mine}
             meId={standings.meId}
             empty="لا ترتيب بعد"
           />
