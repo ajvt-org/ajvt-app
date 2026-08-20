@@ -31,6 +31,8 @@ export default function StandingsBoard({
   empty: string;
 }) {
   const listed = rows.some((r) => r.userId === meId);
+  const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : [];
+  const rest = rows.length >= 3 ? rows.slice(3) : rows;
 
   return (
     <section className="card p-4 space-y-2">
@@ -38,13 +40,77 @@ export default function StandingsBoard({
         {title}
       </p>
 
+      {podium.length === 3 && (
+        <div className="flex items-end justify-center gap-3 pb-2" aria-label="المنصة">
+          {podium.map((row) => {
+            const first = row.rank === 1;
+            return (
+              <div
+                key={row.userId}
+                className="flex flex-col items-center gap-1"
+                style={{ width: first ? 96 : 84 }}
+              >
+                <div
+                  className="rounded-full flex items-center justify-center overflow-hidden"
+                  style={{
+                    width: first ? 60 : 50,
+                    height: first ? 60 : 50,
+                    border: first ? "3px solid var(--copper-500)" : "3px solid var(--mint-200)",
+                    background: first
+                      ? "linear-gradient(135deg, #f7e9de, #f1dcc9)"
+                      : "var(--mint-100)",
+                  }}
+                >
+                  <PlayerAvatar photo={null} fullName={row.name} size={first ? 54 : 44} />
+                </div>
+                <p
+                  className="text-[11px] font-extrabold text-center truncate w-full"
+                  style={{ color: "var(--text-main)" }}
+                >
+                  {row.name}
+                </p>
+                <span
+                  className="rounded-full px-2.5 text-[11px] font-black"
+                  style={
+                    first
+                      ? {
+                          background:
+                            "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
+                          color: "white",
+                        }
+                      : { background: "var(--mint-50)", color: "var(--text-muted)" }
+                  }
+                >
+                  <NumericRanges>{String(row.total)}</NumericRanges>
+                </span>
+                <div
+                  className="w-full rounded-t-xl flex items-center justify-center font-black"
+                  style={{
+                    height: first ? 46 : row.rank === 2 ? 32 : 24,
+                    background: first
+                      ? "linear-gradient(180deg, #f1dcc9, #f7e9de)"
+                      : row.rank === 2
+                        ? "var(--mint-100)"
+                        : "var(--mint-50)",
+                    color: first ? "var(--copper-600)" : "var(--mint-500)",
+                    fontSize: first ? 18 : 13,
+                  }}
+                >
+                  <NumericRanges>{String(row.rank)}</NumericRanges>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {empty}
         </p>
       ) : (
         <ol className="space-y-1.5">
-          {rows.map((row) => (
+          {rest.map((row) => (
             <li
               key={row.userId}
               className="flex items-center gap-2.5 rounded-xl p-2"

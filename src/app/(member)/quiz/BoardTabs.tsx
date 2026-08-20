@@ -18,18 +18,22 @@ export default function BoardTabs({
   const open = tabs.some((t) => t.id === active) ? active : tabs[0]?.id;
 
   return (
-    <div className="flex gap-2 overflow-x-auto" role="tablist">
+    <div className="card p-1.5 flex gap-1" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
           aria-selected={tab.id === open}
           onClick={() => onSelect(tab.id)}
-          className="btn btn-sm text-xs font-bold shrink-0"
+          className="flex-1 min-w-0 truncate rounded-2xl text-xs py-2.5 px-2 transition-all"
           style={
             tab.id === open
-              ? { background: "var(--mint-600)", color: "white" }
-              : { background: "white", color: "var(--text-main)" }
+              ? {
+                  background: "linear-gradient(135deg, var(--mint-600), var(--mint-700))",
+                  color: "white",
+                  fontWeight: 800,
+                }
+              : { background: "transparent", color: "var(--text-muted)", fontWeight: 700 }
           }
         >
           {tab.title}

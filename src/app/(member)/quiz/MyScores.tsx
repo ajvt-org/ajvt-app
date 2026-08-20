@@ -47,10 +47,19 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
       {rounds?.map((round) => (
         <div
           key={round.round}
-          className="flex items-center justify-between gap-2 rounded-lg p-2 text-xs"
-          style={{ background: "var(--surface-2)", opacity: round.missed ? 0.7 : 1 }}
+          className="flex items-center gap-3 py-2 text-xs"
+          style={{ opacity: round.missed ? 0.55 : 1 }}
         >
-          <span className="text-start">
+          <span
+            className="rounded-full shrink-0"
+            style={{
+              width: 10,
+              height: 10,
+              background: round.missed ? "transparent" : "var(--mint-600)",
+              border: round.missed ? "2px solid var(--mint-300)" : "none",
+            }}
+          />
+          <span className="text-start flex-1 min-w-0">
             <span className="block font-bold" style={{ color: "var(--text-main)" }}>
               <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
               {round.category ? ` · ${round.category}` : ""}
