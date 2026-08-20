@@ -74,16 +74,19 @@ function CompetitionCard({
         <Icon name={STATE_ICON[state]} size={22} />
       </span>
       <span className="flex-1 min-w-0">
-        <span className="flex items-center gap-2">
-          <span className="font-black truncate" style={{ color: "var(--text-main)", fontSize: 15 }}>
+        <span className="flex items-start gap-2">
+          <span
+            className="flex-1 min-w-0 font-black line-clamp-2"
+            style={{ color: "var(--text-main)", fontSize: 15 }}
+          >
             {competition.name}
           </span>
           {competition.visibility === "PRIVATE" && (
-            <Icon name="lock" size={12} color="var(--text-muted)" className="shrink-0" />
+            <Icon name="lock" size={12} color="var(--text-muted)" className="shrink-0 mt-1" />
           )}
           <span
             className="shrink-0 rounded-full font-black"
-            style={{ padding: "1px 10px", fontSize: 10, ...CHIP_STYLE[state] }}
+            style={{ padding: "1px 10px", fontSize: 10, marginTop: 2, ...CHIP_STYLE[state] }}
           >
             {STATE_LABEL[state]}
           </span>
@@ -113,11 +116,14 @@ function CompetitionCard({
       </span>
       {playable && (
         <span
-          className="shrink-0 flex items-center gap-1.5 rounded-full"
-          style={{ padding: "5px 11px", background: "var(--mint-50)" }}
+          className="shrink-0 flex items-center justify-center gap-1.5 rounded-full"
+          style={{ padding: "6px 11px", minWidth: 58, background: "var(--mint-50)" }}
         >
-          <Icon name="star" size={13} filled color="var(--copper-500)" />
-          <span className="text-sm font-black tabular-nums" style={{ color: "var(--mint-700)" }}>
+          <Icon name="star" size={13} filled color="var(--copper-500)" className="shrink-0" />
+          <span
+            className="text-sm font-black tabular-nums"
+            style={{ color: "var(--mint-700)", lineHeight: 1 }}
+          >
             <NumericRanges>{`${competition.myScore}`}</NumericRanges>
           </span>
         </span>
