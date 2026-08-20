@@ -4,7 +4,7 @@ Next.js 16, React 19, Prisma 7, Postgres. Arabic interface, right to left.
 
 ## Requirements
 
-- Node 20.9 or newer
+- Node 22 or newer
 - Docker, for the local database
 - No local Postgres install needed, it runs in a container
 
@@ -70,7 +70,7 @@ The route handlers are plain exported functions, so the tests import `POST` and 
 
 ## Branches and deploys
 
-`dev` is where work lands. `master` is what is deployed. Render watches `master` and deploys every push to it, so merging into `master` is the release.
+`dev` is where work lands. `master` is what is deployed. Railway watches `master` and deploys every push to it, so merging into `master` is the release. `railway.toml` at the root carries the build and start commands.
 
 Day to day:
 
@@ -98,7 +98,7 @@ There is no `CHANGELOG.md`, and this is deliberate. Every tag has a [release](ht
 
 Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge, and the reason the build has to pass before one can happen.
 
-To roll back, redeploy the previous commit from the Render dashboard. That is faster than a revert, and it does not undo a migration either way.
+To roll back, redeploy the previous commit from the Railway dashboard. That is faster than a revert, and it does not undo a migration either way.
 
 Admins are not covered by the rules, so there is a way through if the build is broken and something has to ship. Use it knowingly.
 
@@ -141,7 +141,7 @@ The rest are optional and the app works without them:
 
 ## Uploads
 
-Member photos and payment proofs are written to disk, not to the database. Locally they land in `public/uploads`, which is ignored by git. In production `UPLOAD_DIR` points at a mounted disk, so the files survive a redeploy.
+Member photos and payment proofs are written to disk, not to the database. Locally they land in `public/uploads`, which is ignored by git. In production `UPLOAD_DIR` points at a mounted Railway volume, so the files survive a redeploy.
 
 ## Database
 

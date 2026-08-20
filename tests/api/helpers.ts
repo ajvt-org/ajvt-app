@@ -86,13 +86,14 @@ export async function createAdmin(username = "admin", role = "SUPER", password =
 }
 
 export async function signInAs(user: { id: string; tokenVersion: number }) {
-  const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });
+  const token = await signToken({ typ: "user", userId: user.id, tokenVersion: user.tokenVersion });
   setCookie("user_token", token);
   return token;
 }
 
 export async function signInAsAdmin(admin: { id: string; username: string; tokenVersion: number }) {
   const token = await signToken({
+    typ: "admin",
     adminId: admin.id,
     username: admin.username,
     tokenVersion: admin.tokenVersion,

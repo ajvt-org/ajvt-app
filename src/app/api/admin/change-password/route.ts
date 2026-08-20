@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { auth, common } from "@/lib/messages";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
 export const POST = withRoute("POST /api/admin/change-password", async (req: NextRequest) => {
   const session = await requireAdmin();
@@ -13,7 +14,7 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
   if (!currentPassword || !newPassword) {
     return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
-  if (newPassword.length < 3) {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
 
@@ -38,11 +39,15 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
   // Re-issue a fresh token for this session so the admin isn't logged
   // out on this device — other devices/sessions are invalidated since
   // their token still carries the old tokenVersion.
-  const token = await signToken({
-    adminId: updated.id,
-    username: updated.username,
-    tokenVersion: updated.tokenVersion,
-  });
+  const token = await signToken(
+    {
+      typ: "admin",
+      adminId: updated.id,
+      username: updated.username,
+      tokenVersion: updated.tokenVersion,
+    },
+    "8h",
+  );
   const res = NextResponse.json({ ok: true });
   res.cookies.set("admin_token", token, {
     httpOnly: true,

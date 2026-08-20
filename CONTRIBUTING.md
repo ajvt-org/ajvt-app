@@ -12,7 +12,10 @@ Two things that catch people out:
   setting worth running.
 - A schema change needs a migration in `prisma/migrations/`, written by hand.
   Every boot runs `prisma migrate deploy`, so a release migrates the production
-  database.
+  database. Name the folder with the real current UTC time — migrations replay
+  in folder-name order on a rebuild, and `src/lib/migrationOrder.test.ts` fails
+  the build if a new folder sorts before an existing one or is dated more than
+  ten days ahead.
 
 Before pushing:
 
