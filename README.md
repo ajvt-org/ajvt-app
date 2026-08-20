@@ -4,7 +4,7 @@ Next.js 16, React 19, Prisma 7, Postgres. Arabic interface, right to left.
 
 ## Requirements
 
-- Node 20.9 or newer
+- Node 22 or newer
 - Docker, for the local database
 - No local Postgres install needed, it runs in a container
 
