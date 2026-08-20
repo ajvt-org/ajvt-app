@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
-import { validatePhone } from "@/lib/utils";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { ConflictError } from "@/lib/errors";
 import { auth, common } from "@/lib/messages";
+import { registerSchema } from "./schema";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 10;
@@ -17,27 +19,14 @@ export const POST = withRoute("POST /api/auth/register", async (req: NextRequest
   }
   recordFailedAttempt(key, WINDOW_MS);
 
-  const { phone, password } = await req.json();
+  const { phone, password } = parse(registerSchema, await req.json());
 
-  if (!phone || !password) {
-    return NextResponse.json({ error: auth.credentialsRequired }, { status: 400 });
-  }
-  const phoneError = validatePhone(phone);
-  if (phoneError) {
-    return NextResponse.json({ error: phoneError }, { status: 400 });
-  }
-  if (password.length < 3) {
-    return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
-  }
-
-  const existing = await prisma.user.findUnique({ where: { phone: phone.trim() } });
-  if (existing) {
-    return NextResponse.json({ error: "رقم الهاتف مسجّل مسبقاً" }, { status: 409 });
-  }
+  const existing = await prisma.user.findUnique({ where: { phone } });
+  if (existing) throw new ConflictError(auth.phoneTaken);
 
   const hashed = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { phone: phone.trim(), password: hashed },
+    data: { phone, password: hashed },
   });
 
   const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });

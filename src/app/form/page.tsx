@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { validatePhone, loginPathWithNext, safeNextPath } from "@/lib/utils";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
+import { auth } from "@/lib/messages";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { generateReferenceCode } from "@/lib/referenceCode";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
@@ -291,8 +293,8 @@ function FormPageInner() {
 
   async function createAccount() {
     setError("");
-    if (password.length < 3) {
-      setError("كلمة المرور يجب أن تكون 3 أحرف على الأقل");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(auth.passwordTooShort);
       return;
     }
     if (password !== confirmPassword) {

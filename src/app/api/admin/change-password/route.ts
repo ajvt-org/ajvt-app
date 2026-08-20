@@ -5,6 +5,7 @@ import { logAction } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { auth, common } from "@/lib/messages";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
 export const POST = withRoute("POST /api/admin/change-password", async (req: NextRequest) => {
   const session = await requireAdmin();
@@ -13,7 +14,7 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
   if (!currentPassword || !newPassword) {
     return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
-  if (newPassword.length < 3) {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
 
