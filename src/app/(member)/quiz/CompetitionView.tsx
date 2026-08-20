@@ -101,11 +101,7 @@ export default function CompetitionView({
 
   useEffect(() => {
     let alive = true;
-    if (standings.state === "over") {
-      setPending(false);
-      return;
-    }
-    setPending(true);
+    if (standings.state === "over") return;
     api
       .post<AttemptState>("/api/quiz/attempt", { competitionId })
       .then((state) => {
