@@ -71,9 +71,49 @@ export default function QuizPicker({
         })}
 
         {onTutorial && (
-          <button onClick={onTutorial} className="btn btn-sm text-xs">
-            جولة تجريبية
-          </button>
+          <div className="card p-4 relative overflow-hidden">
+            <div
+              className="absolute rounded-full"
+              style={{
+                insetInlineStart: -22,
+                top: -22,
+                width: 90,
+                height: 90,
+                background: "#f7e9de",
+                opacity: 0.6,
+              }}
+            />
+            <div className="relative flex items-center gap-3.5">
+              <span
+                className="rounded-2xl flex items-center justify-center shrink-0"
+                style={{
+                  width: 56,
+                  height: 56,
+                  background: "linear-gradient(135deg, #f7e9de, #f1dcc9)",
+                  color: "var(--copper-600)",
+                }}
+              >
+                <Icon name="play" size={28} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span
+                  className="block text-xs font-extrabold"
+                  style={{ color: "var(--copper-600)" }}
+                >
+                  جديد على المسابقات؟
+                </span>
+                <span className="block font-black" style={{ color: "var(--text-main)" }}>
+                  تعلّم اللعب في دقيقة
+                </span>
+                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
+                  <NumericRanges>3 أسئلة قصيرة للتجربة، لا تُحسب نقاطها</NumericRanges>
+                </span>
+              </span>
+            </div>
+            <button onClick={onTutorial} className="btn btn-copper mt-3.5 text-sm relative">
+              <Icon name="play" size={16} className="icon-inline" /> ابدأ الجولة التجريبية
+            </button>
+          </div>
         )}
       </div>
     </div>
