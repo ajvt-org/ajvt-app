@@ -122,6 +122,7 @@ export interface Standings {
   roundCount: number | null;
   state: RoundState | null;
   next: { index: number; opensAt: Date } | null;
+  closesAt: Date | null;
   me: { played: boolean; finished: boolean; score: number | null } | null;
   curve: ScoreCurve | null;
   boards: StandingsBoard[];
@@ -143,6 +144,7 @@ export async function getStandings(
     roundCount: null,
     state: null,
     next: null,
+    closesAt: null,
     me: null,
     curve: null,
     boards: [],
@@ -164,6 +166,7 @@ export async function getStandings(
   }));
 
   const coming = nextWindow(shapeOf(competition), now);
+  const openNow = currentRound(shapeOf(competition), now);
   return {
     running: true,
     competitionId: competition.id,
@@ -173,6 +176,7 @@ export async function getStandings(
     roundCount: competition.roundCount,
     state: roundState(shapeOf(competition), now),
     next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
+    closesAt: openNow ? openNow.closesAt : null,
     me: userId ? await myRoundOf(competition.id, userId, at) : null,
     curve: {
       fullSeconds: competition.fullSeconds,
