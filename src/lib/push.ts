@@ -11,14 +11,19 @@ if (publicKey && privateKey) {
   webpush.setVapidDetails("https://ajvt-app.onrender.com", publicKey, privateKey);
 }
 
-export async function sendPushToUser(
-  userId: string,
+export const PUSH_BATCH = 25;
+
+interface Subscription {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+async function deliver(
+  subscriptions: Subscription[],
   payload: { title: string; body: string; url?: string },
 ) {
-  if (!publicKey || !privateKey) return;
-
-  const subscriptions = await prisma.pushSubscription.findMany({ where: { userId } });
-
   await Promise.all(
     subscriptions.map(async (sub) => {
       try {
@@ -39,4 +44,27 @@ export async function sendPushToUser(
       }
     }),
   );
+}
+
+export async function sendPushToUser(
+  userId: string,
+  payload: { title: string; body: string; url?: string },
+) {
+  if (!publicKey || !privateKey) return;
+  await deliver(await prisma.pushSubscription.findMany({ where: { userId } }), payload);
+}
+
+export async function sendPushToUsers(
+  userIds: string[],
+  payload: { title: string; body: string; url?: string },
+) {
+  if (!publicKey || !privateKey || userIds.length === 0) return;
+
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId: { in: userIds } },
+  });
+
+  for (let i = 0; i < subscriptions.length; i += PUSH_BATCH) {
+    await deliver(subscriptions.slice(i, i + PUSH_BATCH), payload);
+  }
 }

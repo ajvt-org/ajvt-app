@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { sendPushToUser } from "@/lib/push";
+import { sendPushToUsers } from "@/lib/push";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -30,12 +30,8 @@ export const POST = withRoute(
       new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)),
     );
 
-    await Promise.all(
-      userIds.map((uid) =>
-        sendPushToUser(uid, { title: title.trim(), body: body.trim() }).catch((err) =>
-          logger.error("broadcast.push.error", err),
-        ),
-      ),
+    await sendPushToUsers(userIds, { title: title.trim(), body: body.trim() }).catch((err) =>
+      logger.error("broadcast.push.error", err),
     );
 
     await logAction(
