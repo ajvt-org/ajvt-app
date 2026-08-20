@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  breakdownOf,
-  memberBreakdown,
-  roundEntries,
-  rowPercent,
-  type AnswerRow,
-} from "./quizBreakdown";
+import { breakdownOf, roundEntries, rowPercent, type AnswerRow } from "./quizBreakdown";
 import { DEFAULT_CURVE } from "./competitionConfig";
 
 const row = (over: Partial<AnswerRow> = {}): AnswerRow => ({
@@ -144,25 +138,5 @@ describe("roundEntries", () => {
 
   it("is empty before anything opens", () => {
     expect(roundEntries(windows, new Map([[0, "a0"]]), at(-MINUTE))).toEqual([]);
-  });
-});
-
-describe("memberBreakdown", () => {
-  it("keeps the counts and drops what would leak", () => {
-    const full = breakdownOf(
-      [row(), row({ position: 1, isCorrect: false, points: 0 })],
-      DEFAULT_CURVE,
-    );
-
-    const lean = memberBreakdown(full);
-
-    expect(lean.correct).toBe(full.correct);
-    expect(lean.score).toBe(full.score);
-    expect(lean.rows).toHaveLength(2);
-    expect(lean.rows[0]).not.toHaveProperty("correct");
-    expect(lean.rows[0]).not.toHaveProperty("chosen");
-    expect(lean.rows[0]).not.toHaveProperty("elapsedMs");
-    expect(lean.rows[0]).not.toHaveProperty("percent");
-    expect(lean.rows[0].points).toBe(10);
   });
 });

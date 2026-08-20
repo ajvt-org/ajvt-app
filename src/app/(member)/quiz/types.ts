@@ -20,30 +20,6 @@ export interface RunningCompetition {
   myScore: number;
 }
 
-export interface BreakdownRowView {
-  position: number;
-  question: string;
-  category: string;
-  maxPoints: number;
-  isCorrect: boolean | null;
-  points: number;
-}
-
-export interface AttemptDetailView {
-  attemptId: string;
-  round: number;
-  category: string | null;
-  competitionName: string;
-  breakdown: {
-    rows: BreakdownRowView[];
-    correct: number;
-    answered: number;
-    total: number;
-    score: number;
-    possible: number;
-  };
-}
-
 export interface AttemptSummary {
   attemptId: string | null;
   round: number;

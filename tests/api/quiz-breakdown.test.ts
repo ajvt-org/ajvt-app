@@ -4,7 +4,6 @@ import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin, withId
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MY_ROUNDS } from "@/app/api/quiz/breakdown/route";
-import { GET as MY_DETAIL } from "@/app/api/quiz/breakdown/[id]/route";
 import { GET as ADMIN_DETAIL } from "@/app/api/admin/quiz/attempts/[id]/route";
 import { GET as ADMIN_ROUND } from "@/app/api/admin/quiz/competitions/[id]/attempts/route";
 
@@ -150,24 +149,6 @@ describe("a member reading their own score", () => {
     expect(body.rounds).toEqual([]);
   });
 
-  it("breaks an attempt down question by question", async () => {
-    const c = await competition();
-    const user = await paidUser();
-    const made = await attempt(c.id, user.id);
-    await signInAs(user);
-
-    const body = await (
-      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
-    ).json();
-
-    expect(body.detail.breakdown.rows).toHaveLength(3);
-    expect(body.detail.breakdown.correct).toBe(1);
-    expect(body.detail.breakdown.answered).toBe(2);
-    expect(body.detail.breakdown.total).toBe(3);
-    expect(body.detail.breakdown.score).toBe(10);
-    expect(body.detail.breakdown.possible).toBe(45);
-  });
-
   it("says how much of each round was right", async () => {
     const c = await competition();
     const user = await paidUser();
@@ -178,59 +159,6 @@ describe("a member reading their own score", () => {
 
     expect(body.rounds[0].correct).toBe(1);
     expect(body.rounds[0].total).toBe(3);
-  });
-
-  it("keeps the right answers, the choices and the times to itself", async () => {
-    const c = await competition();
-    const user = await paidUser();
-    const made = await attempt(c.id, user.id);
-    await signInAs(user);
-
-    const body = await (
-      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
-    ).json();
-
-    expect(body.detail.breakdown.rows[0].correct).toBeUndefined();
-    expect(body.detail.breakdown.rows[0].chosen).toBeUndefined();
-    expect(body.detail.breakdown.rows[0].elapsedMs).toBeUndefined();
-    expect(body.detail.breakdown.rows[0].percent).toBeUndefined();
-    expect(body.detail.curve).toBeUndefined();
-    expect(body.detail.userId).toBeUndefined();
-  });
-
-  it("still says what each question paid and where it landed", async () => {
-    const c = await competition();
-    const user = await paidUser();
-    const made = await attempt(c.id, user.id);
-    await signInAs(user);
-
-    const body = await (
-      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
-    ).json();
-
-    expect(body.detail.round).toBe(0);
-    expect(body.detail.competitionName).toBe("مسابقة");
-    expect(body.detail.breakdown.rows[0].points).toBe(10);
-    expect(body.detail.breakdown.rows[0].isCorrect).toBe(true);
-  });
-
-  it("refuses to show another member's attempt", async () => {
-    const c = await competition();
-    const mine = await paidUser("أحمد");
-    const theirs = await paidUser("محمد");
-    const made = await attempt(c.id, theirs.id);
-    await signInAs(mine);
-
-    const res = await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id));
-
-    expect(res.status).toBe(403);
-  });
-
-  it("says nothing found for an attempt that does not exist", async () => {
-    const user = await paidUser();
-    await signInAs(user);
-
-    expect((await MY_DETAIL(get("/api/quiz/breakdown/nope"), withId("nope"))).status).toBe(404);
   });
 
   it("is closed to a member who has not paid", async () => {

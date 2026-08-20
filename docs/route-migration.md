@@ -196,7 +196,6 @@ untouched through all of this.
 | `push/unsubscribe/route.ts` | POST | yes | yes | none |
 | `quiz/attempt/answer/route.ts` | POST | yes | yes | typed (1) |
 | `quiz/attempt/route.ts` | POST | yes | no | typed (3) |
-| `quiz/breakdown/[id]/route.ts` | GET | yes | no | typed (1) |
 | `quiz/breakdown/route.ts` | GET | yes | no | typed (3) |
 | `quiz/competitions/route.ts` | GET | yes | no | typed (1) |
 | `quiz/standings/route.ts` | GET | yes | no | none |
