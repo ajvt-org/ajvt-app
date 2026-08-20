@@ -141,8 +141,8 @@ function CompetitionCard({
         >
           <Icon name="star" size={13} filled color="var(--copper-500)" className="shrink-0" />
           <span
-            className="text-sm font-black tabular-nums"
-            style={{ color: "var(--mint-700)", lineHeight: 1 }}
+            className="badge-numeral text-sm font-black tabular-nums"
+            style={{ color: "var(--mint-700)" }}
           >
             <NumericRanges>{`${competition.myScore}`}</NumericRanges>
           </span>
