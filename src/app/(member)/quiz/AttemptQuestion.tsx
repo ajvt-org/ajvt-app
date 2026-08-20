@@ -107,7 +107,7 @@ export default function AttemptQuestion({
                 aria-checked={on}
                 disabled={busy}
                 onClick={() => toggle(option.id)}
-                className="text-right rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5"
+                className="question-option text-right rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5"
                 style={{
                   padding: "15px 18px",
                   minHeight: 56,
