@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
+import { proofScope } from "@/lib/proofScope";
 import { withRoute } from "@/lib/route";
 import { money } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const session = await requireUnscopedAdmin();
-  const role = (session as { role: string }).role;
-  const includeMembership = role === "SUPER" || role === "MEMBERS";
-  const includeActivity = role === "SUPER" || role === "ACTIVITIES";
-  const includeDonations = role === "SUPER";
+  const scope = proofScope((session as { role: string }).role);
+  const includeMembership = scope.membership;
+  const includeActivity = scope.activity;
+  const includeDonations = scope.donations;
 
   const [members, registrations, donations] = await Promise.all([
     includeMembership
