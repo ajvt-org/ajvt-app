@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, createUser } from "./helpers";
 
-const sendPushToUser = vi.hoisted(() => vi.fn(async () => {}));
-vi.mock("@/lib/push", () => ({ sendPushToUser }));
+const sendPushToUsers = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("@/lib/push", () => ({ sendPushToUsers, sendPushToUser: vi.fn(async () => {}) }));
+
+const notified = () => sendPushToUsers.mock.calls.flatMap((call) => call[0] as string[]);
 
 const { sendMatchReminders } = await import("@/lib/tournamentNotify");
 const { announceOpenDay } = await import("@/lib/quizNotify");
@@ -40,7 +42,7 @@ async function scheduledMatch() {
 describe("sendMatchReminders", () => {
   beforeEach(async () => {
     await resetDb();
-    sendPushToUser.mockClear();
+    sendPushToUsers.mockClear();
   });
 
   it("notifies a team once", async () => {
@@ -48,7 +50,7 @@ describe("sendMatchReminders", () => {
 
     await sendMatchReminders();
 
-    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+    expect(notified()).toHaveLength(1);
   });
 
   it("does not notify twice when two requests race", async () => {
@@ -56,7 +58,7 @@ describe("sendMatchReminders", () => {
 
     await Promise.all([sendMatchReminders(), sendMatchReminders()]);
 
-    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+    expect(notified()).toHaveLength(1);
   });
 });
 
@@ -115,7 +117,7 @@ async function openDayWithQuestions() {
 describe("announceOpenDay", () => {
   beforeEach(async () => {
     await resetDb();
-    sendPushToUser.mockClear();
+    sendPushToUsers.mockClear();
   });
 
   it("tells every eligible member once the round is open", async () => {
@@ -125,7 +127,7 @@ describe("announceOpenDay", () => {
     const sent = await announceOpenDay();
 
     expect(sent).toBe(1);
-    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+    expect(notified()).toHaveLength(1);
   });
 
   it("does not announce the same round twice when two requests race", async () => {
@@ -134,7 +136,7 @@ describe("announceOpenDay", () => {
 
     await Promise.all([announceOpenDay(), announceOpenDay()]);
 
-    expect(sendPushToUser).toHaveBeenCalledTimes(1);
+    expect(notified()).toHaveLength(1);
   });
 
   it("says nothing when the round has no questions loaded", async () => {
@@ -163,7 +165,7 @@ describe("announceOpenDay", () => {
     });
 
     expect(await announceOpenDay()).toBe(0);
-    expect(sendPushToUser).not.toHaveBeenCalled();
+    expect(notified()).toEqual([]);
   });
 
   it("says nothing before the competition is launched", async () => {
@@ -183,7 +185,7 @@ describe("announceOpenDay", () => {
     await openDayWithQuestions();
 
     expect(await announceOpenDay()).toBe(2);
-    expect(sendPushToUser).toHaveBeenCalledTimes(2);
+    expect(notified()).toHaveLength(2);
   });
 
   it("tells only the listed members about a private competition", async () => {
@@ -199,7 +201,7 @@ describe("announceOpenDay", () => {
     });
 
     expect(await announceOpenDay()).toBe(1);
-    expect(sendPushToUser).toHaveBeenCalledWith(listed.id, expect.anything());
+    expect(notified()).toEqual([listed.id]);
   });
 
   it("skips a listed member who is no longer a paid member", async () => {

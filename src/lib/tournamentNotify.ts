@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { sendPushToUser } from "./push";
+import { sendPushToUsers } from "./push";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
 
@@ -25,10 +25,8 @@ export async function notifyTeams(
       ),
     ),
   );
-  await Promise.all(
-    userIds.map((uid) =>
-      sendPushToUser(uid, payload).catch((err) => logger.error("tournament.push.error", err)),
-    ),
+  await sendPushToUsers(userIds, payload).catch((err) =>
+    logger.error("tournament.push.error", err),
   );
 }
 

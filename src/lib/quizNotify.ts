@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { sendPushToUser } from "./push";
+import { sendPushToUsers } from "./push";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
 import { eligibleMembers } from "./quiz";
@@ -64,12 +64,8 @@ async function announceFor(
     );
     targets = eligible.filter((userId) => listed.has(userId));
   }
-  await Promise.all(
-    targets.map((userId) =>
-      sendPushToUser(userId, DAY_OPEN_PAYLOAD).catch((err) =>
-        logger.error("quiz.day.push.error", err),
-      ),
-    ),
+  await sendPushToUsers(targets, DAY_OPEN_PAYLOAD).catch((err) =>
+    logger.error("quiz.day.push.error", err),
   );
   return targets.length;
 }
