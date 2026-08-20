@@ -7,6 +7,7 @@ export interface ScoreCurve {
 }
 
 export interface BoardConfig {
+  id?: string;
   title: string;
   blockTitle: string;
   blockRounds: number;

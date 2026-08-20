@@ -3,7 +3,12 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
-import { requireCompetition, saveCompetition, deleteCompetition } from "@/lib/competitionServer";
+import {
+  requireCompetition,
+  saveCompetition,
+  saveRunningCompetition,
+  deleteCompetition,
+} from "@/lib/competitionServer";
 import { common } from "@/lib/messages";
 
 type Params = { params: Promise<{ id: string }> };
@@ -30,7 +35,10 @@ export const PUT = withRoute(
       throw new ValidationError(common.invalidBody);
     }
 
-    const competition = await saveCompetition(body, id);
+    const running = await requireCompetition(id);
+    const competition = running.startedAt
+      ? await saveRunningCompetition(body, id)
+      : await saveCompetition(body, id);
 
     await logAction(session.username, "SAVE_COMPETITION", competition.name, {
       ...auditContext(session, req),
