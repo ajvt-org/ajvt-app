@@ -621,6 +621,34 @@ describe("once a competition has started", () => {
     expect(boards[1].blockRounds).toBe(2);
   });
 
+  it("hands the new standing back with its id, so saving twice adds it once", async () => {
+    const kept = await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+    const body = {
+      boards: [
+        { id: kept.id, title: kept.title },
+        { title: "أفضل جولتين", blockTitle: "المرحلة", blockRounds: 2, counting: 2 },
+      ],
+    };
+
+    const first = await (await save(id, body)).json();
+    const added = first.competition.boards.find(
+      (b: { title: string }) => b.title === "أفضل جولتين",
+    );
+    expect(added.id).toBeTruthy();
+
+    await save(id, {
+      boards: [
+        { id: kept.id, title: kept.title },
+        { id: added.id, title: "أفضل جولتين", blockTitle: "المرحلة" },
+      ],
+    });
+
+    expect(await prisma.quizBoard.count({ where: { competitionId: id } })).toBe(2);
+  });
+
   it("removes a standing the admin dropped", async () => {
     const boards = await prisma.quizBoard.findMany({
       where: { competitionId: id },

@@ -174,4 +174,22 @@ describe("reopening the questions a member never answered", () => {
     expect(entry.targetId).toBe(attempt.id);
     expect(JSON.stringify(entry.meta)).toContain(user.id);
   });
+
+  it("does not wipe an answer the member sends while the admin is clicking", async () => {
+    const { attempt } = await attemptWith([answered, stranded]);
+    const racing = await prisma.quizAttemptAnswer.findFirstOrThrow({
+      where: { attemptId: attempt.id, position: 1 },
+    });
+    await prisma.quizAttemptAnswer.update({
+      where: { id: racing.id },
+      data: { answeredAt: new Date(), isCorrect: true, points: 8, elapsedMs: 9000 },
+    });
+
+    const res = await reopen(attempt.id);
+
+    expect(res.status).toBe(409);
+    const after = await prisma.quizAttemptAnswer.findUniqueOrThrow({ where: { id: racing.id } });
+    expect(after.isCorrect).toBe(true);
+    expect(after.points).toBe(8);
+  });
 });

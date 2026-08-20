@@ -151,4 +151,19 @@ describe("MyScores", () => {
 
     expect(screen.queryByRole("button", { name: "تفاصيل الجولة 2" })).toBeNull();
   });
+
+  it("keeps the list when the answers refuse to open", async () => {
+    get.mockImplementation((url: string) =>
+      url.includes("/breakdown/")
+        ? Promise.reject(new Error("تفاصيل الإجابات تظهر بعد إغلاق الجولة"))
+        : Promise.resolve({ rounds }),
+    );
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 1/));
+
+    await userEvent.click(screen.getByRole("button", { name: "تفاصيل الجولة 1" }));
+
+    expect(await screen.findByText(/تظهر بعد إغلاق الجولة/)).toBeDefined();
+    expect(screen.getByText(/الجولة 1/)).toBeDefined();
+  });
 });

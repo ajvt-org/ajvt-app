@@ -297,9 +297,16 @@ export async function reopenMissedQuestions(attemptId: string, now = new Date())
   const missed = missedAnswers(attempt.answers, curve.maxSeconds, now);
   if (missed.length === 0) throw new ConflictError(NOT_MISSED);
 
+  const cutoff = new Date(now.getTime() - curve.maxSeconds * 1000);
   await prisma.$transaction(async (tx) => {
     await tx.quizAttemptAnswer.updateMany({
-      where: { id: { in: missed.map((a) => a.id) } },
+      where: {
+        id: { in: missed.map((a) => a.id) },
+        OR: [
+          { answeredAt: { not: null }, isCorrect: null },
+          { answeredAt: null, shownAt: { lt: cutoff } },
+        ],
+      },
       data: {
         answeredAt: null,
         shownAt: null,

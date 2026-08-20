@@ -48,7 +48,7 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
     };
   }, [competitionId]);
 
-  if (error) {
+  if (error && rounds === null) {
     return (
       <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
         {error}
@@ -61,6 +61,11 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         <IconLabel name="list">تفاصيل نقاطي</IconLabel>
       </p>
+      {error && (
+        <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
+          {error}
+        </p>
+      )}
       {rounds?.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           لم تشارك في أي جولة بعد

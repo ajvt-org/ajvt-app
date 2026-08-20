@@ -69,6 +69,8 @@ export default function CompetitionPanel({
       const data = competitionId
         ? await api.put<{ competition: Competition }>(path, draft)
         : await api.post<{ competition: Competition }>("/api/admin/quiz/competitions", draft);
+      setDraft(draftOf(data.competition));
+      setStartedAt(data.competition.startedAt);
       setNotice("تم الحفظ");
       onSaved(data.competition.id);
       onChanged();
