@@ -79,7 +79,7 @@ describe("POST /api/auth/login", () => {
 
     const res = await POST(postFrom(ip, { phone: "24445555", password: "guess-123" }));
     expect(res.status).toBe(429);
-  });
+  }, 30_000);
 
   it("leaves other IPs alone when one is rate limited", async () => {
     await createUser("22334455", "secret");
@@ -94,7 +94,7 @@ describe("POST /api/auth/login", () => {
 
     const res = await POST(postFrom("198.51.100.11", { phone: "22334455", password: "secret" }));
     expect(res.status).toBe(200);
-  });
+  }, 30_000);
 
   it("clears the account bucket on success so honest retries keep working", async () => {
     await createUser("22334455", "secret");

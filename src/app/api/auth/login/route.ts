@@ -15,6 +15,8 @@ const MAX_IP_ATTEMPTS = 30;
 
 const BAD_CREDENTIALS = "رقم الهاتف أو كلمة المرور غير صحيحة";
 
+const DUMMY_HASH = bcrypt.hashSync("timing-equalizer", 12);
+
 export const POST = withRoute("Login", async (req: NextRequest) => {
   const { phone, password } = await req.json();
 
@@ -32,6 +34,7 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
 
   const user = await prisma.user.findUnique({ where: { phone: phone.trim() } });
   if (!user) {
+    await bcrypt.compare(password, DUMMY_HASH);
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
     throw new UnauthorizedError(BAD_CREDENTIALS);

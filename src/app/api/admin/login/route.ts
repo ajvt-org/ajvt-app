@@ -12,6 +12,8 @@ const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const MAX_IP_ATTEMPTS = 30;
 
+const DUMMY_HASH = bcrypt.hashSync("timing-equalizer", 12);
+
 export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) => {
   const { username, password } = await req.json();
 
@@ -28,6 +30,7 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
 
   const admin = await prisma.admin.findUnique({ where: { username } });
   if (!admin) {
+    await bcrypt.compare(password, DUMMY_HASH);
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
     logger.warn("admin.login.failed", { username, ip: getClientIp(req), reason: "unknown_user" });
