@@ -16,6 +16,9 @@ const standings: StandingsState = {
   competitionId: "c1",
   name: "مسابقة الصيف",
   meId: "u1",
+  roundCount: 5,
+  state: "open",
+  next: null,
   boards: [
     {
       id: "b1",
@@ -235,6 +238,40 @@ describe("CompetitionView", () => {
     setup();
 
     await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10/)).toBeDefined());
+  });
+
+  it("names the coming round and its time between two rounds", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{
+          ...standings,
+          state: "closed",
+          next: { index: 2, opensAt: "2026-08-23T08:00:00.000Z" },
+        }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText(/الجولة القادمة 3 من 5/)).toBeDefined());
+    expect(screen.getByText(/تبدأ/)).toBeDefined();
+    expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
+  });
+
+  it("says the competition is over instead of a shut door", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{ ...standings, state: "over", next: null }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText("انتهت المسابقة")).toBeDefined());
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
   });
 
   it("goes back to the list of quizzes rather than out of the section", async () => {

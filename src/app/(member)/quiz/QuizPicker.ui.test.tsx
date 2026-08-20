@@ -50,4 +50,34 @@ describe("QuizPicker", () => {
 
     expect(onPick).toHaveBeenCalledWith("c2");
   });
+
+  it("keeps a finished competition open to look at", async () => {
+    const onPick = vi.fn();
+    render(
+      <QuizPicker
+        competitions={[{ ...rows[0], state: "over" }]}
+        backHref="/home"
+        onPick={onPick}
+      />,
+    );
+
+    await userEvent.click(screen.getByText("مسابقة الصيف"));
+
+    expect(onPick).toHaveBeenCalledWith("c1");
+  });
+
+  it("keeps one that has not started shut", async () => {
+    const onPick = vi.fn();
+    render(
+      <QuizPicker
+        competitions={[{ ...rows[0], state: "before" }]}
+        backHref="/home"
+        onPick={onPick}
+      />,
+    );
+
+    await userEvent.click(screen.getByText("مسابقة الصيف"));
+
+    expect(onPick).not.toHaveBeenCalled();
+  });
 });
