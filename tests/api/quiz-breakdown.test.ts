@@ -180,7 +180,7 @@ describe("a member reading their own score", () => {
     expect(body.rounds[0].total).toBe(3);
   });
 
-  it("gives the right answer and what the member chose", async () => {
+  it("keeps the right answers, the choices and the times to itself", async () => {
     const c = await competition();
     const user = await paidUser();
     const made = await attempt(c.id, user.id);
@@ -190,11 +190,15 @@ describe("a member reading their own score", () => {
       await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
     ).json();
 
-    expect(body.detail.breakdown.rows[0].correct).toEqual(["صحيح"]);
-    expect(body.detail.breakdown.rows[0].chosen).toEqual([]);
+    expect(body.detail.breakdown.rows[0].correct).toBeUndefined();
+    expect(body.detail.breakdown.rows[0].chosen).toBeUndefined();
+    expect(body.detail.breakdown.rows[0].elapsedMs).toBeUndefined();
+    expect(body.detail.breakdown.rows[0].percent).toBeUndefined();
+    expect(body.detail.curve).toBeUndefined();
+    expect(body.detail.userId).toBeUndefined();
   });
 
-  it("says which speed band each answer earned", async () => {
+  it("still says what each question paid and where it landed", async () => {
     const c = await competition();
     const user = await paidUser();
     const made = await attempt(c.id, user.id);
@@ -204,23 +208,10 @@ describe("a member reading their own score", () => {
       await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
     ).json();
 
-    expect(body.detail.breakdown.rows[0].percent).toBe(100);
-    expect(body.detail.breakdown.rows[1].percent).toBe(0);
-  });
-
-  it("carries the bands so the formula can be shown", async () => {
-    const c = await competition();
-    const user = await paidUser();
-    const made = await attempt(c.id, user.id);
-    await signInAs(user);
-
-    const body = await (
-      await MY_DETAIL(get(`/api/quiz/breakdown/${made.id}`), withId(made.id))
-    ).json();
-
-    expect(body.detail.curve).toEqual(DEFAULT_CURVE);
     expect(body.detail.round).toBe(0);
     expect(body.detail.competitionName).toBe("مسابقة");
+    expect(body.detail.breakdown.rows[0].points).toBe(10);
+    expect(body.detail.breakdown.rows[0].isCorrect).toBe(true);
   });
 
   it("refuses to show another member's attempt", async () => {
