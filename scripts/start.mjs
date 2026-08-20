@@ -18,6 +18,11 @@ try {
   console.log("  Fingerprinting skipped.");
 }
 
+console.log("→ Re-encoding legacy images in the background...");
+spawn("npx", ["tsx", "prisma/backfillLegacyImages.ts"], { stdio: "inherit" }).on("error", () =>
+  console.log("  Re-encoding skipped."),
+);
+
 // The three steps above are boot work and block on purpose: nothing serves a
 // request before the database matches the code. This one is the server, and it
 // differs on both counts. It is spawned, not run synchronously, so the SIGTERM
