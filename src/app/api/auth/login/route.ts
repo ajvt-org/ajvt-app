@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
-import { isRateLimited, recordFailedAttempt, clearAttempts } from "@/lib/rateLimit";
+import { isRateLimited, recordFailedAttempt, clearAttempts, getClientIp } from "@/lib/rateLimit";
 import { withRoute } from "@/lib/route";
 import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
@@ -11,6 +11,7 @@ import { isTempPasswordActive, isTempPasswordExpired } from "@/lib/tempPassword"
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
+const MAX_IP_ATTEMPTS = 30;
 
 const BAD_CREDENTIALS = "رقم الهاتف أو كلمة المرور غير صحيحة";
 
@@ -22,7 +23,8 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
   }
 
   const key = `login:${phone.trim()}`;
-  if (isRateLimited(key, MAX_ATTEMPTS)) {
+  const ipKey = `login-ip:${getClientIp(req)}`;
+  if (isRateLimited(key, MAX_ATTEMPTS) || isRateLimited(ipKey, MAX_IP_ATTEMPTS)) {
     // No phone number here on purpose, it identifies a member.
     logger.warn("member.login.rate_limited");
     throw new HttpError("RATE_LIMITED", 429, common.tooManyAttempts);
@@ -31,12 +33,14 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
   const user = await prisma.user.findUnique({ where: { phone: phone.trim() } });
   if (!user) {
     recordFailedAttempt(key, WINDOW_MS);
+    recordFailedAttempt(ipKey, WINDOW_MS);
     throw new UnauthorizedError(BAD_CREDENTIALS);
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     recordFailedAttempt(key, WINDOW_MS);
+    recordFailedAttempt(ipKey, WINDOW_MS);
     throw new UnauthorizedError(BAD_CREDENTIALS);
   }
 
