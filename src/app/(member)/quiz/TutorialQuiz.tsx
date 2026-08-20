@@ -45,25 +45,113 @@ export default function TutorialQuiz({
   if (done) {
     return (
       <div
-        className="flex flex-col min-h-[100svh] p-5 gap-4 items-center justify-center text-center"
-        style={{ background: "var(--mint-50)" }}
+        className="question-screen relative overflow-hidden flex flex-col min-h-[100svh] px-6 py-10 items-center justify-center text-center text-white"
+        style={{
+          background:
+            "linear-gradient(170deg, var(--mint-900), var(--mint-800) 55%, var(--mint-700))",
+        }}
       >
-        <span className="badge badge-pending text-xs">جولة تجريبية</span>
-        <div style={{ color: "var(--mint-600)" }}>
-          <Icon name="check" size={56} />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute rounded-full"
+            style={{
+              top: -80,
+              insetInlineStart: -60,
+              width: 260,
+              height: 260,
+              background: "radial-gradient(circle, rgba(74,156,126,0.35), rgba(74,156,126,0))",
+            }}
+          />
+          <div
+            className="absolute rounded-full"
+            style={{
+              bottom: 40,
+              insetInlineEnd: -80,
+              width: 240,
+              height: 240,
+              background: "radial-gradient(circle, rgba(196,124,90,0.22), rgba(196,124,90,0))",
+            }}
+          />
+          <span className="absolute opacity-80" style={{ top: "22%", insetInlineStart: 84 }}>
+            <Icon name="sparkle" size={16} color="var(--copper-300)" />
+          </span>
+          <span className="absolute opacity-70" style={{ top: "28%", insetInlineEnd: 74 }}>
+            <Icon name="sparkle" size={12} color="var(--mint-300)" />
+          </span>
+          <span className="absolute opacity-60" style={{ bottom: "29%", insetInlineStart: 60 }}>
+            <Icon name="sparkle" size={11} color="var(--copper-300)" />
+          </span>
         </div>
-        <p className="text-lg font-black" style={{ color: "var(--text-main)" }}>
+
+        <span
+          className="relative inline-flex items-center gap-1.5 rounded-full text-xs font-black"
+          style={{
+            background: "rgba(196,124,90,0.18)",
+            border: "1px solid rgba(232,176,138,0.5)",
+            color: "var(--copper-300)",
+            padding: "3px 14px",
+          }}
+        >
+          <Icon name="play" size={13} />
+          جولة تجريبية
+        </span>
+
+        <div
+          className="relative rounded-full flex items-center justify-center"
+          style={{
+            marginTop: 28,
+            width: 104,
+            height: 104,
+            background: "linear-gradient(135deg, var(--mint-600), var(--mint-700))",
+            border: "3px solid var(--copper-500)",
+            boxShadow: "0 0 0 8px rgba(196,124,90,0.15), 0 14px 40px rgba(0,0,0,0.35)",
+          }}
+        >
+          <Icon name="check" size={52} />
+        </div>
+
+        <p className="relative text-2xl font-black" style={{ marginTop: 22 }}>
           أنهيت الجولة التجريبية
         </p>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          <NumericRanges>{`مجموعك ${countedNoun(score, POINTS)}، وهي لا تحتسب في المسابقة`}</NumericRanges>
+        <p className="relative text-sm mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>
+          صرت تعرف اللعبة، والجولات الحقيقية بانتظارك
         </p>
-        <button onClick={again} className="btn btn-primary w-full max-w-xs text-sm font-bold">
-          إعادة التجربة
-        </button>
-        <button onClick={onExit} className="btn w-full max-w-xs text-sm font-bold">
-          العودة للمسابقة
-        </button>
+
+        <div
+          className="relative inline-flex items-center gap-2.5 rounded-2xl"
+          style={{
+            marginTop: 20,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            padding: "12px 26px",
+          }}
+        >
+          <Icon name="star" size={22} filled color="var(--copper-300)" />
+          <span className="text-2xl font-black tabular-nums">
+            <NumericRanges>{`مجموعك ${countedNoun(score, POINTS)}`}</NumericRanges>
+          </span>
+        </div>
+        <p className="relative text-xs mt-2" style={{ color: "rgba(255,255,255,0.55)" }}>
+          لا تحتسب في المسابقة
+        </p>
+
+        <div className="relative w-full max-w-xs flex flex-col gap-3" style={{ marginTop: 34 }}>
+          <button onClick={onExit} className="btn btn-copper text-sm font-bold">
+            <Icon name="trophy" size={17} className="icon-inline" /> العودة للمسابقة
+          </button>
+          <button
+            onClick={again}
+            className="w-full text-sm font-extrabold text-white flex items-center justify-center gap-2"
+            style={{
+              minHeight: 48,
+              borderRadius: 16,
+              background: "rgba(255,255,255,0.08)",
+              border: "1.5px solid rgba(255,255,255,0.22)",
+            }}
+          >
+            <Icon name="refresh" size={16} /> إعادة التجربة
+          </button>
+        </div>
       </div>
     );
   }
