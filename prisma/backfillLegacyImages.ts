@@ -1,10 +1,11 @@
 import "dotenv/config";
-import { readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { prisma } from "../src/lib/prisma";
 import { processImage } from "../src/lib/imageProcessing";
 import { proofHash } from "../src/lib/proofHash";
 import { planFor } from "../src/lib/legacyImages";
+import { completeFiles, writeWhole } from "../src/lib/wholeFiles";
 
 // Re-encodes the uploads compression never touched. Non-webp original: write
 // the webp pair, rename every reference, rehash the fingerprint on the webp
@@ -97,7 +98,7 @@ const refs: Ref[] = [
 
 async function main() {
   const dir = uploadDir();
-  const onDisk = new Set(await readdir(dir));
+  const onDisk = await completeFiles(dir);
 
   const referenced = new Set<string>();
   for (const ref of refs) {
@@ -117,12 +118,12 @@ async function main() {
       const original = await readFile(join(dir, plan.filename));
       const { full, thumbnail } = await processImage(original);
       if (plan.kind === "thumbnail") {
-        await writeFile(join(dir, plan.thumb), thumbnail);
+        await writeWhole(dir, plan.thumb, thumbnail);
         thumbnails++;
         continue;
       }
-      await writeFile(join(dir, plan.webp), full);
-      await writeFile(join(dir, plan.thumb), thumbnail);
+      await writeWhole(dir, plan.webp, full);
+      await writeWhole(dir, plan.thumb, thumbnail);
       for (const ref of refs) await ref.rename(plan.filename, plan.webp);
       await prisma.proofImage.updateMany({
         where: { filename: plan.filename },
