@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, createUser } from "./helpers";
 
 const sendPushToUsers = vi.hoisted(() =>
-  vi.fn(async (_userIds: string[], _payload: { title: string; body: string }) => {}),
+  vi.fn<(userIds: string[], payload: { title: string; body: string }) => Promise<void>>(
+    async () => {},
+  ),
 );
 vi.mock("@/lib/push", () => ({ sendPushToUsers, sendPushToUser: vi.fn(async () => {}) }));
 
