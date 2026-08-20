@@ -1,4 +1,10 @@
-import { curveScore, DEFAULT_CURVE, type ScoreCurve } from "./competitionConfig";
+import { curveScore, type ScoreCurve } from "./competitionConfig";
+
+export const TUTORIAL_CURVE: ScoreCurve = {
+  fullSeconds: 3,
+  maxSeconds: 10,
+  floorPercent: 50,
+};
 
 export interface TutorialOption {
   id: string;
@@ -71,7 +77,7 @@ export function gradeTutorial(
   question: TutorialQuestion,
   selected: string[],
   elapsedMs: number,
-  curve: ScoreCurve = DEFAULT_CURVE,
+  curve: ScoreCurve = TUTORIAL_CURVE,
 ): { isCorrect: boolean; points: number } {
   const late = elapsedMs > curve.maxSeconds * 1000;
   const isCorrect = !late && isRight(question, selected);

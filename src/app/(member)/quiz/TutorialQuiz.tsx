@@ -4,17 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import AttemptQuestion from "./AttemptQuestion";
-import { TUTORIAL_QUESTIONS, gradeTutorial } from "@/lib/quizTutorial";
-import { DEFAULT_CURVE, type ScoreCurve } from "@/lib/competitionConfig";
+import { TUTORIAL_QUESTIONS, TUTORIAL_CURVE, gradeTutorial } from "@/lib/quizTutorial";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
-export default function TutorialQuiz({
-  curve,
-  onExit,
-}: {
-  curve?: ScoreCurve;
-  onExit: () => void;
-}) {
+export default function TutorialQuiz({ onExit }: { onExit: () => void }) {
   const [position, setPosition] = useState(0);
   const [score, setScore] = useState(0);
   const startedAt = useRef(0);
@@ -28,7 +21,7 @@ export default function TutorialQuiz({
 
   function answer(selected: string[]) {
     const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
-    const graded = gradeTutorial(question, selected, elapsed, curve ?? DEFAULT_CURVE);
+    const graded = gradeTutorial(question, selected, elapsed);
     setScore((s) => s + graded.points);
     setPosition((p) => p + 1);
   }
@@ -175,7 +168,7 @@ export default function TutorialQuiz({
           shownAt: "",
           options: question.options,
         }}
-        curve={curve ?? DEFAULT_CURVE}
+        curve={TUTORIAL_CURVE}
         busy={false}
         onSubmit={answer}
         onExpire={skip}
