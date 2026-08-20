@@ -26,7 +26,7 @@ export const POST = withRoute("POST /api/quiz/attempt", async (req: NextRequest)
 
   return NextResponse.json({
     attemptId: attempt.id,
-    score: attempt.score,
+    score: view.done ? attempt.score : undefined,
     done: view.done,
     total: view.total,
     position: view.position,

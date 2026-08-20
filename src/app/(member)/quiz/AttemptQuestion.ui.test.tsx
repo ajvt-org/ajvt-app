@@ -92,7 +92,16 @@ describe("AttemptQuestion", () => {
 
     await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
 
-    expect(confirm()).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: "تأكيد الإجابة" })).toBeNull();
+    expect(screen.getByText(/تم تسجيل إجابتك/)).toBeDefined();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("says nothing about the answer being right or wrong", () => {
+    setup({ busy: true });
+
+    expect(screen.queryByText(/صحيحة/)).toBeNull();
+    expect(screen.queryByText(/خاطئة/)).toBeNull();
+    expect(screen.queryByText(/نقطة/)).toBeNull();
   });
 });
