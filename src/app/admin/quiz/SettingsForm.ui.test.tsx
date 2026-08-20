@@ -4,17 +4,19 @@ import userEvent from "@testing-library/user-event";
 import SettingsForm from "./SettingsForm";
 import { emptySettingsForm } from "./types";
 
-const setup = (onChange = vi.fn(), onSubmit = vi.fn()) => {
+const setup = (onChange = vi.fn(), onSubmit = vi.fn(), onToggleConfirm = vi.fn()) => {
   render(
     <SettingsForm
       values={emptySettingsForm}
+      confirmAnswers
       error=""
       saving={false}
       onChange={onChange}
+      onToggleConfirm={onToggleConfirm}
       onSubmit={onSubmit}
     />,
   );
-  return { onChange, onSubmit };
+  return { onChange, onSubmit, onToggleConfirm };
 };
 
 describe("SettingsForm", () => {
@@ -60,13 +62,30 @@ describe("SettingsForm", () => {
     render(
       <SettingsForm
         values={emptySettingsForm}
+        confirmAnswers
         error="عدد الإجابات الصحيحة أكبر من عدد الإجابات"
         saving={false}
         onChange={() => {}}
+        onToggleConfirm={() => {}}
         onSubmit={() => {}}
       />,
     );
 
     expect(screen.getByText(/عدد الإجابات الصحيحة أكبر/)).toBeDefined();
+  });
+
+  it("offers the confirm button toggle checked when it is on", () => {
+    setup();
+
+    const toggle = screen.getByLabelText("زر تأكيد الإجابة") as HTMLInputElement;
+    expect(toggle.checked).toBe(true);
+  });
+
+  it("reports a flip of the confirm toggle", async () => {
+    const { onToggleConfirm } = setup();
+
+    await userEvent.click(screen.getByLabelText("زر تأكيد الإجابة"));
+
+    expect(onToggleConfirm).toHaveBeenCalled();
   });
 });

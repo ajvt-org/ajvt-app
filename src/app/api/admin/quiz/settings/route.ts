@@ -14,13 +14,22 @@ export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
 
 export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  const { defaultAnswerCount, defaultCorrectCount, defaultPoints } = await req.json();
+  const { defaultAnswerCount, defaultCorrectCount, defaultPoints, confirmAnswers } =
+    await req.json();
 
   const data: {
     defaultAnswerCount?: number;
     defaultCorrectCount?: number;
     defaultPoints?: number;
+    confirmAnswers?: boolean;
   } = {};
+
+  if (confirmAnswers !== undefined) {
+    if (typeof confirmAnswers !== "boolean") {
+      return NextResponse.json({ error: "قيمة زر التأكيد غير صالحة" }, { status: 400 });
+    }
+    data.confirmAnswers = confirmAnswers;
+  }
 
   for (const [key, value] of Object.entries({
     defaultAnswerCount,
