@@ -16,10 +16,14 @@ import {
   boardRanking,
   myRound,
   standingOf,
+  type MyRound,
   type RoundScore,
   type Ranked,
 } from "./quizRanking";
 import type { ScoreCurve } from "./competitionConfig";
+import { sharedResult } from "./sharedResult";
+
+export const STANDINGS_TTL_MS = 10_000;
 
 export interface Board {
   rank: number;
@@ -78,6 +82,51 @@ export interface StandingsBoard {
   mine: Ranked | null;
 }
 
+type SharedBoard = Omit<StandingsBoard, "mine">;
+
+interface SharedStandings {
+  boards: SharedBoard[];
+  ranked: Ranked[][];
+}
+
+type Competition = NonNullable<Awaited<ReturnType<typeof getCompetition>>>;
+
+async function sharedStandings(
+  competition: Competition,
+  at: number,
+  limit: number,
+): Promise<SharedStandings> {
+  const scores = await roundScores(competition.id);
+  const boards: SharedBoard[] = [];
+  const ranked: Ranked[][] = [];
+  for (const board of competition.boards) {
+    const rows = boardRanking(scores, board, at);
+    ranked.push(rows);
+    boards.push({
+      id: board.id,
+      title: board.title,
+      blockTitle: board.blockTitle,
+      blockRounds: board.blockRounds,
+      counting: board.counting,
+      wholeRun: board.wholeRun,
+      ...boardBlocks(board, at),
+      rows: await named(rows, limit),
+    });
+  }
+  return { boards, ranked };
+}
+
+async function myRoundOf(competitionId: string, userId: string, at: number): Promise<MyRound> {
+  const attempt = await prisma.quizAttempt.findFirst({
+    where: { userId, round: { competitionId, index: at } },
+    select: { score: true, finishedAt: true },
+  });
+  const scores: RoundScore[] = attempt
+    ? [{ userId, index: at, score: attempt.score, finishedAt: attempt.finishedAt }]
+    : [];
+  return myRound(scores, userId, at);
+}
+
 export interface Standings {
   running: boolean;
   competitionId: string | null;
@@ -114,25 +163,19 @@ export async function getStandings(
   };
   if (!competition?.startedAt) return empty;
 
-  const scores = await roundScores(competition.id);
   const at =
     currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
 
-  const boards: StandingsBoard[] = [];
-  for (const board of competition.boards) {
-    const rows = boardRanking(scores, board, at);
-    boards.push({
-      id: board.id,
-      title: board.title,
-      blockTitle: board.blockTitle,
-      blockRounds: board.blockRounds,
-      counting: board.counting,
-      wholeRun: board.wholeRun,
-      ...boardBlocks(board, at),
-      rows: await named(rows, limit),
-      mine: userId ? standingOf(rows, userId) : null,
-    });
-  }
+  const shared = await sharedResult(
+    `standings:${competition.id}:${at}:${limit}`,
+    now.getTime(),
+    STANDINGS_TTL_MS,
+    () => sharedStandings(competition, at, limit),
+  );
+  const boards: StandingsBoard[] = shared.boards.map((board, i) => ({
+    ...board,
+    mine: userId ? standingOf(shared.ranked[i], userId) : null,
+  }));
 
   const coming = nextWindow(shapeOf(competition), now);
   return {
@@ -144,7 +187,7 @@ export async function getStandings(
     roundCount: competition.roundCount,
     state: roundState(shapeOf(competition), now),
     next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
-    me: userId ? myRound(scores, userId, at) : null,
+    me: userId ? await myRoundOf(competition.id, userId, at) : null,
     curve: {
       fullSeconds: competition.fullSeconds,
       maxSeconds: competition.maxSeconds,

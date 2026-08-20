@@ -4,7 +4,7 @@ import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin, withId
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
-import { getStandings } from "@/lib/quizRankingServer";
+import { getStandings, STANDINGS_TTL_MS } from "@/lib/quizRankingServer";
 import { GET as WINNERS } from "@/app/api/admin/quiz/competitions/[id]/winners/route";
 
 const START = (() => {
@@ -249,6 +249,70 @@ describe("standings a member can see", () => {
     const body = await (await standings()).json();
 
     expect(body.boards[0].mine).toBeNull();
+  });
+});
+
+describe("standings shared between readers", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("hands a second reader the boards the first one computed", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const at = new Date(START.getTime() + 1000);
+
+    const first = await getStandings(c.id, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const second = await getStandings(c.id, b.id, 10, at);
+
+    expect(second.boards[0].rows).toEqual(first.boards[0].rows);
+  });
+
+  it("still answers each reader about their own round", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const at = new Date(START.getTime() + 1000);
+
+    await getStandings(c.id, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const second = await getStandings(c.id, b.id, 10, at);
+
+    expect(second.me).toEqual({ played: true, finished: true, score: 90 });
+  });
+
+  it("takes the newer scores once the window has passed", async () => {
+    const c = await competition();
+    const [a, b] = await createUsers(2);
+    await member(a.id, "أحمد");
+    await member(b.id, "محمد");
+    await attempt(c.id, a.id, 0, 30);
+    const at = new Date(START.getTime() + 1000);
+
+    await getStandings(c.id, a.id, 10, at);
+    await attempt(c.id, b.id, 0, 90);
+    const later = await getStandings(c.id, b.id, 10, new Date(at.getTime() + STANDINGS_TTL_MS));
+
+    expect(later.boards[0].rows.map((r) => r.total)).toEqual([90, 30]);
+  });
+
+  it("keeps one competition's boards out of another's", async () => {
+    const one = await competition();
+    const other = await competition({ name: "أخرى" });
+    const [a] = await createUsers(1);
+    await member(a.id, "أحمد");
+    await attempt(one.id, a.id, 0, 30);
+    const at = new Date(START.getTime() + 1000);
+
+    await getStandings(one.id, a.id, 10, at);
+
+    expect((await getStandings(other.id, a.id, 10, at)).boards[0].rows).toEqual([]);
   });
 });
 
