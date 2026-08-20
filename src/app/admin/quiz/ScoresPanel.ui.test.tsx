@@ -4,9 +4,10 @@ import userEvent from "@testing-library/user-event";
 import ScoresPanel from "./ScoresPanel";
 
 const get = vi.fn();
+const post = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { get: (...a: unknown[]) => get(...a) },
+  api: { get: (...a: unknown[]) => get(...a), post: (...a: unknown[]) => post(...a) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -41,13 +42,19 @@ const detail = {
   },
 };
 
+function answers(role: string) {
+  get.mockImplementation((url: string) => {
+    if (url === "/api/admin/me") return Promise.resolve({ role });
+    if (url.includes("/attempts?round=")) return Promise.resolve({ attempts, opened: true });
+    return Promise.resolve({ detail });
+  });
+}
+
 beforeEach(() => {
   get.mockReset();
-  get.mockImplementation((url: string) =>
-    url.includes("/attempts?round=")
-      ? Promise.resolve({ attempts, opened: true })
-      : Promise.resolve({ detail }),
-  );
+  post.mockReset();
+  post.mockResolvedValue({ reopened: 2 });
+  answers("SUPER");
 });
 
 describe("ScoresPanel", () => {
@@ -55,7 +62,7 @@ describe("ScoresPanel", () => {
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
 
     await waitFor(() => expect(screen.getByText("أحمد")).toBeDefined());
-    expect(get.mock.calls[0][0]).toBe("/api/admin/quiz/competitions/c1/attempts?round=0");
+    expect(get).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/attempts?round=0");
   });
 
   it("reads another round when one is chosen", async () => {
@@ -88,6 +95,36 @@ describe("ScoresPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: /إغلاق/ }));
 
     await waitFor(() => expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull());
+  });
+
+  it("offers a SUPER admin the way to reopen what a member missed", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.click(screen.getAllByRole("button", { name: /إعادة فتح/ })[0]);
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/attempts/a1/reopen", {}),
+    );
+    expect(await screen.findByText(/أعيد فتح/)).toBeDefined();
+  });
+
+  it("keeps that out of the hands of an admin who is not SUPER", async () => {
+    answers("QUIZ");
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    expect(screen.queryByRole("button", { name: /إعادة فتح/ })).toBeNull();
+  });
+
+  it("shows what the server refused", async () => {
+    post.mockRejectedValue(new Error("لا توجد أسئلة فائتة في هذه المحاولة"));
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.click(screen.getAllByRole("button", { name: /إعادة فتح/ })[0]);
+
+    expect(await screen.findByText(/لا توجد أسئلة فائتة/)).toBeDefined();
   });
 
   it("says so when nobody played the round", async () => {

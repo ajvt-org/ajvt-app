@@ -278,6 +278,54 @@ export async function submitAnswer(
   return { isCorrect, points, correctIds, elapsedMs, expired: false };
 }
 
+export const NOT_MISSED = "لا توجد أسئلة فائتة في هذه المحاولة";
+export const ROUND_CLOSED = "أغلقت الجولة، لا يمكن إعادة فتحها";
+
+export async function reopenMissedQuestions(attemptId: string, now = new Date()) {
+  const attempt = await prisma.quizAttempt.findUnique({
+    where: { id: attemptId },
+    include: {
+      round: { include: { competition: true } },
+      answers: { select: { id: true, isCorrect: true, answeredAt: true, shownAt: true } },
+    },
+  });
+  if (!attempt) throw new NotFoundError(quiz.questionNotFound);
+  if (attempt.round.closesAt <= now) throw new ConflictError(ROUND_CLOSED);
+
+  const curve = curveOf(attempt.round.competition);
+  const ranOut = (shownAt: Date | null) =>
+    shownAt !== null && now.getTime() - shownAt.getTime() > curve.maxSeconds * 1000;
+
+  const missed = attempt.answers.filter((a) =>
+    a.answeredAt === null ? ranOut(a.shownAt) : a.isCorrect === null,
+  );
+  if (missed.length === 0) throw new ConflictError(NOT_MISSED);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.quizAttemptAnswer.updateMany({
+      where: { id: { in: missed.map((a) => a.id) } },
+      data: {
+        answeredAt: null,
+        shownAt: null,
+        isCorrect: null,
+        points: 0,
+        elapsedMs: null,
+        selectedAnswerIds: [],
+      },
+    });
+    const totals = await tx.quizAttemptAnswer.aggregate({
+      where: { attemptId },
+      _sum: { points: true },
+    });
+    await tx.quizAttempt.update({
+      where: { id: attemptId },
+      data: { score: totals._sum.points ?? 0, finishedAt: null },
+    });
+  });
+
+  return { reopened: missed.length, userId: attempt.userId, round: attempt.round.index };
+}
+
 export async function closeExpiredAttempts(now = new Date()) {
   const stale = await prisma.quizRound.findMany({
     where: {
