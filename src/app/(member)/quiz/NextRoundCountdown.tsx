@@ -7,9 +7,11 @@ import { countedNoun, DAYS } from "@/lib/arabicPlural";
 export default function NextRoundCountdown({
   opensAt,
   onReached,
+  color = "var(--mint-700)",
 }: {
   opensAt: string;
   onReached?: () => void;
+  color?: string;
 }) {
   const [leftMs, setLeftMs] = useState(() => new Date(opensAt).getTime() - Date.now());
   const fired = useRef(false);
@@ -38,8 +40,8 @@ export default function NextRoundCountdown({
 
   return (
     <p
-      className="text-2xl font-black mt-1"
-      style={{ color: "var(--mint-700)", fontVariantNumeric: "tabular-nums" }}
+      className="text-3xl font-black mt-1"
+      style={{ color, fontVariantNumeric: "tabular-nums", letterSpacing: "2px" }}
       aria-label="الوقت المتبقي للجولة القادمة"
     >
       <NumericRanges>{days > 0 ? `${countedNoun(days, DAYS)} و ${clock}` : clock}</NumericRanges>

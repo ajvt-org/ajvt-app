@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
@@ -11,7 +10,7 @@ import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 import ScoreFormula from "./ScoreFormula";
 import NextRoundCountdown from "./NextRoundCountdown";
-import { countedNoun, POINTS } from "@/lib/arabicPlural";
+import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 
 interface AttemptState {
@@ -47,9 +46,11 @@ export interface StandingsState {
   competitionId: string | null;
   name: string | null;
   meId: string | null;
+  round: number | null;
   roundCount: number | null;
   state: "before" | "open" | "closed" | "over" | null;
   next: { index: number; opensAt: string } | null;
+  me: { played: boolean; finished: boolean; score: number | null } | null;
   curve: ScoreCurve | null;
   boards: StandingsBoard[];
 }
@@ -65,8 +66,8 @@ export default function CompetitionView({
 }) {
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
+  const [playing, setPlaying] = useState(false);
   const [closed, setClosed] = useState("");
-  const [pending, setPending] = useState(true);
   const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [block, setBlock] = useState<number | null>(null);
@@ -99,38 +100,34 @@ export default function CompetitionView({
     }
   }
 
-  useEffect(() => {
-    let alive = true;
-    if (standings.state === "over") {
-      setPending(false);
-      return;
-    }
-    setPending(true);
-    api
-      .post<AttemptState>("/api/quiz/attempt", { competitionId })
-      .then((state) => {
-        if (!alive) return;
-        setAttempt(state);
-        setClosed("");
-        setPending(false);
-      })
-      .catch((e) => {
-        if (!alive) return;
-        setClosed(errorMessage(e));
-        setPending(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [competitionId, standings.state]);
-
   function land(next: AttemptState) {
     if (next.done) {
+      setPlaying(false);
+      setAttempt(null);
       onReloadStandings();
-      onBack();
       return;
     }
     setAttempt(next);
+  }
+
+  async function startRound() {
+    if (!competitionId || busy) return;
+    setBusy(true);
+    setClosed("");
+    try {
+      const state = await api.post<AttemptState>("/api/quiz/attempt", { competitionId });
+      if (state.done) {
+        onReloadStandings();
+      } else {
+        setAttempt(state);
+        setPlaying(true);
+      }
+    } catch (e) {
+      setClosed(errorMessage(e));
+      onReloadStandings();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function skip() {
@@ -139,6 +136,7 @@ export default function CompetitionView({
     try {
       land(await api.post<AttemptState>("/api/quiz/attempt", { competitionId }));
     } catch (e) {
+      setPlaying(false);
       setClosed(errorMessage(e));
     } finally {
       setBusy(false);
@@ -156,13 +154,14 @@ export default function CompetitionView({
         }),
       );
     } catch (e) {
+      setPlaying(false);
       setClosed(errorMessage(e));
     } finally {
       setBusy(false);
     }
   }
 
-  if (attempt && !attempt.done && attempt.question) {
+  if (playing && attempt && !attempt.done && attempt.question) {
     return (
       <AttemptQuestion
         key={attempt.question.answerId}
@@ -176,44 +175,85 @@ export default function CompetitionView({
   }
 
   const over = standings.state === "over";
+  const roundOpen = standings.state === "open";
   const between = standings.state === "closed" || standings.state === "before";
   const upcoming = between && standings.next ? standings.next : null;
+  const finished = roundOpen && standings.me?.finished;
+  const champion = over ? (standings.boards.find((b) => b.wholeRun)?.rows[0] ?? null) : null;
 
   return (
     <div className="app-shell">
-      <PageHeader title={standings.name ?? "المسابقات الثقافية"} onBack={onBack} />
-      <div className="px-5 py-6 pb-10 space-y-5">
-        <div className="card p-6 text-center">
-          <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
-            <Icon name={over ? "trophy" : pending || closed ? "clock" : "check"} size={36} />
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(160deg, var(--mint-900), var(--mint-700))",
+          borderRadius: "0 0 28px 28px",
+          padding: "16px 20px 56px",
+        }}
+      >
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            top: -60,
+            insetInlineStart: -50,
+            width: 220,
+            height: 220,
+            background: "radial-gradient(circle, rgba(74,156,126,0.4), rgba(74,156,126,0))",
+          }}
+        />
+        <div className="relative flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
+              رابطة شباب قرية التاكلالت
+            </p>
+            <h1 className="text-lg font-black text-white truncate">
+              {standings.name ?? "المسابقات الثقافية"}
+            </h1>
           </div>
+          <button
+            type="button"
+            aria-label="رجوع"
+            onClick={onBack}
+            className="rounded-xl flex items-center justify-center shrink-0"
+            style={{ width: 48, height: 44, background: "rgba(255,255,255,0.14)" }}
+          >
+            <Icon name="chevronRight" size={20} className="text-white" />
+          </button>
+        </div>
+
+        <div className="relative mt-4 flex flex-col items-center gap-2 text-center">
           {over && (
-            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              انتهت المسابقة
-            </p>
-          )}
-          {!over && pending && (
-            <p className="text-sm animate-pulse" style={{ color: "var(--text-muted)" }}>
-              …
-            </p>
-          )}
-          {!over && !pending && !closed && (
-            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              أنهيت أسئلة الجولة
-            </p>
-          )}
-          {!over && !pending && !closed && attempt && attempt.score !== undefined && (
-            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك {countedNoun(attempt.score, POINTS)} في هذه الجولة
-            </p>
-          )}
-          {!over && !pending && closed && upcoming && (
             <>
-              <p className="font-semibold" style={{ color: "var(--text-main)" }}>
+              <span
+                className="rounded-full flex items-center justify-center"
+                style={{ width: 56, height: 56, background: "rgba(196,124,90,0.25)" }}
+              >
+                <Icon name="trophy" size={30} color="var(--copper-300)" />
+              </span>
+              <p className="text-xl font-black text-white">انتهت المسابقة</p>
+              {standings.roundCount !== null && (
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  {countedNoun(standings.roundCount, ROUNDS)}
+                </p>
+              )}
+            </>
+          )}
+
+          {upcoming && (
+            <>
+              <span
+                className="flex items-center gap-2 text-sm font-extrabold"
+                style={{ color: "var(--mint-300)" }}
+              >
+                <Icon name="clock" size={16} />
                 الجولة القادمة {upcoming.index + 1} من {standings.roundCount}
-              </p>
-              <NextRoundCountdown opensAt={upcoming.opensAt} onReached={onReloadStandings} />
-              <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+              </span>
+              <NextRoundCountdown
+                opensAt={upcoming.opensAt}
+                onReached={onReloadStandings}
+                color="#ffffff"
+              />
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
                 تبدأ{" "}
                 {new Date(upcoming.opensAt).toLocaleString("ar", {
                   dateStyle: "short",
@@ -222,12 +262,79 @@ export default function CompetitionView({
               </p>
             </>
           )}
-          {!over && !pending && closed && !upcoming && (
-            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              {closed}
-            </p>
+
+          {between && !upcoming && closed && <p className="font-semibold text-white">{closed}</p>}
+
+          {finished && (
+            <>
+              <span
+                className="rounded-full flex items-center justify-center"
+                style={{ width: 56, height: 56, background: "rgba(255,255,255,0.14)" }}
+              >
+                <Icon name="check" size={30} className="text-white" />
+              </span>
+              <p className="text-lg font-black text-white">أنهيت أسئلة الجولة</p>
+              {standings.me?.score != null && (
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.65)" }}>
+                  مجموعك {countedNoun(standings.me.score, POINTS)} في هذه الجولة
+                </p>
+              )}
+            </>
+          )}
+
+          {roundOpen && !finished && (
+            <>
+              <p className="text-lg font-black text-white">
+                الجولة {(standings.round ?? 0) + 1} مفتوحة الآن
+              </p>
+              {closed && (
+                <p className="text-xs font-semibold" style={{ color: "var(--copper-300)" }}>
+                  {closed}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={startRound}
+                disabled={busy}
+                className="btn mt-1 text-sm font-extrabold text-white"
+                style={{
+                  width: "auto",
+                  padding: "0.7rem 2.2rem",
+                  background: "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
+                  boxShadow: "0 4px 18px rgba(140,74,42,0.45)",
+                }}
+              >
+                <Icon name="play" size={16} className="icon-inline" />
+                {busy ? "..." : standings.me?.played ? "أكمل الجولة" : "ابدأ الجولة"}
+              </button>
+            </>
           )}
         </div>
+      </div>
+
+      <div className="px-5 pb-10 space-y-4" style={{ marginTop: -28 }}>
+        {champion && (
+          <div
+            className="rounded-2xl p-4 flex items-center gap-3.5 relative"
+            style={{
+              background: "linear-gradient(135deg, #f7e9de, #f1dcc9)",
+              boxShadow: "0 6px 24px rgba(140,74,42,0.18)",
+            }}
+          >
+            <Icon name="trophy" size={26} color="var(--copper-600)" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-extrabold" style={{ color: "var(--copper-600)" }}>
+                بطل الترتيب العام
+              </span>
+              <span className="block font-black truncate" style={{ color: "var(--text-main)" }}>
+                {champion.name}
+              </span>
+            </span>
+            <span className="text-lg font-black" style={{ color: "var(--copper-700)" }}>
+              {champion.total}
+            </span>
+          </div>
+        )}
 
         <BoardTabs tabs={tabs} active={openTab} onSelect={pickTab} />
 

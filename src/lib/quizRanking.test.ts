@@ -8,6 +8,7 @@ import {
   blockAnchor,
   blockLabel,
   boardBlocks,
+  myRound,
 } from "./quizRanking";
 
 const at = (iso: string) => new Date(iso);
@@ -228,6 +229,39 @@ describe("a four round board", () => {
   it("turns the block exactly at the fourth round", () => {
     expect(boardBlocks(board, 3)).toEqual({ block: 0, blocks: 1 });
     expect(boardBlocks(board, 4)).toEqual({ block: 1, blocks: 2 });
+  });
+});
+
+describe("myRound", () => {
+  const played = (userId: string, index: number, finishedAt: Date | null): RoundScore => ({
+    userId,
+    index,
+    score: 12,
+    finishedAt,
+  });
+
+  it("knows a round never entered", () => {
+    expect(myRound([played("b", 0, new Date(0))], "a", 0)).toEqual({
+      played: false,
+      finished: false,
+      score: null,
+    });
+  });
+
+  it("keeps the score back while the attempt still runs", () => {
+    expect(myRound([played("a", 0, null)], "a", 0)).toEqual({
+      played: true,
+      finished: false,
+      score: null,
+    });
+  });
+
+  it("hands the score over once the attempt settled", () => {
+    expect(myRound([played("a", 3, new Date(0))], "a", 3)).toEqual({
+      played: true,
+      finished: true,
+      score: 12,
+    });
   });
 });
 

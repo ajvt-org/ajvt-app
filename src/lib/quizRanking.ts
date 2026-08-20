@@ -100,6 +100,21 @@ export function standingOf(rows: Ranked[], userId: string): Ranked | null {
   return rows.find((r) => r.userId === userId) ?? null;
 }
 
+export interface MyRound {
+  played: boolean;
+  finished: boolean;
+  score: number | null;
+}
+
+export function myRound(scores: RoundScore[], userId: string, at: number): MyRound {
+  const row = scores.find((s) => s.userId === userId && s.index === at) ?? null;
+  return {
+    played: row !== null,
+    finished: row?.finishedAt != null,
+    score: row?.finishedAt != null ? row.score : null,
+  };
+}
+
 export function boardBlocks(board: BoardShape, at: number): { block: number; blocks: number } {
   if (board.wholeRun) return { block: 0, blocks: 1 };
   const block = Math.max(0, groupOf(at, Math.max(1, board.blockRounds)));
