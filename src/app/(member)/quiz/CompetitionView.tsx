@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { api, errorMessage } from "@/lib/api";
+import BackButton from "@/components/BackButton";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
@@ -202,6 +204,8 @@ export default function CompetitionView({
           }}
         />
         <div className="relative flex items-center gap-3">
+          <BackButton onBack={onBack} />
+          <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               رابطة شباب قرية التاكلالت
@@ -210,15 +214,6 @@ export default function CompetitionView({
               {standings.name ?? "المسابقات الثقافية"}
             </h1>
           </div>
-          <button
-            type="button"
-            aria-label="رجوع"
-            onClick={onBack}
-            className="rounded-xl flex items-center justify-center shrink-0"
-            style={{ width: 48, height: 44, background: "rgba(255,255,255,0.14)" }}
-          >
-            <Icon name="chevronRight" size={20} className="text-white" />
-          </button>
         </div>
 
         <div className="relative mt-4 flex flex-col items-center gap-2 text-center">
@@ -312,7 +307,7 @@ export default function CompetitionView({
         </div>
       </div>
 
-      <div className="px-5 pb-10 space-y-4" style={{ marginTop: -28 }}>
+      <div className="px-5 pb-10 space-y-4 relative" style={{ marginTop: -28 }}>
         {champion && (
           <div
             className="rounded-2xl p-4 flex items-center gap-3.5 relative"

@@ -4,6 +4,7 @@ import {
   windowAt,
   currentRound,
   nextWindow,
+  roundsBegun,
   roundState,
   endsAt,
   groupOf,
@@ -115,6 +116,21 @@ describe("roundState", () => {
   it("is over as soon as the last window shuts, not when its period runs out", () => {
     expect(roundState(daily, at("2026-09-18T23:00:00Z"))).toBe("over");
     expect(roundState(daily, at("2026-09-18T21:00:00Z"))).toBe("open");
+  });
+});
+
+describe("roundsBegun", () => {
+  it("counts nothing before the start", () => {
+    expect(roundsBegun(daily, at("2026-08-20T07:00:00Z"))).toBe(0);
+  });
+
+  it("counts the windows opened so far, played or not", () => {
+    expect(roundsBegun(daily, at("2026-08-20T09:00:00Z"))).toBe(1);
+    expect(roundsBegun(daily, at("2026-08-27T12:00:00Z"))).toBe(8);
+  });
+
+  it("stops at the run's own count", () => {
+    expect(roundsBegun(daily, at("2026-12-01T00:00:00Z"))).toBe(30);
   });
 });
 

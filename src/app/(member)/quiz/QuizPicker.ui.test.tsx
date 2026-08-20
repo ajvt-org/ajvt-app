@@ -12,7 +12,7 @@ const rows: RunningCompetition[] = [
     roundCount: 30,
     startsAt: "2026-08-20T08:00:00.000Z",
     state: "open",
-    playedRounds: 2,
+    passedRounds: 2,
     myScore: 40,
   },
   {
@@ -22,7 +22,7 @@ const rows: RunningCompetition[] = [
     roundCount: 7,
     startsAt: "2026-08-20T08:00:00.000Z",
     state: "closed",
-    playedRounds: 0,
+    passedRounds: 0,
     myScore: 0,
   },
 ];
