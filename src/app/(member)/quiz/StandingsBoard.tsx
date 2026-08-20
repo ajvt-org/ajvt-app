@@ -137,7 +137,7 @@ export default function StandingsBoard({
               >
                 {row.rank}
               </span>
-              <PlayerAvatar photo={null} fullName={row.name} size={26} />
+              <PlayerAvatar photoUrl={row.photoUrl} fullName={row.name} size={26} />
               <span className="text-sm flex-1 truncate" style={{ color: "var(--text-main)" }}>
                 {row.name}
               </span>

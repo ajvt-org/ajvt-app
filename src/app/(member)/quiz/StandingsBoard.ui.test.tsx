@@ -74,4 +74,17 @@ describe("StandingsBoard", () => {
     expect(screen.getByRole("list").textContent).toContain("امبيريك");
     expect(screen.getByRole("list").textContent).not.toContain("يوسف");
   });
+
+  it("shows the member's photo when the row carries one and the icon when it does not", () => {
+    setup({
+      rows: [
+        { rank: 1, userId: "u1", name: "محمد", photoUrl: "/api/files/member/m1.webp", total: 90 },
+        { rank: 2, userId: "u2", name: "أحمد", photoUrl: null, total: 60 },
+      ],
+    });
+
+    const img = screen.getByAltText("محمد") as HTMLImageElement;
+    expect(img.src).toContain("/api/files/member/m1-thumb.webp");
+    expect(screen.queryByAltText("أحمد")).toBeNull();
+  });
 });
