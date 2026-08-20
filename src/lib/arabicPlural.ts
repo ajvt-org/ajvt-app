@@ -63,6 +63,14 @@ export const CORRECT_ANSWERS: NounForms = {
   other: "إجابة صحيحة",
 };
 
+export const DAYS: NounForms = {
+  one: "يوم واحد",
+  two: "يومين",
+  few: "أيام",
+  many: "يوماً",
+  other: "يوم",
+};
+
 export const HOURS: NounForms = {
   one: "ساعة واحدة",
   two: "ساعتين",
