@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import Icon from "@/components/Icon";
 import { goAfterAuthChange } from "@/lib/authNav";
@@ -14,16 +14,25 @@ import type { RunningCompetition } from "./types";
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function QuizPage() {
+  return (
+    <Suspense fallback={null}>
+      <QuizScreen />
+    </Suspense>
+  );
+}
+
+function QuizScreen() {
   const router = useRouter();
+  const chosen = useSearchParams().get("competition");
 
   const [mine, setMine] = useState<RunningCompetition[]>([]);
   const [confirmAnswers, setConfirmAnswers] = useState(true);
-  const [chosen, setChosen] = useState<string | null>(null);
   const [tutorial, setTutorial] = useState(false);
   const [standings, setStandings] = useState<StandingsState | null>(null);
   const [ineligible, setIneligible] = useState(false);
   const [visitor, setVisitor] = useState(false);
   const [loading, setLoading] = useState(true);
+  const wasChosen = useRef(false);
 
   function loadMine() {
     return fetch("/api/quiz/competitions")
@@ -64,6 +73,11 @@ export default function QuizPage() {
   useEffect(() => {
     loadStandings();
   }, [loadStandings]);
+
+  useEffect(() => {
+    if (!chosen && wasChosen.current) loadMine();
+    wasChosen.current = !!chosen;
+  }, [chosen]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -114,14 +128,11 @@ export default function QuizPage() {
     return <TutorialQuiz confirm={confirmAnswers} onExit={() => setTutorial(false)} />;
   }
 
-  if (chosen && standings?.running) {
+  if (chosen && standings?.running && standings.competitionId === chosen) {
     return (
       <CompetitionView
         standings={standings}
-        onBack={() => {
-          setChosen(null);
-          loadMine();
-        }}
+        onBack={() => router.push("/quiz")}
         onReloadStandings={loadStandings}
       />
     );
@@ -131,7 +142,7 @@ export default function QuizPage() {
     <QuizPicker
       competitions={mine}
       backHref={backHref}
-      onPick={setChosen}
+      onPick={(id) => router.push(`/quiz?competition=${id}`)}
       onTutorial={() => setTutorial(true)}
       onStarted={loadMine}
     />
