@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { counted, countedNoun } from "@/lib/arabicCount";
-import { ANSWER, POINT } from "@/lib/messages";
+import { counted } from "@/lib/arabicCount";
+import { countedNoun, CORRECT_ANSWERS, ANSWERS } from "@/lib/arabicPlural";
+import { POINT } from "@/lib/messages";
 
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -45,8 +46,9 @@ function QuestionCard({
             style={{ color: "var(--text-muted)" }}
           >
             {question.category} ·<Icon name="star" size={11} />
-            {counted(question.points, POINT)} · {question.correctCount}{" "}
-            {countedNoun(question.correctCount, ANSWER)} صحيحة من {question.answers.length}
+            {counted(question.points, POINT)} ·{" "}
+            {countedNoun(question.correctCount, CORRECT_ANSWERS)} من{" "}
+            {countedNoun(question.answers.length, ANSWERS)}
           </p>
           <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
             أُرسلت لـ {question.sentCount} · أُجيبت {question.answeredCount} · صحيحة{" "}

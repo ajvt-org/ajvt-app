@@ -63,7 +63,14 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     boards: {
       create: [
         { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false, order: 0 },
-        { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false, order: 1 },
+        {
+          title: "ترتيب الأسبوع",
+          blockTitle: "الأسبوع",
+          blockRounds: 7,
+          counting: 6,
+          wholeRun: false,
+          order: 1,
+        },
         { title: "الترتيب العام", blockRounds: 1, counting: 1, wholeRun: true, order: 2 },
       ],
     },

@@ -31,6 +31,7 @@ interface Place {
 export interface StandingsBoard {
   id: string;
   title: string;
+  blockTitle: string;
   blockRounds: number;
   counting: number;
   wholeRun: boolean;
@@ -220,7 +221,7 @@ export default function CompetitionView({
           >
             {Array.from({ length: open.blocks }, (_, b) => (
               <option key={b} value={b}>
-                {blockLabel(open.blockRounds, b, standings.roundCount ?? 0)}
+                {blockLabel(open.blockRounds, b, standings.roundCount ?? 0, open.blockTitle)}
               </option>
             ))}
           </select>
@@ -229,9 +230,14 @@ export default function CompetitionView({
         {open && (
           <StandingsBoard
             title={
-              past && block !== null
-                ? `${open.title} · ${blockLabel(open.blockRounds, block, standings.roundCount ?? 0)}`
-                : open.title
+              open.wholeRun
+                ? open.title
+                : `${open.title} · ${blockLabel(
+                    open.blockRounds,
+                    past && block !== null ? block : open.block,
+                    standings.roundCount ?? 0,
+                    open.blockTitle,
+                  )}`
             }
             rows={past ? past.rows : open.rows}
             mine={past ? past.mine : open.mine}

@@ -43,35 +43,9 @@ const rounds = [
   },
 ];
 
-const detail = {
-  attemptId: "a1",
-  round: 0,
-  category: "جغرافيا",
-  competitionName: "مسابقة",
-  breakdown: {
-    rows: [
-      {
-        position: 0,
-        question: "ما عاصمة موريتانيا؟",
-        category: "جغرافيا",
-        maxPoints: 10,
-        isCorrect: true,
-        points: 10,
-      },
-    ],
-    correct: 1,
-    answered: 1,
-    total: 1,
-    score: 10,
-    possible: 10,
-  },
-};
-
 beforeEach(() => {
   get.mockReset();
-  get.mockImplementation((url: string) =>
-    url.includes("?competition=") ? Promise.resolve({ rounds }) : Promise.resolve({ detail }),
-  );
+  get.mockResolvedValue({ rounds });
 });
 
 describe("MyScores", () => {
@@ -82,37 +56,22 @@ describe("MyScores", () => {
     expect(screen.getByText(/الجولة 2/)).toBeDefined();
   });
 
-  it("opens the breakdown of the round that was picked", async () => {
+  it("offers no way into a round's answers", async () => {
     render(<MyScores competitionId="c1" />);
     await waitFor(() => screen.getByText(/الجولة 1/));
 
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+
     await userEvent.click(screen.getByText(/الجولة 1/));
 
-    await waitFor(() => expect(screen.getByText("ما عاصمة موريتانيا؟")).toBeDefined());
-    expect(get).toHaveBeenCalledWith("/api/quiz/breakdown/a1");
+    expect(get).toHaveBeenCalledTimes(1);
   });
 
-  it("goes back to the list of rounds", async () => {
-    render(<MyScores competitionId="c1" />);
-    await waitFor(() => screen.getByText(/الجولة 1/));
-    await userEvent.click(screen.getByText(/الجولة 1/));
-    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
-
-    await userEvent.click(screen.getByRole("button", { name: /كل الجولات/ }));
-
-    await waitFor(() => expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull());
-  });
-
-  it("keeps a missed round on the list without a way in", async () => {
+  it("keeps a missed round on the list with nothing scored", async () => {
     render(<MyScores competitionId="c1" />);
     await waitFor(() => screen.getByText(/الجولة 2/));
 
     expect(screen.getByText("لم تشارك")).toBeDefined();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
-
-    await userEvent.click(screen.getByText(/الجولة 2/));
-
-    expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull();
   });
 
   it("says so when the member has played nothing", async () => {

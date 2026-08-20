@@ -91,7 +91,13 @@ export async function setParticipants(competitionId: string, userIds: string[]) 
 }
 
 type CompetitionRow = Competition & {
-  boards?: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
+  boards?: {
+    title: string;
+    blockTitle: string;
+    blockRounds: number;
+    counting: number;
+    wholeRun: boolean;
+  }[];
 };
 
 function asConfig(row: CompetitionRow): CompetitionConfig {
@@ -105,6 +111,7 @@ function asConfig(row: CompetitionRow): CompetitionConfig {
     servedCount: row.servedCount,
     boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
       title: b.title,
+      blockTitle: b.blockTitle,
       blockRounds: b.blockRounds,
       counting: b.counting,
       wholeRun: b.wholeRun,
@@ -148,6 +155,7 @@ export async function saveCompetition(raw: Partial<CompetitionConfig>, id?: stri
   const data = asRow(merged);
   const boards = merged.boards.map((board, order) => ({
     title: board.title.trim(),
+    blockTitle: (board.blockTitle ?? "").trim(),
     blockRounds: board.blockRounds,
     counting: board.counting,
     wholeRun: board.wholeRun,
