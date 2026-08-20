@@ -104,4 +104,34 @@ describe("AttemptQuestion", () => {
     expect(screen.queryByText(/خاطئة/)).toBeNull();
     expect(screen.queryByText(/نقطة/)).toBeNull();
   });
+
+  it("sends the tap straight away when the confirm button is off", async () => {
+    const { onSubmit } = setup({ confirm: false });
+
+    expect(screen.queryByRole("button", { name: "تأكيد الإجابة" })).toBeNull();
+    await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(["o1"]);
+  });
+
+  it("keeps the confirm button on a multiple question even when it is off", async () => {
+    const { onSubmit } = setup({ confirm: false, question: { ...single, correctCount: 2 } });
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "نواكشوط" }));
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "روصو" }));
+    await userEvent.click(confirm());
+
+    expect(onSubmit).toHaveBeenCalledWith(["o1", "o3"]);
+  });
+
+  it("ignores taps while an instant answer is being sent", async () => {
+    const { onSubmit } = setup({ confirm: false, busy: true });
+
+    await userEvent.click(screen.getByRole("radio", { name: "نواكشوط" }));
+
+    expect(screen.getByText(/تم تسجيل إجابتك/)).toBeDefined();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });
