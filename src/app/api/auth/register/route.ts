@@ -29,7 +29,7 @@ export const POST = withRoute("POST /api/auth/register", async (req: NextRequest
     data: { phone, password: hashed },
   });
 
-  const token = await signToken({ userId: user.id, tokenVersion: user.tokenVersion });
+  const token = await signToken({ typ: "user", userId: user.id, tokenVersion: user.tokenVersion });
   const res = NextResponse.json({ ok: true }, { status: 201 });
   res.cookies.set("user_token", token, {
     httpOnly: true,

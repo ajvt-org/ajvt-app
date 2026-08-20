@@ -62,6 +62,7 @@ export const POST = withRoute("POST /api/user/password", async (req: NextRequest
   });
 
   const token = await signToken({
+    typ: "user",
     userId: updated.id,
     tokenVersion: updated.tokenVersion,
     mustChangePassword: false,

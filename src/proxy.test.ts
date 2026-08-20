@@ -19,12 +19,12 @@ async function sign(payload: Record<string, unknown>): Promise<string> {
 const COOKIES = {
   visitor: async () => "",
   member: async () =>
-    `user_token=${await sign({ userId: "u1", tokenVersion: 0, mustChangePassword: false })}`,
+    `user_token=${await sign({ typ: "user", userId: "u1", tokenVersion: 0, mustChangePassword: false })}`,
   locked: async () =>
-    `user_token=${await sign({ userId: "u1", tokenVersion: 0, mustChangePassword: true })}`,
+    `user_token=${await sign({ typ: "user", userId: "u1", tokenVersion: 0, mustChangePassword: true })}`,
   forged: async () => "user_token=not.a.real.token",
   admin: async () =>
-    `admin_token=${await sign({ adminId: "a1", username: "admin", tokenVersion: 0 })}`,
+    `admin_token=${await sign({ typ: "admin", adminId: "a1", username: "admin", tokenVersion: 0 })}`,
 };
 
 type State = keyof typeof COOKIES;
@@ -175,5 +175,37 @@ describe("the proxy matcher", () => {
     "/uploads/photo.webp",
   ])("leaves %s alone", (path) => {
     expect(pattern.test(path)).toBe(false);
+  });
+});
+
+describe("a token of the wrong type is treated as absent", () => {
+  async function landsWith(path: string, cookie: string): Promise<string> {
+    const res = await proxy(new NextRequest(`http://localhost${path}`, { headers: { cookie } }));
+    const location = res.headers.get("location");
+    if (!location) return path;
+    const url = new URL(location);
+    return url.pathname;
+  }
+
+  it("sends a user token in the admin cookie to the admin login", async () => {
+    const user = await sign({ typ: "user", userId: "u1", tokenVersion: 0 });
+    expect(await landsWith("/admin/dashboard", `admin_token=${user}`)).toBe("/admin/login");
+  });
+
+  it("sends an admin token in the user cookie to the member login", async () => {
+    const admin = await sign({ typ: "admin", adminId: "a1", username: "admin", tokenVersion: 0 });
+    expect(await landsWith("/home", `user_token=${admin}`)).toBe("/login");
+  });
+
+  it("forces a token from before the claim existed to sign in again", async () => {
+    const legacy = await sign({ userId: "u1", tokenVersion: 0 });
+    expect(await landsWith("/home", `user_token=${legacy}`)).toBe("/login");
+    const legacyAdmin = await sign({ adminId: "a1", username: "admin", tokenVersion: 0 });
+    expect(await landsWith("/admin/dashboard", `admin_token=${legacyAdmin}`)).toBe("/admin/login");
+  });
+
+  it("never bounces a mistyped user token into the change-password loop", async () => {
+    const admin = await sign({ typ: "admin", adminId: "a1", mustChangePassword: true });
+    expect(await landsWith("/activities", `user_token=${admin}`)).toBe("/activities");
   });
 });

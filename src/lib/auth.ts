@@ -2,6 +2,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 import { HttpError, UnauthorizedError, ForbiddenError } from "./errors";
+import { isTokenOf } from "./tokenType";
 import { auth } from "./messages";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
@@ -29,7 +30,8 @@ export async function getAdminSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
   if (!token) return null;
-  return verifyToken(token);
+  const payload = await verifyToken(token);
+  return isTokenOf(payload, "admin") ? payload : null;
 }
 
 export async function requireAdmin() {
@@ -71,7 +73,7 @@ async function loadUserSession() {
   if (!token) return null;
 
   const payload = await verifyToken(token);
-  if (!payload) return null;
+  if (!isTokenOf(payload, "user")) return null;
 
   const { userId, tokenVersion } = payload as { userId?: string; tokenVersion?: number };
   if (!userId) return null;

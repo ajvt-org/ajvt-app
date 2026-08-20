@@ -54,6 +54,7 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
 
   const mustChangePassword = isTempPasswordActive(user.tempPasswordExpiresAt);
   const token = await signToken({
+    typ: "user",
     userId: user.id,
     tokenVersion: user.tokenVersion,
     mustChangePassword,

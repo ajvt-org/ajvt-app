@@ -40,6 +40,7 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
   // out on this device — other devices/sessions are invalidated since
   // their token still carries the old tokenVersion.
   const token = await signToken({
+    typ: "admin",
     adminId: updated.id,
     username: updated.username,
     tokenVersion: updated.tokenVersion,

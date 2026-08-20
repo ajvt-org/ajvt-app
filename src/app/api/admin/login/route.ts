@@ -59,6 +59,7 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
   });
 
   const token = await signToken({
+    typ: "admin",
     adminId: admin.id,
     username: admin.username,
     tokenVersion: admin.tokenVersion,

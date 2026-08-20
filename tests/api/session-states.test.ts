@@ -71,7 +71,7 @@ async function enter(state: StateName) {
     });
   }
 
-  setCookie("user_token", await signToken({ userId: user.id, tokenVersion }));
+  setCookie("user_token", await signToken({ typ: "user", userId: user.id, tokenVersion }));
 }
 
 const SIGNED_IN: StateName[] = [
