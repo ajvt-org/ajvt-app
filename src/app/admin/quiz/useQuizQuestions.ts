@@ -104,6 +104,26 @@ export function useQuizQuestions() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function toggleConfirm() {
+    if (!settings || savingSettings) return;
+    setSavingSettings(true);
+    try {
+      const data = await api.patch<{ settings: QuizSettings }>("/api/admin/quiz/settings", {
+        confirmAnswers: !settings.confirmAnswers,
+      });
+      setSettings(data.settings);
+      showToast(
+        data.settings.confirmAnswers
+          ? "أعيد زر تأكيد الإجابة، ويسري من الجولة القادمة"
+          : "أصبح اختيار الإجابة يرسلها مباشرة، ويسري من الجولة القادمة",
+      );
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   async function saveSettings(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
     setSettingsError("");
@@ -247,11 +267,13 @@ export function useQuizQuestions() {
     createBank,
     renameBank,
     deleteBank,
+    settings,
     settingsForm,
     settingsError,
     savingSettings,
     setSettingsForm,
     saveSettings,
+    toggleConfirm,
     showImport,
     setShowImport,
     showForm,

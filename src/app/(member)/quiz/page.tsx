@@ -17,6 +17,7 @@ export default function QuizPage() {
   const router = useRouter();
 
   const [mine, setMine] = useState<RunningCompetition[]>([]);
+  const [confirmAnswers, setConfirmAnswers] = useState(true);
   const [chosen, setChosen] = useState<string | null>(null);
   const [tutorial, setTutorial] = useState(false);
   const [standings, setStandings] = useState<StandingsState | null>(null);
@@ -38,7 +39,10 @@ export default function QuizPage() {
         return r.json();
       })
       .then((json) => {
-        if (json) setMine(json.competitions);
+        if (json) {
+          setMine(json.competitions);
+          setConfirmAnswers(json.confirmAnswers ?? true);
+        }
       })
       .catch(() => setVisitor(true));
   }
@@ -107,7 +111,7 @@ export default function QuizPage() {
   }
 
   if (tutorial) {
-    return <TutorialQuiz onExit={() => setTutorial(false)} />;
+    return <TutorialQuiz confirm={confirmAnswers} onExit={() => setTutorial(false)} />;
   }
 
   if (chosen && standings?.running) {
@@ -129,6 +133,7 @@ export default function QuizPage() {
       backHref={backHref}
       onPick={setChosen}
       onTutorial={() => setTutorial(true)}
+      onStarted={loadMine}
     />
   );
 }

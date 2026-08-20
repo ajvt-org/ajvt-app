@@ -31,6 +31,7 @@ export const POST = withRoute("POST /api/quiz/attempt", async (req: NextRequest)
     total: view.total,
     position: view.position,
     curve: view.curve,
+    confirm: view.confirm,
     question: view.question,
   });
 });

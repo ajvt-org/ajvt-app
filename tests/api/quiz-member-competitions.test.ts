@@ -90,4 +90,12 @@ describe("the competitions a member may play", () => {
 
     expect((await mine()).status).toBe(403);
   });
+
+  it("carries the live confirm flag for the tutorial", async () => {
+    await competition();
+    await paidMember();
+    await prisma.quizSettings.create({ data: { id: "singleton", confirmAnswers: false } });
+
+    expect((await (await mine()).json()).confirmAnswers).toBe(false);
+  });
 });

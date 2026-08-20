@@ -483,15 +483,94 @@ describe("working through an attempt", () => {
     expect(finished.score).toBe(30);
   });
 
-  it("refuses an answer once the round has closed", async () => {
+  it("keeps a question dealt before the close answerable in its window", async () => {
+    const { u, attempt } = await ready();
+    const view = await currentQuestion(attempt.id, u.id, new Date(`${DAY}T21:59:50.000Z`));
+    const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
+      where: { id: view.question!.answerId },
+      include: { question: { select: { answers: true } } },
+    });
+    const right = row.question.answers.find((a) => a.isCorrect)!;
+
+    const result = await submitAnswer(
+      view.question!.answerId,
+      u.id,
+      [right.id],
+      new Date(`${DAY}T22:00:10.000Z`),
+    );
+
+    expect(result.expired).toBe(false);
+    expect(result.points).toBeGreaterThan(0);
+  });
+
+  it("pays nothing for a dealt question answered too long after the close", async () => {
+    const { u, attempt } = await ready();
+    const view = await currentQuestion(attempt.id, u.id, new Date(`${DAY}T21:59:50.000Z`));
+
+    const result = await submitAnswer(
+      view.question!.answerId,
+      u.id,
+      [],
+      new Date(`${DAY}T22:01:00.000Z`),
+    );
+
+    expect(result.expired).toBe(true);
+    expect(result.points).toBe(0);
+  });
+
+  it("keeps earned points and settles once the close voids the rest", async () => {
     const { u, attempt } = await ready();
     const view = await currentQuestion(attempt.id, u.id, openAt);
+    const row = await prisma.quizAttemptAnswer.findUniqueOrThrow({
+      where: { id: view.question!.answerId },
+      include: { question: { select: { answers: true } } },
+    });
+    const right = row.question.answers.find((a) => a.isCorrect)!;
+    await submitAnswer(view.question!.answerId, u.id, [right.id], openAt);
 
-    expect(
-      await refusal(() =>
-        submitAnswer(view.question!.answerId, u.id, [], new Date(`${DAY}T23:00:00.000Z`)),
-      ),
-    ).toBe(NOT_OPEN);
+    const after = await currentQuestion(attempt.id, u.id, new Date(`${DAY}T23:00:00.000Z`));
+
+    expect(after.done).toBe(true);
+    const settled = await prisma.quizAttempt.findUniqueOrThrow({ where: { id: attempt.id } });
+    expect(settled.finishedAt).not.toBeNull();
+    expect(settled.score).toBe(10);
+  });
+});
+
+describe("the confirm mode a round pins", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("stamps the setting at the first attempt and keeps it for the whole round", async () => {
+    const c = await competition();
+    await pool(c.id);
+    await prisma.quizSettings.create({ data: { id: "singleton", confirmAnswers: false } });
+    const u = await user();
+
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
+    expect((await currentQuestion(attempt.id, u.id, openAt)).confirm).toBe(false);
+
+    await prisma.quizSettings.update({
+      where: { id: "singleton" },
+      data: { confirmAnswers: true },
+    });
+    const other = await user();
+    const theirs = await startOrResumeAttempt(c.id, other.id, openAt);
+
+    expect((await currentQuestion(theirs.id, other.id, openAt)).confirm).toBe(false);
+  });
+
+  it("answers by the button when nothing was ever set", async () => {
+    const c = await competition();
+    await pool(c.id);
+    const u = await user();
+
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
+
+    expect((await currentQuestion(attempt.id, u.id, openAt)).confirm).toBe(true);
+    const round = await prisma.quizRound.findFirstOrThrow({ where: { competitionId: c.id } });
+    expect(round.confirmAnswers).toBe(true);
   });
 });
 
@@ -537,6 +616,28 @@ describe("closing the round", () => {
     expect(
       (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: theirs.id } })).finishedAt,
     ).toBeNull();
+  });
+
+  it("leaves a dealt question inside its window alone at the cutoff", async () => {
+    const c = await competition();
+    await pool(c.id);
+    const u = await user();
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
+    await currentQuestion(attempt.id, u.id, new Date(`${DAY}T21:59:50.000Z`));
+
+    expect(await closeExpiredAttempts(new Date(`${DAY}T22:00:05.000Z`))).toBe(2);
+    const open = await prisma.quizAttemptAnswer.findFirstOrThrow({
+      where: { attemptId: attempt.id, position: 0 },
+    });
+    expect(open.answeredAt).toBeNull();
+    expect(
+      (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: attempt.id } })).finishedAt,
+    ).toBeNull();
+
+    expect(await closeExpiredAttempts(new Date(`${DAY}T22:01:00.000Z`))).toBe(1);
+    expect(
+      (await prisma.quizAttempt.findUniqueOrThrow({ where: { id: attempt.id } })).finishedAt,
+    ).not.toBeNull();
   });
 
   it("does nothing while the round is still open", async () => {

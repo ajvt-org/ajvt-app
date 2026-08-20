@@ -64,8 +64,8 @@ export default function StandingsBoard({
                   <PlayerAvatar photo={null} fullName={row.name} size={first ? 54 : 44} />
                 </div>
                 <p
-                  className="text-[11px] font-extrabold text-center truncate w-full"
-                  style={{ color: "var(--text-main)" }}
+                  className="text-[11px] font-extrabold text-center line-clamp-2 w-full"
+                  style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
                 >
                   {row.name}
                 </p>

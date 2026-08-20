@@ -27,21 +27,29 @@ export default function AttemptQuestion({
   question,
   curve,
   busy,
+  confirm = true,
   onSubmit,
   onExpire,
 }: {
   question: AttemptView;
   curve?: ScoreCurve;
   busy: boolean;
+  confirm?: boolean;
   onSubmit: (selected: string[]) => void;
   onExpire?: () => void;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
   const many = question.correctCount > 1;
+  const instant = !confirm && !many;
   const theme = QUESTION_THEME;
 
   function toggle(id: string) {
     if (busy) return;
+    if (instant) {
+      setPicked([id]);
+      onSubmit([id]);
+      return;
+    }
     setPicked((current) => {
       if (!many) return [id];
       return current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
@@ -130,30 +138,32 @@ export default function AttemptQuestion({
           </div>
         </div>
 
-        <div
-          className="question-confirm mt-auto sticky bottom-0 -mx-5 px-5 pb-5 pt-6"
-          style={theme.confirmBar}
-        >
-          {busy ? (
-            <div
-              className="w-full rounded-2xl flex items-center justify-center gap-2 text-sm font-bold"
-              style={{ minHeight: 52, ...theme.locked }}
-            >
-              تم تسجيل إجابتك…
-            </div>
-          ) : (
-            <button
-              type="button"
-              aria-label="تأكيد الإجابة"
-              disabled={!ready}
-              onClick={() => onSubmit(picked)}
-              className="w-full text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{ minHeight: 52, borderRadius: "0.875rem", ...theme.confirm }}
-            >
-              تأكيد <Icon name="chevronLeft" size={15} className="icon-inline" />
-            </button>
-          )}
-        </div>
+        {(busy || !instant) && (
+          <div
+            className="question-confirm mt-auto sticky bottom-0 -mx-5 px-5 pb-5 pt-6"
+            style={theme.confirmBar}
+          >
+            {busy ? (
+              <div
+                className="w-full rounded-2xl flex items-center justify-center gap-2 text-sm font-bold"
+                style={{ minHeight: 52, ...theme.locked }}
+              >
+                تم تسجيل إجابتك…
+              </div>
+            ) : (
+              <button
+                type="button"
+                aria-label="تأكيد الإجابة"
+                disabled={!ready}
+                onClick={() => onSubmit(picked)}
+                className="w-full text-sm font-bold text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                style={{ minHeight: 52, borderRadius: "0.875rem", ...theme.confirm }}
+              >
+                تأكيد <Icon name="chevronLeft" size={15} className="icon-inline" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

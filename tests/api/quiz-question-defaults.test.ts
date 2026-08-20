@@ -48,6 +48,19 @@ describe("the defaults a new question starts from", () => {
     expect(res.status).toBe(400);
   });
 
+  it("saves the confirm toggle", async () => {
+    await save({ confirmAnswers: false });
+
+    const settings = await prisma.quizSettings.findUniqueOrThrow({ where: { id: "singleton" } });
+    expect(settings.confirmAnswers).toBe(false);
+  });
+
+  it("refuses a confirm value that is not on or off", async () => {
+    const res = await save({ confirmAnswers: "لا" });
+
+    expect(res.status).toBe(400);
+  });
+
   it("refuses points outside the range a difficulty is read from", async () => {
     expect((await save({ defaultPoints: 40 })).status).toBe(400);
     expect((await save({ defaultPoints: 0 })).status).toBe(400);

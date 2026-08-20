@@ -24,9 +24,11 @@ export default function QuestionsSection({ state }: { state: QuizQuestionsState 
 
       <SettingsForm
         values={state.settingsForm}
+        confirmAnswers={state.settings?.confirmAnswers ?? true}
         error={state.settingsError}
         saving={state.savingSettings}
         onChange={(key, value) => state.setSettingsForm((p) => ({ ...p, [key]: value }))}
+        onToggleConfirm={state.toggleConfirm}
         onSubmit={state.saveSettings}
       />
 

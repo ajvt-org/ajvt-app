@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { getQuizSettings } from "./quiz";
 import { requireCompetition, shapeOf } from "./competitionServer";
 import { curveScore, type ScoreCurve } from "./competitionConfig";
 import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
@@ -40,6 +41,13 @@ export async function startOrResumeAttempt(
   now = new Date(),
 ) {
   const { competition, round } = await openCompetitionRound(competitionId, now);
+
+  if (round.confirmAnswers === null) {
+    await prisma.quizRound.updateMany({
+      where: { id: round.id, confirmAnswers: null },
+      data: { confirmAnswers: (await getQuizSettings()).confirmAnswers },
+    });
+  }
 
   const existing = await prisma.quizAttempt.findUnique({
     where: { roundId_userId: { roundId: round.id, userId } },
@@ -84,8 +92,6 @@ export async function startOrResumeAttempt(
   }
 }
 
-// A question the member let run past its time is closed where it stands, with
-// no answer and no points, so the attempt moves on rather than waiting.
 async function expireOverdue(
   attemptId: string,
   rows: { id: string; shownAt: Date | null; answeredAt: Date | null }[],
@@ -149,10 +155,21 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
 
   const total = attempt.answers.length;
   const curve = curveOf(attempt.round.competition);
+  const confirm = attempt.round.confirmAnswers ?? true;
   const expired = await expireOverdue(attempt.id, attempt.answers, curve, now);
   const next = attempt.answers.find((a) => a.answeredAt === null && !expired.has(a.id));
   if (!next) {
-    return { attempt, done: true as const, total, position: total, curve, question: null };
+    return { attempt, done: true as const, total, position: total, curve, confirm, question: null };
+  }
+
+  if (!next.shownAt && attempt.round.closesAt.getTime() <= now.getTime()) {
+    const left = attempt.answers.filter((a) => a.answeredAt === null && !expired.has(a.id));
+    await prisma.quizAttemptAnswer.updateMany({
+      where: { id: { in: left.map((a) => a.id) } },
+      data: { answeredAt: now, isCorrect: null, points: 0 },
+    });
+    await settleAttempt(attempt.id, now);
+    return { attempt, done: true as const, total, position: total, curve, confirm, question: null };
   }
 
   if (!next.shownAt) {
@@ -172,6 +189,7 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
     done: false as const,
     total,
     curve,
+    confirm,
     position: next.position,
     question: {
       answerId: next.id,
@@ -191,17 +209,12 @@ export async function submitAnswer(
   selectedAnswerIds: string[],
   now = new Date(),
 ) {
-  const owner = await prisma.quizAttemptAnswer.findUnique({
-    where: { id: attemptAnswerId },
-    select: { attempt: { select: { round: { select: { competitionId: true } } } } },
-  });
-  if (!owner) throw new NotFoundError(quiz.questionNotFound);
-  const { competition } = await openCompetitionRound(owner.attempt.round.competitionId, now);
-
   const row = await prisma.quizAttemptAnswer.findUnique({
     where: { id: attemptAnswerId },
     include: {
-      attempt: { select: { id: true, userId: true } },
+      attempt: {
+        select: { id: true, userId: true, round: { select: { competition: true } } },
+      },
       question: {
         select: {
           points: true,
@@ -215,7 +228,7 @@ export async function submitAnswer(
   if (row.attempt.userId !== userId) throw new ForbiddenError();
   if (row.answeredAt) throw new ConflictError(quiz.alreadyAnswered);
 
-  const curve = curveOf(competition);
+  const curve = curveOf(row.attempt.round.competition);
   const spent = row.shownAt ? Math.max(0, now.getTime() - row.shownAt.getTime()) : 0;
   if (spent > curve.maxSeconds * 1000) {
     await prisma.quizAttemptAnswer.update({
@@ -272,18 +285,26 @@ export async function closeExpiredAttempts(now = new Date()) {
       closesAt: { lte: now },
       attempts: { some: { finishedAt: null } },
     },
-    select: { id: true },
+    select: { id: true, competition: { select: { maxSeconds: true } } },
   });
   if (stale.length === 0) return 0;
-  const roundIds = stale.map((r) => r.id);
 
-  const { count } = await prisma.quizAttemptAnswer.updateMany({
-    where: { answeredAt: null, attempt: { roundId: { in: roundIds } } },
-    data: { answeredAt: now, isCorrect: null, points: 0 },
-  });
-  await prisma.quizAttempt.updateMany({
-    where: { roundId: { in: roundIds }, finishedAt: null },
-    data: { finishedAt: now },
-  });
+  let count = 0;
+  for (const round of stale) {
+    const cutoff = new Date(now.getTime() - round.competition.maxSeconds * 1000);
+    const zeroed = await prisma.quizAttemptAnswer.updateMany({
+      where: {
+        answeredAt: null,
+        attempt: { roundId: round.id },
+        OR: [{ shownAt: null }, { shownAt: { lte: cutoff } }],
+      },
+      data: { answeredAt: now, isCorrect: null, points: 0 },
+    });
+    count += zeroed.count;
+    await prisma.quizAttempt.updateMany({
+      where: { roundId: round.id, finishedAt: null, answers: { none: { answeredAt: null } } },
+      data: { finishedAt: now },
+    });
+  }
   return count;
 }

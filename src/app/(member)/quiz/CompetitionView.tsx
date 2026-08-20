@@ -22,6 +22,7 @@ interface AttemptState {
   total: number;
   position: number;
   curve?: ScoreCurve;
+  confirm?: boolean;
   question: AttemptView | null;
 }
 
@@ -170,6 +171,7 @@ export default function CompetitionView({
         question={attempt.question}
         curve={attempt.curve}
         busy={busy}
+        confirm={attempt.confirm ?? true}
         onSubmit={answer}
         onExpire={skip}
       />
