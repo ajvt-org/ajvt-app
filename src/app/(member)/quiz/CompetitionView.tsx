@@ -15,7 +15,7 @@ import { blockLabel } from "@/lib/quizRanking";
 
 interface AttemptState {
   attemptId: string;
-  score: number;
+  score?: number;
   done: boolean;
   total: number;
   position: number;
@@ -153,6 +153,7 @@ export default function CompetitionView({
   if (attempt && !attempt.done && attempt.question) {
     return (
       <AttemptQuestion
+        key={attempt.question.answerId}
         question={attempt.question}
         curve={attempt.curve}
         busy={busy}
@@ -179,7 +180,7 @@ export default function CompetitionView({
               أنهيت أسئلة الجولة
             </p>
           )}
-          {!closed && attempt && (
+          {!closed && attempt && attempt.score !== undefined && (
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
               مجموعك {countedNoun(attempt.score, POINTS)} في هذه الجولة
             </p>
