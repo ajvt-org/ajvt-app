@@ -2,7 +2,20 @@ import { describe, it, expect } from "vitest";
 import { TUTORIAL_QUESTIONS, isRight, gradeTutorial } from "./quizTutorial";
 import { DEFAULT_CURVE } from "./competitionConfig";
 
-const [single, , multi] = TUTORIAL_QUESTIONS;
+const [single] = TUTORIAL_QUESTIONS;
+const multi = {
+  id: "m1",
+  text: "سؤال متعدد",
+  category: "تجربة",
+  points: 20,
+  correctCount: 2,
+  options: [
+    { id: "m1a", text: "أ" },
+    { id: "m1b", text: "ب" },
+    { id: "m1c", text: "ج" },
+  ],
+  correctIds: ["m1a", "m1c"],
+};
 
 describe("the tutorial bank", () => {
   it("holds exactly three questions", () => {
@@ -40,11 +53,18 @@ describe("isRight", () => {
   });
 
   it("refuses a right option padded with a wrong one", () => {
-    expect(isRight(multi, [...multi.correctIds, "t3b"])).toBe(false);
+    expect(isRight(multi, [...multi.correctIds, "m1b"])).toBe(false);
   });
 
   it("refuses an empty answer", () => {
     expect(isRight(single, [])).toBe(false);
+  });
+
+  it("keeps every tutorial question to a single answer", () => {
+    for (const question of TUTORIAL_QUESTIONS) {
+      expect(question.correctCount).toBe(1);
+      expect(question.correctIds).toHaveLength(1);
+    }
   });
 });
 

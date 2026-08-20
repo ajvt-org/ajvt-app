@@ -64,17 +64,15 @@ describe("TutorialQuiz", () => {
     await waitFor(() => expect(screen.getByText(second.text)).toBeDefined());
   });
 
-  it("wants every right option of the last question", async () => {
+  it("asks for one answer on every question, the last included", async () => {
     render(<TutorialQuiz onExit={() => {}} />);
     await answerRight(first);
     await waitFor(() => screen.getByText(second.text));
     await answerRight(second);
 
     await waitFor(() => expect(screen.getByText(third.text)).toBeDefined());
-    await pick(third.options.find((o) => o.id === third.correctIds[0])!.text);
-    expect(
-      (screen.getByRole("button", { name: "تأكيد الإجابة" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
   });
 
   it("ends by saying the score does not count", async () => {

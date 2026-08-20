@@ -51,12 +51,9 @@ export default function AttemptQuestion({
   const ready = many ? picked.length === question.correctCount : picked.length === 1;
 
   return (
-    <div
-      className="question-screen min-h-[100svh] p-5 relative overflow-hidden"
-      style={theme.screen}
-    >
+    <div className="question-screen min-h-[100svh] px-5 pt-5 relative" style={theme.screen}>
       {theme.variant === "stage" && (
-        <>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div
             className="absolute rounded-full pointer-events-none"
             style={{
@@ -77,10 +74,10 @@ export default function AttemptQuestion({
               background: "radial-gradient(circle, rgba(196,124,90,0.18), rgba(196,124,90,0))",
             }}
           />
-        </>
+        </div>
       )}
 
-      <div className="question-slide relative mx-auto w-full max-w-md min-h-[calc(100svh-2.5rem)] flex flex-col gap-5">
+      <div className="question-slide relative mx-auto w-full max-w-md min-h-[calc(100svh-1.25rem)] flex flex-col gap-5">
         {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} onExpire={onExpire} />}
 
         <div style={theme.questionCard}>
@@ -131,7 +128,7 @@ export default function AttemptQuestion({
           })}
         </div>
 
-        <div className="mt-auto">
+        <div className="mt-auto sticky bottom-0 -mx-5 px-5 pb-5 pt-6" style={theme.confirmBar}>
           {busy ? (
             <div
               className="w-full rounded-2xl flex items-center justify-center gap-2 text-sm font-bold"
