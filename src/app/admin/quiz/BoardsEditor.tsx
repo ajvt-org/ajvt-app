@@ -67,6 +67,17 @@ export default function BoardsEditor({
             {!board.wholeRun && (
               <>
                 <label className="flex-1 text-xs">
+                  <span className="block font-bold mb-1">اسم الفترة</span>
+                  <input
+                    aria-label={`اسم فترة الترتيب ${index + 1}`}
+                    value={board.blockTitle}
+                    placeholder="الجولة"
+                    disabled={disabled}
+                    onChange={(e) => set(index, { blockTitle: e.target.value })}
+                    className="input input-sm"
+                  />
+                </label>
+                <label className="flex-1 text-xs">
                   <span className="block font-bold mb-1">الجولات</span>
                   <NumberField
                     min={1}
@@ -117,7 +128,10 @@ export default function BoardsEditor({
         <button
           type="button"
           onClick={() =>
-            onChange([...boards, { title: "", blockRounds: 1, counting: 1, wholeRun: false }])
+            onChange([
+              ...boards,
+              { title: "", blockTitle: "", blockRounds: 1, counting: 1, wholeRun: false },
+            ])
           }
           className="btn btn-sm text-xs"
         >

@@ -56,7 +56,9 @@ describe("validateConfig", () => {
         roundCount: 20,
         roundPeriodMinutes: 60,
         roundWindowMinutes: 45,
-        boards: [{ title: "كل خمس جولات", blockRounds: 5, counting: 4, wholeRun: false }],
+        boards: [
+          { title: "كل خمس جولات", blockTitle: "", blockRounds: 5, counting: 4, wholeRun: false },
+        ],
       }),
     ).toBeNull();
   });
@@ -76,37 +78,62 @@ describe("validateConfig", () => {
     expect(pickConfig(config)).toEqual(config);
   });
 
+  it("refuses a block word that is not text", () => {
+    expect(
+      with_({
+        boards: [
+          {
+            title: "ترتيب",
+            blockTitle: 7,
+            blockRounds: 1,
+            counting: 1,
+            wholeRun: false,
+          } as unknown as (typeof config.boards)[number],
+        ],
+      }),
+    ).toContain("اسم فترة الترتيب");
+  });
+
   it("needs at least one ranking", () => {
     expect(with_({ boards: [] })).toContain("ترتيب واحد على الأقل");
   });
 
   it("refuses a ranking with no title", () => {
     expect(
-      with_({ boards: [{ title: "  ", blockRounds: 1, counting: 1, wholeRun: false }] }),
+      with_({
+        boards: [{ title: "  ", blockTitle: "", blockRounds: 1, counting: 1, wholeRun: false }],
+      }),
     ).toContain("عنوان الترتيب");
   });
 
   it("refuses counting more rounds than a ranking covers", () => {
     expect(
-      with_({ boards: [{ title: "أسبوعي", blockRounds: 5, counting: 6, wholeRun: false }] }),
+      with_({
+        boards: [{ title: "أسبوعي", blockTitle: "", blockRounds: 5, counting: 6, wholeRun: false }],
+      }),
     ).toContain("الجولات المحتسبة");
   });
 
   it("allows counting every round a ranking covers", () => {
     expect(
-      with_({ boards: [{ title: "أسبوعي", blockRounds: 5, counting: 5, wholeRun: false }] }),
+      with_({
+        boards: [{ title: "أسبوعي", blockTitle: "", blockRounds: 5, counting: 5, wholeRun: false }],
+      }),
     ).toBeNull();
   });
 
   it("refuses a ranking of no rounds", () => {
     expect(
-      with_({ boards: [{ title: "فارغ", blockRounds: 0, counting: 1, wholeRun: false }] }),
+      with_({
+        boards: [{ title: "فارغ", blockTitle: "", blockRounds: 0, counting: 1, wholeRun: false }],
+      }),
     ).toContain("عدد جولات الترتيب");
   });
 
   it("refuses more rankings than the app shows", () => {
     const many = Array.from({ length: 7 }, (_, i) => ({
       title: `ترتيب ${i}`,
+      blockTitle: "",
       blockRounds: 1,
       counting: 1,
       wholeRun: false,

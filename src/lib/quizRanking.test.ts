@@ -196,6 +196,39 @@ describe("blockLabel", () => {
   it("names a span of one round as that round", () => {
     expect(blockLabel(7, 4, 29)).toBe("الجولة 29");
   });
+
+  it("batches four round blocks as 1-4, 5-8, 9-12", () => {
+    expect(blockLabel(4, 0, 12)).toBe("الجولات 1 - 4");
+    expect(blockLabel(4, 1, 12)).toBe("الجولات 5 - 8");
+    expect(blockLabel(4, 2, 12)).toBe("الجولات 9 - 12");
+  });
+
+  it("uses the board's own block word when one is given", () => {
+    expect(blockLabel(7, 0, 30, "الأسبوع")).toBe("الأسبوع 1");
+    expect(blockLabel(7, 2, 30, "الأسبوع")).toBe("الأسبوع 3");
+    expect(blockLabel(7, 0, 30, "  ")).toBe("الجولات 1 - 7");
+  });
+});
+
+describe("a four round board", () => {
+  const board = { blockRounds: 4, counting: 4, wholeRun: false };
+  const played = (userId: string, index: number, score: number): RoundScore => ({
+    userId,
+    index,
+    score,
+    finishedAt: new Date(index * 60_000),
+  });
+  const scores = [played("a", 0, 10), played("a", 3, 10), played("a", 4, 7), played("a", 7, 7)];
+
+  it("adds up only the block's own rounds", () => {
+    expect(boardRanking(scores, board, 3)[0].total).toBe(20);
+    expect(boardRanking(scores, board, 4)[0].total).toBe(14);
+  });
+
+  it("turns the block exactly at the fourth round", () => {
+    expect(boardBlocks(board, 3)).toEqual({ block: 0, blocks: 1 });
+    expect(boardBlocks(board, 4)).toEqual({ block: 1, blocks: 2 });
+  });
 });
 
 describe("boardBlocks", () => {

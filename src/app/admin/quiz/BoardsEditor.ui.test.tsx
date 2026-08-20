@@ -48,6 +48,14 @@ describe("BoardsEditor", () => {
     expect(onChange.mock.calls[0][0][0].title).toBe("ترتيب الجولةي");
   });
 
+  it("takes a block word for a ranking", async () => {
+    const { onChange } = setup();
+
+    await userEvent.type(screen.getByLabelText("اسم فترة الترتيب 2"), "ي");
+
+    expect(onChange.mock.calls[0][0][1].blockTitle).toBe("الأسبوعي");
+  });
+
   it("changes how many rounds a ranking covers", async () => {
     const { onChange } = setup();
 
@@ -60,7 +68,7 @@ describe("BoardsEditor", () => {
     const onChange = vi.fn();
     render(
       <Held
-        start={[{ title: "أسبوعي", blockRounds: 7, counting: 6, wholeRun: false }]}
+        start={[{ title: "أسبوعي", blockTitle: "", blockRounds: 7, counting: 6, wholeRun: false }]}
         onChange={onChange}
       />,
     );

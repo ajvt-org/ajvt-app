@@ -8,6 +8,7 @@ export interface ScoreCurve {
 
 export interface BoardConfig {
   title: string;
+  blockTitle: string;
   blockRounds: number;
   counting: number;
   wholeRun: boolean;
@@ -27,9 +28,9 @@ export interface CompetitionConfig extends ScoreCurve {
 }
 
 export const DEFAULT_BOARDS: BoardConfig[] = [
-  { title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false },
-  { title: "ترتيب الأسبوع", blockRounds: 7, counting: 6, wholeRun: false },
-  { title: "الترتيب العام", blockRounds: 1, counting: 1, wholeRun: true },
+  { title: "ترتيب الجولة", blockTitle: "", blockRounds: 1, counting: 1, wholeRun: false },
+  { title: "ترتيب الأسبوع", blockTitle: "الأسبوع", blockRounds: 7, counting: 6, wholeRun: false },
+  { title: "الترتيب العام", blockTitle: "", blockRounds: 1, counting: 1, wholeRun: true },
 ];
 
 export const MAX_BOARDS = 6;
@@ -104,6 +105,8 @@ export function validateBoards(boards: BoardConfig[]): string | null {
   if (boards.length > MAX_BOARDS) return `عدد الترتيبات يجب ألا يتجاوز ${MAX_BOARDS}`;
   for (const board of boards) {
     if (typeof board.title !== "string" || !board.title.trim()) return "عنوان الترتيب مطلوب";
+    if (board.blockTitle !== undefined && typeof board.blockTitle !== "string")
+      return "اسم فترة الترتيب غير صالح";
     if (!Number.isInteger(board.blockRounds) || board.blockRounds < 1)
       return "عدد جولات الترتيب غير صالح";
     if (
