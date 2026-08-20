@@ -14,6 +14,7 @@ import ScoreFormula from "./ScoreFormula";
 import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
+import { useNow } from "@/hooks/useNow";
 
 interface AttemptState {
   attemptId: string;
@@ -61,15 +62,10 @@ export interface StandingsState {
 
 const URGENT_MS = 30 * 60 * 1000;
 
-function RoundClock({
-  closesAt,
-  urgent,
-  onReached,
-}: {
-  closesAt: string;
-  urgent: boolean;
-  onReached: () => void;
-}) {
+function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () => void }) {
+  const now = useNow(1000);
+  const urgent = new Date(closesAt).getTime() - now < URGENT_MS;
+
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full text-xs font-bold"
@@ -218,7 +214,6 @@ export default function CompetitionView({
   const upcoming = between && standings.next ? standings.next : null;
   const finished = roundOpen && standings.me?.finished;
   const closing = roundOpen && standings.closesAt ? standings.closesAt : null;
-  const urgent = closing !== null && new Date(closing).getTime() - Date.now() < URGENT_MS;
   const champion = over ? (standings.boards.find((b) => b.wholeRun)?.rows[0] ?? null) : null;
 
   return (
@@ -340,9 +335,7 @@ export default function CompetitionView({
               <p className="text-lg font-black text-white">
                 الجولة {(standings.round ?? 0) + 1} مفتوحة الآن
               </p>
-              {closing && (
-                <RoundClock closesAt={closing} urgent={urgent} onReached={onReloadStandings} />
-              )}
+              {closing && <RoundClock closesAt={closing} onReached={onReloadStandings} />}
               {closed && (
                 <p className="text-xs font-semibold" style={{ color: "var(--copper-300)" }}>
                   {closed}
