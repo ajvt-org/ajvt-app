@@ -13,13 +13,13 @@ import {
 import {
   blockAnchor,
   boardBlocks,
-  boardRanking,
   myRound,
   standingOf,
   type MyRound,
   type RoundScore,
   type Ranked,
 } from "./quizRanking";
+import { rankBoard } from "./quizRankingSql";
 import type { ScoreCurve } from "./competitionConfig";
 import { sharedResult } from "./sharedResult";
 
@@ -31,19 +31,6 @@ export interface Board {
   name: string;
   photoUrl: string | null;
   total: number;
-}
-
-async function roundScores(competitionId: string): Promise<RoundScore[]> {
-  const attempts = await prisma.quizAttempt.findMany({
-    where: { round: { competitionId } },
-    select: { userId: true, score: true, finishedAt: true, round: { select: { index: true } } },
-  });
-  return attempts.map((a) => ({
-    userId: a.userId,
-    index: a.round.index,
-    score: a.score,
-    finishedAt: a.finishedAt,
-  }));
 }
 
 async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
@@ -96,11 +83,10 @@ async function sharedStandings(
   at: number,
   limit: number,
 ): Promise<SharedStandings> {
-  const scores = await roundScores(competition.id);
   const boards: SharedBoard[] = [];
   const ranked: Ranked[][] = [];
   for (const board of competition.boards) {
-    const rows = boardRanking(scores, board, at);
+    const rows = await rankBoard(competition.id, board, at);
     ranked.push(rows);
     boards.push({
       id: board.id,
@@ -212,22 +198,29 @@ export async function boardBlock(
   const board = competition.boards.find((b) => b.id === boardId);
   if (!board) throw new NotFoundError(NO_BOARD);
 
-  const scores = await roundScores(competition.id);
   const current =
     currentRound(shapeOf(competition), now)?.index ?? roundIndexAt(shapeOf(competition), now);
-  const rows = boardRanking(scores, board, blockAnchor(board, block, current));
+  const rows = await rankBoard(competition.id, board, blockAnchor(board, block, current));
   return {
     rows: await named(rows, limit),
     mine: userId ? standingOf(rows, userId) : null,
   };
 }
 
+async function playedRounds(competitionId: string): Promise<number[]> {
+  const rounds = await prisma.quizAttempt.findMany({
+    where: { round: { competitionId } },
+    select: { round: { select: { index: true } } },
+    distinct: ["roundId"],
+  });
+  return [...new Set(rounds.map((r) => r.round.index))].sort((a, b) => a - b);
+}
+
 export async function getWinners(competitionId: string, now = new Date()) {
   const competition = await getCompetition(competitionId);
   if (!competition?.startedAt) return { boards: [] };
 
-  const scores = await roundScores(competition.id);
-  const played = [...new Set(scores.map((s) => s.index))].sort((a, b) => a - b);
+  const played = await playedRounds(competition.id);
   const finished = now >= endsAt(shapeOf(competition));
 
   const boards = [];
@@ -236,7 +229,9 @@ export async function getWinners(competitionId: string, now = new Date()) {
 
     if (board.wholeRun) {
       const winner = finished
-        ? ((await named(boardRanking(scores, board, played[played.length - 1] ?? 0), 1))[0] ?? null)
+        ? ((
+            await named(await rankBoard(competition.id, board, played[played.length - 1] ?? 0), 1)
+          )[0] ?? null)
         : null;
       boards.push({
         id: board.id,
@@ -257,7 +252,7 @@ export async function getWinners(competitionId: string, now = new Date()) {
       winners: await Promise.all(
         blocks.map(async (block) => ({
           block,
-          winner: (await named(boardRanking(scores, board, block * size), 1))[0] ?? null,
+          winner: (await named(await rankBoard(competition.id, board, block * size), 1))[0] ?? null,
         })),
       ),
     });
