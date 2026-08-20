@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { ForbiddenError } from "@/lib/errors";
-import { isQuizEligible } from "@/lib/quiz";
+import { getQuizSettings, isQuizEligible } from "@/lib/quiz";
 import { myCompetitions, shapeOf } from "@/lib/competitionServer";
 import { roundsBegun, roundState } from "@/lib/quizRound";
 import { quiz } from "@/lib/messages";
@@ -13,7 +13,8 @@ export const GET = withRoute("GET /api/quiz/competitions", async () => {
 
   const now = new Date();
   const rows = myCompetitionsView(await myCompetitions(session.userId), now);
-  return NextResponse.json({ competitions: rows });
+  const settings = await getQuizSettings();
+  return NextResponse.json({ competitions: rows, confirmAnswers: settings.confirmAnswers });
 });
 
 function myCompetitionsView(

@@ -23,6 +23,7 @@ export interface QuizSettings {
   defaultAnswerCount: number;
   defaultCorrectCount: number;
   defaultPoints: number;
+  confirmAnswers: boolean;
   questionsPerDay: number;
   answerWindowSeconds: number;
   minScorePercent: number;

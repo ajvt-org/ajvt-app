@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { getQuizSettings } from "./quiz";
 import { requireCompetition, shapeOf } from "./competitionServer";
 import { curveScore, type ScoreCurve } from "./competitionConfig";
 import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
@@ -40,6 +41,13 @@ export async function startOrResumeAttempt(
   now = new Date(),
 ) {
   const { competition, round } = await openCompetitionRound(competitionId, now);
+
+  if (round.confirmAnswers === null) {
+    await prisma.quizRound.updateMany({
+      where: { id: round.id, confirmAnswers: null },
+      data: { confirmAnswers: (await getQuizSettings()).confirmAnswers },
+    });
+  }
 
   const existing = await prisma.quizAttempt.findUnique({
     where: { roundId_userId: { roundId: round.id, userId } },
@@ -147,10 +155,11 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
 
   const total = attempt.answers.length;
   const curve = curveOf(attempt.round.competition);
+  const confirm = attempt.round.confirmAnswers ?? true;
   const expired = await expireOverdue(attempt.id, attempt.answers, curve, now);
   const next = attempt.answers.find((a) => a.answeredAt === null && !expired.has(a.id));
   if (!next) {
-    return { attempt, done: true as const, total, position: total, curve, question: null };
+    return { attempt, done: true as const, total, position: total, curve, confirm, question: null };
   }
 
   if (!next.shownAt && attempt.round.closesAt.getTime() <= now.getTime()) {
@@ -160,7 +169,7 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
       data: { answeredAt: now, isCorrect: null, points: 0 },
     });
     await settleAttempt(attempt.id, now);
-    return { attempt, done: true as const, total, position: total, curve, question: null };
+    return { attempt, done: true as const, total, position: total, curve, confirm, question: null };
   }
 
   if (!next.shownAt) {
@@ -180,6 +189,7 @@ export async function currentQuestion(attemptId: string, userId: string, now = n
     done: false as const,
     total,
     curve,
+    confirm,
     position: next.position,
     question: {
       answerId: next.id,

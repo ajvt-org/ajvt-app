@@ -7,7 +7,13 @@ import AttemptQuestion from "./AttemptQuestion";
 import { TUTORIAL_QUESTIONS, TUTORIAL_CURVE, gradeTutorial } from "@/lib/quizTutorial";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
-export default function TutorialQuiz({ onExit }: { onExit: () => void }) {
+export default function TutorialQuiz({
+  confirm = true,
+  onExit,
+}: {
+  confirm?: boolean;
+  onExit: () => void;
+}) {
   const [position, setPosition] = useState(0);
   const [score, setScore] = useState(0);
   const startedAt = useRef(0);
@@ -170,6 +176,7 @@ export default function TutorialQuiz({ onExit }: { onExit: () => void }) {
         }}
         curve={TUTORIAL_CURVE}
         busy={false}
+        confirm={confirm}
         onSubmit={answer}
         onExpire={skip}
       />

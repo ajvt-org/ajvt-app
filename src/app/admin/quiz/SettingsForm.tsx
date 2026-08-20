@@ -11,21 +11,40 @@ const FIELDS: { key: keyof FormValues; label: string; min: number; max?: number 
 
 export default function SettingsForm({
   values,
+  confirmAnswers,
   error,
   saving,
   onChange,
+  onToggleConfirm,
   onSubmit,
 }: {
   values: FormValues;
+  confirmAnswers: boolean;
   error: string;
   saving: boolean;
   onChange: (key: keyof FormValues, value: string) => void;
+  onToggleConfirm: () => void;
   onSubmit: (ev: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
   return (
     <form onSubmit={onSubmit} className="card p-4 space-y-3">
       <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
         <IconLabel name="target">إعدادات الأسئلة</IconLabel>
+      </p>
+
+      <label className="flex items-center gap-2 text-xs font-bold">
+        <input
+          id="quiz-confirm-answers"
+          type="checkbox"
+          checked={confirmAnswers}
+          disabled={saving}
+          onChange={onToggleConfirm}
+        />
+        <span style={{ color: "var(--text-main)" }}>زر تأكيد الإجابة</span>
+      </label>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        عند إيقافه يرسل اختيار الإجابة مباشرة دون تأكيد في كل المسابقات، ويسري التغيير من الجولة
+        القادمة. الأسئلة متعددة الإجابات تحتفظ بالزر دائماً.
       </p>
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>

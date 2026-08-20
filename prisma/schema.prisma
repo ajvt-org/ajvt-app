@@ -510,6 +510,7 @@ model QuizSettings {
   defaultAnswerCount  Int      @default(4)
   defaultCorrectCount Int      @default(1)
   defaultPoints       Int      @default(10)
+  confirmAnswers      Boolean  @default(true)
   updatedAt           DateTime @updatedAt
 }
 
@@ -586,17 +587,18 @@ model QuizBoard {
 }
 
 model QuizRound {
-  id            String              @id @default(cuid())
-  competitionId String
-  competition   Competition         @relation(fields: [competitionId], references: [id], onDelete: Cascade)
-  index         Int
-  category      String?
-  opensAt       DateTime
-  closesAt      DateTime
-  announcedAt   DateTime?
-  createdAt     DateTime            @default(now())
-  questions     QuizRoundQuestion[]
-  attempts      QuizAttempt[]
+  id             String              @id @default(cuid())
+  competitionId  String
+  competition    Competition         @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  index          Int
+  category       String?
+  opensAt        DateTime
+  closesAt       DateTime
+  confirmAnswers Boolean?
+  announcedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  questions      QuizRoundQuestion[]
+  attempts       QuizAttempt[]
 
   @@unique([competitionId, index])
   @@index([opensAt])

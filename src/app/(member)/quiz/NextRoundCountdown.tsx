@@ -8,10 +8,14 @@ export default function NextRoundCountdown({
   opensAt,
   onReached,
   color = "var(--mint-700)",
+  compact = false,
+  ariaLabel = "الوقت المتبقي للجولة القادمة",
 }: {
   opensAt: string;
   onReached?: () => void;
   color?: string;
+  compact?: boolean;
+  ariaLabel?: string;
 }) {
   const [leftMs, setLeftMs] = useState(() => new Date(opensAt).getTime() - Date.now());
   const fired = useRef(false);
@@ -39,12 +43,16 @@ export default function NextRoundCountdown({
   const clock = `${pad(Math.floor((total % 86_400) / 3600))}:${pad(Math.floor((total % 3600) / 60))}:${pad(total % 60)}`;
 
   return (
-    <p
-      className="text-3xl font-black mt-1"
-      style={{ color, fontVariantNumeric: "tabular-nums", letterSpacing: "2px" }}
-      aria-label="الوقت المتبقي للجولة القادمة"
+    <span
+      className={compact ? "text-xs font-black" : "block text-3xl font-black mt-1"}
+      style={{
+        color,
+        fontVariantNumeric: "tabular-nums",
+        letterSpacing: compact ? undefined : "2px",
+      }}
+      aria-label={ariaLabel}
     >
       <NumericRanges>{days > 0 ? `${countedNoun(days, DAYS)} و ${clock}` : clock}</NumericRanges>
-    </p>
+    </span>
   );
 }

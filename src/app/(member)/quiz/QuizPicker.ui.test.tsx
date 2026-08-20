@@ -118,6 +118,23 @@ describe("QuizPicker", () => {
     expect(onPick).toHaveBeenCalledWith("c1");
   });
 
+  it("counts down to the start of one that has not begun", () => {
+    const soon = new Date(Date.now() + 90_000).toISOString();
+    render(
+      <QuizPicker
+        competitions={[{ ...rows[0], state: "before", startsAt: soon, passedRounds: 0 }]}
+        backHref="/home"
+        onPick={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("تنطلق بعد")).toBeDefined();
+    expect(screen.getByLabelText("الوقت المتبقي لانطلاق المسابقة").textContent).toMatch(
+      /00:01:\d\d/,
+    );
+    expect(screen.queryByText(/من 30 جولة/)).toBeNull();
+  });
+
   it("keeps one that has not started shut", async () => {
     const onPick = vi.fn();
     render(
