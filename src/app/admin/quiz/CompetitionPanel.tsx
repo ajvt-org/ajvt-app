@@ -79,6 +79,21 @@ export default function CompetitionPanel({
     }
   }
 
+  async function copy() {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const data = await api.post<{ competition: Competition }>(`${path}/copy`, {});
+      onSaved(data.competition.id);
+      onChanged();
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function act(what: "start" | "reset" | "delete") {
     setBusy(true);
     setError("");
@@ -159,14 +174,24 @@ export default function CompetitionPanel({
       )}
 
       {competitionId && (
-        <button
-          onClick={() => setConfirming("delete")}
-          disabled={busy}
-          className="btn btn-sm text-xs"
-          style={{ background: "#fee2e2", color: "#991b1b" }}
-        >
-          حذف المسابقة
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={copy}
+            disabled={busy}
+            className="btn btn-sm text-xs"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <IconLabel name="copy">نسخ لمسابقة جديدة</IconLabel>
+          </button>
+          <button
+            onClick={() => setConfirming("delete")}
+            disabled={busy}
+            className="btn btn-sm text-xs"
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
+            حذف المسابقة
+          </button>
+        </div>
       )}
 
       {confirming === "start" && (

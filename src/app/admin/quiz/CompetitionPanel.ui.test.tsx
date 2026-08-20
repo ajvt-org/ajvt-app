@@ -51,6 +51,28 @@ beforeEach(() => {
 });
 
 describe("CompetitionPanel", () => {
+  it("copies the competition into a fresh one to adjust", async () => {
+    post.mockResolvedValue({ competition: { ...saved, id: "c2", name: "نسخة من مسابقة الصيف" } });
+    const onSaved = vi.fn();
+    render(
+      <CompetitionPanel
+        banks={[{ id: "general", name: "البنك العام" }]}
+        competitionId="c1"
+        onSaved={onSaved}
+        onChanged={() => {}}
+        onDeleted={() => {}}
+      />,
+    );
+    await waitFor(() => screen.getByRole("button", { name: /نسخ لمسابقة جديدة/ }));
+
+    await userEvent.click(screen.getByRole("button", { name: /نسخ لمسابقة جديدة/ }));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/copy", {}),
+    );
+    expect(onSaved).toHaveBeenCalledWith("c2");
+  });
+
   it("starts empty for a competition that does not exist yet", async () => {
     render(
       <CompetitionPanel

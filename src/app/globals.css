@@ -609,6 +609,7 @@ button:disabled {
 
 .tab-bar-item[aria-current="page"] .tab-bar-icon {
   background: var(--mint-100);
+  transform: translateY(-2px);
 }
 
 .tab-bar-label {
@@ -642,6 +643,42 @@ body:has(.tab-bar) .app-shell {
 body:has(.question-screen) .tab-bar,
 body:has(.question-screen) .tab-bar-spacer {
   display: none;
+}
+
+.page-enter {
+  animation: page-enter 0.28s ease-out;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.question-slide {
+  animation: question-slide-in 0.35s ease;
+}
+
+@keyframes question-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question-slide {
+    animation: none;
+  }
 }
 
 /* The pull-to-refresh gesture is ours, so the browser's own must not fire
