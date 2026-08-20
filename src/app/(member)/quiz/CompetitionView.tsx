@@ -9,6 +9,7 @@ import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
+import ScoreFormula from "./ScoreFormula";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 
@@ -31,6 +32,7 @@ export interface StandingsBoard {
   id: string;
   title: string;
   blockRounds: number;
+  counting: number;
   wholeRun: boolean;
   block: number;
   blocks: number;
@@ -46,6 +48,7 @@ export interface StandingsState {
   roundCount: number | null;
   state: "before" | "open" | "closed" | "over" | null;
   next: { index: number; opensAt: string } | null;
+  curve: ScoreCurve | null;
   boards: StandingsBoard[];
 }
 
@@ -238,6 +241,8 @@ export default function CompetitionView({
         )}
 
         {competitionId && <MyScores competitionId={competitionId} />}
+
+        {standings.curve && <ScoreFormula curve={standings.curve} boards={standings.boards} />}
       </div>
     </div>
   );

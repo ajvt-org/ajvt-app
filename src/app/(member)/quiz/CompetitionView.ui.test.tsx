@@ -19,11 +19,13 @@ const standings: StandingsState = {
   roundCount: 5,
   state: "open",
   next: null,
+  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   boards: [
     {
       id: "b1",
       title: "ترتيب الجولة",
       blockRounds: 1,
+      counting: 1,
       wholeRun: false,
       block: 2,
       blocks: 3,
@@ -34,6 +36,7 @@ const standings: StandingsState = {
       id: "b2",
       title: "الترتيب العام",
       blockRounds: 1,
+      counting: 1,
       wholeRun: true,
       block: 0,
       blocks: 1,
@@ -310,6 +313,15 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("tab", { name: "الترتيب العام" }));
 
     expect(screen.queryByRole("combobox", { name: "فترة الترتيب" })).toBeNull();
+  });
+
+  it("explains the points on the quiz page itself", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
+
+    expect(screen.getByText("كيف تُحتسب النقاط")).toBeDefined();
+    expect(screen.getByText(/حتى 10 ثوانٍ، كل النقاط/)).toBeDefined();
   });
 
   it("goes back to the list of quizzes rather than out of the section", async () => {
