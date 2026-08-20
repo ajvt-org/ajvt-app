@@ -159,3 +159,10 @@ export async function locateUpload(base: string): Promise<OwnedMatch | null> {
   const found = await Promise.all(UPLOAD_FIELDS.map((f) => (f.locate ? f.locate(base) : null)));
   return found.find((match) => match !== null) ?? null;
 }
+
+export async function renameUpload(from: string, to: string, sha256: string): Promise<void> {
+  await prisma.$transaction([
+    ...UPLOAD_FIELDS.map((field) => field.rename(from, to)),
+    prisma.proofImage.updateMany({ where: { filename: from }, data: { filename: to, sha256 } }),
+  ]);
+}

@@ -5,7 +5,7 @@ import { prisma } from "../src/lib/prisma";
 import { processImage } from "../src/lib/imageProcessing";
 import { proofHash } from "../src/lib/proofHash";
 import { planFor } from "../src/lib/legacyImages";
-import { UPLOAD_FIELDS } from "../src/lib/uploadFields";
+import { renameUpload, UPLOAD_FIELDS } from "../src/lib/uploadFields";
 import { completeFiles, writeWhole } from "../src/lib/wholeFiles";
 
 // Re-encodes the uploads compression never touched. Non-webp original: write
@@ -47,11 +47,7 @@ async function main() {
       }
       await writeWhole(dir, plan.webp, full);
       await writeWhole(dir, plan.thumb, thumbnail);
-      for (const field of UPLOAD_FIELDS) await field.rename(plan.filename, plan.webp);
-      await prisma.proofImage.updateMany({
-        where: { filename: plan.filename },
-        data: { filename: plan.webp, sha256: proofHash(full) },
-      });
+      await renameUpload(plan.filename, plan.webp, proofHash(full));
       await unlink(join(dir, plan.filename));
       reencoded++;
     } catch {
