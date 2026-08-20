@@ -2,10 +2,12 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, createUser } from "./helpers";
 
-const sendPushToUsers = vi.hoisted(() => vi.fn(async () => {}));
+const sendPushToUsers = vi.hoisted(() =>
+  vi.fn(async (_userIds: string[], _payload: { title: string; body: string }) => {}),
+);
 vi.mock("@/lib/push", () => ({ sendPushToUsers, sendPushToUser: vi.fn(async () => {}) }));
 
-const notified = () => sendPushToUsers.mock.calls.flatMap((call) => call[0] as string[]);
+const notified = () => sendPushToUsers.mock.calls.flatMap((call) => call[0]);
 
 const { sendMatchReminders } = await import("@/lib/tournamentNotify");
 const { announceOpenDay } = await import("@/lib/quizNotify");
