@@ -1,6 +1,14 @@
 import { prisma } from "./prisma";
 import { getCompetition, shapeOf } from "./competitionServer";
-import { currentRound, endsAt, groupOf, roundIndexAt } from "./quizRound";
+import {
+  currentRound,
+  endsAt,
+  groupOf,
+  nextWindow,
+  roundIndexAt,
+  roundState,
+  type RoundState,
+} from "./quizRound";
 import { boardRanking, standingOf, type RoundScore, type Ranked } from "./quizRanking";
 
 export interface Board {
@@ -60,6 +68,9 @@ export interface Standings {
   name: string | null;
   meId: string | null;
   round: number | null;
+  roundCount: number | null;
+  state: RoundState | null;
+  next: { index: number; opensAt: Date } | null;
   boards: StandingsBoard[];
 }
 
@@ -76,6 +87,9 @@ export async function getStandings(
     name: competition?.name ?? null,
     meId: userId ?? null,
     round: null,
+    roundCount: null,
+    state: null,
+    next: null,
     boards: [],
   };
   if (!competition?.startedAt) return empty;
@@ -95,12 +109,16 @@ export async function getStandings(
     });
   }
 
+  const coming = nextWindow(shapeOf(competition), now);
   return {
     running: true,
     competitionId: competition.id,
     name: competition.name,
     meId: userId ?? null,
     round: at,
+    roundCount: competition.roundCount,
+    state: roundState(shapeOf(competition), now),
+    next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
     boards,
   };
 }
