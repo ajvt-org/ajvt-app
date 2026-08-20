@@ -2,7 +2,22 @@ import { describe, it, expect } from "vitest";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const FUTURE_SLACK_DAYS = 10;
+const FUTURE_SLACK_DAYS = 1;
+
+const HAND_DATED_BEFORE_THE_GUARD = new Set([
+  "20260821090000_quiz_category_rounds",
+  "20260822090000_drop_quiz_assignments",
+  "20260823090000_question_banks",
+  "20260823100000_competition_bank",
+  "20260824090000_score_curve",
+  "20260825090000_quiz_boards",
+  "20260826090000_payment_donor_photo",
+  "20260826100000_payment_donor_phone_tags",
+  "20260826110000_payment_recorded_by",
+  "20260827090000_competition_drop_pool_size",
+  "20260828090000_quiz_board_block_title",
+  "20260829090000_quiz_confirm_toggle",
+]);
 
 function migrationFolders(): string[] {
   return readdirSync(join(process.cwd(), "prisma", "migrations"), { withFileTypes: true })
@@ -29,13 +44,23 @@ describe("migration folder order", () => {
     }
   });
 
-  it("refuses a migration dated further than the allowed slack ahead of now", () => {
+  it("refuses a new migration dated ahead of the clock", () => {
     const horizon = Date.now() + FUTURE_SLACK_DAYS * 24 * 60 * 60 * 1000;
     for (const folder of migrationFolders()) {
+      if (HAND_DATED_BEFORE_THE_GUARD.has(folder)) continue;
       expect(
         timestampOf(folder).getTime(),
-        `${folder} is dated more than ${FUTURE_SLACK_DAYS} days in the future`,
+        `${folder} is dated more than ${FUTURE_SLACK_DAYS} day(s) in the future`,
       ).toBeLessThanOrEqual(horizon);
+    }
+  });
+
+  it("holds no folder in the grandfathered list that has left the tree", () => {
+    const present = new Set(migrationFolders());
+    for (const folder of HAND_DATED_BEFORE_THE_GUARD) {
+      expect(present.has(folder), `${folder} is listed as grandfathered but no longer exists`).toBe(
+        true,
+      );
     }
   });
 
