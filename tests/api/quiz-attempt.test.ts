@@ -537,6 +537,43 @@ describe("working through an attempt", () => {
   });
 });
 
+describe("the confirm mode a round pins", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("stamps the setting at the first attempt and keeps it for the whole round", async () => {
+    const c = await competition();
+    await pool(c.id);
+    await prisma.quizSettings.create({ data: { id: "singleton", confirmAnswers: false } });
+    const u = await user();
+
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
+    expect((await currentQuestion(attempt.id, u.id, openAt)).confirm).toBe(false);
+
+    await prisma.quizSettings.update({
+      where: { id: "singleton" },
+      data: { confirmAnswers: true },
+    });
+    const other = await user();
+    const theirs = await startOrResumeAttempt(c.id, other.id, openAt);
+
+    expect((await currentQuestion(theirs.id, other.id, openAt)).confirm).toBe(false);
+  });
+
+  it("answers by the button when nothing was ever set", async () => {
+    const c = await competition();
+    await pool(c.id);
+    const u = await user();
+
+    const attempt = await startOrResumeAttempt(c.id, u.id, openAt);
+
+    expect((await currentQuestion(attempt.id, u.id, openAt)).confirm).toBe(true);
+    const round = await prisma.quizRound.findFirstOrThrow({ where: { competitionId: c.id } });
+    expect(round.confirmAnswers).toBe(true);
+  });
+});
+
 describe("closing the round", () => {
   beforeEach(async () => {
     await resetDb();
