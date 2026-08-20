@@ -20,6 +20,7 @@ const rounds = [
     total: 3,
     finishedAt: null,
     missed: false,
+    closed: true,
   },
   {
     attemptId: null,
@@ -30,6 +31,7 @@ const rounds = [
     total: 0,
     finishedAt: null,
     missed: true,
+    closed: true,
   },
   {
     attemptId: "a2",
@@ -40,12 +42,39 @@ const rounds = [
     total: 3,
     finishedAt: null,
     missed: false,
+    closed: false,
   },
 ];
 
+const detail = {
+  breakdown: {
+    rows: [
+      {
+        position: 0,
+        question: "ما عاصمة موريتانيا؟",
+        maxPoints: 10,
+        isCorrect: null,
+        elapsedMs: null,
+        points: 0,
+        percent: 0,
+        correct: ["نواكشوط"],
+        chosen: [],
+      },
+    ],
+    correct: 0,
+    answered: 0,
+    total: 1,
+    score: 0,
+    possible: 10,
+    elapsedMs: 0,
+  },
+};
+
 beforeEach(() => {
   get.mockReset();
-  get.mockResolvedValue({ rounds });
+  get.mockImplementation((url: string) =>
+    url.includes("/breakdown/") ? Promise.resolve({ detail }) : Promise.resolve({ rounds }),
+  );
 });
 
 describe("MyScores", () => {
@@ -56,15 +85,14 @@ describe("MyScores", () => {
     expect(screen.getByText(/الجولة 2/)).toBeDefined();
   });
 
-  it("offers no way into a round's answers", async () => {
+  it("opens nothing when the row itself is tapped", async () => {
     render(<MyScores competitionId="c1" />);
     await waitFor(() => screen.getByText(/الجولة 1/));
-
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
 
     await userEvent.click(screen.getByText(/الجولة 1/));
 
     expect(get).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull();
   });
 
   it("keeps a missed round on the list with nothing scored", async () => {
@@ -86,5 +114,41 @@ describe("MyScores", () => {
     render(<MyScores competitionId="c1" />);
 
     await waitFor(() => expect(screen.getByText(/هذه المسابقة خاصة/)).toBeDefined());
+  });
+
+  it("opens a closed round into the answers as they were given", async () => {
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 1/));
+
+    await userEvent.click(screen.getByRole("button", { name: "تفاصيل الجولة 1" }));
+
+    expect(await screen.findByText("ما عاصمة موريتانيا؟")).toBeDefined();
+    expect(screen.getByText("لم تجب")).toBeDefined();
+    expect(get).toHaveBeenCalledWith("/api/quiz/breakdown/a1");
+  });
+
+  it("closes the answers again when the member taps once more", async () => {
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 1/));
+    await userEvent.click(screen.getByRole("button", { name: "تفاصيل الجولة 1" }));
+    await screen.findByText("ما عاصمة موريتانيا؟");
+
+    await userEvent.click(screen.getByRole("button", { name: "تفاصيل الجولة 1" }));
+
+    expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull();
+  });
+
+  it("offers nothing to open on a round that is still running", async () => {
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 3/));
+
+    expect(screen.queryByRole("button", { name: "تفاصيل الجولة 3" })).toBeNull();
+  });
+
+  it("offers nothing to open on a round the member missed", async () => {
+    render(<MyScores competitionId="c1" />);
+    await waitFor(() => screen.getByText(/الجولة 2/));
+
+    expect(screen.queryByRole("button", { name: "تفاصيل الجولة 2" })).toBeNull();
   });
 });
