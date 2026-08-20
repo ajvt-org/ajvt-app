@@ -114,7 +114,10 @@ export default function QuizPage() {
     return (
       <CompetitionView
         standings={standings}
-        onBack={() => setChosen(null)}
+        onBack={() => {
+          setChosen(null);
+          loadMine();
+        }}
         onReloadStandings={loadStandings}
       />
     );
