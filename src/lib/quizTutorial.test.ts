@@ -91,7 +91,14 @@ describe("gradeTutorial", () => {
     expect(out.points).toBe(0);
   });
 
-  it("falls back to the default bands", () => {
+  it("falls back to the tutorial's own bands", () => {
     expect(gradeTutorial(single, single.correctIds, 2_000).points).toBe(10);
+  });
+
+  it("closes the tutorial question after ten seconds", () => {
+    const out = gradeTutorial(single, single.correctIds, 12_000);
+
+    expect(out.isCorrect).toBe(false);
+    expect(out.points).toBe(0);
   });
 });
