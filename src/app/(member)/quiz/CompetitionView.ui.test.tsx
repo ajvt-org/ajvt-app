@@ -253,6 +253,35 @@ describe("CompetitionView", () => {
     await waitFor(() => expect(screen.getByText(/ترتيبك 4 بمجموع 10 نقاط/)).toBeDefined());
   });
 
+  it("holds the status card until the round's fate is known", async () => {
+    post.mockReturnValue(new Promise(() => {}));
+    setup();
+    await waitFor(() => screen.getByRole("tab", { name: "ترتيب الجولة" }));
+
+    expect(screen.queryByText("أنهيت أسئلة الجولة")).toBeNull();
+    expect(screen.queryByText("انتهت المسابقة")).toBeNull();
+  });
+
+  it("counts down to the coming round", async () => {
+    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+    render(
+      <CompetitionView
+        standings={{
+          ...standings,
+          state: "closed",
+          next: { index: 2, opensAt: new Date(Date.now() + 3_600_000).toISOString() },
+        }}
+        onBack={vi.fn()}
+        onReloadStandings={vi.fn()}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText("الوقت المتبقي للجولة القادمة")).toBeDefined(),
+    );
+    expect(screen.getByLabelText("الوقت المتبقي للجولة القادمة").textContent).toMatch(/59:5\d/);
+  });
+
   it("names the coming round and its time between two rounds", async () => {
     post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
     render(
@@ -272,8 +301,7 @@ describe("CompetitionView", () => {
     expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
   });
 
-  it("says the competition is over instead of a shut door", async () => {
-    post.mockRejectedValue(new Error("المسابقة ليست مفتوحة الآن"));
+  it("says the competition is over at once, without knocking", async () => {
     render(
       <CompetitionView
         standings={{ ...standings, state: "over", next: null }}
@@ -282,7 +310,8 @@ describe("CompetitionView", () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText("انتهت المسابقة")).toBeDefined());
+    expect(screen.getByText("انتهت المسابقة")).toBeDefined();
+    expect(post).not.toHaveBeenCalled();
     expect(screen.getByText("محمد")).toBeDefined();
     expect(screen.queryByText("المسابقة ليست مفتوحة الآن")).toBeNull();
   });

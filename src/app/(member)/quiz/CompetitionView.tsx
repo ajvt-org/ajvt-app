@@ -10,6 +10,7 @@ import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
 import ScoreFormula from "./ScoreFormula";
+import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 
@@ -65,6 +66,7 @@ export default function CompetitionView({
   const competitionId = standings.competitionId;
   const [attempt, setAttempt] = useState<AttemptState | null>(null);
   const [closed, setClosed] = useState("");
+  const [pending, setPending] = useState(true);
   const [tab, setTab] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [block, setBlock] = useState<number | null>(null);
@@ -99,18 +101,28 @@ export default function CompetitionView({
 
   useEffect(() => {
     let alive = true;
+    if (standings.state === "over") {
+      setPending(false);
+      return;
+    }
+    setPending(true);
     api
       .post<AttemptState>("/api/quiz/attempt", { competitionId })
       .then((state) => {
-        if (alive) setAttempt(state);
+        if (!alive) return;
+        setAttempt(state);
+        setClosed("");
+        setPending(false);
       })
       .catch((e) => {
-        if (alive) setClosed(errorMessage(e));
+        if (!alive) return;
+        setClosed(errorMessage(e));
+        setPending(false);
       });
     return () => {
       alive = false;
     };
-  }, [competitionId]);
+  }, [competitionId, standings.state]);
 
   function land(next: AttemptState) {
     if (next.done) {
@@ -165,7 +177,7 @@ export default function CompetitionView({
 
   const over = standings.state === "over";
   const between = standings.state === "closed" || standings.state === "before";
-  const upcoming = closed && between && standings.next ? standings.next : null;
+  const upcoming = between && standings.next ? standings.next : null;
 
   return (
     <div className="app-shell">
@@ -173,28 +185,34 @@ export default function CompetitionView({
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-6 text-center">
           <div className="mb-3 flex justify-center" style={{ color: "var(--mint-500)" }}>
-            <Icon name={closed ? (over ? "trophy" : "clock") : "check"} size={36} />
+            <Icon name={over ? "trophy" : pending || closed ? "clock" : "check"} size={36} />
           </div>
-          {!closed && (
-            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              أنهيت أسئلة الجولة
-            </p>
-          )}
-          {!closed && attempt && attempt.score !== undefined && (
-            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              مجموعك {countedNoun(attempt.score, POINTS)} في هذه الجولة
-            </p>
-          )}
-          {closed && over && (
+          {over && (
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
               انتهت المسابقة
             </p>
           )}
-          {upcoming && (
+          {!over && pending && (
+            <p className="text-sm animate-pulse" style={{ color: "var(--text-muted)" }}>
+              …
+            </p>
+          )}
+          {!over && !pending && !closed && (
+            <p className="font-semibold" style={{ color: "var(--text-main)" }}>
+              أنهيت أسئلة الجولة
+            </p>
+          )}
+          {!over && !pending && !closed && attempt && attempt.score !== undefined && (
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+              مجموعك {countedNoun(attempt.score, POINTS)} في هذه الجولة
+            </p>
+          )}
+          {!over && !pending && closed && upcoming && (
             <>
               <p className="font-semibold" style={{ color: "var(--text-main)" }}>
                 الجولة القادمة {upcoming.index + 1} من {standings.roundCount}
               </p>
+              <NextRoundCountdown opensAt={upcoming.opensAt} onReached={onReloadStandings} />
               <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
                 تبدأ{" "}
                 {new Date(upcoming.opensAt).toLocaleString("ar", {
@@ -204,7 +222,7 @@ export default function CompetitionView({
               </p>
             </>
           )}
-          {closed && !over && !upcoming && (
+          {!over && !pending && closed && !upcoming && (
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
               {closed}
             </p>
