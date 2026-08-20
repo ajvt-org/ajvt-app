@@ -31,6 +31,8 @@ const detail = {
         elapsedMs: 5_000,
         points: 10,
         percent: 100,
+        correct: ["نواكشوط"],
+        chosen: ["نواكشوط"],
       },
     ],
     correct: 1,

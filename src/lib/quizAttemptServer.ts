@@ -5,6 +5,7 @@ import { curveScore, type ScoreCurve } from "./competitionConfig";
 import { currentRound, drawQuestions, seededShuffle } from "./quizRound";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import { isUniqueViolation } from "./prismaError";
+import { missedAnswers } from "./quizRetry";
 import { quiz } from "./messages";
 
 export const NOT_OPEN = "المسابقة ليست مفتوحة الآن";
@@ -293,12 +294,7 @@ export async function reopenMissedQuestions(attemptId: string, now = new Date())
   if (attempt.round.closesAt <= now) throw new ConflictError(ROUND_CLOSED);
 
   const curve = curveOf(attempt.round.competition);
-  const ranOut = (shownAt: Date | null) =>
-    shownAt !== null && now.getTime() - shownAt.getTime() > curve.maxSeconds * 1000;
-
-  const missed = attempt.answers.filter((a) =>
-    a.answeredAt === null ? ranOut(a.shownAt) : a.isCorrect === null,
-  );
+  const missed = missedAnswers(attempt.answers, curve.maxSeconds, now);
   if (missed.length === 0) throw new ConflictError(NOT_MISSED);
 
   await prisma.$transaction(async (tx) => {

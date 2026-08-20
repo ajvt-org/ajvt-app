@@ -10,6 +10,7 @@ import {
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
+import { droppedBoards, mergeRunningBoards } from "./runningBoards";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
 export const STARTS_IN_PAST = "وقت البداية قد مضى";
@@ -144,28 +145,15 @@ export async function saveRunningCompetition(raw: Partial<CompetitionConfig>, id
 
   const input = pickConfig(raw);
   const current = asConfig(existing);
-  const held = new Map(existing.boards.map((board) => [board.id, board]));
-
-  const boards = (input.boards ?? current.boards).map((board) => {
-    const kept = board.id ? held.get(board.id) : undefined;
-    return {
-      id: kept?.id,
-      title: board.title,
-      blockTitle: board.blockTitle ?? "",
-      blockRounds: kept ? kept.blockRounds : board.blockRounds,
-      counting: kept ? kept.counting : board.counting,
-      wholeRun: kept ? kept.wholeRun : board.wholeRun === true,
-    };
-  });
+  const boards = mergeRunningBoards(existing.boards, input.boards ?? current.boards);
 
   const merged: CompetitionConfig = { ...current, name: input.name ?? current.name, boards };
   const problem = validateConfig(merged);
   if (problem) throw new ValidationError(problem);
 
-  const keeping = new Set(boards.map((board) => board.id).filter(Boolean) as string[]);
   await prisma.$transaction([
     prisma.quizBoard.deleteMany({
-      where: { competitionId: existing.id, id: { notIn: [...keeping] } },
+      where: { competitionId: existing.id, id: { in: droppedBoards(existing.boards, boards) } },
     }),
     ...boards.map((board, order) =>
       board.id
