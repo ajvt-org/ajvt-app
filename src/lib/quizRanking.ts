@@ -99,3 +99,20 @@ export function boardRanking(scores: RoundScore[], board: BoardShape, at: number
 export function standingOf(rows: Ranked[], userId: string): Ranked | null {
   return rows.find((r) => r.userId === userId) ?? null;
 }
+
+export function boardBlocks(board: BoardShape, at: number): { block: number; blocks: number } {
+  if (board.wholeRun) return { block: 0, blocks: 1 };
+  const block = Math.max(0, groupOf(at, Math.max(1, board.blockRounds)));
+  return { block, blocks: block + 1 };
+}
+
+export function blockAnchor(board: BoardShape, block: number, current: number): number {
+  return board.wholeRun ? current : block * Math.max(1, board.blockRounds);
+}
+
+export function blockLabel(blockRounds: number, block: number, roundCount: number): string {
+  if (blockRounds <= 1) return `الجولة ${block + 1}`;
+  const first = block * blockRounds + 1;
+  const last = Math.min((block + 1) * blockRounds, roundCount);
+  return first === last ? `الجولة ${first}` : `الجولات ${first} - ${last}`;
+}
