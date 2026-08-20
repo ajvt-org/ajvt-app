@@ -6,7 +6,7 @@ import { getUserSession, requireAdmin } from "@/lib/auth";
 import { isScopedRole } from "@/lib/activityAccess";
 import { proofScope } from "@/lib/proofScope";
 import { toBaseFilename } from "@/lib/imageProcessing";
-import { prisma } from "@/lib/prisma";
+import { locateUpload, type ProofKind } from "@/lib/uploadFields";
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -15,54 +15,7 @@ const MIME: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-type Kind = "photo" | "membership" | "activity" | "donations" | "expense";
-
-interface Match {
-  kind: Kind;
-  ownerId: string | null;
-}
-
-function paymentKind(purpose: string): Kind {
-  if (purpose === "MEMBERSHIP") return "membership";
-  if (purpose === "ACTIVITY") return "activity";
-  return "donations";
-}
-
-async function findMatch(base: string): Promise<Match | null> {
-  const [photo, member, membership, registration, donation, payment, expense] = await Promise.all([
-    prisma.member.findFirst({ where: { photo: base }, select: { userId: true } }),
-    prisma.member.findFirst({ where: { paymentProof: base }, select: { userId: true } }),
-    prisma.membership.findFirst({
-      where: { paymentProof: base },
-      select: { member: { select: { userId: true } } },
-    }),
-    prisma.activityRegistration.findFirst({
-      where: { paymentProof: base },
-      select: { member: { select: { userId: true } } },
-    }),
-    prisma.donation.findFirst({
-      where: { proof: base },
-      select: { member: { select: { userId: true } } },
-    }),
-    prisma.payment.findFirst({
-      where: { proof: base },
-      select: { purpose: true, member: { select: { userId: true } } },
-    }),
-    prisma.expense.findFirst({ where: { proof: base }, select: { id: true } }),
-  ]);
-
-  if (photo) return { kind: "photo", ownerId: photo.userId };
-  if (member) return { kind: "membership", ownerId: member.userId };
-  if (membership) return { kind: "membership", ownerId: membership.member.userId };
-  if (registration) return { kind: "activity", ownerId: registration.member.userId };
-  if (donation) return { kind: "donations", ownerId: donation.member?.userId ?? null };
-  if (payment)
-    return { kind: paymentKind(payment.purpose), ownerId: payment.member?.userId ?? null };
-  if (expense) return { kind: "expense", ownerId: null };
-  return null;
-}
-
-function adminAllowed(role: string, kind: Kind): boolean {
+function adminAllowed(role: string, kind: ProofKind): boolean {
   if (kind === "photo") return true;
   if (kind === "expense") return !isScopedRole(role);
   return proofScope(role)[kind];
@@ -94,7 +47,7 @@ export async function GET(
       return new NextResponse("Not found", { status: 404 });
     }
 
-    const match = await findMatch(toBaseFilename(filename));
+    const match = await locateUpload(toBaseFilename(filename));
     const userId = user ? (user as { userId?: string }).userId : undefined;
     const allowed =
       !!match &&

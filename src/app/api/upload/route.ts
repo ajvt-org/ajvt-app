@@ -12,7 +12,7 @@ import { withRoute } from "@/lib/route";
 import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
 
 export function getUploadDir(): string {
-  // In production (Railway): UPLOAD_DIR points to a mounted volume
+  // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
   // In development: public/uploads (served statically)
   return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
 }

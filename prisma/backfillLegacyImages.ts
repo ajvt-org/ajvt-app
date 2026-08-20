@@ -1,10 +1,12 @@
 import "dotenv/config";
-import { readdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { prisma } from "../src/lib/prisma";
 import { processImage } from "../src/lib/imageProcessing";
 import { proofHash } from "../src/lib/proofHash";
 import { planFor } from "../src/lib/legacyImages";
+import { renameUpload, UPLOAD_FIELDS } from "../src/lib/uploadFields";
+import { completeFiles, writeWhole } from "../src/lib/wholeFiles";
 
 // Re-encodes the uploads compression never touched. Non-webp original: write
 // the webp pair, rename every reference, rehash the fingerprint on the webp
@@ -17,91 +19,13 @@ function uploadDir(): string {
   return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
 }
 
-type Ref = {
-  names(): Promise<(string | null)[]>;
-  rename(from: string, to: string): Promise<unknown>;
-};
-
-const refs: Ref[] = [
-  {
-    names: async () =>
-      (await prisma.member.findMany({ select: { photo: true } })).map((r) => r.photo),
-    rename: (from, to) => prisma.member.updateMany({ where: { photo: from }, data: { photo: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.member.findMany({ select: { paymentProof: true } })).map((r) => r.paymentProof),
-    rename: (from, to) =>
-      prisma.member.updateMany({ where: { paymentProof: from }, data: { paymentProof: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.membership.findMany({ select: { paymentProof: true } })).map(
-        (r) => r.paymentProof,
-      ),
-    rename: (from, to) =>
-      prisma.membership.updateMany({ where: { paymentProof: from }, data: { paymentProof: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.activity.findMany({ select: { photo: true } })).map((r) => r.photo),
-    rename: (from, to) =>
-      prisma.activity.updateMany({ where: { photo: from }, data: { photo: to } }),
-  },
-  {
-    names: async () => (await prisma.team.findMany({ select: { logo: true } })).map((r) => r.logo),
-    rename: (from, to) => prisma.team.updateMany({ where: { logo: from }, data: { logo: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.activityRegistration.findMany({ select: { paymentProof: true } })).map(
-        (r) => r.paymentProof,
-      ),
-    rename: (from, to) =>
-      prisma.activityRegistration.updateMany({
-        where: { paymentProof: from },
-        data: { paymentProof: to },
-      }),
-  },
-  {
-    names: async () =>
-      (await prisma.donation.findMany({ select: { proof: true } })).map((r) => r.proof),
-    rename: (from, to) =>
-      prisma.donation.updateMany({ where: { proof: from }, data: { proof: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.donation.findMany({ select: { donorPhoto: true } })).map((r) => r.donorPhoto),
-    rename: (from, to) =>
-      prisma.donation.updateMany({ where: { donorPhoto: from }, data: { donorPhoto: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.expense.findMany({ select: { proof: true } })).map((r) => r.proof),
-    rename: (from, to) =>
-      prisma.expense.updateMany({ where: { proof: from }, data: { proof: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.payment.findMany({ select: { proof: true } })).map((r) => r.proof),
-    rename: (from, to) =>
-      prisma.payment.updateMany({ where: { proof: from }, data: { proof: to } }),
-  },
-  {
-    names: async () =>
-      (await prisma.payment.findMany({ select: { donorPhoto: true } })).map((r) => r.donorPhoto),
-    rename: (from, to) =>
-      prisma.payment.updateMany({ where: { donorPhoto: from }, data: { donorPhoto: to } }),
-  },
-];
-
 async function main() {
   const dir = uploadDir();
-  const onDisk = new Set(await readdir(dir));
+  const onDisk = await completeFiles(dir);
 
   const referenced = new Set<string>();
-  for (const ref of refs) {
-    for (const name of await ref.names()) if (name) referenced.add(name);
+  for (const field of UPLOAD_FIELDS) {
+    for (const name of await field.names()) if (name) referenced.add(name);
   }
 
   const plans = [...referenced]
@@ -117,17 +41,13 @@ async function main() {
       const original = await readFile(join(dir, plan.filename));
       const { full, thumbnail } = await processImage(original);
       if (plan.kind === "thumbnail") {
-        await writeFile(join(dir, plan.thumb), thumbnail);
+        await writeWhole(dir, plan.thumb, thumbnail);
         thumbnails++;
         continue;
       }
-      await writeFile(join(dir, plan.webp), full);
-      await writeFile(join(dir, plan.thumb), thumbnail);
-      for (const ref of refs) await ref.rename(plan.filename, plan.webp);
-      await prisma.proofImage.updateMany({
-        where: { filename: plan.filename },
-        data: { filename: plan.webp, sha256: proofHash(full) },
-      });
+      await writeWhole(dir, plan.webp, full);
+      await writeWhole(dir, plan.thumb, thumbnail);
+      await renameUpload(plan.filename, plan.webp, proofHash(full));
       await unlink(join(dir, plan.filename));
       reencoded++;
     } catch {
