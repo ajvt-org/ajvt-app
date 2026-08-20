@@ -18,6 +18,7 @@ import {
   type RoundScore,
   type Ranked,
 } from "./quizRanking";
+import type { ScoreCurve } from "./competitionConfig";
 
 export interface Board {
   rank: number;
@@ -67,6 +68,7 @@ export interface StandingsBoard {
   id: string;
   title: string;
   blockRounds: number;
+  counting: number;
   wholeRun: boolean;
   block: number;
   blocks: number;
@@ -83,6 +85,7 @@ export interface Standings {
   roundCount: number | null;
   state: RoundState | null;
   next: { index: number; opensAt: Date } | null;
+  curve: ScoreCurve | null;
   boards: StandingsBoard[];
 }
 
@@ -102,6 +105,7 @@ export async function getStandings(
     roundCount: null,
     state: null,
     next: null,
+    curve: null,
     boards: [],
   };
   if (!competition?.startedAt) return empty;
@@ -117,6 +121,7 @@ export async function getStandings(
       id: board.id,
       title: board.title,
       blockRounds: board.blockRounds,
+      counting: board.counting,
       wholeRun: board.wholeRun,
       ...boardBlocks(board, at),
       rows: await named(rows, limit),
@@ -134,6 +139,11 @@ export async function getStandings(
     roundCount: competition.roundCount,
     state: roundState(shapeOf(competition), now),
     next: coming ? { index: coming.index, opensAt: coming.opensAt } : null,
+    curve: {
+      fullSeconds: competition.fullSeconds,
+      maxSeconds: competition.maxSeconds,
+      floorPercent: competition.floorPercent,
+    },
     boards,
   };
 }

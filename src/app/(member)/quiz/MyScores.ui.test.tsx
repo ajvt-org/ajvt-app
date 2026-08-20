@@ -48,8 +48,6 @@ const detail = {
   round: 0,
   category: "جغرافيا",
   competitionName: "مسابقة",
-  curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
-  boards: [{ title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
   breakdown: {
     rows: [
       {
@@ -58,11 +56,7 @@ const detail = {
         category: "جغرافيا",
         maxPoints: 10,
         isCorrect: true,
-        elapsedMs: 5_000,
         points: 10,
-        percent: 50,
-        correct: ["نواكشوط"],
-        chosen: ["نواكشوط"],
       },
     ],
     correct: 1,
@@ -70,7 +64,6 @@ const detail = {
     total: 1,
     score: 10,
     possible: 10,
-    elapsedMs: 5_000,
   },
 };
 

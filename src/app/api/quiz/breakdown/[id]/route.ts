@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { ForbiddenError } from "@/lib/errors";
 import { attemptDetail } from "@/lib/quizBreakdownServer";
+import { memberBreakdown } from "@/lib/quizBreakdown";
 import { quiz } from "@/lib/messages";
 
 export const GET = withRoute(
@@ -12,6 +13,11 @@ export const GET = withRoute(
     const { id } = await params;
     const detail = await attemptDetail(id);
     if (detail.userId !== session.userId) throw new ForbiddenError(quiz.notYourAttempt);
-    return NextResponse.json({ detail });
+
+    const { userId, curve, boards, breakdown, ...rest } = detail;
+    void userId;
+    void curve;
+    void boards;
+    return NextResponse.json({ detail: { ...rest, breakdown: memberBreakdown(breakdown) } });
   },
 );
