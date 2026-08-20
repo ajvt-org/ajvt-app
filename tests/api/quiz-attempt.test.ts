@@ -248,7 +248,7 @@ describe("starting a daily attempt", () => {
 
   it("serves a different set on a different round", async () => {
     const c = await competition();
-    const dayOne = await pool(c.id, 5);
+    const dayOne = await pool(c.id, 30);
     const later = await prisma.quizRound.create({
       data: {
         competitionId: c.id,
