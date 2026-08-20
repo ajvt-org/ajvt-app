@@ -2,6 +2,7 @@
 
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
+import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
 export interface BoardRow {
   rank: number;
@@ -74,7 +75,7 @@ export default function StandingsBoard({
           className="text-xs font-bold rounded-xl p-2"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <NumericRanges>{`ترتيبك ${mine.rank} بمجموع ${mine.total}`}</NumericRanges>
+          <NumericRanges>{`ترتيبك ${mine.rank} بمجموع ${countedNoun(mine.total, POINTS)}`}</NumericRanges>
         </p>
       )}
     </section>
