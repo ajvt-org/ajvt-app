@@ -6,6 +6,7 @@ import { seedActivities, seedRegistrations } from "./seed/activities";
 import { seedLeague, seedDoubles } from "./seed/tournament";
 import { seedTags, seedDonations, seedExpenses } from "./seed/finance";
 import { seedQuizSettings, seedQuestions, seedCompetitions } from "./seed/quiz";
+import { seedPlayedRounds, seedClosingSoon } from "./seed/quizPlay";
 import { seedSiteVisits, seedAuditLog, seedDeletedRecords } from "./seed/history";
 import { writePlaceholders } from "./seed/images";
 
@@ -31,7 +32,9 @@ async function main() {
 
   await seedQuizSettings();
   const questions = await seedQuestions();
-  await seedCompetitions(users, questions);
+  const competitions = await seedCompetitions(users, questions);
+  await seedPlayedRounds(users, competitions.open.id);
+  await seedClosingSoon(questions);
 
   await seedSiteVisits(30);
   await seedAuditLog(24);
