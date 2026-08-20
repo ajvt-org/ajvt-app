@@ -5,6 +5,7 @@ import Image from "next/image";
 import BackButton from "@/components/BackButton";
 import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
+import NextRoundCountdown from "./NextRoundCountdown";
 import type { CompetitionState, RunningCompetition } from "./types";
 import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
 
@@ -50,9 +51,11 @@ const CHIP_STYLE: Record<CompetitionState, CSSProperties> = {
 function CompetitionCard({
   competition,
   onPick,
+  onStarted,
 }: {
   competition: RunningCompetition;
   onPick: (id: string) => void;
+  onStarted?: () => void;
 }) {
   const { state } = competition;
   const playable = state !== "before";
@@ -91,28 +94,45 @@ function CompetitionCard({
             {STATE_LABEL[state]}
           </span>
         </span>
-        <span className="flex items-center gap-2 mt-1.5">
+        {state === "before" ? (
           <span
-            className="flex-1 block rounded-full overflow-hidden"
-            style={{ height: 5, background: "#eef6f1" }}
+            className="flex items-center gap-1.5 mt-1.5 text-xs font-bold"
+            style={{ color: "var(--copper-600)" }}
           >
-            <span
-              className="block h-full rounded-full"
-              style={{
-                width: `${share}%`,
-                background:
-                  state === "over"
-                    ? "var(--mint-200)"
-                    : "linear-gradient(90deg, var(--mint-600), var(--mint-500))",
-              }}
+            <Icon name="clock" size={13} className="shrink-0" />
+            تنطلق بعد
+            <NextRoundCountdown
+              opensAt={competition.startsAt}
+              onReached={onStarted}
+              color="var(--copper-600)"
+              compact
+              ariaLabel="الوقت المتبقي لانطلاق المسابقة"
             />
           </span>
-          <span className="shrink-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
-            <NumericRanges>
-              {`${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
-            </NumericRanges>
+        ) : (
+          <span className="flex items-center gap-2 mt-1.5">
+            <span
+              className="flex-1 block rounded-full overflow-hidden"
+              style={{ height: 5, background: "#eef6f1" }}
+            >
+              <span
+                className="block h-full rounded-full"
+                style={{
+                  width: `${share}%`,
+                  background:
+                    state === "over"
+                      ? "var(--mint-200)"
+                      : "linear-gradient(90deg, var(--mint-600), var(--mint-500))",
+                }}
+              />
+            </span>
+            <span className="shrink-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+              <NumericRanges>
+                {`${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
+              </NumericRanges>
+            </span>
           </span>
-        </span>
+        )}
       </span>
       {playable && (
         <span
@@ -137,11 +157,13 @@ export default function QuizPicker({
   backHref,
   onPick,
   onTutorial,
+  onStarted,
 }: {
   competitions: RunningCompetition[];
   backHref: string;
   onPick: (id: string) => void;
   onTutorial?: () => void;
+  onStarted?: () => void;
 }) {
   return (
     <div className="app-shell">
@@ -191,7 +213,12 @@ export default function QuizPicker({
         )}
 
         {competitions.map((competition) => (
-          <CompetitionCard key={competition.id} competition={competition} onPick={onPick} />
+          <CompetitionCard
+            key={competition.id}
+            competition={competition}
+            onPick={onPick}
+            onStarted={onStarted}
+          />
         ))}
 
         {onTutorial && (
