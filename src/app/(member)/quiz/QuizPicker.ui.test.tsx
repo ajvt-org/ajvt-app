@@ -42,6 +42,31 @@ describe("QuizPicker", () => {
     expect(screen.getByText(/0 من 7 جولات/)).toBeDefined();
   });
 
+  it("wears each competition's state as a chip", () => {
+    render(<QuizPicker competitions={rows} backHref="/home" onPick={() => {}} />);
+
+    expect(screen.getByText("جولة مفتوحة الآن")).toBeDefined();
+    expect(screen.getByText("بين جولتين")).toBeDefined();
+  });
+
+  it("shows the member's score on a playable competition", () => {
+    render(<QuizPicker competitions={rows} backHref="/home" onPick={() => {}} />);
+
+    expect(screen.getByText("40")).toBeDefined();
+  });
+
+  it("hides the score of one that has not started", () => {
+    render(
+      <QuizPicker
+        competitions={[{ ...rows[0], state: "before" }]}
+        backHref="/home"
+        onPick={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText("40")).toBeNull();
+  });
+
   it("hands back the one that was picked", async () => {
     const onPick = vi.fn();
     render(<QuizPicker competitions={rows} backHref="/home" onPick={onPick} />);
@@ -62,6 +87,20 @@ describe("QuizPicker", () => {
     await userEvent.click(screen.getByRole("button", { name: /ابدأ الجولة التجريبية/ }));
 
     expect(onTutorial).toHaveBeenCalled();
+  });
+
+  it("fences the tutorial behind its own separator", () => {
+    render(
+      <QuizPicker competitions={rows} backHref="/home" onPick={() => {}} onTutorial={() => {}} />,
+    );
+
+    expect(screen.getByText("ركن التجربة")).toBeDefined();
+  });
+
+  it("keeps the separator out when there is no tutorial", () => {
+    render(<QuizPicker competitions={rows} backHref="/home" onPick={() => {}} />);
+
+    expect(screen.queryByText("ركن التجربة")).toBeNull();
   });
 
   it("keeps a finished competition open to look at", async () => {

@@ -77,58 +77,63 @@ export default function AttemptQuestion({
         </div>
       )}
 
-      <div className="question-slide relative mx-auto w-full max-w-md min-h-[calc(100svh-1.25rem)] flex flex-col gap-5">
-        {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} onExpire={onExpire} />}
+      <div className="relative mx-auto w-full max-w-md min-h-[calc(100svh-1.25rem)] flex flex-col">
+        <div className="question-slide flex flex-col gap-5">
+          {curve && <QuestionTimer shownAt={question.shownAt} curve={curve} onExpire={onExpire} />}
 
-        <div style={theme.questionCard}>
-          <h1 style={theme.questionText}>{question.text}</h1>
-          {theme.variant === "stage" && (
-            <div
-              className="rounded-full mx-auto"
-              style={{ width: 44, height: 4, background: "var(--mint-300)", marginTop: 14 }}
-            />
+          <div style={theme.questionCard}>
+            <h1 style={theme.questionText}>{question.text}</h1>
+            {theme.variant === "stage" && (
+              <div
+                className="rounded-full mx-auto"
+                style={{ width: 44, height: 4, background: "var(--mint-300)", marginTop: 14 }}
+              />
+            )}
+          </div>
+
+          {many && (
+            <p className="text-xs text-center" style={theme.hint}>
+              <NumericRanges>{`اختر ${countedNoun(question.correctCount, ANSWERS)}`}</NumericRanges>
+            </p>
           )}
+
+          <div className="flex flex-col gap-3">
+            {question.options.map((option) => {
+              const on = picked.includes(option.id);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  role={many ? "checkbox" : "radio"}
+                  aria-checked={on}
+                  disabled={busy}
+                  onClick={() => toggle(option.id)}
+                  className="question-option text-right rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5"
+                  style={{
+                    padding: "15px 18px",
+                    minHeight: 56,
+                    ...(on ? theme.optionSelected : theme.option),
+                  }}
+                >
+                  {on && (
+                    <span
+                      className="rounded-full flex items-center justify-center shrink-0"
+                      style={{ width: 22, height: 22, ...theme.checkBubble }}
+                    >
+                      <Icon name="check" size={13} />
+                    </span>
+                  )}
+                  {option.text}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {many && (
-          <p className="text-xs text-center" style={theme.hint}>
-            <NumericRanges>{`اختر ${countedNoun(question.correctCount, ANSWERS)}`}</NumericRanges>
-          </p>
-        )}
-
-        <div className="flex flex-col gap-3">
-          {question.options.map((option) => {
-            const on = picked.includes(option.id);
-            return (
-              <button
-                key={option.id}
-                type="button"
-                role={many ? "checkbox" : "radio"}
-                aria-checked={on}
-                disabled={busy}
-                onClick={() => toggle(option.id)}
-                className="text-right rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5"
-                style={{
-                  padding: "15px 18px",
-                  minHeight: 56,
-                  ...(on ? theme.optionSelected : theme.option),
-                }}
-              >
-                {on && (
-                  <span
-                    className="rounded-full flex items-center justify-center shrink-0"
-                    style={{ width: 22, height: 22, ...theme.checkBubble }}
-                  >
-                    <Icon name="check" size={13} />
-                  </span>
-                )}
-                {option.text}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-auto sticky bottom-0 -mx-5 px-5 pb-5 pt-6" style={theme.confirmBar}>
+        <div
+          className="question-confirm mt-auto sticky bottom-0 -mx-5 px-5 pb-5 pt-6"
+          style={theme.confirmBar}
+        >
           {busy ? (
             <div
               className="w-full rounded-2xl flex items-center justify-center gap-2 text-sm font-bold"

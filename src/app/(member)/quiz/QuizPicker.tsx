@@ -1,8 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import BackButton from "@/components/BackButton";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import type { CompetitionState, RunningCompetition } from "./types";
 import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
@@ -13,6 +14,117 @@ const STATE_LABEL: Record<CompetitionState, string> = {
   closed: "بين جولتين",
   over: "انتهت",
 };
+
+const STATE_ICON: Record<CompetitionState, IconName> = {
+  before: "hourglass",
+  open: "play",
+  closed: "clock",
+  over: "trophy",
+};
+
+const TILE_STYLE: Record<CompetitionState, CSSProperties> = {
+  open: {
+    background: "linear-gradient(135deg, var(--mint-600), var(--mint-700))",
+    color: "#ffffff",
+    boxShadow: "0 4px 12px rgba(38,92,73,0.3)",
+  },
+  closed: { background: "var(--mint-100)", color: "var(--mint-600)" },
+  over: { background: "var(--mint-50)", color: "var(--text-muted)" },
+  before: {
+    background: "var(--mint-50)",
+    border: "1.5px dashed var(--mint-200)",
+    color: "var(--text-muted)",
+  },
+};
+
+const CHIP_STYLE: Record<CompetitionState, CSSProperties> = {
+  open: {
+    background: "linear-gradient(135deg, var(--mint-600), var(--mint-700))",
+    color: "#ffffff",
+  },
+  closed: { background: "var(--mint-100)", color: "var(--mint-700)" },
+  over: { background: "var(--mint-50)", color: "var(--text-muted)" },
+  before: { border: "1px solid var(--mint-200)", color: "var(--text-muted)" },
+};
+
+function CompetitionCard({
+  competition,
+  onPick,
+}: {
+  competition: RunningCompetition;
+  onPick: (id: string) => void;
+}) {
+  const { state } = competition;
+  const playable = state !== "before";
+  const share =
+    competition.roundCount > 0
+      ? Math.min(100, (competition.passedRounds / competition.roundCount) * 100)
+      : 0;
+  return (
+    <button
+      onClick={() => onPick(competition.id)}
+      disabled={!playable}
+      className="card p-4 w-full text-start flex items-center gap-3 disabled:opacity-60"
+      style={state === "open" ? { boxShadow: "0 6px 24px rgba(26,63,51,0.12)" } : undefined}
+    >
+      <span
+        className="rounded-2xl flex items-center justify-center shrink-0"
+        style={{ width: 48, height: 48, ...TILE_STYLE[state] }}
+      >
+        <Icon name={STATE_ICON[state]} size={22} />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="flex items-center gap-2">
+          <span className="font-black truncate" style={{ color: "var(--text-main)", fontSize: 15 }}>
+            {competition.name}
+          </span>
+          {competition.visibility === "PRIVATE" && (
+            <Icon name="lock" size={12} color="var(--text-muted)" className="shrink-0" />
+          )}
+          <span
+            className="shrink-0 rounded-full font-black"
+            style={{ padding: "1px 10px", fontSize: 10, ...CHIP_STYLE[state] }}
+          >
+            {STATE_LABEL[state]}
+          </span>
+        </span>
+        <span className="flex items-center gap-2 mt-1.5">
+          <span
+            className="flex-1 block rounded-full overflow-hidden"
+            style={{ height: 5, background: "#eef6f1" }}
+          >
+            <span
+              className="block h-full rounded-full"
+              style={{
+                width: `${share}%`,
+                background:
+                  state === "over"
+                    ? "var(--mint-200)"
+                    : "linear-gradient(90deg, var(--mint-600), var(--mint-500))",
+              }}
+            />
+          </span>
+          <span className="shrink-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
+            <NumericRanges>
+              {`${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
+            </NumericRanges>
+          </span>
+        </span>
+      </span>
+      {playable && (
+        <span
+          className="shrink-0 flex items-center gap-1.5 rounded-full"
+          style={{ padding: "5px 11px", background: "var(--mint-50)" }}
+        >
+          <Icon name="star" size={13} filled color="var(--copper-500)" />
+          <span className="text-sm font-black tabular-nums" style={{ color: "var(--mint-700)" }}>
+            <NumericRanges>{`${competition.myScore}`}</NumericRanges>
+          </span>
+        </span>
+      )}
+    </button>
+  );
+}
 
 export default function QuizPicker({
   competitions,
@@ -67,82 +179,92 @@ export default function QuizPicker({
             </p>
           </div>
         ) : (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          <p className="text-sm font-bold" style={{ color: "var(--text-muted)" }}>
             المسابقات التي تشارك فيها
           </p>
         )}
 
-        {competitions.map((competition) => {
-          const playable = competition.state !== "before";
-          return (
-            <button
-              key={competition.id}
-              onClick={() => onPick(competition.id)}
-              disabled={!playable}
-              className="card p-4 w-full text-start flex items-center gap-3 disabled:opacity-60"
-            >
-              <Icon name={competition.visibility === "PRIVATE" ? "lock" : "trophy"} size={20} />
-              <span className="flex-1 min-w-0">
-                <span className="block font-bold truncate" style={{ color: "var(--text-main)" }}>
-                  {competition.name}
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  <NumericRanges>
-                    {`${STATE_LABEL[competition.state]} · ${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
-                  </NumericRanges>
-                </span>
-              </span>
-              <span className="text-sm font-black" style={{ color: "var(--mint-700)" }}>
-                <NumericRanges>{`${competition.myScore}`}</NumericRanges>
-              </span>
-            </button>
-          );
-        })}
+        {competitions.map((competition) => (
+          <CompetitionCard key={competition.id} competition={competition} onPick={onPick} />
+        ))}
 
         {onTutorial && (
-          <div className="card p-4 relative overflow-hidden">
-            <div
-              className="absolute rounded-full"
-              style={{
-                insetInlineStart: -22,
-                top: -22,
-                width: 90,
-                height: 90,
-                background: "#f7e9de",
-                opacity: 0.6,
-              }}
-            />
-            <div className="relative flex items-center gap-3.5">
+          <>
+            <div className="flex items-center gap-3 pt-2.5">
               <span
-                className="rounded-2xl flex items-center justify-center shrink-0"
+                className="flex-1"
                 style={{
-                  width: 56,
-                  height: 56,
-                  background: "linear-gradient(135deg, #f7e9de, #f1dcc9)",
-                  color: "var(--copper-600)",
+                  height: 1.5,
+                  background: "linear-gradient(to left, #ecd7c5, rgba(236,215,197,0))",
                 }}
+              />
+              <span
+                className="flex items-center gap-1.5 text-xs font-black"
+                style={{ color: "var(--copper-600)" }}
               >
-                <Icon name="play" size={28} />
+                <Icon name="sparkle" size={14} />
+                ركن التجربة
               </span>
-              <span className="min-w-0 flex-1">
-                <span
-                  className="block text-xs font-extrabold"
-                  style={{ color: "var(--copper-600)" }}
-                >
-                  جديد على المسابقات؟
-                </span>
-                <span className="block font-black" style={{ color: "var(--text-main)" }}>
-                  تعلّم اللعب في دقيقة
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  <NumericRanges>3 أسئلة قصيرة للتجربة، لا تُحسب نقاطها</NumericRanges>
-                </span>
-              </span>
+              <span
+                className="flex-1"
+                style={{
+                  height: 1.5,
+                  background: "linear-gradient(to right, #ecd7c5, rgba(236,215,197,0))",
+                }}
+              />
             </div>
-            <button onClick={onTutorial} className="btn btn-copper mt-3.5 text-sm relative">
-              <Icon name="play" size={16} className="icon-inline" /> ابدأ الجولة التجريبية
-            </button>
-          </div>
+            <div
+              className="relative overflow-hidden p-4"
+              style={{
+                background: "linear-gradient(150deg, #fffdfb, #fbf1e8)",
+                border: "1.5px dashed #d9a583",
+                borderRadius: 20,
+              }}
+            >
+              <div
+                className="absolute rounded-full"
+                style={{
+                  insetInlineStart: -22,
+                  top: -22,
+                  width: 90,
+                  height: 90,
+                  background: "#f7e9de",
+                  opacity: 0.7,
+                }}
+              />
+              <div className="relative flex items-center gap-3.5">
+                <span
+                  className="rounded-2xl flex items-center justify-center shrink-0"
+                  style={{
+                    width: 52,
+                    height: 52,
+                    background: "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
+                    boxShadow: "0 4px 12px rgba(140,74,42,0.3)",
+                    color: "#ffffff",
+                  }}
+                >
+                  <Icon name="play" size={26} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span
+                    className="block text-xs font-extrabold"
+                    style={{ color: "var(--copper-600)" }}
+                  >
+                    جديد على المسابقات؟
+                  </span>
+                  <span className="block font-black" style={{ color: "var(--text-main)" }}>
+                    تعلّم اللعب في دقيقة
+                  </span>
+                  <span className="block text-xs" style={{ color: "#8c6a52" }}>
+                    <NumericRanges>3 أسئلة قصيرة للتجربة، لا تُحسب نقاطها</NumericRanges>
+                  </span>
+                </span>
+              </div>
+              <button onClick={onTutorial} className="btn btn-copper mt-3.5 text-sm relative">
+                <Icon name="play" size={16} className="icon-inline" /> ابدأ الجولة التجريبية
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
