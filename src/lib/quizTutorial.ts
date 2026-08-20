@@ -46,17 +46,17 @@ export const TUTORIAL_QUESTIONS: TutorialQuestion[] = [
   },
   {
     id: "t3",
-    text: "أي من هذه المدن على الساحل؟",
+    text: "كم عدد ألوان قوس قزح؟",
     category: "تجربة",
     points: 20,
-    correctCount: 2,
+    correctCount: 1,
     options: [
-      { id: "t3a", text: "نواذيبو" },
-      { id: "t3b", text: "أطار" },
-      { id: "t3c", text: "نواكشوط" },
-      { id: "t3d", text: "النعمة" },
+      { id: "t3a", text: "خمسة" },
+      { id: "t3b", text: "ستة" },
+      { id: "t3c", text: "سبعة" },
+      { id: "t3d", text: "ثمانية" },
     ],
-    correctIds: ["t3a", "t3c"],
+    correctIds: ["t3c"],
   },
 ];
 
