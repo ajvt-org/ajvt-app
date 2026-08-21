@@ -144,7 +144,13 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   for (const p of payments) {
     if (p.purpose !== "MEMBERSHIP") {
-      addRecord(p.amount, p.method, p.createdAt, p.donorName?.trim() || money.anonymousDonor, "دعم");
+      addRecord(
+        p.amount,
+        p.method,
+        p.createdAt,
+        p.donorName?.trim() || money.anonymousDonor,
+        "دعم",
+      );
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
