@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { ConflictError } from "@/lib/errors";
 import { quiz } from "@/lib/messages";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
@@ -119,6 +120,12 @@ export const DELETE = withRoute(
     if (!question) {
       return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
     }
+
+    const [drawn, answered] = await Promise.all([
+      prisma.quizRoundQuestion.count({ where: { questionId: id } }),
+      prisma.quizAttemptAnswer.count({ where: { questionId: id } }),
+    ]);
+    if (drawn > 0 || answered > 0) throw new ConflictError(quiz.questionInUse);
 
     await prisma.quizQuestion.delete({ where: { id } });
     await logAction(session.username, "DELETE_QUIZ_QUESTION", question.text.slice(0, 60));
