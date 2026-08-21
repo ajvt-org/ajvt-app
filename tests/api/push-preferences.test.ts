@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, createUsers, createUser, get, put, signInAs } from "./helpers";
+import { OPT_OUT_CATEGORIES } from "@/lib/notificationCategories";
 
 process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-public-key";
 process.env.VAPID_PRIVATE_KEY = "test-private-key";
@@ -145,7 +146,9 @@ describe("the preferences a member reads and sets", () => {
     const body = await (await READ_PREFS(get("/api/user/notification-preferences"))).json();
 
     expect(body.categories.every((c: { enabled: boolean }) => c.enabled)).toBe(true);
-    expect(body.categories.filter((c: { optOut: boolean }) => c.optOut)).toHaveLength(4);
+    expect(body.categories.filter((c: { optOut: boolean }) => c.optOut)).toHaveLength(
+      OPT_OUT_CATEGORIES.length,
+    );
   });
 
   it("records a category being switched off", async () => {
