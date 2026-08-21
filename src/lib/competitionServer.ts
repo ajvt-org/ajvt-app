@@ -54,7 +54,9 @@ export async function myCompetitions(userId: string) {
     include: {
       participants: { where: { userId }, select: { id: true }, take: 1 },
       rounds: {
-        select: { attempts: { where: { userId }, select: { score: true } } },
+        select: {
+          attempts: { where: { userId }, select: { score: true, voidedAt: true } },
+        },
       },
     },
   });
@@ -63,7 +65,7 @@ export async function myCompetitions(userId: string) {
     .filter((c) => (c.visibility === "PUBLIC" ? c.startedAt !== null : c.participants.length > 0))
     .map((c) => ({
       competition: c,
-      mine: c.rounds.flatMap((r) => r.attempts),
+      mine: c.rounds.flatMap((r) => r.attempts).map((a) => ({ score: a.voidedAt ? 0 : a.score })),
     }));
 }
 

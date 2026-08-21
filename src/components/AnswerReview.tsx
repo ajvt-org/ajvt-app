@@ -43,10 +43,10 @@ function outcomeOf(row: ReviewRow): Outcome {
 
 const seconds = (ms: number | null) => (ms === null ? "—" : `${Math.round(ms / 100) / 10} ث`);
 
-function Tally({ review }: { review: Review }) {
+function Tally({ review, voided }: { review: Review; voided: boolean }) {
   const missed = review.total - review.answered;
   const cells: { value: string; label: string; ink: string }[] = [
-    { value: String(review.score), label: "نقطة", ink: "var(--mint-700)" },
+    { value: voided ? "0" : String(review.score), label: "نقطة", ink: "var(--mint-700)" },
     { value: String(review.correct), label: "صحيحة", ink: LOOK.right.ink },
     { value: String(review.answered - review.correct), label: "خاطئة", ink: LOOK.wrong.ink },
     { value: String(missed), label: "بلا إجابة", ink: LOOK.missed.ink },
@@ -71,10 +71,25 @@ function Tally({ review }: { review: Review }) {
   );
 }
 
-export default function AnswerReview({ review }: { review: Review }) {
+export default function AnswerReview({
+  review,
+  voided = false,
+}: {
+  review: Review;
+  voided?: boolean;
+}) {
   return (
     <div className="space-y-2.5">
-      <Tally review={review} />
+      {voided && (
+        <p
+          className="rounded-xl p-2 text-xs font-bold text-center"
+          style={{ background: "#fdeaea", color: "#991b1b" }}
+        >
+          ألغيت نقاط هذه الجولة
+        </p>
+      )}
+
+      <Tally review={review} voided={voided} />
 
       <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
         <NumericRanges>

@@ -1,4 +1,6 @@
 export const quiz = {
+  questionInUse:
+    "السؤال مستعمل في مسابقة، لا يمكن حذفه لأن المشاركين يراجعون إجاباتهم. عطّله بدل ذلك",
   questionNotFound: "السؤال غير موجود",
   textRequired: "نص السؤال مطلوب",
   categoryRequired: "التصنيف مطلوب",

@@ -20,6 +20,7 @@ const rounds = [
     total: 3,
     finishedAt: null,
     missed: false,
+    voided: false,
     closed: true,
   },
   {
@@ -31,6 +32,7 @@ const rounds = [
     total: 0,
     finishedAt: null,
     missed: true,
+    voided: false,
     closed: true,
   },
   {
@@ -42,6 +44,7 @@ const rounds = [
     total: 3,
     finishedAt: null,
     missed: false,
+    voided: false,
     closed: false,
   },
 ];
@@ -165,5 +168,18 @@ describe("MyScores", () => {
 
     expect(await screen.findByText(/تظهر بعد إغلاق الجولة/)).toBeDefined();
     expect(screen.getByText(/الجولة 1/)).toBeDefined();
+  });
+
+  it("says when a round's points were taken away", async () => {
+    get.mockImplementation((url: string) =>
+      url.includes("/breakdown/")
+        ? Promise.resolve({ detail })
+        : Promise.resolve({
+            rounds: [{ ...rounds[0], voided: true, score: 0 }],
+          }),
+    );
+    render(<MyScores competitionId="c1" />);
+
+    expect(await screen.findByText("ألغيت نقاط هذه الجولة")).toBeDefined();
   });
 });

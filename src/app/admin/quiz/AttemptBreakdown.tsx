@@ -8,6 +8,7 @@ export interface AttemptDetail {
   name: string;
   round: number;
   category: string | null;
+  voided?: boolean;
   breakdown: Review;
 }
 
@@ -32,7 +33,7 @@ export default function AttemptBreakdown({
         </button>
       </div>
 
-      <AnswerReview review={breakdown} />
+      <AnswerReview review={breakdown} voided={detail.voided ?? false} />
     </div>
   );
 }

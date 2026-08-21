@@ -19,6 +19,7 @@ export interface AttemptDetail {
   curve: ScoreCurve;
   boards: { title: string; blockRounds: number; counting: number; wholeRun: boolean }[];
   finishedAt: Date | null;
+  voided: boolean;
   breakdown: Breakdown;
 }
 
@@ -73,6 +74,7 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
       wholeRun: b.wholeRun,
     })),
     finishedAt: attempt.finishedAt,
+    voided: attempt.voidedAt !== null,
     breakdown: breakdownOf(rows, curve),
   };
 }
@@ -88,6 +90,7 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
         id: true,
         score: true,
         finishedAt: true,
+        voidedAt: true,
         round: { select: { index: true, category: true } },
         answers: { select: { isCorrect: true, points: true } },
       },
@@ -107,7 +110,8 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
             attemptId: attempt.id as string | null,
             round: window.index,
             category: attempt.round.category,
-            score: attempt.score,
+            score: attempt.voidedAt ? 0 : attempt.score,
+            voided: attempt.voidedAt !== null,
             correct: attempt.answers.filter((x) => x.isCorrect === true).length,
             total: attempt.answers.length,
             possible: attempt.answers.length,
@@ -125,6 +129,7 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
             possible: 0,
             finishedAt: null,
             missed: true,
+            voided: false,
             closed: window.closesAt <= now,
           },
   );
@@ -139,7 +144,7 @@ export async function attemptsInRound(competitionId: string, index: number) {
 
   const attempts = await prisma.quizAttempt.findMany({
     where: { roundId: round.id },
-    select: { id: true, userId: true, score: true, finishedAt: true },
+    select: { id: true, userId: true, score: true, finishedAt: true, voidedAt: true },
     orderBy: { score: "desc" },
   });
   const members = await prisma.member.findMany({
@@ -148,11 +153,14 @@ export async function attemptsInRound(competitionId: string, index: number) {
   });
   const names = new Map(members.map((m) => [m.userId as string, m.fullName]));
 
-  return attempts.map((a) => ({
-    attemptId: a.id,
-    userId: a.userId,
-    name: names.get(a.userId) ?? "",
-    score: a.score,
-    finishedAt: a.finishedAt,
-  }));
+  return attempts
+    .map((a) => ({
+      attemptId: a.id,
+      userId: a.userId,
+      name: names.get(a.userId) ?? "",
+      score: a.voidedAt ? 0 : a.score,
+      voided: a.voidedAt !== null,
+      finishedAt: a.finishedAt,
+    }))
+    .sort((a, b) => b.score - a.score);
 }
