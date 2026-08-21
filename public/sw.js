@@ -23,22 +23,24 @@ function fallback(path) {
   return caches.match(path).then((cached) => cached || Response.error());
 }
 
+function fetchWithFallback(request, downPath, offlinePath) {
+  return fetch(request)
+    .then((response) => {
+      if (response.status < 500) return response;
+      return caches.match(downPath).then((cached) => cached || response);
+    })
+    .catch(() => fallback(offlinePath));
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.status < 500) return response;
-          return caches.match(DEPLOYING_URL).then((cached) => cached || response);
-        })
-        .catch(() => fallback(OFFLINE_URL))
-    );
+    event.respondWith(fetchWithFallback(event.request, DEPLOYING_URL, OFFLINE_URL));
     return;
   }
 
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin || !OFFLINE_ASSETS.includes(url.pathname)) return;
-  event.respondWith(fetch(event.request).catch(() => fallback(url.pathname)));
+  event.respondWith(fetchWithFallback(event.request, url.pathname, url.pathname));
 });
 
 self.addEventListener("push", (event) => {
