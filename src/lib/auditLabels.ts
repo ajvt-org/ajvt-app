@@ -48,6 +48,8 @@ export const ACTION_LABELS: Record<string, string> = {
   FILL_QUIZ_ROUNDS: "توزيع الأسئلة على الجولات",
   RESET_QUIZ_SCORES: "تصفير نقاط المسابقة",
   REOPEN_QUIZ_ATTEMPT: "إعادة فتح الأسئلة الفائتة لمشارك",
+  VOID_QUIZ_SCORE: "إلغاء نقاط مشارك",
+  RESTORE_QUIZ_SCORE: "إرجاع نقاط مشارك",
   RENEW_MEMBER: "تجديد عضوية",
   CREATE_AGE_GROUP: "إضافة عصر",
   UPDATE_AGE_GROUP: "تعديل اسم عصر",

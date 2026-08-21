@@ -24,7 +24,7 @@ export async function rankBoard(
   const rows = await prisma.$queryRaw<RankedRow[]>`
     WITH scored AS (
       SELECT a."userId" AS "userId",
-             a.score AS score,
+             CASE WHEN a."voidedAt" IS NULL THEN a.score ELSE 0 END AS score,
              a."finishedAt" AS "finishedAt",
              (r."index" / ${size}::int) AS block
       FROM "QuizAttempt" a
