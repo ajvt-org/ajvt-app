@@ -45,17 +45,17 @@ describe("migration folder order", () => {
   });
 
   it("refuses a new migration dated ahead of the clock", () => {
-    const grandfathered = [...HAND_DATED_BEFORE_THE_GUARD].map((folder) =>
-      timestampOf(folder).getTime(),
-    );
     const slack = FUTURE_SLACK_DAYS * 24 * 60 * 60 * 1000;
-    const horizon = Math.max(Date.now(), ...grandfathered) + slack;
+    let previous = -Infinity;
     for (const folder of migrationFolders()) {
-      if (HAND_DATED_BEFORE_THE_GUARD.has(folder)) continue;
-      expect(
-        timestampOf(folder).getTime(),
-        `${folder} is dated more than ${FUTURE_SLACK_DAYS} day(s) past the last migration`,
-      ).toBeLessThanOrEqual(horizon);
+      const at = timestampOf(folder).getTime();
+      if (!HAND_DATED_BEFORE_THE_GUARD.has(folder)) {
+        expect(
+          at,
+          `${folder} is dated more than ${FUTURE_SLACK_DAYS} day(s) past the last migration`,
+        ).toBeLessThanOrEqual(Math.max(Date.now(), previous) + slack);
+      }
+      previous = at;
     }
   });
 

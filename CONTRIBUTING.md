@@ -5,8 +5,13 @@ Setup, the scripts, the test suites and the environment variables are in the
 before opening a pull request — `dev` and `master` are protected, work lands on
 `dev`, and a release is a pull request from `dev` into `master`.
 
-Two things that catch people out:
+Three things that catch people out:
 
+- This is Next.js 16. Its APIs, conventions and file layout differ from what
+  most references and most models will tell you, so a plausible-looking answer
+  is often a version or two out of date. The guides bundled in
+  `node_modules/next/dist/docs/` are the authority — read the relevant one
+  before writing routing or caching code, and heed the deprecation notices.
 - Prettier owns formatting and CI checks it. See
   [Formatting](README.md#formatting), which also has the one-off `git blame`
   setting worth running.
