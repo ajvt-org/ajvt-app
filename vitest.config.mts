@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
+import { DATABASE_BOUND_LIB } from "./tests/coverageScope.js";
 
 export default defineConfig({
   resolve: {
@@ -11,21 +12,29 @@ export default defineConfig({
   test: {
     // Measured over src/lib, which is what this suite tests. Components and screens
     // belong to the UI suite, and counting them here would report a number that
-    // no test in this file could ever move.
+    // no test in this file could ever move. The same goes for the modules bound
+    // to prisma: the api suite exercises those, so counting them here reported a
+    // floor that pure code could not lift and that shifted when logic moved
+    // between the two. coverageScope.test.ts keeps that list honest.
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "json-summary"],
       reportsDirectory: "coverage/unit",
       include: ["src/lib/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/**/*.ui.test.tsx", "src/generated/**", "**/*.d.ts"],
-      // The floor is what was measured when coverage was turned on, rounded
-      // down. It is here to stop the number falling, not to demand a number:
-      // raising it is a separate piece of work with tests attached.
+      exclude: [
+        "src/**/*.test.ts",
+        "src/**/*.ui.test.tsx",
+        "src/generated/**",
+        "**/*.d.ts",
+        ...DATABASE_BOUND_LIB,
+      ],
+      // The floor is what pure src/lib actually reaches, rounded down. It is
+      // here to stop the number falling, not to demand a number.
       thresholds: {
-        lines: 47,
-        functions: 50,
-        branches: 54,
-        statements: 48,
+        lines: 74,
+        functions: 78,
+        branches: 75,
+        statements: 74,
       },
     },
     environment: "node",

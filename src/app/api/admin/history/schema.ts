@@ -3,7 +3,13 @@ import { common } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 
-export const HISTORY_TARGETS = ["Expense", "Donation", "Member", "Activity"] as const;
+export const HISTORY_TARGETS = [
+  "Expense",
+  "Donation",
+  "Member",
+  "Activity",
+  "ActivityRegistration",
+] as const;
 
 export type HistoryTarget = (typeof HISTORY_TARGETS)[number];
 

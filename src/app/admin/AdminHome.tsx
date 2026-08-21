@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, errorMessage } from "@/lib/api";
 import { loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
@@ -56,6 +56,7 @@ function Answer({
 export default function AdminHome() {
   const router = useRouter();
   const [summary, setSummary] = useState<HomeSummary | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -65,13 +66,32 @@ export default function AdminHome() {
         if (alive) setSummary(data);
       })
       .catch((e) => {
-        if (e instanceof ApiError && e.status === 401)
+        if (!alive) return;
+        const status = e instanceof ApiError ? e.status : 0;
+        if (status === 401) {
           router.replace(loginPathWithNext("/admin/login"));
+          return;
+        }
+        if (status === 403) {
+          router.replace("/admin/activities");
+          return;
+        }
+        setError(errorMessage(e));
       });
     return () => {
       alive = false;
     };
   }, [router]);
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <p className="card p-4 text-sm" style={{ color: "var(--danger)" }}>
+          {error}
+        </p>
+      </div>
+    );
+  }
 
   if (!summary) return <PageLoading />;
 

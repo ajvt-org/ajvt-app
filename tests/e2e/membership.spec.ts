@@ -43,7 +43,8 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await adminPage.fill('input[type="password"]', "admin123");
   await adminPage.click('button[type="submit"]');
 
-  await adminPage.waitForURL("**/admin/dashboard");
+  await adminPage.waitForURL("**/admin");
+  await adminPage.goto("/admin/dashboard");
   await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
 
   await adminPage.getByText(MEMBER.fullName).first().click();

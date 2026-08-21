@@ -17,10 +17,13 @@ Three things that catch people out:
   setting worth running.
 - A schema change needs a migration in `prisma/migrations/`, written by hand.
   Every boot runs `prisma migrate deploy`, so a release migrates the production
-  database. Name the folder with the real current UTC time — migrations replay
-  in folder-name order on a rebuild, and `src/lib/migrationOrder.test.ts` fails
-  the build if a new folder sorts before an existing one or is dated more than
-  a day past the last migration.
+  database. Create the folder with `npm run db:new-migration -- <name>` rather
+  than naming it yourself: migrations replay in folder-name order on a rebuild,
+  so a new one has to sort after every existing one, and
+  `src/lib/migrationOrder.test.ts` fails the build if it does not or if it is
+  dated more than a day past the last migration. Folders have been hand-dated
+  ahead of the clock before, and when they have, today's date sorts too early —
+  the script takes the later of the clock and one second past the last folder.
 
 Before pushing:
 
