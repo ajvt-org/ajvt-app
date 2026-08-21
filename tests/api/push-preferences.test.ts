@@ -1,6 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, createUsers, createUser, get, put, signInAs } from "./helpers";
+import {
+  resetDb,
+  createUsers,
+  createUser,
+  createAdmin,
+  get,
+  post,
+  put,
+  signInAs,
+  signInAsAdmin,
+} from "./helpers";
 import { OPT_OUT_CATEGORIES } from "@/lib/notificationCategories";
 
 process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-public-key";
@@ -17,7 +27,8 @@ vi.mock("web-push", () => ({
   },
 }));
 
-const { sendPushToUsers, sendPushToUser } = await import("@/lib/push");
+const { sendPushToUsers, sendPushToUser, sendPushIgnoringPreferences } = await import("@/lib/push");
+const { POST: BROADCAST } = await import("@/app/api/admin/notifications/broadcast/route");
 const { GET: READ_PREFS, PUT: SET_PREF } =
   await import("@/app/api/user/notification-preferences/route");
 
@@ -267,6 +278,60 @@ async function runningCompetitionWithQuestions() {
   await prisma.quizRoundQuestion.create({ data: { roundId: round.id, questionId: question.id } });
   return competition;
 }
+
+describe("a push that ignores preferences", () => {
+  beforeEach(async () => {
+    await resetDb();
+    sent.calls = [];
+  });
+
+  it("does not deliver an ordinary broadcast to a member who switched it off", async () => {
+    const user = await subscriber("22000001");
+    await optOut(user.id, "BROADCAST");
+
+    await sendPushToUsers([user.id], PAYLOAD, "BROADCAST");
+
+    expect(sent.calls).toEqual([]);
+  });
+
+  it("delivers past the switch when preferences are ignored", async () => {
+    const user = await subscriber("22000001");
+    await optOut(user.id, "BROADCAST");
+
+    await sendPushIgnoringPreferences([user.id], PAYLOAD);
+
+    expect(sent.calls).toEqual([endpointOf(user)]);
+  });
+
+  it("reaches everyone from the broadcast route only when asked to", async () => {
+    const quiet = await paidMember("22000001", "صامت");
+    await optOut(quiet.id, "BROADCAST");
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    const ordinary = await BROADCAST(
+      post("/api/admin/notifications/broadcast", { target: "ALL", title: "عنوان", body: "نص" }),
+    );
+    expect(ordinary.status).toBe(200);
+    expect(sent.calls).toEqual([]);
+
+    const everyone = await BROADCAST(
+      post("/api/admin/notifications/broadcast", {
+        target: "ALL",
+        title: "عنوان",
+        body: "نص",
+        toEveryone: true,
+      }),
+    );
+    expect(everyone.status).toBe(200);
+    expect(sent.calls).toEqual([endpointOf(quiet)]);
+
+    const actions = await prisma.auditLog.findMany();
+    expect(actions.map((a) => a.action).sort()).toEqual([
+      "SEND_BROADCAST",
+      "SEND_BROADCAST_TO_EVERYONE",
+    ]);
+  });
+});
 
 describe("the round announcement", () => {
   beforeEach(async () => {
