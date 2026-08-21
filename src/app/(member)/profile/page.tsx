@@ -8,6 +8,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import MemberProfile from "@/components/MemberProfile";
 import NotificationsToggle from "@/components/NotificationsToggle";
+import PaymentReceipts from "@/components/PaymentReceipts";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
 import SurplusVisibility from "@/components/SurplusVisibility";
@@ -73,6 +74,8 @@ export default function ProfilePage() {
               }
             />
           )}
+
+          {member && <PaymentReceipts />}
 
           <div className="space-y-3 pt-2">
             <NotificationsToggle awaitingDecision={member?.status === "PENDING"} />
