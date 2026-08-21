@@ -102,7 +102,6 @@ export const PATCH = withRoute(
       awayTeamId?: string;
     } = {};
 
-    // Manual override — e.g. fixing an auto-generated bracket pairing.
     if (homeTeamId !== undefined || awayTeamId !== undefined) {
       const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
       const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
