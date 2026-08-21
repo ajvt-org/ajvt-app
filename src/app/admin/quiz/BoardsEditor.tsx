@@ -7,10 +7,12 @@ import { MAX_BOARDS, type BoardConfig } from "@/lib/competitionConfig";
 export default function BoardsEditor({
   boards,
   disabled,
+  shapeLocked = false,
   onChange,
 }: {
   boards: BoardConfig[];
   disabled: boolean;
+  shapeLocked?: boolean;
   onChange: (boards: BoardConfig[]) => void;
 }) {
   function set(index: number, patch: Partial<BoardConfig>) {
@@ -83,7 +85,7 @@ export default function BoardsEditor({
                     min={1}
                     ariaLabel={`جولات الترتيب ${index + 1}`}
                     value={board.blockRounds}
-                    disabled={disabled}
+                    disabled={disabled || (shapeLocked && !!board.id)}
                     onChange={(blockRounds) => set(index, { blockRounds })}
                   />
                 </label>
@@ -93,7 +95,7 @@ export default function BoardsEditor({
                     min={1}
                     ariaLabel={`المحتسبة في الترتيب ${index + 1}`}
                     value={board.counting}
-                    disabled={disabled}
+                    disabled={disabled || (shapeLocked && !!board.id)}
                     onChange={(counting) => set(index, { counting })}
                   />
                 </label>
@@ -103,7 +105,7 @@ export default function BoardsEditor({
               <input
                 type="checkbox"
                 checked={board.wholeRun}
-                disabled={disabled}
+                disabled={disabled || (shapeLocked && !!board.id)}
                 onChange={(e) =>
                   set(
                     index,

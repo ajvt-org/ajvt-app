@@ -6,6 +6,7 @@ import { roundWindows } from "./quizRound";
 import type { ScoreCurve } from "./competitionConfig";
 
 export const NO_ATTEMPT = "لا توجد محاولة";
+export const ROUND_STILL_OPEN = "تفاصيل الإجابات تظهر بعد إغلاق الجولة";
 
 export interface AttemptDetail {
   attemptId: string;
@@ -112,6 +113,7 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
             possible: attempt.answers.length,
             finishedAt: attempt.finishedAt,
             missed: false,
+            closed: window.closesAt <= now,
           }
         : {
             attemptId: null,
@@ -123,6 +125,7 @@ export async function attemptsOf(competitionId: string, userId: string, now = ne
             possible: 0,
             finishedAt: null,
             missed: true,
+            closed: window.closesAt <= now,
           },
   );
 }

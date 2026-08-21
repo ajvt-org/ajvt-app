@@ -10,10 +10,12 @@ import {
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { requireBank } from "./questionBankServer";
 import type { RoundShape } from "./quizRound";
+import { droppedBoards, mergeRunningBoards } from "./runningBoards";
 
 export const ALREADY_STARTED = "المسابقة انطلقت، لا يمكن تعديل إعداداتها";
 export const STARTS_IN_PAST = "وقت البداية قد مضى";
 export const NO_COMPETITION = "لا توجد مسابقة";
+export const NOT_STARTED_YET = "المسابقة لم تنطلق بعد";
 
 export async function listCompetitions() {
   return prisma.competition.findMany({
@@ -93,6 +95,7 @@ export async function setParticipants(competitionId: string, userIds: string[]) 
 
 type CompetitionRow = Competition & {
   boards?: {
+    id?: string;
     title: string;
     blockTitle: string;
     blockRounds: number;
@@ -111,6 +114,7 @@ function asConfig(row: CompetitionRow): CompetitionConfig {
     roundWindowMinutes: row.roundWindowMinutes,
     servedCount: row.servedCount,
     boards: (row.boards ?? DEFAULT_BOARDS).map((b) => ({
+      id: "id" in b ? b.id : undefined,
       title: b.title,
       blockTitle: b.blockTitle,
       blockRounds: b.blockRounds,
@@ -129,6 +133,53 @@ function asRow(config: CompetitionConfig) {
   const { boards, ...rest } = config;
   void boards;
   return { ...rest, startsAt: new Date(config.startsAt) };
+}
+
+export async function saveRunningCompetition(raw: Partial<CompetitionConfig>, id: string) {
+  const existing = await prisma.competition.findUnique({
+    where: { id },
+    include: { boards: { orderBy: { order: "asc" } } },
+  });
+  if (!existing) throw new NotFoundError(NO_COMPETITION);
+  if (!existing.startedAt) throw new ConflictError(NOT_STARTED_YET);
+
+  const input = pickConfig(raw);
+  const current = asConfig(existing);
+  const boards = mergeRunningBoards(existing.boards, input.boards ?? current.boards);
+
+  const merged: CompetitionConfig = { ...current, name: input.name ?? current.name, boards };
+  const problem = validateConfig(merged);
+  if (problem) throw new ValidationError(problem);
+
+  await prisma.$transaction([
+    prisma.quizBoard.deleteMany({
+      where: { competitionId: existing.id, id: { in: droppedBoards(existing.boards, boards) } },
+    }),
+    ...boards.map((board, order) =>
+      board.id
+        ? prisma.quizBoard.update({
+            where: { id: board.id },
+            data: { title: board.title.trim(), blockTitle: board.blockTitle.trim(), order },
+          })
+        : prisma.quizBoard.create({
+            data: {
+              competitionId: existing.id,
+              title: board.title.trim(),
+              blockTitle: board.blockTitle.trim(),
+              blockRounds: board.blockRounds,
+              counting: board.counting,
+              wholeRun: board.wholeRun,
+              order,
+            },
+          }),
+    ),
+    prisma.competition.update({
+      where: { id: existing.id },
+      data: { name: merged.name.trim() },
+    }),
+  ]);
+
+  return requireCompetition(existing.id);
 }
 
 export async function saveCompetition(

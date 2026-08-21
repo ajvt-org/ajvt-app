@@ -31,7 +31,7 @@ const saved = {
   groupSize: 7,
   countingRounds: 6,
   categoryRounds: false,
-  boards: [{ title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
+  boards: [{ id: "b1", title: "ترتيب الجولة", blockRounds: 1, counting: 1, wholeRun: false }],
   bankId: "general",
   fullSeconds: 10,
   maxSeconds: 30,
@@ -324,7 +324,7 @@ describe("CompetitionPanel", () => {
     );
   });
 
-  it("locks every field once it has started", async () => {
+  it("locks the schedule once it has started but keeps the name open", async () => {
     get.mockResolvedValue({ competition: { ...saved, startedAt: "2026-08-20T08:00:00.000Z" } });
     render(
       <CompetitionPanel
@@ -336,10 +336,12 @@ describe("CompetitionPanel", () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
-    expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).disabled).toBe(true);
+    await waitFor(() => expect(screen.getByText(/المسابقة انطلقت/)).toBeDefined());
+    expect((screen.getByLabelText("اسم المسابقة") as HTMLInputElement).disabled).toBe(false);
+    expect((screen.getByLabelText("عنوان الترتيب 1") as HTMLInputElement).disabled).toBe(false);
     expect((screen.getByLabelText("عدد الجولات") as HTMLInputElement).disabled).toBe(true);
-    expect(screen.queryByRole("button", { name: /حفظ الإعدادات/ })).toBeNull();
+    expect((screen.getByLabelText("جولات الترتيب 1") as HTMLInputElement).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: /حفظ ما يمكن تعديله/ })).toBeDefined();
     expect(screen.queryByRole("button", { name: /تصفير النقاط/ })).toBeNull();
   });
 
@@ -397,7 +399,7 @@ describe("CompetitionPanel", () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText(/الإعدادات مغلقة/)).toBeDefined());
+    await waitFor(() => expect(screen.getByText(/المسابقة انطلقت/)).toBeDefined());
     await userEvent.click(screen.getByRole("button", { name: /حذف المسابقة/ }));
 
     expect(screen.getByText(/يمحو جولاتها ومحاولات المشاركين/)).toBeDefined();

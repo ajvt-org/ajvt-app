@@ -12,6 +12,8 @@ interface AttemptRow {
   finishedAt: string | null;
 }
 
+const REOPENED = "أعيد فتح الأسئلة الفائتة";
+
 export default function ScoresPanel({
   competitionId,
   roundCount,
@@ -24,6 +26,23 @@ export default function ScoresPanel({
   const [opened, setOpened] = useState(true);
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
+  const [role, setRole] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .get<{ role: string }>("/api/admin/me")
+      .then((data) => {
+        if (alive) setRole(data.role);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -42,7 +61,7 @@ export default function ScoresPanel({
     return () => {
       alive = false;
     };
-  }, [competitionId, round]);
+  }, [competitionId, round, reload]);
 
   async function open(attemptId: string) {
     setError("");
@@ -53,6 +72,22 @@ export default function ScoresPanel({
       setDetail(data.detail);
     } catch (e) {
       setError(errorMessage(e));
+    }
+  }
+
+  async function reopen(attemptId: string) {
+    setError("");
+    setNote("");
+    setBusy(attemptId);
+    try {
+      await api.post(`/api/admin/quiz/attempts/${attemptId}/reopen`, {});
+      setNote(REOPENED);
+      setReload((n) => n + 1);
+      setDetail(null);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -87,6 +122,12 @@ export default function ScoresPanel({
         </p>
       )}
 
+      {note && (
+        <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
+          {note}
+        </p>
+      )}
+
       {rows.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {opened ? "لم يشارك أحد في هذه الجولة" : "لم تبدأ هذه الجولة بعد"}
@@ -95,17 +136,32 @@ export default function ScoresPanel({
 
       <div className="space-y-1">
         {rows.map((row) => (
-          <button
+          <div
             key={row.attemptId}
-            onClick={() => open(row.attemptId)}
-            className="w-full flex items-center justify-between rounded-lg p-2 text-xs"
+            className="flex items-center gap-2 rounded-lg p-2 text-xs"
             style={{ background: "var(--surface-2)" }}
           >
-            <span style={{ color: "var(--text-main)" }}>{row.name}</span>
-            <span className="font-bold" style={{ color: "var(--mint-700)" }}>
-              {row.score}
-            </span>
-          </button>
+            <button
+              onClick={() => open(row.attemptId)}
+              className="flex-1 flex items-center justify-between text-start"
+            >
+              <span style={{ color: "var(--text-main)" }}>{row.name}</span>
+              <span className="font-bold" style={{ color: "var(--mint-700)" }}>
+                {row.score}
+              </span>
+            </button>
+            {role === "SUPER" && (
+              <button
+                onClick={() => reopen(row.attemptId)}
+                disabled={busy === row.attemptId}
+                className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
+                style={{ background: "var(--copper-500)", color: "#fff" }}
+                title="إعادة فتح الأسئلة الفائتة"
+              >
+                <IconLabel name="refresh">إعادة فتح</IconLabel>
+              </button>
+            )}
+          </div>
         ))}
       </div>
 

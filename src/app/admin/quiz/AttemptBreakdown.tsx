@@ -1,33 +1,15 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import { countedNoun, CORRECT_ANSWERS, POINTS, QUESTIONS } from "@/lib/arabicPlural";
+import AnswerReview, { type Review } from "@/components/AnswerReview";
 
 export interface AttemptDetail {
   attemptId: string;
   name: string;
   round: number;
   category: string | null;
-  breakdown: {
-    rows: {
-      position: number;
-      question: string;
-      maxPoints: number;
-      isCorrect: boolean | null;
-      elapsedMs: number | null;
-      points: number;
-      percent: number;
-    }[];
-    correct: number;
-    answered: number;
-    total: number;
-    score: number;
-    possible: number;
-    elapsedMs: number;
-  };
+  breakdown: Review;
 }
-
-const seconds = (ms: number | null) => (ms === null ? "" : `${Math.round(ms / 100) / 10} ث`);
 
 export default function AttemptBreakdown({
   detail,
@@ -50,36 +32,7 @@ export default function AttemptBreakdown({
         </button>
       </div>
 
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {countedNoun(breakdown.correct, CORRECT_ANSWERS)} من{" "}
-        {countedNoun(breakdown.total, QUESTIONS)}، المجموع {breakdown.score} من{" "}
-        {countedNoun(breakdown.possible, POINTS)}، الوقت {seconds(breakdown.elapsedMs)}
-      </p>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr style={{ color: "var(--text-muted)" }}>
-              <th className="p-1 text-start">السؤال</th>
-              <th className="p-1">النقاط</th>
-              <th className="p-1">الوقت</th>
-              <th className="p-1">النسبة</th>
-              <th className="p-1">المحصلة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {breakdown.rows.map((row) => (
-              <tr key={row.position} style={{ color: "var(--text-main)" }}>
-                <td className="p-1">{row.question}</td>
-                <td className="p-1 text-center">{row.maxPoints}</td>
-                <td className="p-1 text-center">{seconds(row.elapsedMs)}</td>
-                <td className="p-1 text-center">{row.percent}%</td>
-                <td className="p-1 text-center font-bold">{row.points}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <AnswerReview review={breakdown} />
     </div>
   );
 }

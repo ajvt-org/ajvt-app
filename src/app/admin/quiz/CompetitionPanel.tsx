@@ -69,6 +69,8 @@ export default function CompetitionPanel({
       const data = competitionId
         ? await api.put<{ competition: Competition }>(path, draft)
         : await api.post<{ competition: Competition }>("/api/admin/quiz/competitions", draft);
+      setDraft(draftOf(data.competition));
+      setStartedAt(data.competition.startedAt);
       setNotice("تم الحفظ");
       onSaved(data.competition.id);
       onChanged();
@@ -128,11 +130,18 @@ export default function CompetitionPanel({
           className="text-xs font-semibold rounded-lg p-2"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          المسابقة انطلقت، الإعدادات مغلقة
+          المسابقة انطلقت. يمكن تعديل الاسم وعناوين الترتيبات وإضافة ترتيب أو حذفه، أما الجولات
+          والتوقيت واحتساب النقاط فمغلقة
         </p>
       )}
 
-      <CompetitionFields draft={draft} banks={banks} locked={locked} onChange={set} />
+      <CompetitionFields
+        draft={draft}
+        banks={banks}
+        locked={locked}
+        running={locked}
+        onChange={set}
+      />
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
@@ -143,6 +152,12 @@ export default function CompetitionPanel({
         <p className="text-xs font-semibold" style={{ color: "var(--mint-700)" }}>
           {notice}
         </p>
+      )}
+
+      {locked && (
+        <button onClick={save} disabled={busy} className="btn btn-primary btn-sm text-xs">
+          <IconLabel name="save">حفظ ما يمكن تعديله</IconLabel>
+        </button>
       )}
 
       {!locked && (

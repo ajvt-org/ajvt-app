@@ -267,9 +267,14 @@ describe("configuring a competition before it starts", () => {
   it("freezes the bank once the competition has started", async () => {
     const bank = await prisma.questionBank.create({ data: { name: "بنك آخر" } });
     const c = await stocked();
+    const before = (await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).bankId;
     await start(c.id);
 
-    expect((await save(c.id, { bankId: bank.id })).status).toBe(409);
+    await save(c.id, { bankId: bank.id });
+
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id: c.id } })).bankId).toBe(
+      before,
+    );
   });
 
   it("refuses a visibility that is neither public nor private", async () => {
@@ -541,12 +546,125 @@ describe("once a competition has started", () => {
     ).not.toBeNull();
   });
 
-  it("freezes every setting", async () => {
-    const res = await save(id, { servedCount: 3 });
+  it("keeps the schedule and the scoring where they are", async () => {
+    const res = await save(id, {
+      servedCount: 3,
+      roundCount: 40,
+      startsAt: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+      maxSeconds: 90,
+    });
 
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe(ALREADY_STARTED);
-    expect((await prisma.competition.findUniqueOrThrow({ where: { id } })).servedCount).toBe(2);
+    expect(res.status).toBe(200);
+    const after = await prisma.competition.findUniqueOrThrow({ where: { id } });
+    expect(after.servedCount).toBe(2);
+    expect(after.roundCount).toBe(2);
+    expect(after.maxSeconds).toBe(DEFAULT_CURVE.maxSeconds);
+  });
+
+  it("takes a new name", async () => {
+    await save(id, { name: "المسابقة الكبرى" });
+
+    expect((await prisma.competition.findUniqueOrThrow({ where: { id } })).name).toBe(
+      "المسابقة الكبرى",
+    );
+  });
+
+  it("takes a new title and period name on a standing, and keeps its id", async () => {
+    const before = await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+
+    await save(id, {
+      boards: [{ id: before.id, title: "ترتيب اليوم", blockTitle: "اليوم" }],
+    });
+
+    const after = await prisma.quizBoard.findUniqueOrThrow({ where: { id: before.id } });
+    expect(after.title).toBe("ترتيب اليوم");
+    expect(after.blockTitle).toBe("اليوم");
+  });
+
+  it("keeps a standing's block size and counting even when they are sent", async () => {
+    const before = await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+
+    await save(id, {
+      boards: [{ id: before.id, title: before.title, blockRounds: 9, counting: 4, wholeRun: true }],
+    });
+
+    const after = await prisma.quizBoard.findUniqueOrThrow({ where: { id: before.id } });
+    expect(after.blockRounds).toBe(before.blockRounds);
+    expect(after.counting).toBe(before.counting);
+    expect(after.wholeRun).toBe(before.wholeRun);
+  });
+
+  it("adds a standing that ranks the rounds already played", async () => {
+    const kept = await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+
+    await save(id, {
+      boards: [
+        { id: kept.id, title: kept.title },
+        { title: "أفضل جولتين", blockTitle: "المرحلة", blockRounds: 2, counting: 2 },
+      ],
+    });
+
+    const boards = await prisma.quizBoard.findMany({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+    expect(boards.map((b) => b.title)).toEqual([kept.title, "أفضل جولتين"]);
+    expect(boards[1].blockRounds).toBe(2);
+  });
+
+  it("hands the new standing back with its id, so saving twice adds it once", async () => {
+    const kept = await prisma.quizBoard.findFirstOrThrow({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+    const body = {
+      boards: [
+        { id: kept.id, title: kept.title },
+        { title: "أفضل جولتين", blockTitle: "المرحلة", blockRounds: 2, counting: 2 },
+      ],
+    };
+
+    const first = await (await save(id, body)).json();
+    const added = first.competition.boards.find(
+      (b: { title: string }) => b.title === "أفضل جولتين",
+    );
+    expect(added.id).toBeTruthy();
+
+    await save(id, {
+      boards: [
+        { id: kept.id, title: kept.title },
+        { id: added.id, title: "أفضل جولتين", blockTitle: "المرحلة" },
+      ],
+    });
+
+    expect(await prisma.quizBoard.count({ where: { competitionId: id } })).toBe(2);
+  });
+
+  it("removes a standing the admin dropped", async () => {
+    const boards = await prisma.quizBoard.findMany({
+      where: { competitionId: id },
+      orderBy: { order: "asc" },
+    });
+
+    await save(id, { boards: [{ id: boards[0].id, title: boards[0].title }] });
+
+    expect(await prisma.quizBoard.count({ where: { competitionId: id } })).toBe(1);
+  });
+
+  it("refuses to leave a competition with no standing at all", async () => {
+    const res = await save(id, { boards: [] });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.quizBoard.count({ where: { competitionId: id } })).toBeGreaterThan(0);
   });
 
   it("refuses to start twice", async () => {
