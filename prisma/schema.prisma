@@ -41,6 +41,7 @@ model User {
   createdAt             DateTime           @default(now())
   members               Member[]
   pushSubscriptions     PushSubscription[]
+  notificationPrefs     NotificationPreference[]
   teamFollows           TeamFollow[]
   mvpVotes              MvpVote[]
   quizAttempts          QuizAttempt[]
@@ -436,6 +437,18 @@ model PushSubscription {
   p256dh    String
   auth      String
   createdAt DateTime @default(now())
+}
+
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  enabled   Boolean
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, category])
+  @@index([userId])
 }
 
 model AuditLog {

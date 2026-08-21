@@ -64,7 +64,7 @@ async function announceFor(
     );
     targets = eligible.filter((userId) => listed.has(userId));
   }
-  await sendPushToUsers(targets, DAY_OPEN_PAYLOAD).catch((err) =>
+  await sendPushToUsers(targets, DAY_OPEN_PAYLOAD, "QUIZ_ROUND").catch((err) =>
     logger.error("quiz.day.push.error", err),
   );
   return targets.length;
