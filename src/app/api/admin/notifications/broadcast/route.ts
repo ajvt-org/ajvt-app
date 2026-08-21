@@ -15,7 +15,10 @@ export const POST = withRoute(
   "POST /api/admin/notifications/broadcast",
   async (req: NextRequest) => {
     const session = await requireAdminRole("SUPER");
-    const { target, activityId, age, title, body } = parse(broadcastSchema, await req.json());
+    const { target, activityId, age, title, body, toEveryone } = parse(
+      broadcastSchema,
+      await req.json(),
+    );
 
     const where: {
       status: ReviewStatus;
@@ -30,13 +33,15 @@ export const POST = withRoute(
       new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)),
     );
 
-    await sendPushToUsers(userIds, { title: title.trim(), body: body.trim() }).catch((err) =>
-      logger.error("broadcast.push.error", err),
-    );
+    await sendPushToUsers(
+      userIds,
+      { title: title.trim(), body: body.trim() },
+      toEveryone ? undefined : "BROADCAST",
+    ).catch((err) => logger.error("broadcast.push.error", err));
 
     await logAction(
       session.username,
-      "SEND_BROADCAST",
+      toEveryone ? "SEND_BROADCAST_TO_EVERYONE" : "SEND_BROADCAST",
       `${title.trim()} → ${counted(userIds.length, RECIPIENT)}`,
     );
 

@@ -86,14 +86,18 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   );
 
   if (updated.userId) {
-    sendPushToUser(updated.userId, {
-      title: push.title,
-      body:
-        action === "ACTIVE"
-          ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
-          : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
-      url: "/profile",
-    }).catch((err) => logger.error("push.notify.error", err));
+    sendPushToUser(
+      updated.userId,
+      {
+        title: push.title,
+        body:
+          action === "ACTIVE"
+            ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
+            : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
+        url: "/profile",
+      },
+      "MEMBERSHIP_DECISION",
+    ).catch((err) => logger.error("push.notify.error", err));
   }
 
   return NextResponse.json({ member: updated });

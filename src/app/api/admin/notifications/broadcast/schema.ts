@@ -17,6 +17,7 @@ export const broadcastSchema = z
     age: z.string(AGE_REQUIRED).nullish(),
     title: z.string(BOTH_REQUIRED).refine((v) => v.trim().length > 0, BOTH_REQUIRED),
     body: z.string(BOTH_REQUIRED).refine((v) => v.trim().length > 0, BOTH_REQUIRED),
+    toEveryone: z.boolean(INVALID).optional(),
   })
   .refine((v) => v.title.trim().length <= TITLE_MAX && v.body.trim().length <= BODY_MAX, TOO_LONG)
   .refine((v) => v.target !== "ACTIVITY" || !!v.activityId, ACTIVITY_REQUIRED)

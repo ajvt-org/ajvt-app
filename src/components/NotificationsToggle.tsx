@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Icon from "./Icon";
 import Toggle from "./Toggle";
+import NotificationCategories from "./NotificationCategories";
 
 // A push subscription belongs to the account, not to a person on it, so this
 // is one switch on the profile rather than a prompt beside every member.
@@ -125,21 +126,24 @@ export default function NotificationsToggle({
             : "لتصلك تذكيرات المباريات وأخبار الأنشطة أولاً بأول";
 
   return (
-    <div className="card p-4 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <Icon name="bell" size={15} className="icon-inline" /> الإشعارات
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-          {hint}
-        </p>
+    <>
+      <div className="card p-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            <Icon name="bell" size={15} className="icon-inline" /> الإشعارات
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {hint}
+          </p>
+        </div>
+        <Toggle
+          label="الإشعارات"
+          checked={on}
+          disabled={status === "denied" || status === "busy"}
+          onChange={(next) => (next ? enable() : disable())}
+        />
       </div>
-      <Toggle
-        label="الإشعارات"
-        checked={on}
-        disabled={status === "denied" || status === "busy"}
-        onChange={(next) => (next ? enable() : disable())}
-      />
-    </div>
+      {on && <NotificationCategories />}
+    </>
   );
 }

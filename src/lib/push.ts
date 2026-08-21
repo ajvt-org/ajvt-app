@@ -1,6 +1,7 @@
 import webpush from "web-push";
 import { prisma } from "./prisma";
 import { logger } from "./logger";
+import { isOptOutCategory, type CategoryKey } from "./notificationCategories";
 
 const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const privateKey = process.env.VAPID_PRIVATE_KEY;
@@ -46,22 +47,32 @@ async function deliver(
   );
 }
 
+function silencedBy(category?: CategoryKey) {
+  if (!category || !isOptOutCategory(category)) return {};
+  return { user: { notificationPrefs: { none: { category, enabled: false } } } };
+}
+
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; url?: string },
+  category?: CategoryKey,
 ) {
   if (!publicKey || !privateKey) return;
-  await deliver(await prisma.pushSubscription.findMany({ where: { userId } }), payload);
+  await deliver(
+    await prisma.pushSubscription.findMany({ where: { userId, ...silencedBy(category) } }),
+    payload,
+  );
 }
 
 export async function sendPushToUsers(
   userIds: string[],
   payload: { title: string; body: string; url?: string },
+  category?: CategoryKey,
 ) {
   if (!publicKey || !privateKey || userIds.length === 0) return;
 
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId: { in: userIds } },
+    where: { userId: { in: userIds }, ...silencedBy(category) },
   });
 
   for (let i = 0; i < subscriptions.length; i += PUSH_BATCH) {
