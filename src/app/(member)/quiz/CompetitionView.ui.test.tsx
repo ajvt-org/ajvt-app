@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 
@@ -317,21 +317,29 @@ describe("CompetitionView", () => {
   it("says how much of an open round is left", () => {
     setup({ closesAt: new Date(Date.now() + 3 * 3_600_000).toISOString() });
 
-    expect(screen.getByText(/يبقى من الجولة/)).toBeDefined();
+    expect(screen.getByText(/تُغلق الجولة بعد/)).toBeDefined();
     expect(screen.getByLabelText("الوقت المتبقي لإغلاق الجولة").textContent).toMatch(/02:59/);
   });
 
-  it("turns the clock urgent as the door starts to close", () => {
+  it("keeps the wording the same however much is left", () => {
     setup({ closesAt: new Date(Date.now() + 10 * 60_000).toISOString() });
 
-    expect(screen.getByText(/تُغلق الجولة بعد/)).toBeDefined();
-    expect(screen.queryByText(/يبقى من الجولة/)).toBeNull();
+    expect(screen.getAllByText(/تُغلق الجولة بعد/)).toHaveLength(1);
+  });
+
+  it("colours the clock as the round nears its close", () => {
+    setup({ closesAt: new Date(Date.now() + 10 * 60_000).toISOString() });
+    const urgent = screen.getByText(/تُغلق الجولة بعد/).style.color;
+
+    cleanup();
+    setup({ closesAt: new Date(Date.now() + 3 * 3_600_000).toISOString() });
+
+    expect(screen.getByText(/تُغلق الجولة بعد/).style.color).not.toBe(urgent);
   });
 
   it("keeps the round clock off a round that is not open", () => {
     setup({ state: "closed", closesAt: null, next: { index: 3, opensAt: FUTURE } });
 
-    expect(screen.queryByText(/يبقى من الجولة/)).toBeNull();
     expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
   });
 
@@ -343,6 +351,6 @@ describe("CompetitionView", () => {
     });
 
     expect(screen.getByText(/الجولة القادمة بعد/)).toBeDefined();
-    expect(screen.queryByText(/يبقى من الجولة/)).toBeNull();
+    expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
   });
 });

@@ -76,7 +76,7 @@ function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () =
       }}
     >
       <Icon name="clock" size={13} />
-      {urgent ? "تُغلق الجولة بعد" : "يبقى من الجولة"}
+      تُغلق الجولة بعد
       <NextRoundCountdown
         opensAt={closesAt}
         onReached={onReached}
