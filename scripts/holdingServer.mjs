@@ -14,7 +14,6 @@ export function startHoldingServer(port) {
       res.end(JSON.stringify({ ok: false }));
       return;
     }
-    // The page's own logo, the one asset it needs to render correctly.
     if (req.url === "/version-final.png") {
       res.writeHead(200, { "content-type": "image/png" });
       res.end(LOGO);
