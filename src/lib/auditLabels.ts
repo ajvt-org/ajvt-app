@@ -26,6 +26,7 @@ export const ACTION_LABELS: Record<string, string> = {
   UPDATE_GROUP: "تعديل مجموعة",
   DELETE_GROUP: "حذف مجموعة",
   SEND_BROADCAST: "إرسال إشعار جماعي",
+  CHASE_WAITING_REQUEST: "تذكير بطلب معلق",
   APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
   DELETE_DONATION: "حذف تبرع نهائياً",
   ATTACH_MEMBER_ACCOUNT: "إنشاء حساب لعضو",

@@ -9,5 +9,9 @@ export const push = {
   broadcast: "إعلانات الرابطة",
   membershipDecision: "قرار العضوية",
   activityDecision: "قرار التسجيل في نشاط",
+  chaseTitle: "طلبك ما زال بانتظارك",
+  chasePending: "طلب انضمامك قيد المراجعة. إن كان ينقصه شيء فأكمله من التطبيق",
+  chaseUnfinished: "لم تكمل استمارة الانضمام بعد. تكفي دقيقة لإتمامها",
+  chaseSent: "أُرسل التذكير",
   broadcastToEveryone: "أرسل للجميع حتى لمن أوقف الإعلانات",
 } as const;
