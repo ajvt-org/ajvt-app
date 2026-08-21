@@ -40,7 +40,6 @@ export const POST = withRoute(
       }
     }
 
-    // Admin-initiated registration is confirmed immediately — no review queue.
     const registration = await prisma.activityRegistration.upsert({
       where: { memberId_activityId: { memberId, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
