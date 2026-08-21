@@ -4,6 +4,10 @@ export function isUniqueViolation(err: unknown): boolean {
   return !!err && typeof err === "object" && "code" in err && err.code === "P2002";
 }
 
+export function isForeignKeyViolation(err: unknown): boolean {
+  return !!err && typeof err === "object" && "code" in err && err.code === "P2003";
+}
+
 // Which field clashed. A route that retries one unique field has to tell it
 // apart from the others, or it retries a clash no new value can settle.
 export function uniqueViolationFields(err: unknown): string[] {

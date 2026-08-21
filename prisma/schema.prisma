@@ -609,7 +609,7 @@ model QuizRoundQuestion {
   roundId    String
   round      QuizRound    @relation(fields: [roundId], references: [id], onDelete: Cascade)
   questionId String
-  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@unique([roundId, questionId])
   @@index([roundId])
@@ -637,7 +637,7 @@ model QuizAttemptAnswer {
   attemptId         String
   attempt           QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   questionId        String
-  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
   position          Int
   optionOrder       String[]     @default([])
   shownAt           DateTime?

@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ConflictError } from "@/lib/errors";
+import { isForeignKeyViolation } from "@/lib/prismaError";
 import { quiz } from "@/lib/messages";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
@@ -127,7 +128,12 @@ export const DELETE = withRoute(
     ]);
     if (drawn > 0 || answered > 0) throw new ConflictError(quiz.questionInUse);
 
-    await prisma.quizQuestion.delete({ where: { id } });
+    try {
+      await prisma.quizQuestion.delete({ where: { id } });
+    } catch (err) {
+      if (isForeignKeyViolation(err)) throw new ConflictError(quiz.questionInUse);
+      throw err;
+    }
     await logAction(session.username, "DELETE_QUIZ_QUESTION", question.text.slice(0, 60));
 
     return NextResponse.json({ ok: true });
