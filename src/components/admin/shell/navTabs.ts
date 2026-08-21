@@ -11,6 +11,7 @@ export const NAV_TABS: NavTab[] = [
   { href: "/admin/activities", label: "الأنشطة", icon: "trophy" },
   { href: "/admin/payments", label: "المدفوعات", icon: "receipt" },
   { href: "/admin/expenses", label: "المصاريف", icon: "banknote" },
+  { href: "/admin/finance-report", label: "التقرير المالي", icon: "file" },
   { href: "/admin/quiz", label: "المسابقات الثقافية", icon: "quiz" },
   { href: "/admin/stats", label: "الإحصائيات", icon: "chart" },
   { href: "/admin/settings", label: "الإعدادات", icon: "gear" },
