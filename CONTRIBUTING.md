@@ -15,7 +15,7 @@ Two things that catch people out:
   database. Name the folder with the real current UTC time — migrations replay
   in folder-name order on a rebuild, and `src/lib/migrationOrder.test.ts` fails
   the build if a new folder sorts before an existing one or is dated more than
-  ten days ahead.
+  a day past the last migration.
 
 Before pushing:
 

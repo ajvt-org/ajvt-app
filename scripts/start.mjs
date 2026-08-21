@@ -30,8 +30,8 @@ backfill.on("error", () => console.log("  Re-encoding skipped."));
 // Next's own entry point rather than `npx next start`, which would put an npx
 // process and a shell in between for the signal to stop at instead.
 //
-// The child's exit code is passed on, so restartPolicyType = "on_failure"
-// still reads a failure as one.
+// The child's exit code is passed on, so a crash still reads as a failure to
+// the platform rather than as a clean exit.
 console.log("→ Starting Next.js...");
 const next = createRequire(import.meta.url).resolve("next/dist/bin/next");
 const server = spawn(process.execPath, [next, "start"], { stdio: "inherit" });
