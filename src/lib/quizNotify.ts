@@ -1,18 +1,14 @@
 import { prisma } from "./prisma";
 import { sendPushToUsers } from "./push";
 import { logger } from "./logger";
-import { push } from "@/lib/messages";
+import { notify } from "@/lib/messages";
 import { eligibleMembers } from "./quiz";
 import { shapeOf } from "./competitionServer";
 import { currentRound } from "./quizRound";
 
 export const RETIRED = "الإرسال اليدوي توقف، الأسئلة تُنشر تلقائياً عند فتح يوم المسابقة";
 
-export const DAY_OPEN_PAYLOAD = {
-  title: push.title,
-  body: "أسئلة الجولة متاحة الآن، شارك قبل إغلاق الباب",
-  url: "/quiz",
-};
+export const DAY_OPEN_PAYLOAD = notify.quizDayOpen();
 
 export async function eligibleUserIds(): Promise<string[]> {
   return (await eligibleMembers()).map((m) => m.userId);

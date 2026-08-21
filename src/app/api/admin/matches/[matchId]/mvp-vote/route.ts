@@ -7,7 +7,7 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { mvpVoteCreateSchema, mvpVoteStatusSchema } from "./schema";
-import { push, tournament } from "@/lib/messages";
+import { notify, tournament } from "@/lib/messages";
 
 const VOTE_INCLUDE = {
   candidates: {
@@ -73,11 +73,11 @@ export const POST = withRoute(
       `${match.homeTeam.name} × ${match.awayTeam.name}`,
     );
 
-    notifyTeams(match.homeTeamId, match.awayTeamId, {
-      title: push.title,
-      body: `🌟 صوّت الآن لأفضل لاعب في مباراة ${match.homeTeam.name} × ${match.awayTeam.name}`,
-      url: `/tournament/${match.activityId}`,
-    }).catch((err) => logger.error("mvp.vote.open.push.error", err));
+    notifyTeams(
+      match.homeTeamId,
+      match.awayTeamId,
+      notify.mvpVoteOpen(match.homeTeam.name, match.awayTeam.name, match.activityId),
+    ).catch((err) => logger.error("mvp.vote.open.push.error", err));
 
     return NextResponse.json({ vote }, { status: 201 });
   },
