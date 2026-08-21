@@ -11,6 +11,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
+import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
 import AccountPhoneForm from "./AccountPhoneForm";
@@ -248,6 +249,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </ul>
         )}
       </ProfileSection>
+
+      <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 
       <ProfileSection icon="list" title={`سجل التغييرات (${history.length})`}>
         {history.length === 0 ? (

@@ -12,6 +12,7 @@ export const NOTIFICATION_CATEGORIES = [
   { key: "QUIZ_ROUND", label: push.quizRound, optOut: true },
   { key: "TOURNAMENT_MATCH", label: push.tournamentMatch, optOut: true },
   { key: "MATCH_REMINDER", label: push.matchReminder, optOut: true },
+  { key: "REQUEST_REMINDER", label: push.requestReminder, optOut: true },
   { key: "BROADCAST", label: push.broadcast, optOut: true },
 ] as const satisfies readonly NotificationCategory[];
 

@@ -28,7 +28,7 @@ function Receipt({ row, innerRef }: { row: ReceiptRow; innerRef?: React.Ref<HTML
   );
 }
 
-export default function PaymentReceipts() {
+export default function PaymentReceipts({ source = "/api/user/receipts" }: { source?: string }) {
   const [rows, setRows] = useState<ReceiptRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const refs = useRef(new Map<string, HTMLDivElement>());
@@ -36,7 +36,7 @@ export default function PaymentReceipts() {
   useEffect(() => {
     let alive = true;
     api
-      .get<{ receipts: ReceiptRow[] }>("/api/user/receipts")
+      .get<{ receipts: ReceiptRow[] }>(source)
       .then((data) => {
         if (alive) setRows(data.receipts);
       })
@@ -46,7 +46,7 @@ export default function PaymentReceipts() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [source]);
 
   async function share(row: ReceiptRow) {
     const node = refs.current.get(row.id);

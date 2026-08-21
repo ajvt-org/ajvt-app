@@ -8,6 +8,7 @@ import { loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
 import PageLoading from "@/components/PageLoading";
+import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST, SETTLED } from "@/lib/messages";
 
@@ -99,6 +100,7 @@ export default function AdminHome() {
 
   return (
     <div className="p-4 flex flex-col gap-3">
+      <WaitingRequests />
       <Answer
         href="/admin/dashboard?standing=paid"
         icon="check"
