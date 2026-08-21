@@ -1,11 +1,11 @@
 import { prisma } from "./prisma";
 import type { ReceiptPurpose, ReceiptRow } from "./receipts";
 
-export async function receiptsForMember(where: { userId?: string; memberId?: string }) {
+export async function receiptsForMember(where: { userId: string } | { memberId: string }) {
   const payments = await prisma.payment.findMany({
     where: {
       status: "ACTIVE",
-      member: where.memberId ? { id: where.memberId } : { userId: where.userId },
+      member: "memberId" in where ? { id: where.memberId } : { userId: where.userId },
     },
     orderBy: { createdAt: "desc" },
     select: {

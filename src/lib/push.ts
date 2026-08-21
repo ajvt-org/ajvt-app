@@ -1,4 +1,5 @@
 import webpush from "web-push";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { logger } from "./logger";
 import { isOptOutCategory, type CategoryKey } from "./notificationCategories";
@@ -47,15 +48,15 @@ async function deliver(
   );
 }
 
-function silencedBy(category?: CategoryKey) {
-  if (!category || !isOptOutCategory(category)) return {};
+function silencedBy(category: CategoryKey) {
+  if (!isOptOutCategory(category)) return {};
   return { user: { notificationPrefs: { none: { category, enabled: false } } } };
 }
 
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; url?: string },
-  category?: CategoryKey,
+  category: CategoryKey,
 ) {
   if (!publicKey || !privateKey) return 0;
   const subscriptions = await prisma.pushSubscription.findMany({
@@ -65,18 +66,30 @@ export async function sendPushToUser(
   return subscriptions.length;
 }
 
-export async function sendPushToUsers(
-  userIds: string[],
+async function sendBatched(
+  where: Prisma.PushSubscriptionWhereInput,
   payload: { title: string; body: string; url?: string },
-  category?: CategoryKey,
 ) {
-  if (!publicKey || !privateKey || userIds.length === 0) return;
-
-  const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId: { in: userIds }, ...silencedBy(category) },
-  });
+  const subscriptions = await prisma.pushSubscription.findMany({ where });
 
   for (let i = 0; i < subscriptions.length; i += PUSH_BATCH) {
     await deliver(subscriptions.slice(i, i + PUSH_BATCH), payload);
   }
+}
+
+export async function sendPushToUsers(
+  userIds: string[],
+  payload: { title: string; body: string; url?: string },
+  category: CategoryKey,
+) {
+  if (!publicKey || !privateKey || userIds.length === 0) return;
+  await sendBatched({ userId: { in: userIds }, ...silencedBy(category) }, payload);
+}
+
+export async function sendPushIgnoringPreferences(
+  userIds: string[],
+  payload: { title: string; body: string; url?: string },
+) {
+  if (!publicKey || !privateKey || userIds.length === 0) return;
+  await sendBatched({ userId: { in: userIds } }, payload);
 }

@@ -54,6 +54,7 @@ describe("sendPushToUsers", () => {
     await sendPushToUsers(
       users.map((u) => u.id),
       PAYLOAD,
+      "QUIZ_ROUND",
     );
 
     expect(findMany).toHaveBeenCalledTimes(1);
@@ -66,6 +67,7 @@ describe("sendPushToUsers", () => {
     await sendPushToUsers(
       users.map((u) => u.id),
       PAYLOAD,
+      "QUIZ_ROUND",
     );
 
     expect(sent.calls).toHaveLength(60);
@@ -77,6 +79,7 @@ describe("sendPushToUsers", () => {
     await sendPushToUsers(
       users.map((u) => u.id),
       PAYLOAD,
+      "QUIZ_ROUND",
     );
 
     expect(sent.most).toBeLessThanOrEqual(PUSH_BATCH);
@@ -85,7 +88,7 @@ describe("sendPushToUsers", () => {
   it("asks nothing of the database when nobody is targeted", async () => {
     const findMany = vi.spyOn(prisma.pushSubscription, "findMany");
 
-    await sendPushToUsers([], PAYLOAD);
+    await sendPushToUsers([], PAYLOAD, "QUIZ_ROUND");
 
     expect(findMany).not.toHaveBeenCalled();
     findMany.mockRestore();
@@ -101,6 +104,7 @@ describe("sendPushToUsers", () => {
     await sendPushToUsers(
       users.map((u) => u.id),
       PAYLOAD,
+      "QUIZ_ROUND",
     );
 
     expect(await prisma.pushSubscription.count()).toBe(1);

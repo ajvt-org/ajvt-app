@@ -1,14 +1,7 @@
 import type { NextConfig } from "next";
+import { execSync } from "node:child_process";
+import { releaseFrom } from "./src/lib/release";
 
-// React/Tailwind rely on inline `style="..."` attributes throughout the app,
-// so style-src needs 'unsafe-inline'. script-src also needs it: Next.js
-// injects inline bootstrap/hydration scripts (RSC payload via
-// `self.__next_f.push(...)`) on every page, and without 'unsafe-inline' (or
-// a per-request nonce wired through proxy.ts, which would force every page
-// into dynamic rendering) the browser blocks them outright — the app loads
-// but nothing is interactive (buttons/redirects silently do nothing). A
-// stricter nonce-based CSP is possible later if needed; this keeps the app
-// working while still blocking remote/third-party script and iframe sources.
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
@@ -21,13 +14,22 @@ const CSP = [
   "form-action 'self'",
 ].join("; ");
 
+function lastSubject(): string | null {
+  try {
+    return execSync("git log -1 --format=%s", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return null;
+  }
+}
+
 const nextConfig: NextConfig = {
-  // Allow access from other devices on the local network (for testing from phone)
   allowedDevOrigins: ["192.168.1.*", "192.168.0.*", "10.0.0.*"],
 
+  env: { RELEASE: releaseFrom(lastSubject(), process.env.RENDER_GIT_COMMIT) },
+
   async headers() {
-    // Skip in dev: Turbopack's HMR (eval'd chunks, websocket) would trip
-    // script-src/connect-src and break local hot reload for no production benefit.
     if (process.env.NODE_ENV !== "production") return [];
 
     return [
