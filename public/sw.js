@@ -1,6 +1,7 @@
-const OFFLINE_CACHE = "ajvt-offline-v2";
+const OFFLINE_CACHE = "ajvt-offline-v3";
 const OFFLINE_URL = "/offline.html";
-const OFFLINE_ASSETS = [OFFLINE_URL, "/version-final.png"];
+const DEPLOYING_URL = "/deploying.html";
+const OFFLINE_ASSETS = [OFFLINE_URL, DEPLOYING_URL, "/version-final.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));
@@ -24,7 +25,14 @@ function fallback(path) {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).catch(() => fallback(OFFLINE_URL)));
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.status < 500) return response;
+          return caches.match(DEPLOYING_URL).then((cached) => cached || response);
+        })
+        .catch(() => fallback(OFFLINE_URL))
+    );
     return;
   }
 
