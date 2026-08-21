@@ -98,7 +98,42 @@ describe("requests that have been waiting", () => {
     const res = await CHASE(post("/api/admin/waiting/chase", { userId: user.id, kind: "pending" }));
 
     expect(res.status).toBe(200);
+    expect((await res.json()).reached).toBe(1);
     expect(sent.calls).toEqual([`https://push.example/${user.id}`]);
+  });
+
+  it("says it reached nobody when the member has no device", async () => {
+    const { user } = await pendingMember("22000001", "صابر", WAITING_DAYS + 3);
+
+    const res = await CHASE(post("/api/admin/waiting/chase", { userId: user.id, kind: "pending" }));
+
+    expect((await res.json()).reached).toBe(0);
+    expect(sent.calls).toEqual([]);
+  });
+
+  it("says it reached nobody when the member has silenced reminders", async () => {
+    const { user } = await pendingMember("22000001", "صابر", WAITING_DAYS + 3);
+    await subscribe(user.id);
+    await prisma.notificationPreference.create({
+      data: { userId: user.id, category: "REQUEST_REMINDER", enabled: false },
+    });
+
+    const res = await CHASE(post("/api/admin/waiting/chase", { userId: user.id, kind: "pending" }));
+
+    expect((await res.json()).reached).toBe(0);
+    expect(sent.calls).toEqual([]);
+  });
+
+  it("still reaches a member who silenced other categories", async () => {
+    const { user } = await pendingMember("22000001", "صابر", WAITING_DAYS + 3);
+    await subscribe(user.id);
+    await prisma.notificationPreference.create({
+      data: { userId: user.id, category: "BROADCAST", enabled: false },
+    });
+
+    const res = await CHASE(post("/api/admin/waiting/chase", { userId: user.id, kind: "pending" }));
+
+    expect((await res.json()).reached).toBe(1);
   });
 
   it("writes the chase to the audit log", async () => {

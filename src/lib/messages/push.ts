@@ -13,5 +13,7 @@ export const push = {
   chasePending: "طلب انضمامك قيد المراجعة. إن كان ينقصه شيء فأكمله من التطبيق",
   chaseUnfinished: "لم تكمل استمارة الانضمام بعد. تكفي دقيقة لإتمامها",
   chaseSent: "أُرسل التذكير",
+  chaseUnreachable: "لا يصله إشعار",
+  requestReminder: "تذكير بطلبك",
   broadcastToEveryone: "أرسل للجميع حتى لمن أوقف الإعلانات",
 } as const;

@@ -26,14 +26,17 @@ function Row({
   onChased: (id: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<"sent" | "unreachable" | null>(null);
 
   async function chase() {
     if (!row.userId) return;
     setBusy(true);
     try {
-      await api.post("/api/admin/waiting/chase", { userId: row.userId, kind });
-      setDone(true);
+      const { reached } = await api.post<{ reached: number }>("/api/admin/waiting/chase", {
+        userId: row.userId,
+        kind,
+      });
+      setDone(reached > 0 ? "sent" : "unreachable");
       onChased(row.id);
     } catch {
       setBusy(false);
@@ -55,8 +58,11 @@ function Row({
         </span>
       </div>
       {done ? (
-        <span className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
-          {push.chaseSent}
+        <span
+          className="text-xs font-bold"
+          style={{ color: done === "sent" ? "var(--mint-700)" : "var(--text-muted)" }}
+        >
+          {done === "sent" ? push.chaseSent : push.chaseUnreachable}
         </span>
       ) : (
         <button

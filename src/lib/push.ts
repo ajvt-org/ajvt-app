@@ -25,7 +25,7 @@ async function deliver(
   subscriptions: Subscription[],
   payload: { title: string; body: string; url?: string },
 ) {
-  await Promise.all(
+  return Promise.all(
     subscriptions.map(async (sub) => {
       try {
         await webpush.sendNotification(
@@ -57,11 +57,12 @@ export async function sendPushToUser(
   payload: { title: string; body: string; url?: string },
   category?: CategoryKey,
 ) {
-  if (!publicKey || !privateKey) return;
-  await deliver(
-    await prisma.pushSubscription.findMany({ where: { userId, ...silencedBy(category) } }),
-    payload,
-  );
+  if (!publicKey || !privateKey) return 0;
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId, ...silencedBy(category) },
+  });
+  await deliver(subscriptions, payload);
+  return subscriptions.length;
 }
 
 export async function sendPushToUsers(

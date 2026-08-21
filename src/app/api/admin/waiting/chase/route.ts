@@ -11,14 +11,14 @@ export const POST = withRoute("POST /api/admin/waiting/chase", async (req: NextR
   const session = await requireAdminRole("MEMBERS");
   const { userId, kind } = parse(chaseSchema, await req.json());
 
-  await sendPushToUser(
+  const reached = await sendPushToUser(
     userId,
     {
       title: push.chaseTitle,
       body: kind === "pending" ? push.chasePending : push.chaseUnfinished,
       url: kind === "pending" ? "/profile" : "/form",
     },
-    "MEMBERSHIP_DECISION",
+    "REQUEST_REMINDER",
   );
 
   await logAction(session.username, "CHASE_WAITING_REQUEST", kind, {
@@ -27,5 +27,5 @@ export const POST = withRoute("POST /api/admin/waiting/chase", async (req: NextR
     targetId: userId,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, reached });
 });
