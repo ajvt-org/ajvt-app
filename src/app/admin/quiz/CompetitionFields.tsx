@@ -47,11 +47,13 @@ export default function CompetitionFields({
   draft,
   banks,
   locked,
+  running = false,
   onChange,
 }: {
   draft: Draft;
   banks: { id: string; name: string }[];
   locked: boolean;
+  running?: boolean;
   onChange: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
 }) {
   const number = (key: keyof Draft, id: string, label: string, min = 1, max?: number) => (
@@ -76,7 +78,7 @@ export default function CompetitionFields({
           id="c-name"
           type="text"
           value={draft.name}
-          disabled={locked}
+          disabled={locked && !running}
           onChange={(e) => onChange("name", e.target.value)}
           className="input input-sm"
         />
@@ -186,7 +188,8 @@ export default function CompetitionFields({
 
       <BoardsEditor
         boards={draft.boards}
-        disabled={locked}
+        disabled={locked && !running}
+        shapeLocked={running}
         onChange={(boards) => onChange("boards", boards)}
       />
 

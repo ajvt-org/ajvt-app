@@ -29,4 +29,5 @@ export interface AttemptSummary {
   total: number;
   finishedAt: string | null;
   missed: boolean;
+  closed: boolean;
 }

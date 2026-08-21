@@ -4,6 +4,8 @@ import { PAYMENT_METHOD_SHARE, REJECTION_REASONS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, pick, referenceCode } from "./random";
 import { runningYear } from "../../src/lib/membershipYear";
+import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
+import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
 
 export type SeededUser = { id: string; phone: string };
@@ -70,6 +72,18 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         verifyToken: isActive ? generateVerifyToken() : null,
         createdAt: daysAgo(Math.max(1, 130 - i)),
       },
+    });
+
+    await mirrorMembershipPayment(prisma, {
+      memberId: member.id,
+      year: membershipYear,
+      amount: member.paidAmount,
+      feeApplied: MEMBERSHIP_FEE,
+      method: member.paymentMethod,
+      proof: member.paymentProof,
+      status,
+      anonymous: member.surplusAnonymous,
+      donorName: member.fullName,
     });
 
     all.push(member);
