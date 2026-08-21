@@ -119,20 +119,5 @@ export async function seedCompetitions(users: SeededUser[], questions: { id: str
     }
   }
 
-  const rounds = await prisma.quizRound.findMany({
-    where: { competitionId: open.id, index: { lt: 2 } },
-    orderBy: { index: "asc" },
-  });
-  for (const round of rounds) {
-    for (let i = 0; i < 20; i++) {
-      await prisma.quizAttempt.create({
-        data: {
-          roundId: round.id,
-          userId: users[i].id,
-          score: (i * 7 + round.index * 3) % 31,
-          finishedAt: minutesAgo(round.index * 60 + i),
-        },
-      });
-    }
-  }
+  return { open, second, invited };
 }
