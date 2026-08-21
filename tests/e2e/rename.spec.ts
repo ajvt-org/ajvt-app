@@ -42,7 +42,8 @@ test("an admin corrects a name from the list and the log keeps it", async ({ pag
   await adminPage.fill('input[type="text"]', "admin");
   await adminPage.fill('input[type="password"]', "admin123");
   await adminPage.click('button[type="submit"]');
-  await adminPage.waitForURL("**/admin/dashboard");
+  await adminPage.waitForURL("**/admin");
+  await adminPage.goto("/admin/dashboard");
 
   await adminPage.getByRole("button", { name: `تعديل اسم ${MEMBER.fullName}` }).click();
   const field = adminPage.getByRole("textbox", { name: "الاسم", exact: true });

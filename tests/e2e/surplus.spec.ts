@@ -54,7 +54,8 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
   await adminPage.fill('input[type="text"]', "admin");
   await adminPage.fill('input[type="password"]', "admin123");
   await adminPage.click('button[type="submit"]');
-  await adminPage.waitForURL("**/admin/dashboard");
+  await adminPage.waitForURL("**/admin");
+  await adminPage.goto("/admin/dashboard");
 
   await adminPage.getByText(MEMBER.fullName).first().click();
   await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
