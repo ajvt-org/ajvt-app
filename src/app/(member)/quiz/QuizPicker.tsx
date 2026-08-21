@@ -67,16 +67,16 @@ function CompetitionCard({
     <button
       onClick={() => onPick(competition.id)}
       disabled={!playable}
-      className="card p-4 w-full text-start flex items-center gap-3 disabled:opacity-60"
+      className="card p-4 w-full text-start flex items-center gap-3"
       style={state === "open" ? { boxShadow: "0 6px 24px rgba(26,63,51,0.12)" } : undefined}
     >
       <span
         className="rounded-2xl flex items-center justify-center shrink-0"
-        style={{ width: 48, height: 48, ...TILE_STYLE[state] }}
+        style={{ width: 48, height: 48, opacity: playable ? undefined : 0.6, ...TILE_STYLE[state] }}
       >
         <Icon name={STATE_ICON[state]} size={22} />
       </span>
-      <span className="flex-1 min-w-0">
+      <span className="flex-1 min-w-0" style={{ opacity: playable ? undefined : 0.6 }}>
         <span className="flex items-start gap-2">
           <span
             className="flex-1 min-w-0 font-black line-clamp-2"

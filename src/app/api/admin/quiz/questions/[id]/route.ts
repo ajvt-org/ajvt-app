@@ -35,6 +35,16 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: quiz.questionNotFound }, { status: 404 });
     }
 
+    const rewritesPlay =
+      answers !== undefined || correctCount !== undefined || points !== undefined;
+    if (rewritesPlay) {
+      const [drawn, answered] = await Promise.all([
+        prisma.quizRoundQuestion.count({ where: { questionId: id } }),
+        prisma.quizAttemptAnswer.count({ where: { questionId: id } }),
+      ]);
+      if (drawn > 0 || answered > 0) throw new ConflictError(quiz.questionAnswersLocked);
+    }
+
     const data: QuizQuestionUpdateData = {};
 
     if (text !== undefined) {

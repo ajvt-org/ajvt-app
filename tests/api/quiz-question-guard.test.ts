@@ -180,3 +180,92 @@ describe("a question drawn between the check and the delete", () => {
     expect(await prisma.quizQuestion.count({ where: { id: q.id } })).toBe(1);
   });
 });
+
+describe("editing a question a quiz has used", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
+  });
+
+  async function used() {
+    const q = await question();
+    const r = await round();
+    await prisma.quizRoundQuestion.create({ data: { roundId: r.id, questionId: q.id } });
+    return q;
+  }
+
+  const edit = (id: string, body: Record<string, unknown>) =>
+    EDIT(patch(`/api/admin/quiz/questions/${id}`, body), withId(id));
+
+  it("lets a typo in the wording be fixed", async () => {
+    const q = await used();
+
+    const res = await edit(q.id, { text: "سؤال مصحح" });
+
+    expect(res.status).toBe(200);
+    expect((await prisma.quizQuestion.findUniqueOrThrow({ where: { id: q.id } })).text).toBe(
+      "سؤال مصحح",
+    );
+  });
+
+  it("lets the category be corrected", async () => {
+    const q = await used();
+
+    expect((await edit(q.id, { category: "تاريخ" })).status).toBe(200);
+  });
+
+  it("refuses a change to the answers", async () => {
+    const q = await used();
+
+    const res = await edit(q.id, {
+      answers: [
+        { text: "أ", isCorrect: true },
+        { text: "ب", isCorrect: false },
+      ],
+    });
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(quiz.questionAnswersLocked);
+  });
+
+  it("refuses a change to which answer is correct", async () => {
+    const q = await used();
+
+    expect((await edit(q.id, { correctCount: 2 })).status).toBe(409);
+  });
+
+  it("refuses a change to the points a score was computed from", async () => {
+    const q = await used();
+
+    expect((await edit(q.id, { points: 50 })).status).toBe(409);
+    expect((await prisma.quizQuestion.findUniqueOrThrow({ where: { id: q.id } })).points).toBe(10);
+  });
+
+  it("refuses it once a member has answered, even with no round entry", async () => {
+    const q = await question();
+    const r = await round();
+    const user = await createUser("22334455");
+    const attempt = await prisma.quizAttempt.create({ data: { roundId: r.id, userId: user.id } });
+    await prisma.quizAttemptAnswer.create({
+      data: { attemptId: attempt.id, questionId: q.id, position: 0 },
+    });
+
+    expect((await edit(q.id, { points: 50 })).status).toBe(409);
+  });
+
+  it("changes nothing at all when one field of the edit is refused", async () => {
+    const q = await used();
+
+    await edit(q.id, { text: "صياغة جديدة", points: 50 });
+
+    const after = await prisma.quizQuestion.findUniqueOrThrow({ where: { id: q.id } });
+    expect(after.text).toBe("سؤال");
+    expect(after.points).toBe(10);
+  });
+
+  it("leaves a question no quiz has touched fully editable", async () => {
+    const q = await question();
+
+    expect((await edit(q.id, { points: 50 })).status).toBe(200);
+  });
+});

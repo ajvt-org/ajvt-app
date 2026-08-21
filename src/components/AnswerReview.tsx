@@ -3,6 +3,7 @@
 import type { CSSProperties } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
+import IconLabel from "@/components/IconLabel";
 import { countedNoun, CORRECT_ANSWERS, POINTS, QUESTIONS } from "@/lib/arabicPlural";
 
 export interface ReviewRow {
@@ -150,14 +151,12 @@ export default function AnswerReview({
                 className="flex items-center gap-3 text-[10px] font-bold"
                 style={{ color: "var(--text-muted)" }}
               >
-                <span className="inline-flex items-center gap-1">
-                  <Icon name="clock" size={11} />
+                <IconLabel name="clock" size="1.3em">
                   <NumericRanges>{seconds(row.elapsedMs)}</NumericRanges>
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Icon name="star" size={11} filled color="var(--copper-500)" />
+                </IconLabel>
+                <IconLabel name="star" size="1.3em" filled color="var(--copper-500)">
                   <NumericRanges>{`${row.points} من ${row.maxPoints}`}</NumericRanges>
-                </span>
+                </IconLabel>
                 {outcome === "right" && row.percent < 100 && (
                   <span style={{ color: LOOK.missed.ink }}>
                     <NumericRanges>{`${row.percent}٪ للسرعة`}</NumericRanges>
