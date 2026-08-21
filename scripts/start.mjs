@@ -11,18 +11,7 @@ execSync("npx prisma migrate deploy", { stdio: "inherit" });
 console.log("→ Seeding admin (skipped if exists)...");
 execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
 
-console.log("→ Fingerprinting payment proofs (skipped if done)...");
-try {
-  execSync("npx tsx prisma/backfillProofHashes.ts", { stdio: "inherit" });
-} catch {
-  console.log("  Fingerprinting skipped.");
-}
-
-console.log("→ Re-encoding legacy images in the background...");
-const backfill = spawn("npx", ["tsx", "prisma/backfillLegacyImages.ts"], { stdio: "inherit" });
-backfill.on("error", () => console.log("  Re-encoding skipped."));
-
-// The three steps above are boot work and block on purpose: nothing serves a
+// The two steps above are boot work and block on purpose: nothing serves a
 // request before the database matches the code. This one is the server, and it
 // differs on both counts. It is spawned, not run synchronously, so the SIGTERM
 // the platform sends on every deploy reaches Next and lets it drain what is in
@@ -38,13 +27,11 @@ const server = spawn(process.execPath, [next, "start"], { stdio: "inherit" });
 
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, () => {
-    backfill.kill(signal);
     server.kill(signal);
   });
 }
 
 server.on("exit", (code, signal) => {
-  backfill.kill("SIGTERM");
   if (signal) {
     // Re-raise so the parent's own exit status is the signal, not a code. The
     // listener has to go first or the handler above would catch it again.
