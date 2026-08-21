@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CompetitionView, { type StandingsState } from "./CompetitionView";
 
@@ -20,6 +20,7 @@ const standings: StandingsState = {
   roundCount: 5,
   state: "open",
   next: null,
+  closesAt: null,
   me: { played: false, finished: false, score: null },
   curve: { fullSeconds: 10, maxSeconds: 30, floorPercent: 50 },
   boards: [
@@ -61,6 +62,8 @@ const question = {
     { id: "o2", text: "نواذيبو" },
   ],
 };
+
+const FUTURE = new Date(Date.now() + 5 * 3_600_000).toISOString();
 
 const setup = (over: Partial<StandingsState> = {}) =>
   render(
@@ -309,5 +312,45 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
 
     expect(onBack).toHaveBeenCalled();
+  });
+
+  it("says how much of an open round is left", () => {
+    setup({ closesAt: new Date(Date.now() + 3 * 3_600_000).toISOString() });
+
+    expect(screen.getByText(/تُغلق الجولة بعد/)).toBeDefined();
+    expect(screen.getByLabelText("الوقت المتبقي لإغلاق الجولة").textContent).toMatch(/02:59/);
+  });
+
+  it("keeps the wording the same however much is left", () => {
+    setup({ closesAt: new Date(Date.now() + 10 * 60_000).toISOString() });
+
+    expect(screen.getAllByText(/تُغلق الجولة بعد/)).toHaveLength(1);
+  });
+
+  it("colours the clock as the round nears its close", () => {
+    setup({ closesAt: new Date(Date.now() + 10 * 60_000).toISOString() });
+    const urgent = screen.getByText(/تُغلق الجولة بعد/).style.color;
+
+    cleanup();
+    setup({ closesAt: new Date(Date.now() + 3 * 3_600_000).toISOString() });
+
+    expect(screen.getByText(/تُغلق الجولة بعد/).style.color).not.toBe(urgent);
+  });
+
+  it("keeps the round clock off a round that is not open", () => {
+    setup({ state: "closed", closesAt: null, next: { index: 3, opensAt: FUTURE } });
+
+    expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
+  });
+
+  it("tells a member who has finished when the next round opens", () => {
+    setup({
+      me: { played: true, finished: true, score: 40 },
+      closesAt: new Date(Date.now() + 3_600_000).toISOString(),
+      next: { index: 4, opensAt: FUTURE },
+    });
+
+    expect(screen.getByText(/الجولة القادمة بعد/)).toBeDefined();
+    expect(screen.queryByText(/تُغلق الجولة/)).toBeNull();
   });
 });

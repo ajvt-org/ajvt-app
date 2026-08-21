@@ -14,6 +14,7 @@ import ScoreFormula from "./ScoreFormula";
 import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
+import { useNow } from "@/hooks/useNow";
 
 interface AttemptState {
   attemptId: string;
@@ -53,9 +54,38 @@ export interface StandingsState {
   roundCount: number | null;
   state: "before" | "open" | "closed" | "over" | null;
   next: { index: number; opensAt: string } | null;
+  closesAt: string | null;
   me: { played: boolean; finished: boolean; score: number | null } | null;
   curve: ScoreCurve | null;
   boards: StandingsBoard[];
+}
+
+const URGENT_MS = 30 * 60 * 1000;
+
+function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () => void }) {
+  const now = useNow(1000);
+  const urgent = new Date(closesAt).getTime() - now < URGENT_MS;
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full text-xs font-bold"
+      style={{
+        padding: "4px 12px",
+        background: urgent ? "rgba(196,124,90,0.25)" : "rgba(255,255,255,0.12)",
+        color: urgent ? "var(--copper-300)" : "rgba(255,255,255,0.85)",
+      }}
+    >
+      <Icon name="clock" size={13} />
+      تُغلق الجولة بعد
+      <NextRoundCountdown
+        opensAt={closesAt}
+        onReached={onReached}
+        color={urgent ? "var(--copper-300)" : "#ffffff"}
+        compact
+        ariaLabel="الوقت المتبقي لإغلاق الجولة"
+      />
+    </span>
+  );
 }
 
 export default function CompetitionView({
@@ -183,6 +213,7 @@ export default function CompetitionView({
   const between = standings.state === "closed" || standings.state === "before";
   const upcoming = between && standings.next ? standings.next : null;
   const finished = roundOpen && standings.me?.finished;
+  const closing = roundOpen && standings.closesAt ? standings.closesAt : null;
   const champion = over ? (standings.boards.find((b) => b.wholeRun)?.rows[0] ?? null) : null;
 
   return (
@@ -276,6 +307,26 @@ export default function CompetitionView({
                   مجموعك {countedNoun(standings.me.score, POINTS)} في هذه الجولة
                 </p>
               )}
+              {standings.next && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full text-xs font-bold"
+                  style={{
+                    padding: "4px 12px",
+                    background: "rgba(255,255,255,0.12)",
+                    color: "rgba(255,255,255,0.85)",
+                  }}
+                >
+                  <Icon name="clock" size={13} />
+                  الجولة القادمة بعد
+                  <NextRoundCountdown
+                    opensAt={standings.next.opensAt}
+                    onReached={onReloadStandings}
+                    color="#ffffff"
+                    compact
+                    ariaLabel="الوقت المتبقي للجولة القادمة"
+                  />
+                </span>
+              )}
             </>
           )}
 
@@ -284,6 +335,7 @@ export default function CompetitionView({
               <p className="text-lg font-black text-white">
                 الجولة {(standings.round ?? 0) + 1} مفتوحة الآن
               </p>
+              {closing && <RoundClock closesAt={closing} onReached={onReloadStandings} />}
               {closed && (
                 <p className="text-xs font-semibold" style={{ color: "var(--copper-300)" }}>
                   {closed}

@@ -252,6 +252,37 @@ describe("standings a member can see", () => {
   });
 });
 
+describe("what the standings say about the clock", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("says when the open round closes", async () => {
+    const c = await competition();
+    const [a] = await createUsers(1);
+    await member(a.id, "أحمد");
+
+    const at = new Date(START.getTime() + 1000);
+    const standings = await getStandings(c.id, a.id, 10, at);
+
+    expect(standings.state).toBe("open");
+    expect(standings.closesAt?.toISOString()).toBe(
+      new Date(START.getTime() + PERIOD).toISOString(),
+    );
+  });
+
+  it("says nothing about a close while the doors are shut", async () => {
+    const c = await competition({ roundWindowMinutes: 60 });
+    const [a] = await createUsers(1);
+    await member(a.id, "أحمد");
+
+    const standings = await getStandings(c.id, a.id, 10, new Date(START.getTime() + 2 * 3_600_000));
+
+    expect(standings.state).toBe("closed");
+    expect(standings.closesAt).toBeNull();
+  });
+});
+
 describe("standings shared between readers", () => {
   beforeEach(async () => {
     await resetDb();
