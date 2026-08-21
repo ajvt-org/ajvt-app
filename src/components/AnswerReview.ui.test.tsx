@@ -118,3 +118,30 @@ describe("AnswerReview", () => {
     expect(screen.queryByText("ألغيت نقاط هذه الجولة")).toBeNull();
   });
 });
+
+describe("the points and time beside each answer", () => {
+  it("carries the optical correction every other icon in the app gets", () => {
+    const { container } = render(<AnswerReview review={{ ...review, rows: [right] }} />);
+
+    const icons = [...container.querySelectorAll("svg")];
+    const beside = icons.filter((svg) => svg.closest(".icon-label"));
+
+    expect(beside.length).toBeGreaterThanOrEqual(2);
+    for (const svg of beside) expect(svg.classList.contains("icon-inline")).toBe(true);
+  });
+
+  it("sizes them against the text rather than pinning them to a pixel count", () => {
+    const { container } = render(<AnswerReview review={{ ...review, rows: [right] }} />);
+
+    const beside = [...container.querySelectorAll(".icon-label svg")];
+
+    for (const svg of beside) expect(svg.getAttribute("width")).toBe("1.3em");
+  });
+
+  it("still shows the seconds and the score it always showed", () => {
+    render(<AnswerReview review={{ ...review, rows: [right] }} />);
+
+    expect(screen.getByText("5 ث")).toBeTruthy();
+    expect(screen.getByText("10 من 10")).toBeTruthy();
+  });
+});
