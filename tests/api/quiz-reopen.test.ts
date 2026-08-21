@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { NOT_MISSED, ROUND_CLOSED } from "@/lib/quizAttemptServer";
+import { NOT_MISSED, ROUND_CLOSED, ROUND_VOIDED } from "@/lib/quizAttemptServer";
 import { resetDb, post, createUser, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { POST as REOPEN } from "@/app/api/admin/quiz/attempts/[id]/reopen/route";
@@ -191,5 +191,34 @@ describe("reopening the questions a member never answered", () => {
     const after = await prisma.quizAttemptAnswer.findUniqueOrThrow({ where: { id: racing.id } });
     expect(after.isCorrect).toBe(true);
     expect(after.points).toBe(8);
+  });
+
+  it("refuses a round whose points an admin has voided", async () => {
+    const { attempt } = await attemptWith([answered, missed]);
+    await prisma.quizAttempt.update({
+      where: { id: attempt.id },
+      data: { voidedAt: new Date(), voidedBy: "boss" },
+    });
+
+    const res = await reopen(attempt.id);
+
+    expect(res.status).toBe(409);
+    expect(await refusal(res)).toBe(ROUND_VOIDED);
+  });
+
+  it("takes the round again once the points are back", async () => {
+    const { attempt } = await attemptWith([answered, missed]);
+    await prisma.quizAttempt.update({
+      where: { id: attempt.id },
+      data: { voidedAt: new Date(), voidedBy: "boss" },
+    });
+    await reopen(attempt.id);
+
+    await prisma.quizAttempt.update({
+      where: { id: attempt.id },
+      data: { voidedAt: null, voidedBy: null },
+    });
+
+    expect((await reopen(attempt.id)).status).toBe(200);
   });
 });

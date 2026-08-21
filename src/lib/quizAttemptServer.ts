@@ -281,6 +281,7 @@ export async function submitAnswer(
 
 export const NOT_MISSED = "لا توجد أسئلة فائتة في هذه المحاولة";
 export const ROUND_CLOSED = "أغلقت الجولة، لا يمكن إعادة فتحها";
+export const ROUND_VOIDED = "نقاط هذه الجولة ملغاة، أرجعها أولاً إن أردت فتحها";
 
 export async function reopenMissedQuestions(attemptId: string, now = new Date()) {
   const attempt = await prisma.quizAttempt.findUnique({
@@ -292,6 +293,7 @@ export async function reopenMissedQuestions(attemptId: string, now = new Date())
   });
   if (!attempt) throw new NotFoundError(quiz.questionNotFound);
   if (attempt.round.closesAt <= now) throw new ConflictError(ROUND_CLOSED);
+  if (attempt.voidedAt) throw new ConflictError(ROUND_VOIDED);
 
   const curve = curveOf(attempt.round.competition);
   const missed = missedAnswers(attempt.answers, curve.maxSeconds, now);
