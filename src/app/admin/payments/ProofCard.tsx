@@ -5,6 +5,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import RecordHistory from "@/components/admin/RecordHistory";
+import type { HistoryTarget } from "@/app/api/admin/history/schema";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import DonationTags from "./DonationTags";
 import DonationActions from "./DonationActions";
@@ -17,6 +18,7 @@ import {
   type ActivityOption,
   type MemberOption,
   type Proof,
+  type ProofKind,
 } from "./paymentTypes";
 
 function Origin({ proof }: { proof: Proof }) {
@@ -29,6 +31,12 @@ function statusText(proof: Proof) {
   const label = STATUS_LABEL[proof.status] || proof.status;
   return proof.kind === "DONATION" && proof.amount ? `${label} — ${proof.amount} أوقية` : label;
 }
+
+const HISTORY_TARGET: Record<ProofKind, HistoryTarget> = {
+  MEMBERSHIP: "Member",
+  ACTIVITY: "ActivityRegistration",
+  DONATION: "Donation",
+};
 
 export default function ProofCard({
   proof,
@@ -147,7 +155,9 @@ export default function ProofCard({
           >
             <IconLabel name="list">السجل</IconLabel>
           </button>
-          {showHistory && <RecordHistory targetType="Donation" targetId={proof.id} />}
+          {showHistory && (
+            <RecordHistory targetType={HISTORY_TARGET[proof.kind]} targetId={proof.id} />
+          )}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import AuditLogEntryCard from "./AuditLogEntryCard";
 import type { AuditLogEntry } from "./auditLogTypes";
+import type { HistoryTarget } from "@/app/api/admin/history/schema";
 
 type Row = Pick<
   AuditLogEntry,
@@ -15,7 +16,7 @@ export default function RecordHistory({
   targetType,
   targetId,
 }: {
-  targetType: "Expense" | "Donation" | "Member" | "Activity";
+  targetType: HistoryTarget;
   targetId: string;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);

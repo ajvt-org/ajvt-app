@@ -91,4 +91,20 @@ describe("the history of one money record", () => {
 
     expect((await read("Expense", "e1")).status).toBe(403);
   });
+
+  it("finds a membership decision under the member it was about", async () => {
+    await entry("Member", "m1", "APPROVE_MEMBER");
+
+    const body = await (await read("Member", "m1")).json();
+
+    expect(body.history.map((h: { action: string }) => h.action)).toEqual(["APPROVE_MEMBER"]);
+  });
+
+  it("finds an activity decision under its registration", async () => {
+    await entry("ActivityRegistration", "r1", "APPROVE_REGISTRATION");
+
+    const body = await (await read("ActivityRegistration", "r1")).json();
+
+    expect(body.history.map((h: { action: string }) => h.action)).toEqual(["APPROVE_REGISTRATION"]);
+  });
 });
