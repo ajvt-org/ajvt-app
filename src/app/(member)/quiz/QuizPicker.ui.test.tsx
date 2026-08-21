@@ -150,3 +150,37 @@ describe("QuizPicker", () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 });
+
+describe("a card that has not started", () => {
+  function card(state: "before" | "open") {
+    const { container } = render(
+      <QuizPicker competitions={[{ ...rows[0], state }]} backHref="/home" onPick={() => {}} />,
+    );
+    return container.querySelector("button.card") as HTMLButtonElement;
+  }
+
+  it("keeps the card itself opaque, so the header cannot show through where they overlap", () => {
+    expect(card("before").style.opacity).toBe("");
+    expect(card("before").className).not.toContain("opacity-60");
+  });
+
+  it("still reads as unavailable by dimming what is inside it", () => {
+    const dimmed = [...card("before").children].filter(
+      (child) => (child as HTMLElement).style.opacity === "0.6",
+    );
+
+    expect(dimmed).toHaveLength(2);
+  });
+
+  it("leaves a card that can be played undimmed", () => {
+    const dimmed = [...card("open").children].filter(
+      (child) => (child as HTMLElement).style.opacity === "0.6",
+    );
+
+    expect(dimmed).toHaveLength(0);
+  });
+
+  it("is still disabled", () => {
+    expect(card("before").disabled).toBe(true);
+  });
+});
