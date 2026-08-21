@@ -66,7 +66,7 @@ describe("QuizPage", () => {
     render(<QuizPage />);
 
     expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
-    expect(screen.getByText("المسابقات التي تشارك فيها")).toBeDefined();
+    expect(screen.getByText("ركن التجربة")).toBeDefined();
   });
 
   it("puts the picked competition in the URL", async () => {
@@ -90,6 +90,6 @@ describe("QuizPage", () => {
     search = "competition=deleted";
     render(<QuizPage />);
 
-    expect(await screen.findByText("المسابقات التي تشارك فيها")).toBeDefined();
+    expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
   });
 });

@@ -197,7 +197,7 @@ export default function QuizPicker({
         </div>
       </div>
       <div className="px-5 pb-10 space-y-3 relative" style={{ marginTop: -24 }}>
-        {competitions.length === 0 ? (
+        {competitions.length === 0 && (
           <div className="card p-6 text-center space-y-2">
             <div className="flex justify-center" style={{ color: "var(--mint-500)" }}>
               <Icon name="trophy" size={36} />
@@ -206,10 +206,6 @@ export default function QuizPicker({
               لا توجد مسابقة تشارك فيها الآن
             </p>
           </div>
-        ) : (
-          <p className="text-sm font-bold" style={{ color: "var(--text-muted)" }}>
-            المسابقات التي تشارك فيها
-          </p>
         )}
 
         {competitions.map((competition) => (
