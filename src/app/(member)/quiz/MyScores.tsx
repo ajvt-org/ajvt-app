@@ -93,8 +93,10 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
                   <NumericRanges>{`الجولة ${round.round + 1}`}</NumericRanges>
                   {round.category ? ` · ${round.category}` : ""}
                 </span>
-                <span style={{ color: "var(--text-muted)" }}>
-                  {round.missed ? (
+                <span style={{ color: round.voided ? "#991b1b" : "var(--text-muted)" }}>
+                  {round.voided ? (
+                    "ألغيت نقاط هذه الجولة"
+                  ) : round.missed ? (
                     "لم تشارك"
                   ) : (
                     <NumericRanges>
@@ -105,7 +107,9 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
               </span>
               <span
                 className="font-bold"
-                style={{ color: round.missed ? "var(--text-muted)" : "var(--mint-700)" }}
+                style={{
+                  color: round.missed || round.voided ? "var(--text-muted)" : "var(--mint-700)",
+                }}
               >
                 <NumericRanges>{`${round.score}`}</NumericRanges>
               </span>
@@ -129,7 +133,7 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
 
             {open === round.attemptId && reviews[round.attemptId as string] && (
               <div className="pb-3">
-                <AnswerReview review={reviews[round.attemptId as string]} />
+                <AnswerReview review={reviews[round.attemptId as string]} voided={round.voided} />
               </div>
             )}
           </div>

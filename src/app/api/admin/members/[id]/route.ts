@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
 import { ValidationError } from "@/lib/errors";
 import { confirmationMatches } from "@/lib/deletedRecords";
 import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
@@ -115,12 +116,14 @@ export const DELETE = withRoute(
       session.username,
     );
     await prisma.member.delete({ where: { id } });
+    const forgotten = member.userId ? await forgetQuizFootprint(member.userId) : null;
     await purgeExpired();
     await logAction(session.username, "DELETE_MEMBER", member.fullName, {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
       before: { fullName: member.fullName, age: member.age, status: member.status },
+      meta: forgotten ?? undefined,
     });
 
     return NextResponse.json({ ok: true });

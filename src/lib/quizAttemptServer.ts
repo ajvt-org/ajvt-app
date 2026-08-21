@@ -281,6 +281,7 @@ export async function submitAnswer(
 
 export const NOT_MISSED = "لا توجد أسئلة فائتة في هذه المحاولة";
 export const ROUND_CLOSED = "أغلقت الجولة، لا يمكن إعادة فتحها";
+export const ROUND_VOIDED = "نقاط هذه الجولة ملغاة، أرجعها أولاً إن أردت فتحها";
 
 export async function reopenMissedQuestions(attemptId: string, now = new Date()) {
   const attempt = await prisma.quizAttempt.findUnique({
@@ -292,6 +293,7 @@ export async function reopenMissedQuestions(attemptId: string, now = new Date())
   });
   if (!attempt) throw new NotFoundError(quiz.questionNotFound);
   if (attempt.round.closesAt <= now) throw new ConflictError(ROUND_CLOSED);
+  if (attempt.voidedAt) throw new ConflictError(ROUND_VOIDED);
 
   const curve = curveOf(attempt.round.competition);
   const missed = missedAnswers(attempt.answers, curve.maxSeconds, now);
@@ -327,6 +329,44 @@ export async function reopenMissedQuestions(attemptId: string, now = new Date())
   });
 
   return { reopened: missed.length, userId: attempt.userId, round: attempt.round.index };
+}
+
+export async function forgetQuizFootprint(userId: string) {
+  const [attempts, participations] = await prisma.$transaction([
+    prisma.quizAttempt.deleteMany({ where: { userId } }),
+    prisma.quizParticipant.deleteMany({ where: { userId } }),
+  ]);
+  return { attempts: attempts.count, participations: participations.count };
+}
+
+export const NOTHING_TO_VOID = "لا توجد محاولات لهذا المشارك في هذه المسابقة";
+
+export async function setAttemptVoided(attemptId: string, voided: boolean, by: string) {
+  const attempt = await prisma.quizAttempt.findUnique({
+    where: { id: attemptId },
+    select: { userId: true, round: { select: { index: true, competitionId: true } } },
+  });
+  if (!attempt) throw new NotFoundError(quiz.questionNotFound);
+
+  await prisma.quizAttempt.update({
+    where: { id: attemptId },
+    data: { voidedAt: voided ? new Date() : null, voidedBy: voided ? by : null },
+  });
+  return { userId: attempt.userId, round: attempt.round.index };
+}
+
+export async function setCompetitionVoided(
+  competitionId: string,
+  userId: string,
+  voided: boolean,
+  by: string,
+) {
+  const { count } = await prisma.quizAttempt.updateMany({
+    where: { userId, round: { competitionId } },
+    data: { voidedAt: voided ? new Date() : null, voidedBy: voided ? by : null },
+  });
+  if (count === 0) throw new ConflictError(NOTHING_TO_VOID);
+  return count;
 }
 
 export async function closeExpiredAttempts(now = new Date()) {

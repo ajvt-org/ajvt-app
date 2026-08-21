@@ -105,10 +105,17 @@ async function sharedStandings(
 async function myRoundOf(competitionId: string, userId: string, at: number): Promise<MyRound> {
   const attempt = await prisma.quizAttempt.findFirst({
     where: { userId, round: { competitionId, index: at } },
-    select: { score: true, finishedAt: true },
+    select: { score: true, finishedAt: true, voidedAt: true },
   });
   const scores: RoundScore[] = attempt
-    ? [{ userId, index: at, score: attempt.score, finishedAt: attempt.finishedAt }]
+    ? [
+        {
+          userId,
+          index: at,
+          score: attempt.voidedAt ? 0 : attempt.score,
+          finishedAt: attempt.finishedAt,
+        },
+      ]
     : [];
   return myRound(scores, userId, at);
 }

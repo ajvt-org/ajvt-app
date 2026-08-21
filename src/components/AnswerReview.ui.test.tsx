@@ -96,4 +96,25 @@ describe("AnswerReview", () => {
 
     expect(screen.queryByText(/للسرعة/)).toBeNull();
   });
+
+  it("says a voided round is voided and reads its total as zero", () => {
+    render(<AnswerReview review={review} voided />);
+
+    expect(screen.getByText("ألغيت نقاط هذه الجولة")).toBeDefined();
+    const tally = screen.getByText("نقطة").parentElement;
+    expect(tally?.textContent).toContain("0");
+  });
+
+  it("leaves the questions readable so the member can still review them", () => {
+    render(<AnswerReview review={review} voided />);
+
+    expect(screen.getByText("ما عاصمة موريتانيا؟")).toBeDefined();
+    expect(screen.getByText("إجابة صحيحة")).toBeDefined();
+  });
+
+  it("says nothing of a void on a round that stands", () => {
+    render(<AnswerReview review={review} />);
+
+    expect(screen.queryByText("ألغيت نقاط هذه الجولة")).toBeNull();
+  });
 });
