@@ -51,7 +51,7 @@ self.addEventListener("push", (event) => {
     data = {};
   }
 
-  const title = data.title || "رابطة شباب التاكلالت";
+  const title = data.title || "إشعار جديد";
   const options = {
     body: data.body || "",
     icon: "/icon.png",

@@ -11,7 +11,7 @@ import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-import { members, push } from "@/lib/messages";
+import { members, notify } from "@/lib/messages";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -88,14 +88,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   if (updated.userId) {
     sendPushToUser(
       updated.userId,
-      {
-        title: push.title,
-        body:
-          action === "ACTIVE"
-            ? `تهانينا! تم قبول عضوية ${updated.fullName} 🎉`
-            : `نأسف، لم يتم قبول طلب انضمام ${updated.fullName}`,
-        url: "/profile",
-      },
+      notify.membershipDecision(action === "ACTIVE"),
       "MEMBERSHIP_DECISION",
     ).catch((err) => logger.error("push.notify.error", err));
   }

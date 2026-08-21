@@ -7,7 +7,7 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
-import { activities, members, push } from "@/lib/messages";
+import { activities, members, notify } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -108,14 +108,11 @@ export const PATCH = withRoute(
     if (registration.member.userId) {
       sendPushToUser(
         registration.member.userId,
-        {
-          title: push.title,
-          body:
-            status === "ACTIVE"
-              ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
-              : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${reason.trim()}` : ""}`,
-          url: "/home",
-        },
+        notify.registrationDecision(
+          status === "ACTIVE",
+          registration.activity.title,
+          reason ?? undefined,
+        ),
         "ACTIVITY_DECISION",
       ).catch((err) => logger.error("registration.review.push.error", err));
     }

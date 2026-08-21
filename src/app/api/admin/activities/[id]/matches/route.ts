@@ -6,7 +6,7 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { push, tournament } from "@/lib/messages";
+import { notify, tournament } from "@/lib/messages";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -142,11 +142,9 @@ export const POST = withRoute(
       },
     });
 
-    notifyTeams(homeTeamId, awayTeamId, {
-      title: push.title,
-      body: `تم تحديد مباراة فريقك: ${home.name} × ${away.name}`,
-      url: `/tournament/${id}`,
-    }).catch((err) => logger.error("match.created.push.error", err));
+    notifyTeams(homeTeamId, awayTeamId, notify.matchScheduled(home.name, away.name, id)).catch(
+      (err) => logger.error("match.created.push.error", err),
+    );
 
     return NextResponse.json({ match }, { status: 201 });
   },
