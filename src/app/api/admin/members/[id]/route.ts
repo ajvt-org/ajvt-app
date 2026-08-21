@@ -115,8 +115,8 @@ export const DELETE = withRoute(
       member as unknown as Prisma.InputJsonValue,
       session.username,
     );
-    const forgotten = member.userId ? await forgetQuizFootprint(member.userId) : null;
     await prisma.member.delete({ where: { id } });
+    const forgotten = member.userId ? await forgetQuizFootprint(member.userId) : null;
     await purgeExpired();
     await logAction(session.username, "DELETE_MEMBER", member.fullName, {
       ...auditContext(session, req),

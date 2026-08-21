@@ -153,12 +153,14 @@ export async function attemptsInRound(competitionId: string, index: number) {
   });
   const names = new Map(members.map((m) => [m.userId as string, m.fullName]));
 
-  return attempts.map((a) => ({
-    attemptId: a.id,
-    userId: a.userId,
-    name: names.get(a.userId) ?? "",
-    score: a.voidedAt ? 0 : a.score,
-    voided: a.voidedAt !== null,
-    finishedAt: a.finishedAt,
-  }));
+  return attempts
+    .map((a) => ({
+      attemptId: a.id,
+      userId: a.userId,
+      name: names.get(a.userId) ?? "",
+      score: a.voidedAt ? 0 : a.score,
+      voided: a.voidedAt !== null,
+      finishedAt: a.finishedAt,
+    }))
+    .sort((a, b) => b.score - a.score);
 }

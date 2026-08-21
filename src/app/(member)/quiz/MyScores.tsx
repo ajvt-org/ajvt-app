@@ -133,7 +133,7 @@ export default function MyScores({ competitionId }: { competitionId: string }) {
 
             {open === round.attemptId && reviews[round.attemptId as string] && (
               <div className="pb-3">
-                <AnswerReview review={reviews[round.attemptId as string]} />
+                <AnswerReview review={reviews[round.attemptId as string]} voided={round.voided} />
               </div>
             )}
           </div>

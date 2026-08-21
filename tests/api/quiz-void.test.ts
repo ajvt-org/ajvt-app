@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { getStandings } from "@/lib/quizRankingServer";
-import { attemptsOf } from "@/lib/quizBreakdownServer";
+import { attemptsOf, attemptsInRound } from "@/lib/quizBreakdownServer";
+import { myCompetitions } from "@/lib/competitionServer";
 import { NOTHING_TO_VOID } from "@/lib/quizAttemptServer";
 import { resetDb, post, createUsers, createAdmin, signInAsAdmin, withId } from "./helpers";
 
@@ -172,5 +173,47 @@ describe("voiding what a member scored", () => {
     );
     expect(actions).toContain("VOID_QUIZ_SCORE");
     expect(actions).toContain("RESTORE_QUIZ_SCORE");
+  });
+
+  it("drops the voided points from the score on the quiz list", async () => {
+    const c = await competition();
+    const [cheat] = await createUsers(1);
+    await member(cheat.id, "غشاش");
+    await attempt(c.id, cheat.id, 0, 30);
+    const second = await attempt(c.id, cheat.id, 1, 90);
+
+    await voidOne(second.id, true);
+
+    const mine = (await myCompetitions(cheat.id)).find((row) => row.competition.id === c.id);
+    expect(mine?.mine.reduce((sum, a) => sum + a.score, 0)).toBe(30);
+  });
+
+  it("orders the admin list by the score it shows", async () => {
+    const c = await competition();
+    const [cheat, honest] = await createUsers(2);
+    await member(cheat.id, "غشاش");
+    await member(honest.id, "نزيه");
+    const big = await attempt(c.id, cheat.id, 1, 90);
+    await attempt(c.id, honest.id, 1, 40);
+
+    await voidOne(big.id, true);
+
+    const rows = await attemptsInRound(c.id, 1);
+    expect(rows.map((r) => [r.name, r.score])).toEqual([
+      ["نزيه", 40],
+      ["غشاش", 0],
+    ]);
+  });
+
+  it("marks the round void in the answers a member reads back", async () => {
+    const c = await competition();
+    const [cheat] = await createUsers(1);
+    await member(cheat.id, "غشاش");
+    const round = await attempt(c.id, cheat.id, 1, 90);
+
+    await voidOne(round.id, true);
+
+    const { attemptDetail } = await import("@/lib/quizBreakdownServer");
+    expect((await attemptDetail(round.id)).voided).toBe(true);
   });
 });
