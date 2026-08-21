@@ -105,6 +105,41 @@ describe("the finance summary", () => {
     expect(summary.unassigned).toEqual([{ id: donation.id, name: "زائر", amount: 500 }]);
   });
 
+  it("keeps an old payment in the totals but off the day list", async () => {
+    const m = await member("محمد");
+    await recordMembershipPayment(prisma, m.id, 1000, 100);
+    await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
+
+    const summary = await getFinanceSummary(30);
+
+    expect(summary.totalRevenue).toBe(1000);
+    expect(summary.byMethod["بنكيلي"]).toBe(1000);
+    expect(summary.byMethodDetail["بنكيلي"].intisab).toEqual([{ name: "محمد", amount: 100 }]);
+    expect(summary.byMethodDetail["بنكيلي"].daem).toEqual([{ name: "محمد", amount: 900 }]);
+    expect(summary.days).toEqual([]);
+    expect(summary.allRecords).toEqual([]);
+  });
+
+  it("still lists an old gift with no method for assignment", async () => {
+    const donation = await gift(500, { name: "زائر" });
+    await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
+
+    const summary = await getFinanceSummary(30);
+
+    expect(summary.unassigned).toEqual([{ id: donation.id, name: "زائر", amount: 500 }]);
+  });
+
+  it("adds a donor's gifts together under each method they used", async () => {
+    await gift(300, { name: "زائر", method: "السداد" });
+    await gift(200, { name: "زائر", method: "السداد" });
+    await gift(100, { name: "زائر", method: "بنكيلي" });
+
+    const summary = await getFinanceSummary();
+
+    expect(summary.byMethodDetail["السداد"].daem).toEqual([{ name: "زائر", amount: 500 }]);
+    expect(summary.byMethodDetail["بنكيلي"].daem).toEqual([{ name: "زائر", amount: 100 }]);
+  });
+
   it("names an unnamed giver on the day list the way the board does", async () => {
     await gift(500, { method: "السداد" });
 
