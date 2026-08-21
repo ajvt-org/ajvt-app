@@ -106,14 +106,18 @@ export const PATCH = withRoute(
     );
 
     if (registration.member.userId) {
-      sendPushToUser(registration.member.userId, {
-        title: push.title,
-        body:
-          status === "ACTIVE"
-            ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
-            : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${reason.trim()}` : ""}`,
-        url: "/home",
-      }).catch((err) => logger.error("registration.review.push.error", err));
+      sendPushToUser(
+        registration.member.userId,
+        {
+          title: push.title,
+          body:
+            status === "ACTIVE"
+              ? `تم تأكيد تسجيل ${registration.member.fullName} في "${registration.activity.title}" 🎉`
+              : `نأسف، لم يتم قبول تسجيل ${registration.member.fullName} في "${registration.activity.title}"${reason ? ` — ${reason.trim()}` : ""}`,
+          url: "/home",
+        },
+        "ACTIVITY_DECISION",
+      ).catch((err) => logger.error("registration.review.push.error", err));
     }
 
     return NextResponse.json({ registration: updated });

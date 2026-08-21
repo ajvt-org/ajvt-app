@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { quiz } from "@/lib/messages";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
@@ -117,5 +117,66 @@ describe("a question a quiz has used", () => {
 
     expect((await remove(q.id)).status).toBe(200);
     expect(await prisma.quizQuestion.count({ where: { id: q.id } })).toBe(0);
+  });
+});
+
+describe("the database behind the guard", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
+  });
+
+  it("refuses a delete that goes around the route, for a drawn question", async () => {
+    const q = await question();
+    const r = await round();
+    await prisma.quizRoundQuestion.create({ data: { roundId: r.id, questionId: q.id } });
+
+    await expect(prisma.quizQuestion.delete({ where: { id: q.id } })).rejects.toMatchObject({
+      code: "P2003",
+    });
+    expect(await prisma.quizQuestion.count({ where: { id: q.id } })).toBe(1);
+  });
+
+  it("refuses a delete that goes around the route, for an answered question", async () => {
+    const q = await question();
+    const r = await round();
+    const user = await createUser("22334455");
+    const attempt = await prisma.quizAttempt.create({ data: { roundId: r.id, userId: user.id } });
+    await prisma.quizAttemptAnswer.create({
+      data: { attemptId: attempt.id, questionId: q.id, position: 0 },
+    });
+
+    await expect(prisma.quizQuestion.delete({ where: { id: q.id } })).rejects.toMatchObject({
+      code: "P2003",
+    });
+  });
+
+  it("still lets an untouched question and its answers go", async () => {
+    const q = await question();
+
+    await prisma.quizQuestion.delete({ where: { id: q.id } });
+
+    expect(await prisma.quizAnswer.count({ where: { questionId: q.id } })).toBe(0);
+  });
+});
+
+describe("a question drawn between the check and the delete", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("quizmaster", "QUIZ"));
+  });
+
+  it("answers with the conflict rather than a server error", async () => {
+    const q = await question();
+    const r = await round();
+    await prisma.quizRoundQuestion.create({ data: { roundId: r.id, questionId: q.id } });
+    const blind = vi.spyOn(prisma.quizRoundQuestion, "count").mockResolvedValue(0);
+
+    const res = await remove(q.id);
+    blind.mockRestore();
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(quiz.questionInUse);
+    expect(await prisma.quizQuestion.count({ where: { id: q.id } })).toBe(1);
   });
 });

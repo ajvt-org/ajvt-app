@@ -10,7 +10,7 @@
     "dev": "prisma migrate deploy && tsx prisma/seed.ts && next dev",
     "build": "prisma generate && next build",
     "start": "node scripts/start.mjs",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
@@ -27,6 +27,7 @@
     "test:e2e": "tsx tests/e2e/prepareDb.ts && playwright test",
     "db:proof-hashes": "tsx prisma/backfillProofHashes.ts",
     "db:legacy-images": "tsx prisma/backfillLegacyImages.ts",
+    "db:new-migration": "node scripts/new-migration.mjs",
     "db:dedupe-members": "tsx prisma/dedupeMembers.ts"
   },
   "prisma": {

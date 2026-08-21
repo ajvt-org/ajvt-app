@@ -41,6 +41,7 @@ model User {
   createdAt             DateTime           @default(now())
   members               Member[]
   pushSubscriptions     PushSubscription[]
+  notificationPrefs     NotificationPreference[]
   teamFollows           TeamFollow[]
   mvpVotes              MvpVote[]
   quizAttempts          QuizAttempt[]
@@ -438,6 +439,18 @@ model PushSubscription {
   createdAt DateTime @default(now())
 }
 
+model NotificationPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  enabled   Boolean
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, category])
+  @@index([userId])
+}
+
 model AuditLog {
   id            String   @id @default(cuid())
   adminUsername String
@@ -609,7 +622,7 @@ model QuizRoundQuestion {
   roundId    String
   round      QuizRound    @relation(fields: [roundId], references: [id], onDelete: Cascade)
   questionId String
-  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
 
   @@unique([roundId, questionId])
   @@index([roundId])
@@ -637,7 +650,7 @@ model QuizAttemptAnswer {
   attemptId         String
   attempt           QuizAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   questionId        String
-  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
   position          Int
   optionOrder       String[]     @default([])
   shownAt           DateTime?

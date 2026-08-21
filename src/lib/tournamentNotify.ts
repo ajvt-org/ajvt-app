@@ -2,11 +2,13 @@ import { prisma } from "./prisma";
 import { sendPushToUsers } from "./push";
 import { logger } from "./logger";
 import { push } from "@/lib/messages";
+import type { CategoryKey } from "./notificationCategories";
 
 export async function notifyTeams(
   homeTeamId: string,
   awayTeamId: string,
   payload: { title: string; body: string; url?: string },
+  category: CategoryKey = "TOURNAMENT_MATCH",
 ) {
   const [teamMembers, followers] = await Promise.all([
     prisma.teamMember.findMany({
@@ -25,7 +27,7 @@ export async function notifyTeams(
       ),
     ),
   );
-  await sendPushToUsers(userIds, payload).catch((err) =>
+  await sendPushToUsers(userIds, payload, category).catch((err) =>
     logger.error("tournament.push.error", err),
   );
 }
@@ -55,11 +57,16 @@ export async function sendMatchReminders() {
   for (const m of matches) {
     if (!(await claimReminder(m.id, now))) continue;
 
-    await notifyTeams(m.homeTeamId, m.awayTeamId, {
-      title: push.title,
-      body: `تذكير: مباراة فريقك غداً — ${m.homeTeam.name} × ${m.awayTeam.name}`,
-      url: `/tournament/${m.activityId}`,
-    }).catch((err) => logger.error("match.reminder.push.error", err));
+    await notifyTeams(
+      m.homeTeamId,
+      m.awayTeamId,
+      {
+        title: push.title,
+        body: `تذكير: مباراة فريقك غداً — ${m.homeTeam.name} × ${m.awayTeam.name}`,
+        url: `/tournament/${m.activityId}`,
+      },
+      "MATCH_REMINDER",
+    ).catch((err) => logger.error("match.reminder.push.error", err));
   }
 }
 
