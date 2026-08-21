@@ -11,7 +11,7 @@ import {
   withId,
 } from "./helpers";
 import { DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { ALREADY_STARTED, STARTS_IN_PAST } from "@/lib/competitionServer";
+import { STARTS_IN_PAST } from "@/lib/competitionServer";
 
 import { GET as LIST, POST as CREATE } from "@/app/api/admin/quiz/competitions/route";
 import {
