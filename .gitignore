@@ -64,3 +64,8 @@ next-env.d.ts
 
 # agent tooling, machine-specific
 .claude/
+
+# written by `next dev` whenever an AI agent's env is detected, and by nothing
+# else — ignored so a regenerated copy never lands in a diff
+/AGENTS.md
+/CLAUDE.md

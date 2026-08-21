@@ -4,7 +4,7 @@
 //
 // Fixed list rather than free text: the member sees this directly, and a
 // short list keeps it something they can act on without contacting the
-// association (cf. AGENTS.md UX TODO, bloc B3).
+// association.
 export const REJECTION_REASONS = [
   "الصورة غير واضحة",
   "المبلغ المدفوع غير مطابق",

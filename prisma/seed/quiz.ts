@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { prisma } from "./client";
 import { questionBank } from "./questionBank";
-import { daysAgo, daysFromNow, minutesAgo } from "./random";
+import { daysAgo, daysFromNow } from "./random";
 import { DEFAULT_CURVE } from "../../src/lib/competitionConfig";
 import type { SeededUser } from "./members";
 
