@@ -70,7 +70,7 @@ The route handlers are plain exported functions, so the tests import `POST` and 
 
 ## Branches and deploys
 
-`dev` is where work lands. `master` is what is deployed. Render serves production from `master`, so merging into `master` is the release.
+`dev` is where work lands. `master` is what production runs. Render serves it from `master`, from a single web service, and there is no other deploy target and no staging environment. Merging into `master` is the release; putting it in production is a separate step, below.
 
 Day to day:
 
@@ -86,17 +86,16 @@ A release is a pull request too, from `dev` into `master`:
 
 ```bash
 gh pr create --base master --head dev --title "Release 0.21.0"
-# merge once the build passes, then tag what was deployed
-git checkout master && git pull
-git tag -a 0.21.0 -m "what changed"
-git push origin 0.21.0
+# merge once the build passes, then fast-forward dev onto master
 ```
 
-Tags live on `master` only, so a tag always means the version was deployed. `git log --tags master` is the deployment history.
+Merging it runs the release workflow, which tags the merge commit and publishes the tag. Tags live on `master` only, so `git log --tags master` is the release history.
 
 There is no `CHANGELOG.md`, and this is deliberate. Every tag has a [release](https://github.com/ajvt-org/ajvt-app/releases) whose notes are written by hand when the release pull request is opened, and the workflow publishes the pull request body as those notes. A file in the repository would be a second copy of the same thing, kept up to date by whoever remembered. Commits here are plain imperative rather than Conventional Commits, so nothing can generate one either.
 
-Every boot runs `prisma migrate deploy` and the seed, so a release migrates the production database. That is the reason releases are a deliberate merge rather than every merge, and the reason the build has to pass before one can happen.
+Merging the release tags it and publishes the notes. It does not put it in production: the deploy is started by hand from the Render dashboard, and until someone does, production is still running the previous tag. Check which one it is there before assuming a fix is live.
+
+Every boot runs `prisma migrate deploy` and the seed, so a deploy migrates the production database. That is the reason releases are a deliberate merge rather than every merge, the reason the build has to pass before one can happen, and the reason the deploy itself is a decision rather than a consequence.
 
 To roll back, redeploy the previous commit from the Render dashboard. That is faster than a revert, and it does not undo a migration either way.
 
