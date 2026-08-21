@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatDate, formatTime } from "@/lib/utils";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import RecordHistory from "@/components/admin/RecordHistory";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import DonationTags from "./DonationTags";
 import DonationActions from "./DonationActions";
@@ -51,6 +52,7 @@ export default function ProofCard({
   onPatch: (changes: Partial<Proof>) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [linking, setLinking] = useState(false);
   const isDonation = proof.kind === "DONATION";
 
@@ -137,6 +139,15 @@ export default function ProofCard({
               )}
             </>
           )}
+
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-xs font-bold mt-2"
+            style={{ color: "var(--mint-700)" }}
+          >
+            <IconLabel name="list">السجل</IconLabel>
+          </button>
+          {showHistory && <RecordHistory targetType="Donation" targetId={proof.id} />}
         </div>
       </div>
     </div>
