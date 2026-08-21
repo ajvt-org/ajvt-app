@@ -124,6 +124,9 @@ export default function AdminHome() {
         detail={`عضويات ${handling.pendingMembers}، أنشطة ${handling.pendingRegistrations}، دفعات ${handling.pendingPayments}`}
         tone={handling.total > 0 ? "var(--mint-700)" : undefined}
       />
+      <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
+        الإصدار {process.env.RELEASE}
+      </p>
     </div>
   );
 }
