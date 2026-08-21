@@ -97,6 +97,8 @@ Merging the release tags it and publishes the notes. It does not put it in produ
 
 Every boot runs `prisma migrate deploy` and the seed, so a deploy migrates the production database. That is the reason releases are a deliberate merge rather than every merge, the reason the build has to pass before one can happen, and the reason the deploy itself is a decision rather than a consequence.
 
+The service's Health Check Path must be set to `/api/health` in the Render dashboard — this lives outside the repo and nothing in code can set it. Disk-backed services here deploy by stopping the previous instance before starting the new one, since the disk can only be attached to one instance at a time, so there is no previous instance for Render to fall back on during any deploy: the holding page is what every visitor sees for that whole window, not a first-deploy fallback. The setting still matters for a different reason. The port opens the instant boot starts, before migrations even run, so without it Render reads an open port as live and would call the deploy done while the database is still being migrated. The health check path is what makes Render wait for `/api/health` itself to answer healthy first.
+
 To roll back, redeploy the previous commit from the Render dashboard. That is faster than a revert, and it does not undo a migration either way.
 
 Admins are not covered by the rules, so there is a way through if the build is broken and something has to ship. Use it knowingly.

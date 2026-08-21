@@ -1,15 +1,26 @@
 import { execSync, spawn } from "child_process";
 import { mkdirSync } from "fs";
 import { createRequire } from "module";
+import { startHoldingServer } from "./holdingServer.mjs";
 
 const uploadDir = process.env.UPLOAD_DIR || "public/uploads";
 mkdirSync(uploadDir, { recursive: true });
+
+const port = Number(process.env.PORT) || 3000;
+
+// Migrations and seeding below block on purpose (see the next comment), which
+// used to leave the port closed the whole time and show as a 502. This holds
+// it open instead, answering /api/health as unhealthy until it closes.
+console.log("→ Holding the port during boot...");
+const holding = await startHoldingServer(port);
 
 console.log("→ Running database migrations...");
 execSync("npx prisma migrate deploy", { stdio: "inherit" });
 
 console.log("→ Seeding admin (skipped if exists)...");
 execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
+
+await new Promise((resolve) => holding.close(resolve));
 
 // The two steps above are boot work and block on purpose: nothing serves a
 // request before the database matches the code. This one is the server, and it
