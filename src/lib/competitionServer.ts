@@ -228,9 +228,13 @@ export async function saveCompetition(
     return prisma.competition.update({
       where: { id: existing.id },
       data: { ...data, boards: { create: boards } },
+      include: { boards: { orderBy: { order: "asc" } } },
     });
   }
-  return prisma.competition.create({ data: { ...data, boards: { create: boards } } });
+  return prisma.competition.create({
+    data: { ...data, boards: { create: boards } },
+    include: { boards: { orderBy: { order: "asc" } } },
+  });
 }
 
 export async function copyCompetition(id: string, now = new Date()) {
@@ -272,6 +276,7 @@ export async function copyCompetition(id: string, now = new Date()) {
       },
       participants: { create: participants.map((p) => ({ userId: p.userId })) },
     },
+    include: { boards: { orderBy: { order: "asc" } } },
   });
 }
 
@@ -281,6 +286,7 @@ export async function startCompetition(id: string, now = new Date()) {
   return prisma.competition.update({
     where: { id: competition.id },
     data: { startedAt: now },
+    include: { boards: { orderBy: { order: "asc" } } },
   });
 }
 
