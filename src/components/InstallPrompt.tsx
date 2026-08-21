@@ -46,6 +46,7 @@ export default function InstallPrompt() {
   const [installed, setInstalled] = useState<boolean | null>(null);
   const pathname = usePathname();
   const shownOn = useRef<string | null>(null);
+  const offered = useRef(false);
 
   useEffect(() => {
     if (runningInstalled()) {
@@ -57,7 +58,7 @@ export default function InstallPrompt() {
     let live = true;
 
     knownInstalled().then((yes) => {
-      if (!live) return;
+      if (!live || offered.current) return;
       if (yes) {
         localStorage.setItem(INSTALLED_KEY, "1");
         if (!flagSet(localStorage.getItem(HINTED_KEY))) {
@@ -86,7 +87,14 @@ export default function InstallPrompt() {
     function handler(e: Event) {
       e.preventDefault();
       sessionStorage.setItem(SESSION_KEY, "1");
-      if (live) setOffer(e as BeforeInstallPromptEvent);
+      offered.current = true;
+      localStorage.removeItem(INSTALLED_KEY);
+      localStorage.removeItem(HINTED_KEY);
+      if (live) {
+        setInstalled(false);
+        setHint(false);
+        setOffer(e as BeforeInstallPromptEvent);
+      }
     }
     window.addEventListener("beforeinstallprompt", handler);
 

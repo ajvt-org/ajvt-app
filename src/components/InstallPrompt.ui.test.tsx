@@ -66,7 +66,6 @@ describe("InstallPrompt", () => {
   it("finds an install that happened before the flag existed", async () => {
     relatedApps(true);
     render(<InstallPrompt />);
-    offerInstall();
 
     expect(await screen.findByText(HINT)).toBeDefined();
     expect(screen.queryByText(BANNER)).toBeNull();
@@ -103,14 +102,26 @@ describe("InstallPrompt", () => {
     await waitFor(() => expect(screen.queryByText(BANNER)).toBeNull());
   });
 
-  it("points at the installed app instead of offering it again", async () => {
+  it("trusts the browser's offer over a remembered install", async () => {
     localStorage.setItem(INSTALLED_KEY, "1");
+    localStorage.setItem(HINTED_KEY, "1");
     render(<InstallPrompt />);
     offerInstall();
 
-    expect(await screen.findByText(HINT)).toBeDefined();
-    expect(screen.queryByText(BANNER)).toBeNull();
-    expect(localStorage.getItem(HINTED_KEY)).toBe("1");
+    expect(await screen.findByText(BANNER)).toBeDefined();
+    expect(screen.queryByText(HINT)).toBeNull();
+    expect(localStorage.getItem(INSTALLED_KEY)).toBeNull();
+    expect(localStorage.getItem(HINTED_KEY)).toBeNull();
+  });
+
+  it("offers again on a device that says installed but still sends the offer", async () => {
+    localStorage.setItem(INSTALLED_KEY, "1");
+    relatedApps(true);
+    render(<InstallPrompt />);
+    offerInstall();
+
+    expect(await screen.findByText(BANNER)).toBeDefined();
+    expect(screen.queryByText(HINT)).toBeNull();
   });
 
   it("points at the installed app only once", async () => {
