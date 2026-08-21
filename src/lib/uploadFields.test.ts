@@ -43,6 +43,12 @@ function partsOf(id: string): { model: string; field: string } {
   return { model, field };
 }
 
+function locatorOf(id: string) {
+  const field = UPLOAD_FIELDS.find((f) => f.id === id)!;
+  if (field.serve.via !== "authenticated") throw new Error(`${id} has no resolver`);
+  return field.serve.locate;
+}
+
 const lastCall = () => state.calls[state.calls.length - 1];
 
 beforeEach(() => {
@@ -80,12 +86,12 @@ describe("every registry entry", () => {
     },
   );
 
-  it.each(UPLOAD_FIELDS.filter((f) => f.locate).map((f) => [f.id, f] as const))(
+  it.each(UPLOAD_FIELDS.filter((f) => f.serve.via === "authenticated").map((f) => [f.id] as const))(
     "%s looks the owner up by its own column",
-    async (id, f) => {
+    async (id) => {
       const { model, field } = partsOf(id);
 
-      await f.locate!("proof.webp");
+      await locatorOf(id)("proof.webp");
 
       expect(lastCall().model).toBe(model);
       expect(lastCall().op).toBe("findFirst");
@@ -124,7 +130,7 @@ describe("locateUpload", () => {
 });
 
 describe("payment proofs", () => {
-  const payment = UPLOAD_FIELDS.find((f) => f.id === "payment.proof")!;
+  const locate = locatorOf("payment.proof");
 
   it.each([
     ["MEMBERSHIP", "membership"],
@@ -133,13 +139,13 @@ describe("payment proofs", () => {
   ])("reads a %s payment as a %s proof", async (purpose, kind) => {
     state.row = { purpose, member: { userId: "u1" } };
 
-    expect(await payment.locate!("proof.webp")).toEqual({ kind, ownerId: "u1" });
+    expect(await locate("proof.webp")).toEqual({ kind, ownerId: "u1" });
   });
 
   it("keeps a payment with no member admin only", async () => {
     state.row = { purpose: "DONATION", member: null };
 
-    expect(await payment.locate!("proof.webp")).toEqual({ kind: "donations", ownerId: null });
+    expect(await locate("proof.webp")).toEqual({ kind: "donations", ownerId: null });
   });
 });
 

@@ -23,15 +23,17 @@ export async function GET(
       return new NextResponse("Not found", { status: 404 });
     }
 
-    // Donor photos (manually-entered donors with no Member/account) are
-    // shown publicly on the leaderboard — like member/activity photos, only
-    // serve filenames actually attached to a donation as donorPhoto, so this
-    // route can't be used to probe the shared upload directory.
-    const donation = await prisma.donation.findFirst({
-      where: { donorPhoto: toBaseFilename(filename) },
-      select: { id: true },
-    });
-    if (!donation) {
+    // Donor photos (manually-entered donors with no Member/account) are shown
+    // publicly on the honour board, which reads them off Payment — like
+    // member/activity photos, only serve filenames actually attached to a row
+    // as donorPhoto, so this route can't be used to probe the shared upload
+    // directory.
+    const base = toBaseFilename(filename);
+    const [donation, payment] = await Promise.all([
+      prisma.donation.findFirst({ where: { donorPhoto: base }, select: { id: true } }),
+      prisma.payment.findFirst({ where: { donorPhoto: base }, select: { id: true } }),
+    ]);
+    if (!donation && !payment) {
       return new NextResponse("Not found", { status: 404 });
     }
 
