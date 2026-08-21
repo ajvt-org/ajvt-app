@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import RecordHistory from "@/components/admin/RecordHistory";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
@@ -52,6 +54,8 @@ function Row({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [showHistory, setShowHistory] = useState(false);
+
   return (
     <div className="card p-3">
       <div className="flex items-center gap-3">
@@ -105,7 +109,16 @@ function Row({
         >
           {busy ? "..." : <IconLabel name="trash">حذف</IconLabel>}
         </button>
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <IconLabel name="list">السجل</IconLabel>
+        </button>
       </div>
+
+      {showHistory && <RecordHistory targetType="Expense" targetId={expense.id} />}
     </div>
   );
 }
