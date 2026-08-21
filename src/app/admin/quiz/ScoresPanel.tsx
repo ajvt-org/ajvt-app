@@ -7,8 +7,10 @@ import AttemptBreakdown, { type AttemptDetail } from "./AttemptBreakdown";
 
 interface AttemptRow {
   attemptId: string;
+  userId: string;
   name: string;
   score: number;
+  voided: boolean;
   finishedAt: string | null;
 }
 
@@ -75,13 +77,16 @@ export default function ScoresPanel({
     }
   }
 
-  async function reopen(attemptId: string) {
+  const reopen = (attemptId: string) =>
+    act(attemptId, () => api.post(`/api/admin/quiz/attempts/${attemptId}/reopen`, {}), REOPENED);
+
+  async function act(attemptId: string, run: () => Promise<unknown>, done: string) {
     setError("");
     setNote("");
     setBusy(attemptId);
     try {
-      await api.post(`/api/admin/quiz/attempts/${attemptId}/reopen`, {});
-      setNote(REOPENED);
+      await run();
+      setNote(done);
       setReload((n) => n + 1);
       setDetail(null);
     } catch (e) {
@@ -90,6 +95,24 @@ export default function ScoresPanel({
       setBusy(null);
     }
   }
+
+  const voidRound = (row: AttemptRow) =>
+    act(
+      row.attemptId,
+      () => api.post(`/api/admin/quiz/attempts/${row.attemptId}/void`, { voided: !row.voided }),
+      row.voided ? "أرجعت نقاط الجولة" : "ألغيت نقاط الجولة",
+    );
+
+  const voidEverything = (row: AttemptRow) =>
+    act(
+      row.attemptId,
+      () =>
+        api.post(`/api/admin/quiz/competitions/${competitionId}/void`, {
+          userId: row.userId,
+          voided: !row.voided,
+        }),
+      row.voided ? "أرجعت نقاط كل الجولات" : "ألغيت نقاط كل الجولات",
+    );
 
   return (
     <div className="card p-4 space-y-3">
@@ -143,23 +166,57 @@ export default function ScoresPanel({
           >
             <button
               onClick={() => open(row.attemptId)}
-              className="flex-1 flex items-center justify-between text-start"
+              className="flex-1 flex items-center justify-between text-start min-w-0"
             >
-              <span style={{ color: "var(--text-main)" }}>{row.name}</span>
-              <span className="font-bold" style={{ color: "var(--mint-700)" }}>
+              <span className="truncate" style={{ color: "var(--text-main)" }}>
+                {row.name}
+                {row.voided && (
+                  <span className="font-bold" style={{ color: "#991b1b" }}>
+                    {" "}
+                    · ملغاة
+                  </span>
+                )}
+              </span>
+              <span
+                className="font-bold shrink-0"
+                style={{ color: row.voided ? "#991b1b" : "var(--mint-700)" }}
+              >
                 {row.score}
               </span>
             </button>
             {role === "SUPER" && (
-              <button
-                onClick={() => reopen(row.attemptId)}
-                disabled={busy === row.attemptId}
-                className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
-                style={{ background: "var(--copper-500)", color: "#fff" }}
-                title="إعادة فتح الأسئلة الفائتة"
-              >
-                <IconLabel name="refresh">إعادة فتح</IconLabel>
-              </button>
+              <>
+                <button
+                  onClick={() => reopen(row.attemptId)}
+                  disabled={busy === row.attemptId}
+                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
+                  style={{ background: "var(--copper-500)", color: "#fff" }}
+                  title="إعادة فتح الأسئلة الفائتة"
+                >
+                  <IconLabel name="refresh">إعادة فتح</IconLabel>
+                </button>
+                <button
+                  onClick={() => voidRound(row)}
+                  disabled={busy === row.attemptId}
+                  aria-label={`${row.voided ? "إرجاع" : "إلغاء"} نقاط ${row.name} في هذه الجولة`}
+                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
+                  style={{
+                    background: row.voided ? "var(--mint-600)" : "#991b1b",
+                    color: "#fff",
+                  }}
+                >
+                  <IconLabel name="ban">{row.voided ? "إرجاع" : "إلغاء"}</IconLabel>
+                </button>
+                <button
+                  onClick={() => voidEverything(row)}
+                  disabled={busy === row.attemptId}
+                  aria-label={`${row.voided ? "إرجاع" : "إلغاء"} نقاط ${row.name} في كل الجولات`}
+                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
+                  style={{ background: "var(--surface-2)", color: "var(--text-main)" }}
+                >
+                  كل الجولات
+                </button>
+              </>
             )}
           </div>
         ))}

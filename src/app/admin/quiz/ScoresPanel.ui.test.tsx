@@ -12,8 +12,8 @@ vi.mock("@/lib/api", () => ({
 }));
 
 const attempts = [
-  { attemptId: "a1", name: "أحمد", score: 30, finishedAt: null },
-  { attemptId: "a2", name: "محمد", score: 10, finishedAt: null },
+  { attemptId: "a1", userId: "u1", name: "أحمد", score: 30, voided: false, finishedAt: null },
+  { attemptId: "a2", userId: "u2", name: "محمد", score: 10, voided: true, finishedAt: null },
 ];
 
 const detail = {
@@ -142,5 +142,55 @@ describe("ScoresPanel", () => {
 
     await waitFor(() => expect(screen.getByText("لم تبدأ هذه الجولة بعد")).toBeDefined());
     expect(screen.queryByText(/لم يشارك أحد/)).toBeNull();
+  });
+
+  it("voids the round a member played", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.click(screen.getByLabelText("إلغاء نقاط أحمد في هذه الجولة"));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/attempts/a1/void", { voided: true }),
+    );
+  });
+
+  it("offers to put back what was already voided", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("محمد"));
+
+    await userEvent.click(screen.getByLabelText("إرجاع نقاط محمد في هذه الجولة"));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/attempts/a2/void", { voided: false }),
+    );
+  });
+
+  it("voids every round of the competition for one member", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.click(screen.getByLabelText("إلغاء نقاط أحمد في كل الجولات"));
+
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledWith("/api/admin/quiz/competitions/c1/void", {
+        userId: "u1",
+        voided: true,
+      }),
+    );
+  });
+
+  it("marks a voided round in the list", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+
+    expect(await screen.findByText(/ملغاة/)).toBeDefined();
+  });
+
+  it("keeps voiding out of the hands of an admin who is not SUPER", async () => {
+    answers("QUIZ");
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    expect(screen.queryByLabelText("إلغاء نقاط أحمد في هذه الجولة")).toBeNull();
   });
 });
