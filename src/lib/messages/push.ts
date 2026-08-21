@@ -1,5 +1,4 @@
 export const push = {
-  title: "رابطة شباب التاكلالت",
   categoriesHeading: "ما الذي تريد أن يصلك",
   alwaysOn: "يصلك دائماً",
   categorySaveFailed: "تعذر حفظ التفضيل",

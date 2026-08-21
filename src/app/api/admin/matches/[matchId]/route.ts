@@ -10,7 +10,7 @@ import { validateGoals, parseScorePair, type GoalInput } from "@/lib/matchInput"
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
-import { push, tournament } from "@/lib/messages";
+import { notify, tournament } from "@/lib/messages";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -102,7 +102,6 @@ export const PATCH = withRoute(
       awayTeamId?: string;
     } = {};
 
-    // Manual override — e.g. fixing an auto-generated bracket pairing.
     if (homeTeamId !== undefined || awayTeamId !== undefined) {
       const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
       const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
@@ -328,11 +327,17 @@ export const PATCH = withRoute(
         },
       );
       if (!wasPlayed) {
-        notifyTeams(match.homeTeamId, match.awayTeamId, {
-          title: push.title,
-          body: `نتيجة مباراة فريقك: ${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
-          url: `/tournament/${match.activityId}`,
-        }).catch((err) => logger.error("match.result.push.error", err));
+        notifyTeams(
+          match.homeTeamId,
+          match.awayTeamId,
+          notify.matchResult(
+            match.homeTeam.name,
+            updateData.homeScore!,
+            updateData.awayScore!,
+            match.awayTeam.name,
+            match.activityId,
+          ),
+        ).catch((err) => logger.error("match.result.push.error", err));
       }
     }
 
