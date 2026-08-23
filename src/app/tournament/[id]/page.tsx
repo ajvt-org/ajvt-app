@@ -50,6 +50,8 @@ export default async function PublicTournamentPage({
       startsAt: true,
       endsAt: true,
       withTime: true,
+      profile: true,
+      teamSize: true,
       isTournament: true,
       groups: { select: { id: true, name: true } },
       teams: {
@@ -155,12 +157,16 @@ export default async function PublicTournamentPage({
     .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
-  const hasStats =
-    topScorers.length > 0 ||
-    discipline.length > 0 ||
-    cleanSheets.length > 0 ||
-    motmLeaders.length > 0 ||
-    teamAdvancedStats.length > 0;
+  const board = activity.profile === "BOARD";
+  const singles = activity.teamSize === 1;
+  const participantsLabel = singles ? "اللاعبون" : "الفرق";
+  const hasStats = board
+    ? teamAdvancedStats.length > 0
+    : topScorers.length > 0 ||
+      discipline.length > 0 ||
+      cleanSheets.length > 0 ||
+      motmLeaders.length > 0 ||
+      teamAdvancedStats.length > 0;
 
   // A knockout match counts towards nobody's points, so a cup with no group
   // stage would open on a table of zeros for every team. It leads with the
@@ -240,6 +246,7 @@ export default async function PublicTournamentPage({
                     match={match}
                     day={day}
                     allMatches={matches}
+                    football={!board}
                     tournamentTitle={activity.title}
                     loggedIn={!!userId}
                     myVoteCandidateId={
@@ -255,7 +262,7 @@ export default async function PublicTournamentPage({
     },
     {
       key: "teams",
-      label: "الفرق",
+      label: participantsLabel,
       icon: "users",
       content: <TeamsGrid teams={activity.teams} />,
     },
@@ -263,7 +270,7 @@ export default async function PublicTournamentPage({
 
   if (hasStats) {
     const statPanels: TournamentPanel[] = [];
-    if (topScorers.length > 0) {
+    if (!board && topScorers.length > 0) {
       statPanels.push({
         key: "scorers",
         label: "الهدافون",
@@ -285,7 +292,7 @@ export default async function PublicTournamentPage({
         ),
       });
     }
-    if (discipline.length > 0) {
+    if (!board && discipline.length > 0) {
       statPanels.push({
         key: "discipline",
         label: "الانضباط",
@@ -308,7 +315,7 @@ export default async function PublicTournamentPage({
         ),
       });
     }
-    if (cleanSheets.length > 0) {
+    if (!board && cleanSheets.length > 0) {
       statPanels.push({
         key: "defence",
         label: "أفضل دفاع",
@@ -329,7 +336,7 @@ export default async function PublicTournamentPage({
         ),
       });
     }
-    if (motmLeaders.length > 0) {
+    if (!board && motmLeaders.length > 0) {
       statPanels.push({
         key: "motm",
         label: "رجل المباراة",
@@ -354,7 +361,7 @@ export default async function PublicTournamentPage({
     if (teamAdvancedStats.length > 0) {
       statPanels.push({
         key: "teamStats",
-        label: "الفرق",
+        label: participantsLabel,
         icon: "chart",
         content: <TeamFormList teams={teamAdvancedStats} />,
       });
@@ -366,14 +373,16 @@ export default async function PublicTournamentPage({
       icon: "chart",
       content: (
         <>
-          <TournamentSummary
-            matchesPlayed={stats.matchesPlayed}
-            totalGoals={stats.totalGoals}
-            avgGoalsPerMatch={stats.avgGoalsPerMatch}
-            bestAttack={
-              stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "\u2014"
-            }
-          />
+          {!board && (
+            <TournamentSummary
+              matchesPlayed={stats.matchesPlayed}
+              totalGoals={stats.totalGoals}
+              avgGoalsPerMatch={stats.avgGoalsPerMatch}
+              bestAttack={
+                stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "\u2014"
+              }
+            />
+          )}
           <TournamentTabs panels={statPanels} variant="sub" />
         </>
       ),
@@ -402,7 +411,7 @@ export default async function PublicTournamentPage({
 
         {activity.teams.length === 0 ? (
           <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-            لم تُحدَّد الفرق بعد
+            {singles ? "لم يُحدَّد اللاعبون بعد" : "لم تُحدَّد الفرق بعد"}
           </p>
         ) : (
           <>

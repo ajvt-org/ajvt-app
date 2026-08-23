@@ -11,6 +11,7 @@ export default function MatchResult({
   match,
   day,
   allMatches,
+  football = true,
   tournamentTitle,
   loggedIn,
   myVoteCandidateId,
@@ -18,6 +19,7 @@ export default function MatchResult({
   match: PublicMatch;
   day: { round: string | null; venue: string | null };
   allMatches: PublicMatch[];
+  football?: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
   myVoteCandidateId: string | null;
@@ -81,14 +83,14 @@ export default function MatchResult({
           awayScore={match.awayScore ?? 0}
           round={match.round}
           tournamentTitle={tournamentTitle}
-          goals={match.goals.map((g) => ({
+          goals={(football ? match.goals : []).map((g) => ({
             fullName: g.member.fullName,
             photo: g.member.photo,
             count: g.count,
             minute: g.minute,
             isHome: g.teamId === match.homeTeam.id,
           }))}
-          bookings={match.bookings.map((b) => ({
+          bookings={(football ? match.bookings : []).map((b) => ({
             fullName: b.member.fullName,
             photo: b.member.photo,
             cardType: b.cardType as "YELLOW" | "RED",
@@ -98,7 +100,7 @@ export default function MatchResult({
         />
       </div>
 
-      {match.goals.length > 0 && (
+      {football && match.goals.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {match.goals.map((goal, i) => (
             <span
@@ -116,7 +118,7 @@ export default function MatchResult({
         </div>
       )}
 
-      {match.bookings.length > 0 && (
+      {football && match.bookings.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {match.bookings.map((booking, i) => (
             <span
@@ -137,7 +139,7 @@ export default function MatchResult({
         </div>
       )}
 
-      {match.manOfTheMatch && (
+      {football && match.manOfTheMatch && (
         <p
           className="text-xs font-semibold flex items-center gap-1.5"
           style={{ color: "var(--mint-700)" }}
@@ -161,7 +163,7 @@ export default function MatchResult({
         </p>
       )}
 
-      {match.mvpVote && (
+      {football && match.mvpVote && (
         <MvpVoteWidget
           matchId={match.id}
           status={match.mvpVote.status as "OPEN" | "CLOSED"}
