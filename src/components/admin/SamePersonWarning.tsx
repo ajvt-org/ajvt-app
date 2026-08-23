@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import { memberStatusLabels } from "@/lib/messages";
 
 type SamePerson = {
   id: string;
@@ -13,11 +14,7 @@ type SamePerson = {
   accountPhone: string | null;
 };
 
-const STATUS: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "معتمد",
-  REJECTED: "مرفوض",
-};
+const STATUS: Record<string, string> = memberStatusLabels;
 
 export default function SamePersonWarning({ memberId }: { memberId: string }) {
   // Kept next to the member it belongs to, so moving to the next request shows

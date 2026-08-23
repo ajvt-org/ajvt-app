@@ -1,10 +1,7 @@
+import { memberStatusLabels } from "@/lib/messages";
 import type { Status } from "./types";
 
-export const STATUS_LABEL: Record<Status, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "معتمد",
-  REJECTED: "غير مقبول",
-};
+export const STATUS_LABEL: Record<Status, string> = memberStatusLabels;
 
 export const STATUS_BADGE: Record<Status, string> = {
   PENDING: "badge-pending",
