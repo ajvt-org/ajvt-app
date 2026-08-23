@@ -64,6 +64,10 @@ export default function NewAccountForm({ onCreated }: { onCreated: () => Promise
           </option>
         ))}
       </select>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        لحصر مشرف في أنشطة بعينها، أنشئ الحساب ثم اضغط «تحديد الأنشطة» في صفّه — تتحول صلاحيته
+        تلقائياً إلى أنشطة محددة فقط.
+      </p>
       {error && <Notice tone="error">{error}</Notice>}
       <button type="submit" disabled={loading} className="btn btn-primary text-sm">
         {loading ? "..." : "إضافة"}
