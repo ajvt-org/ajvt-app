@@ -50,13 +50,14 @@ describe("ConvertTournamentCard", () => {
     fireEvent.click(screen.getByText("تحويل إلى بطولة"));
     expect(patch).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText("أزواج"));
+    fireEvent.click(screen.getByText("بطولة أزواج"));
     fireEvent.click(screen.getAllByRole("button", { name: "تحويل إلى بطولة" })[1]);
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
         isTournament: true,
         format: "KNOCKOUT",
+        profile: "BOARD",
         teamSize: "2",
       }),
     );

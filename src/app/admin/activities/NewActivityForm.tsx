@@ -157,9 +157,12 @@ export default function NewActivityForm({
       {draft.isTournament && (
         <TournamentSetupFields
           format={draft.format}
+          profile={draft.profile}
           teamSize={draft.teamSize}
           onFormat={(format) => setDraft((p) => ({ ...p, format }))}
-          onTeamSize={(teamSize) => setDraft((p) => ({ ...p, teamSize }))}
+          onPreset={(preset) =>
+            setDraft((p) => ({ ...p, profile: preset.profile, teamSize: preset.teamSize }))
+          }
         />
       )}
       {draft.isVolunteer && (

@@ -120,6 +120,7 @@ model Activity {
   isOpen        Boolean                @default(true)
   isTournament  Boolean                @default(false)
   format        TournamentFormat?
+  profile       SportProfile           @default(FOOTBALL)
   teamSize      Int?
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
@@ -733,4 +734,12 @@ model Payment {
 enum TournamentFormat {
   KNOCKOUT
   GROUPS_THEN_KNOCKOUT
+}
+
+// What kind of sport the tournament records. FOOTBALL carries the full
+// apparatus (scorers, minutes, cards, man of the match); BOARD is result-only
+// (chess, checkers, PlayStation, card games) and those sections never render.
+enum SportProfile {
+  FOOTBALL
+  BOARD
 }

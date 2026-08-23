@@ -3,65 +3,94 @@
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
 
-export const PARTICIPANT_CHOICES: {
+export interface TournamentPreset {
   value: string;
   label: string;
   hint: string;
   icon: IconName;
-}[] = [
-  { value: "", label: "فرق", hint: "كرة القدم ونحوها — كل فريق عدة لاعبين", icon: "shield" },
+  profile: string;
+  teamSize: string;
+}
+
+export const TOURNAMENT_PRESETS: TournamentPreset[] = [
   {
-    value: "1",
-    label: "لاعبون فرادى",
-    hint: "شطرنج، دامة، بلايستيشن — كل مشارك لنفسه",
-    icon: "user",
+    value: "football",
+    label: "بطولة فرق",
+    hint: "كرة القدم ونحوها — أهداف وبطاقات وهدافون",
+    icon: "ball",
+    profile: "FOOTBALL",
+    teamSize: "",
   },
-  { value: "2", label: "أزواج", hint: "لعب الورق — كل فريق لاعبان اثنان", icon: "users" },
+  {
+    value: "board",
+    label: "بطولة فردية",
+    hint: "شطرنج، دامة، بلايستيشن — نتيجة فقط، كل مشارك يلعب لنفسه",
+    icon: "user",
+    profile: "BOARD",
+    teamSize: "1",
+  },
+  {
+    value: "cards",
+    label: "بطولة أزواج",
+    hint: "لعب الورق — نتيجة فقط، كل فريق لاعبان اثنان",
+    icon: "users",
+    profile: "BOARD",
+    teamSize: "2",
+  },
 ];
+
+export function presetOf(profile: string, teamSize: string): string {
+  if (profile === "BOARD") return teamSize === "2" ? "cards" : "board";
+  return "football";
+}
 
 export default function TournamentSetupFields({
   format,
+  profile,
   teamSize,
   onFormat,
-  onTeamSize,
+  onPreset,
 }: {
   format: string;
+  profile: string;
   teamSize: string;
   onFormat: (format: string) => void;
-  onTeamSize: (teamSize: string) => void;
+  onPreset: (preset: TournamentPreset) => void;
 }) {
+  const selected = presetOf(profile, teamSize);
+
   return (
     <div className="space-y-3">
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          من يتنافس؟
+          نوع البطولة
         </p>
         <div className="space-y-1.5">
-          {PARTICIPANT_CHOICES.map((choice) => (
+          {TOURNAMENT_PRESETS.map((preset) => (
             <label
-              key={choice.value}
+              key={preset.value}
               className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer"
               style={{
-                background: teamSize === choice.value ? "var(--mint-100)" : "white",
+                background: selected === preset.value ? "var(--mint-100)" : "white",
                 border:
-                  teamSize === choice.value
+                  selected === preset.value
                     ? "1.5px solid var(--mint-500)"
                     : "1.5px solid var(--mint-100)",
               }}
             >
               <input
                 type="radio"
-                name="tournament-participants"
-                checked={teamSize === choice.value}
-                onChange={() => onTeamSize(choice.value)}
+                name="tournament-preset"
+                checked={selected === preset.value}
+                onChange={() => onPreset(preset)}
                 className="w-4 h-4"
               />
               <span className="min-w-0">
                 <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={choice.icon}>{choice.label}</IconLabel>
+                  <IconLabel name={preset.icon}>{preset.label}</IconLabel>
                 </span>
                 <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  {choice.hint}
+                  {preset.hint}
                 </span>
               </span>
             </label>

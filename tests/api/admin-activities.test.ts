@@ -42,6 +42,40 @@ describe("reading one activity's core facts", () => {
     });
   });
 
+  it("carries the sport profile from creation and locks it with the first match", async () => {
+    const created = await (
+      await POST(
+        post("/api/admin/activities", {
+          title: "بطولة الورق",
+          description: "أزواج",
+          isTournament: true,
+          format: "KNOCKOUT",
+          profile: "BOARD",
+          teamSize: 2,
+        }),
+      )
+    ).json();
+
+    expect(created.activity).toMatchObject({ profile: "BOARD", teamSize: 2 });
+
+    const home = await prisma.team.create({
+      data: { activityId: created.activity.id, name: "أ" },
+    });
+    const away = await prisma.team.create({
+      data: { activityId: created.activity.id, name: "ب" },
+    });
+    await prisma.match.create({
+      data: { activityId: created.activity.id, homeTeamId: home.id, awayTeamId: away.id },
+    });
+
+    const res = await PATCH(
+      post(`/api/admin/activities/${created.activity.id}`, { profile: "FOOTBALL" }),
+      withId(created.activity.id),
+    );
+
+    expect(res.status).toBe(409);
+  });
+
   it("says not found for an unknown id", async () => {
     expect((await GET(get("/api/admin/activities/nope"), withId("nope"))).status).toBe(404);
   });
