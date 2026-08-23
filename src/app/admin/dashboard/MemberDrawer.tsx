@@ -227,8 +227,11 @@ export default function MemberDrawer({
           <MembershipPanel memberId={member.id} />
 
           <div className="flex items-center justify-between card p-4">
-            <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-              الحالة
+            <span
+              className="text-sm font-semibold flex items-center"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <IconLabel name="flag">الحالة</IconLabel>
             </span>
             <span className={`badge ${STATUS_BADGE[member.status]}`}>
               <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
