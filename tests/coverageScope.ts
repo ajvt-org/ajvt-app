@@ -6,6 +6,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/attachAccount.ts",
   "src/lib/audit.ts",
   "src/lib/auth.ts",
+  "src/lib/bareAccountsServer.ts",
   "src/lib/competitionServer.ts",
   "src/lib/deletedRecordsServer.ts",
   "src/lib/donationActivity.ts",
