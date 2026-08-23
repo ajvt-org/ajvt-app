@@ -2,7 +2,7 @@
 
 import { formatDateTime } from "@/lib/utils";
 import { adminRoleLabel } from "@/lib/adminRoles";
-import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import type { AdminAccount } from "./accountTypes";
 
 export default function AccountRow({
@@ -45,11 +45,10 @@ export default function AccountRow({
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={onScope}
-          aria-label="تحديد الأنشطة"
-          className="p-1.5 rounded-lg"
+          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <Icon name="trophy" size={16} />
+          <IconLabel name="trophy">تحديد الأنشطة</IconLabel>
         </button>
         <button
           onClick={onDelete}
