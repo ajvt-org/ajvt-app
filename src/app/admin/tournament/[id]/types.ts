@@ -80,4 +80,24 @@ export interface Match {
   mvpVote: MvpVote | null;
 }
 
-export type Tab = "teams" | "days" | "matches" | "standings" | "scorers";
+export interface Suspension {
+  id: string;
+  reason: "RED_CARD" | "YELLOW_CARDS" | "CONDUCT";
+  scope: "MATCHES" | "DAYS" | "INDEFINITE";
+  matches: number | null;
+  until: string | null;
+  note: string | null;
+  status: "PROPOSED" | "ACTIVE" | "LIFTED";
+  createdBy: string;
+  decidedBy: string | null;
+  createdAt: string;
+  running: boolean;
+  member: { id: string; fullName: string; photo: string | null };
+}
+
+export interface DisciplineRules {
+  yellowsForBan: number;
+  redBanMatches: number;
+}
+
+export type Tab = "teams" | "days" | "matches" | "standings" | "scorers" | "discipline";

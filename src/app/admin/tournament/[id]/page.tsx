@@ -19,6 +19,7 @@ import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
 import PlayersTab from "./PlayersTab";
 import DaysTab from "./DaysTab";
+import DisciplineTab from "./DisciplineTab";
 import { useTournamentData } from "./useTournamentData";
 import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import ArrowLabel from "@/components/ArrowLabel";
@@ -28,10 +29,10 @@ import PageLoading from "@/components/PageLoading";
 import { toThumbUrl } from "@/lib/utils";
 import { countedNoun } from "@/lib/arabicCount";
 import { MATCH, PLAYER, TEAM } from "@/lib/messages";
-import { tournamentWorkspace as texts } from "@/lib/texts";
+import { discipline as disciplineTexts, tournamentWorkspace as texts } from "@/lib/texts";
 
-function tabsFor(singles: boolean): WorkspaceTab[] {
-  return [
+function tabsFor(singles: boolean, football: boolean, pendingProposals: number): WorkspaceTab[] {
+  const tabs: WorkspaceTab[] = [
     {
       key: "teams",
       label: singles ? texts.tabs.players : texts.tabs.teams,
@@ -42,6 +43,15 @@ function tabsFor(singles: boolean): WorkspaceTab[] {
     { key: "standings", label: texts.tabs.standings, icon: "list" },
     { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
   ];
+  if (football) {
+    tabs.push({
+      key: "discipline",
+      label: disciplineTexts.tab,
+      icon: "ban",
+      badge: pendingProposals,
+    });
+  }
+  return tabs;
 }
 
 function TournamentPageInner() {
@@ -52,7 +62,9 @@ function TournamentPageInner() {
   const data = useTournamentData(activityId);
 
   const singles = data.info?.teamSize === 1;
-  const TABS = tabsFor(singles);
+  const football = (data.info?.profile ?? "FOOTBALL") === "FOOTBALL";
+  const pendingProposals = data.suspensions.filter((s) => s.status === "PROPOSED").length;
+  const TABS = tabsFor(singles, football, pendingProposals);
   const requested = searchParams.get("tab") as Tab | null;
   const fallbackTab: Tab = data.matches.length > 0 ? "matches" : "teams";
   const tab: Tab = requested && TABS.some((t) => t.key === requested) ? requested : fallbackTab;
@@ -182,6 +194,15 @@ function TournamentPageInner() {
             groups={groups}
             stats={stats}
             matches={matches}
+          />
+        )}
+        {tab === "discipline" && football && (
+          <DisciplineTab
+            activityId={activityId}
+            teams={teams}
+            suspensions={data.suspensions}
+            rules={data.rules}
+            onChange={data.reloadDiscipline}
           />
         )}
         {tab === "scorers" && (

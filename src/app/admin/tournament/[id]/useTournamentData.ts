@@ -7,7 +7,15 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import { tournamentWorkspace as texts } from "@/lib/texts";
-import type { Group, Match, RosterMember, Team, TournamentFormat } from "./types";
+import type {
+  DisciplineRules,
+  Group,
+  Match,
+  RosterMember,
+  Suspension,
+  Team,
+  TournamentFormat,
+} from "./types";
 
 export interface TournamentInfo {
   id: string;
@@ -28,6 +36,8 @@ export function useTournamentData(activityId: string) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [suspensions, setSuspensions] = useState<Suspension[]>([]);
+  const [rules, setRules] = useState<DisciplineRules | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -65,12 +75,27 @@ export function useTournamentData(activityId: string) {
     () => load("matches", (d: { matches: Match[] }) => setMatches(d.matches || [])),
     [load],
   );
+  const reloadDiscipline = useCallback(
+    () =>
+      load("suspensions", (d: { suspensions: Suspension[]; rules: DisciplineRules }) => {
+        setSuspensions(d.suspensions || []);
+        setRules(d.rules || null);
+      }),
+    [load],
+  );
 
   useEffect(() => {
-    Promise.all([reloadInfo(), reloadRoster(), reloadGroups(), reloadTeams(), reloadMatches()])
+    Promise.all([
+      reloadInfo(),
+      reloadRoster(),
+      reloadGroups(),
+      reloadTeams(),
+      reloadMatches(),
+      reloadDiscipline(),
+    ])
       .catch(() => setError(texts.loadFailed))
       .finally(() => setLoading(false));
-  }, [reloadInfo, reloadRoster, reloadGroups, reloadTeams, reloadMatches]);
+  }, [reloadInfo, reloadRoster, reloadGroups, reloadTeams, reloadMatches, reloadDiscipline]);
 
   return {
     info,
@@ -78,6 +103,8 @@ export function useTournamentData(activityId: string) {
     groups,
     teams,
     matches,
+    suspensions,
+    rules,
     loading,
     error,
     reloadInfo,
@@ -85,5 +112,6 @@ export function useTournamentData(activityId: string) {
     reloadGroups,
     reloadTeams,
     reloadMatches,
+    reloadDiscipline,
   };
 }
