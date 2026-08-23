@@ -224,6 +224,26 @@ export function computeStats(
   };
 }
 
+// Round-one pairing over an already-shuffled list: backtracks to avoid
+// putting two teams of the same group in one tie. Null when no such perfect
+// pairing exists (a group larger than half the field).
+export function drawKnockoutPairs<T extends { id: string; groupId?: string | null }>(
+  shuffled: T[],
+): [T, T][] | null {
+  function solve(remaining: T[]): [T, T][] | null {
+    if (remaining.length === 0) return [];
+    const [first, ...rest] = remaining;
+    for (let i = 0; i < rest.length; i++) {
+      const partner = rest[i];
+      if (first.groupId != null && partner.groupId === first.groupId) continue;
+      const sub = solve(rest.filter((_, j) => j !== i));
+      if (sub) return [[first, partner], ...sub];
+    }
+    return null;
+  }
+  return solve(shuffled);
+}
+
 export interface GeneratedFixture {
   round: number;
   homeTeamId: string;

@@ -48,12 +48,12 @@ export default function MatchesTab({
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  async function runBracketAction(endpoint: string, confirmMsg: string) {
+  async function runBracketAction(endpoint: string, confirmMsg: string, body?: object) {
     if (!confirm(confirmMsg)) return;
     setGenerating(true);
     setError("");
     try {
-      await api.post(`/api/admin/activities/${activityId}/bracket/${endpoint}`);
+      await api.post(`/api/admin/activities/${activityId}/bracket/${endpoint}`, body);
       onChange();
     } catch (e) {
       setError(errorMessage(e));
@@ -317,6 +317,24 @@ export default function MatchesTab({
           ) : (
             <>
               <BracketTree matches={bracketMatches} />
+              {bracketMatches.every((m) => m.bracketRound === 1 && m.status === "SCHEDULED") && (
+                <button
+                  onClick={() =>
+                    isTwoGroupFormat
+                      ? runBracketAction("semis-from-groups", texts.confirmRegenerateSemis, {
+                          redo: true,
+                        })
+                      : runBracketAction("draw", texts.confirmRedraw, { redo: true })
+                  }
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  <IconLabel name="dice">
+                    {isTwoGroupFormat ? texts.regenerateSemis : texts.redraw}
+                  </IconLabel>
+                </button>
+              )}
               {canAdvanceBracket && (
                 <button
                   onClick={() => runBracketAction("next-round", texts.confirmNextRound)}
