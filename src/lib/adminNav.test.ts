@@ -32,6 +32,13 @@ describe("canOpen", () => {
     expect(canOpen("MEMBERS", "/admin/quiz")).toBe(false);
   });
 
+  it("opens the trash to the roles that can delete, and no one else", () => {
+    expect(canOpen("MEMBERS", "/admin/deleted")).toBe(true);
+    expect(canOpen("SUPER", "/admin/deleted")).toBe(true);
+    expect(canOpen("ACTIVITIES", "/admin/deleted")).toBe(false);
+    expect(canOpen("QUIZ", "/admin/deleted")).toBe(false);
+  });
+
   it("lets every role change its own password from the tools tab", () => {
     for (const role of ["MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"]) {
       expect(canOpen(role, "/admin/tools"), role).toBe(true);
@@ -89,6 +96,7 @@ describe("tabActive", () => {
       "/admin/admins",
       "/admin/audit-log",
       "/admin/broadcast",
+      "/admin/deleted",
     ]) {
       expect(tabActive("/admin/tools", path), path).toBe(true);
     }
