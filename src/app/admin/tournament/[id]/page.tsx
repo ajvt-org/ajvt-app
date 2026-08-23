@@ -9,69 +9,40 @@ import {
   computeMotmLeaders,
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
-import { loginPathWithNext } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import type { Group, Match, RosterMember, Tab, Team, TournamentFormat } from "./types";
+import type { Tab } from "./types";
 import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
+import { useTournamentData } from "./useTournamentData";
 import BackButton from "@/components/BackButton";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 
-export default function TournamentPage() {
+const TABS: [Tab, string][] = [
+  ["teams", "الفرق"],
+  ["matches", "المباريات"],
+  ["standings", "الترتيب"],
+  ["scorers", "الإحصائيات"],
+];
+
+function TournamentPageInner() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const activityId = params.id;
-  const title = searchParams.get("title") || "البطولة";
+  const data = useTournamentData(activityId);
 
-  const [tab, setTab] = useState<Tab>("teams");
-  const [loading, setLoading] = useState(true);
-  const [roster, setRoster] = useState<RosterMember[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [format, setFormat] = useState<TournamentFormat>(null);
-  const [teamSize, setTeamSize] = useState<number | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [error, setError] = useState("");
+  const requested = searchParams.get("tab") as Tab | null;
+  const tab: Tab = requested && TABS.some(([key]) => key === requested) ? requested : "teams";
 
-  async function loadAll() {
-    try {
-      const [rosterRes, groupsRes, teamsRes, matchesRes] = await Promise.all([
-        fetch(`/api/admin/activities/${activityId}/roster`),
-        fetch(`/api/admin/activities/${activityId}/groups`),
-        fetch(`/api/admin/activities/${activityId}/teams`),
-        fetch(`/api/admin/activities/${activityId}/matches`),
-      ]);
-      if ([rosterRes, groupsRes, teamsRes, matchesRes].some((r) => r.status === 401)) {
-        router.push(loginPathWithNext("/admin/login"));
-        return;
-      }
-      const rosterData = await rosterRes.json();
-      const groupsData = await groupsRes.json();
-      const teamsData = await teamsRes.json();
-      const matchesData = await matchesRes.json();
-      setRoster(rosterData.roster || []);
-      setGroups(groupsData.groups || []);
-      setFormat(groupsData.format ?? null);
-      setTeamSize(groupsData.teamSize ?? null);
-      setTeams(teamsData.teams || []);
-      setMatches(matchesData.matches || []);
-    } catch {
-      setError("فشل تحميل بيانات البطولة");
-    } finally {
-      setLoading(false);
-    }
+  function pickTab(next: Tab) {
+    router.replace(`/admin/tournament/${activityId}?tab=${next}`, { scroll: false });
   }
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadAll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
+  const { teams, matches, groups, roster, info } = data;
   const standingsByGroup = useMemo(() => groupStandings(teams, matches), [teams, matches]);
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
@@ -83,7 +54,10 @@ export default function TournamentPage() {
     [teams, matches],
   );
 
-  if (loading) {
+  const reloadSquads = () =>
+    Promise.all([data.reloadTeams(), data.reloadRoster(), data.reloadGroups()]);
+
+  if (data.loading) {
     return <PageLoading />;
   }
 
@@ -94,12 +68,12 @@ export default function TournamentPage() {
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <div className="flex items-center gap-3">
-          <BackButton href="/admin/activities" />
+          <BackButton href={`/admin/activities/${activityId}`} />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               <IconLabel name="ball">إدارة البطولة</IconLabel>
             </p>
-            <p className="text-sm font-black text-white leading-none">{title}</p>
+            <p className="text-sm font-black text-white leading-none">{info?.title || "البطولة"}</p>
           </div>
         </div>
         <a
@@ -114,27 +88,20 @@ export default function TournamentPage() {
       </div>
 
       <div className="admin-page">
-        {error && (
+        {data.error && (
           <div
             className="p-3 rounded-xl text-sm font-semibold mb-4"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            <IconLabel name="warning">{error}</IconLabel>
+            <IconLabel name="warning">{data.error}</IconLabel>
           </div>
         )}
 
         <div className="grid grid-cols-4 gap-2 mb-5">
-          {(
-            [
-              ["teams", "الفرق"],
-              ["matches", "المباريات"],
-              ["standings", "الترتيب"],
-              ["scorers", "الإحصائيات"],
-            ] as [Tab, string][]
-          ).map(([key, label]) => (
+          {TABS.map(([key, label]) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
+              onClick={() => pickTab(key)}
               className="rounded-xl py-2.5 text-center text-sm font-bold transition-all"
               style={{
                 background: tab === key ? "var(--mint-700)" : "white",
@@ -152,10 +119,10 @@ export default function TournamentPage() {
             activityId={activityId}
             teams={teams}
             groups={groups}
-            format={format}
-            teamSize={teamSize}
+            format={info?.format ?? null}
+            teamSize={info?.teamSize ?? null}
             roster={roster}
-            onChange={loadAll}
+            onChange={reloadSquads}
           />
         )}
         {tab === "matches" && (
@@ -163,14 +130,14 @@ export default function TournamentPage() {
             activityId={activityId}
             teams={teams}
             groups={groups}
-            format={format}
+            format={info?.format ?? null}
             matches={matches}
-            onChange={loadAll}
+            onChange={data.reloadMatches}
           />
         )}
         {tab === "standings" && (
           <StandingsTab
-            title={title}
+            title={info?.title || "البطولة"}
             standingsByGroup={standingsByGroup}
             groups={groups}
             stats={stats}
@@ -188,5 +155,13 @@ export default function TournamentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TournamentPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <TournamentPageInner />
+    </Suspense>
   );
 }

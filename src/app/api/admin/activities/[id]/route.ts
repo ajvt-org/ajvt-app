@@ -9,6 +9,28 @@ import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
 import type { TournamentFormat } from "@prisma/client";
 
+export const GET = withRoute(
+  "GET /api/admin/activities/[id]",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
+    await requireActivityAccess(id);
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        isTournament: true,
+        format: true,
+        teamSize: true,
+        startsAt: true,
+        endsAt: true,
+      },
+    });
+    if (!activity) return NextResponse.json({ error: activities.notFound }, { status: 404 });
+    return NextResponse.json({ activity });
+  },
+);
+
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

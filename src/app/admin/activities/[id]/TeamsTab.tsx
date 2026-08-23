@@ -7,7 +7,7 @@ import { GROUP, MATCH, PLAYER } from "@/lib/messages";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 
 export default function TeamsTab({ activity }: { activity: ActivityDetail["activity"] }) {
-  const manageHref = `/admin/tournament/${activity.id}?title=${encodeURIComponent(activity.title)}`;
+  const manageHref = `/admin/tournament/${activity.id}`;
 
   return (
     <div className="space-y-4">

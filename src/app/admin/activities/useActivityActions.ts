@@ -18,7 +18,7 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       const data = await api.post<{ activity: Activity }>("/api/admin/activities", draft);
       const created = data.activity;
       if (created?.isTournament) {
-        router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
+        router.push(`/admin/tournament/${created.id}`);
         return;
       }
       await reload();
