@@ -37,7 +37,6 @@ import { useBareAccounts } from "./useBareAccounts";
 import PageLoading from "@/components/PageLoading";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
 function AdminDashboardInner() {
   const router = useRouter();
@@ -71,8 +70,6 @@ function AdminDashboardInner() {
   const [accountPhoneInput, setAccountPhoneInput] = useState("");
   const [attachAccountLoading, setAttachAccountLoading] = useState(false);
   const [attachAccountError, setAttachAccountError] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<Member | null>(null);
 
   const [showStats, setShowStats] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
@@ -203,20 +200,6 @@ function AdminDashboardInner() {
       alert("حدث خطأ أثناء التنفيذ الجماعي");
     } finally {
       setBulkLoading(false);
-    }
-  }
-
-  async function deleteMember(id: string, confirmName: string) {
-    setDeleteLoading(true);
-    try {
-      await api.del(`/api/admin/members/${id}`, { confirmName });
-      setConfirmDelete(null);
-      await fetchMembers();
-      setSelected(null);
-    } catch (e) {
-      alert(errorMessage(e));
-    } finally {
-      setDeleteLoading(false);
     }
   }
 
@@ -416,7 +399,6 @@ function AdminDashboardInner() {
         <MemberDrawer
           member={selected}
           actionLoading={actionLoading}
-          deleteLoading={deleteLoading}
           resetLoading={resetLoading}
           tempPassword={tempPassword}
           tempPasswordHours={tempPasswordHours}
@@ -435,16 +417,6 @@ function AdminDashboardInner() {
           onCloseRejectPicker={() => setShowRejectPicker(false)}
           onApprove={() => validate(selected.id, "ACTIVE")}
           onReject={() => validate(selected.id, "REJECTED", rejectReason)}
-          onDelete={() => setConfirmDelete(selected)}
-        />
-      )}
-
-      {confirmDelete && (
-        <ConfirmDeleteDialog
-          name={confirmDelete.fullName}
-          loading={deleteLoading}
-          onConfirm={(confirmName) => deleteMember(confirmDelete.id, confirmName)}
-          onClose={() => setConfirmDelete(null)}
         />
       )}
 
