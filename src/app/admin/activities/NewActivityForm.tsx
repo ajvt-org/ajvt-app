@@ -4,7 +4,26 @@ import { useState } from "react";
 import PhotoUpload from "@/components/PhotoUpload";
 import IconLabel from "@/components/IconLabel";
 import { errorMessage } from "@/lib/api";
-import { emptyNewActivity, type NewActivityDraft } from "./activityTypes";
+import type { IconName } from "@/components/Icon";
+import TournamentSetupFields from "./TournamentSetupFields";
+import {
+  emptyNewActivity,
+  natureOf,
+  withNature,
+  type ActivityNature,
+  type NewActivityDraft,
+} from "./activityTypes";
+
+const NATURES: { value: ActivityNature; label: string; hint: string; icon: IconName }[] = [
+  { value: "normal", label: "نشاط عادي", hint: "تسجيل أعضاء وحضور", icon: "calendar" },
+  { value: "tournament", label: "بطولة", hint: "فرق ومباريات وترتيب وهدافون", icon: "trophy" },
+  {
+    value: "volunteer",
+    label: "حملة تطوعية",
+    hint: "بدون تسجيل داخل التطبيق — رابط واتساب مباشر",
+    icon: "handshake",
+  },
+];
 
 export default function NewActivityForm({
   onCreate,
@@ -99,65 +118,50 @@ export default function NewActivityForm({
         onChange={(e) => setDraft((p) => ({ ...p, capacity: e.target.value }))}
         className="input"
       />
-      <label
-        className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: "var(--text-main)" }}
-      >
-        <input
-          type="checkbox"
-          checked={draft.isTournament}
-          onChange={(e) =>
-            setDraft((p) => ({
-              ...p,
-              isTournament: e.target.checked,
-              isVolunteer: e.target.checked ? false : p.isVolunteer,
-            }))
-          }
-        />
-        <IconLabel name="ball">هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)</IconLabel>
-      </label>
-      {draft.isTournament && (
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="activity-format"
-          >
-            نظام البطولة
-          </label>
-          <select
-            id="activity-format"
-            value={draft.format}
-            onChange={(e) => setDraft((p) => ({ ...p, format: e.target.value }))}
-            className="input"
-          >
-            <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
-            <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
-          </select>
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            لا يمكن تغييره بعد إنشاء المباريات
-          </p>
+      <div>
+        <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          نوع النشاط
+        </p>
+        <div className="space-y-1.5">
+          {NATURES.map((n) => (
+            <label
+              key={n.value}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer"
+              style={{
+                background: natureOf(draft) === n.value ? "var(--mint-100)" : "white",
+                border:
+                  natureOf(draft) === n.value
+                    ? "1.5px solid var(--mint-500)"
+                    : "1.5px solid var(--mint-100)",
+              }}
+            >
+              <input
+                type="radio"
+                name="activity-nature"
+                checked={natureOf(draft) === n.value}
+                onChange={() => setDraft((p) => withNature(p, n.value))}
+                className="w-4 h-4"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                  <IconLabel name={n.icon}>{n.label}</IconLabel>
+                </span>
+                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
+                  {n.hint}
+                </span>
+              </span>
+            </label>
+          ))}
         </div>
-      )}
-      <label
-        className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: "var(--text-main)" }}
-      >
-        <input
-          type="checkbox"
-          checked={draft.isVolunteer}
-          onChange={(e) =>
-            setDraft((p) => ({
-              ...p,
-              isVolunteer: e.target.checked,
-              isTournament: e.target.checked ? false : p.isTournament,
-            }))
-          }
+      </div>
+      {draft.isTournament && (
+        <TournamentSetupFields
+          format={draft.format}
+          teamSize={draft.teamSize}
+          onFormat={(format) => setDraft((p) => ({ ...p, format }))}
+          onTeamSize={(teamSize) => setDraft((p) => ({ ...p, teamSize }))}
         />
-        <IconLabel name="handshake">
-          هذا النشاط حملة تطوعية (بدون تسجيل داخل التطبيق — رابط واتساب مباشر)
-        </IconLabel>
-      </label>
+      )}
       {draft.isVolunteer && (
         <input
           type="text"
