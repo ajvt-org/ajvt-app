@@ -11,6 +11,7 @@ import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function MatchCard({
   match,
@@ -20,8 +21,6 @@ export default function MatchCard({
   onDelete,
   showResultForm,
   onToggleResultForm,
-  showCards,
-  onToggleCards,
   showMvp,
   onToggleMvp,
   showDetails,
@@ -38,8 +37,6 @@ export default function MatchCard({
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
-  showCards: boolean;
-  onToggleCards: () => void;
   showMvp: boolean;
   onToggleMvp: () => void;
   showDetails: boolean;
@@ -67,7 +64,7 @@ export default function MatchCard({
             {match.homePenalties !== null && match.awayPenalties !== null && (
               <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                 {" "}
-                (ركلات ترجيح {match.homePenalties}-{match.awayPenalties})
+                ({texts.penaltiesShort} {match.homePenalties}-{match.awayPenalties})
               </span>
             )}
           </p>
@@ -82,13 +79,15 @@ export default function MatchCard({
               </span>
             )}
             {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
-            {match.isKnockout && <span className="badge badge-pending">إقصائية</span>}
+            {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
           </div>
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              <IconLabel name="refresh">مواجهات سابقة:</IconLabel>{" "}
+              <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>{" "}
               {priorMeetings
-                .map((pm) => (pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"))
+                .map((pm) =>
+                  pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : texts.upcomingShort,
+                )
                 .join("، ")}
             </p>
           )}
@@ -101,7 +100,7 @@ export default function MatchCard({
                 disabled={!onMoveUp}
                 className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title="تقديم"
+                title={texts.moveUp}
               >
                 <Icon name="chevronUp" size={12} />
               </button>
@@ -110,7 +109,7 @@ export default function MatchCard({
                 disabled={!onMoveDown}
                 className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title="تأخير"
+                title={texts.moveDown}
               >
                 <Icon name="chevronDown" size={12} />
               </button>
@@ -121,7 +120,7 @@ export default function MatchCard({
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            {match.status === "PLAYED" ? "تعديل النتيجة" : "أدخل النتيجة"}
+            {match.status === "PLAYED" ? texts.editResult : texts.enterResult}
           </button>
           <button
             onClick={onDelete}
@@ -159,7 +158,9 @@ export default function MatchCard({
             fullName={match.manOfTheMatch.fullName}
             size={20}
           />
-          <IconLabel name="star">رجل المباراة: {match.manOfTheMatch.fullName}</IconLabel>
+          <IconLabel name="star">
+            {texts.motm} {match.manOfTheMatch.fullName}
+          </IconLabel>
         </p>
       )}
 
@@ -178,25 +179,6 @@ export default function MatchCard({
       <div className="flex gap-2 mt-2">
         {football && (
           <button
-            onClick={onToggleCards}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-            style={{
-              background: "white",
-              color: "var(--mint-700)",
-              border: "1px solid var(--mint-200)",
-            }}
-          >
-            {showCards ? (
-              "إخفاء البطاقات"
-            ) : (
-              <>
-                <CardChip type="YELLOW" /> <CardChip type="RED" /> إدارة البطاقات
-              </>
-            )}
-          </button>
-        )}
-        {football && (
-          <button
             onClick={onToggleMvp}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{
@@ -205,7 +187,7 @@ export default function MatchCard({
               border: "1px solid var(--mint-200)",
             }}
           >
-            {showMvp ? "إخفاء التصويت" : <IconLabel name="star">أفضل لاعب</IconLabel>}
+            {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
           </button>
         )}
         <button
@@ -217,13 +199,19 @@ export default function MatchCard({
             border: "1px solid var(--mint-200)",
           }}
         >
-          {showDetails ? "إخفاء التفاصيل" : <IconLabel name="pencil">تعديل التفاصيل</IconLabel>}
+          {showDetails ? (
+            texts.hideDetails
+          ) : (
+            <IconLabel name="pencil">{texts.editDetails}</IconLabel>
+          )}
         </button>
       </div>
 
-      {football && showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
       {showResultForm && (
-        <ResultForm match={match} teams={teams} profile={profile} onSaved={onSaved} />
+        <>
+          <ResultForm match={match} teams={teams} profile={profile} onSaved={onSaved} />
+          {football && <BookingsForm match={match} teams={teams} onChange={onChange} />}
+        </>
       )}
       {football && showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
       {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}

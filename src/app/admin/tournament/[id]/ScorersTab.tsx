@@ -1,8 +1,5 @@
 "use client";
 
-import { counted } from "@/lib/arabicCount";
-import { MATCH } from "@/lib/messages";
-
 import {
   type TopScorerRow,
   type DisciplineRow,
@@ -11,9 +8,48 @@ import {
   type TeamAdvancedRow,
 } from "@/lib/tournament";
 import { RankBadge } from "./StandingsTab";
-import { FORM_STYLE } from "./constants";
 import CardChip from "@/components/tournament/CardChip";
+import TeamFormList from "@/components/tournament/TeamFormList";
+import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import IconLabel from "@/components/IconLabel";
+import { statsAdmin as statsTexts } from "@/lib/texts";
+
+function Empty({ children }: { children: string }) {
+  return (
+    <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>
+      {children}
+    </p>
+  );
+}
+
+function PersonRow({
+  i,
+  fullName,
+  teamName,
+  value,
+}: {
+  i: number;
+  fullName: string;
+  teamName: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="card p-3 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <RankBadge i={i} />
+        <div>
+          <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+            {fullName}
+          </p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {teamName}
+          </p>
+        </div>
+      </div>
+      {value}
+    </div>
+  );
+}
 
 export default function ScorersTab({
   profile,
@@ -32,100 +68,80 @@ export default function ScorersTab({
 }) {
   const football = profile === "FOOTBALL";
   const teamsWithStats = teamAdvancedStats.filter((t) => t.biggestWin || t.form.length > 0);
-  const noData = football
-    ? topScorers.length === 0 &&
-      discipline.length === 0 &&
-      cleanSheets.length === 0 &&
-      motmLeaders.length === 0 &&
-      teamsWithStats.length === 0
-    : teamsWithStats.length === 0;
 
-  if (noData) {
-    return (
-      <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-        لا توجد إحصائيات مسجلة بعد
-      </p>
+  const teamsPanel =
+    teamsWithStats.length === 0 ? (
+      <Empty>{statsTexts.noStats}</Empty>
+    ) : (
+      <TeamFormList teams={teamsWithStats} />
     );
+
+  if (!football) {
+    return teamsPanel;
   }
 
-  return (
-    <div className="space-y-5">
-      {football && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="ball">الهدافون</IconLabel>
-          </h3>
-          {topScorers.length === 0 ? (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              لا توجد أهداف مسجلة بعد
-            </p>
-          ) : (
-            topScorers.slice(0, 15).map((s, i) => (
-              <div key={s.memberId} className="card p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <RankBadge i={i} />
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                      {s.fullName}
-                    </p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {s.teamName}
-                    </p>
-                  </div>
-                </div>
-                <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                  <IconLabel name="ball">{s.goals}</IconLabel>
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {football && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            <CardChip type="YELLOW" /> <CardChip type="RED" /> الانضباط
-          </h3>
-          {discipline.length === 0 ? (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              لا توجد بطاقات مسجلة بعد
-            </p>
-          ) : (
-            discipline.slice(0, 15).map((d, i) => (
-              <div key={d.memberId} className="card p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <RankBadge i={i} />
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                      {d.fullName}
-                    </p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {d.teamName}
-                    </p>
-                  </div>
-                </div>
-                <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
-                  {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}{" "}
-                  {d.red > 0 && <CardChip type="RED" count={d.red} />}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {football && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="glove">أفضل دفاع (مباريات بدون استقبال أهداف)</IconLabel>
-          </h3>
-          {cleanSheets.length === 0 ? (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              لا توجد بيانات كافية بعد
-            </p>
-          ) : (
-            cleanSheets.slice(0, 10).map((c, i) => (
+  const panels: TournamentPanel[] = [
+    {
+      key: "scorers",
+      label: statsTexts.scorers,
+      icon: "ball",
+      content:
+        topScorers.length === 0 ? (
+          <Empty>{statsTexts.noGoals}</Empty>
+        ) : (
+          <div className="space-y-2">
+            {topScorers.slice(0, 15).map((s, i) => (
+              <PersonRow
+                key={s.memberId}
+                i={i}
+                fullName={s.fullName}
+                teamName={s.teamName}
+                value={
+                  <span className="font-black" style={{ color: "var(--mint-700)" }}>
+                    <IconLabel name="ball">{s.goals}</IconLabel>
+                  </span>
+                }
+              />
+            ))}
+          </div>
+        ),
+    },
+    {
+      key: "discipline",
+      label: statsTexts.cards,
+      icon: "card",
+      content:
+        discipline.length === 0 ? (
+          <Empty>{statsTexts.noCards}</Empty>
+        ) : (
+          <div className="space-y-2">
+            {discipline.slice(0, 15).map((d, i) => (
+              <PersonRow
+                key={d.memberId}
+                i={i}
+                fullName={d.fullName}
+                teamName={d.teamName}
+                value={
+                  <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
+                    {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}{" "}
+                    {d.red > 0 && <CardChip type="RED" count={d.red} />}
+                  </span>
+                }
+              />
+            ))}
+          </div>
+        ),
+    },
+    {
+      key: "defense",
+      label: statsTexts.defense,
+      icon: "glove",
+      content:
+        cleanSheets.length === 0 ? (
+          <Empty>{statsTexts.noDefense}</Empty>
+        ) : (
+          <div className="space-y-2">
+            {cleanSheets.slice(0, 10).map((c, i) => (
               <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <RankBadge i={i} />
@@ -139,85 +155,37 @@ export default function ScorersTab({
                   </IconLabel>
                 </span>
               </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {football && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="star">رجل المباراة</IconLabel>
-          </h3>
-          {motmLeaders.length === 0 ? (
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              لم يتم تحديد رجل مباراة بعد
-            </p>
-          ) : (
-            motmLeaders.slice(0, 10).map((m, i) => (
-              <div key={m.memberId} className="card p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <RankBadge i={i} />
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                      {m.fullName}
-                    </p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {m.teamName}
-                    </p>
-                  </div>
-                </div>
-                <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                  <IconLabel name="star">{m.count}</IconLabel>
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {teamsWithStats.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="chart">إحصائيات الفرق</IconLabel>
-          </h3>
-          {teamsWithStats.map((t) => (
-            <div key={t.teamId} className="card p-3 space-y-1">
-              <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                {t.name}
-              </p>
-              {t.biggestWin && (
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  <IconLabel name="flame">
-                    أكبر فوز: {t.biggestWin.score} أمام {t.biggestWin.opponent}
-                  </IconLabel>
-                </p>
-              )}
-              {t.unbeatenStreak > 0 && (
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  <IconLabel name="shield">سلسلة بدون هزيمة: {t.unbeatenStreak}</IconLabel>
-                </p>
-              )}
-              {t.form.length > 0 && (
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    آخر {counted(t.form.length, MATCH)}:
+            ))}
+          </div>
+        ),
+    },
+    {
+      key: "motm",
+      label: statsTexts.motm,
+      icon: "star",
+      content:
+        motmLeaders.length === 0 ? (
+          <Empty>{statsTexts.noMotm}</Empty>
+        ) : (
+          <div className="space-y-2">
+            {motmLeaders.slice(0, 10).map((m, i) => (
+              <PersonRow
+                key={m.memberId}
+                i={i}
+                fullName={m.fullName}
+                teamName={m.teamName}
+                value={
+                  <span className="font-black" style={{ color: "var(--mint-700)" }}>
+                    <IconLabel name="star">{m.count}</IconLabel>
                   </span>
-                  {t.form.map((f, i) => (
-                    <span
-                      key={i}
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
-                      style={{ background: FORM_STYLE[f].bg, color: FORM_STYLE[f].color }}
-                    >
-                      {f}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+                }
+              />
+            ))}
+          </div>
+        ),
+    },
+    { key: "teams", label: statsTexts.teams, icon: "chart", content: teamsPanel },
+  ];
+
+  return <TournamentTabs panels={panels} variant="sub" />;
 }

@@ -159,10 +159,11 @@ export default function StandingsTab({
 export function RankBadge({ i }: { i: number }) {
   return (
     <span
-      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0"
+      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 leading-none"
       style={{
         background: i === 0 ? "#fde68a" : "var(--mint-100)",
         color: i === 0 ? "#92400e" : "var(--mint-700)",
+        fontVariantNumeric: "tabular-nums",
       }}
     >
       {i + 1}
