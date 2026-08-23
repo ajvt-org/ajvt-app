@@ -59,6 +59,18 @@ export const matchAdmin = {
   pickPlayer: "اختر لاعباً...",
 } as const;
 
+export const standingsAdmin = {
+  noTeams: "لا توجد فرق بعد",
+  group: "مجموعة",
+  noGroup: "بدون مجموعة",
+  exportCsv: "تصدير الترتيب والنتائج",
+  csvFileSuffix: "الترتيب-والنتائج",
+  csvStandings: "الترتيب",
+  csvResults: "النتائج",
+  csvStandingsColumns: ["#", "الفريق", "لعب", "فاز", "تعادل", "خسر", "له", "عليه", "الفرق", "نقاط"],
+  csvResultsColumns: ["الجولة", "المضيف", "النتيجة", "الضيف", "الملعب", "التاريخ"],
+} as const;
+
 export const statsAdmin = {
   scorers: "الهدافون",
   noGoals: "لا توجد أهداف مسجلة بعد",
