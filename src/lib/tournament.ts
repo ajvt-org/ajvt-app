@@ -107,7 +107,8 @@ export function groupStandings(
 export interface ScorerGoalInput {
   teamId: string;
   count: number;
-  member: { id: string; fullName: string; photo?: string | null };
+  kind?: "GOAL" | "PENALTY" | "OWN_GOAL";
+  member: { id: string; fullName: string; photo?: string | null } | null;
 }
 
 export interface ScorerMatchInput {
@@ -130,6 +131,7 @@ export function computeTopScorers(
   const teamNameById = new Map(teams.map((t) => [t.id, t.name]));
   for (const m of matches) {
     for (const g of m.goals) {
+      if (g.member === null || g.kind === "OWN_GOAL") continue;
       const existing = tally.get(g.member.id);
       if (existing) {
         existing.goals += g.count;
