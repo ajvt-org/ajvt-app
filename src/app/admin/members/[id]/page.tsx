@@ -80,7 +80,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           className="text-sm font-bold"
           style={{ color: "var(--mint-600)" }}
         >
-          <ArrowLabel direction="back">الحسابات</ArrowLabel>
+          <ArrowLabel direction="back">المستخدمون</ArrowLabel>
         </Link>
       </div>
     );
@@ -95,7 +95,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         className="text-sm font-bold"
         style={{ color: "var(--mint-600)" }}
       >
-        <ArrowLabel direction="back">الحسابات</ArrowLabel>
+        <ArrowLabel direction="back">المستخدمون</ArrowLabel>
       </Link>
 
       <div className="card p-4 flex items-center gap-3">
