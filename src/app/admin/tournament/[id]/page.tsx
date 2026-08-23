@@ -16,6 +16,7 @@ import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
+import DaysTab from "./DaysTab";
 import { useTournamentData } from "./useTournamentData";
 import BackButton from "@/components/BackButton";
 import IconLabel from "@/components/IconLabel";
@@ -23,6 +24,7 @@ import PageLoading from "@/components/PageLoading";
 
 const TABS: [Tab, string][] = [
   ["teams", "الفرق"],
+  ["days", "الأيام"],
   ["matches", "المباريات"],
   ["standings", "الترتيب"],
   ["scorers", "الإحصائيات"],
@@ -97,7 +99,7 @@ function TournamentPageInner() {
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2 mb-5">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-5">
           {TABS.map(([key, label]) => (
             <button
               key={key}
@@ -124,6 +126,9 @@ function TournamentPageInner() {
             roster={roster}
             onChange={reloadSquads}
           />
+        )}
+        {tab === "days" && (
+          <DaysTab activityId={activityId} onMatchesChanged={data.reloadMatches} />
         )}
         {tab === "matches" && (
           <MatchesTab
