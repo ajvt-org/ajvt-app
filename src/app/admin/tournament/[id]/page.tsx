@@ -16,19 +16,22 @@ import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
+import PlayersTab from "./PlayersTab";
 import DaysTab from "./DaysTab";
 import { useTournamentData } from "./useTournamentData";
 import BackButton from "@/components/BackButton";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 
-const TABS: [Tab, string][] = [
-  ["teams", "الفرق"],
-  ["days", "الأيام"],
-  ["matches", "المباريات"],
-  ["standings", "الترتيب"],
-  ["scorers", "الإحصائيات"],
-];
+function tabsFor(singles: boolean): [Tab, string][] {
+  return [
+    ["teams", singles ? "اللاعبون" : "الفرق"],
+    ["days", "الأيام"],
+    ["matches", "المباريات"],
+    ["standings", "الترتيب"],
+    ["scorers", "الإحصائيات"],
+  ];
+}
 
 function TournamentPageInner() {
   const router = useRouter();
@@ -37,6 +40,8 @@ function TournamentPageInner() {
   const activityId = params.id;
   const data = useTournamentData(activityId);
 
+  const singles = data.info?.teamSize === 1;
+  const TABS = tabsFor(singles);
   const requested = searchParams.get("tab") as Tab | null;
   const tab: Tab = requested && TABS.some(([key]) => key === requested) ? requested : "teams";
 
@@ -116,17 +121,27 @@ function TournamentPageInner() {
           ))}
         </div>
 
-        {tab === "teams" && (
-          <TeamsTab
-            activityId={activityId}
-            teams={teams}
-            groups={groups}
-            format={info?.format ?? null}
-            teamSize={info?.teamSize ?? null}
-            roster={roster}
-            onChange={reloadSquads}
-          />
-        )}
+        {tab === "teams" &&
+          (singles ? (
+            <PlayersTab
+              activityId={activityId}
+              teams={teams}
+              groups={groups}
+              format={info?.format ?? null}
+              roster={roster}
+              onChange={reloadSquads}
+            />
+          ) : (
+            <TeamsTab
+              activityId={activityId}
+              teams={teams}
+              groups={groups}
+              format={info?.format ?? null}
+              teamSize={info?.teamSize ?? null}
+              roster={roster}
+              onChange={reloadSquads}
+            />
+          ))}
         {tab === "days" && (
           <DaysTab activityId={activityId} onMatchesChanged={data.reloadMatches} />
         )}
