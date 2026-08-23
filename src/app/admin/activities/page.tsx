@@ -1,19 +1,25 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import PageLoading from "@/components/PageLoading";
-import BarChart from "@/components/admin/BarChart";
-import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
-import { ACTIVITIES_VIEW_KEYS, readActivitiesView, writeActivitiesView } from "./activitiesView";
-import ActivityCard from "./ActivityCard";
-import NewActivityForm from "./NewActivityForm";
+import {
+  ACTIVITIES_VIEW_KEYS,
+  ACTIVITY_KINDS,
+  matchesActivitiesView,
+  readActivitiesView,
+  writeActivitiesView,
+} from "./activitiesView";
+import ActivityRow from "./ActivityRow";
+import NewActivityDialog from "./NewActivityDialog";
 
 function AdminActivitiesPageInner() {
-  const { activities, members, loading, reload } = useActivitiesData();
+  const { activities, loading, reload } = useActivitiesData();
   const actions = useActivityActions(activities, reload);
+  const [showCreate, setShowCreate] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
@@ -22,63 +28,85 @@ function AdminActivitiesPageInner() {
 
   if (loading) return <PageLoading />;
 
+  const visible = activities.filter((a) => matchesActivitiesView(a, filters));
+  const unfiltered = !filters.q.trim() && !filters.kind;
+
   return (
     <div className="admin-page space-y-3">
-      {activities.length === 0 ? (
-        <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>
-          لا توجد أنشطة بعد — أضف أول نشاط أدناه
-        </p>
+      <div className="flex gap-2 flex-wrap">
+        <input
+          type="text"
+          placeholder="بحث باسم النشاط..."
+          value={filters.q}
+          onChange={(e) => go({ ...filters, q: e.target.value })}
+          className="input input-sm flex-1"
+          style={{ background: "white", minWidth: "10rem" }}
+        />
+        <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-sm text-xs">
+          <IconLabel name="plus">إضافة نشاط</IconLabel>
+        </button>
+      </div>
+
+      <div className="flex gap-1.5 flex-wrap">
+        {ACTIVITY_KINDS.map((k) => {
+          const on = filters.kind === k.value;
+          return (
+            <button
+              key={k.value}
+              onClick={() => go({ ...filters, kind: k.value })}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+              style={{
+                background: on ? "var(--mint-600)" : "white",
+                color: on ? "white" : "var(--mint-700)",
+                border: on ? "none" : "1px solid var(--mint-100)",
+              }}
+            >
+              {k.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="card p-6 text-center space-y-3">
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            {activities.length === 0 ? "لا توجد أنشطة بعد" : "لا يطابق أي نشاط هذا البحث"}
+          </p>
+          {activities.length === 0 && (
+            <button onClick={() => setShowCreate(true)} className="btn btn-sm btn-primary mx-auto">
+              <IconLabel name="plus">أضف أول نشاط</IconLabel>
+            </button>
+          )}
+        </div>
       ) : (
-        <>
-          <div className="card p-4">
-            <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
-              عدد المسجلين حسب النشاط
-            </p>
-            <BarChart
-              data={activities.map((a) => ({
-                label: a.title.slice(0, 6),
-                value: a.registrations.filter((r) => r.status !== "REJECTED").length,
-              }))}
-            />
-          </div>
-          {activities.map((a, index) => (
-            <ActivityCard
-              key={a.id}
-              activity={a}
-              index={index}
-              total={activities.length}
-              members={members}
-              expanded={filters.expanded === a.id}
-              actionLoading={actions.actionLoading}
-              reorderLoading={actions.reorderLoading}
-              onToggleExpanded={() => go({ expanded: filters.expanded === a.id ? "" : a.id })}
-              onMove={(direction) => actions.moveActivity(index, direction)}
-              onUpdatePhoto={(photo) => actions.updateActivityPhoto(a.id, photo)}
-              onToggleTournament={() => actions.toggleActivityTournament(a)}
-              onToggleOpen={() => actions.toggleActivityOpen(a)}
-              onDelete={() => actions.requestDeleteActivity(a.id)}
-              onSaveWhatsappLink={actions.saveWhatsappLink}
-              onDatesSaved={reload}
-              onReview={actions.reviewRegistration}
-              onRegister={actions.registerMember}
-              onUnregister={actions.unregisterMember}
-            />
-          ))}
-        </>
+        <div className="space-y-2">
+          {visible.map((a) => {
+            const index = activities.indexOf(a);
+            return (
+              <ActivityRow
+                key={a.id}
+                activity={a}
+                canReorder={
+                  unfiltered ? { up: index > 0, down: index < activities.length - 1 } : null
+                }
+                reorderLoading={actions.reorderLoading}
+                onMove={(direction) =>
+                  actions.moveActivity(index, direction === -1 ? "up" : "down")
+                }
+              />
+            );
+          })}
+        </div>
       )}
 
-      <NewActivityForm onCreate={actions.createActivity} />
+      {unfiltered && activities.length > 1 && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          الأسهم تغيّر ترتيب الظهور في الصفحة الرئيسية.
+        </p>
+      )}
 
-      {actions.deletingId && (
-        <ConfirmDialog
-          title="حذف النشاط"
-          message="هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه."
-          confirmLabel="حذف نهائي"
-          danger
-          loading={actions.actionLoading}
-          onConfirm={actions.confirmDeleteActivity}
-          onClose={actions.cancelDeleteActivity}
-        />
+      {showCreate && (
+        <NewActivityDialog onCreate={actions.createActivity} onClose={() => setShowCreate(false)} />
       )}
     </div>
   );

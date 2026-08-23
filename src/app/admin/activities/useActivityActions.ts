@@ -4,16 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
-import { useRegistrationActions } from "./useRegistrationActions";
 import type { Activity, NewActivityDraft } from "./activityTypes";
 
 export function useActivityActions(activities: Activity[], reload: () => Promise<void>) {
   const router = useRouter();
   const showToast = useToast();
-  const registrations = useRegistrationActions(reload);
   const [actionLoading, setActionLoading] = useState(false);
   const [reorderLoading, setReorderLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function createActivity(draft: NewActivityDraft) {
     setActionLoading(true);
@@ -25,37 +22,6 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
         return;
       }
       await reload();
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function updateActivityPhoto(id: string, photo: string) {
-    await api.patch(`/api/admin/activities/${id}`, { photo });
-    await reload();
-  }
-
-  async function toggleActivityTournament(activity: Activity) {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${activity.id}`, {
-        isTournament: !activity.isTournament,
-      });
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function toggleActivityOpen(activity: Activity) {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${activity.id}`, { isOpen: !activity.isOpen });
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
     }
@@ -80,58 +46,5 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
     }
   }
 
-  async function saveWhatsappLink(id: string, link: string): Promise<boolean> {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${id}`, { whatsappLink: link.trim() });
-      await reload();
-      return true;
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  function requestDeleteActivity(id: string) {
-    setDeletingId(id);
-  }
-
-  function cancelDeleteActivity() {
-    setDeletingId(null);
-  }
-
-  async function confirmDeleteActivity() {
-    const id = deletingId;
-    if (!id) return;
-    setActionLoading(true);
-    try {
-      await api.del(`/api/admin/activities/${id}`);
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setActionLoading(false);
-      setDeletingId(null);
-    }
-  }
-
-  return {
-    actionLoading: actionLoading || registrations.actionLoading,
-    reorderLoading,
-    deletingId,
-    createActivity,
-    updateActivityPhoto,
-    toggleActivityTournament,
-    toggleActivityOpen,
-    moveActivity,
-    saveWhatsappLink,
-    requestDeleteActivity,
-    cancelDeleteActivity,
-    confirmDeleteActivity,
-    registerMember: registrations.registerMember,
-    reviewRegistration: registrations.reviewRegistration,
-    unregisterMember: registrations.unregisterMember,
-  };
+  return { actionLoading, reorderLoading, createActivity, moveActivity };
 }

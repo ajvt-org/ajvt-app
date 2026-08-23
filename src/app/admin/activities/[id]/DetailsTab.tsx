@@ -7,6 +7,8 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivityDatesEditor from "../ActivityDatesEditor";
+import ConvertTournamentCard from "./ConvertTournamentCard";
+import DeleteActivityCard from "./DeleteActivityCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 
 export default function DetailsTab({
@@ -152,6 +154,10 @@ export default function DetailsTab({
         </p>
         <ActivityDatesEditor activity={activity} onSaved={onSaved} />
       </div>
+
+      {!activity.isVolunteer && <ConvertTournamentCard activity={activity} onChanged={onSaved} />}
+
+      <DeleteActivityCard activityId={activity.id} />
     </div>
   );
 }
