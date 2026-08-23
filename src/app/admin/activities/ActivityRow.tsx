@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import { toThumbUrl } from "@/lib/utils";
 import { formatActivityDates } from "@/lib/activityDates";
+import { countedNoun } from "@/lib/arabicCount";
+import { REGISTERED } from "@/lib/messages";
+import { activityRow as texts } from "@/lib/texts";
 import type { Activity } from "./activityTypes";
 
 function Chip({ text, tone }: { text: string; tone: "warn" | "muted" | "brand" }) {
@@ -66,21 +70,32 @@ export default function ActivityRow({
                 {dates}
               </span>
             )}
-            {!a.isVolunteer && <Chip text={`${registered} مسجلاً`} tone="muted" />}
-            {pending > 0 && <Chip text={`${pending} في الانتظار`} tone="warn" />}
-            {a.isTournament && <Chip text="بطولة" tone="brand" />}
-            {a.isVolunteer && <Chip text="حملة تطوعية" tone="brand" />}
-            {!a.isOpen && <Chip text="التسجيل مغلق" tone="muted" />}
+            {!a.isVolunteer && (
+              <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
+            )}
+            {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
+            {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
+            {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
+            {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
           </div>
         </div>
       </Link>
       <div className="shrink-0 flex items-center gap-1">
+        {a.isTournament && (
+          <Link
+            href={`/admin/tournament/${a.id}`}
+            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <IconLabel name="trophy">{texts.manageTournament}</IconLabel>
+          </Link>
+        )}
         {canReorder && (
           <>
             <button
               onClick={() => onMove(-1)}
               disabled={!canReorder.up || reorderLoading}
-              aria-label={`تقديم ${a.title} في الترتيب`}
+              aria-label={texts.moveUp(a.title)}
               className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
               style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
             >
@@ -89,7 +104,7 @@ export default function ActivityRow({
             <button
               onClick={() => onMove(1)}
               disabled={!canReorder.down || reorderLoading}
-              aria-label={`تأخير ${a.title} في الترتيب`}
+              aria-label={texts.moveDown(a.title)}
               className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
               style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
             >
@@ -99,7 +114,7 @@ export default function ActivityRow({
         )}
         <Link
           href={`/admin/activities/${a.id}`}
-          aria-label={`فتح ${a.title}`}
+          aria-label={texts.open(a.title)}
           style={{ color: "var(--text-muted)" }}
         >
           ›
