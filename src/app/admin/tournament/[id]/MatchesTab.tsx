@@ -17,6 +17,7 @@ export default function MatchesTab({
   teams,
   groups,
   format,
+  profile,
   matches,
   onChange,
 }: {
@@ -24,6 +25,7 @@ export default function MatchesTab({
   teams: Team[];
   groups: Group[];
   format: TournamentFormat;
+  profile: "FOOTBALL" | "BOARD";
   matches: Match[];
   onChange: () => void;
 }) {
@@ -400,6 +402,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                profile={profile}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -436,6 +439,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                profile={profile}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}

@@ -9,10 +9,12 @@ import IconLabel from "@/components/IconLabel";
 export default function ResultForm({
   match,
   teams,
+  profile,
   onSaved,
 }: {
   match: Match;
   teams: Team[];
+  profile: "FOOTBALL" | "BOARD";
   onSaved: () => void;
 }) {
   // A result form is drawn per match, so ids come from useId rather than the
@@ -46,6 +48,7 @@ export default function ResultForm({
   const [homePenalties, setHomePenalties] = useState(match.homePenalties?.toString() ?? "");
   const [awayPenalties, setAwayPenalties] = useState(match.awayPenalties?.toString() ?? "");
   const [manOfTheMatchId, setManOfTheMatchId] = useState(match.manOfTheMatch?.id ?? "");
+  const football = profile === "FOOTBALL";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -160,43 +163,49 @@ export default function ResultForm({
         </div>
       )}
 
-      <GoalRows
-        label={`هدافو ${match.homeTeam.name} (اختياري)`}
-        rows={homeGoals}
-        setRows={setHomeGoals}
-        teamMembers={homeRoster}
-      />
-      <GoalRows
-        label={`هدافو ${match.awayTeam.name} (اختياري)`}
-        rows={awayGoals}
-        setRows={setAwayGoals}
-        teamMembers={awayRoster}
-      />
+      {football && (
+        <>
+          <GoalRows
+            label={`هدافو ${match.homeTeam.name} (اختياري)`}
+            rows={homeGoals}
+            setRows={setHomeGoals}
+            teamMembers={homeRoster}
+          />
+          <GoalRows
+            label={`هدافو ${match.awayTeam.name} (اختياري)`}
+            rows={awayGoals}
+            setRows={setAwayGoals}
+            teamMembers={awayRoster}
+          />
+        </>
+      )}
 
-      <div>
-        <label
-          htmlFor={`${uid}-motm`}
-          className="text-xs font-semibold"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <IconLabel name="star" filled>
-            رجل المباراة (اختياري)
-          </IconLabel>
-        </label>
-        <select
-          id={`${uid}-motm`}
-          value={manOfTheMatchId}
-          onChange={(e) => setManOfTheMatchId(e.target.value)}
-          className="input"
-        >
-          <option value="">بدون</option>
-          {combinedRoster.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.fullName}
-            </option>
-          ))}
-        </select>
-      </div>
+      {football && (
+        <div>
+          <label
+            htmlFor={`${uid}-motm`}
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <IconLabel name="star" filled>
+              رجل المباراة (اختياري)
+            </IconLabel>
+          </label>
+          <select
+            id={`${uid}-motm`}
+            value={manOfTheMatchId}
+            onChange={(e) => setManOfTheMatchId(e.target.value)}
+            className="input"
+          >
+            <option value="">بدون</option>
+            {combinedRoster.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.fullName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {error && (
         <div

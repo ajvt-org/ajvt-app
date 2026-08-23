@@ -12,28 +12,33 @@ import {
 } from "@/lib/tournament";
 import { RankBadge } from "./StandingsTab";
 import { FORM_STYLE } from "./constants";
+import CardChip from "@/components/tournament/CardChip";
 import IconLabel from "@/components/IconLabel";
 
 export default function ScorersTab({
+  profile,
   topScorers,
   discipline,
   cleanSheets,
   motmLeaders,
   teamAdvancedStats,
 }: {
+  profile: "FOOTBALL" | "BOARD";
   topScorers: TopScorerRow[];
   discipline: DisciplineRow[];
   cleanSheets: CleanSheetRow[];
   motmLeaders: MotmRow[];
   teamAdvancedStats: TeamAdvancedRow[];
 }) {
+  const football = profile === "FOOTBALL";
   const teamsWithStats = teamAdvancedStats.filter((t) => t.biggestWin || t.form.length > 0);
-  const noData =
-    topScorers.length === 0 &&
-    discipline.length === 0 &&
-    cleanSheets.length === 0 &&
-    motmLeaders.length === 0 &&
-    teamsWithStats.length === 0;
+  const noData = football
+    ? topScorers.length === 0 &&
+      discipline.length === 0 &&
+      cleanSheets.length === 0 &&
+      motmLeaders.length === 0 &&
+      teamsWithStats.length === 0
+    : teamsWithStats.length === 0;
 
   if (noData) {
     return (
@@ -45,122 +50,131 @@ export default function ScorersTab({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2">
-        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="ball">الهدافون</IconLabel>
-        </h3>
-        {topScorers.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا توجد أهداف مسجلة بعد
-          </p>
-        ) : (
-          topScorers.slice(0, 15).map((s, i) => (
-            <div key={s.memberId} className="card p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <RankBadge i={i} />
-                <div>
+      {football && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="ball">الهدافون</IconLabel>
+          </h3>
+          {topScorers.length === 0 ? (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              لا توجد أهداف مسجلة بعد
+            </p>
+          ) : (
+            topScorers.slice(0, 15).map((s, i) => (
+              <div key={s.memberId} className="card p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <RankBadge i={i} />
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                      {s.fullName}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {s.teamName}
+                    </p>
+                  </div>
+                </div>
+                <span className="font-black" style={{ color: "var(--mint-700)" }}>
+                  <IconLabel name="ball">{s.goals}</IconLabel>
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {football && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
+            <CardChip type="YELLOW" /> <CardChip type="RED" /> الانضباط
+          </h3>
+          {discipline.length === 0 ? (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              لا توجد بطاقات مسجلة بعد
+            </p>
+          ) : (
+            discipline.slice(0, 15).map((d, i) => (
+              <div key={d.memberId} className="card p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <RankBadge i={i} />
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                      {d.fullName}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {d.teamName}
+                    </p>
+                  </div>
+                </div>
+                <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
+                  {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}{" "}
+                  {d.red > 0 && <CardChip type="RED" count={d.red} />}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {football && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="glove">أفضل دفاع (مباريات بدون استقبال أهداف)</IconLabel>
+          </h3>
+          {cleanSheets.length === 0 ? (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              لا توجد بيانات كافية بعد
+            </p>
+          ) : (
+            cleanSheets.slice(0, 10).map((c, i) => (
+              <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <RankBadge i={i} />
                   <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                    {s.fullName}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {s.teamName}
+                    {c.name}
                   </p>
                 </div>
+                <span className="font-black" style={{ color: "var(--mint-700)" }}>
+                  <IconLabel name="glove">
+                    {c.cleanSheets}/{c.played}
+                  </IconLabel>
+                </span>
               </div>
-              <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                <IconLabel name="ball">{s.goals}</IconLabel>
-              </span>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          🟨🟥 الانضباط
-        </h3>
-        {discipline.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا توجد بطاقات مسجلة بعد
-          </p>
-        ) : (
-          discipline.slice(0, 15).map((d, i) => (
-            <div key={d.memberId} className="card p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <RankBadge i={i} />
-                <div>
-                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                    {d.fullName}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {d.teamName}
-                  </p>
+      {football && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="star">رجل المباراة</IconLabel>
+          </h3>
+          {motmLeaders.length === 0 ? (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              لم يتم تحديد رجل مباراة بعد
+            </p>
+          ) : (
+            motmLeaders.slice(0, 10).map((m, i) => (
+              <div key={m.memberId} className="card p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <RankBadge i={i} />
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
+                      {m.fullName}
+                    </p>
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {m.teamName}
+                    </p>
+                  </div>
                 </div>
+                <span className="font-black" style={{ color: "var(--mint-700)" }}>
+                  <IconLabel name="star">{m.count}</IconLabel>
+                </span>
               </div>
-              <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
-                {d.yellow > 0 && `🟨${d.yellow}`} {d.red > 0 && `🟥${d.red}`}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="glove">أفضل دفاع (مباريات بدون استقبال أهداف)</IconLabel>
-        </h3>
-        {cleanSheets.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا توجد بيانات كافية بعد
-          </p>
-        ) : (
-          cleanSheets.slice(0, 10).map((c, i) => (
-            <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <RankBadge i={i} />
-                <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                  {c.name}
-                </p>
-              </div>
-              <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                <IconLabel name="glove">
-                  {c.cleanSheets}/{c.played}
-                </IconLabel>
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="star">رجل المباراة</IconLabel>
-        </h3>
-        {motmLeaders.length === 0 ? (
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لم يتم تحديد رجل مباراة بعد
-          </p>
-        ) : (
-          motmLeaders.slice(0, 10).map((m, i) => (
-            <div key={m.memberId} className="card p-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <RankBadge i={i} />
-                <div>
-                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                    {m.fullName}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {m.teamName}
-                  </p>
-                </div>
-              </div>
-              <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                <IconLabel name="star">{m.count}</IconLabel>
-              </span>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {teamsWithStats.length > 0 && (
         <div className="space-y-2">
