@@ -32,6 +32,8 @@ import UpToDateSummary from "./UpToDateSummary";
 import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
+import BareAccountsSection from "./BareAccountsSection";
+import { useBareAccounts } from "./useBareAccounts";
 import PageLoading from "@/components/PageLoading";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
@@ -74,6 +76,8 @@ function AdminDashboardInner() {
 
   const [showStats, setShowStats] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualAddPhone, setManualAddPhone] = useState("");
+  const bare = useBareAccounts();
   const [showAgeGroups, setShowAgeGroups] = useState(false);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [orphanAges, setOrphanAges] = useState<OrphanAge[]>([]);
@@ -307,87 +311,105 @@ function AdminDashboardInner() {
 
   return (
     <div className="admin-page">
-      <StatTabs active={filter} counts={counts} onPick={setFilter} />
-
-      <DashboardToolbar
-        statsOpen={showStats}
-        onToggleStats={() => setShowStats((v) => !v)}
-        onExport={() => exportMembers(members)}
+      <StatTabs
+        active={filter}
+        counts={{ ...counts, NO_REQUEST: bare.users.length }}
+        onPick={setFilter}
       />
 
-      {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
-
-      <UpToDateSummary
-        year={membership.year}
-        paid={standing.paid}
-        active={standing.active}
-        showing={
-          filters.standing === "paid" || filters.standing === "behind" ? filters.standing : null
-        }
-        onShowPaid={() => setFilters(withStanding("paid"))}
-        onShowBehind={() => setFilters(withStanding("behind"))}
-      />
-
-      <MemberSearch
-        value={filters.q}
-        onChange={(q) => setFilters({ ...filters, q })}
-        onManageAgeGroups={() => setShowAgeGroups(true)}
-        onManualAdd={() => setShowManualAdd(true)}
-      />
-
-      <MemberFilterRow
-        filters={filters}
-        ageGroups={ageGroups}
-        paymentMethods={paymentMethods}
-        years={years}
-        resultCount={filtered.length}
-        onChange={setFilters}
-      />
-
-      {selectedIds.size > 0 && (
-        <BulkActionsBar
-          count={selectedIds.size}
-          pending={filter === "PENDING"}
-          loading={bulkLoading}
-          reason={bulkReason}
-          age={bulkAge}
-          ageGroups={ageGroups}
-          onReason={setBulkReason}
-          onAge={setBulkAge}
-          onClear={() => setSelectedIds(new Set())}
-          onApprove={() =>
-            runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`)
-          }
-          onReject={() =>
-            runOnSelection(
-              "REJECTED",
-              bulkReason,
-              `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
-            )
-          }
-          onMoveAge={bulkMoveAge}
+      {filter === "NO_REQUEST" ? (
+        <BareAccountsSection
+          users={bare.users}
+          loading={bare.loading}
+          onFill={(phone) => {
+            setManualAddPhone(phone);
+            setShowManualAdd(true);
+          }}
+          onChanged={bare.refresh}
         />
-      )}
-
-      {loading ? (
-        <PageLoading />
       ) : (
-        <MemberList
-          members={paginated}
-          selectedIds={selectedIds}
-          onToggle={toggleSelected}
-          onOpen={(m) => {
-            setSelected(m);
-            setProofZoom(false);
-            setTempPassword(null);
-            setShowRejectPicker(false);
-          }}
-          onRenamed={(id, fullName) => {
-            setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
-            setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
-          }}
-          pagination={{ page: currentPage, totalPages, onGo: setPage }}
-        />
+        <>
+          <DashboardToolbar
+            statsOpen={showStats}
+            onToggleStats={() => setShowStats((v) => !v)}
+            onExport={() => exportMembers(members)}
+          />
+
+          {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
+
+          <UpToDateSummary
+            year={membership.year}
+            paid={standing.paid}
+            active={standing.active}
+            showing={
+              filters.standing === "paid" || filters.standing === "behind" ? filters.standing : null
+            }
+            onShowPaid={() => setFilters(withStanding("paid"))}
+            onShowBehind={() => setFilters(withStanding("behind"))}
+          />
+
+          <MemberSearch
+            value={filters.q}
+            onChange={(q) => setFilters({ ...filters, q })}
+            onManageAgeGroups={() => setShowAgeGroups(true)}
+            onManualAdd={() => setShowManualAdd(true)}
+          />
+
+          <MemberFilterRow
+            filters={filters}
+            ageGroups={ageGroups}
+            paymentMethods={paymentMethods}
+            years={years}
+            resultCount={filtered.length}
+            onChange={setFilters}
+          />
+
+          {selectedIds.size > 0 && (
+            <BulkActionsBar
+              count={selectedIds.size}
+              pending={filter === "PENDING"}
+              loading={bulkLoading}
+              reason={bulkReason}
+              age={bulkAge}
+              ageGroups={ageGroups}
+              onReason={setBulkReason}
+              onAge={setBulkAge}
+              onClear={() => setSelectedIds(new Set())}
+              onApprove={() =>
+                runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`)
+              }
+              onReject={() =>
+                runOnSelection(
+                  "REJECTED",
+                  bulkReason,
+                  `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
+                )
+              }
+              onMoveAge={bulkMoveAge}
+            />
+          )}
+
+          {loading ? (
+            <PageLoading />
+          ) : (
+            <MemberList
+              members={paginated}
+              selectedIds={selectedIds}
+              onToggle={toggleSelected}
+              onOpen={(m) => {
+                setSelected(m);
+                setProofZoom(false);
+                setTempPassword(null);
+                setShowRejectPicker(false);
+              }}
+              onRenamed={(id, fullName) => {
+                setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
+                setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
+              }}
+              pagination={{ page: currentPage, totalPages, onGo: setPage }}
+            />
+          )}
+        </>
       )}
 
       {selected && (
@@ -433,12 +455,19 @@ function AdminDashboardInner() {
       {showManualAdd && (
         <ManualAddDialog
           ageGroups={ageGroups}
-          onCreated={fetchMembers}
+          initialPhone={manualAddPhone || undefined}
+          onCreated={async () => {
+            await fetchMembers();
+            await bare.refresh();
+          }}
           onManageAgeGroups={() => {
             setShowManualAdd(false);
             setShowAgeGroups(true);
           }}
-          onClose={() => setShowManualAdd(false)}
+          onClose={() => {
+            setShowManualAdd(false);
+            setManualAddPhone("");
+          }}
         />
       )}
 

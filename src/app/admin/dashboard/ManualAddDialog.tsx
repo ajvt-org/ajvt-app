@@ -11,6 +11,7 @@ import IconLabel from "@/components/IconLabel";
 
 type Props = {
   ageGroups: AgeGroup[];
+  initialPhone?: string;
   onCreated: () => Promise<void> | void;
   onManageAgeGroups: () => void;
   onClose: () => void;
@@ -18,11 +19,12 @@ type Props = {
 
 export default function ManualAddDialog({
   ageGroups,
+  initialPhone,
   onCreated,
   onManageAgeGroups,
   onClose,
 }: Props) {
-  const [form, setForm] = useState(emptyManualForm);
+  const [form, setForm] = useState({ ...emptyManualForm, accountPhone: initialPhone ?? "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ tempPassword?: string } | null>(null);
