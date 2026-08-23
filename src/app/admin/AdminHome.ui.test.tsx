@@ -26,14 +26,6 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
 }));
 
-const SUMMARY = {
-  year: 2026,
-  membership: { current: 8, active: 10, former: 2 },
-  money: { revenue: 5000, spending: 2000, net: 3000 },
-  handling: { pendingMembers: 1, pendingRegistrations: 2, pendingPayments: 0, total: 3 },
-  matchesToday: [],
-};
-
 const TODAY_MATCH = {
   id: "m1",
   matchDate: "2026-08-23T16:00:00.000Z",
@@ -45,10 +37,26 @@ const TODAY_MATCH = {
   awayTeam: { name: "النسور" },
 };
 
+const SUMMARY = {
+  year: 2026,
+  membership: { current: 8, active: 10, former: 2 },
+  money: { revenue: 5000, spending: 2000, net: 3000 },
+  handling: { pendingMembers: 1, pendingRegistrations: 2, pendingPayments: 0, total: 3 },
+  matchesToday: [] as (typeof TODAY_MATCH)[],
+};
+
+const WAITING = { pending: [], unfinished: [] };
+
+function answer(summary: typeof SUMMARY) {
+  get.mockImplementation((url: unknown) =>
+    Promise.resolve(url === "/api/admin/waiting" ? WAITING : summary),
+  );
+}
+
 beforeEach(() => {
   get.mockReset();
   replace.mockReset();
-  get.mockResolvedValue(SUMMARY);
+  answer(SUMMARY);
 });
 
 afterEach(() => {
@@ -64,7 +72,7 @@ describe("the admin home", () => {
   });
 
   it("lists today's matches with a way into the tournament", async () => {
-    get.mockResolvedValue({ ...SUMMARY, matchesToday: [TODAY_MATCH] });
+    answer({ ...SUMMARY, matchesToday: [TODAY_MATCH] });
 
     render(<AdminHome />);
 
