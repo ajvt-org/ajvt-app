@@ -4,43 +4,25 @@ import UpToDateSummary from "./UpToDateSummary";
 
 const noop = vi.fn();
 
-function show(paid: number, active: number) {
+function show(current: number, active: number) {
   render(
     <UpToDateSummary
       year={2026}
-      paid={paid}
+      current={current}
       active={active}
       showing={null}
-      onShowPaid={noop}
-      onShowBehind={noop}
+      onShowCurrent={noop}
+      onShowFormer={noop}
     />,
   );
 }
 
 describe("the membership summary", () => {
-  it("puts the number before the noun, which is the order arabic reads", () => {
+  it("counts the current and former members of the year, plainly", () => {
     show(91, 117);
 
-    expect(screen.getByText("91 مسدّداً")).toBeTruthy();
-    expect(screen.getByText("26 لم يجددوا")).toBeTruthy();
-  });
-
-  it("takes the plural from three to ten", () => {
-    show(7, 10);
-
-    expect(screen.getByText("7 مسدّدين")).toBeTruthy();
-    expect(screen.getByText("3 لم يجددوا")).toBeTruthy();
-  });
-
-  it("carries none as a plural rather than a bare singular", () => {
-    show(0, 5);
-
-    expect(screen.getByText("0 مسدّدين")).toBeTruthy();
-  });
-
-  it("counts everyone who is not paid up for the year as behind", () => {
-    show(91, 117);
-
+    expect(screen.getByText("91 حالي")).toBeTruthy();
+    expect(screen.getByText("26 سابق")).toBeTruthy();
     expect(screen.getByText("من 117 عضواً نشطاً")).toBeTruthy();
   });
 
@@ -48,11 +30,11 @@ describe("the membership summary", () => {
     const { container } = render(
       <UpToDateSummary
         year={2026}
-        paid={0}
+        current={0}
         active={0}
         showing={null}
-        onShowPaid={noop}
-        onShowBehind={noop}
+        onShowCurrent={noop}
+        onShowFormer={noop}
       />,
     );
 

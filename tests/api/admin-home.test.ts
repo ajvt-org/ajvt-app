@@ -33,11 +33,11 @@ describe("the admin home", () => {
 
   it("answers how many members are up to date", async () => {
     await member("سدد");
-    await member("متأخر", { paidAmount: 100 });
+    await member("سابق", { membershipYear: 2025 });
 
     const body = await (await read()).json();
 
-    expect(body.membership).toEqual({ paid: 1, active: 2, behind: 1 });
+    expect(body.membership).toEqual({ current: 1, active: 2, former: 1 });
   });
 
   it("answers what came in and what went out", async () => {
@@ -78,7 +78,7 @@ describe("the admin home", () => {
   it("answers zero on an empty association rather than failing", async () => {
     const body = await (await read()).json();
 
-    expect(body.membership).toEqual({ paid: 0, active: 0, behind: 0 });
+    expect(body.membership).toEqual({ current: 0, active: 0, former: 0 });
     expect(body.money).toEqual({ revenue: 0, spending: 0, net: 0 });
     expect(body.handling.total).toBe(0);
   });

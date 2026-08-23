@@ -2,26 +2,26 @@
 
 import IconLabel from "@/components/IconLabel";
 import { counted } from "@/lib/arabicCount";
-import { ACTIVE_MEMBER, NOT_RENEWED, SETTLED } from "@/lib/messages";
+import { ACTIVE_MEMBER } from "@/lib/messages";
 
 export default function UpToDateSummary({
   year,
-  paid,
+  current,
   active,
   showing,
-  onShowPaid,
-  onShowBehind,
+  onShowCurrent,
+  onShowFormer,
 }: {
   year: number;
-  paid: number;
+  current: number;
   active: number;
-  showing: "paid" | "behind" | null;
-  onShowPaid: () => void;
-  onShowBehind: () => void;
+  showing: "current" | "former" | null;
+  onShowCurrent: () => void;
+  onShowFormer: () => void;
 }) {
   if (active === 0) return null;
 
-  const behind = active - paid;
+  const former = active - current;
   const chip = (on: boolean) => ({
     background: on ? "var(--mint-600)" : "var(--mint-100)",
     color: on ? "white" : "var(--mint-700)",
@@ -33,18 +33,18 @@ export default function UpToDateSummary({
         عضوية {year}
       </p>
       <button
-        onClick={onShowPaid}
+        onClick={onShowCurrent}
         className="text-xs px-2.5 py-1 rounded-lg font-bold"
-        style={chip(showing === "paid")}
+        style={chip(showing === "current")}
       >
-        <IconLabel name="check">{counted(paid, SETTLED)}</IconLabel>
+        <IconLabel name="check">{current} حالي</IconLabel>
       </button>
       <button
-        onClick={onShowBehind}
+        onClick={onShowFormer}
         className="text-xs px-2.5 py-1 rounded-lg font-bold"
-        style={chip(showing === "behind")}
+        style={chip(showing === "former")}
       >
-        <IconLabel name="clock">{counted(behind, NOT_RENEWED)}</IconLabel>
+        <IconLabel name="clock">{former} سابق</IconLabel>
       </button>
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
         من {counted(active, ACTIVE_MEMBER)}

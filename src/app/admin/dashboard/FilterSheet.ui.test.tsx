@@ -42,9 +42,9 @@ describe("FilterSheet", () => {
   });
 
   it("toggles the standing chips", () => {
-    const { onChange } = renderSheet({ standing: "paid" });
+    const { onChange } = renderSheet({ standing: "current" });
 
-    fireEvent.click(screen.getByText("مسدّد 2026"));
+    fireEvent.click(screen.getByText("حالي 2026"));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ standing: "" }));
   });

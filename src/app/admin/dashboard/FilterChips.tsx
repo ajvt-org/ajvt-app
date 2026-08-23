@@ -12,8 +12,8 @@ const PAID_LABEL: Record<string, string> = {
 };
 
 export function standingLabel(standing: string, year: number): string | null {
-  if (standing === "paid") return `مسدّد ${year}`;
-  if (standing === "behind") return `لم يجدد ${year}`;
+  if (standing === "current") return `حالي ${year}`;
+  if (standing === "former") return `سابق ${year}`;
   return null;
 }
 

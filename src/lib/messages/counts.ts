@@ -112,20 +112,6 @@ export const RESULT: CountedNoun = {
   many: "نتيجةً",
 };
 
-export const SETTLED: CountedNoun = {
-  one: "مسدّد",
-  two: "مسدّدان",
-  few: "مسدّدين",
-  many: "مسدّداً",
-};
-
-export const NOT_RENEWED: CountedNoun = {
-  one: "لم يجدد",
-  two: "لم يجددا",
-  few: "لم يجددوا",
-  many: "لم يجددوا",
-};
-
 export const ACTIVE_MEMBER: CountedNoun = {
   one: "عضو نشط",
   two: "عضوين نشطين",

@@ -34,7 +34,10 @@ export type FilterableMember = {
   user?: { phone: string } | null;
 };
 
+const LEGACY_STANDING: Record<string, string> = { paid: "current", behind: "former" };
+
 export function readFilters(params: URLSearchParams): MemberFilters {
+  const standing = params.get("standing") || "";
   return {
     status: params.get("status") || NO_FILTERS.status,
     q: params.get("q") || "",
@@ -42,7 +45,7 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     method: params.get("method") || "",
     paid: params.get("paid") || "",
     year: params.get("year") || "",
-    standing: params.get("standing") || "",
+    standing: LEGACY_STANDING[standing] ?? standing,
     from: params.get("from") || "",
     to: params.get("to") || "",
   };
@@ -116,9 +119,9 @@ export interface Membership {
 
 function matchesStanding(member: FilterableMember, standing: string, m: Membership): boolean {
   if (!standing) return true;
-  const current = member.membershipYear === m.year && (member.paidAmount ?? 0) >= m.fee;
-  if (standing === "paid") return current;
-  if (standing === "behind") return !current;
+  const current = member.membershipYear === m.year;
+  if (standing === "current") return current;
+  if (standing === "former") return !current;
   return true;
 }
 
@@ -143,6 +146,6 @@ export function membershipYearsPresent(members: FilterableMember[]): number[] {
 
 export function upToDate(members: FilterableMember[], membership: Membership) {
   const active = members.filter((m) => m.status === "ACTIVE");
-  const paid = active.filter((m) => matchesStanding(m, "paid", membership));
-  return { paid: paid.length, active: active.length };
+  const current = active.filter((m) => matchesStanding(m, "current", membership));
+  return { current: current.length, active: active.length };
 }
