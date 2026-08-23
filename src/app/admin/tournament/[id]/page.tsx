@@ -136,6 +136,7 @@ function TournamentPageInner() {
             teams={teams}
             groups={groups}
             format={info?.format ?? null}
+            profile={info?.profile ?? "FOOTBALL"}
             matches={matches}
             onChange={data.reloadMatches}
           />
@@ -151,6 +152,7 @@ function TournamentPageInner() {
         )}
         {tab === "scorers" && (
           <ScorersTab
+            profile={info?.profile ?? "FOOTBALL"}
             topScorers={topScorers}
             discipline={discipline}
             cleanSheets={cleanSheets}

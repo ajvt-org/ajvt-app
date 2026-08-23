@@ -1,5 +1,6 @@
 "use client";
 
+import CardChip from "@/components/tournament/CardChip";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { getHeadToHead, formatMatchDateTime } from "@/lib/tournament";
@@ -8,7 +9,6 @@ import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
-import { CARD_LABEL } from "./constants";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 
@@ -16,6 +16,7 @@ export default function MatchCard({
   match,
   teams,
   allMatches,
+  profile,
   onDelete,
   showResultForm,
   onToggleResultForm,
@@ -33,6 +34,7 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
+  profile: "FOOTBALL" | "BOARD";
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
@@ -48,6 +50,7 @@ export default function MatchCard({
   onChange: () => void;
 }) {
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const football = profile === "FOOTBALL";
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
@@ -130,7 +133,7 @@ export default function MatchCard({
         </div>
       </div>
 
-      {match.status === "PLAYED" && match.goals.length > 0 && (
+      {football && match.status === "PLAYED" && match.goals.length > 0 && (
         <div
           className="mt-2 pt-2 flex flex-wrap gap-1.5"
           style={{ borderTop: "1px solid var(--mint-100)" }}
@@ -146,7 +149,7 @@ export default function MatchCard({
         </div>
       )}
 
-      {match.manOfTheMatch && (
+      {football && match.manOfTheMatch && (
         <p
           className="text-xs mt-2 font-semibold flex items-center gap-1.5"
           style={{ color: "var(--mint-700)" }}
@@ -160,12 +163,12 @@ export default function MatchCard({
         </p>
       )}
 
-      {match.bookings.length > 0 && (
+      {football && match.bookings.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {match.bookings.map((b) => (
             <span key={b.id} className="badge badge-rejected flex items-center gap-1.5">
               <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
-              {CARD_LABEL[b.cardType]} {b.member.fullName}
+              <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
               {b.minute ? ` (${b.minute}')` : ""}
             </span>
           ))}
@@ -173,28 +176,38 @@ export default function MatchCard({
       )}
 
       <div className="flex gap-2 mt-2">
-        <button
-          onClick={onToggleCards}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          {showCards ? "إخفاء البطاقات" : "🟨🟥 إدارة البطاقات"}
-        </button>
-        <button
-          onClick={onToggleMvp}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          {showMvp ? "إخفاء التصويت" : <IconLabel name="star">أفضل لاعب</IconLabel>}
-        </button>
+        {football && (
+          <button
+            onClick={onToggleCards}
+            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-200)",
+            }}
+          >
+            {showCards ? (
+              "إخفاء البطاقات"
+            ) : (
+              <>
+                <CardChip type="YELLOW" /> <CardChip type="RED" /> إدارة البطاقات
+              </>
+            )}
+          </button>
+        )}
+        {football && (
+          <button
+            onClick={onToggleMvp}
+            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-200)",
+            }}
+          >
+            {showMvp ? "إخفاء التصويت" : <IconLabel name="star">أفضل لاعب</IconLabel>}
+          </button>
+        )}
         <button
           onClick={onToggleDetails}
           className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
@@ -208,9 +221,11 @@ export default function MatchCard({
         </button>
       </div>
 
-      {showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
-      {showResultForm && <ResultForm match={match} teams={teams} onSaved={onSaved} />}
-      {showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
+      {football && showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
+      {showResultForm && (
+        <ResultForm match={match} teams={teams} profile={profile} onSaved={onSaved} />
+      )}
+      {football && showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
       {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
     </div>
   );
