@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/Icon";
+import { canOpen } from "@/lib/adminNav";
 
 export interface ToolLink {
   href: string;
@@ -12,9 +13,11 @@ export const TOOL_LINKS: ToolLink[] = [
   { href: "/admin/admins", label: "إدارة حسابات المشرفين", icon: "users", superOnly: true },
   { href: "/admin/audit-log", label: "سجل الإجراءات", icon: "list", superOnly: true },
   { href: "/admin/broadcast", label: "إرسال إشعار جماعي", icon: "megaphone", superOnly: true },
+  { href: "/admin/deleted", label: "سلة المحذوفات", icon: "trash", superOnly: false },
 ];
 
 export function toolsFor(role: string | null): ToolLink[] {
-  if (role === null) return TOOL_LINKS.filter((tool) => !tool.superOnly);
-  return TOOL_LINKS.filter((tool) => !tool.superOnly || role === "SUPER");
+  return TOOL_LINKS.filter(
+    (tool) => (!tool.superOnly || role === "SUPER") && (role === null || canOpen(role, tool.href)),
+  );
 }

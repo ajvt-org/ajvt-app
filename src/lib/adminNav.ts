@@ -4,7 +4,13 @@ const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
 const ROLE_AREAS: Record<string, string[] | null> = {
   SUPER: ALL_AREAS,
-  MEMBERS: ["/admin/dashboard", "/admin/payments", "/admin/expenses", ...OWN_ACCOUNT],
+  MEMBERS: [
+    "/admin/dashboard",
+    "/admin/payments",
+    "/admin/expenses",
+    "/admin/deleted",
+    ...OWN_ACCOUNT,
+  ],
   ACTIVITIES: ["/admin/activities", "/admin/payments", "/admin/expenses", ...OWN_ACCOUNT],
   QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
   ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
@@ -25,7 +31,13 @@ export function canOpen(role: string | null | undefined, pathname: string): bool
 const TAB_ALIASES: Record<string, string[]> = {
   "/admin/dashboard": ["/admin/members"],
   "/admin/activities": ["/admin/tournament"],
-  "/admin/tools": ["/admin/password", "/admin/admins", "/admin/audit-log", "/admin/broadcast"],
+  "/admin/tools": [
+    "/admin/password",
+    "/admin/admins",
+    "/admin/audit-log",
+    "/admin/broadcast",
+    "/admin/deleted",
+  ],
 };
 
 export function tabActive(tabHref: string, pathname: string | null): boolean {
