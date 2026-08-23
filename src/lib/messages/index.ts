@@ -20,7 +20,7 @@ export {
   GROUP,
   MATCH,
   MEMBER,
-  OVERDUE,
+  NOT_RENEWED,
   PLAYER,
   POINT,
   RECIPIENT,

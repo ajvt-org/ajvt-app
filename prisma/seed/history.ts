@@ -52,6 +52,26 @@ export async function seedDeletedRecords() {
 
   await prisma.deletedRecord.create({
     data: {
+      kind: "User",
+      recordId: "seed-deleted-user",
+      label: "36990011",
+      data: {
+        id: "seed-deleted-user",
+        phone: "36990011",
+        password: "$2b$12$seedseedseedseedseedsehQ0aFDBGaieiglgoBIYqAJTsc5R9m1u",
+        tokenVersion: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        createdAt: daysAgo(40).toISOString(),
+      },
+      deletedBy: "members",
+      deletedAt: daysAgo(1),
+      expiresAt: retentionExpiry(daysAgo(1)),
+    },
+  });
+
+  await prisma.deletedRecord.create({
+    data: {
       kind: "Member",
       recordId: "seed-expiring-member",
       label: fullName(78),

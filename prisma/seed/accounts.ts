@@ -30,6 +30,19 @@ export async function seedAgeGroups() {
   }
 }
 
+export async function seedPushSubscriptions(userIds: string[]) {
+  for (const [i, userId] of userIds.entries()) {
+    await prisma.pushSubscription.create({
+      data: {
+        userId,
+        endpoint: `https://push.invalid/seed-${i}`,
+        p256dh: "seed-p256dh",
+        auth: "seed-auth",
+      },
+    });
+  }
+}
+
 export async function seedUsers(count: number) {
   const password = await bcrypt.hash("user123", 12);
   const users = [];
@@ -43,7 +56,7 @@ export async function seedUsers(count: number) {
           currentStreak: i % 5,
           longestStreak: (i % 5) + (i % 3),
           lastActiveDate: i % 4 === 0 ? daysAgo(i % 7) : null,
-          createdAt: daysAgo(120 - i * 3),
+          createdAt: daysAgo(i % 120),
         },
       }),
     );

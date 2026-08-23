@@ -2,7 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import { counted } from "@/lib/arabicCount";
-import { ACTIVE_MEMBER, OVERDUE, SETTLED } from "@/lib/messages";
+import { ACTIVE_MEMBER, NOT_RENEWED, SETTLED } from "@/lib/messages";
 
 export default function UpToDateSummary({
   year,
@@ -44,7 +44,7 @@ export default function UpToDateSummary({
         className="text-xs px-2.5 py-1 rounded-lg font-bold"
         style={chip(showing === "behind")}
       >
-        <IconLabel name="clock">{counted(behind, OVERDUE)}</IconLabel>
+        <IconLabel name="clock">{counted(behind, NOT_RENEWED)}</IconLabel>
       </button>
       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
         من {counted(active, ACTIVE_MEMBER)}

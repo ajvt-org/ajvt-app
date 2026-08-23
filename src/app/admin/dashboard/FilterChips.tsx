@@ -11,14 +11,15 @@ const PAID_LABEL: Record<string, string> = {
   none: "لم يدفع",
 };
 
-const STANDING_LABEL: Record<string, string> = {
-  paid: "مسدّدون",
-  behind: "متأخرون",
-};
+export function standingLabel(standing: string, year: number): string | null {
+  if (standing === "paid") return `مسدّد ${year}`;
+  if (standing === "behind") return `لم يجدد ${year}`;
+  return null;
+}
 
 type Chip = { key: keyof MemberFilters; label: string };
 
-function chipsFor(filters: MemberFilters): Chip[] {
+function chipsFor(filters: MemberFilters, year: number): Chip[] {
   const chips: Chip[] = [];
   if (filters.age) chips.push({ key: "age", label: filters.age });
   if (filters.method) chips.push({ key: "method", label: filters.method });
@@ -27,21 +28,23 @@ function chipsFor(filters: MemberFilters): Chip[] {
   if (filters.year) chips.push({ key: "year", label: `عضوية ${filters.year}` });
   if (filters.from) chips.push({ key: "from", label: `من ${filters.from}` });
   if (filters.to) chips.push({ key: "to", label: `إلى ${filters.to}` });
-  if (filters.standing && STANDING_LABEL[filters.standing])
-    chips.push({ key: "standing", label: STANDING_LABEL[filters.standing] });
+  const standing = standingLabel(filters.standing, year);
+  if (standing) chips.push({ key: "standing", label: standing });
   return chips;
 }
 
 export default function FilterChips({
   filters,
+  year,
   resultCount,
   onChange,
 }: {
   filters: MemberFilters;
+  year: number;
   resultCount: number;
   onChange: (next: MemberFilters) => void;
 }) {
-  const chips = chipsFor(filters);
+  const chips = chipsFor(filters, year);
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 mb-3 flex-wrap">

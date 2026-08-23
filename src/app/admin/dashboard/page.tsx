@@ -348,7 +348,12 @@ function AdminDashboardInner() {
             onShowBehind={() => setFilters(withStanding("behind"))}
           />
 
-          <FilterChips filters={filters} resultCount={filtered.length} onChange={setFilters} />
+          <FilterChips
+            filters={filters}
+            year={membership.year}
+            resultCount={filtered.length}
+            onChange={setFilters}
+          />
 
           {selectedIds.size > 0 && (
             <BulkActionsBar
@@ -402,6 +407,7 @@ function AdminDashboardInner() {
         <MemberDrawer
           member={selected}
           actionLoading={actionLoading}
+          settingsYear={membership.year}
           resetLoading={resetLoading}
           tempPassword={tempPassword}
           tempPasswordHours={tempPasswordHours}
@@ -429,6 +435,7 @@ function AdminDashboardInner() {
           ageGroups={ageGroups}
           paymentMethods={paymentMethods}
           years={years}
+          year={membership.year}
           resultCount={filtered.length}
           onChange={setFilters}
           onClose={() => setShowFilters(false)}

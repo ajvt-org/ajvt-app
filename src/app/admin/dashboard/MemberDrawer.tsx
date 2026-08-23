@@ -84,11 +84,12 @@ function paidRows(member: Member): Row[] {
   ];
 }
 
-function Facts({ member }: { member: Member }) {
+function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
   const rows: Row[] = [
     ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
     ["العصر", member.age, undefined],
     ["طريقة الدفع", member.paymentMethod, undefined],
+    ["سنة العضوية", String(member.membershipYear), "ltr"],
     ...paidRows(member),
     ["رقم العضوية", member.memberNumber || "—", "ltr"],
     ["تاريخ الطلب", formatDate(member.createdAt), undefined],
@@ -107,6 +108,14 @@ function Facts({ member }: { member: Member }) {
           </span>
         </div>
       ))}
+      {member.status === "ACTIVE" && member.membershipYear < settingsYear && (
+        <p
+          className="text-xs font-bold rounded-lg px-3 py-2"
+          style={{ background: "#fef3c7", color: "#92400e" }}
+        >
+          المبالغ أعلاه تخص عضوية {member.membershipYear}، ولم يجدد عضوية {settingsYear} بعد.
+        </p>
+      )}
     </div>
   );
 }
@@ -149,6 +158,7 @@ function Proof({ member, onZoom }: { member: Member; onZoom: () => void }) {
 export interface MemberDrawerProps {
   member: Member;
   actionLoading: boolean;
+  settingsYear: number;
   resetLoading: boolean;
   tempPassword: string | null;
   tempPasswordHours: number;
@@ -172,6 +182,7 @@ export interface MemberDrawerProps {
 export default function MemberDrawer({
   member,
   actionLoading,
+  settingsYear,
   resetLoading,
   tempPassword,
   tempPasswordHours,
@@ -212,7 +223,7 @@ export default function MemberDrawer({
         <div className="p-5 space-y-4">
           <SamePersonWarning memberId={member.id} />
           <Identity member={member} />
-          <Facts member={member} />
+          <Facts member={member} settingsYear={settingsYear} />
           <MembershipPanel memberId={member.id} />
 
           <div className="flex items-center justify-between card p-4">

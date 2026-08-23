@@ -119,11 +119,11 @@ export const SETTLED: CountedNoun = {
   many: "مسدّداً",
 };
 
-export const OVERDUE: CountedNoun = {
-  one: "متأخر",
-  two: "متأخران",
-  few: "متأخرين",
-  many: "متأخراً",
+export const NOT_RENEWED: CountedNoun = {
+  one: "لم يجدد",
+  two: "لم يجددا",
+  few: "لم يجددوا",
+  many: "لم يجددوا",
 };
 
 export const ACTIVE_MEMBER: CountedNoun = {

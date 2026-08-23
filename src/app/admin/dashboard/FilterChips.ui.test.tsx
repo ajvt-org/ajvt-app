@@ -6,7 +6,7 @@ import { NO_FILTERS } from "@/lib/memberFilters";
 function renderChips(over: Partial<typeof NO_FILTERS>, onChange = vi.fn()) {
   cleanup();
   const filters = { ...NO_FILTERS, ...over };
-  render(<FilterChips filters={filters} resultCount={7} onChange={onChange} />);
+  render(<FilterChips filters={filters} year={2026} resultCount={7} onChange={onChange} />);
   return { filters, onChange };
 }
 
@@ -16,7 +16,7 @@ describe("FilterChips", () => {
 
     expect(screen.getByText("البدريين")).toBeDefined();
     expect(screen.getByText("دفع ناقص")).toBeDefined();
-    expect(screen.getByText("متأخرون")).toBeDefined();
+    expect(screen.getByText("لم يجدد 2026")).toBeDefined();
   });
 
   it("shows no chips when only the tab and the search are set", () => {
