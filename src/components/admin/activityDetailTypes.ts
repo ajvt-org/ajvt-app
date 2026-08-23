@@ -11,6 +11,9 @@ export type ActivityDetail = {
     capacity: number | null;
     isOpen: boolean;
     isTournament: boolean;
+    format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
+    profile: "FOOTBALL" | "BOARD";
+    teamSize: number | null;
     isVolunteer: boolean;
     whatsappLink: string | null;
     registrations: {

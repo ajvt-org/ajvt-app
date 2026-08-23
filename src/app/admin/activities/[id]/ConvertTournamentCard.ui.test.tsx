@@ -23,6 +23,9 @@ function activity(isTournament: boolean): ActivityDetail["activity"] {
     capacity: null,
     isOpen: true,
     isTournament,
+    format: isTournament ? ("KNOCKOUT" as const) : null,
+    profile: "FOOTBALL" as const,
+    teamSize: null,
     isVolunteer: false,
     whatsappLink: null,
     registrations: [],
@@ -59,6 +62,23 @@ describe("ConvertTournamentCard", () => {
         format: "KNOCKOUT",
         profile: "BOARD",
         teamSize: "2",
+      }),
+    );
+  });
+
+  it("edits an existing tournament's settings through the same questions", async () => {
+    show(true);
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+    fireEvent.click(screen.getByText("بطولة فردية"));
+    fireEvent.click(screen.getByText("حفظ الإعدادات"));
+
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
+        isTournament: true,
+        format: "KNOCKOUT",
+        profile: "BOARD",
+        teamSize: "1",
       }),
     );
   });
