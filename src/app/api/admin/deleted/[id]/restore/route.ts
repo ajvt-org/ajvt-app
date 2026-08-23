@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError, ConflictError } from "@/lib/errors";
+import { accounts } from "@/lib/messages";
 
 export const POST = withRoute(
   "POST /api/admin/deleted/[id]/restore",
@@ -13,23 +14,43 @@ export const POST = withRoute(
 
     const record = await prisma.deletedRecord.findUnique({ where: { id } });
     if (!record) throw new NotFoundError("السجل المحذوف غير موجود");
-    if (record.kind !== "Member") throw new ConflictError("لا يمكن استرجاع هذا النوع بعد");
 
     const data = record.data as Record<string, unknown>;
-    const existing = await prisma.member.findUnique({ where: { id: record.recordId } });
-    if (existing) throw new ConflictError("العضو موجود بالفعل");
+    if (record.kind === "Member") {
+      const existing = await prisma.member.findUnique({ where: { id: record.recordId } });
+      if (existing) throw new ConflictError("العضو موجود بالفعل");
 
-    await prisma.$transaction([
-      prisma.member.create({ data: data as never }),
-      prisma.deletedRecord.delete({ where: { id } }),
-    ]);
+      await prisma.$transaction([
+        prisma.member.create({ data: data as never }),
+        prisma.deletedRecord.delete({ where: { id } }),
+      ]);
 
-    await logAction(session.username, "RESTORE_MEMBER", record.label, {
-      ...auditContext(session, req),
-      targetType: "Member",
-      targetId: record.recordId,
-      after: { fullName: record.label },
-    });
+      await logAction(session.username, "RESTORE_MEMBER", record.label, {
+        ...auditContext(session, req),
+        targetType: "Member",
+        targetId: record.recordId,
+        after: { fullName: record.label },
+      });
+    } else if (record.kind === "User") {
+      const taken = await prisma.user.findFirst({
+        where: { OR: [{ id: record.recordId }, { phone: String(data.phone) }] },
+      });
+      if (taken) throw new ConflictError(accounts.phoneTaken);
+
+      await prisma.$transaction([
+        prisma.user.create({ data: data as never }),
+        prisma.deletedRecord.delete({ where: { id } }),
+      ]);
+
+      await logAction(session.username, "RESTORE_USER", record.label, {
+        ...auditContext(session, req),
+        targetType: "User",
+        targetId: record.recordId,
+        after: { phone: record.label },
+      });
+    } else {
+      throw new ConflictError("لا يمكن استرجاع هذا النوع بعد");
+    }
 
     return NextResponse.json({ ok: true });
   },

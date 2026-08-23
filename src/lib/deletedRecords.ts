@@ -1,6 +1,6 @@
 export const RETENTION_DAYS = 30;
 
-export type DeletableKind = "Member" | "Activity";
+export type DeletableKind = "Member" | "Activity" | "User";
 
 export function retentionExpiry(now: Date, days = RETENTION_DAYS): Date {
   const expires = new Date(now);

@@ -40,6 +40,7 @@ const VALUE_LABELS: Record<string, string> = {
 
 const TARGET_LABELS: Record<string, string> = {
   Member: "عضو",
+  User: "حساب",
   Admin: "مشرف",
   AgeGroup: "عصر",
   Activity: "نشاط",

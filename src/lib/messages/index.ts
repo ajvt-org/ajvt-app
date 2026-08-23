@@ -1,6 +1,7 @@
 export { common } from "./common";
 export { uploads } from "./uploads";
 export { members, ageGroups } from "./members";
+export { accounts } from "./accounts";
 export { money } from "./money";
 export { activities } from "./activities";
 export { tournament } from "./tournament";
