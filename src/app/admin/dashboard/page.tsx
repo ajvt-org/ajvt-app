@@ -25,9 +25,9 @@ import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
 import StatTabs from "./StatTabs";
 import StatsPanel from "./StatsPanel";
-import DashboardToolbar from "./DashboardToolbar";
 import MemberSearch from "./MemberSearch";
-import MemberFilterRow from "./MemberFilterRow";
+import FilterSheet from "./FilterSheet";
+import FilterChips from "./FilterChips";
 import UpToDateSummary from "./UpToDateSummary";
 import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
@@ -72,6 +72,7 @@ function AdminDashboardInner() {
   const [attachAccountError, setAttachAccountError] = useState("");
 
   const [showStats, setShowStats] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
   const [manualAddPhone, setManualAddPhone] = useState("");
   const bare = useBareAccounts();
@@ -272,6 +273,16 @@ function AdminDashboardInner() {
     setPage(1);
   }
 
+  const filterCount = [
+    filters.age,
+    filters.method,
+    filters.paid,
+    filters.year,
+    filters.standing,
+    filters.from,
+    filters.to,
+  ].filter(Boolean).length;
+
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
   const paginated = paginate(filtered, currentPage, PAGE_SIZE);
@@ -312,10 +323,16 @@ function AdminDashboardInner() {
         />
       ) : (
         <>
-          <DashboardToolbar
+          <MemberSearch
+            value={filters.q}
+            filterCount={filterCount}
             statsOpen={showStats}
+            onChange={(q) => setFilters({ ...filters, q })}
+            onOpenFilters={() => setShowFilters(true)}
             onToggleStats={() => setShowStats((v) => !v)}
             onExport={() => exportMembers(members)}
+            onManageAgeGroups={() => setShowAgeGroups(true)}
+            onManualAdd={() => setShowManualAdd(true)}
           />
 
           {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
@@ -331,21 +348,7 @@ function AdminDashboardInner() {
             onShowBehind={() => setFilters(withStanding("behind"))}
           />
 
-          <MemberSearch
-            value={filters.q}
-            onChange={(q) => setFilters({ ...filters, q })}
-            onManageAgeGroups={() => setShowAgeGroups(true)}
-            onManualAdd={() => setShowManualAdd(true)}
-          />
-
-          <MemberFilterRow
-            filters={filters}
-            ageGroups={ageGroups}
-            paymentMethods={paymentMethods}
-            years={years}
-            resultCount={filtered.length}
-            onChange={setFilters}
-          />
+          <FilterChips filters={filters} resultCount={filtered.length} onChange={setFilters} />
 
           {selectedIds.size > 0 && (
             <BulkActionsBar
@@ -417,6 +420,18 @@ function AdminDashboardInner() {
           onCloseRejectPicker={() => setShowRejectPicker(false)}
           onApprove={() => validate(selected.id, "ACTIVE")}
           onReject={() => validate(selected.id, "REJECTED", rejectReason)}
+        />
+      )}
+
+      {showFilters && (
+        <FilterSheet
+          filters={filters}
+          ageGroups={ageGroups}
+          paymentMethods={paymentMethods}
+          years={years}
+          resultCount={filtered.length}
+          onChange={setFilters}
+          onClose={() => setShowFilters(false)}
         />
       )}
 

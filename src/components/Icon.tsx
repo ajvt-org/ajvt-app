@@ -14,6 +14,8 @@ const PATHS = {
   chevronRight: "M9 18l6-6-6-6",
   chevronLeft: "M15 18l-6-6 6-6",
   chevronUp: "M18 15l-6-6-6 6",
+  filter: "M22 4H2l8 9v6l4 2v-8l8-9z",
+  dots: "M12 5v.01M12 12v.01M12 19v.01",
   lock: "M5 11h14v10H5V11zM8 11V7a4 4 0 0 1 8 0v4",
   save: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8",
   download: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
