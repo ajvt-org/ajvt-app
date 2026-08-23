@@ -18,4 +18,7 @@ export const tournament = {
   dayHasMatches: "لهذا اليوم مباريات — انقلها أو احذفها أولاً",
   dayIsRest: "هذا يوم راحة — حوّله إلى يوم مباريات أولاً",
   startDateMissing: "حدد تاريخ بداية البطولة أولاً من تفاصيل النشاط",
+  needTwoTeams: "يحتاج النشاط إلى فريقين على الأقل",
+  nothingToGenerate: (perTeam: number) =>
+    `لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل ${perTeam} مباريات`,
 } as const;

@@ -9,6 +9,7 @@ import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
+import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
 
 export default function MatchesTab({
@@ -36,30 +37,12 @@ export default function MatchesTab({
   });
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
+  const [showGenerate, setShowGenerate] = useState(false);
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
   const [cardsFor, setCardsFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-
-  async function generateSchedule() {
-    if (
-      !confirm(
-        "سيتم اقتراح مباريات إضافية تلقائياً بحيث يلعب كل فريق 3 مباريات إجمالاً. يمكنك حذف أو تعديل أي مباراة بعد ذلك. متابعة؟",
-      )
-    )
-      return;
-    setGenerating(true);
-    setError("");
-    try {
-      await api.post(`/api/admin/activities/${activityId}/matches/generate`);
-      onChange();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setGenerating(false);
-    }
-  }
 
   async function runBracketAction(endpoint: string, confirmMsg: string) {
     if (!confirm(confirmMsg)) return;
@@ -183,10 +166,10 @@ export default function MatchesTab({
             <IconLabel name="check">كل المجموعات مكتملة!</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
-            يمكنك الآن توليد جدول مباريات دور المجموعات (3 مباريات لكل فريق).
+            يمكنك الآن توليد جدول مباريات دور المجموعات وتوزيعه على أيام البطولة.
           </p>
           <button
-            onClick={generateSchedule}
+            onClick={() => setShowGenerate(true)}
             disabled={generating}
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
@@ -316,16 +299,12 @@ export default function MatchesTab({
 
       {teams.length >= 2 && (
         <button
-          onClick={generateSchedule}
+          onClick={() => setShowGenerate(true)}
           disabled={generating}
           className="btn btn-primary text-sm"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          {generating ? (
-            "..."
-          ) : (
-            <IconLabel name="dice">اقترح جدول المباريات (3 مباريات لكل فريق)</IconLabel>
-          )}
+          {generating ? "..." : <IconLabel name="dice">اقترح جدول المباريات</IconLabel>}
         </button>
       )}
 
@@ -400,6 +379,14 @@ export default function MatchesTab({
           {loadingAction ? "..." : "إضافة المباراة"}
         </button>
       </form>
+
+      {showGenerate && (
+        <GenerateScheduleDialog
+          activityId={activityId}
+          onDone={onChange}
+          onClose={() => setShowGenerate(false)}
+        />
+      )}
 
       {scheduled.length > 0 && (
         <div>
