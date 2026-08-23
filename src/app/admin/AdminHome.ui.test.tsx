@@ -31,6 +31,18 @@ const SUMMARY = {
   membership: { current: 8, active: 10, former: 2 },
   money: { revenue: 5000, spending: 2000, net: 3000 },
   handling: { pendingMembers: 1, pendingRegistrations: 2, pendingPayments: 0, total: 3 },
+  matchesToday: [],
+};
+
+const TODAY_MATCH = {
+  id: "m1",
+  matchDate: "2026-08-23T16:00:00.000Z",
+  status: "SCHEDULED",
+  homeScore: null,
+  awayScore: null,
+  activity: { id: "a1", title: "دوري القرية" },
+  homeTeam: { name: "الصقور" },
+  awayTeam: { name: "النسور" },
 };
 
 beforeEach(() => {
@@ -49,6 +61,23 @@ describe("the admin home", () => {
 
     expect(await screen.findByText("8 / 10")).toBeTruthy();
     expect(screen.getByText("3000 أوقية")).toBeTruthy();
+  });
+
+  it("lists today's matches with a way into the tournament", async () => {
+    get.mockResolvedValue({ ...SUMMARY, matchesToday: [TODAY_MATCH] });
+
+    render(<AdminHome />);
+
+    expect(await screen.findByText("مباريات اليوم")).toBeTruthy();
+    const row = screen.getByText(/الصقور/).closest("a");
+    expect(row?.getAttribute("href")).toBe("/admin/tournament/a1?tab=matches");
+  });
+
+  it("keeps the card away on a day without matches", async () => {
+    render(<AdminHome />);
+
+    await screen.findByText("8 / 10");
+    expect(screen.queryByText("مباريات اليوم")).toBeNull();
   });
 
   it("sends a scoped admin somewhere they can work instead of spinning", async () => {
