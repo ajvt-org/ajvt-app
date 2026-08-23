@@ -12,6 +12,7 @@ import CardChip from "@/components/tournament/CardChip";
 import TeamFormList from "@/components/tournament/TeamFormList";
 import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import IconLabel from "@/components/IconLabel";
+import { statsAdmin as statsTexts } from "@/lib/texts";
 
 function Empty({ children }: { children: string }) {
   return (
@@ -70,7 +71,7 @@ export default function ScorersTab({
 
   const teamsPanel =
     teamsWithStats.length === 0 ? (
-      <Empty>لا توجد إحصائيات مسجلة بعد</Empty>
+      <Empty>{statsTexts.noStats}</Empty>
     ) : (
       <TeamFormList teams={teamsWithStats} />
     );
@@ -82,11 +83,11 @@ export default function ScorersTab({
   const panels: TournamentPanel[] = [
     {
       key: "scorers",
-      label: "الهدافون",
+      label: statsTexts.scorers,
       icon: "ball",
       content:
         topScorers.length === 0 ? (
-          <Empty>لا توجد أهداف مسجلة بعد</Empty>
+          <Empty>{statsTexts.noGoals}</Empty>
         ) : (
           <div className="space-y-2">
             {topScorers.slice(0, 15).map((s, i) => (
@@ -107,11 +108,11 @@ export default function ScorersTab({
     },
     {
       key: "discipline",
-      label: "البطاقات",
+      label: statsTexts.cards,
       icon: "card",
       content:
         discipline.length === 0 ? (
-          <Empty>لا توجد بطاقات مسجلة بعد</Empty>
+          <Empty>{statsTexts.noCards}</Empty>
         ) : (
           <div className="space-y-2">
             {discipline.slice(0, 15).map((d, i) => (
@@ -133,11 +134,11 @@ export default function ScorersTab({
     },
     {
       key: "defense",
-      label: "أفضل دفاع",
+      label: statsTexts.defense,
       icon: "glove",
       content:
         cleanSheets.length === 0 ? (
-          <Empty>لا توجد بيانات كافية بعد</Empty>
+          <Empty>{statsTexts.noDefense}</Empty>
         ) : (
           <div className="space-y-2">
             {cleanSheets.slice(0, 10).map((c, i) => (
@@ -160,11 +161,11 @@ export default function ScorersTab({
     },
     {
       key: "motm",
-      label: "رجل المباراة",
+      label: statsTexts.motm,
       icon: "star",
       content:
         motmLeaders.length === 0 ? (
-          <Empty>لم يتم تحديد رجل مباراة بعد</Empty>
+          <Empty>{statsTexts.noMotm}</Empty>
         ) : (
           <div className="space-y-2">
             {motmLeaders.slice(0, 10).map((m, i) => (
@@ -183,7 +184,7 @@ export default function ScorersTab({
           </div>
         ),
     },
-    { key: "teams", label: "الفرق", icon: "chart", content: teamsPanel },
+    { key: "teams", label: statsTexts.teams, icon: "chart", content: teamsPanel },
   ];
 
   return <TournamentTabs panels={panels} variant="sub" />;

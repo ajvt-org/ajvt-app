@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Match, Team } from "./types";
 import CardChip from "@/components/tournament/CardChip";
 import { api, errorMessage } from "@/lib/api";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function BookingsForm({
   match,
@@ -58,7 +59,7 @@ export default function BookingsForm({
   return (
     <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-        <CardChip type="YELLOW" /> <CardChip type="RED" /> البطاقات
+        <CardChip type="YELLOW" /> <CardChip type="RED" /> {texts.cardsHeading}
       </p>
       {match.bookings.length > 0 && (
         <div className="space-y-1">
@@ -66,14 +67,14 @@ export default function BookingsForm({
             <div key={b.id} className="flex items-center justify-between text-xs">
               <span className="flex items-center gap-1.5">
                 <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
-                {b.minute ? ` — الدقيقة ${b.minute}` : ""}
+                {b.minute ? ` — ${texts.minute} ${b.minute}` : ""}
               </span>
               <button
                 onClick={() => removeBooking(b.id)}
                 className="font-bold"
                 style={{ color: "#991b1b" }}
               >
-                حذف
+                {texts.remove}
               </button>
             </div>
           ))}
@@ -98,7 +99,7 @@ export default function BookingsForm({
           onChange={(e) => setMemberId(e.target.value)}
           className="input text-sm flex-1"
         >
-          <option value="">اختر لاعباً...</option>
+          <option value="">{texts.pickPlayer}</option>
           {roster.map((m) => (
             <option key={m.id} value={m.id}>
               {m.fullName}
@@ -111,14 +112,14 @@ export default function BookingsForm({
           className="input text-sm"
           style={{ width: "auto" }}
         >
-          <option value="YELLOW">صفراء</option>
-          <option value="RED">حمراء</option>
+          <option value="YELLOW">{texts.yellowCard}</option>
+          <option value="RED">{texts.redCard}</option>
         </select>
         <input
           type="number"
           min={1}
           max={130}
-          placeholder="الدقيقة"
+          placeholder={texts.minute}
           value={minute}
           onChange={(e) => setMinute(e.target.value)}
           className="input text-sm"
@@ -130,7 +131,7 @@ export default function BookingsForm({
           className="btn btn-primary text-xs px-3"
           style={{ width: "auto" }}
         >
-          إضافة
+          {texts.add}
         </button>
       </form>
       {error && (

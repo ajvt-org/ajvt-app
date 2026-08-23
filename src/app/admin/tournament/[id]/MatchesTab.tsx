@@ -11,6 +11,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function MatchesTab({
   activityId,
@@ -91,7 +92,7 @@ export default function MatchesTab({
       ]);
       onChange();
     } catch {
-      alert("خطأ في إعادة الترتيب");
+      alert(texts.reorderFailed);
     } finally {
       setLoadingAction(false);
     }
@@ -101,7 +102,7 @@ export default function MatchesTab({
     e.preventDefault();
     setError("");
     if (!form.homeTeamId || !form.awayTeamId) {
-      setError("يجب اختيار الفريقين");
+      setError(texts.pickBothTeams);
       return;
     }
     setLoadingAction(true);
@@ -124,7 +125,7 @@ export default function MatchesTab({
   }
 
   async function deleteMatch(matchId: string) {
-    if (!confirm("هل تريد حذف هذه المباراة؟")) return;
+    if (!confirm(texts.confirmDeleteMatch)) return;
     setLoadingAction(true);
     try {
       await api.del(`/api/admin/matches/${matchId}`);
@@ -164,10 +165,10 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">كل المجموعات مكتملة!</IconLabel>
+            <IconLabel name="check">{texts.poolsReadyTitle}</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
-            يمكنك الآن توليد جدول مباريات دور المجموعات وتوزيعه على أيام البطولة.
+            {texts.poolsReadyHint}
           </p>
           <button
             onClick={() => setShowGenerate(true)}
@@ -175,11 +176,7 @@ export default function MatchesTab({
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? (
-              "..."
-            ) : (
-              <IconLabel name="dice">توليد جدول مباريات دور المجموعات</IconLabel>
-            )}
+            {generating ? "..." : <IconLabel name="dice">{texts.generateGroupSchedule}</IconLabel>}
           </button>
         </div>
       )}
@@ -190,20 +187,18 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">انتهى دور المجموعات!</IconLabel>
+            <IconLabel name="check">{texts.groupStageDoneTitle}</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
-            كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.
+            {texts.groupStageDoneHint}
           </p>
           <button
-            onClick={() =>
-              runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")
-            }
+            onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
             disabled={generating}
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? "..." : <IconLabel name="swords">توليد نصف النهائي</IconLabel>}
+            {generating ? "..." : <IconLabel name="swords">{texts.generateSemis}</IconLabel>}
           </button>
         </div>
       )}
@@ -211,7 +206,7 @@ export default function MatchesTab({
       {scheduled.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="calendar">مباريات قادمة</IconLabel>
+            <IconLabel name="calendar">{texts.upcoming}</IconLabel>
           </p>
           <div className="space-y-3">
             {scheduled.map((m, i) => (
@@ -246,7 +241,7 @@ export default function MatchesTab({
       {played.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="check">نتائج</IconLabel>
+            <IconLabel name="check">{texts.results}</IconLabel>
           </p>
           <div className="space-y-3">
             {played.map((m) => (
@@ -278,49 +273,40 @@ export default function MatchesTab({
         <div className="card p-4 space-y-3">
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             <IconLabel name="trophy">
-              {isTwoGroupFormat
-                ? "نصف النهائي والنهائي"
-                : "القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)"}
+              {isTwoGroupFormat ? texts.bracketTwoGroups : texts.bracketKnockout}
             </IconLabel>
           </p>
           {bracketMatches.length === 0 ? (
             knockoutLocked ? (
               <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                <Icon name="lock" size={14} className="icon-inline" /> أكمل جميع نتائج دور المجموعات
-                أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.
+                <Icon name="lock" size={14} className="icon-inline" /> {texts.knockoutLockedHint}
               </p>
             ) : isTwoGroupFormat ? (
               <>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  نصف نهائي متقاطع من ترتيب المجموعتين (الأول من كل مجموعة أمام الثاني من الأخرى)،
-                  ثم النهائي.
+                  {texts.crossSemisHint}
                 </p>
                 <button
-                  onClick={() =>
-                    runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")
-                  }
+                  onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
                   disabled={generating}
                   className="btn btn-primary text-sm"
                   style={{ width: "auto" }}
                 >
-                  <IconLabel name="swords">توليد نصف النهائي</IconLabel>
+                  <IconLabel name="swords">{texts.generateSemis}</IconLabel>
                 </button>
               </>
             ) : (
               <>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو
-                  32...
+                  {texts.drawHint}
                 </p>
                 <button
-                  onClick={() =>
-                    runBracketAction("draw", "إجراء قرعة عشوائية بين جميع الفرق الحالية؟")
-                  }
+                  onClick={() => runBracketAction("draw", texts.confirmDraw)}
                   disabled={generating}
                   className="btn btn-primary text-sm"
                   style={{ width: "auto" }}
                 >
-                  <IconLabel name="dice">قرعة عشوائية</IconLabel>
+                  <IconLabel name="dice">{texts.draw}</IconLabel>
                 </button>
               </>
             )
@@ -329,13 +315,11 @@ export default function MatchesTab({
               <BracketTree matches={bracketMatches} />
               {canAdvanceBracket && (
                 <button
-                  onClick={() =>
-                    runBracketAction("next-round", "توليد الدور التالي من نتائج الدور الحالي؟")
-                  }
+                  onClick={() => runBracketAction("next-round", texts.confirmNextRound)}
                   disabled={generating}
                   className="btn btn-primary text-sm"
                 >
-                  <ArrowLabel>توليد الدور التالي</ArrowLabel>
+                  <ArrowLabel>{texts.nextRound}</ArrowLabel>
                 </button>
               )}
               {bracketIsFinalDone &&
@@ -355,7 +339,9 @@ export default function MatchesTab({
                       className="text-sm font-black text-center"
                       style={{ color: "var(--mint-700)" }}
                     >
-                      <IconLabel name="trophy">البطل: {winnerName}</IconLabel>
+                      <IconLabel name="trophy">
+                        {texts.champion} {winnerName}
+                      </IconLabel>
                     </p>
                   );
                 })()}
@@ -371,13 +357,13 @@ export default function MatchesTab({
           className="btn btn-primary text-sm"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
-          {generating ? "..." : <IconLabel name="dice">اقترح جدول المباريات</IconLabel>}
+          {generating ? "..." : <IconLabel name="dice">{texts.suggestSchedule}</IconLabel>}
         </button>
       )}
 
       <form onSubmit={createMatch} className="card p-4 space-y-3">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="plus">مباراة جديدة</IconLabel>
+          <IconLabel name="plus">{texts.newMatch}</IconLabel>
         </p>
         <div className="grid grid-cols-2 gap-2">
           <select
@@ -385,7 +371,7 @@ export default function MatchesTab({
             onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value, awayTeamId: "" }))}
             className="input"
           >
-            <option value="">الفريق المضيف...</option>
+            <option value="">{texts.homeTeamPlaceholder}</option>
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -397,7 +383,7 @@ export default function MatchesTab({
             onChange={(e) => setForm((p) => ({ ...p, awayTeamId: e.target.value }))}
             className="input"
           >
-            <option value="">الفريق الضيف...</option>
+            <option value="">{texts.awayTeamPlaceholder}</option>
             {awayTeamOptions.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -414,7 +400,7 @@ export default function MatchesTab({
           />
           <input
             type="text"
-            placeholder="الجولة (اختياري)"
+            placeholder={texts.roundPlaceholder}
             value={form.round}
             onChange={(e) => setForm((p) => ({ ...p, round: e.target.value }))}
             maxLength={40}
@@ -423,7 +409,7 @@ export default function MatchesTab({
         </div>
         <input
           type="text"
-          placeholder="الملعب (اختياري)"
+          placeholder={texts.venuePlaceholder}
           value={form.venue}
           onChange={(e) => setForm((p) => ({ ...p, venue: e.target.value }))}
           maxLength={60}
@@ -440,10 +426,10 @@ export default function MatchesTab({
               setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))
             }
           />
-          <IconLabel name="trophy">مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)</IconLabel>
+          <IconLabel name="trophy">{texts.knockoutFlag}</IconLabel>
         </label>
         <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
-          {loadingAction ? "..." : "إضافة المباراة"}
+          {loadingAction ? "..." : texts.addMatch}
         </button>
       </form>
 
