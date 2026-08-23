@@ -7,7 +7,7 @@ import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import ActivityFinance from "./ActivityFinance";
-import WorkspaceTabs, { type WorkspaceTab } from "./WorkspaceTabs";
+import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import DetailsTab from "./DetailsTab";
 import RegistrationsTab from "./RegistrationsTab";
 import TeamsTab from "./TeamsTab";
@@ -15,18 +15,24 @@ import LogTab from "./LogTab";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { countedNoun } from "@/lib/arabicCount";
 import { ACCEPTED, REQUEST } from "@/lib/messages";
+import { activityWorkspace as texts } from "@/lib/texts";
 
 function tabsFor(activity: ActivityDetail["activity"]): WorkspaceTab[] {
   const pending = activity.registrations.filter((r) => r.status === "PENDING").length;
-  const tabs: WorkspaceTab[] = [{ key: "details", label: "التفاصيل", icon: "pencil" }];
+  const tabs: WorkspaceTab[] = [{ key: "details", label: texts.tabs.details, icon: "pencil" }];
   if (!activity.isVolunteer) {
-    tabs.push({ key: "registrations", label: "المسجلون", icon: "users", badge: pending });
+    tabs.push({
+      key: "registrations",
+      label: texts.tabs.registrations,
+      icon: "users",
+      badge: pending,
+    });
   }
   if (activity.isTournament) {
-    tabs.push({ key: "teams", label: "البطولة", icon: "trophy" });
+    tabs.push({ key: "teams", label: texts.tabs.tournament, icon: "trophy" });
   }
-  tabs.push({ key: "finance", label: "المالية", icon: "wallet" });
-  tabs.push({ key: "log", label: "السجل", icon: "list" });
+  tabs.push({ key: "finance", label: texts.tabs.finance, icon: "wallet" });
+  tabs.push({ key: "log", label: texts.tabs.log, icon: "list" });
   return tabs;
 }
 
@@ -64,7 +70,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
   if (loading) {
     return (
       <p className="admin-page text-sm text-center py-16" style={{ color: "var(--mint-500)" }}>
-        جاري التحميل...
+        {texts.loading}
       </p>
     );
   }
@@ -73,14 +79,14 @@ function AdminActivityPageInner({ id }: { id: string }) {
     return (
       <div className="admin-page text-center py-16 space-y-3">
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          لم نجد هذا النشاط.
+          {texts.notFound}
         </p>
         <Link
           href="/admin/activities"
           className="text-sm font-bold"
           style={{ color: "var(--mint-600)" }}
         >
-          <ArrowLabel direction="back">الأنشطة</ArrowLabel>
+          <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
         </Link>
       </div>
     );
@@ -103,7 +109,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         className="text-sm font-bold"
         style={{ color: "var(--mint-600)" }}
       >
-        <ArrowLabel direction="back">الأنشطة</ArrowLabel>
+        <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
       </Link>
 
       <div className="card p-4 flex items-center gap-3">
@@ -129,7 +135,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             {accepted} {countedNoun(accepted, ACCEPTED)} من {activity.registrations.length}{" "}
             {countedNoun(activity.registrations.length, REQUEST)}
-            {activity.capacity !== null ? ` · السعة ${activity.capacity}` : ""}
+            {activity.capacity !== null ? ` · ${texts.capacity} ${activity.capacity}` : ""}
           </p>
         </div>
       </div>

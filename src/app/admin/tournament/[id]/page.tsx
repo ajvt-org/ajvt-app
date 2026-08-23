@@ -10,6 +10,7 @@ import {
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
 import { Suspense, useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import type { Tab } from "./types";
 import MatchesTab from "./MatchesTab";
@@ -19,17 +20,27 @@ import TeamsTab from "./TeamsTab";
 import PlayersTab from "./PlayersTab";
 import DaysTab from "./DaysTab";
 import { useTournamentData } from "./useTournamentData";
-import BackButton from "@/components/BackButton";
+import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
+import ArrowLabel from "@/components/ArrowLabel";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import { toThumbUrl } from "@/lib/utils";
+import { countedNoun } from "@/lib/arabicCount";
+import { MATCH, PLAYER, TEAM } from "@/lib/messages";
+import { tournamentWorkspace as texts } from "@/lib/texts";
 
-function tabsFor(singles: boolean): [Tab, string][] {
+function tabsFor(singles: boolean): WorkspaceTab[] {
   return [
-    ["teams", singles ? "اللاعبون" : "الفرق"],
-    ["days", "الأيام"],
-    ["matches", "المباريات"],
-    ["standings", "الترتيب"],
-    ["scorers", "الإحصائيات"],
+    {
+      key: "teams",
+      label: singles ? texts.tabs.players : texts.tabs.teams,
+      icon: singles ? "user" : "users",
+    },
+    { key: "days", label: texts.tabs.days, icon: "calendar" },
+    { key: "matches", label: texts.tabs.matches, icon: "swords" },
+    { key: "standings", label: texts.tabs.standings, icon: "list" },
+    { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
   ];
 }
 
@@ -43,7 +54,7 @@ function TournamentPageInner() {
   const singles = data.info?.teamSize === 1;
   const TABS = tabsFor(singles);
   const requested = searchParams.get("tab") as Tab | null;
-  const tab: Tab = requested && TABS.some(([key]) => key === requested) ? requested : "teams";
+  const tab: Tab = requested && TABS.some((t) => t.key === requested) ? requested : "teams";
 
   function pickTab(next: Tab) {
     router.replace(`/admin/tournament/${activityId}?tab=${next}`, { scroll: false });
@@ -68,58 +79,65 @@ function TournamentPageInner() {
     return <PageLoading />;
   }
 
+  const sideCount = teams.length;
+  const sideNoun = countedNoun(sideCount, singles ? PLAYER : TEAM);
+
   return (
-    <div>
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+    <div className="admin-page space-y-4">
+      <Link
+        href={`/admin/activities/${activityId}?tab=teams`}
+        className="text-sm font-bold inline-block"
+        style={{ color: "var(--mint-600)" }}
       >
-        <div className="flex items-center gap-3">
-          <BackButton href={`/admin/activities/${activityId}`} />
-          <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              <IconLabel name="ball">إدارة البطولة</IconLabel>
-            </p>
-            <p className="text-sm font-black text-white leading-none">{info?.title || "البطولة"}</p>
-          </div>
+        <ArrowLabel direction="back">{texts.backToActivity}</ArrowLabel>
+      </Link>
+
+      <div className="card p-4 flex items-center gap-3 flex-wrap">
+        {info?.photo ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={toThumbUrl(`/api/files/activity/${info.photo}`)}
+            alt={info.title}
+            className="w-14 h-14 rounded-xl object-cover shrink-0"
+          />
+        ) : (
+          <span
+            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "var(--mint-100)" }}
+          >
+            <Icon name="trophy" size={24} />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-base truncate" style={{ color: "var(--text-main)" }}>
+            {info?.title || texts.fallbackTitle}
+          </p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {sideCount} {sideNoun} · {matches.length} {countedNoun(matches.length, MATCH)}
+          </p>
         </div>
         <a
           href={`/tournament/${activityId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-          style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="link">الصفحة العامة</IconLabel>
+          <IconLabel name="link">{texts.publicPage}</IconLabel>
         </a>
       </div>
 
-      <div className="admin-page">
+      <WorkspaceTabs tabs={TABS} active={tab} onPick={(key) => pickTab(key as Tab)} />
+
+      <div className="space-y-4">
         {data.error && (
           <div
-            className="p-3 rounded-xl text-sm font-semibold mb-4"
+            className="p-3 rounded-xl text-sm font-semibold"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
             <IconLabel name="warning">{data.error}</IconLabel>
           </div>
         )}
-
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-5">
-          {TABS.map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => pickTab(key)}
-              className="rounded-xl py-2.5 text-center text-sm font-bold transition-all"
-              style={{
-                background: tab === key ? "var(--mint-700)" : "white",
-                color: tab === key ? "white" : "var(--text-main)",
-                border: tab === key ? "none" : "1px solid var(--mint-100)",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
 
         {tab === "teams" &&
           (singles ? (
@@ -158,7 +176,7 @@ function TournamentPageInner() {
         )}
         {tab === "standings" && (
           <StandingsTab
-            title={info?.title || "البطولة"}
+            title={info?.title || texts.fallbackTitle}
             standingsByGroup={standingsByGroup}
             groups={groups}
             stats={stats}

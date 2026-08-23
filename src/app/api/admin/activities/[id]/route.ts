@@ -19,6 +19,7 @@ export const GET = withRoute(
       select: {
         id: true,
         title: true,
+        photo: true,
         isTournament: true,
         format: true,
         profile: true,
