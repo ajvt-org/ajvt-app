@@ -7,7 +7,7 @@ export interface NavTab {
 }
 
 export const NAV_TABS: NavTab[] = [
-  { href: "/admin/dashboard", label: "الأعضاء", icon: "users" },
+  { href: "/admin/dashboard", label: "الحسابات", icon: "users" },
   { href: "/admin/activities", label: "الأنشطة", icon: "trophy" },
   { href: "/admin/payments", label: "المدفوعات", icon: "receipt" },
   { href: "/admin/expenses", label: "المصاريف", icon: "banknote" },
