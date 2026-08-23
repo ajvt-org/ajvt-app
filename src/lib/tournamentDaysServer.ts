@@ -30,7 +30,7 @@ async function shiftFrom(tx: Tx, activityId: string, position: number, by: 1 | -
     where: { activityId, position: { gte: position } },
     select: { id: true, position: true },
   });
-  if (moved.length === 0) return;
+  if (moved.length === 0) return 0;
   await tx.tournamentDay.updateMany({
     where: { activityId, position: { gte: position } },
     data: { position: { multiply: -1 } },
@@ -41,7 +41,7 @@ async function shiftFrom(tx: Tx, activityId: string, position: number, by: 1 | -
       data: { position: day.position + by },
     });
   }
-  await tx.$executeRaw`
+  return tx.$executeRaw`
     UPDATE "Match" SET "matchDate" = "matchDate" + ${by} * interval '1 day'
     WHERE "dayId" = ANY(${moved.map((d) => d.id)}) AND "matchDate" IS NOT NULL`;
 }
@@ -161,12 +161,12 @@ export async function insertDay(activityId: string, position: number | null, isR
     const count = await tx.tournamentDay.count({ where: { activityId } });
     const at = position === null ? count + 1 : position;
     if (at < 1 || at > count + 1) throw new ValidationError(messages.dayPositionInvalid);
-    await shiftFrom(tx, activityId, at, 1);
+    const shifted = await shiftFrom(tx, activityId, at, 1);
     const day = await tx.tournamentDay.create({
       data: { activityId, position: at, isRest },
     });
     await syncBounds(tx, activityId);
-    return day;
+    return { day, shifted };
   });
 }
 
@@ -179,8 +179,9 @@ export async function removeDay(activityId: string, dayId: string) {
     if (!day || day.activityId !== activityId) throw new NotFoundError(messages.dayNotFound);
     if (day._count.matches > 0) throw new ConflictError(messages.dayHasMatches);
     await tx.tournamentDay.delete({ where: { id: dayId } });
-    await shiftFrom(tx, activityId, day.position + 1, -1);
+    const shifted = await shiftFrom(tx, activityId, day.position + 1, -1);
     await syncBounds(tx, activityId);
+    return { shifted };
   });
 }
 
