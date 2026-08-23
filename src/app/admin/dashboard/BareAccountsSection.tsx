@@ -8,7 +8,14 @@ import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import { push } from "@/lib/messages";
 import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { daysWaiting } from "@/lib/waitingRequests";
+import TempPasswordBox from "./TempPasswordBox";
 import type { BareAccount } from "./types";
+
+function daysSince(createdAt: string): string {
+  const days = daysWaiting(new Date(createdAt), new Date());
+  if (days <= 0) return "سجّل اليوم";
+  return `سجّل منذ ${countedNoun(days, DAYS)}`;
+}
 
 function NudgeButton({ user }: { user: BareAccount }) {
   const [busy, setBusy] = useState(false);
@@ -62,32 +69,61 @@ function Row({
   onFill: () => void;
   onDelete: () => void;
 }) {
+  const [resetBusy, setResetBusy] = useState(false);
+  const [temp, setTemp] = useState<{ password: string; hours: number } | null>(null);
+
+  async function resetPassword() {
+    setResetBusy(true);
+    try {
+      const data = await api.post<{ tempPassword: string; hours: number }>(
+        "/api/admin/reset-password",
+        { userId: user.id },
+      );
+      setTemp({ password: data.tempPassword, hours: data.hours });
+    } catch (e) {
+      alert(errorMessage(e));
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   return (
-    <div className="card p-3 flex items-center gap-2 flex-wrap">
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-bold" dir="ltr">
-          {user.phone}
+    <div className="card p-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold" dir="ltr">
+            {user.phone}
+          </div>
+          <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {daysSince(user.createdAt)}
+          </div>
         </div>
-        <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-          سجّل منذ {countedNoun(daysWaiting(new Date(user.createdAt), new Date()), DAYS)}
-        </div>
+        <NudgeButton user={user} />
+        <button
+          onClick={resetPassword}
+          disabled={resetBusy}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          {resetBusy ? "..." : <IconLabel name="lock">إعادة تعيين</IconLabel>}
+        </button>
+        <button
+          onClick={onFill}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-700)", color: "white" }}
+        >
+          <IconLabel name="plus">إضافة طلب</IconLabel>
+        </button>
+        <span className="w-4 shrink-0" aria-hidden />
+        <button
+          onClick={onDelete}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
+        >
+          <IconLabel name="trash">حذف</IconLabel>
+        </button>
       </div>
-      <NudgeButton user={user} />
-      <button
-        onClick={onFill}
-        className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-        style={{ background: "var(--mint-700)", color: "white" }}
-      >
-        <IconLabel name="plus">إضافة طلب</IconLabel>
-      </button>
-      <span className="w-4 shrink-0" aria-hidden />
-      <button
-        onClick={onDelete}
-        className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-        style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
-      >
-        <IconLabel name="trash">حذف</IconLabel>
-      </button>
+      {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
     </div>
   );
 }

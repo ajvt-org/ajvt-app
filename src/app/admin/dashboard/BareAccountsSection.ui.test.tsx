@@ -53,6 +53,24 @@ describe("BareAccountsSection", () => {
     expect(screen.getByText(/سجّل منذ/)).toBeDefined();
   });
 
+  it("says today for an account registered today, not zero days", () => {
+    renderSection([account({ createdAt: new Date().toISOString() })]);
+
+    expect(screen.getByText("سجّل اليوم")).toBeDefined();
+  });
+
+  it("hands out a temporary password on reset", async () => {
+    post.mockResolvedValue({ tempPassword: "AB12CD", hours: 1 });
+    renderSection([account()]);
+
+    fireEvent.click(screen.getByText("إعادة تعيين"));
+
+    await waitFor(() => {
+      expect(post).toHaveBeenCalledWith("/api/admin/reset-password", { userId: "u1" });
+      expect(screen.getByText("AB12CD")).toBeDefined();
+    });
+  });
+
   it("says there is nothing when every account has a request", () => {
     renderSection([]);
 
