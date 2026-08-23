@@ -7,8 +7,8 @@ import {
   type MotmRow,
   type TeamAdvancedRow,
 } from "@/lib/tournament";
-import { RankBadge } from "./StandingsTab";
 import CardChip from "@/components/tournament/CardChip";
+import RankedList from "@/components/tournament/RankedList";
 import TeamFormList from "@/components/tournament/TeamFormList";
 import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import IconLabel from "@/components/IconLabel";
@@ -19,35 +19,6 @@ function Empty({ children }: { children: string }) {
     <p className="text-sm text-center py-6" style={{ color: "var(--text-muted)" }}>
       {children}
     </p>
-  );
-}
-
-function PersonRow({
-  i,
-  fullName,
-  teamName,
-  value,
-}: {
-  i: number;
-  fullName: string;
-  teamName: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className="card p-3 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <RankBadge i={i} />
-        <div>
-          <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-            {fullName}
-          </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {teamName}
-          </p>
-        </div>
-      </div>
-      {value}
-    </div>
   );
 }
 
@@ -89,21 +60,15 @@ export default function ScorersTab({
         topScorers.length === 0 ? (
           <Empty>{statsTexts.noGoals}</Empty>
         ) : (
-          <div className="space-y-2">
-            {topScorers.slice(0, 15).map((s, i) => (
-              <PersonRow
-                key={s.memberId}
-                i={i}
-                fullName={s.fullName}
-                teamName={s.teamName}
-                value={
-                  <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                    <IconLabel name="ball">{s.goals}</IconLabel>
-                  </span>
-                }
-              />
-            ))}
-          </div>
+          <RankedList
+            rows={topScorers.map((s) => ({
+              id: s.memberId,
+              name: s.fullName,
+              photo: s.photo,
+              sub: s.teamName,
+              value: <IconLabel name="ball">{s.goals}</IconLabel>,
+            }))}
+          />
         ),
     },
     {
@@ -114,22 +79,20 @@ export default function ScorersTab({
         discipline.length === 0 ? (
           <Empty>{statsTexts.noCards}</Empty>
         ) : (
-          <div className="space-y-2">
-            {discipline.slice(0, 15).map((d, i) => (
-              <PersonRow
-                key={d.memberId}
-                i={i}
-                fullName={d.fullName}
-                teamName={d.teamName}
-                value={
-                  <span className="font-black text-sm" style={{ color: "var(--text-main)" }}>
-                    {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}{" "}
-                    {d.red > 0 && <CardChip type="RED" count={d.red} />}
-                  </span>
-                }
-              />
-            ))}
-          </div>
+          <RankedList
+            rows={discipline.map((d) => ({
+              id: d.memberId,
+              name: d.fullName,
+              photo: d.photo,
+              sub: d.teamName,
+              value: (
+                <span className="flex items-center gap-2">
+                  {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}
+                  {d.red > 0 && <CardChip type="RED" count={d.red} />}
+                </span>
+              ),
+            }))}
+          />
         ),
     },
     {
@@ -140,23 +103,20 @@ export default function ScorersTab({
         cleanSheets.length === 0 ? (
           <Empty>{statsTexts.noDefense}</Empty>
         ) : (
-          <div className="space-y-2">
-            {cleanSheets.slice(0, 10).map((c, i) => (
-              <div key={c.teamId} className="card p-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <RankBadge i={i} />
-                  <p className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-                    {c.name}
-                  </p>
-                </div>
-                <span className="font-black" style={{ color: "var(--mint-700)" }}>
+          <RankedList
+            rows={cleanSheets.map((c) => ({
+              id: c.teamId,
+              name: c.name,
+              avatar: false,
+              value: (
+                <span dir="ltr">
                   <IconLabel name="glove">
                     {c.cleanSheets}/{c.played}
                   </IconLabel>
                 </span>
-              </div>
-            ))}
-          </div>
+              ),
+            }))}
+          />
         ),
     },
     {
@@ -167,21 +127,15 @@ export default function ScorersTab({
         motmLeaders.length === 0 ? (
           <Empty>{statsTexts.noMotm}</Empty>
         ) : (
-          <div className="space-y-2">
-            {motmLeaders.slice(0, 10).map((m, i) => (
-              <PersonRow
-                key={m.memberId}
-                i={i}
-                fullName={m.fullName}
-                teamName={m.teamName}
-                value={
-                  <span className="font-black" style={{ color: "var(--mint-700)" }}>
-                    <IconLabel name="star">{m.count}</IconLabel>
-                  </span>
-                }
-              />
-            ))}
-          </div>
+          <RankedList
+            rows={motmLeaders.map((m) => ({
+              id: m.memberId,
+              name: m.fullName,
+              photo: m.photo,
+              sub: m.teamName,
+              value: <IconLabel name="star">{m.count}</IconLabel>,
+            }))}
+          />
         ),
     },
     { key: "teams", label: statsTexts.teams, icon: "chart", content: teamsPanel },
