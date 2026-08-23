@@ -12,11 +12,11 @@ function renderChips(over: Partial<typeof NO_FILTERS>, onChange = vi.fn()) {
 
 describe("FilterChips", () => {
   it("shows one chip per active filter, in words", () => {
-    renderChips({ age: "البدريين", paid: "partial", standing: "behind" });
+    renderChips({ age: "البدريين", paid: "partial", standing: "former" });
 
     expect(screen.getByText("البدريين")).toBeDefined();
     expect(screen.getByText("دفع ناقص")).toBeDefined();
-    expect(screen.getByText("لم يجدد 2026")).toBeDefined();
+    expect(screen.getByText("سابق 2026")).toBeDefined();
   });
 
   it("shows no chips when only the tab and the search are set", () => {

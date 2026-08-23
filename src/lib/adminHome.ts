@@ -1,7 +1,6 @@
 export interface StandingMember {
   status: string;
   membershipYear: number;
-  paidAmount: number | null;
 }
 
 export interface HomeCounts {
@@ -10,10 +9,14 @@ export interface HomeCounts {
   pendingPayments: number;
 }
 
-export function membershipStanding(members: StandingMember[], year: number, fee: number) {
+export function membershipStanding(members: StandingMember[], year: number) {
   const active = members.filter((m) => m.status === "ACTIVE");
-  const paid = active.filter((m) => m.membershipYear === year && (m.paidAmount ?? 0) >= fee);
-  return { paid: paid.length, active: active.length, behind: active.length - paid.length };
+  const current = active.filter((m) => m.membershipYear === year);
+  return {
+    current: current.length,
+    active: active.length,
+    former: active.length - current.length,
+  };
 }
 
 export function needsHandling(counts: HomeCounts): number {

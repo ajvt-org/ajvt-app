@@ -339,13 +339,15 @@ function AdminDashboardInner() {
 
           <UpToDateSummary
             year={membership.year}
-            paid={standing.paid}
+            current={standing.current}
             active={standing.active}
             showing={
-              filters.standing === "paid" || filters.standing === "behind" ? filters.standing : null
+              filters.standing === "current" || filters.standing === "former"
+                ? filters.standing
+                : null
             }
-            onShowPaid={() => setFilters(withStanding("paid"))}
-            onShowBehind={() => setFilters(withStanding("behind"))}
+            onShowCurrent={() => setFilters(withStanding("current"))}
+            onShowFormer={() => setFilters(withStanding("former"))}
           />
 
           <FilterChips

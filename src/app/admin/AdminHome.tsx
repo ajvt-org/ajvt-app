@@ -10,11 +10,11 @@ import type { IconName } from "@/components/Icon";
 import PageLoading from "@/components/PageLoading";
 import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
-import { ACTIVE_MEMBER, REQUEST, SETTLED } from "@/lib/messages";
+import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
 
 export interface HomeSummary {
   year: number;
-  membership: { paid: number; active: number; behind: number };
+  membership: { current: number; active: number; former: number };
   money: { revenue: number; spending: number; net: number };
   handling: {
     pendingMembers: number;
@@ -102,11 +102,11 @@ export default function AdminHome() {
     <div className="p-4 flex flex-col gap-3">
       <WaitingRequests />
       <Answer
-        href="/admin/dashboard?standing=paid"
+        href="/admin/dashboard?standing=current"
         icon="check"
-        question={`من سدد عضوية ${summary.year}`}
-        headline={`${membership.paid} / ${membership.active}`}
-        detail={`${counted(membership.paid, SETTLED)} من ${counted(membership.active, ACTIVE_MEMBER)}`}
+        question={`من جدد عضوية ${summary.year}`}
+        headline={`${membership.current} / ${membership.active}`}
+        detail={`${membership.current} حالي من ${counted(membership.active, ACTIVE_MEMBER)}`}
       />
       <Answer
         href="/admin/expenses"

@@ -8,7 +8,7 @@ export async function adminHomeSummary() {
   const [members, payments, expenses, pendingMembers, pendingRegistrations, pendingPayments] =
     await Promise.all([
       prisma.member.findMany({
-        select: { status: true, membershipYear: true, paidAmount: true },
+        select: { status: true, membershipYear: true },
       }),
       prisma.payment.aggregate({ where: { status: "ACTIVE" }, _sum: { amount: true } }),
       prisma.expense.aggregate({ _sum: { amount: true } }),
@@ -23,7 +23,7 @@ export async function adminHomeSummary() {
 
   return {
     year: settings.membershipYear,
-    membership: membershipStanding(members, settings.membershipYear, settings.membershipFee),
+    membership: membershipStanding(members, settings.membershipYear),
     money: { revenue, spending, net: netMoney(revenue, spending) },
     handling: { ...counts, total: needsHandling(counts) },
   };

@@ -51,11 +51,16 @@ describe("carrying the filters in the address", () => {
       method: "نقداً",
       paid: "partial",
       year: "2026",
-      standing: "behind",
+      standing: "former",
       from: "2026-03-01",
       to: "2026-03-31",
     };
     expect(readFilters(new URLSearchParams(writeFilters(chosen).toString()))).toEqual(chosen);
+  });
+
+  it("reads the retired standing names from an old link as the new ones", () => {
+    expect(readFilters(new URLSearchParams("standing=paid")).standing).toBe("current");
+    expect(readFilters(new URLSearchParams("standing=behind")).standing).toBe("former");
   });
 
   it("keeps the page only once it is past the first", () => {
@@ -173,27 +178,27 @@ describe("narrowing to a period", () => {
 });
 
 describe("membership standing", () => {
-  const paidUp = member({ status: "ACTIVE", membershipYear: 2026, paidAmount: 100 });
+  const thisYear = member({ status: "ACTIVE", membershipYear: 2026, paidAmount: 100 });
   const lastYear = member({ status: "ACTIVE", membershipYear: 2025, paidAmount: 100 });
-  const short = member({ status: "ACTIVE", membershipYear: 2026, paidAmount: 40 });
+  const partial = member({ status: "ACTIVE", membershipYear: 2026, paidAmount: 40 });
 
-  it("counts a member as up to date only for the running year and the full fee", () => {
-    const paid = { ...NO_FILTERS, standing: "paid" };
-    expect(matchesFilters(paidUp, paid, MEMBERSHIP)).toBe(true);
-    expect(matchesFilters(lastYear, paid, MEMBERSHIP)).toBe(false);
-    expect(matchesFilters(short, paid, MEMBERSHIP)).toBe(false);
+  it("counts a member as current by the year alone, whatever the amount", () => {
+    const current = { ...NO_FILTERS, standing: "current" };
+    expect(matchesFilters(thisYear, current, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(partial, current, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(lastYear, current, MEMBERSHIP)).toBe(false);
   });
 
-  it("puts everyone else behind, which is the list a renewal drive works from", () => {
-    const behind = { ...NO_FILTERS, standing: "behind" };
-    expect(matchesFilters(paidUp, behind, MEMBERSHIP)).toBe(false);
-    expect(matchesFilters(lastYear, behind, MEMBERSHIP)).toBe(true);
-    expect(matchesFilters(short, behind, MEMBERSHIP)).toBe(true);
+  it("puts an unrenewed year in former, which is the list a renewal drive works from", () => {
+    const former = { ...NO_FILTERS, standing: "former" };
+    expect(matchesFilters(thisYear, former, MEMBERSHIP)).toBe(false);
+    expect(matchesFilters(partial, former, MEMBERSHIP)).toBe(false);
+    expect(matchesFilters(lastYear, former, MEMBERSHIP)).toBe(true);
   });
 
   it("counts against the active members, since the others are not members yet", () => {
-    const members = [paidUp, lastYear, short, member({ status: "PENDING", paidAmount: 100 })];
-    expect(upToDate(members, MEMBERSHIP)).toEqual({ paid: 1, active: 3 });
+    const members = [thisYear, lastYear, partial, member({ status: "PENDING", paidAmount: 100 })];
+    expect(upToDate(members, MEMBERSHIP)).toEqual({ current: 2, active: 3 });
   });
 });
 

@@ -9,7 +9,7 @@ import DateRangeFilter from "./DateRangeFilter";
 import { standingLabel } from "./FilterChips";
 import type { AgeGroup } from "./types";
 
-const STANDINGS = ["paid", "behind"];
+const STANDINGS = ["current", "former"];
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
