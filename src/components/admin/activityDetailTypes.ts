@@ -15,9 +15,17 @@ export type ActivityDetail = {
     whatsappLink: string | null;
     registrations: {
       id: string;
-      status: string;
+      status: "PENDING" | "ACTIVE" | "REJECTED";
       createdAt: string;
-      member: { id: string; fullName: string; age: string; photo: string | null };
+      paymentProof: string | null;
+      rejectionReason: string | null;
+      member: {
+        id: string;
+        fullName: string;
+        age: string;
+        photo: string | null;
+        phone: string | null;
+      };
     }[];
     teams: { id: string; name: string; _count: { members: number } }[];
     _count: { matches: number; groups: number };

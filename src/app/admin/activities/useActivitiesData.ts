@@ -31,7 +31,20 @@ export function useActivitiesData() {
       .then((data) => {
         if (!data) return;
         const [activitiesData, membersData] = data;
-        setActivities(activitiesData.activities || []);
+        interface RawRegistration {
+          member: { user?: { phone: string } | null } & Record<string, unknown>;
+        }
+        setActivities(
+          (activitiesData.activities || []).map(
+            (a: { registrations: RawRegistration[] } & Record<string, unknown>) => ({
+              ...a,
+              registrations: a.registrations.map(({ member, ...r }) => ({
+                ...r,
+                member: { ...member, phone: member.user?.phone ?? null },
+              })),
+            }),
+          ),
+        );
         setMembers(
           (membersData.members || []).map((m: RawMember) => ({
             id: m.id,
