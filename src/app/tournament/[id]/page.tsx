@@ -29,6 +29,8 @@ import PageHeader from "@/components/PageHeader";
 import NumericRanges from "@/components/NumericRanges";
 import Icon from "@/components/Icon";
 import { formatActivityDates } from "@/lib/activityDates";
+import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
+import { suspendedMemberIds } from "@/lib/suspensionServer";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 
 export const dynamic = "force-dynamic";
@@ -158,8 +160,10 @@ export default async function PublicTournamentPage({
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
   const board = activity.profile === "BOARD";
+  const suspended =
+    !board && discipline.length > 0 ? await suspendedMemberIds(activity.id) : new Set<string>();
   const singles = activity.teamSize === 1;
-  const participantsLabel = singles ? "اللاعبون" : "الفرق";
+  const participantsLabel = singles ? texts.players : texts.teams;
   const hasStats = board
     ? teamAdvancedStats.length > 0
     : topScorers.length > 0 ||
@@ -188,7 +192,7 @@ export default async function PublicTournamentPage({
     hasLeagueStage || bracketMatches.length === 0
       ? {
           key: "standings",
-          label: "الترتيب",
+          label: texts.standings,
           icon: "trophy",
           content: (
             <>
@@ -199,35 +203,35 @@ export default async function PublicTournamentPage({
                     singleFlatTable
                       ? null
                       : group.groupId
-                        ? groupNameById.get(group.groupId) || "مجموعة"
-                        : "بدون مجموعة"
+                        ? groupNameById.get(group.groupId) || texts.group
+                        : texts.noGroup
                   }
                   rows={group.standings}
                   showFollow={!!userId}
                 />
               ))}
               {bracketMatches.length > 0 && (
-                <TournamentSection icon="target" title="الدور الإقصائي">
+                <TournamentSection icon="target" title={texts.bracket}>
                   {bracket}
                 </TournamentSection>
               )}
             </>
           ),
         }
-      : { key: "bracket", label: "الدور الإقصائي", icon: "target", content: bracket },
+      : { key: "bracket", label: texts.bracket, icon: "target", content: bracket },
     {
       key: "matches",
-      label: "المباريات",
+      label: texts.matches,
       icon: "calendar",
       content: (
         <>
           {scheduled.length === 0 && played.length === 0 && (
             <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-              لم تُحدَّد المباريات بعد
+              {texts.noMatchesYet}
             </p>
           )}
           {scheduled.length > 0 && (
-            <TournamentSection icon="calendar" title="مباريات قادمة">
+            <TournamentSection icon="calendar" title={texts.upcoming}>
               <MatchDayList
                 matches={scheduled}
                 renderMatch={(match, day) => (
@@ -237,7 +241,7 @@ export default async function PublicTournamentPage({
             </TournamentSection>
           )}
           {played.length > 0 && (
-            <TournamentSection icon="check" title="النتائج">
+            <TournamentSection icon="check" title={texts.results}>
               <MatchDayList
                 matches={played}
                 renderMatch={(match, day) => (
@@ -273,7 +277,7 @@ export default async function PublicTournamentPage({
     if (!board && topScorers.length > 0) {
       statPanels.push({
         key: "scorers",
-        label: "الهدافون",
+        label: texts.scorers,
         icon: "ball",
         content: (
           <RankedList
@@ -295,7 +299,7 @@ export default async function PublicTournamentPage({
     if (!board && discipline.length > 0) {
       statPanels.push({
         key: "discipline",
-        label: "الانضباط",
+        label: texts.discipline,
         icon: "flag",
         content: (
           <RankedList
@@ -304,6 +308,7 @@ export default async function PublicTournamentPage({
               name: d.fullName,
               photo: d.photo,
               sub: d.teamName,
+              badge: suspended.has(d.memberId) ? disciplineTexts.suspendedBadge : undefined,
               value: (
                 <span className="flex items-center gap-2">
                   {d.yellow > 0 && <CardChip type="YELLOW" count={d.yellow} />}
@@ -318,7 +323,7 @@ export default async function PublicTournamentPage({
     if (!board && cleanSheets.length > 0) {
       statPanels.push({
         key: "defence",
-        label: "أفضل دفاع",
+        label: texts.defence,
         icon: "shield",
         content: (
           <RankedList
@@ -339,7 +344,7 @@ export default async function PublicTournamentPage({
     if (!board && motmLeaders.length > 0) {
       statPanels.push({
         key: "motm",
-        label: "رجل المباراة",
+        label: texts.motm,
         icon: "star",
         content: (
           <RankedList
@@ -369,7 +374,7 @@ export default async function PublicTournamentPage({
 
     panels.push({
       key: "stats",
-      label: "الإحصائيات",
+      label: texts.stats,
       icon: "chart",
       content: (
         <>
@@ -411,7 +416,7 @@ export default async function PublicTournamentPage({
 
         {activity.teams.length === 0 ? (
           <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-            {singles ? "لم يُحدَّد اللاعبون بعد" : "لم تُحدَّد الفرق بعد"}
+            {singles ? texts.noPlayersYet : texts.noTeamsYet}
           </p>
         ) : (
           <>
