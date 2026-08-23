@@ -27,7 +27,7 @@ describe("NewActivityForm", () => {
     const onCreate = show();
 
     fireEvent.click(screen.getByText("بطولة"));
-    fireEvent.click(screen.getByText("لاعبون فرادى"));
+    fireEvent.click(screen.getByText("بطولة فردية"));
     fireEvent.change(screen.getByLabelText("نظام البطولة"), {
       target: { value: "GROUPS_THEN_KNOCKOUT" },
     });
@@ -38,6 +38,7 @@ describe("NewActivityForm", () => {
       isTournament: true,
       isVolunteer: false,
       teamSize: "1",
+      profile: "BOARD",
       format: "GROUPS_THEN_KNOCKOUT",
     });
   });

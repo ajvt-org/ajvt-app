@@ -47,6 +47,7 @@ export interface NewActivityDraft {
   photo: string;
   isTournament: boolean;
   format: string;
+  profile: string;
   teamSize: string;
   isVolunteer: boolean;
   whatsappLink: string;
@@ -62,6 +63,7 @@ export function emptyNewActivity(): NewActivityDraft {
     photo: "",
     isTournament: false,
     format: "KNOCKOUT",
+    profile: "FOOTBALL",
     teamSize: "",
     isVolunteer: false,
     whatsappLink: "",

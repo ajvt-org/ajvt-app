@@ -17,7 +17,9 @@ export default function ConvertTournamentCard({
 }) {
   const showToast = useToast();
   const [busy, setBusy] = useState(false);
-  const [setup, setSetup] = useState<{ format: string; teamSize: string } | null>(null);
+  const [setup, setSetup] = useState<{ format: string; profile: string; teamSize: string } | null>(
+    null,
+  );
 
   async function convert() {
     if (!setup) return;
@@ -26,6 +28,7 @@ export default function ConvertTournamentCard({
       await api.patch(`/api/admin/activities/${activity.id}`, {
         isTournament: true,
         format: setup.format,
+        profile: setup.profile,
         teamSize: setup.teamSize,
       });
       setSetup(null);
@@ -65,7 +68,9 @@ export default function ConvertTournamentCard({
       </div>
       <button
         onClick={() =>
-          activity.isTournament ? unconvert() : setSetup({ format: "KNOCKOUT", teamSize: "" })
+          activity.isTournament
+            ? unconvert()
+            : setSetup({ format: "KNOCKOUT", profile: "FOOTBALL", teamSize: "" })
         }
         disabled={busy}
         className="btn btn-sm btn-ghost shrink-0"
@@ -89,9 +94,12 @@ export default function ConvertTournamentCard({
             <div className="p-4 space-y-4">
               <TournamentSetupFields
                 format={setup.format}
+                profile={setup.profile}
                 teamSize={setup.teamSize}
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
-                onTeamSize={(teamSize) => setSetup((p) => p && { ...p, teamSize })}
+                onPreset={(preset) =>
+                  setSetup((p) => p && { ...p, profile: preset.profile, teamSize: preset.teamSize })
+                }
               />
               <button onClick={convert} disabled={busy} className="btn btn-primary text-sm">
                 {busy ? "..." : "تحويل إلى بطولة"}

@@ -13,6 +13,7 @@ export interface TournamentInfo {
   title: string;
   isTournament: boolean;
   format: TournamentFormat;
+  profile: "FOOTBALL" | "BOARD";
   teamSize: number | null;
   startsAt: string | null;
   endsAt: string | null;

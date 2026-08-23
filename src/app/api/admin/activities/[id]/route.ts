@@ -7,7 +7,7 @@ import { normalizeTeamSize } from "@/lib/teamSize";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
-import type { TournamentFormat } from "@prisma/client";
+import type { SportProfile, TournamentFormat } from "@prisma/client";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]",
@@ -21,6 +21,7 @@ export const GET = withRoute(
         title: true,
         isTournament: true,
         format: true,
+        profile: true,
         teamSize: true,
         startsAt: true,
         endsAt: true,
@@ -45,6 +46,7 @@ export const PATCH = withRoute(
       photo,
       isTournament,
       format,
+      profile,
       teamSize,
       isVolunteer,
       whatsappLink,
@@ -68,6 +70,7 @@ export const PATCH = withRoute(
       photo?: string | null;
       isTournament?: boolean;
       format?: TournamentFormat | null;
+      profile?: SportProfile;
       teamSize?: number | null;
       isVolunteer?: boolean;
       whatsappLink?: string | null;
@@ -97,6 +100,13 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
       }
       data.teamSize = normalizeTeamSize(teamSize);
+    }
+    if (profile !== undefined) {
+      const played = await prisma.match.count({ where: { activityId: id } });
+      if (played > 0 && profile !== existing.profile) {
+        return NextResponse.json({ error: tournament.profileLocked }, { status: 409 });
+      }
+      data.profile = profile;
     }
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
