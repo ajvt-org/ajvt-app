@@ -187,7 +187,8 @@ export default function ActivityCard({
 
       {expanded && !a.isVolunteer && (
         <ActivityRegistrationsPanel
-          activity={a}
+          activityId={a.id}
+          registrations={a.registrations}
           members={members}
           actionLoading={actionLoading}
           onReview={onReview}

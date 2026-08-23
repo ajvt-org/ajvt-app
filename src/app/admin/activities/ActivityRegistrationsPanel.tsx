@@ -3,17 +3,19 @@
 import IconLabel from "@/components/IconLabel";
 import PendingRegistrationCard from "./PendingRegistrationCard";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
-import type { Activity, MemberOption } from "./activityTypes";
+import type { Registration, MemberOption } from "./activityTypes";
 
 export default function ActivityRegistrationsPanel({
-  activity,
+  activityId,
+  registrations,
   members,
   actionLoading,
   onReview,
   onRegister,
   onUnregister,
 }: {
-  activity: Activity;
+  activityId: string;
+  registrations: Registration[];
   members: MemberOption[];
   actionLoading: boolean;
   onReview: (
@@ -25,10 +27,10 @@ export default function ActivityRegistrationsPanel({
   onRegister: (activityId: string, memberId: string) => Promise<boolean>;
   onUnregister: (activityId: string, memberId: string) => void;
 }) {
-  const pending = activity.registrations.filter((r) => r.status === "PENDING");
-  const active = activity.registrations.filter((r) => r.status === "ACTIVE");
+  const pending = registrations.filter((r) => r.status === "PENDING");
+  const active = registrations.filter((r) => r.status === "ACTIVE");
   const registeredIds = new Set(
-    activity.registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
+    registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
   );
   const candidates = members.filter((m) => !registeredIds.has(m.id));
 
@@ -42,7 +44,7 @@ export default function ActivityRegistrationsPanel({
           {pending.map((r) => (
             <PendingRegistrationCard
               key={r.id}
-              activityId={activity.id}
+              activityId={activityId}
               registration={r}
               actionLoading={actionLoading}
               onReview={onReview}
@@ -68,7 +70,7 @@ export default function ActivityRegistrationsPanel({
                   {r.member.phone || "غير معروف"}
                 </span>
                 <button
-                  onClick={() => onUnregister(activity.id, r.member.id)}
+                  onClick={() => onUnregister(activityId, r.member.id)}
                   className="font-bold px-2 py-0.5 rounded"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
@@ -81,7 +83,7 @@ export default function ActivityRegistrationsPanel({
       </div>
 
       <AddMemberToActivityForm
-        activityId={activity.id}
+        activityId={activityId}
         candidates={candidates}
         actionLoading={actionLoading}
         onRegister={onRegister}

@@ -56,6 +56,38 @@ describe("one activity with everything hanging off it", () => {
     expect(body.activity.teams[0]._count.members).toBe(1);
   });
 
+  it("carries what the review needs, the proof and the member's phone", async () => {
+    await signInAsAdmin(await createAdmin());
+    const activity = await anActivity();
+    const user = await prisma.user.create({ data: { phone: "36112233", password: "x" } });
+    const member = await prisma.member.create({
+      data: {
+        userId: user.id,
+        fullName: "أحمد",
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
+    });
+    await prisma.activityRegistration.create({
+      data: {
+        memberId: member.id,
+        activityId: activity.id,
+        status: "PENDING",
+        paymentProof: "proof-1.webp",
+      },
+    });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0]).toMatchObject({
+      status: "PENDING",
+      paymentProof: "proof-1.webp",
+      rejectionReason: null,
+    });
+    expect(body.activity.registrations[0].member.phone).toBe("36112233");
+  });
+
   it("carries only this activity's own history", async () => {
     await signInAsAdmin(await createAdmin());
     const mine = await anActivity();
