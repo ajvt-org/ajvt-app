@@ -7,6 +7,7 @@ export type SeededActivity = Awaited<ReturnType<typeof prisma.activity.create>>;
 
 export interface SeededActivities {
   league: SeededActivity;
+  cup: SeededActivity;
   doubles: SeededActivity;
   chess: SeededActivity;
   dhamet: SeededActivity;
@@ -72,6 +73,20 @@ export async function seedActivities(): Promise<SeededActivities> {
     },
   });
 
+  const cup = await prisma.activity.create({
+    data: {
+      title: "كأس التاكلالت 2025",
+      description: "نسخة العام الماضي، منتهية بكل مراحلها، مجموعات ثم إقصائيات وبطل.",
+      startsAt: new Date(Date.now() - 40 * 86_400_000),
+      endsAt: new Date(Date.now() - 30 * 86_400_000),
+      capacity: 30,
+      isTournament: true,
+      format: "GROUPS_THEN_KNOCKOUT",
+      isOpen: false,
+      order: 7,
+    },
+  });
+
   const volunteer = await prisma.activity.create({
     data: {
       title: "حملة تنظيف القرية",
@@ -105,7 +120,7 @@ export async function seedActivities(): Promise<SeededActivities> {
     },
   });
 
-  return { league, doubles, chess, dhamet, volunteer, lecture, health };
+  return { league, cup, doubles, chess, dhamet, volunteer, lecture, health };
 }
 
 export async function seedRegistrations(

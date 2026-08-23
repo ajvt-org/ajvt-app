@@ -243,6 +243,112 @@ export async function seedDoubles(activity: SeededActivity, active: SeededMember
   return teams;
 }
 
+// A tournament played to the end: two groups of three, crossed semi-finals
+// with one shootout, and a final with a champion — every stage in PLAYED
+// state with scorers on both sides, cards, men of the match and a closed
+// MVP vote, all dated in the past.
+export async function seedFinishedCup(
+  activity: SeededActivity,
+  active: SeededMember[],
+  users: SeededUser[],
+) {
+  const names = ["الصقور", "النسور", "الأسود", "الفهود", "الذئاب", "العقبان"];
+  const groups = [];
+  for (const name of ["مجموعة الكأس أ", "مجموعة الكأس ب"]) {
+    groups.push(
+      await prisma.group.create({ data: { activityId: activity.id, name, capacity: 3 } }),
+    );
+  }
+
+  const teams = [];
+  const roster: Record<string, string[]> = {};
+  for (let i = 0; i < names.length; i++) {
+    const team = await prisma.team.create({
+      data: { activityId: activity.id, groupId: groups[i < 3 ? 0 : 1].id, name: names[i] },
+    });
+    roster[team.id] = [];
+    for (let m = 0; m < 5; m++) {
+      const member = active[(i * 5 + m + 40) % active.length];
+      await prisma.teamMember.create({
+        data: { teamId: team.id, memberId: member.id, status: "ACTIVE" },
+      });
+      roster[team.id].push(member.id);
+    }
+    teams.push(team);
+  }
+
+  type Row = [number, number, number, number, number, string, boolean, number | null];
+  // [home, away, homeScore, awayScore, daysAgo, round, isKnockout, bracketRound]
+  const rows: Row[] = [
+    [0, 1, 2, 1, 40, "مجموعة الكأس أ — الجولة 1", false, null],
+    [2, 0, 0, 1, 39, "مجموعة الكأس أ — الجولة 2", false, null],
+    [1, 2, 3, 0, 38, "مجموعة الكأس أ — الجولة 3", false, null],
+    [3, 4, 1, 1, 37, "مجموعة الكأس ب — الجولة 1", false, null],
+    [5, 3, 0, 2, 36, "مجموعة الكأس ب — الجولة 2", false, null],
+    [4, 5, 1, 0, 35, "مجموعة الكأس ب — الجولة 3", false, null],
+    [0, 4, 2, 0, 33, "نصف النهائي", true, 1],
+    [3, 1, 1, 1, 33, "نصف النهائي", true, 1],
+    [0, 3, 3, 1, 30, "النهائي", true, 2],
+  ];
+
+  for (let i = 0; i < rows.length; i++) {
+    const [h, a, hs, as, ago, round, isKnockout, bracketRound] = rows[i];
+    const isFinal = bracketRound === 2;
+    const shootout = isKnockout && hs === as;
+    const match = await prisma.match.create({
+      data: {
+        activityId: activity.id,
+        homeTeamId: teams[h].id,
+        awayTeamId: teams[a].id,
+        matchDate: daysAgo(ago),
+        round,
+        venue: "ملعب القرية",
+        order: i,
+        isKnockout,
+        bracketRound,
+        homeScore: hs,
+        awayScore: as,
+        homePenalties: shootout ? 4 : null,
+        awayPenalties: shootout ? 2 : null,
+        status: "PLAYED",
+        manOfTheMatchId: roster[teams[h].id][0],
+      },
+    });
+
+    for (const [teamIndex, score] of [
+      [h, hs],
+      [a, as],
+    ] as const) {
+      for (let g = 0; g < score; g++) {
+        await prisma.matchGoal.create({
+          data: {
+            matchId: match.id,
+            memberId: pick(roster[teams[teamIndex].id], g),
+            teamId: teams[teamIndex].id,
+            minute: 12 + g * 21 + (teamIndex === a ? 7 : 0),
+          },
+        });
+      }
+    }
+
+    if (i % 3 === 0) {
+      await prisma.matchBooking.create({
+        data: {
+          matchId: match.id,
+          memberId: roster[teams[a].id][1],
+          teamId: teams[a].id,
+          cardType: i === 6 ? "RED" : "YELLOW",
+          minute: 40 + i,
+        },
+      });
+    }
+
+    if (isFinal) await seedMvp(match.id, roster[teams[h].id], users, "CLOSED");
+  }
+
+  return teams;
+}
+
 export async function seedSingles(activity: SeededActivity, active: SeededMember[]) {
   const teams = [];
   for (let i = 0; i < 8; i++) {
