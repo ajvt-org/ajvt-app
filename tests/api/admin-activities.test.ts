@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/activities/route";
-import { PATCH, DELETE } from "@/app/api/admin/activities/[id]/route";
+import { GET, PATCH, DELETE } from "@/app/api/admin/activities/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function anActivity() {
   return prisma.activity.create({
@@ -14,6 +14,38 @@ async function anActivity() {
     },
   });
 }
+
+describe("reading one activity's core facts", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("answers with the title and the tournament settings", async () => {
+    const a = await prisma.activity.create({
+      data: {
+        title: "بطولة الدامة",
+        description: "فردية",
+        isTournament: true,
+        format: "KNOCKOUT",
+        teamSize: 1,
+      },
+    });
+
+    const body = await (await GET(get(`/api/admin/activities/${a.id}`), withId(a.id))).json();
+
+    expect(body.activity).toMatchObject({
+      title: "بطولة الدامة",
+      isTournament: true,
+      format: "KNOCKOUT",
+      teamSize: 1,
+    });
+  });
+
+  it("says not found for an unknown id", async () => {
+    expect((await GET(get("/api/admin/activities/nope"), withId("nope"))).status).toBe(404);
+  });
+});
 
 describe("activity audit detail", () => {
   beforeEach(async () => {
