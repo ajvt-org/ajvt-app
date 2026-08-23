@@ -9,7 +9,7 @@ export function isDataset(value: string): value is Dataset {
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
+  ACTIVE: "معتمد",
   REJECTED: "غير مقبول",
 };
 

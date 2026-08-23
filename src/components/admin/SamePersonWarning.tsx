@@ -15,7 +15,7 @@ type SamePerson = {
 
 const STATUS: Record<string, string> = {
   PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
+  ACTIVE: "معتمد",
   REJECTED: "مرفوض",
 };
 

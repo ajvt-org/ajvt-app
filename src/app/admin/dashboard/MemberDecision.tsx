@@ -140,7 +140,7 @@ export default function MemberDecision({
             </p>
           )}
           <button onClick={onApprove} disabled={loading} className="btn btn-primary w-full text-sm">
-            {loading ? "..." : "تغيير إلى مقبول"}
+            {loading ? "..." : "تغيير إلى معتمد"}
           </button>
         </>
       )}

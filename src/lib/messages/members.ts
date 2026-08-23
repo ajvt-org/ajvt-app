@@ -5,7 +5,7 @@ export const members = {
   fullNameTooLong: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)",
   pickAgeGroup: "يرجى اختيار العصر",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
-  approved: "مقبول",
+  approved: "معتمد",
   rejected: "غير مقبول",
   rejectionReasonRequired: "سبب الرفض مطلوب",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",

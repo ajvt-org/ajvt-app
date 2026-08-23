@@ -7,7 +7,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
-import { STATUS_LABEL, STATUS_BADGE } from "./constants";
+import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
@@ -227,11 +227,14 @@ export default function MemberDrawer({
           <MembershipPanel memberId={member.id} />
 
           <div className="flex items-center justify-between card p-4">
-            <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-              الحالة
+            <span
+              className="text-sm font-semibold flex items-center"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <IconLabel name="flag">الحالة</IconLabel>
             </span>
             <span className={`badge ${STATUS_BADGE[member.status]}`}>
-              {STATUS_LABEL[member.status]}
+              <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
             </span>
           </div>
 
