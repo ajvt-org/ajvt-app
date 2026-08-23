@@ -55,7 +55,7 @@ export default async function PublicTournamentPage({
       profile: true,
       teamSize: true,
       isTournament: true,
-      groups: { select: { id: true, name: true } },
+      groups: { select: { id: true, name: true }, orderBy: { createdAt: "asc" as const } },
       teams: {
         select: {
           id: true,
@@ -137,7 +137,11 @@ export default async function PublicTournamentPage({
   const myVoteByVoteId = new Map(myVotes.map((v) => [v.voteId, v.candidateId]));
 
   const matches = activity.matches as PublicMatch[];
-  const standingsByGroup = groupStandings(activity.teams, activity.matches);
+  const standingsByGroup = groupStandings(
+    activity.teams,
+    activity.matches,
+    activity.groups.map((g) => g.id),
+  );
   const topScorers = computeTopScorers(activity.teams, activity.matches);
   const stats = computeStats(activity.teams, activity.matches);
   const discipline = computeDisciplineStats(activity.teams, activity.matches);
