@@ -7,7 +7,7 @@ const TABS: FilterTab[] = ["ALL", "PENDING", "ACTIVE", "REJECTED", "NO_REQUEST"]
 const TAB_LABEL: Record<FilterTab, string> = {
   ALL: "الكل",
   PENDING: "انتظار",
-  ACTIVE: "مقبول",
+  ACTIVE: "معتمد",
   REJECTED: "مرفوض",
   NO_REQUEST: "بدون طلب",
 };

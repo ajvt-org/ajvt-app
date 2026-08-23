@@ -20,7 +20,7 @@ import type { MemberProfile } from "@/components/admin/profileTypes";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
+  ACTIVE: "معتمد",
   REJECTED: "مرفوض",
 };
 

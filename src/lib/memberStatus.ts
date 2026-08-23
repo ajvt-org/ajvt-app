@@ -30,7 +30,7 @@ export const STATUS: Record<
   },
   ACTIVE: {
     icon: "check",
-    label: "مقبول",
+    label: "معتمد",
     title: "تم قبول العضوية!",
     desc: "تهانينا! عضو رسمي الآن في رابطة شباب قرية التاكلالت.",
     bg: "#f0fdf4",

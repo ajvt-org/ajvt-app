@@ -76,7 +76,10 @@ export default function MemberAccountCard({
     <div className="card p-4">
       {hasAccount ? (
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
+          <span
+            className="text-sm font-semibold flex items-center"
+            style={{ color: "var(--text-muted)" }}
+          >
             <IconLabel name="lock">كلمة مرور الحساب</IconLabel>
           </span>
           <button

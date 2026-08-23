@@ -7,7 +7,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
-import { STATUS_LABEL, STATUS_BADGE } from "./constants";
+import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
@@ -231,7 +231,7 @@ export default function MemberDrawer({
               الحالة
             </span>
             <span className={`badge ${STATUS_BADGE[member.status]}`}>
-              {STATUS_LABEL[member.status]}
+              <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
             </span>
           </div>
 
