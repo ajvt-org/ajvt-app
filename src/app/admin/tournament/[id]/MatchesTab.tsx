@@ -20,6 +20,7 @@ export default function MatchesTab({
   format,
   profile,
   matches,
+  suspendedIds,
   onChange,
 }: {
   activityId: string;
@@ -28,6 +29,7 @@ export default function MatchesTab({
   format: TournamentFormat;
   profile: "FOOTBALL" | "BOARD";
   matches: Match[];
+  suspendedIds: string[];
   onChange: () => void;
 }) {
   const [form, setForm] = useState({
@@ -216,6 +218,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 profile={profile}
+                suspendedIds={suspendedIds}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -251,6 +254,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 profile={profile}
+                suspendedIds={suspendedIds}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}

@@ -9,10 +9,12 @@ import { matchAdmin as texts } from "@/lib/texts";
 export default function BookingsForm({
   match,
   teams,
+  suspendedIds,
   onChange,
 }: {
   match: Match;
   teams: Team[];
+  suspendedIds: string[];
   onChange: () => void;
 }) {
   const [teamId, setTeamId] = useState(match.homeTeam.id);
@@ -22,7 +24,10 @@ export default function BookingsForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const roster = teams.find((t) => t.id === teamId)?.members.map((m) => m.member) || [];
+  const banned = new Set(suspendedIds);
+  const roster = (teams.find((t) => t.id === teamId)?.members.map((m) => m.member) || []).filter(
+    (m) => !banned.has(m.id),
+  );
 
   async function addBooking(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();

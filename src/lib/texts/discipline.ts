@@ -30,6 +30,8 @@ export const discipline = {
     YELLOW_CARDS: "تراكم البطاقات الصفراء",
     CONDUCT: "سلوك",
   },
+  suspendedBadge: "موقوف",
+  hiddenSuspended: (names: string) => `موقوفون عن هذه المباراة: ${names}`,
   remaining: (matches: string) => `متبقي ${matches}`,
   until: (date: string) => `حتى ${date}`,
   indefinite: "إيقاف نهائي",
