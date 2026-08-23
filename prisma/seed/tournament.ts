@@ -20,10 +20,14 @@ const PAIRS: [number, number][] = [
   [2, 3],
   [0, 2],
   [1, 3],
+  [0, 3],
+  [1, 2],
   [4, 5],
   [6, 7],
   [4, 6],
   [5, 7],
+  [4, 7],
+  [5, 6],
 ];
 
 export async function seedLeague(
@@ -83,9 +87,12 @@ async function seedMatches(
   roster: Record<string, string[]>,
   users: SeededUser[],
 ) {
+  const todayLate = new Date();
+  todayLate.setUTCHours(16, 0, 0, 0);
+
   for (let i = 0; i < PAIRS.length; i++) {
     const [h, a] = PAIRS[i];
-    const played = i < 6;
+    const played = i < PAIRS.length - 1;
     const homeScore = played ? (i * 3) % 4 : null;
     const awayScore = played ? (i * 5) % 3 : null;
 
@@ -94,7 +101,7 @@ async function seedMatches(
         activityId: activity.id,
         homeTeamId: teams[h].id,
         awayTeamId: teams[a].id,
-        matchDate: played ? daysAgo(20 - i * 2) : daysAgo(-3 - i),
+        matchDate: played ? daysAgo(22 - i * 2) : todayLate,
         round: "دور المجموعات",
         venue: "ملعب القرية",
         order: i,
@@ -107,38 +114,65 @@ async function seedMatches(
 
     if (!played) continue;
 
-    for (let g = 0; g < (homeScore ?? 0); g++) {
-      const scorers = roster[teams[h].id];
-      if (!scorers?.length) break;
-      await prisma.matchGoal.create({
-        data: {
-          matchId: match.id,
-          memberId: pick(scorers, g),
-          teamId: teams[h].id,
-          minute: 10 + g * 17,
-        },
-      });
+    for (const [teamIndex, score] of [
+      [h, homeScore ?? 0],
+      [a, awayScore ?? 0],
+    ] as const) {
+      const scorers = roster[teams[teamIndex].id];
+      if (!scorers?.length) continue;
+      for (let g = 0; g < score; g++) {
+        await prisma.matchGoal.create({
+          data: {
+            matchId: match.id,
+            memberId: pick(scorers, g),
+            teamId: teams[teamIndex].id,
+            minute: 10 + g * 17 + (teamIndex === a ? 5 : 0),
+          },
+        });
+      }
     }
 
-    const bookable = roster[teams[a].id];
-    if (i % 2 === 0 && bookable?.length) {
+    const awayRoster = roster[teams[a].id];
+    if (i % 2 === 0 && awayRoster?.length) {
       await prisma.matchBooking.create({
         data: {
           matchId: match.id,
-          memberId: bookable[0],
+          memberId: awayRoster[0],
           teamId: teams[a].id,
           cardType: i % 4 === 0 ? "YELLOW" : "RED",
           minute: 55 + i,
         },
       });
     }
+    // Odd matches book the home side's second player, so the teams that host
+    // twice give one member two yellows across the run — the accumulation case.
+    const homeRoster = roster[teams[h].id];
+    if (i % 2 === 1 && homeRoster?.length > 1) {
+      await prisma.matchBooking.create({
+        data: {
+          matchId: match.id,
+          memberId: homeRoster[1],
+          teamId: teams[h].id,
+          cardType: "YELLOW",
+          minute: 30 + i,
+        },
+      });
+    }
 
-    if (i === 0) await seedMvp(match.id, roster[teams[h].id] ?? [], users);
+    if (i === 0) await seedMvp(match.id, roster[teams[h].id] ?? [], users, "OPEN");
+    if (i === 2) await seedMvp(match.id, roster[teams[h].id] ?? [], users, "CLOSED");
   }
 }
 
-async function seedMvp(matchId: string, memberIds: string[], users: SeededUser[]) {
-  const vote = await prisma.matchMvpVote.create({ data: { matchId, status: "OPEN" } });
+async function seedMvp(
+  matchId: string,
+  memberIds: string[],
+  users: SeededUser[],
+  status: "OPEN" | "CLOSED",
+) {
+  const vote = await prisma.matchMvpVote.create({
+    data: { matchId, status, closedAt: status === "CLOSED" ? daysAgo(1) : null },
+  });
 
   const candidates = [];
   for (const memberId of memberIds.slice(0, 3)) {
@@ -154,22 +188,14 @@ async function seedMvp(matchId: string, memberIds: string[], users: SeededUser[]
 }
 
 export async function seedDoubles(activity: SeededActivity, active: SeededMember[]) {
-  const pairs = [
-    ["أحمد ومحمد", 2],
-    ["علي ويحيى", 2],
-    ["سالم وإبراهيم", 2],
-    ["عمر وخالد", 1],
-  ] as const;
-
   let cursor = 0;
   const teams = [];
 
-  for (let i = 0; i < pairs.length; i++) {
-    const [, size] = pairs[i];
+  for (let i = 0; i < 4; i++) {
     const team = await prisma.team.create({
       data: { activityId: activity.id, name: `فريق ${i + 1}`, autoNamed: true },
     });
-    for (let m = 0; m < size && cursor < active.length; m++, cursor++) {
+    for (let m = 0; m < 2 && cursor < active.length; m++, cursor++) {
       await prisma.teamMember.create({
         data: { teamId: team.id, memberId: active[cursor].id, status: "ACTIVE" },
       });
@@ -177,5 +203,59 @@ export async function seedDoubles(activity: SeededActivity, active: SeededMember
     teams.push(team);
   }
 
+  // Two played semi-finals and no final: the bracket tree renders, one semi
+  // carries a shootout, and "توليد الدور التالي" has real work to do.
+  await prisma.match.create({
+    data: {
+      activityId: activity.id,
+      homeTeamId: teams[0].id,
+      awayTeamId: teams[1].id,
+      matchDate: daysAgo(3),
+      round: "نصف النهائي",
+      venue: "قاعة الرابطة",
+      order: 0,
+      isKnockout: true,
+      bracketRound: 1,
+      homeScore: 2,
+      awayScore: 2,
+      homePenalties: 4,
+      awayPenalties: 3,
+      status: "PLAYED",
+    },
+  });
+  await prisma.match.create({
+    data: {
+      activityId: activity.id,
+      homeTeamId: teams[2].id,
+      awayTeamId: teams[3].id,
+      matchDate: daysAgo(2),
+      round: "نصف النهائي",
+      venue: "قاعة الرابطة",
+      order: 1,
+      isKnockout: true,
+      bracketRound: 1,
+      homeScore: 1,
+      awayScore: 0,
+      status: "PLAYED",
+    },
+  });
+
+  return teams;
+}
+
+export async function seedSingles(activity: SeededActivity, active: SeededMember[]) {
+  const teams = [];
+  for (let i = 0; i < 8; i++) {
+    const team = await prisma.team.create({
+      data: { activityId: activity.id, name: `لاعب ${i + 1}`, autoNamed: true },
+    });
+    const member = active[active.length - 1 - i];
+    if (member) {
+      await prisma.teamMember.create({
+        data: { teamId: team.id, memberId: member.id, status: "ACTIVE" },
+      });
+    }
+    teams.push(team);
+  }
   return teams;
 }

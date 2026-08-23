@@ -3,7 +3,7 @@ import { wipe } from "./seed/wipe";
 import { seedAdmins, seedAgeGroups, seedUsers, seedPushSubscriptions } from "./seed/accounts";
 import { seedMembers } from "./seed/members";
 import { seedActivities, seedRegistrations } from "./seed/activities";
-import { seedLeague, seedDoubles } from "./seed/tournament";
+import { seedLeague, seedDoubles, seedSingles } from "./seed/tournament";
 import { seedTags, seedDonations, seedExpenses } from "./seed/finance";
 import { seedQuizSettings, seedQuestions, seedCompetitions } from "./seed/quiz";
 import { seedPlayedRounds, seedClosingSoon } from "./seed/quizPlay";
@@ -29,6 +29,7 @@ async function main() {
 
   const league = await seedLeague(activities.league, members.active, users);
   const doubles = await seedDoubles(activities.doubles, members.active);
+  const singles = await seedSingles(activities.dhamet, members.active);
 
   const tags = await seedTags();
   const donations = await seedDonations(members.active, activities.health, tags);
@@ -52,8 +53,8 @@ async function main() {
     members: members.all.length,
     active: members.active.length,
     pending: members.pending.length,
-    activities: 6,
-    teams: league.teams.length + doubles.length,
+    activities: 7,
+    teams: league.teams.length + doubles.length + singles.length,
     matches: league.matchCount,
     donations,
     expenses,

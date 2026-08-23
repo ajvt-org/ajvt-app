@@ -9,6 +9,7 @@ export interface SeededActivities {
   league: SeededActivity;
   doubles: SeededActivity;
   chess: SeededActivity;
+  dhamet: SeededActivity;
   volunteer: SeededActivity;
   lecture: SeededActivity;
   health: SeededActivity;
@@ -54,6 +55,20 @@ export async function seedActivities(): Promise<SeededActivities> {
     },
   });
 
+  const dhamet = await prisma.activity.create({
+    data: {
+      title: "بطولة الدامة",
+      description: "بطولة فردية، كل مشارك يلعب لنفسه، فرقها مكتملة وجاهزة للقرعة.",
+      period: "سبتمبر 2026",
+      capacity: 8,
+      isTournament: true,
+      format: "KNOCKOUT",
+      teamSize: 1,
+      isOpen: true,
+      order: 6,
+    },
+  });
+
   const volunteer = await prisma.activity.create({
     data: {
       title: "حملة تنظيف القرية",
@@ -87,7 +102,7 @@ export async function seedActivities(): Promise<SeededActivities> {
     },
   });
 
-  return { league, doubles, chess, volunteer, lecture, health };
+  return { league, doubles, chess, dhamet, volunteer, lecture, health };
 }
 
 export async function seedRegistrations(
