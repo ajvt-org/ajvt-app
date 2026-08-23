@@ -14,15 +14,10 @@ import {
   type NewActivityDraft,
 } from "./activityTypes";
 
-const NATURES: { value: ActivityNature; label: string; hint: string; icon: IconName }[] = [
-  { value: "normal", label: "نشاط عادي", hint: "تسجيل أعضاء وحضور", icon: "calendar" },
-  { value: "tournament", label: "بطولة", hint: "فرق ومباريات وترتيب وهدافون", icon: "trophy" },
-  {
-    value: "volunteer",
-    label: "حملة تطوعية",
-    hint: "بدون تسجيل داخل التطبيق — رابط واتساب مباشر",
-    icon: "handshake",
-  },
+const NATURES: { value: ActivityNature; label: string; icon: IconName }[] = [
+  { value: "normal", label: "نشاط عادي", icon: "calendar" },
+  { value: "tournament", label: "بطولة", icon: "trophy" },
+  { value: "volunteer", label: "حملة تطوعية", icon: "handshake" },
 ];
 
 export default function NewActivityForm({
@@ -50,17 +45,17 @@ export default function NewActivityForm({
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="plus">إضافة نشاط جديد</IconLabel>
-      </p>
-      <PhotoUpload
-        photo={draft.photo || null}
-        imageUrlPrefix="/api/files/activity"
-        variant="avatar"
-        label={draft.isTournament ? "شعار البطولة" : "صورة النشاط"}
-        placeholderIcon="image"
-        onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
-      />
+      <div className="flex justify-center">
+        <PhotoUpload
+          photo={draft.photo || null}
+          imageUrlPrefix="/api/files/activity"
+          variant="avatar"
+          bare
+          label={draft.isTournament ? "شعار البطولة" : "صورة النشاط"}
+          placeholderIcon="image"
+          onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
+        />
+      </div>
       <input
         type="text"
         placeholder="عنوان النشاط"
@@ -142,13 +137,8 @@ export default function NewActivityForm({
                 onChange={() => setDraft((p) => withNature(p, n.value))}
                 className="w-4 h-4"
               />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={n.icon}>{n.label}</IconLabel>
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  {n.hint}
-                </span>
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={n.icon}>{n.label}</IconLabel>
               </span>
             </label>
           ))}

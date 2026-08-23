@@ -11,6 +11,7 @@ interface PhotoUploadProps {
   label?: string;
   placeholderIcon?: IconName;
   variant?: "avatar" | "cover" | "hero";
+  bare?: boolean;
 }
 
 export default function PhotoUpload({
@@ -20,6 +21,7 @@ export default function PhotoUpload({
   label = "الصورة الشخصية",
   placeholderIcon = "user",
   variant = "avatar",
+  bare = false,
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -147,6 +149,7 @@ export default function PhotoUpload({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
+        aria-label={label}
         className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
         style={{ background: "var(--mint-100)", border: "2px solid var(--mint-300)" }}
       >
@@ -165,19 +168,21 @@ export default function PhotoUpload({
           {uploading ? "..." : <Icon name="camera" size={11} />}
         </div>
       </button>
-      <div className="min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          {label}
-        </p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {hint}
-        </p>
-        {error && (
-          <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>
-            {error}
+      {!bare && (
+        <div className="min-w-0">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {label}
           </p>
-        )}
-      </div>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {hint}
+          </p>
+        </div>
+      )}
+      {error && (
+        <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>
+          {error}
+        </p>
+      )}
       <input
         ref={inputRef}
         type="file"

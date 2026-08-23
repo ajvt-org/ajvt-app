@@ -6,37 +6,15 @@ import type { IconName } from "@/components/Icon";
 export interface TournamentPreset {
   value: string;
   label: string;
-  hint: string;
   icon: IconName;
   profile: string;
   teamSize: string;
 }
 
 export const TOURNAMENT_PRESETS: TournamentPreset[] = [
-  {
-    value: "football",
-    label: "بطولة فرق",
-    hint: "كرة القدم ونحوها — أهداف وبطاقات وهدافون",
-    icon: "ball",
-    profile: "FOOTBALL",
-    teamSize: "",
-  },
-  {
-    value: "board",
-    label: "بطولة فردية",
-    hint: "شطرنج، دامة، بلايستيشن — نتيجة فقط، كل مشارك يلعب لنفسه",
-    icon: "user",
-    profile: "BOARD",
-    teamSize: "1",
-  },
-  {
-    value: "cards",
-    label: "بطولة أزواج",
-    hint: "لعب الورق — نتيجة فقط، كل فريق لاعبان اثنان",
-    icon: "users",
-    profile: "BOARD",
-    teamSize: "2",
-  },
+  { value: "football", label: "بطولة فرق", icon: "ball", profile: "FOOTBALL", teamSize: "" },
+  { value: "board", label: "بطولة فردية", icon: "user", profile: "BOARD", teamSize: "1" },
+  { value: "cards", label: "بطولة أزواج", icon: "users", profile: "BOARD", teamSize: "2" },
 ];
 
 export function presetOf(profile: string, teamSize: string): string {
@@ -85,13 +63,8 @@ export default function TournamentSetupFields({
                 onChange={() => onPreset(preset)}
                 className="w-4 h-4"
               />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={preset.icon}>{preset.label}</IconLabel>
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  {preset.hint}
-                </span>
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={preset.icon}>{preset.label}</IconLabel>
               </span>
             </label>
           ))}
@@ -115,9 +88,6 @@ export default function TournamentSetupFields({
           <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
           <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
         </select>
-        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-          لا يمكن تغييره بعد إنشاء المباريات.
-        </p>
       </div>
     </div>
   );
