@@ -3,7 +3,10 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { removeDay, setDayRest } from "@/lib/tournamentDaysServer";
-import { dayUpdateSchema } from "../schema";
+import { notifyActivityFollowers } from "@/lib/tournamentNotify";
+import { prisma } from "@/lib/prisma";
+import { notify as notifyMessages } from "@/lib/messages";
+import { dayDeleteSchema, dayUpdateSchema } from "../schema";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]/days/[dayId]",
@@ -18,10 +21,19 @@ export const PATCH = withRoute(
 
 export const DELETE = withRoute(
   "DELETE /api/admin/activities/[id]/days/[dayId]",
-  async (_req: NextRequest, { params }: { params: Promise<{ id: string; dayId: string }> }) => {
+  async (req: NextRequest, { params }: { params: Promise<{ id: string; dayId: string }> }) => {
     const { id, dayId } = await params;
     await requireActivityAccess(id);
-    await removeDay(id, dayId);
-    return NextResponse.json({ ok: true });
+    const { notify } = parse(dayDeleteSchema, await req.json().catch(() => ({})));
+    const { shifted } = await removeDay(id, dayId);
+    if (notify !== false && shifted > 0) {
+      const activity = await prisma.activity.findUnique({
+        where: { id },
+        select: { title: true },
+      });
+      if (activity)
+        await notifyActivityFollowers(id, notifyMessages.scheduleShifted(activity.title, id));
+    }
+    return NextResponse.json({ ok: true, shifted });
   },
 );

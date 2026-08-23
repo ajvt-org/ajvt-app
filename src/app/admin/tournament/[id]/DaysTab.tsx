@@ -37,6 +37,7 @@ export default function DaysTab({
   const [data, setData] = useState<DaysPayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [schedule, setSchedule] = useState<Record<string, { dayId: string; time: string }>>({});
+  const [notifyFollowers, setNotifyFollowers] = useState(true);
 
   const reload = useCallback(() => {
     return api.get<DaysPayload>(`/api/admin/activities/${activityId}/days`).then(setData);
@@ -99,6 +100,15 @@ export default function DaysTab({
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>
           تاريخ النهاية يُحسب تلقائياً من آخر يوم.
         </span>
+        <label className="flex items-center gap-2 text-xs font-bold w-full">
+          <input
+            type="checkbox"
+            checked={notifyFollowers}
+            onChange={(e) => setNotifyFollowers(e.target.checked)}
+            className="w-4 h-4"
+          />
+          إشعار اللاعبين والمتابعين عند تحريك الجدول
+        </label>
       </div>
 
       {data.days.map((day, index) => (
@@ -108,7 +118,12 @@ export default function DaysTab({
               busy={busy}
               onInsert={() =>
                 run(
-                  () => api.post(base, { position: day.position, isRest: true }),
+                  () =>
+                    api.post(base, {
+                      position: day.position,
+                      isRest: true,
+                      notify: notifyFollowers,
+                    }),
                   "أُضيف يوم راحة وتحرّك ما بعده يوماً",
                 )
               }
@@ -121,7 +136,10 @@ export default function DaysTab({
               run(() => api.patch(`${base}/${day.id}`, { isRest }), "تم تغيير اليوم")
             }
             onRemove={() =>
-              run(() => api.del(`${base}/${day.id}`), "حُذف اليوم وتحرّك ما بعده يوماً")
+              run(
+                () => api.del(`${base}/${day.id}`, { notify: notifyFollowers }),
+                "حُذف اليوم وتحرّك ما بعده يوماً",
+              )
             }
             onRetime={(matchId, time) =>
               run(() => api.post(`${base}/assign`, { matchId, dayId: day.id, time }), "تغيّر الوقت")

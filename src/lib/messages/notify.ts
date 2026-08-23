@@ -25,6 +25,12 @@ export const notify = {
     url: `/tournament/${activityId}`,
   }),
 
+  scheduleShifted: (tournamentTitle: string, activityId: string): PushPayload => ({
+    title: "تغيّر جدول البطولة",
+    body: `تحرّكت مواعيد «${tournamentTitle}» — اطلع على الجدول الجديد`,
+    url: `/tournament/${activityId}`,
+  }),
+
   matchResult: (
     home: string,
     homeScore: number,

@@ -85,6 +85,7 @@ describe("DaysTab", () => {
       expect(post).toHaveBeenCalledWith("/api/admin/activities/a1/days", {
         position: 2,
         isRest: true,
+        notify: true,
       }),
     );
   });
