@@ -20,8 +20,6 @@ export default function MatchCard({
   onDelete,
   showResultForm,
   onToggleResultForm,
-  showCards,
-  onToggleCards,
   showMvp,
   onToggleMvp,
   showDetails,
@@ -38,8 +36,6 @@ export default function MatchCard({
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
-  showCards: boolean;
-  onToggleCards: () => void;
   showMvp: boolean;
   onToggleMvp: () => void;
   showDetails: boolean;
@@ -178,25 +174,6 @@ export default function MatchCard({
       <div className="flex gap-2 mt-2">
         {football && (
           <button
-            onClick={onToggleCards}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-            style={{
-              background: "white",
-              color: "var(--mint-700)",
-              border: "1px solid var(--mint-200)",
-            }}
-          >
-            {showCards ? (
-              "إخفاء البطاقات"
-            ) : (
-              <>
-                <CardChip type="YELLOW" /> <CardChip type="RED" /> إدارة البطاقات
-              </>
-            )}
-          </button>
-        )}
-        {football && (
-          <button
             onClick={onToggleMvp}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{
@@ -221,9 +198,11 @@ export default function MatchCard({
         </button>
       </div>
 
-      {football && showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
       {showResultForm && (
-        <ResultForm match={match} teams={teams} profile={profile} onSaved={onSaved} />
+        <>
+          <ResultForm match={match} teams={teams} profile={profile} onSaved={onSaved} />
+          {football && <BookingsForm match={match} teams={teams} onChange={onChange} />}
+        </>
       )}
       {football && showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
       {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}

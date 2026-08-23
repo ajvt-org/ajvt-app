@@ -54,7 +54,8 @@ function TournamentPageInner() {
   const singles = data.info?.teamSize === 1;
   const TABS = tabsFor(singles);
   const requested = searchParams.get("tab") as Tab | null;
-  const tab: Tab = requested && TABS.some((t) => t.key === requested) ? requested : "teams";
+  const fallbackTab: Tab = data.matches.length > 0 ? "matches" : "teams";
+  const tab: Tab = requested && TABS.some((t) => t.key === requested) ? requested : fallbackTab;
 
   function pickTab(next: Tab) {
     router.replace(`/admin/tournament/${activityId}?tab=${next}`, { scroll: false });

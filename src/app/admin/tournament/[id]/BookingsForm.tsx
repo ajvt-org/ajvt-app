@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Match, Team } from "./types";
-import { CARD_LABEL } from "./constants";
+import CardChip from "@/components/tournament/CardChip";
 import { api, errorMessage } from "@/lib/api";
 
 export default function BookingsForm({
@@ -57,12 +57,15 @@ export default function BookingsForm({
 
   return (
     <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
+        <CardChip type="YELLOW" /> <CardChip type="RED" /> البطاقات
+      </p>
       {match.bookings.length > 0 && (
         <div className="space-y-1">
           {match.bookings.map((b) => (
             <div key={b.id} className="flex items-center justify-between text-xs">
-              <span>
-                {CARD_LABEL[b.cardType]} {b.member.fullName}
+              <span className="flex items-center gap-1.5">
+                <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
                 {b.minute ? ` — الدقيقة ${b.minute}` : ""}
               </span>
               <button
@@ -108,8 +111,8 @@ export default function BookingsForm({
           className="input text-sm"
           style={{ width: "auto" }}
         >
-          <option value="YELLOW">🟨</option>
-          <option value="RED">🟥</option>
+          <option value="YELLOW">صفراء</option>
+          <option value="RED">حمراء</option>
         </select>
         <input
           type="number"

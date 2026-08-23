@@ -44,7 +44,7 @@ function match(): Match {
   };
 }
 
-function show(profile: "FOOTBALL" | "BOARD") {
+function show(profile: "FOOTBALL" | "BOARD", showResultForm = false) {
   cleanup();
   render(
     <MatchCard
@@ -53,10 +53,8 @@ function show(profile: "FOOTBALL" | "BOARD") {
       allMatches={[match()]}
       profile={profile}
       onDelete={noop}
-      showResultForm={false}
+      showResultForm={showResultForm}
       onToggleResultForm={noop}
-      showCards={false}
-      onToggleCards={noop}
       showMvp={false}
       onToggleMvp={noop}
       showDetails={false}
@@ -72,7 +70,6 @@ describe("MatchCard by sport profile", () => {
     show("FOOTBALL");
 
     expect(screen.getByText(/رجل المباراة/)).toBeDefined();
-    expect(screen.getByText(/إدارة البطاقات/)).toBeDefined();
     expect(screen.getByText(/أفضل لاعب/)).toBeDefined();
     expect(screen.getByText(/سالم/)).toBeDefined();
   });
@@ -81,9 +78,22 @@ describe("MatchCard by sport profile", () => {
     show("BOARD");
 
     expect(screen.queryByText(/رجل المباراة/)).toBeNull();
-    expect(screen.queryByText(/إدارة البطاقات/)).toBeNull();
     expect(screen.queryByText(/أفضل لاعب/)).toBeNull();
     expect(screen.queryByText(/سالم/)).toBeNull();
     expect(screen.getByText(/تعديل التفاصيل/)).toBeDefined();
+  });
+
+  it("opens card entry with the result form on a football match", () => {
+    show("FOOTBALL", true);
+
+    expect(screen.getByText(/البطاقات/)).toBeDefined();
+    expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
+  });
+
+  it("keeps card entry out of a board result form", () => {
+    show("BOARD", true);
+
+    expect(screen.queryByText(/البطاقات/)).toBeNull();
+    expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 });

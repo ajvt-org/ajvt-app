@@ -41,7 +41,6 @@ export default function MatchesTab({
   const [error, setError] = useState("");
   const [showGenerate, setShowGenerate] = useState(false);
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
-  const [cardsFor, setCardsFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -206,6 +205,72 @@ export default function MatchesTab({
           >
             {generating ? "..." : <IconLabel name="swords">توليد نصف النهائي</IconLabel>}
           </button>
+        </div>
+      )}
+
+      {scheduled.length > 0 && (
+        <div>
+          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="calendar">مباريات قادمة</IconLabel>
+          </p>
+          <div className="space-y-3">
+            {scheduled.map((m, i) => (
+              <MatchCard
+                key={m.id}
+                match={m}
+                teams={teams}
+                allMatches={matches}
+                profile={profile}
+                onDelete={() => deleteMatch(m.id)}
+                showResultForm={resultFormFor === m.id}
+                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
+                showMvp={mvpFor === m.id}
+                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
+                showDetails={detailsFor === m.id}
+                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
+                onMoveUp={i > 0 ? () => moveMatch(scheduled, i, "up") : undefined}
+                onMoveDown={
+                  i < scheduled.length - 1 ? () => moveMatch(scheduled, i, "down") : undefined
+                }
+                onSaved={() => {
+                  setResultFormFor(null);
+                  onChange();
+                }}
+                onChange={onChange}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {played.length > 0 && (
+        <div>
+          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="check">نتائج</IconLabel>
+          </p>
+          <div className="space-y-3">
+            {played.map((m) => (
+              <MatchCard
+                key={m.id}
+                match={m}
+                teams={teams}
+                allMatches={matches}
+                profile={profile}
+                onDelete={() => deleteMatch(m.id)}
+                showResultForm={resultFormFor === m.id}
+                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
+                showMvp={mvpFor === m.id}
+                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
+                showDetails={detailsFor === m.id}
+                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
+                onSaved={() => {
+                  setResultFormFor(null);
+                  onChange();
+                }}
+                onChange={onChange}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -388,76 +453,6 @@ export default function MatchesTab({
           onDone={onChange}
           onClose={() => setShowGenerate(false)}
         />
-      )}
-
-      {scheduled.length > 0 && (
-        <div>
-          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="calendar">مباريات قادمة</IconLabel>
-          </p>
-          <div className="space-y-3">
-            {scheduled.map((m, i) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                teams={teams}
-                allMatches={matches}
-                profile={profile}
-                onDelete={() => deleteMatch(m.id)}
-                showResultForm={resultFormFor === m.id}
-                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showCards={cardsFor === m.id}
-                onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
-                showMvp={mvpFor === m.id}
-                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
-                showDetails={detailsFor === m.id}
-                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
-                onMoveUp={i > 0 ? () => moveMatch(scheduled, i, "up") : undefined}
-                onMoveDown={
-                  i < scheduled.length - 1 ? () => moveMatch(scheduled, i, "down") : undefined
-                }
-                onSaved={() => {
-                  setResultFormFor(null);
-                  onChange();
-                }}
-                onChange={onChange}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {played.length > 0 && (
-        <div>
-          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="check">نتائج</IconLabel>
-          </p>
-          <div className="space-y-3">
-            {played.map((m) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                teams={teams}
-                allMatches={matches}
-                profile={profile}
-                onDelete={() => deleteMatch(m.id)}
-                showResultForm={resultFormFor === m.id}
-                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showCards={cardsFor === m.id}
-                onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
-                showMvp={mvpFor === m.id}
-                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
-                showDetails={detailsFor === m.id}
-                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
-                onSaved={() => {
-                  setResultFormFor(null);
-                  onChange();
-                }}
-                onChange={onChange}
-              />
-            ))}
-          </div>
-        </div>
       )}
     </div>
   );
