@@ -159,3 +159,17 @@ export async function seedRegistrations(
     });
   }
 }
+
+export async function seedRosterRegistrations() {
+  const rostered = await prisma.teamMember.findMany({
+    select: { memberId: true, team: { select: { activityId: true } } },
+  });
+  await prisma.activityRegistration.createMany({
+    data: rostered.map((r) => ({
+      memberId: r.memberId,
+      activityId: r.team.activityId,
+      status: "ACTIVE" as const,
+    })),
+    skipDuplicates: true,
+  });
+}
