@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { tournamentSetup as texts } from "@/lib/texts";
 import type { IconName } from "@/components/Icon";
 
 export interface TournamentPreset {
@@ -12,9 +13,15 @@ export interface TournamentPreset {
 }
 
 export const TOURNAMENT_PRESETS: TournamentPreset[] = [
-  { value: "football", label: "بطولة فرق", icon: "ball", profile: "FOOTBALL", teamSize: "" },
-  { value: "board", label: "بطولة فردية", icon: "user", profile: "BOARD", teamSize: "1" },
-  { value: "cards", label: "بطولة أزواج", icon: "users", profile: "BOARD", teamSize: "2" },
+  {
+    value: "football",
+    label: texts.presets.football,
+    icon: "ball",
+    profile: "FOOTBALL",
+    teamSize: "",
+  },
+  { value: "board", label: texts.presets.board, icon: "user", profile: "BOARD", teamSize: "1" },
+  { value: "cards", label: texts.presets.cards, icon: "users", profile: "BOARD", teamSize: "2" },
 ];
 
 export function presetOf(profile: string, teamSize: string): string {
@@ -41,7 +48,7 @@ export default function TournamentSetupFields({
     <div className="space-y-3">
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          نوع البطولة
+          {texts.presetHeading}
         </p>
         <div className="space-y-1.5">
           {TOURNAMENT_PRESETS.map((preset) => (
@@ -77,7 +84,7 @@ export default function TournamentSetupFields({
           style={{ color: "var(--text-main)" }}
           htmlFor="tournament-format"
         >
-          نظام البطولة
+          {texts.formatHeading}
         </label>
         <select
           id="tournament-format"
@@ -85,8 +92,8 @@ export default function TournamentSetupFields({
           onChange={(e) => onFormat(e.target.value)}
           className="input"
         >
-          <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
-          <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
+          <option value="KNOCKOUT">{texts.formats.KNOCKOUT}</option>
+          <option value="GROUPS_THEN_KNOCKOUT">{texts.formats.GROUPS_THEN_KNOCKOUT}</option>
         </select>
       </div>
     </div>

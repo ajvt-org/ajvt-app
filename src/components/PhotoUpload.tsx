@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Icon, { type IconName } from "./Icon";
 import IconLabel from "./IconLabel";
+import { photoUpload as texts } from "@/lib/texts";
 
 interface PhotoUploadProps {
   photo: string | null;
@@ -18,7 +19,7 @@ export default function PhotoUpload({
   photo,
   onUpload,
   imageUrlPrefix = "/api/files",
-  label = "الصورة الشخصية",
+  label = texts.defaultLabel,
   placeholderIcon = "user",
   variant = "avatar",
   bare = false,
@@ -40,11 +41,11 @@ export default function PhotoUpload({
       fd.append("file", file);
       const upRes = await fetch("/api/upload", { method: "POST", body: fd });
       const uploaded = await upRes.json();
-      if (!upRes.ok) throw new Error(uploaded.error || "فشل رفع الصورة");
+      if (!upRes.ok) throw new Error(uploaded.error || texts.uploadFailed);
 
       await onUpload(uploaded.filename);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(err instanceof Error ? err.message : texts.unexpectedError);
       setPreviewUrl(null);
     } finally {
       setUploading(false);
@@ -52,7 +53,7 @@ export default function PhotoUpload({
   }
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
-  const hint = photo || previewUrl ? "انقر على الصورة لتغييرها" : "اختياري — انقر لإضافة صورة";
+  const hint = photo || previewUrl ? texts.changeHint : texts.addHint;
 
   // The profile opens on the person, so the picture is the page's first thing
   // rather than a card of its own further down.
