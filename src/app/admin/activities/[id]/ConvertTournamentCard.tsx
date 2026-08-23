@@ -5,8 +5,13 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
 import DialogHeader from "@/components/DialogHeader";
-import TournamentSetupFields from "../TournamentSetupFields";
+import TournamentSetupFields, { TOURNAMENT_PRESETS, presetOf } from "../TournamentSetupFields";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
+
+const FORMAT_LABEL: Record<string, string> = {
+  KNOCKOUT: "خروج المغلوب مباشرة",
+  GROUPS_THEN_KNOCKOUT: "مجموعات ثم خروج المغلوب",
+};
 
 export default function ConvertTournamentCard({
   activity,
@@ -21,7 +26,20 @@ export default function ConvertTournamentCard({
     null,
   );
 
-  async function convert() {
+  const teamSizeValue = activity.teamSize === null ? "" : String(activity.teamSize);
+  const currentPreset = TOURNAMENT_PRESETS.find(
+    (p) => p.value === presetOf(activity.profile, teamSizeValue),
+  );
+
+  function openDialog() {
+    setSetup({
+      format: activity.format ?? "KNOCKOUT",
+      profile: activity.profile,
+      teamSize: teamSizeValue,
+    });
+  }
+
+  async function save() {
     if (!setup) return;
     setBusy(true);
     try {
@@ -33,7 +51,7 @@ export default function ConvertTournamentCard({
       });
       setSetup(null);
       await onChanged();
-      showToast("أصبح النشاط بطولة");
+      showToast(activity.isTournament ? "حُفظت إعدادات البطولة" : "أصبح النشاط بطولة");
     } catch (e) {
       showToast(errorMessage(e), "error");
     } finally {
@@ -62,21 +80,26 @@ export default function ConvertTournamentCard({
         </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {activity.isTournament
-            ? "هذا النشاط بطولة، له فرق ومباريات وترتيب."
+            ? `${currentPreset?.label ?? ""} · ${FORMAT_LABEL[activity.format ?? "KNOCKOUT"]}`
             : "حوّل النشاط إلى بطولة ليحصل على فرق ومباريات وترتيب."}
         </p>
       </div>
-      <button
-        onClick={() =>
-          activity.isTournament
-            ? unconvert()
-            : setSetup({ format: "KNOCKOUT", profile: "FOOTBALL", teamSize: "" })
-        }
-        disabled={busy}
-        className="btn btn-sm btn-ghost shrink-0"
-      >
-        {busy ? "..." : activity.isTournament ? "إلغاء وضع البطولة" : "تحويل إلى بطولة"}
-      </button>
+      <div className="flex gap-2 shrink-0">
+        {activity.isTournament ? (
+          <>
+            <button onClick={openDialog} disabled={busy} className="btn btn-sm btn-ghost">
+              <IconLabel name="pencil">تعديل الإعدادات</IconLabel>
+            </button>
+            <button onClick={unconvert} disabled={busy} className="btn btn-sm btn-ghost">
+              {busy ? "..." : "إلغاء وضع البطولة"}
+            </button>
+          </>
+        ) : (
+          <button onClick={openDialog} disabled={busy} className="btn btn-sm btn-ghost">
+            {busy ? "..." : "تحويل إلى بطولة"}
+          </button>
+        )}
+      </div>
 
       {setup && (
         <div
@@ -90,7 +113,10 @@ export default function ConvertTournamentCard({
             className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
             style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
           >
-            <DialogHeader title="تحويل إلى بطولة" onClose={() => setSetup(null)} />
+            <DialogHeader
+              title={activity.isTournament ? "إعدادات البطولة" : "تحويل إلى بطولة"}
+              onClose={() => setSetup(null)}
+            />
             <div className="p-4 space-y-4">
               <TournamentSetupFields
                 format={setup.format}
@@ -101,8 +127,11 @@ export default function ConvertTournamentCard({
                   setSetup((p) => p && { ...p, profile: preset.profile, teamSize: preset.teamSize })
                 }
               />
-              <button onClick={convert} disabled={busy} className="btn btn-primary text-sm">
-                {busy ? "..." : "تحويل إلى بطولة"}
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                النظام والنوع وحجم الفريق تُقفل جميعاً بعد إنشاء أول مباراة.
+              </p>
+              <button onClick={save} disabled={busy} className="btn btn-primary text-sm">
+                {busy ? "..." : activity.isTournament ? "حفظ الإعدادات" : "تحويل إلى بطولة"}
               </button>
             </div>
           </div>
