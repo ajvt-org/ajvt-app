@@ -5,16 +5,19 @@ import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { discipline as texts } from "@/lib/texts";
 
 export default function ResultForm({
   match,
   teams,
   profile,
+  suspendedIds,
   onSaved,
 }: {
   match: Match;
   teams: Team[];
   profile: "FOOTBALL" | "BOARD";
+  suspendedIds: string[];
   onSaved: () => void;
 }) {
   // A result form is drawn per match, so ids come from useId rather than the
@@ -24,7 +27,11 @@ export default function ResultForm({
     teams.find((t) => t.id === match.homeTeam.id)?.members.map((m) => m.member) || [];
   const awayRoster =
     teams.find((t) => t.id === match.awayTeam.id)?.members.map((m) => m.member) || [];
-  const combinedRoster = [...homeRoster, ...awayRoster];
+  const banned = new Set(suspendedIds);
+  const eligibleHome = homeRoster.filter((m) => !banned.has(m.id));
+  const eligibleAway = awayRoster.filter((m) => !banned.has(m.id));
+  const combinedRoster = [...eligibleHome, ...eligibleAway];
+  const suspendedPresent = [...homeRoster, ...awayRoster].filter((m) => banned.has(m.id));
   const [homeScore, setHomeScore] = useState(match.homeScore?.toString() ?? "");
   const [awayScore, setAwayScore] = useState(match.awayScore?.toString() ?? "");
   const [homeGoals, setHomeGoals] = useState<{ memberId: string; count: string; minute: string }[]>(
@@ -163,19 +170,27 @@ export default function ResultForm({
         </div>
       )}
 
+      {football && suspendedPresent.length > 0 && (
+        <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
+          <IconLabel name="ban">
+            {texts.hiddenSuspended(suspendedPresent.map((m) => m.fullName).join("، "))}
+          </IconLabel>
+        </p>
+      )}
+
       {football && (
         <>
           <GoalRows
             label={`هدافو ${match.homeTeam.name} (اختياري)`}
             rows={homeGoals}
             setRows={setHomeGoals}
-            teamMembers={homeRoster}
+            teamMembers={eligibleHome}
           />
           <GoalRows
             label={`هدافو ${match.awayTeam.name} (اختياري)`}
             rows={awayGoals}
             setRows={setAwayGoals}
-            teamMembers={awayRoster}
+            teamMembers={eligibleAway}
           />
         </>
       )}

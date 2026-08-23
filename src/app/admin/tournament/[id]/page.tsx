@@ -64,6 +64,7 @@ function TournamentPageInner() {
   const singles = data.info?.teamSize === 1;
   const football = (data.info?.profile ?? "FOOTBALL") === "FOOTBALL";
   const pendingProposals = data.suspensions.filter((s) => s.status === "PROPOSED").length;
+  const suspendedIds = data.suspensions.filter((s) => s.running).map((s) => s.member.id);
   const TABS = tabsFor(singles, football, pendingProposals);
   const requested = searchParams.get("tab") as Tab | null;
   const fallbackTab: Tab = data.matches.length > 0 ? "matches" : "teams";
@@ -170,6 +171,7 @@ function TournamentPageInner() {
               format={info?.format ?? null}
               teamSize={info?.teamSize ?? null}
               roster={roster}
+              suspendedIds={suspendedIds}
               onChange={reloadSquads}
             />
           ))}
@@ -184,7 +186,11 @@ function TournamentPageInner() {
             format={info?.format ?? null}
             profile={info?.profile ?? "FOOTBALL"}
             matches={matches}
-            onChange={data.reloadMatches}
+            suspendedIds={suspendedIds}
+            onChange={() => {
+              data.reloadMatches();
+              data.reloadDiscipline();
+            }}
           />
         )}
         {tab === "standings" && (

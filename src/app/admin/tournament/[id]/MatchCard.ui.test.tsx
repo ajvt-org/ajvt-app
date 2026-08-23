@@ -52,6 +52,7 @@ function show(profile: "FOOTBALL" | "BOARD", showResultForm = false) {
       teams={[]}
       allMatches={[match()]}
       profile={profile}
+      suspendedIds={[]}
       onDelete={noop}
       showResultForm={showResultForm}
       onToggleResultForm={noop}
