@@ -26,6 +26,7 @@ export {
   REQUEST,
   RESULT,
   SUBSCRIBER,
+  TEAM,
   USER,
   VOLUNTEER,
 } from "./counts";

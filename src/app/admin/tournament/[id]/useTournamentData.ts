@@ -6,11 +6,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
+import { tournamentWorkspace as texts } from "@/lib/texts";
 import type { Group, Match, RosterMember, Team, TournamentFormat } from "./types";
 
 export interface TournamentInfo {
   id: string;
   title: string;
+  photo: string | null;
   isTournament: boolean;
   format: TournamentFormat;
   profile: "FOOTBALL" | "BOARD";
@@ -66,7 +68,7 @@ export function useTournamentData(activityId: string) {
 
   useEffect(() => {
     Promise.all([reloadInfo(), reloadRoster(), reloadGroups(), reloadTeams(), reloadMatches()])
-      .catch(() => setError("فشل تحميل بيانات البطولة"))
+      .catch(() => setError(texts.loadFailed))
       .finally(() => setLoading(false));
   }, [reloadInfo, reloadRoster, reloadGroups, reloadTeams, reloadMatches]);
 
