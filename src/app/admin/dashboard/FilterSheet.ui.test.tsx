@@ -15,6 +15,7 @@ function renderSheet(over: Partial<typeof NO_FILTERS> = {}) {
       ageGroups={AGE_GROUPS}
       paymentMethods={["بنكيلي"]}
       years={[2025, 2026]}
+      year={2026}
       resultCount={12}
       onChange={onChange}
       onClose={onClose}
@@ -43,7 +44,7 @@ describe("FilterSheet", () => {
   it("toggles the standing chips", () => {
     const { onChange } = renderSheet({ standing: "paid" });
 
-    fireEvent.click(screen.getByText("مسدّدون"));
+    fireEvent.click(screen.getByText("مسدّد 2026"));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ standing: "" }));
   });

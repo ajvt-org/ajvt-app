@@ -1,6 +1,6 @@
 import { prisma } from "./seed/client";
 import { wipe } from "./seed/wipe";
-import { seedAdmins, seedAgeGroups, seedUsers } from "./seed/accounts";
+import { seedAdmins, seedAgeGroups, seedUsers, seedPushSubscriptions } from "./seed/accounts";
 import { seedMembers } from "./seed/members";
 import { seedActivities, seedRegistrations } from "./seed/activities";
 import { seedLeague, seedDoubles } from "./seed/tournament";
@@ -19,6 +19,10 @@ async function main() {
 
   const users = await seedUsers(USERS);
   const members = await seedMembers(users);
+
+  const attached = new Set(members.all.map((m) => m.userId).filter(Boolean));
+  const bare = users.filter((u) => !attached.has(u.id));
+  await seedPushSubscriptions(bare.slice(0, 9).map((u) => u.id));
 
   const activities = await seedActivities();
   await seedRegistrations(activities, members.active, members.pending);
@@ -44,6 +48,7 @@ async function main() {
 
   console.log("Dev data seeded:", {
     users: users.length,
+    bareAccounts: bare.length,
     members: members.all.length,
     active: members.active.length,
     pending: members.pending.length,

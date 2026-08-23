@@ -6,12 +6,10 @@ import { counted } from "@/lib/arabicCount";
 import { RESULT } from "@/lib/messages";
 import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
 import DateRangeFilter from "./DateRangeFilter";
+import { standingLabel } from "./FilterChips";
 import type { AgeGroup } from "./types";
 
-const STANDINGS = [
-  { value: "paid", label: "مسدّدون" },
-  { value: "behind", label: "متأخرون" },
-];
+const STANDINGS = ["paid", "behind"];
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -29,6 +27,7 @@ export default function FilterSheet({
   ageGroups,
   paymentMethods,
   years,
+  year,
   resultCount,
   onChange,
   onClose,
@@ -37,6 +36,7 @@ export default function FilterSheet({
   ageGroups: AgeGroup[];
   paymentMethods: string[];
   years: number[];
+  year: number;
   resultCount: number;
   onChange: (next: MemberFilters) => void;
   onClose: () => void;
@@ -130,14 +130,14 @@ export default function FilterSheet({
             />
           </Field>
 
-          <Field label="عضوية السنة">
+          <Field label={`عضوية ${year}`}>
             <div className="flex gap-2">
-              {STANDINGS.map((s) => {
-                const on = filters.standing === s.value;
+              {STANDINGS.map((value) => {
+                const on = filters.standing === value;
                 return (
                   <button
-                    key={s.value}
-                    onClick={() => onChange({ ...filters, standing: on ? "" : s.value })}
+                    key={value}
+                    onClick={() => onChange({ ...filters, standing: on ? "" : value })}
                     className="text-xs px-3 py-1.5 rounded-lg font-bold"
                     style={{
                       background: on ? "var(--mint-600)" : "white",
@@ -145,7 +145,7 @@ export default function FilterSheet({
                       border: on ? "none" : "1px solid var(--mint-100)",
                     }}
                   >
-                    {s.label}
+                    {standingLabel(value, year)}
                   </button>
                 );
               })}

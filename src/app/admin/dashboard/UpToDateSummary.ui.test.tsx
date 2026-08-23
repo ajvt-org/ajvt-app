@@ -22,14 +22,14 @@ describe("the membership summary", () => {
     show(91, 117);
 
     expect(screen.getByText("91 مسدّداً")).toBeTruthy();
-    expect(screen.getByText("26 متأخراً")).toBeTruthy();
+    expect(screen.getByText("26 لم يجددوا")).toBeTruthy();
   });
 
   it("takes the plural from three to ten", () => {
     show(7, 10);
 
     expect(screen.getByText("7 مسدّدين")).toBeTruthy();
-    expect(screen.getByText("3 متأخرين")).toBeTruthy();
+    expect(screen.getByText("3 لم يجددوا")).toBeTruthy();
   });
 
   it("carries none as a plural rather than a bare singular", () => {
