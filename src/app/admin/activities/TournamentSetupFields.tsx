@@ -1,12 +1,12 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { tournamentSetup as texts } from "@/lib/texts";
 import type { IconName } from "@/components/Icon";
 
 export interface TournamentPreset {
   value: string;
   label: string;
-  hint: string;
   icon: IconName;
   profile: string;
   teamSize: string;
@@ -15,28 +15,13 @@ export interface TournamentPreset {
 export const TOURNAMENT_PRESETS: TournamentPreset[] = [
   {
     value: "football",
-    label: "بطولة فرق",
-    hint: "كرة القدم ونحوها — أهداف وبطاقات وهدافون",
+    label: texts.presets.football,
     icon: "ball",
     profile: "FOOTBALL",
     teamSize: "",
   },
-  {
-    value: "board",
-    label: "بطولة فردية",
-    hint: "شطرنج، دامة، بلايستيشن — نتيجة فقط، كل مشارك يلعب لنفسه",
-    icon: "user",
-    profile: "BOARD",
-    teamSize: "1",
-  },
-  {
-    value: "cards",
-    label: "بطولة أزواج",
-    hint: "لعب الورق — نتيجة فقط، كل فريق لاعبان اثنان",
-    icon: "users",
-    profile: "BOARD",
-    teamSize: "2",
-  },
+  { value: "board", label: texts.presets.board, icon: "user", profile: "BOARD", teamSize: "1" },
+  { value: "cards", label: texts.presets.cards, icon: "users", profile: "BOARD", teamSize: "2" },
 ];
 
 export function presetOf(profile: string, teamSize: string): string {
@@ -63,7 +48,7 @@ export default function TournamentSetupFields({
     <div className="space-y-3">
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          نوع البطولة
+          {texts.presetHeading}
         </p>
         <div className="space-y-1.5">
           {TOURNAMENT_PRESETS.map((preset) => (
@@ -85,13 +70,8 @@ export default function TournamentSetupFields({
                 onChange={() => onPreset(preset)}
                 className="w-4 h-4"
               />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={preset.icon}>{preset.label}</IconLabel>
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  {preset.hint}
-                </span>
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={preset.icon}>{preset.label}</IconLabel>
               </span>
             </label>
           ))}
@@ -104,7 +84,7 @@ export default function TournamentSetupFields({
           style={{ color: "var(--text-main)" }}
           htmlFor="tournament-format"
         >
-          نظام البطولة
+          {texts.formatHeading}
         </label>
         <select
           id="tournament-format"
@@ -112,12 +92,9 @@ export default function TournamentSetupFields({
           onChange={(e) => onFormat(e.target.value)}
           className="input"
         >
-          <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
-          <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
+          <option value="KNOCKOUT">{texts.formats.KNOCKOUT}</option>
+          <option value="GROUPS_THEN_KNOCKOUT">{texts.formats.GROUPS_THEN_KNOCKOUT}</option>
         </select>
-        <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-          لا يمكن تغييره بعد إنشاء المباريات.
-        </p>
       </div>
     </div>
   );

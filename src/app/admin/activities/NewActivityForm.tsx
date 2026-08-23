@@ -4,6 +4,7 @@ import { useState } from "react";
 import PhotoUpload from "@/components/PhotoUpload";
 import IconLabel from "@/components/IconLabel";
 import { errorMessage } from "@/lib/api";
+import { activityForm as texts } from "@/lib/texts";
 import type { IconName } from "@/components/Icon";
 import TournamentSetupFields from "./TournamentSetupFields";
 import {
@@ -14,15 +15,10 @@ import {
   type NewActivityDraft,
 } from "./activityTypes";
 
-const NATURES: { value: ActivityNature; label: string; hint: string; icon: IconName }[] = [
-  { value: "normal", label: "نشاط عادي", hint: "تسجيل أعضاء وحضور", icon: "calendar" },
-  { value: "tournament", label: "بطولة", hint: "فرق ومباريات وترتيب وهدافون", icon: "trophy" },
-  {
-    value: "volunteer",
-    label: "حملة تطوعية",
-    hint: "بدون تسجيل داخل التطبيق — رابط واتساب مباشر",
-    icon: "handshake",
-  },
+const NATURES: { value: ActivityNature; label: string; icon: IconName }[] = [
+  { value: "normal", label: texts.natures.normal, icon: "calendar" },
+  { value: "tournament", label: texts.natures.tournament, icon: "trophy" },
+  { value: "volunteer", label: texts.natures.volunteer, icon: "handshake" },
 ];
 
 export default function NewActivityForm({
@@ -50,20 +46,20 @@ export default function NewActivityForm({
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="plus">إضافة نشاط جديد</IconLabel>
-      </p>
-      <PhotoUpload
-        photo={draft.photo || null}
-        imageUrlPrefix="/api/files/activity"
-        variant="avatar"
-        label={draft.isTournament ? "شعار البطولة" : "صورة النشاط"}
-        placeholderIcon="image"
-        onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
-      />
+      <div className="flex justify-center">
+        <PhotoUpload
+          photo={draft.photo || null}
+          imageUrlPrefix="/api/files/activity"
+          variant="avatar"
+          bare
+          label={draft.isTournament ? texts.tournamentLogo : texts.activityPhoto}
+          placeholderIcon="image"
+          onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
+        />
+      </div>
       <input
         type="text"
-        placeholder="عنوان النشاط"
+        placeholder={texts.titlePlaceholder}
         value={draft.title}
         onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))}
         required
@@ -71,7 +67,7 @@ export default function NewActivityForm({
         className="input"
       />
       <textarea
-        placeholder="الوصف"
+        placeholder={texts.descriptionPlaceholder}
         value={draft.description}
         onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))}
         required
@@ -85,7 +81,7 @@ export default function NewActivityForm({
           style={{ color: "var(--text-muted)" }}
           htmlFor="activity-field-1"
         >
-          من
+          {texts.from}
         </label>
         <input
           id="activity-field-1"
@@ -99,7 +95,7 @@ export default function NewActivityForm({
           style={{ color: "var(--text-muted)" }}
           htmlFor="activity-field-2"
         >
-          إلى
+          {texts.to}
         </label>
         <input
           id="activity-field-2"
@@ -113,14 +109,14 @@ export default function NewActivityForm({
       <input
         type="number"
         min={1}
-        placeholder="السعة القصوى (اختياري)"
+        placeholder={texts.capacityPlaceholder}
         value={draft.capacity}
         onChange={(e) => setDraft((p) => ({ ...p, capacity: e.target.value }))}
         className="input"
       />
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          نوع النشاط
+          {texts.natureHeading}
         </p>
         <div className="space-y-1.5">
           {NATURES.map((n) => (
@@ -142,13 +138,8 @@ export default function NewActivityForm({
                 onChange={() => setDraft((p) => withNature(p, n.value))}
                 className="w-4 h-4"
               />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={n.icon}>{n.label}</IconLabel>
-                </span>
-                <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-                  {n.hint}
-                </span>
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={n.icon}>{n.label}</IconLabel>
               </span>
             </label>
           ))}
@@ -169,7 +160,7 @@ export default function NewActivityForm({
         <input
           type="text"
           dir="ltr"
-          placeholder="رابط مجموعة الواتساب — https://chat.whatsapp.com/..."
+          placeholder={texts.whatsappPlaceholder}
           value={draft.whatsappLink}
           onChange={(e) => setDraft((p) => ({ ...p, whatsappLink: e.target.value }))}
           required
@@ -185,7 +176,7 @@ export default function NewActivityForm({
         </div>
       )}
       <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-        {saving ? "..." : "إضافة"}
+        {saving ? "..." : texts.submit}
       </button>
     </form>
   );
