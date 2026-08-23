@@ -80,4 +80,4 @@ export interface Match {
   mvpVote: MvpVote | null;
 }
 
-export type Tab = "teams" | "matches" | "standings" | "scorers";
+export type Tab = "teams" | "days" | "matches" | "standings" | "scorers";
