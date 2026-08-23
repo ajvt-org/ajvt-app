@@ -48,6 +48,8 @@ export const PATCH = withRoute(
       format,
       profile,
       teamSize,
+      yellowsForBan,
+      redBanMatches,
       isVolunteer,
       whatsappLink,
       order,
@@ -72,6 +74,8 @@ export const PATCH = withRoute(
       format?: TournamentFormat | null;
       profile?: SportProfile;
       teamSize?: number | null;
+      yellowsForBan?: number;
+      redBanMatches?: number;
       isVolunteer?: boolean;
       whatsappLink?: string | null;
       order?: number;
@@ -108,6 +112,8 @@ export const PATCH = withRoute(
       }
       data.profile = profile;
     }
+    if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
+    if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
     if (order !== undefined) data.order = Number(order);

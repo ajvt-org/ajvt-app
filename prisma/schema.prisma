@@ -88,6 +88,7 @@ model Member {
   donations        Donation[]
   memberships      Membership[]
   payments         Payment[]
+  suspensions      Suspension[]
 
   @@index([membershipYear])
 }
@@ -122,6 +123,8 @@ model Activity {
   format        TournamentFormat?
   profile       SportProfile           @default(FOOTBALL)
   teamSize      Int?
+  yellowsForBan Int                    @default(2) // yellows across the tournament that propose a suspension
+  redBanMatches Int                    @default(1) // matches a proposed red-card ban carries
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
   order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
@@ -136,6 +139,7 @@ model Activity {
   admins        AdminActivity[]
   payments      Payment[]
   days          TournamentDay[]
+  suspensions   Suspension[]
 }
 
 // The tournament's spine: an ordered run of days counted from the activity's
@@ -742,4 +746,47 @@ enum TournamentFormat {
 enum SportProfile {
   FOOTBALL
   BOARD
+}
+
+enum SuspensionReason {
+  RED_CARD
+  YELLOW_CARDS
+  CONDUCT
+}
+
+enum SuspensionScope {
+  MATCHES
+  DAYS
+  INDEFINITE
+}
+
+enum SuspensionStatus {
+  PROPOSED
+  ACTIVE
+  LIFTED
+}
+
+// A ban scoped to one tournament. Everything starts PROPOSED — the system
+// only ever proposes, an admin validates — and MATCHES-scoped bans count
+// down as the member's team plays, LIFTED at zero. matches holds what is
+// left to serve; until is the DAYS deadline; INDEFINITE ends only by hand.
+model Suspension {
+  id         String           @id @default(cuid())
+  activityId String
+  activity   Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  memberId   String
+  member     Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  reason     SuspensionReason
+  scope      SuspensionScope
+  matches    Int?
+  until      DateTime?
+  note       String?
+  status     SuspensionStatus @default(PROPOSED)
+  createdBy  String
+  decidedBy  String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([activityId, memberId])
+  @@index([activityId, status])
 }
