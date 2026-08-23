@@ -149,7 +149,6 @@ function Proof({ member, onZoom }: { member: Member; onZoom: () => void }) {
 export interface MemberDrawerProps {
   member: Member;
   actionLoading: boolean;
-  deleteLoading: boolean;
   resetLoading: boolean;
   tempPassword: string | null;
   tempPasswordHours: number;
@@ -168,13 +167,11 @@ export interface MemberDrawerProps {
   onCloseRejectPicker: () => void;
   onApprove: () => void;
   onReject: () => void;
-  onDelete: () => void;
 }
 
 export default function MemberDrawer({
   member,
   actionLoading,
-  deleteLoading,
   resetLoading,
   tempPassword,
   tempPasswordHours,
@@ -193,7 +190,6 @@ export default function MemberDrawer({
   onCloseRejectPicker,
   onApprove,
   onReject,
-  onDelete,
 }: MemberDrawerProps) {
   return (
     <div
@@ -277,15 +273,6 @@ export default function MemberDrawer({
             onApprove={onApprove}
             onReject={onReject}
           />
-
-          <button
-            onClick={onDelete}
-            disabled={deleteLoading}
-            className="btn w-full text-sm font-bold"
-            style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-          >
-            {deleteLoading ? "..." : <IconLabel name="trash">حذف الطلب نهائياً</IconLabel>}
-          </button>
 
           <div className="pb-2" />
         </div>

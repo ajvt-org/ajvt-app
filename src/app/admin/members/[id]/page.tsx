@@ -14,6 +14,7 @@ import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
+import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
@@ -146,12 +147,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <MemberDecision
-          memberId={member.id}
-          fullName={member.fullName}
-          status={member.status}
-          onDecided={load}
-        />
+        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
       )}
 
       {member.user && (
@@ -272,6 +268,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </ul>
         )}
       </ProfileSection>
+
+      <DeleteMemberCard memberId={member.id} fullName={member.fullName} />
     </div>
   );
 }
