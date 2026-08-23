@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
@@ -88,17 +89,29 @@ function Row({
   }
 
   return (
-    <div className="card p-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-bold" dir="ltr">
-            {user.phone}
+    <div className="card w-full p-3 sm:p-4 text-right">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white"
+            style={{ background: "var(--mint-400)" }}
+          >
+            <Icon name="user" size={20} />
           </div>
-          <div className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {daysSince(user.createdAt)}
+          <div className="min-w-0">
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }} dir="ltr">
+              {user.phone}
+            </p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {daysSince(user.createdAt)}
+            </p>
           </div>
         </div>
-        <NudgeButton user={user} />
+        <div className="shrink-0">
+          <NudgeButton user={user} />
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-2 flex-wrap" style={{ paddingRight: "52px" }}>
         <button
           onClick={resetPassword}
           disabled={resetBusy}
@@ -114,7 +127,7 @@ function Row({
         >
           <IconLabel name="plus">إضافة طلب</IconLabel>
         </button>
-        <span className="w-4 shrink-0" aria-hidden />
+        <span className="flex-1" aria-hidden />
         <button
           onClick={onDelete}
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
