@@ -31,6 +31,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/samePersonServer.ts",
   "src/lib/scheduleGenerateServer.ts",
   "src/lib/settingsServer.ts",
+  "src/lib/suspensionServer.ts",
   "src/lib/siteStatsServer.ts",
   "src/lib/tournamentDaysServer.ts",
   "src/lib/tournamentNotify.ts",

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
+import { serveMatch, suspendedMemberIds } from "@/lib/suspensionServer";
 import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
@@ -280,6 +281,18 @@ export const PATCH = withRoute(
       }
     }
 
+    if (enteringResult) {
+      const suspended = await suspendedMemberIds(match.activityId);
+      const involved = [
+        ...parsedHomeGoals.map((g) => g.memberId),
+        ...parsedAwayGoals.map((g) => g.memberId),
+        ...(updateData.manOfTheMatchId ? [updateData.manOfTheMatchId] : []),
+      ];
+      if (involved.some((memberId) => suspended.has(memberId))) {
+        return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
+      }
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       if (enteringResult) {
         await tx.matchGoal.deleteMany({ where: { matchId } });
@@ -305,6 +318,9 @@ export const PATCH = withRoute(
             })),
           });
         }
+      }
+      if (enteringResult && updateData.status === "PLAYED" && !wasPlayed) {
+        await serveMatch(tx, match.activityId, [match.homeTeamId, match.awayTeamId]);
       }
       return tx.match.update({ where: { id: matchId }, data: updateData, include: MATCH_INCLUDE });
     });

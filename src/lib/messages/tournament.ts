@@ -20,6 +20,14 @@ export const tournament = {
   dayIsRest: "هذا يوم راحة — حوّله إلى يوم مباريات أولاً",
   startDateMissing: "حدد تاريخ بداية البطولة أولاً من تفاصيل النشاط",
   needTwoTeams: "يحتاج النشاط إلى فريقين على الأقل",
+  suspensionNotFound: "الإيقاف غير موجود",
+  suspensionDecided: "حُسم هذا الاقتراح بالفعل",
+  suspensionNotActive: "هذا الإيقاف غير نافذ",
+  suspensionAlreadyOpen: "لهذا اللاعب إيقاف قائم أو اقتراح معلق بالفعل",
+  suspensionMatchesRequired: "حدد عدد المباريات",
+  suspensionUntilRequired: "حدد تاريخ نهاية الإيقاف",
+  memberNotInTournament: "اللاعب ليس ضمن هذه البطولة",
+  memberSuspended: "اللاعب موقوف — لا يمكن تسجيله في هذه المباراة",
   nothingToGenerate: (perTeam: number) =>
     `لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل ${perTeam} مباريات`,
 } as const;

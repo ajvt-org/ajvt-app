@@ -36,6 +36,8 @@ export const activityUpdateSchema = z
     isTournament: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
     profile: z.enum(["FOOTBALL", "BOARD"], INVALID).optional(),
+    yellowsForBan: z.number().int().min(1).max(10).optional(),
+    redBanMatches: z.number().int().min(1).max(10).optional(),
     teamSize: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),

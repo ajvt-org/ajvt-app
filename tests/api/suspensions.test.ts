@@ -1,0 +1,236 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { GET as LIST, POST as PROPOSE } from "@/app/api/admin/activities/[id]/suspensions/route";
+import {
+  PATCH as DECIDE,
+  DELETE as LIFT,
+} from "@/app/api/admin/activities/[id]/suspensions/[suspensionId]/route";
+import { POST as BOOK } from "@/app/api/admin/matches/[matchId]/bookings/route";
+import { PATCH as SAVE_RESULT } from "@/app/api/admin/matches/[matchId]/route";
+import { prisma } from "@/lib/prisma";
+import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin, withId } from "./helpers";
+
+function withIds(id: string, suspensionId: string) {
+  return { params: Promise.resolve({ id, suspensionId }) };
+}
+
+function withMatch(matchId: string) {
+  return { params: Promise.resolve({ matchId }) };
+}
+
+async function tournament() {
+  const activity = await prisma.activity.create({
+    data: { title: "بطولة الانضباط", description: "بطولة", isTournament: true, format: "KNOCKOUT" },
+  });
+  const home = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
+  const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
+  const players = [];
+  for (let i = 0; i < 2; i++) {
+    const member = await prisma.member.create({
+      data: { fullName: `لاعب ${i}`, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    });
+    await prisma.teamMember.create({
+      data: { teamId: i === 0 ? home.id : away.id, memberId: member.id, status: "ACTIVE" },
+    });
+    players.push(member);
+  }
+  const match = await prisma.match.create({
+    data: { activityId: activity.id, homeTeamId: home.id, awayTeamId: away.id },
+  });
+  return { activity, home, away, players, match };
+}
+
+async function activate(activityId: string, suspensionId: string) {
+  return DECIDE(
+    patch(`/api/admin/activities/${activityId}/suspensions/${suspensionId}`, { approve: true }),
+    withIds(activityId, suspensionId),
+  );
+}
+
+describe("the discipline engine", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("proposes the tournament's ban when a red card lands, and only proposes", async () => {
+    const { away, players, match } = await tournament();
+
+    const res = await BOOK(
+      post(`/api/admin/matches/${match.id}/bookings`, {
+        memberId: players[1].id,
+        teamId: away.id,
+        cardType: "RED",
+      }),
+      withMatch(match.id),
+    );
+
+    expect((await res.json()).proposed).toBe(true);
+    const suspension = await prisma.suspension.findFirstOrThrow();
+    expect(suspension).toMatchObject({
+      reason: "RED_CARD",
+      scope: "MATCHES",
+      matches: 1,
+      status: "PROPOSED",
+    });
+  });
+
+  it("proposes on the second yellow, not the first", async () => {
+    const { activity, away, players, match } = await tournament();
+    const second = await prisma.match.create({
+      data: {
+        activityId: activity.id,
+        homeTeamId: (await prisma.team.findFirstOrThrow({ where: { name: "أ" } })).id,
+        awayTeamId: away.id,
+      },
+    });
+
+    const book = (matchId: string) =>
+      BOOK(
+        post(`/api/admin/matches/${matchId}/bookings`, {
+          memberId: players[1].id,
+          teamId: away.id,
+          cardType: "YELLOW",
+        }),
+        withMatch(matchId),
+      );
+
+    expect((await (await book(match.id)).json()).proposed).toBe(false);
+    expect((await (await book(second.id)).json()).proposed).toBe(true);
+    expect(await prisma.suspension.count()).toBe(1);
+    expect((await prisma.suspension.findFirstOrThrow()).reason).toBe("YELLOW_CARDS");
+  });
+
+  it("keeps a suspended player out of the score sheet", async () => {
+    const { activity, players, match } = await tournament();
+    const proposal = await (
+      await PROPOSE(
+        post(`/api/admin/activities/${activity.id}/suspensions`, {
+          memberId: players[0].id,
+          scope: "INDEFINITE",
+        }),
+        withId(activity.id),
+      )
+    ).json();
+    await activate(activity.id, proposal.suspension.id);
+
+    const res = await SAVE_RESULT(
+      patch(`/api/admin/matches/${match.id}`, {
+        homeScore: 1,
+        awayScore: 0,
+        homeGoals: [{ memberId: players[0].id, count: 1 }],
+      }),
+      withMatch(match.id),
+    );
+
+    expect(res.status).toBe(409);
+  });
+
+  it("serves a match ban down as the team plays, lifting at zero", async () => {
+    const { activity, players, match } = await tournament();
+    const proposal = await (
+      await PROPOSE(
+        post(`/api/admin/activities/${activity.id}/suspensions`, {
+          memberId: players[0].id,
+          scope: "MATCHES",
+          matches: 1,
+        }),
+        withId(activity.id),
+      )
+    ).json();
+    await activate(activity.id, proposal.suspension.id);
+
+    await SAVE_RESULT(
+      patch(`/api/admin/matches/${match.id}`, { homeScore: 0, awayScore: 0 }),
+      withMatch(match.id),
+    );
+
+    const served = await prisma.suspension.findFirstOrThrow();
+    expect(served).toMatchObject({ matches: 0, status: "LIFTED" });
+  });
+
+  it("dismissing a proposal removes it entirely", async () => {
+    const { activity, players } = await tournament();
+    const proposal = await (
+      await PROPOSE(
+        post(`/api/admin/activities/${activity.id}/suspensions`, {
+          memberId: players[0].id,
+          scope: "INDEFINITE",
+        }),
+        withId(activity.id),
+      )
+    ).json();
+
+    await DECIDE(
+      patch(`/api/admin/activities/${activity.id}/suspensions/${proposal.suspension.id}`, {
+        approve: false,
+      }),
+      withIds(activity.id, proposal.suspension.id),
+    );
+
+    expect(await prisma.suspension.count()).toBe(0);
+  });
+
+  it("lifts an active suspension by hand", async () => {
+    const { activity, players } = await tournament();
+    const proposal = await (
+      await PROPOSE(
+        post(`/api/admin/activities/${activity.id}/suspensions`, {
+          memberId: players[0].id,
+          scope: "INDEFINITE",
+        }),
+        withId(activity.id),
+      )
+    ).json();
+    await activate(activity.id, proposal.suspension.id);
+
+    const res = await LIFT(
+      del(`/api/admin/activities/${activity.id}/suspensions/${proposal.suspension.id}`),
+      withIds(activity.id, proposal.suspension.id),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await prisma.suspension.findFirstOrThrow()).status).toBe("LIFTED");
+  });
+
+  it("refuses a second open suspension for the same player", async () => {
+    const { activity, players } = await tournament();
+    await PROPOSE(
+      post(`/api/admin/activities/${activity.id}/suspensions`, {
+        memberId: players[0].id,
+        scope: "INDEFINITE",
+      }),
+      withId(activity.id),
+    );
+
+    const res = await PROPOSE(
+      post(`/api/admin/activities/${activity.id}/suspensions`, {
+        memberId: players[0].id,
+        scope: "MATCHES",
+        matches: 2,
+      }),
+      withId(activity.id),
+    );
+
+    expect(res.status).toBe(409);
+  });
+
+  it("lists proposals and bans with the tournament's rules", async () => {
+    const { activity, players } = await tournament();
+    await PROPOSE(
+      post(`/api/admin/activities/${activity.id}/suspensions`, {
+        memberId: players[0].id,
+        scope: "DAYS",
+        until: "2027-01-01T00:00:00.000Z",
+      }),
+      withId(activity.id),
+    );
+
+    const body = await (
+      await LIST(get(`/api/admin/activities/${activity.id}/suspensions`), withId(activity.id))
+    ).json();
+
+    expect(body.rules).toEqual({ yellowsForBan: 2, redBanMatches: 1 });
+    expect(body.suspensions).toHaveLength(1);
+    expect(body.suspensions[0].member.fullName).toBe("لاعب 0");
+  });
+});
