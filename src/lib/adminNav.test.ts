@@ -84,7 +84,12 @@ describe("tabActive", () => {
   });
 
   it("keeps the tools tab lit on its sub-pages", () => {
-    for (const path of ["/admin/password", "/admin/admins", "/admin/audit-log", "/admin/broadcast"]) {
+    for (const path of [
+      "/admin/password",
+      "/admin/admins",
+      "/admin/audit-log",
+      "/admin/broadcast",
+    ]) {
       expect(tabActive("/admin/tools", path), path).toBe(true);
     }
     expect(tabActive("/admin/tools", "/admin/dashboard")).toBe(false);
