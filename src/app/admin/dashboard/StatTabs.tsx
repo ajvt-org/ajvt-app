@@ -1,14 +1,16 @@
 "use client";
 
+import { memberStatusLabels } from "@/lib/messages";
 import type { FilterTab } from "./types";
 
-const TABS: FilterTab[] = ["ALL", "PENDING", "ACTIVE", "REJECTED"];
+const TABS: FilterTab[] = ["ALL", "PENDING", "ACTIVE", "REJECTED", "NO_REQUEST"];
 
 const TAB_LABEL: Record<FilterTab, string> = {
   ALL: "الكل",
   PENDING: "انتظار",
-  ACTIVE: "مقبول",
+  ACTIVE: memberStatusLabels.ACTIVE,
   REJECTED: "مرفوض",
+  NO_REQUEST: "بدون طلب",
 };
 
 export default function StatTabs({
@@ -21,7 +23,7 @@ export default function StatTabs({
   onPick: (tab: FilterTab) => void;
 }) {
   return (
-    <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-5">
+    <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-3 sm:mb-5">
       {TABS.map((s) => (
         <button
           key={s}

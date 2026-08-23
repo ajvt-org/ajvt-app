@@ -7,7 +7,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
-import { STATUS_LABEL, STATUS_BADGE } from "./constants";
+import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
@@ -84,11 +84,12 @@ function paidRows(member: Member): Row[] {
   ];
 }
 
-function Facts({ member }: { member: Member }) {
+function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
   const rows: Row[] = [
     ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
     ["العصر", member.age, undefined],
     ["طريقة الدفع", member.paymentMethod, undefined],
+    ["سنة العضوية", String(member.membershipYear), "ltr"],
     ...paidRows(member),
     ["رقم العضوية", member.memberNumber || "—", "ltr"],
     ["تاريخ الطلب", formatDate(member.createdAt), undefined],
@@ -107,6 +108,14 @@ function Facts({ member }: { member: Member }) {
           </span>
         </div>
       ))}
+      {member.status === "ACTIVE" && member.membershipYear < settingsYear && (
+        <p
+          className="text-xs font-bold rounded-lg px-3 py-2"
+          style={{ background: "#fef3c7", color: "#92400e" }}
+        >
+          المبالغ أعلاه تخص عضوية {member.membershipYear}، ولم يجدد عضوية {settingsYear} بعد.
+        </p>
+      )}
     </div>
   );
 }
@@ -149,7 +158,7 @@ function Proof({ member, onZoom }: { member: Member; onZoom: () => void }) {
 export interface MemberDrawerProps {
   member: Member;
   actionLoading: boolean;
-  deleteLoading: boolean;
+  settingsYear: number;
   resetLoading: boolean;
   tempPassword: string | null;
   tempPasswordHours: number;
@@ -168,13 +177,12 @@ export interface MemberDrawerProps {
   onCloseRejectPicker: () => void;
   onApprove: () => void;
   onReject: () => void;
-  onDelete: () => void;
 }
 
 export default function MemberDrawer({
   member,
   actionLoading,
-  deleteLoading,
+  settingsYear,
   resetLoading,
   tempPassword,
   tempPasswordHours,
@@ -193,7 +201,6 @@ export default function MemberDrawer({
   onCloseRejectPicker,
   onApprove,
   onReject,
-  onDelete,
 }: MemberDrawerProps) {
   return (
     <div
@@ -216,15 +223,18 @@ export default function MemberDrawer({
         <div className="p-5 space-y-4">
           <SamePersonWarning memberId={member.id} />
           <Identity member={member} />
-          <Facts member={member} />
+          <Facts member={member} settingsYear={settingsYear} />
           <MembershipPanel memberId={member.id} />
 
           <div className="flex items-center justify-between card p-4">
-            <span className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-              الحالة
+            <span
+              className="text-sm font-semibold flex items-center"
+              style={{ color: "var(--text-muted)" }}
+            >
+              <IconLabel name="flag">الحالة</IconLabel>
             </span>
             <span className={`badge ${STATUS_BADGE[member.status]}`}>
-              {STATUS_LABEL[member.status]}
+              <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
             </span>
           </div>
 
@@ -277,15 +287,6 @@ export default function MemberDrawer({
             onApprove={onApprove}
             onReject={onReject}
           />
-
-          <button
-            onClick={onDelete}
-            disabled={deleteLoading}
-            className="btn w-full text-sm font-bold"
-            style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-          >
-            {deleteLoading ? "..." : <IconLabel name="trash">حذف الطلب نهائياً</IconLabel>}
-          </button>
 
           <div className="pb-2" />
         </div>

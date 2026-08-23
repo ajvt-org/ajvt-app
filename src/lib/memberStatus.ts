@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/Icon";
+import { memberStatusLabels } from "@/lib/messages";
 import type { Status } from "@/lib/useMember";
 
 // One description of each status, so the badge at the top of the profile and
@@ -19,7 +20,7 @@ export const STATUS: Record<
 > = {
   PENDING: {
     icon: "clock",
-    label: "قيد الانتظار",
+    label: memberStatusLabels.PENDING,
     title: "الطلب قيد المراجعة",
     desc: "تم استلام الطلب. سيقوم المشرف بمراجعة البيانات وإثبات الدفع وإعلامك بالنتيجة قريباً.",
     bg: "#fef9ee",
@@ -30,7 +31,7 @@ export const STATUS: Record<
   },
   ACTIVE: {
     icon: "check",
-    label: "مقبول",
+    label: memberStatusLabels.ACTIVE,
     title: "تم قبول العضوية!",
     desc: "تهانينا! عضو رسمي الآن في رابطة شباب قرية التاكلالت.",
     bg: "#f0fdf4",
@@ -41,7 +42,7 @@ export const STATUS: Record<
   },
   REJECTED: {
     icon: "close",
-    label: "غير مقبول",
+    label: memberStatusLabels.REJECTED,
     title: "لم يتم قبول الطلب",
     desc: "نأسف لإعلامك أنه لم يتم قبول هذا الطلب. يمكنك التواصل مع المشرف لمزيد من المعلومات.",
     bg: "#fff5f5",

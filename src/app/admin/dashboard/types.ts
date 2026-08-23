@@ -1,5 +1,13 @@
 export type Status = "PENDING" | "ACTIVE" | "REJECTED";
-export type FilterTab = "ALL" | Status;
+export type FilterTab = "ALL" | Status | "NO_REQUEST";
+
+export interface BareAccount {
+  id: string;
+  phone: string;
+  createdAt: string;
+  lastActiveDate: string | null;
+  hasPush: boolean;
+}
 
 export interface Member {
   id: string;

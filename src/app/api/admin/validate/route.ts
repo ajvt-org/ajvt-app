@@ -11,7 +11,7 @@ import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
-import { members, notify } from "@/lib/messages";
+import { members, memberStatusLabels, notify } from "@/lib/messages";
 
 export const POST = withRoute("Validate", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
@@ -60,11 +60,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     return m;
   });
 
-  const statusLabel: Record<string, string> = {
-    PENDING: "قيد الانتظار",
-    ACTIVE: members.approved,
-    REJECTED: members.rejected,
-  };
+  const statusLabel: Record<string, string> = memberStatusLabels;
   const transition = existing
     ? ` (من ${statusLabel[existing.status]} إلى ${statusLabel[action]})`
     : "";

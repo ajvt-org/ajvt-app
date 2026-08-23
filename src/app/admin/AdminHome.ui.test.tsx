@@ -28,7 +28,7 @@ vi.mock("next/navigation", () => ({
 
 const SUMMARY = {
   year: 2026,
-  membership: { paid: 8, active: 10, behind: 2 },
+  membership: { current: 8, active: 10, former: 2 },
   money: { revenue: 5000, spending: 2000, net: 3000 },
   handling: { pendingMembers: 1, pendingRegistrations: 2, pendingPayments: 0, total: 3 },
 };

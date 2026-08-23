@@ -52,7 +52,7 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
 
   await adminPage.getByRole("button", { name: "الكل" }).click();
   await expect(adminPage.locator(".card", { hasText: MEMBER.fullName }).first()).toContainText(
-    "مقبول",
+    "معتمد",
   );
   await admin.close();
 

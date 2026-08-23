@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { allowedAreas, canOpen, landingFor } from "@/lib/adminNav";
+import { allowedAreas, canOpen, landingFor, tabActive } from "@/lib/adminNav";
 
 describe("allowedAreas", () => {
   it("gives a full admin everything", () => {
@@ -30,6 +30,13 @@ describe("canOpen", () => {
     expect(canOpen("MEMBERS", "/admin/payments")).toBe(true);
     expect(canOpen("MEMBERS", "/admin/activities")).toBe(false);
     expect(canOpen("MEMBERS", "/admin/quiz")).toBe(false);
+  });
+
+  it("opens the trash to the roles that can delete, and no one else", () => {
+    expect(canOpen("MEMBERS", "/admin/deleted")).toBe(true);
+    expect(canOpen("SUPER", "/admin/deleted")).toBe(true);
+    expect(canOpen("ACTIVITIES", "/admin/deleted")).toBe(false);
+    expect(canOpen("QUIZ", "/admin/deleted")).toBe(false);
   });
 
   it("lets every role change its own password from the tools tab", () => {
@@ -65,6 +72,43 @@ describe("canOpen", () => {
   it("lets a full admin anywhere", () => {
     expect(canOpen("SUPER", "/admin/quiz")).toBe(true);
     expect(canOpen("SUPER", "/admin/settings")).toBe(true);
+  });
+});
+
+describe("tabActive", () => {
+  it("matches the tab itself and its sub-pages", () => {
+    expect(tabActive("/admin/activities", "/admin/activities")).toBe(true);
+    expect(tabActive("/admin/activities", "/admin/activities/abc")).toBe(true);
+    expect(tabActive("/admin/activities", "/admin/dashboard")).toBe(false);
+  });
+
+  it("keeps the accounts tab lit on a member detail page", () => {
+    expect(tabActive("/admin/dashboard", "/admin/members/abc")).toBe(true);
+  });
+
+  it("keeps the activities tab lit on a tournament page", () => {
+    expect(tabActive("/admin/activities", "/admin/tournament/abc")).toBe(true);
+  });
+
+  it("keeps the tools tab lit on its sub-pages", () => {
+    for (const path of [
+      "/admin/password",
+      "/admin/admins",
+      "/admin/audit-log",
+      "/admin/broadcast",
+      "/admin/deleted",
+    ]) {
+      expect(tabActive("/admin/tools", path), path).toBe(true);
+    }
+    expect(tabActive("/admin/tools", "/admin/dashboard")).toBe(false);
+  });
+
+  it("does not prefix-match across route names", () => {
+    expect(tabActive("/admin/dashboard", "/admin/membership")).toBe(false);
+  });
+
+  it("is inactive with no pathname yet", () => {
+    expect(tabActive("/admin/dashboard", null)).toBe(false);
   });
 });
 

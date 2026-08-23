@@ -25,7 +25,7 @@ describe("auditTargetLabel", () => {
 describe("auditValueLabel", () => {
   it("translates the status codes the log is full of", () => {
     expect(auditValueLabel("PENDING")).toBe("قيد المراجعة");
-    expect(auditValueLabel("ACTIVE")).toBe("مقبول");
+    expect(auditValueLabel("ACTIVE")).toBe("معتمد");
   });
 
   it("names an admin role the same way the admin list does", () => {

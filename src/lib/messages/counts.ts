@@ -112,20 +112,6 @@ export const RESULT: CountedNoun = {
   many: "نتيجةً",
 };
 
-export const SETTLED: CountedNoun = {
-  one: "مسدّد",
-  two: "مسدّدان",
-  few: "مسدّدين",
-  many: "مسدّداً",
-};
-
-export const OVERDUE: CountedNoun = {
-  one: "متأخر",
-  two: "متأخران",
-  few: "متأخرين",
-  many: "متأخراً",
-};
-
 export const ACTIVE_MEMBER: CountedNoun = {
   one: "عضو نشط",
   two: "عضوين نشطين",

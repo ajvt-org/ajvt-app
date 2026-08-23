@@ -97,7 +97,7 @@ export default function StandingsTab({
         className="text-xs px-3 py-1.5 rounded-lg font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        <IconLabel name="download">تصدير الترتيب والنتائج (CSV)</IconLabel>
+        <IconLabel name="download">تصدير الترتيب والنتائج</IconLabel>
       </button>
 
       {standingsByGroup.map((group) => (

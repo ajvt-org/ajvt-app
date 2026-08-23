@@ -25,17 +25,18 @@ import AgeGroupsDialog from "./AgeGroupsDialog";
 import ManualAddDialog from "./ManualAddDialog";
 import StatTabs from "./StatTabs";
 import StatsPanel from "./StatsPanel";
-import DashboardToolbar from "./DashboardToolbar";
 import MemberSearch from "./MemberSearch";
-import MemberFilterRow from "./MemberFilterRow";
+import FilterSheet from "./FilterSheet";
+import FilterChips from "./FilterChips";
 import UpToDateSummary from "./UpToDateSummary";
 import { useMembershipSettings } from "./useMembershipSettings";
 import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
+import BareAccountsSection from "./BareAccountsSection";
+import { useBareAccounts } from "./useBareAccounts";
 import PageLoading from "@/components/PageLoading";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
 function AdminDashboardInner() {
   const router = useRouter();
@@ -69,11 +70,12 @@ function AdminDashboardInner() {
   const [accountPhoneInput, setAccountPhoneInput] = useState("");
   const [attachAccountLoading, setAttachAccountLoading] = useState(false);
   const [attachAccountError, setAttachAccountError] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<Member | null>(null);
 
   const [showStats, setShowStats] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualAddPhone, setManualAddPhone] = useState("");
+  const bare = useBareAccounts();
   const [showAgeGroups, setShowAgeGroups] = useState(false);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [orphanAges, setOrphanAges] = useState<OrphanAge[]>([]);
@@ -202,20 +204,6 @@ function AdminDashboardInner() {
     }
   }
 
-  async function deleteMember(id: string, confirmName: string) {
-    setDeleteLoading(true);
-    try {
-      await api.del(`/api/admin/members/${id}`, { confirmName });
-      setConfirmDelete(null);
-      await fetchMembers();
-      setSelected(null);
-    } catch (e) {
-      alert(errorMessage(e));
-    } finally {
-      setDeleteLoading(false);
-    }
-  }
-
   async function resetPassword(userId: string) {
     setResetLoading(true);
     setTempPassword(null);
@@ -285,6 +273,16 @@ function AdminDashboardInner() {
     setPage(1);
   }
 
+  const filterCount = [
+    filters.age,
+    filters.method,
+    filters.paid,
+    filters.year,
+    filters.standing,
+    filters.from,
+    filters.to,
+  ].filter(Boolean).length;
+
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const currentPage = Math.min(page, totalPages);
   const paginated = paginate(filtered, currentPage, PAGE_SIZE);
@@ -307,94 +305,111 @@ function AdminDashboardInner() {
 
   return (
     <div className="admin-page">
-      <StatTabs active={filter} counts={counts} onPick={setFilter} />
-
-      <DashboardToolbar
-        statsOpen={showStats}
-        onToggleStats={() => setShowStats((v) => !v)}
-        onExport={() => exportMembers(members)}
+      <StatTabs
+        active={filter}
+        counts={{ ...counts, NO_REQUEST: bare.users.length }}
+        onPick={setFilter}
       />
 
-      {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
-
-      <UpToDateSummary
-        year={membership.year}
-        paid={standing.paid}
-        active={standing.active}
-        showing={
-          filters.standing === "paid" || filters.standing === "behind" ? filters.standing : null
-        }
-        onShowPaid={() => setFilters(withStanding("paid"))}
-        onShowBehind={() => setFilters(withStanding("behind"))}
-      />
-
-      <MemberSearch
-        value={filters.q}
-        onChange={(q) => setFilters({ ...filters, q })}
-        onManageAgeGroups={() => setShowAgeGroups(true)}
-        onManualAdd={() => setShowManualAdd(true)}
-      />
-
-      <MemberFilterRow
-        filters={filters}
-        ageGroups={ageGroups}
-        paymentMethods={paymentMethods}
-        years={years}
-        resultCount={filtered.length}
-        onChange={setFilters}
-      />
-
-      {selectedIds.size > 0 && (
-        <BulkActionsBar
-          count={selectedIds.size}
-          pending={filter === "PENDING"}
-          loading={bulkLoading}
-          reason={bulkReason}
-          age={bulkAge}
-          ageGroups={ageGroups}
-          onReason={setBulkReason}
-          onAge={setBulkAge}
-          onClear={() => setSelectedIds(new Set())}
-          onApprove={() =>
-            runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`)
-          }
-          onReject={() =>
-            runOnSelection(
-              "REJECTED",
-              bulkReason,
-              `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
-            )
-          }
-          onMoveAge={bulkMoveAge}
+      {filter === "NO_REQUEST" ? (
+        <BareAccountsSection
+          users={bare.users}
+          loading={bare.loading}
+          onFill={(phone) => {
+            setManualAddPhone(phone);
+            setShowManualAdd(true);
+          }}
+          onChanged={bare.refresh}
         />
-      )}
-
-      {loading ? (
-        <PageLoading />
       ) : (
-        <MemberList
-          members={paginated}
-          selectedIds={selectedIds}
-          onToggle={toggleSelected}
-          onOpen={(m) => {
-            setSelected(m);
-            setProofZoom(false);
-            setTempPassword(null);
-            setShowRejectPicker(false);
-          }}
-          onRenamed={(id, fullName) => {
-            setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
-            setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
-          }}
-          pagination={{ page: currentPage, totalPages, onGo: setPage }}
-        />
+        <>
+          <MemberSearch
+            value={filters.q}
+            filterCount={filterCount}
+            statsOpen={showStats}
+            onChange={(q) => setFilters({ ...filters, q })}
+            onOpenFilters={() => setShowFilters(true)}
+            onToggleStats={() => setShowStats((v) => !v)}
+            onExport={() => exportMembers(members)}
+            onManageAgeGroups={() => setShowAgeGroups(true)}
+            onManualAdd={() => setShowManualAdd(true)}
+          />
+
+          {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
+
+          <UpToDateSummary
+            year={membership.year}
+            current={standing.current}
+            active={standing.active}
+            showing={
+              filters.standing === "current" || filters.standing === "former"
+                ? filters.standing
+                : null
+            }
+            onShowCurrent={() => setFilters(withStanding("current"))}
+            onShowFormer={() => setFilters(withStanding("former"))}
+          />
+
+          <FilterChips
+            filters={filters}
+            year={membership.year}
+            resultCount={filtered.length}
+            onChange={setFilters}
+          />
+
+          {selectedIds.size > 0 && (
+            <BulkActionsBar
+              count={selectedIds.size}
+              pending={filter === "PENDING"}
+              loading={bulkLoading}
+              reason={bulkReason}
+              age={bulkAge}
+              ageGroups={ageGroups}
+              onReason={setBulkReason}
+              onAge={setBulkAge}
+              onClear={() => setSelectedIds(new Set())}
+              onApprove={() =>
+                runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`)
+              }
+              onReject={() =>
+                runOnSelection(
+                  "REJECTED",
+                  bulkReason,
+                  `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
+                )
+              }
+              onMoveAge={bulkMoveAge}
+            />
+          )}
+
+          {loading ? (
+            <PageLoading />
+          ) : (
+            <MemberList
+              members={paginated}
+              selectedIds={selectedIds}
+              onToggle={toggleSelected}
+              onOpen={(m) => {
+                setSelected(m);
+                setProofZoom(false);
+                setTempPassword(null);
+                setShowRejectPicker(false);
+              }}
+              onRenamed={(id, fullName) => {
+                setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, fullName } : m)));
+                setSelected((prev) => (prev && prev.id === id ? { ...prev, fullName } : prev));
+              }}
+              pagination={{ page: currentPage, totalPages, onGo: setPage }}
+            />
+          )}
+        </>
       )}
 
       {selected && (
         <MemberDrawer
           member={selected}
           actionLoading={actionLoading}
-          deleteLoading={deleteLoading}
+          settingsYear={membership.year}
           resetLoading={resetLoading}
           tempPassword={tempPassword}
           tempPasswordHours={tempPasswordHours}
@@ -413,16 +428,19 @@ function AdminDashboardInner() {
           onCloseRejectPicker={() => setShowRejectPicker(false)}
           onApprove={() => validate(selected.id, "ACTIVE")}
           onReject={() => validate(selected.id, "REJECTED", rejectReason)}
-          onDelete={() => setConfirmDelete(selected)}
         />
       )}
 
-      {confirmDelete && (
-        <ConfirmDeleteDialog
-          name={confirmDelete.fullName}
-          loading={deleteLoading}
-          onConfirm={(confirmName) => deleteMember(confirmDelete.id, confirmName)}
-          onClose={() => setConfirmDelete(null)}
+      {showFilters && (
+        <FilterSheet
+          filters={filters}
+          ageGroups={ageGroups}
+          paymentMethods={paymentMethods}
+          years={years}
+          year={membership.year}
+          resultCount={filtered.length}
+          onChange={setFilters}
+          onClose={() => setShowFilters(false)}
         />
       )}
 
@@ -433,12 +451,19 @@ function AdminDashboardInner() {
       {showManualAdd && (
         <ManualAddDialog
           ageGroups={ageGroups}
-          onCreated={fetchMembers}
+          initialPhone={manualAddPhone || undefined}
+          onCreated={async () => {
+            await fetchMembers();
+            await bare.refresh();
+          }}
           onManageAgeGroups={() => {
             setShowManualAdd(false);
             setShowAgeGroups(true);
           }}
-          onClose={() => setShowManualAdd(false)}
+          onClose={() => {
+            setShowManualAdd(false);
+            setManualAddPhone("");
+          }}
         />
       )}
 

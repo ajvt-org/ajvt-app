@@ -176,7 +176,7 @@ function AdminExpensesPageInner() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          <IconLabel name="download">تصدير CSV</IconLabel>
+          <IconLabel name="download">تصدير</IconLabel>
         </button>
       </div>
 

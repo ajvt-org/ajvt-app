@@ -3,6 +3,8 @@ export const ACTION_LABELS: Record<string, string> = {
   REJECT_MEMBER: "رفض طلب",
   DELETE_MEMBER: "حذف طلب",
   RESTORE_MEMBER: "استرجاع عضو",
+  DELETE_USER: "حذف حساب",
+  RESTORE_USER: "استرجاع حساب",
   EXPORT_DATA: "تصدير بيانات",
   UPDATE_ADMIN_ACTIVITIES: "تحديد أنشطة مشرف",
   CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",

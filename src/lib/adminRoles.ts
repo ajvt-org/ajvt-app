@@ -1,6 +1,6 @@
 export const ROLE_LABELS: Record<string, string> = {
   SUPER: "كامل الصلاحيات",
-  MEMBERS: "الأعضاء فقط",
+  MEMBERS: "المستخدمون فقط",
   ACTIVITIES: "الأنشطة فقط",
   QUIZ: "المسابقات الثقافية فقط",
   ACTIVITY: "أنشطة محددة فقط",

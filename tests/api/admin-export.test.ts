@@ -44,7 +44,7 @@ describe("GET /api/admin/export/[dataset]", () => {
     expect(res.headers.get("content-type")).toContain("text/csv");
     expect(res.headers.get("content-disposition")).toContain("members-");
     expect(body).toContain("محمد ولد أحمد");
-    expect(body).toContain("مقبول");
+    expect(body).toContain("معتمد");
   });
 
   it("carries a donation's tags into the export", async () => {

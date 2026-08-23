@@ -1,29 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
-import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
 export default function MemberDecision({
   memberId,
-  fullName,
   status,
   onDecided,
 }: {
   memberId: string;
-  fullName: string;
   status: string;
   onDecided: () => void;
 }) {
-  const router = useRouter();
   const [picking, setPicking] = useState(false);
   const [reason, setReason] = useState<string>(REJECTION_REASONS[0]);
   const [busy, setBusy] = useState(false);
-  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
 
   async function decide(action: "ACTIVE" | "REJECTED", rejectionReason?: string) {
@@ -41,19 +35,6 @@ export default function MemberDecision({
       setError(errorMessage(e));
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function remove(confirmName: string) {
-    setBusy(true);
-    setError("");
-    try {
-      await api.del(`/api/admin/members/${memberId}`, { confirmName });
-      router.push("/admin/dashboard");
-    } catch (e) {
-      setError(errorMessage(e));
-      setBusy(false);
-      setConfirming(false);
     }
   }
 
@@ -115,14 +96,6 @@ export default function MemberDecision({
               <IconLabel name="close">رفض</IconLabel>
             </button>
           )}
-          <button
-            onClick={() => setConfirming(true)}
-            disabled={busy}
-            className="btn text-sm"
-            style={{ background: "transparent", color: "var(--text-muted)" }}
-          >
-            <IconLabel name="trash">حذف</IconLabel>
-          </button>
         </div>
       )}
 
@@ -130,15 +103,6 @@ export default function MemberDecision({
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
           <Icon name="warning" size={13} className="icon-inline" /> {error}
         </p>
-      )}
-
-      {confirming && (
-        <ConfirmDeleteDialog
-          name={fullName}
-          loading={busy}
-          onConfirm={remove}
-          onClose={() => setConfirming(false)}
-        />
       )}
     </div>
   );

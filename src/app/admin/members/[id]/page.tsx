@@ -14,14 +14,13 @@ import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
+import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import type { MemberProfile } from "@/components/admin/profileTypes";
+import { memberStatusLabels } from "@/lib/messages";
+import { STATUS_LABEL as REGISTRATION_LABEL } from "@/app/admin/activities/activityTypes";
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "مرفوض",
-};
+const MEMBER_STATUS: Record<string, string> = memberStatusLabels;
 
 function day(value: string | Date | null | undefined): string {
   if (!value) return "—";
@@ -79,7 +78,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           className="text-sm font-bold"
           style={{ color: "var(--mint-600)" }}
         >
-          <ArrowLabel direction="back">الأعضاء</ArrowLabel>
+          <ArrowLabel direction="back">المستخدمون</ArrowLabel>
         </Link>
       </div>
     );
@@ -94,7 +93,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         className="text-sm font-bold"
         style={{ color: "var(--mint-600)" }}
       >
-        <ArrowLabel direction="back">الأعضاء</ArrowLabel>
+        <ArrowLabel direction="back">المستخدمون</ArrowLabel>
       </Link>
 
       <div className="card p-4 flex items-center gap-3">
@@ -123,7 +122,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </p>
         </div>
         <div className="shrink-0 flex items-center gap-2">
-          <span className="text-xs font-bold">{STATUS_LABEL[member.status]}</span>
+          <span className="text-xs font-bold">{MEMBER_STATUS[member.status]}</span>
           <button
             onClick={() => setEditing((v) => !v)}
             className="text-xs font-bold px-3 py-1.5 rounded-lg"
@@ -146,12 +145,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           onCancel={() => setEditing(false)}
         />
       ) : (
-        <MemberDecision
-          memberId={member.id}
-          fullName={member.fullName}
-          status={member.status}
-          onDecided={load}
-        />
+        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
       )}
 
       {member.user && (
@@ -204,7 +198,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
               <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate">{r.activity.title}</span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {STATUS_LABEL[r.status] ?? r.status} · <span dir="ltr">{day(r.createdAt)}</span>
+                  {REGISTRATION_LABEL[r.status] ?? r.status} ·{" "}
+                  <span dir="ltr">{day(r.createdAt)}</span>
                 </span>
               </li>
             ))}
@@ -272,6 +267,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </ul>
         )}
       </ProfileSection>
+
+      <DeleteMemberCard memberId={member.id} fullName={member.fullName} />
     </div>
   );
 }
