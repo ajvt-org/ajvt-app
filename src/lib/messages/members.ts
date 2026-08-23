@@ -1,3 +1,9 @@
+export const memberStatusLabels = {
+  PENDING: "قيد الانتظار",
+  ACTIVE: "معتمد",
+  REJECTED: "غير مقبول",
+} as const;
+
 export const members = {
   notFound: "العضو غير موجود",
   requestNotFound: "الطلب غير موجود",
@@ -5,8 +11,6 @@ export const members = {
   fullNameTooLong: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)",
   pickAgeGroup: "يرجى اختيار العصر",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
-  approved: "معتمد",
-  rejected: "غير مقبول",
   rejectionReasonRequired: "سبب الرفض مطلوب",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",

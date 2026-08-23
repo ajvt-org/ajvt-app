@@ -1,5 +1,5 @@
 import { ROLE_LABELS } from "./adminRoles";
-import { members } from "@/lib/messages";
+import { memberStatusLabels } from "@/lib/messages";
 
 // Field and value names as they appear inside before/after snapshots. An
 // unknown key falls through to its raw name rather than disappearing, so a
@@ -33,8 +33,8 @@ const FIELD_LABELS: Record<string, string> = {
 
 const VALUE_LABELS: Record<string, string> = {
   PENDING: "قيد المراجعة",
-  ACTIVE: members.approved,
-  REJECTED: members.rejected,
+  ACTIVE: memberStatusLabels.ACTIVE,
+  REJECTED: memberStatusLabels.REJECTED,
   ...ROLE_LABELS,
 };
 

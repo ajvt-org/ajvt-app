@@ -1,3 +1,4 @@
+import { memberStatusLabels } from "./messages";
 import type { AgeStanding } from "./ageStandings";
 
 export const DATASETS = ["members", "donations", "ages"] as const;
@@ -7,11 +8,7 @@ export function isDataset(value: string): value is Dataset {
   return (DATASETS as readonly string[]).includes(value);
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "معتمد",
-  REJECTED: "غير مقبول",
-};
+const STATUS_LABEL: Record<string, string> = memberStatusLabels;
 
 const SOURCE_LABEL: Record<string, string> = {
   PUBLIC: "عام",
