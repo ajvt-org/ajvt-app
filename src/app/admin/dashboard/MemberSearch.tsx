@@ -29,7 +29,7 @@ function MoreMenu({
       icon: "chart" as const,
       run: onToggleStats,
     },
-    { label: "تصدير CSV", icon: "download" as const, run: onExport },
+    { label: "تصدير", icon: "download" as const, run: onExport },
     { label: "الأعصار", icon: "tag" as const, run: onManageAgeGroups },
   ];
 

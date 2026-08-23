@@ -38,12 +38,12 @@ describe("MemberSearch", () => {
   it("keeps the secondary actions behind the menu until asked", () => {
     const props = renderSearch();
 
-    expect(screen.queryByText("تصدير CSV")).toBeNull();
+    expect(screen.queryByText("تصدير")).toBeNull();
     fireEvent.click(screen.getByLabelText("المزيد"));
-    fireEvent.click(screen.getByText("تصدير CSV"));
+    fireEvent.click(screen.getByText("تصدير"));
 
     expect(props.onExport).toHaveBeenCalled();
-    expect(screen.queryByText("تصدير CSV")).toBeNull();
+    expect(screen.queryByText("تصدير")).toBeNull();
   });
 
   it("runs the age groups and stats actions from the menu", () => {
