@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { tabActive } from "@/lib/adminNav";
 import type { NavTab } from "./navTabs";
 import type { PendingCounts } from "./useAdminSession";
 
@@ -76,7 +77,7 @@ export default function TabStrip({
           <Tab
             key={tab.href}
             tab={tab}
-            active={pathname === tab.href || !!pathname?.startsWith(tab.href + "/")}
+            active={tabActive(tab.href, pathname)}
             count={key ? pending[key] : 0}
             onOpen={() => onOpen(tab.href)}
           />

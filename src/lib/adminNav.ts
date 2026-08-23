@@ -22,6 +22,18 @@ export function canOpen(role: string | null | undefined, pathname: string): bool
   return areas.some((area) => pathname.startsWith(area));
 }
 
+const TAB_ALIASES: Record<string, string[]> = {
+  "/admin/dashboard": ["/admin/members"],
+  "/admin/activities": ["/admin/tournament"],
+  "/admin/tools": ["/admin/password", "/admin/admins", "/admin/audit-log", "/admin/broadcast"],
+};
+
+export function tabActive(tabHref: string, pathname: string | null): boolean {
+  if (!pathname) return false;
+  const prefixes = [tabHref, ...(TAB_ALIASES[tabHref] ?? [])];
+  return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
 export function landingFor(role: string | null | undefined): string | null {
   const areas = allowedAreas(role);
   if (areas === ALL_AREAS) return null;
