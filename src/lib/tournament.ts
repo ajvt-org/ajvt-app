@@ -82,6 +82,7 @@ export function computeStandings(
 export function groupStandings(
   teams: StandingsTeamInput[],
   matches: StandingsMatchInput[],
+  groupOrder?: string[],
 ): { groupId: string | null; teams: StandingsTeamInput[]; standings: StandingsRow[] }[] {
   const byGroup = new Map<string | null, StandingsTeamInput[]>();
   for (const t of teams) {
@@ -89,11 +90,18 @@ export function groupStandings(
     if (!byGroup.has(key)) byGroup.set(key, []);
     byGroup.get(key)!.push(t);
   }
-  return Array.from(byGroup.entries()).map(([groupId, groupTeams]) => ({
-    groupId,
-    teams: groupTeams,
-    standings: computeStandings(groupTeams, matches),
-  }));
+  const rank = (groupId: string | null) => {
+    if (groupId === null) return Number.MAX_SAFE_INTEGER;
+    const i = groupOrder?.indexOf(groupId) ?? -1;
+    return i === -1 ? Number.MAX_SAFE_INTEGER - 1 : i;
+  };
+  return Array.from(byGroup.entries())
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([groupId, groupTeams]) => ({
+      groupId,
+      teams: groupTeams,
+      standings: computeStandings(groupTeams, matches),
+    }));
 }
 
 export interface ScorerGoalInput {
@@ -174,12 +182,27 @@ export function computeStats(
   teams: StandingsTeamInput[],
   matches: StandingsMatchInput[],
 ): TournamentStats {
-  const standings = computeStandings(teams, matches);
-  const playedTeams = standings.filter((r) => r.played > 0);
-  const matchesPlayed = matches.filter(
+  const played = matches.filter(
     (m) => m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null,
-  ).length;
-  const totalGoals = matches.reduce((sum, m) => sum + (m.homeScore ?? 0) + (m.awayScore ?? 0), 0);
+  );
+  const matchesPlayed = played.length;
+  const totalGoals = played.reduce((sum, m) => sum + (m.homeScore ?? 0) + (m.awayScore ?? 0), 0);
+
+  const tally = new Map(
+    teams.map((t) => [t.id, { teamId: t.id, name: t.name, played: 0, gf: 0, ga: 0 }]),
+  );
+  for (const m of played) {
+    const home = tally.get(m.homeTeam.id);
+    const away = tally.get(m.awayTeam.id);
+    if (!home || !away) continue;
+    home.played++;
+    away.played++;
+    home.gf += m.homeScore!;
+    home.ga += m.awayScore!;
+    away.gf += m.awayScore!;
+    away.ga += m.homeScore!;
+  }
+  const playedTeams = Array.from(tally.values()).filter((r) => r.played > 0);
 
   const bestAttack = playedTeams.length
     ? playedTeams.reduce((best, r) => (r.gf > best.gf ? r : best))

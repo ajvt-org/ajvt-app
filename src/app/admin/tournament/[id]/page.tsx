@@ -75,7 +75,15 @@ function TournamentPageInner() {
   }
 
   const { teams, matches, groups, roster, info } = data;
-  const standingsByGroup = useMemo(() => groupStandings(teams, matches), [teams, matches]);
+  const standingsByGroup = useMemo(
+    () =>
+      groupStandings(
+        teams,
+        matches,
+        groups.map((g) => g.id),
+      ),
+    [teams, matches, groups],
+  );
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
   const discipline = useMemo(() => computeDisciplineStats(teams, matches), [teams, matches]);

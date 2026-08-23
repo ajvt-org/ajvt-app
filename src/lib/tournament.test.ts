@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   computeStandings,
+  computeStats,
   groupStandings,
   computeTopScorers,
   generateMatchSchedule,
@@ -122,6 +123,42 @@ describe("groupStandings", () => {
     const grouped = groupStandings([{ id: "a", name: "ألف" }], []);
 
     expect(grouped[0].groupId).toBeNull();
+  });
+
+  it("orders the groups as given, ungrouped last, whatever the team order", () => {
+    const grouped = groupStandings(
+      [
+        { id: "x", name: "بلا مجموعة" },
+        { id: "c", name: "جيم", groupId: "g2" },
+        { id: "a", name: "ألف", groupId: "g1" },
+      ],
+      [],
+      ["g1", "g2"],
+    );
+
+    expect(grouped.map((g) => g.groupId)).toEqual(["g1", "g2", null]);
+  });
+});
+
+describe("computeStats", () => {
+  it("counts knockout matches like every other played match", () => {
+    const stats = computeStats(teams, [
+      match("a", "b", 3, 0),
+      match("a", "c", 2, 0, { isKnockout: true }),
+    ]);
+
+    expect(stats.matchesPlayed).toBe(2);
+    expect(stats.totalGoals).toBe(5);
+    expect(stats.bestAttack).toMatchObject({ teamId: "a", gf: 5 });
+    expect(stats.bestDefense).toMatchObject({ teamId: "a", ga: 0 });
+  });
+
+  it("leaves a scheduled match out of the goal count", () => {
+    const stats = computeStats(teams, [match("a", "b", 2, 1, { status: "SCHEDULED" })]);
+
+    expect(stats.matchesPlayed).toBe(0);
+    expect(stats.totalGoals).toBe(0);
+    expect(stats.bestAttack).toBeNull();
   });
 });
 
