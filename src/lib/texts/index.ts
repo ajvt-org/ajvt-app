@@ -5,4 +5,5 @@ export { financeReport } from "./financeReport";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";
+export { quizBoard } from "./quizBoard";
 export { matchDisplay, publicTournament } from "./publicTournament";

@@ -90,10 +90,12 @@ function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () =
 
 export default function CompetitionView({
   standings,
+  canPlay = true,
   onBack,
   onReloadStandings,
 }: {
   standings: StandingsState;
+  canPlay?: boolean;
   onBack: () => void;
   onReloadStandings: () => void;
 }) {
@@ -330,7 +332,7 @@ export default function CompetitionView({
             </>
           )}
 
-          {roundOpen && !finished && (
+          {roundOpen && !finished && canPlay && (
             <>
               <p className="text-lg font-black text-white">
                 الجولة {(standings.round ?? 0) + 1} مفتوحة الآن
@@ -421,7 +423,7 @@ export default function CompetitionView({
           />
         )}
 
-        {competitionId && <MyScores competitionId={competitionId} />}
+        {competitionId && canPlay && <MyScores competitionId={competitionId} />}
 
         {standings.curve && <ScoreFormula curve={standings.curve} boards={standings.boards} />}
       </div>
