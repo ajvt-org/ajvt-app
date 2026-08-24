@@ -120,6 +120,7 @@ model Activity {
   photo         String?
   capacity      Int?
   isOpen        Boolean                @default(true)
+  autoApprove   Boolean                @default(false)
   isTournament  Boolean                @default(false)
   format        TournamentFormat?
   profile       SportProfile           @default(FOOTBALL)

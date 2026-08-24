@@ -15,7 +15,13 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
     prisma.member.findUnique({ where: { id: memberId } }),
     prisma.activity.findUnique({
       where: { id: activityId },
-      select: { id: true, isOpen: true, isVolunteer: true, capacity: true },
+      select: {
+        id: true,
+        isOpen: true,
+        isVolunteer: true,
+        autoApprove: true,
+        capacity: true,
+      },
     }),
   ]);
   if (!activity) throw new NotFoundError(activities.notFound);
@@ -23,7 +29,7 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
   if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
   if (member.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
 
-  const status = activity.isVolunteer ? "ACTIVE" : "PENDING";
+  const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
 
   await prisma.$transaction(
     async (tx) => {

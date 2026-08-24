@@ -44,6 +44,7 @@ export const PATCH = withRoute(
       period,
       capacity,
       isOpen,
+      autoApprove,
       photo,
       isTournament,
       format,
@@ -70,6 +71,7 @@ export const PATCH = withRoute(
       period?: string | null;
       capacity?: number | null;
       isOpen?: boolean;
+      autoApprove?: boolean;
       photo?: string | null;
       isTournament?: boolean;
       format?: TournamentFormat | null;
@@ -90,6 +92,7 @@ export const PATCH = withRoute(
     if (period !== undefined) data.period = period?.trim() || null;
     if (capacity !== undefined) data.capacity = capacity;
     if (isOpen !== undefined) data.isOpen = !!isOpen;
+    if (autoApprove !== undefined) data.autoApprove = !!autoApprove;
     if (photo !== undefined) data.photo = photo;
     if (isTournament !== undefined) data.isTournament = !!isTournament;
     if (format !== undefined) {
@@ -144,6 +147,7 @@ export const PATCH = withRoute(
         period: activity.period,
         capacity: activity.capacity,
         isOpen: activity.isOpen,
+        autoApprove: activity.autoApprove,
         isTournament: activity.isTournament,
         format: activity.format,
         isVolunteer: activity.isVolunteer,
