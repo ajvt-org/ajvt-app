@@ -3,11 +3,14 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import { toThumbUrl } from "@/lib/utils";
+import ActivityStandingChip from "@/components/ActivityStandingChip";
 
 export type LandingActivity = {
   id: string;
   title: string;
   when: string | null;
+  startsAt: string | Date | null;
+  endsAt: string | Date | null;
   photo: string | null;
   isVolunteer: boolean;
 };
@@ -90,8 +93,11 @@ export default function LandingActivities({
             )}
 
             <span className="min-w-0 flex-1">
-              <span className="font-bold block truncate" style={{ color: "var(--text-main)" }}>
-                {activity.title}
+              <span className="flex items-center gap-2">
+                <span className="font-bold truncate" style={{ color: "var(--text-main)" }}>
+                  {activity.title}
+                </span>
+                <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
               </span>
               {activity.when && (
                 <span className="text-xs" style={{ color: "var(--text-muted)" }}>

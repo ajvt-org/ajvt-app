@@ -10,6 +10,8 @@ const activity: Activity = {
   title: "دوري الحي",
   description: "",
   when: null,
+  startsAt: null,
+  endsAt: null,
   photo: null,
   capacity: null,
   isOpen: true,
