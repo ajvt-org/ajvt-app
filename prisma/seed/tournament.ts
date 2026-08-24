@@ -159,6 +159,26 @@ async function seedMatches(
       });
     }
 
+    if (i === 2) {
+      const g = await prisma.matchGoal.findFirst({ where: { matchId: match.id } });
+      if (g) await prisma.matchGoal.update({ where: { id: g.id }, data: { kind: "PENALTY" } });
+    }
+    if (i === 4) {
+      const g = await prisma.matchGoal.findFirst({ where: { matchId: match.id } });
+      const opponent =
+        g && (roster[g.teamId === teams[h].id ? teams[a].id : teams[h].id]?.[0] ?? null);
+      if (g && opponent) {
+        await prisma.matchGoal.update({
+          where: { id: g.id },
+          data: { kind: "OWN_GOAL", memberId: opponent },
+        });
+      }
+    }
+    if (i === 6) {
+      const g = await prisma.matchGoal.findFirst({ where: { matchId: match.id } });
+      if (g) await prisma.matchGoal.update({ where: { id: g.id }, data: { memberId: null } });
+    }
+
     if (i === 0) await seedMvp(match.id, roster[teams[h].id] ?? [], users, "OPEN");
     if (i === 2) await seedMvp(match.id, roster[teams[h].id] ?? [], users, "CLOSED");
   }
@@ -327,6 +347,35 @@ export async function seedFinishedCup(
             teamId: teams[teamIndex].id,
             minute: 12 + g * 21 + (teamIndex === a ? 7 : 0),
           },
+        });
+      }
+    }
+
+    if (shootout) {
+      const homeKickers = roster[teams[h].id];
+      const awayKickers = roster[teams[a].id];
+      const sequence: [string, string | null, boolean][] = [
+        [teams[h].id, homeKickers[0] ?? null, true],
+        [teams[a].id, awayKickers[0] ?? null, true],
+        [teams[h].id, homeKickers[1] ?? null, true],
+        [teams[a].id, awayKickers[1] ?? null, false],
+        [teams[h].id, homeKickers[2] ?? homeKickers[0] ?? null, true],
+        [teams[a].id, null, true],
+        [teams[h].id, null, true],
+        [teams[a].id, awayKickers[2] ?? awayKickers[0] ?? null, false],
+      ];
+      for (const [idx, [teamId, memberId, scored]] of sequence.entries()) {
+        await prisma.matchPenaltyKick.create({
+          data: { matchId: match.id, teamId, memberId, order: idx + 1, scored },
+        });
+      }
+      const equalizer = await prisma.matchGoal.findFirst({
+        where: { matchId: match.id, teamId: teams[a].id },
+      });
+      if (equalizer) {
+        await prisma.matchGoal.update({
+          where: { id: equalizer.id },
+          data: { period: "EXTRA_TIME", minute: 104 },
         });
       }
     }
