@@ -2,6 +2,7 @@ export { activityForm, activityRow, activityStandingTexts, tournamentSetup } fro
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
 export { financeReport } from "./financeReport";
+export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
