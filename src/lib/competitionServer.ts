@@ -39,6 +39,21 @@ export async function requireCompetition(id?: string) {
   return competition;
 }
 
+export async function publicCompetitions() {
+  return prisma.competition.findMany({
+    where: { startedAt: { not: null }, visibility: "PUBLIC" },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function isPublicCompetition(competitionId: string): Promise<boolean> {
+  const competition = await prisma.competition.findUnique({
+    where: { id: competitionId },
+    select: { startedAt: true, visibility: true },
+  });
+  return !!competition?.startedAt && competition.visibility === "PUBLIC";
+}
+
 export async function runningCompetitionsFor(userId: string) {
   const all = await prisma.competition.findMany({
     where: { startedAt: { not: null } },

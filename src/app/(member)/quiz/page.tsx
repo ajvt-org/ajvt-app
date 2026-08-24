@@ -10,6 +10,7 @@ import QuizLocked, { CreateAccountAction } from "./QuizLocked";
 import QuizPicker from "./QuizPicker";
 import TutorialQuiz from "./TutorialQuiz";
 import type { RunningCompetition } from "./types";
+import { quizBoard as texts } from "@/lib/texts";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -31,30 +32,39 @@ function QuizScreen() {
   const [standings, setStandings] = useState<StandingsState | null>(null);
   const [ineligible, setIneligible] = useState(false);
   const [visitor, setVisitor] = useState(false);
+  const [canPlay, setCanPlay] = useState(true);
   const [loading, setLoading] = useState(true);
   const wasChosen = useRef(false);
 
-  function loadMine() {
-    return fetch("/api/quiz/competitions")
-      .then((r) => {
-        if (r.status === 401) {
-          setVisitor(true);
-          return null;
-        }
-        if (r.status === 403) {
-          setIneligible(true);
-          return null;
-        }
-        return r.json();
-      })
-      .then((json) => {
-        if (json) {
-          setMine(json.competitions);
-          setConfirmAnswers(json.confirmAnswers ?? true);
-        }
-      })
-      .catch(() => setVisitor(true));
-  }
+  const loadPublic = useCallback(async () => {
+    const res = await fetch("/api/quiz/competitions/public");
+    const json = res.ok ? await res.json() : { competitions: [] };
+    setMine(json.competitions ?? []);
+    setCanPlay(false);
+  }, []);
+
+  const loadMine = useCallback(async () => {
+    try {
+      const res = await fetch("/api/quiz/competitions");
+      if (res.status === 401) {
+        setVisitor(true);
+        await loadPublic();
+        return;
+      }
+      if (res.status === 403) {
+        setIneligible(true);
+        await loadPublic();
+        return;
+      }
+      const json = await res.json();
+      setMine(json.competitions);
+      setConfirmAnswers(json.confirmAnswers ?? true);
+      setCanPlay(true);
+    } catch {
+      setVisitor(true);
+      await loadPublic().catch(() => {});
+    }
+  }, [loadPublic]);
 
   const loadStandings = useCallback(() => {
     if (!chosen) return Promise.resolve();
@@ -67,8 +77,9 @@ function QuizScreen() {
   }, [chosen]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMine().finally(() => setLoading(false));
-  }, []);
+  }, [loadMine]);
 
   useEffect(() => {
     loadStandings();
@@ -77,7 +88,7 @@ function QuizScreen() {
   useEffect(() => {
     if (!chosen && wasChosen.current) loadMine();
     wasChosen.current = !!chosen;
-  }, [chosen]);
+  }, [chosen, loadMine]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -100,25 +111,19 @@ function QuizScreen() {
     );
   }
 
-  if (visitor) {
+  if (mine.length === 0 && (visitor || ineligible)) {
     return (
       <QuizLocked
         backHref={backHref}
-        message="أنشئ حساباً وأكمل استمارة الانضمام للمشاركة في المسابقات الثقافية."
-        action={<CreateAccountAction />}
-      />
-    );
-  }
-
-  if (ineligible) {
-    return (
-      <QuizLocked
-        backHref={backHref}
-        message="يجب أن تكون منتسباً مقبولاً وقد دفعت رسوم الانتساب لتتمكن من المشاركة في المسابقات الثقافية."
+        message={visitor ? texts.visitorNoCompetitions : texts.ineligible}
         action={
-          <button onClick={() => router.push("/home")} className="btn btn-primary">
-            العودة للرئيسية
-          </button>
+          visitor ? (
+            <CreateAccountAction />
+          ) : (
+            <button onClick={() => router.push("/home")} className="btn btn-primary">
+              {texts.backHome}
+            </button>
+          )
         }
       />
     );
@@ -132,6 +137,7 @@ function QuizScreen() {
     return (
       <CompetitionView
         standings={standings}
+        canPlay={canPlay}
         onBack={() => router.push("/quiz")}
         onReloadStandings={loadStandings}
       />
@@ -143,7 +149,8 @@ function QuizScreen() {
       competitions={mine}
       backHref={backHref}
       onPick={(id) => router.push(`/quiz?competition=${id}`)}
-      onTutorial={() => setTutorial(true)}
+      onTutorial={canPlay ? () => setTutorial(true) : undefined}
+      hint={canPlay ? undefined : visitor ? texts.visitorHint : texts.ineligibleHint}
       onStarted={loadMine}
     />
   );
