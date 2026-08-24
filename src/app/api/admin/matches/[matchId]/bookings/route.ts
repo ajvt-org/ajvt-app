@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { bookingCreateSchema } from "./schema";
 import { tournament } from "@/lib/messages";
+import { proposeFromBooking, suspendedMemberIds } from "@/lib/suspensionServer";
 
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
@@ -16,7 +17,7 @@ export const POST = withRoute(
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
-      select: { homeTeamId: true, awayTeamId: true },
+      select: { homeTeamId: true, awayTeamId: true, activityId: true },
     });
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
@@ -32,15 +33,24 @@ export const POST = withRoute(
       return NextResponse.json({ error: "اللاعب لا ينتمي إلى هذا الفريق" }, { status: 400 });
     }
 
-    const booking = await prisma.matchBooking.create({
-      data: { matchId, memberId, teamId, cardType, minute: minute ?? null },
-      select: {
-        id: true,
-        cardType: true,
-        minute: true,
-        teamId: true,
-        member: { select: { id: true, fullName: true } },
-      },
+    const suspended = await suspendedMemberIds(match.activityId);
+    if (suspended.has(memberId)) {
+      return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
+    }
+
+    const { booking, proposed } = await prisma.$transaction(async (tx) => {
+      const created = await tx.matchBooking.create({
+        data: { matchId, memberId, teamId, cardType, minute: minute ?? null },
+        select: {
+          id: true,
+          cardType: true,
+          minute: true,
+          teamId: true,
+          member: { select: { id: true, fullName: true } },
+        },
+      });
+      const proposal = await proposeFromBooking(tx, match.activityId, memberId, cardType);
+      return { booking: created, proposed: proposal !== null };
     });
 
     await logAction(
@@ -61,6 +71,6 @@ export const POST = withRoute(
       },
     );
 
-    return NextResponse.json({ booking }, { status: 201 });
+    return NextResponse.json({ booking, proposed }, { status: 201 });
   },
 );

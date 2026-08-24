@@ -34,6 +34,8 @@ export const GET = withRoute("GET /api/activities", async () => {
       title: a.title,
       description: a.description,
       when: formatActivityDates(a),
+      startsAt: a.startsAt,
+      endsAt: a.endsAt,
       photo: a.photo,
       capacity: a.capacity,
       isOpen: a.isOpen,

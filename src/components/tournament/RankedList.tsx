@@ -12,6 +12,7 @@ export type RankedRow = {
   sub?: string | null;
   value: ReactNode;
   avatar?: boolean;
+  badge?: string;
 };
 
 export default function RankedList({ rows, pageSize }: { rows: RankedRow[]; pageSize?: number }) {
@@ -30,8 +31,16 @@ export default function RankedList({ rows, pageSize }: { rows: RankedRow[]; page
               <PlayerAvatar photo={row.photo} fullName={row.name} size={32} />
             )}
             <div className="min-w-0">
-              <p className="font-bold text-sm truncate" style={{ color: "var(--text-main)" }}>
+              <p
+                className="font-bold text-sm truncate flex items-center gap-1.5"
+                style={{ color: "var(--text-main)" }}
+              >
                 {row.name}
+                {row.badge && (
+                  <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
+                    {row.badge}
+                  </span>
+                )}
               </p>
               {row.sub && (
                 <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>

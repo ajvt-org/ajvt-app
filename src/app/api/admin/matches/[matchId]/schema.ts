@@ -14,6 +14,8 @@ export const matchUpdateSchema = z.object({
   awayPenalties: z.unknown().optional(),
   homeGoals: z.unknown().optional(),
   awayGoals: z.unknown().optional(),
+  goalEvents: z.unknown().optional(),
+  penaltyKicks: z.unknown().optional(),
   matchDate: z.string(INVALID).nullish(),
   round: z.string(INVALID).nullish(),
   venue: z.string(INVALID).nullish(),

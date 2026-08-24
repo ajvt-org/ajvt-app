@@ -6,7 +6,16 @@ export type MatchGoal = {
   count: number;
   minute: number | null;
   teamId: string;
-  member: MatchPlayer;
+  kind: "GOAL" | "PENALTY" | "OWN_GOAL";
+  period: "REGULAR" | "EXTRA_TIME";
+  member: MatchPlayer | null;
+};
+
+export type MatchKick = {
+  teamId: string;
+  order: number;
+  scored: boolean;
+  member: MatchPlayer | null;
 };
 
 export type MatchBooking = {
@@ -33,6 +42,7 @@ export type PublicMatch = {
   status: string;
   manOfTheMatch: MatchPlayer | null;
   goals: MatchGoal[];
+  penaltyKicks: MatchKick[];
   bookings: MatchBooking[];
   mvpVote: {
     id: string;

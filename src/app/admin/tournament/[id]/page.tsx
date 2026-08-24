@@ -9,70 +9,81 @@ import {
   computeMotmLeaders,
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
-import { loginPathWithNext } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import type { Group, Match, RosterMember, Tab, Team, TournamentFormat } from "./types";
+import type { Tab } from "./types";
 import MatchesTab from "./MatchesTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
 import TeamsTab from "./TeamsTab";
-import BackButton from "@/components/BackButton";
+import PlayersTab from "./PlayersTab";
+import DaysTab from "./DaysTab";
+import DisciplineTab from "./DisciplineTab";
+import { useTournamentData } from "./useTournamentData";
+import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
+import ArrowLabel from "@/components/ArrowLabel";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import { toThumbUrl } from "@/lib/utils";
+import { countedNoun } from "@/lib/arabicCount";
+import { MATCH, PLAYER, TEAM } from "@/lib/messages";
+import { discipline as disciplineTexts, tournamentWorkspace as texts } from "@/lib/texts";
 
-export default function TournamentPage() {
+function tabsFor(singles: boolean, football: boolean, pendingProposals: number): WorkspaceTab[] {
+  const tabs: WorkspaceTab[] = [
+    {
+      key: "teams",
+      label: singles ? texts.tabs.players : texts.tabs.teams,
+      icon: singles ? "user" : "users",
+    },
+    { key: "days", label: texts.tabs.days, icon: "calendar" },
+    { key: "matches", label: texts.tabs.matches, icon: "swords" },
+    { key: "standings", label: texts.tabs.standings, icon: "list" },
+    { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
+  ];
+  if (football) {
+    tabs.push({
+      key: "discipline",
+      label: disciplineTexts.tab,
+      icon: "ban",
+      badge: pendingProposals,
+    });
+  }
+  return tabs;
+}
+
+function TournamentPageInner() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const activityId = params.id;
-  const title = searchParams.get("title") || "البطولة";
+  const data = useTournamentData(activityId);
 
-  const [tab, setTab] = useState<Tab>("teams");
-  const [loading, setLoading] = useState(true);
-  const [roster, setRoster] = useState<RosterMember[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [format, setFormat] = useState<TournamentFormat>(null);
-  const [teamSize, setTeamSize] = useState<number | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [error, setError] = useState("");
+  const singles = data.info?.teamSize === 1;
+  const football = (data.info?.profile ?? "FOOTBALL") === "FOOTBALL";
+  const pendingProposals = data.suspensions.filter((s) => s.status === "PROPOSED").length;
+  const suspendedIds = data.suspensions.filter((s) => s.running).map((s) => s.member.id);
+  const TABS = tabsFor(singles, football, pendingProposals);
+  const requested = searchParams.get("tab") as Tab | null;
+  const fallbackTab: Tab = data.matches.length > 0 ? "matches" : "teams";
+  const tab: Tab = requested && TABS.some((t) => t.key === requested) ? requested : fallbackTab;
 
-  async function loadAll() {
-    try {
-      const [rosterRes, groupsRes, teamsRes, matchesRes] = await Promise.all([
-        fetch(`/api/admin/activities/${activityId}/roster`),
-        fetch(`/api/admin/activities/${activityId}/groups`),
-        fetch(`/api/admin/activities/${activityId}/teams`),
-        fetch(`/api/admin/activities/${activityId}/matches`),
-      ]);
-      if ([rosterRes, groupsRes, teamsRes, matchesRes].some((r) => r.status === 401)) {
-        router.push(loginPathWithNext("/admin/login"));
-        return;
-      }
-      const rosterData = await rosterRes.json();
-      const groupsData = await groupsRes.json();
-      const teamsData = await teamsRes.json();
-      const matchesData = await matchesRes.json();
-      setRoster(rosterData.roster || []);
-      setGroups(groupsData.groups || []);
-      setFormat(groupsData.format ?? null);
-      setTeamSize(groupsData.teamSize ?? null);
-      setTeams(teamsData.teams || []);
-      setMatches(matchesData.matches || []);
-    } catch {
-      setError("فشل تحميل بيانات البطولة");
-    } finally {
-      setLoading(false);
-    }
+  function pickTab(next: Tab) {
+    router.replace(`/admin/tournament/${activityId}?tab=${next}`, { scroll: false });
   }
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadAll();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const standingsByGroup = useMemo(() => groupStandings(teams, matches), [teams, matches]);
+  const { teams, matches, groups, roster, info } = data;
+  const standingsByGroup = useMemo(
+    () =>
+      groupStandings(
+        teams,
+        matches,
+        groups.map((g) => g.id),
+      ),
+    [teams, matches, groups],
+  );
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
   const discipline = useMemo(() => computeDisciplineStats(teams, matches), [teams, matches]);
@@ -83,102 +94,134 @@ export default function TournamentPage() {
     [teams, matches],
   );
 
-  if (loading) {
+  const reloadSquads = () =>
+    Promise.all([data.reloadTeams(), data.reloadRoster(), data.reloadGroups()]);
+
+  if (data.loading) {
     return <PageLoading />;
   }
 
+  const sideCount = teams.length;
+  const sideNoun = countedNoun(sideCount, singles ? PLAYER : TEAM);
+
   return (
-    <div>
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+    <div className="admin-page space-y-4">
+      <Link
+        href={`/admin/activities/${activityId}?tab=teams`}
+        className="text-sm font-bold inline-block"
+        style={{ color: "var(--mint-600)" }}
       >
-        <div className="flex items-center gap-3">
-          <BackButton href="/admin/activities" />
-          <div>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              <IconLabel name="ball">إدارة البطولة</IconLabel>
-            </p>
-            <p className="text-sm font-black text-white leading-none">{title}</p>
-          </div>
+        <ArrowLabel direction="back">{texts.backToActivity}</ArrowLabel>
+      </Link>
+
+      <div className="card p-4 flex items-center gap-3 flex-wrap">
+        {info?.photo ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={toThumbUrl(`/api/files/activity/${info.photo}`)}
+            alt={info.title}
+            className="w-14 h-14 rounded-xl object-cover shrink-0"
+          />
+        ) : (
+          <span
+            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: "var(--mint-100)" }}
+          >
+            <Icon name="trophy" size={24} />
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="font-black text-base truncate" style={{ color: "var(--text-main)" }}>
+            {info?.title || texts.fallbackTitle}
+          </p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {sideCount} {sideNoun} · {matches.length} {countedNoun(matches.length, MATCH)}
+          </p>
         </div>
         <a
           href={`/tournament/${activityId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs px-3 py-1.5 rounded-lg font-semibold"
-          style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="link">الصفحة العامة</IconLabel>
+          <IconLabel name="link">{texts.publicPage}</IconLabel>
         </a>
       </div>
 
-      <div className="admin-page">
-        {error && (
+      <WorkspaceTabs tabs={TABS} active={tab} onPick={(key) => pickTab(key as Tab)} />
+
+      <div className="space-y-4">
+        {data.error && (
           <div
-            className="p-3 rounded-xl text-sm font-semibold mb-4"
+            className="p-3 rounded-xl text-sm font-semibold"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            <IconLabel name="warning">{error}</IconLabel>
+            <IconLabel name="warning">{data.error}</IconLabel>
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2 mb-5">
-          {(
-            [
-              ["teams", "الفرق"],
-              ["matches", "المباريات"],
-              ["standings", "الترتيب"],
-              ["scorers", "الإحصائيات"],
-            ] as [Tab, string][]
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className="rounded-xl py-2.5 text-center text-sm font-bold transition-all"
-              style={{
-                background: tab === key ? "var(--mint-700)" : "white",
-                color: tab === key ? "white" : "var(--text-main)",
-                border: tab === key ? "none" : "1px solid var(--mint-100)",
-              }}
-            >
-              {label}
-            </button>
+        {tab === "teams" &&
+          (singles ? (
+            <PlayersTab
+              activityId={activityId}
+              teams={teams}
+              groups={groups}
+              format={info?.format ?? null}
+              roster={roster}
+              onChange={reloadSquads}
+            />
+          ) : (
+            <TeamsTab
+              activityId={activityId}
+              teams={teams}
+              groups={groups}
+              format={info?.format ?? null}
+              teamSize={info?.teamSize ?? null}
+              roster={roster}
+              suspendedIds={suspendedIds}
+              onChange={reloadSquads}
+            />
           ))}
-        </div>
-
-        {tab === "teams" && (
-          <TeamsTab
-            activityId={activityId}
-            teams={teams}
-            groups={groups}
-            format={format}
-            teamSize={teamSize}
-            roster={roster}
-            onChange={loadAll}
-          />
+        {tab === "days" && (
+          <DaysTab activityId={activityId} onMatchesChanged={data.reloadMatches} />
         )}
         {tab === "matches" && (
           <MatchesTab
             activityId={activityId}
             teams={teams}
             groups={groups}
-            format={format}
+            format={info?.format ?? null}
+            profile={info?.profile ?? "FOOTBALL"}
             matches={matches}
-            onChange={loadAll}
+            suspendedIds={suspendedIds}
+            onChange={() => {
+              data.reloadMatches();
+              data.reloadDiscipline();
+            }}
           />
         )}
         {tab === "standings" && (
           <StandingsTab
-            title={title}
+            title={info?.title || texts.fallbackTitle}
             standingsByGroup={standingsByGroup}
             groups={groups}
             stats={stats}
             matches={matches}
           />
         )}
+        {tab === "discipline" && football && (
+          <DisciplineTab
+            activityId={activityId}
+            teams={teams}
+            suspensions={data.suspensions}
+            rules={data.rules}
+            onChange={data.reloadDiscipline}
+          />
+        )}
         {tab === "scorers" && (
           <ScorersTab
+            profile={info?.profile ?? "FOOTBALL"}
             topScorers={topScorers}
             discipline={discipline}
             cleanSheets={cleanSheets}
@@ -188,5 +231,13 @@ export default function TournamentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TournamentPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <TournamentPageInner />
+    </Suspense>
   );
 }

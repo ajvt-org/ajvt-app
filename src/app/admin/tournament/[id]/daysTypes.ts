@@ -1,0 +1,46 @@
+export interface DayMatch {
+  id: string;
+  matchDate: string | null;
+  round: string | null;
+  venue: string | null;
+  status: "SCHEDULED" | "PLAYED";
+  homeTeam: { id: string; name: string };
+  awayTeam: { id: string; name: string };
+}
+
+export interface TournamentDayRow {
+  id: string;
+  position: number;
+  isRest: boolean;
+  date: string | null;
+  matches: DayMatch[];
+}
+
+export interface DaysPayload {
+  startsAt: string | null;
+  endsAt: string | null;
+  days: TournamentDayRow[];
+  unscheduled: DayMatch[];
+}
+
+export function dayLabel(date: string | null): string {
+  if (!date) return "";
+  return new Intl.DateTimeFormat("ar", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(date));
+}
+
+export function doubleBookedTeams(day: TournamentDayRow): string[] {
+  const seen = new Map<string, string>();
+  const twice = new Set<string>();
+  for (const match of day.matches) {
+    for (const team of [match.homeTeam, match.awayTeam]) {
+      if (seen.has(team.id)) twice.add(team.name);
+      seen.set(team.id, team.name);
+    }
+  }
+  return [...twice];
+}

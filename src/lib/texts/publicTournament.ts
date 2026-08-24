@@ -1,0 +1,26 @@
+export const matchDisplay = {
+  unknownScorer: "مجهول",
+  ownGoal: "عكسي",
+  penaltyShort: "ج",
+  extraTimeShort: "و.إ",
+} as const;
+
+export const publicTournament = {
+  standings: "الترتيب",
+  bracket: "الدور الإقصائي",
+  matches: "المباريات",
+  upcoming: "مباريات قادمة",
+  results: "النتائج",
+  stats: "الإحصائيات",
+  scorers: "الهدافون",
+  discipline: "الانضباط",
+  defence: "أفضل دفاع",
+  motm: "رجل المباراة",
+  teams: "الفرق",
+  players: "اللاعبون",
+  group: "مجموعة",
+  noGroup: "بدون مجموعة",
+  noMatchesYet: "لم تُحدَّد المباريات بعد",
+  noTeamsYet: "لم تُحدَّد الفرق بعد",
+  noPlayersYet: "لم يُحدَّد اللاعبون بعد",
+} as const;

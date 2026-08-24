@@ -30,6 +30,8 @@ export default async function ActivitiesPage() {
           id: a.id,
           title: a.title,
           when: formatActivityDates(a),
+          startsAt: a.startsAt,
+          endsAt: a.endsAt,
           photo: a.photo,
           isVolunteer: a.isVolunteer,
         }))}

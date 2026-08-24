@@ -9,21 +9,27 @@ import MatchCard from "./MatchCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
+import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function MatchesTab({
   activityId,
   teams,
   groups,
   format,
+  profile,
   matches,
+  suspendedIds,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
   groups: Group[];
   format: TournamentFormat;
+  profile: "FOOTBALL" | "BOARD";
   matches: Match[];
+  suspendedIds: string[];
   onChange: () => void;
 }) {
   const [form, setForm] = useState({
@@ -36,37 +42,18 @@ export default function MatchesTab({
   });
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
+  const [showGenerate, setShowGenerate] = useState(false);
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
-  const [cardsFor, setCardsFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  async function generateSchedule() {
-    if (
-      !confirm(
-        "سيتم اقتراح مباريات إضافية تلقائياً بحيث يلعب كل فريق 3 مباريات إجمالاً. يمكنك حذف أو تعديل أي مباراة بعد ذلك. متابعة؟",
-      )
-    )
-      return;
-    setGenerating(true);
-    setError("");
-    try {
-      await api.post(`/api/admin/activities/${activityId}/matches/generate`);
-      onChange();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  async function runBracketAction(endpoint: string, confirmMsg: string) {
+  async function runBracketAction(endpoint: string, confirmMsg: string, body?: object) {
     if (!confirm(confirmMsg)) return;
     setGenerating(true);
     setError("");
     try {
-      await api.post(`/api/admin/activities/${activityId}/bracket/${endpoint}`);
+      await api.post(`/api/admin/activities/${activityId}/bracket/${endpoint}`, body);
       onChange();
     } catch (e) {
       setError(errorMessage(e));
@@ -107,7 +94,7 @@ export default function MatchesTab({
       ]);
       onChange();
     } catch {
-      alert("خطأ في إعادة الترتيب");
+      alert(texts.reorderFailed);
     } finally {
       setLoadingAction(false);
     }
@@ -117,7 +104,7 @@ export default function MatchesTab({
     e.preventDefault();
     setError("");
     if (!form.homeTeamId || !form.awayTeamId) {
-      setError("يجب اختيار الفريقين");
+      setError(texts.pickBothTeams);
       return;
     }
     setLoadingAction(true);
@@ -140,7 +127,7 @@ export default function MatchesTab({
   }
 
   async function deleteMatch(matchId: string) {
-    if (!confirm("هل تريد حذف هذه المباراة؟")) return;
+    if (!confirm(texts.confirmDeleteMatch)) return;
     setLoadingAction(true);
     try {
       await api.del(`/api/admin/matches/${matchId}`);
@@ -180,22 +167,18 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">كل المجموعات مكتملة!</IconLabel>
+            <IconLabel name="check">{texts.poolsReadyTitle}</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
-            يمكنك الآن توليد جدول مباريات دور المجموعات (3 مباريات لكل فريق).
+            {texts.poolsReadyHint}
           </p>
           <button
-            onClick={generateSchedule}
+            onClick={() => setShowGenerate(true)}
             disabled={generating}
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? (
-              "..."
-            ) : (
-              <IconLabel name="dice">توليد جدول مباريات دور المجموعات</IconLabel>
-            )}
+            {generating ? "..." : <IconLabel name="dice">{texts.generateGroupSchedule}</IconLabel>}
           </button>
         </div>
       )}
@@ -206,205 +189,26 @@ export default function MatchesTab({
           style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
         >
           <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">انتهى دور المجموعات!</IconLabel>
+            <IconLabel name="check">{texts.groupStageDoneTitle}</IconLabel>
           </p>
           <p className="text-xs" style={{ color: "#065f46" }}>
-            كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.
+            {texts.groupStageDoneHint}
           </p>
           <button
-            onClick={() =>
-              runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")
-            }
+            onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
             disabled={generating}
             className="btn btn-primary text-sm"
             style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
           >
-            {generating ? "..." : <IconLabel name="swords">توليد نصف النهائي</IconLabel>}
+            {generating ? "..." : <IconLabel name="swords">{texts.generateSemis}</IconLabel>}
           </button>
         </div>
       )}
 
-      {teams.length >= 2 && (
-        <div className="card p-4 space-y-3">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="trophy">
-              {isTwoGroupFormat
-                ? "نصف النهائي والنهائي"
-                : "القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)"}
-            </IconLabel>
-          </p>
-          {bracketMatches.length === 0 ? (
-            knockoutLocked ? (
-              <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                <Icon name="lock" size={14} className="icon-inline" /> أكمل جميع نتائج دور المجموعات
-                أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.
-              </p>
-            ) : isTwoGroupFormat ? (
-              <>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  نصف نهائي متقاطع من ترتيب المجموعتين (الأول من كل مجموعة أمام الثاني من الأخرى)،
-                  ثم النهائي.
-                </p>
-                <button
-                  onClick={() =>
-                    runBracketAction("semis-from-groups", "توليد نصف النهائي من ترتيب المجموعتين؟")
-                  }
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                  style={{ width: "auto" }}
-                >
-                  <IconLabel name="swords">توليد نصف النهائي</IconLabel>
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — يجب أن يكون العدد 4 أو 8 أو 16 أو
-                  32...
-                </p>
-                <button
-                  onClick={() =>
-                    runBracketAction("draw", "إجراء قرعة عشوائية بين جميع الفرق الحالية؟")
-                  }
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                  style={{ width: "auto" }}
-                >
-                  <IconLabel name="dice">قرعة عشوائية</IconLabel>
-                </button>
-              </>
-            )
-          ) : (
-            <>
-              <BracketTree matches={bracketMatches} />
-              {canAdvanceBracket && (
-                <button
-                  onClick={() =>
-                    runBracketAction("next-round", "توليد الدور التالي من نتائج الدور الحالي؟")
-                  }
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                >
-                  <ArrowLabel>توليد الدور التالي</ArrowLabel>
-                </button>
-              )}
-              {bracketIsFinalDone &&
-                (() => {
-                  const finalMatch = finalRound[0];
-                  const winnerId = getMatchWinnerTeamId({
-                    ...finalMatch,
-                    homeTeamId: finalMatch.homeTeam.id,
-                    awayTeamId: finalMatch.awayTeam.id,
-                  });
-                  const winnerName =
-                    winnerId === finalMatch.homeTeam.id
-                      ? finalMatch.homeTeam.name
-                      : finalMatch.awayTeam.name;
-                  return (
-                    <p
-                      className="text-sm font-black text-center"
-                      style={{ color: "var(--mint-700)" }}
-                    >
-                      <IconLabel name="trophy">البطل: {winnerName}</IconLabel>
-                    </p>
-                  );
-                })()}
-            </>
-          )}
-        </div>
-      )}
-
-      {teams.length >= 2 && (
-        <button
-          onClick={generateSchedule}
-          disabled={generating}
-          className="btn btn-primary text-sm"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          {generating ? (
-            "..."
-          ) : (
-            <IconLabel name="dice">اقترح جدول المباريات (3 مباريات لكل فريق)</IconLabel>
-          )}
-        </button>
-      )}
-
-      <form onSubmit={createMatch} className="card p-4 space-y-3">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="plus">مباراة جديدة</IconLabel>
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <select
-            value={form.homeTeamId}
-            onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value, awayTeamId: "" }))}
-            className="input"
-          >
-            <option value="">الفريق المضيف...</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={form.awayTeamId}
-            onChange={(e) => setForm((p) => ({ ...p, awayTeamId: e.target.value }))}
-            className="input"
-          >
-            <option value="">الفريق الضيف...</option>
-            {awayTeamOptions.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="datetime-local"
-            value={form.matchDate}
-            onChange={(e) => setForm((p) => ({ ...p, matchDate: e.target.value }))}
-            className="input"
-          />
-          <input
-            type="text"
-            placeholder="الجولة (اختياري)"
-            value={form.round}
-            onChange={(e) => setForm((p) => ({ ...p, round: e.target.value }))}
-            maxLength={40}
-            className="input"
-          />
-        </div>
-        <input
-          type="text"
-          placeholder="الملعب (اختياري)"
-          value={form.venue}
-          onChange={(e) => setForm((p) => ({ ...p, venue: e.target.value }))}
-          maxLength={60}
-          className="input"
-        />
-        <label
-          className="flex items-center gap-2 text-sm font-semibold"
-          style={{ color: "var(--text-main)" }}
-        >
-          <input
-            type="checkbox"
-            checked={form.isKnockout}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))
-            }
-          />
-          <IconLabel name="trophy">مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)</IconLabel>
-        </label>
-        <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
-          {loadingAction ? "..." : "إضافة المباراة"}
-        </button>
-      </form>
-
       {scheduled.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="calendar">مباريات قادمة</IconLabel>
+            <IconLabel name="calendar">{texts.upcoming}</IconLabel>
           </p>
           <div className="space-y-3">
             {scheduled.map((m, i) => (
@@ -413,11 +217,11 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                profile={profile}
+                suspendedIds={suspendedIds}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showCards={cardsFor === m.id}
-                onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
                 showMvp={mvpFor === m.id}
                 onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
                 showDetails={detailsFor === m.id}
@@ -440,7 +244,7 @@ export default function MatchesTab({
       {played.length > 0 && (
         <div>
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="check">نتائج</IconLabel>
+            <IconLabel name="check">{texts.results}</IconLabel>
           </p>
           <div className="space-y-3">
             {played.map((m) => (
@@ -449,11 +253,11 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                profile={profile}
+                suspendedIds={suspendedIds}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showCards={cardsFor === m.id}
-                onToggleCards={() => setCardsFor((v) => (v === m.id ? null : m.id))}
                 showMvp={mvpFor === m.id}
                 onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
                 showDetails={detailsFor === m.id}
@@ -467,6 +271,196 @@ export default function MatchesTab({
             ))}
           </div>
         </div>
+      )}
+
+      {teams.length >= 2 && (
+        <div className="card p-4 space-y-3">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="trophy">
+              {isTwoGroupFormat ? texts.bracketTwoGroups : texts.bracketKnockout}
+            </IconLabel>
+          </p>
+          {bracketMatches.length === 0 ? (
+            knockoutLocked ? (
+              <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+                <Icon name="lock" size={14} className="icon-inline" /> {texts.knockoutLockedHint}
+              </p>
+            ) : isTwoGroupFormat ? (
+              <>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {texts.crossSemisHint}
+                </p>
+                <button
+                  onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  <IconLabel name="swords">{texts.generateSemis}</IconLabel>
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {texts.drawHint}
+                </p>
+                <button
+                  onClick={() => runBracketAction("draw", texts.confirmDraw)}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  <IconLabel name="dice">{texts.draw}</IconLabel>
+                </button>
+              </>
+            )
+          ) : (
+            <>
+              <BracketTree matches={bracketMatches} />
+              {bracketMatches.every((m) => m.bracketRound === 1 && m.status === "SCHEDULED") && (
+                <button
+                  onClick={() =>
+                    isTwoGroupFormat
+                      ? runBracketAction("semis-from-groups", texts.confirmRegenerateSemis, {
+                          redo: true,
+                        })
+                      : runBracketAction("draw", texts.confirmRedraw, { redo: true })
+                  }
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                  style={{ width: "auto" }}
+                >
+                  <IconLabel name="dice">
+                    {isTwoGroupFormat ? texts.regenerateSemis : texts.redraw}
+                  </IconLabel>
+                </button>
+              )}
+              {canAdvanceBracket && (
+                <button
+                  onClick={() => runBracketAction("next-round", texts.confirmNextRound)}
+                  disabled={generating}
+                  className="btn btn-primary text-sm"
+                >
+                  <ArrowLabel>{texts.nextRound}</ArrowLabel>
+                </button>
+              )}
+              {bracketIsFinalDone &&
+                (() => {
+                  const finalMatch = finalRound[0];
+                  const winnerId = getMatchWinnerTeamId({
+                    ...finalMatch,
+                    homeTeamId: finalMatch.homeTeam.id,
+                    awayTeamId: finalMatch.awayTeam.id,
+                  });
+                  const winnerName =
+                    winnerId === finalMatch.homeTeam.id
+                      ? finalMatch.homeTeam.name
+                      : finalMatch.awayTeam.name;
+                  return (
+                    <p
+                      className="text-sm font-black text-center"
+                      style={{ color: "var(--mint-700)" }}
+                    >
+                      <IconLabel name="trophy">
+                        {texts.champion} {winnerName}
+                      </IconLabel>
+                    </p>
+                  );
+                })()}
+            </>
+          )}
+        </div>
+      )}
+
+      {teams.length >= 2 && (
+        <button
+          onClick={() => setShowGenerate(true)}
+          disabled={generating}
+          className="btn btn-primary text-sm"
+          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+        >
+          {generating ? "..." : <IconLabel name="dice">{texts.suggestSchedule}</IconLabel>}
+        </button>
+      )}
+
+      <form onSubmit={createMatch} className="card p-4 space-y-3">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          <IconLabel name="plus">{texts.newMatch}</IconLabel>
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={form.homeTeamId}
+            onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value, awayTeamId: "" }))}
+            className="input"
+          >
+            <option value="">{texts.homeTeamPlaceholder}</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={form.awayTeamId}
+            onChange={(e) => setForm((p) => ({ ...p, awayTeamId: e.target.value }))}
+            className="input"
+          >
+            <option value="">{texts.awayTeamPlaceholder}</option>
+            {awayTeamOptions.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="datetime-local"
+            value={form.matchDate}
+            onChange={(e) => setForm((p) => ({ ...p, matchDate: e.target.value }))}
+            className="input"
+          />
+          <input
+            type="text"
+            placeholder={texts.roundPlaceholder}
+            value={form.round}
+            onChange={(e) => setForm((p) => ({ ...p, round: e.target.value }))}
+            maxLength={40}
+            className="input"
+          />
+        </div>
+        <input
+          type="text"
+          placeholder={texts.venuePlaceholder}
+          value={form.venue}
+          onChange={(e) => setForm((p) => ({ ...p, venue: e.target.value }))}
+          maxLength={60}
+          className="input"
+        />
+        <label
+          className="flex items-center gap-2 text-sm font-semibold"
+          style={{ color: "var(--text-main)" }}
+        >
+          <input
+            type="checkbox"
+            checked={form.isKnockout}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))
+            }
+          />
+          <IconLabel name="trophy">{texts.knockoutFlag}</IconLabel>
+        </label>
+        <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
+          {loadingAction ? "..." : texts.addMatch}
+        </button>
+      </form>
+
+      {showGenerate && (
+        <GenerateScheduleDialog
+          activityId={activityId}
+          onDone={onChange}
+          onClose={() => setShowGenerate(false)}
+        />
       )}
     </div>
   );

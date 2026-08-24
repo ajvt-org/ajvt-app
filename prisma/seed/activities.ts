@@ -7,8 +7,10 @@ export type SeededActivity = Awaited<ReturnType<typeof prisma.activity.create>>;
 
 export interface SeededActivities {
   league: SeededActivity;
+  cup: SeededActivity;
   doubles: SeededActivity;
   chess: SeededActivity;
+  dhamet: SeededActivity;
   volunteer: SeededActivity;
   lecture: SeededActivity;
   health: SeededActivity;
@@ -20,6 +22,8 @@ export async function seedActivities(): Promise<SeededActivities> {
       title: "دوري رابطة شباب التاكلالت 2026",
       description: "دوري كرة القدم السنوي بين فرق القرية، بمشاركة ثمانية فرق موزعة على مجموعتين.",
       period: "أغسطس 2026",
+      startsAt: new Date(Date.now() - 22 * 86_400_000),
+      endsAt: new Date(),
       photo: placeholder("seed-activity-1.webp"),
       isTournament: true,
       format: "GROUPS_THEN_KNOCKOUT",
@@ -35,6 +39,7 @@ export async function seedActivities(): Promise<SeededActivities> {
       period: "سبتمبر 2026",
       isTournament: true,
       format: "KNOCKOUT",
+      profile: "BOARD",
       teamSize: 2,
       isOpen: true,
       order: 1,
@@ -46,11 +51,45 @@ export async function seedActivities(): Promise<SeededActivities> {
       title: "بطولة الشطرنج",
       description: "بطولة إقصائية فردية، لم تبدأ بعد ولا فرق مسجلة فيها.",
       period: "أكتوبر 2026",
+      startsAt: new Date(Date.now() + 40 * 86_400_000),
+      endsAt: new Date(Date.now() + 46 * 86_400_000),
       capacity: 32,
       isTournament: true,
       format: "KNOCKOUT",
+      profile: "BOARD",
       isOpen: true,
       order: 2,
+    },
+  });
+
+  const dhamet = await prisma.activity.create({
+    data: {
+      title: "بطولة الدامة",
+      description: "بطولة فردية، كل مشارك يلعب لنفسه، فرقها مكتملة وجاهزة للقرعة.",
+      period: "سبتمبر 2026",
+      startsAt: new Date(Date.now() + 2 * 86_400_000),
+      endsAt: new Date(Date.now() + 6 * 86_400_000),
+      capacity: 8,
+      isTournament: true,
+      format: "KNOCKOUT",
+      profile: "BOARD",
+      teamSize: 1,
+      isOpen: true,
+      order: 6,
+    },
+  });
+
+  const cup = await prisma.activity.create({
+    data: {
+      title: "كأس التاكلالت 2025",
+      description: "نسخة العام الماضي، منتهية بكل مراحلها، مجموعات ثم إقصائيات وبطل.",
+      startsAt: new Date(Date.now() - 40 * 86_400_000),
+      endsAt: new Date(Date.now() - 30 * 86_400_000),
+      capacity: 30,
+      isTournament: true,
+      format: "GROUPS_THEN_KNOCKOUT",
+      isOpen: false,
+      order: 7,
     },
   });
 
@@ -87,7 +126,7 @@ export async function seedActivities(): Promise<SeededActivities> {
     },
   });
 
-  return { league, doubles, chess, volunteer, lecture, health };
+  return { league, cup, doubles, chess, dhamet, volunteer, lecture, health };
 }
 
 export async function seedRegistrations(
@@ -125,4 +164,18 @@ export async function seedRegistrations(
       data: { memberId: pending[i].id, activityId: activities.volunteer.id, status: "PENDING" },
     });
   }
+}
+
+export async function seedRosterRegistrations() {
+  const rostered = await prisma.teamMember.findMany({
+    select: { memberId: true, team: { select: { activityId: true } } },
+  });
+  await prisma.activityRegistration.createMany({
+    data: rostered.map((r) => ({
+      memberId: r.memberId,
+      activityId: r.team.activityId,
+      status: "ACTIVE" as const,
+    })),
+    skipDuplicates: true,
+  });
 }

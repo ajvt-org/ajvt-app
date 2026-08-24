@@ -1,0 +1,231 @@
+// Owns the TournamentDay rows and everything they imply: derivation from
+// already-dated matches, position shifts with their matchDate moves, and the
+// activity's startsAt/endsAt staying the first and last day's dates. Every
+// mutation runs in one transaction; positions are parked negative mid-shift
+// because the (activityId, position) unique index checks per row.
+
+import { prisma } from "./prisma";
+import type { Prisma } from "@prisma/client";
+import { ConflictError, NotFoundError, ValidationError } from "./errors";
+import { tournament as messages } from "./messages";
+import { DAY_MS, atTime, dayDate, derivePlan, endsAtFor } from "./tournamentDays";
+
+type Tx = Prisma.TransactionClient;
+
+async function syncBounds(tx: Tx, activityId: string) {
+  const activity = await tx.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { startsAt: true },
+  });
+  if (!activity.startsAt) return;
+  const count = await tx.tournamentDay.count({ where: { activityId } });
+  await tx.activity.update({
+    where: { id: activityId },
+    data: { endsAt: endsAtFor(activity.startsAt, count) },
+  });
+}
+
+async function shiftFrom(tx: Tx, activityId: string, position: number, by: 1 | -1) {
+  const moved = await tx.tournamentDay.findMany({
+    where: { activityId, position: { gte: position } },
+    select: { id: true, position: true },
+  });
+  if (moved.length === 0) return 0;
+  await tx.tournamentDay.updateMany({
+    where: { activityId, position: { gte: position } },
+    data: { position: { multiply: -1 } },
+  });
+  for (const day of moved) {
+    await tx.tournamentDay.update({
+      where: { id: day.id },
+      data: { position: day.position + by },
+    });
+  }
+  return tx.$executeRaw`
+    UPDATE "Match" SET "matchDate" = "matchDate" + ${by} * interval '1 day'
+    WHERE "dayId" = ANY(${moved.map((d) => d.id)}) AND "matchDate" IS NOT NULL`;
+}
+
+export async function ensureDays(activityId: string) {
+  const existing = await prisma.tournamentDay.count({ where: { activityId } });
+  if (existing > 0) return;
+
+  const activity = await prisma.activity.findUnique({
+    where: { id: activityId },
+    select: {
+      startsAt: true,
+      endsAt: true,
+      isTournament: true,
+      matches: { select: { id: true, matchDate: true } },
+    },
+  });
+  if (!activity?.isTournament) return;
+
+  const dated = activity.matches.filter((m) => m.matchDate !== null);
+  const plan = derivePlan(
+    activity.startsAt,
+    dated.map((m) => m.matchDate as Date),
+  );
+
+  if (!plan) {
+    if (!activity.startsAt || !activity.endsAt) return;
+    const count =
+      Math.round((activity.endsAt.getTime() - activity.startsAt.getTime()) / DAY_MS) + 1;
+    await prisma.tournamentDay.createMany({
+      data: Array.from({ length: Math.min(count, 60) }, (_, i) => ({
+        activityId,
+        position: i + 1,
+        isRest: false,
+      })),
+    });
+    return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const byPosition = new Map<number, string>();
+    for (const day of plan.days) {
+      const row = await tx.tournamentDay.create({
+        data: { activityId, position: day.position, isRest: day.isRest },
+      });
+      byPosition.set(day.position, row.id);
+    }
+    for (let i = 0; i < dated.length; i++) {
+      await tx.match.update({
+        where: { id: dated[i].id },
+        data: { dayId: byPosition.get(plan.positionByMatch[i]) },
+      });
+    }
+    await tx.activity.update({
+      where: { id: activityId },
+      data: { startsAt: plan.startsAt, endsAt: endsAtFor(plan.startsAt, plan.days.length) },
+    });
+  });
+}
+
+export async function listDays(activityId: string) {
+  await ensureDays(activityId);
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: {
+      startsAt: true,
+      endsAt: true,
+      days: {
+        orderBy: { position: "asc" },
+        select: {
+          id: true,
+          position: true,
+          isRest: true,
+          matches: {
+            orderBy: { matchDate: "asc" },
+            select: {
+              id: true,
+              matchDate: true,
+              round: true,
+              venue: true,
+              status: true,
+              homeTeam: { select: { id: true, name: true } },
+              awayTeam: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
+      matches: {
+        where: { dayId: null },
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          matchDate: true,
+          round: true,
+          venue: true,
+          status: true,
+          homeTeam: { select: { id: true, name: true } },
+          awayTeam: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  return {
+    startsAt: activity.startsAt,
+    endsAt: activity.endsAt,
+    days: activity.days.map((day) => ({
+      ...day,
+      date: activity.startsAt ? dayDate(activity.startsAt, day.position) : null,
+    })),
+    unscheduled: activity.matches,
+  };
+}
+
+export async function insertDay(activityId: string, position: number | null, isRest: boolean) {
+  return prisma.$transaction(async (tx) => {
+    const count = await tx.tournamentDay.count({ where: { activityId } });
+    const at = position === null ? count + 1 : position;
+    if (at < 1 || at > count + 1) throw new ValidationError(messages.dayPositionInvalid);
+    const shifted = await shiftFrom(tx, activityId, at, 1);
+    const day = await tx.tournamentDay.create({
+      data: { activityId, position: at, isRest },
+    });
+    await syncBounds(tx, activityId);
+    return { day, shifted };
+  });
+}
+
+export async function removeDay(activityId: string, dayId: string) {
+  return prisma.$transaction(async (tx) => {
+    const day = await tx.tournamentDay.findUnique({
+      where: { id: dayId },
+      select: { position: true, activityId: true, _count: { select: { matches: true } } },
+    });
+    if (!day || day.activityId !== activityId) throw new NotFoundError(messages.dayNotFound);
+    if (day._count.matches > 0) throw new ConflictError(messages.dayHasMatches);
+    await tx.tournamentDay.delete({ where: { id: dayId } });
+    const shifted = await shiftFrom(tx, activityId, day.position + 1, -1);
+    await syncBounds(tx, activityId);
+    return { shifted };
+  });
+}
+
+export async function setDayRest(activityId: string, dayId: string, isRest: boolean) {
+  const day = await prisma.tournamentDay.findUnique({
+    where: { id: dayId },
+    select: { activityId: true, _count: { select: { matches: true } } },
+  });
+  if (!day || day.activityId !== activityId) throw new NotFoundError(messages.dayNotFound);
+  if (isRest && day._count.matches > 0) throw new ConflictError(messages.dayHasMatches);
+  return prisma.tournamentDay.update({ where: { id: dayId }, data: { isRest } });
+}
+
+export async function assignMatch(
+  activityId: string,
+  matchId: string,
+  dayId: string | null,
+  time: string,
+) {
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { activityId: true },
+  });
+  if (!match || match.activityId !== activityId) throw new NotFoundError(messages.matchNotFound);
+
+  if (dayId === null) {
+    return prisma.match.update({ where: { id: matchId }, data: { dayId: null } });
+  }
+
+  const day = await prisma.tournamentDay.findUnique({
+    where: { id: dayId },
+    select: { activityId: true, position: true, isRest: true },
+  });
+  if (!day || day.activityId !== activityId) throw new NotFoundError(messages.dayNotFound);
+  if (day.isRest) throw new ConflictError(messages.dayIsRest);
+
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { startsAt: true },
+  });
+  if (!activity.startsAt) throw new ConflictError(messages.startDateMissing);
+
+  return prisma.match.update({
+    where: { id: matchId },
+    data: { dayId, matchDate: atTime(dayDate(activity.startsAt, day.position), time) },
+  });
+}

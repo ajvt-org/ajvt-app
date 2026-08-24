@@ -11,7 +11,6 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
   const showToast = useToast();
   const [actionLoading, setActionLoading] = useState(false);
   const [reorderLoading, setReorderLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function createActivity(draft: NewActivityDraft) {
     setActionLoading(true);
@@ -19,41 +18,10 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
       const data = await api.post<{ activity: Activity }>("/api/admin/activities", draft);
       const created = data.activity;
       if (created?.isTournament) {
-        router.push(`/admin/tournament/${created.id}?title=${encodeURIComponent(created.title)}`);
+        router.push(`/admin/tournament/${created.id}`);
         return;
       }
       await reload();
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function updateActivityPhoto(id: string, photo: string) {
-    await api.patch(`/api/admin/activities/${id}`, { photo });
-    await reload();
-  }
-
-  async function toggleActivityTournament(activity: Activity) {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${activity.id}`, {
-        isTournament: !activity.isTournament,
-      });
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function toggleActivityOpen(activity: Activity) {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${activity.id}`, { isOpen: !activity.isOpen });
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
     } finally {
       setActionLoading(false);
     }
@@ -78,107 +46,5 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
     }
   }
 
-  async function saveWhatsappLink(id: string, link: string): Promise<boolean> {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${id}`, { whatsappLink: link.trim() });
-      await reload();
-      return true;
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  function requestDeleteActivity(id: string) {
-    setDeletingId(id);
-  }
-
-  function cancelDeleteActivity() {
-    setDeletingId(null);
-  }
-
-  async function confirmDeleteActivity() {
-    const id = deletingId;
-    if (!id) return;
-    setActionLoading(true);
-    try {
-      await api.del(`/api/admin/activities/${id}`);
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setActionLoading(false);
-      setDeletingId(null);
-    }
-  }
-
-  async function registerMember(activityId: string, memberId: string): Promise<boolean> {
-    setActionLoading(true);
-    try {
-      await api.post(`/api/admin/activities/${activityId}/register`, { memberId });
-      await reload();
-      return true;
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function reviewRegistration(
-    activityId: string,
-    registrationId: string,
-    status: "ACTIVE" | "REJECTED",
-    reason?: string,
-  ): Promise<boolean> {
-    setActionLoading(true);
-    try {
-      await api.patch(`/api/admin/activities/${activityId}/register`, {
-        registrationId,
-        status,
-        reason,
-      });
-      await reload();
-      return true;
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function unregisterMember(activityId: string, memberId: string) {
-    setActionLoading(true);
-    try {
-      await api.del(`/api/admin/activities/${activityId}/register`, { memberId });
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  return {
-    actionLoading,
-    reorderLoading,
-    deletingId,
-    createActivity,
-    updateActivityPhoto,
-    toggleActivityTournament,
-    toggleActivityOpen,
-    moveActivity,
-    saveWhatsappLink,
-    requestDeleteActivity,
-    cancelDeleteActivity,
-    confirmDeleteActivity,
-    registerMember,
-    reviewRegistration,
-    unregisterMember,
-  };
+  return { actionLoading, reorderLoading, createActivity, moveActivity };
 }

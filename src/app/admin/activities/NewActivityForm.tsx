@@ -4,7 +4,22 @@ import { useState } from "react";
 import PhotoUpload from "@/components/PhotoUpload";
 import IconLabel from "@/components/IconLabel";
 import { errorMessage } from "@/lib/api";
-import { emptyNewActivity, type NewActivityDraft } from "./activityTypes";
+import { activityForm as texts } from "@/lib/texts";
+import type { IconName } from "@/components/Icon";
+import TournamentSetupFields from "./TournamentSetupFields";
+import {
+  emptyNewActivity,
+  natureOf,
+  withNature,
+  type ActivityNature,
+  type NewActivityDraft,
+} from "./activityTypes";
+
+const NATURES: { value: ActivityNature; label: string; icon: IconName }[] = [
+  { value: "normal", label: texts.natures.normal, icon: "calendar" },
+  { value: "tournament", label: texts.natures.tournament, icon: "trophy" },
+  { value: "volunteer", label: texts.natures.volunteer, icon: "handshake" },
+];
 
 export default function NewActivityForm({
   onCreate,
@@ -31,20 +46,20 @@ export default function NewActivityForm({
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="plus">إضافة نشاط جديد</IconLabel>
-      </p>
-      <PhotoUpload
-        photo={draft.photo || null}
-        imageUrlPrefix="/api/files/activity"
-        variant="avatar"
-        label={draft.isTournament ? "شعار البطولة" : "صورة النشاط"}
-        placeholderIcon="image"
-        onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
-      />
+      <div className="flex justify-center">
+        <PhotoUpload
+          photo={draft.photo || null}
+          imageUrlPrefix="/api/files/activity"
+          variant="avatar"
+          bare
+          label={draft.isTournament ? texts.tournamentLogo : texts.activityPhoto}
+          placeholderIcon="image"
+          onUpload={(filename) => setDraft((p) => ({ ...p, photo: filename }))}
+        />
+      </div>
       <input
         type="text"
-        placeholder="عنوان النشاط"
+        placeholder={texts.titlePlaceholder}
         value={draft.title}
         onChange={(e) => setDraft((p) => ({ ...p, title: e.target.value }))}
         required
@@ -52,7 +67,7 @@ export default function NewActivityForm({
         className="input"
       />
       <textarea
-        placeholder="الوصف"
+        placeholder={texts.descriptionPlaceholder}
         value={draft.description}
         onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))}
         required
@@ -66,7 +81,7 @@ export default function NewActivityForm({
           style={{ color: "var(--text-muted)" }}
           htmlFor="activity-field-1"
         >
-          من
+          {texts.from}
         </label>
         <input
           id="activity-field-1"
@@ -80,7 +95,7 @@ export default function NewActivityForm({
           style={{ color: "var(--text-muted)" }}
           htmlFor="activity-field-2"
         >
-          إلى
+          {texts.to}
         </label>
         <input
           id="activity-field-2"
@@ -94,75 +109,58 @@ export default function NewActivityForm({
       <input
         type="number"
         min={1}
-        placeholder="السعة القصوى (اختياري)"
+        placeholder={texts.capacityPlaceholder}
         value={draft.capacity}
         onChange={(e) => setDraft((p) => ({ ...p, capacity: e.target.value }))}
         className="input"
       />
-      <label
-        className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: "var(--text-main)" }}
-      >
-        <input
-          type="checkbox"
-          checked={draft.isTournament}
-          onChange={(e) =>
-            setDraft((p) => ({
-              ...p,
-              isTournament: e.target.checked,
-              isVolunteer: e.target.checked ? false : p.isVolunteer,
-            }))
-          }
-        />
-        <IconLabel name="ball">هذا النشاط بطولة (فرق، مباريات، ترتيب، هدافون)</IconLabel>
-      </label>
-      {draft.isTournament && (
-        <div>
-          <label
-            className="block text-sm font-bold mb-1.5"
-            style={{ color: "var(--text-main)" }}
-            htmlFor="activity-format"
-          >
-            نظام البطولة
-          </label>
-          <select
-            id="activity-format"
-            value={draft.format}
-            onChange={(e) => setDraft((p) => ({ ...p, format: e.target.value }))}
-            className="input"
-          >
-            <option value="KNOCKOUT">خروج المغلوب مباشرة</option>
-            <option value="GROUPS_THEN_KNOCKOUT">مجموعات ثم خروج المغلوب</option>
-          </select>
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            لا يمكن تغييره بعد إنشاء المباريات
-          </p>
+      <div>
+        <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          {texts.natureHeading}
+        </p>
+        <div className="space-y-1.5">
+          {NATURES.map((n) => (
+            <label
+              key={n.value}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer"
+              style={{
+                background: natureOf(draft) === n.value ? "var(--mint-100)" : "white",
+                border:
+                  natureOf(draft) === n.value
+                    ? "1.5px solid var(--mint-500)"
+                    : "1.5px solid var(--mint-100)",
+              }}
+            >
+              <input
+                type="radio"
+                name="activity-nature"
+                checked={natureOf(draft) === n.value}
+                onChange={() => setDraft((p) => withNature(p, n.value))}
+                className="w-4 h-4"
+              />
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={n.icon}>{n.label}</IconLabel>
+              </span>
+            </label>
+          ))}
         </div>
-      )}
-      <label
-        className="flex items-center gap-2 text-sm font-semibold"
-        style={{ color: "var(--text-main)" }}
-      >
-        <input
-          type="checkbox"
-          checked={draft.isVolunteer}
-          onChange={(e) =>
-            setDraft((p) => ({
-              ...p,
-              isVolunteer: e.target.checked,
-              isTournament: e.target.checked ? false : p.isTournament,
-            }))
+      </div>
+      {draft.isTournament && (
+        <TournamentSetupFields
+          format={draft.format}
+          profile={draft.profile}
+          teamSize={draft.teamSize}
+          onFormat={(format) => setDraft((p) => ({ ...p, format }))}
+          onPreset={(preset) =>
+            setDraft((p) => ({ ...p, profile: preset.profile, teamSize: preset.teamSize }))
           }
         />
-        <IconLabel name="handshake">
-          هذا النشاط حملة تطوعية (بدون تسجيل داخل التطبيق — رابط واتساب مباشر)
-        </IconLabel>
-      </label>
+      )}
       {draft.isVolunteer && (
         <input
           type="text"
           dir="ltr"
-          placeholder="رابط مجموعة الواتساب — https://chat.whatsapp.com/..."
+          placeholder={texts.whatsappPlaceholder}
           value={draft.whatsappLink}
           onChange={(e) => setDraft((p) => ({ ...p, whatsappLink: e.target.value }))}
           required
@@ -178,7 +176,7 @@ export default function NewActivityForm({
         </div>
       )}
       <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-        {saving ? "..." : "إضافة"}
+        {saving ? "..." : texts.submit}
       </button>
     </form>
   );

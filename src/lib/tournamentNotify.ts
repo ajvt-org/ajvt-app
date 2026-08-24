@@ -32,6 +32,38 @@ export async function notifyTeams(
   );
 }
 
+export async function notifyActivityFollowers(
+  activityId: string,
+  payload: { title: string; body: string; url?: string },
+  category: CategoryKey = "TOURNAMENT_MATCH",
+) {
+  const teams = await prisma.team.findMany({
+    where: { activityId },
+    select: { id: true },
+  });
+  const teamIds = teams.map((t) => t.id);
+  const [teamMembers, followers] = await Promise.all([
+    prisma.teamMember.findMany({
+      where: { teamId: { in: teamIds } },
+      select: { member: { select: { userId: true } } },
+    }),
+    prisma.teamFollow.findMany({
+      where: { teamId: { in: teamIds } },
+      select: { userId: true },
+    }),
+  ]);
+  const userIds = Array.from(
+    new Set(
+      [...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter(
+        (id): id is string => id !== null,
+      ),
+    ),
+  );
+  await sendPushToUsers(userIds, payload, category).catch((err) =>
+    logger.error("tournament.push.error", err),
+  );
+}
+
 const REMINDER_WINDOW_MS = 36 * 60 * 60 * 1000;
 
 export async function sendMatchReminders() {

@@ -7,7 +7,31 @@ import { normalizeTeamSize } from "@/lib/teamSize";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
-import type { TournamentFormat } from "@prisma/client";
+import type { SportProfile, TournamentFormat } from "@prisma/client";
+
+export const GET = withRoute(
+  "GET /api/admin/activities/[id]",
+  async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params;
+    await requireActivityAccess(id);
+    const activity = await prisma.activity.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        photo: true,
+        isTournament: true,
+        format: true,
+        profile: true,
+        teamSize: true,
+        startsAt: true,
+        endsAt: true,
+      },
+    });
+    if (!activity) return NextResponse.json({ error: activities.notFound }, { status: 404 });
+    return NextResponse.json({ activity });
+  },
+);
 
 export const PATCH = withRoute(
   "PATCH /api/admin/activities/[id]",
@@ -23,7 +47,10 @@ export const PATCH = withRoute(
       photo,
       isTournament,
       format,
+      profile,
       teamSize,
+      yellowsForBan,
+      redBanMatches,
       isVolunteer,
       whatsappLink,
       order,
@@ -46,7 +73,10 @@ export const PATCH = withRoute(
       photo?: string | null;
       isTournament?: boolean;
       format?: TournamentFormat | null;
+      profile?: SportProfile;
       teamSize?: number | null;
+      yellowsForBan?: number;
+      redBanMatches?: number;
       isVolunteer?: boolean;
       whatsappLink?: string | null;
       order?: number;
@@ -76,6 +106,15 @@ export const PATCH = withRoute(
       }
       data.teamSize = normalizeTeamSize(teamSize);
     }
+    if (profile !== undefined) {
+      const played = await prisma.match.count({ where: { activityId: id } });
+      if (played > 0 && profile !== existing.profile) {
+        return NextResponse.json({ error: tournament.profileLocked }, { status: 409 });
+      }
+      data.profile = profile;
+    }
+    if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
+    if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
     if (order !== undefined) data.order = Number(order);

@@ -42,6 +42,20 @@ export const ACCEPTED: CountedNoun = {
   many: "مقبولاً",
 };
 
+export const REGISTERED: CountedNoun = {
+  one: "مسجل",
+  two: "مسجلان",
+  few: "مسجلين",
+  many: "مسجلاً",
+};
+
+export const TEAM: CountedNoun = {
+  one: "فريق",
+  two: "فريقان",
+  few: "فرق",
+  many: "فريقاً",
+};
+
 export const PLAYER: CountedNoun = {
   one: "لاعب",
   two: "لاعبان",

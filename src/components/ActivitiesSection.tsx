@@ -6,6 +6,7 @@ import Link from "next/link";
 import ArrowLabel from "./ArrowLabel";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
+import ActivityStandingChip from "./ActivityStandingChip";
 import type { Activity, EligibleMember } from "./activityTypes";
 
 interface ActivitiesSectionProps {
@@ -166,6 +167,7 @@ function ActivityCard({ activity, member }: { activity: Activity; member: Eligib
           <span className="font-bold truncate" style={{ color: "var(--text-main)" }}>
             {activity.title}
           </span>
+          <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
           {!activity.isOpen && (
             <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
               مغلق

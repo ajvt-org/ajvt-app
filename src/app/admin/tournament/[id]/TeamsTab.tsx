@@ -10,6 +10,7 @@ import GroupsPanel from "./GroupsPanel";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { discipline as disciplineTexts } from "@/lib/texts";
 
 export default function TeamsTab({
   activityId,
@@ -18,6 +19,7 @@ export default function TeamsTab({
   format,
   teamSize,
   roster,
+  suspendedIds,
   onChange,
 }: {
   activityId: string;
@@ -26,6 +28,7 @@ export default function TeamsTab({
   format: TournamentFormat;
   teamSize: number | null;
   roster: RosterMember[];
+  suspendedIds: string[];
   onChange: () => void;
 }) {
   const [newTeamName, setNewTeamName] = useState("");
@@ -367,6 +370,11 @@ export default function TeamsTab({
                     >
                       <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
                       {member.fullName} <Icon name="pencil" size={12} className="icon-inline" />
+                      {suspendedIds.includes(member.id) && (
+                        <span className="badge badge-rejected" style={{ fontSize: "10px" }}>
+                          <IconLabel name="ban">{disciplineTexts.suspendedBadge}</IconLabel>
+                        </span>
+                      )}
                       {status === "PENDING" && (
                         <span className="badge badge-pending" style={{ fontSize: "10px" }}>
                           <IconLabel name="clock">بانتظار الموافقة</IconLabel>

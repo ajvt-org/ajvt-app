@@ -1,5 +1,6 @@
 "use client";
 
+import CardChip from "@/components/tournament/CardChip";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { getHeadToHead, formatMatchDateTime } from "@/lib/tournament";
@@ -8,19 +9,19 @@ import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
-import { CARD_LABEL } from "./constants";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function MatchCard({
   match,
   teams,
   allMatches,
+  profile,
+  suspendedIds,
   onDelete,
   showResultForm,
   onToggleResultForm,
-  showCards,
-  onToggleCards,
   showMvp,
   onToggleMvp,
   showDetails,
@@ -33,11 +34,11 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
+  profile: "FOOTBALL" | "BOARD";
+  suspendedIds: string[];
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
-  showCards: boolean;
-  onToggleCards: () => void;
   showMvp: boolean;
   onToggleMvp: () => void;
   showDetails: boolean;
@@ -48,6 +49,7 @@ export default function MatchCard({
   onChange: () => void;
 }) {
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const football = profile === "FOOTBALL";
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
@@ -64,7 +66,7 @@ export default function MatchCard({
             {match.homePenalties !== null && match.awayPenalties !== null && (
               <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                 {" "}
-                (ركلات ترجيح {match.homePenalties}-{match.awayPenalties})
+                ({texts.penaltiesShort} {match.homePenalties}-{match.awayPenalties})
               </span>
             )}
           </p>
@@ -79,13 +81,15 @@ export default function MatchCard({
               </span>
             )}
             {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
-            {match.isKnockout && <span className="badge badge-pending">إقصائية</span>}
+            {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
           </div>
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              <IconLabel name="refresh">مواجهات سابقة:</IconLabel>{" "}
+              <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>{" "}
               {priorMeetings
-                .map((pm) => (pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"))
+                .map((pm) =>
+                  pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : texts.upcomingShort,
+                )
                 .join("، ")}
             </p>
           )}
@@ -98,7 +102,7 @@ export default function MatchCard({
                 disabled={!onMoveUp}
                 className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title="تقديم"
+                title={texts.moveUp}
               >
                 <Icon name="chevronUp" size={12} />
               </button>
@@ -107,7 +111,7 @@ export default function MatchCard({
                 disabled={!onMoveDown}
                 className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title="تأخير"
+                title={texts.moveDown}
               >
                 <Icon name="chevronDown" size={12} />
               </button>
@@ -118,7 +122,7 @@ export default function MatchCard({
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            {match.status === "PLAYED" ? "تعديل النتيجة" : "أدخل النتيجة"}
+            {match.status === "PLAYED" ? texts.editResult : texts.enterResult}
           </button>
           <button
             onClick={onDelete}
@@ -130,23 +134,27 @@ export default function MatchCard({
         </div>
       </div>
 
-      {match.status === "PLAYED" && match.goals.length > 0 && (
+      {football && match.status === "PLAYED" && match.goals.length > 0 && (
         <div
           className="mt-2 pt-2 flex flex-wrap gap-1.5"
           style={{ borderTop: "1px solid var(--mint-100)" }}
         >
           {match.goals.map((g) => (
             <span key={g.id} className="badge badge-active flex items-center gap-1.5">
-              <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
-              <Icon name="ball" size={12} /> {g.member.fullName}
+              {g.member && (
+                <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
+              )}
+              <Icon name="ball" size={12} /> {g.member?.fullName ?? texts.unknownScorer}
               {g.minute ? ` ${g.minute}'` : ""}
               {g.count > 1 ? ` (${g.count})` : ""}
+              {g.kind === "PENALTY" && ` (${texts.kindPenalty})`}
+              {g.kind === "OWN_GOAL" && ` (${texts.kindOwnGoal})`}
             </span>
           ))}
         </div>
       )}
 
-      {match.manOfTheMatch && (
+      {football && match.manOfTheMatch && (
         <p
           className="text-xs mt-2 font-semibold flex items-center gap-1.5"
           style={{ color: "var(--mint-700)" }}
@@ -156,16 +164,18 @@ export default function MatchCard({
             fullName={match.manOfTheMatch.fullName}
             size={20}
           />
-          <IconLabel name="star">رجل المباراة: {match.manOfTheMatch.fullName}</IconLabel>
+          <IconLabel name="star">
+            {texts.motm} {match.manOfTheMatch.fullName}
+          </IconLabel>
         </p>
       )}
 
-      {match.bookings.length > 0 && (
+      {football && match.bookings.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {match.bookings.map((b) => (
             <span key={b.id} className="badge badge-rejected flex items-center gap-1.5">
               <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
-              {CARD_LABEL[b.cardType]} {b.member.fullName}
+              <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
               {b.minute ? ` (${b.minute}')` : ""}
             </span>
           ))}
@@ -173,28 +183,19 @@ export default function MatchCard({
       )}
 
       <div className="flex gap-2 mt-2">
-        <button
-          onClick={onToggleCards}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          {showCards ? "إخفاء البطاقات" : "🟨🟥 إدارة البطاقات"}
-        </button>
-        <button
-          onClick={onToggleMvp}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          {showMvp ? "إخفاء التصويت" : <IconLabel name="star">أفضل لاعب</IconLabel>}
-        </button>
+        {football && (
+          <button
+            onClick={onToggleMvp}
+            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-200)",
+            }}
+          >
+            {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
+          </button>
+        )}
         <button
           onClick={onToggleDetails}
           className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
@@ -204,13 +205,34 @@ export default function MatchCard({
             border: "1px solid var(--mint-200)",
           }}
         >
-          {showDetails ? "إخفاء التفاصيل" : <IconLabel name="pencil">تعديل التفاصيل</IconLabel>}
+          {showDetails ? (
+            texts.hideDetails
+          ) : (
+            <IconLabel name="pencil">{texts.editDetails}</IconLabel>
+          )}
         </button>
       </div>
 
-      {showCards && <BookingsForm match={match} teams={teams} onChange={onChange} />}
-      {showResultForm && <ResultForm match={match} teams={teams} onSaved={onSaved} />}
-      {showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
+      {showResultForm && (
+        <>
+          <ResultForm
+            match={match}
+            teams={teams}
+            profile={profile}
+            suspendedIds={suspendedIds}
+            onSaved={onSaved}
+          />
+          {football && (
+            <BookingsForm
+              match={match}
+              teams={teams}
+              suspendedIds={suspendedIds}
+              onChange={onChange}
+            />
+          )}
+        </>
+      )}
+      {football && showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
       {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
     </div>
   );

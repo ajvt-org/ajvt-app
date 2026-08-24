@@ -83,6 +83,36 @@ describe("the admin home", () => {
     expect(body.handling.total).toBe(0);
   });
 
+  it("lists today's matches and only today's", async () => {
+    const activity = await prisma.activity.create({
+      data: { title: "دوري اليوم", description: "بطولة", isTournament: true, format: "KNOCKOUT" },
+    });
+    const home = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
+    const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
+    await prisma.match.create({
+      data: {
+        activityId: activity.id,
+        homeTeamId: home.id,
+        awayTeamId: away.id,
+        matchDate: new Date(),
+      },
+    });
+    await prisma.match.create({
+      data: {
+        activityId: activity.id,
+        homeTeamId: away.id,
+        awayTeamId: home.id,
+        matchDate: new Date(Date.now() - 3 * 86_400_000),
+      },
+    });
+
+    const body = await (await read()).json();
+
+    expect(body.matchesToday).toHaveLength(1);
+    expect(body.matchesToday[0].activity.title).toBe("دوري اليوم");
+    expect(body.matchesToday[0].homeTeam.name).toBe("أ");
+  });
+
   it("is closed to someone who is not signed in", async () => {
     const { clearCookies } = await import("./cookieJar");
     clearCookies();

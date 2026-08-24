@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Icon, { type IconName } from "./Icon";
 import IconLabel from "./IconLabel";
+import { photoUpload as texts } from "@/lib/texts";
 
 interface PhotoUploadProps {
   photo: string | null;
@@ -11,15 +12,17 @@ interface PhotoUploadProps {
   label?: string;
   placeholderIcon?: IconName;
   variant?: "avatar" | "cover" | "hero";
+  bare?: boolean;
 }
 
 export default function PhotoUpload({
   photo,
   onUpload,
   imageUrlPrefix = "/api/files",
-  label = "الصورة الشخصية",
+  label = texts.defaultLabel,
   placeholderIcon = "user",
   variant = "avatar",
+  bare = false,
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -38,11 +41,11 @@ export default function PhotoUpload({
       fd.append("file", file);
       const upRes = await fetch("/api/upload", { method: "POST", body: fd });
       const uploaded = await upRes.json();
-      if (!upRes.ok) throw new Error(uploaded.error || "فشل رفع الصورة");
+      if (!upRes.ok) throw new Error(uploaded.error || texts.uploadFailed);
 
       await onUpload(uploaded.filename);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(err instanceof Error ? err.message : texts.unexpectedError);
       setPreviewUrl(null);
     } finally {
       setUploading(false);
@@ -50,7 +53,7 @@ export default function PhotoUpload({
   }
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
-  const hint = photo || previewUrl ? "انقر على الصورة لتغييرها" : "اختياري — انقر لإضافة صورة";
+  const hint = photo || previewUrl ? texts.changeHint : texts.addHint;
 
   // The profile opens on the person, so the picture is the page's first thing
   // rather than a card of its own further down.
@@ -147,6 +150,7 @@ export default function PhotoUpload({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
+        aria-label={label}
         className="relative w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
         style={{ background: "var(--mint-100)", border: "2px solid var(--mint-300)" }}
       >
@@ -165,19 +169,21 @@ export default function PhotoUpload({
           {uploading ? "..." : <Icon name="camera" size={11} />}
         </div>
       </button>
-      <div className="min-w-0">
-        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          {label}
-        </p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {hint}
-        </p>
-        {error && (
-          <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>
-            {error}
+      {!bare && (
+        <div className="min-w-0">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            {label}
           </p>
-        )}
-      </div>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {hint}
+          </p>
+        </div>
+      )}
+      {error && (
+        <p className="text-xs mt-0.5" style={{ color: "#dc2626" }}>
+          {error}
+        </p>
+      )}
       <input
         ref={inputRef}
         type="file"

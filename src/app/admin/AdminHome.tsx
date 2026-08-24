@@ -11,6 +11,19 @@ import PageLoading from "@/components/PageLoading";
 import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
+import { adminHome as texts } from "@/lib/texts";
+import { formatMatchTime } from "@/lib/tournament";
+
+export interface HomeMatch {
+  id: string;
+  matchDate: string | null;
+  status: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  activity: { id: string; title: string };
+  homeTeam: { name: string };
+  awayTeam: { name: string };
+}
 
 export interface HomeSummary {
   year: number;
@@ -22,6 +35,7 @@ export interface HomeSummary {
     pendingPayments: number;
     total: number;
   };
+  matchesToday: HomeMatch[];
 }
 
 function Answer({
@@ -101,31 +115,67 @@ export default function AdminHome() {
   return (
     <div className="p-4 flex flex-col gap-3">
       <WaitingRequests />
+      {summary.matchesToday.length > 0 && (
+        <div className="card p-4">
+          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            <IconLabel name="swords">{texts.matchesToday}</IconLabel>
+          </p>
+          <div className="mt-2 space-y-2">
+            {summary.matchesToday.map((m) => (
+              <Link
+                key={m.id}
+                href={`/admin/tournament/${m.activity.id}?tab=matches`}
+                className="flex items-center justify-between gap-2 text-sm"
+                style={{ color: "var(--text-main)" }}
+              >
+                <span className="min-w-0 truncate font-semibold">
+                  {m.homeTeam.name}{" "}
+                  {m.status === "PLAYED" ? `${m.homeScore} - ${m.awayScore}` : "×"}{" "}
+                  {m.awayTeam.name}
+                </span>
+                <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+                  {m.activity.title}
+                  {m.matchDate ? (
+                    <>
+                      {" "}
+                      · <span dir="ltr">{formatMatchTime(m.matchDate)}</span>
+                    </>
+                  ) : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       <Answer
         href="/admin/dashboard?standing=current"
         icon="check"
-        question={`من جدد عضوية ${summary.year}`}
+        question={texts.renewedQuestion(summary.year)}
         headline={`${membership.current} / ${membership.active}`}
-        detail={`${membership.current} حالي من ${counted(membership.active, ACTIVE_MEMBER)}`}
+        detail={texts.renewedDetail(membership.current, counted(membership.active, ACTIVE_MEMBER))}
       />
       <Answer
         href="/admin/expenses"
         icon="banknote"
-        question="ما دخل وما خرج"
-        headline={`${money.net} أوقية`}
-        detail={`دخل ${money.revenue} أوقية، صرف ${money.spending} أوقية`}
+        question={texts.moneyQuestion}
+        headline={texts.ouguiya(money.net)}
+        detail={texts.moneyDetail(money.revenue, money.spending)}
         tone={money.net < 0 ? "var(--danger)" : undefined}
       />
       <Answer
         href="/admin/dashboard?status=PENDING"
         icon="clock"
-        question="ما ينتظر البت فيه"
+        question={texts.pendingQuestion}
         headline={counted(handling.total, REQUEST)}
-        detail={`عضويات ${handling.pendingMembers}، أنشطة ${handling.pendingRegistrations}، دفعات ${handling.pendingPayments}`}
+        detail={texts.pendingDetail(
+          handling.pendingMembers,
+          handling.pendingRegistrations,
+          handling.pendingPayments,
+        )}
         tone={handling.total > 0 ? "var(--mint-700)" : undefined}
       />
       <p className="text-center text-xs" style={{ color: "var(--text-muted)" }}>
-        الإصدار {process.env.RELEASE}
+        {texts.version} {process.env.RELEASE}
       </p>
     </div>
   );

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { validateGoals, parseScorePair } from "./matchInput";
+import {
+  validateGoals,
+  validateGoalEvents,
+  validateKicks,
+  scoreFromGoals,
+  shootoutFromKicks,
+  parseScorePair,
+} from "./matchInput";
 
 const goal = { memberId: "m1", count: 1, minute: 10 };
 
@@ -103,5 +110,66 @@ describe("parseScorePair", () => {
 
   it("rejects something that is not a number", () => {
     expect(parseScorePair("two", 0)).toBe("invalid");
+  });
+});
+
+describe("validateGoalEvents", () => {
+  const H = "home";
+  const A = "away";
+
+  it("fills the defaults for a plain goal", () => {
+    const events = validateGoalEvents([{ teamId: H, memberId: "m1" }], H, A);
+
+    expect(events).toEqual([
+      { teamId: H, memberId: "m1", kind: "GOAL", period: "REGULAR", minute: null },
+    ]);
+  });
+
+  it("accepts an unknown scorer", () => {
+    const events = validateGoalEvents([{ teamId: A, memberId: null, kind: "PENALTY" }], H, A);
+
+    expect(events![0].memberId).toBeNull();
+    expect(events![0].kind).toBe("PENALTY");
+  });
+
+  it("rejects a goal for a team not in the match", () => {
+    expect(validateGoalEvents([{ teamId: "zzz", memberId: null }], H, A)).toBeNull();
+  });
+
+  it("rejects a bad kind, period or minute", () => {
+    expect(validateGoalEvents([{ teamId: H, memberId: null, kind: "X" }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: H, memberId: null, period: "X" }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: H, memberId: null, minute: 300 }], H, A)).toBeNull();
+  });
+});
+
+describe("scoreFromGoals and shootoutFromKicks", () => {
+  it("derives the score from the credited teams", () => {
+    expect(scoreFromGoals([{ teamId: "h" }, { teamId: "h" }, { teamId: "a" }], "h")).toEqual({
+      home: 2,
+      away: 1,
+    });
+  });
+
+  it("counts only the scored kicks", () => {
+    const kicks = [
+      { teamId: "h", memberId: null, scored: true },
+      { teamId: "a", memberId: null, scored: false },
+      { teamId: "h", memberId: null, scored: false },
+      { teamId: "a", memberId: null, scored: true },
+      { teamId: "h", memberId: null, scored: true },
+    ];
+
+    expect(shootoutFromKicks(kicks, "h")).toEqual({ home: 2, away: 1 });
+  });
+});
+
+describe("validateKicks", () => {
+  it("reads absence as an empty shootout", () => {
+    expect(validateKicks(undefined, "h", "a")).toEqual([]);
+  });
+
+  it("rejects a kick without a verdict", () => {
+    expect(validateKicks([{ teamId: "h", memberId: null }], "h", "a")).toBeNull();
   });
 });

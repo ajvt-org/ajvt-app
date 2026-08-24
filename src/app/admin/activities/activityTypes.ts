@@ -47,6 +47,8 @@ export interface NewActivityDraft {
   photo: string;
   isTournament: boolean;
   format: string;
+  profile: string;
+  teamSize: string;
   isVolunteer: boolean;
   whatsappLink: string;
 }
@@ -61,7 +63,23 @@ export function emptyNewActivity(): NewActivityDraft {
     photo: "",
     isTournament: false,
     format: "KNOCKOUT",
+    profile: "FOOTBALL",
+    teamSize: "",
     isVolunteer: false,
     whatsappLink: "",
+  };
+}
+
+export type ActivityNature = "normal" | "tournament" | "volunteer";
+
+export function natureOf(draft: Pick<NewActivityDraft, "isTournament" | "isVolunteer">) {
+  return draft.isTournament ? "tournament" : draft.isVolunteer ? "volunteer" : "normal";
+}
+
+export function withNature(draft: NewActivityDraft, nature: ActivityNature): NewActivityDraft {
+  return {
+    ...draft,
+    isTournament: nature === "tournament",
+    isVolunteer: nature === "volunteer",
   };
 }
