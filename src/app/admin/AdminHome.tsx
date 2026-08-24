@@ -125,7 +125,7 @@ export default function AdminHome() {
             {summary.matchesToday.map((m) => (
               <Link
                 key={m.id}
-                href={`/admin/tournament/${m.activity.id}?tab=matches`}
+                href={`/admin/activities/${m.activity.id}?tab=matches`}
                 className="flex items-center justify-between gap-2 text-sm"
                 style={{ color: "var(--text-main)" }}
               >
