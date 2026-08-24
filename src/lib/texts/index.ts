@@ -8,4 +8,5 @@ export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
+export { treasury } from "./treasury";
 export { matchDisplay, publicTournament } from "./publicTournament";
