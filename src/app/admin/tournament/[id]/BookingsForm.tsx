@@ -5,6 +5,8 @@ import type { Match, Team } from "./types";
 import CardChip from "@/components/tournament/CardChip";
 import { api, errorMessage } from "@/lib/api";
 import { matchAdmin as texts } from "@/lib/texts";
+import FieldRow from "@/components/admin/FieldRow";
+import IconLabel from "@/components/IconLabel";
 
 export default function BookingsForm({
   match,
@@ -86,57 +88,77 @@ export default function BookingsForm({
         </div>
       )}
 
-      <form onSubmit={addBooking} className="flex flex-wrap gap-2 items-center">
-        <select
-          value={teamId}
-          onChange={(e) => {
-            setTeamId(e.target.value);
-            setMemberId("");
-          }}
-          className="input text-sm"
-          style={{ width: "auto" }}
-        >
-          <option value={match.homeTeam.id}>{match.homeTeam.name}</option>
-          <option value={match.awayTeam.id}>{match.awayTeam.name}</option>
-        </select>
-        <select
-          value={memberId}
-          onChange={(e) => setMemberId(e.target.value)}
-          className="input text-sm flex-1"
-        >
-          <option value="">{texts.pickPlayer}</option>
-          {roster.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.fullName}
-            </option>
-          ))}
-        </select>
-        <select
-          value={cardType}
-          onChange={(e) => setCardType(e.target.value as "YELLOW" | "RED")}
-          className="input text-sm"
-          style={{ width: "auto" }}
-        >
-          <option value="YELLOW">{texts.yellowCard}</option>
-          <option value="RED">{texts.redCard}</option>
-        </select>
-        <input
-          type="number"
-          min={1}
-          max={130}
-          placeholder={texts.minute}
-          value={minute}
-          onChange={(e) => setMinute(e.target.value)}
-          className="input text-sm"
-          style={{ width: "80px" }}
-        />
-        <button
-          type="submit"
-          disabled={!memberId || loading}
-          className="btn btn-primary text-xs px-3"
-          style={{ width: "auto" }}
-        >
-          {texts.add}
+      <form
+        onSubmit={addBooking}
+        className="rounded-xl p-3 space-y-2.5"
+        style={{ background: "var(--mint-50)" }}
+      >
+        <FieldRow label={texts.fieldTeam}>
+          {(id) => (
+            <select
+              id={id}
+              value={teamId}
+              onChange={(e) => {
+                setTeamId(e.target.value);
+                setMemberId("");
+              }}
+              className="input text-sm"
+            >
+              <option value={match.homeTeam.id}>{match.homeTeam.name}</option>
+              <option value={match.awayTeam.id}>{match.awayTeam.name}</option>
+            </select>
+          )}
+        </FieldRow>
+
+        <FieldRow label={texts.fieldPlayer}>
+          {(id) => (
+            <select
+              id={id}
+              value={memberId}
+              onChange={(e) => setMemberId(e.target.value)}
+              className="input text-sm"
+            >
+              <option value="">{texts.pickPlayer}</option>
+              {roster.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.fullName}
+                </option>
+              ))}
+            </select>
+          )}
+        </FieldRow>
+
+        <FieldRow label={texts.fieldCard}>
+          {(id) => (
+            <select
+              id={id}
+              value={cardType}
+              onChange={(e) => setCardType(e.target.value as "YELLOW" | "RED")}
+              className="input text-sm"
+            >
+              <option value="YELLOW">{texts.yellowCard}</option>
+              <option value="RED">{texts.redCard}</option>
+            </select>
+          )}
+        </FieldRow>
+
+        <FieldRow label={texts.fieldMinute} hint={texts.minuteHint}>
+          {(id) => (
+            <input
+              id={id}
+              type="number"
+              min={1}
+              max={130}
+              inputMode="numeric"
+              value={minute}
+              onChange={(e) => setMinute(e.target.value)}
+              className="input text-sm"
+            />
+          )}
+        </FieldRow>
+
+        <button type="submit" disabled={!memberId || loading} className="btn btn-primary text-sm">
+          <IconLabel name="plus">{texts.addCard}</IconLabel>
         </button>
       </form>
       {error && (
