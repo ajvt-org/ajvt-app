@@ -6,4 +6,8 @@ export const quizBoard = {
   noCompetitions: "لا توجد مسابقة تشارك فيها الآن",
   visitorHint: "الترتيب معروض للجميع. أنشئ حساباً للمشاركة في الجولات.",
   ineligibleHint: "الترتيب معروض للجميع. المشاركة في الجولات للمنتسبين الذين دفعوا رسوم الانتساب.",
+  roundOpen: (n: number) => `الجولة ${n} مفتوحة الآن`,
+  startRound: "ابدأ الجولة",
+  resumeRound: "أكمل الجولة",
+  signUpToPlay: "سجّل للمشاركة",
 } as const;
