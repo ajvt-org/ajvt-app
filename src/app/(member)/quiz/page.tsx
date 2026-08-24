@@ -36,35 +36,19 @@ function QuizScreen() {
   const [loading, setLoading] = useState(true);
   const wasChosen = useRef(false);
 
-  const loadPublic = useCallback(async () => {
-    const res = await fetch("/api/quiz/competitions/public");
-    const json = res.ok ? await res.json() : { competitions: [] };
-    setMine(json.competitions ?? []);
-    setCanPlay(false);
-  }, []);
-
   const loadMine = useCallback(async () => {
     try {
       const res = await fetch("/api/quiz/competitions");
-      if (res.status === 401) {
-        setVisitor(true);
-        await loadPublic();
-        return;
-      }
-      if (res.status === 403) {
-        setIneligible(true);
-        await loadPublic();
-        return;
-      }
       const json = await res.json();
-      setMine(json.competitions);
+      setMine(json.competitions ?? []);
       setConfirmAnswers(json.confirmAnswers ?? true);
-      setCanPlay(true);
+      setCanPlay(json.canPlay ?? false);
+      setVisitor(!json.signedIn);
+      setIneligible(!!json.signedIn && !json.canPlay);
     } catch {
       setVisitor(true);
-      await loadPublic().catch(() => {});
     }
-  }, [loadPublic]);
+  }, []);
 
   const loadStandings = useCallback(() => {
     if (!chosen) return Promise.resolve();
@@ -138,6 +122,7 @@ function QuizScreen() {
       <CompetitionView
         standings={standings}
         canPlay={canPlay}
+        visitor={visitor}
         onBack={() => router.push("/quiz")}
         onReloadStandings={loadStandings}
       />
@@ -149,7 +134,7 @@ function QuizScreen() {
       competitions={mine}
       backHref={backHref}
       onPick={(id) => router.push(`/quiz?competition=${id}`)}
-      onTutorial={canPlay ? () => setTutorial(true) : undefined}
+      onTutorial={() => setTutorial(true)}
       hint={canPlay ? undefined : visitor ? texts.visitorHint : texts.ineligibleHint}
       onStarted={loadMine}
     />

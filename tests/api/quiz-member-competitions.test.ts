@@ -84,11 +84,26 @@ describe("the competitions a member may play", () => {
     expect((await (await mine()).json()).competitions).toHaveLength(2);
   });
 
-  it("is closed to a member who has not paid", async () => {
+  it("shows a member who has not paid the standings without the play controls", async () => {
     await competition();
     await paidMember(0);
 
-    expect((await mine()).status).toBe(403);
+    const res = await mine();
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.canPlay).toBe(false);
+    expect(body.signedIn).toBe(true);
+    expect(body.competitions.map((c: { name: string }) => c.name)).toEqual(["مسابقة"]);
+  });
+
+  it("keeps a private competition away from a member who has not paid", async () => {
+    await competition({ visibility: "PRIVATE", name: "خاصة" });
+    await paidMember(0);
+
+    const body = await (await mine()).json();
+
+    expect(body.competitions).toEqual([]);
   });
 
   it("carries the live confirm flag for the tutorial", async () => {
