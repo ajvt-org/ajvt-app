@@ -30,6 +30,24 @@ export const tournament = {
   memberSuspended: "اللاعب موقوف — لا يمكن تسجيله في هذه المباراة",
   nothingToGenerate: (perTeam: number) =>
     `لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل ${perTeam} مباريات`,
+  resultNotNumber: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب",
+  scorersInvalid: "بيانات الهدافين غير صالحة",
+  homeGoalsMismatch: "مجموع أهداف لاعبي الفريق المضيف لا يطابق النتيجة",
+  awayGoalsMismatch: "مجموع أهداف لاعبي الفريق الضيف لا يطابق النتيجة",
+  scorerNotInHome: "أحد الهدافين ليس ضمن الفريق المضيف",
+  scorerNotInAway: "أحد الهدافين ليس ضمن الفريق الضيف",
+  penaltiesNotNumber: "نتيجة ركلات الترجيح يجب أن تكون رقماً صحيحاً غير سالب",
+  penaltiesTied: "لا يمكن أن تتعادل ركلات الترجيح",
+  penaltiesKnockoutOnly: "ركلات الترجيح متاحة فقط لمباريات خروج المغلوب",
+  penaltiesTieOnly: "ركلات الترجيح متاحة فقط عند تعادل النتيجة",
+  motmNotInMatch: "رجل المباراة يجب أن يكون ضمن أحد الفريقين",
+  leaguePairing:
+    "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
+  goalEventsInvalid: "بيانات الأهداف غير صالحة",
+  kicksInvalid: "بيانات ركلات الترجيح غير صالحة",
+  scorerWrongTeam: "أحد الهدافين ليس ضمن الفريق الصحيح",
+  ownGoalScorerWrongTeam: "مسجل الهدف العكسي يجب أن يكون من الفريق الآخر",
+  kickerWrongTeam: "أحد منفذي ركلات الترجيح ليس ضمن فريقه",
   teamsIncomplete: (size: number, names: string) =>
     `فرق غير مكتملة (${size} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
   needPowerOfTwo: (count: number) =>

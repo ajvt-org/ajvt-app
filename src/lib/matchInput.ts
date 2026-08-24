@@ -27,6 +27,88 @@ export function validateGoals(input: unknown): GoalInput[] | null {
   return goals;
 }
 
+export type GoalKindInput = "GOAL" | "PENALTY" | "OWN_GOAL";
+export type GoalPeriodInput = "REGULAR" | "EXTRA_TIME";
+
+export interface GoalEvent {
+  teamId: string;
+  memberId: string | null;
+  kind: GoalKindInput;
+  period: GoalPeriodInput;
+  minute: number | null;
+}
+
+export interface KickEvent {
+  teamId: string;
+  memberId: string | null;
+  scored: boolean;
+}
+
+const KINDS: GoalKindInput[] = ["GOAL", "PENALTY", "OWN_GOAL"];
+const PERIODS: GoalPeriodInput[] = ["REGULAR", "EXTRA_TIME"];
+
+function parseMinute(raw: unknown): number | null | "invalid" {
+  if (raw === undefined || raw === null || raw === "") return null;
+  const m = Number(raw);
+  if (!Number.isInteger(m) || m < 1 || m > 130) return "invalid";
+  return m;
+}
+
+export function validateGoalEvents(
+  input: unknown,
+  homeTeamId: string,
+  awayTeamId: string,
+): GoalEvent[] | null {
+  if (!Array.isArray(input)) return null;
+  const events: GoalEvent[] = [];
+  for (const g of input) {
+    if (!g || (g.teamId !== homeTeamId && g.teamId !== awayTeamId)) return null;
+    if (g.memberId !== null && typeof g.memberId !== "string") return null;
+    const kind = g.kind === undefined ? "GOAL" : g.kind;
+    if (!KINDS.includes(kind)) return null;
+    const period = g.period === undefined ? "REGULAR" : g.period;
+    if (!PERIODS.includes(period)) return null;
+    const minute = parseMinute(g.minute);
+    if (minute === "invalid") return null;
+    events.push({ teamId: g.teamId, memberId: g.memberId ?? null, kind, period, minute });
+  }
+  return events;
+}
+
+export function validateKicks(
+  input: unknown,
+  homeTeamId: string,
+  awayTeamId: string,
+): KickEvent[] | null {
+  if (input === undefined) return [];
+  if (!Array.isArray(input)) return null;
+  const kicks: KickEvent[] = [];
+  for (const k of input) {
+    if (!k || (k.teamId !== homeTeamId && k.teamId !== awayTeamId)) return null;
+    if (k.memberId !== null && typeof k.memberId !== "string") return null;
+    if (typeof k.scored !== "boolean") return null;
+    kicks.push({ teamId: k.teamId, memberId: k.memberId ?? null, scored: k.scored });
+  }
+  return kicks;
+}
+
+export function scoreFromGoals(
+  goals: { teamId: string }[],
+  homeTeamId: string,
+): { home: number; away: number } {
+  const home = goals.filter((g) => g.teamId === homeTeamId).length;
+  return { home, away: goals.length - home };
+}
+
+export function shootoutFromKicks(
+  kicks: KickEvent[],
+  homeTeamId: string,
+): { home: number; away: number } {
+  const home = kicks.filter((k) => k.teamId === homeTeamId && k.scored).length;
+  const away = kicks.filter((k) => k.teamId !== homeTeamId && k.scored).length;
+  return { home, away };
+}
+
 export type ScorePair = { home: number; away: number } | null;
 
 export function parseScorePair(home: unknown, away: unknown): ScorePair | "invalid" {

@@ -91,6 +91,8 @@ export default async function PublicTournamentPage({
               count: true,
               minute: true,
               teamId: true,
+              kind: true,
+              period: true,
               member: { select: { id: true, fullName: true, photo: true } },
             },
           },

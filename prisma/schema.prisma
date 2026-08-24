@@ -30,15 +30,15 @@ datasource db {
 }
 
 model User {
-  id                    String             @id @default(cuid())
-  phone                 String             @unique
+  id                    String                   @id @default(cuid())
+  phone                 String                   @unique
   password              String
-  tokenVersion          Int                @default(0)
+  tokenVersion          Int                      @default(0)
   // Set when an admin issues a temporary password. Non-null means the current
   // password is temporary: the app is locked until it is changed, and the
   // password stops working altogether once this passes.
   tempPasswordExpiresAt DateTime?
-  createdAt             DateTime           @default(now())
+  createdAt             DateTime                 @default(now())
   members               Member[]
   pushSubscriptions     PushSubscription[]
   notificationPrefs     NotificationPreference[]
@@ -46,8 +46,8 @@ model User {
   mvpVotes              MvpVote[]
   quizAttempts          QuizAttempt[]
   quizParticipations    QuizParticipant[]
-  currentStreak         Int                @default(0) // consecutive days of app activity ("flame")
-  longestStreak         Int                @default(0)
+  currentStreak         Int                      @default(0) // consecutive days of app activity ("flame")
+  longestStreak         Int                      @default(0)
   lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
 }
 
@@ -82,6 +82,7 @@ model Member {
   registrations    ActivityRegistration[]
   teamMemberships  TeamMember[]
   matchGoals       MatchGoal[]
+  penaltyKicks     MatchPenaltyKick[]
   matchBookings    MatchBooking[]
   motmMatches      Match[]                @relation("ManOfTheMatch")
   mvpCandidacies   MvpCandidate[]
@@ -171,21 +172,22 @@ model Group {
 }
 
 model Team {
-  id          String         @id @default(cuid())
-  activityId  String
-  activity    Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  groupId     String?
-  group       Group?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  name        String
-  autoNamed   Boolean        @default(false)
-  logo        String?
-  createdAt   DateTime       @default(now())
-  members     TeamMember[]
-  homeMatches Match[]        @relation("HomeTeam")
-  awayMatches Match[]        @relation("AwayTeam")
-  goals       MatchGoal[]
-  bookings    MatchBooking[]
-  followers   TeamFollow[]
+  id           String             @id @default(cuid())
+  activityId   String
+  activity     Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  groupId      String?
+  group        Group?             @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  name         String
+  autoNamed    Boolean            @default(false)
+  logo         String?
+  createdAt    DateTime           @default(now())
+  members      TeamMember[]
+  homeMatches  Match[]            @relation("HomeTeam")
+  awayMatches  Match[]            @relation("AwayTeam")
+  goals        MatchGoal[]
+  bookings     MatchBooking[]
+  penaltyKicks MatchPenaltyKick[]
+  followers    TeamFollow[]
 
   @@index([activityId])
   @@index([groupId])
@@ -215,33 +217,34 @@ model TeamMember {
 }
 
 model Match {
-  id              String         @id @default(cuid())
+  id              String             @id @default(cuid())
   activityId      String
-  activity        Activity       @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity        Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
   homeTeamId      String
-  homeTeam        Team           @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  homeTeam        Team               @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
   awayTeamId      String
-  awayTeam        Team           @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  awayTeam        Team               @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
   matchDate       DateTime?
   dayId           String?
-  day             TournamentDay? @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  day             TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
   round           String?
   venue           String?
-  order           Int            @default(0)
-  isKnockout      Boolean        @default(false)
+  order           Int                @default(0)
+  isKnockout      Boolean            @default(false)
   bracketRound    Int? // set only for matches created by the bracket generator (round 1 = first knockout round, increasing towards the final)
   homeScore       Int?
   awayScore       Int?
   homePenalties   Int?
   awayPenalties   Int?
   manOfTheMatchId String?
-  manOfTheMatch   Member?        @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
-  status          MatchStatus    @default(SCHEDULED)
+  manOfTheMatch   Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
+  status          MatchStatus        @default(SCHEDULED)
   reminderSentAt  DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
   goals           MatchGoal[]
   bookings        MatchBooking[]
+  penaltyKicks    MatchPenaltyKick[]
   mvpVote         MatchMvpVote?
 
   @@index([activityId])
@@ -298,19 +301,50 @@ model MatchBooking {
   @@index([matchId])
 }
 
+enum GoalKind {
+  GOAL
+  PENALTY
+  OWN_GOAL
+}
+
+enum GoalPeriod {
+  REGULAR
+  EXTRA_TIME
+}
+
+// teamId is the team the goal counts FOR. A null member is an unknown scorer;
+// an OWN_GOAL's member belongs to the other team. Scores derive from these
+// rows when a result is saved with events.
 model MatchGoal {
+  id        String     @id @default(cuid())
+  matchId   String
+  match     Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  memberId  String?
+  member    Member?    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  count     Int        @default(1)
+  minute    Int?
+  kind      GoalKind   @default(GOAL)
+  period    GoalPeriod @default(REGULAR)
+  createdAt DateTime   @default(now())
+
+  @@index([matchId])
+}
+
+model MatchPenaltyKick {
   id        String   @id @default(cuid())
   matchId   String
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  count     Int      @default(1)
-  minute    Int?
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  order     Int
+  scored    Boolean
   createdAt DateTime @default(now())
 
-  @@index([matchId])
+  @@unique([matchId, order])
 }
 
 model ActivityRegistration {
