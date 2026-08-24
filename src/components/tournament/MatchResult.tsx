@@ -6,6 +6,7 @@ import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { formatMatchTime, getHeadToHead } from "@/lib/tournament";
 import type { PublicMatch } from "./publicTypes";
+import { matchDisplay } from "@/lib/texts";
 
 export default function MatchResult({
   match,
@@ -84,8 +85,8 @@ export default function MatchResult({
           round={match.round}
           tournamentTitle={tournamentTitle}
           goals={(football ? match.goals : []).map((g) => ({
-            fullName: g.member.fullName,
-            photo: g.member.photo,
+            fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
+            photo: g.member?.photo ?? null,
             count: g.count,
             minute: g.minute,
             isHome: g.teamId === match.homeTeam.id,
@@ -108,11 +109,15 @@ export default function MatchResult({
               className="flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs font-bold"
               style={{ background: "#d1fae5", color: "#065f46" }}
             >
-              <PlayerAvatar photo={goal.member.photo} fullName={goal.member.fullName} size={18} />
+              {goal.member && (
+                <PlayerAvatar photo={goal.member.photo} fullName={goal.member.fullName} size={18} />
+              )}
               <Icon name="ball" size={13} className="icon-inline" />
-              {goal.member.fullName}
+              {goal.member?.fullName ?? matchDisplay.unknownScorer}
               {goal.minute ? ` ${goal.minute}'` : ""}
               {goal.count > 1 ? ` (${goal.count})` : ""}
+              {goal.kind === "PENALTY" && ` (${matchDisplay.penaltyShort})`}
+              {goal.kind === "OWN_GOAL" && ` (${matchDisplay.ownGoal})`}
             </span>
           ))}
         </div>

@@ -141,10 +141,14 @@ export default function MatchCard({
         >
           {match.goals.map((g) => (
             <span key={g.id} className="badge badge-active flex items-center gap-1.5">
-              <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
-              <Icon name="ball" size={12} /> {g.member.fullName}
+              {g.member && (
+                <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
+              )}
+              <Icon name="ball" size={12} /> {g.member?.fullName ?? texts.unknownScorer}
               {g.minute ? ` ${g.minute}'` : ""}
               {g.count > 1 ? ` (${g.count})` : ""}
+              {g.kind === "PENALTY" && ` (${texts.kindPenalty})`}
+              {g.kind === "OWN_GOAL" && ` (${texts.kindOwnGoal})`}
             </span>
           ))}
         </div>
