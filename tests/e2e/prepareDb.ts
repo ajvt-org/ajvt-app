@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { Client } from "pg";
-import { localDatabase } from "../localDatabase";
+import { localDatabase } from "../localDatabase.mjs";
 
 async function prepare() {
   const url = new URL(process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e"));

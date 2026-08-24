@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
-import { DATABASE_BOUND_LIB } from "./tests/coverageScope.js";
+import { DATABASE_BOUND_LIB } from "./tests/coverageScope.mjs";
 
 export default defineConfig({
   resolve: {
