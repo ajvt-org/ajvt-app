@@ -174,6 +174,7 @@ export const PATCH = withRoute(
     let eventKicks: KickEvent[] = [];
     const eventsMode = goalEvents !== undefined;
     const enteringResult = !eventsMode && (homeScore !== undefined || awayScore !== undefined);
+    let clearedResult = false;
 
     if (eventsMode) {
       const evGoals = validateGoalEvents(goalEvents, match.homeTeamId, match.awayTeamId);
@@ -258,7 +259,10 @@ export const PATCH = withRoute(
       if (scores === null) {
         updateData.homeScore = null;
         updateData.awayScore = null;
+        updateData.homePenalties = null;
+        updateData.awayPenalties = null;
         updateData.status = "SCHEDULED";
+        clearedResult = true;
       } else {
         const hs = scores.home;
         const as = scores.away;
@@ -397,6 +401,9 @@ export const PATCH = withRoute(
       }
       if (enteringResult) {
         await tx.matchGoal.deleteMany({ where: { matchId } });
+        if (clearedResult) {
+          await tx.matchPenaltyKick.deleteMany({ where: { matchId } });
+        }
         if (parsedHomeGoals.length > 0) {
           await tx.matchGoal.createMany({
             data: parsedHomeGoals.map((g) => ({
