@@ -78,7 +78,7 @@ describe("the admin home", () => {
 
     expect(await screen.findByText("مباريات اليوم")).toBeTruthy();
     const row = screen.getByText(/الصقور/).closest("a");
-    expect(row?.getAttribute("href")).toBe("/admin/tournament/a1?tab=matches");
+    expect(row?.getAttribute("href")).toBe("/admin/activities/a1?tab=matches");
   });
 
   it("keeps the card away on a day without matches", async () => {

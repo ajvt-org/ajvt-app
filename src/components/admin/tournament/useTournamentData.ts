@@ -29,7 +29,7 @@ export interface TournamentInfo {
   endsAt: string | null;
 }
 
-export function useTournamentData(activityId: string) {
+export function useTournamentData(activityId: string, enabled = true) {
   const router = useRouter();
   const [info, setInfo] = useState<TournamentInfo | null>(null);
   const [roster, setRoster] = useState<RosterMember[]>([]);
@@ -85,6 +85,7 @@ export function useTournamentData(activityId: string) {
   );
 
   useEffect(() => {
+    if (!enabled) return;
     Promise.all([
       reloadInfo(),
       reloadRoster(),
@@ -95,7 +96,15 @@ export function useTournamentData(activityId: string) {
     ])
       .catch(() => setError(texts.loadFailed))
       .finally(() => setLoading(false));
-  }, [reloadInfo, reloadRoster, reloadGroups, reloadTeams, reloadMatches, reloadDiscipline]);
+  }, [
+    enabled,
+    reloadInfo,
+    reloadRoster,
+    reloadGroups,
+    reloadTeams,
+    reloadMatches,
+    reloadDiscipline,
+  ]);
 
   return {
     info,

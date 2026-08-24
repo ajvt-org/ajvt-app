@@ -3,10 +3,16 @@ export const activityWorkspace = {
   notFound: "لم نجد هذا النشاط.",
   backToIndex: "الأنشطة",
   capacity: "السعة",
+  publicPage: "الصفحة العامة",
   tabs: {
     details: "التفاصيل",
     registrations: "المسجلون",
-    tournament: "البطولة",
+    teams: "الفرق",
+    players: "اللاعبون",
+    days: "الأيام",
+    matches: "المباريات",
+    standings: "الترتيب",
+    scorers: "الإحصائيات",
     finance: "المالية",
     log: "السجل",
   },
@@ -14,15 +20,5 @@ export const activityWorkspace = {
 
 export const tournamentWorkspace = {
   fallbackTitle: "البطولة",
-  backToActivity: "النشاط",
-  publicPage: "الصفحة العامة",
   loadFailed: "فشل تحميل بيانات البطولة",
-  tabs: {
-    teams: "الفرق",
-    players: "اللاعبون",
-    days: "الأيام",
-    matches: "المباريات",
-    standings: "الترتيب",
-    scorers: "الإحصائيات",
-  },
 } as const;

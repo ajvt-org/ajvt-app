@@ -83,7 +83,7 @@ export default function ActivityRow({
       <div className="shrink-0 flex items-center gap-1">
         {a.isTournament && (
           <Link
-            href={`/admin/tournament/${a.id}`}
+            href={`/admin/activities/${a.id}?tab=matches`}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
