@@ -11,7 +11,7 @@ type Team = {
 
 export default function TeamsGrid({ teams }: { teams: Team[] }) {
   return (
-    <div className="grid grid-cols-2 items-start gap-2">
+    <div className="space-y-2">
       {teams.map((team) => (
         <details key={team.id} className="card p-3">
           <summary
