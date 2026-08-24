@@ -32,14 +32,6 @@ export default function MatchesPanel({
 
   return (
     <>
-      {scheduled.length > 0 && (
-        <TournamentSection icon="calendar" title={texts.upcoming}>
-          <MatchDayList
-            matches={scheduled}
-            renderMatch={(match, day) => <MatchFixture key={match.id} match={match} day={day} />}
-          />
-        </TournamentSection>
-      )}
       {played.length > 0 && (
         <TournamentSection icon="check" title={texts.results}>
           <MatchDayList
@@ -58,6 +50,14 @@ export default function MatchesPanel({
                 }
               />
             )}
+          />
+        </TournamentSection>
+      )}
+      {scheduled.length > 0 && (
+        <TournamentSection icon="calendar" title={texts.upcoming}>
+          <MatchDayList
+            matches={scheduled}
+            renderMatch={(match, day) => <MatchFixture key={match.id} match={match} day={day} />}
           />
         </TournamentSection>
       )}
