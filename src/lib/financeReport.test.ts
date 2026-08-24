@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { byMonth, byTag, monthKey, monthsBetween, sumOf, UNTAGGED } from "./financeReport";
+import {
+  byMonth,
+  byTag,
+  monthKey,
+  monthsBetween,
+  sumOf,
+  tagTotal,
+  UNTAGGED,
+} from "./financeReport";
 
 const at = (iso: string) => new Date(iso);
 const entry = (iso: string, amount: number, tags: string[] = []) => ({
@@ -147,5 +155,26 @@ describe("sumOf", () => {
 
   it("is nothing for an empty period", () => {
     expect(sumOf([])).toBe(0);
+  });
+});
+
+describe("tagTotal", () => {
+  it("adds the rows up", () => {
+    expect(
+      tagTotal([
+        { tag: "أ", amount: 300 },
+        { tag: "ب", amount: 200 },
+      ]),
+    ).toBe(500);
+  });
+
+  it("is zero with nothing tagged", () => {
+    expect(tagTotal([])).toBe(0);
+  });
+
+  it("runs past the real total when one entry carries two tags", () => {
+    const rows = byTag([{ at: new Date("2026-01-05"), amount: 100, tags: ["أ", "ب"] }]);
+
+    expect(tagTotal(rows)).toBe(200);
   });
 });
