@@ -1,6 +1,6 @@
 "use client";
 
-import { matchDateToLocalInput } from "@/lib/tournament";
+import { matchDateToLocalInput } from "@/lib/clubTime";
 import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";

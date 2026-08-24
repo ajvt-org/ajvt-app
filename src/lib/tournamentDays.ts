@@ -1,9 +1,4 @@
-// Day arithmetic for the tournament spine. Positions are 1-based and dense;
-// a day's date is startsAt + (position - 1) days, all at UTC midnight like
-// Activity.startsAt itself. Shifting whole days adds whole days to matchDate,
-// which keeps each match's stored time of day.
-
-import { matchDateKey } from "./tournament";
+import { fromClubWallClock, matchDateKey, toClubWallClock } from "./clubTime";
 
 export const DAY_MS = 86_400_000;
 
@@ -23,13 +18,13 @@ export function endsAtFor(startsAt: Date, dayCount: number): Date | null {
 
 export function atTime(day: Date, time: string): Date {
   const [h, m] = time.split(":").map(Number);
-  const at = new Date(day);
-  at.setUTCHours(h || 0, m || 0, 0, 0);
-  return at;
+  const wall = toClubWallClock(day);
+  wall.setUTCHours(h || 0, m || 0, 0, 0);
+  return fromClubWallClock(wall.getTime());
 }
 
 export function timeOf(date: Date): string {
-  return date.toISOString().slice(11, 16);
+  return toClubWallClock(date).toISOString().slice(11, 16);
 }
 
 function clubDayNumber(date: Date): number {
@@ -44,9 +39,6 @@ export interface DerivedPlan {
   positionByMatch: number[];
 }
 
-// Rebuilds the day plan from already-dated matches: each distinct club-local
-// day becomes a match day, uncovered days between them become rest days, and
-// the plan starts at the earlier of startsAt and the first match.
 export function derivePlan(startsAt: Date | null, matchDates: Date[]): DerivedPlan | null {
   if (matchDates.length === 0) return null;
 
@@ -61,7 +53,7 @@ export function derivePlan(startsAt: Date | null, matchDates: Date[]): DerivedPl
   }
 
   return {
-    startsAt: startsAt ?? new Date(first * DAY_MS),
+    startsAt: startsAt ?? fromClubWallClock(first * DAY_MS),
     days,
     positionByMatch: numbers.map((n) => n - first + 1),
   };

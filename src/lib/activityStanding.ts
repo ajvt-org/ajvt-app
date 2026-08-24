@@ -1,4 +1,4 @@
-import { matchDateKey } from "./tournament";
+import { matchDateKey } from "./clubTime";
 
 const DAY_MS = 86_400_000;
 

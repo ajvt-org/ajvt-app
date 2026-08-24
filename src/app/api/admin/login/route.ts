@@ -6,7 +6,7 @@ import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { logAction } from "@/lib/audit";
-import { common } from "@/lib/messages";
+import { auth, common } from "@/lib/messages";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -24,7 +24,7 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
   const key = `admin-login:${username}`;
   const ipKey = `admin-login-ip:${getClientIp(req)}`;
   if (isRateLimited(key, MAX_ATTEMPTS) || isRateLimited(ipKey, MAX_IP_ATTEMPTS)) {
-    logger.warn("admin.login.rate_limited", { username, ip: getClientIp(req) });
+    logger.warn("admin.login.rate_limited");
     return NextResponse.json({ error: common.tooManyAttempts }, { status: 429 });
   }
 
@@ -33,20 +33,20 @@ export const POST = withRoute("POST /api/admin/login", async (req: NextRequest) 
     await bcrypt.compare(password, DUMMY_HASH);
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
-    logger.warn("admin.login.failed", { username, ip: getClientIp(req), reason: "unknown_user" });
-    return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
+    logger.warn("admin.login.failed", { reason: "unknown_user" });
+    return NextResponse.json({ error: auth.adminCredentialsWrong }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(password, admin.password);
   if (!valid) {
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
-    logger.warn("admin.login.failed", { username, ip: getClientIp(req), reason: "bad_password" });
-    return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
+    logger.warn("admin.login.failed", { reason: "bad_password" });
+    return NextResponse.json({ error: auth.adminCredentialsWrong }, { status: 401 });
   }
 
   clearAttempts(key);
-  logger.info("admin.login.ok", { username, role: admin.role, ip: getClientIp(req) });
+  logger.info("admin.login.ok", { role: admin.role });
 
   await prisma.admin.update({
     where: { id: admin.id },

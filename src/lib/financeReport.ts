@@ -70,6 +70,10 @@ export function byTag(entries: ReportEntry[]): TagRow[] {
     .sort((a, b) => b.amount - a.amount || a.tag.localeCompare(b.tag));
 }
 
+export function tagTotal(rows: TagRow[]): number {
+  return rows.reduce((total, row) => total + row.amount, 0);
+}
+
 export function sumOf(entries: ReportEntry[]): number {
   return entries.reduce((total, entry) => total + entry.amount, 0);
 }

@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { getAppSettings } from "./settingsServer";
 import { membershipStanding, needsHandling, netMoney } from "./adminHome";
-import { matchDateKey } from "./tournament";
+import { matchDateKey } from "./clubTime";
 
 const DAY_MS = 86_400_000;
 

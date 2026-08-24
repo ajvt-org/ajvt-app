@@ -33,6 +33,26 @@ describe("toCsv", () => {
     expect(toCsv(["amount"], [[1000]])).toContain('"1000"');
   });
 
+  it("stops a spreadsheet running a name as a formula", () => {
+    const csv = toCsv(["الاسم"], [['=HYPERLINK("http://x","click")']]);
+
+    expect(csv).toContain(`"'=HYPERLINK`);
+  });
+
+  it("defuses every character a spreadsheet treats as a formula", () => {
+    for (const start of ["=", "+", "-", "@", "\t", "\r"]) {
+      expect(toCsv(["h"], [[`${start}cmd`]])).toContain(`"'${start}cmd"`);
+    }
+  });
+
+  it("leaves a negative amount as a number", () => {
+    expect(toCsv(["amount"], [[-500]])).toContain('"-500"');
+  });
+
+  it("leaves an ordinary name alone", () => {
+    expect(toCsv(["الاسم"], [["محمد"]])).toContain('"محمد"');
+  });
+
   it("handles no rows", () => {
     expect(toCsv(["a"], [])).toBe(`${BOM}"a"`);
   });

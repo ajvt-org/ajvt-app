@@ -1,7 +1,7 @@
 "use client";
 
 import Icon from "@/components/Icon";
-import { formatMatchDateTime } from "@/lib/tournament";
+import { formatMatchDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
 import { scoreline, type Fixture } from "@/lib/memberFixtures";
 
