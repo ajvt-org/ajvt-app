@@ -52,6 +52,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("the web storage the prompt remembers itself in", () => {
+  it("is a real one, separate for the session and the device", () => {
+    expect(localStorage).toBeDefined();
+    expect(sessionStorage).toBeDefined();
+
+    localStorage.setItem(INSTALLED_KEY, "device");
+    sessionStorage.setItem(INSTALLED_KEY, "session");
+
+    expect(localStorage.getItem(INSTALLED_KEY)).toBe("device");
+    expect(sessionStorage.getItem(INSTALLED_KEY)).toBe("session");
+  });
+});
+
 const BANNER = "أضف التطبيق لشاشتك الرئيسية";
 const HINT = "التطبيق مثبت على جهازك";
 
