@@ -4,6 +4,7 @@ import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import { toThumbUrl } from "@/lib/utils";
 import ActivityStandingChip from "@/components/ActivityStandingChip";
+import { landingActivities as texts } from "@/lib/texts";
 
 export type LandingActivity = {
   id: string;
@@ -30,7 +31,7 @@ export default function LandingActivities({
     >
       {heading && (
         <h2 className="font-black text-lg mb-4 text-center" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="trophy">أنشطة هذا الصيف</IconLabel>
+          <IconLabel name="trophy">{texts.heading}</IconLabel>
         </h2>
       )}
 
@@ -54,10 +55,10 @@ export default function LandingActivities({
           </span>
           <span className="min-w-0 flex-1">
             <span className="font-bold block" style={{ color: "var(--text-main)" }}>
-              المسابقات الثقافية
+              {texts.quizTitle}
             </span>
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              جولات بأسئلة ونقاط، وترتيب خاص بكل مسابقة
+              {texts.quizSub}
             </span>
           </span>
           <Icon name="chevronLeft" size={16} className="shrink-0" />
@@ -114,7 +115,7 @@ export default function LandingActivities({
 
       {activities.length > 0 && (
         <p className="text-xs text-center mt-5" style={{ color: "var(--text-muted)" }}>
-          أنشئ حساباً وأكمل استمارة الانضمام للتسجيل في الأنشطة
+          {texts.signUpHint}
         </p>
       )}
     </div>
