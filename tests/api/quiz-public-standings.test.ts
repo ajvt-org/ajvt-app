@@ -5,7 +5,7 @@ import { clearCookies } from "./cookieJar";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
-import { GET as PUBLIC_COMPETITIONS } from "@/app/api/quiz/competitions/public/route";
+import { GET as COMPETITIONS } from "@/app/api/quiz/competitions/route";
 
 const START = (() => {
   const d = new Date();
@@ -18,7 +18,7 @@ const PERIOD = 1440 * 60_000;
 
 const standings = (id?: string) =>
   STANDINGS(get(id ? `/api/quiz/standings?competition=${id}` : "/api/quiz/standings"));
-const competitions = () => PUBLIC_COMPETITIONS();
+const competitions = () => COMPETITIONS();
 
 async function competition(over: Record<string, unknown> = {}) {
   return prisma.competition.create({
@@ -105,7 +105,7 @@ describe("standings without an account", () => {
     expect(body.competitionId).toBeNull();
   });
 
-  it("lists only the public competitions and refuses play", async () => {
+  it("lists only the public competitions and refuses play to a visitor", async () => {
     const open = await competition();
     await competition({ visibility: "PRIVATE", name: "خاصة" });
 
@@ -125,5 +125,18 @@ describe("standings without an account", () => {
     const body = await (await standings(c.id)).json();
 
     expect(body.meId).toBe(a.id);
+  });
+
+  it("gives a signed in member their own list rather than the public one", async () => {
+    const open = await competition();
+    await competition({ visibility: "PRIVATE", name: "خاصة" });
+    const [a] = await createUsers(1);
+    await member(a.id, "أحمد");
+    await signInAs(a);
+
+    const body = await (await competitions()).json();
+
+    expect(body.signedIn).toBe(true);
+    expect(body.competitions.map((c: { id: string }) => c.id)).toContain(open.id);
   });
 });
