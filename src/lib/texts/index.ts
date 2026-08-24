@@ -1,4 +1,4 @@
-export { activityForm, activityRow, tournamentSetup } from "./activities";
+export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";

@@ -11,6 +11,8 @@ export interface Activity {
   title: string;
   description: string;
   when: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
   photo: string | null;
   capacity: number | null;
   isOpen: boolean;

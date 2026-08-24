@@ -27,6 +27,15 @@ export const activityRow = {
   moveDown: (title: string) => `تأخير ${title} في الترتيب`,
 } as const;
 
+export const activityStandingTexts = {
+  startsToday: "يبدأ اليوم",
+  startsTomorrow: "يبدأ غداً",
+  startsIn: (days: number) =>
+    days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
+  running: "جارٍ الآن",
+  finished: "انتهى",
+} as const;
+
 export const tournamentSetup = {
   presetHeading: "نوع البطولة",
   presets: {
