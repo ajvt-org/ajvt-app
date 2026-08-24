@@ -306,6 +306,8 @@ export default function ResultForm({
         </label>
         <select
           id={`${uid}-motm`}
+          name={`${uid}-motm`}
+          autoComplete="off"
           value={manOfTheMatchId}
           onChange={(e) => setManOfTheMatchId(e.target.value)}
           className="input"
