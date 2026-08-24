@@ -3,6 +3,7 @@ export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
 export { financeReport } from "./financeReport";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
+export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import FixtureRow from "@/components/FixtureRow";
 import FixturesEmpty from "@/components/FixturesEmpty";
 import type { FixturesResponse } from "@/lib/memberFixtures";
+import { memberMatches as texts } from "@/lib/texts";
 
 function Section({ title, fixtures }: { title: string; fixtures: FixturesResponse["upcoming"] }) {
   if (fixtures.length === 0) return null;
@@ -35,7 +36,7 @@ export default function MatchesList() {
   if (loading) {
     return (
       <div className="px-5 py-16 text-center" style={{ color: "var(--mint-500)" }}>
-        <p className="text-sm font-semibold">جاري التحميل...</p>
+        <p className="text-sm font-semibold">{texts.loading}</p>
       </div>
     );
   }
@@ -50,8 +51,8 @@ export default function MatchesList() {
 
   return (
     <div className="px-5 py-6 pb-10 space-y-5">
-      <Section title="القادمة" fixtures={data.upcoming} />
-      <Section title="السابقة" fixtures={data.past} />
+      <Section title={texts.past} fixtures={data.past} />
+      <Section title={texts.upcoming} fixtures={data.upcoming} />
     </div>
   );
 }
