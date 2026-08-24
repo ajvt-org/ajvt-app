@@ -249,7 +249,7 @@ export interface GeneratedFixture {
 
 function circleMethodRounds(teamIds: string[]): [string | null, string | null][][] {
   const arr: (string | null)[] = [...teamIds];
-  if (arr.length % 2 !== 0) arr.push(null); // null = bye
+  if (arr.length % 2 !== 0) arr.push(null);
   const n = arr.length;
   const rounds: [string | null, string | null][][] = [];
   let current = arr.slice();
@@ -512,7 +512,7 @@ export interface TeamMatchInput {
 export interface TeamAdvancedRow {
   teamId: string;
   name: string;
-  biggestWin: { opponent: string; score: string; gd: number } | null;
+  biggestWin: { opponent: string; gf: number; ga: number; gd: number } | null;
   unbeatenStreak: number;
   form: ("W" | "D" | "L")[];
 }
@@ -538,7 +538,8 @@ export function computeTeamAdvancedStats(
       if (!biggestWin || gd > biggestWin.gd) {
         biggestWin = {
           opponent: isHome ? m.awayTeam.name : m.homeTeam.name,
-          score: `${gf}-${ga}`,
+          gf,
+          ga,
           gd,
         };
       }

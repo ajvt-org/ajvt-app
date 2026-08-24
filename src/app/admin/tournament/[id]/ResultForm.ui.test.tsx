@@ -112,7 +112,7 @@ describe("ResultForm as goal events", () => {
     fireEvent.click(screen.getByText("إضافة"));
 
     expect(await screen.findByText(/الصقور — مجهول/)).toBeDefined();
-    expect(screen.getByText("1 - 0")).toBeDefined();
+    expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain("1-0");
   });
 
   it("offers the other roster for an عكسي goal", () => {

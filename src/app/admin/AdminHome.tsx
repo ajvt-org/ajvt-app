@@ -8,6 +8,7 @@ import { loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
 import PageLoading from "@/components/PageLoading";
+import Scoreline from "@/components/tournament/Scoreline";
 import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
@@ -130,7 +131,11 @@ export default function AdminHome() {
               >
                 <span className="min-w-0 truncate font-semibold">
                   {m.homeTeam.name}{" "}
-                  {m.status === "PLAYED" ? `${m.homeScore} - ${m.awayScore}` : "×"}{" "}
+                  {m.status === "PLAYED" ? (
+                    <Scoreline home={m.homeScore} away={m.awayScore} />
+                  ) : (
+                    "×"
+                  )}{" "}
                   {m.awayTeam.name}
                 </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>

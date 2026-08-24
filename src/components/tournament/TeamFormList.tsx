@@ -1,10 +1,8 @@
 import PagedList from "./PagedList";
+import Scoreline from "./Scoreline";
 import { counted } from "@/lib/arabicCount";
 import { MATCH } from "@/lib/messages";
 
-// A run of results, said in the language the page is written in. W/D/L is an
-// English-league convention, and the pale fills it was drawn in left the three
-// outcomes reading as one grey row.
 const FORM_STYLE: Record<
   "W" | "D" | "L",
   { bg: string; color: string; letter: string; label: string }
@@ -17,7 +15,7 @@ const FORM_STYLE: Record<
 type TeamStats = {
   teamId: string;
   name: string;
-  biggestWin: { score: string; opponent: string } | null;
+  biggestWin: { gf: number; ga: number; opponent: string } | null;
   unbeatenStreak: number;
   form: ("W" | "D" | "L")[];
 };
@@ -32,7 +30,7 @@ export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
           </p>
           {team.biggestWin && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              أكبر فوز: <span dir="ltr">{team.biggestWin.score}</span> أمام{" "}
+              أكبر فوز: <Scoreline home={team.biggestWin.gf} away={team.biggestWin.ga} /> أمام{" "}
               {team.biggestWin.opponent}
             </p>
           )}
