@@ -196,7 +196,8 @@ export default function ResultForm({
         style={{ color: "var(--mint-700)" }}
         aria-live="polite"
       >
-        {match.homeTeam.name} <Scoreline home={hs} away={as} /> {match.awayTeam.name}
+        <bdi>{match.homeTeam.name}</bdi> <Scoreline home={hs} away={as} />{" "}
+        <bdi>{match.awayTeam.name}</bdi>
       </p>
 
       {suspendedPresent.length > 0 && (

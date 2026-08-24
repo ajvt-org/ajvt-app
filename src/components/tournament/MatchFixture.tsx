@@ -26,10 +26,10 @@ export default function MatchFixture({
           style={{ color: "var(--text-main)" }}
         >
           <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={18} />
-          {match.homeTeam.name}
+          <bdi>{match.homeTeam.name}</bdi>
           <span style={{ color: "var(--text-muted)" }}>×</span>
           <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={18} />
-          {match.awayTeam.name}
+          <bdi>{match.awayTeam.name}</bdi>
         </p>
         {(round || venue) && (
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
