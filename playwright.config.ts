@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { localDatabase } from "./tests/localDatabase";
+import { localDatabase } from "./tests/localDatabase.mjs";
 
 const DATABASE_URL = process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e");
 const PORT = 3100;
