@@ -138,6 +138,7 @@ The rest are optional and the app works without them:
 - `NEXT_PUBLIC_BASE_URL` is used for link previews, defaults to the production URL
 - `NEXT_PUBLIC_WHATSAPP_LINK` is the group invite shown to members
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` turn on push notifications. Without both, the notifications switch on the profile is hidden and nothing breaks. Generate a pair with `npx web-push generate-vapid-keys`
+- `VAPID_SUBJECT` is the contact the push services see, an `https://` or `mailto:` URL. Left empty it uses `NEXT_PUBLIC_BASE_URL` when that is https, and the Render URL otherwise
 - `UPLOAD_DIR` is where uploaded images are written, defaults to `public/uploads`
 
 ## Uploads
