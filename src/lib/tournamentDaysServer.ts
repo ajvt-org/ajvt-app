@@ -7,10 +7,14 @@
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
+import { isUniqueViolation } from "./prismaError";
+import { logger } from "./logger";
 import { tournament as messages } from "./messages";
 import { DAY_MS, atTime, dayDate, derivePlan, endsAtFor } from "./tournamentDays";
 
 type Tx = Prisma.TransactionClient;
+
+const MAX_DAYS = 60;
 
 async function syncBounds(tx: Tx, activityId: string) {
   const activity = await tx.activity.findUniqueOrThrow({
@@ -69,37 +73,51 @@ export async function ensureDays(activityId: string) {
 
   if (!plan) {
     if (!activity.startsAt || !activity.endsAt) return;
-    const count =
-      Math.round((activity.endsAt.getTime() - activity.startsAt.getTime()) / DAY_MS) + 1;
+    const span = Math.round((activity.endsAt.getTime() - activity.startsAt.getTime()) / DAY_MS) + 1;
+    if (span < 1) return;
+    const count = capped(activityId, span);
     await prisma.tournamentDay.createMany({
-      data: Array.from({ length: Math.min(count, 60) }, (_, i) => ({
+      data: Array.from({ length: count }, (_, i) => ({
         activityId,
         position: i + 1,
         isRest: false,
       })),
+      skipDuplicates: true,
     });
     return;
   }
 
-  await prisma.$transaction(async (tx) => {
-    const byPosition = new Map<number, string>();
-    for (const day of plan.days) {
-      const row = await tx.tournamentDay.create({
-        data: { activityId, position: day.position, isRest: day.isRest },
+  const days = plan.days.slice(0, capped(activityId, plan.days.length));
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const byPosition = new Map<number, string>();
+      for (const day of days) {
+        const row = await tx.tournamentDay.create({
+          data: { activityId, position: day.position, isRest: day.isRest },
+        });
+        byPosition.set(day.position, row.id);
+      }
+      for (let i = 0; i < dated.length; i++) {
+        await tx.match.update({
+          where: { id: dated[i].id },
+          data: { dayId: byPosition.get(plan.positionByMatch[i]) ?? null },
+        });
+      }
+      await tx.activity.update({
+        where: { id: activityId },
+        data: { startsAt: plan.startsAt, endsAt: endsAtFor(plan.startsAt, days.length) },
       });
-      byPosition.set(day.position, row.id);
-    }
-    for (let i = 0; i < dated.length; i++) {
-      await tx.match.update({
-        where: { id: dated[i].id },
-        data: { dayId: byPosition.get(plan.positionByMatch[i]) },
-      });
-    }
-    await tx.activity.update({
-      where: { id: activityId },
-      data: { startsAt: plan.startsAt, endsAt: endsAtFor(plan.startsAt, plan.days.length) },
     });
-  });
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+  }
+}
+
+function capped(activityId: string, wanted: number): number {
+  if (wanted <= MAX_DAYS) return wanted;
+  logger.warn("tournament.days.capped", { activityId, wanted, kept: MAX_DAYS });
+  return MAX_DAYS;
 }
 
 export async function listDays(activityId: string) {

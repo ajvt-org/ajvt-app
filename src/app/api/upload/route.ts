@@ -7,15 +7,10 @@ import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/image
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { proofHash } from "@/lib/proofHash";
+import { getUploadDir } from "@/lib/uploadDir";
 import { uploads } from "@/lib/messages";
 import { withRoute } from "@/lib/route";
 import { HttpError, UnauthorizedError, ValidationError } from "@/lib/errors";
-
-export function getUploadDir(): string {
-  // In production (Render): UPLOAD_DIR points to a mounted persistent Disk
-  // In development: public/uploads (served statically)
-  return process.env.UPLOAD_DIR || join(process.cwd(), "public", "uploads");
-}
 
 export const POST = withRoute("POST /api/upload", async (req: NextRequest) => {
   try {
