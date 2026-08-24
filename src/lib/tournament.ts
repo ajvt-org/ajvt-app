@@ -512,7 +512,7 @@ export interface TeamMatchInput {
 export interface TeamAdvancedRow {
   teamId: string;
   name: string;
-  biggestWin: { opponent: string; score: string; gd: number } | null;
+  biggestWin: { opponent: string; gf: number; ga: number; gd: number } | null;
   unbeatenStreak: number;
   form: ("W" | "D" | "L")[];
 }
@@ -538,7 +538,8 @@ export function computeTeamAdvancedStats(
       if (!biggestWin || gd > biggestWin.gd) {
         biggestWin = {
           opponent: isHome ? m.awayTeam.name : m.homeTeam.name,
-          score: `${gf}-${ga}`,
+          gf,
+          ga,
           gd,
         };
       }

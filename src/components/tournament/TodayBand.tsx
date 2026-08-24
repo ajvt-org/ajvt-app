@@ -1,4 +1,5 @@
 import Icon from "@/components/Icon";
+import Scoreline from "./Scoreline";
 import TeamLogo from "./TeamLogo";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
@@ -20,9 +21,15 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
               <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={28} />
               <span className="font-bold text-sm text-white truncate">{match.homeTeam.name}</span>
             </div>
-            <span dir="ltr" className="font-black text-white text-lg shrink-0 px-2">
-              {match.status === "PLAYED" ? `${match.homeScore} - ${match.awayScore}` : "×"}
-            </span>
+            {match.status === "PLAYED" ? (
+              <Scoreline
+                home={match.homeScore}
+                away={match.awayScore}
+                className="font-black text-white text-lg shrink-0 px-2"
+              />
+            ) : (
+              <span className="font-black text-white text-lg shrink-0 px-2">×</span>
+            )}
             <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
               <span className="font-bold text-sm text-white truncate">{match.awayTeam.name}</span>
               <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={28} />

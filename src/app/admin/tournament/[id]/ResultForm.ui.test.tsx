@@ -112,7 +112,9 @@ describe("ResultForm as goal events", () => {
     fireEvent.click(screen.getByText("إضافة"));
 
     expect(await screen.findByText(/الصقور — مجهول/)).toBeDefined();
-    expect(screen.getByText("1 - 0")).toBeDefined();
+    // The two numbers sit in their own spans, so the running score reads off
+    // the live region rather than off one text node.
+    expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain("1-0");
   });
 
   it("offers the other roster for an عكسي goal", () => {
