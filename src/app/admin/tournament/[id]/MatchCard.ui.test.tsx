@@ -69,6 +69,43 @@ function show(profile: "FOOTBALL" | "BOARD", showResultForm = false) {
   );
 }
 
+describe("a team name carrying Latin letters", () => {
+  it("keeps the score out of the name's own run", () => {
+    cleanup();
+    const { container } = render(
+      <MatchCard
+        match={{
+          ...match(),
+          homeTeam: { id: "t1", name: "كاستيا A", logo: null },
+          awayTeam: { id: "t2", name: "اتحاد الجديدة B", logo: null },
+          homeScore: 0,
+          awayScore: 4,
+        }}
+        teams={[]}
+        allMatches={[]}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        onDelete={noop}
+        showResultForm={false}
+        onToggleResultForm={noop}
+        showMvp={false}
+        onToggleMvp={noop}
+        showDetails={false}
+        onToggleDetails={noop}
+        onSaved={noop}
+        onChange={noop}
+      />,
+    );
+
+    const names = [...container.querySelectorAll("bdi")].map((b) => b.textContent);
+    expect(names).toContain("كاستيا A");
+    expect(names).toContain("اتحاد الجديدة B");
+
+    const score = [...container.querySelectorAll("span")].find((el) => el.textContent === "0-4");
+    expect(score?.getAttribute("dir")).toBe("rtl");
+  });
+});
+
 describe("MatchCard by sport profile", () => {
   it("shows the whole football apparatus for a football match", () => {
     show("FOOTBALL");

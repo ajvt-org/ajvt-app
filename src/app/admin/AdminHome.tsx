@@ -130,13 +130,13 @@ export default function AdminHome() {
                 style={{ color: "var(--text-main)" }}
               >
                 <span className="min-w-0 truncate font-semibold">
-                  {m.homeTeam.name}{" "}
+                  <bdi>{m.homeTeam.name}</bdi>{" "}
                   {m.status === "PLAYED" ? (
                     <Scoreline home={m.homeScore} away={m.awayScore} />
                   ) : (
-                    "×"
+                    <span>×</span>
                   )}{" "}
-                  {m.awayTeam.name}
+                  <bdi>{m.awayTeam.name}</bdi>
                 </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {m.activity.title}

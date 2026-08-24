@@ -196,7 +196,8 @@ export default function ResultForm({
         style={{ color: "var(--mint-700)" }}
         aria-live="polite"
       >
-        {match.homeTeam.name} <Scoreline home={hs} away={as} /> {match.awayTeam.name}
+        <bdi>{match.homeTeam.name}</bdi> <Scoreline home={hs} away={as} />{" "}
+        <bdi>{match.awayTeam.name}</bdi>
       </p>
 
       {suspendedPresent.length > 0 && (
@@ -305,6 +306,8 @@ export default function ResultForm({
         </label>
         <select
           id={`${uid}-motm`}
+          name={`${uid}-motm`}
+          autoComplete="off"
           value={manOfTheMatchId}
           onChange={(e) => setManOfTheMatchId(e.target.value)}
           className="input"

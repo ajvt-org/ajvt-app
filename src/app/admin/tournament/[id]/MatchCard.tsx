@@ -61,13 +61,13 @@ export default function MatchCard({
             style={{ color: "var(--text-main)" }}
           >
             <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
-            {match.homeTeam.name}
+            <bdi>{match.homeTeam.name}</bdi>
             {match.status === "PLAYED" ? (
               <Scoreline home={match.homeScore} away={match.awayScore} />
             ) : (
-              "×"
+              <span>×</span>
             )}
-            {match.awayTeam.name}
+            <bdi>{match.awayTeam.name}</bdi>
             <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
             {match.homePenalties !== null && match.awayPenalties !== null && (
               <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
