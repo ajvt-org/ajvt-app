@@ -124,6 +124,7 @@ export const PATCH = withRoute(
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
       status?: MatchStatus;
+      suspensionsServedAt?: Date;
       homeTeamId?: string;
       awayTeamId?: string;
     } = {};
@@ -419,8 +420,13 @@ export const PATCH = withRoute(
           });
         }
       }
-      if ((enteringResult || eventsMode) && updateData.status === "PLAYED" && !wasPlayed) {
+      if (
+        (enteringResult || eventsMode) &&
+        updateData.status === "PLAYED" &&
+        !match.suspensionsServedAt
+      ) {
         await serveMatch(tx, match.activityId, [match.homeTeamId, match.awayTeamId]);
+        updateData.suspensionsServedAt = new Date();
       }
       return tx.match.update({ where: { id: matchId }, data: updateData, include: MATCH_INCLUDE });
     });

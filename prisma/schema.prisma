@@ -217,35 +217,36 @@ model TeamMember {
 }
 
 model Match {
-  id              String             @id @default(cuid())
-  activityId      String
-  activity        Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  homeTeamId      String
-  homeTeam        Team               @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
-  awayTeamId      String
-  awayTeam        Team               @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
-  matchDate       DateTime?
-  dayId           String?
-  day             TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
-  round           String?
-  venue           String?
-  order           Int                @default(0)
-  isKnockout      Boolean            @default(false)
-  bracketRound    Int? // set only for matches created by the bracket generator (round 1 = first knockout round, increasing towards the final)
-  homeScore       Int?
-  awayScore       Int?
-  homePenalties   Int?
-  awayPenalties   Int?
-  manOfTheMatchId String?
-  manOfTheMatch   Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
-  status          MatchStatus        @default(SCHEDULED)
-  reminderSentAt  DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  goals           MatchGoal[]
-  bookings        MatchBooking[]
-  penaltyKicks    MatchPenaltyKick[]
-  mvpVote         MatchMvpVote?
+  id                  String             @id @default(cuid())
+  activityId          String
+  activity            Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  homeTeamId          String
+  homeTeam            Team               @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId          String
+  awayTeam            Team               @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  matchDate           DateTime?
+  dayId               String?
+  day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  round               String?
+  venue               String?
+  order               Int                @default(0)
+  isKnockout          Boolean            @default(false)
+  bracketRound        Int? // set only for matches created by the bracket generator (round 1 = first knockout round, increasing towards the final)
+  homeScore           Int?
+  awayScore           Int?
+  homePenalties       Int?
+  awayPenalties       Int?
+  manOfTheMatchId     String?
+  manOfTheMatch       Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
+  status              MatchStatus        @default(SCHEDULED)
+  suspensionsServedAt DateTime?
+  reminderSentAt      DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  goals               MatchGoal[]
+  bookings            MatchBooking[]
+  penaltyKicks        MatchPenaltyKick[]
+  mvpVote             MatchMvpVote?
 
   @@index([activityId])
 }

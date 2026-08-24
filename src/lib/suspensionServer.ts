@@ -80,10 +80,20 @@ export async function proposeFromBooking(
     });
   }
 
-  const yellows = await tx.matchBooking.count({
-    where: { memberId, cardType: "YELLOW", match: { activityId } },
+  const lastBan = await tx.suspension.findFirst({
+    where: { activityId, memberId, reason: "YELLOW_CARDS" },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
   });
-  if (yellows > 0 && yellows % activity.yellowsForBan === 0) {
+  const yellows = await tx.matchBooking.count({
+    where: {
+      memberId,
+      cardType: "YELLOW",
+      match: { activityId },
+      ...(lastBan ? { createdAt: { gt: lastBan.createdAt } } : {}),
+    },
+  });
+  if (yellows >= activity.yellowsForBan) {
     return tx.suspension.create({
       data: {
         activityId,
