@@ -59,13 +59,6 @@ export function nextFixture(fixtures: Fixture[]): Fixture | null {
   return sortUpcoming(splitFixtures(fixtures).upcoming)[0] ?? null;
 }
 
-export function scoreline(fixture: Fixture): string | null {
-  if (fixture.homeScore === null || fixture.awayScore === null) return null;
-  const base = `${fixture.homeScore} - ${fixture.awayScore}`;
-  if (fixture.homePenalties === null || fixture.awayPenalties === null) return base;
-  return `${base} (${fixture.homePenalties} - ${fixture.awayPenalties})`;
-}
-
 export type EmptyReason = "NO_TEAM" | "NO_FIXTURES";
 
 export function emptyReason(teamCount: number): EmptyReason {

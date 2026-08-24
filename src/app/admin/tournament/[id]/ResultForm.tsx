@@ -1,15 +1,11 @@
 "use client";
 
-// Football results are event lists, the score is never typed. A goal row is
-// credited to a team; an OWN_GOAL scorer comes off the other roster; a null
-// member is an unknown scorer (مجهول). Kicks appear on a tied knockout match.
-// Board matches keep the plain two-number form.
-
 import { useId, useState } from "react";
 import type { GoalKind, GoalPeriod, Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Scoreline from "@/components/tournament/Scoreline";
 import { discipline as disciplineTexts, matchAdmin as texts } from "@/lib/texts";
 
 interface GoalDraft {
@@ -200,7 +196,7 @@ export default function ResultForm({
         style={{ color: "var(--mint-700)" }}
         aria-live="polite"
       >
-        {match.homeTeam.name} <span dir="ltr">{`${hs} - ${as}`}</span> {match.awayTeam.name}
+        {match.homeTeam.name} <Scoreline home={hs} away={as} /> {match.awayTeam.name}
       </p>
 
       {suspendedPresent.length > 0 && (
@@ -251,9 +247,11 @@ export default function ResultForm({
           <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
             <IconLabel name="target">{texts.shootoutHeading}</IconLabel>{" "}
             {kicks.length > 0 && (
-              <span dir="ltr" style={{ color: "var(--mint-700)" }}>
-                {kickTally.home} - {kickTally.away}
-              </span>
+              <Scoreline
+                home={kickTally.home}
+                away={kickTally.away}
+                style={{ color: "var(--mint-700)" }}
+              />
             )}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
