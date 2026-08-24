@@ -14,6 +14,7 @@ export type LandingActivity = {
   endsAt: string | Date | null;
   photo: string | null;
   isVolunteer: boolean;
+  isOpen: boolean;
 };
 
 export default function LandingActivities({
@@ -99,6 +100,11 @@ export default function LandingActivities({
                   {activity.title}
                 </span>
                 <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
+                {!activity.isOpen && (
+                  <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
+                    {texts.closedChip}
+                  </span>
+                )}
               </span>
               {activity.when && (
                 <span className="text-xs" style={{ color: "var(--text-muted)" }}>
