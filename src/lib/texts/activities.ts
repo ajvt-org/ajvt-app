@@ -14,6 +14,9 @@ export const activityForm = {
   tournamentLogo: "شعار البطولة",
   activityPhoto: "صورة النشاط",
   submit: "إضافة",
+  registrationOpen: "التسجيل مفتوح",
+  autoApprove: "قبول التسجيل تلقائياً",
+  autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
 } as const;
 
 export const activityRow = {

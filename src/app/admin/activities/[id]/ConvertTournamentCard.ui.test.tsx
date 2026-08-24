@@ -22,6 +22,7 @@ function activity(isTournament: boolean): ActivityDetail["activity"] {
     photo: null,
     capacity: null,
     isOpen: true,
+    autoApprove: false,
     isTournament,
     format: isTournament ? ("KNOCKOUT" as const) : null,
     profile: "FOOTBALL" as const,
