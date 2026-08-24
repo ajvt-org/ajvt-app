@@ -28,9 +28,12 @@ function match(): Match {
         count: 1,
         minute: 12,
         teamId: "t1",
+        kind: "GOAL",
+        period: "REGULAR",
         member: { id: "p1", fullName: "أحمد", photo: null },
       },
     ],
+    penaltyKicks: [],
     bookings: [
       {
         id: "b1",

@@ -25,9 +25,12 @@ function match(): PublicMatch {
         count: 1,
         minute: 12,
         teamId: "t1",
+        kind: "GOAL",
+        period: "REGULAR",
         member: { id: "p1", fullName: "أحمد ولد محمد", photo: null },
       },
     ],
+    penaltyKicks: [],
     bookings: [
       {
         cardType: "YELLOW",

@@ -96,6 +96,15 @@ export default async function PublicTournamentPage({
               member: { select: { id: true, fullName: true, photo: true } },
             },
           },
+          penaltyKicks: {
+            orderBy: { order: "asc" as const },
+            select: {
+              teamId: true,
+              order: true,
+              scored: true,
+              member: { select: { id: true, fullName: true, photo: true } },
+            },
+          },
           bookings: {
             select: {
               cardType: true,

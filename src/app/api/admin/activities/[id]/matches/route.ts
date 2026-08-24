@@ -18,6 +18,18 @@ const MATCH_INCLUDE = {
       count: true,
       minute: true,
       teamId: true,
+      kind: true,
+      period: true,
+      member: { select: { id: true, fullName: true, photo: true } },
+    },
+  },
+  penaltyKicks: {
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      teamId: true,
+      order: true,
+      scored: true,
       member: { select: { id: true, fullName: true, photo: true } },
     },
   },

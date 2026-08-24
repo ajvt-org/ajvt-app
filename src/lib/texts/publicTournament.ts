@@ -1,3 +1,10 @@
+export const matchDisplay = {
+  unknownScorer: "مجهول",
+  ownGoal: "عكسي",
+  penaltyShort: "ج",
+  extraTimeShort: "و.إ",
+} as const;
+
 export const publicTournament = {
   standings: "الترتيب",
   bracket: "الدور الإقصائي",
