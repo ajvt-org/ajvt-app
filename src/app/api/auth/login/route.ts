@@ -25,7 +25,6 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
   const key = `login:${phone.trim()}`;
   const ipKey = `login-ip:${getClientIp(req)}`;
   if (isRateLimited(key, MAX_ATTEMPTS) || isRateLimited(ipKey, MAX_IP_ATTEMPTS)) {
-    // No phone number here on purpose, it identifies a member.
     logger.warn("member.login.rate_limited");
     throw new HttpError("RATE_LIMITED", 429, common.tooManyAttempts);
   }
@@ -45,8 +44,6 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
     throw new UnauthorizedError(auth.memberCredentialsWrong);
   }
 
-  // Checked after the password, so a wrong guess still answers with the
-  // generic failure rather than confirming the account exists.
   if (isTempPasswordExpired(user.tempPasswordExpiresAt)) {
     throw new UnauthorizedError(auth.tempPasswordExpired);
   }

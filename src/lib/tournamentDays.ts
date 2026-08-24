@@ -1,8 +1,3 @@
-// Day arithmetic for the tournament spine. Positions are 1-based and dense;
-// a day's date is startsAt + (position - 1) days, all at UTC midnight like
-// Activity.startsAt itself. Shifting whole days adds whole days to matchDate,
-// which keeps each match's stored time of day.
-
 import { fromClubWallClock, matchDateKey, toClubWallClock } from "./clubTime";
 
 export const DAY_MS = 86_400_000;
@@ -44,9 +39,6 @@ export interface DerivedPlan {
   positionByMatch: number[];
 }
 
-// Rebuilds the day plan from already-dated matches: each distinct club-local
-// day becomes a match day, uncovered days between them become rest days, and
-// the plan starts at the earlier of startsAt and the first match.
 export function derivePlan(startsAt: Date | null, matchDates: Date[]): DerivedPlan | null {
   if (matchDates.length === 0) return null;
 

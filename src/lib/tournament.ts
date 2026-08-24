@@ -157,8 +157,6 @@ export interface HeadToHeadMatchInput {
   awayTeam: { id: string };
 }
 
-// Teams are recreated per tournament (Team belongs to a single Activity), so
-// "past meetings" only ever spans matches within the same activity/tournament.
 export function getHeadToHead<T extends HeadToHeadMatchInput>(
   matches: T[],
   teamAId: string,
@@ -226,9 +224,6 @@ export function computeStats(
   };
 }
 
-// Round-one pairing over an already-shuffled list: backtracks to avoid
-// putting two teams of the same group in one tie. Null when no such perfect
-// pairing exists (a group larger than half the field).
 export function drawKnockoutPairs<T extends { id: string; groupId?: string | null }>(
   shuffled: T[],
 ): [T, T][] | null {
@@ -252,10 +247,6 @@ export interface GeneratedFixture {
   awayTeamId: string;
 }
 
-// Standard "circle method" round-robin: fix team[0], rotate the rest each
-// round. Every pair meets exactly once across n-1 rounds (n even) — this
-// guarantees each team plays exactly once per round, which is exactly what
-// we want for "round 1 of every group happens together, then round 2, ...".
 function circleMethodRounds(teamIds: string[]): [string | null, string | null][][] {
   const arr: (string | null)[] = [...teamIds];
   if (arr.length % 2 !== 0) arr.push(null); // null = bye
@@ -273,12 +264,6 @@ function circleMethodRounds(teamIds: string[]): [string | null, string | null][]
   return rounds;
 }
 
-// Builds a schedule where every team plays exactly `targetPerTeam` matches
-// (3 by default), picking new opponents first and only repeating a pairing
-// if there is no other way to bring a team up to the target — this only
-// happens with an odd number of teams, where a perfectly even 3-a-side
-// schedule is mathematically impossible (3 * odd number is odd, but every
-// match hands out exactly 2 "match credits").
 export function generateMatchSchedule(
   teamIds: string[],
   targetPerTeam = 3,
@@ -308,7 +293,6 @@ export function generateMatchSchedule(
     if (usedThisRound) round++;
   }
 
-  // Patch up any team still short (only possible with an odd team count).
   let short = teamIds.filter((id) => (counts.get(id) || 0) < targetPerTeam);
   let guard = 0;
   while (short.length > 0 && guard < 50) {
@@ -343,8 +327,6 @@ export interface BracketMatchInput {
   status: string;
 }
 
-// Returns the winning team's id, or null if the match hasn't been played yet
-// or ended in a draw that wasn't resolved by a penalty shootout.
 export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
   if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) return null;
   if (m.homeScore > m.awayScore) return m.homeTeamId;
@@ -355,10 +337,6 @@ export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
   return null;
 }
 
-// Human label for a knockout round, derived from how many matches it has
-// (i.e. how many participants remain) rather than a round index — works
-// the same whether the bracket started at 16, 8, 4 or 2 participants.
-// A knockout bracket only works when every round halves cleanly.
 export function isPowerOfTwo(n: number): boolean {
   return n >= 2 && (n & (n - 1)) === 0;
 }
@@ -371,10 +349,6 @@ export function bracketRoundLabel(matchCount: number): string {
   return `الدور الإقصائي`;
 }
 
-// A non-knockout ("league") match must stay within a single group — pairing
-// teams from two different groups is how a match ends up silently dropped
-// from both groups' standings (computeStandings only counts a match if both
-// teams are in the pool it was given). Groupless teams/tournaments are fine.
 export function isValidLeaguePairing(
   isKnockout: boolean,
   homeGroupId: string | null,
@@ -457,8 +431,6 @@ export interface CleanSheetRow {
   cleanSheets: number;
 }
 
-// "Best defense" ranking by matches played without conceding — the data
-// model has no player position, so this is a team stat, not a per-goalkeeper one.
 export function computeCleanSheets(
   teams: StandingsTeamInput[],
   matches: CleanSheetMatchInput[],

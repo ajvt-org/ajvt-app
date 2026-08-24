@@ -186,10 +186,6 @@ export default async function PublicTournamentPage({
       motmLeaders.length > 0 ||
       teamAdvancedStats.length > 0;
 
-  // A knockout match counts towards nobody's points, so a cup with no group
-  // stage would open on a table of zeros for every team. It leads with the
-  // bracket instead. A tournament with neither still shows the table, which
-  // is the only thing that says who is in which group.
   const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
   const bracket = (
     <div className="card p-3">

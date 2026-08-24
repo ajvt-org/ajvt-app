@@ -1,10 +1,3 @@
-// The discipline engine. The system only ever proposes — a red card proposes
-// the tournament's redBanMatches, reaching yellowsForBan proposes one match —
-// and an admin turns a proposal ACTIVE or dismisses it. MATCHES bans count
-// down when the member's team finishes a match, LIFTED at zero; DAYS bans
-// expire by date; INDEFINITE ends only by hand. One open row per member per
-// tournament keeps proposals from piling up.
-
 import { prisma } from "./prisma";
 import type { Prisma, SuspensionReason, SuspensionScope } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
@@ -52,8 +45,6 @@ async function hasOpenSuspension(tx: Tx, activityId: string, memberId: string) {
   return open !== null;
 }
 
-// Called after a booking lands. Red proposes the tournament's ban; the
-// yellowsForBan-th yellow (and every multiple) proposes one match.
 export async function proposeFromBooking(
   tx: Tx,
   activityId: string,
@@ -108,8 +99,6 @@ export async function proposeFromBooking(
   return null;
 }
 
-// Called when a match first turns PLAYED: every running MATCHES ban of a
-// member on either squad serves one match.
 export async function serveMatch(tx: Tx, activityId: string, teamIds: string[]) {
   const squadMembers = await tx.teamMember.findMany({
     where: { teamId: { in: teamIds } },

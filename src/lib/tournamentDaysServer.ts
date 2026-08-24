@@ -1,9 +1,3 @@
-// Owns the TournamentDay rows and everything they imply: derivation from
-// already-dated matches, position shifts with their matchDate moves, and the
-// activity's startsAt/endsAt staying the first and last day's dates. Every
-// mutation runs in one transaction; positions are parked negative mid-shift
-// because the (activityId, position) unique index checks per row.
-
 import { prisma } from "./prisma";
 import type { Prisma } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";

@@ -1,14 +1,5 @@
 import { CLUB_TIMEZONE, matchDateKey } from "./clubTime";
 
-// A fixture list repeats itself: a round is played on one day at one ground,
-// so printing the round and the venue on every match writes the same two
-// phrases twenty times. Matches are gathered into their club-local day, and
-// whatever the whole day agrees on is lifted into the day's heading and left
-// off the rows. Days the schedule has not reached yet come last, undated.
-//
-// The weekday and month names are spelled out here rather than taken from
-// Intl's Arabic locale, which numbers the days in Arabic-Indic digits the
-// rest of the app does not use.
 const WEEKDAYS: Record<string, string> = {
   Sun: "الأحد",
   Mon: "الاثنين",

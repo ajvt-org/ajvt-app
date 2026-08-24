@@ -1,5 +1,3 @@
-// Excel on Windows only reads UTF-8 CSV correctly when it starts with a BOM,
-// and these files are full of Arabic names.
 const BOM = "﻿";
 
 const FORMULA = /^[=+\-@\t\r]/;
