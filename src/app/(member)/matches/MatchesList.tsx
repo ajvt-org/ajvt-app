@@ -50,8 +50,8 @@ export default function MatchesList() {
 
   return (
     <div className="px-5 py-6 pb-10 space-y-5">
-      <Section title="القادمة" fixtures={data.upcoming} />
       <Section title="السابقة" fixtures={data.past} />
+      <Section title="القادمة" fixtures={data.upcoming} />
     </div>
   );
 }

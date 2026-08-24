@@ -240,16 +240,6 @@ export default async function PublicTournamentPage({
               {texts.noMatchesYet}
             </p>
           )}
-          {scheduled.length > 0 && (
-            <TournamentSection icon="calendar" title={texts.upcoming}>
-              <MatchDayList
-                matches={scheduled}
-                renderMatch={(match, day) => (
-                  <MatchFixture key={match.id} match={match} day={day} />
-                )}
-              />
-            </TournamentSection>
-          )}
           {played.length > 0 && (
             <TournamentSection icon="check" title={texts.results}>
               <MatchDayList
@@ -267,6 +257,16 @@ export default async function PublicTournamentPage({
                       match.mvpVote ? (myVoteByVoteId.get(match.mvpVote.id) ?? null) : null
                     }
                   />
+                )}
+              />
+            </TournamentSection>
+          )}
+          {scheduled.length > 0 && (
+            <TournamentSection icon="calendar" title={texts.upcoming}>
+              <MatchDayList
+                matches={scheduled}
+                renderMatch={(match, day) => (
+                  <MatchFixture key={match.id} match={match} day={day} />
                 )}
               />
             </TournamentSection>
