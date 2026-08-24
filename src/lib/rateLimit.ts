@@ -70,9 +70,10 @@ export function bucketKeys(): string[] {
 }
 
 export function getClientIp(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown"
-  );
+  const forwarded = req.headers.get("x-forwarded-for");
+  const hops = (forwarded ?? "")
+    .split(",")
+    .map((hop) => hop.trim())
+    .filter(Boolean);
+  return hops.at(-1) || req.headers.get("x-real-ip")?.trim() || "unknown";
 }

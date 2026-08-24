@@ -163,14 +163,26 @@ describe("sweeping what has expired", () => {
 });
 
 describe("getClientIp", () => {
-  it("takes the first entry of x-forwarded-for", () => {
-    expect(getClientIp(requestWith({ "x-forwarded-for": "1.2.3.4, 10.0.0.1" }))).toBe("1.2.3.4");
+  it("takes the hop the proxy appended, not the one the caller claimed", () => {
+    expect(getClientIp(requestWith({ "x-forwarded-for": "1.2.3.4, 10.0.0.1" }))).toBe("10.0.0.1");
+  });
+
+  it("reads a lone address as the caller's", () => {
+    expect(getClientIp(requestWith({ "x-forwarded-for": "1.2.3.4" }))).toBe("1.2.3.4");
   });
 
   it("trims whitespace around the address", () => {
-    expect(getClientIp(requestWith({ "x-forwarded-for": "  1.2.3.4  , 10.0.0.1" }))).toBe(
-      "1.2.3.4",
+    expect(getClientIp(requestWith({ "x-forwarded-for": "  1.2.3.4  ,  10.0.0.1  " }))).toBe(
+      "10.0.0.1",
     );
+  });
+
+  it("cannot be given a fresh bucket by a spoofed header", () => {
+    const spoofed = ["9.9.9.9", "8.8.8.8", ""].map((claim) =>
+      getClientIp(requestWith({ "x-forwarded-for": `${claim}, 10.0.0.1` })),
+    );
+
+    expect(new Set(spoofed)).toEqual(new Set(["10.0.0.1"]));
   });
 
   it("falls back to x-real-ip", () => {

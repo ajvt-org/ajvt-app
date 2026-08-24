@@ -13,8 +13,6 @@ const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const MAX_IP_ATTEMPTS = 30;
 
-const BAD_CREDENTIALS = "رقم الهاتف أو كلمة المرور غير صحيحة";
-
 const DUMMY_HASH = bcrypt.hashSync("timing-equalizer", 12);
 
 export const POST = withRoute("Login", async (req: NextRequest) => {
@@ -37,14 +35,14 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
     await bcrypt.compare(password, DUMMY_HASH);
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
-    throw new UnauthorizedError(BAD_CREDENTIALS);
+    throw new UnauthorizedError(auth.memberCredentialsWrong);
   }
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);
-    throw new UnauthorizedError(BAD_CREDENTIALS);
+    throw new UnauthorizedError(auth.memberCredentialsWrong);
   }
 
   // Checked after the password, so a wrong guess still answers with the
