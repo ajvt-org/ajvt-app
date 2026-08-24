@@ -12,7 +12,7 @@ import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
 import { adminHome as texts } from "@/lib/texts";
-import { formatMatchTime } from "@/lib/tournament";
+import { formatMatchTime } from "@/lib/clubTime";
 
 export interface HomeMatch {
   id: string;

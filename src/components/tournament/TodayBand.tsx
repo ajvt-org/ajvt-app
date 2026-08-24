@@ -1,6 +1,6 @@
 import Icon from "@/components/Icon";
 import TeamLogo from "./TeamLogo";
-import { formatMatchTime } from "@/lib/tournament";
+import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 
 // Today's fixtures sit above the tabs: whichever tab a reader opens, the

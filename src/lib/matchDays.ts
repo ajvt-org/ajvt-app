@@ -1,4 +1,4 @@
-import { CLUB_TIMEZONE, matchDateKey } from "./tournament";
+import { CLUB_TIMEZONE, matchDateKey } from "./clubTime";
 
 // A fixture list repeats itself: a round is played on one day at one ground,
 // so printing the round and the venue on every match writes the same two

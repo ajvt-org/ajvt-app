@@ -3,7 +3,8 @@
 import CardChip from "@/components/tournament/CardChip";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
-import { getHeadToHead, formatMatchDateTime } from "@/lib/tournament";
+import { getHeadToHead } from "@/lib/tournament";
+import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";

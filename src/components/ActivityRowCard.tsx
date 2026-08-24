@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
-import { formatMatchDateTime } from "@/lib/tournament";
+import { formatMatchDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
 import type { ActivityDetail, ActivityRow } from "@/lib/memberActivities";
 

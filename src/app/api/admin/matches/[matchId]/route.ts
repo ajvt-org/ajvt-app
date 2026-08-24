@@ -4,7 +4,8 @@ import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { serveMatch, suspendedMemberIds } from "@/lib/suspensionServer";
-import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
+import { isValidLeaguePairing } from "@/lib/tournament";
+import { parseMatchDate } from "@/lib/clubTime";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import {

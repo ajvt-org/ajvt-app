@@ -9,9 +9,8 @@ import {
   computeCleanSheets,
   computeMotmLeaders,
   computeTeamAdvancedStats,
-  matchDateKey,
-  todayClubDateKey,
 } from "@/lib/tournament";
+import { matchDateKey, todayClubDateKey } from "@/lib/clubTime";
 import BracketTree from "@/components/tournament/BracketTree";
 import CardChip from "@/components/tournament/CardChip";
 import MatchDayList from "@/components/tournament/MatchDayList";

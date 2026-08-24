@@ -4,7 +4,8 @@ import PlayerAvatar from "./PlayerAvatar";
 import CardChip from "./CardChip";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
-import { formatMatchTime, getHeadToHead } from "@/lib/tournament";
+import { getHeadToHead } from "@/lib/tournament";
+import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
 
