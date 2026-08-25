@@ -7,6 +7,7 @@ import { toThumbUrl } from "@/lib/utils";
 import { formatActivityDates } from "@/lib/activityDates";
 import { countedNoun } from "@/lib/arabicCount";
 import { REGISTERED } from "@/lib/messages";
+import { activityAccent } from "@/lib/activityAccent";
 import { activityRow as texts } from "@/lib/texts";
 import type { Activity } from "./activityTypes";
 
@@ -41,7 +42,9 @@ export default function ActivityRow({
   const dates = formatActivityDates(a);
 
   return (
-    <div className="card w-full p-3 sm:p-4 flex items-center gap-3">
+    <div
+      className={`card activity-row ${activityAccent(a)} w-full p-3 sm:p-4 flex items-center gap-3`}
+    >
       <Link
         href={`/admin/activities/${a.id}`}
         className="flex items-center gap-3 min-w-0 flex-1"
@@ -52,24 +55,22 @@ export default function ActivityRow({
           <img
             src={toThumbUrl(`/api/files/activity/${a.photo}`)}
             alt={a.title}
-            className="w-10 h-10 rounded-xl object-cover shrink-0"
+            className="activity-thumb"
           />
         ) : (
-          <span
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "var(--mint-100)" }}
-          >
-            <Icon name={a.isVolunteer ? "handshake" : "trophy"} size={18} />
+          <span className="activity-thumb">
+            <Icon name={a.isVolunteer ? "handshake" : "trophy"} size={22} />
           </span>
         )}
-        <div className="min-w-0">
-          <p className="text-sm font-bold truncate">{a.title}</p>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {dates && (
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {dates}
-              </span>
-            )}
+        <div className="min-w-0 space-y-1">
+          <p className="activity-title">{a.title}</p>
+          {dates && (
+            <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
+              <Icon name="calendar" size={12} />
+              {dates}
+            </p>
+          )}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {!a.isVolunteer && (
               <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
             )}
