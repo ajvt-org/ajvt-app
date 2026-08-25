@@ -899,12 +899,13 @@ details[open] > .team-summary .team-chevron {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.375rem;
-  height: 1.375rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
-  font-weight: 900;
   line-height: 1;
+}
+.form-pip svg {
+  stroke-width: 3.4;
 }
 
 /* The lists inside the statistics tab get their own strip. Five short labels
