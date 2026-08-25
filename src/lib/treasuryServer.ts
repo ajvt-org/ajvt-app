@@ -8,8 +8,8 @@ export async function getTreasury(): Promise<Treasury> {
       where: { status: "ACTIVE" },
       select: { amount: true, purpose: true, feeApplied: true, method: true },
     }),
-    prisma.expense.aggregate({ _sum: { amount: true } }),
+    prisma.expense.findMany({ select: { amount: true, method: true } }),
   ]);
 
-  return treasuryOf(payments, spent._sum.amount ?? 0, PAYMENT_METHODS);
+  return treasuryOf(payments, spent, PAYMENT_METHODS);
 }

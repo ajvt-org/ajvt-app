@@ -7,7 +7,10 @@ export const treasury = {
   fees: "رسوم الانتساب",
   support: "الدعم والتبرعات",
   byMethod: "المداخيل حسب طريقة الدفع",
+  spendingByMethod: "المصاريف حسب طريقة الدفع",
+  noSpending: "لا توجد مصاريف مسجلة بعد",
   noIncome: "لا توجد مداخيل مسجلة بعد",
   loading: "جاري التحميل...",
   ouguiya: (amount: number) => `${amount} أوقية`,
+  currency: "أوقية",
 } as const;
