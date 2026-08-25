@@ -19,7 +19,7 @@ npm run db:up
 npm run dev
 ```
 
-`npm run dev` applies the migrations, creates the admin account, then starts the server on http://localhost:3000.
+`npm run dev` regenerates the Prisma client, applies the migrations, creates the admin account, then starts the server on http://localhost:3000.
 
 The database starts empty apart from the admin account. To get something to look at, load the fake data:
 
@@ -48,7 +48,7 @@ Plain `npm run db:seed` only creates the `admin` account and the age groups. Tha
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Migrate, seed the admin, start the dev server |
+| `npm run dev` | Generate the Prisma client, migrate, seed the admin, start the dev server |
 | `npm run build` | Generate the Prisma client and build |
 | `npm run db:up` | Start the local Postgres container |
 | `npm run db:down` | Stop it |
