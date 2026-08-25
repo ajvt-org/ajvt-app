@@ -109,7 +109,7 @@ function ManOfTheMatch({
   return (
     <div className="flex items-center justify-center gap-2 text-xs font-bold" style={{ color }}>
       <span className={`${LINE} justify-center w-5`} role="img" aria-label={matchDisplay.motm}>
-        <Icon name="trophy" size={14} />
+        <Icon name="jersey" size={15} />
       </span>
       <span className={LINE}>
         <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
