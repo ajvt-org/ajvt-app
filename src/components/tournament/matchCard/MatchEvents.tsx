@@ -83,7 +83,7 @@ function ManOfTheMatch({
       </span>
       <span className="leading-6 optical-name" style={{ fontSize: NAME_SIZE }}>
         {matchDisplay.motm} {row.name}
-        {row.team && <span style={{ color: muted }}> ({row.team})</span>}
+        {row.team && <span style={{ color: muted }}>{` (${row.team})`}</span>}
       </span>
     </div>
   );
