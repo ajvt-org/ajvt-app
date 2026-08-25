@@ -1,6 +1,7 @@
 export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
+export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
