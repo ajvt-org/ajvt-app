@@ -70,7 +70,7 @@ function MemberRow({
         <Avatar member={member} />
         <div className="min-w-0 flex-1">
           <InlineName memberId={member.id} fullName={member.fullName} onRenamed={onRenamed} />
-          <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }} dir="ltr">
             {member.user?.phone || "غير معروف"}
           </p>
         </div>
