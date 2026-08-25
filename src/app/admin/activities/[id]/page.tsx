@@ -149,7 +149,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         </div>
         {activity.isTournament && (
           <a
-            href={`/tournament/${activity.id}`}
+            href={`/activities/${activity.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"

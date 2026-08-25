@@ -42,7 +42,7 @@ describe("a match payload", () => {
   it("carries the pairing and points at the tournament", () => {
     const p = notify.matchReminder("الهلال", "النصر", "act1");
     expect(p.body).toBe("«الهلال» × «النصر»");
-    expect(p.url).toBe("/tournament/act1");
+    expect(p.url).toBe("/activities/act1");
   });
 
   it("carries the score between the names", () => {
