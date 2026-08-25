@@ -514,7 +514,6 @@ button:disabled {
 .icon-inline {
   display: inline-block;
   vertical-align: middle;
-  transform: translateY(-0.14em);
 }
 
 /* Your own rows on the supporters board. box-shadow has no logical direction,
