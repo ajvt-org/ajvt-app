@@ -1,32 +1,48 @@
 "use client";
 
+import { Fragment } from "react";
 import IconLabel from "@/components/IconLabel";
 import type { MethodTotal, Treasury } from "@/lib/treasury";
 import { treasury as texts } from "@/lib/texts";
 
-function Line({ label, value }: { label: string; value: number }) {
+type MoneyRow = { key: string; label: string; value: number; rule?: boolean };
+
+function MoneyList({ rows }: { rows: MoneyRow[] }) {
   return (
     <div
-      className="grid items-center gap-x-2 py-1.5 text-sm"
+      className="grid items-center gap-x-2 text-sm"
       style={{ gridTemplateColumns: "1fr auto auto" }}
     >
-      <span className="optical-name" style={{ color: "var(--text-muted)" }}>
-        {label}
-      </span>
-      <span className="font-bold optical-name" style={{ color: "var(--text-main)" }}>
-        {texts.currency}
-      </span>
-      <span
-        dir="ltr"
-        className="font-bold optical-numeral"
-        style={{
-          color: value < 0 ? "var(--danger)" : "var(--text-main)",
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {value}
-      </span>
+      {rows.map((row) => (
+        <Fragment key={row.key}>
+          {row.rule && (
+            <span
+              style={{ gridColumn: "1 / -1", borderTop: "1px solid var(--mint-100)" }}
+              aria-hidden="true"
+            />
+          )}
+          <span className="optical-name py-1.5" style={{ color: "var(--text-muted)" }}>
+            {row.label}
+          </span>
+          <span
+            dir="ltr"
+            className="font-bold optical-numeral py-1.5"
+            style={{
+              color: row.value < 0 ? "var(--danger)" : "var(--text-main)",
+              textAlign: "right",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {row.value}
+          </span>
+          <span
+            className="font-bold optical-name py-1.5"
+            style={{ color: "var(--text-main)", textAlign: "right" }}
+          >
+            {texts.currency}
+          </span>
+        </Fragment>
+      ))}
     </div>
   );
 }
@@ -50,7 +66,9 @@ function MethodCard({
           {empty}
         </p>
       ) : (
-        rows.map((row) => <Line key={row.method} label={row.method} value={row.amount} />)
+        <MoneyList
+          rows={rows.map((row) => ({ key: row.method, label: row.method, value: row.amount }))}
+        />
       )}
     </div>
   );
@@ -75,11 +93,14 @@ export default function TreasuryView({ treasury }: { treasury: Treasury }) {
       </div>
 
       <div className="card p-4">
-        <Line label={texts.income} value={treasury.income} />
-        <Line label={texts.fees} value={treasury.fees} />
-        <Line label={texts.support} value={treasury.support} />
-        <div style={{ borderTop: "1px solid var(--mint-100)" }} />
-        <Line label={texts.spending} value={treasury.spending} />
+        <MoneyList
+          rows={[
+            { key: "income", label: texts.income, value: treasury.income },
+            { key: "fees", label: texts.fees, value: treasury.fees },
+            { key: "support", label: texts.support, value: treasury.support },
+            { key: "spending", label: texts.spending, value: treasury.spending, rule: true },
+          ]}
+        />
       </div>
 
       <MethodCard heading={texts.byMethod} rows={treasury.byMethod} empty={texts.noIncome} />
