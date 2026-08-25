@@ -542,6 +542,10 @@ button:disabled {
   transform: translateY(0.18em);
 }
 
+.icon-optical {
+  transform: translateY(-0.08em);
+}
+
 .optical-name {
   display: block;
   transform: translateY(0.27em);

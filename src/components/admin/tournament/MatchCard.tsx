@@ -85,6 +85,7 @@ export default function MatchCard({
           score={
             match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
           }
+          layout="stacked"
         />
         {priorMeetings.length > 0 && (
           <p
