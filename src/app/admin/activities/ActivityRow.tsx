@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import ActivityRowBody from "@/components/ActivityRowBody";
 import IconLabel from "@/components/IconLabel";
-import { toThumbUrl } from "@/lib/utils";
 import { formatActivityDates } from "@/lib/activityDates";
 import { countedNoun } from "@/lib/arabicCount";
 import { REGISTERED } from "@/lib/messages";
@@ -48,36 +48,23 @@ export default function ActivityRow({
         className="flex items-center gap-3 min-w-0"
         style={{ color: "var(--text-main)" }}
       >
-        {a.photo ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={toThumbUrl(`/api/files/activity/${a.photo}`)}
-            alt={a.title}
-            className="activity-thumb"
-          />
-        ) : (
-          <span className="activity-thumb">
-            <Icon name={a.isVolunteer ? "handshake" : "trophy"} size={22} />
-          </span>
-        )}
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="activity-title">{a.title}</p>
-          {dates && (
-            <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
-              <Icon name="calendar" size={12} />
-              {dates}
-            </p>
-          )}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {!a.isVolunteer && (
-              <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
-            )}
-            {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
-            {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
-            {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
-            {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
-          </div>
-        </div>
+        <ActivityRowBody
+          title={a.title}
+          photo={a.photo}
+          isVolunteer={a.isVolunteer}
+          when={dates}
+          chips={
+            <>
+              {!a.isVolunteer && (
+                <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
+              )}
+              {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
+              {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
+              {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
+              {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
+            </>
+          }
+        />
         <Icon name="chevronLeft" size={15} className="shrink-0" />
       </Link>
       <div className="flex items-center justify-end gap-1">
