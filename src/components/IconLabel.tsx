@@ -15,7 +15,15 @@ export default function IconLabel({
   color?: string;
   after?: boolean;
 }) {
-  const icon = <Icon name={name} size={size} filled={filled} color={color} />;
+  const icon = (
+    <Icon
+      name={name}
+      size={size}
+      filled={filled}
+      color={color}
+      className={after ? "icon-label-numeral" : undefined}
+    />
+  );
   return (
     <span className="icon-label inline-flex items-center justify-center gap-1.5">
       {after ? (

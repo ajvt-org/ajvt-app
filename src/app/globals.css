@@ -511,6 +511,10 @@ button:disabled {
    Preflight lays every svg out as a block, which inside a paragraph puts the
    icon on a line of its own and leaves the label stranded underneath, so the
    display is restored here as well. */
+.icon-label-numeral {
+  transform: translateY(-0.21em);
+}
+
 .icon-inline {
   display: inline-block;
   vertical-align: middle;
@@ -924,25 +928,28 @@ details[open] > .team-summary .team-chevron {
 
 /* The place in a leaderboard, set as a plain numeral. Tabular figures keep
    the names beside them on one line however many places the list runs to. */
-.activity-row {
-  position: relative;
+.activity-row-live {
+  background-image: linear-gradient(90deg, rgba(53, 122, 98, 0.2), rgba(53, 122, 98, 0) 62%);
 }
-.activity-row::before {
-  content: "";
-  position: absolute;
-  inset-block: 1rem;
-  inset-inline-start: 0;
-  width: 3px;
-  border-radius: 999px;
-  background: transparent;
+.activity-row-soon {
+  background-image: linear-gradient(90deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0) 62%);
 }
-.activity-row-live::before {
-  background: var(--mint-600);
+.activity-row-done {
+  background-image: linear-gradient(90deg, rgba(90, 120, 104, 0.16), rgba(90, 120, 104, 0) 62%);
 }
-.activity-row-soon::before {
-  background: #f59e0b;
+[dir="rtl"] .activity-row-live {
+  background-image: linear-gradient(270deg, rgba(53, 122, 98, 0.2), rgba(53, 122, 98, 0) 62%);
+}
+[dir="rtl"] .activity-row-soon {
+  background-image: linear-gradient(270deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0) 62%);
+}
+[dir="rtl"] .activity-row-done {
+  background-image: linear-gradient(270deg, rgba(90, 120, 104, 0.16), rgba(90, 120, 104, 0) 62%);
 }
 .activity-row-done .activity-thumb {
+  opacity: 0.7;
+}
+.activity-thumb {
   opacity: 0.7;
 }
 .activity-thumb {
