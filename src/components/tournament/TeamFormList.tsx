@@ -1,8 +1,6 @@
 import Icon, { type IconName } from "@/components/Icon";
 import PagedList from "./PagedList";
 import Scoreline from "./Scoreline";
-import { counted } from "@/lib/arabicCount";
-import { MATCH } from "@/lib/messages";
 
 const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; icon: IconName; label: string }> = {
   W: { bg: "#059669", icon: "check", label: "فوز" },
@@ -39,9 +37,6 @@ export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
           )}
           {team.form.length > 0 && (
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                آخر {counted(team.form.length, MATCH)}:
-              </span>
               {team.form.map((result, i) => (
                 <span
                   key={i}

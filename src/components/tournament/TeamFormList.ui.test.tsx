@@ -37,6 +37,13 @@ describe("TeamFormList", () => {
     expect(screen.getByLabelText("خسارة")).toBeDefined();
   });
 
+  it("lets the circles speak for themselves, with no label", () => {
+    const { container } = show(["W", "D", "L"]);
+
+    expect(container.textContent).not.toContain("آخر");
+    expect(container.querySelectorAll(".form-pip")).toHaveLength(3);
+  });
+
   it("has no run of circles for a team that has not played", () => {
     const { container } = show([]);
 
