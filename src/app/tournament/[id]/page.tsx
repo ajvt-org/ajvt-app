@@ -25,6 +25,7 @@ import TournamentTabs, { type TournamentPanel } from "@/components/tournament/To
 import PageHeader from "@/components/PageHeader";
 import NumericRanges from "@/components/NumericRanges";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import { formatActivityDates } from "@/lib/activityDates";
 import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
 import { suspendedMemberIds } from "@/lib/suspensionServer";
@@ -266,9 +267,9 @@ export default async function PublicTournamentPage({
               photo: s.photo,
               sub: s.teamName,
               value: (
-                <>
-                  <Icon name="ball" size={14} className="icon-inline" /> {s.goals}
-                </>
+                <IconLabel name="ball" after>
+                  {s.goals}
+                </IconLabel>
               ),
             }))}
           />
@@ -333,9 +334,9 @@ export default async function PublicTournamentPage({
               photo: m.photo,
               sub: m.teamName,
               value: (
-                <>
-                  <Icon name="star" size={14} className="icon-inline" filled /> {m.count}
-                </>
+                <IconLabel name="star" filled after>
+                  {m.count}
+                </IconLabel>
               ),
             }))}
           />
