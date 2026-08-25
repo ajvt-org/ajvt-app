@@ -174,3 +174,42 @@ export function memberTeamName(
   const team = teams.find((one) => one.members.some((entry) => entry.member.id === memberId));
   return team?.name ?? null;
 }
+
+export type TimelineEntry = {
+  key: string;
+  minute: number | null;
+  type: Exclude<MatchEventType, "motm">;
+  name: string;
+  photo: string | null;
+  side: EventSide;
+  note: string;
+};
+
+export function matchTimeline(match: EventMatch): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  match.goals.forEach((goal, i) => {
+    entries.push({
+      key: `goal:${i}`,
+      minute: goal.minute,
+      type: "goal",
+      name: goal.member?.fullName ?? matchDisplay.unknownScorer,
+      photo: goal.member?.photo ?? null,
+      side: sideOf(goal.teamId, match.homeTeamId),
+      note:
+        (goal.count > 1 ? ` (${goal.count})` : "") +
+        kindSuffix(goal.kind as GoalSource["kind"]).trimStart(),
+    });
+  });
+  match.bookings.forEach((booking, i) => {
+    entries.push({
+      key: `card:${i}`,
+      minute: booking.minute,
+      type: booking.cardType === "RED" ? "red" : "yellow",
+      name: booking.member.fullName,
+      photo: booking.member.photo,
+      side: sideOf(booking.teamId, match.homeTeamId),
+      note: "",
+    });
+  });
+  return entries.sort((a, b) => (a.minute ?? 999) - (b.minute ?? 999));
+}
