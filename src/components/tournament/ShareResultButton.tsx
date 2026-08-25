@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
-import TeamLogo from "@/components/tournament/TeamLogo";
+import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
 import IconLabel from "@/components/IconLabel";
 import Icon from "@/components/Icon";
 import CardChip from "@/components/tournament/CardChip";
+import { matchDisplay } from "@/lib/texts";
 
 interface GoalEntry {
   fullName: string;
@@ -121,29 +122,14 @@ export default function ShareResultButton({
           {tournamentTitle}
           {round ? ` — ${round}` : ""}
         </p>
-        <div className="flex items-center justify-between gap-3" dir="rtl">
-          <div className="flex-1 flex flex-col items-center gap-1">
-            <TeamLogo logo={homeTeamLogo} name={homeTeamName} size={28} />
-            <p
-              className="font-black text-white text-sm text-center"
-              style={{ wordBreak: "break-word" }}
-            >
-              {homeTeamName}
-            </p>
-          </div>
-          <p className="font-black text-white text-2xl shrink-0">
-            {homeScore} - {awayScore}
-          </p>
-          <div className="flex-1 flex flex-col items-center gap-1">
-            <TeamLogo logo={awayTeamLogo} name={awayTeamName} size={28} />
-            <p
-              className="font-black text-white text-sm text-center"
-              style={{ wordBreak: "break-word" }}
-            >
-              {awayTeamName}
-            </p>
-          </div>
-        </div>
+        <MatchTeams
+          home={{ name: homeTeamName, logo: homeTeamLogo }}
+          away={{ name: awayTeamName, logo: awayTeamLogo }}
+          score={{ home: homeScore, away: awayScore }}
+          tone="dark"
+          size="xl"
+          layout="stacked"
+        />
 
         {(homeEvents.length > 0 || awayEvents.length > 0) && (
           <div className="flex justify-between gap-3 mt-4" dir="rtl">
@@ -181,7 +167,7 @@ export default function ShareResultButton({
         )}
 
         <p className="text-xs mt-3 text-center" style={{ color: "rgba(255,255,255,0.6)" }}>
-          رابطة شباب قرية التاكلالت
+          {matchDisplay.clubName}
         </p>
       </div>
 
@@ -191,7 +177,7 @@ export default function ShareResultButton({
         className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        {downloading ? "..." : <IconLabel name="upload">مشاركة النتيجة</IconLabel>}
+        {downloading ? "..." : <IconLabel name="upload">{matchDisplay.shareResult}</IconLabel>}
       </button>
     </div>
   );
