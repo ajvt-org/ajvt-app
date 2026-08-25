@@ -20,6 +20,7 @@ export default function MatchResult({
   tournamentTitle,
   loggedIn,
   myVoteCandidateId,
+  manOfTheMatchTeam = null,
 }: {
   match: PublicMatch;
   day: { round: string | null; venue: string | null };
@@ -28,6 +29,7 @@ export default function MatchResult({
   tournamentTitle: string;
   loggedIn: boolean;
   myVoteCandidateId: string | null;
+  manOfTheMatchTeam?: string | null;
 }) {
   const round = day.round ? null : match.round;
   const venue = day.venue ? null : match.venue;
@@ -54,7 +56,9 @@ export default function MatchResult({
       />
 
       {football && (
-        <MatchEvents rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id })} />
+        <MatchEvents
+          rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id, manOfTheMatchTeam })}
+        />
       )}
 
       {priorMeetings.length > 0 && (

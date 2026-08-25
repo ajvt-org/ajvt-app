@@ -28,6 +28,7 @@ export type MatchEventRow = {
   side: EventSide;
   type: MatchEventType;
   name: string;
+  team?: string | null;
   photo: string | null;
   minutes: string[];
 };
@@ -105,6 +106,7 @@ type EventPlayer = { id: string; fullName: string; photo: string | null };
 
 export type EventMatch = {
   homeTeamId?: string;
+  manOfTheMatchTeam?: string | null;
   goals: {
     count: number;
     minute: number | null;
@@ -155,10 +157,20 @@ export function matchEventRows(match: EventMatch): MatchEventRow[] {
       key: `motm:${match.manOfTheMatch.id}`,
       side: null,
       type: "motm",
-      name: `${matchDisplay.motm} ${match.manOfTheMatch.fullName}`,
+      name: match.manOfTheMatch.fullName,
+      team: match.manOfTheMatchTeam ?? null,
       photo: match.manOfTheMatch.photo,
       minutes: [],
     });
   }
   return rows;
+}
+
+export function memberTeamName(
+  memberId: string | null | undefined,
+  teams: { name: string; members: { member: { id: string } }[] }[],
+): string | null {
+  if (!memberId) return null;
+  const team = teams.find((one) => one.members.some((entry) => entry.member.id === memberId));
+  return team?.name ?? null;
 }

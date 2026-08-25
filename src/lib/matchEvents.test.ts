@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { goalRows, bookingRows, minuteLines, matchEventRows } from "./matchEvents";
+import { goalRows, bookingRows, minuteLines, matchEventRows, memberTeamName } from "./matchEvents";
 
 function goal(over: Partial<Parameters<typeof goalRows>[0][number]> = {}) {
   return {
@@ -111,7 +111,7 @@ describe("matchEventRows", () => {
     });
 
     expect(rows.map((r) => r.type)).toEqual(["goal", "yellow", "motm"]);
-    expect(rows[2].name).toContain("رجل المباراة");
+    expect(rows[2].name).toBe("أسامه محمد");
   });
 
   it("names an unknown scorer rather than leaving the row blank", () => {
@@ -177,5 +177,45 @@ describe("sides", () => {
     });
 
     expect(rows[0].side).toBeNull();
+  });
+});
+
+describe("memberTeamName", () => {
+  const teams = [
+    { name: "فريق النجم", members: [{ member: { id: "p1" } }] },
+    { name: "فريق الشباب", members: [{ member: { id: "p2" } }] },
+  ];
+
+  it("names the team a player belongs to", () => {
+    expect(memberTeamName("p2", teams)).toBe("فريق الشباب");
+  });
+
+  it("has no name for a player on neither roster", () => {
+    expect(memberTeamName("p9", teams)).toBeNull();
+  });
+
+  it("has no name when there is no player", () => {
+    expect(memberTeamName(null, teams)).toBeNull();
+  });
+});
+
+describe("the man of the match row", () => {
+  const player = { id: "p1", fullName: "أسامه محمد", photo: null };
+
+  it("carries the team so the card can say who he played for", () => {
+    const rows = matchEventRows({
+      goals: [],
+      bookings: [],
+      manOfTheMatch: player,
+      manOfTheMatchTeam: "فريق النجم",
+    });
+
+    expect(rows[0].team).toBe("فريق النجم");
+  });
+
+  it("leaves the team out when it is not known", () => {
+    const rows = matchEventRows({ goals: [], bookings: [], manOfTheMatch: player });
+
+    expect(rows[0].team).toBeNull();
   });
 });

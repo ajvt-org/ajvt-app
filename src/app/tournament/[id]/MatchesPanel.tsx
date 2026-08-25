@@ -3,6 +3,7 @@ import MatchFixture from "@/components/tournament/MatchFixture";
 import MatchResult from "@/components/tournament/MatchResult";
 import TournamentSection from "@/components/tournament/TournamentSection";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
+import { memberTeamName } from "@/lib/matchEvents";
 import { publicTournament as texts } from "@/lib/texts";
 
 export default function MatchesPanel({
@@ -13,6 +14,7 @@ export default function MatchesPanel({
   tournamentTitle,
   loggedIn,
   myVoteByVoteId,
+  teams,
 }: {
   played: PublicMatch[];
   scheduled: PublicMatch[];
@@ -21,6 +23,7 @@ export default function MatchesPanel({
   tournamentTitle: string;
   loggedIn: boolean;
   myVoteByVoteId: Map<string, string>;
+  teams: { name: string; members: { member: { id: string } }[] }[];
 }) {
   if (played.length === 0 && scheduled.length === 0) {
     return (
@@ -45,6 +48,7 @@ export default function MatchesPanel({
                 football={football}
                 tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}
+                manOfTheMatchTeam={memberTeamName(match.manOfTheMatch?.id, teams)}
                 myVoteCandidateId={
                   match.mvpVote ? (myVoteByVoteId.get(match.mvpVote.id) ?? null) : null
                 }

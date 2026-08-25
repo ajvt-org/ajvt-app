@@ -6,7 +6,7 @@ import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
 import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
 import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
-import { matchEventRows } from "@/lib/matchEvents";
+import { matchEventRows, memberTeamName } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
@@ -54,7 +54,13 @@ export default function MatchCard({
 }) {
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
   const football = profile === "FOOTBALL";
-  const events = football ? matchEventRows({ ...match, homeTeamId: match.homeTeam.id }) : [];
+  const events = football
+    ? matchEventRows({
+        ...match,
+        homeTeamId: match.homeTeam.id,
+        manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
+      })
+    : [];
   return (
     <div className="card p-4">
       <MatchCardHead time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}>
