@@ -536,6 +536,17 @@ button:disabled {
   transform: translateY(0.37em);
 }
 
+.optical-numeral {
+  display: inline-block;
+  line-height: 1;
+  transform: translateY(0.18em);
+}
+
+.optical-name {
+  display: block;
+  transform: translateY(0.27em);
+}
+
 /* The same asymmetry seen from the other side. Tajawal reserves ascent for
    Arabic marks and descent for tails, so a numeral, which uses neither, has
    its ink well above the middle of its own line box. Centring the box leaves

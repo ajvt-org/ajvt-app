@@ -71,3 +71,14 @@ describe("MatchEvents", () => {
     expect(container.innerHTML).toContain("بطاقة حمراء");
   });
 });
+
+describe("optical centering", () => {
+  it("lifts the name and the minutes onto the icon's centre line", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[row]} />);
+
+    const cells = [...(container.firstElementChild?.children ?? [])];
+    expect(cells[2].className).toContain("optical-name");
+    expect(cells[3].querySelector("bdi")?.className).toContain("optical-numeral");
+  });
+});

@@ -39,14 +39,16 @@ export default function MatchEvents({
           <span className={LINE}>
             <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
           </span>
-          <span className="leading-6" style={{ wordBreak: "break-word" }}>
+          <span className="leading-6 optical-name" style={{ wordBreak: "break-word" }}>
             {row.name}
           </span>
           <span className="flex flex-col">
             {minuteLines(row.minutes).map((line, i) => (
               <span key={i} className={`${LINE} gap-1.5 whitespace-nowrap`}>
                 {line.map((minute) => (
-                  <bdi key={minute}>{minute}</bdi>
+                  <bdi key={minute} className="optical-numeral">
+                    {minute}
+                  </bdi>
                 ))}
               </span>
             ))}
