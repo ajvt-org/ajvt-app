@@ -240,6 +240,7 @@ export default async function PublicTournamentPage({
           tournamentTitle={activity.title}
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}
+          teams={activity.teams}
         />
       ),
     },

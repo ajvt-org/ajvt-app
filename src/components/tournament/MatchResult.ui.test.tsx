@@ -62,14 +62,14 @@ describe("MatchResult by sport profile", () => {
   it("tells the football story in full", () => {
     show(true);
 
-    expect(screen.getByText(/رجل المباراة/)).toBeDefined();
+    expect(screen.getAllByLabelText(/رجل المباراة/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/سالم ولد علي/).length).toBeGreaterThan(0);
   });
 
   it("keeps a board result to the score alone", () => {
     show(false);
 
-    expect(screen.queryByText(/رجل المباراة/)).toBeNull();
+    expect(screen.queryByLabelText(/رجل المباراة/)).toBeNull();
     expect(screen.queryByText(/سالم ولد علي/)).toBeNull();
     expect(screen.getAllByText(/الصقور/).length).toBeGreaterThan(0);
   });

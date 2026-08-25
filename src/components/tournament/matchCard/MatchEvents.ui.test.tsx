@@ -26,7 +26,7 @@ describe("MatchEvents", () => {
       <MatchEvents rows={[row, { ...row, key: "p2", name: "باه الصبار", minutes: ["10'"] }]} />,
     );
 
-    const grid = container.firstElementChild as HTMLElement;
+    const grid = container.querySelector(".grid") as HTMLElement;
     expect(grid.className).toContain("grid");
     expect(grid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
     expect(grid.childElementCount).toBe(8);
@@ -36,7 +36,7 @@ describe("MatchEvents", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[0].querySelector("svg")).not.toBeNull();
     expect(cells[1].querySelector("svg,img")).not.toBeNull();
     expect(cells[2].textContent).toBe("أسامه محمد");
@@ -47,7 +47,7 @@ describe("MatchEvents", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[0].className).toContain("items-center");
     expect(cells[1].className).toContain("items-center");
     expect(cells[2].className).toContain("leading-6");
@@ -59,7 +59,7 @@ describe("MatchEvents", () => {
       <MatchEvents rows={[{ ...row, minutes: ["7'", "30'", "45'", "60'", "88'"] }]} />,
     );
 
-    const minutes = [...(container.firstElementChild?.children ?? [])][3];
+    const minutes = [...(container.querySelector(".grid")?.children ?? [])][3];
     expect(minutes.childElementCount).toBe(3);
     expect(minutes.children[0].textContent).toBe("7'30'");
     expect(minutes.children[2].textContent).toBe("88'");
@@ -78,7 +78,7 @@ describe("optical centering", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[2].className).toContain("optical-name");
     expect(cells[3].querySelector("bdi")?.className).toContain("optical-numeral");
   });
@@ -119,7 +119,8 @@ describe("two teams", () => {
     const { container } = render(<MatchEvents rows={[home, away, motm]} />);
 
     const last = container.firstElementChild?.lastElementChild;
-    expect(last?.textContent).toContain("رجل المباراة");
+    expect(last?.textContent).toContain("أسامه");
+    expect((last as HTMLElement).className).toContain("justify-center");
   });
 
   it("stays one list when no row carries a side", () => {
@@ -127,5 +128,132 @@ describe("two teams", () => {
     const { container } = render(<MatchEvents rows={[row]} />);
 
     expect(container.querySelectorAll(".flex.gap-3")).toHaveLength(0);
+  });
+});
+
+describe("sections", () => {
+  const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+  const card: MatchEventRow = { ...row, key: "c", side: "away", type: "yellow", name: "باه" };
+  const motm: MatchEventRow = {
+    ...row,
+    key: "m",
+    side: null,
+    type: "motm",
+    name: "أسامه محمد",
+    team: "فريق النجم",
+  };
+
+  it("keeps the goals and the cards in sections of their own", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const sections = container.firstElementChild as HTMLElement;
+    expect(sections.childElementCount).toBe(2);
+    expect(sections.children[0].textContent).toContain("أسامه محمد");
+    expect(sections.children[1].textContent).toContain("باه");
+  });
+
+  it("rules a line off before the man of the match", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, motm]} />);
+
+    const rule = container.querySelector("[style*='border-top']");
+    expect(rule).not.toBeNull();
+    expect(rule?.nextElementSibling?.textContent).toContain("أسامه محمد");
+  });
+
+  it("names the team the man of the match played for", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, motm]} />);
+
+    expect(container.textContent).toContain("أسامه محمد");
+    expect(container.textContent).toContain("(فريق النجم)");
+    expect(container.textContent).not.toContain("رجل المباراة");
+  });
+
+  it("skips the rule when the man of the match is all there is", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[motm]} />);
+
+    const sections = container.firstElementChild as HTMLElement;
+    expect(sections.querySelector("[style*='border-top']")).toBeNull();
+  });
+});
+
+describe("column alignment across sections", () => {
+  it("boxes every event icon the same width so the photos line up", () => {
+    cleanup();
+    const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+    const card: MatchEventRow = { ...row, key: "c", side: "home", type: "yellow" };
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const cells = [...container.querySelectorAll(".grid")].map(
+      (grid) => grid.firstElementChild as HTMLElement,
+    );
+    expect(cells).toHaveLength(2);
+    for (const cell of cells) {
+      expect(cell.className).toContain("w-4");
+      expect(cell.className).toContain("justify-center");
+    }
+  });
+});
+
+describe("mirrored away column", () => {
+  const home: MatchEventRow = { ...row, key: "h", side: "home" };
+  const away: MatchEventRow = { ...row, key: "a", side: "away", name: "باه الصبار" };
+
+  it("turns the away rows around so each side's icon faces the outer edge", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const [homeGrid, awayGrid] = [...container.querySelectorAll(".grid")];
+    expect(homeGrid.firstElementChild?.querySelector("svg")).not.toBeNull();
+    expect(awayGrid.lastElementChild?.querySelector("svg")).not.toBeNull();
+    expect(homeGrid.lastElementChild?.textContent).toBe("7'");
+    expect(awayGrid.firstElementChild?.textContent).toBe("7'");
+  });
+
+  it("keeps the photo beside its own name on both sides", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const [homeGrid, awayGrid] = [...container.querySelectorAll(".grid")];
+    expect(homeGrid.children[1].querySelector("svg,img")).not.toBeNull();
+    expect(awayGrid.children[1].querySelector("svg,img")).not.toBeNull();
+    expect(homeGrid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
+    expect(awayGrid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
+  });
+
+  it("keeps both sides' names reading from the same edge", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const names = [...container.querySelectorAll(".optical-name")] as HTMLElement[];
+    expect(names).toHaveLength(2);
+    for (const name of names) {
+      expect(name.getAttribute("style")).toContain("text-align: start");
+    }
+  });
+});
+
+describe("minute columns", () => {
+  it("anchors the home minutes to the edge they share across sections", () => {
+    cleanup();
+    const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+    const card: MatchEventRow = { ...row, key: "c", side: "home", type: "yellow" };
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const lines = [...container.querySelectorAll(".grid")].map(
+      (grid) => grid.children[3].firstElementChild as HTMLElement,
+    );
+    for (const line of lines) expect(line.className).toContain("justify-end");
+  });
+
+  it("leaves the away minutes on their own shared edge", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[{ ...row, key: "a", side: "away" }]} />);
+
+    const line = container.querySelector(".grid")?.children[0].firstElementChild as HTMLElement;
+    expect(line.className).not.toContain("justify-end");
   });
 });

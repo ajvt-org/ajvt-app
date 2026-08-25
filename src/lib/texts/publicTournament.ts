@@ -4,7 +4,7 @@ export const matchDisplay = {
   penaltyShort: "ج",
   extraTimeShort: "و.إ",
   penalties: "ركلات ترجيح",
-  motm: "رجل المباراة:",
+  motm: "رجل المباراة",
   priorMeetings: "مواجهات سابقة:",
   upcomingShort: "قادمة",
   todayMatches: "مباريات اليوم",
