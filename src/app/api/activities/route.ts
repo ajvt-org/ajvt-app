@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { formatActivityDates } from "@/lib/activityDates";
+import { sortActivities } from "@/lib/activityOrder";
 
-// No sign-in required: every field here is already on the public landing
-// page, and the activity page has to render for a visitor deciding whether
-// an account is worth creating.
 export const GET = withRoute("GET /api/activities", async () => {
   const activities = await prisma.activity.findMany({
-    orderBy: [{ isOpen: "desc" }, { createdAt: "asc" }],
+    orderBy: { createdAt: "asc" },
     select: {
       id: true,
       title: true,
@@ -29,7 +27,7 @@ export const GET = withRoute("GET /api/activities", async () => {
   });
 
   return NextResponse.json({
-    activities: activities.map((a) => ({
+    activities: sortActivities(activities).map((a) => ({
       id: a.id,
       title: a.title,
       description: a.description,
