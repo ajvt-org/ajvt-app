@@ -42,12 +42,10 @@ export default function ActivityRow({
   const dates = formatActivityDates(a);
 
   return (
-    <div
-      className={`card activity-row ${activityAccent(a)} w-full p-3 sm:p-4 flex items-center gap-3`}
-    >
+    <div className={`card activity-row ${activityAccent(a)} w-full p-3 sm:p-4 space-y-2`}>
       <Link
         href={`/admin/activities/${a.id}`}
-        className="flex items-center gap-3 min-w-0 flex-1"
+        className="flex items-center gap-3 min-w-0"
         style={{ color: "var(--text-main)" }}
       >
         {a.photo ? (
@@ -62,7 +60,7 @@ export default function ActivityRow({
             <Icon name={a.isVolunteer ? "handshake" : "trophy"} size={22} />
           </span>
         )}
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <p className="activity-title">{a.title}</p>
           {dates && (
             <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}>
@@ -80,8 +78,9 @@ export default function ActivityRow({
             {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
           </div>
         </div>
+        <Icon name="chevronLeft" size={15} className="shrink-0" />
       </Link>
-      <div className="shrink-0 flex items-center gap-1">
+      <div className="flex items-center justify-end gap-1">
         {a.isTournament && (
           <Link
             href={`/admin/activities/${a.id}?tab=matches`}
@@ -113,14 +112,6 @@ export default function ActivityRow({
             </button>
           </>
         )}
-        <Link
-          href={`/admin/activities/${a.id}`}
-          aria-label={texts.open(a.title)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ color: "var(--text-muted)" }}
-        >
-          <Icon name="chevronLeft" size={15} />
-        </Link>
       </div>
     </div>
   );
