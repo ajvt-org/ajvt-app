@@ -4,6 +4,7 @@ import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
 import { toThumbUrl } from "@/lib/utils";
 import ActivityStandingChip from "@/components/ActivityStandingChip";
+import { activityAccent } from "@/lib/activityAccent";
 import { landingActivities as texts } from "@/lib/texts";
 
 export type LandingActivity = {
@@ -71,40 +72,28 @@ export default function LandingActivities({
           <Link
             key={activity.id}
             href={`/activities/${activity.id}`}
-            className="card p-3.5 flex items-center gap-3"
+            className={`card activity-row ${activityAccent(activity)} p-3.5 flex items-center gap-3`}
           >
             {activity.photo ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
                 alt=""
-                width={44}
-                height={44}
+                width={52}
+                height={52}
                 loading="lazy"
                 decoding="async"
-                className="w-11 h-11 rounded-full object-cover shrink-0"
-                style={{ border: "1.5px solid var(--mint-200)" }}
+                className="activity-thumb"
               />
             ) : (
-              <span
-                className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center"
-                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-              >
-                <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={20} />
+              <span className="activity-thumb">
+                <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={22} />
               </span>
             )}
 
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <span className="font-bold truncate" style={{ color: "var(--text-main)" }}>
-                  {activity.title}
-                </span>
-                <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
-                {!activity.isOpen && (
-                  <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
-                    {texts.closedChip}
-                  </span>
-                )}
+            <span className="min-w-0 flex-1 space-y-1">
+              <span className="activity-title block" style={{ color: "var(--text-main)" }}>
+                {activity.title}
               </span>
               {activity.when && (
                 <span
@@ -115,6 +104,14 @@ export default function LandingActivities({
                   <NumericRanges>{activity.when}</NumericRanges>
                 </span>
               )}
+              <span className="flex items-center gap-1.5 flex-wrap">
+                <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
+                {!activity.isOpen && (
+                  <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
+                    {texts.closedChip}
+                  </span>
+                )}
+              </span>
             </span>
 
             <Icon name="chevronLeft" size={16} className="shrink-0" />
