@@ -78,22 +78,19 @@ function CompetitionCard({
         <Icon name={STATE_ICON[state]} size={22} />
       </span>
       <span className="flex-1 min-w-0" style={{ opacity: playable ? undefined : 0.6 }}>
-        <span className="flex items-start gap-2">
-          <span
-            className="flex-1 min-w-0 font-black line-clamp-2"
-            style={{ color: "var(--text-main)", fontSize: 15 }}
-          >
-            {competition.name}
-          </span>
-          {competition.visibility === "PRIVATE" && (
-            <Icon name="lock" size={12} color="var(--text-muted)" className="shrink-0 mt-1" />
-          )}
+        <span className="activity-title block" style={{ color: "var(--text-main)" }}>
+          {competition.name}
+        </span>
+        <span className="flex items-center gap-1.5 flex-wrap mt-1">
           <span
             className="shrink-0 rounded-full font-black"
-            style={{ padding: "1px 10px", fontSize: 10, marginTop: 2, ...CHIP_STYLE[state] }}
+            style={{ padding: "1px 10px", fontSize: 10, ...CHIP_STYLE[state] }}
           >
             {STATE_LABEL[state]}
           </span>
+          {competition.visibility === "PRIVATE" && (
+            <Icon name="lock" size={12} color="var(--text-muted)" className="shrink-0" />
+          )}
         </span>
         {state === "before" ? (
           <span
