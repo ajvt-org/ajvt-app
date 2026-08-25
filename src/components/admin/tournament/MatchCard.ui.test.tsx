@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import MatchCard from "./MatchCard";
 import type { Match } from "./types";
 
@@ -112,6 +112,14 @@ describe("MatchCard by sport profile", () => {
 
     expect(screen.getByLabelText(/رجل المباراة/)).toBeDefined();
     expect(screen.getByText(/أفضل لاعب/)).toBeDefined();
+    expect(screen.getByText(/مجريات المباراة/)).toBeDefined();
+  });
+
+  it("keeps a yellow card off the card until the timeline is opened", () => {
+    show("FOOTBALL");
+
+    expect(screen.queryByText(/سالم/)).toBeNull();
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
     expect(screen.getByText(/سالم/)).toBeDefined();
   });
 
@@ -121,6 +129,7 @@ describe("MatchCard by sport profile", () => {
     expect(screen.queryByLabelText(/رجل المباراة/)).toBeNull();
     expect(screen.queryByText(/أفضل لاعب/)).toBeNull();
     expect(screen.queryByText(/سالم/)).toBeNull();
+    expect(screen.queryByText(/مجريات المباراة/)).toBeNull();
     expect(screen.getByText(/تعديل التفاصيل/)).toBeDefined();
   });
 
