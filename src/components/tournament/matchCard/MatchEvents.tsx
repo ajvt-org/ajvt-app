@@ -8,7 +8,7 @@ import { matchTone, type MatchTone } from "./tone";
 
 const LINE = "h-6 flex items-center";
 const ICON_CELL = `${LINE} justify-center w-4`;
-const NAME_SIZE = 11;
+const NAME_SIZE = 10;
 
 function EventIcon({ type }: { type: MatchEventType }) {
   if (type === "yellow") return <CardChip type="YELLOW" />;
