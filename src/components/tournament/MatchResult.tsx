@@ -53,7 +53,9 @@ export default function MatchResult({
         score={{ home: match.homeScore, away: match.awayScore }}
       />
 
-      {football && <MatchEvents rows={matchEventRows(match)} />}
+      {football && (
+        <MatchEvents rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id })} />
+      )}
 
       {priorMeetings.length > 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
