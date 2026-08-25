@@ -14,18 +14,16 @@ function EventIcon({ type }: { type: MatchEventType }) {
   return <Icon name="ball" size={13} />;
 }
 
-export default function MatchEvents({
+function EventGrid({
   rows,
-  tone = "light",
-  avatarSize = 18,
+  color,
+  avatarSize,
 }: {
   rows: MatchEventRow[];
-  tone?: MatchTone;
-  avatarSize?: number;
+  color: string;
+  avatarSize: number;
 }) {
   if (rows.length === 0) return null;
-  const color = matchTone[tone].event;
-
   return (
     <div
       className="grid gap-x-2 gap-y-1 text-xs font-bold"
@@ -55,6 +53,40 @@ export default function MatchEvents({
           </span>
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+export default function MatchEvents({
+  rows,
+  tone = "light",
+  avatarSize = 18,
+}: {
+  rows: MatchEventRow[];
+  tone?: MatchTone;
+  avatarSize?: number;
+}) {
+  if (rows.length === 0) return null;
+  const color = matchTone[tone].event;
+  const home = rows.filter((row) => row.side === "home");
+  const away = rows.filter((row) => row.side === "away");
+  const shared = rows.filter((row) => row.side === null);
+
+  if (home.length === 0 && away.length === 0) {
+    return <EventGrid rows={shared} color={color} avatarSize={avatarSize} />;
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-3">
+        <div className="flex-1 min-w-0">
+          <EventGrid rows={home} color={color} avatarSize={avatarSize} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <EventGrid rows={away} color={color} avatarSize={avatarSize} />
+        </div>
+      </div>
+      <EventGrid rows={shared} color={color} avatarSize={avatarSize} />
     </div>
   );
 }
