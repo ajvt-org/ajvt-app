@@ -93,7 +93,7 @@ async function seedMatches(
   for (let i = 0; i < PAIRS.length; i++) {
     const [h, a] = PAIRS[i];
     const played = i < PAIRS.length - 1;
-    const homeScore = played ? (i * 3) % 4 : null;
+    const homeScore = played ? (i % 3 === 1 ? 3 : (i * 3) % 4) : null;
     const awayScore = played ? (i * 5) % 3 : null;
 
     const match = await prisma.match.create({
@@ -101,7 +101,7 @@ async function seedMatches(
         activityId: activity.id,
         homeTeamId: teams[h].id,
         awayTeamId: teams[a].id,
-        matchDate: played ? daysAgo(22 - i * 2) : todayLate,
+        matchDate: played ? daysAgo(22 - i * 2, 16 + (i % 2)) : todayLate,
         round: "دور المجموعات",
         venue: "ملعب القرية",
         order: i,
@@ -120,11 +120,12 @@ async function seedMatches(
     ] as const) {
       const scorers = roster[teams[teamIndex].id];
       if (!scorers?.length) continue;
+      const oneManShow = i % 3 === 1 && teamIndex === h;
       for (let g = 0; g < score; g++) {
         await prisma.matchGoal.create({
           data: {
             matchId: match.id,
-            memberId: pick(scorers, g),
+            memberId: oneManShow ? scorers[0] : pick(scorers, g),
             teamId: teams[teamIndex].id,
             minute: 10 + g * 17 + (teamIndex === a ? 5 : 0),
           },
@@ -230,7 +231,7 @@ export async function seedDoubles(activity: SeededActivity, active: SeededMember
       activityId: activity.id,
       homeTeamId: teams[0].id,
       awayTeamId: teams[1].id,
-      matchDate: daysAgo(3),
+      matchDate: daysAgo(3, 17),
       round: "نصف النهائي",
       venue: "قاعة الرابطة",
       order: 0,
@@ -248,7 +249,7 @@ export async function seedDoubles(activity: SeededActivity, active: SeededMember
       activityId: activity.id,
       homeTeamId: teams[2].id,
       awayTeamId: teams[3].id,
-      matchDate: daysAgo(2),
+      matchDate: daysAgo(2, 18),
       round: "نصف النهائي",
       venue: "قاعة الرابطة",
       order: 1,
@@ -320,7 +321,7 @@ export async function seedFinishedCup(
         activityId: activity.id,
         homeTeamId: teams[h].id,
         awayTeamId: teams[a].id,
-        matchDate: daysAgo(ago),
+        matchDate: daysAgo(ago, 16),
         round,
         venue: "ملعب القرية",
         order: i,

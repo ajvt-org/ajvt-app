@@ -120,14 +120,16 @@ describe("AnswerReview", () => {
 });
 
 describe("the points and time beside each answer", () => {
-  it("carries the optical correction every other icon in the app gets", () => {
+  it("centers each icon on its label rather than nudging it off the baseline", () => {
     const { container } = render(<AnswerReview review={{ ...review, rows: [right] }} />);
 
-    const icons = [...container.querySelectorAll("svg")];
-    const beside = icons.filter((svg) => svg.closest(".icon-label"));
+    const labels = [...container.querySelectorAll(".icon-label")];
 
-    expect(beside.length).toBeGreaterThanOrEqual(2);
-    for (const svg of beside) expect(svg.classList.contains("icon-inline")).toBe(true);
+    expect(labels.length).toBeGreaterThanOrEqual(2);
+    for (const label of labels) {
+      expect(label.className).toContain("items-center");
+      expect(label.querySelector("svg")?.classList.contains("icon-inline")).toBe(false);
+    }
   });
 
   it("sizes them against the text rather than pinning them to a pixel count", () => {

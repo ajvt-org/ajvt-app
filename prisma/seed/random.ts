@@ -30,8 +30,10 @@ export function referenceCode(i: number): string {
   return `AJ-${code}`;
 }
 
-export function daysAgo(n: number): Date {
-  return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+export function daysAgo(n: number, hour?: number): Date {
+  const at = new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+  if (hour !== undefined) at.setUTCHours(hour, 0, 0, 0);
+  return at;
 }
 
 export function daysFromNow(n: number): Date {

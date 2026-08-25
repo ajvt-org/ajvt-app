@@ -1,8 +1,17 @@
 export const matchDisplay = {
   unknownScorer: "مجهول",
-  ownGoal: "عكسي",
+  ownGoal: "ع",
   penaltyShort: "ج",
   extraTimeShort: "و.إ",
+  penalties: "ركلات ترجيح",
+  motm: "رجل المباراة",
+  priorMeetings: "مواجهات سابقة:",
+  upcomingShort: "قادمة",
+  todayMatches: "مباريات اليوم",
+  clubName: "رابطة شباب قرية التاكلالت",
+  shareResult: "مشاركة النتيجة",
+  timeline: "مجريات المباراة",
+  hideTimeline: "إخفاء المجريات",
 } as const;
 
 export const publicTournament = {

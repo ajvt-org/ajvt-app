@@ -25,7 +25,6 @@ export const activityRow = {
   volunteerChip: "حملة تطوعية",
   closedChip: "التسجيل مغلق",
   manageTournament: "إدارة البطولة",
-  open: (title: string) => `فتح ${title}`,
   moveUp: (title: string) => `تقديم ${title} في الترتيب`,
   moveDown: (title: string) => `تأخير ${title} في الترتيب`,
 } as const;

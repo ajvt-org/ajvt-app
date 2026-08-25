@@ -66,10 +66,10 @@ export default function StandingsTable({
           {rows.map((row, i) => (
             <tr key={row.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
               <td className="px-2 py-2 text-center">{i + 1}</td>
-              <td className="px-2 py-2 font-bold" style={{ color: "var(--text-main)" }}>
-                <span className="flex items-center gap-1.5 justify-start whitespace-nowrap">
+              <td className="px-2 py-2 font-bold text-xs" style={{ color: "var(--text-main)" }}>
+                <span className="flex items-center gap-1.5 justify-start">
                   <TeamLogo logo={row.logo} name={row.name} size={18} />
-                  {row.name}
+                  <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
                 </span>
               </td>
               <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>

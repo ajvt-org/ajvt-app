@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import ActivityRowBody from "@/components/ActivityRowBody";
 import IconLabel from "@/components/IconLabel";
-import { toThumbUrl } from "@/lib/utils";
 import { formatActivityDates } from "@/lib/activityDates";
 import { countedNoun } from "@/lib/arabicCount";
 import { REGISTERED } from "@/lib/messages";
+import { activityAccent } from "@/lib/activityAccent";
 import { activityRow as texts } from "@/lib/texts";
 import type { Activity } from "./activityTypes";
 
@@ -41,46 +42,32 @@ export default function ActivityRow({
   const dates = formatActivityDates(a);
 
   return (
-    <div className="card w-full p-3 sm:p-4 flex items-center gap-3">
+    <div className={`card activity-row ${activityAccent(a)} w-full p-3 sm:p-4 space-y-2`}>
       <Link
         href={`/admin/activities/${a.id}`}
-        className="flex items-center gap-3 min-w-0 flex-1"
+        className="flex items-center gap-3 min-w-0"
         style={{ color: "var(--text-main)" }}
       >
-        {a.photo ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={toThumbUrl(`/api/files/activity/${a.photo}`)}
-            alt={a.title}
-            className="w-10 h-10 rounded-xl object-cover shrink-0"
-          />
-        ) : (
-          <span
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "var(--mint-100)" }}
-          >
-            <Icon name={a.isVolunteer ? "handshake" : "trophy"} size={18} />
-          </span>
-        )}
-        <div className="min-w-0">
-          <p className="text-sm font-bold truncate">{a.title}</p>
-          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {dates && (
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {dates}
-              </span>
-            )}
-            {!a.isVolunteer && (
-              <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
-            )}
-            {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
-            {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
-            {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
-            {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
-          </div>
-        </div>
+        <ActivityRowBody
+          title={a.title}
+          photo={a.photo}
+          isVolunteer={a.isVolunteer}
+          when={dates}
+          chips={
+            <>
+              {!a.isVolunteer && (
+                <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
+              )}
+              {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
+              {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
+              {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
+              {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}
+            </>
+          }
+        />
+        <Icon name="chevronLeft" size={15} className="shrink-0" />
       </Link>
-      <div className="shrink-0 flex items-center gap-1">
+      <div className="flex items-center justify-end gap-1">
         {a.isTournament && (
           <Link
             href={`/admin/activities/${a.id}?tab=matches`}
@@ -112,13 +99,6 @@ export default function ActivityRow({
             </button>
           </>
         )}
-        <Link
-          href={`/admin/activities/${a.id}`}
-          aria-label={texts.open(a.title)}
-          style={{ color: "var(--text-muted)" }}
-        >
-          ›
-        </Link>
       </div>
     </div>
   );

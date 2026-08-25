@@ -2,9 +2,11 @@ export { activityForm, activityRow, activityStandingTexts, tournamentSetup } fro
 export { activityPage } from "./activityPage";
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
+export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
+export { memberActivities } from "./memberActivities";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";

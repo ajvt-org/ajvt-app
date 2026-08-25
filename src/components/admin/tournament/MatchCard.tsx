@@ -1,17 +1,20 @@
 "use client";
 
-import CardChip from "@/components/tournament/CardChip";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import Scoreline from "@/components/tournament/Scoreline";
-import TeamLogo from "@/components/tournament/TeamLogo";
+import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
+import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
+import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
+import MatchTimeline from "@/components/tournament/matchCard/MatchTimeline";
+import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
+import { matchEventRows, matchTimeline, memberTeamName } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
-import Icon from "@/components/Icon";
+import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
 
@@ -52,47 +55,45 @@ export default function MatchCard({
 }) {
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
   const football = profile === "FOOTBALL";
+  const events = football
+    ? matchEventRows({
+        ...match,
+        homeTeamId: match.homeTeam.id,
+        manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
+      })
+    : [];
   return (
     <div className="card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
+      <MatchCardHead time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}>
+        <MatchMeta
+          round={match.round}
+          venue={match.venue}
+          penalties={
+            match.homePenalties !== null && match.awayPenalties !== null
+              ? { home: match.homePenalties, away: match.awayPenalties }
+              : null
+          }
+        >
+          {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
+        </MatchMeta>
+      </MatchCardHead>
+
+      <div className="mt-2">
+        <MatchTeams
+          home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
+          away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+          score={
+            match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
+          }
+          layout="stacked"
+        />
+        {priorMeetings.length > 0 && (
           <p
-            className="font-bold text-sm flex items-center gap-1.5 flex-wrap"
-            style={{ color: "var(--text-main)" }}
-          >
-            <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
-            <bdi>{match.homeTeam.name}</bdi>
-            {match.status === "PLAYED" ? (
-              <Scoreline home={match.homeScore} away={match.awayScore} />
-            ) : (
-              <span>×</span>
-            )}
-            <bdi>{match.awayTeam.name}</bdi>
-            <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
-            {match.homePenalties !== null && match.awayPenalties !== null && (
-              <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                {" "}
-                ({texts.penaltiesShort}{" "}
-                <Scoreline home={match.homePenalties} away={match.awayPenalties} />)
-              </span>
-            )}
-          </p>
-          <div
-            className="flex items-center gap-2 text-xs mt-1 flex-wrap"
+            className="text-xs mt-1 flex items-center gap-1.5 flex-wrap"
             style={{ color: "var(--text-muted)" }}
           >
-            {match.round && <span>{match.round}</span>}
-            {match.venue && (
-              <span>
-                <IconLabel name="pin">{match.venue}</IconLabel>
-              </span>
-            )}
-            {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
-            {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
-          </div>
-          {priorMeetings.length > 0 && (
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>{" "}
+            <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>
+            <span>
               {priorMeetings.map((pm, i) => (
                 <span key={pm.id}>
                   {i > 0 && "، "}
@@ -103,127 +104,33 @@ export default function MatchCard({
                   )}
                 </span>
               ))}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {(onMoveUp || onMoveDown) && (
-            <div className="flex flex-col gap-0.5">
-              <button
-                onClick={onMoveUp}
-                disabled={!onMoveUp}
-                className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
-                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title={texts.moveUp}
-              >
-                <Icon name="chevronUp" size={12} />
-              </button>
-              <button
-                onClick={onMoveDown}
-                disabled={!onMoveDown}
-                className="w-6 h-5 rounded flex items-center justify-center text-xs font-bold disabled:opacity-30"
-                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                title={texts.moveDown}
-              >
-                <Icon name="chevronDown" size={12} />
-              </button>
-            </div>
-          )}
-          <button
-            onClick={onToggleResultForm}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            {match.status === "PLAYED" ? texts.editResult : texts.enterResult}
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-            style={{ background: "#fee2e2", color: "#991b1b" }}
-          >
-            <Icon name="trash" size={13} />
-          </button>
-        </div>
-      </div>
-
-      {football && match.status === "PLAYED" && match.goals.length > 0 && (
-        <div
-          className="mt-2 pt-2 flex flex-wrap gap-1.5"
-          style={{ borderTop: "1px solid var(--mint-100)" }}
-        >
-          {match.goals.map((g) => (
-            <span key={g.id} className="badge badge-active flex items-center gap-1.5">
-              {g.member && (
-                <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
-              )}
-              <Icon name="ball" size={12} /> {g.member?.fullName ?? texts.unknownScorer}
-              {g.minute ? ` ${g.minute}'` : ""}
-              {g.count > 1 ? ` (${g.count})` : ""}
-              {g.kind === "PENALTY" && ` (${texts.kindPenalty})`}
-              {g.kind === "OWN_GOAL" && ` (${texts.kindOwnGoal})`}
             </span>
-          ))}
-        </div>
-      )}
-
-      {football && match.manOfTheMatch && (
-        <p
-          className="text-xs mt-2 font-semibold flex items-center gap-1.5"
-          style={{ color: "var(--mint-700)" }}
-        >
-          <PlayerAvatar
-            photo={match.manOfTheMatch.photo}
-            fullName={match.manOfTheMatch.fullName}
-            size={20}
-          />
-          <IconLabel name="star">
-            {texts.motm} {match.manOfTheMatch.fullName}
-          </IconLabel>
-        </p>
-      )}
-
-      {football && match.bookings.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {match.bookings.map((b) => (
-            <span key={b.id} className="badge badge-rejected flex items-center gap-1.5">
-              <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
-              <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
-              {b.minute ? ` (${b.minute}')` : ""}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="flex gap-2 mt-2">
-        {football && (
-          <button
-            onClick={onToggleMvp}
-            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-            style={{
-              background: "white",
-              color: "var(--mint-700)",
-              border: "1px solid var(--mint-200)",
-            }}
-          >
-            {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
-          </button>
+          </p>
         )}
-        <button
-          onClick={onToggleDetails}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          {showDetails ? (
-            texts.hideDetails
-          ) : (
-            <IconLabel name="pencil">{texts.editDetails}</IconLabel>
-          )}
-        </button>
       </div>
+
+      {events.length > 0 && (
+        <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+          <MatchEvents rows={events} />
+          <MatchTimeline
+            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
+            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+          />
+        </div>
+      )}
+
+      <MatchCardActions
+        played={match.status === "PLAYED"}
+        football={football}
+        showMvp={showMvp}
+        showDetails={showDetails}
+        onDelete={onDelete}
+        onToggleResultForm={onToggleResultForm}
+        onToggleMvp={onToggleMvp}
+        onToggleDetails={onToggleDetails}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+      />
 
       {showResultForm && (
         <>

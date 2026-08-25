@@ -10,6 +10,7 @@ import {
 import { matchDateKey, todayClubDateKey } from "@/lib/clubTime";
 import BracketTree from "@/components/tournament/BracketTree";
 import CardChip from "@/components/tournament/CardChip";
+import IconLabel from "@/components/IconLabel";
 import MatchesPanel from "./MatchesPanel";
 import RankedList from "@/components/tournament/RankedList";
 import StandingsTable from "@/components/tournament/StandingsTable";
@@ -18,7 +19,6 @@ import TeamsGrid from "@/components/tournament/TeamsGrid";
 import TournamentSection from "@/components/tournament/TournamentSection";
 import TournamentSummary from "@/components/tournament/TournamentSummary";
 import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
-import Icon from "@/components/Icon";
 import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
 import { suspendedMemberIds } from "@/lib/suspensionServer";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
@@ -125,6 +125,7 @@ export async function tournamentPanels(
           tournamentTitle={activity.title}
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}
+          teams={activity.teams}
         />
       ),
     },
@@ -151,9 +152,9 @@ export async function tournamentPanels(
               photo: s.photo,
               sub: s.teamName,
               value: (
-                <>
-                  <Icon name="ball" size={14} className="icon-inline" /> {s.goals}
-                </>
+                <IconLabel name="ball" after>
+                  {s.goals}
+                </IconLabel>
               ),
             }))}
           />
@@ -218,9 +219,9 @@ export async function tournamentPanels(
               photo: m.photo,
               sub: m.teamName,
               value: (
-                <>
-                  <Icon name="star" size={14} className="icon-inline" filled /> {m.count}
-                </>
+                <IconLabel name="star" filled after>
+                  {m.count}
+                </IconLabel>
               ),
             }))}
           />

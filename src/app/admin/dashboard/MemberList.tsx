@@ -58,35 +58,36 @@ function MemberRow({
       onClick={onOpen}
       className="card w-full p-3 sm:p-4 text-right transition-all hover:shadow-md cursor-pointer"
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={onToggle}
-            onClick={(e) => e.stopPropagation()}
-            className="w-4 h-4 shrink-0"
-            aria-label={`تحديد ${member.fullName}`}
-          />
-          <Avatar member={member} />
-          <div className="min-w-0">
-            <InlineName memberId={member.id} fullName={member.fullName} onRenamed={onRenamed} />
-            <p className="text-xs" style={{ color: "var(--text-muted)" }} dir="ltr">
-              {member.user?.phone || "غير معروف"}
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          onClick={(e) => e.stopPropagation()}
+          className="w-4 h-4 shrink-0"
+          aria-label={`تحديد ${member.fullName}`}
+        />
+        <Avatar member={member} />
+        <div className="min-w-0 flex-1">
+          <InlineName memberId={member.id} fullName={member.fullName} onRenamed={onRenamed} />
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }} dir="ltr">
+            {member.user?.phone || "غير معروف"}
+          </p>
         </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <span className={`badge ${STATUS_BADGE[member.status]}`}>
-            {STATUS_LABEL[member.status]}
-          </span>
-          <span style={{ color: "var(--text-muted)" }}>›</span>
-        </div>
+        <span
+          className="w-6 h-6 flex items-center justify-center shrink-0"
+          style={{ color: "var(--text-muted)" }}
+        >
+          <Icon name="chevronLeft" size={15} />
+        </span>
       </div>
       <div
-        className="flex gap-3 mt-2 text-xs"
+        className="flex items-center gap-2 flex-wrap mt-2 text-xs"
         style={{ color: "var(--text-muted)", paddingRight: "52px" }}
       >
+        <span className={`badge ${STATUS_BADGE[member.status]}`}>
+          {STATUS_LABEL[member.status]}
+        </span>
         <span>العصر: {member.age}</span>
         <span>•</span>
         <span>{member.paymentMethod}</span>

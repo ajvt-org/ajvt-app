@@ -1,26 +1,36 @@
 "use client";
 
 import { useRef, useState } from "react";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
-import TeamLogo from "@/components/tournament/TeamLogo";
+import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
+import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
 import IconLabel from "@/components/IconLabel";
-import Icon from "@/components/Icon";
-import CardChip from "@/components/tournament/CardChip";
+import { goalRows, bookingRows, type MatchEventRow } from "@/lib/matchEvents";
+import { matchDisplay } from "@/lib/texts";
 
 interface GoalEntry {
+  memberId: string | null;
   fullName: string;
   photo: string | null;
   count: number;
   minute: number | null;
+  kind: "GOAL" | "PENALTY" | "OWN_GOAL";
   isHome: boolean;
 }
 
 interface BookingEntry {
+  memberId: string;
   fullName: string;
   photo: string | null;
   cardType: "YELLOW" | "RED";
   minute: number | null;
   isHome: boolean;
+}
+
+interface MotmEntry {
+  id: string;
+  fullName: string;
+  photo: string | null;
+  team: string | null;
 }
 
 interface ShareResultButtonProps {
@@ -34,36 +44,16 @@ interface ShareResultButtonProps {
   tournamentTitle: string;
   goals?: GoalEntry[];
   bookings?: BookingEntry[];
+  manOfTheMatch?: MotmEntry | null;
 }
 
-interface EventLine {
-  icon: React.ReactNode;
-  label: string;
-  photo: string | null;
-  minute: number | null;
-}
-
-function buildEvents(goals: GoalEntry[], bookings: BookingEntry[], isHome: boolean): EventLine[] {
-  const lines: EventLine[] = [];
-  for (const g of goals.filter((x) => x.isHome === isHome)) {
-    for (let i = 0; i < Math.max(g.count, 1); i++) {
-      lines.push({
-        icon: <Icon name="ball" size={13} className="icon-inline" />,
-        label: g.fullName,
-        photo: g.photo,
-        minute: i === 0 ? g.minute : null,
-      });
-    }
-  }
-  for (const b of bookings.filter((x) => x.isHome === isHome)) {
-    lines.push({
-      icon: <CardChip type={b.cardType as "YELLOW" | "RED"} />,
-      label: b.fullName,
-      photo: b.photo,
-      minute: b.minute,
-    });
-  }
-  return lines.sort((a, b) => (a.minute ?? 999) - (b.minute ?? 999));
+function sideRows(goals: GoalEntry[], bookings: BookingEntry[]): MatchEventRow[] {
+  return [
+    ...goalRows(goals.map((goal) => ({ ...goal, side: goal.isHome ? "home" : "away" }))),
+    ...bookingRows(
+      bookings.map((booking) => ({ ...booking, side: booking.isHome ? "home" : "away" })),
+    ),
+  ];
 }
 
 export default function ShareResultButton({
@@ -77,12 +67,23 @@ export default function ShareResultButton({
   tournamentTitle,
   goals = [],
   bookings = [],
+  manOfTheMatch = null,
 }: ShareResultButtonProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
-  const homeEvents = buildEvents(goals, bookings, true);
-  const awayEvents = buildEvents(goals, bookings, false);
+  const events = sideRows(goals, bookings);
+  if (manOfTheMatch) {
+    events.push({
+      key: `motm:${manOfTheMatch.id}`,
+      side: null,
+      type: "motm",
+      name: manOfTheMatch.fullName,
+      team: manOfTheMatch.team,
+      photo: manOfTheMatch.photo,
+      minutes: [],
+    });
+  }
 
   async function download() {
     if (!cardRef.current) return;
@@ -121,67 +122,23 @@ export default function ShareResultButton({
           {tournamentTitle}
           {round ? ` — ${round}` : ""}
         </p>
-        <div className="flex items-center justify-between gap-3" dir="rtl">
-          <div className="flex-1 flex flex-col items-center gap-1">
-            <TeamLogo logo={homeTeamLogo} name={homeTeamName} size={28} />
-            <p
-              className="font-black text-white text-sm text-center"
-              style={{ wordBreak: "break-word" }}
-            >
-              {homeTeamName}
-            </p>
-          </div>
-          <p className="font-black text-white text-2xl shrink-0">
-            {homeScore} - {awayScore}
-          </p>
-          <div className="flex-1 flex flex-col items-center gap-1">
-            <TeamLogo logo={awayTeamLogo} name={awayTeamName} size={28} />
-            <p
-              className="font-black text-white text-sm text-center"
-              style={{ wordBreak: "break-word" }}
-            >
-              {awayTeamName}
-            </p>
-          </div>
-        </div>
+        <MatchTeams
+          home={{ name: homeTeamName, logo: homeTeamLogo }}
+          away={{ name: awayTeamName, logo: awayTeamLogo }}
+          score={{ home: homeScore, away: awayScore }}
+          tone="dark"
+          size="xl"
+          layout="stacked"
+        />
 
-        {(homeEvents.length > 0 || awayEvents.length > 0) && (
-          <div className="flex justify-between gap-3 mt-4" dir="rtl">
-            <div className="flex-1 space-y-1.5">
-              {homeEvents.map((ev, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-center gap-1"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  <PlayerAvatar photo={ev.photo} fullName={ev.label} size={16} />
-                  <span className="text-xs">
-                    {ev.icon} {ev.label}
-                    {ev.minute ? ` ${ev.minute}'` : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="flex-1 space-y-1.5">
-              {awayEvents.map((ev, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-center gap-1"
-                  style={{ color: "rgba(255,255,255,0.85)" }}
-                >
-                  <PlayerAvatar photo={ev.photo} fullName={ev.label} size={16} />
-                  <span className="text-xs">
-                    {ev.icon} {ev.label}
-                    {ev.minute ? ` ${ev.minute}'` : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
+        {events.length > 0 && (
+          <div className="mt-4">
+            <MatchEvents rows={events} tone="dark" avatarSize={16} />
           </div>
         )}
 
         <p className="text-xs mt-3 text-center" style={{ color: "rgba(255,255,255,0.6)" }}>
-          رابطة شباب قرية التاكلالت
+          {matchDisplay.clubName}
         </p>
       </div>
 
@@ -191,7 +148,7 @@ export default function ShareResultButton({
         className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        {downloading ? "..." : <IconLabel name="upload">مشاركة النتيجة</IconLabel>}
+        {downloading ? "..." : <IconLabel name="upload">{matchDisplay.shareResult}</IconLabel>}
       </button>
     </div>
   );

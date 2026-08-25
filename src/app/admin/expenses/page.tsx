@@ -79,6 +79,7 @@ function AdminExpensesPageInner() {
     setForm({
       label: expense.label,
       amount: String(expense.amount),
+      method: expense.method || "",
       note: expense.note || "",
       date: expense.date.slice(0, 10),
       proof: expense.proof || "",
@@ -107,6 +108,7 @@ function AdminExpensesPageInner() {
       const body = {
         label: form.label.trim(),
         amount,
+        method: form.method || null,
         note: form.note.trim() || null,
         date: form.date || undefined,
         proof: form.proof || null,

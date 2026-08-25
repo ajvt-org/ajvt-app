@@ -66,7 +66,11 @@ export default function ScorersTab({
               name: s.fullName,
               photo: s.photo,
               sub: s.teamName,
-              value: <IconLabel name="ball">{s.goals}</IconLabel>,
+              value: (
+                <IconLabel name="ball" after>
+                  {s.goals}
+                </IconLabel>
+              ),
             }))}
           />
         ),
@@ -110,7 +114,7 @@ export default function ScorersTab({
               avatar: false,
               value: (
                 <span dir="ltr">
-                  <IconLabel name="glove">
+                  <IconLabel name="glove" after>
                     {c.cleanSheets}/{c.played}
                   </IconLabel>
                 </span>
@@ -133,7 +137,11 @@ export default function ScorersTab({
               name: m.fullName,
               photo: m.photo,
               sub: m.teamName,
-              value: <IconLabel name="star">{m.count}</IconLabel>,
+              value: (
+                <IconLabel name="star" after>
+                  {m.count}
+                </IconLabel>
+              ),
             }))}
           />
         ),
