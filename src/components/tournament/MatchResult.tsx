@@ -54,6 +54,7 @@ export default function MatchResult({
         home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
         away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
         score={{ home: match.homeScore, away: match.awayScore }}
+        layout="stacked"
       />
 
       {football && (

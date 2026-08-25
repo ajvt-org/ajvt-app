@@ -36,6 +36,7 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
             }
             tone="dark"
             size="lg"
+            layout="stacked"
           />
         </div>
       ))}

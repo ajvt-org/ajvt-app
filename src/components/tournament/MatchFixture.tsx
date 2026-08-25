@@ -20,6 +20,7 @@ export default function MatchFixture({
         home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
         away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
         size="sm"
+        layout="stacked"
       />
     </div>
   );
