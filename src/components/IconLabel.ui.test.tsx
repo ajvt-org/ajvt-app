@@ -24,6 +24,17 @@ describe("IconLabel", () => {
     expect(label.textContent).toBe("3");
   });
 
+  it("lifts the icon onto a count's centre line", () => {
+    cleanup();
+    const { container } = render(
+      <IconLabel name="ball" after>
+        3
+      </IconLabel>,
+    );
+
+    expect(container.querySelector("svg")?.getAttribute("class")).toBe("icon-label-numeral");
+  });
+
   it("centers the icon on its label instead of nudging it off the baseline", () => {
     cleanup();
     const { container } = render(<IconLabel name="ball">الهدافون</IconLabel>);
