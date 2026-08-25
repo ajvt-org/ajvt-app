@@ -35,6 +35,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/suspensionServer.ts",
   "src/lib/siteStatsServer.ts",
   "src/lib/tournamentDaysServer.ts",
+  "src/lib/treasuryServer.ts",
   "src/lib/tournamentNotify.ts",
   "src/lib/uploadFields.ts",
   "src/lib/viewerAge.ts",

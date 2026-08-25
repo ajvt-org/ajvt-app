@@ -2,9 +2,11 @@ import Icon from "@/components/Icon";
 import TeamLogo from "./TeamLogo";
 import PlayerAvatar from "./PlayerAvatar";
 import CardChip from "./CardChip";
+import Scoreline from "./Scoreline";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
-import { formatMatchTime, getHeadToHead } from "@/lib/tournament";
+import { getHeadToHead } from "@/lib/tournament";
+import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
 
@@ -38,13 +40,12 @@ export default function MatchResult({
             {match.homeTeam.name}
           </span>
         </span>
-        <span
-          dir="ltr"
+        <Scoreline
+          home={match.homeScore}
+          away={match.awayScore}
           className="font-black text-base shrink-0 px-1"
           style={{ color: "var(--mint-700)" }}
-        >
-          {match.homeScore} - {match.awayScore}
-        </span>
+        />
         <span className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
           <span className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
             {match.awayTeam.name}
@@ -67,10 +68,7 @@ export default function MatchResult({
           )}
           {match.homePenalties !== null && match.awayPenalties !== null && (
             <span>
-              ركلات ترجيح{" "}
-              <span dir="ltr">
-                {match.homePenalties}-{match.awayPenalties}
-              </span>
+              ركلات ترجيح <Scoreline home={match.homePenalties} away={match.awayPenalties} />
             </span>
           )}
         </p>
@@ -162,9 +160,16 @@ export default function MatchResult({
       {priorMeetings.length > 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           مواجهات سابقة:{" "}
-          {priorMeetings
-            .map((pm) => (pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : "قادمة"))
-            .join("، ")}
+          {priorMeetings.map((pm, i) => (
+            <span key={pm.id}>
+              {i > 0 && "، "}
+              {pm.status === "PLAYED" ? (
+                <Scoreline home={pm.homeScore} away={pm.awayScore} />
+              ) : (
+                "قادمة"
+              )}
+            </span>
+          ))}
         </p>
       )}
 

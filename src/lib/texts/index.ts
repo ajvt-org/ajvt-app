@@ -1,7 +1,12 @@
 export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
+export { financeReport } from "./financeReport";
+export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
+export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";
+export { quizBoard } from "./quizBoard";
+export { treasury } from "./treasury";
 export { matchDisplay, publicTournament } from "./publicTournament";

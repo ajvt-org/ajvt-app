@@ -1,42 +1,15 @@
 "use client";
 
-// Football results are event lists, the score is never typed. A goal row is
-// credited to a team; an OWN_GOAL scorer comes off the other roster; a null
-// member is an unknown scorer (مجهول). Kicks appear on a tied knockout match.
-// Board matches keep the plain two-number form.
-
 import { useId, useState } from "react";
-import type { GoalKind, GoalPeriod, Match, Team } from "./types";
+import type { GoalKind, Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Scoreline from "@/components/tournament/Scoreline";
+import GoalSection from "./GoalSection";
+import KickAdder from "./KickAdder";
+import type { GoalDraft, KickDraft } from "./goalDraft";
 import { discipline as disciplineTexts, matchAdmin as texts } from "@/lib/texts";
-
-interface GoalDraft {
-  teamId: string;
-  memberId: string | null;
-  kind: GoalKind;
-  period: GoalPeriod;
-  minute: string;
-}
-
-interface KickDraft {
-  teamId: string;
-  memberId: string | null;
-  scored: boolean;
-}
-
-const KIND_LABEL: Record<GoalKind, string> = {
-  GOAL: texts.kindGoal,
-  PENALTY: texts.kindPenalty,
-  OWN_GOAL: texts.kindOwnGoal,
-};
-
-function goalSuffix(kind: GoalKind) {
-  if (kind === "PENALTY") return ` (${texts.kindPenalty})`;
-  if (kind === "OWN_GOAL") return ` (${texts.kindOwnGoal})`;
-  return "";
-}
 
 export default function ResultForm({
   match,
@@ -200,7 +173,8 @@ export default function ResultForm({
         style={{ color: "var(--mint-700)" }}
         aria-live="polite"
       >
-        {match.homeTeam.name} <span dir="ltr">{`${hs} - ${as}`}</span> {match.awayTeam.name}
+        <bdi>{match.homeTeam.name}</bdi> <Scoreline home={hs} away={as} />{" "}
+        <bdi>{match.awayTeam.name}</bdi>
       </p>
 
       {suspendedPresent.length > 0 && (
@@ -251,9 +225,11 @@ export default function ResultForm({
           <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
             <IconLabel name="target">{texts.shootoutHeading}</IconLabel>{" "}
             {kicks.length > 0 && (
-              <span dir="ltr" style={{ color: "var(--mint-700)" }}>
-                {kickTally.home} - {kickTally.away}
-              </span>
+              <Scoreline
+                home={kickTally.home}
+                away={kickTally.away}
+                style={{ color: "var(--mint-700)" }}
+              />
             )}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -307,6 +283,8 @@ export default function ResultForm({
         </label>
         <select
           id={`${uid}-motm`}
+          name={`${uid}-motm`}
+          autoComplete="off"
           value={manOfTheMatchId}
           onChange={(e) => setManOfTheMatchId(e.target.value)}
           className="input"
@@ -333,197 +311,5 @@ export default function ResultForm({
         {loading ? "..." : texts.saveResult}
       </button>
     </form>
-  );
-}
-
-function GoalSection({
-  title,
-  period,
-  goals,
-  setGoals,
-  sides,
-  scorerRoster,
-  nameOf,
-}: {
-  title: string;
-  period: GoalPeriod;
-  goals: GoalDraft[];
-  setGoals: React.Dispatch<React.SetStateAction<GoalDraft[]>>;
-  sides: { id: string; name: string }[];
-  scorerRoster: (teamId: string, kind: GoalKind) => { id: string; fullName: string }[];
-  nameOf: (memberId: string | null) => string;
-}) {
-  const [teamId, setTeamId] = useState(sides[0].id);
-  const [kind, setKind] = useState<GoalKind>("GOAL");
-  const [memberId, setMemberId] = useState("");
-  const [minute, setMinute] = useState("");
-
-  const mine = goals.map((g, index) => ({ g, index })).filter(({ g }) => g.period === period);
-
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="ball">{title}</IconLabel>
-      </p>
-      {period === "REGULAR" && mine.length === 0 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.goalless}
-        </p>
-      )}
-      {mine.map(({ g, index }) => (
-        <div key={index} className="flex items-center gap-2 text-xs font-semibold flex-wrap">
-          <Icon name="ball" size={13} />
-          <span className="min-w-0">
-            {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.memberId)}
-            {g.minute ? ` ${g.minute}'` : ""}
-            {goalSuffix(g.kind)}
-          </span>
-          <button
-            type="button"
-            onClick={() => setGoals((prev) => prev.filter((_, j) => j !== index))}
-            aria-label={texts.remove}
-            className="px-1.5 rounded-lg"
-            style={{ background: "#fee2e2", color: "#991b1b" }}
-          >
-            <Icon name="close" size={12} />
-          </button>
-        </div>
-      ))}
-      <div className="flex flex-wrap gap-2 items-center">
-        <select
-          value={teamId}
-          onChange={(e) => {
-            setTeamId(e.target.value);
-            setMemberId("");
-          }}
-          className="input text-sm"
-          style={{ width: "auto" }}
-        >
-          {sides.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={kind}
-          onChange={(e) => {
-            setKind(e.target.value as GoalKind);
-            setMemberId("");
-          }}
-          className="input text-sm"
-          style={{ width: "auto" }}
-        >
-          {(Object.keys(KIND_LABEL) as GoalKind[]).map((k) => (
-            <option key={k} value={k}>
-              {KIND_LABEL[k]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={memberId}
-          onChange={(e) => setMemberId(e.target.value)}
-          className="input text-sm flex-1"
-        >
-          <option value="">{texts.unknownScorer}</option>
-          {scorerRoster(teamId, kind).map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.fullName}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          min={1}
-          max={130}
-          placeholder={texts.minute}
-          value={minute}
-          onChange={(e) => setMinute(e.target.value)}
-          className="input text-sm"
-          style={{ width: "80px" }}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setGoals((prev) => [
-              ...prev,
-              { teamId, kind, memberId: memberId || null, period, minute },
-            ]);
-            setMemberId("");
-            setMinute("");
-          }}
-          className="btn btn-primary text-xs px-3"
-          style={{ width: "auto" }}
-        >
-          {texts.add}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function KickAdder({
-  sides,
-  rosterOf,
-  onAdd,
-}: {
-  sides: { id: string; name: string }[];
-  rosterOf: (teamId: string) => { id: string; fullName: string }[];
-  onAdd: (kick: KickDraft) => void;
-}) {
-  const [teamId, setTeamId] = useState(sides[0].id);
-  const [memberId, setMemberId] = useState("");
-  const [scored, setScored] = useState(true);
-
-  return (
-    <div className="flex flex-wrap gap-2 items-center">
-      <select
-        value={teamId}
-        onChange={(e) => {
-          setTeamId(e.target.value);
-          setMemberId("");
-        }}
-        className="input text-sm"
-        style={{ width: "auto" }}
-      >
-        {sides.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-      <select
-        value={memberId}
-        onChange={(e) => setMemberId(e.target.value)}
-        className="input text-sm flex-1"
-      >
-        <option value="">{texts.unknownScorer}</option>
-        {rosterOf(teamId).map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.fullName}
-          </option>
-        ))}
-      </select>
-      <select
-        value={scored ? "yes" : "no"}
-        onChange={(e) => setScored(e.target.value === "yes")}
-        className="input text-sm"
-        style={{ width: "auto" }}
-      >
-        <option value="yes">{texts.kickScored}</option>
-        <option value="no">{texts.kickMissed}</option>
-      </select>
-      <button
-        type="button"
-        onClick={() => {
-          onAdd({ teamId, memberId: memberId || null, scored });
-          setMemberId("");
-        }}
-        className="btn btn-primary text-xs px-3"
-        style={{ width: "auto" }}
-      >
-        {texts.add}
-      </button>
-    </div>
   );
 }

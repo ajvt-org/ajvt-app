@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUserSession, requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { boardBlock, getStandings } from "@/lib/quizRankingServer";
-import { canPlay, runningCompetitionsFor } from "@/lib/competitionServer";
+import {
+  canPlay,
+  isPublicCompetition,
+  publicCompetitions,
+  runningCompetitionsFor,
+} from "@/lib/competitionServer";
 import { announceOpenDay } from "@/lib/quizNotify";
 import { closeExpiredAttempts } from "@/lib/quizAttemptServer";
 import { sharedResult } from "@/lib/sharedResult";
@@ -20,19 +25,27 @@ function upkeep() {
   );
 }
 
+async function visible(asked: string | null, userId: string | undefined): Promise<string | null> {
+  if (userId) {
+    if (asked && (await canPlay(asked, userId))) return asked;
+    return (await runningCompetitionsFor(userId))[0]?.id ?? null;
+  }
+  if (asked && (await isPublicCompetition(asked))) return asked;
+  return (await publicCompetitions())[0]?.id ?? null;
+}
+
 export const GET = withRoute("GET /api/quiz/standings", async (req: NextRequest) => {
-  const session = await requireUser();
+  const signedIn = await getUserSession();
+  const userId = signedIn ? (await requireUser()).userId : undefined;
   upkeep();
 
-  const asked = req.nextUrl.searchParams.get("competition");
-  const allowed = asked ? await canPlay(asked, session.userId) : false;
-  const id = allowed ? asked : ((await runningCompetitionsFor(session.userId))[0]?.id ?? null);
+  const id = await visible(req.nextUrl.searchParams.get("competition"), userId);
 
   const board = req.nextUrl.searchParams.get("board");
   const block = Number(req.nextUrl.searchParams.get("block"));
   if (id && board && Number.isInteger(block) && block >= 0) {
-    return NextResponse.json(await boardBlock(id, board, block, session.userId));
+    return NextResponse.json(await boardBlock(id, board, block, userId));
   }
 
-  return NextResponse.json(await getStandings(id, session.userId));
+  return NextResponse.json(await getStandings(id, userId));
 });

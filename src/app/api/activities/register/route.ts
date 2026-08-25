@@ -3,11 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { activityRegisterSchema } from "./schema";
 import { activities, members } from "@/lib/messages";
 
-// Registering for an activity is free — the membership fee already paid to
-// get approved (ACTIVE) covers it, so this never asks for another payment.
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
   const { activityId, memberId } = parse(activityRegisterSchema, await req.json());
@@ -20,51 +19,41 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
         id: true,
         isOpen: true,
         isVolunteer: true,
+        autoApprove: true,
         capacity: true,
-        _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
       },
     }),
   ]);
-  if (!activity) {
-    return NextResponse.json({ error: activities.notFound }, { status: 404 });
-  }
-  if (!activity.isOpen) {
-    return NextResponse.json({ error: "التسجيل في هذا النشاط مغلق" }, { status: 409 });
-  }
-  if (!member || member.userId !== session.userId) {
-    return NextResponse.json({ error: members.notFound }, { status: 404 });
-  }
-  if (member.status !== "ACTIVE") {
-    return NextResponse.json(
-      { error: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً" },
-      { status: 403 },
-    );
-  }
+  if (!activity) throw new NotFoundError(activities.notFound);
+  if (!activity.isOpen) throw new ConflictError(activities.registrationClosed);
+  if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
+  if (member.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
 
-  const existing = await prisma.activityRegistration.findUnique({
-    where: { memberId_activityId: { memberId, activityId } },
-  });
-  if (existing && existing.status !== "REJECTED") {
-    return NextResponse.json({ error: "مسجَّل بالفعل في هذا النشاط" }, { status: 409 });
-  }
+  const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
 
-  if (
-    activity.capacity !== null &&
-    activity._count.registrations >= activity.capacity &&
-    !existing
-  ) {
-    return NextResponse.json(
-      { error: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط" },
-      { status: 409 },
-    );
-  }
-
-  const status = activity.isVolunteer ? "ACTIVE" : "PENDING";
-  await prisma.activityRegistration.upsert({
-    where: { memberId_activityId: { memberId, activityId } },
-    update: { status, rejectionReason: null },
-    create: { memberId, activityId, status },
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      const existing = await tx.activityRegistration.findUnique({
+        where: { memberId_activityId: { memberId, activityId } },
+        select: { status: true },
+      });
+      if (existing && existing.status !== "REJECTED") {
+        throw new ConflictError(activities.alreadyRegistered);
+      }
+      if (activity.capacity !== null) {
+        const taken = await tx.activityRegistration.count({
+          where: { activityId, status: { not: "REJECTED" } },
+        });
+        if (taken >= activity.capacity) throw new ConflictError(activities.noSeatsLeft);
+      }
+      await tx.activityRegistration.upsert({
+        where: { memberId_activityId: { memberId, activityId } },
+        update: { status, rejectionReason: null },
+        create: { memberId, activityId, status },
+      });
+    },
+    { isolationLevel: "Serializable" },
+  );
 
   return NextResponse.json({ ok: true });
 });
@@ -74,9 +63,7 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
   const { memberId, activityId } = parse(activityRegisterSchema, await req.json());
 
   const member = await prisma.member.findUnique({ where: { id: memberId } });
-  if (!member || member.userId !== session.userId) {
-    return NextResponse.json({ error: members.notFound }, { status: 404 });
-  }
+  if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
 
   await prisma.activityRegistration.deleteMany({ where: { memberId, activityId } });
 

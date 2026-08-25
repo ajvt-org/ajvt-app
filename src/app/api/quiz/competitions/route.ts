@@ -1,34 +1,40 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getUserSession, requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
-import { ForbiddenError } from "@/lib/errors";
 import { getQuizSettings, isQuizEligible } from "@/lib/quiz";
-import { myCompetitions, shapeOf } from "@/lib/competitionServer";
-import { roundsBegun, roundState } from "@/lib/quizRound";
-import { quiz } from "@/lib/messages";
+import { myCompetitions, publicCompetitions } from "@/lib/competitionServer";
+import { competitionRows } from "@/lib/competitionView";
 
 export const GET = withRoute("GET /api/quiz/competitions", async () => {
-  const session = await requireUser();
-  if (!(await isQuizEligible(session.userId))) throw new ForbiddenError(quiz.paidMembersOnly);
-
-  const now = new Date();
-  const rows = myCompetitionsView(await myCompetitions(session.userId), now);
+  const signedIn = await getUserSession();
   const settings = await getQuizSettings();
-  return NextResponse.json({ competitions: rows, confirmAnswers: settings.confirmAnswers });
-});
+  const now = new Date();
 
-function myCompetitionsView(
-  rows: Awaited<ReturnType<typeof myCompetitions>>,
-  now: Date,
-): unknown[] {
-  return rows.map(({ competition, mine }) => ({
-    id: competition.id,
-    name: competition.name,
-    visibility: competition.visibility,
-    roundCount: competition.roundCount,
-    startsAt: competition.startsAt,
-    state: competition.startedAt ? roundState(shapeOf(competition), now) : "before",
-    passedRounds: competition.startedAt ? roundsBegun(shapeOf(competition), now) : 0,
-    myScore: mine.reduce((sum, a) => sum + a.score, 0),
-  }));
-}
+  if (!signedIn) {
+    const rows = (await publicCompetitions()).map((competition) => ({ competition, mine: [] }));
+    return NextResponse.json({
+      competitions: competitionRows(rows, now),
+      confirmAnswers: settings.confirmAnswers,
+      canPlay: false,
+      signedIn: false,
+    });
+  }
+
+  const session = await requireUser();
+  if (!(await isQuizEligible(session.userId))) {
+    const rows = (await publicCompetitions()).map((competition) => ({ competition, mine: [] }));
+    return NextResponse.json({
+      competitions: competitionRows(rows, now),
+      confirmAnswers: settings.confirmAnswers,
+      canPlay: false,
+      signedIn: true,
+    });
+  }
+
+  return NextResponse.json({
+    competitions: competitionRows(await myCompetitions(session.userId), now),
+    confirmAnswers: settings.confirmAnswers,
+    canPlay: true,
+    signedIn: true,
+  });
+});

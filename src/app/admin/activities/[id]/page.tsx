@@ -10,14 +10,21 @@ import ActivityFinance from "./ActivityFinance";
 import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import DetailsTab from "./DetailsTab";
 import RegistrationsTab from "./RegistrationsTab";
-import TeamsTab from "./TeamsTab";
 import LogTab from "./LogTab";
+import IconLabel from "@/components/IconLabel";
+import TournamentPanel from "@/components/admin/tournament/TournamentPanel";
+import {
+  isTournamentTab,
+  tournamentTabs,
+  type TournamentTabKey,
+} from "@/components/admin/tournament/tournamentTabs";
+import { useTournamentData } from "@/components/admin/tournament/useTournamentData";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { countedNoun } from "@/lib/arabicCount";
 import { ACCEPTED, REQUEST } from "@/lib/messages";
 import { activityWorkspace as texts } from "@/lib/texts";
 
-function tabsFor(activity: ActivityDetail["activity"]): WorkspaceTab[] {
+function tabsFor(activity: ActivityDetail["activity"], pendingProposals: number): WorkspaceTab[] {
   const pending = activity.registrations.filter((r) => r.status === "PENDING").length;
   const tabs: WorkspaceTab[] = [{ key: "details", label: texts.tabs.details, icon: "pencil" }];
   if (!activity.isVolunteer) {
@@ -28,9 +35,7 @@ function tabsFor(activity: ActivityDetail["activity"]): WorkspaceTab[] {
       badge: pending,
     });
   }
-  if (activity.isTournament) {
-    tabs.push({ key: "teams", label: texts.tabs.tournament, icon: "trophy" });
-  }
+  tabs.push(...tournamentTabs(activity, pendingProposals));
   tabs.push({ key: "finance", label: texts.tabs.finance, icon: "wallet" });
   tabs.push({ key: "log", label: texts.tabs.log, icon: "list" });
   return tabs;
@@ -67,6 +72,10 @@ function AdminActivityPageInner({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const isTournament = data?.activity.isTournament ?? false;
+  const tournament = useTournamentData(id, isTournament);
+  const pendingProposals = tournament.suspensions.filter((s) => s.status === "PROPOSED").length;
+
   if (loading) {
     return (
       <p className="admin-page text-sm text-center py-16" style={{ color: "var(--mint-500)" }}>
@@ -94,7 +103,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
   const { activity, history } = data;
   const accepted = activity.registrations.filter((r) => r.status === "ACTIVE").length;
-  const tabs = tabsFor(activity);
+  const tabs = tabsFor(activity, pendingProposals);
   const requested = searchParams.get("tab") || tabs[0].key;
   const tab = tabs.some((t) => t.key === requested) ? requested : tabs[0].key;
 
@@ -112,7 +121,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
       </Link>
 
-      <div className="card p-4 flex items-center gap-3">
+      <div className="card p-4 flex items-center gap-3 flex-wrap">
         {activity.photo ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -138,13 +147,26 @@ function AdminActivityPageInner({ id }: { id: string }) {
             {activity.capacity !== null ? ` · ${texts.capacity} ${activity.capacity}` : ""}
           </p>
         </div>
+        {activity.isTournament && (
+          <a
+            href={`/tournament/${activity.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <IconLabel name="link">{texts.publicPage}</IconLabel>
+          </a>
+        )}
       </div>
 
       <WorkspaceTabs tabs={tabs} active={tab} onPick={pickTab} />
 
       {tab === "details" && <DetailsTab activity={activity} onSaved={load} />}
       {tab === "registrations" && <RegistrationsTab activity={activity} onChanged={load} />}
-      {tab === "teams" && <TeamsTab activity={activity} />}
+      {isTournamentTab(tab) && (
+        <TournamentPanel activityId={activity.id} tab={tab as TournamentTabKey} data={tournament} />
+      )}
       {tab === "finance" && <ActivityFinance activityId={activity.id} />}
       {tab === "log" && <LogTab history={history} />}
     </div>

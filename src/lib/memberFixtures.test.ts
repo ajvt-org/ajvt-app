@@ -4,7 +4,6 @@ import {
   sortUpcoming,
   sortPast,
   nextFixture,
-  scoreline,
   emptyReason,
   type Fixture,
 } from "@/lib/memberFixtures";
@@ -89,22 +88,6 @@ describe("nextFixture", () => {
 
   it("is nothing when every match has been played", () => {
     expect(nextFixture([fixture({ status: "PLAYED" })])).toBeNull();
-  });
-});
-
-describe("scoreline", () => {
-  it("is absent while the match has no result", () => {
-    expect(scoreline(fixture())).toBeNull();
-  });
-
-  it("reads home to away", () => {
-    expect(scoreline(fixture({ homeScore: 2, awayScore: 1 }))).toBe("2 - 1");
-  });
-
-  it("carries the penalties when there were any", () => {
-    expect(
-      scoreline(fixture({ homeScore: 1, awayScore: 1, homePenalties: 4, awayPenalties: 3 })),
-    ).toBe("1 - 1 (4 - 3)");
   });
 });
 

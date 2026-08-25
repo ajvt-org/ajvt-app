@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import ResultForm from "./ResultForm";
 import type { Match, Team } from "./types";
+import { matchAdmin as texts } from "@/lib/texts";
 
 const patchMock = vi.fn();
 
@@ -109,10 +110,10 @@ describe("ResultForm as goal events", () => {
   it("computes the score from the added goals", async () => {
     show();
 
-    fireEvent.click(screen.getByText("إضافة"));
+    fireEvent.click(screen.getByRole("button", { name: texts.addGoal }));
 
     expect(await screen.findByText(/الصقور — مجهول/)).toBeDefined();
-    expect(screen.getByText("1 - 0")).toBeDefined();
+    expect(document.querySelector('[aria-live="polite"]')?.textContent).toContain("1-0");
   });
 
   it("offers the other roster for an عكسي goal", () => {
@@ -136,7 +137,7 @@ describe("ResultForm as goal events", () => {
   it("saves the events, never a typed score", async () => {
     show();
 
-    fireEvent.click(screen.getByText("إضافة"));
+    fireEvent.click(screen.getByRole("button", { name: texts.addGoal }));
     fireEvent.click(screen.getByText("حفظ النتيجة"));
 
     await waitFor(() => expect(patchMock).toHaveBeenCalled());
@@ -160,5 +161,44 @@ describe("ResultForm as goal events", () => {
 
     expect(screen.queryByText("الأهداف")).toBeNull();
     expect(screen.getAllByRole("spinbutton").length).toBe(2);
+  });
+});
+
+describe("the goal form", () => {
+  it("names every control it asks for", () => {
+    cleanup();
+    render(
+      <ResultForm
+        match={MATCH}
+        teams={TEAMS}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByLabelText(texts.fieldTeam).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(texts.fieldKind).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(texts.fieldScorer).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(texts.fieldMinute).length).toBeGreaterThan(0);
+  });
+
+  it("says where an own goal scorer comes from", () => {
+    cleanup();
+    render(
+      <ResultForm
+        match={MATCH}
+        teams={TEAMS}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(texts.ownGoalHint)).toBeNull();
+    fireEvent.change(screen.getAllByLabelText(texts.fieldKind)[0], {
+      target: { value: "OWN_GOAL" },
+    });
+    expect(screen.getByText(texts.ownGoalHint)).toBeDefined();
   });
 });

@@ -3,17 +3,14 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import { tagTotal, type TagRow } from "@/lib/financeReport";
+import { financeReport as texts } from "@/lib/texts";
 
 interface MonthRow {
   month: string;
   income: number;
   spending: number;
   net: number;
-}
-
-interface TagRow {
-  tag: string;
-  amount: number;
 }
 
 interface Report {
@@ -40,11 +37,14 @@ function today(): string {
 }
 
 function Amount({ value }: { value: number }) {
-  return <span style={{ color: value < 0 ? "var(--danger)" : undefined }}>{value} أوقية</span>;
+  return (
+    <span style={{ color: value < 0 ? "var(--danger)" : undefined }}>{texts.ouguiya(value)}</span>
+  );
 }
 
-function TagTable({ title, rows }: { title: string; rows: TagRow[] }) {
+function TagTable({ title, rows, total }: { title: string; rows: TagRow[]; total: number }) {
   if (rows.length === 0) return null;
+  const tagged = tagTotal(rows);
   return (
     <div className="card p-4">
       <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
@@ -61,7 +61,20 @@ function TagTable({ title, rows }: { title: string; rows: TagRow[] }) {
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr style={{ color: "var(--text-muted)" }}>
+            <td className="py-1">{texts.tagTotal}</td>
+            <td className="py-1 text-left">
+              <Amount value={tagged} />
+            </td>
+          </tr>
+        </tfoot>
       </table>
+      {tagged !== total && (
+        <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
+          {texts.tagsOverlap}
+        </p>
+      )}
     </div>
   );
 }
@@ -90,7 +103,7 @@ export default function FinanceReportPage() {
     <div className="p-4 flex flex-col gap-3">
       <div className="card p-4 no-print flex flex-wrap items-end gap-3">
         <label className="text-xs flex flex-col gap-1">
-          من
+          {texts.from}
           <input
             type="date"
             value={from}
@@ -99,15 +112,15 @@ export default function FinanceReportPage() {
           />
         </label>
         <label className="text-xs flex flex-col gap-1">
-          إلى
+          {texts.to}
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input" />
         </label>
         <button className="btn btn-primary" onClick={run} disabled={loading}>
-          <IconLabel name="chart">اعرض التقرير</IconLabel>
+          <IconLabel name="chart">{texts.run}</IconLabel>
         </button>
         {report && (
           <button className="btn" onClick={() => window.print()}>
-            <IconLabel name="file">اطبع</IconLabel>
+            <IconLabel name="file">{texts.print}</IconLabel>
           </button>
         )}
       </div>
@@ -122,30 +135,30 @@ export default function FinanceReportPage() {
         <>
           <div className="card p-4">
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-              من {from} إلى {to}
+              {texts.span(from, to)}
             </p>
             <p className="text-2xl font-bold mt-1">
               <Amount value={report.totals.net} />
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              دخل {report.totals.income} أوقية، صرف {report.totals.spending} أوقية
+              {texts.moneyDetail(report.totals.income, report.totals.spending)}
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              انتساب {report.totals.membershipFees} أوقية، دعم {report.totals.support} أوقية
+              {texts.splitDetail(report.totals.membershipFees, report.totals.support)}
             </p>
           </div>
 
           <div className="card p-4">
             <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-              شهراً بشهر
+              {texts.monthByMonth}
             </p>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ color: "var(--text-muted)" }}>
-                  <th className="text-right font-normal py-1">الشهر</th>
-                  <th className="text-left font-normal py-1">دخل</th>
-                  <th className="text-left font-normal py-1">صرف</th>
-                  <th className="text-left font-normal py-1">الصافي</th>
+                  <th className="text-right font-normal py-1">{texts.month}</th>
+                  <th className="text-left font-normal py-1">{texts.income}</th>
+                  <th className="text-left font-normal py-1">{texts.spending}</th>
+                  <th className="text-left font-normal py-1">{texts.net}</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,8 +176,16 @@ export default function FinanceReportPage() {
             </table>
           </div>
 
-          <TagTable title="الدخل حسب الوسم" rows={report.incomeByTag} />
-          <TagTable title="الصرف حسب الوسم" rows={report.spendingByTag} />
+          <TagTable
+            title={texts.incomeByTag}
+            rows={report.incomeByTag}
+            total={report.totals.income}
+          />
+          <TagTable
+            title={texts.spendingByTag}
+            rows={report.spendingByTag}
+            total={report.totals.spending}
+          />
         </>
       )}
     </div>

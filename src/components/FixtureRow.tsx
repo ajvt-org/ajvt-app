@@ -1,9 +1,10 @@
 "use client";
 
 import Icon from "@/components/Icon";
-import { formatMatchDateTime } from "@/lib/tournament";
+import Scoreline from "@/components/tournament/Scoreline";
+import { formatMatchDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
-import { scoreline, type Fixture } from "@/lib/memberFixtures";
+import { type Fixture } from "@/lib/memberFixtures";
 
 function TeamName({ name, mine }: { name: string; mine: boolean }) {
   return (
@@ -20,7 +21,8 @@ function TeamName({ name, mine }: { name: string; mine: boolean }) {
 }
 
 export default function FixtureRow({ fixture }: { fixture: Fixture }) {
-  const score = scoreline(fixture);
+  const played = fixture.homeScore !== null && fixture.awayScore !== null;
+  const shootout = fixture.homePenalties !== null && fixture.awayPenalties !== null;
 
   return (
     <div className="card p-3.5 space-y-2">
@@ -41,9 +43,18 @@ export default function FixtureRow({ fixture }: { fixture: Fixture }) {
           <span style={{ color: "var(--text-muted)" }}>×</span>
           <TeamName name={fixture.awayTeam.name} mine={fixture.myTeamId === fixture.awayTeam.id} />
         </div>
-        {score && (
-          <span className="font-black shrink-0" dir="ltr" style={{ color: "var(--mint-700)" }}>
-            {score}
+        {played && (
+          <span className="font-black shrink-0 flex items-center gap-1.5">
+            <Scoreline
+              home={fixture.homeScore}
+              away={fixture.awayScore}
+              style={{ color: "var(--mint-700)" }}
+            />
+            {shootout && (
+              <span className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
+                (<Scoreline home={fixture.homePenalties} away={fixture.awayPenalties} />)
+              </span>
+            )}
           </span>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
-import { localDatabase } from "./tests/localDatabase";
+import { localDatabase } from "./tests/localDatabase.mjs";
 
 const DATABASE_URL = process.env.TEST_DATABASE_URL ?? localDatabase("ajvt_test");
 

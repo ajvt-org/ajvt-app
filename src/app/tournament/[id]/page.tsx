@@ -9,14 +9,11 @@ import {
   computeCleanSheets,
   computeMotmLeaders,
   computeTeamAdvancedStats,
-  matchDateKey,
-  todayClubDateKey,
 } from "@/lib/tournament";
+import { matchDateKey, todayClubDateKey } from "@/lib/clubTime";
 import BracketTree from "@/components/tournament/BracketTree";
 import CardChip from "@/components/tournament/CardChip";
-import MatchDayList from "@/components/tournament/MatchDayList";
-import MatchFixture from "@/components/tournament/MatchFixture";
-import MatchResult from "@/components/tournament/MatchResult";
+import MatchesPanel from "./MatchesPanel";
 import RankedList from "@/components/tournament/RankedList";
 import StandingsTable from "@/components/tournament/StandingsTable";
 import TeamFormList from "@/components/tournament/TeamFormList";
@@ -187,10 +184,6 @@ export default async function PublicTournamentPage({
       motmLeaders.length > 0 ||
       teamAdvancedStats.length > 0;
 
-  // A knockout match counts towards nobody's points, so a cup with no group
-  // stage would open on a table of zeros for every team. It leads with the
-  // bracket instead. A tournament with neither still shows the table, which
-  // is the only thing that says who is in which group.
   const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
   const bracket = (
     <div className="card p-3">
@@ -239,44 +232,15 @@ export default async function PublicTournamentPage({
       label: texts.matches,
       icon: "calendar",
       content: (
-        <>
-          {scheduled.length === 0 && played.length === 0 && (
-            <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-              {texts.noMatchesYet}
-            </p>
-          )}
-          {scheduled.length > 0 && (
-            <TournamentSection icon="calendar" title={texts.upcoming}>
-              <MatchDayList
-                matches={scheduled}
-                renderMatch={(match, day) => (
-                  <MatchFixture key={match.id} match={match} day={day} />
-                )}
-              />
-            </TournamentSection>
-          )}
-          {played.length > 0 && (
-            <TournamentSection icon="check" title={texts.results}>
-              <MatchDayList
-                matches={played}
-                renderMatch={(match, day) => (
-                  <MatchResult
-                    key={match.id}
-                    match={match}
-                    day={day}
-                    allMatches={matches}
-                    football={!board}
-                    tournamentTitle={activity.title}
-                    loggedIn={!!userId}
-                    myVoteCandidateId={
-                      match.mvpVote ? (myVoteByVoteId.get(match.mvpVote.id) ?? null) : null
-                    }
-                  />
-                )}
-              />
-            </TournamentSection>
-          )}
-        </>
+        <MatchesPanel
+          played={played}
+          scheduled={scheduled}
+          allMatches={matches}
+          football={!board}
+          tournamentTitle={activity.title}
+          loggedIn={!!userId}
+          myVoteByVoteId={myVoteByVoteId}
+        />
       ),
     },
     {
@@ -411,9 +375,7 @@ export default async function PublicTournamentPage({
 
   return (
     <div className="app-shell">
-      {/* The only way in is the activity's own page, and a tournament carries
-          the activity's id, so back goes where the visitor actually came
-          from rather than to whichever home their session implies. */}
+      {}
       <PageHeader title={activity.title} backHref={`/activities/${id}`} />
 
       <div className="flex-1 px-5 py-6 space-y-5">

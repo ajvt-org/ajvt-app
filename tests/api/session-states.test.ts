@@ -13,9 +13,6 @@ import { POST as MEMBERS } from "@/app/api/members/route";
 import { GET as ADMIN_MEMBERS } from "@/app/api/admin/members/route";
 import { GET as SETTINGS } from "@/app/api/settings/route";
 
-// What the API says to each kind of caller. The proxy can only see which cookie
-// you carry; these are the distinctions that need the database, which is why
-// they belong here rather than next to the routing table in src/proxy.test.ts.
 const HOUR = 60 * 60 * 1000;
 
 type StateName =
@@ -53,8 +50,6 @@ async function enter(state: StateName) {
   if (state === "memberPending") await addMember(user.id, user.phone, "PENDING", "أحمد");
   if (state === "memberActive") await addMember(user.id, user.phone, "ACTIVE", "محمد");
   if (state === "memberRejected") await addMember(user.id, user.phone, "REJECTED", "سالم");
-  // An account holds one membership, so the second one an account can see is
-  // none: a member detached from it, which /api/user/me must not hand back.
   if (state === "detachedMember") {
     const member = await addMember(user.id, user.phone, "REJECTED", "منفصل");
     await prisma.member.update({ where: { id: member.id }, data: { userId: null } });
@@ -124,9 +119,21 @@ describe("who the API serves", () => {
             keys: { p256dh: "a", auth: "b" },
           }),
         ),
-      "quiz/competitions": () => QUIZ_MINE(),
       members: () => MEMBERS(post("/api/members", {})),
     };
+
+    it("quiz/competitions answers a visitor with the public competitions", async () => {
+      await enter("visitor");
+      const res = await QUIZ_MINE();
+
+      expect(res.status).toBe(200);
+      expect((await res.json()).canPlay).toBe(false);
+    });
+
+    it("quiz/competitions still locks out an account on a temporary password", async () => {
+      await enter("tempPassword");
+      expect((await QUIZ_MINE()).status).toBe(403);
+    });
 
     for (const [name, call] of Object.entries(ROUTES)) {
       it(`${name} refuses a visitor`, async () => {

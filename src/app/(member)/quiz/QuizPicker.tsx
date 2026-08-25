@@ -8,6 +8,7 @@ import NumericRanges from "@/components/NumericRanges";
 import NextRoundCountdown from "./NextRoundCountdown";
 import type { CompetitionState, RunningCompetition } from "./types";
 import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
+import { quizBoard as texts } from "@/lib/texts";
 
 const STATE_LABEL: Record<CompetitionState, string> = {
   before: "لم تنطلق بعد",
@@ -155,12 +156,14 @@ function CompetitionCard({
 export default function QuizPicker({
   competitions,
   backHref,
+  hint,
   onPick,
   onTutorial,
   onStarted,
 }: {
   competitions: RunningCompetition[];
   backHref: string;
+  hint?: string;
   onPick: (id: string) => void;
   onTutorial?: () => void;
   onStarted?: () => void;
@@ -197,13 +200,18 @@ export default function QuizPicker({
         </div>
       </div>
       <div className="px-5 pb-10 space-y-3 relative" style={{ marginTop: -24 }}>
+        {hint && (
+          <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
+            {hint}
+          </p>
+        )}
         {competitions.length === 0 && (
           <div className="card p-6 text-center space-y-2">
             <div className="flex justify-center" style={{ color: "var(--mint-500)" }}>
               <Icon name="trophy" size={36} />
             </div>
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              لا توجد مسابقة تشارك فيها الآن
+              {texts.noCompetitions}
             </p>
           </div>
         )}

@@ -70,6 +70,18 @@ export const matchAdmin = {
   add: "إضافة",
   remove: "حذف",
   pickPlayer: "اختر لاعباً...",
+  fieldTeam: "الفريق",
+  fieldKind: "النوع",
+  fieldScorer: "المسجل",
+  fieldPlayer: "اللاعب",
+  fieldCard: "البطاقة",
+  fieldMinute: "الدقيقة",
+  fieldOutcome: "النتيجة",
+  minuteHint: "اتركها فارغة إن لم تكن معروفة",
+  ownGoalHint: "المسجل يُختار من الفريق الآخر",
+  addGoal: "إضافة الهدف",
+  addCard: "إضافة البطاقة",
+  addKick: "إضافة الركلة",
 } as const;
 
 export const standingsAdmin = {

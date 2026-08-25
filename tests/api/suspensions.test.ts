@@ -233,4 +233,67 @@ describe("the discipline engine", () => {
     expect(body.suspensions).toHaveLength(1);
     expect(body.suspensions[0].member.fullName).toBe("لاعب 0");
   });
+  it("serves a match ban once when a result is cleared and entered again", async () => {
+    const { activity, players, match } = await tournament();
+    const proposal = await (
+      await PROPOSE(
+        post(`/api/admin/activities/${activity.id}/suspensions`, {
+          memberId: players[0].id,
+          scope: "MATCHES",
+          matches: 2,
+        }),
+        withId(activity.id),
+      )
+    ).json();
+    await activate(activity.id, proposal.suspension.id);
+
+    const result = (homeScore: number | null, awayScore: number | null) =>
+      SAVE_RESULT(
+        patch(`/api/admin/matches/${match.id}`, { homeScore, awayScore }),
+        withMatch(match.id),
+      );
+
+    await result(0, 0);
+    await result(null, null);
+    await result(1, 0);
+
+    const served = await prisma.suspension.findUniqueOrThrow({
+      where: { id: proposal.suspension.id },
+    });
+    expect(served.matches).toBe(1);
+    expect(served.status).toBe("ACTIVE");
+  });
+
+  it("counts yellows again from zero after a ban, not from the tournament's start", async () => {
+    const { activity, away, players, match } = await tournament();
+    await prisma.activity.update({ where: { id: activity.id }, data: { yellowsForBan: 2 } });
+
+    const book = () =>
+      BOOK(
+        post(`/api/admin/matches/${match.id}/bookings`, {
+          memberId: players[1].id,
+          teamId: away.id,
+          cardType: "YELLOW",
+        }),
+        withMatch(match.id),
+      );
+    const yellowBans = () => prisma.suspension.count({ where: { reason: "YELLOW_CARDS" } });
+
+    await book();
+    await book();
+    const first = await prisma.suspension.findFirstOrThrow({ where: { reason: "YELLOW_CARDS" } });
+
+    await book();
+    await book();
+    expect(await yellowBans()).toBe(1);
+
+    await activate(activity.id, first.id);
+    await LIFT(
+      del(`/api/admin/activities/${activity.id}/suspensions/${first.id}`),
+      withIds(activity.id, first.id),
+    );
+
+    await book();
+    expect(await yellowBans()).toBe(2);
+  });
 });

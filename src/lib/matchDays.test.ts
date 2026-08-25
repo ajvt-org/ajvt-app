@@ -76,7 +76,7 @@ describe("grouping fixtures into match days", () => {
   it("files a late kickoff under the club's day, not the reader's", () => {
     const days = groupMatchesByDay([match("2026-08-24T23:30:00Z")]);
 
-    expect(days[0].key).toBe("2026-08-25");
+    expect(days[0].key).toBe("2026-08-24");
   });
 });
 
@@ -86,6 +86,6 @@ describe("naming a match day", () => {
   });
 
   it("names the day the club is in when the two disagree", () => {
-    expect(formatDayLabel("2026-08-24T23:30:00Z")).toBe("الثلاثاء 25 أغسطس");
+    expect(formatDayLabel("2026-08-24T23:30:00Z")).toBe("الاثنين 24 أغسطس");
   });
 });

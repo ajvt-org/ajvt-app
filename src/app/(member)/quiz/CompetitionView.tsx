@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import BackButton from "@/components/BackButton";
 import Icon from "@/components/Icon";
@@ -15,6 +16,7 @@ import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 import { useNow } from "@/hooks/useNow";
+import { quizBoard as texts } from "@/lib/texts";
 
 interface AttemptState {
   attemptId: string;
@@ -62,6 +64,13 @@ export interface StandingsState {
 
 const URGENT_MS = 30 * 60 * 1000;
 
+const CALL_STYLE = {
+  width: "auto",
+  padding: "0.7rem 2.2rem",
+  background: "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
+  boxShadow: "0 4px 18px rgba(140,74,42,0.45)",
+} as const;
+
 function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () => void }) {
   const now = useNow(1000);
   const urgent = new Date(closesAt).getTime() - now < URGENT_MS;
@@ -90,10 +99,14 @@ function RoundClock({ closesAt, onReached }: { closesAt: string; onReached: () =
 
 export default function CompetitionView({
   standings,
+  canPlay = true,
+  visitor = false,
   onBack,
   onReloadStandings,
 }: {
   standings: StandingsState;
+  canPlay?: boolean;
+  visitor?: boolean;
   onBack: () => void;
   onReloadStandings: () => void;
 }) {
@@ -333,7 +346,7 @@ export default function CompetitionView({
           {roundOpen && !finished && (
             <>
               <p className="text-lg font-black text-white">
-                الجولة {(standings.round ?? 0) + 1} مفتوحة الآن
+                {texts.roundOpen((standings.round ?? 0) + 1)}
               </p>
               {closing && <RoundClock closesAt={closing} onReached={onReloadStandings} />}
               {closed && (
@@ -341,21 +354,31 @@ export default function CompetitionView({
                   {closed}
                 </p>
               )}
-              <button
-                type="button"
-                onClick={startRound}
-                disabled={busy}
-                className="btn mt-1 text-sm font-extrabold text-white"
-                style={{
-                  width: "auto",
-                  padding: "0.7rem 2.2rem",
-                  background: "linear-gradient(135deg, var(--copper-500), var(--copper-600))",
-                  boxShadow: "0 4px 18px rgba(140,74,42,0.45)",
-                }}
-              >
-                <Icon name="play" size={16} className="icon-inline" />
-                {busy ? "..." : standings.me?.played ? "أكمل الجولة" : "ابدأ الجولة"}
-              </button>
+              {canPlay ? (
+                <button
+                  type="button"
+                  onClick={startRound}
+                  disabled={busy}
+                  className="btn mt-1 text-sm font-extrabold text-white"
+                  style={CALL_STYLE}
+                >
+                  <Icon name="play" size={16} className="icon-inline" />
+                  {busy ? "..." : standings.me?.played ? texts.resumeRound : texts.startRound}
+                </button>
+              ) : visitor ? (
+                <Link
+                  href="/form"
+                  className="btn mt-1 text-sm font-extrabold text-white"
+                  style={CALL_STYLE}
+                >
+                  <Icon name="pencil" size={16} className="icon-inline" />
+                  {texts.signUpToPlay}
+                </Link>
+              ) : (
+                <p className="text-xs font-semibold" style={{ color: "var(--copper-300)" }}>
+                  {texts.ineligibleHint}
+                </p>
+              )}
             </>
           )}
         </div>
@@ -421,7 +444,7 @@ export default function CompetitionView({
           />
         )}
 
-        {competitionId && <MyScores competitionId={competitionId} />}
+        {competitionId && canPlay && <MyScores competitionId={competitionId} />}
 
         {standings.curve && <ScoreFormula curve={standings.curve} boards={standings.boards} />}
       </div>

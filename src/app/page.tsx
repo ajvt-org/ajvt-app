@@ -7,22 +7,13 @@ import LandingHero from "@/components/LandingHero";
 import LandingActivities from "@/components/LandingActivities";
 import MemberTabs from "@/components/MemberTabs";
 
-// The page is the list of sections in LANDING_SECTIONS, in that order. Hiding
-// one or swapping two is an edit to that array.
-//
-// It is also the manifest's start_url, so the installed app reopens here every
-// time. Someone already signed in is sent on rather than shown the two doors
-// again, which read as being logged out.
 export default async function LandingPage() {
   const wantsActivities = LANDING_SECTIONS.includes("activities");
   const [session, rows] = await Promise.all([
     getUserSession(),
-    // Only queried when a section actually renders it, so dropping
-    // "activities" from the list drops the query with it.
     wantsActivities
       ? prisma.activity.findMany({
-          where: { isOpen: true },
-          orderBy: { order: "asc" },
+          orderBy: [{ isOpen: "desc" }, { order: "asc" }],
           select: {
             id: true,
             title: true,
@@ -32,6 +23,7 @@ export default async function LandingPage() {
             withTime: true,
             photo: true,
             isVolunteer: true,
+            isOpen: true,
           },
         })
       : Promise.resolve([]),
@@ -47,6 +39,7 @@ export default async function LandingPage() {
     endsAt: a.endsAt,
     photo: a.photo,
     isVolunteer: a.isVolunteer,
+    isOpen: a.isOpen,
   }));
 
   return (

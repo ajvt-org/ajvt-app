@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
-import { DATABASE_BOUND_LIB } from "@tests/coverageScope";
+import { DATABASE_BOUND_LIB } from "@tests/coverageScope.mjs";
 
 const PRISMA_IMPORT = /from ["'](\.\/prisma|@\/lib\/prisma)["']/;
 

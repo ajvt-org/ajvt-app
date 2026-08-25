@@ -1,3 +1,5 @@
+import { CLUB_TIMEZONE } from "@/lib/clubTime";
+
 export interface DayMatch {
   id: string;
   matchDate: string | null;
@@ -29,7 +31,7 @@ export function dayLabel(date: string | null): string {
     weekday: "long",
     day: "numeric",
     month: "long",
-    timeZone: "UTC",
+    timeZone: CLUB_TIMEZONE,
   }).format(new Date(date));
 }
 

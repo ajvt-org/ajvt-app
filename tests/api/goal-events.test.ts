@@ -106,6 +106,30 @@ describe("goal events", () => {
     expect(await prisma.matchPenaltyKick.count({ where: { matchId: match.id } })).toBe(4);
   });
 
+  it("takes the shootout away with the result it belonged to", async () => {
+    const { home, away, players, match } = await football(true);
+    await save(match.id, {
+      goalEvents: [],
+      penaltyKicks: [
+        { teamId: home.id, memberId: players[0].id, scored: true },
+        { teamId: away.id, memberId: players[1].id, scored: false },
+      ],
+    });
+
+    await save(match.id, { homeScore: null, awayScore: null });
+
+    const cleared = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(cleared).toMatchObject({
+      homeScore: null,
+      awayScore: null,
+      homePenalties: null,
+      awayPenalties: null,
+      status: "SCHEDULED",
+    });
+    expect(await prisma.matchPenaltyKick.count({ where: { matchId: match.id } })).toBe(0);
+    expect(await prisma.matchGoal.count({ where: { matchId: match.id } })).toBe(0);
+  });
+
   it("refuses a shootout that ends level or on a league match", async () => {
     const knockout = await football(true);
     const level = await save(knockout.match.id, {
@@ -139,5 +163,54 @@ describe("goal events", () => {
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
     expect(saved).toMatchObject({ homeScore: 0, awayScore: 1 });
     expect(await prisma.matchGoal.count({ where: { matchId: match.id } })).toBe(1);
+  });
+
+  it("names no man of the match when the save carries none", async () => {
+    const { home, players, match } = await football();
+
+    await save(match.id, {
+      goalEvents: [
+        { teamId: home.id, memberId: players[0].id, kind: "GOAL", period: "REGULAR", minute: 10 },
+      ],
+      manOfTheMatchId: null,
+    });
+
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.manOfTheMatchId).toBeNull();
+  });
+
+  it("leaves the man of the match alone when the field is absent", async () => {
+    const { home, players, match } = await football();
+    await prisma.match.update({
+      where: { id: match.id },
+      data: { manOfTheMatchId: players[1].id },
+    });
+
+    await save(match.id, {
+      goalEvents: [
+        { teamId: home.id, memberId: players[0].id, kind: "GOAL", period: "REGULAR", minute: 10 },
+      ],
+    });
+
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.manOfTheMatchId).toBe(players[1].id);
+  });
+
+  it("clears the man of the match when the save says none", async () => {
+    const { home, players, match } = await football();
+    await prisma.match.update({
+      where: { id: match.id },
+      data: { manOfTheMatchId: players[0].id },
+    });
+
+    await save(match.id, {
+      goalEvents: [
+        { teamId: home.id, memberId: players[0].id, kind: "GOAL", period: "REGULAR", minute: 10 },
+      ],
+      manOfTheMatchId: null,
+    });
+
+    const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
+    expect(saved.manOfTheMatchId).toBeNull();
   });
 });

@@ -10,6 +10,7 @@ export type ActivityDetail = {
     photo: string | null;
     capacity: number | null;
     isOpen: boolean;
+    autoApprove: boolean;
     isTournament: boolean;
     format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
     profile: "FOOTBALL" | "BOARD";

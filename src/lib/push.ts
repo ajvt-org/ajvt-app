@@ -7,10 +7,17 @@ import { isOptOutCategory, type CategoryKey } from "./notificationCategories";
 const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const privateKey = process.env.VAPID_PRIVATE_KEY;
 
+const FALLBACK_SUBJECT = "https://ajvt-app.onrender.com";
+
+function vapidSubject(): string {
+  const configured = process.env.VAPID_SUBJECT?.trim();
+  if (configured) return configured;
+  const base = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+  return base?.startsWith("https://") ? base : FALLBACK_SUBJECT;
+}
+
 if (publicKey && privateKey) {
-  // Must be an https: or mailto: URL per the Web Push spec — NEXT_PUBLIC_BASE_URL
-  // is http:// in local dev, so it can't be reused here.
-  webpush.setVapidDetails("https://ajvt-app.onrender.com", publicKey, privateKey);
+  webpush.setVapidDetails(vapidSubject(), publicKey, privateKey);
 }
 
 export const PUSH_BATCH = 25;

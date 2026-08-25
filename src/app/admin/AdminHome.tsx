@@ -8,11 +8,12 @@ import { loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
 import PageLoading from "@/components/PageLoading";
+import Scoreline from "@/components/tournament/Scoreline";
 import WaitingRequests from "./WaitingRequests";
 import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
 import { adminHome as texts } from "@/lib/texts";
-import { formatMatchTime } from "@/lib/tournament";
+import { formatMatchTime } from "@/lib/clubTime";
 
 export interface HomeMatch {
   id: string;
@@ -124,14 +125,18 @@ export default function AdminHome() {
             {summary.matchesToday.map((m) => (
               <Link
                 key={m.id}
-                href={`/admin/tournament/${m.activity.id}?tab=matches`}
+                href={`/admin/activities/${m.activity.id}?tab=matches`}
                 className="flex items-center justify-between gap-2 text-sm"
                 style={{ color: "var(--text-main)" }}
               >
                 <span className="min-w-0 truncate font-semibold">
-                  {m.homeTeam.name}{" "}
-                  {m.status === "PLAYED" ? `${m.homeScore} - ${m.awayScore}` : "×"}{" "}
-                  {m.awayTeam.name}
+                  <bdi>{m.homeTeam.name}</bdi>{" "}
+                  {m.status === "PLAYED" ? (
+                    <Scoreline home={m.homeScore} away={m.awayScore} />
+                  ) : (
+                    <span>×</span>
+                  )}{" "}
+                  <bdi>{m.awayTeam.name}</bdi>
                 </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {m.activity.title}

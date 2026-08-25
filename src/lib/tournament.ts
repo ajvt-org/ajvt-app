@@ -157,8 +157,6 @@ export interface HeadToHeadMatchInput {
   awayTeam: { id: string };
 }
 
-// Teams are recreated per tournament (Team belongs to a single Activity), so
-// "past meetings" only ever spans matches within the same activity/tournament.
 export function getHeadToHead<T extends HeadToHeadMatchInput>(
   matches: T[],
   teamAId: string,
@@ -226,9 +224,6 @@ export function computeStats(
   };
 }
 
-// Round-one pairing over an already-shuffled list: backtracks to avoid
-// putting two teams of the same group in one tie. Null when no such perfect
-// pairing exists (a group larger than half the field).
 export function drawKnockoutPairs<T extends { id: string; groupId?: string | null }>(
   shuffled: T[],
 ): [T, T][] | null {
@@ -252,13 +247,9 @@ export interface GeneratedFixture {
   awayTeamId: string;
 }
 
-// Standard "circle method" round-robin: fix team[0], rotate the rest each
-// round. Every pair meets exactly once across n-1 rounds (n even) — this
-// guarantees each team plays exactly once per round, which is exactly what
-// we want for "round 1 of every group happens together, then round 2, ...".
 function circleMethodRounds(teamIds: string[]): [string | null, string | null][][] {
   const arr: (string | null)[] = [...teamIds];
-  if (arr.length % 2 !== 0) arr.push(null); // null = bye
+  if (arr.length % 2 !== 0) arr.push(null);
   const n = arr.length;
   const rounds: [string | null, string | null][][] = [];
   let current = arr.slice();
@@ -273,12 +264,6 @@ function circleMethodRounds(teamIds: string[]): [string | null, string | null][]
   return rounds;
 }
 
-// Builds a schedule where every team plays exactly `targetPerTeam` matches
-// (3 by default), picking new opponents first and only repeating a pairing
-// if there is no other way to bring a team up to the target — this only
-// happens with an odd number of teams, where a perfectly even 3-a-side
-// schedule is mathematically impossible (3 * odd number is odd, but every
-// match hands out exactly 2 "match credits").
 export function generateMatchSchedule(
   teamIds: string[],
   targetPerTeam = 3,
@@ -308,7 +293,6 @@ export function generateMatchSchedule(
     if (usedThisRound) round++;
   }
 
-  // Patch up any team still short (only possible with an odd team count).
   let short = teamIds.filter((id) => (counts.get(id) || 0) < targetPerTeam);
   let guard = 0;
   while (short.length > 0 && guard < 50) {
@@ -343,8 +327,6 @@ export interface BracketMatchInput {
   status: string;
 }
 
-// Returns the winning team's id, or null if the match hasn't been played yet
-// or ended in a draw that wasn't resolved by a penalty shootout.
 export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
   if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) return null;
   if (m.homeScore > m.awayScore) return m.homeTeamId;
@@ -355,10 +337,6 @@ export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
   return null;
 }
 
-// Human label for a knockout round, derived from how many matches it has
-// (i.e. how many participants remain) rather than a round index — works
-// the same whether the bracket started at 16, 8, 4 or 2 participants.
-// A knockout bracket only works when every round halves cleanly.
 export function isPowerOfTwo(n: number): boolean {
   return n >= 2 && (n & (n - 1)) === 0;
 }
@@ -371,74 +349,6 @@ export function bracketRoundLabel(matchCount: number): string {
   return `الدور الإقصائي`;
 }
 
-// The app has no per-user timezone setting, so match times are always
-// entered/displayed in the club's local timezone (Morocco, fixed UTC+1 —
-// no DST since 2018).
-export const CLUB_TIMEZONE = "Africa/Casablanca";
-
-// <input type="datetime-local"> values (YYYY-MM-DDTHH:mm[:ss]) carry no
-// timezone — interpret them as club-local time rather than the server's.
-// Anything else (already-ISO with Z/offset, or a bare YYYY-MM-DD date) is
-// parsed as-is.
-export function parseMatchDate(value: string): Date {
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(value)) {
-    const withSeconds = value.length === 16 ? `${value}:00` : value;
-    return new Date(`${withSeconds}+01:00`);
-  }
-  return new Date(value);
-}
-
-// Inverse of parseMatchDate — populates a <input type="datetime-local">
-// field with the club-local (UTC+1, no DST) representation of a stored date.
-export function matchDateToLocalInput(date: string | Date): string {
-  const local = new Date(new Date(date).getTime() + 60 * 60 * 1000);
-  return local.toISOString().slice(0, 16);
-}
-
-// Same shape as formatDateTime, but a kickoff belongs to the club's day
-// rather than the reader's, so the parts come from a zoned formatter and are
-// reassembled instead of read off a Date.
-export function formatMatchDateTime(date: string | Date): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: CLUB_TIMEZONE,
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date(date));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((p) => p.type === type)?.value ?? "";
-  return `${part("year")}/${part("month")}/${part("day")} ${part("hour")}:${part("minute")}`;
-}
-
-export function formatMatchTime(date: string | Date): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: CLUB_TIMEZONE,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date(date));
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((p) => p.type === type)?.value ?? "";
-  return `${part("hour")}:${part("minute")}`;
-}
-
-// Club-local (YYYY-MM-DD) calendar day for a match date — used to find
-// "today"'s matches regardless of where the code happens to run.
-export function matchDateKey(date: string | Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TIMEZONE }).format(new Date(date));
-}
-
-export function todayClubDateKey(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TIMEZONE }).format(new Date());
-}
-
-// A non-knockout ("league") match must stay within a single group — pairing
-// teams from two different groups is how a match ends up silently dropped
-// from both groups' standings (computeStandings only counts a match if both
-// teams are in the pool it was given). Groupless teams/tournaments are fine.
 export function isValidLeaguePairing(
   isKnockout: boolean,
   homeGroupId: string | null,
@@ -521,8 +431,6 @@ export interface CleanSheetRow {
   cleanSheets: number;
 }
 
-// "Best defense" ranking by matches played without conceding — the data
-// model has no player position, so this is a team stat, not a per-goalkeeper one.
 export function computeCleanSheets(
   teams: StandingsTeamInput[],
   matches: CleanSheetMatchInput[],
@@ -604,7 +512,7 @@ export interface TeamMatchInput {
 export interface TeamAdvancedRow {
   teamId: string;
   name: string;
-  biggestWin: { opponent: string; score: string; gd: number } | null;
+  biggestWin: { opponent: string; gf: number; ga: number; gd: number } | null;
   unbeatenStreak: number;
   form: ("W" | "D" | "L")[];
 }
@@ -630,7 +538,8 @@ export function computeTeamAdvancedStats(
       if (!biggestWin || gd > biggestWin.gd) {
         biggestWin = {
           opponent: isHome ? m.awayTeam.name : m.homeTeam.name,
-          score: `${gf}-${ga}`,
+          gf,
+          ga,
           gd,
         };
       }

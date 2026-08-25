@@ -2,8 +2,10 @@
 
 import CardChip from "@/components/tournament/CardChip";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import Scoreline from "@/components/tournament/Scoreline";
 import TeamLogo from "@/components/tournament/TeamLogo";
-import { getHeadToHead, formatMatchDateTime } from "@/lib/tournament";
+import { getHeadToHead } from "@/lib/tournament";
+import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
@@ -59,14 +61,19 @@ export default function MatchCard({
             style={{ color: "var(--text-main)" }}
           >
             <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
-            {match.homeTeam.name}
-            {match.status === "PLAYED" ? ` ${match.homeScore} - ${match.awayScore} ` : " × "}
-            {match.awayTeam.name}
+            <bdi>{match.homeTeam.name}</bdi>
+            {match.status === "PLAYED" ? (
+              <Scoreline home={match.homeScore} away={match.awayScore} />
+            ) : (
+              <span>×</span>
+            )}
+            <bdi>{match.awayTeam.name}</bdi>
             <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
             {match.homePenalties !== null && match.awayPenalties !== null && (
               <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
                 {" "}
-                ({texts.penaltiesShort} {match.homePenalties}-{match.awayPenalties})
+                ({texts.penaltiesShort}{" "}
+                <Scoreline home={match.homePenalties} away={match.awayPenalties} />)
               </span>
             )}
           </p>
@@ -86,11 +93,16 @@ export default function MatchCard({
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>{" "}
-              {priorMeetings
-                .map((pm) =>
-                  pm.status === "PLAYED" ? `${pm.homeScore}-${pm.awayScore}` : texts.upcomingShort,
-                )
-                .join("، ")}
+              {priorMeetings.map((pm, i) => (
+                <span key={pm.id}>
+                  {i > 0 && "، "}
+                  {pm.status === "PLAYED" ? (
+                    <Scoreline home={pm.homeScore} away={pm.awayScore} />
+                  ) : (
+                    texts.upcomingShort
+                  )}
+                </span>
+              ))}
             </p>
           )}
         </div>

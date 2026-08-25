@@ -2,13 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { formatActivityDates } from "@/lib/activityDates";
 import LandingActivities from "@/components/LandingActivities";
 import PageHeader from "@/components/PageHeader";
+import { landingActivities as texts } from "@/lib/texts";
 
-// The activities tab for someone with no account. A signed-in member gets
-// /home instead, which knows what they are registered for.
 export default async function ActivitiesPage() {
   const rows = await prisma.activity.findMany({
-    where: { isOpen: true },
-    orderBy: { order: "asc" },
+    orderBy: [{ isOpen: "desc" }, { order: "asc" }],
     select: {
       id: true,
       title: true,
@@ -18,12 +16,13 @@ export default async function ActivitiesPage() {
       withTime: true,
       photo: true,
       isVolunteer: true,
+      isOpen: true,
     },
   });
 
   return (
     <div className="app-shell">
-      <PageHeader title="الأنشطة" />
+      <PageHeader title={texts.pageTitle} />
       <LandingActivities
         heading={false}
         activities={rows.map((a) => ({
@@ -34,6 +33,7 @@ export default async function ActivitiesPage() {
           endsAt: a.endsAt,
           photo: a.photo,
           isVolunteer: a.isVolunteer,
+          isOpen: a.isOpen,
         }))}
       />
     </div>

@@ -32,6 +32,7 @@ export const activityUpdateSchema = z
     period: z.string(INVALID).nullish(),
     capacity: capacity.optional(),
     isOpen: z.unknown().optional(),
+    autoApprove: z.unknown().optional(),
     photo: z.string(INVALID).nullish(),
     isTournament: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),

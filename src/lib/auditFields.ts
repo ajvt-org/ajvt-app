@@ -1,9 +1,6 @@
 import { ROLE_LABELS } from "./adminRoles";
 import { memberStatusLabels } from "@/lib/messages";
 
-// Field and value names as they appear inside before/after snapshots. An
-// unknown key falls through to its raw name rather than disappearing, so a
-// route that starts recording a new field still shows it.
 const FIELD_LABELS: Record<string, string> = {
   fullName: "الاسم الكامل",
   name: "الاسم",
@@ -29,6 +26,8 @@ const FIELD_LABELS: Record<string, string> = {
   endsAt: "تاريخ النهاية",
   withTime: "تحديد الساعة",
   membersRenamed: "الأعضاء المحدَّثون",
+  isOpen: "التسجيل مفتوح",
+  autoApprove: "قبول تلقائي",
 };
 
 const VALUE_LABELS: Record<string, string> = {

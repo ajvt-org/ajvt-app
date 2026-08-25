@@ -4,7 +4,8 @@ import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { serveMatch, suspendedMemberIds } from "@/lib/suspensionServer";
-import { parseMatchDate, isValidLeaguePairing } from "@/lib/tournament";
+import { isValidLeaguePairing } from "@/lib/tournament";
+import { parseMatchDate } from "@/lib/clubTime";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import {
@@ -123,6 +124,7 @@ export const PATCH = withRoute(
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
       status?: MatchStatus;
+      suspensionsServedAt?: Date;
       homeTeamId?: string;
       awayTeamId?: string;
     } = {};
@@ -172,6 +174,7 @@ export const PATCH = withRoute(
     let eventKicks: KickEvent[] = [];
     const eventsMode = goalEvents !== undefined;
     const enteringResult = !eventsMode && (homeScore !== undefined || awayScore !== undefined);
+    let clearedResult = false;
 
     if (eventsMode) {
       const evGoals = validateGoalEvents(goalEvents, match.homeTeamId, match.awayTeamId);
@@ -256,7 +259,10 @@ export const PATCH = withRoute(
       if (scores === null) {
         updateData.homeScore = null;
         updateData.awayScore = null;
+        updateData.homePenalties = null;
+        updateData.awayPenalties = null;
         updateData.status = "SCHEDULED";
+        clearedResult = true;
       } else {
         const hs = scores.home;
         const as = scores.away;
@@ -395,6 +401,9 @@ export const PATCH = withRoute(
       }
       if (enteringResult) {
         await tx.matchGoal.deleteMany({ where: { matchId } });
+        if (clearedResult) {
+          await tx.matchPenaltyKick.deleteMany({ where: { matchId } });
+        }
         if (parsedHomeGoals.length > 0) {
           await tx.matchGoal.createMany({
             data: parsedHomeGoals.map((g) => ({
@@ -418,8 +427,13 @@ export const PATCH = withRoute(
           });
         }
       }
-      if ((enteringResult || eventsMode) && updateData.status === "PLAYED" && !wasPlayed) {
+      if (
+        (enteringResult || eventsMode) &&
+        updateData.status === "PLAYED" &&
+        !match.suspensionsServedAt
+      ) {
         await serveMatch(tx, match.activityId, [match.homeTeamId, match.awayTeamId]);
+        updateData.suspensionsServedAt = new Date();
       }
       return tx.match.update({ where: { id: matchId }, data: updateData, include: MATCH_INCLUDE });
     });
