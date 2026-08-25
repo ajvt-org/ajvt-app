@@ -5,8 +5,12 @@ import type { Treasury } from "@/lib/treasury";
 import { treasury as texts } from "@/lib/texts";
 
 function view(over: Partial<Treasury> = {}) {
+  return viewIn(over);
+}
+
+function viewIn(over: Partial<Treasury> = {}) {
   cleanup();
-  render(
+  return render(
     <TreasuryView
       treasury={{
         balance: 3800,
@@ -48,15 +52,30 @@ describe("TreasuryView", () => {
     expect(screen.getByText("2000")).toBeDefined();
   });
 
-  it("keeps every amount in its own right-aligned column with the currency beside it", () => {
-    view({ byMethod: [], spendingByMethod: [] });
+  it("puts every amount of one card on a single grid so the columns line up", () => {
+    const { container } = viewIn({ byMethod: [], spendingByMethod: [] });
 
-    const amount = screen.getByText("5000");
-    expect(amount.getAttribute("dir")).toBe("ltr");
+    const grid = container.querySelector("[style*='1fr auto auto']") as HTMLElement;
+    expect(grid).not.toBeNull();
+    const amounts = [...grid.querySelectorAll("[dir=ltr]")].map((n) => n.textContent);
+    expect(amounts).toEqual(["5000", "3000", "2000", "1200"]);
+  });
+
+  it("reads the amount before the currency, the way the balance above it does", () => {
+    const { container } = viewIn({ byMethod: [], spendingByMethod: [] });
+
+    const grid = container.querySelector("[style*='1fr auto auto']") as HTMLElement;
+    const [label, amount, currency] = [...grid.children];
+    expect(label.textContent).toBe(texts.income);
+    expect(amount.textContent).toBe("5000");
+    expect(currency.textContent).toBe(texts.currency);
+  });
+
+  it("right-aligns the amounts so the leading digit shows the size", () => {
+    const { container } = viewIn({ byMethod: [], spendingByMethod: [] });
+
+    const amount = container.querySelector("[dir=ltr]") as HTMLElement;
     expect(amount.getAttribute("style")).toContain("text-align: right");
-    const row = amount.parentElement as HTMLElement;
-    expect(row.getAttribute("style")).toContain("1fr auto auto");
-    expect(row.children[1].textContent).toBe(texts.currency);
   });
 
   it("breaks the spending down by how it was paid", () => {
