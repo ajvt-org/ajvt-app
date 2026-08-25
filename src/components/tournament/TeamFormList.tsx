@@ -1,15 +1,11 @@
+import Icon, { type IconName } from "@/components/Icon";
 import PagedList from "./PagedList";
 import Scoreline from "./Scoreline";
-import { counted } from "@/lib/arabicCount";
-import { MATCH } from "@/lib/messages";
 
-const FORM_STYLE: Record<
-  "W" | "D" | "L",
-  { bg: string; color: string; letter: string; label: string }
-> = {
-  W: { bg: "#059669", color: "#fff", letter: "ف", label: "فوز" },
-  D: { bg: "var(--mint-300)", color: "var(--text-main)", letter: "ت", label: "تعادل" },
-  L: { bg: "#dc2626", color: "#fff", letter: "خ", label: "خسارة" },
+const FORM_STYLE: Record<"W" | "D" | "L", { bg: string; icon: IconName; label: string }> = {
+  W: { bg: "#059669", icon: "check", label: "فوز" },
+  D: { bg: "var(--text-muted)", icon: "minus", label: "تعادل" },
+  L: { bg: "#dc2626", icon: "close", label: "خسارة" },
 };
 
 type TeamStats = {
@@ -41,18 +37,16 @@ export default function TeamFormList({ teams }: { teams: TeamStats[] }) {
           )}
           {team.form.length > 0 && (
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                آخر {counted(team.form.length, MATCH)}:
-              </span>
               {team.form.map((result, i) => (
                 <span
                   key={i}
                   className="form-pip"
+                  role="img"
                   title={FORM_STYLE[result].label}
                   aria-label={FORM_STYLE[result].label}
-                  style={{ background: FORM_STYLE[result].bg, color: FORM_STYLE[result].color }}
+                  style={{ background: FORM_STYLE[result].bg, color: "#fff" }}
                 >
-                  {FORM_STYLE[result].letter}
+                  <Icon name={FORM_STYLE[result].icon} size={11} />
                 </span>
               ))}
             </div>

@@ -6,17 +6,37 @@ export default function IconLabel({
   size = "1.3em",
   filled,
   color,
+  after,
 }: {
   name: IconName;
   children: React.ReactNode;
   size?: number | string;
   filled?: boolean;
   color?: string;
+  after?: boolean;
 }) {
+  const icon = (
+    <Icon
+      name={name}
+      size={size}
+      filled={filled}
+      color={color}
+      className={after ? "icon-label-numeral" : undefined}
+    />
+  );
   return (
     <span className="icon-label inline-flex items-center justify-center gap-1.5">
-      <Icon name={name} size={size} className="icon-inline" filled={filled} color={color} />
-      {children}
+      {after ? (
+        <>
+          {children}
+          {icon}
+        </>
+      ) : (
+        <>
+          {icon}
+          {children}
+        </>
+      )}
     </span>
   );
 }

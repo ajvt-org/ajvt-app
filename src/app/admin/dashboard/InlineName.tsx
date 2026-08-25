@@ -56,14 +56,17 @@ export default function InlineName({
 
   if (!editing) {
     return (
-      <div className="flex items-center gap-1.5 min-w-0">
-        <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
+      <div className="flex items-start gap-1.5 min-w-0">
+        <p
+          className="font-bold leading-6 optical-name"
+          style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+        >
           {fullName}
         </p>
         <button
           onClick={open}
           aria-label={`تعديل اسم ${fullName}`}
-          className="shrink-0 p-1 rounded-lg"
+          className="shrink-0 p-1 rounded-lg h-6 flex items-center"
           style={{ color: "var(--mint-700)" }}
         >
           <Icon name="pencil" size={14} />

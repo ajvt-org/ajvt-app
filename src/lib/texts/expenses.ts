@@ -1,0 +1,18 @@
+export const expenseForm = {
+  editTitle: "تعديل مصروف",
+  addTitle: "إضافة مصروف",
+  proofHeading: "صورة الفاتورة / الإيصال (اختياري)",
+  proofLabel: "صورة الفاتورة",
+  label: "الوصف",
+  amount: "المبلغ (MRU)",
+  method: "طريقة الدفع (اختياري)",
+  noMethod: "أخرى",
+  date: "التاريخ",
+  note: "ملاحظة (اختياري)",
+  activity: "النشاط (اختياري)",
+  noActivity: "بدون نشاط",
+  tags: "التصنيفات",
+  noTags: "لا توجد تصنيفات بعد، أضفها من زر التصنيفات",
+  save: "حفظ التعديل",
+  add: "إضافة المصروف",
+} as const;

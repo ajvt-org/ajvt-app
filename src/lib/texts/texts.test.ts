@@ -21,7 +21,6 @@ describe("text formatters", () => {
 
   it("names the activity in the row labels", () => {
     expect(activityRow.pendingChip(2)).toContain("2");
-    expect(activityRow.open("النشاط")).toContain("النشاط");
     expect(activityRow.moveUp("الدوري")).toContain("الدوري");
     expect(activityRow.moveDown("الدوري")).toContain("الدوري");
   });

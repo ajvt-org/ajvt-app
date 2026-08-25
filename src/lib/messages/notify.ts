@@ -16,19 +16,19 @@ export const notify = {
   matchScheduled: (home: string, away: string, activityId: string): PushPayload => ({
     title: "مباراة جديدة لفريقك",
     body: pairing(home, away),
-    url: `/tournament/${activityId}`,
+    url: `/activities/${activityId}`,
   }),
 
   matchReminder: (home: string, away: string, activityId: string): PushPayload => ({
     title: "مباراة فريقك غداً",
     body: pairing(home, away),
-    url: `/tournament/${activityId}`,
+    url: `/activities/${activityId}`,
   }),
 
   scheduleShifted: (tournamentTitle: string, activityId: string): PushPayload => ({
     title: "تغيّر جدول البطولة",
     body: `تحرّكت مواعيد «${tournamentTitle}» — اطلع على الجدول الجديد`,
-    url: `/tournament/${activityId}`,
+    url: `/activities/${activityId}`,
   }),
 
   matchResult: (
@@ -40,13 +40,13 @@ export const notify = {
   ): PushPayload => ({
     title: "انتهت مباراة فريقك",
     body: `«${home}» ${homeScore} – ${awayScore} «${away}»`,
-    url: `/tournament/${activityId}`,
+    url: `/activities/${activityId}`,
   }),
 
   mvpVoteOpen: (home: string, away: string, activityId: string): PushPayload => ({
     title: "من الأفضل في المباراة؟",
     body: `افتُتِح التصويت، ${pairing(home, away)}`,
-    url: `/tournament/${activityId}`,
+    url: `/activities/${activityId}`,
   }),
 
   membershipDecision: (accepted: boolean): PushPayload =>

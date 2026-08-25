@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import NumericRanges from "@/components/NumericRanges";
-import { toThumbUrl } from "@/lib/utils";
+import ActivityRowBody from "@/components/ActivityRowBody";
 import ActivityStandingChip from "@/components/ActivityStandingChip";
+import { activityAccent } from "@/lib/activityAccent";
 import { landingActivities as texts } from "@/lib/texts";
 
 export type LandingActivity = {
@@ -65,55 +65,30 @@ export default function LandingActivities({
           <Icon name="chevronLeft" size={16} className="shrink-0" />
         </Link>
 
-        <div className="pb-1" style={{ borderBottom: "1px solid var(--mint-200)" }} />
+        <div className="pb-1 mb-2" style={{ borderBottom: "1px solid var(--mint-200)" }} />
 
         {activities.map((activity) => (
           <Link
             key={activity.id}
             href={`/activities/${activity.id}`}
-            className="card p-3.5 flex items-center gap-3"
+            className={`card activity-row ${activityAccent(activity)} p-3.5 flex items-center gap-3`}
           >
-            {activity.photo ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
-                alt=""
-                width={44}
-                height={44}
-                loading="lazy"
-                decoding="async"
-                className="w-11 h-11 rounded-full object-cover shrink-0"
-                style={{ border: "1.5px solid var(--mint-200)" }}
-              />
-            ) : (
-              <span
-                className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center"
-                style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-              >
-                <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={20} />
-              </span>
-            )}
-
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2">
-                <span className="font-bold truncate" style={{ color: "var(--text-main)" }}>
-                  {activity.title}
-                </span>
-                <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
-                {!activity.isOpen && (
-                  <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
-                    {texts.closedChip}
-                  </span>
-                )}
-              </span>
-              {activity.when && (
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  <Icon name="calendar" size={12} className="icon-inline" />{" "}
-                  <NumericRanges>{activity.when}</NumericRanges>
-                </span>
-              )}
-            </span>
-
+            <ActivityRowBody
+              title={activity.title}
+              photo={activity.photo}
+              isVolunteer={activity.isVolunteer}
+              when={activity.when}
+              chips={
+                <>
+                  <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
+                  {!activity.isOpen && (
+                    <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
+                      {texts.closedChip}
+                    </span>
+                  )}
+                </>
+              }
+            />
             <Icon name="chevronLeft" size={16} className="shrink-0" />
           </Link>
         ))}

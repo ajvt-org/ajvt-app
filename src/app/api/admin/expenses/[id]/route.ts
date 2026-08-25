@@ -11,7 +11,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireUnscopedAdmin();
     const { id } = await params;
-    const { label, amount, note, date, proof, tagIds, activityId } = parse(
+    const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
       expenseUpdateSchema,
       await req.json(),
     );
@@ -24,6 +24,7 @@ export const PATCH = withRoute(
     const data: {
       label?: string;
       amount?: number;
+      method?: string | null;
       note?: string | null;
       date?: Date;
       proof?: string | null;
@@ -33,6 +34,7 @@ export const PATCH = withRoute(
 
     if (label !== undefined) data.label = label;
     if (amount !== undefined) data.amount = Number(amount);
+    if (method !== undefined) data.method = method?.trim() || null;
 
     if (note !== undefined) {
       data.note = note?.trim() || null;
@@ -63,6 +65,7 @@ export const PATCH = withRoute(
         after: {
           label: expense.label,
           amount: expense.amount,
+          method: expense.method,
           note: expense.note,
           date: expense.date,
           proof: expense.proof,

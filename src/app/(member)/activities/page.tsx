@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { formatActivityDates } from "@/lib/activityDates";
+import { sortActivities } from "@/lib/activityOrder";
 import LandingActivities from "@/components/LandingActivities";
 import PageHeader from "@/components/PageHeader";
 import { landingActivities as texts } from "@/lib/texts";
 
 export default async function ActivitiesPage() {
   const rows = await prisma.activity.findMany({
-    orderBy: [{ isOpen: "desc" }, { order: "asc" }],
+    orderBy: { order: "asc" },
     select: {
       id: true,
       title: true,
@@ -25,7 +26,7 @@ export default async function ActivitiesPage() {
       <PageHeader title={texts.pageTitle} />
       <LandingActivities
         heading={false}
-        activities={rows.map((a) => ({
+        activities={sortActivities(rows).map((a) => ({
           id: a.id,
           title: a.title,
           when: formatActivityDates(a),

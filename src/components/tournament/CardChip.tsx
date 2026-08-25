@@ -2,6 +2,7 @@ export default function CardChip({ type, count }: { type: "YELLOW" | "RED"; coun
   const yellow = type === "YELLOW";
   return (
     <span className="inline-flex items-center gap-1 align-middle">
+      {count !== undefined && count}
       <span
         role="img"
         aria-label={yellow ? "بطاقة صفراء" : "بطاقة حمراء"}
@@ -13,7 +14,6 @@ export default function CardChip({ type, count }: { type: "YELLOW" | "RED"; coun
           background: yellow ? "#facc15" : "#dc2626",
         }}
       />
-      {count !== undefined && count}
     </span>
   );
 }

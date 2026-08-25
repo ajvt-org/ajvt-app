@@ -435,6 +435,7 @@ model Expense {
   id         String       @id @default(cuid())
   label      String
   amount     Int
+  method     String?
   note       String?
   proof      String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
   date       DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, cleanup as rtlCleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup as rtlCleanup } from "@testing-library/react";
 import MatchResult from "./MatchResult";
 import type { PublicMatch } from "./publicTypes";
 
@@ -62,15 +62,24 @@ describe("MatchResult by sport profile", () => {
   it("tells the football story in full", () => {
     show(true);
 
-    expect(screen.getByText(/رجل المباراة/)).toBeDefined();
-    expect(screen.getAllByText(/سالم ولد علي/).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/رجل المباراة/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/مجريات المباراة/)).toBeDefined();
+  });
+
+  it("keeps a yellow card off the card until the timeline is opened", () => {
+    show(true);
+
+    expect(screen.queryByText(/سالم ولد علي/)).toBeNull();
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
+    expect(screen.getByText(/سالم ولد علي/)).toBeDefined();
   });
 
   it("keeps a board result to the score alone", () => {
     show(false);
 
-    expect(screen.queryByText(/رجل المباراة/)).toBeNull();
+    expect(screen.queryByLabelText(/رجل المباراة/)).toBeNull();
     expect(screen.queryByText(/سالم ولد علي/)).toBeNull();
+    expect(screen.queryByText(/مجريات المباراة/)).toBeNull();
     expect(screen.getAllByText(/الصقور/).length).toBeGreaterThan(0);
   });
 });

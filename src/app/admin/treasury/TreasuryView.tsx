@@ -1,24 +1,57 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import type { Treasury } from "@/lib/treasury";
+import type { MethodTotal, Treasury } from "@/lib/treasury";
 import { treasury as texts } from "@/lib/texts";
-
-function Amount({ value }: { value: number }) {
-  return (
-    <span dir="rtl" style={{ color: value < 0 ? "var(--danger)" : undefined }}>
-      {texts.ouguiya(value)}
-    </span>
-  );
-}
 
 function Line({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between py-1.5 text-sm">
-      <span style={{ color: "var(--text-muted)" }}>{label}</span>
-      <span className="font-bold" style={{ color: "var(--text-main)" }}>
-        <Amount value={value} />
+    <div
+      className="grid items-center gap-x-2 py-1.5 text-sm"
+      style={{ gridTemplateColumns: "1fr auto auto" }}
+    >
+      <span className="optical-name" style={{ color: "var(--text-muted)" }}>
+        {label}
       </span>
+      <span className="font-bold optical-name" style={{ color: "var(--text-main)" }}>
+        {texts.currency}
+      </span>
+      <span
+        dir="ltr"
+        className="font-bold optical-numeral"
+        style={{
+          color: value < 0 ? "var(--danger)" : "var(--text-main)",
+          textAlign: "right",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function MethodCard({
+  heading,
+  rows,
+  empty,
+}: {
+  heading: string;
+  rows: MethodTotal[];
+  empty: string;
+}) {
+  return (
+    <div className="card p-4">
+      <p className="text-sm font-bold mb-1" style={{ color: "var(--text-main)" }}>
+        <IconLabel name="banknote">{heading}</IconLabel>
+      </p>
+      {rows.length === 0 ? (
+        <p className="text-xs py-2" style={{ color: "var(--text-muted)" }}>
+          {empty}
+        </p>
+      ) : (
+        rows.map((row) => <Line key={row.method} label={row.method} value={row.amount} />)
+      )}
     </div>
   );
 }
@@ -49,20 +82,13 @@ export default function TreasuryView({ treasury }: { treasury: Treasury }) {
         <Line label={texts.spending} value={treasury.spending} />
       </div>
 
-      <div className="card p-4">
-        <p className="text-sm font-bold mb-1" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">{texts.byMethod}</IconLabel>
-        </p>
-        {treasury.byMethod.length === 0 ? (
-          <p className="text-xs py-2" style={{ color: "var(--text-muted)" }}>
-            {texts.noIncome}
-          </p>
-        ) : (
-          treasury.byMethod.map((row) => (
-            <Line key={row.method} label={row.method} value={row.amount} />
-          ))
-        )}
-      </div>
+      <MethodCard heading={texts.byMethod} rows={treasury.byMethod} empty={texts.noIncome} />
+
+      <MethodCard
+        heading={texts.spendingByMethod}
+        rows={treasury.spendingByMethod}
+        empty={texts.noSpending}
+      />
     </div>
   );
 }
