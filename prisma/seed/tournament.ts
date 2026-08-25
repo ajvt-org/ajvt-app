@@ -93,7 +93,7 @@ async function seedMatches(
   for (let i = 0; i < PAIRS.length; i++) {
     const [h, a] = PAIRS[i];
     const played = i < PAIRS.length - 1;
-    const homeScore = played ? (i * 3) % 4 : null;
+    const homeScore = played ? (i % 3 === 1 ? 3 : (i * 3) % 4) : null;
     const awayScore = played ? (i * 5) % 3 : null;
 
     const match = await prisma.match.create({
@@ -120,11 +120,12 @@ async function seedMatches(
     ] as const) {
       const scorers = roster[teams[teamIndex].id];
       if (!scorers?.length) continue;
+      const oneManShow = i % 3 === 1 && teamIndex === h;
       for (let g = 0; g < score; g++) {
         await prisma.matchGoal.create({
           data: {
             matchId: match.id,
-            memberId: pick(scorers, g),
+            memberId: oneManShow ? scorers[0] : pick(scorers, g),
             teamId: teams[teamIndex].id,
             minute: 10 + g * 17 + (teamIndex === a ? 5 : 0),
           },
