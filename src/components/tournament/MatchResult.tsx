@@ -2,12 +2,13 @@ import Scoreline from "./Scoreline";
 import MatchTeams from "./matchCard/MatchTeams";
 import MatchMeta from "./matchCard/MatchMeta";
 import MatchEvents from "./matchCard/MatchEvents";
+import MatchTimeline from "./matchCard/MatchTimeline";
 import MatchCardHead from "./matchCard/MatchCardHead";
 import MatchCardFooter from "./matchCard/MatchCardFooter";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
-import { matchEventRows } from "@/lib/matchEvents";
+import { matchEventRows, matchTimeline } from "@/lib/matchEvents";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
@@ -56,9 +57,15 @@ export default function MatchResult({
       />
 
       {football && (
-        <MatchEvents
-          rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id, manOfTheMatchTeam })}
-        />
+        <>
+          <MatchEvents
+            rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id, manOfTheMatchTeam })}
+          />
+          <MatchTimeline
+            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
+            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+          />
+        </>
       )}
 
       {priorMeetings.length > 0 && (

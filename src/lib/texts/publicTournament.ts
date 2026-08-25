@@ -1,6 +1,6 @@
 export const matchDisplay = {
   unknownScorer: "مجهول",
-  ownGoal: "عكسي",
+  ownGoal: "ع",
   penaltyShort: "ج",
   extraTimeShort: "و.إ",
   penalties: "ركلات ترجيح",
@@ -10,6 +10,8 @@ export const matchDisplay = {
   todayMatches: "مباريات اليوم",
   clubName: "رابطة شباب قرية التاكلالت",
   shareResult: "مشاركة النتيجة",
+  timeline: "مجريات المباراة",
+  hideTimeline: "إخفاء المجريات",
 } as const;
 
 export const publicTournament = {

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { goalRows, bookingRows, minuteLines, matchEventRows, memberTeamName } from "./matchEvents";
+import {
+  goalRows,
+  bookingRows,
+  minuteLines,
+  matchEventRows,
+  memberTeamName,
+  matchTimeline,
+} from "./matchEvents";
 
 function goal(over: Partial<Parameters<typeof goalRows>[0][number]> = {}) {
   return {
@@ -30,7 +37,7 @@ describe("goalRows", () => {
   it("marks how a goal was scored next to its minute", () => {
     const rows = goalRows([goal({ kind: "PENALTY" }), goal({ minute: 12, kind: "OWN_GOAL" })]);
 
-    expect(rows[0].minutes).toEqual(["7' (ج)", "12' (عكسي)"]);
+    expect(rows[0].minutes).toEqual(["7' (ج)", "12' (ع)"]);
   });
 
   it("falls back to a tally when the minutes were never recorded", () => {
@@ -217,5 +224,69 @@ describe("the man of the match row", () => {
     const rows = matchEventRows({ goals: [], bookings: [], manOfTheMatch: player });
 
     expect(rows[0].team).toBeNull();
+  });
+});
+
+describe("matchTimeline", () => {
+  const player = { id: "p1", fullName: "أسامه محمد", photo: null };
+  const other = { id: "p2", fullName: "سالم ولد علي", photo: null };
+
+  it("runs the events in the order they happened", () => {
+    const entries = matchTimeline({
+      homeTeamId: "t1",
+      goals: [
+        { count: 1, minute: 44, kind: "GOAL", teamId: "t1", member: player },
+        { count: 1, minute: 10, kind: "GOAL", teamId: "t2", member: other },
+      ],
+      bookings: [{ cardType: "YELLOW", minute: 31, teamId: "t1", member: player }],
+    });
+
+    expect(entries.map((e) => e.minute)).toEqual([10, 31, 44]);
+    expect(entries.map((e) => e.type)).toEqual(["goal", "yellow", "goal"]);
+  });
+
+  it("keeps the yellows the card itself leaves out", () => {
+    const entries = matchTimeline({
+      goals: [],
+      bookings: [{ cardType: "YELLOW", minute: 31, member: player }],
+    });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].type).toBe("yellow");
+  });
+
+  it("sends an event with no minute to the end", () => {
+    const entries = matchTimeline({
+      goals: [
+        { count: 1, minute: null, kind: "GOAL", member: player },
+        { count: 1, minute: 70, kind: "GOAL", member: other },
+      ],
+      bookings: [],
+    });
+
+    expect(entries.map((e) => e.minute)).toEqual([70, null]);
+  });
+
+  it("notes how a goal was scored and how many it was", () => {
+    const entries = matchTimeline({
+      goals: [
+        { count: 1, minute: 12, kind: "PENALTY", member: player },
+        { count: 2, minute: 40, kind: "GOAL", member: other },
+      ],
+      bookings: [],
+    });
+
+    expect(entries[0].note).toBe("(ج)");
+    expect(entries[1].note).toBe(" (2)");
+  });
+
+  it("names the side each event belongs to", () => {
+    const entries = matchTimeline({
+      homeTeamId: "t1",
+      goals: [{ count: 1, minute: 12, kind: "GOAL", teamId: "t2", member: player }],
+      bookings: [],
+    });
+
+    expect(entries[0].side).toBe("away");
   });
 });

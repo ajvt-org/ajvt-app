@@ -4,9 +4,10 @@ import Scoreline from "@/components/tournament/Scoreline";
 import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
 import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
 import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
+import MatchTimeline from "@/components/tournament/matchCard/MatchTimeline";
 import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
-import { matchEventRows, memberTeamName } from "@/lib/matchEvents";
+import { matchEventRows, matchTimeline, memberTeamName } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
@@ -108,8 +109,12 @@ export default function MatchCard({
       </div>
 
       {events.length > 0 && (
-        <div className="mt-2 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+        <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <MatchEvents rows={events} />
+          <MatchTimeline
+            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
+            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+          />
         </div>
       )}
 
