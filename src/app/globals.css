@@ -833,9 +833,12 @@ body {
   line-height: 1.2;
 }
 
-/* A kickoff time leads its row, so the rows line up on the fixture rather
-   than on however wide the hour happens to render. */
-.fixture-time {
+/* A kickoff time sits in the same corner of every match card, so the cards
+   line up on the hour rather than on however wide it happens to render. */
+.match-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   flex-shrink: 0;
   font-size: 0.8125rem;
   font-weight: 800;
@@ -844,6 +847,10 @@ body {
   background: var(--mint-100);
   border-radius: 0.5rem;
   padding: 0.25rem 0.5rem;
+}
+.match-time-dark {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* The day a round is played on, with whatever the whole day shares. */
