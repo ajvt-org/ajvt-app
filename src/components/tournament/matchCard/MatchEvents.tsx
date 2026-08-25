@@ -7,6 +7,7 @@ import { matchDisplay } from "@/lib/texts";
 import { matchTone, type MatchTone } from "./tone";
 
 const LINE = "h-6 flex items-center";
+const ICON_CELL = `${LINE} justify-center w-4`;
 const NAME_SIZE = 11;
 
 function EventIcon({ type }: { type: MatchEventType }) {
@@ -33,7 +34,7 @@ function EventGrid({
     >
       {rows.map((row) => (
         <Fragment key={row.key}>
-          <span className={LINE}>
+          <span className={ICON_CELL}>
             <EventIcon type={row.type} />
           </span>
           <span className={LINE}>
@@ -75,7 +76,7 @@ function ManOfTheMatch({
 }) {
   return (
     <div className="flex items-center justify-center gap-2 text-xs font-bold" style={{ color }}>
-      <span className={LINE}>
+      <span className={ICON_CELL}>
         <EventIcon type={row.type} />
       </span>
       <span className={LINE}>

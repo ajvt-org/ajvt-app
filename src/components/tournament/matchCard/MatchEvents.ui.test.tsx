@@ -178,3 +178,21 @@ describe("sections", () => {
     expect(sections.querySelector("[style*='border-top']")).toBeNull();
   });
 });
+
+describe("column alignment across sections", () => {
+  it("boxes every event icon the same width so the photos line up", () => {
+    cleanup();
+    const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+    const card: MatchEventRow = { ...row, key: "c", side: "home", type: "yellow" };
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const cells = [...container.querySelectorAll(".grid")].map(
+      (grid) => grid.firstElementChild as HTMLElement,
+    );
+    expect(cells).toHaveLength(2);
+    for (const cell of cells) {
+      expect(cell.className).toContain("w-4");
+      expect(cell.className).toContain("justify-center");
+    }
+  });
+});
