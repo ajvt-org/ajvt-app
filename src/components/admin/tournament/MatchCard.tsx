@@ -3,7 +3,8 @@
 import CardChip from "@/components/tournament/CardChip";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import Scoreline from "@/components/tournament/Scoreline";
-import TeamLogo from "@/components/tournament/TeamLogo";
+import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
+import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
 import { getHeadToHead } from "@/lib/tournament";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
@@ -55,40 +56,29 @@ export default function MatchCard({
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p
-            className="font-bold text-sm flex items-center gap-1.5 flex-wrap"
-            style={{ color: "var(--text-main)" }}
-          >
-            <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
-            <bdi>{match.homeTeam.name}</bdi>
-            {match.status === "PLAYED" ? (
-              <Scoreline home={match.homeScore} away={match.awayScore} />
-            ) : (
-              <span>×</span>
-            )}
-            <bdi>{match.awayTeam.name}</bdi>
-            <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
-            {match.homePenalties !== null && match.awayPenalties !== null && (
-              <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                {" "}
-                ({texts.penaltiesShort}{" "}
-                <Scoreline home={match.homePenalties} away={match.awayPenalties} />)
-              </span>
-            )}
-          </p>
-          <div
-            className="flex items-center gap-2 text-xs mt-1 flex-wrap"
-            style={{ color: "var(--text-muted)" }}
-          >
-            {match.round && <span>{match.round}</span>}
-            {match.venue && (
-              <span>
-                <IconLabel name="pin">{match.venue}</IconLabel>
-              </span>
-            )}
-            {match.matchDate && <span dir="ltr">{formatMatchDateTime(match.matchDate)}</span>}
-            {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
+        <div className="min-w-0 flex-1">
+          <MatchTeams
+            home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
+            away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+            score={
+              match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
+            }
+          />
+          <div className="mt-1">
+            <MatchMeta
+              time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}
+              round={match.round}
+              venue={match.venue}
+              penalties={
+                match.homePenalties !== null && match.awayPenalties !== null
+                  ? { home: match.homePenalties, away: match.awayPenalties }
+                  : null
+              }
+            >
+              {match.isKnockout && (
+                <span className="badge badge-pending">{texts.knockoutBadge}</span>
+              )}
+            </MatchMeta>
           </div>
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
