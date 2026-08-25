@@ -110,7 +110,7 @@ describe("MatchCard by sport profile", () => {
   it("shows the whole football apparatus for a football match", () => {
     show("FOOTBALL");
 
-    expect(screen.getByText(/رجل المباراة/)).toBeDefined();
+    expect(screen.getByLabelText(/رجل المباراة/)).toBeDefined();
     expect(screen.getByText(/أفضل لاعب/)).toBeDefined();
     expect(screen.getByText(/سالم/)).toBeDefined();
   });
@@ -118,7 +118,7 @@ describe("MatchCard by sport profile", () => {
   it("keeps a board match down to the result", () => {
     show("BOARD");
 
-    expect(screen.queryByText(/رجل المباراة/)).toBeNull();
+    expect(screen.queryByLabelText(/رجل المباراة/)).toBeNull();
     expect(screen.queryByText(/أفضل لاعب/)).toBeNull();
     expect(screen.queryByText(/سالم/)).toBeNull();
     expect(screen.getByText(/تعديل التفاصيل/)).toBeDefined();

@@ -13,7 +13,7 @@ const NAME_SIZE = 10;
 function EventIcon({ type }: { type: MatchEventType }) {
   if (type === "yellow") return <CardChip type="YELLOW" />;
   if (type === "red") return <CardChip type="RED" />;
-  if (type === "motm") return <Icon name="star" size={13} filled />;
+  if (type === "motm") return <Icon name="medal" size={14} />;
   return <Icon name="ball" size={13} />;
 }
 
@@ -64,7 +64,10 @@ function EventGrid({
         const minutes = (
           <span key="minutes" className="flex flex-col">
             {minuteLines(row.minutes).map((line, i) => (
-              <span key={i} className={`${LINE} gap-1.5 whitespace-nowrap`}>
+              <span
+                key={i}
+                className={`${LINE} gap-1.5 whitespace-nowrap ${mirrored ? "" : "justify-end"}`}
+              >
                 {line.map((minute) => (
                   <bdi key={minute} className="optical-numeral">
                     {minute}
@@ -97,14 +100,14 @@ function ManOfTheMatch({
 }) {
   return (
     <div className="flex items-center justify-center gap-2 text-xs font-bold" style={{ color }}>
-      <span className={ICON_CELL}>
+      <span className={ICON_CELL} role="img" aria-label={matchDisplay.motm}>
         <EventIcon type={row.type} />
       </span>
       <span className={LINE}>
         <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
       </span>
       <span className="leading-6 optical-name" style={{ fontSize: NAME_SIZE }}>
-        {matchDisplay.motm} {row.name}
+        {row.name}
       </span>
       {row.team && (
         <span

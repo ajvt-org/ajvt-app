@@ -110,6 +110,11 @@ export default function MatchResult({
             kind: g.kind,
             isHome: g.teamId === match.homeTeam.id,
           }))}
+          manOfTheMatch={
+            football && match.manOfTheMatch
+              ? { ...match.manOfTheMatch, team: manOfTheMatchTeam }
+              : null
+          }
           bookings={(football ? match.bookings : []).map((b) => ({
             memberId: b.member.id,
             fullName: b.member.fullName,

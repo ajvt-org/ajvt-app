@@ -119,7 +119,7 @@ describe("two teams", () => {
     const { container } = render(<MatchEvents rows={[home, away, motm]} />);
 
     const last = container.firstElementChild?.lastElementChild;
-    expect(last?.textContent).toContain("رجل المباراة");
+    expect(last?.textContent).toContain("أسامه");
     expect((last as HTMLElement).className).toContain("justify-center");
   });
 
@@ -159,15 +159,16 @@ describe("sections", () => {
 
     const rule = container.querySelector("[style*='border-top']");
     expect(rule).not.toBeNull();
-    expect(rule?.nextElementSibling?.textContent).toContain("رجل المباراة");
+    expect(rule?.nextElementSibling?.textContent).toContain("أسامه محمد");
   });
 
   it("names the team the man of the match played for", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[goal, motm]} />);
 
-    expect(container.textContent).toContain("رجل المباراة: أسامه محمد");
+    expect(container.textContent).toContain("أسامه محمد");
     expect(container.textContent).toContain("(فريق النجم)");
+    expect(container.textContent).not.toContain("رجل المباراة");
   });
 
   it("skips the rule when the man of the match is all there is", () => {
@@ -232,5 +233,27 @@ describe("mirrored away column", () => {
     for (const name of names) {
       expect(name.getAttribute("style")).toContain("text-align: start");
     }
+  });
+});
+
+describe("minute columns", () => {
+  it("anchors the home minutes to the edge they share across sections", () => {
+    cleanup();
+    const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+    const card: MatchEventRow = { ...row, key: "c", side: "home", type: "yellow" };
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const lines = [...container.querySelectorAll(".grid")].map(
+      (grid) => grid.children[3].firstElementChild as HTMLElement,
+    );
+    for (const line of lines) expect(line.className).toContain("justify-end");
+  });
+
+  it("leaves the away minutes on their own shared edge", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[{ ...row, key: "a", side: "away" }]} />);
+
+    const line = container.querySelector(".grid")?.children[0].firstElementChild as HTMLElement;
+    expect(line.className).not.toContain("justify-end");
   });
 });

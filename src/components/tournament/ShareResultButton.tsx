@@ -26,6 +26,13 @@ interface BookingEntry {
   isHome: boolean;
 }
 
+interface MotmEntry {
+  id: string;
+  fullName: string;
+  photo: string | null;
+  team: string | null;
+}
+
 interface ShareResultButtonProps {
   homeTeamName: string;
   awayTeamName: string;
@@ -37,6 +44,7 @@ interface ShareResultButtonProps {
   tournamentTitle: string;
   goals?: GoalEntry[];
   bookings?: BookingEntry[];
+  manOfTheMatch?: MotmEntry | null;
 }
 
 function sideRows(goals: GoalEntry[], bookings: BookingEntry[]): MatchEventRow[] {
@@ -59,11 +67,23 @@ export default function ShareResultButton({
   tournamentTitle,
   goals = [],
   bookings = [],
+  manOfTheMatch = null,
 }: ShareResultButtonProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
   const events = sideRows(goals, bookings);
+  if (manOfTheMatch) {
+    events.push({
+      key: `motm:${manOfTheMatch.id}`,
+      side: null,
+      type: "motm",
+      name: manOfTheMatch.fullName,
+      team: manOfTheMatch.team,
+      photo: manOfTheMatch.photo,
+      minutes: [],
+    });
+  }
 
   async function download() {
     if (!cardRef.current) return;
