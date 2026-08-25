@@ -511,6 +511,10 @@ button:disabled {
    Preflight lays every svg out as a block, which inside a paragraph puts the
    icon on a line of its own and leaves the label stranded underneath, so the
    display is restored here as well. */
+.icon-label-numeral {
+  transform: translateY(-0.21em);
+}
+
 .icon-inline {
   display: inline-block;
   vertical-align: middle;
