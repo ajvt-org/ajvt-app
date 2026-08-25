@@ -904,6 +904,47 @@ details[open] > .team-summary .team-chevron {
 
 /* The place in a leaderboard, set as a plain numeral. Tabular figures keep
    the names beside them on one line however many places the list runs to. */
+.activity-row {
+  position: relative;
+}
+.activity-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 1rem;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+}
+.activity-row-live::before {
+  background: var(--mint-600);
+}
+.activity-row-soon::before {
+  background: #f59e0b;
+}
+.activity-row-done .activity-thumb {
+  opacity: 0.7;
+}
+.activity-thumb {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--mint-200);
+  background: var(--mint-100);
+  color: var(--mint-700);
+}
+.activity-title {
+  font-weight: 900;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
 .rank-numeral {
   display: inline-flex;
   align-items: center;
