@@ -57,7 +57,7 @@ function EventGrid({
             style={{
               wordBreak: "break-word",
               fontSize: NAME_SIZE,
-              textAlign: mirrored ? "end" : "start",
+              textAlign: "start",
             }}
           >
             {row.name}

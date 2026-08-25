@@ -221,11 +221,14 @@ describe("mirrored away column", () => {
     expect(awayGrid.getAttribute("style")).toContain("auto minmax(0,1fr) auto auto");
   });
 
-  it("pushes an away name towards its own photo", () => {
+  it("keeps both sides' names reading from the same edge", () => {
     cleanup();
-    const { container } = render(<MatchEvents rows={[away]} />);
+    const { container } = render(<MatchEvents rows={[home, away]} />);
 
-    const name = [...container.querySelectorAll(".optical-name")][0] as HTMLElement;
-    expect(name.getAttribute("style")).toContain("text-align: end");
+    const names = [...container.querySelectorAll(".optical-name")] as HTMLElement[];
+    expect(names).toHaveLength(2);
+    for (const name of names) {
+      expect(name.getAttribute("style")).toContain("text-align: start");
+    }
   });
 });
