@@ -33,9 +33,7 @@ function EventGrid({
     <div
       className="grid gap-x-2 gap-y-1 text-xs font-bold"
       style={{
-        gridTemplateColumns: mirrored
-          ? "auto minmax(0,1fr) auto auto"
-          : "auto auto minmax(0,1fr) auto",
+        gridTemplateColumns: "auto auto minmax(0,1fr) auto",
         color,
       }}
     >
@@ -78,7 +76,7 @@ function EventGrid({
         );
         return (
           <Fragment key={row.key}>
-            {mirrored ? [minutes, name, photo, icon] : [icon, photo, name, minutes]}
+            {mirrored ? [minutes, photo, name, icon] : [icon, photo, name, minutes]}
           </Fragment>
         );
       })}

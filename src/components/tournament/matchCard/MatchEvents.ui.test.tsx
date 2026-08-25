@@ -212,13 +212,15 @@ describe("mirrored away column", () => {
     expect(awayGrid.firstElementChild?.textContent).toBe("7'");
   });
 
-  it("swaps the column widths to match", () => {
+  it("keeps the photo beside its own name on both sides", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[home, away]} />);
 
     const [homeGrid, awayGrid] = [...container.querySelectorAll(".grid")];
+    expect(homeGrid.children[1].querySelector("svg,img")).not.toBeNull();
+    expect(awayGrid.children[1].querySelector("svg,img")).not.toBeNull();
     expect(homeGrid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
-    expect(awayGrid.getAttribute("style")).toContain("auto minmax(0,1fr) auto auto");
+    expect(awayGrid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
   });
 
   it("keeps both sides' names reading from the same edge", () => {
