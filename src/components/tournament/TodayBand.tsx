@@ -1,6 +1,7 @@
 import Icon from "@/components/Icon";
 import MatchTeams from "./matchCard/MatchTeams";
 import MatchMeta from "./matchCard/MatchMeta";
+import MatchCardHead from "./matchCard/MatchCardHead";
 import { formatMatchTime } from "@/lib/clubTime";
 import { matchDisplay as texts } from "@/lib/texts";
 import type { PublicMatch } from "./publicTypes";
@@ -21,6 +22,12 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
           className="card p-4 space-y-2"
           style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
         >
+          <MatchCardHead
+            time={match.matchDate ? formatMatchTime(match.matchDate) : null}
+            tone="dark"
+          >
+            <MatchMeta round={match.round} venue={match.venue} tone="dark" />
+          </MatchCardHead>
           <MatchTeams
             home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
             away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
@@ -29,12 +36,6 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
             }
             tone="dark"
             size="lg"
-          />
-          <MatchMeta
-            time={match.matchDate ? formatMatchTime(match.matchDate) : null}
-            round={match.round}
-            venue={match.venue}
-            tone="dark"
           />
         </div>
       ))}

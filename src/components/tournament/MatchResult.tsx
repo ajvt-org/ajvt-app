@@ -2,6 +2,8 @@ import Scoreline from "./Scoreline";
 import MatchTeams from "./matchCard/MatchTeams";
 import MatchMeta from "./matchCard/MatchMeta";
 import MatchEvents from "./matchCard/MatchEvents";
+import MatchCardHead from "./matchCard/MatchCardHead";
+import MatchCardFooter from "./matchCard/MatchCardFooter";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
@@ -33,15 +35,8 @@ export default function MatchResult({
 
   return (
     <div className="card p-4 space-y-2">
-      <MatchTeams
-        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
-        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
-        score={{ home: match.homeScore, away: match.awayScore }}
-      />
-
-      <div className="flex items-center justify-between gap-2">
+      <MatchCardHead time={match.matchDate ? formatMatchTime(match.matchDate) : null}>
         <MatchMeta
-          time={match.matchDate ? formatMatchTime(match.matchDate) : null}
           round={round}
           venue={venue}
           penalties={
@@ -50,35 +45,13 @@ export default function MatchResult({
               : null
           }
         />
+      </MatchCardHead>
 
-        <ShareResultButton
-          homeTeamName={match.homeTeam.name}
-          awayTeamName={match.awayTeam.name}
-          homeTeamLogo={match.homeTeam.logo}
-          awayTeamLogo={match.awayTeam.logo}
-          homeScore={match.homeScore ?? 0}
-          awayScore={match.awayScore ?? 0}
-          round={match.round}
-          tournamentTitle={tournamentTitle}
-          goals={(football ? match.goals : []).map((g) => ({
-            memberId: g.member?.id ?? null,
-            fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
-            photo: g.member?.photo ?? null,
-            count: g.count,
-            minute: g.minute,
-            kind: g.kind,
-            isHome: g.teamId === match.homeTeam.id,
-          }))}
-          bookings={(football ? match.bookings : []).map((b) => ({
-            memberId: b.member.id,
-            fullName: b.member.fullName,
-            photo: b.member.photo,
-            cardType: b.cardType as "YELLOW" | "RED",
-            minute: b.minute,
-            isHome: b.teamId === match.homeTeam.id,
-          }))}
-        />
-      </div>
+      <MatchTeams
+        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
+        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+        score={{ home: match.homeScore, away: match.awayScore }}
+      />
 
       {football && <MatchEvents rows={matchEventRows(match)} />}
 
@@ -111,6 +84,36 @@ export default function MatchResult({
           initialMyVoteCandidateId={myVoteCandidateId}
         />
       )}
+
+      <MatchCardFooter>
+        <ShareResultButton
+          homeTeamName={match.homeTeam.name}
+          awayTeamName={match.awayTeam.name}
+          homeTeamLogo={match.homeTeam.logo}
+          awayTeamLogo={match.awayTeam.logo}
+          homeScore={match.homeScore ?? 0}
+          awayScore={match.awayScore ?? 0}
+          round={match.round}
+          tournamentTitle={tournamentTitle}
+          goals={(football ? match.goals : []).map((g) => ({
+            memberId: g.member?.id ?? null,
+            fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
+            photo: g.member?.photo ?? null,
+            count: g.count,
+            minute: g.minute,
+            kind: g.kind,
+            isHome: g.teamId === match.homeTeam.id,
+          }))}
+          bookings={(football ? match.bookings : []).map((b) => ({
+            memberId: b.member.id,
+            fullName: b.member.fullName,
+            photo: b.member.photo,
+            cardType: b.cardType as "YELLOW" | "RED",
+            minute: b.minute,
+            isHome: b.teamId === match.homeTeam.id,
+          }))}
+        />
+      </MatchCardFooter>
     </div>
   );
 }

@@ -10,14 +10,6 @@ describe("MatchMeta", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("reads the kickoff time left to right inside a right to left card", () => {
-    cleanup();
-    const { container } = render(<MatchMeta time="16:00" />);
-
-    const time = [...container.querySelectorAll("span")].find((el) => el.textContent === "16:00");
-    expect(time?.getAttribute("dir")).toBe("ltr");
-  });
-
   it("centers the venue against its pin instead of sitting it on the baseline", () => {
     cleanup();
     const { container } = render(<MatchMeta venue="ملعب كوتش" />);

@@ -4,6 +4,7 @@ import Scoreline from "@/components/tournament/Scoreline";
 import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
 import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
 import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
+import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
@@ -56,7 +57,21 @@ export default function MatchCard({
   const events = football ? matchEventRows(match) : [];
   return (
     <div className="card p-4">
-      <div className="flex items-center justify-between gap-3">
+      <MatchCardHead time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}>
+        <MatchMeta
+          round={match.round}
+          venue={match.venue}
+          penalties={
+            match.homePenalties !== null && match.awayPenalties !== null
+              ? { home: match.homePenalties, away: match.awayPenalties }
+              : null
+          }
+        >
+          {match.isKnockout && <span className="badge badge-pending">{texts.knockoutBadge}</span>}
+        </MatchMeta>
+      </MatchCardHead>
+
+      <div className="flex items-center justify-between gap-3 mt-2">
         <div className="min-w-0 flex-1">
           <MatchTeams
             home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
@@ -65,22 +80,6 @@ export default function MatchCard({
               match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
             }
           />
-          <div className="mt-1">
-            <MatchMeta
-              time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}
-              round={match.round}
-              venue={match.venue}
-              penalties={
-                match.homePenalties !== null && match.awayPenalties !== null
-                  ? { home: match.homePenalties, away: match.awayPenalties }
-                  : null
-              }
-            >
-              {match.isKnockout && (
-                <span className="badge badge-pending">{texts.knockoutBadge}</span>
-              )}
-            </MatchMeta>
-          </div>
           {priorMeetings.length > 0 && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               <IconLabel name="refresh">{texts.priorMeetings}</IconLabel>{" "}
