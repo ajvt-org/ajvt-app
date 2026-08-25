@@ -9,6 +9,7 @@ const PATHS = {
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
   chevronDown: "M6 9l6 6 6-6",
   plus: "M12 5v14M5 12h14",
+  minus: "M5 12h14",
   trash: "M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14",
   pencil: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z",
   chevronRight: "M9 18l6-6-6-6",
