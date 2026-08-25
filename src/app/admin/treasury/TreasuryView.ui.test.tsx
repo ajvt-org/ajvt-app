@@ -15,6 +15,7 @@ function view(over: Partial<Treasury> = {}) {
         fees: 3000,
         support: 2000,
         byMethod: [{ method: "بنكيلي", amount: 5000 }],
+        spendingByMethod: [{ method: "نقداً", amount: 1200 }],
         ...over,
       }}
     />,
@@ -30,21 +31,46 @@ describe("TreasuryView", () => {
   });
 
   it("shows what came in and what went out", () => {
-    view({ byMethod: [] });
+    view({ byMethod: [], spendingByMethod: [] });
 
     expect(screen.getByText(texts.income)).toBeDefined();
-    expect(screen.getByText(texts.ouguiya(5000))).toBeDefined();
+    expect(screen.getByText("5000")).toBeDefined();
     expect(screen.getByText(texts.spending)).toBeDefined();
-    expect(screen.getByText(texts.ouguiya(1200))).toBeDefined();
+    expect(screen.getByText("1200")).toBeDefined();
   });
 
   it("splits the income into fees and support", () => {
-    view({ byMethod: [] });
+    view({ byMethod: [], spendingByMethod: [] });
 
     expect(screen.getByText(texts.fees)).toBeDefined();
-    expect(screen.getByText(texts.ouguiya(3000))).toBeDefined();
+    expect(screen.getByText("3000")).toBeDefined();
     expect(screen.getByText(texts.support)).toBeDefined();
-    expect(screen.getByText(texts.ouguiya(2000))).toBeDefined();
+    expect(screen.getByText("2000")).toBeDefined();
+  });
+
+  it("keeps every amount in its own right-aligned column with the currency beside it", () => {
+    view({ byMethod: [], spendingByMethod: [] });
+
+    const amount = screen.getByText("5000");
+    expect(amount.getAttribute("dir")).toBe("ltr");
+    expect(amount.getAttribute("style")).toContain("text-align: right");
+    const row = amount.parentElement as HTMLElement;
+    expect(row.getAttribute("style")).toContain("1fr auto auto");
+    expect(row.children[1].textContent).toBe(texts.currency);
+  });
+
+  it("breaks the spending down by how it was paid", () => {
+    view({ spendingByMethod: [{ method: "أخرى", amount: 700 }] });
+
+    expect(screen.getByText(texts.spendingByMethod)).toBeDefined();
+    expect(screen.getByText("أخرى")).toBeDefined();
+    expect(screen.getByText("700")).toBeDefined();
+  });
+
+  it("says so when nothing has gone out yet", () => {
+    view({ spendingByMethod: [] });
+
+    expect(screen.getByText(texts.noSpending)).toBeDefined();
   });
 
   it("says so when nothing has come in yet", () => {
@@ -54,9 +80,9 @@ describe("TreasuryView", () => {
   });
 
   it("names each payment method that brought money in", () => {
-    view({ byMethod: [{ method: "نقداً", amount: 400 }] });
+    view({ byMethod: [{ method: "نقداً", amount: 400 }], spendingByMethod: [] });
 
     expect(screen.getByText("نقداً")).toBeDefined();
-    expect(screen.getByText(texts.ouguiya(400))).toBeDefined();
+    expect(screen.getByText("400")).toBeDefined();
   });
 });

@@ -7,6 +7,7 @@ export interface Expense {
   id: string;
   label: string;
   amount: number;
+  method: string | null;
   note: string | null;
   proof: string | null;
   date: string;
@@ -62,6 +63,7 @@ export interface FinanceSummary {
 export interface ExpenseForm {
   label: string;
   amount: string;
+  method: string;
   note: string;
   date: string;
   proof: string;
@@ -72,6 +74,7 @@ export interface ExpenseForm {
 export const emptyExpenseForm: ExpenseForm = {
   label: "",
   amount: "",
+  method: "",
   note: "",
   date: "",
   proof: "",

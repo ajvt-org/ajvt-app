@@ -20,7 +20,7 @@ export const GET = withRoute("GET /api/admin/expenses", async () => {
 
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
   const session = await requireUnscopedAdmin();
-  const { label, amount, note, date, proof, tagIds, activityId } = parse(
+  const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
     expenseCreateSchema,
     await req.json(),
   );
@@ -32,6 +32,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
     data: {
       label,
       amount: n,
+      method: method?.trim() || null,
       note: note?.trim() || null,
       proof: proof || null,
       date: parsedDate,
@@ -55,6 +56,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       after: {
         label: expense.label,
         amount: expense.amount,
+        method: expense.method,
         note: expense.note,
         date: expense.date,
         proof: expense.proof,

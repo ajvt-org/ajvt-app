@@ -79,6 +79,24 @@ describe("POST /api/admin/expenses", () => {
     expect((await prisma.expense.findFirstOrThrow()).amount).toBe(2500);
   });
 
+  it("stores the payment method the form picked", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await POST(post("/api/admin/expenses", { ...validExpense, method: "بنكيلي" }));
+
+    expect(res.status).toBe(201);
+    expect((await prisma.expense.findFirstOrThrow()).method).toBe("بنكيلي");
+  });
+
+  it("leaves the method unset when the form sends none", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await POST(post("/api/admin/expenses", { ...validExpense, method: "  " }));
+
+    expect(res.status).toBe(201);
+    expect((await prisma.expense.findFirstOrThrow()).method).toBeNull();
+  });
+
   it("lists expenses newest first", async () => {
     await signInAsAdmin(await createAdmin());
     await prisma.expense.create({
@@ -99,6 +117,21 @@ describe("POST /api/admin/expenses", () => {
 describe("PATCH /api/admin/expenses/[id]", () => {
   beforeEach(async () => {
     await resetDb();
+  });
+
+  it("changes the payment method and can clear it again", async () => {
+    await signInAsAdmin(await createAdmin());
+    const expense = await anExpense();
+
+    await PATCH(...patch(expense.id, { method: "مصرفي" }));
+    expect((await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).method).toBe(
+      "مصرفي",
+    );
+
+    await PATCH(...patch(expense.id, { method: null }));
+    expect(
+      (await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).method,
+    ).toBeNull();
   });
 
   it("refuses an anonymous caller", async () => {

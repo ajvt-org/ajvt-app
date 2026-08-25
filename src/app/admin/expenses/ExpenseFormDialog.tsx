@@ -6,6 +6,8 @@ import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
+import { PAYMENT_METHODS } from "@/lib/donations";
+import { expenseForm as texts } from "@/lib/texts";
 import type { ActivityOption, ExpenseForm } from "./types";
 
 function Field({
@@ -72,9 +74,9 @@ export default function ExpenseFormDialog({
         >
           <h2 className="font-black text-white text-base">
             {editing ? (
-              <IconLabel name="pencil">تعديل مصروف</IconLabel>
+              <IconLabel name="pencil">{texts.editTitle}</IconLabel>
             ) : (
-              <IconLabel name="plus">إضافة مصروف</IconLabel>
+              <IconLabel name="plus">{texts.addTitle}</IconLabel>
             )}
           </h2>
           <DialogClose onClick={onClose} />
@@ -83,19 +85,19 @@ export default function ExpenseFormDialog({
         <form onSubmit={onSubmit} className="p-5 space-y-3">
           <div>
             <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              صورة الفاتورة / الإيصال (اختياري)
+              {texts.proofHeading}
             </p>
             <PhotoUpload
               photo={form.proof || null}
               imageUrlPrefix="/api/files"
               variant="cover"
-              label="صورة الفاتورة"
+              label={texts.proofLabel}
               placeholderIcon="receipt"
               onUpload={(filename) => onChange({ proof: filename })}
             />
           </div>
 
-          <Field id="expense-label" label="الوصف" required>
+          <Field id="expense-label" label={texts.label} required>
             <input
               id="expense-label"
               type="text"
@@ -107,7 +109,7 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-amount" label="المبلغ (MRU)" required>
+          <Field id="expense-amount" label={texts.amount} required>
             <input
               id="expense-amount"
               type="number"
@@ -120,7 +122,23 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-date" label="التاريخ">
+          <Field id="expense-method" label={texts.method}>
+            <select
+              id="expense-method"
+              value={form.method}
+              onChange={(e) => onChange({ method: e.target.value })}
+              className="input"
+            >
+              <option value="">{texts.noMethod}</option>
+              {PAYMENT_METHODS.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field id="expense-date" label={texts.date}>
             <input
               id="expense-date"
               type="date"
@@ -131,7 +149,7 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-note" label="ملاحظة (اختياري)">
+          <Field id="expense-note" label={texts.note}>
             <input
               id="expense-note"
               type="text"
@@ -142,14 +160,14 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-activity" label="النشاط (اختياري)">
+          <Field id="expense-activity" label={texts.activity}>
             <select
               id="expense-activity"
               value={form.activityId}
               onChange={(e) => onChange({ activityId: e.target.value })}
               className="input"
             >
-              <option value="">بدون نشاط</option>
+              <option value="">{texts.noActivity}</option>
               {activities.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.title}
@@ -160,7 +178,7 @@ export default function ExpenseFormDialog({
 
           <div>
             <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              التصنيفات
+              {texts.tags}
             </p>
             <FinanceTagChips
               tags={tags}
@@ -172,7 +190,7 @@ export default function ExpenseFormDialog({
                     : [...form.tagIds, id],
                 })
               }
-              empty="لا توجد تصنيفات بعد، أضفها من زر التصنيفات"
+              empty={texts.noTags}
             />
           </div>
 
@@ -186,13 +204,7 @@ export default function ExpenseFormDialog({
           )}
 
           <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-            {saving ? (
-              "..."
-            ) : editing ? (
-              <IconLabel name="save">حفظ التعديل</IconLabel>
-            ) : (
-              "إضافة المصروف"
-            )}
+            {saving ? "..." : editing ? <IconLabel name="save">{texts.save}</IconLabel> : texts.add}
           </button>
         </form>
       </div>
