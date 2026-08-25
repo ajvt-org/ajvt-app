@@ -121,42 +121,49 @@ function AdminActivityPageInner({ id }: { id: string }) {
         <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
       </Link>
 
-      <div className="card p-4 flex items-center gap-3 flex-wrap">
-        {activity.photo ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
-            alt={activity.title}
-            className="w-14 h-14 rounded-xl object-cover shrink-0"
-          />
-        ) : (
-          <span
-            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "var(--mint-100)" }}
-          >
-            <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={24} />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="font-black text-base truncate" style={{ color: "var(--text-main)" }}>
-            {activity.title}
-          </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {accepted} {countedNoun(accepted, ACCEPTED)} من {activity.registrations.length}{" "}
-            {countedNoun(activity.registrations.length, REQUEST)}
-            {activity.capacity !== null ? ` · ${texts.capacity} ${activity.capacity}` : ""}
-          </p>
+      <div className="card p-4 space-y-3">
+        <div className="flex items-center gap-3">
+          {activity.photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
+              alt={activity.title}
+              className="w-14 h-14 rounded-xl object-cover shrink-0"
+            />
+          ) : (
+            <span
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "var(--mint-100)" }}
+            >
+              <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={24} />
+            </span>
+          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <p
+              className="font-black text-base"
+              style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+            >
+              {activity.title}
+            </p>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {accepted} {countedNoun(accepted, ACCEPTED)} من {activity.registrations.length}{" "}
+              {countedNoun(activity.registrations.length, REQUEST)}
+              {activity.capacity !== null ? ` · ${texts.capacity} ${activity.capacity}` : ""}
+            </p>
+          </div>
         </div>
         {activity.isTournament && (
-          <a
-            href={`/tournament/${activity.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <IconLabel name="link">{texts.publicPage}</IconLabel>
-          </a>
+          <div className="flex justify-end">
+            <a
+              href={`/tournament/${activity.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+            >
+              <IconLabel name="link">{texts.publicPage}</IconLabel>
+            </a>
+          </div>
         )}
       </div>
 
