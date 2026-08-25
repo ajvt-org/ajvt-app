@@ -905,9 +905,12 @@ details[open] > .team-summary .team-chevron {
 /* The place in a leaderboard, set as a plain numeral. Tabular figures keep
    the names beside them on one line however many places the list runs to. */
 .rank-numeral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  min-width: 1.1rem;
-  text-align: center;
+  width: 1.5rem;
+  height: 1.5rem;
   font-size: 0.8125rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;

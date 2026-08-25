@@ -115,9 +115,10 @@ export default function ActivityRow({
         <Link
           href={`/admin/activities/${a.id}`}
           aria-label={texts.open(a.title)}
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
           style={{ color: "var(--text-muted)" }}
         >
-          ›
+          <Icon name="chevronLeft" size={15} />
         </Link>
       </div>
     </div>

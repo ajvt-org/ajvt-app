@@ -80,7 +80,12 @@ function MemberRow({
           <span className={`badge ${STATUS_BADGE[member.status]}`}>
             {STATUS_LABEL[member.status]}
           </span>
-          <span style={{ color: "var(--text-muted)" }}>›</span>
+          <span
+            className="w-6 h-6 flex items-center justify-center shrink-0"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <Icon name="chevronLeft" size={15} />
+          </span>
         </div>
       </div>
       <div
