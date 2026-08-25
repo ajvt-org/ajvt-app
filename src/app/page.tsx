@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getUserSession } from "@/lib/auth";
 import { formatActivityDates } from "@/lib/activityDates";
+import { sortActivities } from "@/lib/activityOrder";
 import { LANDING_SECTIONS } from "@/lib/navigation";
 import LandingHero from "@/components/LandingHero";
 import LandingActivities from "@/components/LandingActivities";
@@ -13,7 +14,7 @@ export default async function LandingPage() {
     getUserSession(),
     wantsActivities
       ? prisma.activity.findMany({
-          orderBy: [{ isOpen: "desc" }, { order: "asc" }],
+          orderBy: { order: "asc" },
           select: {
             id: true,
             title: true,
@@ -31,7 +32,7 @@ export default async function LandingPage() {
 
   if (session) redirect("/home");
 
-  const activities = rows.map((a) => ({
+  const activities = sortActivities(rows).map((a) => ({
     id: a.id,
     title: a.title,
     when: formatActivityDates(a),
