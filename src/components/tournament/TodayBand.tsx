@@ -13,7 +13,7 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
         className="font-black text-base flex items-center gap-1.5"
         style={{ color: "var(--text-main)" }}
       >
-        <Icon name="clock" size={16} />
+        <Icon name="clock" size={16} className="icon-optical" />
         {texts.todayMatches}
       </h2>
       {matches.map((match) => (

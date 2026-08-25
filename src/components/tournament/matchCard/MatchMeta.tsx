@@ -25,7 +25,7 @@ export default function MatchMeta({
       {round && <span>{round}</span>}
       {venue && (
         <span className="inline-flex items-center gap-1">
-          <Icon name="pin" size={12} />
+          <Icon name="pin" size={12} className="icon-optical" />
           {venue}
         </span>
       )}
