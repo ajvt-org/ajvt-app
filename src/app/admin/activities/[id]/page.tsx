@@ -155,7 +155,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         {activity.isTournament && (
           <div className="flex justify-end">
             <a
-              href={`/tournament/${activity.id}`}
+              href={`/activities/${activity.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
