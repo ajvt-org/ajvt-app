@@ -21,32 +21,50 @@ function EventGrid({
   rows,
   color,
   avatarSize,
+  mirrored,
 }: {
   rows: MatchEventRow[];
   color: string;
   avatarSize: number;
+  mirrored?: boolean;
 }) {
   if (rows.length === 0) return null;
   return (
     <div
       className="grid gap-x-2 gap-y-1 text-xs font-bold"
-      style={{ gridTemplateColumns: "auto auto minmax(0,1fr) auto", color }}
+      style={{
+        gridTemplateColumns: mirrored
+          ? "auto minmax(0,1fr) auto auto"
+          : "auto auto minmax(0,1fr) auto",
+        color,
+      }}
     >
-      {rows.map((row) => (
-        <Fragment key={row.key}>
-          <span className={ICON_CELL}>
+      {rows.map((row) => {
+        const icon = (
+          <span key="icon" className={ICON_CELL}>
             <EventIcon type={row.type} />
           </span>
-          <span className={LINE}>
+        );
+        const photo = (
+          <span key="photo" className={LINE}>
             <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
           </span>
+        );
+        const name = (
           <span
+            key="name"
             className="leading-6 optical-name"
-            style={{ wordBreak: "break-word", fontSize: NAME_SIZE }}
+            style={{
+              wordBreak: "break-word",
+              fontSize: NAME_SIZE,
+              textAlign: mirrored ? "end" : "start",
+            }}
           >
             {row.name}
           </span>
-          <span className="flex flex-col">
+        );
+        const minutes = (
+          <span key="minutes" className="flex flex-col">
             {minuteLines(row.minutes).map((line, i) => (
               <span key={i} className={`${LINE} gap-1.5 whitespace-nowrap`}>
                 {line.map((minute) => (
@@ -57,8 +75,13 @@ function EventGrid({
               </span>
             ))}
           </span>
-        </Fragment>
-      ))}
+        );
+        return (
+          <Fragment key={row.key}>
+            {mirrored ? [minutes, name, photo, icon] : [icon, photo, name, minutes]}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }
@@ -118,7 +141,7 @@ function Sides({
         <EventGrid rows={home} color={color} avatarSize={avatarSize} />
       </div>
       <div className="flex-1 min-w-0">
-        <EventGrid rows={away} color={color} avatarSize={avatarSize} />
+        <EventGrid rows={away} color={color} avatarSize={avatarSize} mirrored />
       </div>
     </div>
   );

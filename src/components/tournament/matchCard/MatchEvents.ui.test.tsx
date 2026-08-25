@@ -196,3 +196,36 @@ describe("column alignment across sections", () => {
     }
   });
 });
+
+describe("mirrored away column", () => {
+  const home: MatchEventRow = { ...row, key: "h", side: "home" };
+  const away: MatchEventRow = { ...row, key: "a", side: "away", name: "باه الصبار" };
+
+  it("turns the away rows around so each side's icon faces the outer edge", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const [homeGrid, awayGrid] = [...container.querySelectorAll(".grid")];
+    expect(homeGrid.firstElementChild?.querySelector("svg")).not.toBeNull();
+    expect(awayGrid.lastElementChild?.querySelector("svg")).not.toBeNull();
+    expect(homeGrid.lastElementChild?.textContent).toBe("7'");
+    expect(awayGrid.firstElementChild?.textContent).toBe("7'");
+  });
+
+  it("swaps the column widths to match", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const [homeGrid, awayGrid] = [...container.querySelectorAll(".grid")];
+    expect(homeGrid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
+    expect(awayGrid.getAttribute("style")).toContain("auto minmax(0,1fr) auto auto");
+  });
+
+  it("pushes an away name towards its own photo", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[away]} />);
+
+    const name = [...container.querySelectorAll(".optical-name")][0] as HTMLElement;
+    expect(name.getAttribute("style")).toContain("text-align: end");
+  });
+});
