@@ -107,8 +107,11 @@ export default function LandingActivities({
                 )}
               </span>
               {activity.when && (
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  <Icon name="calendar" size={12} className="icon-inline" />{" "}
+                <span
+                  className="text-xs flex items-center gap-1.5"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <Icon name="calendar" size={12} />
                   <NumericRanges>{activity.when}</NumericRanges>
                 </span>
               )}
