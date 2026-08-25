@@ -1,8 +1,9 @@
 import Icon from "@/components/Icon";
-import TeamLogo from "./TeamLogo";
 import PlayerAvatar from "./PlayerAvatar";
 import CardChip from "./CardChip";
 import Scoreline from "./Scoreline";
+import MatchTeams from "./matchCard/MatchTeams";
+import MatchMeta from "./matchCard/MatchMeta";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
@@ -33,45 +34,23 @@ export default function MatchResult({
 
   return (
     <div className="card p-4 space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="flex items-center gap-1.5 flex-1 min-w-0">
-          <TeamLogo logo={match.homeTeam.logo} name={match.homeTeam.name} size={20} />
-          <span className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-            {match.homeTeam.name}
-          </span>
-        </span>
-        <Scoreline
-          home={match.homeScore}
-          away={match.awayScore}
-          className="font-black text-base shrink-0 px-1"
-          style={{ color: "var(--mint-700)" }}
-        />
-        <span className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-          <span className="font-bold text-sm" style={{ color: "var(--text-main)" }}>
-            {match.awayTeam.name}
-          </span>
-          <TeamLogo logo={match.awayTeam.logo} name={match.awayTeam.name} size={20} />
-        </span>
-      </div>
+      <MatchTeams
+        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
+        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+        score={{ home: match.homeScore, away: match.awayScore }}
+      />
 
       <div className="flex items-center justify-between gap-2">
-        <p
-          className="text-xs flex items-center gap-2 flex-wrap min-w-0"
-          style={{ color: "var(--text-muted)" }}
-        >
-          {match.matchDate && <span dir="ltr">{formatMatchTime(match.matchDate)}</span>}
-          {round && <span>{round}</span>}
-          {venue && (
-            <span>
-              <Icon name="pin" size={12} className="icon-inline" /> {venue}
-            </span>
-          )}
-          {match.homePenalties !== null && match.awayPenalties !== null && (
-            <span>
-              ركلات ترجيح <Scoreline home={match.homePenalties} away={match.awayPenalties} />
-            </span>
-          )}
-        </p>
+        <MatchMeta
+          time={match.matchDate ? formatMatchTime(match.matchDate) : null}
+          round={round}
+          venue={venue}
+          penalties={
+            match.homePenalties !== null && match.awayPenalties !== null
+              ? { home: match.homePenalties, away: match.awayPenalties }
+              : null
+          }
+        />
 
         <ShareResultButton
           homeTeamName={match.homeTeam.name}
@@ -153,20 +132,20 @@ export default function MatchResult({
             size={20}
           />
           <Icon name="star" size={13} className="icon-inline" filled />
-          رجل المباراة: {match.manOfTheMatch.fullName}
+          {matchDisplay.motm} {match.manOfTheMatch.fullName}
         </p>
       )}
 
       {priorMeetings.length > 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          مواجهات سابقة:{" "}
+          {matchDisplay.priorMeetings}{" "}
           {priorMeetings.map((pm, i) => (
             <span key={pm.id}>
               {i > 0 && "، "}
               {pm.status === "PLAYED" ? (
                 <Scoreline home={pm.homeScore} away={pm.awayScore} />
               ) : (
-                "قادمة"
+                matchDisplay.upcomingShort
               )}
             </span>
           ))}
