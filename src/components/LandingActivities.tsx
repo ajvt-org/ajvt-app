@@ -65,7 +65,7 @@ export default function LandingActivities({
           <Icon name="chevronLeft" size={16} className="shrink-0" />
         </Link>
 
-        <div className="pb-1" style={{ borderBottom: "1px solid var(--mint-200)" }} />
+        <div className="pb-1 mb-2" style={{ borderBottom: "1px solid var(--mint-200)" }} />
 
         {activities.map((activity) => (
           <Link
