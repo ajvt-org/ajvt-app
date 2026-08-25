@@ -1,11 +1,11 @@
 "use client";
 
-import CardChip from "@/components/tournament/CardChip";
-import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import Scoreline from "@/components/tournament/Scoreline";
 import MatchTeams from "@/components/tournament/matchCard/MatchTeams";
 import MatchMeta from "@/components/tournament/matchCard/MatchMeta";
+import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
 import { getHeadToHead } from "@/lib/tournament";
+import { matchEventRows } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
@@ -53,6 +53,7 @@ export default function MatchCard({
 }) {
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
   const football = profile === "FOOTBALL";
+  const events = football ? matchEventRows(match) : [];
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between gap-3">
@@ -136,51 +137,9 @@ export default function MatchCard({
         </div>
       </div>
 
-      {football && match.status === "PLAYED" && match.goals.length > 0 && (
-        <div
-          className="mt-2 pt-2 flex flex-wrap gap-1.5"
-          style={{ borderTop: "1px solid var(--mint-100)" }}
-        >
-          {match.goals.map((g) => (
-            <span key={g.id} className="badge badge-active flex items-center gap-1.5">
-              {g.member && (
-                <PlayerAvatar photo={g.member.photo} fullName={g.member.fullName} size={18} />
-              )}
-              <Icon name="ball" size={12} /> {g.member?.fullName ?? texts.unknownScorer}
-              {g.minute ? ` ${g.minute}'` : ""}
-              {g.count > 1 ? ` (${g.count})` : ""}
-              {g.kind === "PENALTY" && ` (${texts.kindPenalty})`}
-              {g.kind === "OWN_GOAL" && ` (${texts.kindOwnGoal})`}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {football && match.manOfTheMatch && (
-        <p
-          className="text-xs mt-2 font-semibold flex items-center gap-1.5"
-          style={{ color: "var(--mint-700)" }}
-        >
-          <PlayerAvatar
-            photo={match.manOfTheMatch.photo}
-            fullName={match.manOfTheMatch.fullName}
-            size={20}
-          />
-          <IconLabel name="star">
-            {texts.motm} {match.manOfTheMatch.fullName}
-          </IconLabel>
-        </p>
-      )}
-
-      {football && match.bookings.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {match.bookings.map((b) => (
-            <span key={b.id} className="badge badge-rejected flex items-center gap-1.5">
-              <PlayerAvatar photo={b.member.photo} fullName={b.member.fullName} size={18} />
-              <CardChip type={b.cardType === "RED" ? "RED" : "YELLOW"} /> {b.member.fullName}
-              {b.minute ? ` (${b.minute}')` : ""}
-            </span>
-          ))}
+      {events.length > 0 && (
+        <div className="mt-2 pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
+          <MatchEvents rows={events} />
         </div>
       )}
 
