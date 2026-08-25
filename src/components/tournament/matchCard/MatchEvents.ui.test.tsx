@@ -26,7 +26,7 @@ describe("MatchEvents", () => {
       <MatchEvents rows={[row, { ...row, key: "p2", name: "باه الصبار", minutes: ["10'"] }]} />,
     );
 
-    const grid = container.firstElementChild as HTMLElement;
+    const grid = container.querySelector(".grid") as HTMLElement;
     expect(grid.className).toContain("grid");
     expect(grid.getAttribute("style")).toContain("auto auto minmax(0,1fr) auto");
     expect(grid.childElementCount).toBe(8);
@@ -36,7 +36,7 @@ describe("MatchEvents", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[0].querySelector("svg")).not.toBeNull();
     expect(cells[1].querySelector("svg,img")).not.toBeNull();
     expect(cells[2].textContent).toBe("أسامه محمد");
@@ -47,7 +47,7 @@ describe("MatchEvents", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[0].className).toContain("items-center");
     expect(cells[1].className).toContain("items-center");
     expect(cells[2].className).toContain("leading-6");
@@ -59,7 +59,7 @@ describe("MatchEvents", () => {
       <MatchEvents rows={[{ ...row, minutes: ["7'", "30'", "45'", "60'", "88'"] }]} />,
     );
 
-    const minutes = [...(container.firstElementChild?.children ?? [])][3];
+    const minutes = [...(container.querySelector(".grid")?.children ?? [])][3];
     expect(minutes.childElementCount).toBe(3);
     expect(minutes.children[0].textContent).toBe("7'30'");
     expect(minutes.children[2].textContent).toBe("88'");
@@ -78,7 +78,7 @@ describe("optical centering", () => {
     cleanup();
     const { container } = render(<MatchEvents rows={[row]} />);
 
-    const cells = [...(container.firstElementChild?.children ?? [])];
+    const cells = [...(container.querySelector(".grid")?.children ?? [])];
     expect(cells[2].className).toContain("optical-name");
     expect(cells[3].querySelector("bdi")?.className).toContain("optical-numeral");
   });
@@ -120,6 +120,7 @@ describe("two teams", () => {
 
     const last = container.firstElementChild?.lastElementChild;
     expect(last?.textContent).toContain("رجل المباراة");
+    expect((last as HTMLElement).className).toContain("justify-center");
   });
 
   it("stays one list when no row carries a side", () => {
@@ -127,5 +128,53 @@ describe("two teams", () => {
     const { container } = render(<MatchEvents rows={[row]} />);
 
     expect(container.querySelectorAll(".flex.gap-3")).toHaveLength(0);
+  });
+});
+
+describe("sections", () => {
+  const goal: MatchEventRow = { ...row, key: "g", side: "home" };
+  const card: MatchEventRow = { ...row, key: "c", side: "away", type: "yellow", name: "باه" };
+  const motm: MatchEventRow = {
+    ...row,
+    key: "m",
+    side: null,
+    type: "motm",
+    name: "أسامه محمد",
+    team: "فريق النجم",
+  };
+
+  it("keeps the goals and the cards in sections of their own", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, card]} />);
+
+    const sections = container.firstElementChild as HTMLElement;
+    expect(sections.childElementCount).toBe(2);
+    expect(sections.children[0].textContent).toContain("أسامه محمد");
+    expect(sections.children[1].textContent).toContain("باه");
+  });
+
+  it("rules a line off before the man of the match", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, motm]} />);
+
+    const rule = container.querySelector("[style*='border-top']");
+    expect(rule).not.toBeNull();
+    expect(rule?.nextElementSibling?.textContent).toContain("رجل المباراة");
+  });
+
+  it("names the team the man of the match played for", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal, motm]} />);
+
+    expect(container.textContent).toContain("رجل المباراة: أسامه محمد");
+    expect(container.textContent).toContain("(فريق النجم)");
+  });
+
+  it("skips the rule when the man of the match is all there is", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[motm]} />);
+
+    const sections = container.firstElementChild as HTMLElement;
+    expect(sections.querySelector("[style*='border-top']")).toBeNull();
   });
 });

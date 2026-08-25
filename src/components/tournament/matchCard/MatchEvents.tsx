@@ -3,9 +3,11 @@ import Icon from "@/components/Icon";
 import CardChip from "../CardChip";
 import PlayerAvatar from "../PlayerAvatar";
 import { minuteLines, type MatchEventRow, type MatchEventType } from "@/lib/matchEvents";
+import { matchDisplay } from "@/lib/texts";
 import { matchTone, type MatchTone } from "./tone";
 
 const LINE = "h-6 flex items-center";
+const NAME_SIZE = 11;
 
 function EventIcon({ type }: { type: MatchEventType }) {
   if (type === "yellow") return <CardChip type="YELLOW" />;
@@ -37,7 +39,10 @@ function EventGrid({
           <span className={LINE}>
             <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
           </span>
-          <span className="leading-6 optical-name" style={{ wordBreak: "break-word" }}>
+          <span
+            className="leading-6 optical-name"
+            style={{ wordBreak: "break-word", fontSize: NAME_SIZE }}
+          >
             {row.name}
           </span>
           <span className="flex flex-col">
@@ -57,6 +62,60 @@ function EventGrid({
   );
 }
 
+function ManOfTheMatch({
+  row,
+  color,
+  muted,
+  avatarSize,
+}: {
+  row: MatchEventRow;
+  color: string;
+  muted: string;
+  avatarSize: number;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-2 text-xs font-bold" style={{ color }}>
+      <span className={LINE}>
+        <EventIcon type={row.type} />
+      </span>
+      <span className={LINE}>
+        <PlayerAvatar photo={row.photo} fullName={row.name} size={avatarSize} />
+      </span>
+      <span className="leading-6 optical-name" style={{ fontSize: NAME_SIZE }}>
+        {matchDisplay.motm} {row.name}
+        {row.team && <span style={{ color: muted }}> ({row.team})</span>}
+      </span>
+    </div>
+  );
+}
+
+function Sides({
+  rows,
+  color,
+  avatarSize,
+}: {
+  rows: MatchEventRow[];
+  color: string;
+  avatarSize: number;
+}) {
+  if (rows.length === 0) return null;
+  const home = rows.filter((row) => row.side === "home");
+  const away = rows.filter((row) => row.side === "away");
+  if (home.length === 0 && away.length === 0) {
+    return <EventGrid rows={rows} color={color} avatarSize={avatarSize} />;
+  }
+  return (
+    <div className="flex gap-3">
+      <div className="flex-1 min-w-0">
+        <EventGrid rows={home} color={color} avatarSize={avatarSize} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <EventGrid rows={away} color={color} avatarSize={avatarSize} />
+      </div>
+    </div>
+  );
+}
+
 export default function MatchEvents({
   rows,
   tone = "light",
@@ -67,26 +126,23 @@ export default function MatchEvents({
   avatarSize?: number;
 }) {
   if (rows.length === 0) return null;
-  const color = matchTone[tone].event;
-  const home = rows.filter((row) => row.side === "home");
-  const away = rows.filter((row) => row.side === "away");
-  const shared = rows.filter((row) => row.side === null);
-
-  if (home.length === 0 && away.length === 0) {
-    return <EventGrid rows={shared} color={color} avatarSize={avatarSize} />;
-  }
+  const { event: color, rule, muted } = matchTone[tone];
+  const goals = rows.filter((row) => row.type === "goal");
+  const cards = rows.filter((row) => row.type === "yellow" || row.type === "red");
+  const motm = rows.find((row) => row.type === "motm");
 
   return (
-    <div className="space-y-1">
-      <div className="flex gap-3">
-        <div className="flex-1 min-w-0">
-          <EventGrid rows={home} color={color} avatarSize={avatarSize} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <EventGrid rows={away} color={color} avatarSize={avatarSize} />
-        </div>
-      </div>
-      <EventGrid rows={shared} color={color} avatarSize={avatarSize} />
+    <div className="space-y-2">
+      <Sides rows={goals} color={color} avatarSize={avatarSize} />
+      <Sides rows={cards} color={color} avatarSize={avatarSize} />
+      {motm && (
+        <>
+          {(goals.length > 0 || cards.length > 0) && (
+            <div style={{ borderTop: `1px solid ${rule}` }} />
+          )}
+          <ManOfTheMatch row={motm} color={color} muted={muted} avatarSize={avatarSize} />
+        </>
+      )}
     </div>
   );
 }
