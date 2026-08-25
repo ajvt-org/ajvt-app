@@ -833,8 +833,6 @@ body {
   line-height: 1.2;
 }
 
-/* A kickoff time sits in the same corner of every match card, so the cards
-   line up on the hour rather than on however wide it happens to render. */
 .match-time {
   display: inline-flex;
   align-items: center;
