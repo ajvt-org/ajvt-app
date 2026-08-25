@@ -5,6 +5,7 @@ import type { MatchEventRow } from "@/lib/matchEvents";
 
 const row: MatchEventRow = {
   key: "p1",
+  side: null,
   type: "goal",
   name: "أسامه محمد",
   photo: null,
@@ -80,5 +81,51 @@ describe("optical centering", () => {
     const cells = [...(container.firstElementChild?.children ?? [])];
     expect(cells[2].className).toContain("optical-name");
     expect(cells[3].querySelector("bdi")?.className).toContain("optical-numeral");
+  });
+});
+
+describe("two teams", () => {
+  const home: MatchEventRow = { ...row, key: "h", side: "home", name: "فريق الشباب" };
+  const away: MatchEventRow = { ...row, key: "a", side: "away", name: "فريق الأمل" };
+
+  it("puts the home scorers on the right and the away scorers on the left", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home, away]} />);
+
+    const columns = container.querySelectorAll(".flex.gap-3 > div");
+    expect(columns).toHaveLength(2);
+    expect(columns[0].textContent).toContain("فريق الشباب");
+    expect(columns[1].textContent).toContain("فريق الأمل");
+  });
+
+  it("keeps a column of its own for a side that scored nothing", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[home]} />);
+
+    const columns = container.querySelectorAll(".flex.gap-3 > div");
+    expect(columns).toHaveLength(2);
+    expect(columns[1].textContent).toBe("");
+  });
+
+  it("runs the man of the match under both columns", () => {
+    cleanup();
+    const motm: MatchEventRow = {
+      ...row,
+      key: "m",
+      side: null,
+      type: "motm",
+      name: "رجل المباراة: أسامه",
+    };
+    const { container } = render(<MatchEvents rows={[home, away, motm]} />);
+
+    const last = container.firstElementChild?.lastElementChild;
+    expect(last?.textContent).toContain("رجل المباراة");
+  });
+
+  it("stays one list when no row carries a side", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[row]} />);
+
+    expect(container.querySelectorAll(".flex.gap-3")).toHaveLength(0);
   });
 });

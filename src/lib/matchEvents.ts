@@ -1,7 +1,10 @@
 import { matchDisplay } from "@/lib/texts";
 
+export type EventSide = "home" | "away" | null;
+
 export type GoalSource = {
   memberId: string | null;
+  side?: EventSide;
   fullName: string;
   photo: string | null;
   count: number;
@@ -11,6 +14,7 @@ export type GoalSource = {
 
 export type BookingSource = {
   memberId: string;
+  side?: EventSide;
   fullName: string;
   photo: string | null;
   cardType: "YELLOW" | "RED";
@@ -21,6 +25,7 @@ export type MatchEventType = "goal" | "yellow" | "red" | "motm";
 
 export type MatchEventRow = {
   key: string;
+  side: EventSide;
   type: MatchEventType;
   name: string;
   photo: string | null;
@@ -42,9 +47,11 @@ function sortMinutes(minutes: string[]): string[] {
 export function goalRows(goals: GoalSource[]): MatchEventRow[] {
   const rows = new Map<string, MatchEventRow & { unnamed: number }>();
   for (const goal of goals) {
-    const key = goal.memberId ?? `unknown:${goal.fullName}`;
+    const side = goal.side ?? null;
+    const key = `${side ?? "any"}:${goal.memberId ?? `unknown:${goal.fullName}`}`;
     const row = rows.get(key) ?? {
       key,
+      side,
       type: "goal" as const,
       name: goal.fullName,
       photo: goal.photo,
@@ -72,9 +79,11 @@ export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
   const rows = new Map<string, MatchEventRow>();
   for (const booking of bookings) {
     const type = booking.cardType === "RED" ? "red" : "yellow";
-    const key = `${booking.memberId}:${type}`;
+    const side = booking.side ?? null;
+    const key = `${side ?? "any"}:${booking.memberId}:${type}`;
     const row = rows.get(key) ?? {
       key,
+      side,
       type,
       name: booking.fullName,
       photo: booking.photo,
@@ -95,15 +104,27 @@ export function minuteLines(minutes: string[], perLine = MINUTES_PER_LINE): stri
 type EventPlayer = { id: string; fullName: string; photo: string | null };
 
 export type EventMatch = {
+  homeTeamId?: string;
   goals: {
     count: number;
     minute: number | null;
     kind: string;
+    teamId?: string;
     member: EventPlayer | null;
   }[];
-  bookings: { cardType: string; minute: number | null; member: EventPlayer }[];
+  bookings: {
+    cardType: string;
+    minute: number | null;
+    teamId?: string;
+    member: EventPlayer;
+  }[];
   manOfTheMatch?: EventPlayer | null;
 };
+
+function sideOf(teamId: string | undefined, homeTeamId: string | undefined): EventSide {
+  if (!homeTeamId || !teamId) return null;
+  return teamId === homeTeamId ? "home" : "away";
+}
 
 export function matchEventRows(match: EventMatch): MatchEventRow[] {
   const rows = [
@@ -115,6 +136,7 @@ export function matchEventRows(match: EventMatch): MatchEventRow[] {
         count: goal.count,
         minute: goal.minute,
         kind: goal.kind as GoalSource["kind"],
+        side: sideOf(goal.teamId, match.homeTeamId),
       })),
     ),
     ...bookingRows(
@@ -124,12 +146,14 @@ export function matchEventRows(match: EventMatch): MatchEventRow[] {
         photo: booking.member.photo,
         cardType: booking.cardType === "RED" ? ("RED" as const) : ("YELLOW" as const),
         minute: booking.minute,
+        side: sideOf(booking.teamId, match.homeTeamId),
       })),
     ),
   ];
   if (match.manOfTheMatch) {
     rows.push({
       key: `motm:${match.manOfTheMatch.id}`,
+      side: null,
       type: "motm",
       name: `${matchDisplay.motm} ${match.manOfTheMatch.fullName}`,
       photo: match.manOfTheMatch.photo,

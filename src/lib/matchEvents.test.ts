@@ -127,3 +127,55 @@ describe("matchEventRows", () => {
     expect(matchEventRows({ goals: [], bookings: [], manOfTheMatch: null })).toEqual([]);
   });
 });
+
+describe("sides", () => {
+  const home = { id: "h1", fullName: "لاعب المضيف", photo: null };
+  const away = { id: "a1", fullName: "لاعب الضيف", photo: null };
+
+  it("reads a goal's side from the team it counts for", () => {
+    const rows = matchEventRows({
+      homeTeamId: "t1",
+      goals: [
+        { count: 1, minute: 10, kind: "GOAL", teamId: "t1", member: home },
+        { count: 1, minute: 20, kind: "GOAL", teamId: "t2", member: away },
+      ],
+      bookings: [],
+    });
+
+    expect(rows.map((r) => r.side)).toEqual(["home", "away"]);
+  });
+
+  it("leaves every row sideless when the match does not say who is home", () => {
+    const rows = matchEventRows({
+      goals: [{ count: 1, minute: 10, kind: "GOAL", teamId: "t1", member: home }],
+      bookings: [],
+    });
+
+    expect(rows[0].side).toBeNull();
+  });
+
+  it("keeps the same player's goals for two teams apart", () => {
+    const rows = matchEventRows({
+      homeTeamId: "t1",
+      goals: [
+        { count: 1, minute: 10, kind: "GOAL", teamId: "t1", member: home },
+        { count: 1, minute: 20, kind: "OWN_GOAL", teamId: "t2", member: home },
+      ],
+      bookings: [],
+    });
+
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.side)).toEqual(["home", "away"]);
+  });
+
+  it("gives the man of the match no side of his own", () => {
+    const rows = matchEventRows({
+      homeTeamId: "t1",
+      goals: [],
+      bookings: [],
+      manOfTheMatch: home,
+    });
+
+    expect(rows[0].side).toBeNull();
+  });
+});

@@ -39,10 +39,12 @@ interface ShareResultButtonProps {
   bookings?: BookingEntry[];
 }
 
-function sideRows(goals: GoalEntry[], bookings: BookingEntry[], isHome: boolean): MatchEventRow[] {
+function sideRows(goals: GoalEntry[], bookings: BookingEntry[]): MatchEventRow[] {
   return [
-    ...goalRows(goals.filter((goal) => goal.isHome === isHome)),
-    ...bookingRows(bookings.filter((booking) => booking.isHome === isHome)),
+    ...goalRows(goals.map((goal) => ({ ...goal, side: goal.isHome ? "home" : "away" }))),
+    ...bookingRows(
+      bookings.map((booking) => ({ ...booking, side: booking.isHome ? "home" : "away" })),
+    ),
   ];
 }
 
@@ -61,8 +63,7 @@ export default function ShareResultButton({
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
-  const homeEvents = sideRows(goals, bookings, true);
-  const awayEvents = sideRows(goals, bookings, false);
+  const events = sideRows(goals, bookings);
 
   async function download() {
     if (!cardRef.current) return;
@@ -110,14 +111,9 @@ export default function ShareResultButton({
           layout="stacked"
         />
 
-        {(homeEvents.length > 0 || awayEvents.length > 0) && (
-          <div className="flex justify-between gap-3 mt-4" dir="rtl">
-            <div className="flex-1 min-w-0">
-              <MatchEvents rows={homeEvents} tone="dark" avatarSize={16} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <MatchEvents rows={awayEvents} tone="dark" avatarSize={16} />
-            </div>
+        {events.length > 0 && (
+          <div className="mt-4">
+            <MatchEvents rows={events} tone="dark" avatarSize={16} />
           </div>
         )}
 
