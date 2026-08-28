@@ -11,6 +11,7 @@ export default function FormSelect({
   options,
   onChange,
   hint,
+  extraOption,
 }: {
   id: string;
   label: string;
@@ -19,6 +20,7 @@ export default function FormSelect({
   options: string[];
   onChange: (value: string) => void;
   hint?: string;
+  extraOption?: { value: string; label: string };
 }) {
   return (
     <div>
@@ -50,6 +52,7 @@ export default function FormSelect({
             {option}
           </option>
         ))}
+        {extraOption && <option value={extraOption.value}>{extraOption.label}</option>}
       </select>
       {hint && (
         <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>

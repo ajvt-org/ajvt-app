@@ -57,6 +57,7 @@ export const ACTION_LABELS: Record<string, string> = {
   CREATE_AGE_GROUP: "إضافة عصر",
   UPDATE_AGE_GROUP: "تعديل اسم عصر",
   DELETE_AGE_GROUP: "حذف عصر",
+  APPROVE_AGE_GROUP: "قبول عصر مقترح",
   CREATE_VILLAGE: "إضافة قرية",
   UPDATE_VILLAGE: "تعديل اسم قرية",
   DELETE_VILLAGE: "حذف قرية",

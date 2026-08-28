@@ -36,6 +36,7 @@ export interface AgeGroup {
   name: string;
   count?: number;
   totalCount?: number;
+  approved?: boolean;
 }
 
 export interface Village {

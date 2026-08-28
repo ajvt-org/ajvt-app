@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup, OrphanAge } from "./types";
 import OrphanAgeGroups from "./OrphanAgeGroups";
+import PendingAgeGroups from "./PendingAgeGroups";
 import MoveAgeGroupMembers from "./MoveAgeGroupMembers";
 import AgeGroupTotal from "./AgeGroupTotal";
 import DialogHeader from "@/components/DialogHeader";
@@ -104,6 +105,11 @@ export default function AgeGroupsDialog({
             الذين اختاروه من قبل، أما حذفه فلا يغيّر شيئاً لديهم.
           </p>
 
+          <PendingAgeGroups
+            groups={ageGroups.filter((g) => g.approved === false)}
+            onChanged={onChanged}
+          />
+
           <OrphanAgeGroups orphans={orphans} ageGroups={ageGroups} onChanged={onChanged} />
 
           <form onSubmit={addAgeGroup} className="flex items-center gap-2">
@@ -140,92 +146,96 @@ export default function AgeGroupsDialog({
             </p>
           ) : (
             <div className="space-y-2">
-              {ageGroups.map((g) => (
-                <div key={g.id} className="card p-3">
-                  <div className="flex items-center gap-2">
-                    {renamingAgeGroupId === g.id ? (
-                      <>
-                        <input
-                          type="text"
-                          value={renameAgeGroupValue}
-                          onChange={(e) => setRenameAgeGroupValue(e.target.value)}
-                          maxLength={30}
-                          className="input text-sm flex-1"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => saveRenameAgeGroup(g.id)}
-                          disabled={ageGroupBusyId === g.id}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                          style={{ background: "var(--mint-600)", color: "white" }}
-                        >
-                          {ageGroupBusyId === g.id ? "..." : "حفظ"}
-                        </button>
-                        <button
-                          onClick={() => setRenamingAgeGroupId(null)}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                        >
-                          إلغاء
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <span
-                          className="text-sm font-bold flex-1 truncate"
-                          style={{ color: "var(--text-main)" }}
-                        >
-                          {g.name}
-                          {g.count ? (
-                            <span
-                              className="text-xs font-normal mr-1.5"
-                              style={{ color: "var(--text-muted)" }}
-                            >
-                              ({g.count})
-                            </span>
-                          ) : null}
-                        </span>
-                        <button
-                          onClick={() => setMovingId(movingId === g.id ? null : g.id)}
-                          disabled={ageGroupBusyId === g.id || ageGroups.length < 2}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                        >
-                          <IconLabel name="upload">نقل</IconLabel>
-                        </button>
-                        <button
-                          onClick={() => startRenameAgeGroup(g)}
-                          disabled={ageGroupBusyId === g.id}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-                        >
-                          <IconLabel name="pencil">تعديل</IconLabel>
-                        </button>
-                        <button
-                          onClick={() => deleteAgeGroup(g.id)}
-                          disabled={ageGroupBusyId === g.id}
-                          className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
-                          style={{ background: "#fee2e2", color: "#991b1b" }}
-                        >
-                          {ageGroupBusyId === g.id ? "..." : <Icon name="trash" size={14} />}
-                        </button>
-                      </>
+              {ageGroups
+                .filter((g) => g.approved !== false)
+                .map((g) => (
+                  <div key={g.id} className="card p-3">
+                    <div className="flex items-center gap-2">
+                      {renamingAgeGroupId === g.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={renameAgeGroupValue}
+                            onChange={(e) => setRenameAgeGroupValue(e.target.value)}
+                            maxLength={30}
+                            className="input text-sm flex-1"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => saveRenameAgeGroup(g.id)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-600)", color: "white" }}
+                          >
+                            {ageGroupBusyId === g.id ? "..." : "حفظ"}
+                          </button>
+                          <button
+                            onClick={() => setRenamingAgeGroupId(null)}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                          >
+                            إلغاء
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span
+                            className="text-sm font-bold flex-1 truncate"
+                            style={{ color: "var(--text-main)" }}
+                          >
+                            {g.name}
+                            {g.count ? (
+                              <span
+                                className="text-xs font-normal mr-1.5"
+                                style={{ color: "var(--text-muted)" }}
+                              >
+                                ({g.count})
+                              </span>
+                            ) : null}
+                          </span>
+                          <button
+                            onClick={() => setMovingId(movingId === g.id ? null : g.id)}
+                            disabled={ageGroupBusyId === g.id || ageGroups.length < 2}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                          >
+                            <IconLabel name="upload">نقل</IconLabel>
+                          </button>
+                          <button
+                            onClick={() => startRenameAgeGroup(g)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+                          >
+                            <IconLabel name="pencil">تعديل</IconLabel>
+                          </button>
+                          <button
+                            onClick={() => deleteAgeGroup(g.id)}
+                            disabled={ageGroupBusyId === g.id}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
+                            style={{ background: "#fee2e2", color: "#991b1b" }}
+                          >
+                            {ageGroupBusyId === g.id ? "..." : <Icon name="trash" size={14} />}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    {renamingAgeGroupId !== g.id && (
+                      <AgeGroupTotal group={g} onChanged={onChanged} />
+                    )}
+                    {movingId === g.id && (
+                      <MoveAgeGroupMembers
+                        group={g}
+                        ageGroups={ageGroups}
+                        onDone={() => {
+                          setMovingId(null);
+                          onChanged();
+                        }}
+                        onCancel={() => setMovingId(null)}
+                      />
                     )}
                   </div>
-                  {renamingAgeGroupId !== g.id && <AgeGroupTotal group={g} onChanged={onChanged} />}
-                  {movingId === g.id && (
-                    <MoveAgeGroupMembers
-                      group={g}
-                      ageGroups={ageGroups}
-                      onDone={() => {
-                        setMovingId(null);
-                        onChanged();
-                      }}
-                      onCancel={() => setMovingId(null)}
-                    />
-                  )}
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>

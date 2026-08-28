@@ -403,6 +403,7 @@ model AgeGroup {
   id         String   @id @default(cuid())
   name       String   @unique
   totalCount Int      @default(30)
+  approved   Boolean  @default(false)
   createdAt  DateTime @default(now())
 }
 

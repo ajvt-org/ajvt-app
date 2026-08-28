@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HOME_VILLAGE, villageChoices } from "@/lib/villages";
 import { DEFAULT_AGES } from "./constants";
 
@@ -24,5 +24,9 @@ export function useFormLists() {
       .catch(() => {});
   }, []);
 
-  return { ages, villages };
+  const addAge = useCallback((name: string) => {
+    setAges((prev) => (prev.includes(name) ? prev : [...prev, name]));
+  }, []);
+
+  return { ages, villages, addAge };
 }

@@ -7,5 +7,9 @@ export const memberForm = {
   phoneHint: "8 أرقام — يبدأ بـ 2 أو 3 أو 4",
   ageLabel: "العصر",
   agePlaceholder: "اختر العصر...",
+  addAge: "+ إضافة عصر جديد",
+  newAgePlaceholder: "اكتب اسم العصر...",
+  addAgeAction: "إضافة",
+  addAgeNote: "العصر الجديد يظهر لك وحدك حتى يوافق عليه المشرف",
   next: "التالي",
 } as const;

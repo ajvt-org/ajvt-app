@@ -1,14 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { villageField } from "@/lib/texts";
+import { memberForm, villageField } from "@/lib/texts";
 import StepIdentity from "./StepIdentity";
 import type { FormValues } from "./constants";
 
 const VILLAGES = [HOME_VILLAGE, "أفجار", OTHER_VILLAGE];
 const AGES = ["البدريين", "المجاهدين"];
 
-function renderStep(overrides: Partial<FormValues> = {}, onVillageSelect = vi.fn()) {
+function renderStep(
+  overrides: Partial<FormValues> = {},
+  onVillageSelect = vi.fn(),
+  onAddAge = vi.fn(),
+) {
   const form: FormValues = {
     fullName: "",
     phone: "",
@@ -27,11 +31,12 @@ function renderStep(overrides: Partial<FormValues> = {}, onVillageSelect = vi.fn
       villages={VILLAGES}
       ages={AGES}
       onVillageSelect={onVillageSelect}
+      onAddAge={onAddAge}
       error=""
       onNext={vi.fn()}
     />,
   );
-  return { onVillageSelect };
+  return { onVillageSelect, onAddAge };
 }
 
 describe("StepIdentity", () => {
@@ -86,10 +91,44 @@ describe("StepIdentity", () => {
     expect(onVillageSelect).toHaveBeenCalledWith("أفجار");
   });
 
-  it("offers no way to invent an age group", () => {
+  it("lets a member of the home village suggest an age group", () => {
     renderStep();
 
     const select = screen.getByLabelText(/العصر/) as HTMLSelectElement;
-    expect([...select.options].map((o) => o.value)).toEqual(["", ...AGES]);
+    expect([...select.options].map((o) => o.value)).toEqual(["", ...AGES, "__add__"]);
+  });
+
+  it("reports a suggested age group once it is typed", () => {
+    const { onAddAge } = renderStep();
+
+    fireEvent.change(screen.getByLabelText(/العصر/), { target: { value: "__add__" } });
+    fireEvent.change(screen.getByLabelText(memberForm.newAgePlaceholder), {
+      target: { value: " الفلانيين " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: memberForm.addAgeAction }));
+
+    expect(onAddAge).toHaveBeenCalledWith("الفلانيين");
+  });
+
+  it("says a suggested age group waits on the admin", () => {
+    renderStep();
+
+    fireEvent.change(screen.getByLabelText(/العصر/), { target: { value: "__add__" } });
+
+    expect(screen.queryByText(memberForm.addAgeNote)).not.toBeNull();
+  });
+
+  it("keeps showing an age group the member already picked but nobody approved", () => {
+    renderStep({ age: "الفلانيين" });
+
+    const select = screen.getByLabelText(/العصر/) as HTMLSelectElement;
+    expect([...select.options].map((o) => o.value)).toContain("الفلانيين");
+    expect(select.value).toBe("الفلانيين");
+  });
+
+  it("offers no age group suggestion to a neighbouring village", () => {
+    renderStep({ village: "أفجار" });
+
+    expect(screen.queryByLabelText(/العصر/)).toBeNull();
   });
 });

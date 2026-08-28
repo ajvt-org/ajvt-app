@@ -1,5 +1,6 @@
 export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
 export { activityPage } from "./activityPage";
+export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { discipline } from "./discipline";
 export { expenseForm } from "./expenses";

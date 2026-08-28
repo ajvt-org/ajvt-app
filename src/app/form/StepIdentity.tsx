@@ -2,10 +2,10 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
-import IconLabel from "@/components/IconLabel";
 import { arabicValidity } from "@/lib/validationMessage";
 import { memberForm, villageField } from "@/lib/texts";
 import { OTHER_VILLAGE, requiresAgeGroup } from "@/lib/villages";
+import AgeGroupField from "./AgeGroupField";
 import ErrorNotice from "./ErrorNotice";
 import FormSelect from "./FormSelect";
 import PhoneInput from "./PhoneInput";
@@ -18,6 +18,7 @@ export default function StepIdentity({
   villages,
   ages,
   onVillageSelect,
+  onAddAge,
   error,
   onNext,
 }: {
@@ -27,6 +28,7 @@ export default function StepIdentity({
   villages: string[];
   ages: string[];
   onVillageSelect: (village: string) => void;
+  onAddAge: (name: string) => void;
   error: string;
   onNext: () => void;
 }) {
@@ -102,21 +104,12 @@ export default function StepIdentity({
       />
 
       {asksForAge && (
-        <div>
-          <FormSelect
-            id="member-age"
-            label={memberForm.ageLabel}
-            placeholder={memberForm.agePlaceholder}
-            value={form.age}
-            options={ages}
-            onChange={(age) => setForm((p) => ({ ...p, age }))}
-          />
-          {form.age && (
-            <p className="text-xs mt-1 font-semibold" style={{ color: "var(--mint-600)" }}>
-              <IconLabel name="check">{form.age}</IconLabel>
-            </p>
-          )}
-        </div>
+        <AgeGroupField
+          value={form.age}
+          ages={ages}
+          onChange={(age) => setForm((p) => ({ ...p, age }))}
+          onAdd={onAddAge}
+        />
       )}
 
       <ErrorNotice error={error} />

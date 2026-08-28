@@ -12,6 +12,7 @@ import { members, villages as villageMessages } from "@/lib/messages";
 import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { suggestAgeGroup } from "@/lib/ageGroups";
 
 const CODE_ATTEMPTS = 5;
 
@@ -61,6 +62,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           rejectionReason: null,
         },
       });
+      if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
       return m;
     });
@@ -95,6 +97,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
             membershipYear,
           },
         });
+        if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
         await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
         return created;
       });

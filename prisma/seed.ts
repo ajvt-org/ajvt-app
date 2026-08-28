@@ -41,7 +41,11 @@ async function main() {
   await seedAdmin();
 
   for (const name of DEFAULT_AGE_GROUPS) {
-    await prisma.ageGroup.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.ageGroup.upsert({
+      where: { name },
+      update: { approved: true },
+      create: { name, approved: true },
+    });
   }
   for (const name of DEFAULT_VILLAGES) {
     await prisma.village.upsert({ where: { name }, update: {}, create: { name } });

@@ -76,7 +76,7 @@ function FormPageInner() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountLoading, setAccountLoading] = useState(false);
 
-  const { ages, villages } = useFormLists();
+  const { ages, villages, addAge } = useFormLists();
 
   const [wantsName, setWantsName] = useState<boolean | null>(null);
 
@@ -440,6 +440,7 @@ function FormPageInner() {
             villages={villages}
             ages={ages}
             onVillageSelect={handleVillageSelect}
+            onAddAge={addAge}
             error={error}
             onNext={goNextFromStep1}
           />
