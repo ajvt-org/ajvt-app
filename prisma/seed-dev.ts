@@ -1,6 +1,12 @@
 import { prisma } from "./seed/client";
 import { wipe } from "./seed/wipe";
-import { seedAdmins, seedAgeGroups, seedUsers, seedPushSubscriptions } from "./seed/accounts";
+import {
+  seedAdmins,
+  seedAgeGroups,
+  seedVillages,
+  seedUsers,
+  seedPushSubscriptions,
+} from "./seed/accounts";
 import { seedMembers } from "./seed/members";
 import { seedActivities, seedRegistrations, seedRosterRegistrations } from "./seed/activities";
 import { seedLeague, seedDoubles, seedFinishedCup, seedSingles } from "./seed/tournament";
@@ -16,6 +22,7 @@ async function main() {
   await wipe();
   await seedAdmins();
   await seedAgeGroups();
+  await seedVillages();
 
   const users = await seedUsers(USERS);
   const members = await seedMembers(users);
