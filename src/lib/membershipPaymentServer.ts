@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
 import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
+import { saveMembershipSnapshot, setMembershipStatus } from "./membershipRecord";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -14,10 +15,12 @@ export async function recordMembershipPayment(
     where: { id: memberId },
     select: {
       status: true,
+      rejectionReason: true,
       fullName: true,
       membershipYear: true,
       paymentProof: true,
       paymentMethod: true,
+      referenceCode: true,
       surplusAnonymous: true,
     },
   });
@@ -29,8 +32,18 @@ export async function recordMembershipPayment(
     select: { id: true },
   });
 
+  const snapshot = {
+    status: member.status,
+    rejectionReason: member.rejectionReason,
+    paymentMethod: member.paymentMethod,
+    paymentProof: member.paymentProof,
+    referenceCode: member.referenceCode,
+    surplusAnonymous: member.surplusAnonymous,
+  };
+
   if (total === null) {
     await db.member.update({ where: { id: memberId }, data: { paidAmount: null } });
+    await saveMembershipSnapshot(db, memberId, membershipYear, { ...snapshot, paidAmount: null });
     if (existing) await db.donation.delete({ where: { id: existing.id } });
     await mirrorMembershipPayment(db, {
       memberId,
@@ -48,6 +61,7 @@ export async function recordMembershipPayment(
 
   const { fee: banked, surplus } = splitPayment(total, fee);
   await db.member.update({ where: { id: memberId }, data: { paidAmount: banked } });
+  await saveMembershipSnapshot(db, memberId, membershipYear, { ...snapshot, paidAmount: banked });
   await mirrorMembershipPayment(db, {
     memberId,
     year: membershipYear,
@@ -86,10 +100,10 @@ export async function recordMembershipPayment(
   }
 }
 
-export async function syncSurplusStatus(db: Db, memberId: string) {
+export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: string) {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { status: true, membershipYear: true },
+    select: { status: true, rejectionReason: true, membershipYear: true },
   });
   if (!member) return;
   await db.donation.updateMany({
@@ -97,6 +111,17 @@ export async function syncSurplusStatus(db: Db, memberId: string) {
     data: { status: member.status },
   });
   await mirrorMembershipStatus(db, memberId, member.membershipYear, member.status);
+  await setMembershipStatus(
+    db,
+    memberId,
+    member.membershipYear,
+    {
+      status: member.status,
+      rejectionReason: member.rejectionReason,
+      reviewedBy: reviewedBy ?? null,
+    },
+    new Date(),
+  );
 }
 
 // The one path that rewrites a year already published: the member asking for
@@ -113,6 +138,10 @@ export async function setSurplusVisibility(db: Db, memberId: string, anonymous: 
   const year = member.membershipYear;
 
   await db.member.update({ where: { id: memberId }, data: { surplusAnonymous: anonymous } });
+  await db.membership.updateMany({
+    where: { memberId, year },
+    data: { surplusAnonymous: anonymous },
+  });
   await db.donation.updateMany({
     where: { memberId, source: "MEMBERSHIP", membershipYear: year },
     data: { donorName },
