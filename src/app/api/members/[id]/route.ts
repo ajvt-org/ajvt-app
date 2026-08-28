@@ -20,6 +20,7 @@ export const GET = withRoute(
         userId: true,
         fullName: true,
         age: true,
+        village: true,
         paymentMethod: true,
         paymentProof: true,
         photo: true,

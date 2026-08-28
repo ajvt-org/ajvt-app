@@ -39,32 +39,36 @@ describe("ageForVillage", () => {
 });
 
 describe("villageChoices", () => {
-  it("puts the other option last", () => {
-    expect(villageChoices([HOME_VILLAGE, "أفجار"])).toEqual([
+  it("opens on the home village and closes on the other option", () => {
+    expect(villageChoices(["أفجار"])).toEqual([HOME_VILLAGE, "أفجار", OTHER_VILLAGE]);
+  });
+
+  it("lists neither the home village nor the other option twice", () => {
+    expect(villageChoices([HOME_VILLAGE, "أفجار", OTHER_VILLAGE])).toEqual([
       HOME_VILLAGE,
       "أفجار",
       OTHER_VILLAGE,
     ]);
   });
 
-  it("never lists the other option twice", () => {
-    expect(villageChoices([HOME_VILLAGE, OTHER_VILLAGE])).toEqual([HOME_VILLAGE, OTHER_VILLAGE]);
-  });
-
-  it("offers the other option on its own when nothing is managed yet", () => {
-    expect(villageChoices([])).toEqual([OTHER_VILLAGE]);
+  it("still offers both fixed options when nothing is managed yet", () => {
+    expect(villageChoices([])).toEqual([HOME_VILLAGE, OTHER_VILLAGE]);
   });
 });
 
 describe("isKnownVillage", () => {
-  it("accepts a managed village and the other option", () => {
-    expect(isKnownVillage(HOME_VILLAGE, [HOME_VILLAGE])).toBe(true);
-    expect(isKnownVillage(OTHER_VILLAGE, [HOME_VILLAGE])).toBe(true);
+  it("always accepts the home village and the other option", () => {
+    expect(isKnownVillage(HOME_VILLAGE, [])).toBe(true);
+    expect(isKnownVillage(OTHER_VILLAGE, [])).toBe(true);
+  });
+
+  it("accepts a managed village", () => {
+    expect(isKnownVillage("أفجار", ["أفجار"])).toBe(true);
   });
 
   it("refuses anything else", () => {
-    expect(isKnownVillage("أفجار", [HOME_VILLAGE])).toBe(false);
-    expect(isKnownVillage("", [HOME_VILLAGE])).toBe(false);
+    expect(isKnownVillage("أفجار", [])).toBe(false);
+    expect(isKnownVillage("", [])).toBe(false);
   });
 });
 

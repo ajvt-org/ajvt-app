@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { validatePhone, loginPathWithNext, safeNextPath } from "@/lib/utils";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
-import { auth } from "@/lib/messages";
+import { auth, members as memberMessages, villages as villageMessages } from "@/lib/messages";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { generateReferenceCode } from "@/lib/referenceCode";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
@@ -16,14 +16,15 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
 import { goAfterAuthChange } from "@/lib/authNav";
+import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
 import ProgressBar from "./ProgressBar";
 import StepIdentity from "./StepIdentity";
 import StepAccount from "./StepAccount";
 import StepPayment from "./StepPayment";
 import SubmittedCard from "./SubmittedCard";
+import { useFormLists } from "./useFormLists";
 import {
-  DEFAULT_AGES,
   DRAFT_KEY,
   IDLE_TIMEOUT_MS,
   STEPS_AUTHENTICATED,
@@ -49,8 +50,6 @@ function FormPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  // Set by whatever sent you here, so the way back is the page you left and
-  // not whichever home your session implies.
   const cameFrom = safeNextPath(searchParams.get("from"), "");
 
   const [loading, setLoading] = useState(false);
@@ -73,21 +72,18 @@ function FormPageInner() {
   const [authenticated, setAuthenticated] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Step 2 — account creation. Never persisted (not part of `form`).
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountLoading, setAccountLoading] = useState(false);
 
-  // العصر dropdown
-  const [ages, setAges] = useState<string[]>(DEFAULT_AGES);
-  const [showAddAge, setShowAddAge] = useState(false);
-  const [newAge, setNewAge] = useState("");
+  const { ages, villages } = useFormLists();
 
   const [wantsName, setWantsName] = useState<boolean | null>(null);
 
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
+    village: HOME_VILLAGE,
     age: "",
     paymentMethod: "",
     paidAmount: "",
@@ -120,17 +116,14 @@ function FormPageInner() {
         }
         setForm({
           fullName: member.fullName || "",
-          // The account's number, not the copy on the member: it is the one
-          // the association calls, and the only one still asked for.
           phone: me?.phone || member.phone || "",
+          village: member.village || HOME_VILLAGE,
           age: member.age || "",
           paymentMethod: member.paymentMethod || "",
           paidAmount:
             member.paidAmount != null
               ? String(member.paidAmount + (member.supportAmount ?? 0))
               : "",
-          // Older members predate this field — fall back to a fresh code
-          // rather than leaving the reconciliation field blank.
           referenceCode: member.referenceCode || generateReferenceCode(),
         });
         if (member.surplusAnonymous) setWantsName(false);
@@ -141,19 +134,12 @@ function FormPageInner() {
         return;
       }
 
-      // A fresh registration doesn't require an account yet — steps 1 and 2
-      // (personal info, then account creation) are open to anonymous
-      // visitors. Only check whether a session already exists so returning
-      // members skip straight past step 2.
       let initialPhone = "";
       const meRes = await fetch("/api/user/me");
       if (meRes.ok) {
         const me = await meRes.json();
         setAuthenticated(true);
         initialPhone = me?.phone || "";
-        // An account holds one request. Filling this in again would only be
-        // refused on submit, so an account that already has one is sent to
-        // where it can be corrected, or to the profile once it is approved.
         const mine = me?.members?.[0];
         if (mine) {
           router.replace(mine.status === "ACTIVE" ? "/profile" : `/form?id=${mine.id}`);
@@ -167,9 +153,8 @@ function FormPageInner() {
           const parsed = JSON.parse(draft);
           setForm({
             ...parsed,
-            // A draft can carry a number typed before signing in. The account's
-            // is the one that counts, and the one the server will store.
             phone: initialPhone || parsed.phone || "",
+            village: parsed.village || HOME_VILLAGE,
             referenceCode: parsed.referenceCode || generateReferenceCode(),
           });
           setDraftRestored(true);
@@ -183,13 +168,6 @@ function FormPageInner() {
       setCheckingAuth(false);
     }
     load();
-
-    fetch("/api/ages")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.ages?.length) setAges(data.ages);
-      })
-      .catch(() => {});
   }, [router, editId]);
 
   useEffect(() => {
@@ -204,6 +182,7 @@ function FormPageInner() {
     setForm({
       fullName: "",
       phone: "",
+      village: HOME_VILLAGE,
       age: "",
       paymentMethod: "",
       paidAmount: "",
@@ -213,26 +192,8 @@ function FormPageInner() {
     setDraftRestored(false);
   }
 
-  function handleAgeSelect(e: React.ChangeEvent<HTMLSelectElement>) {
-    const val = e.target.value;
-    if (val === "__add__") {
-      setShowAddAge(true);
-      setForm((p) => ({ ...p, age: "" }));
-    } else {
-      setShowAddAge(false);
-      setForm((p) => ({ ...p, age: val }));
-    }
-  }
-
-  function addCustomAge() {
-    const trimmed = newAge.trim();
-    if (!trimmed) return;
-    if (!ages.includes(trimmed)) {
-      setAges((prev) => [...prev, trimmed]);
-    }
-    setForm((p) => ({ ...p, age: trimmed }));
-    setNewAge("");
-    setShowAddAge(false);
+  function handleVillageSelect(village: string) {
+    setForm((p) => ({ ...p, village, age: requiresAgeGroup(village) ? p.age : "" }));
   }
 
   async function copyCode(code: string) {
@@ -241,7 +202,6 @@ function FormPageInner() {
       setCopied(code);
       setTimeout(() => setCopied(null), 2000);
     } catch {
-      // fallback for older browsers
       const el = document.createElement("textarea");
       el.value = code;
       document.body.appendChild(el);
@@ -259,20 +219,18 @@ function FormPageInner() {
       try {
         await navigator.share({ text });
         return;
-      } catch {
-        // user cancelled the share sheet, or the browser rejected it — fall
-        // through to copy so the action still does something useful
-      }
+      } catch {}
     }
     copyCode(form.referenceCode);
   }
 
   function validateStep1(): string | null {
-    if (!form.fullName.trim()) return "يرجى إدخال الاسم الكامل";
+    if (!form.fullName.trim()) return memberMessages.fullNameRequired;
     if (!isArabicName(form.fullName)) return "الاسم الكامل يجب أن يكون بالحروف العربية فقط";
     const phoneError = validatePhone(form.phone);
     if (phoneError) return phoneError;
-    if (!form.age) return "يرجى اختيار العصر";
+    if (!form.village) return villageMessages.pickVillage;
+    if (requiresAgeGroup(form.village) && !form.age) return memberMessages.pickAgeGroup;
     return null;
   }
 
@@ -311,8 +269,6 @@ function FormPageInner() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إنشاء الحساب");
-      // `steps` recomputes to [1, 3] now that authenticated is true —
-      // stepIndex (still 1) lands on step 3 automatically.
       setAuthenticated(true);
     } catch (err) {
       setError(errorMessage(err));
@@ -364,6 +320,7 @@ function FormPageInner() {
         body: JSON.stringify({
           ...(editId ? { id: editId } : {}),
           ...form,
+          age: ageForVillage(form.village, form.age),
           paidAmount: Number(form.paidAmount),
           surplusAnonymous: surplus > 0 && wantsName === false,
           paymentProof: proofFilename,
@@ -389,8 +346,6 @@ function FormPageInner() {
     goAfterAuthChange(router, "/login");
   }
 
-  // Anonymous visitors on steps 1-2 have no session to lose — only arm the
-  // idle logout once an account actually exists (editing, or past step 2).
   useInactivityLogout(IDLE_TIMEOUT_MS, handleIdleTimeout, authenticated && !checkingAuth);
 
   if (checkingAuth) {
@@ -416,13 +371,10 @@ function FormPageInner() {
 
   return (
     <div className="app-shell">
-      {/* Header */}
       <div
         className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
-        {/* The form is reached from the landing page or from an activity, and
-            it is long: without this there is no way out but the browser. */}
         <BackButton href={cameFrom || (authenticated ? "/profile" : "/")} />
         <Image src="/version-final.png" alt="شعار" width={38} height={38} />
         <div>
@@ -485,18 +437,14 @@ function FormPageInner() {
             form={form}
             setForm={setForm}
             authenticated={authenticated}
+            villages={villages}
             ages={ages}
-            showAddAge={showAddAge}
-            newAge={newAge}
-            setNewAge={setNewAge}
-            onAgeSelect={handleAgeSelect}
-            onAddCustomAge={addCustomAge}
+            onVillageSelect={handleVillageSelect}
             error={error}
             onNext={goNextFromStep1}
           />
         )}
 
-        {/* Skipped for members who already have an account. */}
         {currentStep === 2 && (
           <StepAccount
             phone={form.phone}

@@ -13,12 +13,14 @@ export function isReservedVillageName(name: string): boolean {
 }
 
 export function villageChoices(names: string[]): string[] {
-  return [...names.filter((name) => name !== OTHER_VILLAGE), OTHER_VILLAGE];
+  const managed = names.filter((name) => name !== HOME_VILLAGE && name !== OTHER_VILLAGE);
+  return [HOME_VILLAGE, ...managed, OTHER_VILLAGE];
 }
 
 export function isKnownVillage(village: string, names: string[]): boolean {
   const trimmed = village.trim();
-  return trimmed === OTHER_VILLAGE || names.includes(trimmed);
+  if (trimmed === HOME_VILLAGE || trimmed === OTHER_VILLAGE) return true;
+  return names.includes(trimmed);
 }
 
 export function ageForVillage(village: string, age: string | null | undefined): string | null {
