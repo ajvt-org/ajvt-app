@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { FilterableMember } from "./memberFilters";
+import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
 import {
   NO_FILTERS,
   readFilters,
@@ -19,6 +20,7 @@ function member(over: Partial<FilterableMember> = {}): FilterableMember {
     fullName: "محمد ولد أحمد",
     referenceCode: "AJVT-12",
     age: "البدريين",
+    village: HOME_VILLAGE,
     paymentMethod: "بنكيلي",
     paidAmount: 100,
     membershipYear: 2026,
@@ -48,6 +50,7 @@ describe("carrying the filters in the address", () => {
       status: "REJECTED",
       q: "محمد",
       age: "التائبين",
+      village: "أفجار",
       method: "نقداً",
       paid: "partial",
       year: "2026",
@@ -86,6 +89,27 @@ describe("narrowing a list of members", () => {
     expect(matchesFilters(member({ paymentMethod: "نقداً" }), filters, MEMBERSHIP)).toBe(false);
     expect(matchesFilters(member({ status: "PENDING" }), filters, MEMBERSHIP)).toBe(false);
     expect(matchesFilters(member({ age: "التائبين" }), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("narrows the list to one village", () => {
+    const filters = { ...NO_FILTERS, village: "أفجار" };
+    expect(matchesFilters(member({ village: "أفجار", age: null }), filters, MEMBERSHIP)).toBe(true);
+    expect(matchesFilters(member(), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("finds the members who picked the other option, so an admin can correct them", () => {
+    const filters = { ...NO_FILTERS, village: OTHER_VILLAGE };
+    expect(matchesFilters(member({ village: OTHER_VILLAGE, age: null }), filters, MEMBERSHIP)).toBe(
+      true,
+    );
+    expect(matchesFilters(member(), filters, MEMBERSHIP)).toBe(false);
+  });
+
+  it("keeps a member with no age group when no age group is asked for", () => {
+    expect(matchesFilters(member({ age: null }), NO_FILTERS, MEMBERSHIP)).toBe(true);
+    expect(
+      matchesFilters(member({ age: null }), { ...NO_FILTERS, age: "البدريين" }, MEMBERSHIP),
+    ).toBe(false);
   });
 
   // The question that could not be asked before: accepted, but short.

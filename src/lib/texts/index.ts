@@ -7,6 +7,8 @@ export { financeReport } from "./financeReport";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
+export { manualAdd } from "./manualAdd";
+export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";

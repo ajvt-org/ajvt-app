@@ -3,7 +3,8 @@ export type MemberProfile = {
     id: string;
     fullName: string;
     phone: string | null;
-    age: string;
+    age: string | null;
+    village: string;
     photo: string | null;
     status: string;
     memberNumber: string | null;

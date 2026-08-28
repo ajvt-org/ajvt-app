@@ -7,6 +7,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
+import { villageField } from "@/lib/texts";
 import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
@@ -87,7 +88,8 @@ function paidRows(member: Member): Row[] {
 function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
   const rows: Row[] = [
     ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
-    ["العصر", member.age, undefined],
+    [villageField.label, member.village, undefined],
+    ...((member.age ? [["العصر", member.age, undefined]] : []) as Row[]),
     ["طريقة الدفع", member.paymentMethod, undefined],
     ["سنة العضوية", String(member.membershipYear), "ltr"],
     ...paidRows(member),

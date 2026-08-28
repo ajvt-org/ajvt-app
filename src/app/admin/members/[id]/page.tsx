@@ -117,7 +117,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {member.fullName}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.age}
+            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.village}
+            {member.age ? ` · ${member.age}` : ""}
             {member.memberNumber ? ` · ${member.memberNumber}` : ""}
           </p>
         </div>

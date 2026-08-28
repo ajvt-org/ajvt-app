@@ -14,7 +14,8 @@ export interface Member {
   userId: string | null; // null = admin-added with an unknown phone number, no account yet
   fullName: string;
   phone: string | null; // null alongside userId — see above
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paymentProof: string | null;
   photo: string | null;
@@ -35,6 +36,12 @@ export interface AgeGroup {
   name: string;
   count?: number;
   totalCount?: number;
+}
+
+export interface Village {
+  id: string;
+  name: string;
+  count?: number;
 }
 
 export interface OrphanAge {

@@ -19,6 +19,7 @@ const SOURCE_LABEL: Record<string, string> = {
 export interface ExportableMember {
   fullName: string;
   age: string | null;
+  village: string;
   paymentMethod: string;
   paidAmount: number | null;
   supportAmount?: number;
@@ -53,6 +54,7 @@ function day(date: Date): string {
 export const MEMBER_HEADERS = [
   "الاسم الكامل",
   "رقم الهاتف",
+  "القرية",
   "العصر",
   "طريقة الدفع",
   "رسوم الاشتراك",
@@ -68,6 +70,7 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
   return members.map((m) => [
     m.fullName,
     m.user?.phone ?? "",
+    m.village,
     m.age ?? "",
     m.paymentMethod,
     m.paidAmount ?? 0,

@@ -12,6 +12,7 @@ const MEMBER_SELECT = {
   fullName: true,
   user: { select: { phone: true } },
   age: true,
+  village: true,
   paymentMethod: true,
   paymentProof: true,
   photo: true,

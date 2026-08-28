@@ -18,4 +18,7 @@ export const villagesDialog = {
   empty: "لا توجد قرى مسجلة بعد",
   confirmDelete: "هل أنت متأكد من حذف هذه القرية من القائمة؟ لن يؤثر ذلك على الأعضاء الحاليين.",
   otherLocked: "خيار ثابت في الاستمارة، يظهر دائماً ولا يمكن حذفه",
+  showOther: "عرض هؤلاء",
+  unlisted: (names: string) => `قرى لم تعد في القائمة وما زال بها أعضاء: ${names}`,
+  filterAll: "كل القرى",
 } as const;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { formatDate } from "@/lib/utils";
+import { villageField } from "@/lib/texts";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
     select: {
       fullName: true,
       age: true,
+      village: true,
       status: true,
       memberNumber: true,
       createdAt: true,
@@ -46,7 +48,8 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
 
           <dl className="flex-1 px-5 py-5 space-y-0">
             <Row label="رقم العضوية" value={member.memberNumber || "—"} dir="ltr" />
-            <Row label="العصر" value={member.age || "—"} />
+            <Row label={villageField.label} value={member.village} />
+            {member.age && <Row label="العصر" value={member.age} />}
             <Row label="عضو منذ" value={formatDate(member.createdAt)} />
           </dl>
 
