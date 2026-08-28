@@ -31,14 +31,21 @@ datasource db {
 
 model User {
   id                    String                   @id @default(cuid())
-  phone                 String                   @unique
-  password              String
+  phone                 String?                  @unique
+  password              String?
   tokenVersion          Int                      @default(0)
   // Set when an admin issues a temporary password. Non-null means the current
   // password is temporary: the app is locked until it is changed, and the
   // password stops working altogether once this passes.
   tempPasswordExpiresAt DateTime?
   createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  fullName              String?
+  age                   String?
+  village               String                   @default("التاكلالت")
+  photo                 String?
+  memberNumber          String?                  @unique
+  verifyToken           String?                  @unique
   members               Member[]
   pushSubscriptions     PushSubscription[]
   notificationPrefs     NotificationPreference[]
@@ -56,8 +63,8 @@ model Member {
   // One membership per account. Null = admin-added with an unknown phone
   // number, an account attached later; Postgres treats nulls as distinct, so
   // any number of those may sit unattached at once.
-  userId           String?                @unique
-  user             User?                  @relation(fields: [userId], references: [id])
+  userId           String                 @unique
+  user             User                   @relation(fields: [userId], references: [id])
   fullName         String
   age              String?
   village          String                 @default("التاكلالت")
