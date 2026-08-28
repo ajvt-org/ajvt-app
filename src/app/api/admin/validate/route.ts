@@ -5,6 +5,7 @@ import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
 import { syncSurplusStatus } from "@/lib/membershipPaymentServer";
+import { syncPersonFromMember } from "@/lib/personServer";
 import { recordMembershipYear } from "@/lib/membershipRecord";
 import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
@@ -57,6 +58,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       });
     }
     await syncSurplusStatus(tx, id, session.username);
+    await syncPersonFromMember(tx, id);
     return m;
   });
 

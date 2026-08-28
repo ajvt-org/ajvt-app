@@ -9,6 +9,7 @@ import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipYear } from "@/lib/membershipRecord";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { syncPersonFromMember } from "@/lib/personServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
@@ -72,7 +73,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     paidAmountValue = Number(paidAmount);
   }
 
-  let userId: string | null = null;
+  let userId: string | undefined;
   let tempPassword: string | undefined;
   if (!phoneUnknown) {
     const found = await prisma.user.findUnique({
@@ -92,6 +93,11 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
       });
       userId = user.id;
     }
+  } else {
+    const person = await prisma.user.create({
+      data: { fullName, age: ageForVillage(village, age), village, photo: photo || null },
+    });
+    userId = person.id;
   }
 
   const issued = status === "ACTIVE" ? await issueMembership() : undefined;
@@ -121,6 +127,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         recordedBy: session.username,
       });
     }
+    await syncPersonFromMember(tx, m.id);
     return tx.member.findUniqueOrThrow({ where: { id: m.id } });
   });
 

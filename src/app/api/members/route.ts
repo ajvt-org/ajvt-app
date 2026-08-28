@@ -13,6 +13,7 @@ import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { suggestAgeGroup } from "@/lib/ageGroups";
+import { syncPersonFromMember } from "@/lib/personServer";
 
 const CODE_ATTEMPTS = 5;
 
@@ -64,6 +65,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       });
       if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      await syncPersonFromMember(tx, id);
       return m;
     });
     return NextResponse.json({ id: updated.id }, { status: 200 });
@@ -99,6 +101,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         });
         if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
         await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
+        await syncPersonFromMember(tx, created.id);
         return created;
       });
       return NextResponse.json(
