@@ -13,12 +13,12 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
 
 export async function eligibleMembers() {
   const members = await prisma.member.findMany({
-    where: { status: "ACTIVE", paidAmount: { gte: MEMBERSHIP_FEE }, userId: { not: null } },
+    where: { status: "ACTIVE", paidAmount: { gte: MEMBERSHIP_FEE } },
     select: { userId: true, fullName: true },
     orderBy: { fullName: "asc" },
     distinct: ["userId"],
   });
-  return members.map((m) => ({ userId: m.userId as string, fullName: m.fullName }));
+  return members.map((m) => ({ userId: m.userId, fullName: m.fullName }));
 }
 
 export async function getQuizSettings() {

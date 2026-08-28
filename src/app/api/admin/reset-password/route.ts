@@ -34,7 +34,7 @@ export const POST = withRoute("POST /api/admin/reset-password", async (req: Next
     },
   });
 
-  await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone, {
+  await logAction(session.username, "RESET_MEMBER_PASSWORD", updated.phone ?? updated.id, {
     ...auditContext(session, req),
     targetType: "User",
     targetId: updated.id,

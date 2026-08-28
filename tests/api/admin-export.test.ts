@@ -29,6 +29,7 @@ describe("GET /api/admin/export/[dataset]", () => {
     await signInAsAdmin(await createAdmin());
     await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "محمد ولد أحمد",
         age: "البدريين",
         paymentMethod: "بنكيلي",
@@ -81,7 +82,13 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("splits a membership payment into the fee and the support it carried", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: {
+        user: { create: {} },
+        fullName: "محمد",
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
@@ -94,7 +101,13 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("carries the support half of a membership payment as a surplus gift", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: {
+        user: { create: {} },
+        fullName: "محمد",
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
@@ -109,7 +122,13 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("leaves a membership payment that carried nothing off the donations export", async () => {
     await signInAsAdmin(await createAdmin());
     const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: {
+        user: { create: {} },
+        fullName: "محمد",
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 100, 100);
@@ -124,6 +143,7 @@ describe("GET /api/admin/export/[dataset]", () => {
     await prisma.ageGroup.create({ data: { name: "البدريين", totalCount: 10 } });
     await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "عضو",
         age: "البدريين",
         paymentMethod: "بنكيلي",

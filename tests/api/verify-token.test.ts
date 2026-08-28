@@ -7,6 +7,7 @@ import { POST as VALIDATE } from "@/app/api/admin/validate/route";
 async function pendingMember(name: string) {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName: name,
       age: "البدريين",
       paymentMethod: "بنكيلي",
@@ -54,6 +55,7 @@ describe("membership verification", () => {
     const issued = await issueMembership();
     await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "محمد",
         age: "البدريين",
         paymentMethod: "بنكيلي",

@@ -7,7 +7,8 @@ import IconLabel from "@/components/IconLabel";
 
 interface MemberCardProps {
   fullName: string;
-  age: string;
+  village: string;
+  age: string | null;
   memberNumber: string | null;
   verifyToken: string | null;
   createdAt: string;
@@ -18,6 +19,7 @@ type Busy = "image" | "pdf" | "share" | null;
 
 export default function MemberCard({
   fullName,
+  village,
   age,
   memberNumber,
   verifyToken,
@@ -180,7 +182,7 @@ export default function MemberCard({
               )}
             </div>
             <p className="text-xs" style={{ color: "#c5e8dc" }}>
-              {age}
+              {[village, age].filter(Boolean).join(" · ")}
             </p>
             <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.7)" }} dir="ltr">
               {memberNumber}

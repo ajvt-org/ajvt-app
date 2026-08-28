@@ -33,7 +33,7 @@ export const PATCH = withRoute(
       select: { fullName: true, userId: true, user: { select: { id: true, phone: true } } },
     });
     if (!member) throw new NotFoundError(members.notFound);
-    if (!member.user) throw new ConflictError(members.noAccountToCorrect);
+    if (!member.user?.phone) throw new ConflictError(members.noAccountToCorrect);
 
     if (member.user.phone === next) return NextResponse.json({ phone: next });
 

@@ -8,7 +8,7 @@ import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helper
 
 async function aMember(fullName: string, village: string) {
   return prisma.member.create({
-    data: { fullName, village, paymentMethod: "بنكيلي" },
+    data: { user: { create: {} }, fullName, village, paymentMethod: "بنكيلي" },
   });
 }
 

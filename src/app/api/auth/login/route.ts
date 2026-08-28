@@ -30,7 +30,7 @@ export const POST = withRoute("Login", async (req: NextRequest) => {
   }
 
   const user = await prisma.user.findUnique({ where: { phone: phone.trim() } });
-  if (!user) {
+  if (!user?.password) {
     await bcrypt.compare(password, DUMMY_HASH);
     recordFailedAttempt(key, WINDOW_MS);
     recordFailedAttempt(ipKey, WINDOW_MS);

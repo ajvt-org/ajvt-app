@@ -7,8 +7,15 @@ vi.mock("@/lib/push", () => ({ sendPushToUser: vi.fn(async () => {}) }));
 const { GET } = await import("@/app/api/user/matches/route");
 
 async function memberFor(userId: string | null, fullName: string) {
+  const owner = userId ?? (await prisma.user.create({ data: {} })).id;
   return prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE", userId },
+    data: {
+      fullName,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      userId: owner,
+    },
   });
 }
 

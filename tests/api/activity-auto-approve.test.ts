@@ -80,7 +80,13 @@ describe("an activity that approves registrations itself", () => {
   it("still refuses once the seats are gone", async () => {
     const a = await activity({ autoApprove: true, capacity: 1 });
     const holder = await prisma.member.create({
-      data: { fullName: "سالم", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: {
+        user: { create: {} },
+        fullName: "سالم",
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
     });
     await prisma.activityRegistration.create({
       data: { memberId: holder.id, activityId: a.id, status: "ACTIVE" },

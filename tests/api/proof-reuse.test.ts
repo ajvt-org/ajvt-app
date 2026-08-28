@@ -13,6 +13,7 @@ async function fingerprint(filename: string, sha256: string) {
 async function memberWithProof(fullName: string, paymentProof: string) {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName,
       age: "البدريين",
       paymentMethod: "بنكيلي",

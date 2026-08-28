@@ -7,8 +7,9 @@ import { runningYear } from "../../src/lib/membershipYear";
 import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
+import { syncPersonFromMember } from "../../src/lib/personServer";
 
-export type SeededUser = { id: string; phone: string };
+export type SeededUser = { id: string; phone: string | null };
 export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>>;
 
 export interface SeededMembers {
@@ -50,9 +51,14 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     const membershipYear = yearFor(i, slots.length, current);
     if (isActive) memberNumber += 1;
 
+    const addedByHand = i % NO_ACCOUNT_EVERY === NO_ACCOUNT_EVERY - 1;
+    const owner = addedByHand
+      ? (await prisma.user.create({ data: { fullName: fullName(i) } })).id
+      : users[i].id;
+
     const member = await prisma.member.create({
       data: {
-        userId: i % NO_ACCOUNT_EVERY === NO_ACCOUNT_EVERY - 1 ? null : users[i].id,
+        userId: owner,
         fullName: fullName(i),
         age,
         paymentMethod: paymentMethod(i),
@@ -73,6 +79,8 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         createdAt: daysAgo(Math.max(1, 130 - i)),
       },
     });
+
+    await syncPersonFromMember(prisma, member.id);
 
     await mirrorMembershipPayment(prisma, {
       memberId: member.id,

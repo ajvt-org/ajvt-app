@@ -27,8 +27,7 @@
     "test:e2e": "tsx tests/e2e/prepareDb.ts && playwright test",
     "db:proof-hashes": "tsx prisma/backfillProofHashes.ts",
     "db:legacy-images": "tsx prisma/backfillLegacyImages.ts",
-    "db:new-migration": "node scripts/new-migration.mjs",
-    "db:dedupe-members": "tsx prisma/dedupeMembers.ts"
+    "db:new-migration": "node scripts/new-migration.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

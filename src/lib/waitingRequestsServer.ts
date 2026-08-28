@@ -11,7 +11,7 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
       select: { id: true, userId: true, fullName: true, createdAt: true },
     }),
     prisma.user.findMany({
-      where: { members: { none: {} }, createdAt: { lte: cutoff } },
+      where: { members: { none: {} }, phone: { not: null }, createdAt: { lte: cutoff } },
       select: { id: true, phone: true, createdAt: true },
     }),
   ]);
@@ -29,6 +29,6 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
     pending: longestFirst(
       pending.map((m) => asRow(m.id, m.userId, m.fullName || money.anonymousDonor, m.createdAt)),
     ),
-    unfinished: longestFirst(unfinished.map((u) => asRow(u.id, u.id, u.phone, u.createdAt))),
+    unfinished: longestFirst(unfinished.map((u) => asRow(u.id, u.id, u.phone ?? "", u.createdAt))),
   };
 }

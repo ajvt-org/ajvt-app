@@ -5,7 +5,7 @@ import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function aMember(fullName: string, age: string) {
   return prisma.member.create({
-    data: { fullName, age, paymentMethod: "بنكيلي" },
+    data: { user: { create: {} }, fullName, age, paymentMethod: "بنكيلي" },
   });
 }
 
@@ -78,10 +78,22 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     await signInAsAdmin(await createAdmin());
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
     const older = await prisma.member.create({
-      data: { fullName: "محمد", age: "المنصورين", paymentMethod: "بنكيلي", paymentProof: "a.webp" },
+      data: {
+        user: { create: {} },
+        fullName: "محمد",
+        age: "المنصورين",
+        paymentMethod: "بنكيلي",
+        paymentProof: "a.webp",
+      },
     });
     const newer = await prisma.member.create({
-      data: { fullName: "أحمد", age: "المبشرين", paymentMethod: "بنكيلي", paymentProof: "b.webp" },
+      data: {
+        user: { create: {} },
+        fullName: "أحمد",
+        age: "المبشرين",
+        paymentMethod: "بنكيلي",
+        paymentProof: "b.webp",
+      },
     });
 
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));

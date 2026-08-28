@@ -14,8 +14,10 @@ const LAST = YEAR - 1;
 const payment = { paidAmount: 1000, paymentMethod: "بنكيلي" };
 
 function member(over: Record<string, unknown> = {}) {
+  const { userId, ...rest } = over;
   return prisma.member.create({
     data: {
+      ...(userId ? { userId: userId as string } : { user: { create: {} } }),
       fullName: "محمد ولد أحمد",
       age: "البدريين",
       paymentMethod: "بنكيلي",
@@ -23,7 +25,7 @@ function member(over: Record<string, unknown> = {}) {
       paidAmount: 500,
       membershipYear: LAST,
       memberNumber: "AJVT-2025-0001",
-      ...over,
+      ...rest,
     },
   });
 }

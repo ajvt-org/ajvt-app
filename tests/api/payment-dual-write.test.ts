@@ -182,6 +182,7 @@ describe("every path that touches money writes both shapes", () => {
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
     const m = await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "محمد",
         age: "البدريين",
         paymentMethod: "بنكيلي",

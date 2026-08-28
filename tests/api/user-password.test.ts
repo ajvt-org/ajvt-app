@@ -22,8 +22,8 @@ describe("POST /api/user/password", () => {
 
     expect(res.status).toBe(200);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-    expect(await bcrypt.compare("brandnew", after.password)).toBe(true);
-    expect(await bcrypt.compare("secret", after.password)).toBe(false);
+    expect(await bcrypt.compare("brandnew", after.password as string)).toBe(true);
+    expect(await bcrypt.compare("secret", after.password as string)).toBe(false);
   });
 
   it("refuses a wrong current password and leaves the old one working", async () => {
@@ -34,7 +34,7 @@ describe("POST /api/user/password", () => {
 
     expect(res.status).toBe(401);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-    expect(await bcrypt.compare("secret", after.password)).toBe(true);
+    expect(await bcrypt.compare("secret", after.password as string)).toBe(true);
   });
 
   it("refuses to set the same password again", async () => {

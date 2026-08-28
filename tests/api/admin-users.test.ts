@@ -133,7 +133,7 @@ describe("DELETE /api/admin/users/[id]", () => {
     const user = await bareUser();
     await DELETE(...asDelete(user.id, { confirmPhone: user.phone }));
     const record = await prisma.deletedRecord.findFirstOrThrow();
-    await createUser(user.phone);
+    await createUser(user.phone as string);
 
     const res = await RESTORE(
       post(`/api/admin/deleted/${record.id}/restore`, {}),

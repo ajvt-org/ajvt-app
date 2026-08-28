@@ -7,6 +7,7 @@ import { resetDb, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 async function aMember(over: { village?: string; age?: string | null } = {}) {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName: "محمد ولد أحمد",
       paymentMethod: "بنكيلي",
       village: over.village ?? HOME_VILLAGE,
