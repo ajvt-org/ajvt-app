@@ -14,6 +14,7 @@ import { members, villages as villageMessages } from "@/lib/messages";
 import { ageForVillage, isKnownVillage, requiresAgeGroup } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { attachAccount } from "@/lib/attachAccount";
+import { syncPersonFromMember } from "@/lib/personServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/members/[id]",
@@ -45,7 +46,6 @@ export const PATCH = withRoute(
       age?: string | null;
       village?: string;
       photo?: string | null;
-      userId?: string;
     } = {};
 
     if (village !== undefined && !isKnownVillage(village, await villageNames())) {
@@ -55,12 +55,12 @@ export const PATCH = withRoute(
     if (fullName !== undefined) data.fullName = fullName;
 
     let tempPassword: string | undefined;
+    let attachedUserId: string | undefined;
     if (accountPhone !== undefined) {
-      const attached = await attachAccount(accountPhone, {
+      const attached = await attachAccount(id, accountPhone, {
         allowed: session.role !== "ACTIVITIES",
-        alreadyAttached: !!existing.userId,
       });
-      data.userId = attached.userId;
+      attachedUserId = attached.userId;
       tempPassword = attached.tempPassword;
     }
 
@@ -75,6 +75,7 @@ export const PATCH = withRoute(
     }
     if (photo !== undefined) data.photo = photo;
     const member = await prisma.member.update({ where: { id }, data });
+    await syncPersonFromMember(prisma, id);
     await logAction(
       session.username,
       "UPDATE_MEMBER",
@@ -93,7 +94,7 @@ export const PATCH = withRoute(
         },
       },
     );
-    if (data.userId) {
+    if (attachedUserId) {
       await logAction(
         session.username,
         "ATTACH_MEMBER_ACCOUNT",
@@ -103,7 +104,7 @@ export const PATCH = withRoute(
           targetType: "Member",
           targetId: member.id,
           before: { userId: null },
-          after: { userId: data.userId, account: accountPhone!.trim() },
+          after: { userId: attachedUserId, account: accountPhone!.trim() },
         },
       );
     }
