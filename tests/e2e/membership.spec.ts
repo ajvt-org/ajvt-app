@@ -14,12 +14,20 @@ const MEMBER = {
   paymentMethod: "بنكيلي",
 };
 
+const NEIGHBOUR = {
+  fullName: "أحمد ولد افجار",
+  phone: "22119977",
+  password: "test1234",
+  village: "أفجار",
+  paymentMethod: "بنكيلي",
+};
+
 test("a visitor joins and an admin approves them", async ({ page }) => {
   await page.goto("/form");
 
   await page.fill('input[name="fullName"]', MEMBER.fullName);
   await page.fill('input[type="tel"]', MEMBER.phone);
-  await page.selectOption("select", MEMBER.age);
+  await page.selectOption("#member-age", MEMBER.age);
   await page.getByRole("button", { name: "التالي" }).click();
 
   await page.fill('input[type="password"] >> nth=0', MEMBER.password);
@@ -60,4 +68,29 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   // ask: a second request is what put a rejection on an approved account.
   await page.goto("/form");
   await page.waitForURL("**/profile");
+});
+
+test("a neighbour from another village joins without an age group", async ({ page }) => {
+  await page.goto("/form");
+
+  await page.fill('input[name="fullName"]', NEIGHBOUR.fullName);
+  await page.fill('input[type="tel"]', NEIGHBOUR.phone);
+  await page.selectOption("#member-village", NEIGHBOUR.village);
+  await expect(page.locator("#member-age")).toHaveCount(0);
+  await page.getByRole("button", { name: "التالي" }).click();
+
+  await page.fill('input[type="password"] >> nth=0', NEIGHBOUR.password);
+  await page.fill('input[type="password"] >> nth=1', NEIGHBOUR.password);
+  await page.getByRole("button", { name: "التالي" }).click();
+
+  await page.click(`text=${NEIGHBOUR.paymentMethod}`);
+  await page.fill('input[type="number"]', "100");
+  await page
+    .locator('input[type="file"]')
+    .last()
+    .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
+  await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
+
+  await expect(page.getByText(NEIGHBOUR.fullName).first()).toBeVisible();
+  await expect(page.getByText(NEIGHBOUR.village).first()).toBeVisible();
 });

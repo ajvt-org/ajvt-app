@@ -51,7 +51,7 @@ async function createAccountOnly(page: Page, phone: string) {
   await page.goto("/form");
   await page.fill('input[name="fullName"]', "حساب بلا طلب");
   await page.fill('input[type="tel"]', phone);
-  await page.selectOption("select", "البدريين");
+  await page.selectOption("#member-age", "البدريين");
   await page.getByRole("button", { name: "التالي" }).click();
   await page.fill('input[type="password"] >> nth=0', "test1234");
   await page.fill('input[type="password"] >> nth=1', "test1234");
