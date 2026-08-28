@@ -88,7 +88,7 @@ describe("GET /api/admin/export/[dataset]", () => {
 
     const row = (await (await download("members")).text()).split("\n")[1];
 
-    expect(row.split(",").slice(4, 7)).toEqual(['"100"', '"900"', '"1000"']);
+    expect(row.split(",").slice(5, 8)).toEqual(['"100"', '"900"', '"1000"']);
   });
 
   it("carries the support half of a membership payment as a surplus gift", async () => {

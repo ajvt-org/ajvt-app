@@ -21,7 +21,7 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
 
   await page.fill('input[name="fullName"]', MEMBER.fullName);
   await page.fill('input[type="tel"]', MEMBER.phone);
-  await page.selectOption("select", MEMBER.age);
+  await page.selectOption("#member-age", MEMBER.age);
   await page.getByRole("button", { name: "التالي" }).click();
 
   await page.fill('input[type="password"] >> nth=0', MEMBER.password);

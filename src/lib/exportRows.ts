@@ -18,7 +18,8 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export interface ExportableMember {
   fullName: string;
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paidAmount: number | null;
   supportAmount?: number;
@@ -41,9 +42,6 @@ export interface ExportableDonation {
   tags: { name: string }[];
 }
 
-// A payment records what it was for, not where it came from, so the source
-// column is read back off it: a membership payment is a surplus, and anything
-// else is a member's own gift or a gift from outside.
 export function sourceOf(purpose: string, memberId: string | null): string {
   if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
   return memberId ? "SELF" : "PUBLIC";
@@ -56,6 +54,7 @@ function day(date: Date): string {
 export const MEMBER_HEADERS = [
   "الاسم الكامل",
   "رقم الهاتف",
+  "القرية",
   "العصر",
   "طريقة الدفع",
   "رسوم الاشتراك",
@@ -71,7 +70,8 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
   return members.map((m) => [
     m.fullName,
     m.user?.phone ?? "",
-    m.age,
+    m.village,
+    m.age ?? "",
     m.paymentMethod,
     m.paidAmount ?? 0,
     m.supportAmount ?? 0,

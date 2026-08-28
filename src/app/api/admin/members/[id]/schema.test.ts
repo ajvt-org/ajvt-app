@@ -22,8 +22,26 @@ describe("adminMemberUpdateSchema", () => {
     );
   });
 
-  it("rejects a blank age group", () => {
-    expect(rejectionOf(adminMemberUpdateSchema, { age: "" })).toBe("اسم العصر مطلوب");
+  it("takes a blank age group, which the route reads as clearing it", () => {
+    expect(parse(adminMemberUpdateSchema, { age: "" }).age).toBe("");
+  });
+
+  it("takes a null age group for a member outside the home village", () => {
+    expect(parse(adminMemberUpdateSchema, { age: null }).age).toBeNull();
+  });
+
+  it("trims a corrected village", () => {
+    expect(parse(adminMemberUpdateSchema, { village: "  أفجار  " }).village).toBe("أفجار");
+  });
+
+  it("rejects a blank village", () => {
+    expect(rejectionOf(adminMemberUpdateSchema, { village: "  " })).toBe("يرجى اختيار القرية");
+  });
+
+  it("rejects a village over thirty characters", () => {
+    expect(rejectionOf(adminMemberUpdateSchema, { village: "ب".repeat(31) })).toBe(
+      "اسم القرية طويل جداً (30 حرفاً كحد أقصى)",
+    );
   });
 
   it("rejects an age group over thirty characters", () => {

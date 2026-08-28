@@ -13,7 +13,9 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { ConflictError } from "@/lib/errors";
-import { members } from "@/lib/messages";
+import { members, villages as villageMessages } from "@/lib/messages";
+import { ageForVillage, isKnownVillage } from "@/lib/villages";
+import { villageNames } from "@/lib/villagesServer";
 import { adminMemberCreateSchema } from "./schema";
 import { paidForYear } from "@/lib/paidBreakdown";
 
@@ -48,6 +50,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     fullName,
     phoneUnknown,
     age,
+    village,
     paymentMethod,
     paymentProof,
     photo,
@@ -57,6 +60,10 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
   } = parse(adminMemberCreateSchema, await req.json());
 
   const { membershipFee, membershipYear } = await getAppSettings();
+
+  if (!isKnownVillage(village, await villageNames())) {
+    return NextResponse.json({ error: villageMessages.unknownVillage }, { status: 400 });
+  }
 
   let paidAmountValue: number | null = null;
   if (paidAmount !== undefined && paidAmount !== null && String(paidAmount).trim() !== "") {
@@ -94,7 +101,8 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
       data: {
         userId,
         fullName,
-        age,
+        age: ageForVillage(village, age),
+        village,
         paymentMethod,
         paymentProof: paymentProof || null,
         photo: photo || null,
@@ -123,6 +131,7 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     after: {
       fullName: member.fullName,
       age: member.age,
+      village: member.village,
       paymentMethod: member.paymentMethod,
       paidAmount: member.paidAmount,
       status: member.status,

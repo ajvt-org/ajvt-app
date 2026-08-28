@@ -15,13 +15,20 @@ import {
 import { api, ApiError, errorMessage } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import { pageCount, paginate } from "@/lib/listUrlState";
-import type { FilterTab, Member, AgeGroup, OrphanAge } from "./types";
+import type { FilterTab, Member, AgeGroup, OrphanAge, Village } from "./types";
 import { PAGE_SIZE } from "./constants";
 import { initialFilterTab } from "./initialTab";
 import { useReviewShortcuts } from "./useReviewShortcuts";
-import { statusCounts, ageBreakdown, paymentBreakdown, signupsByDay } from "./memberStats";
+import {
+  statusCounts,
+  ageBreakdown,
+  villageBreakdown,
+  paymentBreakdown,
+  signupsByDay,
+} from "./memberStats";
 import { exportMembers } from "./exportMembers";
 import AgeGroupsDialog from "./AgeGroupsDialog";
+import VillagesDialog from "./VillagesDialog";
 import ManualAddDialog from "./ManualAddDialog";
 import StatTabs from "./StatTabs";
 import StatsPanel from "./StatsPanel";
@@ -34,6 +41,7 @@ import BulkActionsBar from "./BulkActionsBar";
 import MemberList from "./MemberList";
 import BareAccountsSection from "./BareAccountsSection";
 import { useBareAccounts } from "./useBareAccounts";
+import { OTHER_VILLAGE } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
@@ -79,6 +87,10 @@ function AdminDashboardInner() {
   const [showAgeGroups, setShowAgeGroups] = useState(false);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
   const [orphanAges, setOrphanAges] = useState<OrphanAge[]>([]);
+  const [showVillages, setShowVillages] = useState(false);
+  const [villages, setVillages] = useState<Village[]>([]);
+  const [otherVillageCount, setOtherVillageCount] = useState(0);
+  const [unlistedVillages, setUnlistedVillages] = useState<OrphanAge[]>([]);
 
   function setFilters(next: typeof filters, nextPage = 1) {
     setFiltersState(next);
@@ -91,6 +103,7 @@ function AdminDashboardInner() {
   useEffect(() => {
     fetchMembers();
     fetchAgeGroups();
+    fetchVillages();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchMembers() {
@@ -117,6 +130,19 @@ function AdminDashboardInner() {
       );
       setAgeGroups(data.ageGroups || []);
       setOrphanAges(data.orphans || []);
+    } catch {}
+  }
+
+  async function fetchVillages() {
+    try {
+      const data = await api.get<{
+        villages: Village[];
+        otherCount: number;
+        unlisted: OrphanAge[];
+      }>("/api/admin/villages");
+      setVillages(data.villages || []);
+      setOtherVillageCount(data.otherCount || 0);
+      setUnlistedVillages(data.unlisted || []);
     } catch {}
   }
 
@@ -251,6 +277,7 @@ function AdminDashboardInner() {
 
   const counts = statusCounts(members);
   const byAge = useMemo(() => ageBreakdown(members), [members]);
+  const byVillage = useMemo(() => villageBreakdown(members), [members]);
   const byPayment = useMemo(() => paymentBreakdown(members), [members]);
   const signups = useMemo(() => signupsByDay(members), [members]);
   const paymentMethods = useMemo(
@@ -275,6 +302,7 @@ function AdminDashboardInner() {
 
   const filterCount = [
     filters.age,
+    filters.village,
     filters.method,
     filters.paid,
     filters.year,
@@ -332,10 +360,18 @@ function AdminDashboardInner() {
             onToggleStats={() => setShowStats((v) => !v)}
             onExport={() => exportMembers(members)}
             onManageAgeGroups={() => setShowAgeGroups(true)}
+            onManageVillages={() => setShowVillages(true)}
             onManualAdd={() => setShowManualAdd(true)}
           />
 
-          {showStats && <StatsPanel signups={signups} byAge={byAge} byPayment={byPayment} />}
+          {showStats && (
+            <StatsPanel
+              signups={signups}
+              byAge={byAge}
+              byVillage={byVillage}
+              byPayment={byPayment}
+            />
+          )}
 
           <UpToDateSummary
             year={membership.year}
@@ -435,6 +471,7 @@ function AdminDashboardInner() {
         <FilterSheet
           filters={filters}
           ageGroups={ageGroups}
+          villages={villages}
           paymentMethods={paymentMethods}
           years={years}
           year={membership.year}
@@ -460,6 +497,10 @@ function AdminDashboardInner() {
             setShowManualAdd(false);
             setShowAgeGroups(true);
           }}
+          onManageVillages={() => {
+            setShowManualAdd(false);
+            setShowVillages(true);
+          }}
           onClose={() => {
             setShowManualAdd(false);
             setManualAddPhone("");
@@ -476,6 +517,23 @@ function AdminDashboardInner() {
             fetchMembers();
           }}
           onClose={() => setShowAgeGroups(false)}
+        />
+      )}
+
+      {showVillages && (
+        <VillagesDialog
+          villages={villages}
+          otherCount={otherVillageCount}
+          unlisted={unlistedVillages}
+          onChanged={() => {
+            fetchVillages();
+            fetchMembers();
+          }}
+          onShowOther={() => {
+            setShowVillages(false);
+            setFilters({ ...filters, status: "ALL", village: OTHER_VILLAGE });
+          }}
+          onClose={() => setShowVillages(false)}
         />
       )}
     </div>

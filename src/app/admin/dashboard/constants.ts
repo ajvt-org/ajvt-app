@@ -1,4 +1,5 @@
 import { memberStatusLabels } from "@/lib/messages";
+import { HOME_VILLAGE } from "@/lib/villages";
 import type { Status } from "./types";
 
 export const STATUS_LABEL: Record<Status, string> = memberStatusLabels;
@@ -21,6 +22,7 @@ export const emptyManualForm = {
   accountPhone: "",
   fullName: "",
   phoneUnknown: false,
+  village: HOME_VILLAGE,
   age: "",
   paymentMethod: "",
   paidAmount: "",

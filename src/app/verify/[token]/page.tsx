@@ -5,22 +5,10 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { formatDate } from "@/lib/utils";
+import { villageField } from "@/lib/texts";
 
 export const dynamic = "force-dynamic";
 
-// Reached by scanning the QR on a membership card, so it answers to anyone.
-// It is looked up by verifyToken and never by memberNumber: the number runs in
-// sequence, and a page keyed on it can be counted through from a single card.
-//
-// It shows what someone checking a card at a door needs and nothing else. The
-// activities a member signed up for are not that.
-//
-// The answer is the page rather than a card sitting on one: whoever scanned
-// this came for one fact, and it should be the first thing their eye lands on.
-// There is no back button at all — arriving by camera means there is nothing
-// behind this page, and a member who opens their own card has the bar. The
-// link at the foot goes into the app instead, which is the way anyone here
-// actually wants to travel.
 export default async function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
@@ -29,6 +17,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
     select: {
       fullName: true,
       age: true,
+      village: true,
       status: true,
       memberNumber: true,
       createdAt: true,
@@ -59,7 +48,8 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
 
           <dl className="flex-1 px-5 py-5 space-y-0">
             <Row label="رقم العضوية" value={member.memberNumber || "—"} dir="ltr" />
-            <Row label="العصر" value={member.age} />
+            <Row label={villageField.label} value={member.village} />
+            {member.age && <Row label="العصر" value={member.age} />}
             <Row label="عضو منذ" value={formatDate(member.createdAt)} />
           </dl>
 

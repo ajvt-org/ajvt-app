@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ageGroups, common, members } from "@/lib/messages";
+import { ageGroups, common, members, villages } from "@/lib/messages";
+import { VILLAGE_NAME_MAX } from "@/lib/villages";
 
 const INVALID = common.invalidBody;
 const NAME_REQUIRED = members.fullNameRequired;
@@ -19,8 +20,13 @@ export const adminMemberUpdateSchema = z.object({
     .optional(),
   age: z
     .string(AGE_REQUIRED)
-    .refine((v) => v.trim().length > 0, AGE_REQUIRED)
     .refine((v) => v.trim().length <= AGE_MAX, AGE_TOO_LONG)
+    .transform((v) => v.trim())
+    .nullish(),
+  village: z
+    .string(villages.pickVillage)
+    .refine((v) => v.trim().length > 0, villages.pickVillage)
+    .refine((v) => v.trim().length <= VILLAGE_NAME_MAX, villages.nameTooLong)
     .transform((v) => v.trim())
     .optional(),
   photo: z.string(INVALID).nullish(),

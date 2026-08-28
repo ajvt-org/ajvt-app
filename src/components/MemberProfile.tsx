@@ -55,7 +55,7 @@ export default function MemberProfile({
         <>
           <MemberCard
             fullName={member.fullName}
-            age={member.age}
+            age={member.age || member.village}
             memberNumber={member.memberNumber}
             verifyToken={member.verifyToken}
             createdAt={member.createdAt}

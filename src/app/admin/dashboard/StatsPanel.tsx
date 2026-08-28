@@ -28,10 +28,12 @@ function BreakdownCard({ title, rows }: { title: string; rows: Breakdown }) {
 export default function StatsPanel({
   signups,
   byAge,
+  byVillage,
   byPayment,
 }: {
   signups: { label: string; value: number }[];
   byAge: Breakdown;
+  byVillage: Breakdown;
   byPayment: Breakdown;
 }) {
   return (
@@ -43,6 +45,7 @@ export default function StatsPanel({
         <BarChart data={signups} />
       </div>
       <div className="grid grid-cols-2 gap-3">
+        <BreakdownCard title="حسب القرية" rows={byVillage} />
         <BreakdownCard title="حسب العصر" rows={byAge} />
         <BreakdownCard title="حسب طريقة الدفع" rows={byPayment} />
       </div>

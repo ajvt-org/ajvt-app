@@ -59,7 +59,8 @@ model Member {
   userId           String?                @unique
   user             User?                  @relation(fields: [userId], references: [id])
   fullName         String
-  age              String
+  age              String?
+  village          String                 @default("التاكلالت")
   paymentMethod    String
   paymentProof     String?
   photo            String?
@@ -402,7 +403,14 @@ model AgeGroup {
   id         String   @id @default(cuid())
   name       String   @unique
   totalCount Int      @default(30)
+  approved   Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+model Village {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
 }
 
 model Donation {

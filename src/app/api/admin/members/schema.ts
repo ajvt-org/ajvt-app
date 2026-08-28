@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { validatePhone } from "@/lib/utils";
-import { ageGroups, common, members } from "@/lib/messages";
+import { ageGroups, common, members, villages } from "@/lib/messages";
+import { HOME_VILLAGE, VILLAGE_NAME_MAX, requiresAgeGroup } from "@/lib/villages";
 
 const INVALID = common.invalidBody;
 const ALL_REQUIRED = "جميع الحقول مطلوبة";
@@ -19,9 +20,16 @@ const name = z
 
 const age = z
   .string(ALL_REQUIRED)
-  .refine((v) => v.trim().length > 0, ALL_REQUIRED)
   .refine((v) => v.trim().length <= AGE_MAX, AGE_TOO_LONG)
-  .transform((v) => v.trim());
+  .transform((v) => v.trim())
+  .nullish();
+
+const village = z
+  .string(villages.pickVillage)
+  .refine((v) => v.trim().length > 0, villages.pickVillage)
+  .refine((v) => v.trim().length <= VILLAGE_NAME_MAX, villages.nameTooLong)
+  .transform((v) => v.trim())
+  .default(HOME_VILLAGE);
 
 export const adminMemberCreateSchema = z
   .object({
@@ -29,6 +37,7 @@ export const adminMemberCreateSchema = z
     fullName: name,
     phoneUnknown: z.unknown().optional(),
     age,
+    village,
     paymentMethod: z.string(ALL_REQUIRED).refine((v) => v.trim().length > 0, ALL_REQUIRED),
     paymentProof: z.string(INVALID).nullish(),
     photo: z.string(INVALID).nullish(),
@@ -37,6 +46,9 @@ export const adminMemberCreateSchema = z
     surplusAnonymous: z.boolean(INVALID).optional(),
   })
   .superRefine((v, ctx) => {
+    if (requiresAgeGroup(v.village) && !v.age?.trim()) {
+      ctx.addIssue({ code: "custom", path: ["age"], message: members.pickAgeGroup });
+    }
     if (v.phoneUnknown) return;
     const phoneError = validatePhone(v.accountPhone ?? "");
     if (phoneError) ctx.addIssue({ code: "custom", message: phoneError });

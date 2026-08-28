@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import MemberDrawer from "./MemberDrawer";
+import { HOME_VILLAGE } from "@/lib/villages";
 import type { Member } from "./types";
 
 vi.mock("@/lib/api", () => ({
@@ -17,6 +18,7 @@ function member(over: Partial<Member> = {}): Member {
     fullName: "الشيخ ولد أحمد",
     phone: null,
     age: "المحسنين",
+    village: HOME_VILLAGE,
     paymentMethod: "بنكيلي",
     paymentProof: null,
     photo: null,

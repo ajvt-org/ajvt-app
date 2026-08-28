@@ -4,11 +4,14 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
 import { pgAdapterOptions } from "../src/lib/db-url";
 import { initialAdminPassword } from "../src/lib/initialAdminPassword";
+import { HOME_VILLAGE } from "../src/lib/villages";
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) throw new Error("DATABASE_URL is not set");
 const adapter = new PrismaPg(pgAdapterOptions(dbUrl));
 const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
+
+const DEFAULT_VILLAGES = [HOME_VILLAGE, "أفجار"];
 
 const DEFAULT_AGE_GROUPS = [
   "البدريين",
@@ -38,14 +41,16 @@ async function main() {
   await seedAdmin();
 
   for (const name of DEFAULT_AGE_GROUPS) {
-    await prisma.ageGroup.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.ageGroup.upsert({
+      where: { name },
+      update: { approved: true },
+      create: { name, approved: true },
+    });
   }
-  const usedAges = await prisma.member.findMany({ distinct: ["age"], select: { age: true } });
-  for (const { age } of usedAges) {
-    if (age)
-      await prisma.ageGroup.upsert({ where: { name: age }, update: {}, create: { name: age } });
+  for (const name of DEFAULT_VILLAGES) {
+    await prisma.village.upsert({ where: { name }, update: {}, create: { name } });
   }
-  console.log("Age groups seeded");
+  console.log("Age groups and villages seeded");
 }
 
 main()

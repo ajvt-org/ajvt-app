@@ -6,10 +6,13 @@ import { parse } from "@/lib/validation";
 import { memberSubmissionSchema } from "./schema";
 import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
-import { members } from "@/lib/messages";
+import { members, villages as villageMessages } from "@/lib/messages";
+import { ageForVillage, isKnownVillage } from "@/lib/villages";
+import { villageNames } from "@/lib/villagesServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { suggestAgeGroup } from "@/lib/ageGroups";
 
 const CODE_ATTEMPTS = 5;
 
@@ -20,6 +23,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     id,
     fullName,
     age,
+    village,
     paymentMethod,
     paymentProof,
     photo,
@@ -27,6 +31,11 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     referenceCode,
     surplusAnonymous,
   } = parse(memberSubmissionSchema(membershipFee), await req.json());
+
+  if (!isKnownVillage(village, await villageNames())) {
+    throw new ValidationError(villageMessages.unknownVillage);
+  }
+  const ageForRecord = ageForVillage(village, age);
 
   if (id) {
     const existing = await prisma.member.findUnique({ where: { id } });
@@ -42,7 +51,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         where: { id },
         data: {
           fullName: fullName.trim(),
-          age: age.trim(),
+          age: ageForRecord,
+          village: village.trim(),
           paymentMethod,
           paymentProof,
           ...(photo !== undefined ? { photo } : {}),
@@ -52,6 +62,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           rejectionReason: null,
         },
       });
+      if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
       return m;
     });
@@ -75,7 +86,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           data: {
             userId: session.userId,
             fullName: fullName.trim(),
-            age: age.trim(),
+            age: ageForRecord,
+            village: village.trim(),
             paymentMethod,
             paymentProof,
             photo: photo || null,
@@ -85,6 +97,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
             membershipYear,
           },
         });
+        if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
         await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
         return created;
       });

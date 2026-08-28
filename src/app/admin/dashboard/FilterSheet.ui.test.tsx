@@ -4,6 +4,7 @@ import FilterSheet from "./FilterSheet";
 import { NO_FILTERS } from "@/lib/memberFilters";
 
 const AGE_GROUPS = [{ id: "g1", name: "البدريين" }];
+const VILLAGES = [{ id: "v1", name: "أفجار" }];
 
 function renderSheet(over: Partial<typeof NO_FILTERS> = {}) {
   cleanup();
@@ -13,6 +14,7 @@ function renderSheet(over: Partial<typeof NO_FILTERS> = {}) {
     <FilterSheet
       filters={{ ...NO_FILTERS, ...over }}
       ageGroups={AGE_GROUPS}
+      villages={VILLAGES}
       paymentMethods={["بنكيلي"]}
       years={[2025, 2026]}
       year={2026}

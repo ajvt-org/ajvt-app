@@ -32,7 +32,8 @@ export interface MemberData {
   id: string;
   fullName: string;
   user: { phone: string } | null;
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paymentProof: string | null;
   paidAmount: number | null;

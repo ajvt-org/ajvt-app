@@ -11,10 +11,11 @@ export function statusCounts(members: Member[]) {
   };
 }
 
-function countBy(members: Member[], pick: (m: Member) => string): Breakdown {
+function countBy(members: Member[], pick: (m: Member) => string | null): Breakdown {
   const map: Record<string, number> = {};
   members.forEach((m) => {
     const key = pick(m);
+    if (!key) return;
     map[key] = (map[key] || 0) + 1;
   });
   return Object.entries(map).sort((a, b) => b[1] - a[1]);
@@ -22,6 +23,10 @@ function countBy(members: Member[], pick: (m: Member) => string): Breakdown {
 
 export function ageBreakdown(members: Member[]): Breakdown {
   return countBy(members, (m) => m.age);
+}
+
+export function villageBreakdown(members: Member[]): Breakdown {
+  return countBy(members, (m) => m.village);
 }
 
 export function paymentBreakdown(members: Member[]): Breakdown {

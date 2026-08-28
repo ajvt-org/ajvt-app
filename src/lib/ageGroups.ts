@@ -1,4 +1,7 @@
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "./prisma";
+
+type Db = PrismaClient | Prisma.TransactionClient;
 
 // Raw SQL on purpose. Member.updatedAt is @updatedAt, so renaming through the
 // client stamps every row it touches, and the member's own page reads that
@@ -6,4 +9,14 @@ import { prisma } from "./prisma";
 // everyone's approval date to the moment an admin fixed a spelling.
 export function renameMemberAge(from: string, to: string) {
   return prisma.$executeRaw`UPDATE "Member" SET "age" = ${to} WHERE "age" = ${from}`;
+}
+
+export async function suggestAgeGroup(db: Db, name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  await db.ageGroup.upsert({
+    where: { name: trimmed },
+    update: {},
+    create: { name: trimmed, approved: false },
+  });
 }

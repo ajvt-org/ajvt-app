@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import MemberEditForm from "./MemberEditForm";
 
 const member = {
   id: "m1",
   fullName: "محمد ولد أحمد",
-  age: "البدريين",
+  age: "البدريين" as string | null,
+  village: HOME_VILLAGE,
   paymentMethod: "بنكيلي",
   paidAmount: 100,
   supportAmount: 0,
@@ -78,6 +80,65 @@ describe("MemberEditForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
 
     expect(screen.getByText(/الاسم الكامل مطلوب/)).toBeDefined();
+    expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PATCH")).toBe(false);
+  });
+
+  it("asks a member of the home village for an age group", async () => {
+    mockFetch();
+    setup();
+
+    expect(screen.queryByLabelText("العصر")).not.toBeNull();
+  });
+
+  it("drops the age group question for a neighbouring village", async () => {
+    mockFetch();
+    setup({ village: "أفجار", age: null });
+
+    expect(screen.queryByLabelText("العصر")).toBeNull();
+  });
+
+  it("keeps a village that is no longer managed rather than moving the member off it", async () => {
+    mockFetch({ villages: [{ name: "أفجار" }] });
+    setup({ village: "بوتلميت", age: null });
+
+    await waitFor(() =>
+      expect((screen.getByLabelText("القرية") as HTMLSelectElement).value).toBe("بوتلميت"),
+    );
+  });
+
+  it("sends the corrected village and clears the age group with it", async () => {
+    const fetchMock = mockFetch({ villages: [{ name: "أفجار" }] });
+    const { onSaved } = setup();
+    await waitFor(() => expect(screen.getByRole("option", { name: "أفجار" })).toBeDefined());
+
+    await userEvent.selectOptions(screen.getByLabelText("القرية"), "أفجار");
+    await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
+    expect(JSON.parse(patchCall![1].body)).toMatchObject({ village: "أفجار", age: null });
+  });
+
+  it("lets an admin correct a member who picked the other option", async () => {
+    const fetchMock = mockFetch({ villages: [{ name: "أفجار" }] });
+    const { onSaved } = setup({ village: OTHER_VILLAGE, age: null });
+    await waitFor(() => expect(screen.getByRole("option", { name: "أفجار" })).toBeDefined());
+
+    await userEvent.selectOptions(screen.getByLabelText("القرية"), "أفجار");
+    await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
+    expect(JSON.parse(patchCall![1].body)).toMatchObject({ village: "أفجار" });
+  });
+
+  it("refuses to save a member of the home village with no age group", async () => {
+    const fetchMock = mockFetch();
+    setup({ age: "" });
+
+    await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
+
+    expect(screen.getByText(/يرجى اختيار العصر/)).toBeDefined();
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PATCH")).toBe(false);
   });
 
