@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parse } from "@/lib/validation";
 import { rejectionOf } from "@tests/schema";
+import { HOME_VILLAGE } from "@/lib/villages";
 import { adminMemberCreateSchema } from "./schema";
 
 const valid = {
@@ -35,10 +36,18 @@ describe("adminMemberCreateSchema", () => {
     );
   });
 
-  it("rejects a missing age group", () => {
-    expect(rejectionOf(adminMemberCreateSchema, { ...valid, age: "  " })).toBe(
-      "جميع الحقول مطلوبة",
+  it("rejects a missing age group for the home village", () => {
+    expect(rejectionOf(adminMemberCreateSchema, { ...valid, age: "  " })).toBe("يرجى اختيار العصر");
+  });
+
+  it("takes a missing age group for a neighbouring village", () => {
+    expect(parse(adminMemberCreateSchema, { ...valid, age: "", village: "أفجار" }).village).toBe(
+      "أفجار",
     );
+  });
+
+  it("files a member under the home village when none is given", () => {
+    expect(parse(adminMemberCreateSchema, valid).village).toBe(HOME_VILLAGE);
   });
 
   it("rejects a missing payment method", () => {

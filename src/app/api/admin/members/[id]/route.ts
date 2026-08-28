@@ -10,7 +10,9 @@ import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
 import type { Prisma } from "@prisma/client";
 import { parse } from "@/lib/validation";
 import { adminMemberUpdateSchema } from "./schema";
-import { members } from "@/lib/messages";
+import { members, villages as villageMessages } from "@/lib/messages";
+import { ageForVillage, isKnownVillage, requiresAgeGroup } from "@/lib/villages";
+import { villageNames } from "@/lib/villagesServer";
 import { attachAccount } from "@/lib/attachAccount";
 
 export const PATCH = withRoute(
@@ -18,7 +20,10 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, photo, accountPhone } = parse(adminMemberUpdateSchema, await req.json());
+    const { fullName, age, village, photo, accountPhone } = parse(
+      adminMemberUpdateSchema,
+      await req.json(),
+    );
 
     const existing = await prisma.member.findUnique({
       where: { id },
@@ -26,6 +31,7 @@ export const PATCH = withRoute(
         fullName: true,
         userId: true,
         age: true,
+        village: true,
         paymentMethod: true,
         paidAmount: true,
       },
@@ -36,10 +42,15 @@ export const PATCH = withRoute(
 
     const data: {
       fullName?: string;
-      age?: string;
+      age?: string | null;
+      village?: string;
       photo?: string | null;
       userId?: string;
     } = {};
+
+    if (village !== undefined && !isKnownVillage(village, await villageNames())) {
+      return NextResponse.json({ error: villageMessages.unknownVillage }, { status: 400 });
+    }
 
     if (fullName !== undefined) data.fullName = fullName;
 
@@ -53,7 +64,15 @@ export const PATCH = withRoute(
       tempPassword = attached.tempPassword;
     }
 
-    if (age !== undefined) data.age = age;
+    if (village !== undefined) data.village = village;
+    if (age !== undefined || village !== undefined) {
+      const nextVillage = village ?? existing.village;
+      const nextAge = ageForVillage(nextVillage, age === undefined ? existing.age : age);
+      if (requiresAgeGroup(nextVillage) && !nextAge) {
+        return NextResponse.json({ error: members.pickAgeGroup }, { status: 400 });
+      }
+      data.age = nextAge;
+    }
     if (photo !== undefined) data.photo = photo;
     const member = await prisma.member.update({ where: { id }, data });
     await logAction(
@@ -68,6 +87,7 @@ export const PATCH = withRoute(
         after: {
           fullName: member.fullName,
           age: member.age,
+          village: member.village,
           paymentMethod: member.paymentMethod,
           paidAmount: member.paidAmount,
         },
