@@ -5,9 +5,11 @@ import IconLabel from "@/components/IconLabel";
 import { counted } from "@/lib/arabicCount";
 import { RESULT } from "@/lib/messages";
 import { NO_FILTERS, activeFilterCount, type MemberFilters } from "@/lib/memberFilters";
+import { OTHER_VILLAGE } from "@/lib/villages";
 import DateRangeFilter from "./DateRangeFilter";
 import { standingLabel } from "./FilterChips";
-import type { AgeGroup } from "./types";
+import { villageField, villagesDialog } from "@/lib/texts";
+import type { AgeGroup, Village } from "./types";
 
 const STANDINGS = ["current", "former"];
 
@@ -25,6 +27,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function FilterSheet({
   filters,
   ageGroups,
+  villages,
   paymentMethods,
   years,
   year,
@@ -34,6 +37,7 @@ export default function FilterSheet({
 }: {
   filters: MemberFilters;
   ageGroups: AgeGroup[];
+  villages: Village[];
   paymentMethods: string[];
   years: number[];
   year: number;
@@ -58,6 +62,23 @@ export default function FilterSheet({
         <DialogHeader title="تصفية القائمة" onClose={onClose} />
 
         <div className="p-5 space-y-4">
+          <Field label={villageField.label}>
+            <select
+              value={filters.village}
+              onChange={(e) => onChange({ ...filters, village: e.target.value })}
+              className="input input-sm w-full"
+              aria-label="تصفية حسب القرية"
+            >
+              <option value="">{villagesDialog.filterAll}</option>
+              {villages.map((v) => (
+                <option key={v.id} value={v.name}>
+                  {v.name}
+                </option>
+              ))}
+              <option value={OTHER_VILLAGE}>{OTHER_VILLAGE}</option>
+            </select>
+          </Field>
+
           <Field label="العصر">
             <select
               value={filters.age}

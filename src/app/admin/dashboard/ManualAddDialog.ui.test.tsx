@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManualAddDialog from "./ManualAddDialog";
+import { HOME_VILLAGE } from "@/lib/villages";
 
 const ageGroups = [
   { id: "1", name: "أشبال" },
@@ -13,6 +14,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ManualAddDialog>> 
     ageGroups,
     onCreated: vi.fn(),
     onManageAgeGroups: vi.fn(),
+    onManageVillages: vi.fn(),
     onClose: vi.fn(),
     ...overrides,
   };
@@ -63,16 +65,16 @@ describe("ManualAddDialog", () => {
     await userEvent.selectOptions(screen.getByLabelText("طريقة الدفع"), "نقداً");
     await userEvent.click(screen.getByRole("button", { name: "إنشاء العضو" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/api/admin/members");
-    expect(JSON.parse(init.body)).toMatchObject({
+    await waitFor(() => expect(props.onCreated).toHaveBeenCalled());
+    const call = fetchMock.mock.calls.find((c) => c[0] === "/api/admin/members");
+    expect(call).toBeDefined();
+    expect(JSON.parse(call![1].body)).toMatchObject({
       fullName: "محمد",
       age: "شباب",
+      village: HOME_VILLAGE,
       paymentMethod: "نقداً",
       phoneUnknown: true,
     });
-    expect(props.onCreated).toHaveBeenCalled();
   });
 
   it("shows the temporary password the server sends back", async () => {
