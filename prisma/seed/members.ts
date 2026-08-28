@@ -46,7 +46,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
   const current = runningYear();
 
   for (let i = 0; i < slots.length; i++) {
-    const { age, status } = slots[i];
+    const { age, village, status } = slots[i];
     const isActive = status === "ACTIVE";
     const membershipYear = yearFor(i, slots.length, current);
     if (isActive) memberNumber += 1;
@@ -61,6 +61,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         userId: owner,
         fullName: fullName(i),
         age,
+        village,
         paymentMethod: paymentMethod(i),
         paymentProof:
           i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1

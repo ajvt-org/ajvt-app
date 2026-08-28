@@ -1,9 +1,11 @@
-import { AGE_GROUP_ROSTER } from "./data";
+import { AGE_GROUP_ROSTER, NEIGHBOUR_ROSTER } from "./data";
+import { HOME_VILLAGE } from "../../src/lib/villages";
 
 export type MemberStatus = "ACTIVE" | "PENDING" | "REJECTED";
 
 export interface RosterSlot {
-  age: string;
+  age: string | null;
+  village: string;
   status: MemberStatus;
 }
 
@@ -16,8 +18,21 @@ export function rosterSlots(): RosterSlot[] {
       ["REJECTED", group.rejected],
     ];
     for (const [status, count] of counts) {
-      for (let i = 0; i < count; i++) slots.push({ age: group.name, status });
+      for (let i = 0; i < count; i++)
+        slots.push({ age: group.name, village: HOME_VILLAGE, status });
     }
   }
+
+  for (const group of NEIGHBOUR_ROSTER) {
+    const counts: [MemberStatus, number][] = [
+      ["ACTIVE", group.active],
+      ["PENDING", group.pending],
+      ["REJECTED", group.rejected],
+    ];
+    for (const [status, count] of counts) {
+      for (let i = 0; i < count; i++) slots.push({ age: null, village: group.village, status });
+    }
+  }
+
   return slots;
 }
