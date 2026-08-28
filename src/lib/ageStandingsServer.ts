@@ -20,7 +20,6 @@ export async function getAgeStandings(): Promise<AgeStanding[]> {
     }),
     prisma.member.groupBy({
       by: ["age"],
-      where: { userId: { not: null } },
       _count: { _all: true },
     }),
   ]);

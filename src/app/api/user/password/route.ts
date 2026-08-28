@@ -41,14 +41,14 @@ export const POST = withRoute("POST /api/user/password", async (req: NextRequest
     if (!currentPassword) {
       throw new ValidationError(common.allFieldsRequired);
     }
-    if (!(await bcrypt.compare(currentPassword, user.password))) {
+    if (!user.password || !(await bcrypt.compare(currentPassword, user.password))) {
       recordFailedAttempt(key, WINDOW_MS);
       throw new UnauthorizedError(auth.currentPasswordWrong);
     }
     clearAttempts(key);
   }
 
-  if (await bcrypt.compare(newPassword, user.password)) {
+  if (user.password && (await bcrypt.compare(newPassword, user.password))) {
     throw new ValidationError(auth.passwordUnchanged);
   }
 

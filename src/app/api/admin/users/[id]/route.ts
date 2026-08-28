@@ -24,20 +24,20 @@ export const DELETE = withRoute(
     }
 
     const { confirmPhone } = await req.json().catch(() => ({ confirmPhone: undefined }));
-    if (!confirmationMatches(String(confirmPhone ?? ""), user.phone)) {
+    if (!confirmationMatches(String(confirmPhone ?? ""), user.phone ?? "")) {
       throw new ValidationError(accounts.confirmPhone);
     }
 
     await archive(
       "User",
       id,
-      user.phone,
+      user.phone ?? user.id,
       user as unknown as Prisma.InputJsonValue,
       session.username,
     );
     await prisma.user.delete({ where: { id } });
     await purgeExpired();
-    await logAction(session.username, "DELETE_USER", user.phone, {
+    await logAction(session.username, "DELETE_USER", user.phone ?? user.id, {
       ...auditContext(session, req),
       targetType: "User",
       targetId: id,

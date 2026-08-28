@@ -27,7 +27,7 @@ export interface ExportableMember {
   memberNumber: string | null;
   referenceCode: string | null;
   createdAt: Date;
-  user: { phone: string } | null;
+  user: { phone: string | null } | null;
 }
 
 export interface ExportableDonation {
