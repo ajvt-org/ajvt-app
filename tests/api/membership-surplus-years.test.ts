@@ -13,6 +13,7 @@ const LAST = YEAR - 1;
 function memberOnLastYear() {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName: "محمد ولد أحمد",
       age: "البدريين",
       paymentMethod: "بنكيلي",
@@ -119,6 +120,7 @@ describe("a surplus belongs to the year it was paid for", () => {
   it("tags a first surplus with the year the membership covers", async () => {
     const m = await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "أحمد",
         age: "البدريين",
         paymentMethod: "بنكيلي",

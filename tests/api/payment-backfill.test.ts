@@ -12,6 +12,7 @@ const LAST = YEAR - 1;
 async function memberWith(over: Record<string, unknown> = {}) {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName: "محمد ولد أحمد",
       age: "البدريين",
       paymentMethod: "بنكيلي",

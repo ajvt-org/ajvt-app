@@ -5,10 +5,12 @@ import { resetDb, patch, createAdmin, createUser, signInAsAdmin, withId } from "
 import { clearCookies } from "./cookieJar";
 
 async function memberOn(accountPhone: string | null, fullName = "محمد ولد أحمد") {
-  const user = accountPhone ? await createUser(accountPhone) : null;
+  const user = accountPhone
+    ? await createUser(accountPhone)
+    : await prisma.user.create({ data: {} });
   return prisma.member.create({
     data: {
-      userId: user?.id ?? null,
+      userId: user.id,
       fullName,
       age: "البدريين",
       paymentMethod: "بنكيلي",

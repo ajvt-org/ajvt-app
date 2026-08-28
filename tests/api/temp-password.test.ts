@@ -64,7 +64,7 @@ describe("temporary passwords", () => {
 
     expect(res.status).toBe(200);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-    expect(await bcrypt.compare("chosenwell", after.password)).toBe(true);
+    expect(await bcrypt.compare("chosenwell", after.password as string)).toBe(true);
   });
 
   it("clears the expiry, so the lock lifts", async () => {
@@ -108,7 +108,7 @@ describe("temporary passwords", () => {
 
     expect(res.status).toBe(400);
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-    expect(await bcrypt.compare("secret", after.password)).toBe(true);
+    expect(await bcrypt.compare("secret", after.password as string)).toBe(true);
   });
 });
 

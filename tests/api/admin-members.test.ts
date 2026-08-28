@@ -30,9 +30,10 @@ async function signIn() {
 }
 
 async function memberFor(userId: string | null, over: Record<string, unknown> = {}) {
+  const owner = userId ?? (await prisma.user.create({ data: {} })).id;
   return prisma.member.create({
     data: {
-      userId,
+      userId: owner,
       fullName: "عضو",
       age: "البدريين",
       paymentMethod: "بنكيلي",
@@ -159,6 +160,6 @@ describe("admin membership is one per account", () => {
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: ALREADY });
     const untouched = await prisma.member.findUniqueOrThrow({ where: { id: orphan.id } });
-    expect(untouched.userId).toBeNull();
+    expect(untouched.userId).toBe(orphan.userId);
   });
 });

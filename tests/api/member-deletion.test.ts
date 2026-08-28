@@ -12,7 +12,13 @@ function asDelete(id: string, body: unknown) {
 
 async function member(fullName = "محمد ولد أحمد") {
   return prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    data: {
+      user: { create: {} },
+      fullName,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+    },
   });
 }
 

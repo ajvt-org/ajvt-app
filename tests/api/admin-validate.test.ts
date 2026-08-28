@@ -70,6 +70,7 @@ describe("POST /api/admin/validate", () => {
     const first = await pendingMember();
     const second = await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "أحمد ولد سيدي",
         age: "الفائزين",
         paymentMethod: "السداد",

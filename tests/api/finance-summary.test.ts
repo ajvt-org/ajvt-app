@@ -9,7 +9,7 @@ const ANON = "فاعل خير";
 
 async function member(fullName: string, status: "ACTIVE" | "PENDING" = "ACTIVE") {
   return prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status },
+    data: { user: { create: {} }, fullName, age: "البدريين", paymentMethod: "بنكيلي", status },
   });
 }
 

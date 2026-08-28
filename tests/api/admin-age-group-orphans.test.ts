@@ -10,7 +10,7 @@ function reassign(body: unknown) {
 
 async function aMember(fullName: string, age: string) {
   return prisma.member.create({
-    data: { fullName, age, paymentMethod: "بنكيلي" },
+    data: { user: { create: {} }, fullName, age, paymentMethod: "بنكيلي" },
   });
 }
 

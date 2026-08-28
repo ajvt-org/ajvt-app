@@ -10,6 +10,7 @@ function ask(id: string) {
 async function aMember(fullName = "محمد") {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName,
       age: "البدريين",
       paymentMethod: "بنكيلي",

@@ -12,10 +12,12 @@ async function member(
     status?: "PENDING" | "ACTIVE" | "REJECTED";
   } = {},
 ) {
-  const user = over.accountPhone ? await createUser(over.accountPhone) : null;
+  const user = over.accountPhone
+    ? await createUser(over.accountPhone)
+    : await prisma.user.create({ data: {} });
   return prisma.member.create({
     data: {
-      userId: user?.id ?? null,
+      userId: user.id,
       fullName,
       age: "البدريين",
       paymentMethod: "بنكيلي",

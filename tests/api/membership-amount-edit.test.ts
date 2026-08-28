@@ -12,6 +12,7 @@ const YEAR = runningYear();
 async function memberMissingAmount() {
   const m = await prisma.member.create({
     data: {
+      user: { create: {} },
       fullName: "محمد ولد أحمد",
       age: "البدريين",
       paymentMethod: "بنكيلي",

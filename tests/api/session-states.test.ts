@@ -21,7 +21,6 @@ type StateName =
   | "memberPending"
   | "memberActive"
   | "memberRejected"
-  | "detachedMember"
   | "revoked"
   | "tempPassword";
 
@@ -29,7 +28,7 @@ async function makeUser(phone: string) {
   return prisma.user.create({ data: { phone, password: await bcrypt.hash("secret", 4) } });
 }
 
-async function addMember(userId: string, phone: string, status: string, name: string) {
+async function addMember(userId: string, phone: string | null, status: string, name: string) {
   return prisma.member.create({
     data: {
       userId,
@@ -37,7 +36,7 @@ async function addMember(userId: string, phone: string, status: string, name: st
       age: "البدريين",
       paymentMethod: "بنكيلي",
       status: status as "PENDING" | "ACTIVE" | "REJECTED",
-      memberNumber: status === "ACTIVE" ? `AJVT-2026-${phone.slice(-4)}` : null,
+      memberNumber: status === "ACTIVE" ? `AJVT-2026-${(phone ?? "0000").slice(-4)}` : null,
     },
   });
 }
@@ -50,10 +49,6 @@ async function enter(state: StateName) {
   if (state === "memberPending") await addMember(user.id, user.phone, "PENDING", "أحمد");
   if (state === "memberActive") await addMember(user.id, user.phone, "ACTIVE", "محمد");
   if (state === "memberRejected") await addMember(user.id, user.phone, "REJECTED", "سالم");
-  if (state === "detachedMember") {
-    const member = await addMember(user.id, user.phone, "REJECTED", "منفصل");
-    await prisma.member.update({ where: { id: member.id }, data: { userId: null } });
-  }
 
   const tokenVersion = user.tokenVersion;
   if (state === "revoked") {
@@ -69,13 +64,7 @@ async function enter(state: StateName) {
   setCookie("user_token", await signToken({ typ: "user", userId: user.id, tokenVersion }));
 }
 
-const SIGNED_IN: StateName[] = [
-  "accountOnly",
-  "memberPending",
-  "memberActive",
-  "memberRejected",
-  "detachedMember",
-];
+const SIGNED_IN: StateName[] = ["accountOnly", "memberPending", "memberActive", "memberRejected"];
 const ALL: StateName[] = [...SIGNED_IN, "visitor", "revoked", "tempPassword"];
 
 describe("who the API serves", () => {
@@ -101,11 +90,6 @@ describe("who the API serves", () => {
 
     it("returns no members for an account that has none", async () => {
       await enter("accountOnly");
-      expect((await (await ME()).json()).members).toEqual([]);
-    });
-
-    it("does not return a member detached from the account", async () => {
-      await enter("detachedMember");
       expect((await (await ME()).json()).members).toEqual([]);
     });
   });

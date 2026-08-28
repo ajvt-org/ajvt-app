@@ -21,7 +21,13 @@ async function doublesActivity(teamSize: number | null = 2) {
 
 async function player(activityId: string, fullName: string) {
   const member = await prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    data: {
+      user: { create: {} },
+      fullName,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+    },
   });
   await prisma.activityRegistration.create({
     data: { memberId: member.id, activityId, status: "ACTIVE" },

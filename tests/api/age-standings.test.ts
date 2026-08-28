@@ -9,7 +9,13 @@ async function group(name: string, totalCount: number) {
 
 async function member(age: string, status: "PENDING" | "ACTIVE" | "REJECTED") {
   return prisma.member.create({
-    data: { fullName: `عضو ${age} ${status}`, age, paymentMethod: "بنكيلي", status },
+    data: {
+      user: { create: {} },
+      fullName: `عضو ${age} ${status}`,
+      age,
+      paymentMethod: "بنكيلي",
+      status,
+    },
   });
 }
 

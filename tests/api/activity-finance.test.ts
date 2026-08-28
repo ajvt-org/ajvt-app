@@ -119,6 +119,7 @@ describe("attaching finance to an activity", () => {
     const a = await activity("القافلة الصحية");
     const m = await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "عضو",
         age: "البدريين",
         paymentMethod: "بنكيلي",

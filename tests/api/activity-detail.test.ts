@@ -35,6 +35,7 @@ describe("one activity with everything hanging off it", () => {
     const activity = await anActivity();
     const member = await prisma.member.create({
       data: {
+        user: { create: {} },
         fullName: "محمد",
         age: "البدريين",
         paymentMethod: "بنكيلي",

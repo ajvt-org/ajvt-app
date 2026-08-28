@@ -59,7 +59,7 @@ describe("the year a membership covers", () => {
 
   it("is never missing, even on a row written without one", async () => {
     const member = await prisma.member.create({
-      data: { fullName: "سالم", age: "البدريين", paymentMethod: "بنكيلي" },
+      data: { user: { create: {} }, fullName: "سالم", age: "البدريين", paymentMethod: "بنكيلي" },
     });
 
     expect(member.membershipYear).toBe(runningYear());

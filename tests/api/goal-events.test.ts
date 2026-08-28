@@ -16,7 +16,13 @@ async function football(isKnockout = false) {
   const players: { id: string }[] = [];
   for (let i = 0; i < 2; i++) {
     const member = await prisma.member.create({
-      data: { fullName: `لاعب ${i}`, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: {
+        user: { create: {} },
+        fullName: `لاعب ${i}`,
+        age: "البدريين",
+        paymentMethod: "بنكيلي",
+        status: "ACTIVE",
+      },
     });
     await prisma.teamMember.create({
       data: { teamId: i === 0 ? home.id : away.id, memberId: member.id, status: "ACTIVE" },

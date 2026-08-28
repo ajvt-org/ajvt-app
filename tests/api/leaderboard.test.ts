@@ -9,6 +9,7 @@ import { resetDb } from "./helpers";
 async function member(fullName: string) {
   return prisma.member.create({
     data: {
+      user: { create: {} },
       fullName,
       age: "البدريين",
       paymentMethod: "بنكيلي",
