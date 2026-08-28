@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
 import { stampRecordedBy } from "./paymentMirror";
 
@@ -49,12 +49,66 @@ export async function recordMembershipYear(
     create: {
       memberId,
       year,
+      status: "ACTIVE",
       paidAmount,
       paymentMethod: payment.paymentMethod,
       paymentProof: payment.paymentProof,
       recordedBy: payment.recordedBy ?? null,
+      reviewedBy: payment.recordedBy ?? null,
     },
   });
 
-  if (payment.recordedBy) await stampRecordedBy(db, memberId, year, payment.recordedBy);
+  if (payment.recordedBy) {
+    await db.membership.updateMany({
+      where: { memberId, year, recordedBy: null },
+      data: { recordedBy: payment.recordedBy },
+    });
+    await stampRecordedBy(db, memberId, year, payment.recordedBy);
+  }
+}
+
+export interface MembershipVerdict {
+  status: ReviewStatus;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+}
+
+export async function setMembershipStatus(
+  db: Db,
+  memberId: string,
+  year: number,
+  verdict: MembershipVerdict,
+  now: Date,
+) {
+  await db.membership.updateMany({
+    where: { memberId, year },
+    data: {
+      status: verdict.status,
+      rejectionReason: verdict.rejectionReason ?? null,
+      ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
+    },
+  });
+}
+
+export interface MembershipSnapshot {
+  status: ReviewStatus;
+  rejectionReason: string | null;
+  paidAmount: number | null;
+  paymentMethod: string | null;
+  paymentProof: string | null;
+  referenceCode: string | null;
+  surplusAnonymous: boolean;
+}
+
+export async function saveMembershipSnapshot(
+  db: Db,
+  memberId: string,
+  year: number,
+  snapshot: MembershipSnapshot,
+) {
+  await db.membership.upsert({
+    where: { memberId_year: { memberId, year } },
+    update: snapshot,
+    create: { memberId, year, ...snapshot },
+  });
 }

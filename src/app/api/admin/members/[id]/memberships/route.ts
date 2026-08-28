@@ -27,6 +27,8 @@ export const GET = withRoute(
       select: {
         id: true,
         year: true,
+        status: true,
+        rejectionReason: true,
         paidAmount: true,
         paymentMethod: true,
         recordedBy: true,

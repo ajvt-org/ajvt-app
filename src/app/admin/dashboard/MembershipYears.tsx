@@ -1,6 +1,8 @@
 "use client";
 
 import { formatDate } from "@/lib/utils";
+import IconLabel from "@/components/IconLabel";
+import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "./constants";
 import type { MembershipYear } from "./membershipTypes";
 
 export default function MembershipYears({
@@ -17,7 +19,7 @@ export default function MembershipYears({
       {years.map((year) => (
         <div
           key={year.id}
-          className="flex items-center justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg"
+          className="flex flex-wrap items-center justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg"
           style={{
             background: year.year === currentYear ? "var(--mint-100)" : "white",
             border: "1px solid var(--mint-100)",
@@ -26,6 +28,9 @@ export default function MembershipYears({
           <span className="font-black" style={{ color: "var(--mint-700)" }} dir="ltr">
             {year.year}
           </span>
+          <span className={`badge ${STATUS_BADGE[year.status]}`}>
+            <IconLabel name={STATUS_ICON[year.status]}>{STATUS_LABEL[year.status]}</IconLabel>
+          </span>
           <span style={{ color: "var(--text-main)" }}>
             {year.paidAmount ? `${year.paidAmount} أوقية` : "—"}
             {year.paymentMethod ? ` · ${year.paymentMethod}` : ""}
@@ -33,6 +38,11 @@ export default function MembershipYears({
           <span style={{ color: "var(--text-muted)" }}>
             {year.recordedBy ? year.recordedBy : formatDate(year.createdAt)}
           </span>
+          {year.rejectionReason && (
+            <span className="w-full text-[11px]" style={{ color: "#991b1b" }}>
+              {year.rejectionReason}
+            </span>
+          )}
         </div>
       ))}
     </div>

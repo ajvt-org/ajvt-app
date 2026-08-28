@@ -42,10 +42,13 @@ export const POST = withRoute(
         data: {
           memberId: id,
           year: membershipYear,
+          status: "ACTIVE",
           paidAmount: Math.min(Number(paidAmount), membershipFee),
           paymentMethod,
           paymentProof: paymentProof || null,
           recordedBy: session.username,
+          reviewedBy: session.username,
+          reviewedAt: new Date(),
         },
       });
       await tx.member.update({

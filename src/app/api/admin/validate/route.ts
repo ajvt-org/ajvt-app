@@ -56,7 +56,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
         recordedBy: session.username,
       });
     }
-    await syncSurplusStatus(tx, id);
+    await syncSurplusStatus(tx, id, session.username);
     return m;
   });
 
