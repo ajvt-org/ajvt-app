@@ -7,6 +7,7 @@ import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
 import { PERSON_SELECT, withPerson } from "@/lib/person";
+import { paidForYear } from "@/lib/paidBreakdown";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -22,8 +23,12 @@ export const GET = withRoute(
         user: { select: PERSON_SELECT },
         paymentMethod: true,
         paymentProof: true,
-        paidAmount: true,
         surplusAnonymous: true,
+        membershipYear: true,
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true },
+        },
         referenceCode: true,
         status: true,
         createdAt: true,
@@ -34,9 +39,14 @@ export const GET = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { userId: _userId, ...rest } = withPerson(member);
+    const { userId: _userId, payments, ...rest } = withPerson(member);
     void _userId;
-    return NextResponse.json(rest);
+    const paid = paidForYear(payments, rest.membershipYear);
+    return NextResponse.json({
+      ...rest,
+      paidAmount: paid?.fee ?? null,
+      supportAmount: paid?.support ?? 0,
+    });
   },
 );
 
