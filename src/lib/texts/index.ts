@@ -52,5 +52,6 @@ export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
+export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";

@@ -8,6 +8,7 @@ import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import GroupsPanel from "./GroupsPanel";
 import type { Group, RosterMember, Team, TournamentFormat } from "./types";
+import { playersTab } from "@/lib/texts";
 
 export default function PlayersTab({
   activityId,
@@ -58,13 +59,13 @@ export default function PlayersTab({
       );
       await api.post(`/api/admin/teams/${team.id}/members`, { memberId: selected });
       setSelected("");
-    }, "أُضيف اللاعب");
+    }, playersTab.added);
   }
 
   function removePlayer(team: Team) {
     const name = team.members[0]?.member.fullName ?? team.name;
-    if (!confirm(`إزالة ${name} من البطولة؟`)) return;
-    run(() => api.del(`/api/admin/teams/${team.id}`), "أُزيل اللاعب");
+    if (!confirm(playersTab.confirmRemove(name))) return;
+    run(() => api.del(`/api/admin/teams/${team.id}`), playersTab.removed);
   }
 
   return (
@@ -81,11 +82,11 @@ export default function PlayersTab({
 
       <div className="card p-4 space-y-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="user">اللاعبون ({teams.length})</IconLabel>
+          <IconLabel name="user">{playersTab.heading(teams.length)}</IconLabel>
         </p>
         {teams.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا يوجد لاعبون بعد — أضف أول لاعب أدناه.
+            {playersTab.empty}
           </p>
         ) : (
           teams.map((team) => {
@@ -99,7 +100,9 @@ export default function PlayersTab({
                 <span className="text-sm font-bold min-w-0 flex-1">
                   {entry?.member.fullName ?? team.name}
                   {entry?.status === "PENDING" && (
-                    <span className="badge badge-pending text-xs mr-2">طلب انضمام</span>
+                    <span className="badge badge-pending text-xs mr-2">
+                      {playersTab.joinRequest}
+                    </span>
                   )}
                 </span>
                 {entry?.status === "PENDING" && (
@@ -107,14 +110,14 @@ export default function PlayersTab({
                     onClick={() =>
                       run(
                         () => api.patch(`/api/admin/teams/${team.id}/members/${entry.member.id}`),
-                        "قُبل اللاعب",
+                        playersTab.accepted,
                       )
                     }
                     disabled={busy}
                     className="text-xs px-3 py-1.5 rounded-lg font-bold"
                     style={{ background: "var(--mint-600)", color: "white" }}
                   >
-                    قبول الانضمام
+                    {playersTab.acceptJoin}
                   </button>
                 )}
                 {hasGroups && (
@@ -126,15 +129,15 @@ export default function PlayersTab({
                           api.patch(`/api/admin/teams/${team.id}`, {
                             groupId: e.target.value || null,
                           }),
-                        "نُقل اللاعب",
+                        playersTab.moved,
                       )
                     }
                     disabled={busy}
-                    aria-label={`مجموعة ${entry?.member.fullName ?? team.name}`}
+                    aria-label={playersTab.groupOf(entry?.member.fullName ?? team.name)}
                     className="input input-sm"
                     style={{ width: "auto" }}
                   >
-                    <option value="">بلا مجموعة</option>
+                    <option value="">{playersTab.noGroup}</option>
                     {groups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name}
@@ -145,7 +148,7 @@ export default function PlayersTab({
                 <button
                   onClick={() => removePlayer(team)}
                   disabled={busy}
-                  aria-label={`إزالة ${entry?.member.fullName ?? team.name}`}
+                  aria-label={playersTab.removeOf(entry?.member.fullName ?? team.name)}
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
@@ -159,17 +162,17 @@ export default function PlayersTab({
 
       <div className="card p-4 space-y-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="plus">إضافة لاعب</IconLabel>
+          <IconLabel name="plus">{playersTab.addPlayer}</IconLabel>
         </p>
         {candidates.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            كل المسجلين في النشاط مضافون بالفعل.
+            {playersTab.allAdded}
           </p>
         ) : (
           <>
             <input
               type="text"
-              placeholder="بحث بالاسم أو الهاتف..."
+              placeholder={playersTab.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="input text-sm"
@@ -178,10 +181,10 @@ export default function PlayersTab({
               <select
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
-                aria-label="اختيار اللاعب"
+                aria-label={playersTab.pickPlayerLabel}
                 className="input input-sm flex-1"
               >
-                <option value="">اختر لاعباً...</option>
+                <option value="">{playersTab.pickPlayer}</option>
                 {filtered.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.fullName}
@@ -193,7 +196,7 @@ export default function PlayersTab({
                 disabled={busy || !selected}
                 className="btn btn-sm btn-primary disabled:opacity-40"
               >
-                {busy ? "..." : "إضافة"}
+                {busy ? "..." : playersTab.add}
               </button>
             </div>
           </>
