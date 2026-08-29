@@ -38,7 +38,7 @@ export interface ExportableDonation {
   status: string;
   source: string;
   createdAt: Date;
-  member: { fullName: string } | null;
+  member: { user: { fullName: string | null } } | null;
   tags: { name: string }[];
 }
 
@@ -103,7 +103,7 @@ export function donationRows(donations: ExportableDonation[]): (string | number)
     d.paymentMethod ?? "",
     STATUS_LABEL[d.status] ?? d.status,
     SOURCE_LABEL[d.source] ?? d.source,
-    d.member?.fullName ?? "",
+    d.member?.user.fullName ?? "",
     d.tags.map((t) => t.name).join(" / "),
     day(d.createdAt),
   ]);

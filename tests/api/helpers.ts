@@ -114,3 +114,31 @@ export function withParams<T extends Record<string, string>>(params: T) {
 export function withId(id: string) {
   return withParams({ id });
 }
+
+export function personFor(memberId: string) {
+  return prisma.user.findFirstOrThrow({ where: { members: { some: { id: memberId } } } });
+}
+
+const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyToken"] as const;
+
+// A member and the account that carries the person, from one flat object: the
+// person's own fields land on the account, the rest on the membership.
+export async function makeMember(data: Record<string, unknown>) {
+  const person: Record<string, unknown> = {};
+  const membership: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if ((PERSON as readonly string[]).includes(key)) person[key] = value;
+    else membership[key] = value;
+  }
+
+  const userId = membership.userId as string | undefined;
+  if (userId) {
+    if (Object.keys(person).length > 0) {
+      await prisma.user.update({ where: { id: userId }, data: person });
+    }
+    return prisma.member.create({ data: membership as never });
+  }
+  return prisma.member.create({
+    data: { ...membership, user: { create: person } } as never,
+  });
+}

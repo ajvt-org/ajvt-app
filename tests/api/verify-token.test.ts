@@ -1,18 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { issueMembership } from "@/lib/member";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, createAdmin, signInAsAdmin, personFor, makeMember } from "./helpers";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
 
 async function pendingMember(name: string) {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: name,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "PENDING",
-    },
+  return makeMember({
+    fullName: name,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "PENDING",
   });
 }
 
@@ -28,7 +25,7 @@ describe("membership verification", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.memberNumber).toBeTruthy();
     expect(after.verifyToken).toMatch(/^[0-9a-f]{32}$/);
   });
@@ -42,8 +39,8 @@ describe("membership verification", () => {
     await VALIDATE(post("/api/admin/validate", { id: first.id, action: "ACTIVE" }));
     await VALIDATE(post("/api/admin/validate", { id: second.id, action: "ACTIVE" }));
 
-    const a = await prisma.member.findUniqueOrThrow({ where: { id: first.id } });
-    const b = await prisma.member.findUniqueOrThrow({ where: { id: second.id } });
+    const a = await personFor(first.id);
+    const b = await personFor(second.id);
 
     // The numbers run in sequence, which is the whole reason the QR stopped
     // carrying them.
@@ -53,19 +50,16 @@ describe("membership verification", () => {
 
   it("cannot be looked up by the member number the card prints", async () => {
     const issued = await issueMembership();
-    await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        ...issued,
-      },
+    await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      ...issued,
     });
 
-    const byToken = await prisma.member.findUnique({ where: { verifyToken: issued.verifyToken } });
-    const byNumberAsToken = await prisma.member.findUnique({
+    const byToken = await prisma.user.findUnique({ where: { verifyToken: issued.verifyToken } });
+    const byNumberAsToken = await prisma.user.findUnique({
       where: { verifyToken: issued.memberNumber },
     });
 

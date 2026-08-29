@@ -4,6 +4,7 @@ import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { proofScope } from "@/lib/proofScope";
 import { withRoute } from "@/lib/route";
 import { money } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const session = await requireUnscopedAdmin();
@@ -18,7 +19,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
           where: { paymentProof: { not: null } },
           select: {
             id: true,
-            fullName: true,
+            user: { select: { fullName: true } },
             paymentProof: true,
             status: true,
             createdAt: true,
@@ -36,7 +37,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
             status: true,
             createdAt: true,
             updatedAt: true,
-            member: { select: { fullName: true } },
+            member: { select: { user: { select: { fullName: true } } } },
             activity: { select: { title: true } },
           },
           orderBy: { updatedAt: "desc" },
@@ -58,7 +59,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
             memberId: true,
             activityId: true,
             activity: { select: { title: true } },
-            member: { select: { fullName: true } },
+            member: { select: { user: { select: { fullName: true } } } },
             tags: { select: { id: true, name: true } },
             createdAt: true,
             updatedAt: true,
@@ -73,7 +74,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: m.id,
       kind: "MEMBERSHIP" as const,
       proof: m.paymentProof as string,
-      memberName: m.fullName,
+      memberName: nameOf(m.user),
       activityTitle: null as string | null,
       amount: null as number | null,
       status: m.status,
@@ -84,7 +85,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: r.id,
       kind: "ACTIVITY" as const,
       proof: r.paymentProof as string,
-      memberName: r.member.fullName,
+      memberName: r.member.user.fullName,
       activityTitle: r.activity.title,
       amount: null as number | null,
       status: r.status,
@@ -95,7 +96,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: d.id,
       kind: "DONATION" as const,
       proof: d.proof as string | null,
-      memberName: d.member?.fullName || d.donorName || money.anonymousDonor,
+      memberName: d.member?.user.fullName || d.donorName || money.anonymousDonor,
       activityId: d.activityId,
       activityTitle: d.activity?.title ?? null,
       amount: d.amount,

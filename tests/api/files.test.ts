@@ -12,6 +12,7 @@ import {
   signInAs,
   signInAsAdmin,
   withParams,
+  makeMember,
 } from "./helpers";
 import { clearCookies } from "./cookieJar";
 
@@ -43,15 +44,13 @@ afterAll(async () => {
 });
 
 async function memberFor(user: { id: string }, over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      ...over,
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    ...over,
   });
 }
 

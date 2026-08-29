@@ -3,19 +3,26 @@ import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
 import { POST as LOGIN } from "@/app/api/auth/login/route";
-import { resetDb, patch, post, createUser, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  patch,
+  post,
+  createUser,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 async function personWithNoAccount(fullName = "أحمد ولد سالم") {
-  return prisma.member.create({
-    data: {
-      user: { create: { fullName, memberNumber: "AJVT-2026-0007", verifyToken: "tok-7" } },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "نقداً",
-      status: "ACTIVE",
-      memberNumber: "AJVT-2026-0007",
-      verifyToken: "tok-7",
-    },
+  return makeMember({
+    user: { create: { fullName, memberNumber: "AJVT-2026-0007", verifyToken: "tok-7" } },
+    fullName,
+    age: "البدريين",
+    paymentMethod: "نقداً",
+    status: "ACTIVE",
+    memberNumber: "AJVT-2026-0007",
+    verifyToken: "tok-7",
   });
 }
 
@@ -89,8 +96,11 @@ describe("attaching an account to someone an admin added", () => {
 
   it("refuses a number that already carries a member", async () => {
     const taken = await createUser("22119911", "secret");
-    await prisma.member.create({
-      data: { userId: taken.id, fullName: "آخر", age: "البدريين", paymentMethod: "نقداً" },
+    await makeMember({
+      userId: taken.id,
+      fullName: "آخر",
+      age: "البدريين",
+      paymentMethod: "نقداً",
     });
     const member = await personWithNoAccount();
 
@@ -104,8 +114,11 @@ describe("attaching an account to someone an admin added", () => {
 
   it("refuses to attach a second number to someone who already has one", async () => {
     const owner = await createUser("22119900", "secret");
-    const member = await prisma.member.create({
-      data: { userId: owner.id, fullName: "محمد", age: "البدريين", paymentMethod: "نقداً" },
+    const member = await makeMember({
+      userId: owner.id,
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "نقداً",
     });
 
     const res = await attach(member.id, "22119911");

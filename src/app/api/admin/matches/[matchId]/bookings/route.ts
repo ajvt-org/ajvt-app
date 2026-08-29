@@ -46,7 +46,7 @@ export const POST = withRoute(
           cardType: true,
           minute: true,
           teamId: true,
-          member: { select: { id: true, fullName: true } },
+          member: { select: { id: true, user: { select: { fullName: true } } } },
         },
       });
       const proposal = await proposeFromBooking(tx, match.activityId, memberId, cardType);
@@ -56,7 +56,7 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "CREATE_BOOKING",
-      `${booking.member.fullName} — ${booking.cardType}`,
+      `${booking.member.user.fullName} — ${booking.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",

@@ -3,18 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { get } from "./helpers";
+import { get, makeMember } from "./helpers";
 import { resetDb } from "./helpers";
 
 async function member(fullName: string) {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 

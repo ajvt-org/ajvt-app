@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/members/route";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createUser, signInAs, personFor } from "./helpers";
 
 const validBody = {
   fullName: "محمد ولد أحمد",
@@ -31,7 +31,7 @@ describe("the village on a membership request", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await personFor((await prisma.member.findFirstOrThrow()).id);
     expect(member.village).toBe(HOME_VILLAGE);
     expect(member.age).toBe("البدريين");
   });
@@ -41,7 +41,7 @@ describe("the village on a membership request", () => {
 
     await POST(post("/api/members", { ...validBody, village: HOME_VILLAGE }));
 
-    expect((await prisma.member.findFirstOrThrow()).age).toBe("البدريين");
+    expect((await personFor((await prisma.member.findFirstOrThrow()).id)).age).toBe("البدريين");
   });
 
   it("refuses the home village with no age group", async () => {
@@ -59,7 +59,7 @@ describe("the village on a membership request", () => {
     const res = await POST(post("/api/members", { ...validBody, village: "أفجار" }));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await personFor((await prisma.member.findFirstOrThrow()).id);
     expect(member.village).toBe("أفجار");
     expect(member.age).toBeNull();
   });
@@ -70,7 +70,7 @@ describe("the village on a membership request", () => {
     const res = await POST(post("/api/members", { ...validBody, village: "أفجار", age: null }));
 
     expect(res.status).toBe(201);
-    expect((await prisma.member.findFirstOrThrow()).age).toBeNull();
+    expect((await personFor((await prisma.member.findFirstOrThrow()).id)).age).toBeNull();
   });
 
   it("takes the other option for a village nobody listed", async () => {
@@ -79,7 +79,7 @@ describe("the village on a membership request", () => {
     const res = await POST(post("/api/members", { ...validBody, village: OTHER_VILLAGE, age: "" }));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await personFor((await prisma.member.findFirstOrThrow()).id);
     expect(member.village).toBe(OTHER_VILLAGE);
     expect(member.age).toBeNull();
   });
@@ -98,7 +98,7 @@ describe("the village on a membership request", () => {
 
     await POST(post("/api/members", { ...validBody, village: " أفجار " }));
 
-    expect((await prisma.member.findFirstOrThrow()).village).toBe("أفجار");
+    expect((await personFor((await prisma.member.findFirstOrThrow()).id)).village).toBe("أفجار");
   });
 
   it("moves a member to a neighbouring village when they correct their request", async () => {
@@ -112,7 +112,7 @@ describe("the village on a membership request", () => {
     );
 
     expect(res.status).toBe(200);
-    const member = await prisma.member.findUniqueOrThrow({ where: { id: created.id } });
+    const member = await personFor(created.id);
     expect(member.village).toBe("أفجار");
     expect(member.age).toBeNull();
   });
@@ -132,7 +132,7 @@ describe("the village on a membership request", () => {
     );
 
     expect(res.status).toBe(200);
-    const member = await prisma.member.findUniqueOrThrow({ where: { id: created.id } });
+    const member = await personFor(created.id);
     expect(member.village).toBe(HOME_VILLAGE);
     expect(member.age).toBe("المجاهدين");
   });

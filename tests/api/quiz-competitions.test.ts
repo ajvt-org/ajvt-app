@@ -9,6 +9,7 @@ import {
   createAdmin,
   signInAsAdmin,
   withId,
+  makeMember,
 } from "./helpers";
 import { DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { STARTS_IN_PAST } from "@/lib/competitionServer";
@@ -466,15 +467,13 @@ describe("who may play a private competition", () => {
 
   async function paidMember(fullName: string) {
     const [user] = await createUsers(1);
-    await prisma.member.create({
-      data: {
-        userId: user.id,
-        fullName,
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        paidAmount: 100,
-      },
+    await makeMember({
+      userId: user.id,
+      fullName,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 100,
     });
     return user;
   }

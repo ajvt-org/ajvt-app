@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { formatActivityDates } from "@/lib/activityDates";
 import { buildActivityRows, type MemberActivity } from "@/lib/memberActivities";
 import type { Fixture } from "@/lib/memberFixtures";
+import { nameOf } from "@/lib/person";
 
 const ACTIVITY_SELECT = {
   id: true,
@@ -54,7 +55,10 @@ export const GET = withRoute("GET /api/user/activities", async () => {
             activity: { select: ACTIVITY_SELECT },
             members: {
               where: { status: "ACTIVE" },
-              select: { memberId: true, member: { select: { fullName: true } } },
+              select: {
+                memberId: true,
+                member: { select: { user: { select: { fullName: true } } } },
+              },
             },
           },
         },
@@ -119,7 +123,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
       autoNamed: membership.team.autoNamed,
       teammates: membership.team.members
         .filter((m) => m.memberId !== membership.memberId)
-        .map((m) => m.member.fullName),
+        .map((m) => nameOf(m.member.user)),
     };
     entry.fixtures = fixtures.filter((f) => f.myTeamId === membership.team.id);
   }

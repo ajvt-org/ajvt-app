@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST as REGISTER } from "@/app/api/activities/register/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createUser, signInAs, makeMember } from "./helpers";
 
 async function aFullActivity(capacity = 1) {
   return prisma.activity.create({
@@ -10,14 +10,12 @@ async function aFullActivity(capacity = 1) {
 }
 
 async function anActiveMemberOf(user: { id: string }, fullName: string) {
-  return prisma.member.create({
-    data: {
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      userId: user.id,
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    userId: user.id,
   });
 }
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as DETAIL } from "@/app/api/admin/activities/[id]/detail/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 function ask(id: string) {
   return [get(`/api/admin/activities/${id}/detail`), withId(id)] as const;
@@ -33,14 +33,11 @@ describe("one activity with everything hanging off it", () => {
   it("brings the registrations, the teams and the counts together", async () => {
     await signInAsAdmin(await createAdmin());
     const activity = await anActivity();
-    const member = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const member = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     await prisma.activityRegistration.create({
       data: { memberId: member.id, activityId: activity.id, status: "ACTIVE" },
@@ -61,14 +58,12 @@ describe("one activity with everything hanging off it", () => {
     await signInAsAdmin(await createAdmin());
     const activity = await anActivity();
     const user = await prisma.user.create({ data: { phone: "36112233", password: "x" } });
-    const member = await prisma.member.create({
-      data: {
-        userId: user.id,
-        fullName: "أحمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const member = await makeMember({
+      userId: user.id,
+      fullName: "أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     await prisma.activityRegistration.create({
       data: {

@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import type { ReceiptPurpose, ReceiptRow } from "./receipts";
+import { nameOf } from "./person";
 
 export async function receiptsForMember(where: { userId: string } | { memberId: string }) {
   const payments = await prisma.payment.findMany({
@@ -15,7 +16,7 @@ export async function receiptsForMember(where: { userId: string } | { memberId: 
       year: true,
       createdAt: true,
       activity: { select: { title: true } },
-      member: { select: { fullName: true, memberNumber: true } },
+      member: { select: { user: { select: { fullName: true, memberNumber: true } } } },
     },
   });
 
@@ -25,8 +26,8 @@ export async function receiptsForMember(where: { userId: string } | { memberId: 
     purpose: p.purpose as ReceiptPurpose,
     paidAt: p.createdAt.toISOString(),
     year: p.year,
-    memberNumber: p.member?.memberNumber ?? null,
-    payerName: p.member?.fullName ?? "",
+    memberNumber: p.member?.user.memberNumber ?? null,
+    payerName: nameOf(p.member?.user ?? { fullName: null }),
     activityTitle: p.activity?.title ?? null,
   }));
 }

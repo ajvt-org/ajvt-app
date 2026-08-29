@@ -60,17 +60,12 @@ model User {
 
 model Member {
   id               String                 @id @default(cuid())
-  // One membership per account. Null = admin-added with an unknown phone
-  // number, an account attached later; Postgres treats nulls as distinct, so
-  // any number of those may sit unattached at once.
+  // One membership per account. The account is the person: their name, عصر,
+  // village, photo and membership number all live on it.
   userId           String                 @unique
   user             User                   @relation(fields: [userId], references: [id])
-  fullName         String
-  age              String?
-  village          String                 @default("التاكلالت")
   paymentMethod    String
   paymentProof     String?
-  photo            String?
   paidAmount       Int?
   // How the member wants what they paid above the fee to appear on the
   // support board. Read when the surplus donation is created. Only the member
@@ -81,10 +76,6 @@ model Member {
   status           ReviewStatus           @default(PENDING)
   rejectionReason  String? // one of src/lib/rejectionReasons.ts, set on REJECTED, cleared on resubmit/approval
   membershipYear   Int                    @default(dbgenerated("EXTRACT(YEAR FROM now() AT TIME ZONE 'UTC')::INTEGER"))
-  memberNumber     String?                @unique
-  // What the membership card's QR points at. memberNumber is sequential, so a
-  // URL built from it can be counted through; this cannot be guessed.
-  verifyToken      String?                @unique
   createdAt        DateTime               @default(now())
   updatedAt        DateTime               @updatedAt
   registrations    ActivityRegistration[]

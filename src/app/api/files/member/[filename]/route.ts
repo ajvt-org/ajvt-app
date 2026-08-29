@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { filename } = await params;
   return servePublicUpload(filename, async (photo) => {
-    const member = await prisma.member.findFirst({ where: { photo }, select: { id: true } });
-    return member !== null;
+    const person = await prisma.user.findFirst({ where: { photo }, select: { id: true } });
+    return person !== null;
   });
 }

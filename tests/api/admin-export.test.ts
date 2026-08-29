@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/export/[dataset]/route";
 import { prisma } from "@/lib/prisma";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, createAdmin, signInAsAdmin, withParams } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
 
 function download(dataset: string) {
   return GET(get(`/api/admin/export/${dataset}`), withParams({ dataset }));
@@ -27,15 +27,12 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("sends the members as a downloadable csv", async () => {
     await signInAsAdmin(await createAdmin());
-    await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد ولد أحمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        paidAmount: 100,
-      },
+    await makeMember({
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 100,
     });
 
     const res = await download("members");
@@ -81,14 +78,11 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("splits a membership payment into the fee and the support it carried", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
@@ -100,14 +94,11 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("carries the support half of a membership payment as a surplus gift", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
@@ -121,14 +112,11 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("leaves a membership payment that carried nothing off the donations export", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 100, 100);
@@ -141,14 +129,11 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("exports the age groups with their rate", async () => {
     await signInAsAdmin(await createAdmin());
     await prisma.ageGroup.create({ data: { name: "البدريين", totalCount: 10 } });
-    await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "عضو",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    await makeMember({
+      fullName: "عضو",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
 
     const body = await (await download("ages")).text();

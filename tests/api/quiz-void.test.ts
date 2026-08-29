@@ -5,7 +5,15 @@ import { getStandings } from "@/lib/quizRankingServer";
 import { attemptsOf, attemptsInRound } from "@/lib/quizBreakdownServer";
 import { myCompetitions } from "@/lib/competitionServer";
 import { NOTHING_TO_VOID } from "@/lib/quizAttemptServer";
-import { resetDb, post, createUsers, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  post,
+  createUsers,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 import { POST as VOID_ONE } from "@/app/api/admin/quiz/attempts/[id]/void/route";
 import { POST as VOID_ALL } from "@/app/api/admin/quiz/competitions/[id]/void/route";
@@ -45,15 +53,13 @@ async function attempt(competitionId: string, userId: string, index: number, sco
 }
 
 async function member(userId: string, fullName: string) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  return makeMember({
+    userId,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
 }
 

@@ -8,6 +8,7 @@ import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 import { activities, members, notify } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -17,7 +18,10 @@ export const POST = withRoute(
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const [member, activity] = await Promise.all([
-      prisma.member.findUnique({ where: { id: memberId }, select: { id: true, fullName: true } }),
+      prisma.member.findUnique({
+        where: { id: memberId },
+        select: { id: true, user: { select: { fullName: true } } },
+      }),
       prisma.activity.findUnique({
         where: { id },
         select: {
@@ -49,7 +53,7 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "ADMIN_REGISTER_ACTIVITY",
-      `${member.fullName} → ${activity.title}`,
+      `${nameOf(member.user)} → ${activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
@@ -75,7 +79,7 @@ export const PATCH = withRoute(
         activityId: true,
         status: true,
         rejectionReason: true,
-        member: { select: { fullName: true, userId: true } },
+        member: { select: { userId: true, user: { select: { fullName: true } } } },
         activity: { select: { title: true } },
       },
     });
@@ -94,7 +98,7 @@ export const PATCH = withRoute(
     await logAction(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
-      `${registration.member.fullName} → ${registration.activity.title}`,
+      `${registration.member.user.fullName} → ${registration.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
@@ -132,7 +136,7 @@ export const DELETE = withRoute(
       select: {
         id: true,
         status: true,
-        member: { select: { fullName: true } },
+        member: { select: { user: { select: { fullName: true } } } },
         activity: { select: { title: true } },
       },
     });
@@ -142,7 +146,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "ADMIN_UNREGISTER_ACTIVITY",
-      `${existing.member.fullName} — ${existing.activity.title}`,
+      `${existing.member.user.fullName} — ${existing.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",

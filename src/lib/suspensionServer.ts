@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import type { Prisma, SuspensionReason, SuspensionScope } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
+import { nameOf } from "./person";
 
 type Tx = Prisma.TransactionClient;
 
@@ -218,9 +219,13 @@ export async function listSuspensions(activityId: string) {
       createdBy: true,
       decidedBy: true,
       createdAt: true,
-      member: { select: { id: true, fullName: true, photo: true } },
+      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
     },
   });
   const now = new Date();
-  return rows.map((s) => ({ ...s, running: suspensionIsRunning(s, now) }));
+  return rows.map((s) => ({
+    ...s,
+    member: { id: s.member.id, fullName: nameOf(s.member.user), photo: s.member.user.photo },
+    running: suspensionIsRunning(s, now),
+  }));
 }

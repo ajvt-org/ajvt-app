@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, createUsers, signInAs } from "./helpers";
+import { resetDb, createUsers, signInAs, makeMember } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as MINE } from "@/app/api/quiz/competitions/route";
@@ -24,15 +24,13 @@ async function competition(over: Record<string, unknown> = {}) {
 
 async function paidMember(paid = 100) {
   const [user] = await createUsers(1);
-  await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: paid,
-    },
+  await makeMember({
+    userId: user.id,
+    fullName: "أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: paid,
   });
   await signInAs(user);
   return user;

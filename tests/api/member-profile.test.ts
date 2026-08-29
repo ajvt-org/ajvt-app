@@ -1,21 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 function ask(id: string) {
   return [get(`/api/admin/members/${id}/profile`), withId(id)] as const;
 }
 
 async function aMember(fullName = "محمد") {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 

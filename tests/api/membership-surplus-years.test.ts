@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { mirrorMembershipPayment } from "@/lib/paymentMirror";
-import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, post, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 
@@ -11,17 +11,14 @@ const YEAR = runningYear();
 const LAST = YEAR - 1;
 
 function memberOnLastYear() {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-      membershipYear: LAST,
-      memberNumber: "AJVT-2025-0001",
-    },
+  return makeMember({
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
+    membershipYear: LAST,
+    memberNumber: "AJVT-2025-0001",
   });
 }
 
@@ -118,15 +115,12 @@ describe("a surplus belongs to the year it was paid for", () => {
   });
 
   it("tags a first surplus with the year the membership covers", async () => {
-    const m = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "أحمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "PENDING",
-        membershipYear: YEAR,
-      },
+    const m = await makeMember({
+      fullName: "أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "PENDING",
+      membershipYear: YEAR,
     });
 
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");

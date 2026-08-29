@@ -4,7 +4,15 @@ import { POST as CREATE_TEAM } from "@/app/api/admin/activities/[id]/teams/route
 import { POST as ADD_MEMBER } from "@/app/api/admin/teams/[teamId]/members/route";
 import { POST as DRAW } from "@/app/api/admin/activities/[id]/bracket/draw/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin, withId, withParams } from "./helpers";
+import {
+  resetDb,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  withParams,
+  makeMember,
+} from "./helpers";
 
 async function doublesActivity(teamSize: number | null = 2) {
   const res = await CREATE_ACTIVITY(
@@ -20,14 +28,11 @@ async function doublesActivity(teamSize: number | null = 2) {
 }
 
 async function player(activityId: string, fullName: string) {
-  const member = await prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  const member = await makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
   await prisma.activityRegistration.create({
     data: { memberId: member.id, activityId, status: "ACTIVE" },

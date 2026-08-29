@@ -3,7 +3,16 @@ import { GET } from "@/app/api/admin/users/route";
 import { DELETE } from "@/app/api/admin/users/[id]/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, del, createAdmin, createUser, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  post,
+  del,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 function asDelete(id: string, body: unknown) {
   return [del(`/api/admin/users/${id}`, body), withId(id)] as const;
@@ -15,8 +24,11 @@ async function bareUser(phone = "36000001") {
 
 async function userWithMember(phone = "36000002") {
   const user = await createUser(phone);
-  await prisma.member.create({
-    data: { userId: user.id, fullName: "محمد ولد أحمد", age: "البدريين", paymentMethod: "بنكيلي" },
+  await makeMember({
+    userId: user.id,
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
   });
   return user;
 }

@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { MEMBERSHIP_FEE } from "./donations";
+import { nameOf } from "./person";
 
 const SETTINGS_ID = "singleton";
 
@@ -14,11 +15,11 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
 export async function eligibleMembers() {
   const members = await prisma.member.findMany({
     where: { status: "ACTIVE", paidAmount: { gte: MEMBERSHIP_FEE } },
-    select: { userId: true, fullName: true },
-    orderBy: { fullName: "asc" },
+    select: { userId: true, user: { select: { fullName: true } } },
+    orderBy: { user: { fullName: "asc" } },
     distinct: ["userId"],
   });
-  return members.map((m) => ({ userId: m.userId, fullName: m.fullName }));
+  return members.map((m) => ({ userId: m.userId, fullName: nameOf(m.user) }));
 }
 
 export async function getQuizSettings() {

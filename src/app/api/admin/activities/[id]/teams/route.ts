@@ -24,10 +24,7 @@ export const GET = withRoute(
             member: {
               select: {
                 id: true,
-                fullName: true,
-                age: true,
-                photo: true,
-                user: { select: { phone: true } },
+                user: { select: { phone: true, fullName: true, age: true, photo: true } },
               },
             },
           },

@@ -7,10 +7,11 @@ import { runningYear } from "../../src/lib/membershipYear";
 import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
-import { syncPersonFromMember } from "../../src/lib/personServer";
 
 export type SeededUser = { id: string; phone: string | null };
-export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>>;
+export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>> & {
+  fullName: string;
+};
 
 export interface SeededMembers {
   all: SeededMember[];
@@ -56,32 +57,36 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       ? (await prisma.user.create({ data: { fullName: fullName(i) } })).id
       : users[i].id;
 
-    const member = await prisma.member.create({
+    await prisma.user.update({
+      where: { id: owner },
       data: {
-        userId: owner,
         fullName: fullName(i),
         age,
         village,
+        photo: i % PHOTO_EVERY === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
+        memberNumber: isActive
+          ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
+          : null,
+        verifyToken: isActive ? generateVerifyToken() : null,
+      },
+    });
+
+    const member = await prisma.member.create({
+      data: {
+        userId: owner,
         paymentMethod: paymentMethod(i),
         paymentProof:
           i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1
             ? null
             : placeholder(`seed-proof-${next()}.webp`),
-        photo: i % PHOTO_EVERY === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
         paidAmount: [500, 1000, 1500, 2000, 3000][i % 5],
         referenceCode: referenceCode(i),
         status,
         rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
         membershipYear,
-        memberNumber: isActive
-          ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
-          : null,
-        verifyToken: isActive ? generateVerifyToken() : null,
         createdAt: daysAgo(Math.max(1, 130 - i)),
       },
     });
-
-    await syncPersonFromMember(prisma, member.id);
 
     await mirrorMembershipPayment(prisma, {
       memberId: member.id,
@@ -92,12 +97,13 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       proof: member.paymentProof,
       status,
       anonymous: member.surplusAnonymous,
-      donorName: member.fullName,
+      donorName: fullName(i),
     });
 
-    all.push(member);
-    if (isActive) active.push(member);
-    if (status === "PENDING") pending.push(member);
+    const withName = { ...member, fullName: fullName(i) };
+    all.push(withName);
+    if (isActive) active.push(withName);
+    if (status === "PENDING") pending.push(withName);
   }
 
   await prisma.counter.upsert({

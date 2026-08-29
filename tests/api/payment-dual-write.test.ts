@@ -14,6 +14,7 @@ import {
   signInAsAdmin,
   withId,
   postForm,
+  makeMember,
 } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
@@ -180,17 +181,14 @@ describe("every path that touches money writes both shapes", () => {
 
   it("agrees after a renewal, keeping each year its own payment", async () => {
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
-    const m = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        paidAmount: 100,
-        membershipYear: YEAR - 1,
-        memberNumber: "AJVT-2025-0001",
-      },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 100,
+      membershipYear: YEAR - 1,
+      memberNumber: "AJVT-2025-0001",
     });
     await prisma.membership.create({
       data: { memberId: m.id, year: YEAR - 1, paidAmount: 100 },

@@ -12,6 +12,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
 import { stampRecordedBy } from "@/lib/paymentMirror";
+import { nameOf } from "@/lib/person";
 
 const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
   notActive: messages.renewNotActive,
@@ -31,10 +32,16 @@ export const POST = withRoute(
     const paidAmountError = validatePaidAmount(paidAmount, membershipFee);
     if (paidAmountError) throw new ValidationError(paidAmountError);
 
-    const member = await prisma.member.findUnique({ where: { id } });
+    const member = await prisma.member.findUnique({
+      where: { id },
+      include: { user: { select: { fullName: true, memberNumber: true } } },
+    });
     if (!member) throw new NotFoundError(messages.notFound);
 
-    const refusal = renewalRefusal(member, membershipYear);
+    const refusal = renewalRefusal(
+      { ...member, memberNumber: member.user.memberNumber },
+      membershipYear,
+    );
     if (refusal) throw new ConflictError(REFUSALS[refusal]);
 
     const renewed = await prisma.$transaction(async (tx) => {
@@ -64,13 +71,18 @@ export const POST = withRoute(
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
-    await logAction(session.username, "RENEW_MEMBER", `${member.fullName} — ${membershipYear}`, {
-      ...auditContext(session, req),
-      targetType: "Member",
-      targetId: id,
-      before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
-      after: { membershipYear, paidAmount: Number(paidAmount) },
-    });
+    await logAction(
+      session.username,
+      "RENEW_MEMBER",
+      `${nameOf(member.user)} — ${membershipYear}`,
+      {
+        ...auditContext(session, req),
+        targetType: "Member",
+        targetId: id,
+        before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
+        after: { membershipYear, paidAmount: Number(paidAmount) },
+      },
+    );
 
     return NextResponse.json({ member: renewed }, { status: 201 });
   },

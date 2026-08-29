@@ -1,22 +1,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUser, signInAs } from "./helpers";
+import { resetDb, get, createUser, signInAs, personFor, makeMember } from "./helpers";
 
 import { GET as RECEIPTS } from "@/app/api/user/receipts/route";
 
 const read = () => RECEIPTS(get("/api/user/receipts"));
 
 async function memberFor(user: { id: string }, over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "محمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      memberNumber: `AJVT-${Math.floor(Math.random() * 100000)}`,
-      ...over,
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "محمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    memberNumber: `AJVT-${Math.floor(Math.random() * 100000)}`,
+    ...over,
   });
 }
 
@@ -46,7 +44,7 @@ describe("the receipts a member can take away", () => {
       amount: 1000,
       purpose: "MEMBERSHIP",
       year: 2026,
-      memberNumber: member.memberNumber,
+      memberNumber: (await personFor(member.id)).memberNumber,
       payerName: "محمد",
     });
   });

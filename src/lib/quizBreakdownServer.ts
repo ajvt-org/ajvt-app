@@ -33,8 +33,8 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
   });
   if (!attempt) throw new NotFoundError(NO_ATTEMPT);
 
-  const member = await prisma.member.findFirst({
-    where: { userId: attempt.userId },
+  const person = await prisma.user.findUnique({
+    where: { id: attempt.userId },
     select: { fullName: true },
   });
   const boards = attempt.round.competition.boards;
@@ -61,7 +61,7 @@ export async function attemptDetail(attemptId: string): Promise<AttemptDetail> {
   return {
     attemptId: attempt.id,
     userId: attempt.userId,
-    name: member?.fullName ?? "",
+    name: person?.fullName ?? "",
     round: attempt.round.index,
     category: attempt.round.category,
     competitionId: attempt.round.competitionId,
@@ -147,11 +147,11 @@ export async function attemptsInRound(competitionId: string, index: number) {
     select: { id: true, userId: true, score: true, finishedAt: true, voidedAt: true },
     orderBy: { score: "desc" },
   });
-  const members = await prisma.member.findMany({
-    where: { userId: { in: attempts.map((a) => a.userId) } },
-    select: { userId: true, fullName: true },
+  const people = await prisma.user.findMany({
+    where: { id: { in: attempts.map((a) => a.userId) } },
+    select: { id: true, fullName: true },
   });
-  const names = new Map(members.map((m) => [m.userId as string, m.fullName]));
+  const names = new Map(people.map((u) => [u.id, u.fullName]));
 
   return attempts
     .map((a) => ({

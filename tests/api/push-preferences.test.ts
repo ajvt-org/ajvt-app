@@ -10,6 +10,7 @@ import {
   put,
   signInAs,
   signInAsAdmin,
+  makeMember,
 } from "./helpers";
 import { OPT_OUT_CATEGORIES } from "@/lib/notificationCategories";
 
@@ -236,15 +237,13 @@ const START = new Date("2026-08-01T08:00:00.000Z");
 
 async function paidMember(phone: string, fullName: string) {
   const user = await subscriber(phone);
-  await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 1000,
-    },
+  await makeMember({
+    userId: user.id,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 1000,
   });
   return user;
 }

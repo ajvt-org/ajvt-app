@@ -4,21 +4,27 @@ import { GET as LIST_DELETED } from "@/app/api/admin/deleted/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
 import { RETENTION_DAYS } from "@/lib/deletedRecords";
-import { resetDb, post, del, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  post,
+  del,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+  personFor,
+} from "./helpers";
 
 function asDelete(id: string, body: unknown) {
   return [del(`/api/admin/members/${id}`, body), withId(id)] as const;
 }
 
 async function member(fullName = "محمد ولد أحمد") {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 
@@ -71,8 +77,9 @@ describe("DELETE /api/admin/members/[id]", () => {
     );
 
     expect(res.status).toBe(200);
-    const restored = await prisma.member.findUnique({ where: { id: m.id } });
-    expect(restored).toMatchObject({ fullName: "محمد ولد أحمد", status: "ACTIVE" });
+    const restored = await prisma.member.findUniqueOrThrow({ where: { id: m.id } });
+    expect(restored).toMatchObject({ status: "ACTIVE" });
+    expect((await personFor(m.id)).fullName).toBe("محمد ولد أحمد");
     expect(await prisma.deletedRecord.count()).toBe(0);
   });
 

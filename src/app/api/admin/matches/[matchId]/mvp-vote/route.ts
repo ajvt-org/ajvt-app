@@ -14,7 +14,7 @@ const VOTE_INCLUDE = {
     select: {
       id: true,
       memberId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, user: { select: { fullName: true } } } },
       _count: { select: { votes: true } },
     },
   },

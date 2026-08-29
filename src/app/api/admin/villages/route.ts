@@ -10,13 +10,16 @@ export const GET = withRoute("GET /api/admin/villages", async () => {
   await requireAdminRole("MEMBERS");
   const [rows, used] = await Promise.all([
     prisma.village.findMany({ orderBy: { createdAt: "asc" } }),
-    prisma.member.groupBy({ by: ["village"], _count: { _all: true } }),
+    prisma.member.findMany({ select: { user: { select: { village: true } } } }),
   ]);
-  const counts = new Map(used.map((row) => [row.village, row._count._all]));
+  const counts = new Map<string, number>();
+  for (const row of used) {
+    counts.set(row.user.village, (counts.get(row.user.village) ?? 0) + 1);
+  }
   const known = new Set(rows.map((row) => row.name));
-  const unlisted = used
-    .filter((row) => row.village !== OTHER_VILLAGE && !known.has(row.village))
-    .map((row) => ({ name: row.village, count: row._count._all }))
+  const unlisted = [...counts.entries()]
+    .filter(([name]) => name !== OTHER_VILLAGE && !known.has(name))
+    .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
   return NextResponse.json({

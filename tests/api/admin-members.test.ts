@@ -12,6 +12,8 @@ import {
   createUser,
   signInAsAdmin,
   withId,
+  personFor,
+  makeMember,
 } from "./helpers";
 
 const ALREADY = "لهذا الحساب عضو مسبقاً";
@@ -31,15 +33,13 @@ async function signIn() {
 
 async function memberFor(userId: string | null, over: Record<string, unknown> = {}) {
   const owner = userId ?? (await prisma.user.create({ data: {} })).id;
-  return prisma.member.create({
-    data: {
-      userId: owner,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      ...over,
-    },
+  return makeMember({
+    userId: owner,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    ...over,
   });
 }
 
@@ -102,9 +102,10 @@ describe("admin membership is one per account", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(updated.age).toBe("الفائزين");
-    expect(updated.paymentMethod).toBe("السداد");
+    expect((await personFor(member.id)).age).toBe("الفائزين");
+    expect(
+      (await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paymentMethod,
+    ).toBe("السداد");
 
     const log = await prisma.auditLog.findFirstOrThrow({
       where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER" },
@@ -126,7 +127,7 @@ describe("admin membership is one per account", () => {
 
     const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(updated.paymentMethod).toBe("بنكيلي");
-    expect(updated.fullName).toBe("عضو");
+    expect((await personFor(member.id)).fullName).toBe("عضو");
   });
 
   it("refuses an empty payment method rather than blanking it", async () => {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
+import { nameOf } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/roster",
@@ -15,10 +16,7 @@ export const GET = withRoute(
         member: {
           select: {
             id: true,
-            fullName: true,
-            user: { select: { phone: true } },
-            age: true,
-            photo: true,
+            user: { select: { phone: true, fullName: true, age: true, photo: true } },
             teamMemberships: {
               where: { team: { activityId: id } },
               select: { team: { select: { id: true, name: true } } },
@@ -26,15 +24,15 @@ export const GET = withRoute(
           },
         },
       },
-      orderBy: { member: { fullName: "asc" } },
+      orderBy: { member: { user: { fullName: "asc" } } },
     });
 
     const roster = registrations.map(({ member }) => ({
       id: member.id,
-      fullName: member.fullName,
-      phone: member.user?.phone ?? null,
-      age: member.age,
-      photo: member.photo,
+      fullName: nameOf(member.user),
+      phone: member.user.phone ?? null,
+      age: member.user.age,
+      photo: member.user.photo,
       team: member.teamMemberships[0]?.team || null,
     }));
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH as SAVE } from "@/app/api/admin/matches/[matchId]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, patch, createAdmin, signInAsAdmin, makeMember } from "./helpers";
 
 function withMatch(matchId: string) {
   return { params: Promise.resolve({ matchId }) };
@@ -15,14 +15,11 @@ async function football(isKnockout = false) {
   const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
   const players: { id: string }[] = [];
   for (let i = 0; i < 2; i++) {
-    const member = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: `لاعب ${i}`,
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const member = await makeMember({
+      fullName: `لاعب ${i}`,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     await prisma.teamMember.create({
       data: { teamId: i === 0 ? home.id : away.id, memberId: member.id, status: "ACTIVE" },

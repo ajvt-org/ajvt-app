@@ -8,6 +8,7 @@ import { parse } from "@/lib/validation";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members } from "@/lib/messages";
 import { accountPhoneSchema } from "./schema";
+import { nameOf } from "@/lib/person";
 
 // Correcting the number an account signs in with. Since the member's own copy
 // was dropped, this is the only number the association has for a person, and a
@@ -30,7 +31,7 @@ export const PATCH = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, userId: true, user: { select: { id: true, phone: true } } },
+      select: { userId: true, user: { select: { id: true, phone: true, fullName: true } } },
     });
     if (!member) throw new NotFoundError(members.notFound);
     if (!member.user?.phone) throw new ConflictError(members.noAccountToCorrect);
@@ -46,7 +47,7 @@ export const PATCH = withRoute(
     const before = member.user.phone;
     await prisma.user.update({ where: { id: member.user.id }, data: { phone: next } });
 
-    await logAction(session.username, "CHANGE_ACCOUNT_PHONE", `${member.fullName} — ${next}`, {
+    await logAction(session.username, "CHANGE_ACCOUNT_PHONE", `${nameOf(member.user)} — ${next}`, {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,

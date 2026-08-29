@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { resetDb, patch, put, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, patch, put, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 import { PATCH as UPDATE } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
@@ -10,17 +10,14 @@ import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 const YEAR = runningYear();
 
 async function memberMissingAmount() {
-  const m = await prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: null,
-      membershipYear: YEAR,
-      memberNumber: "AJVT-2026-0001",
-    },
+  const m = await makeMember({
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: null,
+    membershipYear: YEAR,
+    memberNumber: "AJVT-2026-0001",
   });
   await prisma.membership.create({
     data: { memberId: m.id, year: YEAR, paidAmount: null, paymentMethod: "بنكيلي" },

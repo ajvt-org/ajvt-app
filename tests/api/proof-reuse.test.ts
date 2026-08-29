@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { findProofReuse } from "@/lib/proofReuse";
-import { resetDb } from "./helpers";
+import { resetDb, makeMember } from "./helpers";
 
 const HASH = "a".repeat(64);
 const OTHER = "b".repeat(64);
@@ -11,15 +11,12 @@ async function fingerprint(filename: string, sha256: string) {
 }
 
 async function memberWithProof(fullName: string, paymentProof: string) {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "PENDING",
-      paymentProof,
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "PENDING",
+    paymentProof,
   });
 }
 

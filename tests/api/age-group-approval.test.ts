@@ -15,6 +15,7 @@ import {
   signInAs,
   signInAsAdmin,
   withId,
+  personFor,
 } from "./helpers";
 
 const validBody = {
@@ -48,7 +49,7 @@ describe("suggesting an age group from the form", () => {
 
     await CREATE_MEMBER(post("/api/members", { ...validBody, age: "الفلانيين" }));
 
-    expect((await prisma.member.findFirstOrThrow()).age).toBe("الفلانيين");
+    expect((await personFor((await prisma.member.findFirstOrThrow()).id)).age).toBe("الفلانيين");
   });
 
   it("does not demote a group that is already approved", async () => {

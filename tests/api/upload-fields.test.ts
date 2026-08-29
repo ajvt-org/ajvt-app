@@ -6,7 +6,7 @@ import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { UPLOAD_FIELDS, locateUpload, renameUpload } from "@/lib/uploadFields";
 import type { PublicFileRoute } from "@/lib/uploadFields";
-import { resetDb, createUser, get, withParams } from "./helpers";
+import { resetDb, createUser, get, withParams, personFor, makeMember } from "./helpers";
 
 import { GET as ACTIVITY_FILE } from "@/app/api/files/activity/[filename]/route";
 import { GET as DONATION_FILE } from "@/app/api/files/donation/[filename]/route";
@@ -15,15 +15,13 @@ import { GET as TEAM_FILE } from "@/app/api/files/team/[filename]/route";
 
 async function memberWith(over: Record<string, unknown>) {
   const user = await createUser(`2${String(Date.now()).slice(-7)}`);
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      ...over,
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    ...over,
   });
 }
 
@@ -34,7 +32,7 @@ describe("the upload field registry", () => {
 
   it("lists every column that can hold an upload filename", () => {
     expect(UPLOAD_FIELDS.map((f) => f.id)).toEqual([
-      "member.photo",
+      "user.photo",
       "member.paymentProof",
       "membership.paymentProof",
       "activityRegistration.paymentProof",
@@ -51,7 +49,7 @@ describe("the upload field registry", () => {
   it("serves through the generic route only what has no public route of its own", () => {
     const served = UPLOAD_FIELDS.filter((f) => f.serve.via === "authenticated").map((f) => f.id);
     expect(served).toEqual([
-      "member.photo",
+      "user.photo",
       "member.paymentProof",
       "membership.paymentProof",
       "activityRegistration.paymentProof",
@@ -91,7 +89,7 @@ describe("renameUpload", () => {
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.paymentProof).toBe("new.webp");
-    expect(after.photo).toBe("new.webp");
+    expect((await personFor(member.id)).photo).toBe("new.webp");
     expect((await prisma.expense.findFirstOrThrow()).proof).toBe("new.webp");
     const fingerprint = await prisma.proofImage.findUniqueOrThrow({
       where: { filename: "new.webp" },
