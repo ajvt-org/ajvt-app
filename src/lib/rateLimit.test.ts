@@ -6,6 +6,7 @@ import {
   clearAttempts,
   getClientIp,
   bucketKeys,
+  forgetRateLimits,
 } from "./rateLimit";
 
 const WINDOW = 60_000;
@@ -191,5 +192,17 @@ describe("getClientIp", () => {
 
   it("returns a constant when the proxy sends nothing", () => {
     expect(getClientIp(requestWith({}))).toBe("unknown");
+  });
+});
+
+describe("forgetRateLimits", () => {
+  it("empties every bucket, so one test cannot rate limit the next", () => {
+    recordFailedAttempt("someone", 60_000);
+    expect(bucketKeys().length).toBeGreaterThan(0);
+
+    forgetRateLimits();
+
+    expect(bucketKeys()).toEqual([]);
+    expect(isRateLimited("someone", 1)).toBe(false);
   });
 });

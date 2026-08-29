@@ -3,6 +3,7 @@ import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
+import { forgetRateLimits } from "@/lib/rateLimit";
 import { setCookie, clearCookies } from "./cookieJar";
 
 export async function resetDb() {
@@ -14,6 +15,7 @@ export async function resetDb() {
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
   await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
   forgetShared();
+  forgetRateLimits();
   clearCookies();
 }
 
