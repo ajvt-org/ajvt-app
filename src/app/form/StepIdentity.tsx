@@ -5,10 +5,10 @@ import ArrowLabel from "@/components/ArrowLabel";
 import { arabicValidity } from "@/lib/validationMessage";
 import { memberForm, villageField } from "@/lib/texts";
 import { OTHER_VILLAGE, requiresAgeGroup } from "@/lib/villages";
-import AgeGroupField from "./AgeGroupField";
-import ErrorNotice from "./ErrorNotice";
-import FormSelect from "./FormSelect";
-import PhoneInput from "./PhoneInput";
+import AgeGroupField from "@/components/form/AgeGroupField";
+import ErrorNotice from "@/components/form/ErrorNotice";
+import FormSelect from "@/components/form/FormSelect";
+import PhoneInput from "@/components/form/PhoneInput";
 import { isArabicName, type FormValues } from "./constants";
 
 export default function StepIdentity({

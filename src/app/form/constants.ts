@@ -1,3 +1,5 @@
+export { isArabicName } from "@/lib/arabicName";
+
 export interface FormValues {
   fullName: string;
   phone: string;
@@ -18,19 +20,5 @@ export const PAYMENT_CODES: Record<string, string> = {
 
 export const DRAFT_KEY = "ajvt_form_draft";
 
-export const DEFAULT_AGES = [
-  "البدريين",
-  "الفائزين",
-  "النجميين",
-  "المجاهدين",
-  "المنصورين",
-  "الخاشعين",
-  "التائبين",
-];
-
 export const STEPS_NEW = [1, 2, 3] as const;
 export const STEPS_AUTHENTICATED = [1, 3] as const;
-
-export function isArabicName(value: string): boolean {
-  return /^[؀-ۿ\s]+$/.test(value.trim());
-}

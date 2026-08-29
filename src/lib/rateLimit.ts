@@ -48,6 +48,10 @@ export function clearAttempts(key: string): void {
   buckets.delete(bucketKey(key));
 }
 
+export function forgetRateLimits(): void {
+  buckets.clear();
+}
+
 export function bucketKeys(): string[] {
   return [...buckets.keys()];
 }

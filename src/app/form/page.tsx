@@ -18,12 +18,12 @@ import BackButton from "@/components/BackButton";
 import { goAfterAuthChange } from "@/lib/authNav";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
-import ProgressBar from "./ProgressBar";
+import ProgressBar from "@/components/form/ProgressBar";
 import StepIdentity from "./StepIdentity";
 import StepAccount from "./StepAccount";
 import StepPayment from "./StepPayment";
 import SubmittedCard from "./SubmittedCard";
-import { useFormLists } from "./useFormLists";
+import { useFormLists } from "@/components/form/useFormLists";
 import {
   DRAFT_KEY,
   IDLE_TIMEOUT_MS,
@@ -265,7 +265,14 @@ function FormPageInner() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: form.phone, password }),
+        body: JSON.stringify({
+          phone: form.phone,
+          password,
+          fullName: form.fullName.trim(),
+          village: form.village,
+          age: ageForVillage(form.village, form.age),
+          photo,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "فشل إنشاء الحساب");

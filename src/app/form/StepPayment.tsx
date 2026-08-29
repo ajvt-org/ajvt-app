@@ -8,7 +8,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
 import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import CopyRow from "./CopyRow";
-import ErrorNotice from "./ErrorNotice";
+import ErrorNotice from "@/components/form/ErrorNotice";
 import { PAYMENT_CODES, type FormValues } from "./constants";
 
 export default function StepPayment({

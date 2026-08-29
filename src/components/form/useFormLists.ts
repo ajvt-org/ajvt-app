@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { HOME_VILLAGE, villageChoices } from "@/lib/villages";
-import { DEFAULT_AGES } from "./constants";
+import { DEFAULT_AGES } from "@/lib/ageGroupDefaults";
 
 export function useFormLists() {
   const [ages, setAges] = useState<string[]>(DEFAULT_AGES);

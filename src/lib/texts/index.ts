@@ -18,6 +18,7 @@ export { photoLock } from "./photoLock";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
 export { quizRecap } from "./quizRecap";
+export { signUp } from "./signUp";
 export { treasury } from "./treasury";
 export { villageField, villagesDialog } from "./villages";
 export { matchDisplay, publicTournament } from "./publicTournament";
