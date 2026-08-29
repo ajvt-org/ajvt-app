@@ -28,6 +28,7 @@ export { memberCard } from "./memberCard";
 export { manualAdd } from "./manualAdd";
 export { memberEdit } from "./memberAdmin";
 export { memberDrawer } from "./memberDrawer";
+export { memberPicker } from "./memberPicker";
 export { memberForm } from "./memberForm";
 export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";

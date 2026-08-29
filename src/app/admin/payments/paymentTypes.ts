@@ -46,6 +46,11 @@ export interface MemberOption {
   id: string;
   userId: string;
   fullName: string;
+  memberNumber: string | null;
+  phone: string | null;
+  village: string;
+  age: string | null;
+  photo: string | null;
 }
 
 export interface ActivityOption {
