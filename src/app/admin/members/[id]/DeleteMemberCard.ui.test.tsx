@@ -12,8 +12,14 @@ function mockFetch() {
   return fetchMock;
 }
 
-function setup() {
-  render(<DeleteMemberCard memberId="m1" fullName="محمد ولد أحمد" />);
+function setup(userId: string | null = "u1") {
+  render(<DeleteMemberCard memberId="m1" userId={userId} fullName="محمد ولد أحمد" />);
+}
+
+async function confirmWith(name: string) {
+  await userEvent.click(screen.getByRole("button", { name: /متابعة/ }));
+  await userEvent.type(screen.getByLabelText("اسم العضو للتأكيد"), name);
+  await userEvent.click(screen.getByRole("button", { name: /حذف نهائي$/ }));
 }
 
 afterEach(() => {
@@ -26,7 +32,7 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الطلب نهائياً/ }));
+    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /متابعة/ })).toBeDefined();
@@ -36,12 +42,11 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الطلب نهائياً/ }));
-    await userEvent.click(screen.getByRole("button", { name: /متابعة/ }));
-    await userEvent.type(screen.getByLabelText("اسم العضو للتأكيد"), "محمد ولد أحمد");
-    await userEvent.click(screen.getByRole("button", { name: /حذف نهائي$/ }));
+    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
+    await confirmWith("محمد ولد أحمد");
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/dashboard"));
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/admin/members/m1");
     expect(fetchMock.mock.calls[0][1].method).toBe("DELETE");
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       confirmName: "محمد ولد أحمد",
@@ -52,11 +57,28 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الطلب نهائياً/ }));
-    await userEvent.click(screen.getByRole("button", { name: /متابعة/ }));
-    await userEvent.type(screen.getByLabelText("اسم العضو للتأكيد"), "محمد");
-    await userEvent.click(screen.getByRole("button", { name: /حذف نهائي$/ }));
+    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
+    await confirmWith("محمد");
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes the person through the account, not the payment", async () => {
+    const fetchMock = mockFetch();
+    setup();
+
+    await userEvent.click(screen.getByRole("button", { name: /حذف الشخص نهائياً/ }));
+    await confirmWith("محمد ولد أحمد");
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/dashboard"));
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/admin/users/u1");
+  });
+
+  it("offers no person deletion when there is no account to delete", () => {
+    mockFetch();
+    setup(null);
+
+    expect(screen.queryByRole("button", { name: /حذف الشخص نهائياً/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /حذف الدفع نهائياً/ })).toBeDefined();
   });
 });

@@ -80,12 +80,69 @@ describe("DELETE /api/admin/users/[id]", () => {
     await signInAsAdmin(await createAdmin());
   });
 
-  it("refuses an account that has a membership request", async () => {
+  it("takes the membership payment with the person", async () => {
+    const user = await userWithMember();
+
+    const res = await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+
+    expect(res.status).toBe(200);
+    expect(await prisma.user.count()).toBe(0);
+    expect(await prisma.member.count()).toBe(0);
+  });
+
+  it("keeps a restorable copy of both the person and their payment", async () => {
+    const user = await userWithMember();
+    const member = await prisma.member.findFirstOrThrow();
+
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+
+    const kinds = await prisma.deletedRecord.findMany({ orderBy: { kind: "asc" } });
+    expect(kinds.map((r) => [r.kind, r.recordId])).toEqual([
+      ["Member", member.id],
+      ["User", user.id],
+    ]);
+  });
+
+  it("brings a deleted person back, account first then payment", async () => {
+    const user = await userWithMember();
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+    const [memberRecord, userRecord] = await prisma.deletedRecord.findMany({
+      orderBy: { kind: "asc" },
+    });
+
+    const early = await RESTORE(
+      post(`/api/admin/deleted/${memberRecord.id}/restore`, {}),
+      withId(memberRecord.id),
+    );
+    expect(early.status).toBe(409);
+
+    await RESTORE(post(`/api/admin/deleted/${userRecord.id}/restore`, {}), withId(userRecord.id));
+    const late = await RESTORE(
+      post(`/api/admin/deleted/${memberRecord.id}/restore`, {}),
+      withId(memberRecord.id),
+    );
+
+    expect(late.status).toBe(200);
+    expect(await prisma.user.count()).toBe(1);
+    expect(await prisma.member.count()).toBe(1);
+  });
+
+  it("accepts the number instead of the name, whichever screen the admin came from", async () => {
     const user = await userWithMember();
 
     const res = await DELETE(...asDelete(user.id, { confirmPhone: user.phone }));
 
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
+    expect(await prisma.user.count()).toBe(0);
+  });
+
+  it("refuses an account with nothing to confirm against rather than taking an empty string", async () => {
+    const user = await bareUser();
+    await prisma.user.update({ where: { id: user.id }, data: { fullName: null, phone: null } });
+
+    const res = await DELETE(...asDelete(user.id, { confirmPhone: "" }));
+
+    expect(res.status).toBe(400);
     expect(await prisma.user.count()).toBe(1);
   });
 
@@ -121,7 +178,7 @@ describe("DELETE /api/admin/users/[id]", () => {
     expect(res.status).toBe(200);
     expect(await prisma.user.count()).toBe(0);
     const record = await prisma.deletedRecord.findFirstOrThrow();
-    expect(record).toMatchObject({ kind: "User", recordId: user.id, label: user.phone });
+    expect(record).toMatchObject({ kind: "User", recordId: user.id, label: "محمد ولد أحمد" });
   });
 
   it("brings the account back on restore, password included", async () => {

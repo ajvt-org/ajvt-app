@@ -1,6 +1,6 @@
 export const accounts = {
   notFound: "الحساب غير موجود",
-  hasMember: "لهذا الحساب طلب عضوية، احذف الطلب أولاً",
-  confirmPhone: "اكتب رقم الحساب كما هو للتأكيد",
+  confirmPerson: "اكتب اسم الشخص أو رقمه كما هو للتأكيد",
   phoneTaken: "هذا الرقم مستعمل لحساب آخر",
+  restoreAccountFirst: "استرجع حساب هذا الشخص أولاً، ثم دفعه",
 } as const;

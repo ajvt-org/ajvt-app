@@ -281,7 +281,11 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      <DeleteMemberCard memberId={member.id} fullName={member.fullName} />
+      <DeleteMemberCard
+        memberId={member.id}
+        userId={member.user?.id ?? null}
+        fullName={member.fullName}
+      />
     </div>
   );
 }
