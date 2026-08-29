@@ -3,6 +3,7 @@ export interface Person {
   age: string | null;
   village: string;
   photo: string | null;
+  photoLocked: boolean;
   memberNumber: string | null;
   verifyToken: string | null;
 }
@@ -12,6 +13,7 @@ export const PERSON_SELECT = {
   age: true,
   village: true,
   photo: true,
+  photoLocked: true,
   memberNumber: true,
   verifyToken: true,
 } as const;
@@ -24,6 +26,7 @@ export function personOf(user: Person) {
     age: user.age,
     village: user.village,
     photo: user.photo,
+    photoLocked: user.photoLocked,
     memberNumber: user.memberNumber,
     verifyToken: user.verifyToken,
   };
@@ -35,11 +38,13 @@ export function withPerson<M extends { user: Person }>(
   member: M,
 ): Omit<M, "user"> & ShapedPerson & { user: Omit<M["user"], keyof Person> } {
   const { user, ...membership } = member;
-  const { fullName, age, village, photo, memberNumber, verifyToken, ...account } = user;
+  const { fullName, age, village, photo, photoLocked, memberNumber, verifyToken, ...account } =
+    user;
   void fullName;
   void age;
   void village;
   void photo;
+  void photoLocked;
   void memberNumber;
   void verifyToken;
   return {

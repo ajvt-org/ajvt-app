@@ -75,7 +75,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
       return {
         ...member,
         ...person,
-        photoLocked: user.photoLocked,
         user: { phone: user.phone },
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,
