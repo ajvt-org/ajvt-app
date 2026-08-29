@@ -1,8 +1,7 @@
 export const matchDisplay = {
   tieUnresolved: "متساويان تماماً — يفصل بينهما القرعة",
   tieMark: "قرعة",
-  forfeitBadge: "فوز بالانسحاب",
-  forfeitNote: (team: string) => `انسحاب — احتُسبت المباراة لصالح ${team}`,
+  forfeitBadge: "انسحاب",
   unknownScorer: "مجهول",
   ownGoal: "ع",
   penaltyShort: "ج",
@@ -10,6 +9,7 @@ export const matchDisplay = {
   penalties: "ركلات ترجيح",
   motm: "رجل المباراة",
   priorMeetings: "مواجهات سابقة:",
+  meetingSeparator: "، ",
   upcomingShort: "قادمة",
   todayMatches: "مباريات اليوم",
   clubName: "رابطة شباب قرية التاكلالت",

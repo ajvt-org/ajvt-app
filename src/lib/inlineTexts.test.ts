@@ -22,6 +22,7 @@ const KEPT_CLEAN = [
   "src/components/ProofUpload.tsx",
   "src/components/admin/tournament/PlayersTab.tsx",
   "src/components/MemberCard.tsx",
+  "src/components/tournament/MatchResult.tsx",
   "src/components/PaymentReceipts.tsx",
   "src/components/admin/shell/navTabs.ts",
   "src/lib/officialReceipt.ts",

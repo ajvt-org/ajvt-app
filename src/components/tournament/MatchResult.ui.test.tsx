@@ -105,10 +105,10 @@ describe("a match won by forfeit", () => {
     );
   }
 
-  it("says so, naming the side it was awarded to", () => {
+  it("says so in one word rather than repeating the score in a sentence", () => {
     showForfeit("t1");
 
-    expect(screen.getByText(matchDisplay.forfeitNote("الصقور"))).toBeDefined();
+    expect(screen.getByText(matchDisplay.forfeitBadge)).toBeDefined();
   });
 
   it("says nothing on a match that was played out", () => {
@@ -121,7 +121,7 @@ describe("a match won by forfeit", () => {
     showForfeit("t1", { homePenalties: 4, awayPenalties: 3 });
 
     expect(screen.queryByText(matchDisplay.penalties)).toBeNull();
-    expect(screen.getByText(matchDisplay.forfeitNote("الصقور"))).toBeDefined();
+    expect(screen.getByText(matchDisplay.forfeitBadge)).toBeDefined();
   });
 
   it("still shows the shootout on a match nobody forfeited", () => {
