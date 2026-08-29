@@ -15,7 +15,7 @@ import { useReceiptsData } from "./useReceiptsData";
 import { emptyReceiptForm, type ReceiptForm as Form } from "./types";
 
 export default function AdminReceiptsPage() {
-  const { receipts, officersMissing, reload } = useReceiptsData();
+  const { receipts, years, year, officersMissing, reload, showYear } = useReceiptsData();
   const [form, setForm] = useState<Form>(emptyReceiptForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +78,26 @@ export default function AdminReceiptsPage() {
         error={error}
         officersMissing={officersMissing}
       />
+
+      {years.length > 1 && (
+        <div className="flex items-center gap-2">
+          <label htmlFor="receipt-year" className="text-sm font-bold">
+            {receiptAdmin.yearLabel}
+          </label>
+          <select
+            id="receipt-year"
+            value={year ?? ""}
+            onChange={(e) => showYear(Number(e.target.value))}
+            className="input w-auto"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <ReceiptList
         receipts={receipts}

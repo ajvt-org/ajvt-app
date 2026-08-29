@@ -46,6 +46,7 @@ export const receiptAdmin = {
   voidReasonLabel: "سبب الإلغاء",
   voidConfirm: "تأكيد الإلغاء",
   empty: "لم يصدر أي وصل بعد.",
+  yearLabel: "سنة الإصدار",
   issuedBy: "أصدره",
   statusVoid: "ملغى",
   statusActive: "ساري",

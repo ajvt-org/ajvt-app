@@ -74,17 +74,41 @@ export async function receiptByToken(token: string): Promise<OfficialReceiptView
   return row ? receiptView(row) : null;
 }
 
+const VIEW_SELECT = {
+  number: true,
+  token: true,
+  payerName: true,
+  reason: true,
+  amount: true,
+  issuedOn: true,
+  secretary: true,
+  treasurer: true,
+  status: true,
+} as const;
+
+type ReceiptViewRow = Prisma.ReceiptGetPayload<{ select: typeof VIEW_SELECT }>;
+
+export async function receiptYears(): Promise<number[]> {
+  const rows = await prisma.receipt.findMany({
+    select: { issuedOn: true },
+    orderBy: { issuedOn: "desc" },
+    distinct: ["issuedOn"],
+  });
+  return [...new Set(rows.map((r) => r.issuedOn.getFullYear()))].sort((a, b) => b - a);
+}
+
 export async function listReceipts(year?: number): Promise<OfficialReceiptView[]> {
   const rows = await prisma.receipt.findMany({
     where: year
       ? { issuedOn: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) } }
       : undefined,
     orderBy: { issuedOn: "desc" },
+    select: VIEW_SELECT,
   });
   return rows.map(receiptView);
 }
 
-export function receiptView(row: Receipt): OfficialReceiptView {
+export function receiptView(row: ReceiptViewRow): OfficialReceiptView {
   return {
     number: row.number,
     token: row.token,

@@ -245,6 +245,37 @@ describe("the list of receipts", () => {
     expect(receipts[0].number).toBe("R-2027-0001");
   });
 
+  it("opens on the most recent year rather than everything ever issued", async () => {
+    await asBoss();
+    await issue({ ...DRAFT, issuedOn: new Date(2026, 5, 1).toISOString() });
+    await issue({ ...DRAFT, issuedOn: new Date(2027, 5, 1).toISOString() });
+
+    const body = await (await LIST(get("/api/admin/receipts"))).json();
+
+    expect(body.year).toBe(2027);
+    expect(body.receipts).toHaveLength(1);
+    expect(body.receipts[0].number).toBe("R-2027-0001");
+  });
+
+  it("names every year that has a receipt, newest first", async () => {
+    await asBoss();
+    await issue({ ...DRAFT, issuedOn: new Date(2026, 5, 1).toISOString() });
+    await issue({ ...DRAFT, issuedOn: new Date(2027, 5, 1).toISOString() });
+
+    const body = await (await LIST(get("/api/admin/receipts"))).json();
+
+    expect(body.years).toEqual([2027, 2026]);
+  });
+
+  it("has no year to open on when nothing was ever issued", async () => {
+    await asBoss();
+
+    const body = await (await LIST(get("/api/admin/receipts"))).json();
+
+    expect(body.years).toEqual([]);
+    expect(body.receipts).toEqual([]);
+  });
+
   it("is closed to nobody at all", async () => {
     expect((await LIST(get("/api/admin/receipts"))).status).toBe(401);
   });
