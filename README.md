@@ -42,7 +42,7 @@ After `npm run db:seed:dev`:
 
 Admins sign in at `/admin/login`, members at `/login`. The exact member phone numbers are printed when the seed finishes.
 
-Plain `npm run db:seed` only creates the `admin` account and the age groups. That is the one that runs in production, so keep the fake data out of it. It takes the first password from `ADMIN_INITIAL_PASSWORD` and refuses to create the account without it. The `admin123` fallback applies to a database on this machine and nowhere else, so a deployment can never come up with a password written down here. Once the account exists the seed leaves its password alone, with one exception: an account still holding `admin123` is replaced with `ADMIN_INITIAL_PASSWORD` on the next boot, and warns in the log while nothing is set.
+Plain `npm run db:seed` only creates the `admin` account and the age groups. That is the one that runs in production, so keep the fake data out of it. It takes the first password from `ADMIN_INITIAL_PASSWORD` and refuses to create the account without it. The `admin123` fallback applies to a database on this machine and nowhere else, so a deployment can never come up with a password written down here. Once the account exists the seed leaves its password alone, with one exception: an account still holding `admin123` is replaced with `ADMIN_INITIAL_PASSWORD` on the next boot, and warns in the log while nothing is set. The account is only ever created when the table is empty, so deleting `admin` once the association has admins of its own keeps it deleted.
 
 ## Scripts
 
