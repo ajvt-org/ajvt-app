@@ -11,6 +11,7 @@ export { memberActivities } from "./memberActivities";
 export { manualAdd } from "./manualAdd";
 export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
+export { memberProof } from "./memberProof";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoLock } from "./photoLock";

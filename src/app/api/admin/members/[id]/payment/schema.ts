@@ -4,7 +4,7 @@ import { common } from "@/lib/messages";
 const INVALID = common.invalidBody;
 
 export const memberPaymentSchema = z.object({
-  amountTransferred: z.union([z.number(), z.null()]),
+  amountTransferred: z.union([z.number(), z.null()]).optional(),
   paymentMethod: z
     .string(INVALID)
     .refine((v) => v.trim().length > 0, INVALID)

@@ -53,6 +53,7 @@ function show(m: Member) {
       rejectReason=""
       onClose={() => {}}
       onZoomProof={() => {}}
+      onProofSaved={() => {}}
       onResetPassword={() => {}}
       onAccountPhone={() => {}}
       onAttachAccount={() => {}}

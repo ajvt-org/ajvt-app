@@ -27,11 +27,16 @@ export const PUT = withRoute(
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { membershipYear: true, paidAmount: true, user: { select: { fullName: true } } },
+      select: {
+        membershipYear: true,
+        paidAmount: true,
+        paymentProof: true,
+        user: { select: { fullName: true } },
+      },
     });
     if (!existing) throw new NotFoundError(messages.notFound);
 
-    if (amountTransferred !== null) {
+    if (amountTransferred !== undefined && amountTransferred !== null) {
       const amountError = validatePaidAmount(amountTransferred, membershipFee);
       if (amountError) throw new ValidationError(amountError);
     }
@@ -48,11 +53,20 @@ export const PUT = withRoute(
           },
         });
       }
-      await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
+      if (amountTransferred !== undefined) {
+        await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
+      }
       await syncMembershipRecord(tx, id, existing.membershipYear, {
-        paidAmount:
-          amountTransferred === null ? null : splitPayment(amountTransferred, membershipFee).fee,
+        ...(amountTransferred !== undefined
+          ? {
+              paidAmount:
+                amountTransferred === null
+                  ? null
+                  : splitPayment(amountTransferred, membershipFee).fee,
+            }
+          : {}),
         ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+        ...(paymentProof !== undefined ? { paymentProof } : {}),
       });
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
@@ -61,8 +75,11 @@ export const PUT = withRoute(
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { amountTransferred: before },
-      after: { amountTransferred },
+      before: { amountTransferred: before, paymentProof: existing.paymentProof },
+      after: {
+        amountTransferred: amountTransferred === undefined ? before : amountTransferred,
+        paymentProof: paymentProof === undefined ? existing.paymentProof : paymentProof,
+      },
     });
 
     return NextResponse.json({
