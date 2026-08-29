@@ -1,7 +1,19 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import ProofCard from "./ProofCard";
-import type { Proof } from "./paymentTypes";
+import { ouguiya, paymentCard } from "@/lib/texts";
+import type { MemberOption, Proof } from "./paymentTypes";
+
+const ACCOUNT: MemberOption = {
+  id: "m1",
+  userId: "u1",
+  fullName: "أبوبكر لمرابط",
+  memberNumber: "AJVT-2026-0061",
+  phone: "33655124",
+  village: "التاكلالت",
+  age: "البدريين",
+  photo: null,
+};
 
 const REUSE = [{ kind: "member", id: "m9", label: "أحمد", date: "2026-08-01T00:00:00.000Z" }];
 
@@ -31,11 +43,11 @@ function proofOf(over: Partial<Proof> = {}): Proof {
   };
 }
 
-function show(over: Partial<Proof> = {}) {
+function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
   render(
     <ProofCard
       proof={proofOf(over)}
-      members={[]}
+      members={members}
       activities={[]}
       financeTags={[]}
       busy={false}
@@ -95,5 +107,64 @@ describe("the other kinds on the same list", () => {
 
     await waitFor(() => expect(screen.getByText("الدوري")).toBeTruthy());
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the amount on its own, not buried in the status", () => {
+    mockFetch([]);
+    show({ amount: 2000 });
+
+    expect(screen.getByText(ouguiya.amount(2000))).toBeTruthy();
+    expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
+  });
+
+  it("shows the name typed by hand when it differs from the one on show", () => {
+    mockFetch([]);
+    show({ memberName: "أبوبكر لمرابط", donorName: "ابو", userId: "u1", memberId: "m1" });
+
+    expect(screen.getByText(paymentCard.storedName("ابو"))).toBeTruthy();
+  });
+
+  it("says nothing about a stored name that already matches", () => {
+    mockFetch([]);
+    show({ memberName: "أحمد", donorName: "أحمد" });
+
+    expect(screen.queryByText(/الاسم المكتوب/)).toBeNull();
+  });
+
+  it("says when a gift is hidden from the public board", () => {
+    mockFetch([]);
+    show({ anonymous: true });
+
+    expect(screen.getByText(paymentCard.hiddenOnBoard)).toBeTruthy();
+  });
+
+  it("says nothing about hiding a gift that is named", () => {
+    mockFetch([]);
+    show({ anonymous: false });
+
+    expect(screen.queryByText(paymentCard.hiddenOnBoard)).toBeNull();
+  });
+
+  it("shows who the gift is linked to, with enough to confirm it", () => {
+    mockFetch([]);
+    show({ userId: "u1", memberId: "m1" }, [ACCOUNT]);
+
+    expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
+  });
+
+  it("links to the receipt and says whether it still stands", () => {
+    mockFetch([]);
+    show({ receipt: { number: "R-2026-0243", status: "ACTIVE", token: "t".repeat(32) } });
+
+    const link = screen.getByRole("link", { name: /R-2026-0243/ });
+    expect(link.getAttribute("href")).toBe(`/receipt/${"t".repeat(32)}`);
+    expect(screen.getByText(new RegExp(paymentCard.receiptActive))).toBeTruthy();
+  });
+
+  it("marks a voided receipt as voided", () => {
+    mockFetch([]);
+    show({ receipt: { number: "R-2026-0242", status: "VOID", token: "t".repeat(32) } });
+
+    expect(screen.getByText(new RegExp(paymentCard.receiptVoid))).toBeTruthy();
   });
 });

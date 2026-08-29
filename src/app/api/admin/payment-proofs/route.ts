@@ -71,6 +71,12 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       : Promise.resolve([]),
   ]);
 
+  const receipts = await prisma.receipt.findMany({
+    where: { paymentId: { in: donations.map((d) => d.id) } },
+    select: { paymentId: true, number: true, status: true, token: true },
+  });
+  const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
+
   const proofs = [
     ...members.map((m) => ({
       id: m.id,
@@ -112,6 +118,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       donorPhone: d.donorPhone,
       donorPhoto: d.donorPhoto,
       tags: d.tags,
+      receipt: receiptOf.get(d.id) ?? null,
       uploadedAt: d.updatedAt,
       submittedAt: d.createdAt,
     })),
