@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { settleMvpVotes } from "@/lib/mvpVoteServer";
+import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -49,6 +51,7 @@ const MATCH_INCLUDE = {
     select: {
       id: true,
       status: true,
+      closesAt: true,
       candidates: {
         select: {
           id: true,
@@ -67,13 +70,23 @@ export const GET = withRoute(
     const { id } = await params;
     await requireActivityAccess(id);
 
-    const matches = await prisma.match.findMany({
-      where: { activityId: id },
-      orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "asc" }],
-      include: MATCH_INCLUDE,
-    });
+    const read = () =>
+      prisma.match.findMany({
+        where: { activityId: id },
+        orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "asc" }],
+        include: MATCH_INCLUDE,
+      });
 
-    return NextResponse.json({ matches });
+    const [matches, activity] = await Promise.all([
+      read(),
+      prisma.activity.findUnique({ where: { id }, select: { mvpVoteMinutes: true } }),
+    ]);
+    const applied = await settleMvpVotes(matches);
+
+    return NextResponse.json({
+      matches: applied.size > 0 ? await read() : matches,
+      mvpVoteMinutes: activity?.mvpVoteMinutes ?? DEFAULT_MVP_VOTE_MINUTES,
+    });
   },
 );
 

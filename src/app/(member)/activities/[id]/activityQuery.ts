@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { settleMvpVotes } from "@/lib/mvpVoteServer";
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -57,6 +58,7 @@ async function loadActivity(id: string) {
           awayPenalties: true,
           status: true,
           forfeitWinnerTeamId: true,
+          manOfTheMatchId: true,
           manOfTheMatch: {
             select: { id: true, user: { select: { fullName: true, photo: true } } },
           },
@@ -93,9 +95,11 @@ async function loadActivity(id: string) {
             select: {
               id: true,
               status: true,
+              closesAt: true,
               candidates: {
                 select: {
                   id: true,
+                  memberId: true,
                   member: { select: { id: true, user: { select: { fullName: true } } } },
                   _count: { select: { votes: true } },
                 },
@@ -150,7 +154,13 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
 
 export async function loadActivityPage(id: string) {
   const activity = await loadActivity(id);
-  return activity ? shape(activity) : null;
+  if (!activity) return null;
+
+  const applied = await settleMvpVotes(activity.matches);
+  if (applied.size === 0) return shape(activity);
+
+  const settled = await loadActivity(id);
+  return settled ? shape(settled) : null;
 }
 
 export type ActivityPageData = NonNullable<Awaited<ReturnType<typeof loadActivityPage>>>;

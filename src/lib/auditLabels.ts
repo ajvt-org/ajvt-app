@@ -92,6 +92,7 @@ export const ACTION_LABELS: Record<string, string> = {
   OPEN_MVP_VOTE: "فتح تصويت أفضل لاعب",
   CLOSE_MVP_VOTE: "إغلاق تصويت أفضل لاعب",
   REOPEN_MVP_VOTE: "إعادة فتح تصويت أفضل لاعب",
+  EXTEND_MVP_VOTE: "تمديد مدة تصويت أفضل لاعب",
   DELETE_MVP_VOTE: "حذف تصويت أفضل لاعب",
   GENERATE_MATCH_SCHEDULE: "توليد جدول المباريات",
   GENERATE_BRACKET_DRAW: "توليد قرعة الأدوار الإقصائية",

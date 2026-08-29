@@ -10,6 +10,7 @@ import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline } from "@/lib/matchEvents";
 import { forfeitLoserTeamId } from "@/lib/forfeit";
+import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
@@ -112,7 +113,15 @@ export default function MatchResult({
       {football && match.mvpVote && (
         <MvpVoteWidget
           matchId={match.id}
-          status={match.mvpVote.status as "OPEN" | "CLOSED"}
+          status={
+            isVoteClosed({
+              status: match.mvpVote.status as "OPEN" | "CLOSED",
+              closesAt: match.mvpVote.closesAt,
+            })
+              ? "CLOSED"
+              : "OPEN"
+          }
+          closesAt={match.mvpVote.closesAt}
           candidates={match.mvpVote.candidates.map((c) => ({
             id: c.id,
             fullName: c.member.fullName,

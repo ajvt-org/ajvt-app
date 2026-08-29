@@ -19,6 +19,7 @@ export { memberForm } from "./memberForm";
 export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
+export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";

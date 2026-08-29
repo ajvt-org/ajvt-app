@@ -6,6 +6,7 @@ import { parse } from "@/lib/validation";
 import { mvpVoteCastSchema } from "./schema";
 import { isUniqueViolation } from "@/lib/prismaError";
 import { tournament } from "@/lib/messages";
+import { isVoteClosed } from "@/lib/mvpVote";
 
 export const POST = withRoute(
   "POST /api/matches/[matchId]/mvp-vote",
@@ -16,13 +17,13 @@ export const POST = withRoute(
 
     const vote = await prisma.matchMvpVote.findUnique({
       where: { matchId },
-      select: { id: true, status: true, candidates: { select: { id: true } } },
+      select: { id: true, status: true, closesAt: true, candidates: { select: { id: true } } },
     });
     if (!vote) {
       return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
     }
-    if (vote.status !== "OPEN") {
-      return NextResponse.json({ error: "التصويت مغلق" }, { status: 409 });
+    if (isVoteClosed(vote)) {
+      return NextResponse.json({ error: tournament.voteOver }, { status: 409 });
     }
     if (!vote.candidates.some((c) => c.id === candidateId)) {
       return NextResponse.json({ error: "لاعب غير موجود ضمن المرشحين" }, { status: 400 });
