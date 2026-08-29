@@ -6,7 +6,7 @@ import { parse } from "@/lib/validation";
 import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
-import { withPerson } from "@/lib/person";
+import { PERSON_SELECT, withPerson } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -19,17 +19,7 @@ export const GET = withRoute(
       select: {
         id: true,
         userId: true,
-        user: {
-          select: {
-            fullName: true,
-            age: true,
-            village: true,
-            photo: true,
-            photoLocked: true,
-            memberNumber: true,
-            verifyToken: true,
-          },
-        },
+        user: { select: PERSON_SELECT },
         paymentMethod: true,
         paymentProof: true,
         paidAmount: true,

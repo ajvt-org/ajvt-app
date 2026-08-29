@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
-import { withPerson } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
 // Everything the association knows about one person, in one answer. The facts
 // live in five tables — the member, their activity registrations, their teams,
@@ -22,15 +22,8 @@ export const GET = withRoute(
         user: {
           select: {
             id: true,
-            phone: true,
             createdAt: true,
-            fullName: true,
-            age: true,
-            village: true,
-            photo: true,
-            photoLocked: true,
-            memberNumber: true,
-            verifyToken: true,
+            ...PERSON_WITH_PHONE_SELECT,
           },
         },
         registrations: {
