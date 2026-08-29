@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 import IconLabel from "./IconLabel";
+import { proofUpload } from "@/lib/texts";
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = [
@@ -68,11 +69,11 @@ function uploadWithProgress(
       if (xhr.status >= 200 && xhr.status < 300 && data.filename) {
         resolve({ filename: data.filename });
       } else {
-        reject(new Error(data.error || "فشل رفع الصورة"));
+        reject(new Error(data.error || proofUpload.uploadFailed));
       }
     };
-    xhr.onerror = () => reject(new Error("انقطع الاتصال بالإنترنت أثناء الرفع"));
-    xhr.ontimeout = () => reject(new Error("استغرق الرفع وقتاً طويلاً — تحقق من اتصالك"));
+    xhr.onerror = () => reject(new Error(proofUpload.connectionLost));
+    xhr.ontimeout = () => reject(new Error(proofUpload.tooSlow));
 
     xhr.send(body);
   });
@@ -104,12 +105,12 @@ export default function ProofUpload({
     setProgress(0);
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("نوع الملف غير مدعوم (JPG أو PNG أو WEBP أو HEIC فقط)");
+      setError(proofUpload.unsupportedType);
       setStatus("error");
       return;
     }
     if (file.size > MAX_SIZE) {
-      setError("حجم الملف يتجاوز 10 ميغابايت");
+      setError(proofUpload.tooLarge);
       setStatus("error");
       return;
     }
@@ -124,7 +125,7 @@ export default function ProofUpload({
       setStatus("done");
       onUploaded(filename);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطأ غير متوقع");
+      setError(err instanceof Error ? err.message : proofUpload.unexpected);
       setStatus("error");
     }
   }
@@ -146,7 +147,7 @@ export default function ProofUpload({
   return (
     <div>
       <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-        كابتير — صورة تأكيد الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+        {proofUpload.label} <span style={{ color: "var(--copper-500)" }}>*</span>
       </p>
 
       {showingImage ? (
@@ -154,7 +155,7 @@ export default function ProofUpload({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl || `/api/files/${existingProof}`}
-            alt="الكابتير"
+            alt={proofUpload.imageAlt}
             className="max-h-48 mx-auto rounded-xl object-contain"
           />
 
@@ -173,7 +174,7 @@ export default function ProofUpload({
                 className="mt-1 text-xs text-center font-semibold"
                 style={{ color: "var(--mint-600)" }}
               >
-                جاري الرفع... {progress}%
+                {proofUpload.uploading(progress)}
               </p>
             </div>
           )}
@@ -183,7 +184,7 @@ export default function ProofUpload({
               className="mt-2 text-xs text-center font-semibold"
               style={{ color: "var(--mint-600)" }}
             >
-              جاري تجهيز الصورة...
+              {proofUpload.preparing}
             </p>
           )}
 
@@ -192,7 +193,7 @@ export default function ProofUpload({
               className="mt-2 text-xs text-center font-semibold"
               style={{ color: "var(--mint-600)" }}
             >
-              <IconLabel name="check">تم رفع الصورة</IconLabel>
+              <IconLabel name="check">{proofUpload.uploaded}</IconLabel>
             </p>
           )}
 
@@ -207,7 +208,7 @@ export default function ProofUpload({
                 className="mt-1.5 text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-600)", color: "white" }}
               >
-                إعادة المحاولة
+                {proofUpload.retry}
               </button>
             </div>
           )}
@@ -220,7 +221,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="camera">صورة جديدة</IconLabel>
+                <IconLabel name="camera">{proofUpload.newPhoto}</IconLabel>
               </button>
               <button
                 type="button"
@@ -228,7 +229,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="image">من المعرض</IconLabel>
+                <IconLabel name="image">{proofUpload.fromGallery}</IconLabel>
               </button>
             </div>
           )}
@@ -240,10 +241,10 @@ export default function ProofUpload({
               <Icon name="camera" size={40} />
             </div>
             <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
-              التقط صورة أو اختر واحدة من هاتفك
+              {proofUpload.prompt}
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              JPG / PNG / WEBP — حجم أقصى 10 ميغابايت
+              {proofUpload.hint}
             </p>
             <div className="flex gap-2 mt-3 justify-center">
               <button
@@ -252,7 +253,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-2 rounded-lg font-bold"
                 style={{ background: "var(--mint-600)", color: "white" }}
               >
-                <IconLabel name="camera">التقط صورة</IconLabel>
+                <IconLabel name="camera">{proofUpload.takePhoto}</IconLabel>
               </button>
               <button
                 type="button"
@@ -260,7 +261,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-2 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="image">اختر من المعرض</IconLabel>
+                <IconLabel name="image">{proofUpload.pickFromGallery}</IconLabel>
               </button>
             </div>
           </div>
