@@ -13,6 +13,7 @@ import DonateThanks from "./DonateThanks";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import { donate as texts } from "@/lib/texts";
 
 export default function DonatePage() {
   return (
@@ -85,16 +86,16 @@ function DonatePageInner() {
     e.preventDefault();
     setError("");
     if (!selectedFile) {
-      setError("يرجى إرفاق صورة إثبات الدفع");
+      setError(texts.proofRequired);
       return;
     }
     const n = Number(amount);
     if (!amount.trim() || !Number.isInteger(n) || n <= 0) {
-      setError("يرجى إدخال مبلغ التبرع");
+      setError(texts.amountRequired);
       return;
     }
     if (!paymentMethod) {
-      setError("يرجى اختيار طريقة الدفع");
+      setError(texts.methodRequired);
       return;
     }
     const choiceError = validateDonorChoice(
@@ -122,7 +123,7 @@ function DonatePageInner() {
 
       const res = await fetch("/api/donations", { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل إرسال التبرع");
+      if (!res.ok) throw new Error(data.error || texts.sendFailed);
       setDone(true);
     } catch (err) {
       setError(errorMessage(err));
@@ -146,7 +147,7 @@ function DonatePageInner() {
   if (!lockedMember && !confirmedAnonymous) {
     return (
       <div className="app-shell">
-        <PageHeader title={"دعم الرابطة"} />
+        <PageHeader title={texts.title} />
 
         <div className="px-5 py-6 pb-10 space-y-5">
           <div className="card p-5 fade-up">
@@ -154,11 +155,10 @@ function DonatePageInner() {
               <Icon name="heart" filled size={32} color="var(--mint-600)" />
             </div>
             <p className="text-sm font-bold mb-2 text-center" style={{ color: "var(--text-main)" }}>
-              أنت على وشك التبرع بدون إنشاء حساب
+              {texts.noAccountTitle}
             </p>
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-              بدون حساب لن يكون لديك بطاقة عضوية رقمية، ولن تتمكن من المشاركة في أنشطة وفعاليات
-              الرابطة — التبرع هنا يبقى دعماً عاماً منفصلاً عن العضوية.
+              {texts.noAccountBody}
             </p>
           </div>
 
@@ -167,19 +167,18 @@ function DonatePageInner() {
             style={{ background: "var(--mint-50)", border: "1px solid var(--mint-200)" }}
           >
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              <Icon name="trophy" size={14} className="icon-inline" /> الاشتراك في الرابطة (100
-              أوقية على الأقل) يتيح لك:
+              <Icon name="trophy" size={14} className="icon-inline" /> {texts.joinHeading}
             </p>
             <ul className="text-sm space-y-1" style={{ color: "var(--text-muted)" }}>
-              <li>• المشاركة في الأنشطة والفعاليات</li>
-              <li>• بطاقة عضوية رقمية بمعرّف خاص بك</li>
-              <li>• أي مبلغ زائد عن 100 يُحتسب تلقائياً كتبرّع باسمك</li>
+              {texts.joinBenefits.map((benefit) => (
+                <li key={benefit}>• {benefit}</li>
+              ))}
             </ul>
           </div>
 
           <div className="space-y-2.5 fade-up delay-2">
             <button onClick={() => router.push("/membership")} className="btn btn-primary">
-              <IconLabel name="user">إنشاء حساب والانضمام للرابطة</IconLabel>
+              <IconLabel name="user">{texts.createAccount}</IconLabel>
             </button>
             <button
               onClick={() => setConfirmedAnonymous(true)}
@@ -187,7 +186,7 @@ function DonatePageInner() {
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
               <IconLabel name="heart" filled>
-                المتابعة والتبرع بدون حساب
+                {texts.continueWithout}
               </IconLabel>
             </button>
           </div>
@@ -198,7 +197,7 @@ function DonatePageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={"دعم الرابطة"} />
+      <PageHeader title={texts.title} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         <div className="card p-5 text-center fade-up">
@@ -206,9 +205,7 @@ function DonatePageInner() {
             <Icon name="heart" filled size={32} color="var(--mint-600)" />
           </div>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {lockedMember
-              ? "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت."
-              : "تتابع الآن كمتبرع بدون حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة."}
+            {lockedMember ? texts.memberHint : texts.guestHint}
           </p>
         </div>
 
@@ -221,7 +218,8 @@ function DonatePageInner() {
               className="block text-sm font-bold mb-1.5"
               style={{ color: "var(--text-main)" }}
             >
-              المبلغ (MRU)<span style={{ color: "var(--copper-500)" }}>*</span>
+              {texts.amountLabel}
+              <span style={{ color: "var(--copper-500)" }}>*</span>
             </label>
             <input
               id="donate-amount"
@@ -230,7 +228,7 @@ function DonatePageInner() {
               inputMode="numeric"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="بالأوقية"
+              placeholder={texts.amountPlaceholder}
               required
               {...arabicValidity()}
               className="input"
@@ -244,7 +242,7 @@ function DonatePageInner() {
               className="block text-sm font-bold mb-2"
               style={{ color: "var(--text-main)" }}
             >
-              طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+              {texts.methodLabel} <span style={{ color: "var(--copper-500)" }}>*</span>
             </p>
             <div
               className="grid grid-cols-3 gap-2"
@@ -284,7 +282,7 @@ function DonatePageInner() {
 
           <div>
             <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              صورة إثبات الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+              {texts.proofLabel} <span style={{ color: "var(--copper-500)" }}>*</span>
             </p>
             <label className="upload-zone" style={{ display: "block", cursor: "pointer" }}>
               {previewUrl ? (
@@ -292,11 +290,11 @@ function DonatePageInner() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl}
-                    alt="إثبات الدفع"
+                    alt={texts.proofAlt}
                     className="max-h-48 mx-auto rounded-xl object-contain"
                   />
                   <p className="mt-2 text-xs text-center" style={{ color: "var(--mint-600)" }}>
-                    انقر لتغيير الصورة
+                    {texts.changeImage}
                   </p>
                 </div>
               ) : (
@@ -305,10 +303,10 @@ function DonatePageInner() {
                     <Icon name="receipt" size={36} />
                   </div>
                   <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
-                    انقر لاختيار صورة من هاتفك
+                    {texts.pickImage}
                   </p>
                   <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-                    PNG / JPG — حجم أقصى 5 ميغابايت
+                    {texts.imageHint}
                   </p>
                 </div>
               )}
@@ -332,10 +330,10 @@ function DonatePageInner() {
 
           <button type="submit" disabled={loading} className="btn btn-primary">
             {loading ? (
-              "جاري الإرسال..."
+              texts.sending
             ) : (
               <IconLabel name="heart" filled>
-                تأكيد الدعم
+                {texts.submit}
               </IconLabel>
             )}
           </button>

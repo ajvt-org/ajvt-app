@@ -16,6 +16,7 @@ export { adminTabs } from "./adminNav";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { discipline } from "./discipline";
+export { donate } from "./donate";
 export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
