@@ -4,14 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import { ReceiptCard } from "@/components/receipt/ReceiptSheet";
+import ReceiptFit from "@/components/receipt/ReceiptFit";
 import { savePdf, sharePng } from "@/components/pdf/renderPdf";
 import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
 import { memberReceipts } from "@/lib/texts/receipt";
 
+type Pending = { receipt: OfficialReceiptView; action: "pdf" | "share" };
+
 export default function PaymentReceipts({ source = "/api/user/receipts" }: { source?: string }) {
   const [rows, setRows] = useState<OfficialReceiptView[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const refs = useRef(new Map<string, HTMLDivElement>());
+  const [pending, setPending] = useState<Pending | null>(null);
+  const captureRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -28,18 +31,20 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
     };
   }, [source]);
 
-  async function run(receipt: OfficialReceiptView, action: (node: HTMLElement) => Promise<void>) {
-    const node = refs.current.get(receipt.number);
-    if (!node) return;
-    setBusy(receipt.number);
-    try {
-      await action(node);
-    } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") console.error("Receipt error:", err);
-    } finally {
-      setBusy(null);
-    }
-  }
+  useEffect(() => {
+    if (!pending || !captureRef.current) return;
+    const node = captureRef.current;
+    const { receipt, action } = pending;
+    const run =
+      action === "pdf"
+        ? savePdf(node, receiptFileName(receipt.number, "pdf"))
+        : sharePng(node, receiptFileName(receipt.number, "png"), memberReceipts.title);
+    run
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name !== "AbortError") console.error("Receipt error:", err);
+      })
+      .finally(() => setPending(null));
+  }, [pending]);
 
   if (!rows || rows.length === 0) return null;
 
@@ -54,33 +59,21 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
       <div className="flex flex-col gap-4">
         {rows.map((receipt) => (
           <div key={receipt.number} className="rounded-xl overflow-hidden">
-            <div style={{ overflowX: "auto" }}>
-              <ReceiptCard
-                receipt={receipt}
-                innerRef={(node) => {
-                  if (node) refs.current.set(receipt.number, node);
-                  else refs.current.delete(receipt.number);
-                }}
-              />
-            </div>
+            <ReceiptFit>
+              <ReceiptCard receipt={receipt} />
+            </ReceiptFit>
             <div className="flex gap-2 mt-2">
               <button
                 className="btn flex-1"
-                disabled={busy === receipt.number}
-                onClick={() =>
-                  run(receipt, (node) => savePdf(node, receiptFileName(receipt.number, "pdf")))
-                }
+                disabled={pending !== null}
+                onClick={() => setPending({ receipt, action: "pdf" })}
               >
                 <IconLabel name="file">{memberReceipts.pdf}</IconLabel>
               </button>
               <button
                 className="btn flex-1"
-                disabled={busy === receipt.number}
-                onClick={() =>
-                  run(receipt, (node) =>
-                    sharePng(node, receiptFileName(receipt.number, "png"), memberReceipts.title),
-                  )
-                }
+                disabled={pending !== null}
+                onClick={() => setPending({ receipt, action: "share" })}
               >
                 <IconLabel name="upload">{memberReceipts.share}</IconLabel>
               </button>
@@ -88,6 +81,12 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
           </div>
         ))}
       </div>
+
+      {pending && (
+        <div style={{ position: "fixed", left: -10000, top: 0 }} aria-hidden="true">
+          <ReceiptCard receipt={pending.receipt} innerRef={captureRef} />
+        </div>
+      )}
     </div>
   );
 }
