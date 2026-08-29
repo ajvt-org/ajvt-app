@@ -28,6 +28,7 @@ export const GET = withRoute(
             age: true,
             village: true,
             photo: true,
+            photoLocked: true,
             memberNumber: true,
             verifyToken: true,
           },

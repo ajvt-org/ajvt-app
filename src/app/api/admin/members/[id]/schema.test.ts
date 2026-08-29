@@ -30,6 +30,15 @@ describe("adminMemberUpdateSchema", () => {
     expect(parse(adminMemberUpdateSchema, { age: null }).age).toBeNull();
   });
 
+  it("takes the picture block either way", () => {
+    expect(parse(adminMemberUpdateSchema, { photoLocked: true }).photoLocked).toBe(true);
+    expect(parse(adminMemberUpdateSchema, { photoLocked: false }).photoLocked).toBe(false);
+  });
+
+  it("rejects a picture block that is not a yes or a no", () => {
+    expect(rejectionOf(adminMemberUpdateSchema, { photoLocked: "yes" })).toBeTruthy();
+  });
+
   it("trims a corrected village", () => {
     expect(parse(adminMemberUpdateSchema, { village: "  أفجار  " }).village).toBe("أفجار");
   });

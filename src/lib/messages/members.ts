@@ -21,6 +21,7 @@ export const members = {
   renewNotIssued: "لا يوجد رقم عضوية لتجديده",
   renewAlreadyDone: "العضوية مجددة لهذه السنة بالفعل",
   renewYearBehind: "عضوية هذا العضو تتجاوز السنة الجارية",
+  photoLocked: "تغيير الصورة موقوف على هذا الحساب، راجع إدارة الرابطة",
 } as const;
 
 export const ageGroups = {

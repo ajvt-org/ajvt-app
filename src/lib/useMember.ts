@@ -46,6 +46,7 @@ export interface MemberData {
   memberNumber: string | null;
   verifyToken: string | null;
   photo: string | null;
+  photoLocked: boolean;
   registrations: RegistrationData[];
   teamMemberships: TeamMembershipData[];
 }
