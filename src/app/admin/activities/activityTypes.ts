@@ -17,6 +17,7 @@ export interface Activity {
   photo: string | null;
   capacity: number | null;
   isOpen: boolean;
+  published: boolean;
   isTournament: boolean;
   isVolunteer: boolean;
   whatsappLink: string | null;

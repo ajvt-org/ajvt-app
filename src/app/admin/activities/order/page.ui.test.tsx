@@ -36,6 +36,7 @@ function activity(
     photo: null,
     capacity: null,
     isOpen: true,
+    published: true,
     isTournament: false,
     isVolunteer: false,
     whatsappLink: null,

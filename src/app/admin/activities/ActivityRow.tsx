@@ -32,19 +32,51 @@ function seats(activity: Activity): string {
   return texts.registeredOf(registered, activity.capacity);
 }
 
-function menuItems(activity: Activity): RowMenuItem[] {
-  if (!activity.isTournament) return [];
-  return [
-    {
+export interface RowControls {
+  busy: boolean;
+  setPublished: (id: string, published: boolean) => void;
+  setOpen: (id: string, isOpen: boolean) => void;
+  duplicate: (id: string) => void;
+}
+
+function menuItems(activity: Activity, controls: RowControls): RowMenuItem[] {
+  const items: RowMenuItem[] = [];
+  if (activity.isTournament) {
+    items.push({
       key: "tournament",
       label: texts.manageTournament,
       icon: "trophy",
       href: `/admin/activities/${activity.id}?tab=matches`,
-    },
-  ];
+    });
+  }
+  items.push({
+    key: "published",
+    label: activity.published ? texts.unpublish : texts.publish,
+    icon: activity.published ? "ban" : "check",
+    onPick: () => controls.setPublished(activity.id, !activity.published),
+  });
+  items.push({
+    key: "registration",
+    label: activity.isOpen ? texts.closeRegistration : texts.openRegistration,
+    icon: activity.isOpen ? "ban" : "check",
+    onPick: () => controls.setOpen(activity.id, !activity.isOpen),
+  });
+  items.push({
+    key: "duplicate",
+    label: texts.duplicate,
+    icon: "copy",
+    onPick: () => controls.duplicate(activity.id),
+  });
+  return items;
 }
 
-export default function ActivityRow({ activity }: { activity: Activity }) {
+export default function ActivityRow({
+  activity,
+  controls,
+}: {
+  activity: Activity;
+  controls: RowControls;
+}) {
   const a = activity;
   const pending = pendingCount(a);
 
@@ -63,6 +95,7 @@ export default function ActivityRow({ activity }: { activity: Activity }) {
             when={formatActivityDates(a)}
             chips={
               <>
+                {!a.published && <Chip text={texts.draftChip} tone="warn" />}
                 <Chip text={seats(a)} tone="muted" />
                 {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
                 {a.pendingJoinRequests > 0 && (
@@ -76,7 +109,7 @@ export default function ActivityRow({ activity }: { activity: Activity }) {
           />
           <Icon name="chevronLeft" size={15} className="shrink-0" />
         </Link>
-        <ActivityRowMenu label={texts.rowMenu(a.title)} items={menuItems(a)} />
+        <ActivityRowMenu label={texts.rowMenu(a.title)} items={menuItems(a, controls)} />
       </div>
     </div>
   );

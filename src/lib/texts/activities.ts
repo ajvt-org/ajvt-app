@@ -37,6 +37,13 @@ export const activityRow = {
   },
   registeredOf: (registered: number, capacity: number) => `${registered} من ${capacity}`,
   rowMenu: (title: string) => `خيارات ${title}`,
+  draftChip: "مسودة",
+  publish: "نشر النشاط",
+  unpublish: "إخفاء من صفحات الأعضاء",
+  openRegistration: "فتح التسجيل",
+  closeRegistration: "إغلاق التسجيل",
+  duplicate: "نسخ النشاط",
+  duplicated: "أُنشئت نسخة كمسودة",
   arrangeLink: "ترتيب الظهور",
   arrangeTitle: "ترتيب ظهور الأنشطة",
   arrangeNote:

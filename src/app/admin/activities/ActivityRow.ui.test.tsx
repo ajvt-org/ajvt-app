@@ -1,8 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
 import ActivityRow from "./ActivityRow";
 import type { Activity } from "./activityTypes";
+
+const controls = {
+  busy: false,
+  setPublished: vi.fn(),
+  setOpen: vi.fn(),
+  duplicate: vi.fn(),
+};
 
 function activity(over: Partial<Activity> = {}): Activity {
   return {
@@ -16,6 +23,7 @@ function activity(over: Partial<Activity> = {}): Activity {
     photo: null,
     capacity: null,
     isOpen: true,
+    published: true,
     isTournament: true,
     isVolunteer: false,
     whatsappLink: null,
@@ -28,8 +36,12 @@ function activity(over: Partial<Activity> = {}): Activity {
 }
 
 function show(over: Partial<Activity> = {}) {
-  render(<ActivityRow activity={activity(over)} />);
+  render(<ActivityRow activity={activity(over)} controls={controls} />);
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("what an activity row says is waiting", () => {
   it("says a team is waiting to join", () => {
@@ -132,15 +144,71 @@ describe("the row menu", () => {
     expect(screen.getByRole("link", { name: /إدارة البطولة/ })).toBeTruthy();
   });
 
-  it("offers no menu on an activity with nothing to offer", () => {
+  it("leaves the tournament workspace out of an ordinary activity's menu", async () => {
     show({ isTournament: false });
 
-    expect(screen.queryByRole("button", { name: /خيارات/ })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /خيارات/ }));
+
+    expect(screen.queryByRole("link", { name: /إدارة البطولة/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /نسخ النشاط/ })).toBeTruthy();
   });
 
   it("keeps the menu shut until it is asked for", () => {
     show({ isTournament: true });
 
     expect(screen.queryByRole("link", { name: /إدارة البطولة/ })).toBeNull();
+  });
+});
+
+describe("the controls in the row menu", () => {
+  async function openMenu(over: Partial<Activity> = {}) {
+    show(over);
+    await userEvent.click(screen.getByRole("button", { name: /خيارات/ }));
+  }
+
+  it("offers to publish a draft and says it is one", async () => {
+    await openMenu({ published: false });
+
+    expect(screen.getByText("مسودة")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /نشر النشاط/ })).toBeTruthy();
+  });
+
+  it("offers to hide an activity that is already published", async () => {
+    await openMenu({ published: true });
+
+    expect(screen.queryByText("مسودة")).toBeNull();
+    expect(screen.getByRole("button", { name: /إخفاء من صفحات الأعضاء/ })).toBeTruthy();
+  });
+
+  it("publishes on the way out", async () => {
+    await openMenu({ published: false });
+
+    await userEvent.click(screen.getByRole("button", { name: /نشر النشاط/ }));
+
+    expect(controls.setPublished).toHaveBeenCalledWith("a1", true);
+  });
+
+  it("closes a registration that is open", async () => {
+    await openMenu({ isOpen: true });
+
+    await userEvent.click(screen.getByRole("button", { name: /إغلاق التسجيل/ }));
+
+    expect(controls.setOpen).toHaveBeenCalledWith("a1", false);
+  });
+
+  it("opens a registration that is closed", async () => {
+    await openMenu({ isOpen: false });
+
+    await userEvent.click(screen.getByRole("button", { name: /فتح التسجيل/ }));
+
+    expect(controls.setOpen).toHaveBeenCalledWith("a1", true);
+  });
+
+  it("duplicates the activity it belongs to", async () => {
+    await openMenu();
+
+    await userEvent.click(screen.getByRole("button", { name: /نسخ النشاط/ }));
+
+    expect(controls.duplicate).toHaveBeenCalledWith("a1");
   });
 });

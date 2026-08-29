@@ -136,6 +136,7 @@ model Activity {
   teamSize      Int?
   yellowsForBan Int                    @default(2) // yellows across the tournament that propose a suspension
   redBanMatches Int                    @default(1) // matches a proposed red-card ban carries
+  published     Boolean                @default(true)
   isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
   whatsappLink  String?
   order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled

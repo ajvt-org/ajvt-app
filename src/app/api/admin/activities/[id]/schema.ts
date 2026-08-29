@@ -41,6 +41,7 @@ export const activityUpdateSchema = z
     redBanMatches: z.number().int().min(1).max(10).optional(),
     teamSize: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
+    published: z.unknown().optional(),
     settlePending: z.enum(["accept", "reject"], INVALID).optional(),
     whatsappLink: z.string(INVALID).nullish(),
     order: order.optional(),
