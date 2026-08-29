@@ -6,6 +6,7 @@ export type MemberProfile = {
     age: string | null;
     village: string;
     photo: string | null;
+    photoLocked: boolean;
     status: string;
     memberNumber: string | null;
     paidAmount: number | null;

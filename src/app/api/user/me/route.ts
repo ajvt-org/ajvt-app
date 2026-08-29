@@ -50,6 +50,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
       age: true,
       village: true,
       photo: true,
+      photoLocked: true,
       memberNumber: true,
       verifyToken: true,
       members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
@@ -74,6 +75,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
       return {
         ...member,
         ...person,
+        photoLocked: user.photoLocked,
         user: { phone: user.phone },
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,

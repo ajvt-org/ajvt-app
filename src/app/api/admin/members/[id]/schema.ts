@@ -30,5 +30,6 @@ export const adminMemberUpdateSchema = z.object({
     .transform((v) => v.trim())
     .optional(),
   photo: z.string(INVALID).nullish(),
+  photoLocked: z.boolean(INVALID).optional(),
   accountPhone: z.string(INVALID).optional(),
 });

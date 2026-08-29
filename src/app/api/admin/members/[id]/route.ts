@@ -21,7 +21,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
-    const { fullName, age, village, photo, accountPhone } = parse(
+    const { fullName, age, village, photo, photoLocked, accountPhone } = parse(
       adminMemberUpdateSchema,
       await req.json(),
     );
@@ -32,7 +32,7 @@ export const PATCH = withRoute(
         userId: true,
         paymentMethod: true,
         paidAmount: true,
-        user: { select: { fullName: true, age: true, village: true } },
+        user: { select: { fullName: true, age: true, village: true, photoLocked: true } },
       },
     });
     if (!existing) {
@@ -44,6 +44,7 @@ export const PATCH = withRoute(
       age?: string | null;
       village?: string;
       photo?: string | null;
+      photoLocked?: boolean;
     } = {};
 
     if (village !== undefined && !isKnownVillage(village, await villageNames())) {
@@ -72,6 +73,10 @@ export const PATCH = withRoute(
       data.age = nextAge;
     }
     if (photo !== undefined) data.photo = photo;
+    if (photoLocked !== undefined) {
+      data.photoLocked = photoLocked;
+      if (photoLocked) data.photo = null;
+    }
     const member = await prisma.member.findUniqueOrThrow({ where: { id } });
     const person = await prisma.user.update({
       where: { id: member.userId },
@@ -100,6 +105,20 @@ export const PATCH = withRoute(
         },
       },
     );
+    if (photoLocked !== undefined && photoLocked !== existing.user.photoLocked) {
+      await logAction(
+        session.username,
+        photoLocked ? "LOCK_MEMBER_PHOTO" : "UNLOCK_MEMBER_PHOTO",
+        nameOf(person),
+        {
+          ...auditContext(session, req),
+          targetType: "Member",
+          targetId: member.id,
+          before: { photoLocked: existing.user.photoLocked },
+          after: { photoLocked },
+        },
+      );
+    }
     if (attachedUserId) {
       await logAction(
         session.username,
