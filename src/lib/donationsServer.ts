@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
 import { splitPayment } from "@/lib/membershipPayment";
+import { attributedDonorName } from "@/lib/donorName";
 
 export const SUPPORTERS_PAGE_SIZE = 20;
 
-export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "memberIds">;
+export type PublicLeaderboardEntry = Omit<LeaderboardEntry, "accountIds">;
 
 export function toPublicEntry(e: LeaderboardEntry): PublicLeaderboardEntry {
   return {
@@ -21,7 +22,7 @@ interface LeaderboardEntry {
   name: string;
   photoUrl: string | null;
   total: number;
-  memberIds: string[];
+  accountIds: string[];
   anonymous: boolean;
 }
 
@@ -33,10 +34,11 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
       purpose: true,
       amount: true,
       feeApplied: true,
+      anonymous: true,
       donorName: true,
       donorPhoto: true,
-      memberId: true,
-      member: { select: { user: { select: { photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   });
 
@@ -44,21 +46,21 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     name: string;
     photoUrl: string | null;
     total: number;
-    memberIds: Set<string>;
+    accountIds: Set<string>;
     anonymous: boolean;
   };
   const byKey = new Map<string, Row>();
 
   function add(
     key: string,
-    row: Omit<Row, "memberIds" | "total">,
+    row: Omit<Row, "accountIds" | "total">,
     amount: number,
-    memberId?: string | null,
+    accountId?: string | null,
   ) {
-    const entry = byKey.get(key) ?? { ...row, total: 0, memberIds: new Set<string>() };
+    const entry = byKey.get(key) ?? { ...row, total: 0, accountIds: new Set<string>() };
     entry.total += amount;
     if (!entry.photoUrl && row.photoUrl) entry.photoUrl = row.photoUrl;
-    if (memberId) entry.memberIds.add(memberId);
+    if (accountId) entry.accountIds.add(accountId);
     byKey.set(key, entry);
   }
 
@@ -66,20 +68,20 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     const amount =
       p.purpose === "MEMBERSHIP" ? splitPayment(p.amount, p.feeApplied ?? 0).surplus : p.amount;
     if (p.purpose === "MEMBERSHIP" && amount === 0) continue;
-    const named = p.donorName?.trim();
+    const named = p.anonymous ? null : attributedDonorName(p);
 
-    if (p.memberId && named) {
-      const photoUrl = p.member?.user.photo ? `/api/files/member/${p.member.user.photo}` : null;
-      add(`m:${p.memberId}`, { name: named, photoUrl, anonymous: false }, amount, p.memberId);
-    } else if (!p.memberId && named) {
+    if (p.userId && named) {
+      const photoUrl = p.user?.photo ? `/api/files/member/${p.user.photo}` : null;
+      add(`m:${p.userId}`, { name: named, photoUrl, anonymous: false }, amount, p.userId);
+    } else if (named) {
       const photoUrl = p.donorPhoto ? `/api/files/donation/${p.donorPhoto}` : null;
       add(`n:${named}`, { name: named, photoUrl, anonymous: false }, amount);
-    } else if (p.memberId) {
+    } else if (p.userId) {
       add(
-        `a:${p.memberId}`,
+        `a:${p.userId}`,
         { name: money.anonymousDonor, photoUrl: null, anonymous: true },
         amount,
-        p.memberId,
+        p.userId,
       );
     } else {
       add(`a:${p.id}`, { name: money.anonymousDonor, photoUrl: null, anonymous: true }, amount);
@@ -93,7 +95,7 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
       name: e.name,
       photoUrl: e.photoUrl,
       total: e.total,
-      memberIds: [...e.memberIds],
+      accountIds: [...e.accountIds],
       anonymous: e.anonymous,
     }));
 

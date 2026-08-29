@@ -2,8 +2,8 @@ import type { Prisma, PrismaClient, Receipt } from "@prisma/client";
 import { receiptNumber } from "./officialReceipt";
 import { receiptTitle, type ReceiptPurpose } from "./receipts";
 import { generateVerifyToken } from "./verifyToken";
-import { nameOf } from "./person";
-import { money, receipts as receiptMessages } from "./messages";
+import { publicDonorName } from "./donorName";
+import { receipts as receiptMessages } from "./messages";
 import { SETTINGS_ID } from "./settings";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -21,15 +21,13 @@ const SELECT = {
   memberId: true,
   userId: true,
   activity: { select: { title: true } },
-  member: { select: { user: { select: { fullName: true } } } },
+  user: { select: { fullName: true } },
 } as const;
 
 type PaymentRow = Prisma.PaymentGetPayload<{ select: typeof SELECT }>;
 
 function payerOf(payment: PaymentRow): string {
-  if (payment.anonymous) return money.anonymousDonor;
-  if (payment.member) return nameOf(payment.member.user);
-  return payment.donorName?.trim() || money.anonymousDonor;
+  return publicDonorName(payment);
 }
 
 async function nextNumber(db: Db, year: number): Promise<string> {

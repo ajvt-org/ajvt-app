@@ -37,6 +37,7 @@ describe("the receipts a member can take away", () => {
         year: 2026,
         status: "ACTIVE",
         memberId: member.id,
+        userId: member.userId,
       },
     });
     await signInAs(user);
@@ -58,7 +59,13 @@ describe("the receipts a member can take away", () => {
     const user = await createUser("22000001");
     const member = await memberFor(user);
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 5000, status: "ACTIVE", memberId: member.id },
+      data: {
+        purpose: "DONATION",
+        amount: 5000,
+        status: "ACTIVE",
+        memberId: member.id,
+        userId: member.userId,
+      },
     });
     await signInAs(user);
 
@@ -71,7 +78,13 @@ describe("the receipts a member can take away", () => {
     const user = await createUser("22000001");
     const member = await memberFor(user);
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 500, status: "PENDING", memberId: member.id },
+      data: {
+        purpose: "DONATION",
+        amount: 500,
+        status: "PENDING",
+        memberId: member.id,
+        userId: member.userId,
+      },
     });
     await signInAs(user);
 
@@ -84,7 +97,13 @@ describe("the receipts a member can take away", () => {
     await memberFor(mine);
     const theirs = await memberFor(other, { fullName: "أحمد" });
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 9000, status: "ACTIVE", memberId: theirs.id },
+      data: {
+        purpose: "DONATION",
+        amount: 9000,
+        status: "ACTIVE",
+        memberId: theirs.id,
+        userId: theirs.userId,
+      },
     });
     await signInAs(mine);
 
@@ -103,6 +122,7 @@ describe("the receipts a member can take away", () => {
         amount: 2000,
         status: "ACTIVE",
         memberId: member.id,
+        userId: member.userId,
         activityId: activity.id,
       },
     });
@@ -120,6 +140,7 @@ describe("the receipts a member can take away", () => {
         amount: 100,
         status: "ACTIVE",
         memberId: member.id,
+        userId: member.userId,
         createdAt: new Date("2026-01-01T00:00:00Z"),
       },
     });
@@ -129,6 +150,7 @@ describe("the receipts a member can take away", () => {
         amount: 200,
         status: "ACTIVE",
         memberId: member.id,
+        userId: member.userId,
         createdAt: new Date("2026-06-01T00:00:00Z"),
       },
     });

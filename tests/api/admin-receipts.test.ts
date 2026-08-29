@@ -68,7 +68,13 @@ describe("a receipt an admin can produce for a member", () => {
   it("leaves a payment still awaiting review out", async () => {
     const { member } = await memberWithPayment("22000001", "محمد", 1000);
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 500, status: "PENDING", memberId: member.id },
+      data: {
+        purpose: "DONATION",
+        amount: 500,
+        status: "PENDING",
+        memberId: member.id,
+        userId: member.userId,
+      },
     });
     await ensureReceiptsFor(prisma, {});
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
