@@ -12,7 +12,7 @@ export default function LinkMemberPanel({
 }: {
   members: MemberOption[];
   busy: boolean;
-  onPick: (memberId: string) => void;
+  onPick: (userId: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const query = search.trim();
@@ -44,7 +44,7 @@ export default function LinkMemberPanel({
           results.map((m) => (
             <button
               key={m.id}
-              onClick={() => onPick(m.id)}
+              onClick={() => onPick(m.userId)}
               disabled={busy}
               className="w-full text-right text-xs px-2.5 py-1.5 rounded-lg font-semibold"
               style={{ background: "white", color: "var(--text-main)" }}

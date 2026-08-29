@@ -45,6 +45,7 @@ export function usePaymentsData() {
           tags: tagsData?.tags ?? [],
           members: (membersData?.members ?? []).map((m: MemberOption) => ({
             id: m.id,
+            userId: m.userId,
             fullName: m.fullName,
           })),
           activities: (activitiesData?.activities ?? []).map((a: ActivityOption) => ({

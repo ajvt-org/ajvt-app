@@ -16,12 +16,36 @@ describe("donationUpdateSchema", () => {
     expect(rejectionOf(donationUpdateSchema, { status: "PENDING" })).toBe("بيانات غير صالحة");
   });
 
-  it("detaches a donation from a member with null", () => {
-    expect(parse(donationUpdateSchema, { memberId: null }).memberId).toBeNull();
+  it("detaches a donation from an account with null", () => {
+    expect(parse(donationUpdateSchema, { userId: null }).userId).toBeNull();
   });
 
-  it("rejects a member id that is not text", () => {
-    expect(rejectionOf(donationUpdateSchema, { memberId: 7 })).toBe("بيانات غير صالحة");
+  it("rejects an account id that is not text", () => {
+    expect(rejectionOf(donationUpdateSchema, { userId: 7 })).toBe("بيانات غير صالحة");
+  });
+
+  it("leaves out what the patch did not mention", () => {
+    const patched = parse(donationUpdateSchema, { status: "ACTIVE" });
+
+    expect(patched.donorPhoto).toBeUndefined();
+    expect(patched.proof).toBeUndefined();
+    expect(patched.donorPhone).toBeUndefined();
+  });
+
+  it("trims the name it stores", () => {
+    expect(parse(donationUpdateSchema, { donorName: "  أحمد  " }).donorName).toBe("أحمد");
+  });
+
+  it("reads a blank phone as no phone", () => {
+    expect(parse(donationUpdateSchema, { donorPhone: "" }).donorPhone).toBeNull();
+  });
+
+  it("reads a blank photo as no photo", () => {
+    expect(parse(donationUpdateSchema, { donorPhoto: "" }).donorPhoto).toBeNull();
+  });
+
+  it("hands the amount back as a number", () => {
+    expect(parse(donationUpdateSchema, { amount: "500" }).amount).toBe(500);
   });
 
   it("makes a donation anonymous with a null name", () => {
