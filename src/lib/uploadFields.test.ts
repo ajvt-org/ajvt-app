@@ -108,7 +108,7 @@ describe("locateUpload", () => {
   });
 
   it("takes the first match, so a member photo wins over a later column", async () => {
-    state.row = { id: "u1", userId: "u1", member: { userId: "u1" }, purpose: "DONATION" };
+    state.row = { id: "u1", userId: "u1", purpose: "DONATION" };
 
     expect(await locateUpload("shared.webp")).toEqual({ kind: "photo", ownerId: "u1" });
   });
@@ -137,13 +137,13 @@ describe("payment proofs", () => {
     ["ACTIVITY", "activity"],
     ["DONATION", "donations"],
   ])("reads a %s payment as a %s proof", async (purpose, kind) => {
-    state.row = { purpose, member: { userId: "u1" } };
+    state.row = { purpose, userId: "u1" };
 
     expect(await locate("proof.webp")).toEqual({ kind, ownerId: "u1" });
   });
 
-  it("keeps a payment with no member admin only", async () => {
-    state.row = { purpose: "DONATION", member: null };
+  it("keeps a payment with no account admin only", async () => {
+    state.row = { purpose: "DONATION", userId: null };
 
     expect(await locate("proof.webp")).toEqual({ kind: "donations", ownerId: null });
   });
