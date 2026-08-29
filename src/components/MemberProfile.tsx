@@ -76,9 +76,7 @@ export default function MemberProfile({
 
       <MemberInfoCard
         member={member}
-        onEdit={
-          member.status === "PENDING" ? () => router.push(`/form?id=${member.id}`) : undefined
-        }
+        onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
       />
     </div>
   );

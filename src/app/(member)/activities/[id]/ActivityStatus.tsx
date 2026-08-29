@@ -63,7 +63,7 @@ export default function ActivityStatus({ activity }: { activity: Activity }) {
 
   return (
     <div className="space-y-2.5">
-      <Link href={`/form?from=/activities/${activity.id}`} className="btn btn-copper">
+      <Link href={`/membership?from=/activities/${activity.id}`} className="btn btn-copper">
         <IconLabel name="pencil">{texts.signUpCta}</IconLabel>
       </Link>
       <Link

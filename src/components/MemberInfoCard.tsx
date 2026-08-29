@@ -26,7 +26,7 @@ export default function MemberInfoCard({
             className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <IconLabel name="pencil">تعديل</IconLabel>
+            <IconLabel name="pencil">تعديل الدفع</IconLabel>
           </button>
         )}
       </div>
