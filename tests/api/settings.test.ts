@@ -117,6 +117,43 @@ describe("PATCH /api/admin/settings", () => {
     expect((await res.json()).settings.membershipYear).toBe(next);
   });
 
+  it("keeps the two officers who sign the receipts", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await PATCH(
+      post("/api/admin/settings", {
+        ...valid,
+        secretaryName: "  محمد الأمين  ",
+        treasurerName: "أحمد سالم",
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const { settings } = await res.json();
+    expect(settings.secretaryName).toBe("محمد الأمين");
+    expect(settings.treasurerName).toBe("أحمد سالم");
+  });
+
+  it("leaves the officers empty until somebody fills them in", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const { settings } = await (await PATCH(post("/api/admin/settings", valid))).json();
+
+    expect(settings.secretaryName).toBeNull();
+    expect(settings.treasurerName).toBeNull();
+  });
+
+  it("rejects an officer name too long to fit on the sheet", async () => {
+    await signInAsAdmin(await createAdmin());
+
+    const res = await PATCH(
+      post("/api/admin/settings", { ...valid, secretaryName: "م".repeat(61) }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "الاسم طويل جداً" });
+  });
+
   it("rejects a group link that is not https", async () => {
     await signInAsAdmin(await createAdmin());
 

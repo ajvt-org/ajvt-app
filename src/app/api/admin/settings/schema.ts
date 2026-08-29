@@ -4,6 +4,12 @@ import { isMembershipYear } from "@/lib/membershipYear";
 
 const INVALID = common.invalidBody;
 
+const officerName = z
+  .string(INVALID)
+  .refine((v) => v.trim().length <= 60, "الاسم طويل جداً")
+  .transform((v) => v.trim() || null)
+  .nullish();
+
 export const appSettingsSchema = z.object({
   membershipFee: z
     .unknown()
@@ -40,4 +46,6 @@ export const appSettingsSchema = z.object({
     .refine((v) => v === "" || v.startsWith("https://"), "الرابط غير صالح")
     .transform((v) => v.trim() || null)
     .nullish(),
+  secretaryName: officerName,
+  treasurerName: officerName,
 });

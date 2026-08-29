@@ -613,6 +613,8 @@ model AppSettings {
   supportWhatsapp   String   @default("22241070328")
   tempPasswordHours Int      @default(1)
   whatsappGroup     String?
+  secretaryName     String?
+  treasurerName     String?
   updatedAt         DateTime @updatedAt
 }
 

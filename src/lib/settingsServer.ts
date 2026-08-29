@@ -11,6 +11,8 @@ export async function getAppSettings(): Promise<AppSettingsValues> {
     supportWhatsapp: row.supportWhatsapp,
     tempPasswordHours: row.tempPasswordHours,
     whatsappGroup: row.whatsappGroup,
+    secretaryName: row.secretaryName,
+    treasurerName: row.treasurerName,
   };
 }
 
