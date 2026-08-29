@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
 import { stampRecordedBy } from "./paymentMirror";
+import { accountOf } from "./memberAccount";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -50,6 +51,7 @@ export async function recordMembershipYear(
     update: {},
     create: {
       memberId,
+      userId: await accountOf(db, memberId),
       year,
       status: "ACTIVE",
       paidAmount,
@@ -111,6 +113,6 @@ export async function saveMembershipSnapshot(
   await db.membership.upsert({
     where: { memberId_year: { memberId, year } },
     update: snapshot,
-    create: { memberId, year, ...snapshot },
+    create: { memberId, userId: await accountOf(db, memberId), year, ...snapshot },
   });
 }

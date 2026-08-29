@@ -48,6 +48,7 @@ export const POST = withRoute(
       await tx.membership.create({
         data: {
           memberId: id,
+          userId: member.userId,
           year: membershipYear,
           status: "ACTIVE",
           paidAmount: Math.min(Number(paidAmount), membershipFee),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountOf } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
@@ -40,7 +41,14 @@ export const POST = withRoute(
 
     const { booking, proposed } = await prisma.$transaction(async (tx) => {
       const created = await tx.matchBooking.create({
-        data: { matchId, memberId, teamId, cardType, minute: minute ?? null },
+        data: {
+          matchId,
+          memberId,
+          userId: await accountOf(tx, memberId),
+          teamId,
+          cardType,
+          minute: minute ?? null,
+        },
         select: {
           id: true,
           cardType: true,

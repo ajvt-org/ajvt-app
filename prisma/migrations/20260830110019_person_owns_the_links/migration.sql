@@ -1,25 +1,21 @@
 ALTER TABLE "Membership" ADD COLUMN "userId" TEXT;
 UPDATE "Membership" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "Membership" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "Membership" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "Membership" ADD CONSTRAINT "Membership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "TeamMember" ADD COLUMN "userId" TEXT;
 UPDATE "TeamMember" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "TeamMember" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "TeamMember" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "TeamMember" ADD CONSTRAINT "TeamMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "MvpCandidate" ADD COLUMN "userId" TEXT;
 UPDATE "MvpCandidate" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "MvpCandidate" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "MvpCandidate" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "MvpCandidate" ADD CONSTRAINT "MvpCandidate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "MatchBooking" ADD COLUMN "userId" TEXT;
 UPDATE "MatchBooking" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "MatchBooking" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "MatchBooking" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "MatchBooking" ADD CONSTRAINT "MatchBooking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "MatchGoal" ADD COLUMN "userId" TEXT;
@@ -33,7 +29,6 @@ ALTER TABLE "MatchPenaltyKick" ADD CONSTRAINT "MatchPenaltyKick_userId_fkey" FOR
 ALTER TABLE "ActivityRegistration" ADD COLUMN "userId" TEXT;
 UPDATE "ActivityRegistration" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "ActivityRegistration" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "ActivityRegistration" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "ActivityRegistration" ADD CONSTRAINT "ActivityRegistration_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Donation" ADD COLUMN "userId" TEXT;
@@ -51,7 +46,6 @@ ALTER TABLE "Receipt" ADD CONSTRAINT "Receipt_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Suspension" ADD COLUMN "userId" TEXT;
 UPDATE "Suspension" t SET "userId" = m."userId" FROM "Member" m WHERE m."id" = t."memberId";
 ALTER TABLE "Suspension" ALTER COLUMN "userId" SET NOT NULL;
-ALTER TABLE "Suspension" ALTER COLUMN "memberId" DROP NOT NULL;
 ALTER TABLE "Suspension" ADD CONSTRAINT "Suspension_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Match" ADD COLUMN "manOfTheMatchUserId" TEXT;

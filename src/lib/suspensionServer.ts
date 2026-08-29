@@ -3,6 +3,7 @@ import type { Prisma, SuspensionReason, SuspensionScope } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
 import { nameOf } from "./person";
+import { accountOf } from "./memberAccount";
 
 type Tx = Prisma.TransactionClient;
 
@@ -64,6 +65,7 @@ export async function proposeFromBooking(
       data: {
         activityId,
         memberId,
+        userId: await accountOf(tx, memberId),
         reason: "RED_CARD",
         scope: "MATCHES",
         matches: activity.redBanMatches,
@@ -90,6 +92,7 @@ export async function proposeFromBooking(
       data: {
         activityId,
         memberId,
+        userId: await accountOf(tx, memberId),
         reason: "YELLOW_CARDS",
         scope: "MATCHES",
         matches: 1,
@@ -160,6 +163,7 @@ export async function proposeSuspension(
       data: {
         activityId,
         memberId: input.memberId,
+        userId: await accountOf(tx, input.memberId),
         reason: input.reason ?? "CONDUCT",
         scope: input.scope,
         matches: input.scope === "MATCHES" ? input.matches : null,
