@@ -6,6 +6,7 @@ export const RECEIPT_DOTS = "#c8c1b4";
 export const RECEIPT_PAPER = "#ffffff";
 
 export const RECEIPT_LOGO = "/receipt-logo.png";
+export const RECEIPT_SEAL = "/receipt-seal.png";
 
 export const SHEET_WIDTH = 794;
 export const SHEET_HEIGHT = 1123;
