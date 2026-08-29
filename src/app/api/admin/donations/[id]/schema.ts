@@ -8,6 +8,7 @@ export const donationUpdateSchema = z
   .object({
     status: z.enum(["ACTIVE", "REJECTED"], INVALID).optional(),
     userId: accountId,
+    anonymous: z.boolean(INVALID).optional(),
     donorName: donorName.nullish(),
     donorPhone: donorPhone.nullish(),
     donorPhoto: optionalText,

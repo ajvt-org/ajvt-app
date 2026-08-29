@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { PAYMENT_METHODS } from "@/lib/donations";
+import { donationFormError } from "@/lib/donationFields";
+import { donorNameOnRecord, publicDonorName } from "@/lib/donorName";
+import { donationEdit } from "@/lib/texts";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivitySelect from "./ActivitySelect";
-import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
-
-const WHITE = { background: "white" };
+import MemberIdentity from "./MemberIdentity";
+import { DANGER_BOX, FIELD, PRIMARY, QUIET } from "./donationTones";
+import type { ActivityOption, DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
 function initial(proof: Proof) {
   return {
@@ -20,54 +23,63 @@ function initial(proof: Proof) {
     paymentMethod: proof.paymentMethod || "",
     activityId: proof.activityId || "",
     proof: proof.proof || null,
+    anonymous: proof.anonymous ?? false,
   };
 }
 
 export default function DonationEditForm({
   proof,
   activities,
+  linkedMember,
   onCancel,
+  onRelink,
   onSaved,
 }: {
   proof: Proof;
   activities: ActivityOption[];
+  linkedMember?: MemberOption;
   onCancel: () => void;
+  onRelink: () => void;
   onSaved: (changes: Partial<Proof>) => void;
 }) {
   const [form, setForm] = useState(initial(proof));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const linked = !!proof.memberId;
+  const linked = !!proof.userId;
 
   const set = (changes: Partial<typeof form>) => setForm((p) => ({ ...p, ...changes }));
 
-  async function save() {
-    setError("");
-    if (!linked && !form.donorName.trim()) return setError("الاسم مطلوب");
+  const account = linkedMember ? { fullName: linkedMember.fullName } : null;
+  const shownAs = publicDonorName({
+    anonymous: form.anonymous,
+    donorName: form.donorName,
+    user: account,
+  });
 
-    const amount = form.amount.trim() ? Number(form.amount) : null;
-    if (amount !== null && (!Number.isInteger(amount) || amount <= 0)) {
-      return setError("المبلغ يجب أن يكون رقماً صحيحاً موجباً");
-    }
+  async function save() {
+    const invalid = donationFormError(
+      {
+        donorName: form.donorName.trim() || undefined,
+        donorPhone: form.donorPhone,
+        amount: form.amount,
+      },
+      !linked,
+    );
+    setError(invalid);
+    if (invalid) return;
 
     setSaving(true);
     try {
-      const body: Record<string, unknown> = {
+      const { donation } = await api.patch<DonationResponse>(`/api/admin/donations/${proof.id}`, {
+        donorName: form.donorName.trim() || null,
+        donorPhoto: form.donorPhoto,
         donorPhone: form.donorPhone.trim() || null,
+        amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
         activityId: form.activityId || null,
         proof: form.proof,
-      };
-      if (!linked) {
-        body.donorName = form.donorName.trim();
-        body.donorPhoto = form.donorPhoto;
-      }
-      if (amount !== null) body.amount = amount;
-
-      const { donation } = await api.patch<DonationResponse>(
-        `/api/admin/donations/${proof.id}`,
-        body,
-      );
+        anonymous: form.anonymous,
+      });
       onSaved({
         donorName: donation.donorName,
         donorPhone: donation.donorPhone,
@@ -77,7 +89,8 @@ export default function DonationEditForm({
         activityId: donation.activityId,
         activityTitle: activities.find((a) => a.id === donation.activityId)?.title ?? null,
         proof: donation.proof,
-        memberName: linked ? proof.memberName : donation.donorName || "فاعل خير",
+        anonymous: donation.anonymous,
+        memberName: donorNameOnRecord({ donorName: donation.donorName, user: account }),
       });
     } catch (e) {
       setError(errorMessage(e));
@@ -91,62 +104,95 @@ export default function DonationEditForm({
       className="mt-2 p-2.5 rounded-lg space-y-2"
       style={{ background: "var(--mint-50)", border: "1px solid var(--mint-100)" }}
     >
+      <div className="rounded-lg p-2 space-y-1.5" style={FIELD}>
+        <p className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
+          {donationEdit.shownAs}
+        </p>
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          {shownAs}
+        </p>
+        {linkedMember && <MemberIdentity member={linkedMember} size={26} />}
+        <button
+          onClick={onRelink}
+          className="text-[11px] px-2 py-1 rounded-lg font-bold"
+          style={QUIET}
+        >
+          <IconLabel name="link" size={11}>
+            {linked ? donationEdit.changeLink : donationEdit.link}
+          </IconLabel>
+        </button>
+      </div>
+
       <PhotoUpload
         photo={form.proof}
         variant="cover"
-        label="إثبات الدفع"
+        label={donationEdit.proof}
         placeholderIcon="receipt"
         onUpload={(filename) => set({ proof: filename })}
       />
 
-      {!linked && (
-        <>
-          <PhotoUpload
-            photo={form.donorPhoto}
-            imageUrlPrefix="/api/files/donation"
-            variant="avatar"
-            label="صورة المتبرع"
-            placeholderIcon="user"
-            onUpload={(filename) => set({ donorPhoto: filename })}
-          />
-          <input
-            type="text"
-            placeholder="اسم المتبرع"
-            value={form.donorName}
-            onChange={(e) => set({ donorName: e.target.value })}
-            maxLength={50}
-            className="input text-xs"
-            style={WHITE}
-          />
-        </>
-      )}
+      <PhotoUpload
+        photo={form.donorPhoto}
+        imageUrlPrefix="/api/files/donation"
+        variant="avatar"
+        label={donationEdit.donorPhoto}
+        placeholderIcon="user"
+        onUpload={(filename) => set({ donorPhoto: filename })}
+      />
+
+      <label className="block text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
+        {linked ? donationEdit.storedName : donationEdit.donorName}
+        {linked && <span className="font-normal"> — {donationEdit.storedNameHint}</span>}
+      </label>
+      <input
+        type="text"
+        aria-label={linked ? donationEdit.storedName : donationEdit.donorName}
+        placeholder={donationEdit.donorName}
+        value={form.donorName}
+        onChange={(e) => set({ donorName: e.target.value })}
+        maxLength={50}
+        className="input text-xs"
+        style={FIELD}
+      />
+
+      <label className="flex items-center gap-2 text-xs font-semibold">
+        <input
+          type="checkbox"
+          checked={form.anonymous}
+          onChange={(e) => set({ anonymous: e.target.checked })}
+        />
+        {donationEdit.anonymous}
+      </label>
 
       <input
         type="tel"
         dir="ltr"
-        placeholder="رقم الهاتف (اختياري)"
+        aria-label={donationEdit.phone}
+        placeholder={donationEdit.phone}
         value={form.donorPhone}
         onChange={(e) => set({ donorPhone: e.target.value.replace(/\D/g, "").slice(0, 8) })}
         maxLength={8}
         className="input text-xs"
-        style={WHITE}
+        style={FIELD}
       />
       <input
         type="number"
         dir="ltr"
-        placeholder="المبلغ"
+        aria-label={donationEdit.amount}
+        placeholder={donationEdit.amount}
         value={form.amount}
         onChange={(e) => set({ amount: e.target.value })}
         className="input text-xs"
-        style={WHITE}
+        style={FIELD}
       />
       <select
+        aria-label={donationEdit.methodUnset}
         value={form.paymentMethod}
         onChange={(e) => set({ paymentMethod: e.target.value })}
         className="input text-xs"
-        style={WHITE}
+        style={FIELD}
       >
-        <option value="">طريقة الدفع — غير محددة</option>
+        <option value="">{donationEdit.methodUnset}</option>
         {PAYMENT_METHODS.map((m) => (
           <option key={m} value={m}>
             {m}
@@ -158,14 +204,11 @@ export default function DonationEditForm({
         activities={activities}
         value={form.activityId}
         onChange={(activityId) => set({ activityId })}
-        style={WHITE}
+        style={FIELD}
       />
 
       {error && (
-        <div
-          className="p-2 rounded-lg text-xs font-semibold"
-          style={{ background: "#fee2e2", color: "#991b1b" }}
-        >
+        <div className="p-2 rounded-lg text-xs font-semibold" style={DANGER_BOX}>
           <Icon name="warning" size={13} className="icon-inline" /> {error}
         </div>
       )}
@@ -175,16 +218,16 @@ export default function DonationEditForm({
           onClick={save}
           disabled={saving}
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
-          style={{ background: "var(--mint-600)", color: "white" }}
+          style={PRIMARY}
         >
-          {saving ? "..." : <IconLabel name="save">حفظ</IconLabel>}
+          {saving ? "..." : <IconLabel name="save">{donationEdit.save}</IconLabel>}
         </button>
         <button
           onClick={onCancel}
           className="text-xs px-3 py-1.5 rounded-lg font-bold"
           style={{ background: "white", color: "var(--text-muted)" }}
         >
-          إلغاء
+          {donationEdit.cancel}
         </button>
       </div>
     </div>

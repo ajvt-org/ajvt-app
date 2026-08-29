@@ -7,7 +7,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
-import { members } from "@/lib/messages";
+import { members, money } from "@/lib/messages";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { donorNameOnRecord } from "@/lib/donorName";
 import { personLink } from "@/lib/memberAccount";
@@ -29,6 +29,7 @@ export const PATCH = withRoute(
     const {
       status,
       userId,
+      anonymous,
       donorName,
       donorPhone,
       donorPhoto,
@@ -41,13 +42,14 @@ export const PATCH = withRoute(
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
     if (
       existing.source === "MEMBERSHIP" &&
       [
         status,
         userId,
+        anonymous,
         donorName,
         donorPhone,
         donorPhoto,
@@ -58,14 +60,12 @@ export const PATCH = withRoute(
         activityId,
       ].some((v) => v !== undefined)
     ) {
-      return NextResponse.json(
-        { error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
     }
 
     const data: {
       status?: ReviewStatus;
+      anonymous?: boolean;
       memberId?: string | null;
       donorName?: string | null;
       donorPhone?: string | null;
@@ -86,6 +86,7 @@ export const PATCH = withRoute(
       data.userId = link.userId;
     }
 
+    if (anonymous !== undefined) data.anonymous = anonymous;
     if (donorName !== undefined) data.donorName = donorName;
     if (donorPhone !== undefined) data.donorPhone = donorPhone;
     if (donorPhoto !== undefined) data.donorPhoto = donorPhoto;
@@ -135,6 +136,7 @@ export const PATCH = withRoute(
       );
     }
     if (
+      anonymous !== undefined ||
       donorName !== undefined ||
       donorPhone !== undefined ||
       donorPhoto !== undefined ||
@@ -168,13 +170,10 @@ export const DELETE = withRoute(
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
     if (existing.source === "MEMBERSHIP") {
-      return NextResponse.json(
-        { error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
     }
 
     await prisma.donation.delete({ where: { id } });

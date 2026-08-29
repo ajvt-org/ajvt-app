@@ -36,6 +36,7 @@ function toProof(d: DonationResponse["donation"], activities: ActivityOption[]):
     paymentMethod: d.paymentMethod,
     memberId: d.memberId,
     userId: d.userId,
+    anonymous: d.anonymous,
     donorName: d.donorName,
     donorPhone: d.donorPhone,
     donorPhoto: d.donorPhoto,
