@@ -9,6 +9,7 @@ import {
   LOCAL_DEFAULT_PASSWORD,
   suppliedAdminPassword,
 } from "../src/lib/initialAdminPassword";
+import { seedAdminAction } from "../src/lib/adminSeed";
 import { HOME_VILLAGE } from "../src/lib/villages";
 
 const dbUrl = process.env.DATABASE_URL;
@@ -54,8 +55,17 @@ async function retireDefaultPassword(current: { id: string; password: string }) 
 
 async function seedAdmin() {
   const existing = await prisma.admin.findUnique({ where: { username: "admin" } });
-  if (existing) {
+  const action = seedAdminAction({
+    defaultAdminExists: existing !== null,
+    adminCount: await prisma.admin.count(),
+  });
+
+  if (existing && action === "retire") {
     await retireDefaultPassword(existing);
+    return;
+  }
+  if (action === "skip") {
+    console.log("Admins already exist, none created");
     return;
   }
 
