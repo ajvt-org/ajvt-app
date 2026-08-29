@@ -8,6 +8,7 @@ import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useRowControls } from "./useRowControls";
+import { useActivityBulk } from "./useActivityBulk";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import {
   ACTIVITIES_VIEW_KEYS,
@@ -21,15 +22,32 @@ import { splitByStage } from "./activitiesList";
 import ActivityRow, { type RowControls } from "./ActivityRow";
 import AttentionPanel from "./AttentionPanel";
 import FilterChips from "./FilterChips";
+import BulkBar from "./BulkBar";
 import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
 import type { Activity } from "./activityTypes";
 
-function Rows({ rows, controls }: { rows: Activity[]; controls: RowControls }) {
+function Rows({
+  rows,
+  controls,
+  picked,
+  onPick,
+}: {
+  rows: Activity[];
+  controls: RowControls;
+  picked: Set<string>;
+  onPick: (id: string) => void;
+}) {
   return (
     <div className="space-y-2">
       {rows.map((a) => (
-        <ActivityRow key={a.id} activity={a} controls={controls} />
+        <ActivityRow
+          key={a.id}
+          activity={a}
+          controls={controls}
+          picked={picked.has(a.id)}
+          onPick={onPick}
+        />
       ))}
     </div>
   );
@@ -39,6 +57,7 @@ function AdminActivitiesPageInner() {
   const { activities, loading, reload } = useActivitiesData();
   const actions = useActivityActions(reload);
   const controls = useRowControls(reload);
+  const bulk = useActivityBulk(reload);
   const [showCreate, setShowCreate] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
@@ -95,6 +114,14 @@ function AdminActivitiesPageInner() {
         />
       </div>
 
+      <BulkBar
+        count={bulk.picked.size}
+        busy={bulk.busy}
+        onClose={bulk.closeRegistration}
+        onDelete={bulk.remove}
+        onClear={bulk.clear}
+      />
+
       {visible.length === 0 ? (
         <div className="card p-6 text-center space-y-3">
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
@@ -113,7 +140,7 @@ function AdminActivitiesPageInner() {
               <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
                 {texts.sections.current}
               </p>
-              <Rows rows={current} controls={controls} />
+              <Rows rows={current} controls={controls} picked={bulk.picked} onPick={bulk.toggle} />
             </div>
           )}
 
@@ -129,7 +156,14 @@ function AdminActivitiesPageInner() {
                 <Icon name={showFinished ? "chevronUp" : "chevronDown"} size={13} />
                 {texts.sections.finished(finished.length)}
               </button>
-              {showFinished && <Rows rows={finished} controls={controls} />}
+              {showFinished && (
+                <Rows
+                  rows={finished}
+                  controls={controls}
+                  picked={bulk.picked}
+                  onPick={bulk.toggle}
+                />
+              )}
             </div>
           )}
         </div>

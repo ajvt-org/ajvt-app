@@ -73,9 +73,13 @@ function menuItems(activity: Activity, controls: RowControls): RowMenuItem[] {
 export default function ActivityRow({
   activity,
   controls,
+  picked,
+  onPick,
 }: {
   activity: Activity;
   controls: RowControls;
+  picked: boolean;
+  onPick: (id: string) => void;
 }) {
   const a = activity;
   const pending = pendingCount(a);
@@ -83,6 +87,13 @@ export default function ActivityRow({
   return (
     <div className={`card activity-row ${activityAccent(a)} w-full p-3 sm:p-4`}>
       <div className="flex items-center gap-2 min-w-0">
+        <input
+          type="checkbox"
+          checked={picked}
+          onChange={() => onPick(a.id)}
+          aria-label={texts.pickRow(a.title)}
+          className="w-4 h-4 shrink-0"
+        />
         <Link
           href={`/admin/activities/${a.id}`}
           className="flex items-center gap-3 min-w-0 flex-1"
