@@ -42,11 +42,18 @@ describe("the receipts a person can see", () => {
     expect(await receiptsForAccount(user.id)).toHaveLength(1);
   });
 
-  it("finds one carrying only the member row", async () => {
+  it("finds one carrying both the account and the membership row", async () => {
+    const { user, member } = await aPerson("أحمد سالم");
+    await aReceipt({ userId: user.id, memberId: member.id });
+
+    expect(await receiptsForAccount(user.id)).toHaveLength(1);
+  });
+
+  it("leaves out one that names no account, whoever it names otherwise", async () => {
     const { user, member } = await aPerson("أحمد سالم");
     await aReceipt({ memberId: member.id });
 
-    expect(await receiptsForAccount(user.id)).toHaveLength(1);
+    expect(await receiptsForAccount(user.id)).toEqual([]);
   });
 
   it("does not hand over someone else's", async () => {
@@ -64,10 +71,10 @@ describe("the receipts a person can see", () => {
     expect(await receiptsForAccount(user.id)).toEqual([]);
   });
 
-  it("gathers both the ones on the account and the ones on the member row", async () => {
+  it("gathers every receipt the account carries", async () => {
     const { user, member } = await aPerson("اباه ولد محمد");
     await aReceipt({ userId: user.id });
-    await aReceipt({ memberId: member.id });
+    await aReceipt({ userId: user.id, memberId: member.id });
 
     expect(await receiptsForAccount(user.id)).toHaveLength(2);
   });
