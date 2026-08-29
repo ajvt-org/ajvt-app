@@ -6,11 +6,11 @@ import { loginPathWithNext } from "@/lib/utils";
 
 export interface PendingCounts {
   members: number;
-  teamRequests: number;
+  activityWork: number;
   donations: number;
 }
 
-const NONE: PendingCounts = { members: 0, teamRequests: 0, donations: 0 };
+const NONE: PendingCounts = { members: 0, activityWork: 0, donations: 0 };
 
 export function useAdminSession(enabled: boolean) {
   const router = useRouter();
@@ -37,7 +37,7 @@ export function useAdminSession(enabled: boolean) {
         if (!data) return;
         setPending({
           members: data.pendingMembers || 0,
-          teamRequests: data.pendingTeamRequests || 0,
+          activityWork: data.pendingActivityWork || 0,
           donations: data.pendingDonations || 0,
         });
       })

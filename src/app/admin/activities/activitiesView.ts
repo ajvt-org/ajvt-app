@@ -1,10 +1,11 @@
 import type { Activity } from "./activityTypes";
 
-export const ACTIVITIES_VIEW_KEYS = ["q", "kind"];
+export const ACTIVITIES_VIEW_KEYS = ["q", "kind", "waiting"];
 
 export interface ActivitiesView {
   q: string;
   kind: string;
+  waiting: string;
 }
 
 export const ACTIVITY_KINDS = [
@@ -15,13 +16,18 @@ export const ACTIVITY_KINDS = [
 ];
 
 export function readActivitiesView(params: URLSearchParams): ActivitiesView {
-  return { q: params.get("q") || "", kind: params.get("kind") || "" };
+  return {
+    q: params.get("q") || "",
+    kind: params.get("kind") || "",
+    waiting: params.get("waiting") || "",
+  };
 }
 
 export function writeActivitiesView(view: ActivitiesView): URLSearchParams {
   const params = new URLSearchParams();
   if (view.q.trim()) params.set("q", view.q.trim());
   if (view.kind) params.set("kind", view.kind);
+  if (view.waiting) params.set("waiting", view.waiting);
   return params;
 }
 
