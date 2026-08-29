@@ -32,6 +32,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
           age: true,
           village: true,
           photo: true,
+          photoLocked: true,
           memberNumber: true,
           verifyToken: true,
         },

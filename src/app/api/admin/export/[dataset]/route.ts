@@ -33,6 +33,7 @@ async function buildCsv(dataset: Dataset): Promise<string> {
             age: true,
             village: true,
             photo: true,
+            photoLocked: true,
             memberNumber: true,
             verifyToken: true,
           },

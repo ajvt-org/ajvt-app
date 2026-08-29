@@ -7,6 +7,7 @@ const ACCOUNT = {
   age: "البدريين",
   village: HOME_VILLAGE,
   photo: "photo.webp",
+  photoLocked: false,
   memberNumber: "AJVT-2026-0001",
   verifyToken: "tok",
 };
@@ -19,6 +20,10 @@ describe("personOf", () => {
   it("leaves an age group that is genuinely absent absent", () => {
     expect(personOf({ ...ACCOUNT, age: null }).age).toBeNull();
   });
+
+  it("carries the picture block, which belongs to the person like the picture", () => {
+    expect(personOf({ ...ACCOUNT, photoLocked: true }).photoLocked).toBe(true);
+  });
 });
 
 describe("withPerson", () => {
@@ -29,6 +34,7 @@ describe("withPerson", () => {
     expect(shaped.status).toBe("ACTIVE");
     expect(shaped.fullName).toBe("محمد ولد أحمد");
     expect(shaped.village).toBe(HOME_VILLAGE);
+    expect(shaped.photoLocked).toBe(false);
   });
 
   it("leaves the rest of the account where it was", () => {

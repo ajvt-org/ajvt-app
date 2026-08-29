@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { PATCH as ADMIN_PATCH } from "@/app/api/admin/members/[id]/route";
 import { PATCH as SELF_PATCH } from "@/app/api/members/[id]/route";
+import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
+import { GET as SELF_GET } from "@/app/api/members/[id]/route";
 import {
   resetDb,
+  get,
   patch,
   createAdmin,
   createUsers,
@@ -170,5 +173,42 @@ describe("a blocked member changing their own picture", () => {
     );
 
     expect((await res.json()).photoLocked).toBe(true);
+  });
+});
+
+describe("the screens that read the block back", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("tells the admin profile the member is blocked", async () => {
+    const { member: row } = await member({ photoLocked: true });
+    await signInAsAdmin(await createAdmin());
+
+    const body = await (
+      await PROFILE(get(`/api/admin/members/${row.id}/profile`), withId(row.id))
+    ).json();
+
+    expect(body.member.photoLocked).toBe(true);
+  });
+
+  it("tells the admin profile when the member is not blocked", async () => {
+    const { member: row } = await member();
+    await signInAsAdmin(await createAdmin());
+
+    const body = await (
+      await PROFILE(get(`/api/admin/members/${row.id}/profile`), withId(row.id))
+    ).json();
+
+    expect(body.member.photoLocked).toBe(false);
+  });
+
+  it("tells the member's own read the picture is blocked", async () => {
+    const { user, member: row } = await member({ photoLocked: true });
+    await signInAs(user);
+
+    const body = await (await SELF_GET(get(`/api/members/${row.id}`), withId(row.id))).json();
+
+    expect(body.photoLocked).toBe(true);
   });
 });
