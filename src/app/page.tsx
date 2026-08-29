@@ -14,6 +14,7 @@ export default async function LandingPage() {
     getUserSession(),
     wantsActivities
       ? prisma.activity.findMany({
+          where: { published: true },
           orderBy: { order: "asc" },
           select: {
             id: true,

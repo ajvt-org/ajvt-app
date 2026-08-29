@@ -1,5 +1,6 @@
 export const activities = {
   notFound: "النشاط غير موجود",
+  copyOf: (title: string) => `${title} (نسخة)`,
   titleTooLong: "العنوان طويل جداً (60 حرفاً كحد أقصى)",
   descriptionTooLong: "الوصف طويل جداً (1000 حرف كحد أقصى)",
   notATournament: "هذا النشاط ليس بطولة",

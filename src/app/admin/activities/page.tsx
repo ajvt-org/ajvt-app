@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
+import { useRowControls } from "./useRowControls";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import {
   ACTIVITIES_VIEW_KEYS,
@@ -17,18 +18,18 @@ import {
   writeActivitiesView,
 } from "./activitiesView";
 import { splitByStage } from "./activitiesList";
-import ActivityRow from "./ActivityRow";
+import ActivityRow, { type RowControls } from "./ActivityRow";
 import AttentionPanel from "./AttentionPanel";
 import FilterChips from "./FilterChips";
 import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
 import type { Activity } from "./activityTypes";
 
-function Rows({ rows }: { rows: Activity[] }) {
+function Rows({ rows, controls }: { rows: Activity[]; controls: RowControls }) {
   return (
     <div className="space-y-2">
       {rows.map((a) => (
-        <ActivityRow key={a.id} activity={a} />
+        <ActivityRow key={a.id} activity={a} controls={controls} />
       ))}
     </div>
   );
@@ -37,6 +38,7 @@ function Rows({ rows }: { rows: Activity[] }) {
 function AdminActivitiesPageInner() {
   const { activities, loading, reload } = useActivitiesData();
   const actions = useActivityActions(reload);
+  const controls = useRowControls(reload);
   const [showCreate, setShowCreate] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
@@ -111,7 +113,7 @@ function AdminActivitiesPageInner() {
               <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
                 {texts.sections.current}
               </p>
-              <Rows rows={current} />
+              <Rows rows={current} controls={controls} />
             </div>
           )}
 
@@ -127,7 +129,7 @@ function AdminActivitiesPageInner() {
                 <Icon name={showFinished ? "chevronUp" : "chevronDown"} size={13} />
                 {texts.sections.finished(finished.length)}
               </button>
-              {showFinished && <Rows rows={finished} />}
+              {showFinished && <Rows rows={finished} controls={controls} />}
             </div>
           )}
         </div>

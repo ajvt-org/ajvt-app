@@ -92,6 +92,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       teamSize: isTournament ? normalizeTeamSize(teamSize) : null,
       isVolunteer: !!isVolunteer,
       whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
+      published: false,
       order: (_max.order ?? -1) + 1,
     },
   });
