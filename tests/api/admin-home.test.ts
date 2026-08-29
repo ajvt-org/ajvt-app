@@ -41,7 +41,13 @@ describe("the admin home", () => {
   it("answers what came in and what went out", async () => {
     const paid = await member("سدد");
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 5000, status: "ACTIVE", memberId: paid.id },
+      data: {
+        purpose: "DONATION",
+        amount: 5000,
+        status: "ACTIVE",
+        memberId: paid.id,
+        userId: paid.userId,
+      },
     });
     await prisma.expense.create({
       data: { label: "مصروف", amount: 2000, createdBy: "boss" },
@@ -55,7 +61,13 @@ describe("the admin home", () => {
   it("leaves a payment still awaiting review out of the money that came in", async () => {
     const m = await member("سدد");
     await prisma.payment.create({
-      data: { purpose: "DONATION", amount: 5000, status: "PENDING", memberId: m.id },
+      data: {
+        purpose: "DONATION",
+        amount: 5000,
+        status: "PENDING",
+        memberId: m.id,
+        userId: m.userId,
+      },
     });
 
     const body = await (await read()).json();
