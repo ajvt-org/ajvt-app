@@ -4,6 +4,7 @@ export type OrderedActivity = {
   startsAt: string | Date | null;
   endsAt?: string | Date | null;
   isOpen: boolean;
+  order?: number;
 };
 
 const LIVE = 0;
@@ -28,6 +29,12 @@ export function activityRank(activity: OrderedActivity, now = new Date()): [numb
 export function sortActivities<T extends OrderedActivity>(rows: T[], now = new Date()): T[] {
   return rows
     .map((row, index) => ({ row, index, rank: activityRank(row, now) }))
-    .sort((a, b) => a.rank[0] - b.rank[0] || a.rank[1] - b.rank[1] || a.index - b.index)
+    .sort(
+      (a, b) =>
+        a.rank[0] - b.rank[0] ||
+        a.rank[1] - b.rank[1] ||
+        (a.row.order ?? 0) - (b.row.order ?? 0) ||
+        a.index - b.index,
+    )
     .map((entry) => entry.row);
 }

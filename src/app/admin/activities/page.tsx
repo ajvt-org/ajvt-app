@@ -14,6 +14,7 @@ import {
   writeActivitiesView,
 } from "./activitiesView";
 import ActivityRow from "./ActivityRow";
+import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
 
 function AdminActivitiesPageInner() {
@@ -101,7 +102,7 @@ function AdminActivitiesPageInner() {
 
       {unfiltered && activities.length > 1 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          الأسهم تغيّر ترتيب الظهور في الصفحة الرئيسية.
+          {texts.orderHint}
         </p>
       )}
 
