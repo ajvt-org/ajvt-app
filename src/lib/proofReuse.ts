@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "./person";
 
 // "Has this screenshot been sent before?" — answered by fingerprint, then
 // traced back to whatever records point at the matching files. A member,
@@ -30,7 +31,7 @@ export async function findProofReuse(
   const [members, donations, expenses] = await Promise.all([
     prisma.member.findMany({
       where: { paymentProof: { in: names } },
-      select: { id: true, fullName: true, createdAt: true },
+      select: { id: true, createdAt: true, user: { select: { fullName: true } } },
     }),
     prisma.donation.findMany({
       where: { proof: { in: names } },
@@ -46,7 +47,7 @@ export async function findProofReuse(
     ...members.map((m) => ({
       kind: "member" as const,
       id: m.id,
-      label: m.fullName,
+      label: nameOf(m.user),
       date: m.createdAt,
     })),
     ...donations.map((d) => ({

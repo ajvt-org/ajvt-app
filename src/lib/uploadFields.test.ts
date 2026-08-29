@@ -108,7 +108,7 @@ describe("locateUpload", () => {
   });
 
   it("takes the first match, so a member photo wins over a later column", async () => {
-    state.row = { userId: "u1", member: { userId: "u1" }, purpose: "DONATION" };
+    state.row = { id: "u1", userId: "u1", member: { userId: "u1" }, purpose: "DONATION" };
 
     expect(await locateUpload("shared.webp")).toEqual({ kind: "photo", ownerId: "u1" });
   });
@@ -118,7 +118,7 @@ describe("locateUpload", () => {
 
     const asked = state.calls.filter((c) => c.op === "findFirst").map((c) => c.model);
     expect(asked).toEqual([
-      "member",
+      "user",
       "member",
       "membership",
       "activityRegistration",

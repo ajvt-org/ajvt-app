@@ -16,12 +16,12 @@ export async function recordMembershipPayment(
     select: {
       status: true,
       rejectionReason: true,
-      fullName: true,
       membershipYear: true,
       paymentProof: true,
       paymentMethod: true,
       referenceCode: true,
       surplusAnonymous: true,
+      user: { select: { fullName: true } },
     },
   });
   if (!member) return;
@@ -54,7 +54,7 @@ export async function recordMembershipPayment(
       proof: member.paymentProof,
       status: member.status,
       anonymous: member.surplusAnonymous,
-      donorName: member.surplusAnonymous ? null : member.fullName,
+      donorName: member.surplusAnonymous ? null : member.user.fullName,
     });
     return;
   }
@@ -71,7 +71,7 @@ export async function recordMembershipPayment(
     proof: member.paymentProof,
     status: member.status,
     anonymous: member.surplusAnonymous,
-    donorName: member.surplusAnonymous ? null : member.fullName,
+    donorName: member.surplusAnonymous ? null : member.user.fullName,
   });
 
   if (surplus === 0) {
@@ -91,7 +91,7 @@ export async function recordMembershipPayment(
     await db.donation.create({
       data: {
         ...data,
-        donorName: member.surplusAnonymous ? null : member.fullName,
+        donorName: member.surplusAnonymous ? null : member.user.fullName,
         memberId,
         membershipYear,
         source: "MEMBERSHIP",
@@ -130,11 +130,11 @@ export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: s
 export async function setSurplusVisibility(db: Db, memberId: string, anonymous: boolean) {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { fullName: true, membershipYear: true },
+    select: { membershipYear: true, user: { select: { fullName: true } } },
   });
   if (!member) return;
 
-  const donorName = anonymous ? null : member.fullName;
+  const donorName = anonymous ? null : member.user.fullName;
   const year = member.membershipYear;
 
   await db.member.update({ where: { id: memberId }, data: { surplusAnonymous: anonymous } });

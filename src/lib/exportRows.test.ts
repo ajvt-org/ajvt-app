@@ -89,7 +89,7 @@ describe("donationRows", () => {
     status: "ACTIVE",
     source: "PUBLIC",
     createdAt: new Date("2026-03-04T09:30:00.000Z"),
-    member: { fullName: "محمد" },
+    member: { user: { fullName: "محمد" } },
     tags: [{ name: "القافلة الصحية" }, { name: "مصاريف عامة" }],
   };
 

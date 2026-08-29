@@ -15,6 +15,7 @@ import {
 } from "./tournament";
 import { incompleteTeams, displayTeamName } from "./teamSize";
 import { tournament as messages } from "./messages";
+import { nameOf } from "./person";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -50,7 +51,7 @@ export async function drawBracket(activityId: string, redo = false) {
       name: true,
       autoNamed: true,
       groupId: true,
-      members: { select: { member: { select: { fullName: true } } } },
+      members: { select: { member: { select: { user: { select: { fullName: true } } } } } },
     },
   });
 
@@ -59,7 +60,7 @@ export async function drawBracket(activityId: string, redo = false) {
       id: t.id,
       name: t.name,
       autoNamed: t.autoNamed,
-      memberNames: t.members.map((m) => m.member.fullName),
+      memberNames: t.members.map((m) => nameOf(m.member.user)),
     })),
     activity?.teamSize ?? null,
   );
