@@ -57,18 +57,22 @@ export const PATCH = withRoute(
       proof?: string | null;
       tags?: { set: { id: string }[] };
       activityId?: string | null;
+      userId?: string | null;
     } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
+      let account: string | null = null;
       if (memberId !== null) {
         const member = await prisma.member.findUnique({
           where: { id: memberId },
-          select: { id: true },
+          select: { userId: true },
         });
         if (!member) return NextResponse.json({ error: members.notFound }, { status: 404 });
+        account = member.userId;
       }
       data.memberId = memberId;
+      data.userId = account;
     }
 
     if (donorName !== undefined) {
