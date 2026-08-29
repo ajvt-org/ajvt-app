@@ -5,14 +5,12 @@ import { memberOf } from "./memberAccount";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export interface MembershipEdit {
-  paidAmount?: number | null;
   paymentMethod?: string | null;
   paymentProof?: string | null;
 }
 
 export function membershipEdit(data: MembershipEdit): MembershipEdit {
   const edit: MembershipEdit = {};
-  if (data.paidAmount !== undefined) edit.paidAmount = data.paidAmount;
   if (data.paymentMethod !== undefined) edit.paymentMethod = data.paymentMethod;
   if (data.paymentProof !== undefined) edit.paymentProof = data.paymentProof;
   return edit;

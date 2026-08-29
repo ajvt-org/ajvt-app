@@ -53,7 +53,6 @@ export const POST = withRoute(
           userId: member.userId,
           year: membershipYear,
           status: "ACTIVE",
-          paidAmount: Math.min(Number(paidAmount), membershipFee),
           paymentMethod,
           paymentProof: paymentProof || null,
           recordedBy: session.username,

@@ -145,6 +145,8 @@ export async function makeMember(data: Record<string, unknown>) {
   // here looks like a member the app itself made.
   const paid = membership.paidAmount as number | null | undefined;
   const anonymous = membership.surplusAnonymous === true;
+  delete membership.paidAmount;
+  delete membership.surplusAnonymous;
 
   const userId = membership.userId as string | undefined;
   const member = userId

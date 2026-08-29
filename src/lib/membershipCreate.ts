@@ -23,13 +23,12 @@ export async function addMembership(db: Db, m: NewMembership) {
       userId: m.userId,
       paymentMethod: m.paymentMethod,
       paymentProof: m.paymentProof,
-      surplusAnonymous: m.surplusAnonymous,
       status: m.status,
       membershipYear: m.membershipYear,
     },
   });
 
-  await recordMembershipPayment(db, member.id, m.paidAmount, m.fee);
+  await recordMembershipPayment(db, member.id, m.paidAmount, m.fee, m.surplusAnonymous);
 
   if (m.status === "ACTIVE") {
     await recordMembershipYear(db, m.userId, member.membershipYear, m.fee, {
