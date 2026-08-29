@@ -17,6 +17,7 @@ export { ouguiya } from "./currency";
 export { discipline } from "./discipline";
 export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
+export { filterSheet } from "./filterSheet";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
