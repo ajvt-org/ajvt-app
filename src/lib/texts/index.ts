@@ -34,6 +34,7 @@ export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
+export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
@@ -47,6 +48,7 @@ export {
   receiptVerify,
 } from "./receipt";
 export { signUp } from "./signUp";
+export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";

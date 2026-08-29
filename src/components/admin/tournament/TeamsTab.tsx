@@ -11,6 +11,7 @@ import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { discipline as disciplineTexts } from "@/lib/texts";
+import { teamsTab } from "@/lib/texts";
 
 export default function TeamsTab({
   activityId,
@@ -124,7 +125,7 @@ export default function TeamsTab({
   }
 
   async function deleteTeam(teamId: string) {
-    if (!confirm("هل تريد حذف هذا الفريق؟")) return;
+    if (!confirm(teamsTab.confirmDelete)) return;
     setLoadingAction(true);
     try {
       await api.del(`/api/admin/teams/${teamId}`);
@@ -202,7 +203,7 @@ export default function TeamsTab({
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
             <IconLabel name="flag">
-              فرق بدون مجموعة ({teams.filter((t) => !t.groupId).length})
+              {teamsTab.ungrouped(teams.filter((t) => !t.groupId).length)}
             </IconLabel>
           </p>
           <div className="space-y-1.5">
@@ -219,7 +220,7 @@ export default function TeamsTab({
                     className="input text-xs"
                     style={{ width: "auto" }}
                   >
-                    <option value="">اختر مجموعة...</option>
+                    <option value="">{teamsTab.pickGroup}</option>
                     {groups.map((g) => (
                       <option key={g.id} value={g.id}>
                         {g.name}
@@ -233,7 +234,7 @@ export default function TeamsTab({
       )}
 
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        عدد الفرق: {teams.length}
+        {teamsTab.teamCount(teams.length)}
       </p>
 
       {teams.map((team) => (
@@ -255,7 +256,7 @@ export default function TeamsTab({
                   className="text-xs px-2 py-1 rounded-lg font-bold"
                   style={{ background: "var(--mint-600)", color: "white" }}
                 >
-                  حفظ
+                  {teamsTab.save}
                 </button>
                 <button
                   onClick={() => setEditingTeamId(null)}
@@ -266,7 +267,7 @@ export default function TeamsTab({
                     border: "1px solid var(--mint-200)",
                   }}
                 >
-                  إلغاء
+                  {teamsTab.cancel}
                 </button>
               </div>
             ) : (
@@ -293,7 +294,7 @@ export default function TeamsTab({
               className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              <IconLabel name="trash">حذف الفريق</IconLabel>
+              <IconLabel name="trash">{teamsTab.deleteTeam}</IconLabel>
             </button>
           </div>
 
@@ -301,7 +302,7 @@ export default function TeamsTab({
             photo={team.logo}
             imageUrlPrefix="/api/files/team"
             variant="avatar"
-            label="شعار الفريق"
+            label={teamsTab.teamLogo}
             placeholderIcon="shield"
             onUpload={(filename) => setTeamLogo(team.id, filename)}
           />
@@ -312,7 +313,7 @@ export default function TeamsTab({
               onChange={(e) => setTeamGroup(team.id, e.target.value)}
               className="input text-sm mb-2"
             >
-              <option value="">بدون مجموعة</option>
+              <option value="">{teamsTab.noGroup}</option>
               {groups.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.name}
@@ -324,7 +325,7 @@ export default function TeamsTab({
           <div className="space-y-1.5 mb-2">
             {team.members.length === 0 ? (
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                لا يوجد لاعبون بعد
+                {teamsTab.noPlayers}
               </p>
             ) : (
               team.members.map(({ member, status }) => (
@@ -345,7 +346,7 @@ export default function TeamsTab({
                         className="text-xs px-2 py-1 rounded-lg font-bold"
                         style={{ background: "var(--mint-600)", color: "white" }}
                       >
-                        حفظ
+                        {teamsTab.save}
                       </button>
                       <button
                         onClick={() => setEditingMemberId(null)}
@@ -356,7 +357,7 @@ export default function TeamsTab({
                           border: "1px solid var(--mint-200)",
                         }}
                       >
-                        إلغاء
+                        {teamsTab.cancel}
                       </button>
                     </div>
                   ) : (
@@ -377,7 +378,7 @@ export default function TeamsTab({
                       )}
                       {status === "PENDING" && (
                         <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                          <IconLabel name="clock">بانتظار الموافقة</IconLabel>
+                          <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
                         </span>
                       )}
                     </button>
@@ -390,7 +391,7 @@ export default function TeamsTab({
                         className="text-xs px-2 py-1 rounded-lg font-bold"
                         style={{ background: "var(--mint-600)", color: "white" }}
                       >
-                        <IconLabel name="check">قبول</IconLabel>
+                        <IconLabel name="check">{teamsTab.accept}</IconLabel>
                       </button>
                     )}
                     <button
@@ -401,7 +402,11 @@ export default function TeamsTab({
                         color: status === "PENDING" ? "#991b1b" : "var(--mint-700)",
                       }}
                     >
-                      {status === "PENDING" ? <IconLabel name="close">رفض</IconLabel> : "إزالة"}
+                      {status === "PENDING" ? (
+                        <IconLabel name="close">{teamsTab.reject}</IconLabel>
+                      ) : (
+                        teamsTab.remove
+                      )}
                     </button>
                   </div>
                 </div>
@@ -416,7 +421,7 @@ export default function TeamsTab({
                 onChange={(e) => setSelectedMember((p) => ({ ...p, [team.id]: e.target.value }))}
                 className="input flex-1"
               >
-                <option value="">اختر لاعباً...</option>
+                <option value="">{teamsTab.pickPlayer}</option>
                 {unassigned.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.fullName}
@@ -429,7 +434,7 @@ export default function TeamsTab({
                 className="btn btn-primary text-xs px-3"
                 style={{ width: "auto" }}
               >
-                إضافة
+                {teamsTab.add}
               </button>
             </div>
           ) : (
@@ -438,7 +443,7 @@ export default function TeamsTab({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              <IconLabel name="plus">إضافة لاعب</IconLabel>
+              <IconLabel name="plus">{teamsTab.addPlayer}</IconLabel>
             </button>
           )}
         </div>
@@ -449,13 +454,13 @@ export default function TeamsTab({
           photo={newTeamLogo || null}
           imageUrlPrefix="/api/files/team"
           variant="avatar"
-          label="شعار الفريق"
+          label={teamsTab.teamLogo}
           placeholderIcon="shield"
           onUpload={(filename) => setNewTeamLogo(filename)}
         />
         <input
           type="text"
-          placeholder="اسم الفريق الجديد"
+          placeholder={teamsTab.newTeamName}
           value={newTeamName}
           onChange={(e) => setNewTeamName(e.target.value)}
           maxLength={40}
@@ -468,7 +473,7 @@ export default function TeamsTab({
             onChange={(e) => setNewTeamGroup(e.target.value)}
             className="input"
           >
-            <option value="">بدون مجموعة</option>
+            <option value="">{teamsTab.noGroup}</option>
             {groups.map((g) => (
               <option key={g.id} value={g.id}>
                 {g.name}
@@ -477,14 +482,14 @@ export default function TeamsTab({
           </select>
         )}
         <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
-          {loadingAction ? "..." : <IconLabel name="plus">فريق</IconLabel>}
+          {loadingAction ? "..." : <IconLabel name="plus">{teamsTab.team}</IconLabel>}
         </button>
       </form>
 
       {unassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="user">لاعبون غير مصنّفين ({unassigned.length})</IconLabel>
+            <IconLabel name="user">{teamsTab.unassigned(unassigned.length)}</IconLabel>
           </p>
           <div className="flex flex-wrap gap-1.5">
             {unassigned.map((m) =>
@@ -505,7 +510,7 @@ export default function TeamsTab({
                     className="text-xs px-2 py-1 rounded-lg font-bold"
                     style={{ background: "var(--mint-600)", color: "white" }}
                   >
-                    حفظ
+                    {teamsTab.save}
                   </button>
                   <button
                     onClick={() => setEditingMemberId(null)}
@@ -516,7 +521,7 @@ export default function TeamsTab({
                       border: "1px solid var(--mint-200)",
                     }}
                   >
-                    إلغاء
+                    {teamsTab.cancel}
                   </button>
                 </div>
               ) : (
