@@ -3,8 +3,6 @@ export type FilterTab = "ALL" | Status | "NO_REQUEST";
 
 export interface BareAccount {
   id: string;
-  // Null for someone an admin added without a number. They cannot sign in, so
-  // the actions that need a login are not offered on their row.
   phone: string | null;
   fullName: string | null;
   createdAt: string;
@@ -14,9 +12,9 @@ export interface BareAccount {
 
 export interface Member {
   id: string;
-  userId: string | null; // null = admin-added with an unknown phone number, no account yet
+  userId: string | null;
   fullName: string;
-  phone: string | null; // null alongside userId — see above
+  phone: string | null;
   age: string | null;
   village: string;
   paymentMethod: string;

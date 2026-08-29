@@ -13,10 +13,6 @@ import TempPasswordBox from "./TempPasswordBox";
 import { bareAccounts as texts } from "@/lib/texts";
 import type { BareAccount } from "./types";
 
-// What to call someone on this list. An admin-added person has a name and no
-// number; someone who signed up has a number and, since registration asks for
-// it, a name too. The delete confirmation echoes whatever this returns, and
-// the API accepts either.
 function identify(user: BareAccount): string {
   return user.fullName?.trim() || user.phone || user.id;
 }
