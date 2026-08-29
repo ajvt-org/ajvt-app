@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/export/[dataset]/route";
 import { prisma } from "@/lib/prisma";
-import { mirrorDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { resetDb, get, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
 
 function download(dataset: string) {
@@ -57,17 +57,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       },
     });
     await mirrorDonation(prisma, {
-      donationId: donation.id,
-      amount: 500,
-      method: null,
-      proof: null,
-      status: "ACTIVE",
-      donorName: "أحمد",
-      donorPhoto: null,
-      donorPhone: null,
-      memberId: null,
-      userId: null,
-      activityId: null,
+      ...donationMirrorOf(donation),
       tagIds: [tag.id],
     });
 

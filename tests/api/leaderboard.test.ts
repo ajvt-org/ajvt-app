@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
-import { mirrorDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { get, makeMember } from "./helpers";
 import { resetDb } from "./helpers";
 
@@ -29,6 +29,7 @@ async function gift(
   const donation = await prisma.donation.create({
     data: {
       amount,
+      anonymous: opts.name == null,
       donorName: opts.name ?? null,
       memberId: opts.memberId ?? null,
       userId: owner?.userId ?? null,
@@ -36,19 +37,7 @@ async function gift(
       source: opts.memberId ? "SELF" : "PUBLIC",
     },
   });
-  await mirrorDonation(prisma, {
-    donationId: donation.id,
-    amount,
-    method: null,
-    proof: null,
-    status,
-    donorName: donation.donorName,
-    donorPhoto: null,
-    donorPhone: null,
-    memberId: donation.memberId,
-    userId: donation.userId,
-    activityId: null,
-  });
+  await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
 
@@ -204,19 +193,7 @@ describe("the supporters board", () => {
     const donation = await prisma.donation.create({
       data: { amount: 500, donorName: "زائر", donorPhoto: "guest.webp", status: "ACTIVE" },
     });
-    await mirrorDonation(prisma, {
-      donationId: donation.id,
-      amount: 500,
-      method: null,
-      proof: null,
-      status: "ACTIVE",
-      donorName: "زائر",
-      donorPhoto: "guest.webp",
-      donorPhone: null,
-      memberId: null,
-      userId: null,
-      activityId: null,
-    });
+    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     const { leaderboard } = await getLeaderboardData();
 
