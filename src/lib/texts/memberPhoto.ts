@@ -1,4 +1,4 @@
-export const photoLock = {
+export const memberPhoto = {
   title: "الصورة الشخصية",
   lockedNow: "العضو ممنوع من تغيير صورته",
   openNow: "العضو يستطيع تغيير صورته",
@@ -7,4 +7,7 @@ export const photoLock = {
   unlock: "السماح بتغيير الصورة",
   working: "جارٍ الحفظ...",
   memberNote: "تغيير الصورة موقوف على حسابك، راجع إدارة الرابطة",
+  remove: "حذف الصورة",
+  removeNote: "الحذف يترك الحساب بلا صورة، دون أن يمنع العضو من وضع واحدة.",
+  none: "لا توجد صورة على هذا الحساب",
 } as const;

@@ -212,3 +212,58 @@ describe("the screens that read the block back", () => {
     expect(body.photoLocked).toBe(true);
   });
 });
+
+describe("an admin removing the picture", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("clears it without asking for a replacement", async () => {
+    const { user, member: row } = await member();
+
+    const res = await ADMIN_PATCH(
+      patch(`/api/admin/members/${row.id}`, { photo: null }),
+      withId(row.id),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await accountOf(user.id)).photo).toBeNull();
+  });
+
+  it("leaves the block where it was", async () => {
+    const { user, member: row } = await member({ photoLocked: true });
+
+    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+
+    expect((await accountOf(user.id)).photoLocked).toBe(true);
+  });
+
+  it("records the removal under its own name in the trail", async () => {
+    const { member: row } = await member();
+
+    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "REMOVE_MEMBER_PHOTO", targetId: row.id },
+    });
+    expect(JSON.stringify(entry.before)).toContain("old.webp");
+  });
+
+  it("says nothing to the trail when there was no picture to remove", async () => {
+    const { member: row } = await member({ photo: null });
+
+    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+
+    expect(await prisma.auditLog.count({ where: { action: "REMOVE_MEMBER_PHOTO" } })).toBe(0);
+  });
+
+  it("keeps the removal out of the trail when the block cleared the picture", async () => {
+    const { member: row } = await member();
+
+    await lock(row.id, true);
+
+    expect(await prisma.auditLog.count({ where: { action: "REMOVE_MEMBER_PHOTO" } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: "LOCK_MEMBER_PHOTO" } })).toBe(1);
+  });
+});

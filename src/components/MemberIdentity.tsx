@@ -3,7 +3,7 @@
 import PhotoUpload from "@/components/PhotoUpload";
 import { STATUS } from "@/lib/memberStatus";
 import type { MemberData } from "@/lib/useMember";
-import { photoLock as texts } from "@/lib/texts";
+import { memberPhoto as texts } from "@/lib/texts";
 
 export default function MemberIdentity({
   member,

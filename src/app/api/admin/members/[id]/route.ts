@@ -32,7 +32,15 @@ export const PATCH = withRoute(
         userId: true,
         paymentMethod: true,
         paidAmount: true,
-        user: { select: { fullName: true, age: true, village: true, photoLocked: true } },
+        user: {
+          select: {
+            fullName: true,
+            age: true,
+            village: true,
+            photo: true,
+            photoLocked: true,
+          },
+        },
       },
     });
     if (!existing) {
@@ -105,6 +113,15 @@ export const PATCH = withRoute(
         },
       },
     );
+    if (photo === null && existing.user.photo !== null) {
+      await logAction(session.username, "REMOVE_MEMBER_PHOTO", nameOf(person), {
+        ...auditContext(session, req),
+        targetType: "Member",
+        targetId: member.id,
+        before: { photo: existing.user.photo },
+        after: { photo: null },
+      });
+    }
     if (photoLocked !== undefined && photoLocked !== existing.user.photoLocked) {
       await logAction(
         session.username,

@@ -14,7 +14,7 @@ export { memberForm } from "./memberForm";
 export { memberProof } from "./memberProof";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
-export { photoLock } from "./photoLock";
+export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
 export { quizRecap } from "./quizRecap";
