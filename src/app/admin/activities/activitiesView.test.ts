@@ -32,35 +32,47 @@ function activity(over: Partial<Activity> = {}): Activity {
 
 describe("carrying the activities search in the address", () => {
   it("reads an empty query as no opinion", () => {
-    expect(readActivitiesView(new URLSearchParams())).toEqual({ q: "", kind: "" });
+    expect(readActivitiesView(new URLSearchParams())).toEqual({ q: "", kind: "", waiting: "" });
   });
 
   it("survives a round trip, which is what a shared link is", () => {
-    const chosen = { q: "دوري", kind: "tournament" };
+    const chosen = { q: "دوري", kind: "tournament", waiting: "" };
     expect(readActivitiesView(new URLSearchParams(writeActivitiesView(chosen).toString()))).toEqual(
       chosen,
     );
   });
 
   it("lists exactly the keys it owns in the address", () => {
-    expect(ACTIVITIES_VIEW_KEYS).toEqual(["q", "kind"]);
+    expect(ACTIVITIES_VIEW_KEYS).toEqual(["q", "kind", "waiting"]);
   });
 });
 
 describe("narrowing the list", () => {
   it("matches by title text", () => {
-    expect(matchesActivitiesView(activity(), { q: "دوري", kind: "" })).toBe(true);
-    expect(matchesActivitiesView(activity(), { q: "حملة", kind: "" })).toBe(false);
+    expect(matchesActivitiesView(activity(), { q: "دوري", kind: "", waiting: "" })).toBe(true);
+    expect(matchesActivitiesView(activity(), { q: "حملة", kind: "", waiting: "" })).toBe(false);
   });
 
   it("keeps each kind to itself", () => {
     expect(
-      matchesActivitiesView(activity({ isTournament: true }), { q: "", kind: "tournament" }),
+      matchesActivitiesView(activity({ isTournament: true }), {
+        q: "",
+        kind: "tournament",
+        waiting: "",
+      }),
     ).toBe(true);
-    expect(matchesActivitiesView(activity(), { q: "", kind: "tournament" })).toBe(false);
+    expect(matchesActivitiesView(activity(), { q: "", kind: "tournament", waiting: "" })).toBe(
+      false,
+    );
     expect(
-      matchesActivitiesView(activity({ isVolunteer: true }), { q: "", kind: "volunteer" }),
+      matchesActivitiesView(activity({ isVolunteer: true }), {
+        q: "",
+        kind: "volunteer",
+        waiting: "",
+      }),
     ).toBe(true);
-    expect(matchesActivitiesView(activity({ isOpen: false }), { q: "", kind: "open" })).toBe(false);
+    expect(
+      matchesActivitiesView(activity({ isOpen: false }), { q: "", kind: "open", waiting: "" }),
+    ).toBe(false);
   });
 });

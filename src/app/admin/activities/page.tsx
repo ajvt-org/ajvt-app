@@ -14,6 +14,7 @@ import {
   writeActivitiesView,
 } from "./activitiesView";
 import ActivityRow from "./ActivityRow";
+import AttentionPanel from "./AttentionPanel";
 import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
 
@@ -34,6 +35,11 @@ function AdminActivitiesPageInner() {
 
   return (
     <div className="admin-page space-y-3">
+      <AttentionPanel
+        newestFirst={filters.waiting === "newest"}
+        onOrderChange={(newestFirst) => go({ ...filters, waiting: newestFirst ? "newest" : "" })}
+      />
+
       <div className="flex gap-2 flex-wrap">
         <input
           type="text"

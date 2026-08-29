@@ -7,7 +7,7 @@ import type { PendingCounts } from "./useAdminSession";
 
 const BADGE_KEY: Record<string, keyof PendingCounts> = {
   "/admin/dashboard": "members",
-  "/admin/activities": "teamRequests",
+  "/admin/activities": "activityWork",
   "/admin/payments": "donations",
 };
 
