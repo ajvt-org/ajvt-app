@@ -31,6 +31,7 @@ export default function DetailsTab({
     photo: activity.photo ?? "",
     isOpen: activity.isOpen,
     autoApprove: activity.autoApprove,
+    showScorersAndCards: activity.showScorersAndCards,
   });
 
   async function save(ev: React.SubmitEvent<HTMLFormElement>) {
@@ -46,9 +47,10 @@ export default function DetailsTab({
         photo: form.photo || null,
         isOpen: form.isOpen,
         autoApprove: form.autoApprove,
+        showScorersAndCards: form.showScorersAndCards,
       });
       await onSaved();
-      showToast("تم حفظ التفاصيل");
+      showToast(texts.saved);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -60,12 +62,12 @@ export default function DetailsTab({
     <div className="space-y-4">
       <div className="card p-4">
         <p className="text-sm font-bold mb-3" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="pencil">تفاصيل النشاط</IconLabel>
+          <IconLabel name="pencil">{texts.detailsHeading}</IconLabel>
         </p>
         <form onSubmit={save} className="space-y-3">
           <div>
             <label htmlFor="activity-title" className="block text-sm font-bold mb-1.5">
-              العنوان
+              {texts.title}
             </label>
             <input
               id="activity-title"
@@ -79,7 +81,7 @@ export default function DetailsTab({
 
           <div>
             <label htmlFor="activity-description" className="block text-sm font-bold mb-1.5">
-              الوصف
+              {texts.description}
             </label>
             <textarea
               id="activity-description"
@@ -93,7 +95,7 @@ export default function DetailsTab({
           <div className="flex gap-2 flex-wrap">
             <div className="flex-1 min-w-0">
               <label htmlFor="activity-capacity" className="block text-sm font-bold mb-1.5">
-                السعة
+                {texts.capacity}
               </label>
               <input
                 id="activity-capacity"
@@ -101,13 +103,13 @@ export default function DetailsTab({
                 min={1}
                 value={form.capacity}
                 onChange={(e) => setForm((p) => ({ ...p, capacity: e.target.value }))}
-                placeholder="بدون حد"
+                placeholder={texts.noCapacity}
                 className="input"
               />
             </div>
             <div className="flex-1 min-w-0">
               <label htmlFor="activity-whatsapp" className="block text-sm font-bold mb-1.5">
-                رابط الواتساب
+                {texts.whatsappLink}
               </label>
               <input
                 id="activity-whatsapp"
@@ -144,13 +146,32 @@ export default function DetailsTab({
             </p>
           </div>
 
+          {activity.isTournament && (
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={form.showScorersAndCards}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, showScorersAndCards: e.target.checked }))
+                  }
+                  className="w-4 h-4"
+                />
+                {texts.showScorersAndCards}
+              </label>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                {texts.showScorersAndCardsHint}
+              </p>
+            </div>
+          )}
+
           <div>
-            <p className="block text-sm font-bold mb-1.5">الصورة</p>
+            <p className="block text-sm font-bold mb-1.5">{texts.photoHeading}</p>
             <PhotoUpload
               photo={form.photo || null}
               imageUrlPrefix="/api/files/activity"
               variant="cover"
-              label="صورة النشاط"
+              label={texts.activityPhoto}
               onUpload={(filename) => setForm((p) => ({ ...p, photo: filename }))}
             />
           </div>
@@ -162,14 +183,14 @@ export default function DetailsTab({
           )}
 
           <button type="submit" disabled={saving} className="btn btn-sm btn-primary">
-            <IconLabel name="save">{saving ? "..." : "حفظ التفاصيل"}</IconLabel>
+            <IconLabel name="save">{saving ? "..." : texts.save}</IconLabel>
           </button>
         </form>
       </div>
 
       <div className="card p-4">
         <p className="text-sm font-bold mb-3" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="calendar">التواريخ</IconLabel>
+          <IconLabel name="calendar">{texts.datesHeading}</IconLabel>
         </p>
         <ActivityDatesEditor activity={activity} onSaved={onSaved} />
       </div>
