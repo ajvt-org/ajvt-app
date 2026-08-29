@@ -7,19 +7,30 @@ export default function TournamentSummary({
   matchesPlayed: number;
   totalGoals: number;
   avgGoalsPerMatch: number;
-  bestAttack: string;
+  bestAttack: { name: string; gf: number } | null;
 }) {
   return (
     <div className="grid grid-cols-2 gap-2">
       <StatBox label="مباريات لُعبت" value={matchesPlayed} />
       <StatBox label="مجموع الأهداف" value={totalGoals} />
       <StatBox label="معدل الأهداف/مباراة" value={avgGoalsPerMatch} />
-      <StatBox label="أفضل هجوم" value={bestAttack} />
+      <StatBox
+        label="أفضل هجوم"
+        value={
+          bestAttack ? (
+            <>
+              <bdi>{bestAttack.name}</bdi> <bdi>({bestAttack.gf})</bdi>
+            </>
+          ) : (
+            "\u2014"
+          )
+        }
+      />
     </div>
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="card p-3 text-center">
       <p className="text-lg font-black" style={{ color: "var(--mint-700)" }}>

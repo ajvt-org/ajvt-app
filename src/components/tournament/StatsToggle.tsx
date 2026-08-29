@@ -8,7 +8,7 @@ interface StatsToggleProps {
   matchesPlayed: number;
   totalGoals: number;
   avgGoalsPerMatch: number;
-  bestAttack: string;
+  bestAttack: { name: string; gf: number } | null;
 }
 
 export default function StatsToggle({

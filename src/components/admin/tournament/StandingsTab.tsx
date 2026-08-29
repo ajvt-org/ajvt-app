@@ -94,7 +94,7 @@ export default function StandingsTab({
         matchesPlayed={stats.matchesPlayed}
         totalGoals={stats.totalGoals}
         avgGoalsPerMatch={stats.avgGoalsPerMatch}
-        bestAttack={stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "—"}
+        bestAttack={stats.bestAttack}
       />
 
       <button
