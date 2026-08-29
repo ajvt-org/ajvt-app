@@ -1,0 +1,95 @@
+import { prisma } from "./prisma";
+import { generateVerifyToken } from "./verifyToken";
+import { getAppSettings } from "./settingsServer";
+import { receiptNumber, type OfficialReceiptView, type ReceiptState } from "./officialReceipt";
+import type { Prisma, Receipt } from "@prisma/client";
+
+export interface ReceiptDraft {
+  payerName: string;
+  reason: string;
+  amount: number;
+  issuedOn: Date;
+  issuedBy: string;
+  memberId?: string | null;
+  paymentId?: string | null;
+}
+
+export async function nextReceiptNumber(year: number): Promise<string> {
+  const counter = await prisma.counter.upsert({
+    where: { id: `receipt:${year}` },
+    update: { value: { increment: 1 } },
+    create: { id: `receipt:${year}`, value: 1 },
+  });
+  return receiptNumber(year, counter.value);
+}
+
+export async function issueReceipt(draft: ReceiptDraft): Promise<Receipt> {
+  const settings = await getAppSettings();
+  return prisma.receipt.create({
+    data: {
+      number: await nextReceiptNumber(draft.issuedOn.getFullYear()),
+      token: generateVerifyToken(),
+      payerName: draft.payerName,
+      reason: draft.reason,
+      amount: draft.amount,
+      issuedOn: draft.issuedOn,
+      issuedBy: draft.issuedBy,
+      secretary: settings.secretaryName,
+      treasurer: settings.treasurerName,
+      memberId: draft.memberId ?? null,
+      paymentId: draft.paymentId ?? null,
+    },
+  });
+}
+
+export async function issueReceiptForPayment(
+  paymentId: string,
+  draft: Omit<ReceiptDraft, "paymentId">,
+): Promise<Receipt> {
+  const existing = await prisma.receipt.findUnique({ where: { paymentId } });
+  if (existing) return existing;
+  try {
+    return await issueReceipt({ ...draft, paymentId });
+  } catch (err) {
+    if ((err as Prisma.PrismaClientKnownRequestError).code !== "P2002") throw err;
+    return prisma.receipt.findUniqueOrThrow({ where: { paymentId } });
+  }
+}
+
+export async function voidReceipt(id: string, reason: string, by: string): Promise<Receipt | null> {
+  const existing = await prisma.receipt.findUnique({ where: { id } });
+  if (!existing || existing.status === "VOID") return null;
+  return prisma.receipt.update({
+    where: { id },
+    data: { status: "VOID", voidReason: reason, voidedBy: by, voidedAt: new Date() },
+  });
+}
+
+export async function receiptByToken(token: string): Promise<OfficialReceiptView | null> {
+  const row = await prisma.receipt.findUnique({ where: { token } });
+  return row ? receiptView(row) : null;
+}
+
+export async function listReceipts(year?: number): Promise<OfficialReceiptView[]> {
+  const rows = await prisma.receipt.findMany({
+    where: year
+      ? { issuedOn: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) } }
+      : undefined,
+    orderBy: { issuedOn: "desc" },
+  });
+  return rows.map(receiptView);
+}
+
+export function receiptView(row: Receipt): OfficialReceiptView {
+  return {
+    number: row.number,
+    token: row.token,
+    payerName: row.payerName,
+    reason: row.reason,
+    amount: row.amount,
+    issuedOn: row.issuedOn.toISOString(),
+    secretary: row.secretary,
+    treasurer: row.treasurer,
+    status: row.status as ReceiptState,
+  };
+}

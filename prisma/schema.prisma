@@ -90,6 +90,7 @@ model Member {
   memberships      Membership[]
   payments         Payment[]
   suspensions      Suspension[]
+  receipts         Receipt[]
 
   @@index([membershipYear])
 }
@@ -784,9 +785,43 @@ model Payment {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
+  receipt Receipt?
+
   @@index([memberId, year, purpose])
   @@index([status])
   @@index([activityId])
+}
+
+enum ReceiptStatus {
+  ACTIVE
+  VOID
+}
+
+model Receipt {
+  id         String        @id @default(cuid())
+  number     String        @unique
+  token      String        @unique
+  payerName  String
+  reason     String
+  amount     Int
+  issuedOn   DateTime
+  issuedBy   String
+  secretary  String?
+  treasurer  String?
+  status     ReceiptStatus @default(ACTIVE)
+  voidReason String?
+  voidedAt   DateTime?
+  voidedBy   String?
+  paymentId  String?       @unique
+  payment    Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  memberId   String?
+  member     Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([memberId])
+  @@index([status])
+  @@index([issuedOn])
 }
 
 enum TournamentFormat {
