@@ -9,6 +9,7 @@ import {
   signInAs,
   signInAsAdmin,
   withId,
+  membershipSurplus as surplusOf,
 } from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
@@ -30,10 +31,6 @@ async function joinAndApprove(body: Record<string, unknown> = {}) {
   await signInAsAdmin(await createAdmin());
   await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
   return member;
-}
-
-function surplusOf(memberId: string) {
-  return prisma.donation.findFirstOrThrow({ where: { memberId, source: "MEMBERSHIP" } });
 }
 
 function mirrorOf(memberId: string) {

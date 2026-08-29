@@ -175,3 +175,17 @@ export async function adminAddsMember(body: Record<string, unknown>) {
     withId(saved.id),
   );
 }
+
+// The surplus of a membership payment is the part above the fee. It is worked
+// out from the payment, which is the only place the money is kept.
+export async function membershipSurplus(memberId: string) {
+  const payment = await prisma.payment.findFirstOrThrow({
+    where: { memberId, purpose: "MEMBERSHIP" },
+  });
+  return {
+    amount: payment.amount - (payment.feeApplied ?? 0),
+    donorName: payment.donorName,
+    anonymous: payment.anonymous,
+    status: payment.status,
+  };
+}

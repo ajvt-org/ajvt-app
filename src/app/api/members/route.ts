@@ -50,7 +50,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           rejectionReason: null,
         },
       });
-      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, surplusAnonymous);
       return m;
     });
     return NextResponse.json({ id: updated.id }, { status: 200 });
@@ -76,7 +76,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
             membershipYear,
           },
         });
-        await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
+        await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee, surplusAnonymous);
         return created;
       });
       return NextResponse.json(

@@ -5,7 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { getAppSettings } from "@/lib/settingsServer";
-import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 import { validatePaidAmount } from "@/lib/donations";
 import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
@@ -44,6 +44,8 @@ export const POST = withRoute(
     );
     if (refusal) throw new ConflictError(REFUSALS[refusal]);
 
+    const before = await totalPaidFor(prisma, id);
+
     const renewed = await prisma.$transaction(async (tx) => {
       await tx.membership.create({
         data: {
@@ -80,7 +82,7 @@ export const POST = withRoute(
         ...auditContext(session, req),
         targetType: "Member",
         targetId: id,
-        before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
+        before: { membershipYear: member.membershipYear, paidAmount: before },
         after: { membershipYear, paidAmount: Number(paidAmount) },
       },
     );
