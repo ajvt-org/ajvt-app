@@ -31,7 +31,6 @@ export const PATCH = withRoute(
       select: {
         userId: true,
         paymentMethod: true,
-        paidAmount: true,
         user: {
           select: {
             fullName: true,
@@ -102,14 +101,12 @@ export const PATCH = withRoute(
         before: {
           ...existing.user,
           paymentMethod: existing.paymentMethod,
-          paidAmount: existing.paidAmount,
         },
         after: {
           fullName: person.fullName,
           age: person.age,
           village: person.village,
           paymentMethod: member.paymentMethod,
-          paidAmount: member.paidAmount,
         },
       },
     );

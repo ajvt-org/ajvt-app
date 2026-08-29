@@ -30,7 +30,6 @@ export const PUT = withRoute(
       select: {
         userId: true,
         membershipYear: true,
-        paidAmount: true,
         paymentProof: true,
         user: { select: { fullName: true } },
       },

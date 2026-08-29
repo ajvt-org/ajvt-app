@@ -13,7 +13,6 @@ const MEMBER_SELECT = {
   id: true,
   paymentMethod: true,
   paymentProof: true,
-  paidAmount: true,
   surplusAnonymous: true,
   membershipYear: true,
   payments: {
