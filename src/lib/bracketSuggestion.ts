@@ -49,7 +49,7 @@ function blocker(groups: SuggestionGroup[]): SuggestionProblem | null {
 
 function warning(groups: SuggestionGroup[]): SuggestionProblem | null {
   const shaky = groups.some((g) =>
-    g.standings.slice(0, QUALIFY_PER_GROUP + 1).some((row) => row.unresolved),
+    g.standings.slice(0, QUALIFY_PER_GROUP).some((row) => row.unresolved),
   );
   return shaky ? "unresolvedTie" : null;
 }

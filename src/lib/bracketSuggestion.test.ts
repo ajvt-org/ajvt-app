@@ -115,11 +115,27 @@ describe("when the group table is not settled", () => {
     expect(suggestion.pairs).toHaveLength(2);
   });
 
-  it("says nothing when the tie is well below the qualifying places", () => {
+  it("says nothing when the tie is below the qualifying places", () => {
     const gs = groups(2, 5);
+    gs[0].standings[2] = row("g0p3", true);
     gs[0].standings[3] = row("g0p4", true);
-    gs[0].standings[4] = row("g0p5", true);
 
     expect(suggestFirstKnockoutRound(gs).problem).toBeNull();
+  });
+
+  it("warns when the tie is for the last qualifying place", () => {
+    const gs = groups(2, 4);
+    gs[0].standings[1] = row("g0p2", true);
+    gs[0].standings[2] = row("g0p3", true);
+
+    expect(suggestFirstKnockoutRound(gs).problem).toBe("unresolvedTie");
+  });
+
+  it("warns when the two who go through are level, since the seeding is not settled", () => {
+    const gs = groups(2, 4);
+    gs[0].standings[0] = row("g0p1", true);
+    gs[0].standings[1] = row("g0p2", true);
+
+    expect(suggestFirstKnockoutRound(gs).problem).toBe("unresolvedTie");
   });
 });
