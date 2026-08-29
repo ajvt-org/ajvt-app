@@ -49,6 +49,25 @@ describe("GET /api/admin/users", () => {
     expect(users[0]).toMatchObject({ id: bare.id, phone: bare.phone, hasPush: false });
   });
 
+  // Someone an admin adds by hand has no number. Filtering the list on a
+  // number hid them: they appeared nowhere but through their payment, so
+  // deleting the payment left a person no screen could reach.
+  it("lists a person an admin added without a number", async () => {
+    const person = await prisma.user.create({ data: { fullName: "سيدي ولد المشرف" } });
+
+    const { users } = await (await GET()).json();
+
+    expect(users).toHaveLength(1);
+    expect(users[0]).toMatchObject({ id: person.id, phone: null, fullName: "سيدي ولد المشرف" });
+  });
+
+  it("still leaves out anyone who has a membership payment, numbered or not", async () => {
+    const person = await prisma.user.create({ data: { fullName: "سيدي ولد المشرف" } });
+    await makeMember({ userId: person.id, fullName: "سيدي ولد المشرف", paymentMethod: "بنكيلي" });
+
+    expect((await (await GET()).json()).users).toHaveLength(0);
+  });
+
   it("says which accounts can receive a push", async () => {
     const bare = await bareUser();
     await prisma.pushSubscription.create({

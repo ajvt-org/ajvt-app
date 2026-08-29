@@ -18,6 +18,7 @@ function account(over: Partial<BareAccount> = {}): BareAccount {
   return {
     id: "u1",
     phone: "36000001",
+    fullName: "محمد ولد أحمد",
     createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     lastActiveDate: null,
     hasPush: true,
@@ -56,7 +57,7 @@ describe("BareAccountsSection", () => {
   it("says today for an account registered today, not zero days", () => {
     renderSection([account({ createdAt: new Date().toISOString() })]);
 
-    expect(screen.getByText("سجّل اليوم")).toBeDefined();
+    expect(screen.getByText(/سجّل اليوم/)).toBeDefined();
   });
 
   it("hands out a temporary password on reset", async () => {
@@ -74,7 +75,7 @@ describe("BareAccountsSection", () => {
   it("says there is nothing when every account has a request", () => {
     renderSection([]);
 
-    expect(screen.getByText("لا توجد حسابات بدون طلب")).toBeDefined();
+    expect(screen.getByText("لا يوجد أحد بلا اشتراك")).toBeDefined();
   });
 
   it("nudges over push and reports the send", async () => {
@@ -107,7 +108,7 @@ describe("BareAccountsSection", () => {
     expect(onFill).toHaveBeenCalledWith("36000001");
   });
 
-  it("deletes only after the phone is typed back", async () => {
+  it("deletes only after the name is typed back", async () => {
     del.mockResolvedValue({ ok: true });
     const onChanged = vi.fn();
     renderSection([account()], { onChanged });
@@ -115,11 +116,11 @@ describe("BareAccountsSection", () => {
     fireEvent.click(screen.getByText("حذف"));
     fireEvent.click(screen.getByText("متابعة"));
     const input = screen.getByRole("textbox");
-    fireEvent.change(input, { target: { value: "36000001" } });
+    fireEvent.change(input, { target: { value: "محمد ولد أحمد" } });
     fireEvent.click(screen.getByRole("button", { name: "حذف نهائي" }));
 
     await waitFor(() => {
-      expect(del).toHaveBeenCalledWith("/api/admin/users/u1", { confirmPhone: "36000001" });
+      expect(del).toHaveBeenCalledWith("/api/admin/users/u1", { confirmPhone: "محمد ولد أحمد" });
       expect(onChanged).toHaveBeenCalled();
     });
   });
@@ -132,5 +133,38 @@ describe("BareAccountsSection", () => {
     const confirm = screen.getByRole("button", { name: "حذف نهائي" }) as HTMLButtonElement;
 
     expect(confirm.disabled).toBe(true);
+  });
+});
+
+describe("someone an admin added without a number", () => {
+  it("is listed, named, and marked as unable to sign in", () => {
+    renderSection([account({ phone: null, fullName: "سيدي ولد المشرف" })]);
+
+    expect(screen.getByText("سيدي ولد المشرف")).toBeDefined();
+    expect(screen.getByText(/لا يملك رقماً للدخول/)).toBeDefined();
+  });
+
+  it("is not offered the actions that need a login", () => {
+    renderSection([account({ phone: null, fullName: "سيدي ولد المشرف" })]);
+
+    expect(screen.queryByRole("button", { name: /إعادة تعيين/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /إضافة طلب/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /تذكير/ })).toBeNull();
+  });
+
+  it("can still be deleted, confirmed by name", async () => {
+    del.mockResolvedValueOnce({});
+    renderSection([account({ phone: null, fullName: "سيدي ولد المشرف" })]);
+
+    fireEvent.click(screen.getByRole("button", { name: /حذف/ }));
+    fireEvent.click(screen.getByRole("button", { name: /متابعة/ }));
+    fireEvent.change(screen.getByLabelText("اسم العضو للتأكيد"), {
+      target: { value: "سيدي ولد المشرف" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /حذف نهائي$/ }));
+
+    await waitFor(() =>
+      expect(del).toHaveBeenCalledWith("/api/admin/users/u1", { confirmPhone: "سيدي ولد المشرف" }),
+    );
   });
 });
