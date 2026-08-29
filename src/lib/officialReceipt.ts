@@ -33,5 +33,5 @@ export function receiptFileName(number: string, extension: string): string {
 }
 
 export function verifyPath(token: string): string {
-  return `/verify/receipt/${token}`;
+  return `/receipt/${token}`;
 }

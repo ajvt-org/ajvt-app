@@ -47,7 +47,7 @@ describe("what the sheet is called and where its QR points", () => {
   });
 
   it("points the QR at the token, never at the number", () => {
-    expect(verifyPath("abc123")).toBe("/verify/receipt/abc123");
+    expect(verifyPath("abc123")).toBe("/receipt/abc123");
     expect(verifyPath("abc123")).not.toContain("R-2026");
   });
 });
