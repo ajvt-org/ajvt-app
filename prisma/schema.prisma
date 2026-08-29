@@ -194,6 +194,7 @@ model Team {
   members      TeamMember[]
   homeMatches  Match[]            @relation("HomeTeam")
   awayMatches  Match[]            @relation("AwayTeam")
+  forfeitWins  Match[]            @relation("ForfeitWinner")
   goals        MatchGoal[]
   bookings     MatchBooking[]
   penaltyKicks MatchPenaltyKick[]
@@ -248,6 +249,8 @@ model Match {
   awayPenalties       Int?
   manOfTheMatchId     String?
   manOfTheMatch       Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
+  forfeitWinnerTeamId String?
+  forfeitWinnerTeam   Team?              @relation("ForfeitWinner", fields: [forfeitWinnerTeamId], references: [id], onDelete: SetNull)
   status              MatchStatus        @default(SCHEDULED)
   suspensionsServedAt DateTime?
   reminderSentAt      DateTime?
@@ -259,6 +262,7 @@ model Match {
   mvpVote             MatchMvpVote?
 
   @@index([activityId])
+  @@index([forfeitWinnerTeamId])
 }
 
 model MatchMvpVote {
