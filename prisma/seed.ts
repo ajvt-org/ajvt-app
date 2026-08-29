@@ -3,7 +3,12 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as bcrypt from "bcryptjs";
 import { pgAdapterOptions } from "../src/lib/db-url";
-import { initialAdminPassword } from "../src/lib/initialAdminPassword";
+import {
+  defaultPasswordVerdict,
+  initialAdminPassword,
+  LOCAL_DEFAULT_PASSWORD,
+  suppliedAdminPassword,
+} from "../src/lib/initialAdminPassword";
 import { HOME_VILLAGE } from "../src/lib/villages";
 
 const dbUrl = process.env.DATABASE_URL;
@@ -23,10 +28,34 @@ const DEFAULT_AGE_GROUPS = [
   "التائبين",
 ];
 
+const STILL_DEFAULT =
+  "SECURITY: the admin account still has the password that ships with this repo. " +
+  "Set ADMIN_INITIAL_PASSWORD and deploy again to replace it.";
+
+async function retireDefaultPassword(current: { id: string; password: string }) {
+  const supplied = suppliedAdminPassword(process.env);
+  const usesDefault = await bcrypt.compare(LOCAL_DEFAULT_PASSWORD, current.password);
+  const verdict = defaultPasswordVerdict({ usesDefault, supplied });
+
+  if (verdict.action === "keep") {
+    console.log("Admin already exists, password left alone");
+    return;
+  }
+  if (verdict.action === "warn") {
+    console.warn(STILL_DEFAULT);
+    return;
+  }
+  await prisma.admin.update({
+    where: { id: current.id },
+    data: { password: await bcrypt.hash(verdict.password, 12) },
+  });
+  console.log("Admin had the default password, replaced with ADMIN_INITIAL_PASSWORD");
+}
+
 async function seedAdmin() {
   const existing = await prisma.admin.findUnique({ where: { username: "admin" } });
   if (existing) {
-    console.log("Admin already exists, password left alone");
+    await retireDefaultPassword(existing);
     return;
   }
 
