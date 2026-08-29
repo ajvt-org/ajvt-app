@@ -39,10 +39,8 @@ async function expectNoDrift(memberId: string) {
   const { member, record } = await currentRecord(memberId);
   expect(record.status).toBe(member.status);
   expect(record.rejectionReason).toBe(member.rejectionReason);
-  expect(record.paidAmount).toBe(member.paidAmount);
   expect(record.paymentMethod).toBe(member.paymentMethod);
   expect(record.referenceCode).toBe(member.referenceCode);
-  expect(record.surplusAnonymous).toBe(member.surplusAnonymous);
 }
 
 async function submitAs(body: Record<string, unknown> = {}) {
@@ -140,7 +138,11 @@ describe("the membership year record follows the member it belongs to", () => {
     );
 
     await expectNoDrift(member.id);
-    expect((await currentRecord(member.id)).record.surplusAnonymous).toBe(true);
+    const payment = await prisma.payment.findFirstOrThrow({
+      where: { memberId: member.id, purpose: "MEMBERSHIP" },
+    });
+    expect(payment.anonymous).toBe(true);
+    expect(payment.donorName).toBeNull();
   });
 
   it("matches for a member an admin adds by hand", async () => {
