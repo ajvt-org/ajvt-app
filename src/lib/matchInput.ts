@@ -1,7 +1,3 @@
-// Goal rows and score pairs come straight from the admin form, so every field
-// is unknown until checked. A minute outside 1..130 is a typo, not a real match
-// event. A pair of nulls clears the score; a single null reads as zero, because
-// that is what the form has always sent for "0".
 export interface GoalInput {
   memberId: string;
   count: number;

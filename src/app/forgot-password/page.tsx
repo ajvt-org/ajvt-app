@@ -8,11 +8,6 @@ import { DEFAULT_SETTINGS } from "@/lib/settings";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 
-// No automated SMS/WhatsApp-API channel is wired up (both would mean a new
-// paid external service) — recovery goes through an admin, who already has
-// a reset tool in /admin/dashboard. This page is the member-facing half:
-// it gets them to that admin with everything needed to act immediately,
-// instead of leaving them with no path back into their account at all.
 function buildWhatsappUrl(support: string, phone: string): string {
   const trimmed = phone.trim();
   const message = trimmed

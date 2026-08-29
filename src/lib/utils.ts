@@ -5,9 +5,6 @@ export function validatePhone(phone: string): string | null {
   return null;
 }
 
-// Appends the current location as `?next=` to a login path, so that after
-// signing back in the user returns to what they were doing instead of a
-// generic dashboard/home. Client-side only (reads window.location).
 export function loginPathWithNext(loginPath: "/login" | "/admin/login"): string {
   if (typeof window === "undefined") return loginPath;
   const next = window.location.pathname + window.location.search;

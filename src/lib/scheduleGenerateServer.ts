@@ -1,8 +1,3 @@
-// The group-stage generator, whole: invent the missing pairings per pool,
-// then lay the rounds onto the day spine — one round per day at the given
-// slot times, appending days when the spine is short. Without a start date
-// the matches are still created, just undated, and the caller says so.
-
 import { prisma } from "./prisma";
 import { generateMatchSchedule } from "./tournament";
 import { layoutRounds } from "./scheduleLayout";

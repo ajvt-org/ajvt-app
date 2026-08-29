@@ -1,12 +1,9 @@
 import { toThumbUrl } from "@/lib/utils";
 import Icon from "@/components/Icon";
 
-// A face or a person icon, never an initial: a letter reads as an identity the
-// person did not choose, and says nothing at all for an anonymous giver.
 interface PlayerAvatarProps {
   photo?: string | null;
-  // For photos that do not live under /api/files/member, such as a donation
-  // proof photo or a leaderboard row already carrying its own path.
+
   photoUrl?: string | null;
   fullName: string;
   size?: number;

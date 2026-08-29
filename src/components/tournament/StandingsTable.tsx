@@ -30,9 +30,6 @@ const COLUMNS: { label: string; detail: boolean; start?: boolean }[] = [
   { label: "الفرق", detail: false },
 ];
 
-// The follow column is only drawn for a reader who can actually follow. It
-// used to carry an invitation to sign in, repeated on every row, which cost
-// the table a wrapped line per team and said the same thing eight times.
 export default function StandingsTable({
   title,
   rows,

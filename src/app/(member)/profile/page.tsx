@@ -15,9 +15,6 @@ import SurplusVisibility from "@/components/SurplusVisibility";
 import { useMember } from "@/lib/useMember";
 import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 
-// The account's own tab: who is on it, where the request stands, and the way
-// out. Supporting the association has a tab of its own, so it is not repeated
-// here, and there is no refresh button — pulling the page down reloads it.
 export default function ProfilePage() {
   const router = useRouter();
   const { member, setMember, currentYear, loading, reload, logout } = useMember();

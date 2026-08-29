@@ -2,9 +2,6 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { sourceFiles } from "@tests/sourceFiles";
 
-// The person moved onto the account. Prisma's create input is a union, so a
-// leftover `fullName` on a member write is not an excess property and the
-// compiler stays quiet about it — it only shows up when the query runs.
 const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyToken"];
 
 const MEMBER_CALL = /(?:prisma|tx|db)\.member\.\w+\(\{/g;
@@ -23,8 +20,6 @@ function closingBrace(source: string, open: number): number {
   return source.length - 1;
 }
 
-// Anything the query hands to the account is fine; only the member's own half
-// of the call is checked.
 function withoutAccountBlocks(block: string): string {
   let rest = block;
   let out = "";

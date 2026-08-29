@@ -24,9 +24,6 @@ const panels = [
   { key: "teams", label: "الفرق", icon: "users" as const, content: <p>قائمة الفرق</p> },
 ];
 
-// getByRole skips anything hidden from the accessibility tree, so it sees the
-// open panel only — which is what "shown" has to mean here, now that a panel
-// stays mounted once it has been opened.
 describe("TournamentTabs", () => {
   it("opens on the first panel and shows no other", () => {
     render(<TournamentTabs panels={panels} />);

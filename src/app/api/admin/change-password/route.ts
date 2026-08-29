@@ -36,9 +36,6 @@ export const POST = withRoute("POST /api/admin/change-password", async (req: Nex
 
   await logAction(session.username, "CHANGE_OWN_PASSWORD");
 
-  // Re-issue a fresh token for this session so the admin isn't logged
-  // out on this device — other devices/sessions are invalidated since
-  // their token still carries the old tokenVersion.
   const token = await signToken(
     {
       typ: "admin",

@@ -28,8 +28,6 @@ export interface MembershipPaymentRow {
   year: number | null;
 }
 
-// What a member paid for one year, read off the payment that covers it: the fee
-// is what it met of the fee in force when it was taken, the support the rest.
 export function paidForYear(rows: MembershipPaymentRow[], year: number): PaidBreakdown | null {
   const row = rows.find((r) => r.year === year);
   if (!row) return null;

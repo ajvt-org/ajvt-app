@@ -19,9 +19,7 @@ export const POST = withRoute(
     if (record.kind === "Member") {
       const existing = await prisma.member.findUnique({ where: { id: record.recordId } });
       if (existing) throw new ConflictError("العضو موجود بالفعل");
-      // Deleting a person archives their account and their payment as two
-      // records. The payment hangs off the account, so it cannot come back
-      // first: say so rather than letting the foreign key fail as a 500.
+
       const account = await prisma.user.findUnique({ where: { id: String(data.userId) } });
       if (!account) throw new ConflictError(accounts.restoreAccountFirst);
 

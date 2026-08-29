@@ -3,16 +3,6 @@
 import { useState, type ReactNode } from "react";
 import Icon, { type IconName } from "@/components/Icon";
 
-// A tournament carries standings, fixtures, squads and a dozen leaderboards.
-// Stacked, they made one scroll nobody reached the end of. Each panel is
-// rendered on the server and handed over whole, so switching tabs costs no
-// request.
-//
-// A panel is mounted the first time it is opened and hidden rather than
-// dropped thereafter, so what a reader did inside it — which sub-tab they
-// picked, how far down a list they paged — is still there when they come
-// back. Panels never opened are never mounted, which keeps the work the
-// browser does proportional to what was actually read.
 export type TournamentPanel = {
   key: string;
   label: string;

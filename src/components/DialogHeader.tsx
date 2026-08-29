@@ -3,10 +3,6 @@
 import DialogBack from "./DialogBack";
 import DialogClose from "./DialogClose";
 
-// The two shapes differ in more than which control they carry. A close sits
-// on the trailing edge with the title pushed away from it, while a back
-// leads and the title follows straight after; spacing them apart would strand
-// the title against the far edge.
 export default function DialogHeader({
   title,
   onBack,

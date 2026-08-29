@@ -1,6 +1,3 @@
-// These label a membership payment, not the person who made it. A refused
-// payment leaves the account, the profile and the person exactly as they
-// were, so the label has to name what was refused.
 export const memberStatusLabels = {
   PENDING: "قيد الانتظار",
   ACTIVE: "معتمد",

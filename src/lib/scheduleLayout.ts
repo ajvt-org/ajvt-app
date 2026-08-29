@@ -1,8 +1,3 @@
-// Lays round chunks onto match days: each chunk (one round of one pool)
-// starts a fresh day, its matches take the slot times in order, and a chunk
-// larger than the slots spills onto the next day. Day numbers are 0-based
-// offsets into the tournament's match days, rest days excluded by the caller.
-
 export interface Placement {
   day: number;
   time: string;

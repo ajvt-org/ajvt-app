@@ -64,9 +64,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
     person = { ...person, ...issued };
   }
 
-  // The year the association is collecting for. The member's own row carries
-  // the year they last paid into, and /home needs both to tell whether they
-  // are paid up or a year behind.
   return NextResponse.json({
     ...person,
     phone: user.phone,

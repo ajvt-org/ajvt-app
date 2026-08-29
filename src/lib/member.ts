@@ -2,9 +2,6 @@ import { randomInt } from "crypto";
 import { prisma } from "./prisma";
 import { generateVerifyToken } from "./verifyToken";
 
-// Both are handed out at the same moment, when a request is approved, so they
-// are handed out together. A member with a number and no token has a card whose
-// QR points nowhere.
 export async function issueMembership(): Promise<{
   memberNumber: string;
   verifyToken: string;
@@ -14,8 +11,7 @@ export async function issueMembership(): Promise<{
 
 export async function generateMemberNumber(): Promise<string> {
   const year = new Date().getFullYear();
-  // Atomic UPDATE on a single row — safe under concurrent approvals, unlike
-  // a count()-then-write which can race and hand out duplicate numbers.
+
   const counter = await prisma.counter.upsert({
     where: { id: "memberNumber" },
     update: { value: { increment: 1 } },

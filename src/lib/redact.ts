@@ -1,7 +1,3 @@
-// Audit rows carry before/after snapshots of whatever a route changed, so a
-// password hash or a temporary password can end up in them by accident. Keys
-// are matched loosely because the field names vary (password, tempPassword,
-// hashedPassword), and the whole value is dropped rather than masked in part.
 const SECRET_KEY = /pass|secret|token|auth|hash|otp|jwt|cookie|session/i;
 const REDACTED = "[محذوف]";
 
