@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { countCategory } from "@/lib/arabicCount";
 import {
   countedLabel,
   countedNoun,
@@ -36,6 +37,22 @@ describe("countedNoun", () => {
   it("reads the shape off the last two digits", () => {
     expect(countedNoun(103, QUESTIONS)).toBe("103 أسئلة");
     expect(countedNoun(146, QUESTIONS)).toBe("146 سؤالاً");
+  });
+});
+
+describe("the two modules share one bucket", () => {
+  it("picks the form countCategory names, for every count up to a thousand", () => {
+    const expected: Record<string, (n: number) => string> = {
+      one: () => QUESTIONS.one,
+      two: () => QUESTIONS.two,
+      few: (n) => `${n} ${QUESTIONS.few}`,
+      many: (n) => `${n} ${QUESTIONS.many}`,
+      zero: (n) => `${n} ${QUESTIONS.other}`,
+      other: (n) => `${n} ${QUESTIONS.other}`,
+    };
+    for (let n = 0; n <= 1000; n++) {
+      expect(countedNoun(n, QUESTIONS), String(n)).toBe(expected[countCategory(n)](n));
+    }
   });
 });
 
