@@ -6,6 +6,8 @@ export const ACTION_LABELS: Record<string, string> = {
   DELETE_USER: "حذف حساب",
   RESTORE_USER: "استرجاع حساب",
   EXPORT_DATA: "تصدير بيانات",
+  ISSUE_RECEIPT: "إصدار وصل قبض",
+  VOID_RECEIPT: "إلغاء وصل قبض",
   UPDATE_ADMIN_ACTIVITIES: "تحديد أنشطة مشرف",
   CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",
   RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
