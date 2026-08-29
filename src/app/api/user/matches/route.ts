@@ -25,7 +25,7 @@ export const GET = withRoute("GET /api/user/matches", async () => {
 
   const teamIds = (
     await prisma.teamMember.findMany({
-      where: { status: "ACTIVE", member: { userId: session.userId } },
+      where: { status: "ACTIVE", userId: session.userId },
       select: { teamId: true },
     })
   ).map((t) => t.teamId);
