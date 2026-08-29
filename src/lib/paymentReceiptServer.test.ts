@@ -11,6 +11,7 @@ const MEMBERSHIP = {
   anonymous: false,
   donorName: null,
   memberId: "m1",
+  userId: "u1",
   activity: null,
   member: { user: { fullName: "محمد ولد أحمد" } },
 };
@@ -71,6 +72,23 @@ describe("issuing a receipt for a payment", () => {
     expect(db.counter.upsert.mock.calls[0][0].where).toEqual({ id: "receipt:2026" });
     expect(db.receipt.create.mock.calls[0][0].data.number).toBe("R-2026-0001");
     expect(db.receipt.create.mock.calls[0][0].data.issuedOn).toEqual(MEMBERSHIP.createdAt);
+  });
+
+  it("keeps the payer's account on the receipt", async () => {
+    const db = fakeDb([MEMBERSHIP]);
+
+    await ensureReceiptsFor(db, {});
+
+    expect(db.receipt.create.mock.calls[0][0].data.userId).toBe("u1");
+    expect(db.receipt.create.mock.calls[0][0].data.memberId).toBe("m1");
+  });
+
+  it("leaves the account off a receipt for a payment with no account", async () => {
+    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, member: null }]);
+
+    await ensureReceiptsFor(db, {});
+
+    expect(db.receipt.create.mock.calls[0][0].data.userId).toBeNull();
   });
 
   it("names the member who paid", async () => {

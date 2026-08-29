@@ -19,6 +19,7 @@ const SELECT = {
   anonymous: true,
   donorName: true,
   memberId: true,
+  userId: true,
   activity: { select: { title: true } },
   member: { select: { user: { select: { fullName: true } } } },
 } as const;
@@ -73,6 +74,7 @@ export async function ensureReceiptsFor(
           secretary: settings?.secretaryName ?? null,
           treasurer: settings?.treasurerName ?? null,
           memberId: payment.memberId,
+          userId: payment.userId,
           paymentId: payment.id,
         },
       }),
