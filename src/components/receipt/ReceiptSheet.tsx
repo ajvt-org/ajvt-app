@@ -15,7 +15,11 @@ export function ReceiptCard({
 }) {
   const qrDataUrl = useReceiptQr(receipt.token);
   return (
-    <div ref={innerRef} className={amiri.className} style={{ background: RECEIPT_PAPER }}>
+    <div
+      ref={innerRef}
+      className={amiri.className}
+      style={{ width: "max-content", background: RECEIPT_PAPER }}
+    >
       <OfficialReceipt receipt={receipt} qrDataUrl={qrDataUrl} />
     </div>
   );
