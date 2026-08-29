@@ -5,9 +5,6 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ageGroups } from "@/lib/messages";
 
-// Orphans are age values members hold that match no group. They are left
-// over from renames made before the rename started reaching members, and
-// nothing else in the admin panel can see them.
 export const GET = withRoute("GET /api/admin/age-groups", async () => {
   await requireAdminRole("MEMBERS");
   const [ageGroups, used] = await Promise.all([

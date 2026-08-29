@@ -5,7 +5,6 @@ import { common, members } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 
-// A membership request is a payment. Who is paying comes from the account.
 export function memberSubmissionSchema(fee: number) {
   return z.object({
     paymentMethod: z.string(members.pickPaymentMethod).min(1, members.pickPaymentMethod),

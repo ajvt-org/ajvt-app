@@ -6,9 +6,6 @@ import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
 import { members, tournament } from "@/lib/messages";
 
-// Players can pick their own team once their registration for that
-// tournament is approved — switching teams just moves the membership,
-// admin can still override anything from the tournament admin screen.
 export const POST = withRoute(
   "POST /api/teams/[teamId]/join",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {

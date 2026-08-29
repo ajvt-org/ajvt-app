@@ -8,10 +8,6 @@ import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 
-// Records a donation the admin collected outside the app (cash in hand,
-// bank transfer confirmed by phone, etc.) — no proof screenshot required,
-// the admin is the one vouching for it. Counted immediately (SUPER already
-// confirmed it happened), same as manually-added members.
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
   const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod, activityId } = parse(

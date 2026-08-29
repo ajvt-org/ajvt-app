@@ -34,9 +34,7 @@ export const PATCH = withRoute(
         });
         if (!group) return NextResponse.json({ error: tournament.groupNotFound }, { status: 400 });
       }
-      // Moving a team between groups after its schedule was generated would
-      // desync existing matches' round labels/standings from the new group —
-      // require the schedule to be cleared first (delete the matches, reassign, regenerate).
+
       if (newGroupId !== existing.groupId) {
         const hasMatches = await prisma.match.findFirst({
           where: {

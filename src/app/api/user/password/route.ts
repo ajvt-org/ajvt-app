@@ -10,18 +10,6 @@ import * as bcrypt from "bcryptjs";
 import { auth, common } from "@/lib/messages";
 import { changePasswordSchema } from "./schema";
 
-// The current password is asked for even though the session already proves who
-// this is: a phone left unlocked is the likeliest way in, and without it that
-// phone can lock the owner out of their own account.
-//
-// The exception is a temporary password issued by an admin. Whoever is here
-// typed it minutes ago to get in, and asking them to repeat it only invites
-// them to keep using it. Whether that applies is read from the database, not
-// taken from the caller, so leaving the field out does not skip the check.
-//
-// Changing it raises tokenVersion, which requireUser checks, so every other
-// session dies. This one is handed a fresh cookie, since signing out the person
-// who just changed their password is not what they asked for.
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 
