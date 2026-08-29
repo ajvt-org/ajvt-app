@@ -48,6 +48,7 @@ export default function LinkMemberPanel({
           results.map((m) => (
             <button
               key={m.id}
+              type="button"
               onClick={() => onPick(m.userId)}
               disabled={busy}
               className="w-full text-right text-xs px-2.5 py-1.5 rounded-lg"

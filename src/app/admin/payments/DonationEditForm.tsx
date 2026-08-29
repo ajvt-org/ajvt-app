@@ -4,13 +4,14 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { donationFormError } from "@/lib/donationFields";
-import { donorNameOnRecord, publicDonorName } from "@/lib/donorName";
+import { publicDonorName } from "@/lib/donorName";
 import { donationEdit } from "@/lib/texts";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivitySelect from "./ActivitySelect";
 import MemberIdentity from "./MemberIdentity";
+import { proofFromDonation } from "./donationProof";
 import { DANGER_BOX, FIELD, PRIMARY, QUIET } from "./donationTones";
 import type { ActivityOption, DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
@@ -80,18 +81,7 @@ export default function DonationEditForm({
         proof: form.proof,
         anonymous: form.anonymous,
       });
-      onSaved({
-        donorName: donation.donorName,
-        donorPhone: donation.donorPhone,
-        donorPhoto: donation.donorPhoto,
-        amount: donation.amount,
-        paymentMethod: donation.paymentMethod,
-        activityId: donation.activityId,
-        activityTitle: activities.find((a) => a.id === donation.activityId)?.title ?? null,
-        proof: donation.proof,
-        anonymous: donation.anonymous,
-        memberName: donorNameOnRecord({ donorName: donation.donorName, user: account }),
-      });
+      onSaved(proofFromDonation(donation, activities, account));
     } catch (e) {
       setError(errorMessage(e));
     } finally {
