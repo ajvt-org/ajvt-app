@@ -46,6 +46,12 @@ describe("the sheet an admin hands over", () => {
     expect(screen.getByText("24 / 08 / 2026")).toBeDefined();
   });
 
+  it("stands the association's mark between the two officers", () => {
+    render(<OfficialReceipt receipt={RECEIPT} qrDataUrl={null} />);
+
+    expect(screen.getByAltText(receiptSheet.sealAlt)).toBeDefined();
+  });
+
   it("prints the two officers under their roles", () => {
     render(<OfficialReceipt receipt={RECEIPT} qrDataUrl={null} />);
 
