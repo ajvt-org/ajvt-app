@@ -8,7 +8,7 @@ import MatchCardFooter from "./matchCard/MatchCardFooter";
 import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
-import { matchEventRows, matchTimeline } from "@/lib/matchEvents";
+import { matchEventRows, matchTimeline, withoutScorersAndCards } from "@/lib/matchEvents";
 import { forfeitLoserTeamId } from "@/lib/forfeit";
 import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
@@ -20,6 +20,7 @@ export default function MatchResult({
   day,
   allMatches,
   football = true,
+  showScorersAndCards = true,
   tournamentTitle,
   loggedIn,
   myVoteCandidateId,
@@ -29,6 +30,7 @@ export default function MatchResult({
   day: { round: string | null; venue: string | null };
   allMatches: PublicMatch[];
   football?: boolean;
+  showScorersAndCards?: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
   myVoteCandidateId: string | null;
@@ -40,6 +42,12 @@ export default function MatchResult({
   const hideGoalsOfTeamId = match.forfeitWinnerTeamId
     ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.homeTeam.id, match.awayTeam.id)
     : null;
+  const eventRows = matchEventRows({
+    ...match,
+    homeTeamId: match.homeTeam.id,
+    manOfTheMatchTeam,
+    hideGoalsOfTeamId,
+  });
 
   return (
     <div className="card p-4 space-y-2">
@@ -72,14 +80,7 @@ export default function MatchResult({
 
       {football && (
         <>
-          <MatchEvents
-            rows={matchEventRows({
-              ...match,
-              homeTeamId: match.homeTeam.id,
-              manOfTheMatchTeam,
-              hideGoalsOfTeamId,
-            })}
-          />
+          <MatchEvents rows={showScorersAndCards ? eventRows : withoutScorersAndCards(eventRows)} />
           <MatchTimeline
             entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id, hideGoalsOfTeamId })}
             teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}

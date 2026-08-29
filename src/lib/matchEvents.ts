@@ -117,6 +117,10 @@ export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
   );
 }
 
+export function withoutScorersAndCards(rows: MatchEventRow[]): MatchEventRow[] {
+  return rows.filter((row) => row.type !== "goal" && row.type !== "red");
+}
+
 export function minuteLines(minutes: MinuteToken[], perLine = MINUTES_PER_LINE): MinuteToken[][] {
   const lines: MinuteToken[][] = [];
   for (let i = 0; i < minutes.length; i += perLine) lines.push(minutes.slice(i, i + perLine));

@@ -122,6 +122,7 @@ export async function tournamentPanels(
           scheduled={scheduled}
           allMatches={matches}
           football={!board}
+          showScorersAndCards={activity.showScorersAndCards}
           tournamentTitle={activity.title}
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}
