@@ -47,7 +47,7 @@ export async function drawBracket(activityId: string, redo = false) {
       name: true,
       autoNamed: true,
       groupId: true,
-      members: { select: { member: { select: { user: { select: { fullName: true } } } } } },
+      members: { select: { user: { select: { fullName: true } } } },
     },
   });
 
@@ -56,7 +56,7 @@ export async function drawBracket(activityId: string, redo = false) {
       id: t.id,
       name: t.name,
       autoNamed: t.autoNamed,
-      memberNames: t.members.map((m) => nameOf(m.member.user)),
+      memberNames: t.members.map((m) => nameOf(m.user)),
     })),
     activity?.teamSize ?? null,
   );

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "@/lib/person";
 import { accountOf } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
@@ -54,7 +55,8 @@ export const POST = withRoute(
           cardType: true,
           minute: true,
           teamId: true,
-          member: { select: { id: true, user: { select: { fullName: true } } } },
+          memberId: true,
+          user: { select: { fullName: true } },
         },
       });
       const proposal = await proposeFromBooking(tx, match.activityId, memberId, cardType);
@@ -64,14 +66,14 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "CREATE_BOOKING",
-      `${booking.member.user.fullName} — ${booking.cardType}`,
+      `${nameOf(booking.user)} — ${booking.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",
         targetId: booking.id,
         after: {
           matchId,
-          memberId: booking.member.id,
+          memberId: booking.memberId,
           teamId: booking.teamId,
           cardType: booking.cardType,
           minute: booking.minute,

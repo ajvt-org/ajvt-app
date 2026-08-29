@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "@/lib/person";
 import { accountOf } from "@/lib/memberAccount";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
@@ -21,7 +22,7 @@ export const PATCH = withRoute(
         id: true,
         status: true,
         team: { select: { name: true } },
-        member: { select: { user: { select: { fullName: true } } } },
+        user: { select: { fullName: true } },
       },
     });
     if (!existing) {
@@ -35,7 +36,7 @@ export const PATCH = withRoute(
     await logAction(
       session.username,
       "APPROVE_TEAM_JOIN",
-      `${existing.member.user.fullName} — ${existing.team.name}`,
+      `${nameOf(existing.user)} — ${existing.team.name}`,
       {
         ...auditContext(session, req),
         targetType: "TeamMember",
@@ -64,7 +65,7 @@ export const DELETE = withRoute(
         id: true,
         status: true,
         team: { select: { name: true } },
-        member: { select: { user: { select: { fullName: true } } } },
+        user: { select: { fullName: true } },
       },
     });
     if (!existing) {
@@ -75,7 +76,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "REMOVE_TEAM_MEMBER",
-      `${existing.member.user.fullName} — ${existing.team.name}`,
+      `${nameOf(existing.user)} — ${existing.team.name}`,
       {
         ...auditContext(session, req),
         targetType: "TeamMember",

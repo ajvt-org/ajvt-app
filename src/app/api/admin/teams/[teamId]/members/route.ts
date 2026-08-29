@@ -68,16 +68,15 @@ export const POST = withRoute(
       data: { teamId, memberId, userId },
       select: {
         id: true,
-        member: {
-          select: { id: true, user: { select: { phone: true, fullName: true, age: true } } },
-        },
+        memberId: true,
+        user: { select: { phone: true, fullName: true, age: true } },
       },
     });
 
     await logAction(
       session.username,
       "ADD_TEAM_MEMBER",
-      `${nameOf(teamMember.member.user)} → ${team.name}`,
+      `${nameOf(teamMember.user)} → ${team.name}`,
       {
         ...auditContext(session, req),
         targetType: "TeamMember",

@@ -13,7 +13,7 @@ export async function notifyTeams(
   const [teamMembers, followers] = await Promise.all([
     prisma.teamMember.findMany({
       where: { teamId: { in: [homeTeamId, awayTeamId] } },
-      select: { member: { select: { userId: true } } },
+      select: { userId: true },
     }),
     prisma.teamFollow.findMany({
       where: { teamId: { in: [homeTeamId, awayTeamId] } },
@@ -22,7 +22,7 @@ export async function notifyTeams(
   ]);
   const userIds = Array.from(
     new Set(
-      [...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter(
+      [...teamMembers.map((tm) => tm.userId), ...followers.map((f) => f.userId)].filter(
         (id): id is string => id !== null,
       ),
     ),
@@ -45,7 +45,7 @@ export async function notifyActivityFollowers(
   const [teamMembers, followers] = await Promise.all([
     prisma.teamMember.findMany({
       where: { teamId: { in: teamIds } },
-      select: { member: { select: { userId: true } } },
+      select: { userId: true },
     }),
     prisma.teamFollow.findMany({
       where: { teamId: { in: teamIds } },
@@ -54,7 +54,7 @@ export async function notifyActivityFollowers(
   ]);
   const userIds = Array.from(
     new Set(
-      [...teamMembers.map((tm) => tm.member.userId), ...followers.map((f) => f.userId)].filter(
+      [...teamMembers.map((tm) => tm.userId), ...followers.map((f) => f.userId)].filter(
         (id): id is string => id !== null,
       ),
     ),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "@/lib/person";
 import { accountOf } from "@/lib/memberAccount";
 import { requireBookingAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
@@ -56,14 +57,15 @@ export const PATCH = withRoute(
         cardType: true,
         minute: true,
         teamId: true,
-        member: { select: { id: true, user: { select: { fullName: true } } } },
+        memberId: true,
+        user: { select: { fullName: true } },
       },
     });
 
     await logAction(
       session.username,
       "UPDATE_BOOKING",
-      `${updated.member.user.fullName} — ${updated.cardType}`,
+      `${nameOf(updated.user)} — ${updated.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",
@@ -75,7 +77,7 @@ export const PATCH = withRoute(
           minute: booking.minute,
         },
         after: {
-          memberId: updated.member.id,
+          memberId: updated.memberId,
           teamId: updated.teamId,
           cardType: updated.cardType,
           minute: updated.minute,
@@ -100,7 +102,8 @@ export const DELETE = withRoute(
         minute: true,
         matchId: true,
         teamId: true,
-        member: { select: { id: true, user: { select: { fullName: true } } } },
+        memberId: true,
+        user: { select: { fullName: true } },
       },
     });
     if (!booking) return NextResponse.json({ ok: true });
@@ -109,14 +112,14 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_BOOKING",
-      `${booking.member.user.fullName} — ${booking.cardType}`,
+      `${nameOf(booking.user)} — ${booking.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",
         targetId: bookingId,
         before: {
           matchId: booking.matchId,
-          memberId: booking.member.id,
+          memberId: booking.memberId,
           teamId: booking.teamId,
           cardType: booking.cardType,
           minute: booking.minute,
