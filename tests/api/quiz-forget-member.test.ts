@@ -2,7 +2,15 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { getStandings } from "@/lib/quizRankingServer";
-import { resetDb, del, createUsers, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  del,
+  createUsers,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 import { DELETE as REMOVE_MEMBER } from "@/app/api/admin/members/[id]/route";
 
@@ -41,15 +49,13 @@ async function played(competitionId: string, userId: string, index: number, scor
 }
 
 async function member(userId: string, fullName: string) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  return makeMember({
+    userId,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
 }
 

@@ -2,7 +2,15 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { resetDb, post, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  createUser,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  makeMember,
+} from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
@@ -58,8 +66,10 @@ describe("the year a membership covers", () => {
   });
 
   it("is never missing, even on a row written without one", async () => {
-    const member = await prisma.member.create({
-      data: { user: { create: {} }, fullName: "سالم", age: "البدريين", paymentMethod: "بنكيلي" },
+    const member = await makeMember({
+      fullName: "سالم",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
     });
 
     expect(member.membershipYear).toBe(runningYear());

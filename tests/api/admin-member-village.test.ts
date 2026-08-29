@@ -2,17 +2,22 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { resetDb, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  patch,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  personFor,
+  makeMember,
+} from "./helpers";
 
 async function aMember(over: { village?: string; age?: string | null } = {}) {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: "محمد ولد أحمد",
-      paymentMethod: "بنكيلي",
-      village: over.village ?? HOME_VILLAGE,
-      age: over.age === undefined ? "البدريين" : over.age,
-    },
+  return makeMember({
+    fullName: "محمد ولد أحمد",
+    paymentMethod: "بنكيلي",
+    village: over.village ?? HOME_VILLAGE,
+    age: over.age === undefined ? "البدريين" : over.age,
   });
 }
 
@@ -32,9 +37,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(401);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).village).toBe(
-      HOME_VILLAGE,
-    );
+    expect((await personFor(member.id)).village).toBe(HOME_VILLAGE);
   });
 
   it("moves a member to a neighbouring village and drops their age group", async () => {
@@ -47,7 +50,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.village).toBe("أفجار");
     expect(after.age).toBeNull();
   });
@@ -62,9 +65,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(200);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).village).toBe(
-      "أفجار",
-    );
+    expect((await personFor(member.id)).village).toBe("أفجار");
   });
 
   it("brings a member back to the home village with an age group", async () => {
@@ -77,7 +78,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.village).toBe(HOME_VILLAGE);
     expect(after.age).toBe("المجاهدين");
   });
@@ -92,9 +93,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(400);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).village).toBe(
-      "أفجار",
-    );
+    expect((await personFor(member.id)).village).toBe("أفجار");
   });
 
   it("refuses to clear the age group of a member of the home village", async () => {
@@ -107,9 +106,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(400);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).age).toBe(
-      "البدريين",
-    );
+    expect((await personFor(member.id)).age).toBe("البدريين");
   });
 
   it("refuses a village that is not on the managed list", async () => {
@@ -122,9 +119,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     );
 
     expect(res.status).toBe(400);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).village).toBe(
-      HOME_VILLAGE,
-    );
+    expect((await personFor(member.id)).village).toBe(HOME_VILLAGE);
   });
 
   it("leaves the village alone when only the name is corrected", async () => {
@@ -133,7 +128,7 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
 
     await PATCH(patch(`/api/admin/members/${member.id}`, { fullName: "أحمد" }), withId(member.id));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.village).toBe("أفجار");
     expect(after.age).toBeNull();
   });

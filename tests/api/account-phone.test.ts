@@ -1,21 +1,27 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/members/[id]/account/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, createAdmin, createUser, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  patch,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 import { clearCookies } from "./cookieJar";
 
 async function memberOn(accountPhone: string | null, fullName = "محمد ولد أحمد") {
   const user = accountPhone
     ? await createUser(accountPhone)
     : await prisma.user.create({ data: {} });
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    userId: user.id,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 

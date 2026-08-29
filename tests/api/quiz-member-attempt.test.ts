@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createUsers, signInAs } from "./helpers";
+import { resetDb, post, createUsers, signInAs, makeMember } from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { POST as ATTEMPT } from "@/app/api/quiz/attempt/route";
@@ -59,15 +59,13 @@ async function setup(paid = 100) {
     });
   }
   const [user] = await createUsers(1);
-  await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "محمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: paid,
-    },
+  await makeMember({
+    userId: user.id,
+    fullName: "محمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: paid,
   });
   await signInAs(user);
   return { competition: c, user, days };

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/members/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createUser, signInAs, personFor } from "./helpers";
 import { saveAppSettings } from "@/lib/settingsServer";
 
 const validBody = {
@@ -34,7 +34,7 @@ describe("POST /api/members", () => {
     const member = await prisma.member.findFirst();
     expect(member?.status).toBe("PENDING");
     expect(member?.userId).toBe(user.id);
-    expect(member?.memberNumber).toBeNull();
+    expect((await personFor(member!.id)).memberNumber).toBeNull();
   });
 
   it("ignores a number the client sends, since the account carries it", async () => {
@@ -139,7 +139,7 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const updated = await personFor(member.id);
     expect(updated.fullName).toBe("اسم آخر");
     expect(await prisma.member.count()).toBe(1);
   });
@@ -157,7 +157,7 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(404);
-    const untouched = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const untouched = await personFor(member.id);
     expect(untouched.fullName).toBe(validBody.fullName);
   });
 

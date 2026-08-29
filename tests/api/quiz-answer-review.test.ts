@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 import { ROUND_STILL_OPEN } from "@/lib/quizBreakdownServer";
-import { resetDb, get, createUser, signInAs, withParams } from "./helpers";
+import { resetDb, get, createUser, signInAs, withParams, makeMember } from "./helpers";
 
 import { GET as REVIEW } from "@/app/api/quiz/breakdown/[attemptId]/route";
 import { GET as ROUNDS } from "@/app/api/quiz/breakdown/route";
@@ -12,15 +12,13 @@ const PERIOD = 1440 * 60_000;
 
 async function paidMember(phone: string) {
   const user = await createUser(phone);
-  await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  await makeMember({
+    userId: user.id,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
   return user;
 }

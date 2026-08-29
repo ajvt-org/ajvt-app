@@ -146,7 +146,7 @@ describe("who the membership surplus is credited to", () => {
     const member = await joinAndApprove({ surplusAnonymous: false });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
-    await prisma.member.update({ where: { id: member.id }, data: { fullName: "اسم آخر" } });
+    await prisma.user.update({ where: { id: member.userId }, data: { fullName: "اسم آخر" } });
     await recordMembershipPayment(prisma, member.id, 700, 100);
 
     const donation = await surplusOf(member.id);

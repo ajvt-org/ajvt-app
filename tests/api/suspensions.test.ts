@@ -7,7 +7,17 @@ import {
 import { POST as BOOK } from "@/app/api/admin/matches/[matchId]/bookings/route";
 import { PATCH as SAVE_RESULT } from "@/app/api/admin/matches/[matchId]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  patch,
+  del,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 function withIds(id: string, suspensionId: string) {
   return { params: Promise.resolve({ id, suspensionId }) };
@@ -25,14 +35,11 @@ async function tournament() {
   const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
   const players = [];
   for (let i = 0; i < 2; i++) {
-    const member = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: `لاعب ${i}`,
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const member = await makeMember({
+      fullName: `لاعب ${i}`,
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     await prisma.teamMember.create({
       data: { teamId: i === 0 ? home.id : away.id, memberId: member.id, status: "ACTIVE" },

@@ -4,12 +4,19 @@ import { PATCH, DELETE } from "@/app/api/admin/villages/[id]/route";
 import { GET as PUBLIC_GET } from "@/app/api/villages/route";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  personFor,
+  makeMember,
+} from "./helpers";
 
 async function aMember(fullName: string, village: string) {
-  return prisma.member.create({
-    data: { user: { create: {} }, fullName, village, paymentMethod: "بنكيلي" },
-  });
+  return makeMember({ user: { create: {} }, fullName, village, paymentMethod: "بنكيلي" });
 }
 
 describe("GET /api/villages", () => {
@@ -166,9 +173,9 @@ describe("PATCH /api/admin/villages/[id]", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { village: "افجار" } })).toBe(2);
-    expect(await prisma.member.count({ where: { village: "أفجار" } })).toBe(0);
-    expect(await prisma.member.count({ where: { village: HOME_VILLAGE } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { village: "افجار" } } })).toBe(2);
+    expect(await prisma.member.count({ where: { user: { village: "أفجار" } } })).toBe(0);
+    expect(await prisma.member.count({ where: { user: { village: HOME_VILLAGE } } })).toBe(1);
   });
 
   it("does not touch updatedAt, the member page reads it as their decision date", async () => {
@@ -178,7 +185,7 @@ describe("PATCH /api/admin/villages/[id]", () => {
 
     await PATCH(post(`/api/admin/villages/${village.id}`, { name: "افجار" }), withId(village.id));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.village).toBe("افجار");
     expect(after.updatedAt.getTime()).toBe(member.updatedAt.getTime());
   });
@@ -210,7 +217,7 @@ describe("PATCH /api/admin/villages/[id]", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(await prisma.member.count({ where: { village: "أفجار" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { village: "أفجار" } } })).toBe(1);
   });
 
   it("refuses renaming a village to the reserved other option", async () => {
@@ -247,7 +254,7 @@ describe("DELETE /api/admin/villages/[id]", () => {
     const res = await DELETE(post(`/api/admin/villages/${village.id}`, {}), withId(village.id));
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { village: "أفجار" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { village: "أفجار" } } })).toBe(1);
     expect(await prisma.village.count()).toBe(0);
   });
 

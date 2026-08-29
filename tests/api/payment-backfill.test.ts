@@ -4,23 +4,20 @@ import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { reconcilePayments } from "@/lib/paymentReconcile";
 import { splitPayment } from "@/lib/membershipPayment";
-import { resetDb } from "./helpers";
+import { resetDb, makeMember } from "./helpers";
 
 const YEAR = runningYear();
 const LAST = YEAR - 1;
 
 async function memberWith(over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-      membershipYear: YEAR,
-      ...over,
-    },
+  return makeMember({
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
+    membershipYear: YEAR,
+    ...over,
   });
 }
 
@@ -32,9 +29,10 @@ async function backfill() {
       COALESCE((SELECT "membershipFee" FROM "AppSettings" LIMIT 1),100),
       ms."year", ms."paymentMethod", ms."paymentProof", m."status",
       COALESCE(m."surplusAnonymous",false),
-      CASE WHEN COALESCE(m."surplusAnonymous",false) THEN NULL ELSE m."fullName" END,
+      CASE WHEN COALESCE(m."surplusAnonymous",false) THEN NULL ELSE u."fullName" END,
       ms."memberId", ms."recordedBy", ms."createdAt", now()
     FROM "Membership" ms JOIN "Member" m ON m."id"=ms."memberId"
+    JOIN "User" u ON u."id"=m."userId"
     LEFT JOIN "Donation" d ON d."memberId"=ms."memberId" AND d."source"='MEMBERSHIP' AND d."membershipYear"=ms."year"
     WHERE COALESCE(ms."paidAmount",0)+COALESCE(d."amount",0) > 0;
   `);

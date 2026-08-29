@@ -1,21 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/ages/standings/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb } from "./helpers";
+import { resetDb, makeMember } from "./helpers";
 
 async function group(name: string, totalCount: number) {
   return prisma.ageGroup.create({ data: { name, totalCount } });
 }
 
 async function member(age: string, status: "PENDING" | "ACTIVE" | "REJECTED") {
-  return prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: `عضو ${age} ${status}`,
-      age,
-      paymentMethod: "بنكيلي",
-      status,
-    },
+  return makeMember({
+    fullName: `عضو ${age} ${status}`,
+    age,
+    paymentMethod: "بنكيلي",
+    status,
   });
 }
 

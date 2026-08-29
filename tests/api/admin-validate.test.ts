@@ -1,20 +1,26 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/validate/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  personFor,
+  makeMember,
+} from "./helpers";
 import { logAction } from "@/lib/audit";
 
 async function pendingMember() {
   const user = await createUser();
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      paidAmount: 1000,
-      status: "PENDING",
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    paidAmount: 1000,
+    status: "PENDING",
   });
 }
 
@@ -53,7 +59,7 @@ describe("POST /api/admin/validate", () => {
     expect(res.status).toBe(200);
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.status).toBe("ACTIVE");
-    expect(after.memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
+    expect((await personFor(member.id)).memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
   });
 
   it("lets a SUPER admin through as well", async () => {
@@ -68,21 +74,18 @@ describe("POST /api/admin/validate", () => {
   it("hands out member numbers in sequence and never reuses one", async () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
     const first = await pendingMember();
-    const second = await prisma.member.create({
-      data: {
-        user: { create: {} },
-        fullName: "أحمد ولد سيدي",
-        age: "الفائزين",
-        paymentMethod: "السداد",
-        status: "PENDING",
-      },
+    const second = await makeMember({
+      fullName: "أحمد ولد سيدي",
+      age: "الفائزين",
+      paymentMethod: "السداد",
+      status: "PENDING",
     });
 
     await POST(post("/api/admin/validate", { id: first.id, action: "ACTIVE" }));
     await POST(post("/api/admin/validate", { id: second.id, action: "ACTIVE" }));
 
-    const numbers = (await prisma.member.findMany({ select: { memberNumber: true } }))
-      .map((m) => m.memberNumber)
+    const numbers = (await prisma.user.findMany({ select: { memberNumber: true } }))
+      .map((u) => u.memberNumber)
       .filter(Boolean);
     expect(new Set(numbers).size).toBe(2);
   });
@@ -92,9 +95,9 @@ describe("POST /api/admin/validate", () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
-    const first = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const first = await personFor(member.id);
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
-    const second = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const second = await personFor(member.id);
 
     expect(second.memberNumber).toBe(first.memberNumber);
   });

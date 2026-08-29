@@ -3,7 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { surplusForYear } from "@/lib/paidBreakdown";
-import { resetDb, get, patch, put, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  patch,
+  put,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { GET as YEARS } from "@/app/api/admin/members/[id]/memberships/route";
@@ -13,16 +22,13 @@ import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 const YEAR = runningYear();
 
 async function overpaidMember() {
-  const m = await prisma.member.create({
-    data: {
-      user: { create: {} },
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      membershipYear: YEAR,
-      memberNumber: "AJVT-2026-0001",
-    },
+  const m = await makeMember({
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    membershipYear: YEAR,
+    memberNumber: "AJVT-2026-0001",
   });
   await prisma.membership.create({
     data: { memberId: m.id, year: YEAR, paidAmount: 100, paymentMethod: "بنكيلي" },

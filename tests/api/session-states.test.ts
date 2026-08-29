@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
-import { resetDb, post } from "./helpers";
+import { resetDb, post, makeMember } from "./helpers";
 import { setCookie, clearCookies } from "./cookieJar";
 
 import { GET as ME } from "@/app/api/user/me/route";
@@ -29,15 +29,13 @@ async function makeUser(phone: string) {
 }
 
 async function addMember(userId: string, phone: string | null, status: string, name: string) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName: name,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: status as "PENDING" | "ACTIVE" | "REJECTED",
-      memberNumber: status === "ACTIVE" ? `AJVT-2026-${(phone ?? "0000").slice(-4)}` : null,
-    },
+  return makeMember({
+    userId,
+    fullName: name,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: status as "PENDING" | "ACTIVE" | "REJECTED",
+    memberNumber: status === "ACTIVE" ? `AJVT-2026-${(phone ?? "0000").slice(-4)}` : null,
   });
 }
 
