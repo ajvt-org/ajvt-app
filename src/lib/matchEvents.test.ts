@@ -57,6 +57,34 @@ describe("goalRows", () => {
 
     expect(rows).toHaveLength(2);
   });
+
+  it("puts the earliest scorer first however the goals arrive", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: 44 }),
+      goal({ minute: 10 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
+
+  it("orders a scorer by his first goal rather than his last", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: 20 }),
+      goal({ minute: 5 }),
+      goal({ minute: 80 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
+
+  it("sends a scorer with no minute after the ones with one", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: null }),
+      goal({ minute: 60 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
 });
 
 describe("bookingRows", () => {
@@ -88,6 +116,24 @@ describe("bookingRows", () => {
     const rows = bookingRows([booking({ minute: null })]);
 
     expect(rows[0].minutes).toEqual([]);
+  });
+
+  it("puts the earliest card first however the bookings arrive", () => {
+    const rows = bookingRows([
+      booking({ minute: 62 }),
+      booking({ memberId: "p3", fullName: "محمد الأمين", minute: 12 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["محمد الأمين", "سالم ولد علي"]);
+  });
+
+  it("sends a card with no minute after the ones with one", () => {
+    const rows = bookingRows([
+      booking({ minute: null }),
+      booking({ memberId: "p3", fullName: "محمد الأمين", minute: 30 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["محمد الأمين", "سالم ولد علي"]);
   });
 });
 
