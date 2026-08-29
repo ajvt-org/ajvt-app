@@ -65,7 +65,7 @@ export const PATCH = withRoute(
       await prisma.$transaction((tx) => setSurplusVisibility(tx, id, surplusAnonymous));
     }
     if (photo !== undefined) {
-      await prisma.member.update({ where: { id }, data: { photo } });
+      await prisma.user.update({ where: { id: existing.userId }, data: { photo } });
     }
 
     const member = await prisma.member.findUnique({
