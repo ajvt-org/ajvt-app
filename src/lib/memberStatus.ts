@@ -2,12 +2,6 @@ import type { IconName } from "@/components/Icon";
 import { memberStatusLabels } from "@/lib/messages";
 import type { Status } from "@/lib/useMember";
 
-// One description of each status, so the badge at the top of the profile and
-// the card explaining it can never say different things.
-//
-// The status belongs to the membership payment. None of these three says
-// anything about the person: a refused payment is a refused payment, and the
-// account behind it carries on.
 export const STATUS: Record<
   Status,
   {

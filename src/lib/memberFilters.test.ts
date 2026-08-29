@@ -112,7 +112,6 @@ describe("narrowing a list of members", () => {
     ).toBe(false);
   });
 
-  // The question that could not be asked before: accepted, but short.
   it("tells a part payment from a full one", () => {
     const partial = { ...NO_FILTERS, paid: "partial" };
     expect(matchesFilters(member({ paidAmount: 50 }), partial, MEMBERSHIP)).toBe(true);

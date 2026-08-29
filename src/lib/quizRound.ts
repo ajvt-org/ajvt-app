@@ -39,8 +39,6 @@ export function currentRound(shape: RoundShape, now: Date): RoundWindow | null {
   return now < window.closesAt ? window : null;
 }
 
-// The round a member is "in" even when the window is shut, so a ranking still
-// knows which block to show between rounds.
 export function roundIndexAt(shape: RoundShape, now: Date): number {
   const elapsed = now.getTime() - shape.startsAt.getTime();
   if (elapsed < 0) return 0;

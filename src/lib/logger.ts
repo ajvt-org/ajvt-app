@@ -1,6 +1,3 @@
-// One line of JSON per event in production so a log viewer can filter it, and
-// something readable in development. Never pass a member's phone, name or
-// proof filename in here — the association's logs are not the place for them.
 type Level = "info" | "warn" | "error";
 
 function emit(level: Level, event: string, detail?: unknown) {

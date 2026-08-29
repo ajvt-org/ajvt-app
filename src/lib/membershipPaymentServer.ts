@@ -129,9 +129,6 @@ export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: s
   );
 }
 
-// The one path that rewrites a year already published: the member asking for
-// their own surplus to change name. Both shapes are written, so the mirror
-// cannot drift from the donation it copies.
 export async function setSurplusVisibility(db: Db, memberId: string, anonymous: boolean) {
   const member = await db.member.findUnique({
     where: { id: memberId },

@@ -25,8 +25,6 @@ interface LeaderboardEntry {
   anonymous: boolean;
 }
 
-// The board counts support, not membership: a membership payment contributes only
-// what it carried past the fee in force when it was taken.
 export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[] }> {
   const payments = await prisma.payment.findMany({
     where: { status: "ACTIVE" },

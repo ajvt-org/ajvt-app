@@ -25,7 +25,6 @@ export async function verifyToken(token: string) {
   }
 }
 
-// --- Admin session ---
 export async function getAdminSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_token")?.value;
@@ -51,8 +50,6 @@ export async function requireAdmin() {
   };
 }
 
-// SUPER always passes — it's the unrestricted role. MEMBERS/ACTIVITIES admins
-// are scoped to their section; other admin API routes reject them with 403.
 export async function requireAdminRole(...allowed: string[]) {
   const session = await requireAdmin();
   if (session.role !== "SUPER" && !allowed.includes(session.role)) {
@@ -61,12 +58,6 @@ export async function requireAdminRole(...allowed: string[]) {
   return session;
 }
 
-// --- User session ---
-// A signature only proves we issued the token, not that it is still good.
-// Changing a password or an admin reset raises tokenVersion, which revokes
-// every older token, so the check belongs here rather than in each caller:
-// a page asking "is this person signed in" was answering yes to a session
-// that every API call would refuse, and drew the member bar over it.
 async function loadUserSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get("user_token")?.value;
@@ -92,9 +83,6 @@ export async function getUserSession() {
   return loaded ? loaded.payload : null;
 }
 
-// The token carries a mustChangePassword claim so the proxy can redirect
-// without a query, but the claim lives in the caller's cookie. This is the
-// check that decides, and it reads the column every time.
 export async function requireUser(options: { allowTempPassword?: boolean } = {}) {
   const loaded = await loadUserSession();
   if (!loaded) throw new UnauthorizedError();

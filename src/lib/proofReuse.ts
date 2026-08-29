@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { nameOf } from "./person";
 
-// "Has this screenshot been sent before?" — answered by fingerprint, then
-// traced back to whatever records point at the matching files. A member,
-// a donation and an expense all store a bare filename, so all three are
-// searched; the record being reviewed is left out of its own answer.
 export type ProofReuse = {
   kind: "member" | "donation" | "expense";
   id: string;

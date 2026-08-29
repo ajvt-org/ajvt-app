@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
 interface DayVisits {
-  date: string; // YYYY-MM-DD
-  visitors: number; // unique visitor-cookies seen that day
+  date: string;
+  visitors: number;
   pageViews: number;
 }
 
@@ -24,7 +24,6 @@ export async function getSiteStats(recentDays = 30) {
     byDay.set(r.date, entry);
   }
 
-  // Fill in days with zero visits so the chart has a continuous, gap-free axis.
   const days: DayVisits[] = [];
   for (let i = recentDays - 1; i >= 0; i--) {
     const d = new Date();

@@ -6,13 +6,6 @@ const CONST_HANDLER = /export const (GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)\s*=
 const FUNCTION_HANDLER =
   /export (?:async )?function (GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)\s*\(/g;
 
-// The handlers that predate withRoute, as a debt list. A route added from here
-// on has to be wrapped, so this list can only get shorter. Taking an entry off
-// it is the last step of migrating that route, never the first.
-//
-// The five files/* routes answer with image bytes rather than JSON, so wrapping
-// them changes what a failure looks like to an <img> tag. They come last.
-// docs/route-migration.md has the order and the reasoning.
 const NOT_YET_WRAPPED = [
   "files/[filename]/route.ts GET",
   "files/activity/[filename]/route.ts GET",
@@ -29,10 +22,6 @@ function routeFiles(dir: string): string[] {
   });
 }
 
-// Per exported handler, not per file: a file can wrap three handlers and leave
-// the fourth bare, and checking the file as a whole would call it compliant.
-// The same mistake let an unaudited handler hide behind a compliant sibling in
-// auditCoverage.test.ts, which this follows.
 export function unwrappedHandlers(source: string): string[] {
   const wrapped = [...source.matchAll(CONST_HANDLER)].filter((m) => m[2]).map((m) => m[1]);
   const bare = [...source.matchAll(CONST_HANDLER)].filter((m) => !m[2]).map((m) => m[1]);

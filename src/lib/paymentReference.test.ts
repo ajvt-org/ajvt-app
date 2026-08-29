@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractPaymentReference, mentionsKnownMerchant, bankilyStamp } from "./paymentReference";
 
-// Taken word for word off real receipts, one per layout the association is
-// actually sent. The labels differ by language; the value's shape does not.
 const RECEIPTS = {
   bankilyEnglish: `Payment Successful !
     Merchant Name : AJVT TAGUILALET
@@ -79,8 +77,6 @@ describe("reading the reference off a receipt", () => {
     expect(extractPaymentReference("Merchant Id : 027217 only")).toBeNull();
   });
 
-  // A merchant id must not be mistaken for a reference, and neither must a
-  // date or an amount.
   it("does not take a short number for a reference", () => {
     expect(extractPaymentReference("027217 100 14-08-26 22:30:35")).toBeNull();
   });
