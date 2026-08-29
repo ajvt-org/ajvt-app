@@ -1,5 +1,4 @@
 import {
-  groupStandings,
   computeTopScorers,
   computeStats,
   computeDisciplineStats,
@@ -7,6 +6,7 @@ import {
   computeMotmLeaders,
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
+import { groupStandings } from "@/lib/standings";
 import { matchDateKey, todayClubDateKey } from "@/lib/clubTime";
 import BracketTree from "@/components/tournament/BracketTree";
 import CardChip from "@/components/tournament/CardChip";

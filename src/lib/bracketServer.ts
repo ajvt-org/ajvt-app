@@ -7,12 +7,12 @@ import { prisma } from "./prisma";
 import { ConflictError, ValidationError } from "./errors";
 import {
   bracketRoundLabel,
-  computeStandings,
   drawKnockoutPairs,
   getMatchWinnerTeamId,
   isPowerOfTwo,
   shuffleArray,
 } from "./tournament";
+import { computeStandings } from "./standings";
 import { incompleteTeams, displayTeamName } from "./teamSize";
 import { tournament as messages } from "./messages";
 import { nameOf } from "./person";

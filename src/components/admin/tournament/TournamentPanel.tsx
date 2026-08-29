@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import {
-  groupStandings,
   computeTopScorers,
   computeStats,
   computeDisciplineStats,
@@ -10,6 +9,7 @@ import {
   computeMotmLeaders,
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
+import { groupStandings } from "@/lib/standings";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { tournamentWorkspace as texts } from "@/lib/texts";

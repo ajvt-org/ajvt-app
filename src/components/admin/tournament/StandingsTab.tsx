@@ -2,7 +2,8 @@
 
 import StatsToggle from "@/components/tournament/StatsToggle";
 import StandingsTable from "@/components/tournament/StandingsTable";
-import { computeStats, type StandingsRow } from "@/lib/tournament";
+import { computeStats } from "@/lib/tournament";
+import type { StandingsRow } from "@/lib/standings";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import type { Group, Match } from "./types";
 import IconLabel from "@/components/IconLabel";

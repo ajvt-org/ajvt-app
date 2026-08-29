@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import StandingsTable from "./StandingsTable";
+import { matchDisplay } from "@/lib/texts";
 
 const rows = [
   {
@@ -102,5 +103,27 @@ describe("a long team name", () => {
     const name = container.querySelector("bdi");
     expect(name?.textContent).toBe(long);
     expect(name?.getAttribute("style")).toContain("overflow-wrap: anywhere");
+  });
+});
+
+describe("a tie no rule can settle", () => {
+  it("marks both teams so nobody reads the order as a ranking", () => {
+    cleanup();
+    render(
+      <StandingsTable
+        title="المجموعة 2"
+        showFollow={false}
+        rows={rows.map((r) => ({ ...r, unresolved: true }))}
+      />,
+    );
+
+    expect(screen.getAllByText(matchDisplay.tieMark)).toHaveLength(rows.length);
+  });
+
+  it("says nothing on a table that is settled", () => {
+    cleanup();
+    render(<StandingsTable title="المجموعة 1" showFollow={false} rows={rows} />);
+
+    expect(screen.queryByText(matchDisplay.tieMark)).toBeNull();
   });
 });
