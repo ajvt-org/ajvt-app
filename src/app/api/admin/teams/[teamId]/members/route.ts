@@ -7,6 +7,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
 import { members, tournament } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
@@ -33,7 +34,7 @@ export const POST = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id: memberId },
-      select: { status: true, fullName: true },
+      select: { status: true, user: { select: { fullName: true } } },
     });
     if (!member) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
@@ -67,7 +68,7 @@ export const POST = withRoute(
       select: {
         id: true,
         member: {
-          select: { id: true, fullName: true, age: true, user: { select: { phone: true } } },
+          select: { id: true, user: { select: { phone: true, fullName: true, age: true } } },
         },
       },
     });
@@ -75,7 +76,7 @@ export const POST = withRoute(
     await logAction(
       session.username,
       "ADD_TEAM_MEMBER",
-      `${teamMember.member.fullName} → ${team.name}`,
+      `${nameOf(teamMember.member.user)} → ${team.name}`,
       {
         ...auditContext(session, req),
         targetType: "TeamMember",

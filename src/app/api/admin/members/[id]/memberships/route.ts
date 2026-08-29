@@ -17,7 +17,7 @@ export const GET = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { status: true, membershipYear: true, memberNumber: true },
+      select: { status: true, membershipYear: true, user: { select: { memberNumber: true } } },
     });
     if (!member) throw new NotFoundError(messages.notFound);
 
@@ -47,7 +47,10 @@ export const GET = withRoute(
         return { ...m, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
       }),
       currentYear: membershipYear,
-      refusal: renewalRefusal(member, membershipYear),
+      refusal: renewalRefusal(
+        { ...member, memberNumber: member.user.memberNumber },
+        membershipYear,
+      ),
     });
   },
 );

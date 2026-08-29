@@ -6,6 +6,7 @@ import { parse } from "@/lib/validation";
 import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
+import { withPerson } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -18,12 +19,18 @@ export const GET = withRoute(
       select: {
         id: true,
         userId: true,
-        fullName: true,
-        age: true,
-        village: true,
+        user: {
+          select: {
+            fullName: true,
+            age: true,
+            village: true,
+            photo: true,
+            memberNumber: true,
+            verifyToken: true,
+          },
+        },
         paymentMethod: true,
         paymentProof: true,
-        photo: true,
         paidAmount: true,
         surplusAnonymous: true,
         referenceCode: true,
@@ -36,7 +43,7 @@ export const GET = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { userId: _userId, ...rest } = member;
+    const { userId: _userId, ...rest } = withPerson(member);
     void _userId;
     return NextResponse.json(rest);
   },
@@ -63,9 +70,9 @@ export const PATCH = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { id: true, photo: true, surplusAnonymous: true },
+      select: { id: true, surplusAnonymous: true, user: { select: { photo: true } } },
     });
 
-    return NextResponse.json(member);
+    return NextResponse.json(member && { ...member, photo: member.user.photo });
   },
 );

@@ -19,13 +19,24 @@ import {
   FILENAMES,
   type Dataset,
 } from "@/lib/exportRows";
+import { withPerson } from "@/lib/person";
 
 async function buildCsv(dataset: Dataset): Promise<string> {
   if (dataset === "members") {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        user: { select: { phone: true } },
+        user: {
+          select: {
+            phone: true,
+            fullName: true,
+            age: true,
+            village: true,
+            photo: true,
+            memberNumber: true,
+            verifyToken: true,
+          },
+        },
         payments: {
           where: { purpose: "MEMBERSHIP" },
           select: { amount: true, feeApplied: true, year: true },
@@ -39,7 +50,7 @@ async function buildCsv(dataset: Dataset): Promise<string> {
           const paid = m.payments.find((p) => p.year === m.membershipYear);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
-            ...m,
+            ...withPerson(m),
             paidAmount: split ? split.fee : null,
             supportAmount: split ? split.surplus : 0,
           };
@@ -52,7 +63,7 @@ async function buildCsv(dataset: Dataset): Promise<string> {
     const payments = await prisma.payment.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        member: { select: { fullName: true } },
+        member: { select: { user: { select: { fullName: true } } } },
         tags: { select: { name: true } },
       },
     });

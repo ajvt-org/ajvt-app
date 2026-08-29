@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { activities as messages } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 // One activity with everything hanging off it: who registered, which teams
 // were made, how many matches were played, and what has been changed about it.
@@ -27,10 +28,7 @@ export const GET = withRoute(
             member: {
               select: {
                 id: true,
-                fullName: true,
-                age: true,
-                photo: true,
-                user: { select: { phone: true } },
+                user: { select: { phone: true, fullName: true, age: true, photo: true } },
               },
             },
           },
@@ -59,10 +57,10 @@ export const GET = withRoute(
           ...r,
           member: {
             id: member.id,
-            fullName: member.fullName,
-            age: member.age,
-            photo: member.photo,
-            phone: member.user?.phone ?? null,
+            fullName: nameOf(member.user),
+            age: member.user.age,
+            photo: member.user.photo,
+            phone: member.user.phone ?? null,
           },
         })),
       },

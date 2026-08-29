@@ -12,7 +12,7 @@ import { notify, tournament } from "@/lib/messages";
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
   awayTeam: { select: { id: true, name: true, logo: true } },
-  manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
+  manOfTheMatch: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
   goals: {
     select: {
       id: true,
@@ -21,7 +21,7 @@ const MATCH_INCLUDE = {
       teamId: true,
       kind: true,
       period: true,
-      member: { select: { id: true, fullName: true, photo: true } },
+      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
     },
   },
   penaltyKicks: {
@@ -31,7 +31,7 @@ const MATCH_INCLUDE = {
       teamId: true,
       order: true,
       scored: true,
-      member: { select: { id: true, fullName: true, photo: true } },
+      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
     },
   },
   bookings: {
@@ -40,7 +40,7 @@ const MATCH_INCLUDE = {
       cardType: true,
       minute: true,
       teamId: true,
-      member: { select: { id: true, fullName: true, photo: true } },
+      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
     },
   },
   mvpVote: {
@@ -51,7 +51,7 @@ const MATCH_INCLUDE = {
         select: {
           id: true,
           memberId: true,
-          member: { select: { id: true, fullName: true } },
+          member: { select: { id: true, user: { select: { fullName: true } } } },
           _count: { select: { votes: true } },
         },
       },

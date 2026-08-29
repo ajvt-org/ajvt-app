@@ -6,16 +6,12 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { personOf } from "@/lib/person";
 
 const MEMBER_SELECT = {
   id: true,
-  fullName: true,
-  user: { select: { phone: true } },
-  age: true,
-  village: true,
   paymentMethod: true,
   paymentProof: true,
-  photo: true,
   paidAmount: true,
   surplusAnonymous: true,
   membershipYear: true,
@@ -27,8 +23,6 @@ const MEMBER_SELECT = {
   rejectionReason: true,
   createdAt: true,
   updatedAt: true,
-  memberNumber: true,
-  verifyToken: true,
   registrations: {
     select: {
       id: true,
@@ -50,31 +44,40 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    include: { members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } } },
+    select: {
+      phone: true,
+      fullName: true,
+      age: true,
+      village: true,
+      photo: true,
+      memberNumber: true,
+      verifyToken: true,
+      members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
+    },
   });
 
   if (!user) {
     return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
   }
 
-  const members = await Promise.all(
-    user.members.map(async (member) => {
-      if (member.status === "ACTIVE" && !member.memberNumber) {
-        return prisma.member.update({
-          where: { id: member.id },
-          data: await issueMembership(),
-          select: MEMBER_SELECT,
-        });
-      }
-      return member;
-    }),
-  );
+  let person = personOf(user);
+  if (!user.memberNumber && user.members.some((member) => member.status === "ACTIVE")) {
+    const issued = await issueMembership();
+    await prisma.user.update({ where: { id: session.userId }, data: issued });
+    person = { ...person, ...issued };
+  }
 
   return NextResponse.json({
     phone: user.phone,
-    members: members.map(({ payments, ...member }) => {
+    members: user.members.map(({ payments, ...member }) => {
       const paid = paidForYear(payments, member.membershipYear);
-      return { ...member, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+      return {
+        ...member,
+        ...person,
+        user: { phone: user.phone },
+        paidAmount: paid?.fee ?? null,
+        supportAmount: paid?.support ?? 0,
+      };
     }),
   });
 });

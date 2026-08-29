@@ -17,7 +17,7 @@ export const DELETE = withRoute(
         minute: true,
         matchId: true,
         teamId: true,
-        member: { select: { id: true, fullName: true } },
+        member: { select: { id: true, user: { select: { fullName: true } } } },
       },
     });
     if (!booking) return NextResponse.json({ ok: true });
@@ -26,7 +26,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_BOOKING",
-      `${booking.member.fullName} — ${booking.cardType}`,
+      `${booking.member.user.fullName} — ${booking.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",

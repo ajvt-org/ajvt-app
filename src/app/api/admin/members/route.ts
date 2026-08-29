@@ -9,7 +9,6 @@ import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipYear } from "@/lib/membershipRecord";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { syncPersonFromMember } from "@/lib/personServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
@@ -19,13 +18,24 @@ import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { adminMemberCreateSchema } from "./schema";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { nameOf, withPerson } from "@/lib/person";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
   const members = await prisma.member.findMany({
     include: {
-      user: { select: { phone: true } },
+      user: {
+        select: {
+          phone: true,
+          fullName: true,
+          age: true,
+          village: true,
+          photo: true,
+          memberNumber: true,
+          verifyToken: true,
+        },
+      },
       registrations: {
         select: { activityId: true, activity: { select: { id: true, title: true } } },
       },
@@ -39,7 +49,11 @@ export const GET = withRoute("GET /api/admin/members", async () => {
   return NextResponse.json({
     members: members.map(({ payments, ...member }) => {
       const paid = paidForYear(payments, member.membershipYear);
-      return { ...member, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+      return {
+        ...withPerson(member),
+        paidAmount: paid?.fee ?? null,
+        supportAmount: paid?.support ?? 0,
+      };
     }),
   });
 });
@@ -106,16 +120,11 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
     const m = await tx.member.create({
       data: {
         userId,
-        fullName,
-        age: ageForVillage(village, age),
-        village,
         paymentMethod,
         paymentProof: paymentProof || null,
-        photo: photo || null,
         surplusAnonymous: surplusAnonymous ?? false,
         status,
         membershipYear,
-        ...(issued ?? {}),
       },
     });
     await recordMembershipPayment(tx, m.id, paidAmountValue, membershipFee);
@@ -127,22 +136,38 @@ export const POST = withRoute("POST /api/admin/members", async (req: NextRequest
         recordedBy: session.username,
       });
     }
-    await syncPersonFromMember(tx, m.id);
-    return tx.member.findUniqueOrThrow({ where: { id: m.id } });
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        fullName,
+        age: ageForVillage(village, age),
+        village,
+        ...(photo ? { photo } : {}),
+        ...(issued ?? {}),
+      },
+    });
+    return tx.member.findUniqueOrThrow({
+      where: { id: m.id },
+      include: {
+        user: {
+          select: { fullName: true, age: true, village: true, memberNumber: true },
+        },
+      },
+    });
   });
 
-  await logAction(session.username, "CREATE_MEMBER_MANUAL", member.fullName, {
+  await logAction(session.username, "CREATE_MEMBER_MANUAL", nameOf(member.user), {
     ...auditContext(session, req),
     targetType: "Member",
     targetId: member.id,
     after: {
-      fullName: member.fullName,
-      age: member.age,
-      village: member.village,
+      fullName: member.user.fullName,
+      age: member.user.age,
+      village: member.user.village,
       paymentMethod: member.paymentMethod,
       paidAmount: member.paidAmount,
       status: member.status,
-      memberNumber: member.memberNumber,
+      memberNumber: member.user.memberNumber,
     },
   });
 

@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { withPerson } from "@/lib/person";
 
 // Everything the association knows about one person, in one answer. The facts
 // live in five tables — the member, their activity registrations, their teams,
@@ -18,7 +19,19 @@ export const GET = withRoute(
     const member = await prisma.member.findUnique({
       where: { id },
       include: {
-        user: { select: { id: true, phone: true, createdAt: true } },
+        user: {
+          select: {
+            id: true,
+            phone: true,
+            createdAt: true,
+            fullName: true,
+            age: true,
+            village: true,
+            photo: true,
+            memberNumber: true,
+            verifyToken: true,
+          },
+        },
         registrations: {
           orderBy: { createdAt: "desc" },
           select: {
@@ -69,7 +82,7 @@ export const GET = withRoute(
 
     return NextResponse.json({
       member: {
-        ...member,
+        ...withPerson(member),
         paidAmount: paidForYear(member.payments, member.membershipYear)?.fee ?? null,
         supportAmount: paidForYear(member.payments, member.membershipYear)?.support ?? 0,
       },

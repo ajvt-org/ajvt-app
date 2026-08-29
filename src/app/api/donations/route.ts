@@ -55,13 +55,13 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     const { userId } = session as { userId: string };
     const member = await prisma.member.findUnique({
       where: { id: memberIdRaw.trim() },
-      select: { userId: true, status: true, fullName: true },
+      select: { userId: true, status: true, user: { select: { fullName: true } } },
     });
     if (!member || member.userId !== userId || member.status !== "ACTIVE") {
       return NextResponse.json({ error: "عضو غير صالح" }, { status: 403 });
     }
     memberId = memberIdRaw.trim();
-    selfName = member.fullName;
+    selfName = member.user.fullName;
     selfAnonymous = formData.get("anonymous") === "true";
   }
 

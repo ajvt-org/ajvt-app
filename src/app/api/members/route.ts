@@ -13,7 +13,6 @@ import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { suggestAgeGroup } from "@/lib/ageGroups";
-import { syncPersonFromMember } from "@/lib/personServer";
 
 const CODE_ATTEMPTS = 5;
 
@@ -48,15 +47,20 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
-      const m = await tx.member.update({
-        where: { id },
+      await tx.user.update({
+        where: { id: session.userId },
         data: {
           fullName: fullName.trim(),
           age: ageForRecord,
           village: village.trim(),
+          ...(photo !== undefined ? { photo } : {}),
+        },
+      });
+      const m = await tx.member.update({
+        where: { id },
+        data: {
           paymentMethod,
           paymentProof,
-          ...(photo !== undefined ? { photo } : {}),
           ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
           ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
           status: "PENDING",
@@ -65,7 +69,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       });
       if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
-      await syncPersonFromMember(tx, id);
       return m;
     });
     return NextResponse.json({ id: updated.id }, { status: 200 });
@@ -84,15 +87,20 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   for (let attempt = 0; ; attempt++) {
     try {
       const member = await prisma.$transaction(async (tx) => {
-        const created = await tx.member.create({
+        await tx.user.update({
+          where: { id: session.userId },
           data: {
-            userId: session.userId,
             fullName: fullName.trim(),
             age: ageForRecord,
             village: village.trim(),
+            photo: photo || null,
+          },
+        });
+        const created = await tx.member.create({
+          data: {
+            userId: session.userId,
             paymentMethod,
             paymentProof,
-            photo: photo || null,
             surplusAnonymous: surplusAnonymous ?? false,
             referenceCode: code,
             status: "PENDING",
@@ -101,7 +109,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         });
         if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
         await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
-        await syncPersonFromMember(tx, created.id);
         return created;
       });
       return NextResponse.json(

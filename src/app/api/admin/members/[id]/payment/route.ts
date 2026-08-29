@@ -12,6 +12,7 @@ import { splitPayment } from "@/lib/membershipPayment";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
+import { nameOf } from "@/lib/person";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
@@ -26,7 +27,7 @@ export const PUT = withRoute(
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, membershipYear: true, paidAmount: true },
+      select: { membershipYear: true, paidAmount: true, user: { select: { fullName: true } } },
     });
     if (!existing) throw new NotFoundError(messages.notFound);
 
@@ -56,7 +57,7 @@ export const PUT = withRoute(
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
-    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", existing.fullName, {
+    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(existing.user), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,

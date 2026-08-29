@@ -124,7 +124,7 @@ export const PATCH = withRoute(
     const donation = await prisma.donation.update({
       where: { id },
       data,
-      include: { member: { select: { fullName: true } } },
+      include: { member: { select: { user: { select: { fullName: true } } } } },
     });
     await mirrorDonation(prisma, {
       donationId: donation.id,
@@ -150,7 +150,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donation.member?.fullName || existing.donorName || money.anonymousDonor,
+        donation.member?.user.fullName || existing.donorName || money.anonymousDonor,
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
@@ -159,7 +159,7 @@ export const PATCH = withRoute(
         session.username,
         memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
         memberId
-          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.fullName}`
+          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.user.fullName}`
           : existing.donorName || money.anonymousDonor,
         {
           ...target,
@@ -179,7 +179,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "UPDATE_DONATION",
-        donation.member?.fullName || donation.donorName || money.anonymousDonor,
+        donation.member?.user.fullName || donation.donorName || money.anonymousDonor,
         {
           ...target,
           before: existing,
