@@ -36,7 +36,7 @@ export default function HomePage() {
             member.paidAmount !== null &&
             member.paidAmount >= MEMBERSHIP_FEE
           }
-          eligibleMember={toEligibleMember(member)}
+          eligibleMember={toEligibleMember(member, currentYear)}
         />
       </div>
     </div>

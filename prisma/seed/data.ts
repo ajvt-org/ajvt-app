@@ -33,6 +33,7 @@ export const AGE_GROUP_ROSTER: AgeGroupRoster[] = [
   { name: "الممدوحين", active: 1, pending: 0, rejected: 0, total: 30 },
   { name: "النجميين", active: 1, pending: 0, rejected: 0, total: 44 },
   { name: "الحافظين", active: 0, pending: 0, rejected: 0, total: 30 },
+  { name: "الاتحاد", active: 1, pending: 0, rejected: 0, total: 30 },
 ];
 
 export const AGE_GROUPS = AGE_GROUP_ROSTER.map((group) => group.name);

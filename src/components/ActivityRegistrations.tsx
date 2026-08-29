@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import { STATUS_CLASS, STATUS_LABEL, type Activity, type EligibleMember } from "./activityTypes";
+import { memberActivities as texts } from "@/lib/texts";
 
 // Where the membership on this account stands with one activity, and the one
 // tap that changes it. An account carries a single membership, so there is
@@ -102,6 +103,10 @@ export default function ActivityRegistrations({
                 </button>
               )}
             </div>
+          ) : !member.canJoinNew ? (
+            <p className="text-center py-1" style={{ color: "var(--text-muted)" }}>
+              <IconLabel name="hourglass">{texts.renewToJoin}</IconLabel>
+            </p>
           ) : activity.isOpen && !full ? (
             <button
               onClick={activity.isVolunteer ? registerVolunteer : register}

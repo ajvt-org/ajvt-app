@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/Icon";
+import { membershipState } from "@/lib/membershipState";
 
 // Shared by the activities list and the activity page.
 export interface Team {
@@ -40,6 +41,7 @@ export interface EligibleMember {
   id: string;
   fullName: string;
   photo: string | null;
+  canJoinNew: boolean;
   registrations: MemberRegistration[];
   teamMemberships: MemberTeamMembership[];
 }
@@ -52,16 +54,25 @@ type ApiMember = {
   fullName: string;
   photo: string | null;
   status: string;
+  membershipYear: number;
   registrations: { activityId: string; status: string; rejectionReason: string | null }[];
   teamMemberships: { status: string; team: { id: string; name: string; activityId: string } }[];
 };
 
-export function toEligibleMember(member: ApiMember | null | undefined): EligibleMember | null {
+export function toEligibleMember(
+  member: ApiMember | null | undefined,
+  currentYear?: number | null,
+): EligibleMember | null {
   if (!member || member.status !== "ACTIVE") return null;
+  const behind =
+    typeof currentYear === "number" &&
+    membershipState({ status: "ACTIVE", membershipYear: member.membershipYear }, currentYear) ===
+      "BEHIND";
   return {
     id: member.id,
     fullName: member.fullName,
     photo: member.photo,
+    canJoinNew: !behind,
     registrations: member.registrations.map((r) => ({
       activityId: r.activityId,
       status: r.status as MemberRegistration["status"],
