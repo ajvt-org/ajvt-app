@@ -6,6 +6,7 @@ export const ACTION_LABELS: Record<string, string> = {
   DELETE_USER: "حذف حساب",
   RESTORE_USER: "استرجاع حساب",
   EXPORT_DATA: "تصدير بيانات",
+  UPDATE_BOOKING: "تعديل بطاقة",
   SET_MATCH_FORFEIT: "تسجيل انسحاب في مباراة",
   CLEAR_MATCH_FORFEIT: "إلغاء انسحاب في مباراة",
   ISSUE_RECEIPT: "إصدار وصل قبض",

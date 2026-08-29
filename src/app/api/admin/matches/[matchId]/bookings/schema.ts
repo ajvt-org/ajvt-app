@@ -24,3 +24,10 @@ export const bookingCreateSchema = z.object({
   cardType: z.enum(["YELLOW", "RED"], INVALID),
   minute: minute.optional(),
 });
+
+export const bookingUpdateSchema = z.object({
+  memberId: z.string(INVALID).min(1, INVALID).optional(),
+  teamId: z.string(INVALID).min(1, INVALID).optional(),
+  cardType: z.enum(["YELLOW", "RED"], INVALID).optional(),
+  minute: minute.optional(),
+});

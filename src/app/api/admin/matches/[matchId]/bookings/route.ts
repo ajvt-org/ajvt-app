@@ -23,14 +23,14 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
     if (teamId !== match.homeTeamId && teamId !== match.awayTeamId) {
-      return NextResponse.json({ error: "الفريق لا ينتمي إلى هذه المباراة" }, { status: 400 });
+      return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
 
     const inRoster = await prisma.teamMember.findUnique({
       where: { teamId_memberId: { teamId, memberId } },
     });
     if (!inRoster) {
-      return NextResponse.json({ error: "اللاعب لا ينتمي إلى هذا الفريق" }, { status: 400 });
+      return NextResponse.json({ error: tournament.playerNotInTeam }, { status: 400 });
     }
 
     const suspended = await suspendedMemberIds(match.activityId);
