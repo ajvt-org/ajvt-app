@@ -20,6 +20,13 @@ import {
   type KickEvent,
 } from "@/lib/matchInput";
 import { forfeitScore } from "@/lib/forfeit";
+import {
+  extraTimeAllowed,
+  hasExtraTime,
+  kicksAllowed,
+  kicksAlternate,
+  playedScore,
+} from "@/lib/matchScores";
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
@@ -229,21 +236,32 @@ export const PATCH = withRoute(
         }
       }
 
-      const scored = scoreFromGoals(evGoals, match.homeTeamId);
+      const played = playedScore(evGoals, match.homeTeamId);
       const winner =
         forfeitWinnerTeamId === undefined ? match.forfeitWinnerTeamId : forfeitWinnerTeamId;
-      const score = winner ? forfeitScore(scored, winner, match.homeTeamId) : scored;
+      const score = winner ? forfeitScore(played, winner, match.homeTeamId) : played;
       updateData.homeScore = score.home;
       updateData.awayScore = score.away;
       updateData.status = "PLAYED";
 
       const effectiveKnockout = updateData.isKnockout ?? match.isKnockout;
+      if (hasExtraTime(evGoals)) {
+        if (!effectiveKnockout) {
+          return NextResponse.json({ error: tournament.extraTimeKnockoutOnly }, { status: 400 });
+        }
+        if (!extraTimeAllowed(effectiveKnockout, evGoals, match.homeTeamId)) {
+          return NextResponse.json({ error: tournament.extraTimeTieOnly }, { status: 400 });
+        }
+      }
       if (evKicks.length > 0) {
         if (!effectiveKnockout) {
           return NextResponse.json({ error: tournament.penaltiesKnockoutOnly }, { status: 400 });
         }
-        if (score.home !== score.away) {
+        if (!kicksAllowed(effectiveKnockout, evGoals, match.homeTeamId)) {
           return NextResponse.json({ error: tournament.penaltiesTieOnly }, { status: 400 });
+        }
+        if (!kicksAlternate(evKicks)) {
+          return NextResponse.json({ error: tournament.kicksNotAlternating }, { status: 400 });
         }
         const shootout = shootoutFromKicks(evKicks, match.homeTeamId);
         if (shootout.home === shootout.away) {
