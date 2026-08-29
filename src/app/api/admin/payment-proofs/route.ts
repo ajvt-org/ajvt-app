@@ -48,6 +48,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
           where: { source: { not: "MEMBERSHIP" } },
           select: {
             id: true,
+            anonymous: true,
             donorName: true,
             donorPhone: true,
             donorPhoto: true,
@@ -106,6 +107,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       paymentMethod: d.paymentMethod,
       memberId: d.memberId,
       userId: d.userId,
+      anonymous: d.anonymous,
       donorName: d.donorName,
       donorPhone: d.donorPhone,
       donorPhoto: d.donorPhoto,

@@ -14,6 +14,7 @@ export interface Proof {
   paymentMethod?: string | null;
   memberId?: string | null;
   userId?: string | null;
+  anonymous?: boolean;
   activityId?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
@@ -36,6 +37,7 @@ export interface DonationResponse {
     proof: string | null;
     memberId: string | null;
     userId: string | null;
+    anonymous: boolean;
     activityId: string | null;
     createdAt: string;
     updatedAt: string;

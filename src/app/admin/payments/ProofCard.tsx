@@ -57,6 +57,7 @@ export default function ProofCard({
   const [showHistory, setShowHistory] = useState(false);
   const [linking, setLinking] = useState(false);
   const isDonation = proof.kind === "DONATION";
+  const linkedMember = members.find((m) => m.userId === proof.userId);
   const reuseKind = REUSE_KIND[proof.kind];
 
   return (
@@ -124,7 +125,9 @@ export default function ProofCard({
                 <DonationEditForm
                   proof={proof}
                   activities={activities}
+                  linkedMember={linkedMember}
                   onCancel={() => setEditing(false)}
+                  onRelink={() => setLinking(true)}
                   onSaved={(changes) => {
                     onPatch(changes);
                     setEditing(false);
