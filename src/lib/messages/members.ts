@@ -16,6 +16,7 @@ export const members = {
   pickAgeGroup: "يرجى اختيار العصر",
   profileIncomplete: "أكمل بيانات حسابك قبل إرسال طلب الانتساب",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
+  statusInvalid: "حالة غير صالحة",
   rejectionReasonRequired: "سبب رفض الدفع مطلوب",
   rejectionReasonInvalid: "سبب رفض الدفع غير صالح",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
