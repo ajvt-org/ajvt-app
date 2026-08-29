@@ -123,6 +123,18 @@ function AdminDashboardInner() {
     }
   }
 
+  async function refreshSelected() {
+    if (!selected) return;
+    const data = await api
+      .get<{ members: Member[] }>("/api/admin/members")
+      .catch(() => ({ members: [] as Member[] }));
+    const loaded = data.members || [];
+    if (loaded.length === 0) return;
+    setMembers(loaded);
+    const fresh = loaded.find((m) => m.id === selected.id);
+    if (fresh) setSelected(fresh);
+  }
+
   async function fetchAgeGroups() {
     try {
       const data = await api.get<{ ageGroups: AgeGroup[]; orphans: OrphanAge[] }>(
@@ -456,6 +468,7 @@ function AdminDashboardInner() {
           rejectReason={rejectReason}
           onClose={closeDrawer}
           onZoomProof={() => setProofZoom(true)}
+          onProofSaved={refreshSelected}
           onResetPassword={() => resetPassword(selected.userId!)}
           onAccountPhone={setAccountPhoneInput}
           onAttachAccount={() => attachAccount(selected.id)}
