@@ -12,6 +12,7 @@ import { GET as QUIZ_MINE } from "@/app/api/quiz/competitions/route";
 import { POST as MEMBERS } from "@/app/api/members/route";
 import { GET as ADMIN_MEMBERS } from "@/app/api/admin/members/route";
 import { GET as SETTINGS } from "@/app/api/settings/route";
+import { getAppSettings } from "@/lib/settingsServer";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -89,6 +90,22 @@ describe("who the API serves", () => {
     it("returns no members for an account that has none", async () => {
       await enter("accountOnly");
       expect((await (await ME()).json()).members).toEqual([]);
+    });
+
+    // /home reads the member's own year against this one to tell a paid-up
+    // member from one who is a year behind.
+    it("says which year the association is collecting for", async () => {
+      await enter("accountOnly");
+      const { membershipYear } = await getAppSettings();
+
+      expect((await (await ME()).json()).currentYear).toBe(membershipYear);
+    });
+
+    it("carries the year each membership was paid into", async () => {
+      await enter("memberActive");
+
+      const { members } = await (await ME()).json();
+      expect(typeof members[0].membershipYear).toBe("number");
     });
   });
 
