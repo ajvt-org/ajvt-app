@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 import { nameOf } from "./person";
 import { sortAttention, type AttentionRow } from "./activityAttention";
 
-const PERSON = { member: { select: { user: { select: { fullName: true } } } } } as const;
+const PERSON = { user: { select: { fullName: true } } } as const;
 const ACTIVITY = { activity: { select: { id: true, title: true } } } as const;
 
 function only(scoped: string[] | null) {
@@ -36,7 +36,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       kind: "join" as const,
       activityId: row.team.activity.id,
       activityTitle: row.team.activity.title,
-      who: `${nameOf(row.member.user)} — ${row.team.name}`,
+      who: `${nameOf(row.user)} — ${row.team.name}`,
       since: row.createdAt.toISOString(),
     })),
     ...registrations.map((row) => ({
@@ -44,7 +44,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       kind: "registration" as const,
       activityId: row.activity.id,
       activityTitle: row.activity.title,
-      who: nameOf(row.member.user),
+      who: nameOf(row.user),
       since: row.createdAt.toISOString(),
     })),
     ...suspensions.map((row) => ({
@@ -52,7 +52,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       kind: "suspension" as const,
       activityId: row.activity.id,
       activityTitle: row.activity.title,
-      who: nameOf(row.member.user),
+      who: nameOf(row.user),
       since: row.createdAt.toISOString(),
     })),
   ];

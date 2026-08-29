@@ -40,11 +40,11 @@ export const GET = withRoute("GET /api/user/activities", async () => {
 
   const [registrations, teamMemberships] = await Promise.all([
     prisma.activityRegistration.findMany({
-      where: { member: { userId: session.userId } },
+      where: { userId: session.userId },
       select: { status: true, activity: { select: ACTIVITY_SELECT } },
     }),
     prisma.teamMember.findMany({
-      where: { status: "ACTIVE", member: { userId: session.userId } },
+      where: { status: "ACTIVE", userId: session.userId },
       select: {
         memberId: true,
         team: {
@@ -57,7 +57,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
               where: { status: "ACTIVE" },
               select: {
                 memberId: true,
-                member: { select: { user: { select: { fullName: true } } } },
+                user: { select: { fullName: true } },
               },
             },
           },
@@ -123,7 +123,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
       autoNamed: membership.team.autoNamed,
       teammates: membership.team.members
         .filter((m) => m.memberId !== membership.memberId)
-        .map((m) => nameOf(m.member.user)),
+        .map((m) => nameOf(m.user)),
     };
     entry.fixtures = fixtures.filter((f) => f.myTeamId === membership.team.id);
   }

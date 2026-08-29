@@ -225,13 +225,14 @@ export async function listSuspensions(activityId: string) {
       createdBy: true,
       decidedBy: true,
       createdAt: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      memberId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   });
   const now = new Date();
   return rows.map((s) => ({
     ...s,
-    member: { id: s.member.id, fullName: nameOf(s.member.user), photo: s.member.user.photo },
+    member: { id: s.memberId, fullName: nameOf(s.user), photo: s.user.photo },
     running: suspensionIsRunning(s, now),
   }));
 }

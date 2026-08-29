@@ -24,7 +24,7 @@ export const GET = withRoute(
           },
         },
       },
-      orderBy: { member: { user: { fullName: "asc" } } },
+      orderBy: { user: { fullName: "asc" } },
     });
 
     const roster = registrations.map(({ member }) => ({
