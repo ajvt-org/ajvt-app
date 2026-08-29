@@ -7,21 +7,26 @@ import { NotFoundError } from "@/lib/errors";
 import { toCsv } from "@/lib/csv";
 import { splitPayment } from "@/lib/membershipPayment";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
+import { activityFinanceReport } from "@/lib/activityReportServer";
+import { dateSpanSchema, spanBounds } from "@/lib/dateSpan";
+import { parse } from "@/lib/validation";
 import {
   isDataset,
   memberRows,
   donationRows,
   ageRows,
+  activityRows,
   sourceOf,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
+  ACTIVITY_HEADERS,
   FILENAMES,
   type Dataset,
 } from "@/lib/exportRows";
 import { withPerson } from "@/lib/person";
 
-async function buildCsv(dataset: Dataset): Promise<string> {
+async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
   if (dataset === "members") {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
@@ -86,6 +91,16 @@ async function buildCsv(dataset: Dataset): Promise<string> {
     );
   }
 
+  if (dataset === "activities") {
+    const { from, to } = parse(dateSpanSchema, {
+      from: req.nextUrl.searchParams.get("from"),
+      to: req.nextUrl.searchParams.get("to"),
+    });
+    const span = spanBounds(from, to);
+    const report = await activityFinanceReport(span.from, span.to);
+    return toCsv(ACTIVITY_HEADERS, activityRows(report.rows));
+  }
+
   return toCsv(AGE_HEADERS, ageRows(await getAgeStandings()));
 }
 
@@ -96,7 +111,7 @@ export const GET = withRoute(
     const { dataset } = await params;
     if (!isDataset(dataset)) throw new NotFoundError("لا يوجد تصدير بهذا الاسم");
 
-    const csv = await buildCsv(dataset);
+    const csv = await buildCsv(dataset, req);
     const day = new Date().toISOString().slice(0, 10);
 
     await logAction(session.username, "EXPORT_DATA", dataset, {

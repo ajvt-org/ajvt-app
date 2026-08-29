@@ -1,8 +1,13 @@
 import { memberStatusLabels } from "./messages";
 import type { AgeStanding } from "./ageStandings";
+import type { ActivityReportRow } from "./activityReport";
+import { activityReport } from "./texts/activityReport";
 
-export const DATASETS = ["members", "donations", "ages"] as const;
+export const DATASETS = ["members", "donations", "ages", "activities"] as const;
 export type Dataset = (typeof DATASETS)[number];
+
+export const PLAIN_DATASETS = ["members", "donations", "ages"] as const;
+export type PlainDataset = (typeof PLAIN_DATASETS)[number];
 
 export function isDataset(value: string): value is Dataset {
   return (DATASETS as readonly string[]).includes(value);
@@ -115,8 +120,37 @@ export function ageRows(standings: AgeStanding[]): (string | number)[][] {
   return standings.map((s) => [s.name, s.members, s.total, `${s.rate}%`]);
 }
 
+export const ACTIVITY_HEADERS = [
+  "النشاط",
+  "دخل",
+  "صرف",
+  "الرصيد",
+  "الحالة",
+  "الصرف حسب الوسم",
+  "الوصولات",
+];
+
+function balanceLabel(balance: number): string {
+  if (balance > 0) return activityReport.surplus;
+  if (balance < 0) return activityReport.deficit;
+  return activityReport.even;
+}
+
+export function activityRows(rows: ActivityReportRow[]): (string | number)[][] {
+  return rows.map((row) => [
+    row.title,
+    row.income,
+    row.spending,
+    row.balance,
+    balanceLabel(row.balance),
+    row.spendingByTag.map((t) => `${t.tag} ${t.amount}`).join(" / "),
+    row.receiptNumbers.join(" / "),
+  ]);
+}
+
 export const FILENAMES: Record<Dataset, string> = {
   members: "members",
   donations: "donations",
   ages: "age-groups",
+  activities: "activities",
 };
