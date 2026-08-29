@@ -14,6 +14,9 @@ import { seedTags, seedDonations, seedExpenses } from "./seed/finance";
 import { seedQuizSettings, seedQuestions, seedCompetitions } from "./seed/quiz";
 import { seedPlayedRounds, seedClosingSoon } from "./seed/quizPlay";
 import { seedSiteVisits, seedAuditLog, seedDeletedRecords } from "./seed/history";
+import { seedGroupsOfFour } from "./seed/groupsOfFour";
+import { seedForfeit } from "./seed/forfeit";
+import { seedOfficers, seedReceipts } from "./seed/receipts";
 import { writePlaceholders } from "./seed/images";
 
 const USERS = 246;
@@ -34,15 +37,20 @@ async function main() {
   const activities = await seedActivities();
   await seedRegistrations(activities, members.active, members.pending);
 
+  await seedOfficers();
+
   const league = await seedLeague(activities.league, members.active, users);
+  const forfeit = await seedForfeit(activities.league.id);
   const doubles = await seedDoubles(activities.doubles, members.active);
   const singles = await seedSingles(activities.dhamet, members.active);
   const cupTeams = await seedFinishedCup(activities.cup, members.active, users);
+  const groupsOfFour = await seedGroupsOfFour(members.active);
   await seedRosterRegistrations();
 
   const tags = await seedTags();
   const donations = await seedDonations(members.active, activities.health, tags);
   const expenses = await seedExpenses(activities.health, tags);
+  const receipts = await seedReceipts();
 
   await seedQuizSettings();
   const questions = await seedQuestions();
@@ -62,11 +70,15 @@ async function main() {
     members: members.all.length,
     active: members.active.length,
     pending: members.pending.length,
-    activities: 8,
-    teams: league.teams.length + doubles.length + singles.length + cupTeams.length,
+    activities: 9,
+    teams:
+      league.teams.length + doubles.length + singles.length + cupTeams.length + groupsOfFour.teams,
     matches: league.matchCount,
+    forfeit: forfeit ? "1 match awarded" : "none",
+    groupsOfFour: `${groupsOfFour.groups} groups, quarter final ready`,
     donations,
     expenses,
+    receipts,
     questions: questions.length,
   });
   console.log("Admins: admin / members / activities, password admin123");
