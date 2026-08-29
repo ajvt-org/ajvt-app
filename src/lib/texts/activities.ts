@@ -36,6 +36,7 @@ export const activityStandingTexts = {
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
   finished: "انتهى",
+  notScheduled: "غير مبرمج بعد",
 } as const;
 
 export const tournamentSetup = {

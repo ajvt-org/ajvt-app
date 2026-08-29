@@ -35,6 +35,17 @@ describe("ActivityRowBody", () => {
     expect(thumb.querySelector("svg")).not.toBeNull();
   });
 
+  it("takes the icon the caller names over the volunteer default", () => {
+    cleanup();
+    const { container: named } = render(<ActivityRowBody title="مسابقة" icon="quiz" />);
+    const path = named.querySelector(".activity-thumb svg path")?.getAttribute("d");
+    cleanup();
+    const { container: fallback } = render(<ActivityRowBody title="حملة" isVolunteer />);
+
+    expect(path).not.toBeUndefined();
+    expect(path).not.toBe(fallback.querySelector(".activity-thumb svg path")?.getAttribute("d"));
+  });
+
   it("shows the poster when there is one", () => {
     cleanup();
     const { container } = render(<ActivityRowBody title="بطولة" photo="poster.webp" />);
