@@ -46,6 +46,7 @@ export {
   receiptVerify,
 } from "./receipt";
 export { signUp } from "./signUp";
+export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
