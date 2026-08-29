@@ -13,7 +13,7 @@ const MEMBERSHIP = {
   memberId: "m1",
   userId: "u1",
   activity: null,
-  member: { user: { fullName: "محمد ولد أحمد" } },
+  user: { fullName: "محمد ولد أحمد" },
 };
 
 function fakeDb(payments: unknown[], settings: unknown = null) {
@@ -84,7 +84,7 @@ describe("issuing a receipt for a payment", () => {
   });
 
   it("leaves the account off a receipt for a payment with no account", async () => {
-    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, member: null }]);
+    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, user: null }]);
 
     await ensureReceiptsFor(db, {});
 
@@ -99,9 +99,17 @@ describe("issuing a receipt for a payment", () => {
     expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
   });
 
+  it("names the account over a donor name typed onto a linked payment", async () => {
+    const db = fakeDb([{ ...MEMBERSHIP, donorName: "ابو" }]);
+
+    await ensureReceiptsFor(db, {});
+
+    expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
+  });
+
   it("names an anonymous donor the way the board does", async () => {
     const db = fakeDb([
-      { ...MEMBERSHIP, purpose: "DONATION", year: null, anonymous: true, member: null },
+      { ...MEMBERSHIP, purpose: "DONATION", year: null, anonymous: true, user: null },
     ]);
 
     await ensureReceiptsFor(db, {});
@@ -111,7 +119,7 @@ describe("issuing a receipt for a payment", () => {
 
   it("falls back to the donor name typed in by hand", async () => {
     const db = fakeDb([
-      { ...MEMBERSHIP, purpose: "DONATION", year: null, member: null, donorName: "أحمد سالم" },
+      { ...MEMBERSHIP, purpose: "DONATION", year: null, user: null, donorName: "أحمد سالم" },
     ]);
 
     await ensureReceiptsFor(db, {});

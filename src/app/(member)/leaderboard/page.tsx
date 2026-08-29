@@ -14,15 +14,13 @@ async function getViewer() {
   const session = await getUserSession();
   if (!session) return null;
   const { userId } = session as { userId: string };
-  const members = await prisma.member.findMany({
+  const member = await prisma.member.findUnique({
     where: { userId },
     select: { id: true, status: true },
-    orderBy: { createdAt: "asc" },
   });
-  const active = members.find((m) => m.status === "ACTIVE");
   return {
-    memberIds: members.map((m) => m.id),
-    donateHref: active ? `/donate?memberId=${active.id}` : "/donate",
+    userId,
+    donateHref: member?.status === "ACTIVE" ? `/donate?memberId=${member.id}` : "/donate",
   };
 }
 
@@ -31,9 +29,7 @@ export default async function LeaderboardPage() {
   const viewer = await getViewer();
   const donateHref = viewer?.donateHref ?? "/donate";
 
-  const mine = viewer
-    ? leaderboard.filter((e) => e.memberIds.some((id) => viewer.memberIds.includes(id)))
-    : [];
+  const mine = viewer ? leaderboard.filter((e) => e.accountIds.includes(viewer.userId)) : [];
 
   return (
     <div className="app-shell">

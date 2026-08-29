@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { nameOf } from "./person";
+import { donorNameOnRecord } from "./donorName";
 
 export type ProofReuse = {
   kind: "member" | "donation" | "expense";
@@ -31,7 +32,12 @@ export async function findProofReuse(
     }),
     prisma.donation.findMany({
       where: { proof: { in: names } },
-      select: { id: true, donorName: true, createdAt: true },
+      select: {
+        id: true,
+        donorName: true,
+        createdAt: true,
+        user: { select: { fullName: true } },
+      },
     }),
     prisma.expense.findMany({
       where: { proof: { in: names } },
@@ -49,7 +55,7 @@ export async function findProofReuse(
     ...donations.map((d) => ({
       kind: "donation" as const,
       id: d.id,
-      label: d.donorName ?? "فاعل خير",
+      label: donorNameOnRecord(d),
       date: d.createdAt,
     })),
     ...expenses.map((e) => ({

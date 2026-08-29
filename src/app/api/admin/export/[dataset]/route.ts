@@ -58,7 +58,7 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
     const payments = await prisma.payment.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        member: { select: { user: { select: { fullName: true } } } },
+        user: { select: { fullName: true } },
         tags: { select: { name: true } },
       },
     });
@@ -73,7 +73,7 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
                 ? splitPayment(p.amount, p.feeApplied ?? 0).surplus
                 : p.amount,
             paymentMethod: p.method,
-            source: sourceOf(p.purpose, p.memberId),
+            source: sourceOf(p.purpose, p.userId),
           }))
           .filter((p) => p.purpose !== "MEMBERSHIP" || p.amount > 0),
       ),

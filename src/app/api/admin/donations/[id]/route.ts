@@ -11,6 +11,7 @@ import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveDonationActivity } from "@/lib/donationActivity";
+import { donorNameOnRecord } from "@/lib/donorName";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -137,7 +138,7 @@ export const PATCH = withRoute(
     const donation = await prisma.donation.update({
       where: { id },
       data,
-      include: { member: { select: { user: { select: { fullName: true } } } } },
+      include: { user: { select: { fullName: true } } },
     });
     await mirrorDonation(prisma, {
       donationId: donation.id,
@@ -164,7 +165,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donation.member?.user.fullName || existing.donorName || money.anonymousDonor,
+        donorNameOnRecord({ donorName: existing.donorName, user: donation.user }),
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
@@ -173,8 +174,8 @@ export const PATCH = withRoute(
         session.username,
         memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
         memberId
-          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.user.fullName}`
-          : existing.donorName || money.anonymousDonor,
+          ? `${donorNameOnRecord({ donorName: existing.donorName })} → ${donorNameOnRecord(donation)}`
+          : donorNameOnRecord({ donorName: existing.donorName }),
         {
           ...target,
           before: { memberId: existing.memberId },
@@ -190,23 +191,18 @@ export const PATCH = withRoute(
       paymentMethod !== undefined ||
       proof !== undefined
     ) {
-      await logAction(
-        session.username,
-        "UPDATE_DONATION",
-        donation.member?.user.fullName || donation.donorName || money.anonymousDonor,
-        {
-          ...target,
-          before: existing,
-          after: {
-            donorName: donation.donorName,
-            donorPhone: donation.donorPhone,
-            donorPhoto: donation.donorPhoto,
-            amount: donation.amount,
-            paymentMethod: donation.paymentMethod,
-            proof: donation.proof,
-          },
+      await logAction(session.username, "UPDATE_DONATION", donorNameOnRecord(donation), {
+        ...target,
+        before: existing,
+        after: {
+          donorName: donation.donorName,
+          donorPhone: donation.donorPhone,
+          donorPhoto: donation.donorPhoto,
+          amount: donation.amount,
+          paymentMethod: donation.paymentMethod,
+          proof: donation.proof,
         },
-      );
+      });
     }
 
     return NextResponse.json({ donation });
@@ -235,7 +231,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_DONATION",
-      `${existing.donorName || money.anonymousDonor} — ${existing.amount ?? 0} أوقية`,
+      `${donorNameOnRecord({ donorName: existing.donorName })} — ${existing.amount ?? 0} أوقية`,
       {
         ...auditContext(session, req),
         targetType: "Donation",

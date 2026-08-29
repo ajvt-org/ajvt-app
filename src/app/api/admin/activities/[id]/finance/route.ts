@@ -4,7 +4,8 @@ import { requireActivityFinanceAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { ledgerTotals, type LedgerInput } from "@/lib/activityLedger";
-import { activities, money } from "@/lib/messages";
+import { activities } from "@/lib/messages";
+import { donorNameOnRecord } from "@/lib/donorName";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/finance",
@@ -18,7 +19,13 @@ export const GET = withRoute(
     const [donations, expenses] = await Promise.all([
       prisma.donation.findMany({
         where: { activityId: id, status: "ACTIVE" },
-        select: { id: true, donorName: true, amount: true, createdAt: true },
+        select: {
+          id: true,
+          donorName: true,
+          amount: true,
+          createdAt: true,
+          user: { select: { fullName: true } },
+        },
       }),
       prisma.expense.findMany({
         where: { activityId: id },
@@ -30,7 +37,7 @@ export const GET = withRoute(
       ...donations.map((d) => ({
         id: d.id,
         kind: "income" as const,
-        label: d.donorName || money.anonymousDonor,
+        label: donorNameOnRecord(d),
         amount: d.amount ?? 0,
         date: d.createdAt.toISOString().slice(0, 10),
       })),

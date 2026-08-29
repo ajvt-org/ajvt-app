@@ -1,4 +1,6 @@
 import { memberStatusLabels } from "./messages";
+import { donorNameOnRecord } from "./donorName";
+import { nameOf } from "./person";
 import type { AgeStanding } from "./ageStandings";
 import type { ActivityReportRow } from "./activityReport";
 import { activityReport } from "./texts/activityReport";
@@ -43,13 +45,13 @@ export interface ExportableDonation {
   status: string;
   source: string;
   createdAt: Date;
-  member: { user: { fullName: string | null } } | null;
+  user: { fullName: string | null } | null;
   tags: { name: string }[];
 }
 
-export function sourceOf(purpose: string, memberId: string | null): string {
+export function sourceOf(purpose: string, accountId: string | null): string {
   if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
-  return memberId ? "SELF" : "PUBLIC";
+  return accountId ? "SELF" : "PUBLIC";
 }
 
 function day(date: Date): string {
@@ -102,13 +104,13 @@ export const DONATION_HEADERS = [
 
 export function donationRows(donations: ExportableDonation[]): (string | number)[][] {
   return donations.map((d) => [
-    d.donorName ?? "فاعل خير",
+    donorNameOnRecord(d),
     d.donorPhone ?? "",
     d.amount ?? 0,
     d.paymentMethod ?? "",
     STATUS_LABEL[d.status] ?? d.status,
     SOURCE_LABEL[d.source] ?? d.source,
-    d.member?.user.fullName ?? "",
+    d.user ? nameOf(d.user) : "",
     d.tags.map((t) => t.name).join(" / "),
     day(d.createdAt),
   ]);
