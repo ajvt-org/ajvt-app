@@ -6,26 +6,27 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { formatDate } from "@/lib/utils";
 import { villageField } from "@/lib/texts";
+import { nameOf } from "@/lib/person";
 
 export const dynamic = "force-dynamic";
 
 export default async function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  const member = await prisma.member.findUnique({
+  const person = await prisma.user.findUnique({
     where: { verifyToken: token },
     select: {
       fullName: true,
       age: true,
       village: true,
-      status: true,
       memberNumber: true,
-      createdAt: true,
       photo: true,
+      members: { select: { status: true, createdAt: true }, take: 1 },
     },
   });
 
-  const valid = !!member && member.status === "ACTIVE";
+  const member = person?.members[0];
+  const valid = !!person && member?.status === "ACTIVE";
 
   return (
     <div className="app-shell">
@@ -35,21 +36,21 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
         <>
           <div className="verify-hero">
             <div className="verify-avatar">
-              <PlayerAvatar photo={member.photo} fullName={member.fullName} size={92} bg="copper" />
+              <PlayerAvatar photo={person.photo} fullName={nameOf(person)} size={92} bg="copper" />
               <span className="verify-seal" role="img" aria-label="عضوية سارية">
                 <Icon name="check" size={16} color="#065f46" />
               </span>
             </div>
             <h2 className="font-black text-xl text-white">عضوية سارية المفعول</h2>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
-              {member.fullName}
+              {nameOf(person)}
             </p>
           </div>
 
           <dl className="flex-1 px-5 py-5 space-y-0">
-            <Row label="رقم العضوية" value={member.memberNumber || "—"} dir="ltr" />
-            <Row label={villageField.label} value={member.village} />
-            {member.age && <Row label="العصر" value={member.age} />}
+            <Row label="رقم العضوية" value={person.memberNumber || "—"} dir="ltr" />
+            <Row label={villageField.label} value={person.village} />
+            {person.age && <Row label="العصر" value={person.age} />}
             <Row label="عضو منذ" value={formatDate(member.createdAt)} />
           </dl>
 
