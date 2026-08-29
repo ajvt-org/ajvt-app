@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { accountsFor } from "./memberAccount";
 import { isVoteClosed, mvpWinner } from "./mvpVote";
 
 export type SettleableMatch = {
@@ -30,11 +31,15 @@ export async function settleMvpVotes(
   }
   if (applied.size === 0) return applied;
 
+  const accountOfMember = await accountsFor(prisma, [...applied.values()]);
   await prisma.$transaction(
     [...applied].map(([matchId, memberId]) =>
       prisma.match.updateMany({
         where: { id: matchId, manOfTheMatchId: null },
-        data: { manOfTheMatchId: memberId },
+        data: {
+          manOfTheMatchId: memberId,
+          manOfTheMatchUserId: accountOfMember.get(memberId) ?? null,
+        },
       }),
     ),
   );
