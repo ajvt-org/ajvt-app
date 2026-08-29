@@ -41,7 +41,7 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
   await prisma.$transaction(
     async (tx) => {
       const existing = await tx.activityRegistration.findUnique({
-        where: { memberId_activityId: { memberId, activityId } },
+        where: { userId_activityId: { userId: member.userId, activityId } },
         select: { status: true },
       });
       if (existing && existing.status !== "REJECTED") {
@@ -54,7 +54,7 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
         if (taken >= activity.capacity) throw new ConflictError(activities.noSeatsLeft);
       }
       await tx.activityRegistration.upsert({
-        where: { memberId_activityId: { memberId, activityId } },
+        where: { userId_activityId: { userId: member.userId, activityId } },
         update: { status, rejectionReason: null },
         create: { memberId, userId: member.userId, activityId, status },
       });
@@ -72,7 +72,7 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
 
-  await prisma.activityRegistration.deleteMany({ where: { memberId, activityId } });
+  await prisma.activityRegistration.deleteMany({ where: { userId: member.userId, activityId } });
 
   return NextResponse.json({ ok: true });
 });

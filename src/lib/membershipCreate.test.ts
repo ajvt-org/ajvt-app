@@ -59,13 +59,13 @@ describe("addMembership", () => {
     expect(db.user.update).not.toHaveBeenCalled();
   });
 
-  it("records the year once the payment is accepted", async () => {
+  it("records the year against the account, not the membership row", async () => {
     vi.mocked(recordMembershipYear).mockClear();
     const db = fakeDb();
 
     await addMembership(db as never, input({ status: "ACTIVE" }));
 
-    expect(recordMembershipYear).toHaveBeenCalledWith(db, "m1", 2026, 100, {
+    expect(recordMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, 100, {
       paidAmount: 100,
       paymentMethod: "بنكيلي",
       paymentProof: null,

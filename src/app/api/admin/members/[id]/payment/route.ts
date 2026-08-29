@@ -28,6 +28,7 @@ export const PUT = withRoute(
     const existing = await prisma.member.findUnique({
       where: { id },
       select: {
+        userId: true,
         membershipYear: true,
         paidAmount: true,
         paymentProof: true,
@@ -56,7 +57,7 @@ export const PUT = withRoute(
       if (amountTransferred !== undefined) {
         await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
       }
-      await syncMembershipRecord(tx, id, existing.membershipYear, {
+      await syncMembershipRecord(tx, existing.userId, existing.membershipYear, {
         ...(amountTransferred !== undefined
           ? {
               paidAmount:

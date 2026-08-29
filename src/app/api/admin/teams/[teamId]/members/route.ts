@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { accountOf } from "@/lib/memberAccount";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { teamIsFull } from "@/lib/teamSize";
@@ -35,7 +34,7 @@ export const POST = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id: memberId },
-      select: { status: true, user: { select: { fullName: true } } },
+      select: { userId: true, status: true, user: { select: { fullName: true } } },
     });
     if (!member) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
@@ -43,16 +42,17 @@ export const POST = withRoute(
     if (member.status === "REJECTED") {
       return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });
     }
+    const userId = member.userId;
 
     const registered = await prisma.activityRegistration.findUnique({
-      where: { memberId_activityId: { memberId, activityId: team.activityId } },
+      where: { userId_activityId: { userId, activityId: team.activityId } },
     });
     if (!registered) {
       return NextResponse.json({ error: "هذا العضو غير مسجل في هذه البطولة" }, { status: 400 });
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
-      where: { memberId, team: { activityId: team.activityId } },
+      where: { userId, team: { activityId: team.activityId } },
       select: { team: { select: { name: true } } },
     });
     if (existingMembership) {
@@ -65,7 +65,7 @@ export const POST = withRoute(
     }
 
     const teamMember = await prisma.teamMember.create({
-      data: { teamId, memberId, userId: await accountOf(prisma, memberId) },
+      data: { teamId, memberId, userId },
       select: {
         id: true,
         member: {

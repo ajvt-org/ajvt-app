@@ -17,12 +17,17 @@ export const GET = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { status: true, membershipYear: true, user: { select: { memberNumber: true } } },
+      select: {
+        userId: true,
+        status: true,
+        membershipYear: true,
+        user: { select: { memberNumber: true } },
+      },
     });
     if (!member) throw new NotFoundError(messages.notFound);
 
     const memberships = await prisma.membership.findMany({
-      where: { memberId: id },
+      where: { userId: member.userId },
       orderBy: { year: "desc" },
       select: {
         id: true,
@@ -37,7 +42,7 @@ export const GET = withRoute(
     });
 
     const payments = await prisma.payment.findMany({
-      where: { memberId: id, purpose: "MEMBERSHIP" },
+      where: { userId: member.userId, purpose: "MEMBERSHIP" },
       select: { amount: true, feeApplied: true, year: true },
     });
 

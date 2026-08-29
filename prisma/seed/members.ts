@@ -101,7 +101,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       referenceCode: member.referenceCode,
       surplusAnonymous: member.surplusAnonymous,
     };
-    await saveMembershipSnapshot(prisma, member.id, membershipYear, snapshot);
+    await saveMembershipSnapshot(prisma, member.userId, membershipYear, snapshot);
     if (isActive) {
       await prisma.membership.updateMany({
         where: { memberId: member.id, year: membershipYear },
@@ -112,16 +112,17 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     // A few members carry last year as well, so the years panel has a history
     // to show rather than a single row.
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
-      await saveMembershipSnapshot(prisma, member.id, current - 1, {
+      await saveMembershipSnapshot(prisma, member.userId, current - 1, {
         ...snapshot,
         referenceCode: null,
       });
       await prisma.membership.updateMany({
-        where: { memberId: member.id, year: current - 1 },
+        where: { userId: member.userId, year: current - 1 },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
       });
       await mirrorMembershipPayment(prisma, {
         memberId: member.id,
+        userId: member.userId,
         year: current - 1,
         amount: MEMBERSHIP_FEE,
         feeApplied: MEMBERSHIP_FEE,
@@ -136,6 +137,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
 
     await mirrorMembershipPayment(prisma, {
       memberId: member.id,
+      userId: member.userId,
       year: membershipYear,
       amount: member.paidAmount,
       feeApplied: MEMBERSHIP_FEE,

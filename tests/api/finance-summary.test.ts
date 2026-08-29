@@ -35,6 +35,7 @@ async function gift(amount: number, opts: { name?: string | null; method?: strin
     donorPhoto: null,
     donorPhone: null,
     memberId: null,
+    userId: null,
     activityId: null,
   });
   return donation;

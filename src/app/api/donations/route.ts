@@ -117,6 +117,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   });
   await mirrorDonation(prisma, {
     donationId: donation.id,
+    userId: donation.userId,
     amount,
     method: paymentMethod,
     proof: filename,

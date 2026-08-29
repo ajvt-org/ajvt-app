@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountOf } from "@/lib/memberAccount";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
@@ -37,7 +38,7 @@ export const POST = withRoute(
 
     if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
       const already = await prisma.activityRegistration.findUnique({
-        where: { memberId_activityId: { memberId, activityId: id } },
+        where: { userId_activityId: { userId: member.userId, activityId: id } },
       });
       if (!already) {
         return NextResponse.json({ error: "اكتمل عدد المسجلين في هذا النشاط" }, { status: 409 });
@@ -45,7 +46,7 @@ export const POST = withRoute(
     }
 
     const registration = await prisma.activityRegistration.upsert({
-      where: { memberId_activityId: { memberId, activityId: id } },
+      where: { userId_activityId: { userId: member.userId, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
       create: { memberId, userId: member.userId, activityId: id, status: "ACTIVE" },
     });
@@ -131,8 +132,8 @@ export const DELETE = withRoute(
     const session = await requireActivityAccess(id);
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
-    const existing = await prisma.activityRegistration.findUnique({
-      where: { memberId_activityId: { memberId, activityId: id } },
+    const existing = await prisma.activityRegistration.findFirst({
+      where: { userId: await accountOf(prisma, memberId), activityId: id },
       select: {
         id: true,
         status: true,

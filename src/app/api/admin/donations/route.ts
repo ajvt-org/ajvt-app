@@ -43,6 +43,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     donorPhoto: donation.donorPhoto,
     donorPhone: donation.donorPhone,
     memberId: donation.memberId,
+    userId: donation.userId,
     activityId: donation.activityId,
   });
   await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${n} أوقية`, {
