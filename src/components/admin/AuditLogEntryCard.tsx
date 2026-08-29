@@ -8,9 +8,6 @@ import { auditFieldLabel, auditTargetLabel, auditValueLabel } from "@/lib/auditF
 import { formatDateTime } from "@/lib/utils";
 import type { AuditLogEntry } from "./auditLogTypes";
 
-// The header is what every row has had since the log existed. Everything the
-// snapshot columns added sits behind the toggle, because most rows are read
-// as a list and only one at a time is read as a question.
 export default function AuditLogEntryCard({ log }: { log: AuditLogEntry }) {
   const [open, setOpen] = useState(false);
   const changes = auditDiff(log.before, log.after);

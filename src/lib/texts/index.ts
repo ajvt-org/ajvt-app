@@ -8,6 +8,7 @@ export {
 export { activityAttention } from "./activityAttention";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
+export { activityRegistration } from "./activityRegistration";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
@@ -18,6 +19,7 @@ export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
+export { filterSheet } from "./filterSheet";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";

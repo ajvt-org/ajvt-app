@@ -7,11 +7,6 @@ import { membershipState, type MembershipState } from "@/lib/membershipState";
 import { membershipStanding as texts } from "@/lib/texts";
 import type { MemberData } from "@/lib/useMember";
 
-// Where the member stands, said once at the top of /home.
-//
-// A member who is paid up for the year gets nothing: the card exists to
-// carry an action or news, and neither applies to them. Every other state
-// has one thing to do or one thing to know, and says which.
 type Tone = Exclude<MembershipState, "UP_TO_DATE">;
 
 const TONES: Record<Tone, { icon: IconName; bg: string; border: string; ink: string }> = {
@@ -28,8 +23,6 @@ export default function MembershipStanding({
   member: MemberData | null;
   currentYear: number | null;
 }) {
-  // Without the year there is no telling paid-up from behind, so say nothing
-  // rather than guess at the member's standing.
   if (currentYear === null) return null;
 
   const state = membershipState(member, currentYear);

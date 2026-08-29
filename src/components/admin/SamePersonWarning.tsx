@@ -17,8 +17,6 @@ type SamePerson = {
 const STATUS: Record<string, string> = memberStatusLabels;
 
 export default function SamePersonWarning({ memberId }: { memberId: string }) {
-  // Kept next to the member it belongs to, so moving to the next request shows
-  // nothing rather than the previous one's warning while its own is in the air.
   const [answer, setAnswer] = useState<{ memberId: string; rows: SamePerson[] } | null>(null);
 
   useEffect(() => {

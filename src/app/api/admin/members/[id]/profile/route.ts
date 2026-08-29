@@ -6,10 +6,6 @@ import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
-// Everything the association knows about one person, in one answer. The facts
-// live in five tables — the member, their activity registrations, their teams,
-// their donations and the audit trail — and until now no screen joined them,
-// so "has this person taken part before?" meant walking four tabs.
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -65,8 +61,6 @@ export const GET = withRoute(
 
     if (!member) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
-    // The trail is written with targetType/targetId, so a member's own history
-    // is a plain lookup rather than a scan of every line.
     const history = await prisma.auditLog.findMany({
       where: { targetType: "Member", targetId: id },
       orderBy: { createdAt: "desc" },

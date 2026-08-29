@@ -1,0 +1,18 @@
+export const activityRegistration = {
+  joinRequested: "تم إرسال طلب الانضمام — بانتظار موافقة المشرف",
+  requestCancelled: "تم إلغاء الطلب",
+  volunteered: "تم تسجيلك كمتطوع",
+  registered: "تم التسجيل في النشاط",
+  cancel: "إلغاء",
+  retry: "إعادة المحاولة",
+  volunteer: "تطوع",
+  register: "سجّل",
+  closed: "التسجيل مغلق",
+  full: "اكتمل العدد",
+  lastRejection: (reason: string) => `سبب الرفض السابق: ${reason}`,
+  yourTeam: "فريقك",
+  pickTeam: "اختر فريقك (اختياري)",
+  teamLocked: "تم التأكيد — لا يمكن تغييره",
+  awaitingApproval: "بانتظار الموافقة",
+  cancelRequest: "إلغاء الطلب",
+} as const;

@@ -5,9 +5,6 @@ import { withRoute } from "@/lib/route";
 import { activities as messages } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
 
-// One activity with everything hanging off it: who registered, which teams
-// were made, how many matches were played, and what has been changed about it.
-// The list screen could show none of this without opening five other tabs.
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/detail",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

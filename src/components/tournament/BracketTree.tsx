@@ -15,8 +15,6 @@ interface BracketMatch {
   status: "SCHEDULED" | "PLAYED";
 }
 
-// A shootout is shown in brackets beside the score it settled, otherwise a
-// tie carries a trophy with nothing on the card explaining it.
 const CARD_HEIGHT = 64;
 const CARD_GAP = 16;
 

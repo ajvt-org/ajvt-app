@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 
-// A number input that keeps what was typed rather than what the number reads
-// back as, so clearing it leaves it empty instead of snapping to 0 and putting
-// the next digit after it.
 export default function NumberField({
   id,
   value,

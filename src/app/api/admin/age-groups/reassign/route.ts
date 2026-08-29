@@ -5,9 +5,6 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { renameMemberAge } from "@/lib/ageGroups";
 
-// Moves the members stranded on an old age value onto a group that exists.
-// The target has to be a real group, otherwise this would just create a new
-// orphan under a different name.
 export const POST = withRoute("POST /api/admin/age-groups/reassign", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS");
   const { from, to } = await req.json();
