@@ -11,6 +11,7 @@ import type { ScoreCurve } from "@/lib/competitionConfig";
 import StandingsBoard, { type BoardRow } from "./StandingsBoard";
 import BoardTabs from "./BoardTabs";
 import MyScores from "./MyScores";
+import RoundRecap from "./RoundRecap";
 import ScoreFormula from "./ScoreFormula";
 import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
@@ -443,6 +444,8 @@ export default function CompetitionView({
             empty="لا ترتيب بعد"
           />
         )}
+
+        {competitionId && canPlay && <RoundRecap competitionId={competitionId} />}
 
         {competitionId && canPlay && <MyScores competitionId={competitionId} />}
 
