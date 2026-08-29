@@ -7,6 +7,8 @@ import { runningYear } from "../../src/lib/membershipYear";
 import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
+import { saveMembershipSnapshot } from "../../src/lib/membershipRecord";
+import { splitPayment } from "../../src/lib/membershipPayment";
 
 export type SeededUser = { id: string; phone: string | null };
 export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>> & {
@@ -21,6 +23,7 @@ export interface SeededMembers {
 }
 
 const NO_ACCOUNT_EVERY = 33;
+const RENEWED_EVERY = 3;
 const NO_PROOF_EVERY = 4;
 const PHOTO_EVERY = 2;
 
@@ -87,6 +90,49 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         createdAt: daysAgo(Math.max(1, 130 - i)),
       },
     });
+
+    const banked = splitPayment(member.paidAmount ?? 0, MEMBERSHIP_FEE).fee;
+    const snapshot = {
+      status,
+      rejectionReason: member.rejectionReason,
+      paidAmount: banked,
+      paymentMethod: member.paymentMethod,
+      paymentProof: member.paymentProof,
+      referenceCode: member.referenceCode,
+      surplusAnonymous: member.surplusAnonymous,
+    };
+    await saveMembershipSnapshot(prisma, member.id, membershipYear, snapshot);
+    if (isActive) {
+      await prisma.membership.updateMany({
+        where: { memberId: member.id, year: membershipYear },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
+      });
+    }
+
+    // A few members carry last year as well, so the years panel has a history
+    // to show rather than a single row.
+    if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
+      await saveMembershipSnapshot(prisma, member.id, current - 1, {
+        ...snapshot,
+        referenceCode: null,
+      });
+      await prisma.membership.updateMany({
+        where: { memberId: member.id, year: current - 1 },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
+      });
+      await mirrorMembershipPayment(prisma, {
+        memberId: member.id,
+        year: current - 1,
+        amount: MEMBERSHIP_FEE,
+        feeApplied: MEMBERSHIP_FEE,
+        method: member.paymentMethod,
+        proof: member.paymentProof,
+        status,
+        anonymous: member.surplusAnonymous,
+        donorName: fullName(i),
+        recordedBy: "admin",
+      });
+    }
 
     await mirrorMembershipPayment(prisma, {
       memberId: member.id,
