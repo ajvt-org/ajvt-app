@@ -151,3 +151,27 @@ export async function makeMember(data: Record<string, unknown>) {
     data: { ...membership, user: { create: person } } as never,
   });
 }
+
+export async function adminAddsMember(body: Record<string, unknown>) {
+  const { POST: ADD_PERSON } = await import("@/app/api/admin/people/route");
+  const { POST: ADD_PAYMENT } = await import("@/app/api/admin/people/[id]/membership/route");
+
+  const { paymentMethod, paymentProof, paidAmount, surplusAnonymous, status, ...person } = body;
+
+  const created = await ADD_PERSON(post("/api/admin/people", person));
+  if (created.status !== 201) return created;
+
+  const { person: saved } = await created.json();
+  if (!paymentMethod) return created;
+
+  return ADD_PAYMENT(
+    post(`/api/admin/people/${saved.id}/membership`, {
+      paymentMethod,
+      paymentProof,
+      paidAmount,
+      surplusAnonymous,
+      status: status ?? "PENDING",
+    }),
+    withId(saved.id),
+  );
+}

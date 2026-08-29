@@ -161,7 +161,7 @@ export default function BareAccountsSection({
 }: {
   users: BareAccount[];
   loading: boolean;
-  onFill: (phone: string) => void;
+  onFill: (person: { id: string; fullName: string }) => void;
   onChanged: () => Promise<void> | void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState<BareAccount | null>(null);
@@ -196,7 +196,7 @@ export default function BareAccountsSection({
           <Row
             key={user.id}
             user={user}
-            onFill={() => onFill(user.phone ?? "")}
+            onFill={() => onFill({ id: user.id, fullName: identify(user) })}
             onDelete={() => setConfirmDelete(user)}
           />
         ))

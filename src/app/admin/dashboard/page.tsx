@@ -82,7 +82,7 @@ function AdminDashboardInner() {
   const [showStats, setShowStats] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
-  const [manualAddPhone, setManualAddPhone] = useState("");
+  const [payFor, setPayFor] = useState<{ id: string; fullName: string } | null>(null);
   const bare = useBareAccounts();
   const [showAgeGroups, setShowAgeGroups] = useState(false);
   const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
@@ -355,8 +355,8 @@ function AdminDashboardInner() {
         <BareAccountsSection
           users={bare.users}
           loading={bare.loading}
-          onFill={(phone) => {
-            setManualAddPhone(phone);
+          onFill={(person) => {
+            setPayFor(person);
             setShowManualAdd(true);
           }}
           onChanged={bare.refresh}
@@ -499,7 +499,7 @@ function AdminDashboardInner() {
       {showManualAdd && (
         <ManualAddDialog
           ageGroups={ageGroups}
-          initialPhone={manualAddPhone || undefined}
+          payFor={payFor}
           onCreated={async () => {
             await fetchMembers();
             await bare.refresh();
@@ -514,7 +514,7 @@ function AdminDashboardInner() {
           }}
           onClose={() => {
             setShowManualAdd(false);
-            setManualAddPhone("");
+            setPayFor(null);
           }}
         />
       )}

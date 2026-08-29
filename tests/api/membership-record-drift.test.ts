@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { POST as REGISTER } from "@/app/api/members/route";
 import { PATCH as SELF_PATCH } from "@/app/api/members/[id]/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 import { PUT as EDIT_PAYMENT } from "@/app/api/admin/members/[id]/payment/route";
 import { saveAppSettings } from "@/lib/settingsServer";
@@ -17,6 +16,7 @@ import {
   signInAs,
   signInAsAdmin,
   withId,
+  adminAddsMember,
 } from "./helpers";
 
 const submission = {
@@ -146,16 +146,14 @@ describe("the membership year record follows the member it belongs to", () => {
   it("matches for a member an admin adds by hand", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "ACTIVE",
-        paidAmount: 300,
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "ACTIVE",
+      paidAmount: 300,
+    });
 
     await expectNoDrift((await prisma.member.findFirstOrThrow()).id);
   });
@@ -189,15 +187,13 @@ describe("the membership year record follows the member it belongs to", () => {
   it("never leaves a member without a record for the year they are on", async () => {
     await submitAs();
     await signInAsAdmin(await createAdmin());
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "PENDING",
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "PENDING",
+    });
 
     const members = await prisma.member.findMany();
     for (const member of members) {

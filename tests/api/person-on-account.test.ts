@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 import { PATCH as ADMIN_EDIT } from "@/app/api/admin/members/[id]/route";
 import { POST as LOGIN } from "@/app/api/auth/login/route";
 import { HOME_VILLAGE } from "@/lib/villages";
@@ -15,6 +14,7 @@ import {
   signInAs,
   signInAsAdmin,
   withId,
+  adminAddsMember,
 } from "./helpers";
 
 const submission = {
@@ -94,15 +94,13 @@ describe("the account carries the person", () => {
   it("gives a person an admin adds by hand an account of their own", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "ACTIVE",
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "ACTIVE",
+    });
 
     const member = await prisma.member.findFirstOrThrow();
     await expectNoDrift(member.id);
@@ -114,15 +112,13 @@ describe("the account carries the person", () => {
   it("leaves no member without an account", async () => {
     await submitAs();
     await signInAsAdmin(await createAdmin());
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "PENDING",
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "PENDING",
+    });
 
     for (const member of await prisma.member.findMany()) {
       expect(member.userId).toBeTruthy();

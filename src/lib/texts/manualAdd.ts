@@ -1,5 +1,11 @@
 export const manualAdd = {
-  title: "إضافة عضو يدوياً",
+  title: "إضافة شخص يدوياً",
+  personStep: "بيانات الشخص",
+  paymentStep: "الاشتراك",
+  personSubmit: "حفظ الشخص",
+  paymentSubmit: "تسجيل الاشتراك",
+  skipPayment: "بدون اشتراك الآن",
+  personSaved: "تم حفظ الشخص. سجّل اشتراكه الآن أو لاحقاً من قائمة الأشخاص بلا اشتراك.",
   phoneUnknown: "رقم الهاتف غير معروف — يُضاف لاحقاً",
   accountPhoneLabel: "رقم هاتف الحساب",
   accountPhoneHint: "إن لم يوجد حساب بهذا الرقم، سيُنشأ حساب جديد تلقائياً بكلمة مرور مؤقتة",
@@ -19,8 +25,8 @@ export const manualAdd = {
   statusPending: "قيد الانتظار",
   submit: "إنشاء العضو",
   submitUploading: "جاري رفع الصورة...",
-  created: "تم إنشاء العضو بنجاح",
+  created: "تمت الإضافة بنجاح",
   tempPasswordNote: "كلمة مرور الحساب الجديد — سلّمها للعضو",
   copy: "نسخ",
-  addAnother: "إضافة عضو آخر",
+  addAnother: "إضافة شخص آخر",
 } as const;
