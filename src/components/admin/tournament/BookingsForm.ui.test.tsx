@@ -26,6 +26,7 @@ const MATCH: Match = {
   homePenalties: null,
   awayPenalties: null,
   manOfTheMatch: null,
+  forfeitWinnerTeamId: null,
   status: "SCHEDULED",
   goals: [],
   penaltyKicks: [],

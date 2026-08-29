@@ -19,6 +19,7 @@ const MATCH: PublicMatch = {
   homePenalties: null,
   awayPenalties: null,
   status: "PLAYED",
+  forfeitWinnerTeamId: null,
   manOfTheMatch: null,
   goals: [],
   penaltyKicks: [],

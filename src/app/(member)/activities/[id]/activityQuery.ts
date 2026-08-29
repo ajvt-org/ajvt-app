@@ -56,6 +56,7 @@ async function loadActivity(id: string) {
           homePenalties: true,
           awayPenalties: true,
           status: true,
+          forfeitWinnerTeamId: true,
           manOfTheMatch: {
             select: { id: true, user: { select: { fullName: true, photo: true } } },
           },

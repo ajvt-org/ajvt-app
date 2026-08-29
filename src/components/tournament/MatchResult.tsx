@@ -9,6 +9,7 @@ import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline } from "@/lib/matchEvents";
+import { forfeitLoserTeamId } from "@/lib/forfeit";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
@@ -35,6 +36,9 @@ export default function MatchResult({
   const round = day.round ? null : match.round;
   const venue = day.venue ? null : match.venue;
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const hideGoalsOfTeamId = match.forfeitWinnerTeamId
+    ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.homeTeam.id, match.awayTeam.id)
+    : null;
 
   return (
     <div className="card p-4 space-y-2">
@@ -60,10 +64,15 @@ export default function MatchResult({
       {football && (
         <>
           <MatchEvents
-            rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id, manOfTheMatchTeam })}
+            rows={matchEventRows({
+              ...match,
+              homeTeamId: match.homeTeam.id,
+              manOfTheMatchTeam,
+              hideGoalsOfTeamId,
+            })}
           />
           <MatchTimeline
-            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
+            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id, hideGoalsOfTeamId })}
             teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
           />
         </>

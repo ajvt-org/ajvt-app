@@ -19,6 +19,7 @@ function match(): PublicMatch {
     homePenalties: null,
     awayPenalties: null,
     status: "PLAYED",
+    forfeitWinnerTeamId: null,
     manOfTheMatch: { id: "p1", fullName: "أحمد ولد محمد", photo: null },
     goals: [
       {
