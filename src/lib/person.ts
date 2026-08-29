@@ -68,3 +68,34 @@ export function withPerson<M extends { user: Person }>(
 export function nameOf(user: { fullName: string | null }): string {
   return user.fullName ?? "";
 }
+
+type WithUser<U> = { id: string; user: U };
+
+export function flatPerson<T extends WithUser<{ fullName: string | null; photo: string | null }>>(
+  row: T,
+): { id: string; fullName: string; photo: string | null } {
+  return { id: row.id, fullName: nameOf(row.user), photo: row.user.photo };
+}
+
+export function flatNamed<T extends WithUser<{ fullName: string | null }>>(
+  row: T,
+): { id: string; fullName: string } {
+  return { id: row.id, fullName: nameOf(row.user) };
+}
+
+export function flatPlayer<
+  T extends WithUser<{
+    fullName: string | null;
+    photo: string | null;
+    phone: string | null;
+    age: string | null;
+  }>,
+>(row: T): { id: string; fullName: string; phone: string; age: string; photo: string | null } {
+  return {
+    id: row.id,
+    fullName: nameOf(row.user),
+    phone: row.user.phone ?? "",
+    age: row.user.age ?? "",
+    photo: row.user.photo,
+  };
+}
