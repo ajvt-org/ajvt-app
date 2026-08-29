@@ -19,6 +19,24 @@ export const activityForm = {
   autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
 } as const;
 
+export const convertCampaign = {
+  heading: "وضع الحملة التطوعية",
+  hint: "حوّل النشاط إلى حملة تطوعية بمجموعة واتساب يلتحق بها المتطوعون.",
+  isCampaign: "النشاط حملة تطوعية.",
+  convert: "تحويل إلى حملة تطوعية",
+  confirm: "تأكيد التحويل",
+  unconvert: "إلغاء وضع الحملة",
+  dialogTitle: "تحويل إلى حملة تطوعية",
+  whatsappLabel: "رابط مجموعة الواتساب",
+  pendingHeading: (n: number) =>
+    n === 1 ? "طلب تسجيل واحد ما يزال في الانتظار" : `${n} طلبات تسجيل ما تزال في الانتظار`,
+  pendingHint: "الحملة التطوعية لا تدير طلبات التسجيل، فاحسم ما ينتظر قبل التحويل.",
+  acceptAll: "اقبلها كلها",
+  rejectAll: "ارفضها كلها",
+  converted: "أصبح النشاط حملة تطوعية",
+  unconverted: "لم يعد النشاط حملة تطوعية",
+} as const;
+
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
