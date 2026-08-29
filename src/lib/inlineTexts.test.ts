@@ -13,6 +13,7 @@ const KEPT_CLEAN = [
   "src/app/api/admin/settings",
   "src/app/receipt",
   "src/components/receipt",
+  "src/components/ActivityRegistrations.tsx",
   "src/components/MemberCard.tsx",
   "src/components/PaymentReceipts.tsx",
   "src/components/admin/shell/navTabs.ts",
