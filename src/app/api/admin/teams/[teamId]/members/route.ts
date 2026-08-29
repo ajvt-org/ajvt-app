@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountOf } from "@/lib/memberAccount";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { teamIsFull } from "@/lib/teamSize";
@@ -64,7 +65,7 @@ export const POST = withRoute(
     }
 
     const teamMember = await prisma.teamMember.create({
-      data: { teamId, memberId },
+      data: { teamId, memberId, userId: await accountOf(prisma, memberId) },
       select: {
         id: true,
         member: {

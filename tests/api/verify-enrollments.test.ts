@@ -30,8 +30,17 @@ async function competition(name: string, startsAt: Date) {
 }
 
 async function enrol(memberId: string, activityId: string, status = "ACTIVE") {
+  const owner = await prisma.member.findUniqueOrThrow({
+    where: { id: memberId },
+    select: { userId: true },
+  });
   return prisma.activityRegistration.create({
-    data: { memberId, activityId, status: status as "ACTIVE" | "PENDING" | "REJECTED" },
+    data: {
+      memberId,
+      userId: owner.userId,
+      activityId,
+      status: status as "ACTIVE" | "PENDING" | "REJECTED",
+    },
   });
 }
 

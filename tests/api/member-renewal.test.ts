@@ -64,7 +64,13 @@ describe("renewing a membership", () => {
   it("leaves the previous year readable beside the new one", async () => {
     const existing = await member();
     await prisma.membership.create({
-      data: { memberId: existing.id, year: LAST, paidAmount: 500, paymentMethod: "بنكيلي" },
+      data: {
+        memberId: existing.id,
+        userId: existing.userId,
+        year: LAST,
+        paidAmount: 500,
+        paymentMethod: "بنكيلي",
+      },
     });
 
     await renew(existing.id);
@@ -160,7 +166,7 @@ describe("reading a member's years", () => {
   it("lists the years newest first, with who took each payment", async () => {
     const existing = await member();
     await prisma.membership.create({
-      data: { memberId: existing.id, year: LAST, paidAmount: 500 },
+      data: { memberId: existing.id, userId: existing.userId, year: LAST, paidAmount: 500 },
     });
     await renew(existing.id);
 

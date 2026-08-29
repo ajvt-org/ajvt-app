@@ -189,12 +189,13 @@ describe("every path that touches money writes both shapes", () => {
       memberNumber: "AJVT-2025-0001",
     });
     await prisma.membership.create({
-      data: { memberId: m.id, year: YEAR - 1, paidAmount: 100 },
+      data: { memberId: m.id, userId: m.userId, year: YEAR - 1, paidAmount: 100 },
     });
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",
         memberId: m.id,
+        userId: m.userId,
         year: YEAR - 1,
         amount: 100,
         feeApplied: 100,

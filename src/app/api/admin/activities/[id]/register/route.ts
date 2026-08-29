@@ -20,7 +20,7 @@ export const POST = withRoute(
     const [member, activity] = await Promise.all([
       prisma.member.findUnique({
         where: { id: memberId },
-        select: { id: true, user: { select: { fullName: true } } },
+        select: { id: true, userId: true, user: { select: { fullName: true } } },
       }),
       prisma.activity.findUnique({
         where: { id },
@@ -47,7 +47,7 @@ export const POST = withRoute(
     const registration = await prisma.activityRegistration.upsert({
       where: { memberId_activityId: { memberId, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
-      create: { memberId, activityId: id, status: "ACTIVE" },
+      create: { memberId, userId: member.userId, activityId: id, status: "ACTIVE" },
     });
 
     await logAction(

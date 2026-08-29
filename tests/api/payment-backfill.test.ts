@@ -55,11 +55,18 @@ describe("the backfill onto the payment table", () => {
   it("merges a year's fee and its surplus into one payment", async () => {
     const m = await memberWith();
     await prisma.membership.create({
-      data: { memberId: m.id, year: YEAR, paidAmount: 100, paymentMethod: "بنكيلي" },
+      data: {
+        memberId: m.id,
+        userId: m.userId,
+        year: YEAR,
+        paidAmount: 100,
+        paymentMethod: "بنكيلي",
+      },
     });
     await prisma.donation.create({
       data: {
         memberId: m.id,
+        userId: m.userId,
         membershipYear: YEAR,
         source: "MEMBERSHIP",
         amount: 2000,
@@ -84,11 +91,12 @@ describe("the backfill onto the payment table", () => {
       [YEAR, 100, 900],
     ] as const) {
       await prisma.membership.create({
-        data: { memberId: m.id, year, paidAmount: fee, paymentMethod: "بنكيلي" },
+        data: { memberId: m.id, userId: m.userId, year, paidAmount: fee, paymentMethod: "بنكيلي" },
       });
       await prisma.donation.create({
         data: {
           memberId: m.id,
+          userId: m.userId,
           membershipYear: year,
           source: "MEMBERSHIP",
           amount: extra,
@@ -111,7 +119,9 @@ describe("the backfill onto the payment table", () => {
 
   it("carries an anonymous member's surplus across without their name", async () => {
     const m = await memberWith({ surplusAnonymous: true });
-    await prisma.membership.create({ data: { memberId: m.id, year: YEAR, paidAmount: 100 } });
+    await prisma.membership.create({
+      data: { memberId: m.id, userId: m.userId, year: YEAR, paidAmount: 100 },
+    });
     await prisma.donation.create({
       data: { memberId: m.id, membershipYear: YEAR, source: "MEMBERSHIP", amount: 500 },
     });
@@ -142,7 +152,9 @@ describe("the backfill onto the payment table", () => {
 
   it("reconciles against what the old tables report", async () => {
     const m = await memberWith();
-    await prisma.membership.create({ data: { memberId: m.id, year: YEAR, paidAmount: 100 } });
+    await prisma.membership.create({
+      data: { memberId: m.id, userId: m.userId, year: YEAR, paidAmount: 100 },
+    });
     await prisma.donation.create({
       data: { memberId: m.id, membershipYear: YEAR, source: "MEMBERSHIP", amount: 2000 },
     });
@@ -159,7 +171,9 @@ describe("the backfill onto the payment table", () => {
 
   it("notices when the two shapes disagree", async () => {
     const m = await memberWith();
-    await prisma.membership.create({ data: { memberId: m.id, year: YEAR, paidAmount: 100 } });
+    await prisma.membership.create({
+      data: { memberId: m.id, userId: m.userId, year: YEAR, paidAmount: 100 },
+    });
     await backfill();
 
     await prisma.payment.updateMany({ data: { amount: 999 } });
@@ -172,7 +186,9 @@ describe("the backfill onto the payment table", () => {
 
   it("writes nothing for a year that carries no money", async () => {
     const m = await memberWith({ paidAmount: null });
-    await prisma.membership.create({ data: { memberId: m.id, year: YEAR, paidAmount: null } });
+    await prisma.membership.create({
+      data: { memberId: m.id, userId: m.userId, year: YEAR, paidAmount: null },
+    });
 
     await backfill();
 

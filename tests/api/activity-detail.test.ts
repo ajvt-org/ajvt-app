@@ -40,11 +40,16 @@ describe("one activity with everything hanging off it", () => {
       status: "ACTIVE",
     });
     await prisma.activityRegistration.create({
-      data: { memberId: member.id, activityId: activity.id, status: "ACTIVE" },
+      data: {
+        memberId: member.id,
+        userId: member.userId,
+        activityId: activity.id,
+        status: "ACTIVE",
+      },
     });
     const team = await prisma.team.create({ data: { activityId: activity.id, name: "النجم" } });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId: member.id, status: "ACTIVE" },
+      data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
     });
 
     const body = await (await DETAIL(...ask(activity.id))).json();
@@ -68,6 +73,7 @@ describe("one activity with everything hanging off it", () => {
     await prisma.activityRegistration.create({
       data: {
         memberId: member.id,
+        userId: member.userId,
         activityId: activity.id,
         status: "PENDING",
         paymentProof: "proof-1.webp",

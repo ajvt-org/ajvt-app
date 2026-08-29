@@ -64,11 +64,18 @@ export const POST = withRoute(
       );
     }
 
+    const candidates = await prisma.member.findMany({
+      where: { id: { in: candidateMemberIds } },
+      select: { id: true, userId: true },
+    });
+
     const vote = await prisma.matchMvpVote.create({
       data: {
         matchId,
         closesAt: closesAtFrom(new Date(), minutes ?? match.activity.mvpVoteMinutes),
-        candidates: { create: candidateMemberIds.map((memberId) => ({ memberId })) },
+        candidates: {
+          create: candidates.map((m) => ({ memberId: m.id, userId: m.userId })),
+        },
       },
       include: VOTE_INCLUDE,
     });

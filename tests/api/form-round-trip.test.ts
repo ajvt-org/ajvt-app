@@ -31,7 +31,13 @@ async function overpaidMember() {
     memberNumber: "AJVT-2026-0001",
   });
   await prisma.membership.create({
-    data: { memberId: m.id, year: YEAR, paidAmount: 100, paymentMethod: "بنكيلي" },
+    data: {
+      memberId: m.id,
+      userId: m.userId,
+      year: YEAR,
+      paidAmount: 100,
+      paymentMethod: "بنكيلي",
+    },
   });
   const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
   await recordMembershipPayment(prisma, m.id, 2100, 100);
