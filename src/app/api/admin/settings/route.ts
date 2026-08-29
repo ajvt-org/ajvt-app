@@ -6,6 +6,7 @@ import { parse } from "@/lib/validation";
 import { getAppSettings, saveAppSettings } from "@/lib/settingsServer";
 import { appSettingsSchema } from "./schema";
 import { logger } from "@/lib/logger";
+import { settings } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/settings", async () => {
   await requireAdminRole();
@@ -22,7 +23,7 @@ export const PATCH = withRoute("PATCH /api/admin/settings", async (req: NextRequ
     by: session.username,
     membershipFee: { from: before.membershipFee, to: values.membershipFee },
   });
-  await logAction(session.username, "UPDATE_SETTINGS", `${values.membershipFee} أوقية`, {
+  await logAction(session.username, "UPDATE_SETTINGS", settings.feeAudit(values.membershipFee), {
     ...auditContext(session, req),
     targetType: "Settings",
     before,

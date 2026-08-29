@@ -1,9 +1,4 @@
-export const ouguiya = {
-  singular: "أوقية",
-  dual: "أوقيتان",
-  plural: "أوقيات",
-  one: "أوقية واحدة",
-} as const;
+import { ouguiya } from "./currency";
 
 export const receiptSheet = {
   org: "رابطة شباب قرية التاكلالت",

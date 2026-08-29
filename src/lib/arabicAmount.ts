@@ -1,5 +1,5 @@
 import { countCategory } from "./arabicCount";
-import { ouguiya } from "./texts/receipt";
+import { ouguiya } from "./texts/currency";
 import { numberToArabicWords, MAX_SPELLED } from "./arabicNumberWords";
 
 export const OUGUIYA = ouguiya;

@@ -7,6 +7,7 @@ import PageLoading from "@/components/PageLoading";
 import DataExport from "./DataExport";
 import SettingsFieldInput from "./SettingsFieldInput";
 import { SETTINGS_FIELDS } from "./settingsFields";
+import { settingsPage } from "@/lib/texts";
 
 export default function AdminSettingsPage() {
   const [values, setValues] = useState<AppSettingsValues>(defaultSettings());
@@ -47,7 +48,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="admin-page space-y-5">
       <h1 className="text-lg font-black" style={{ color: "var(--text-main)" }}>
-        إعدادات الرابطة
+        {settingsPage.title}
       </h1>
 
       <DataExport />
@@ -69,12 +70,12 @@ export default function AdminSettingsPage() {
         )}
         {saved && !error && (
           <p className="text-sm font-bold" style={{ color: "var(--mint-700)" }}>
-            تم الحفظ
+            {settingsPage.saved}
           </p>
         )}
 
         <button type="submit" disabled={saving} className="btn btn-primary">
-          {saving ? "جارٍ الحفظ..." : "حفظ"}
+          {saving ? settingsPage.saving : settingsPage.save}
         </button>
       </form>
     </div>

@@ -1,3 +1,14 @@
+export const settingsPage = {
+  title: "إعدادات الرابطة",
+  saved: "تم الحفظ",
+  save: "حفظ",
+  saving: "جارٍ الحفظ...",
+  exportTitle: "تصدير البيانات",
+  exportMembers: "الانتساب",
+  exportDonations: "الدعم",
+  exportAges: "الأعصار",
+} as const;
+
 export const settingsForm = {
   membershipFeeLabel: "رسم العضوية (أوقية)",
   membershipFeeHint: "المبلغ الأدنى المقبول في استمارة الانضمام.",

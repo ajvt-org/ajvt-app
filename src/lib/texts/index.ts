@@ -3,6 +3,7 @@ export { activityPage } from "./activityPage";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { adminTabs } from "./adminNav";
+export { ouguiya } from "./currency";
 export { discipline } from "./discipline";
 export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
@@ -19,7 +20,7 @@ export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoLock } from "./photoLock";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
-export { settingsForm } from "./settings";
+export { settingsForm, settingsPage } from "./settings";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,
