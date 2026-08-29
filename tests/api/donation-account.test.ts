@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import {
   resetDb,
@@ -11,6 +11,14 @@ import {
   makeMember,
   withId,
 } from "./helpers";
+
+vi.mock("@/lib/imageProcessing", async (orig) => {
+  const actual = await orig<typeof import("@/lib/imageProcessing")>();
+  return {
+    ...actual,
+    processImage: async () => ({ full: Buffer.from("f"), thumbnail: Buffer.from("t") }),
+  };
+});
 
 import { POST as GIVE } from "@/app/api/donations/route";
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
@@ -27,13 +35,15 @@ async function aMember(phone: string, name: string) {
   return { user, member };
 }
 
-function proofForm(memberId: string) {
+let seq = 0;
+
+function give(memberId: string) {
   const form = new FormData();
-  form.set("amount", "5000");
-  form.set("memberId", memberId);
-  form.set("paymentMethod", "بنكيلي");
-  form.set("file", new File([new Uint8Array([1, 2, 3])], "proof.png", { type: "image/png" }));
-  return form;
+  form.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
+  form.append("amount", "5000");
+  form.append("memberId", memberId);
+  form.append("paymentMethod", "بنكيلي");
+  return GIVE(postForm("/api/donations", form, { "x-forwarded-for": `10.0.1.${++seq}` }));
 }
 
 describe("the account behind a donation", () => {
@@ -45,7 +55,7 @@ describe("the account behind a donation", () => {
     const { user, member } = await aMember("22110011", "محمد ولد أحمد");
     await signInAs(user);
 
-    const res = await GIVE(postForm("/api/donations", proofForm(member.id)));
+    const res = await give(member.id);
     expect(res.status).toBe(201);
 
     const donation = await prisma.donation.findFirstOrThrow({ where: { memberId: member.id } });
@@ -56,7 +66,7 @@ describe("the account behind a donation", () => {
     const { user, member } = await aMember("22110022", "أحمد سالم");
     await signInAs(user);
 
-    await GIVE(postForm("/api/donations", proofForm(member.id)));
+    await give(member.id);
 
     const payment = await prisma.payment.findFirstOrThrow({ where: { memberId: member.id } });
     expect(payment.userId).toBe(user.id);
