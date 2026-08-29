@@ -5,4 +5,5 @@ export const receipts = {
   reasonTooLong: "موجب القبض طويل جداً (120 حرفاً كحد أقصى)",
   voidReasonRequired: "سبب الإلغاء مطلوب",
   notFound: "الوصل غير موجود أو ملغى من قبل",
+  withdrawnOnRefusal: "أُلغي الدفع بعد قبوله",
 } as const;

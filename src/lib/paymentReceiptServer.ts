@@ -3,7 +3,7 @@ import { receiptNumber } from "./officialReceipt";
 import { receiptTitle, type ReceiptPurpose } from "./receipts";
 import { generateVerifyToken } from "./verifyToken";
 import { nameOf } from "./person";
-import { money } from "./messages";
+import { money, receipts as receiptMessages } from "./messages";
 import { SETTINGS_ID } from "./settings";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -79,4 +79,34 @@ export async function ensureReceiptsFor(
     );
   }
   return issued;
+}
+
+export async function withdrawReceiptsFor(
+  db: Db,
+  where: Prisma.PaymentWhereInput,
+): Promise<number> {
+  const stale = await db.receipt.findMany({
+    where: {
+      status: "ACTIVE",
+      payment: { is: { ...where, status: { not: "ACTIVE" } } },
+    },
+    select: { id: true },
+  });
+  if (stale.length === 0) return 0;
+
+  const { count } = await db.receipt.updateMany({
+    where: { id: { in: stale.map((r) => r.id) } },
+    data: {
+      status: "VOID",
+      voidReason: receiptMessages.withdrawnOnRefusal,
+      voidedBy: ISSUED_BY,
+      voidedAt: new Date(),
+    },
+  });
+  return count;
+}
+
+export async function syncReceiptsFor(db: Db, where: Prisma.PaymentWhereInput) {
+  await withdrawReceiptsFor(db, where);
+  return ensureReceiptsFor(db, where);
 }
