@@ -6,10 +6,6 @@ import type { AgeGroup } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { MEMBER } from "@/lib/messages";
 
-// Two groups that mean the same thing end up side by side when a name is
-// added twice. Renaming one into the other is refused, the names collide,
-// so the members move across instead and the emptied group is deleted by
-// hand afterwards.
 export default function MoveAgeGroupMembers({
   group,
   ageGroups,

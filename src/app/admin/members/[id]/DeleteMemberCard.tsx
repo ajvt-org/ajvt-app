@@ -8,10 +8,6 @@ import { api, errorMessage } from "@/lib/api";
 import { RETENTION_DAYS } from "@/lib/deletedRecords";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
-// Two different deletions, told apart on the card rather than left to the
-// admin to work out. Refusing a payment never removes anyone, so removing a
-// person is its own action: it takes the account and the payment together
-// instead of leaving an account nobody can see behind a deleted request.
 type Target = "payment" | "person";
 
 export default function DeleteMemberCard({

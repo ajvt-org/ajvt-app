@@ -6,7 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import { STATUS_CLASS, STATUS_LABEL, type Activity, type EligibleMember } from "./activityTypes";
-import { memberActivities as texts } from "@/lib/texts";
+import { activityRegistration, memberActivities as texts } from "@/lib/texts";
 
 export default function ActivityRegistrations({
   member,
@@ -43,21 +43,21 @@ export default function ActivityRegistrations({
   function pickTeam(teamId: string) {
     return run(
       () => api.post(`/api/teams/${teamId}/join`, { memberId: member.id }),
-      "تم إرسال طلب الانضمام — بانتظار موافقة المشرف",
+      activityRegistration.joinRequested,
     );
   }
 
   function leaveTeam(teamId: string) {
     return run(
       () => api.del(`/api/teams/${teamId}/join`, { memberId: member.id }),
-      "تم إلغاء الطلب",
+      activityRegistration.requestCancelled,
     );
   }
 
   function register() {
     return run(
       () => api.post("/api/activities/register", { activityId: activity.id, memberId: member.id }),
-      activity.isVolunteer ? "تم تسجيلك كمتطوع" : "تم التسجيل في النشاط",
+      activity.isVolunteer ? activityRegistration.volunteered : activityRegistration.registered,
     );
   }
 
@@ -75,7 +75,7 @@ export default function ActivityRegistrations({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: member.id, activityId: activity.id }),
       });
-      showToast("تم إلغاء الطلب");
+      showToast(activityRegistration.requestCancelled);
       onReload();
     } catch {
       // best-effort — the member can just try again
@@ -96,7 +96,7 @@ export default function ActivityRegistrations({
               </span>
               {registration!.status === "PENDING" && (
                 <button onClick={cancelPending} className="font-bold" style={{ color: "#991b1b" }}>
-                  إلغاء
+                  {activityRegistration.cancel}
                 </button>
               )}
             </div>
@@ -113,23 +113,23 @@ export default function ActivityRegistrations({
               {busy ? (
                 "..."
               ) : registration?.status === "REJECTED" ? (
-                <IconLabel name="refresh">إعادة المحاولة</IconLabel>
+                <IconLabel name="refresh">{activityRegistration.retry}</IconLabel>
               ) : activity.isVolunteer ? (
-                <IconLabel name="handshake">تطوع</IconLabel>
+                <IconLabel name="handshake">{activityRegistration.volunteer}</IconLabel>
               ) : (
-                <IconLabel name="pencil">سجّل</IconLabel>
+                <IconLabel name="pencil">{activityRegistration.register}</IconLabel>
               )}
             </button>
           ) : (
             <span className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
-              {!activity.isOpen ? "التسجيل مغلق" : "اكتمل العدد"}
+              {!activity.isOpen ? activityRegistration.closed : activityRegistration.full}
             </span>
           )}
         </div>
 
         {registration?.status === "REJECTED" && registration.rejectionReason && (
           <p className="text-xs" style={{ color: "#991b1b" }}>
-            سبب الرفض السابق: {registration.rejectionReason}
+            {activityRegistration.lastRejection(registration.rejectionReason)}
           </p>
         )}
 
@@ -139,7 +139,9 @@ export default function ActivityRegistrations({
             <div className="mt-1.5">
               <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
                 <Icon name="flag" size={12} className="icon-inline" />{" "}
-                {team?.status === "ACTIVE" ? "فريقك:" : "اختر فريقك (اختياري):"}
+                {team?.status === "ACTIVE"
+                  ? `${activityRegistration.yourTeam}:`
+                  : `${activityRegistration.pickTeam}:`}
               </p>
               {team?.status === "ACTIVE" ? (
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -149,7 +151,7 @@ export default function ActivityRegistrations({
                     </IconLabel>
                   </span>
                   <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    تم التأكيد — لا يمكن تغييره
+                    {activityRegistration.teamLocked}
                   </span>
                 </div>
               ) : (
@@ -176,7 +178,7 @@ export default function ActivityRegistrations({
                   {team && (
                     <>
                       <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                        <IconLabel name="clock">بانتظار الموافقة</IconLabel>
+                        <IconLabel name="clock">{activityRegistration.awaitingApproval}</IconLabel>
                       </span>
                       <button
                         onClick={() => leaveTeam(team.teamId)}
@@ -184,7 +186,7 @@ export default function ActivityRegistrations({
                         className="text-xs font-bold"
                         style={{ color: "#991b1b" }}
                       >
-                        إلغاء الطلب
+                        {activityRegistration.cancelRequest}
                       </button>
                     </>
                   )}

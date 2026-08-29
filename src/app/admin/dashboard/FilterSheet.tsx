@@ -10,6 +10,7 @@ import DateRangeFilter from "./DateRangeFilter";
 import { standingLabel } from "./FilterChips";
 import { villageField, villagesDialog } from "@/lib/texts";
 import type { AgeGroup, Village } from "./types";
+import { filterSheet as texts } from "@/lib/texts";
 
 const STANDINGS = ["current", "former"];
 
@@ -59,7 +60,7 @@ export default function FilterSheet({
         className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
-        <DialogHeader title="تصفية القائمة" onClose={onClose} />
+        <DialogHeader title={texts.title} onClose={onClose} />
 
         <div className="p-5 space-y-4">
           <Field label={villageField.label}>
@@ -67,7 +68,7 @@ export default function FilterSheet({
               value={filters.village}
               onChange={(e) => onChange({ ...filters, village: e.target.value })}
               className="input input-sm w-full"
-              aria-label="تصفية حسب القرية"
+              aria-label={texts.byVillage}
             >
               <option value="">{villagesDialog.filterAll}</option>
               {villages.map((v) => (
@@ -79,14 +80,14 @@ export default function FilterSheet({
             </select>
           </Field>
 
-          <Field label="العصر">
+          <Field label={texts.age}>
             <select
               value={filters.age}
               onChange={(e) => onChange({ ...filters, age: e.target.value })}
               className="input input-sm w-full"
-              aria-label="تصفية حسب العصر"
+              aria-label={texts.byAge}
             >
-              <option value="">كل الأعصار</option>
+              <option value="">{texts.allAges}</option>
               {ageGroups.map((g) => (
                 <option key={g.id} value={g.name}>
                   {g.name}
@@ -95,14 +96,14 @@ export default function FilterSheet({
             </select>
           </Field>
 
-          <Field label="طريقة الدفع">
+          <Field label={texts.method}>
             <select
               value={filters.method}
               onChange={(e) => onChange({ ...filters, method: e.target.value })}
               className="input input-sm w-full"
-              aria-label="تصفية حسب طريقة الدفع"
+              aria-label={texts.byMethod}
             >
-              <option value="">كل طرق الدفع</option>
+              <option value="">{texts.allMethods}</option>
               {paymentMethods.map((method) => (
                 <option key={method} value={method}>
                   {method}
@@ -111,39 +112,39 @@ export default function FilterSheet({
             </select>
           </Field>
 
-          <Field label="المبلغ المدفوع">
+          <Field label={texts.paid}>
             <select
               value={filters.paid}
               onChange={(e) => onChange({ ...filters, paid: e.target.value })}
               className="input input-sm w-full"
-              aria-label="تصفية حسب المبلغ المدفوع"
+              aria-label={texts.byPaid}
             >
-              <option value="">كل المبالغ</option>
-              <option value="full">دفع كامل</option>
-              <option value="partial">دفع ناقص</option>
-              <option value="none">لم يدفع</option>
+              <option value="">{texts.allAmounts}</option>
+              <option value="full">{texts.paidFull}</option>
+              <option value="partial">{texts.paidPartial}</option>
+              <option value="none">{texts.paidNone}</option>
             </select>
           </Field>
 
           {years.length > 1 && (
-            <Field label="سنة العضوية">
+            <Field label={texts.membershipYear}>
               <select
                 value={filters.year}
                 onChange={(e) => onChange({ ...filters, year: e.target.value })}
                 className="input input-sm w-full"
-                aria-label="تصفية حسب سنة العضوية"
+                aria-label={texts.byYear}
               >
-                <option value="">كل السنوات</option>
+                <option value="">{texts.allYears}</option>
                 {years.map((year) => (
                   <option key={year} value={String(year)}>
-                    عضوية {year}
+                    {texts.yearOption(year)}
                   </option>
                 ))}
               </select>
             </Field>
           )}
 
-          <Field label="تاريخ الطلب">
+          <Field label={texts.requestDate}>
             <DateRangeFilter
               from={filters.from}
               to={filters.to}
@@ -151,7 +152,7 @@ export default function FilterSheet({
             />
           </Field>
 
-          <Field label={`عضوية ${year}`}>
+          <Field label={texts.membershipOf(year)}>
             <div className="flex gap-2">
               {STANDINGS.map((value) => {
                 const on = filters.standing === value;
@@ -187,11 +188,11 @@ export default function FilterSheet({
                   border: "1px solid var(--mint-100)",
                 }}
               >
-                <IconLabel name="close">إزالة التصفية</IconLabel>
+                <IconLabel name="close">{texts.clear}</IconLabel>
               </button>
             )}
             <button onClick={onClose} className="btn btn-primary btn-sm text-xs">
-              تم
+              {texts.done}
             </button>
           </div>
         </div>

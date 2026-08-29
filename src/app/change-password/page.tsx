@@ -8,12 +8,6 @@ import PageHeader from "@/components/PageHeader";
 import { api, errorMessage } from "@/lib/api";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
-// Where a temporary password lands. No tab bar and no way back on purpose: the
-// account is locked to this screen until the password is replaced. The old one
-// is not asked for, since it was typed minutes ago to get here.
-//
-// Signing out is the one other way off the page, or someone handed a temporary
-// password for the wrong account would be stuck on it.
 const MIN_LENGTH = MIN_PASSWORD_LENGTH;
 
 export default function ChangePasswordPage() {
