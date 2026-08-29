@@ -1,0 +1,18 @@
+export const signUp = {
+  title: "إنشاء حساب",
+  lead: "حسابك يحمل اسمك وقريتك. الانتساب دفعة تأتي بعده.",
+  stepCredentials: "رقم الهاتف وكلمة المرور",
+  stepPerson: "من أنت",
+  passwordLabel: "كلمة المرور",
+  confirmLabel: "تأكيد كلمة المرور",
+  passwordPlaceholder: "••••••••",
+  photoLabel: "الصورة الشخصية (اختياري)",
+  photoNote: "يمكنك إضافتها الآن أو لاحقاً من صفحتك الشخصية",
+  next: "التالي",
+  back: "السابق",
+  submit: "إنشاء الحساب",
+  submitting: "جاري الإنشاء...",
+  haveAccount: "لديك حساب؟",
+  signIn: "تسجيل الدخول",
+  passwordMismatch: "كلمتا المرور غير متطابقتين",
+} as const;
