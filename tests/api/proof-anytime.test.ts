@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
-import { resetDb, post, put, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, put, createAdmin, signInAsAdmin, withId, adminAddsMember } from "./helpers";
 
 const manual = {
   accountPhone: "22334455",
@@ -14,7 +13,7 @@ const manual = {
 };
 
 async function addedByHand(over: Record<string, unknown> = {}) {
-  await ADMIN_ADD(post("/api/admin/members", { ...manual, ...over }));
+  await adminAddsMember({ ...manual, ...over });
   return prisma.member.findFirstOrThrow();
 }
 

@@ -1,11 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
-import { resetDb, post, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  createUser,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  adminAddsMember,
+} from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -117,16 +124,14 @@ describe("the year record a membership request opens", () => {
   it("is written for a member an admin adds as already active", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "ACTIVE",
-        paidAmount: 300,
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "ACTIVE",
+      paidAmount: 300,
+    });
 
     const member = await prisma.member.findFirstOrThrow();
     const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
@@ -137,15 +142,13 @@ describe("the year record a membership request opens", () => {
   it("waits on a decision for a member an admin adds as still waiting", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "PENDING",
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "PENDING",
+    });
 
     const record = await prisma.membership.findFirstOrThrow();
     expect(record.status).toBe("PENDING");

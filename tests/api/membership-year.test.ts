@@ -10,10 +10,10 @@ import {
   signInAs,
   signInAsAdmin,
   makeMember,
+  adminAddsMember,
 } from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -43,15 +43,13 @@ describe("the year a membership covers", () => {
     await saveAppSettings({ membershipYear: pinned });
     await signInAsAdmin(await createAdmin());
 
-    const res = await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        phoneUnknown: true,
-        status: "ACTIVE",
-      }),
-    );
+    const res = await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      phoneUnknown: true,
+      status: "ACTIVE",
+    });
 
     expect(res.status).toBe(201);
     expect((await prisma.member.findFirstOrThrow()).membershipYear).toBe(pinned);

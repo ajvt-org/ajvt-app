@@ -28,7 +28,10 @@ function account(over: Partial<BareAccount> = {}): BareAccount {
 
 function renderSection(
   users: BareAccount[],
-  over: Partial<{ onFill: (phone: string) => void; onChanged: () => void }> = {},
+  over: Partial<{
+    onFill: (person: { id: string; fullName: string }) => void;
+    onChanged: () => void;
+  }> = {},
 ) {
   cleanup();
   render(
@@ -99,13 +102,13 @@ describe("BareAccountsSection", () => {
     expect(screen.queryByText("تذكير")).toBeNull();
   });
 
-  it("hands the phone over to prefill the manual add", () => {
+  it("hands the person over so the payment can be added to them", () => {
     const onFill = vi.fn();
     renderSection([account()], { onFill });
 
     fireEvent.click(screen.getByText("إضافة طلب"));
 
-    expect(onFill).toHaveBeenCalledWith("36000001");
+    expect(onFill).toHaveBeenCalledWith({ id: "u1", fullName: "محمد ولد أحمد" });
   });
 
   it("deletes only after the name is typed back", async () => {
