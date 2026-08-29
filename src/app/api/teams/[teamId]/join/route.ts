@@ -31,7 +31,7 @@ export const POST = withRoute(
     }
 
     const registered = await prisma.activityRegistration.findUnique({
-      where: { memberId_activityId: { memberId, activityId: team.activityId } },
+      where: { userId_activityId: { userId: session.userId, activityId: team.activityId } },
     });
     if (!registered || registered.status !== "ACTIVE") {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export const POST = withRoute(
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
-      where: { memberId, team: { activityId: team.activityId } },
+      where: { userId: session.userId, team: { activityId: team.activityId } },
       select: { id: true, teamId: true, status: true },
     });
     if (existingMembership?.teamId === teamId) {
@@ -83,7 +83,7 @@ export const DELETE = withRoute(
     }
 
     const existing = await prisma.teamMember.findUnique({
-      where: { teamId_memberId: { teamId, memberId } },
+      where: { teamId_userId: { teamId, userId: session.userId } },
       select: { status: true },
     });
     if (existing?.status === "ACTIVE") {
@@ -93,7 +93,7 @@ export const DELETE = withRoute(
       );
     }
 
-    await prisma.teamMember.deleteMany({ where: { teamId, memberId } });
+    await prisma.teamMember.deleteMany({ where: { teamId, userId: session.userId } });
 
     return NextResponse.json({ ok: true });
   },

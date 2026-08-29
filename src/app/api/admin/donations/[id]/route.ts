@@ -137,6 +137,7 @@ export const PATCH = withRoute(
       donorPhone: donation.donorPhone,
       tagIds,
       memberId: donation.memberId,
+      userId: donation.userId,
       activityId: donation.activityId,
     });
 

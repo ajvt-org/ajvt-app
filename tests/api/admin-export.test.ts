@@ -66,6 +66,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       donorPhoto: null,
       donorPhone: null,
       memberId: null,
+      userId: null,
       activityId: null,
       tagIds: [tag.id],
     });

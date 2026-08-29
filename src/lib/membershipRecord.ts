@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
 import { splitPayment } from "./membershipPayment";
 import { stampRecordedBy } from "./paymentMirror";
-import { accountOf } from "./memberAccount";
+import { memberOf } from "./memberAccount";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -21,13 +21,13 @@ export function membershipEdit(data: MembershipEdit): MembershipEdit {
 
 export async function syncMembershipRecord(
   db: Db,
-  memberId: string,
+  userId: string,
   year: number,
   data: MembershipEdit,
 ) {
   const edit = membershipEdit(data);
   if (Object.keys(edit).length === 0) return;
-  await db.membership.updateMany({ where: { memberId, year }, data: edit });
+  await db.membership.updateMany({ where: { userId, year }, data: edit });
 }
 
 export interface MembershipYearPayment {
@@ -39,7 +39,7 @@ export interface MembershipYearPayment {
 
 export async function recordMembershipYear(
   db: Db,
-  memberId: string,
+  userId: string,
   year: number,
   fee: number,
   payment: MembershipYearPayment,
@@ -47,11 +47,11 @@ export async function recordMembershipYear(
   const paidAmount = payment.paidAmount === null ? null : splitPayment(payment.paidAmount, fee).fee;
 
   await db.membership.upsert({
-    where: { memberId_year: { memberId, year } },
+    where: { userId_year: { userId, year } },
     update: {},
     create: {
-      memberId,
-      userId: await accountOf(db, memberId),
+      memberId: await memberOf(db, userId),
+      userId,
       year,
       status: "ACTIVE",
       paidAmount,
@@ -64,10 +64,10 @@ export async function recordMembershipYear(
 
   if (payment.recordedBy) {
     await db.membership.updateMany({
-      where: { memberId, year, recordedBy: null },
+      where: { userId, year, recordedBy: null },
       data: { recordedBy: payment.recordedBy },
     });
-    await stampRecordedBy(db, memberId, year, payment.recordedBy);
+    await stampRecordedBy(db, userId, year, payment.recordedBy);
   }
 }
 
@@ -79,13 +79,13 @@ export interface MembershipVerdict {
 
 export async function setMembershipStatus(
   db: Db,
-  memberId: string,
+  userId: string,
   year: number,
   verdict: MembershipVerdict,
   now: Date,
 ) {
   await db.membership.updateMany({
-    where: { memberId, year },
+    where: { userId, year },
     data: {
       status: verdict.status,
       rejectionReason: verdict.rejectionReason ?? null,
@@ -106,13 +106,13 @@ export interface MembershipSnapshot {
 
 export async function saveMembershipSnapshot(
   db: Db,
-  memberId: string,
+  userId: string,
   year: number,
   snapshot: MembershipSnapshot,
 ) {
   await db.membership.upsert({
-    where: { memberId_year: { memberId, year } },
+    where: { userId_year: { userId, year } },
     update: snapshot,
-    create: { memberId, userId: await accountOf(db, memberId), year, ...snapshot },
+    create: { memberId: await memberOf(db, userId), userId, year, ...snapshot },
   });
 }

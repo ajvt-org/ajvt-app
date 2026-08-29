@@ -28,7 +28,7 @@ export const POST = withRoute(
     }
 
     const inRoster = await prisma.teamMember.findUnique({
-      where: { teamId_memberId: { teamId, memberId } },
+      where: { teamId_userId: { teamId, userId: await accountOf(prisma, memberId) } },
     });
     if (!inRoster) {
       return NextResponse.json({ error: tournament.playerNotInTeam }, { status: 400 });

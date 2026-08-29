@@ -23,9 +23,14 @@ function memberOnLastYear() {
 }
 
 async function lastYearSurplus(memberId: string, amount: number) {
+  const { userId } = await prisma.member.findUniqueOrThrow({
+    where: { id: memberId },
+    select: { userId: true },
+  });
   const donation = await prisma.donation.create({
     data: {
       memberId,
+      userId,
       membershipYear: LAST,
       source: "MEMBERSHIP",
       amount,
@@ -35,6 +40,7 @@ async function lastYearSurplus(memberId: string, amount: number) {
   });
   await mirrorMembershipPayment(prisma, {
     memberId,
+    userId,
     year: LAST,
     amount: 100 + amount,
     feeApplied: 100,

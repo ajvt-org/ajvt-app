@@ -20,11 +20,18 @@ async function gift(
   opts: { name?: string | null; memberId?: string; status?: "ACTIVE" | "PENDING" } = {},
 ) {
   const status = opts.status ?? "ACTIVE";
+  const owner = opts.memberId
+    ? await prisma.member.findUniqueOrThrow({
+        where: { id: opts.memberId },
+        select: { userId: true },
+      })
+    : null;
   const donation = await prisma.donation.create({
     data: {
       amount,
       donorName: opts.name ?? null,
       memberId: opts.memberId ?? null,
+      userId: owner?.userId ?? null,
       status,
       source: opts.memberId ? "SELF" : "PUBLIC",
     },
@@ -39,6 +46,7 @@ async function gift(
     donorPhoto: null,
     donorPhone: null,
     memberId: donation.memberId,
+    userId: donation.userId,
     activityId: null,
   });
   return donation;
@@ -176,6 +184,7 @@ describe("the supporters board", () => {
       donorPhoto: "guest.webp",
       donorPhone: null,
       memberId: null,
+      userId: null,
       activityId: null,
     });
 

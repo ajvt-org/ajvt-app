@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountOf } from "@/lib/memberAccount";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -15,7 +16,7 @@ export const PATCH = withRoute(
     const session = await requireTeamAccess(teamId);
 
     const existing = await prisma.teamMember.findUnique({
-      where: { teamId_memberId: { teamId, memberId } },
+      where: { teamId_userId: { teamId, userId: await accountOf(prisma, memberId) } },
       select: {
         id: true,
         status: true,
@@ -58,7 +59,7 @@ export const DELETE = withRoute(
     const session = await requireTeamAccess(teamId);
 
     const existing = await prisma.teamMember.findUnique({
-      where: { teamId_memberId: { teamId, memberId } },
+      where: { teamId_userId: { teamId, userId: await accountOf(prisma, memberId) } },
       select: {
         id: true,
         status: true,

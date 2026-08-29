@@ -68,7 +68,7 @@ export const POST = withRoute(
         },
       });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
-      await stampRecordedBy(tx, id, membershipYear, session.username);
+      await stampRecordedBy(tx, member.userId, membershipYear, session.username);
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 

@@ -54,7 +54,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     });
     if (issued) await tx.user.update({ where: { id: m.userId }, data: issued });
     if (action === "ACTIVE") {
-      await recordMembershipYear(tx, id, m.membershipYear, membershipFee, {
+      await recordMembershipYear(tx, m.userId, m.membershipYear, membershipFee, {
         paidAmount: m.paidAmount,
         paymentMethod: m.paymentMethod,
         paymentProof: m.paymentProof,
