@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
+import { flatNamed, flatPerson } from "@/lib/person";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -64,6 +66,27 @@ const MATCH_INCLUDE = {
   },
 } as const;
 
+type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
+
+function flatMatch(match: LoadedMatch) {
+  return {
+    ...match,
+    manOfTheMatch: match.manOfTheMatch ? flatPerson(match.manOfTheMatch) : null,
+    goals: match.goals.map((g) => ({ ...g, member: g.member ? flatPerson(g.member) : null })),
+    penaltyKicks: match.penaltyKicks.map((k) => ({
+      ...k,
+      member: k.member ? flatPerson(k.member) : null,
+    })),
+    bookings: match.bookings.map((b) => ({ ...b, member: flatPerson(b.member) })),
+    mvpVote: match.mvpVote
+      ? {
+          ...match.mvpVote,
+          candidates: match.mvpVote.candidates.map((c) => ({ ...c, member: flatNamed(c.member) })),
+        }
+      : null,
+  };
+}
+
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/matches",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -84,7 +107,7 @@ export const GET = withRoute(
     const applied = await settleMvpVotes(matches);
 
     return NextResponse.json({
-      matches: applied.size > 0 ? await read() : matches,
+      matches: (applied.size > 0 ? await read() : matches).map(flatMatch),
       mvpVoteMinutes: activity?.mvpVoteMinutes ?? DEFAULT_MVP_VOTE_MINUTES,
     });
   },
