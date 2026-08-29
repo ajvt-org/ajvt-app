@@ -13,6 +13,7 @@ export const ACTION_LABELS: Record<string, string> = {
   VOID_RECEIPT: "إلغاء وصل قبض",
   UPDATE_ADMIN_ACTIVITIES: "تحديد أنشطة مشرف",
   CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",
+  CREATE_PERSON: "إضافة شخص يدوياً",
   RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
   CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
   CREATE_ADMIN: "إنشاء حساب مشرف",
