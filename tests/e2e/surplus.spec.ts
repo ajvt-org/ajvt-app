@@ -73,7 +73,7 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
   await adminPage.goto("/admin/dashboard");
 
   await adminPage.getByText(MEMBER.fullName).first().click();
-  await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
+  await adminPage.getByRole("button", { name: "قبول الدفع", exact: true }).click();
   await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
 
   async function board() {
