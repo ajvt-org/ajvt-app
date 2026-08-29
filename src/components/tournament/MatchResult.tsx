@@ -47,7 +47,9 @@ export default function MatchResult({
           round={round}
           venue={venue}
           penalties={
-            match.homePenalties !== null && match.awayPenalties !== null
+            match.forfeitWinnerTeamId === null &&
+            match.homePenalties !== null &&
+            match.awayPenalties !== null
               ? { home: match.homePenalties, away: match.awayPenalties }
               : null
           }
