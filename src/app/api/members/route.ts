@@ -76,7 +76,13 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
             membershipYear,
           },
         });
-        await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee, surplusAnonymous);
+        await recordMembershipPayment(
+          tx,
+          created.id,
+          Number(paidAmount),
+          membershipFee,
+          surplusAnonymous,
+        );
         return created;
       });
       return NextResponse.json(
