@@ -1,4 +1,10 @@
-export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
+export {
+  activityForm,
+  activityRow,
+  activityStandingTexts,
+  convertCampaign,
+  tournamentSetup,
+} from "./activities";
 export { activityAttention } from "./activityAttention";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
