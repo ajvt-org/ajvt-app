@@ -18,6 +18,16 @@ function endTime(activity: OrderedActivity): number {
   return end ? new Date(end).getTime() : 0;
 }
 
+export type ActivityStage = "live" | "upcoming" | "undatedOpen" | "undatedClosed" | "finished";
+
+const STAGE_KEYS: ActivityStage[] = [
+  "live",
+  "upcoming",
+  "undatedOpen",
+  "undatedClosed",
+  "finished",
+];
+
 export function activityRank(activity: OrderedActivity, now = new Date()): [number, number] {
   const standing = activityStanding(activity, now);
   if (!standing) return [activity.isOpen ? UNDATED_OPEN : UNDATED_CLOSED, 0];
@@ -37,4 +47,8 @@ export function sortActivities<T extends OrderedActivity>(rows: T[], now = new D
         a.index - b.index,
     )
     .map((entry) => entry.row);
+}
+
+export function activityStage(activity: OrderedActivity, now = new Date()): ActivityStage {
+  return STAGE_KEYS[activityRank(activity, now)[0]];
 }

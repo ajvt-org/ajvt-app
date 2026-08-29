@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import PageLoading from "@/components/PageLoading";
 import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
@@ -20,7 +21,7 @@ import NewActivityDialog from "./NewActivityDialog";
 
 function AdminActivitiesPageInner() {
   const { activities, loading, reload } = useActivitiesData();
-  const actions = useActivityActions(activities, reload);
+  const actions = useActivityActions(reload);
   const [showCreate, setShowCreate] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
@@ -31,7 +32,6 @@ function AdminActivitiesPageInner() {
   if (loading) return <PageLoading />;
 
   const visible = activities.filter((a) => matchesActivitiesView(a, filters));
-  const unfiltered = !filters.q.trim() && !filters.kind;
 
   return (
     <div className="admin-page space-y-3">
@@ -49,6 +49,13 @@ function AdminActivitiesPageInner() {
           className="input input-sm flex-1"
           style={{ background: "white", minWidth: "10rem" }}
         />
+        <Link
+          href="/admin/activities/order"
+          className="btn btn-sm text-xs font-bold"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <IconLabel name="list">{texts.arrangeLink}</IconLabel>
+        </Link>
         <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-sm text-xs">
           <IconLabel name="plus">إضافة نشاط</IconLabel>
         </button>
@@ -87,29 +94,10 @@ function AdminActivitiesPageInner() {
         </div>
       ) : (
         <div className="space-y-2">
-          {visible.map((a) => {
-            const index = activities.indexOf(a);
-            return (
-              <ActivityRow
-                key={a.id}
-                activity={a}
-                canReorder={
-                  unfiltered ? { up: index > 0, down: index < activities.length - 1 } : null
-                }
-                reorderLoading={actions.reorderLoading}
-                onMove={(direction) =>
-                  actions.moveActivity(index, direction === -1 ? "up" : "down")
-                }
-              />
-            );
-          })}
+          {visible.map((a) => (
+            <ActivityRow key={a.id} activity={a} />
+          ))}
         </div>
-      )}
-
-      {unfiltered && activities.length > 1 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.orderHint}
-        </p>
       )}
 
       {showCreate && (

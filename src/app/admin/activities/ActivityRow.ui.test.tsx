@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ActivityRow from "./ActivityRow";
 import type { Activity } from "./activityTypes";
@@ -27,14 +27,7 @@ function activity(over: Partial<Activity> = {}): Activity {
 }
 
 function show(over: Partial<Activity> = {}) {
-  render(
-    <ActivityRow
-      activity={activity(over)}
-      canReorder={null}
-      reorderLoading={false}
-      onMove={vi.fn()}
-    />,
-  );
+  render(<ActivityRow activity={activity(over)} />);
 }
 
 describe("what an activity row says is waiting", () => {
