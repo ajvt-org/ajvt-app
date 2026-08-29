@@ -3,9 +3,6 @@
 import { Children, useState, type ReactNode } from "react";
 import IconLabel from "@/components/IconLabel";
 
-// A leaderboard runs as long as the squad list does. The rows are already on
-// the page, so paging here is only about how much is put in front of a reader
-// at once, and a press costs no request.
 export default function PagedList({
   children,
   pageSize = 10,

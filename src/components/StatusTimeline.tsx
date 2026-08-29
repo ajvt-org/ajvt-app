@@ -9,12 +9,6 @@ interface StatusTimelineProps {
   updatedAt: string;
 }
 
-// There's no per-transition history table — only the current status plus
-// createdAt/updatedAt. "Under review" therefore has no date of its own (it
-// starts the instant the request is received); the decision step's date is
-// only meaningful once the status has actually moved past PENDING, since
-// updatedAt also changes on unrelated edits (e.g. a photo update) while
-// still pending.
 export default function StatusTimeline({ status, createdAt, updatedAt }: StatusTimelineProps) {
   const decided = status !== "PENDING";
   const decisionLabel =

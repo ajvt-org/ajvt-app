@@ -8,9 +8,6 @@ import { api, errorMessage } from "@/lib/api";
 import { STATUS_CLASS, STATUS_LABEL, type Activity, type EligibleMember } from "./activityTypes";
 import { memberActivities as texts } from "@/lib/texts";
 
-// Where the membership on this account stands with one activity, and the one
-// tap that changes it. An account carries a single membership, so there is
-// nobody to name here and nothing to tell apart.
 export default function ActivityRegistrations({
   member,
   activity,

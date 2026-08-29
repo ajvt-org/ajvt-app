@@ -1,7 +1,6 @@
 import type { IconName } from "@/components/Icon";
 import { membershipState } from "@/lib/membershipState";
 
-// Shared by the activities list and the activity page.
 export interface Team {
   id: string;
   name: string;
@@ -46,9 +45,6 @@ export interface EligibleMember {
   teamMemberships: MemberTeamMembership[];
 }
 
-// What /api/user/me hands back, cut down to what registering needs. The
-// activities tab and an activity's own page both read the same endpoint, so
-// the narrowing lives here rather than twice.
 type ApiMember = {
   id: string;
   fullName: string;

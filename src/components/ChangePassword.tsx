@@ -5,8 +5,6 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
 
-// Collapsed until asked for, because most visits to the profile are not about
-// the password and three empty fields sitting open read as something to fill in.
 const MIN_LENGTH = 3;
 
 const EMPTY = { current: "", next: "", confirm: "" };

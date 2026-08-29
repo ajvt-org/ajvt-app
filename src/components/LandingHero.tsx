@@ -1,9 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// The first thing a visitor sees: who the association is, and the two doors
-// that have nowhere else to live. Support and the activities have their own
-// tabs, so they are not repeated here.
 export default function LandingHero() {
   return (
     <div
@@ -13,7 +10,7 @@ export default function LandingHero() {
           "linear-gradient(180deg, var(--mint-700) 0%, var(--mint-500) 55%, var(--mint-50) 100%)",
       }}
     >
-      {/* Logo */}
+      {}
       <div className="fade-up mb-6">
         <div
           className="w-40 h-40 rounded-full flex items-center justify-center mx-auto"

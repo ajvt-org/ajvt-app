@@ -3,12 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 
-// Installed to the home screen there is no browser chrome, so the usual pull
-// to refresh does not exist. This puts it back. It only engages at the very
-// top of the page and only on a downward drag, so it never competes with
-// ordinary scrolling, and the page is reloaded outright rather than
-// re-rendered: most screens fetch their data in an effect, which a router
-// refresh would leave untouched.
 const THRESHOLD = 70;
 const RESISTANCE = 0.5;
 

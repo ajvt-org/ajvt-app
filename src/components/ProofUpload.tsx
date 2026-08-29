@@ -13,7 +13,7 @@ const ALLOWED_TYPES = [
   "image/heic",
   "image/heif",
 ];
-const COMPRESS_THRESHOLD = 2 * 1024 * 1024; // above this, shrink before sending — most phone camera shots
+const COMPRESS_THRESHOLD = 2 * 1024 * 1024;
 const COMPRESS_MAX_DIMENSION = 1600;
 const COMPRESS_QUALITY = 0.75;
 const UPLOAD_TIMEOUT_MS = 30_000;
@@ -23,17 +23,10 @@ type Status = "idle" | "preparing" | "uploading" | "error" | "done";
 interface ProofUploadProps {
   existingProof: string | null;
   onUploaded: (filename: string) => void;
-  // Lets the parent disable submit while a replacement is still in flight —
-  // otherwise submitting mid-upload would silently send the old filename.
+
   onUploadingChange?: (uploading: boolean) => void;
 }
 
-// Best-effort: shrinks the file before it ever leaves the phone, so a weak
-// connection has less to push. The server (src/lib/imageProcessing.ts)
-// re-compresses properly regardless — this only has to be good enough to
-// cut the upload in size, not final quality, so any failure here (format
-// canvas can't decode, browser without createImageBitmap) just falls back
-// to sending the original file untouched rather than blocking the user.
 async function compressForUpload(file: File): Promise<File | Blob> {
   if (file.size <= COMPRESS_THRESHOLD) return file;
   try {
@@ -71,9 +64,7 @@ function uploadWithProgress(
       let data: { filename?: string; error?: string } = {};
       try {
         data = JSON.parse(xhr.responseText);
-      } catch {
-        /* non-JSON error body */
-      }
+      } catch {}
       if (xhr.status >= 200 && xhr.status < 300 && data.filename) {
         resolve({ filename: data.filename });
       } else {
@@ -102,8 +93,7 @@ export default function ProofUpload({
 
   useEffect(() => {
     onUploadingChange?.(status === "preparing" || status === "uploading");
-    // onUploadingChange is expected to be a stable setState-derived callback,
-    // matching every other on* prop in this codebase (e.g. PhotoUpload).
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
