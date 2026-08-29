@@ -50,7 +50,7 @@ export default function ProofCard({
   busy: boolean;
   onReview: (status: "ACTIVE" | "REJECTED") => void;
   onDelete: () => void;
-  onLink: (memberId: string | null) => void;
+  onLink: (userId: string | null) => void;
   onPatch: (changes: Partial<Proof>) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -136,8 +136,8 @@ export default function ProofCard({
                 <LinkMemberPanel
                   members={members}
                   busy={busy}
-                  onPick={(memberId) => {
-                    onLink(memberId);
+                  onPick={(userId) => {
+                    onLink(userId);
                     setLinking(false);
                   }}
                 />

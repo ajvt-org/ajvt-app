@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { amount, donorName, donorPhone, paymentMethod } from "../schema";
+import { accountId, amount, donorName, donorPhone, optionalText, paymentMethod } from "../schema";
 import { common } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
@@ -7,13 +7,13 @@ const INVALID = common.invalidBody;
 export const donationUpdateSchema = z
   .object({
     status: z.enum(["ACTIVE", "REJECTED"], INVALID).optional(),
-    memberId: z.string(INVALID).nullish(),
+    userId: accountId,
     donorName: donorName.nullish(),
     donorPhone: donorPhone.nullish(),
-    donorPhoto: z.string(INVALID).nullish(),
+    donorPhoto: optionalText,
     amount: amount.optional(),
     paymentMethod: paymentMethod.nullish(),
-    proof: z.string(INVALID).nullish(),
+    proof: optionalText,
     tagIds: z.array(z.string(INVALID), INVALID).optional(),
     activityId: z.string(INVALID).nullish(),
   })

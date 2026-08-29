@@ -27,3 +27,18 @@ export async function accountsFor(db: Db, memberIds: string[]): Promise<Map<stri
   });
   return new Map(rows.map((r) => [r.id, r.userId]));
 }
+
+export interface PersonLink {
+  userId: string | null;
+  memberId: string | null;
+}
+
+export async function personLink(db: Db, userId: string | null): Promise<PersonLink | null> {
+  if (userId === null) return { userId: null, memberId: null };
+  const account = await db.user.findUnique({
+    where: { id: userId },
+    select: { members: { select: { id: true } } },
+  });
+  if (!account) return null;
+  return { userId, memberId: account.members[0]?.id ?? null };
+}

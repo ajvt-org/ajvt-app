@@ -13,6 +13,7 @@ export interface Proof {
   source?: "PUBLIC" | "SELF";
   paymentMethod?: string | null;
   memberId?: string | null;
+  userId?: string | null;
   activityId?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
@@ -34,6 +35,7 @@ export interface DonationResponse {
     paymentMethod: string | null;
     proof: string | null;
     memberId: string | null;
+    userId: string | null;
     activityId: string | null;
     createdAt: string;
     updatedAt: string;
@@ -42,6 +44,7 @@ export interface DonationResponse {
 
 export interface MemberOption {
   id: string;
+  userId: string;
   fullName: string;
 }
 

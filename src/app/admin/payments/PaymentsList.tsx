@@ -24,7 +24,7 @@ export default function PaymentsList({
   busyId: string | null;
   onReview: (proof: Proof, status: "ACTIVE" | "REJECTED") => void;
   onDelete: (proof: Proof) => void;
-  onLink: (proof: Proof, memberId: string | null) => void;
+  onLink: (proof: Proof, userId: string | null) => void;
   onPatch: (proof: Proof, changes: Partial<Proof>) => void;
   pagination?: AdminListPagination;
 }) {
@@ -41,7 +41,7 @@ export default function PaymentsList({
           busy={busyId === proof.id}
           onReview={(status) => onReview(proof, status)}
           onDelete={() => onDelete(proof)}
-          onLink={(memberId) => onLink(proof, memberId)}
+          onLink={(userId) => onLink(proof, userId)}
           onPatch={(changes) => onPatch(proof, changes)}
         />
       )}

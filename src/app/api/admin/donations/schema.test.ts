@@ -31,7 +31,7 @@ describe("donationCreateSchema", () => {
   });
 
   it("takes an amount typed into a number field", () => {
-    expect(parse(donationCreateSchema, { ...valid, amount: "500" }).amount).toBe("500");
+    expect(parse(donationCreateSchema, { ...valid, amount: "500" }).amount).toBe(500);
   });
 
   it("rejects an amount of zero", () => {
@@ -52,8 +52,16 @@ describe("donationCreateSchema", () => {
     );
   });
 
-  it("accepts an empty donor phone, which means no phone", () => {
-    expect(parse(donationCreateSchema, { ...valid, donorPhone: "" }).donorPhone).toBe("");
+  it("reads an empty donor phone as no phone", () => {
+    expect(parse(donationCreateSchema, { ...valid, donorPhone: "" }).donorPhone).toBeNull();
+  });
+
+  it("takes the account a gift is linked to at creation", () => {
+    expect(parse(donationCreateSchema, { ...valid, userId: "u1" }).userId).toBe("u1");
+  });
+
+  it("leaves a gift unlinked when no account is given", () => {
+    expect(parse(donationCreateSchema, valid).userId).toBeUndefined();
   });
 
   it("rejects a donor phone of the wrong length", () => {

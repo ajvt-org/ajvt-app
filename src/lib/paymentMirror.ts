@@ -84,6 +84,37 @@ export interface DonationMirror {
   tagIds?: string[];
 }
 
+export interface MirroredDonation {
+  id: string;
+  amount: number | null;
+  paymentMethod: string | null;
+  proof: string | null;
+  status: "PENDING" | "ACTIVE" | "REJECTED";
+  donorName: string | null;
+  donorPhoto: string | null;
+  donorPhone: string | null;
+  memberId: string | null;
+  userId: string | null;
+  activityId: string | null;
+}
+
+export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]): DonationMirror {
+  return {
+    donationId: donation.id,
+    amount: donation.amount,
+    method: donation.paymentMethod,
+    proof: donation.proof,
+    status: donation.status,
+    donorName: donation.donorName,
+    donorPhoto: donation.donorPhoto,
+    donorPhone: donation.donorPhone,
+    memberId: donation.memberId,
+    userId: donation.userId,
+    activityId: donation.activityId,
+    ...(tagIds ? { tagIds } : {}),
+  };
+}
+
 export async function mirrorDonation(db: Db, d: DonationMirror) {
   const existing = await db.payment.findFirst({
     where: { id: d.donationId },
