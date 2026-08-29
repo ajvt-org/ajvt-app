@@ -22,7 +22,12 @@ async function football(isKnockout = true) {
       status: "ACTIVE",
     });
     await prisma.teamMember.create({
-      data: { teamId: i === 0 ? home.id : away.id, memberId: member.id, status: "ACTIVE" },
+      data: {
+        teamId: i === 0 ? home.id : away.id,
+        memberId: member.id,
+        userId: member.userId,
+        status: "ACTIVE",
+      },
     });
     players.push(member);
   }

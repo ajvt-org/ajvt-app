@@ -85,7 +85,7 @@ describe("an activity that approves registrations itself", () => {
       status: "ACTIVE",
     });
     await prisma.activityRegistration.create({
-      data: { memberId: holder.id, activityId: a.id, status: "ACTIVE" },
+      data: { memberId: holder.id, userId: holder.userId, activityId: a.id, status: "ACTIVE" },
     });
     const user = await createUser();
     const member = await activeMember(user);

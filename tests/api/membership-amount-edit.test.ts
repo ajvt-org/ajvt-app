@@ -20,7 +20,13 @@ async function memberMissingAmount() {
     memberNumber: "AJVT-2026-0001",
   });
   await prisma.membership.create({
-    data: { memberId: m.id, year: YEAR, paidAmount: null, paymentMethod: "بنكيلي" },
+    data: {
+      memberId: m.id,
+      userId: m.userId,
+      year: YEAR,
+      paidAmount: null,
+      paymentMethod: "بنكيلي",
+    },
   });
   return m;
 }

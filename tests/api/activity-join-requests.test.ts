@@ -21,7 +21,12 @@ async function aTeamWith(activityId: string, name: string, statuses: string[]) {
       userId: user.id,
     });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId: member.id, status: status as "PENDING" },
+      data: {
+        teamId: team.id,
+        memberId: member.id,
+        userId: member.userId,
+        status: status as "PENDING",
+      },
     });
   }
   return team;

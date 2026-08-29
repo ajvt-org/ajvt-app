@@ -29,7 +29,9 @@ async function scheduledMatch() {
     userId: user.id,
     status: "ACTIVE",
   });
-  await prisma.teamMember.create({ data: { teamId: home.id, memberId: member.id } });
+  await prisma.teamMember.create({
+    data: { teamId: home.id, memberId: member.id, userId: member.userId },
+  });
 
   return prisma.match.create({
     data: {

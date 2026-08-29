@@ -42,7 +42,12 @@ describe("registering for an activity with a seat limit", () => {
     const holder = await anActiveMemberOf(taken, "أحمد");
     const activity = await aFullActivity();
     await prisma.activityRegistration.create({
-      data: { memberId: holder.id, activityId: activity.id, status: "PENDING" },
+      data: {
+        memberId: holder.id,
+        userId: holder.userId,
+        activityId: activity.id,
+        status: "PENDING",
+      },
     });
 
     const user = await createUser("22000002");
@@ -57,14 +62,24 @@ describe("registering for an activity with a seat limit", () => {
     const holder = await anActiveMemberOf(taken, "أحمد");
     const activity = await aFullActivity();
     await prisma.activityRegistration.create({
-      data: { memberId: holder.id, activityId: activity.id, status: "PENDING" },
+      data: {
+        memberId: holder.id,
+        userId: holder.userId,
+        activityId: activity.id,
+        status: "PENDING",
+      },
     });
 
     const user = await createUser("22000002");
     await signInAs(user);
     const member = await anActiveMemberOf(user, "محمد");
     await prisma.activityRegistration.create({
-      data: { memberId: member.id, activityId: activity.id, status: "REJECTED" },
+      data: {
+        memberId: member.id,
+        userId: member.userId,
+        activityId: activity.id,
+        status: "REJECTED",
+      },
     });
 
     expect((await REGISTER(ask(activity.id, member.id))).status).toBe(409);
@@ -81,7 +96,12 @@ describe("registering for an activity with a seat limit", () => {
     await signInAs(user);
     const member = await anActiveMemberOf(user, "محمد");
     await prisma.activityRegistration.create({
-      data: { memberId: member.id, activityId: activity.id, status: "REJECTED" },
+      data: {
+        memberId: member.id,
+        userId: member.userId,
+        activityId: activity.id,
+        status: "REJECTED",
+      },
     });
 
     expect((await REGISTER(ask(activity.id, member.id))).status).toBe(200);
