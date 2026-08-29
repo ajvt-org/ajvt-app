@@ -3,26 +3,42 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import PageLoading from "@/components/PageLoading";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import {
   ACTIVITIES_VIEW_KEYS,
-  ACTIVITY_KINDS,
+  ACTIVITY_STATES,
+  ACTIVITY_TYPES,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
 } from "./activitiesView";
+import { splitByStage } from "./activitiesList";
 import ActivityRow from "./ActivityRow";
 import AttentionPanel from "./AttentionPanel";
+import FilterChips from "./FilterChips";
 import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
+import type { Activity } from "./activityTypes";
+
+function Rows({ rows }: { rows: Activity[] }) {
+  return (
+    <div className="space-y-2">
+      {rows.map((a) => (
+        <ActivityRow key={a.id} activity={a} />
+      ))}
+    </div>
+  );
+}
 
 function AdminActivitiesPageInner() {
   const { activities, loading, reload } = useActivitiesData();
   const actions = useActivityActions(reload);
   const [showCreate, setShowCreate] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
@@ -32,6 +48,7 @@ function AdminActivitiesPageInner() {
   if (loading) return <PageLoading />;
 
   const visible = activities.filter((a) => matchesActivitiesView(a, filters));
+  const { current, finished } = splitByStage(visible);
 
   return (
     <div className="admin-page space-y-3">
@@ -61,24 +78,19 @@ function AdminActivitiesPageInner() {
         </button>
       </div>
 
-      <div className="flex gap-1.5 flex-wrap">
-        {ACTIVITY_KINDS.map((k) => {
-          const on = filters.kind === k.value;
-          return (
-            <button
-              key={k.value}
-              onClick={() => go({ ...filters, kind: k.value })}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{
-                background: on ? "var(--mint-600)" : "white",
-                color: on ? "white" : "var(--mint-700)",
-                border: on ? "none" : "1px solid var(--mint-100)",
-              }}
-            >
-              {k.label}
-            </button>
-          );
-        })}
+      <div className="space-y-1.5">
+        <FilterChips
+          options={ACTIVITY_TYPES}
+          value={filters.type}
+          onPick={(type) => go({ ...filters, type })}
+          label={texts.filters.anyType}
+        />
+        <FilterChips
+          options={ACTIVITY_STATES}
+          value={filters.state}
+          onPick={(state) => go({ ...filters, state })}
+          label={texts.filters.anyState}
+        />
       </div>
 
       {visible.length === 0 ? (
@@ -93,10 +105,31 @@ function AdminActivitiesPageInner() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
-          {visible.map((a) => (
-            <ActivityRow key={a.id} activity={a} />
-          ))}
+        <div className="space-y-3">
+          {current.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
+                {texts.sections.current}
+              </p>
+              <Rows rows={current} />
+            </div>
+          )}
+
+          {finished.length > 0 && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowFinished((shown) => !shown)}
+                aria-expanded={showFinished}
+                className="text-xs font-bold flex items-center gap-1"
+                style={{ color: "var(--mint-700)" }}
+              >
+                <Icon name={showFinished ? "chevronUp" : "chevronDown"} size={13} />
+                {texts.sections.finished(finished.length)}
+              </button>
+              {showFinished && <Rows rows={finished} />}
+            </div>
+          )}
         </div>
       )}
 
