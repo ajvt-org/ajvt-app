@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/Toast";
-import { api, errorMessage } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Activity, NewActivityDraft } from "./activityTypes";
 
-export function useActivityActions(activities: Activity[], reload: () => Promise<void>) {
+export function useActivityActions(reload: () => Promise<void>) {
   const router = useRouter();
-  const showToast = useToast();
   const [actionLoading, setActionLoading] = useState(false);
-  const [reorderLoading, setReorderLoading] = useState(false);
 
   async function createActivity(draft: NewActivityDraft) {
     setActionLoading(true);
@@ -27,24 +24,5 @@ export function useActivityActions(activities: Activity[], reload: () => Promise
     }
   }
 
-  async function moveActivity(index: number, direction: "up" | "down") {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= activities.length) return;
-    const a = activities[index];
-    const b = activities[targetIndex];
-    setReorderLoading(true);
-    try {
-      await Promise.all([
-        api.patch(`/api/admin/activities/${a.id}`, { order: b.order }),
-        api.patch(`/api/admin/activities/${b.id}`, { order: a.order }),
-      ]);
-      await reload();
-    } catch (e) {
-      showToast(errorMessage(e), "error");
-    } finally {
-      setReorderLoading(false);
-    }
-  }
-
-  return { actionLoading, reorderLoading, createActivity, moveActivity };
+  return { actionLoading, createActivity };
 }

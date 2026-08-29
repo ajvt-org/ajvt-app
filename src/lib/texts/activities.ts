@@ -22,6 +22,19 @@ export const activityForm = {
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
+  arrangeLink: "ترتيب الظهور",
+  arrangeTitle: "ترتيب ظهور الأنشطة",
+  arrangeNote:
+    "المرحلة تُقرَّر أولاً: الجاري ثم القادم ثم المنتهي. الأسهم ترتّب النشاط داخل مرحلته فقط.",
+  arrangeBack: "الأنشطة",
+  arrangeEmpty: "لا توجد أنشطة لترتيبها",
+  stages: {
+    live: "جارية الآن",
+    upcoming: "قادمة",
+    undatedOpen: "بلا تاريخ — التسجيل مفتوح",
+    undatedClosed: "بلا تاريخ — التسجيل مغلق",
+    finished: "منتهية",
+  },
   orderHint:
     "الأسهم ترتّب النشاط داخل مجموعته على صفحات الأعضاء. الجاري ثم القادم ثم المنتهي، وهذا الترتيب لا يتغيّر.",
   tournamentChip: "بطولة",

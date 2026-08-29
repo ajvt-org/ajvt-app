@@ -25,17 +25,7 @@ function Chip({ text, tone }: { text: string; tone: "warn" | "muted" | "brand" }
   );
 }
 
-export default function ActivityRow({
-  activity,
-  canReorder,
-  reorderLoading,
-  onMove,
-}: {
-  activity: Activity;
-  canReorder: { up: boolean; down: boolean } | null;
-  reorderLoading: boolean;
-  onMove: (direction: -1 | 1) => void;
-}) {
+export default function ActivityRow({ activity }: { activity: Activity }) {
   const a = activity;
   const registered = a.registrations.filter((r) => r.status !== "REJECTED").length;
   const pending = a.registrations.filter((r) => r.status === "PENDING").length;
@@ -70,8 +60,8 @@ export default function ActivityRow({
         />
         <Icon name="chevronLeft" size={15} className="shrink-0" />
       </Link>
-      <div className="flex items-center justify-end gap-1">
-        {a.isTournament && (
+      {a.isTournament && (
+        <div className="flex items-center justify-end gap-1">
           <Link
             href={`/admin/activities/${a.id}?tab=matches`}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
@@ -79,30 +69,8 @@ export default function ActivityRow({
           >
             <IconLabel name="trophy">{texts.manageTournament}</IconLabel>
           </Link>
-        )}
-        {canReorder && (
-          <>
-            <button
-              onClick={() => onMove(-1)}
-              disabled={!canReorder.up || reorderLoading}
-              aria-label={texts.moveUp(a.title)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-            >
-              <Icon name="chevronUp" size={15} />
-            </button>
-            <button
-              onClick={() => onMove(1)}
-              disabled={!canReorder.down || reorderLoading}
-              aria-label={texts.moveDown(a.title)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center disabled:opacity-30"
-              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-            >
-              <Icon name="chevronDown" size={15} />
-            </button>
-          </>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
