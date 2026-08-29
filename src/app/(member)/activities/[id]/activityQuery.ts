@@ -25,6 +25,7 @@ async function loadActivity(id: string) {
       profile: true,
       teamSize: true,
       isTournament: true,
+      showScorersAndCards: true,
       groups: { select: { id: true, name: true }, orderBy: { createdAt: "asc" as const } },
       teams: {
         select: {

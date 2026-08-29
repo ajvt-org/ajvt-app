@@ -17,6 +17,19 @@ export const activityForm = {
   registrationOpen: "التسجيل مفتوح",
   autoApprove: "قبول التسجيل تلقائياً",
   autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
+  showScorersAndCards: "عرض الهدافين والبطاقات الحمراء",
+  showScorersAndCardsHint:
+    "بطاقة المباراة تعرض الهدافين والبطاقات الحمراء. عند الإطفاء تبقى النتيجة ورجل المباراة والمجريات.",
+  detailsHeading: "تفاصيل النشاط",
+  title: "العنوان",
+  description: "الوصف",
+  capacity: "السعة",
+  noCapacity: "بدون حد",
+  whatsappLink: "رابط الواتساب",
+  photoHeading: "الصورة",
+  save: "حفظ التفاصيل",
+  saved: "تم حفظ التفاصيل",
+  datesHeading: "التواريخ",
 } as const;
 
 export const convertCampaign = {

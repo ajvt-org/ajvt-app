@@ -11,6 +11,7 @@ export default function MatchesPanel({
   scheduled,
   allMatches,
   football,
+  showScorersAndCards,
   tournamentTitle,
   loggedIn,
   myVoteByVoteId,
@@ -20,6 +21,7 @@ export default function MatchesPanel({
   scheduled: PublicMatch[];
   allMatches: PublicMatch[];
   football: boolean;
+  showScorersAndCards: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
   myVoteByVoteId: Map<string, string>;
@@ -46,6 +48,7 @@ export default function MatchesPanel({
                 day={day}
                 allMatches={allMatches}
                 football={football}
+                showScorersAndCards={showScorersAndCards}
                 tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}
                 manOfTheMatchTeam={memberTeamName(match.manOfTheMatch?.id, teams)}

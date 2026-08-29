@@ -36,6 +36,7 @@ export const activityUpdateSchema = z
     autoApprove: z.unknown().optional(),
     photo: z.string(INVALID).nullish(),
     isTournament: z.unknown().optional(),
+    showScorersAndCards: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
     profile: z.enum(["FOOTBALL", "BOARD"], INVALID).optional(),
     yellowsForBan: z.number().int().min(1).max(10).optional(),

@@ -111,6 +111,58 @@ describe("opening and closing the registration", () => {
   });
 });
 
+describe("the scorers and cards on the public match card", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("shows them on a tournament nobody has configured", async () => {
+    const activity = await anActivity({ isTournament: true });
+
+    expect(activity.showScorersAndCards).toBe(true);
+  });
+
+  it("turns them off for the whole tournament", async () => {
+    const activity = await anActivity({ isTournament: true });
+
+    await edit(activity.id, { showScorersAndCards: false });
+
+    const saved = await prisma.activity.findUniqueOrThrow({ where: { id: activity.id } });
+    expect(saved.showScorersAndCards).toBe(false);
+  });
+
+  it("turns them back on", async () => {
+    const activity = await anActivity({ isTournament: true, showScorersAndCards: false });
+
+    await edit(activity.id, { showScorersAndCards: true });
+
+    const saved = await prisma.activity.findUniqueOrThrow({ where: { id: activity.id } });
+    expect(saved.showScorersAndCards).toBe(true);
+  });
+
+  it("leaves the setting alone when the patch says nothing about it", async () => {
+    const activity = await anActivity({ isTournament: true, showScorersAndCards: false });
+
+    await edit(activity.id, { title: "دوري آخر" });
+
+    const saved = await prisma.activity.findUniqueOrThrow({ where: { id: activity.id } });
+    expect(saved.showScorersAndCards).toBe(false);
+  });
+
+  it("records the change under its own name in the trail", async () => {
+    const activity = await anActivity({ isTournament: true });
+
+    await edit(activity.id, { showScorersAndCards: false });
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "UPDATE_ACTIVITY" },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(JSON.stringify(entry.after)).toContain("showScorersAndCards");
+  });
+});
+
 describe("duplicating an activity", () => {
   beforeEach(async () => {
     await resetDb();
@@ -124,6 +176,7 @@ describe("duplicating an activity", () => {
       format: "KNOCKOUT",
       teamSize: 5,
       published: true,
+      showScorersAndCards: false,
     });
 
     const body = await (
@@ -135,6 +188,7 @@ describe("duplicating an activity", () => {
     expect(body.activity.isTournament).toBe(true);
     expect(body.activity.teamSize).toBe(5);
     expect(body.activity.published).toBe(false);
+    expect(body.activity.showScorersAndCards).toBe(false);
   });
 
   it("never copies who signed up", async () => {

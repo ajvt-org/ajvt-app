@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   goalRows,
+  withoutScorersAndCards,
   bookingRows,
   minuteLines,
   matchEventRows,
@@ -98,6 +99,51 @@ describe("goalRows", () => {
     ]);
 
     expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
+});
+
+describe("withoutScorersAndCards", () => {
+  const rows = matchEventRows({
+    homeTeamId: "t1",
+    goals: [
+      {
+        count: 1,
+        minute: 12,
+        kind: "GOAL",
+        teamId: "t1",
+        member: { id: "p1", fullName: "أسامه محمد", photo: null },
+      },
+    ],
+    bookings: [
+      {
+        cardType: "RED",
+        minute: 70,
+        teamId: "t2",
+        member: { id: "p2", fullName: "سالم ولد علي", photo: null },
+      },
+      {
+        cardType: "YELLOW",
+        minute: 40,
+        teamId: "t2",
+        member: { id: "p3", fullName: "محمد الأمين", photo: null },
+      },
+    ],
+    manOfTheMatch: { id: "p1", fullName: "أسامه محمد", photo: null },
+  });
+
+  it("drops the goal rows and the red card rows", () => {
+    const kept = withoutScorersAndCards(rows).map((row) => row.type);
+
+    expect(kept).not.toContain("goal");
+    expect(kept).not.toContain("red");
+  });
+
+  it("keeps the man of the match", () => {
+    expect(withoutScorersAndCards(rows).map((row) => row.type)).toContain("motm");
+  });
+
+  it("leaves the yellows alone, since the card never shows them either way", () => {
+    expect(withoutScorersAndCards(rows).map((row) => row.type)).toContain("yellow");
   });
 });
 

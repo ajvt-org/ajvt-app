@@ -86,6 +86,82 @@ describe("MatchResult by sport profile", () => {
   });
 });
 
+describe("a tournament that hides the scorers and the red cards", () => {
+  function onCard(showScorersAndCards: boolean | undefined, over: Partial<PublicMatch> = {}) {
+    rtlCleanup();
+    const { container } = render(
+      <MatchResult
+        match={{ ...match(), ...over }}
+        day={{ round: null, venue: null }}
+        allMatches={[match()]}
+        football
+        showScorersAndCards={showScorersAndCards}
+        tournamentTitle="كأس"
+        loggedIn={false}
+        myVoteCandidateId={null}
+      />,
+    );
+    const card = container.cloneNode(true) as HTMLElement;
+    card.querySelector("[style*='-9999px']")?.remove();
+    return card;
+  }
+
+  it("names the scorer and his minute while the detail is on", () => {
+    expect(onCard(true).textContent).toContain("12'");
+  });
+
+  it("drops the scorer once the detail is off, keeping the score", () => {
+    const card = onCard(false);
+
+    expect(card.textContent).not.toContain("12'");
+    expect(card.textContent).toContain("الصقور");
+  });
+
+  it("keeps the man of the match, which the toggle does not govern", () => {
+    const card = onCard(false);
+
+    expect(card.querySelector("[aria-label='رجل المباراة']")).not.toBeNull();
+    expect(card.textContent).toContain("أحمد ولد محمد");
+  });
+
+  it("keeps the timeline, where the detail stays one tap away", () => {
+    onCard(false);
+
+    fireEvent.click(screen.getByText(/مجريات المباراة/));
+    expect(screen.getAllByText(/أحمد ولد محمد/).length).toBeGreaterThan(0);
+  });
+
+  it("renders no events at all when there is no man of the match either", () => {
+    const card = onCard(false, { manOfTheMatch: null });
+
+    expect(card.querySelector("[style*='1fr auto 1fr']")).toBeNull();
+    expect(card.querySelector("[aria-label='رجل المباراة']")).toBeNull();
+    expect(card.querySelector(".space-y-3")).toBeNull();
+  });
+
+  it("leaves the shared image its full detail", () => {
+    rtlCleanup();
+    const { container } = render(
+      <MatchResult
+        match={match()}
+        day={{ round: null, venue: null }}
+        allMatches={[match()]}
+        football
+        showScorersAndCards={false}
+        tournamentTitle="كأس"
+        loggedIn={false}
+        myVoteCandidateId={null}
+      />,
+    );
+
+    expect(container.querySelector("[style*='-9999px']")?.textContent).toContain("12'");
+  });
+
+  it("shows the detail when the tournament never set it", () => {
+    expect(onCard(undefined).textContent).toContain("12'");
+  });
+});
+
 describe("a match won by forfeit", () => {
   function showForfeit(
     forfeitWinnerTeamId: string | null,
