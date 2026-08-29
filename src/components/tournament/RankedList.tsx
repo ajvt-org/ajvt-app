@@ -2,9 +2,6 @@ import type { ReactNode } from "react";
 import PlayerAvatar from "./PlayerAvatar";
 import PagedList from "./PagedList";
 
-// Every leaderboard on the page is the same row: a place, who it is, and one
-// number. The value is passed in already phrased so a scorer can carry a ball
-// and a defence a clean-sheet tally without four copies of this markup.
 export type RankedRow = {
   id: string;
   name: string;

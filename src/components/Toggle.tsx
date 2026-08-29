@@ -1,8 +1,5 @@
 "use client";
 
-// A switch, not a checkbox: it applies the moment it is flipped, so there is
-// no form to submit and nothing to confirm. Built on a real checkbox input so
-// it is reachable by keyboard and announced as a switch.
 export default function Toggle({
   checked,
   onChange,

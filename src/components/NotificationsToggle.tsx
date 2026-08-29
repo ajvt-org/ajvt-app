@@ -5,16 +5,6 @@ import Icon from "./Icon";
 import Toggle from "./Toggle";
 import NotificationCategories from "./NotificationCategories";
 
-// A push subscription belongs to the account, not to a person on it, so this
-// is one switch on the profile rather than a prompt beside every member.
-//
-// Off really unsubscribes — the browser subscription is dropped and the row
-// deleted — because a switch that only hid itself would leave the pushes
-// arriving. A browser-level block cannot be undone from here: permission is
-// only ever asked once, so that state is off, disabled, and says where to go.
-//
-// With no VAPID key the deployment cannot send at all, so there is nothing to
-// switch and the whole row is absent. Offering it would fail on every tap.
 type Status = "unsupported" | "off" | "busy" | "on" | "denied" | "error";
 
 const VAPID_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -95,9 +85,6 @@ export default function NotificationsToggle({
       const reg = await navigator.serviceWorker.ready;
       const subscription = await reg.pushManager.getSubscription();
       if (subscription) {
-        // The server row goes first. If the browser drops its subscription and
-        // the request then fails, nothing is left to identify the row with and
-        // the association keeps pushing into a dead endpoint.
         await fetch("/api/push/unsubscribe", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -11,9 +11,6 @@ const WHERE: Record<Reuse["kind"], string> = {
   expense: "مصروف",
 };
 
-// Sits under the screenshot an admin is about to judge. It says only what it
-// can prove — the same image, byte for byte, is already on another record —
-// and names that record so the two can be compared before accepting.
 export default function ProofReuseWarning({
   filename,
   kind,
@@ -23,9 +20,6 @@ export default function ProofReuseWarning({
   kind: Reuse["kind"];
   id: string;
 }) {
-  // The answer is kept next to the screenshot it belongs to, so moving to
-  // another member shows nothing rather than the previous member's warning
-  // while its own request is still in the air.
   const [answer, setAnswer] = useState<{ filename: string; rows: Reuse[] } | null>(null);
 
   useEffect(() => {

@@ -1,8 +1,5 @@
 "use client";
 
-// One loader per data domain, so a mutation refetches what it touched and
-// nothing else. The old shell refired all four requests after every edit.
-
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";

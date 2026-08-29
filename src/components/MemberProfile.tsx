@@ -11,12 +11,6 @@ import MembershipStanding from "@/components/MembershipStanding";
 import StatusTimeline from "@/components/StatusTimeline";
 import type { MemberData } from "@/lib/useMember";
 
-// Everything about one person on the account, in the order they need it.
-//
-// A request still moving is about what happens next, so it leads with the
-// decision and the stages. An accepted one is about being a member, so it
-// leads with the card they show and the group they join, and the stages drop
-// out entirely — the acceptance date moves into the details instead.
 export default function MemberProfile({
   member,
   currentYear,

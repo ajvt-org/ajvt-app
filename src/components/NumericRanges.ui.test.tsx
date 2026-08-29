@@ -2,9 +2,6 @@ import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import NumericRanges from "./NumericRanges";
 
-// jsdom does no bidi layout, so these check the markup that decides the order.
-// The order it actually produces on screen is measured in tests/e2e/bidi.spec.ts,
-// which is the test that would have caught the range reading backwards.
 function ranges(text: string) {
   const { container } = render(<NumericRanges>{text}</NumericRanges>);
   return Array.from(container.querySelectorAll('span[dir="rtl"]')).map((el) => el.textContent);
@@ -33,7 +30,6 @@ describe("NumericRanges", () => {
     expect(ranges("24-29 أغسطس")).toEqual(["24-29"]);
   });
 
-  // The separator can only stay neutral if neither number reaches across it.
   it("isolates each number so the separator does not bind them", () => {
     expect(numbersIsolated("24-29 أغسطس")).toEqual(["24", "29"]);
   });
@@ -42,7 +38,6 @@ describe("NumericRanges", () => {
     expect(ranges("17:00 - 18:00")).toEqual(["17:00 - 18:00"]);
   });
 
-  // A count out of a total is not a range: 32/5 would say something else.
   it("leaves a slash going left to right", () => {
     expect(fractions("5/32 مشارك")).toEqual(["5/32"]);
     expect(ranges("5/32 مشارك")).toEqual([]);

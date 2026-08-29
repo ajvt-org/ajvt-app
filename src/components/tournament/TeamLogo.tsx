@@ -19,8 +19,6 @@ export default function TeamLogo({ logo, size = 24 }: TeamLogoProps) {
     );
   }
   return (
-    // Decorative — the team name is always rendered as visible text right next
-    // to this logo, so alt="" avoids screen readers/copy-paste doubling it.
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={toThumbUrl(`/api/files/team/${logo}`)}

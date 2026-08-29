@@ -1,9 +1,5 @@
 "use client";
 
-// The teams tab for a singles tournament: every entrant is a one-member team
-// under the hood, but the admin only ever sees players. Adding one creates
-// the auto-named team and seats the player in a single action.
-
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";

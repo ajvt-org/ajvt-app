@@ -8,13 +8,6 @@ import ProofUpload from "@/components/ProofUpload";
 import { api, errorMessage } from "@/lib/api";
 import type { MemberData } from "@/lib/useMember";
 
-// A refused payment is almost always a bad proof, so the shortest path back
-// is a new photo and one button, without walking the whole form again.
-// Everything else is still reachable through the link underneath.
-//
-// The amount resent is what the member actually paid, fee and surplus
-// together, which is what the form field holds too. Resending the fee alone
-// would quietly drop their donation on the way back through review.
 export default function MemberRejected({
   member,
   onReload,
