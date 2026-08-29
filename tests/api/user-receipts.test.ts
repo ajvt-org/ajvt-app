@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUser, signInAs, personFor, makeMember } from "./helpers";
+import { resetDb, get, createUser, signInAs, makeMember } from "./helpers";
 
 import { GET as RECEIPTS } from "@/app/api/user/receipts/route";
+import { ensureReceiptsFor } from "@/lib/paymentReceiptServer";
 
-const read = () => RECEIPTS(get("/api/user/receipts"));
+const read = async () => {
+  await ensureReceiptsFor(prisma, {});
+  return RECEIPTS(get("/api/user/receipts"));
+};
 
 async function memberFor(user: { id: string }, over: Record<string, unknown> = {}) {
   return makeMember({
@@ -42,11 +46,12 @@ describe("the receipts a member can take away", () => {
     expect(body.receipts).toHaveLength(1);
     expect(body.receipts[0]).toMatchObject({
       amount: 1000,
-      purpose: "MEMBERSHIP",
-      year: 2026,
-      memberNumber: (await personFor(member.id)).memberNumber,
+      reason: "اشتراك عضوية 2026",
       payerName: "محمد",
+      status: "ACTIVE",
     });
+    expect(body.receipts[0].number).toMatch(/^R-\d{4}-\d{4}$/);
+    expect(body.receipts[0].token).toHaveLength(32);
   });
 
   it("gives a receipt for a gift as well as a subscription", async () => {
@@ -59,7 +64,7 @@ describe("the receipts a member can take away", () => {
 
     const body = await (await read()).json();
 
-    expect(body.receipts[0]).toMatchObject({ purpose: "DONATION", amount: 5000 });
+    expect(body.receipts[0]).toMatchObject({ reason: "تبرع", amount: 5000 });
   });
 
   it("hands back nothing for a payment still awaiting review", async () => {
@@ -103,7 +108,7 @@ describe("the receipts a member can take away", () => {
     });
     await signInAs(user);
 
-    expect((await (await read()).json()).receipts[0].activityTitle).toBe("القافلة الصحية");
+    expect((await (await read()).json()).receipts[0].reason).toBe("دعم نشاط — القافلة الصحية");
   });
 
   it("puts the most recent payment first", async () => {

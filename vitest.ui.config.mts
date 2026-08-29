@@ -6,6 +6,7 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       "@tests": fileURLToPath(new URL("./tests", import.meta.url)),
+      "next/font/google": fileURLToPath(new URL("./tests/ui/nextFont.ts", import.meta.url)),
     },
   },
   test: {

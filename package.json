@@ -26,6 +26,7 @@
     "test:ui": "vitest run --config vitest.ui.config.mts",
     "test:e2e": "tsx tests/e2e/prepareDb.ts && playwright test",
     "db:proof-hashes": "tsx prisma/backfillProofHashes.ts",
+    "db:receipts": "tsx prisma/backfillReceipts.ts",
     "db:legacy-images": "tsx prisma/backfillLegacyImages.ts",
     "db:new-migration": "node scripts/new-migration.mjs"
   },

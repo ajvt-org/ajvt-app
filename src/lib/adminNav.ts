@@ -7,11 +7,18 @@ const ROLE_AREAS: Record<string, string[] | null> = {
   MEMBERS: [
     "/admin/dashboard",
     "/admin/payments",
+    "/admin/receipts",
     "/admin/expenses",
     "/admin/deleted",
     ...OWN_ACCOUNT,
   ],
-  ACTIVITIES: ["/admin/activities", "/admin/payments", "/admin/expenses", ...OWN_ACCOUNT],
+  ACTIVITIES: [
+    "/admin/activities",
+    "/admin/payments",
+    "/admin/receipts",
+    "/admin/expenses",
+    ...OWN_ACCOUNT,
+  ],
   QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
   ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
 };

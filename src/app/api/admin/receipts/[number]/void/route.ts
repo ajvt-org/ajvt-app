@@ -1,0 +1,30 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdminRole } from "@/lib/auth";
+import { logAction, auditContext } from "@/lib/audit";
+import { withRoute } from "@/lib/route";
+import { parse } from "@/lib/validation";
+import { receiptView, voidReceipt } from "@/lib/officialReceiptServer";
+import { receiptVoidSchema } from "../../schema";
+
+const NOT_FOUND = "الوصل غير موجود أو ملغى من قبل";
+
+export const POST = withRoute(
+  "POST /api/admin/receipts/[number]/void",
+  async (req: NextRequest, { params }: { params: Promise<{ number: string }> }) => {
+    const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
+    const { number } = await params;
+    const { reason } = parse(receiptVoidSchema, await req.json());
+
+    const row = await voidReceipt(number, reason, session.username);
+    if (!row) return NextResponse.json({ error: NOT_FOUND }, { status: 404 });
+
+    await logAction(session.username, "VOID_RECEIPT", `${row.number} — ${reason}`, {
+      ...auditContext(session, req),
+      targetType: "Receipt",
+      targetId: row.id,
+      after: { number: row.number, status: row.status, voidReason: reason },
+    });
+
+    return NextResponse.json({ receipt: receiptView(row) });
+  },
+);

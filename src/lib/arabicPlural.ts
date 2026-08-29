@@ -1,17 +1,15 @@
-export interface NounForms {
-  one: string;
-  two: string;
-  few: string;
-  many: string;
+import { countCategory, type CountedNoun } from "./arabicCount";
+
+export interface NounForms extends CountedNoun {
   other: string;
 }
 
 export function countedNoun(count: number, forms: NounForms): string {
-  if (count === 1) return forms.one;
-  if (count === 2) return forms.two;
-  const tail = count % 100;
-  if (tail >= 3 && tail <= 10) return `${count} ${forms.few}`;
-  if (tail >= 11) return `${count} ${forms.many}`;
+  const category = countCategory(count);
+  if (category === "one") return forms.one;
+  if (category === "two") return forms.two;
+  if (category === "few") return `${count} ${forms.few}`;
+  if (category === "many") return `${count} ${forms.many}`;
   return `${count} ${forms.other}`;
 }
 

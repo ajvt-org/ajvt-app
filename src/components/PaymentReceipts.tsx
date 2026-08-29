@@ -3,40 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import { formatDate } from "@/lib/utils";
-import { receiptFilename, receiptReference, receiptTitle, type ReceiptRow } from "@/lib/receipts";
-
-function Receipt({ row, innerRef }: { row: ReceiptRow; innerRef?: React.Ref<HTMLDivElement> }) {
-  return (
-    <div ref={innerRef} className="p-5" style={{ background: "var(--mint-100)" }}>
-      <p className="text-xs" style={{ color: "var(--mint-700)" }}>
-        رابطة شباب التاكلالت
-      </p>
-      <p className="text-sm font-bold mt-1" style={{ color: "var(--text-main)" }}>
-        {receiptTitle(row)}
-      </p>
-      <p className="text-3xl font-black mt-2" style={{ color: "var(--text-main)" }}>
-        {row.amount} أوقية
-      </p>
-      <div className="text-xs mt-3 flex flex-col gap-0.5" style={{ color: "var(--text-muted)" }}>
-        <span>{row.payerName}</span>
-        {row.memberNumber && <span>رقم العضوية {row.memberNumber}</span>}
-        <span>{formatDate(row.paidAt)}</span>
-        <span>مرجع الوصل {receiptReference(row)}</span>
-      </div>
-    </div>
-  );
-}
+import { ReceiptCard } from "@/components/receipt/ReceiptSheet";
+import { savePdf, sharePng } from "@/components/pdf/renderPdf";
+import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
+import { memberReceipts } from "@/lib/texts/receipt";
 
 export default function PaymentReceipts({ source = "/api/user/receipts" }: { source?: string }) {
-  const [rows, setRows] = useState<ReceiptRow[] | null>(null);
+  const [rows, setRows] = useState<OfficialReceiptView[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const refs = useRef(new Map<string, HTMLDivElement>());
 
   useEffect(() => {
     let alive = true;
     api
-      .get<{ receipts: ReceiptRow[] }>(source)
+      .get<{ receipts: OfficialReceiptView[] }>(source)
       .then((data) => {
         if (alive) setRows(data.receipts);
       })
@@ -48,28 +28,12 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
     };
   }, [source]);
 
-  async function share(row: ReceiptRow) {
-    const node = refs.current.get(row.id);
+  async function run(receipt: OfficialReceiptView, action: (node: HTMLElement) => Promise<void>) {
+    const node = refs.current.get(receipt.number);
     if (!node) return;
-    setBusy(row.id);
+    setBusy(receipt.number);
     try {
-      const { default: html2canvas } = await import("html2canvas-pro");
-      const canvas = await html2canvas(node, { backgroundColor: null, scale: 2 });
-      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-
-      const name = receiptFilename(row);
-      const file = new File([blob], name, { type: "image/png" });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: receiptTitle(row) });
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(url);
+      await action(node);
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") console.error("Receipt error:", err);
     } finally {
@@ -85,25 +49,42 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
         className="font-bold mb-3 pb-2"
         style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}
       >
-        <IconLabel name="receipt">وصولات الدفع</IconLabel>
+        <IconLabel name="receipt">{memberReceipts.title}</IconLabel>
       </h3>
-      <div className="flex flex-col gap-3">
-        {rows.map((row) => (
-          <div key={row.id} className="rounded-xl overflow-hidden">
-            <Receipt
-              row={row}
-              innerRef={(node) => {
-                if (node) refs.current.set(row.id, node);
-                else refs.current.delete(row.id);
-              }}
-            />
-            <button
-              className="btn w-full mt-2"
-              disabled={busy === row.id}
-              onClick={() => share(row)}
-            >
-              <IconLabel name="download">حفظ الوصل</IconLabel>
-            </button>
+      <div className="flex flex-col gap-4">
+        {rows.map((receipt) => (
+          <div key={receipt.number} className="rounded-xl overflow-hidden">
+            <div style={{ overflowX: "auto" }}>
+              <ReceiptCard
+                receipt={receipt}
+                innerRef={(node) => {
+                  if (node) refs.current.set(receipt.number, node);
+                  else refs.current.delete(receipt.number);
+                }}
+              />
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button
+                className="btn flex-1"
+                disabled={busy === receipt.number}
+                onClick={() =>
+                  run(receipt, (node) => savePdf(node, receiptFileName(receipt.number, "pdf")))
+                }
+              >
+                <IconLabel name="file">{memberReceipts.pdf}</IconLabel>
+              </button>
+              <button
+                className="btn flex-1"
+                disabled={busy === receipt.number}
+                onClick={() =>
+                  run(receipt, (node) =>
+                    sharePng(node, receiptFileName(receipt.number, "png"), memberReceipts.title),
+                  )
+                }
+              >
+                <IconLabel name="upload">{memberReceipts.share}</IconLabel>
+              </button>
+            </div>
           </div>
         ))}
       </div>

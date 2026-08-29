@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { formatDate } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
+import { savePdf, savePng, sharePng } from "@/components/pdf/renderPdf";
 
 interface MemberCardProps {
   fullName: string;
@@ -42,88 +43,19 @@ export default function MemberCard({
       .catch(() => setQrDataUrl(null));
   }, [verifyToken]);
 
-  // html2canvas-pro (not the plain html2canvas package — its Arabic/RTL
-  // text shaping is unreliable) is loaded only here, on demand, never as
-  // part of the page's own first-load bundle.
-  async function renderCanvas() {
-    if (!cardRef.current) return null;
-    const { default: html2canvas } = await import("html2canvas-pro");
-    return html2canvas(cardRef.current, { backgroundColor: null, scale: 2 });
-  }
-
-  function downloadBlob(blob: Blob, filename: string) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  async function downloadImage() {
-    setBusy("image");
+  async function run(mode: Busy, action: (node: HTMLElement) => Promise<void>) {
+    if (!cardRef.current) return;
+    setBusy(mode);
     try {
-      const canvas = await renderCanvas();
-      if (!canvas) return;
-      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-      downloadBlob(blob, `بطاقة-عضوية-${memberNumber}.png`);
+      await action(cardRef.current);
     } catch (err) {
-      console.error("Card image download error:", err);
+      if (err instanceof Error && err.name !== "AbortError") console.error("Card error:", err);
     } finally {
       setBusy(null);
     }
   }
 
-  async function downloadPdf() {
-    setBusy("pdf");
-    try {
-      const [canvas, { jsPDF }] = await Promise.all([renderCanvas(), import("jspdf")]);
-      if (!canvas) return;
-      const pdf = new jsPDF({
-        orientation: canvas.width >= canvas.height ? "landscape" : "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height],
-      });
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, canvas.width, canvas.height);
-      pdf.save(`بطاقة-عضوية-${memberNumber}.pdf`);
-    } catch (err) {
-      console.error("Card PDF download error:", err);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function shareCard() {
-    setBusy("share");
-    try {
-      const canvas = await renderCanvas();
-      if (!canvas) return;
-      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) return;
-
-      const file = new File([blob], `بطاقة-عضوية-${memberNumber}.png`, { type: "image/png" });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "بطاقة العضوية" });
-        return;
-      }
-      if (navigator.share) {
-        await navigator.share({
-          title: "بطاقة العضوية",
-          url: `${window.location.origin}/verify/${verifyToken}`,
-        });
-        return;
-      }
-      // No Web Share API on this browser — fall back to a direct download
-      // rather than the button silently doing nothing.
-      downloadBlob(blob, `بطاقة-عضوية-${memberNumber}.png`);
-    } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError")
-        console.error("Card share error:", err);
-    } finally {
-      setBusy(null);
-    }
-  }
+  const fileName = (extension: string) => `بطاقة-عضوية-${memberNumber}.${extension}`;
 
   if (!memberNumber) return null;
 
@@ -196,7 +128,7 @@ export default function MemberCard({
 
       <div className="flex gap-2 mt-3">
         <button
-          onClick={downloadImage}
+          onClick={() => run("image", (node) => savePng(node, fileName("png")))}
           disabled={busy !== null}
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
@@ -204,7 +136,7 @@ export default function MemberCard({
           {busy === "image" ? "..." : <IconLabel name="download">صورة</IconLabel>}
         </button>
         <button
-          onClick={downloadPdf}
+          onClick={() => run("pdf", (node) => savePdf(node, fileName("pdf")))}
           disabled={busy !== null}
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
@@ -212,7 +144,16 @@ export default function MemberCard({
           {busy === "pdf" ? "..." : <IconLabel name="file">PDF</IconLabel>}
         </button>
         <button
-          onClick={shareCard}
+          onClick={() =>
+            run("share", (node) =>
+              sharePng(
+                node,
+                fileName("png"),
+                "بطاقة العضوية",
+                `${window.location.origin}/verify/${verifyToken}`,
+              ),
+            )
+          }
           disabled={busy !== null}
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-600)", color: "white" }}

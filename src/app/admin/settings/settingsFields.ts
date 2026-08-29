@@ -4,7 +4,7 @@ import type { AppSettingsValues } from "@/lib/settings";
 export interface SettingsField {
   key: keyof AppSettingsValues;
   label: string;
-  kind: "number" | "phone" | "url";
+  kind: "number" | "phone" | "url" | "text";
   hint?: string;
   min?: number;
   max?: number;
@@ -48,6 +48,20 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     kind: "url",
     placeholder: "https://chat.whatsapp.com/...",
     optional: true,
+  },
+  {
+    key: "secretaryName",
+    label: "اسم الأمين العام",
+    kind: "text",
+    optional: true,
+    hint: "يُطبع على وصل القبض مكان التوقيع.",
+  },
+  {
+    key: "treasurerName",
+    label: "اسم مسؤول المالية",
+    kind: "text",
+    optional: true,
+    hint: "يُطبع على وصل القبض مكان التوقيع.",
   },
 ];
 
