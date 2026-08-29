@@ -12,7 +12,6 @@ import type { Activity, EligibleMember } from "./activityTypes";
 
 interface ActivitiesSectionProps {
   eligibleMember: EligibleMember | null;
-  memberStatus: "PENDING" | "ACTIVE" | "REJECTED" | null;
   quizAccess: boolean;
 }
 
@@ -63,11 +62,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
   );
 }
 
-export default function ActivitiesSection({
-  eligibleMember,
-  memberStatus,
-  quizAccess,
-}: ActivitiesSectionProps) {
+export default function ActivitiesSection({ eligibleMember, quizAccess }: ActivitiesSectionProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,19 +101,7 @@ export default function ActivitiesSection({
         <>
           {!eligibleMember && (
             <p className="text-sm px-1" style={{ color: "var(--text-muted)" }}>
-              {memberStatus === "PENDING" ? (
-                texts.pendingNotice
-              ) : memberStatus === "REJECTED" ? (
-                texts.rejectedNotice
-              ) : (
-                <>
-                  تصفح الأنشطة المتاحة —{" "}
-                  <a href="/register" className="font-bold" style={{ color: "var(--mint-600)" }}>
-                    سجّل طلب انضمام
-                  </a>{" "}
-                  لتتمكن من التسجيل.
-                </>
-              )}
+              {texts.browseNotice}
             </p>
           )}
 

@@ -5,6 +5,7 @@ export const memberActivities = {
   play: "العب",
   closedChip: "مغلق",
   registeredChip: "مسجَّل",
-  pendingNotice: "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة.",
-  rejectedNotice: "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة.",
+  // Why the activities below cannot be joined yet. What to do about it is
+  // said once, at the top of the page, by the standing card.
+  browseNotice: "تصفح الأنشطة المتاحة — التسجيل فيها متاح للمنتسبين بعد قبول اشتراكهم.",
 } as const;
