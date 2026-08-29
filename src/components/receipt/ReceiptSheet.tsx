@@ -23,12 +23,13 @@ export function ReceiptCard({
 
 export default function ReceiptSheet({
   receipt,
+  qrDataUrl = null,
   innerRef,
 }: {
   receipt: OfficialReceiptView;
+  qrDataUrl?: string | null;
   innerRef?: React.Ref<HTMLDivElement>;
 }) {
-  const qrDataUrl = useReceiptQr(receipt.token);
   return (
     <div
       ref={innerRef}

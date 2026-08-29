@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
+import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -7,14 +7,14 @@ import { issueReceipt, listReceipts, receiptView } from "@/lib/officialReceiptSe
 import { receiptCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/receipts", async (req: NextRequest) => {
-  await requireUnscopedAdmin();
+  await requireAdminRole("MEMBERS", "ACTIVITIES");
   const year = Number(new URL(req.url).searchParams.get("year"));
   const receipts = await listReceipts(Number.isInteger(year) && year > 0 ? year : undefined);
   return NextResponse.json({ receipts });
 });
 
 export const POST = withRoute("POST /api/admin/receipts", async (req: NextRequest) => {
-  const session = await requireUnscopedAdmin();
+  const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
   const { payerName, reason, amount, issuedOn, memberId } = parse(
     receiptCreateSchema,
     await req.json(),

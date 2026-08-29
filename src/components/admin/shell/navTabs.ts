@@ -10,6 +10,7 @@ export const NAV_TABS: NavTab[] = [
   { href: "/admin/dashboard", label: "المستخدمون", icon: "users" },
   { href: "/admin/activities", label: "الأنشطة", icon: "trophy" },
   { href: "/admin/payments", label: "المدفوعات", icon: "receipt" },
+  { href: "/admin/receipts", label: "الوصولات", icon: "receipt" },
   { href: "/admin/expenses", label: "المصاريف", icon: "banknote" },
   { href: "/admin/treasury", label: "الخزينة", icon: "wallet" },
   { href: "/admin/finance-report", label: "التقرير المالي", icon: "file" },

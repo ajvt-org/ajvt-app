@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin, withParams } from "./helpers";
 import { GET as LIST, POST as ISSUE } from "@/app/api/admin/receipts/route";
-import { POST as VOID } from "@/app/api/admin/receipts/[id]/void/route";
+import { POST as VOID } from "@/app/api/admin/receipts/[number]/void/route";
 import { PATCH as SAVE_SETTINGS } from "@/app/api/admin/settings/route";
 import { runningYear } from "@/lib/membershipYear";
 
@@ -15,8 +15,8 @@ const DRAFT = {
 
 const issue = (body: Record<string, unknown> = DRAFT) => ISSUE(post("/api/admin/receipts", body));
 
-const voidIt = (id: string, reason: string) =>
-  VOID(post(`/api/admin/receipts/${id}/void`, { reason }), withId(id));
+const voidIt = (number: string, reason: string) =>
+  VOID(post(`/api/admin/receipts/${number}/void`, { reason }), withParams({ number }));
 
 async function asBoss() {
   await signInAsAdmin(await createAdmin("boss", "SUPER"));
@@ -153,8 +153,10 @@ describe("issuing a receipt", () => {
   it("is closed to nobody at all, and to an admin scoped to one activity", async () => {
     expect((await issue()).status).toBe(401);
 
-    await signInAsAdmin(await createAdmin("coach", "ACTIVITY"));
-    expect((await issue()).status).toBe(403);
+    for (const role of ["ACTIVITY", "QUIZ"]) {
+      await signInAsAdmin(await createAdmin(`admin-${role}`, role));
+      expect((await issue()).status, role).toBe(403);
+    }
     expect(await prisma.receipt.count()).toBe(0);
   });
 });
@@ -167,13 +169,12 @@ describe("cancelling a receipt", () => {
   it("marks it void rather than deleting the number", async () => {
     await asBoss();
     const { receipt } = await (await issue()).json();
-    const row = await prisma.receipt.findFirstOrThrow();
 
-    const res = await voidIt(row.id, "خطأ في المبلغ");
+    const res = await voidIt(receipt.number, "خطأ في المبلغ");
 
     expect(res.status).toBe(200);
     expect((await res.json()).receipt.status).toBe("VOID");
-    const after = await prisma.receipt.findUniqueOrThrow({ where: { id: row.id } });
+    const after = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
     expect(after.number).toBe(receipt.number);
     expect(after.voidReason).toBe("خطأ في المبلغ");
     expect(after.voidedBy).toBe("boss");
@@ -183,8 +184,7 @@ describe("cancelling a receipt", () => {
   it("does not hand the cancelled number to the next receipt", async () => {
     await asBoss();
     await issue();
-    const row = await prisma.receipt.findFirstOrThrow();
-    await voidIt(row.id, "خطأ");
+    await voidIt("R-2026-0001", "خطأ");
 
     const { receipt } = await (await issue()).json();
 
@@ -194,27 +194,25 @@ describe("cancelling a receipt", () => {
   it("refuses to cancel the same receipt twice", async () => {
     await asBoss();
     await issue();
-    const row = await prisma.receipt.findFirstOrThrow();
-    await voidIt(row.id, "خطأ");
+    await voidIt("R-2026-0001", "خطأ");
 
-    expect((await voidIt(row.id, "مرة أخرى")).status).toBe(404);
+    expect((await voidIt("R-2026-0001", "مرة أخرى")).status).toBe(404);
   });
 
   it("refuses a receipt that does not exist", async () => {
     await asBoss();
 
-    expect((await voidIt("nope", "خطأ")).status).toBe(404);
+    expect((await voidIt("R-2026-9999", "خطأ")).status).toBe(404);
   });
 
   it("insists on a reason", async () => {
     await asBoss();
     await issue();
-    const row = await prisma.receipt.findFirstOrThrow();
 
-    expect((await voidIt(row.id, "   ")).status).toBe(400);
-    expect((await prisma.receipt.findUniqueOrThrow({ where: { id: row.id } })).status).toBe(
-      "ACTIVE",
-    );
+    expect((await voidIt("R-2026-0001", "   ")).status).toBe(400);
+    expect(
+      (await prisma.receipt.findUniqueOrThrow({ where: { number: "R-2026-0001" } })).status,
+    ).toBe("ACTIVE");
   });
 });
 

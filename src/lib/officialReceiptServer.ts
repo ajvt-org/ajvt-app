@@ -56,11 +56,15 @@ export async function issueReceiptForPayment(
   }
 }
 
-export async function voidReceipt(id: string, reason: string, by: string): Promise<Receipt | null> {
-  const existing = await prisma.receipt.findUnique({ where: { id } });
+export async function voidReceipt(
+  number: string,
+  reason: string,
+  by: string,
+): Promise<Receipt | null> {
+  const existing = await prisma.receipt.findUnique({ where: { number } });
   if (!existing || existing.status === "VOID") return null;
   return prisma.receipt.update({
-    where: { id },
+    where: { number },
     data: { status: "VOID", voidReason: reason, voidedBy: by, voidedAt: new Date() },
   });
 }
