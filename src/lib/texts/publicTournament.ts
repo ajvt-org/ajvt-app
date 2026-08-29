@@ -1,8 +1,20 @@
+import { countedNoun, type NounForms } from "../arabicPlural";
+
+const UNKNOWN_MINUTE_GOALS: NounForms = {
+  one: "هدف دون دقيقة مسجلة",
+  two: "هدفان دون دقيقة مسجلة",
+  few: "أهداف دون دقيقة مسجلة",
+  many: "هدفاً دون دقيقة مسجلة",
+  other: "هدف دون دقيقة مسجلة",
+};
+
 export const matchDisplay = {
   tieUnresolved: "متساويان تماماً — يفصل بينهما القرعة",
   tieMark: "قرعة",
   forfeitBadge: "انسحاب",
   unknownScorer: "مجهول",
+  unknownMinute: (count: number) => countedNoun(count, UNKNOWN_MINUTE_GOALS),
+  unknownMinuteTally: (count: number) => `×${count}`,
   ownGoal: "ع",
   penaltyShort: "ج",
   extraTimeShort: "و.إ",
