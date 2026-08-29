@@ -7,7 +7,8 @@ import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import ActivityFinance from "./ActivityFinance";
-import WorkspaceTabs, { type WorkspaceTab } from "@/components/admin/WorkspaceTabs";
+import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
+import { activityTabs } from "./activityTabs";
 import DetailsTab from "./DetailsTab";
 import RegistrationsTab from "./RegistrationsTab";
 import LogTab from "./LogTab";
@@ -15,7 +16,6 @@ import IconLabel from "@/components/IconLabel";
 import TournamentPanel from "@/components/admin/tournament/TournamentPanel";
 import {
   isTournamentTab,
-  tournamentTabs,
   type TournamentTabKey,
 } from "@/components/admin/tournament/tournamentTabs";
 import { useTournamentData } from "@/components/admin/tournament/useTournamentData";
@@ -23,23 +23,6 @@ import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { countedNoun } from "@/lib/arabicCount";
 import { ACCEPTED, REQUEST } from "@/lib/messages";
 import { activityWorkspace as texts } from "@/lib/texts";
-
-function tabsFor(activity: ActivityDetail["activity"], pendingProposals: number): WorkspaceTab[] {
-  const pending = activity.registrations.filter((r) => r.status === "PENDING").length;
-  const tabs: WorkspaceTab[] = [{ key: "details", label: texts.tabs.details, icon: "pencil" }];
-  if (!activity.isVolunteer) {
-    tabs.push({
-      key: "registrations",
-      label: texts.tabs.registrations,
-      icon: "users",
-      badge: pending,
-    });
-  }
-  tabs.push(...tournamentTabs(activity, pendingProposals));
-  tabs.push({ key: "finance", label: texts.tabs.finance, icon: "wallet" });
-  tabs.push({ key: "log", label: texts.tabs.log, icon: "list" });
-  return tabs;
-}
 
 function AdminActivityPageInner({ id }: { id: string }) {
   const router = useRouter();
@@ -103,7 +86,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
   const { activity, history } = data;
   const accepted = activity.registrations.filter((r) => r.status === "ACTIVE").length;
-  const tabs = tabsFor(activity, pendingProposals);
+  const tabs = activityTabs(activity, pendingProposals);
   const requested = searchParams.get("tab") || tabs[0].key;
   const tab = tabs.some((t) => t.key === requested) ? requested : tabs[0].key;
 
