@@ -33,6 +33,7 @@ export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
+export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
