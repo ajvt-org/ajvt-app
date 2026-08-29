@@ -20,6 +20,7 @@ export interface Proof {
   donorPhone?: string | null;
   donorPhoto?: string | null;
   tags?: FinanceTag[];
+  receipt?: { number: string; status: string; token: string } | null;
   uploadedAt: string;
   submittedAt: string;
 }
@@ -59,12 +60,6 @@ export interface ActivityOption {
   id: string;
   title: string;
 }
-
-export const STATUS_LABEL: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "مرفوض",
-};
 
 export const STATUS_CLASS: Record<string, string> = {
   PENDING: "badge-pending",

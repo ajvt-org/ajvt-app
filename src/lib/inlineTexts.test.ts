@@ -13,6 +13,8 @@ const KEPT_CLEAN = [
   "src/app/admin/payments/DonationEditForm.tsx",
   "src/app/admin/payments/LinkMemberPanel.tsx",
   "src/app/admin/payments/ManualDonationDialog.tsx",
+  "src/app/admin/payments/ProofCard.tsx",
+  "src/app/admin/payments/paymentTypes.ts",
   "src/app/admin/payments/donationProof.ts",
   "src/app/admin/payments/MemberIdentity.tsx",
   "src/app/admin/members/[id]/page.tsx",
