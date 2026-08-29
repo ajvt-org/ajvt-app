@@ -28,9 +28,7 @@ async function memberWithPayment(phone: string, fullName: string, amount: number
     status: "ACTIVE",
     memberNumber: `AJVT-${phone.slice(-4)}`,
     paidAmount: amount,
-  });
-  await prisma.payment.create({
-    data: { purpose: "MEMBERSHIP", amount, year: 2026, status: "ACTIVE", memberId: member.id },
+    membershipYear: 2026,
   });
   await ensureReceiptsFor(prisma, {});
   return { user, member };
