@@ -21,6 +21,7 @@ import MemberPhotoCard from "./MemberPhotoCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
 import { STATUS_LABEL as REGISTRATION_LABEL } from "@/app/admin/activities/activityTypes";
+import { memberPage as texts, ouguiya } from "@/lib/texts";
 
 const MEMBER_STATUS: Record<string, string> = memberStatusLabels;
 
@@ -64,7 +65,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
   if (loading) {
     return (
       <p className="admin-page text-sm text-center py-16" style={{ color: "var(--mint-500)" }}>
-        جاري التحميل...
+        {texts.loading}
       </p>
     );
   }
@@ -73,14 +74,14 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
     return (
       <div className="admin-page text-center py-16 space-y-3">
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          لم نجد هذا العضو.
+          {texts.notFound}
         </p>
         <Link
           href="/admin/dashboard"
           className="text-sm font-bold"
           style={{ color: "var(--mint-600)" }}
         >
-          <ArrowLabel direction="back">المستخدمون</ArrowLabel>
+          <ArrowLabel direction="back">{texts.backToMembers}</ArrowLabel>
         </Link>
       </div>
     );
@@ -95,7 +96,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         className="text-sm font-bold"
         style={{ color: "var(--mint-600)" }}
       >
-        <ArrowLabel direction="back">المستخدمون</ArrowLabel>
+        <ArrowLabel direction="back">{texts.backToMembers}</ArrowLabel>
       </Link>
 
       <div className="card p-4 flex items-center gap-3">
@@ -131,7 +132,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             className="text-xs font-bold px-3 py-1.5 rounded-lg"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            {editing ? "إلغاء" : <IconLabel name="pencil">تعديل</IconLabel>}
+            {editing ? texts.cancel : <IconLabel name="pencil">{texts.edit}</IconLabel>}
           </button>
         </div>
       </div>
@@ -152,7 +153,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
       )}
 
       {member.user && (
-        <ProfileSection icon="user" title="الحساب">
+        <ProfileSection icon="user" title={texts.account}>
           <div className="text-sm">
             <AccountPhoneForm memberId={member.id} phone={member.user.phone} onChanged={load} />
           </div>
@@ -166,18 +167,18 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         onChanged={load}
       />
 
-      <ProfileSection icon="wallet" title="الدفع">
+      <ProfileSection icon="wallet" title={texts.payment}>
         <dl className="text-sm space-y-1">
           <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>المبلغ المدفوع</dt>
+            <dt style={{ color: "var(--text-muted)" }}>{texts.paidAmount}</dt>
             <dd className="font-bold">{member.paidAmount ?? "—"}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>طريقة الدفع</dt>
+            <dt style={{ color: "var(--text-muted)" }}>{texts.method}</dt>
             <dd className="font-bold">{member.paymentMethod || "—"}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>تاريخ الطلب</dt>
+            <dt style={{ color: "var(--text-muted)" }}>{texts.requestDate}</dt>
             <dd className="font-bold" dir="ltr">
               {day(member.createdAt)}
             </dd>
@@ -188,7 +189,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/api/files/${member.paymentProof}`}
-              alt="كابتير"
+              alt={texts.proofAlt}
               className="w-full object-contain max-h-56 rounded-xl"
               style={{ background: "#f3f4f6" }}
             />
@@ -200,10 +201,10 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         </div>
       </ProfileSection>
 
-      <ProfileSection icon="trophy" title={`الأنشطة (${member.registrations.length})`}>
+      <ProfileSection icon="trophy" title={texts.activities(member.registrations.length)}>
         {member.registrations.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لم يشارك في أي نشاط
+            {texts.noActivities}
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -220,10 +221,10 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      <ProfileSection icon="users" title={`الفرق (${member.teamMemberships.length})`}>
+      <ProfileSection icon="users" title={texts.teams(member.teamMemberships.length)}>
         {member.teamMemberships.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            ليس في أي فريق
+            {texts.noTeams}
           </p>
         ) : (
           <ul className="space-y-1.5">
@@ -239,16 +240,16 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      <ProfileSection icon="heart" title={`التبرعات (${member.donations.length})`}>
+      <ProfileSection icon="heart" title={texts.donations(member.donations.length)}>
         {member.donations.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا توجد تبرعات
+            {texts.noDonations}
           </p>
         ) : (
           <ul className="space-y-1.5">
             {member.donations.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-bold">{d.amount} أوقية</span>
+                <span className="font-bold">{ouguiya.amount(d.amount ?? "")}</span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
                 </span>
@@ -260,10 +261,10 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
 
       <PaymentReceipts source={`/api/admin/members/${member.id}/receipts`} />
 
-      <ProfileSection icon="list" title={`سجل التغييرات (${history.length})`}>
+      <ProfileSection icon="list" title={texts.history(history.length)}>
         {history.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا توجد تغييرات مسجلة
+            {texts.noHistory}
           </p>
         ) : (
           <ul className="space-y-1.5">

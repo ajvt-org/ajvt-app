@@ -15,6 +15,7 @@ export { accountPhone } from "./accountPhone";
 export { adminTabs } from "./adminNav";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
+export { daysTab } from "./daysTab";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { expenseForm } from "./expenses";
@@ -33,6 +34,7 @@ export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
+export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
@@ -46,6 +48,7 @@ export {
   receiptVerify,
 } from "./receipt";
 export { signUp } from "./signUp";
+export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
