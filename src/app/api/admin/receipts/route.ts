@@ -3,14 +3,16 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { issueReceipt, listReceipts, receiptView } from "@/lib/officialReceiptServer";
+import { issueReceipt, listReceipts, receiptView, receiptYears } from "@/lib/officialReceiptServer";
 import { receiptCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/receipts", async (req: NextRequest) => {
   await requireAdminRole("MEMBERS", "ACTIVITIES");
-  const year = Number(new URL(req.url).searchParams.get("year"));
-  const receipts = await listReceipts(Number.isInteger(year) && year > 0 ? year : undefined);
-  return NextResponse.json({ receipts });
+  const asked = Number(new URL(req.url).searchParams.get("year"));
+  const years = await receiptYears();
+  const year = Number.isInteger(asked) && asked > 0 ? asked : (years[0] ?? null);
+  const receipts = await listReceipts(year ?? undefined);
+  return NextResponse.json({ receipts, years, year });
 });
 
 export const POST = withRoute("POST /api/admin/receipts", async (req: NextRequest) => {

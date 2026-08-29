@@ -4,6 +4,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { placeholderTeamName } from "@/lib/teamSize";
+import { flatPlayer } from "@/lib/person";
 import { activities, tournament } from "@/lib/messages";
 
 export const GET = withRoute(
@@ -32,7 +33,12 @@ export const GET = withRoute(
       },
     });
 
-    return NextResponse.json({ teams });
+    return NextResponse.json({
+      teams: teams.map((team) => ({
+        ...team,
+        members: team.members.map((m) => ({ ...m, member: flatPlayer(m.member) })),
+      })),
+    });
   },
 );
 
