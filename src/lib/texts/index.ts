@@ -2,12 +2,14 @@ export { activityForm, activityRow, activityStandingTexts, tournamentSetup } fro
 export { activityPage } from "./activityPage";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
+export { adminTabs } from "./adminNav";
 export { discipline } from "./discipline";
 export { expenseForm } from "./expenses";
 export { financeReport } from "./financeReport";
 export { landingActivities } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
+export { memberCard } from "./memberCard";
 export { manualAdd } from "./manualAdd";
 export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
@@ -17,8 +19,15 @@ export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoLock } from "./photoLock";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
+export { settingsForm } from "./settings";
 export { quizRecap } from "./quizRecap";
-export { memberReceipts, receiptAdmin, receiptSheet, receiptVerify } from "./receipt";
+export {
+  memberReceipts,
+  receiptAdmin,
+  receiptPurpose,
+  receiptSheet,
+  receiptVerify,
+} from "./receipt";
 export { signUp } from "./signUp";
 export { treasury } from "./treasury";
 export { villageField, villagesDialog } from "./villages";

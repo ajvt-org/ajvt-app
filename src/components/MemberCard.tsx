@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { formatDate } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import { savePdf, savePng, sharePng } from "@/components/pdf/renderPdf";
+import { memberCard } from "@/lib/texts";
 
 interface MemberCardProps {
   fullName: string;
@@ -55,9 +56,9 @@ export default function MemberCard({
     }
   }
 
-  const fileName = (extension: string) => `بطاقة-عضوية-${memberNumber}.${extension}`;
-
   if (!memberNumber) return null;
+
+  const fileName = (extension: string) => memberCard.fileName(memberNumber, extension);
 
   return (
     <div className="card p-5 overflow-hidden">
@@ -65,7 +66,7 @@ export default function MemberCard({
         className="font-bold mb-3 pb-2"
         style={{ color: "var(--text-main)", borderBottom: "1px solid var(--mint-100)" }}
       >
-        <IconLabel name="idCard">بطاقة العضوية</IconLabel>
+        <IconLabel name="idCard">{memberCard.title}</IconLabel>
       </h3>
 
       <div
@@ -75,12 +76,12 @@ export default function MemberCard({
       >
         <div className="flex items-center gap-3 mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/version-final.png" alt="شعار" width={36} height={36} />
+          <img src="/version-final.png" alt={memberCard.logoAlt} width={36} height={36} />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              رابطة شباب قرية
+              {memberCard.association}
             </p>
-            <p className="text-sm font-black text-white">التاكلالت</p>
+            <p className="text-sm font-black text-white">{memberCard.village}</p>
           </div>
         </div>
 
@@ -120,7 +121,7 @@ export default function MemberCard({
               {memberNumber}
             </p>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-              عضو منذ {formatDate(createdAt)}
+              {memberCard.memberSince(formatDate(createdAt))}
             </p>
           </div>
         </div>
@@ -133,7 +134,11 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {busy === "image" ? "..." : <IconLabel name="download">صورة</IconLabel>}
+          {busy === "image" ? (
+            memberCard.busy
+          ) : (
+            <IconLabel name="download">{memberCard.image}</IconLabel>
+          )}
         </button>
         <button
           onClick={() => run("pdf", (node) => savePdf(node, fileName("pdf")))}
@@ -141,7 +146,7 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          {busy === "pdf" ? "..." : <IconLabel name="file">PDF</IconLabel>}
+          {busy === "pdf" ? memberCard.busy : <IconLabel name="file">{memberCard.pdf}</IconLabel>}
         </button>
         <button
           onClick={() =>
@@ -149,7 +154,7 @@ export default function MemberCard({
               sharePng(
                 node,
                 fileName("png"),
-                "بطاقة العضوية",
+                memberCard.title,
                 `${window.location.origin}/verify/${verifyToken}`,
               ),
             )
@@ -158,12 +163,16 @@ export default function MemberCard({
           className="text-xs px-2 py-2 rounded-lg font-bold flex-1 disabled:opacity-40"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          {busy === "share" ? "..." : <IconLabel name="upload">مشاركة</IconLabel>}
+          {busy === "share" ? (
+            memberCard.busy
+          ) : (
+            <IconLabel name="upload">{memberCard.share}</IconLabel>
+          )}
         </button>
       </div>
 
       <p className="text-xs text-center mt-2" style={{ color: "var(--text-muted)" }}>
-        امسح رمز QR للتحقق من صلاحية العضوية
+        {memberCard.qrHint}
       </p>
     </div>
   );

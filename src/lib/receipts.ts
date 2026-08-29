@@ -1,3 +1,5 @@
+import { receiptPurpose } from "./texts/receipt";
+
 export type ReceiptPurpose = "MEMBERSHIP" | "ACTIVITY" | "DONATION";
 
 export interface ReceiptSubject {
@@ -7,9 +9,9 @@ export interface ReceiptSubject {
 }
 
 export const PURPOSE_LABEL: Record<ReceiptPurpose, string> = {
-  MEMBERSHIP: "اشتراك عضوية",
-  ACTIVITY: "دعم نشاط",
-  DONATION: "تبرع",
+  MEMBERSHIP: receiptPurpose.membership,
+  ACTIVITY: receiptPurpose.activity,
+  DONATION: receiptPurpose.donation,
 };
 
 export function receiptTitle(subject: ReceiptSubject): string {
