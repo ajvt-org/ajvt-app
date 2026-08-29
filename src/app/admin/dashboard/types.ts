@@ -3,7 +3,10 @@ export type FilterTab = "ALL" | Status | "NO_REQUEST";
 
 export interface BareAccount {
   id: string;
-  phone: string;
+  // Null for someone an admin added without a number. They cannot sign in, so
+  // the actions that need a login are not offered on their row.
+  phone: string | null;
+  fullName: string | null;
   createdAt: string;
   lastActiveDate: string | null;
   hasPush: boolean;

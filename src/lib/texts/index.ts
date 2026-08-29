@@ -5,6 +5,7 @@ export { activityReport } from "./activityReport";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { adminTabs } from "./adminNav";
+export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { discipline } from "./discipline";
 export { expenseForm } from "./expenses";
