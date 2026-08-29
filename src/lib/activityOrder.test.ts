@@ -7,7 +7,15 @@ function activity(id: string, startsAt: string | null, endsAt: string | null, is
   return { id, startsAt, endsAt, isOpen };
 }
 
-function order(rows: ReturnType<typeof activity>[]): string[] {
+function order(
+  rows: {
+    id: string;
+    startsAt: string | null;
+    endsAt: string | null;
+    isOpen: boolean;
+    order?: number;
+  }[],
+): string[] {
   return sortActivities(rows, NOW).map((r) => r.id);
 }
 
@@ -73,5 +81,48 @@ describe("sortActivities", () => {
 
   it("has nothing to sort in an empty list", () => {
     expect(sortActivities([], NOW)).toEqual([]);
+  });
+});
+
+describe("the order the admin sets by hand", () => {
+  const undated = (id: string, order: number) => ({
+    id,
+    startsAt: null,
+    endsAt: null,
+    isOpen: true,
+    order,
+  });
+
+  it("decides between two activities of the same standing", () => {
+    expect(order([undated("second", 1), undated("first", 0)])).toEqual(["first", "second"]);
+  });
+
+  it("never lifts an activity out of its own standing", () => {
+    const finished = {
+      id: "done",
+      startsAt: "2026-08-01",
+      endsAt: "2026-08-02",
+      isOpen: true,
+      order: 0,
+    };
+    const upcoming = {
+      id: "soon",
+      startsAt: "2026-09-01",
+      endsAt: "2026-09-02",
+      isOpen: true,
+      order: 9,
+    };
+
+    expect(order([finished, upcoming])).toEqual(["soon", "done"]);
+  });
+
+  it("falls back on the order it was given when nothing says otherwise", () => {
+    expect(order([undated("a", 0), undated("b", 0)])).toEqual(["a", "b"]);
+  });
+
+  it("treats an activity with no order as the first", () => {
+    const noOrder = { id: "plain", startsAt: null, endsAt: null, isOpen: true };
+
+    expect(order([undated("ranked", 3), noOrder])).toEqual(["plain", "ranked"]);
   });
 });

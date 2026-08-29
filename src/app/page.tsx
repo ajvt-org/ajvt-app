@@ -17,6 +17,7 @@ export default async function LandingPage() {
           orderBy: { order: "asc" },
           select: {
             id: true,
+            order: true,
             title: true,
             period: true,
             startsAt: true,

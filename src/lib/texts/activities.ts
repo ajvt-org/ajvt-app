@@ -22,6 +22,8 @@ export const activityForm = {
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
+  orderHint:
+    "الأسهم ترتّب النشاط داخل مجموعته على صفحات الأعضاء. الجاري ثم القادم ثم المنتهي، وهذا الترتيب لا يتغيّر.",
   tournamentChip: "بطولة",
   volunteerChip: "حملة تطوعية",
   closedChip: "التسجيل مغلق",
