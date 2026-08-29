@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { ensureReceiptsFor } from "./paymentReceiptServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -36,9 +37,10 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
 
   if (existing) {
     await db.payment.update({ where: { id: existing.id }, data });
+    await ensureReceiptsFor(db, { id: existing.id });
     return;
   }
-  await db.payment.create({
+  const created = await db.payment.create({
     data: {
       ...data,
       purpose: "MEMBERSHIP",
@@ -49,6 +51,7 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
       recordedBy: m.recordedBy ?? null,
     },
   });
+  await ensureReceiptsFor(db, { id: created.id });
 }
 
 export async function mirrorMembershipStatus(
@@ -61,6 +64,7 @@ export async function mirrorMembershipStatus(
     where: { memberId, year, purpose: "MEMBERSHIP" },
     data: { status },
   });
+  await ensureReceiptsFor(db, { memberId, year, purpose: "MEMBERSHIP" });
 }
 
 export interface DonationMirror {
@@ -107,6 +111,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
       where: { id: existing.id },
       data: { ...data, ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}) },
     });
+    await ensureReceiptsFor(db, { id: existing.id });
     return;
   }
   await db.payment.create({
@@ -116,6 +121,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
       ...(d.tagIds ? { tags: { connect: d.tagIds.map((id) => ({ id })) } } : {}),
     },
   });
+  await ensureReceiptsFor(db, { id: d.donationId });
 }
 
 export async function removeMirroredDonation(db: Db, donationId: string) {

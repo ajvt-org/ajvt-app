@@ -17,7 +17,7 @@ export const PURPOSE_LABEL: Record<ReceiptPurpose, string> = {
   DONATION: "تبرع",
 };
 
-export function receiptTitle(row: ReceiptRow): string {
+export function receiptTitle(row: Pick<ReceiptRow, "purpose" | "year" | "activityTitle">): string {
   if (row.purpose === "MEMBERSHIP") {
     return row.year ? `${PURPOSE_LABEL.MEMBERSHIP} ${row.year}` : PURPOSE_LABEL.MEMBERSHIP;
   }
