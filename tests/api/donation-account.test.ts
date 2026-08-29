@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   resetDb,
   patch,
+  post,
   postForm,
   createUser,
   createAdmin,
@@ -21,6 +22,7 @@ vi.mock("@/lib/imageProcessing", async (orig) => {
 });
 
 import { POST as GIVE } from "@/app/api/donations/route";
+import { POST as RECORD } from "@/app/api/admin/donations/route";
 import { PATCH as UPDATE } from "@/app/api/admin/donations/[id]/route";
 
 async function aMember(phone: string, name: string) {
@@ -81,14 +83,57 @@ describe("the account behind a donation", () => {
     await signInAsAdmin(await createAdmin());
 
     const res = await UPDATE(
-      patch(`/api/admin/donations/${gift.id}`, { memberId: second.member.id }),
+      patch(`/api/admin/donations/${gift.id}`, { userId: second.user.id }),
       withId(gift.id),
     );
     expect(res.status).toBe(200);
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
     expect(after.userId).toBe(second.user.id);
+    expect(after.memberId).toBe(second.member.id);
     expect(after.userId).not.toBe(first.user.id);
+  });
+
+  it("refuses an account that does not exist", async () => {
+    const gift = await prisma.donation.create({
+      data: { donorName: "فاعل خير", amount: 5000, source: "PUBLIC", status: "ACTIVE" },
+    });
+    await signInAsAdmin(await createAdmin());
+
+    const res = await UPDATE(
+      patch(`/api/admin/donations/${gift.id}`, { userId: "ghost" }),
+      withId(gift.id),
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it("names both accounts in the log when a wrong link is corrected", async () => {
+    const first = await aMember("22110066", "سالم ولد محمد");
+    const second = await aMember("22110077", "عبد الله ولد سالم");
+    const gift = await prisma.donation.create({
+      data: {
+        donorName: "ابو",
+        amount: 5000,
+        source: "PUBLIC",
+        status: "ACTIVE",
+        memberId: first.member.id,
+        userId: first.user.id,
+      },
+    });
+    await signInAsAdmin(await createAdmin());
+
+    await UPDATE(
+      patch(`/api/admin/donations/${gift.id}`, { userId: second.user.id }),
+      withId(gift.id),
+    );
+
+    const entry = await prisma.auditLog.findFirstOrThrow({
+      where: { action: "LINK_DONATION_MEMBER" },
+    });
+    expect(entry.targetLabel).toBe("سالم ولد محمد → عبد الله ولد سالم");
+    expect(entry.before).toMatchObject({ userId: first.user.id });
+    expect(entry.after).toMatchObject({ userId: second.user.id });
   });
 
   it("clears the account when an admin unlinks the member", async () => {
@@ -105,9 +150,75 @@ describe("the account behind a donation", () => {
     });
     await signInAsAdmin(await createAdmin());
 
-    await UPDATE(patch(`/api/admin/donations/${gift.id}`, { memberId: null }), withId(gift.id));
+    await UPDATE(patch(`/api/admin/donations/${gift.id}`, { userId: null }), withId(gift.id));
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
     expect(after.userId).toBeNull();
+    expect(after.memberId).toBeNull();
+  });
+
+  it("links a gift to an account as it is recorded, in one step", async () => {
+    const { user, member } = await aMember("22110088", "أبوبكر لمرابط");
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    const res = await RECORD(
+      post("/api/admin/donations", {
+        donorName: "ابو",
+        amount: 2000,
+        paymentMethod: "بنكيلي",
+        userId: user.id,
+      }),
+    );
+    expect(res.status).toBe(201);
+
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.userId).toBe(user.id);
+    expect(donation.memberId).toBe(member.id);
+    expect(donation.donorName).toBe("ابو");
+  });
+
+  it("carries a link made at creation onto the mirrored payment", async () => {
+    const { user, member } = await aMember("22110099", "أبوبكر لمرابط");
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    await RECORD(
+      post("/api/admin/donations", {
+        donorName: "ابو",
+        amount: 2000,
+        paymentMethod: "بنكيلي",
+        userId: user.id,
+      }),
+    );
+
+    const payment = await prisma.payment.findFirstOrThrow();
+    expect(payment.userId).toBe(user.id);
+    expect(payment.memberId).toBe(member.id);
+  });
+
+  it("records a gift with no account when none is given", async () => {
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    await RECORD(
+      post("/api/admin/donations", { donorName: "زائر", amount: 500, paymentMethod: "بنكيلي" }),
+    );
+
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.userId).toBeNull();
+    expect(donation.source).toBe("PUBLIC");
+  });
+
+  it("refuses to record a gift against an account that does not exist", async () => {
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    const res = await RECORD(
+      post("/api/admin/donations", {
+        donorName: "زائر",
+        amount: 500,
+        paymentMethod: "بنكيلي",
+        userId: "ghost",
+      }),
+    );
+
+    expect(res.status).toBe(404);
   });
 });

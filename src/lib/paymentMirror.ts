@@ -72,6 +72,7 @@ export async function mirrorMembershipStatus(
 export interface DonationMirror {
   donationId: string;
   amount: number | null;
+  anonymous: boolean;
   method: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
@@ -82,6 +83,39 @@ export interface DonationMirror {
   userId: string | null;
   activityId: string | null;
   tagIds?: string[];
+}
+
+export interface MirroredDonation {
+  id: string;
+  amount: number | null;
+  anonymous: boolean;
+  paymentMethod: string | null;
+  proof: string | null;
+  status: "PENDING" | "ACTIVE" | "REJECTED";
+  donorName: string | null;
+  donorPhoto: string | null;
+  donorPhone: string | null;
+  memberId: string | null;
+  userId: string | null;
+  activityId: string | null;
+}
+
+export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]): DonationMirror {
+  return {
+    donationId: donation.id,
+    amount: donation.amount,
+    anonymous: donation.anonymous,
+    method: donation.paymentMethod,
+    proof: donation.proof,
+    status: donation.status,
+    donorName: donation.donorName,
+    donorPhoto: donation.donorPhoto,
+    donorPhone: donation.donorPhone,
+    memberId: donation.memberId,
+    userId: donation.userId,
+    activityId: donation.activityId,
+    ...(tagIds ? { tagIds } : {}),
+  };
 }
 
 export async function mirrorDonation(db: Db, d: DonationMirror) {
@@ -101,7 +135,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     method: d.method,
     proof: d.proof,
     status: d.status,
-    anonymous: d.donorName === null,
+    anonymous: d.anonymous,
     donorName: d.donorName,
     donorPhoto: d.donorPhoto,
     donorPhone: d.donorPhone,

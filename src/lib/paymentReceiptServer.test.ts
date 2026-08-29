@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { ensureReceiptsFor } from "./paymentReceiptServer";
-import { money } from "./messages";
+import { ensureReceiptsFor, receiptDriftFor, reconcileReceiptsFor } from "./paymentReceiptServer";
+import { money, receipts as receiptMessages } from "./messages";
 
 const MEMBERSHIP = {
   id: "p1",
@@ -13,10 +13,10 @@ const MEMBERSHIP = {
   memberId: "m1",
   userId: "u1",
   activity: null,
-  member: { user: { fullName: "محمد ولد أحمد" } },
+  user: { fullName: "محمد ولد أحمد" },
 };
 
-function fakeDb(payments: unknown[], settings: unknown = null) {
+function fakeDb(payments: unknown[], settings: unknown = null, standing: unknown[] = []) {
   let counter = 0;
   return {
     payment: { findMany: vi.fn().mockResolvedValue(payments) },
@@ -26,9 +26,26 @@ function fakeDb(payments: unknown[], settings: unknown = null) {
     },
     receipt: {
       create: vi.fn().mockImplementation(async ({ data }: { data: unknown }) => data),
+      findMany: vi.fn().mockResolvedValue(standing),
+      update: vi.fn().mockImplementation(async ({ data }: { data: unknown }) => data),
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
+}
+
+const STANDING = {
+  id: "r1",
+  number: "R-2026-0001",
+  amount: 1000,
+  payerName: "محمد ولد أحمد",
+  reason: "اشتراك عضوية 2026",
+  memberId: "m1",
+  userId: "u1",
+  payment: MEMBERSHIP,
+};
+
+function drifting(over: Record<string, unknown>) {
+  return fakeDb([], null, [{ ...STANDING, ...over }]);
 }
 
 describe("issuing a receipt for a payment", () => {
@@ -84,7 +101,7 @@ describe("issuing a receipt for a payment", () => {
   });
 
   it("leaves the account off a receipt for a payment with no account", async () => {
-    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, member: null }]);
+    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, user: null }]);
 
     await ensureReceiptsFor(db, {});
 
@@ -99,9 +116,17 @@ describe("issuing a receipt for a payment", () => {
     expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
   });
 
+  it("names the account over a donor name typed onto a linked payment", async () => {
+    const db = fakeDb([{ ...MEMBERSHIP, donorName: "ابو" }]);
+
+    await ensureReceiptsFor(db, {});
+
+    expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
+  });
+
   it("names an anonymous donor the way the board does", async () => {
     const db = fakeDb([
-      { ...MEMBERSHIP, purpose: "DONATION", year: null, anonymous: true, member: null },
+      { ...MEMBERSHIP, purpose: "DONATION", year: null, anonymous: true, user: null },
     ]);
 
     await ensureReceiptsFor(db, {});
@@ -111,7 +136,7 @@ describe("issuing a receipt for a payment", () => {
 
   it("falls back to the donor name typed in by hand", async () => {
     const db = fakeDb([
-      { ...MEMBERSHIP, purpose: "DONATION", year: null, member: null, donorName: "أحمد سالم" },
+      { ...MEMBERSHIP, purpose: "DONATION", year: null, user: null, donorName: "أحمد سالم" },
     ]);
 
     await ensureReceiptsFor(db, {});
@@ -193,5 +218,96 @@ describe("issuing a receipt for a payment", () => {
       "R-2026-0002",
       "R-2026-0003",
     ]);
+  });
+});
+
+describe("reconciling a receipt with its payment", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("looks only at standing receipts whose payment still stands", async () => {
+    const db = drifting({});
+
+    await receiptDriftFor(db, { id: "p1" });
+
+    expect(db.receipt.findMany.mock.calls[0][0].where).toEqual({
+      status: "ACTIVE",
+      payment: { is: { id: "p1", status: "ACTIVE" } },
+    });
+  });
+
+  it("finds nothing to do when the receipt still agrees", async () => {
+    expect(await receiptDriftFor(drifting({}), {})).toEqual([]);
+  });
+
+  it("asks for a new number when the amount no longer agrees", async () => {
+    const [drift] = await receiptDriftFor(drifting({ amount: 2000 }), {});
+
+    expect(drift.action).toBe("reissue");
+    expect(drift.changes).toEqual([{ field: "amount", from: 2000, to: 1000 }]);
+  });
+
+  it("reports what else drifted on a receipt that needs a new number", async () => {
+    const [drift] = await receiptDriftFor(
+      drifting({ amount: 2000, payerName: "ابو", userId: null }),
+      {},
+    );
+
+    expect(drift.action).toBe("reissue");
+    expect(drift.changes.map((c) => c.field)).toEqual(["amount", "payerName", "userId"]);
+  });
+
+  it("asks for a correction in place when only the payer changed", async () => {
+    const [drift] = await receiptDriftFor(drifting({ payerName: "ابو" }), {});
+
+    expect(drift.action).toBe("correct");
+    expect(drift.changes).toEqual([{ field: "payerName", from: "ابو", to: "محمد ولد أحمد" }]);
+  });
+
+  it("asks for the account to be filled in on a receipt issued before the link", async () => {
+    const [drift] = await receiptDriftFor(drifting({ memberId: null, userId: null }), {});
+
+    expect(drift.action).toBe("correct");
+    expect(drift.changes).toEqual([
+      { field: "memberId", from: null, to: "m1" },
+      { field: "userId", from: null, to: "u1" },
+    ]);
+  });
+
+  it("voids and lets go of the payment when the amount was corrected", async () => {
+    const db = drifting({ amount: 2000 });
+
+    const detached = await reconcileReceiptsFor(db, {});
+
+    expect(detached).toHaveLength(1);
+    expect(db.receipt.update.mock.calls[0][0]).toMatchObject({
+      where: { id: "r1" },
+      data: {
+        status: "VOID",
+        voidReason: receiptMessages.correctedPending,
+        paymentId: null,
+      },
+    });
+  });
+
+  it("writes only the fields that drifted when correcting in place", async () => {
+    const db = drifting({ payerName: "ابو" });
+
+    const detached = await reconcileReceiptsFor(db, {});
+
+    expect(detached).toEqual([]);
+    expect(db.receipt.update.mock.calls[0][0]).toEqual({
+      where: { id: "r1" },
+      data: { payerName: "محمد ولد أحمد" },
+    });
+  });
+
+  it("leaves an untouched receipt alone rather than rewriting it", async () => {
+    const db = drifting({});
+
+    await reconcileReceiptsFor(db, {});
+
+    expect(db.receipt.update).not.toHaveBeenCalled();
   });
 });

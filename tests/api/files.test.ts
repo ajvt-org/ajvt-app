@@ -83,7 +83,13 @@ async function seedEverything() {
   });
   await prisma.donation.create({ data: { proof: "donation-proof.webp", amount: 100 } });
   await prisma.payment.create({
-    data: { purpose: "MEMBERSHIP", amount: 100, proof: "payment-proof.webp", memberId: mine.id },
+    data: {
+      purpose: "MEMBERSHIP",
+      amount: 100,
+      proof: "payment-proof.webp",
+      memberId: mine.id,
+      userId: mine.userId,
+    },
   });
   await prisma.expense.create({
     data: { label: "مصروف", amount: 50, proof: "expense-proof.webp", createdBy: "admin" },

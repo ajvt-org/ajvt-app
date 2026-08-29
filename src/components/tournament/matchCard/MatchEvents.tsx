@@ -8,8 +8,20 @@ import { matchDisplay } from "@/lib/texts";
 
 const LINE = "h-6 flex items-center";
 const NAME_SIZE = 10;
+const UNKNOWN_MINUTE_SIZE = 13;
 
-function Minutes({ minutes, mirrored }: { minutes: string[]; mirrored?: boolean }) {
+function UnknownMinute({ count }: { count: number }) {
+  return (
+    <span className="optical-numeral" role="img" aria-label={matchDisplay.unknownMinute(count)}>
+      <span className="flex items-center gap-0.5">
+        <Icon name="quiz" size={UNKNOWN_MINUTE_SIZE} />
+        {count > 1 && <bdi>{matchDisplay.unknownMinuteTally(count)}</bdi>}
+      </span>
+    </span>
+  );
+}
+
+function Minutes({ minutes, mirrored }: { minutes: MatchEventRow["minutes"]; mirrored?: boolean }) {
   return (
     <span className="flex flex-col">
       {minuteLines(minutes).map((line, i) => (
@@ -17,11 +29,15 @@ function Minutes({ minutes, mirrored }: { minutes: string[]; mirrored?: boolean 
           key={i}
           className={`${LINE} gap-1.5 whitespace-nowrap ${mirrored ? "" : "justify-end"}`}
         >
-          {line.map((minute) => (
-            <bdi key={minute} className="optical-numeral">
-              {minute}
-            </bdi>
-          ))}
+          {line.map((token, index) =>
+            token.kind === "minute" ? (
+              <bdi key={index} className="optical-numeral">
+                {token.label}
+              </bdi>
+            ) : (
+              <UnknownMinute key={index} count={token.count} />
+            ),
+          )}
         </span>
       ))}
     </span>

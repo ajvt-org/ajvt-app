@@ -92,7 +92,7 @@ describe("donationRows", () => {
     status: "ACTIVE",
     source: "PUBLIC",
     createdAt: new Date("2026-03-04T09:30:00.000Z"),
-    member: { user: { fullName: "محمد" } },
+    user: { fullName: "محمد" },
     tags: [{ name: "القافلة الصحية" }, { name: "مصاريف عامة" }],
   };
 
@@ -105,7 +105,11 @@ describe("donationRows", () => {
   });
 
   it("names an anonymous giver rather than leaving it blank", () => {
-    expect(donationRows([{ ...donation, donorName: null }])[0][0]).toBe("فاعل خير");
+    expect(donationRows([{ ...donation, donorName: null, user: null }])[0][0]).toBe("فاعل خير");
+  });
+
+  it("exports the account name over the name typed onto a linked gift", () => {
+    expect(donationRows([{ ...donation, donorName: "ابو" }])[0][0]).toBe("محمد");
   });
 });
 

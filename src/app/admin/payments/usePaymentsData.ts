@@ -6,6 +6,8 @@ import { loginPathWithNext } from "@/lib/utils";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import type { ActivityOption, MemberOption, Proof } from "./paymentTypes";
 
+type MemberRow = Omit<MemberOption, "phone"> & { user: { phone: string | null } | null };
+
 interface Loaded {
   proofs: Proof[];
   members: MemberOption[];
@@ -43,9 +45,15 @@ export function usePaymentsData() {
         setData({
           proofs: proofsData?.proofs ?? [],
           tags: tagsData?.tags ?? [],
-          members: (membersData?.members ?? []).map((m: MemberOption) => ({
+          members: (membersData?.members ?? []).map((m: MemberRow) => ({
             id: m.id,
+            userId: m.userId,
             fullName: m.fullName,
+            memberNumber: m.memberNumber,
+            phone: m.user?.phone ?? null,
+            village: m.village,
+            age: m.age,
+            photo: m.photo,
           })),
           activities: (activitiesData?.activities ?? []).map((a: ActivityOption) => ({
             id: a.id,

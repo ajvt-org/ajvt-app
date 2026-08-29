@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { proofScope } from "@/lib/proofScope";
 import { withRoute } from "@/lib/route";
-import { money } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
+import { donorNameOnRecord } from "@/lib/donorName";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const session = await requireUnscopedAdmin();
@@ -48,6 +48,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
           where: { source: { not: "MEMBERSHIP" } },
           select: {
             id: true,
+            anonymous: true,
             donorName: true,
             donorPhone: true,
             donorPhoto: true,
@@ -57,9 +58,10 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
             source: true,
             paymentMethod: true,
             memberId: true,
+            userId: true,
             activityId: true,
             activity: { select: { title: true } },
-            member: { select: { user: { select: { fullName: true } } } },
+            user: { select: { fullName: true } },
             tags: { select: { id: true, name: true } },
             createdAt: true,
             updatedAt: true,
@@ -68,6 +70,12 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
         })
       : Promise.resolve([]),
   ]);
+
+  const receipts = await prisma.receipt.findMany({
+    where: { paymentId: { in: donations.map((d) => d.id) } },
+    select: { paymentId: true, number: true, status: true, token: true },
+  });
+  const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
 
   const proofs = [
     ...members.map((m) => ({
@@ -85,7 +93,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: r.id,
       kind: "ACTIVITY" as const,
       proof: r.paymentProof as string,
-      memberName: r.member.user.fullName,
+      memberName: nameOf(r.member.user),
       activityTitle: r.activity.title,
       amount: null as number | null,
       status: r.status,
@@ -96,7 +104,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       id: d.id,
       kind: "DONATION" as const,
       proof: d.proof as string | null,
-      memberName: d.member?.user.fullName || d.donorName || money.anonymousDonor,
+      memberName: donorNameOnRecord(d),
       activityId: d.activityId,
       activityTitle: d.activity?.title ?? null,
       amount: d.amount,
@@ -104,10 +112,13 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
       source: d.source,
       paymentMethod: d.paymentMethod,
       memberId: d.memberId,
+      userId: d.userId,
+      anonymous: d.anonymous,
       donorName: d.donorName,
       donorPhone: d.donorPhone,
       donorPhoto: d.donorPhoto,
       tags: d.tags,
+      receipt: receiptOf.get(d.id) ?? null,
       uploadedAt: d.updatedAt,
       submittedAt: d.createdAt,
     })),

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { mirrorDonation, removeMirroredDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation, removeMirroredDonation } from "@/lib/paymentMirror";
 import { requireAdminRole } from "@/lib/auth";
-import { validatePhone } from "@/lib/utils";
-import { PAYMENT_METHODS } from "@/lib/donations";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -11,6 +9,17 @@ import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveDonationActivity } from "@/lib/donationActivity";
+import { donorNameOnRecord } from "@/lib/donorName";
+import { personLink } from "@/lib/memberAccount";
+
+async function namedAccount(userId: string | null): Promise<string | null> {
+  if (!userId) return null;
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { fullName: true },
+  });
+  return account ? donorNameOnRecord({ donorName: null, user: account }) : null;
+}
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
@@ -19,7 +28,8 @@ export const PATCH = withRoute(
     const { id } = await params;
     const {
       status,
-      memberId,
+      userId,
+      anonymous,
       donorName,
       donorPhone,
       donorPhoto,
@@ -32,13 +42,14 @@ export const PATCH = withRoute(
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
     if (
       existing.source === "MEMBERSHIP" &&
       [
         status,
-        memberId,
+        userId,
+        anonymous,
         donorName,
         donorPhone,
         donorPhoto,
@@ -49,14 +60,12 @@ export const PATCH = withRoute(
         activityId,
       ].some((v) => v !== undefined)
     ) {
-      return NextResponse.json(
-        { error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
     }
 
     const data: {
       status?: ReviewStatus;
+      anonymous?: boolean;
       memberId?: string | null;
       donorName?: string | null;
       donorPhone?: string | null;
@@ -70,64 +79,20 @@ export const PATCH = withRoute(
     } = {};
     if (status !== undefined) data.status = status;
 
-    if (memberId !== undefined) {
-      let account: string | null = null;
-      if (memberId !== null) {
-        const member = await prisma.member.findUnique({
-          where: { id: memberId },
-          select: { userId: true },
-        });
-        if (!member) return NextResponse.json({ error: members.notFound }, { status: 404 });
-        account = member.userId;
-      }
-      data.memberId = memberId;
-      data.userId = account;
+    if (userId !== undefined) {
+      const link = await personLink(prisma, userId ?? null);
+      if (!link) return NextResponse.json({ error: members.notFound }, { status: 404 });
+      data.memberId = link.memberId;
+      data.userId = link.userId;
     }
 
-    if (donorName !== undefined) {
-      if (donorName !== null) {
-        if (!donorName.trim())
-          return NextResponse.json({ error: money.nameRequired }, { status: 400 });
-        if (donorName.trim().length > 50)
-          return NextResponse.json({ error: money.nameTooLong }, { status: 400 });
-        data.donorName = donorName.trim();
-      } else {
-        data.donorName = null;
-      }
-    }
-
-    if (donorPhone !== undefined) {
-      if (donorPhone !== null && donorPhone !== "") {
-        const phoneError = validatePhone(donorPhone);
-        if (phoneError) return NextResponse.json({ error: phoneError }, { status: 400 });
-        data.donorPhone = donorPhone.trim();
-      } else {
-        data.donorPhone = null;
-      }
-    }
-
-    if (donorPhoto !== undefined) {
-      data.donorPhoto = donorPhoto || null;
-    }
-
-    if (proof !== undefined) {
-      data.proof = proof || null;
-    }
-
-    if (amount !== undefined) {
-      const n = Number(amount);
-      if (!Number.isInteger(n) || n <= 0) {
-        return NextResponse.json({ error: money.amountInvalid }, { status: 400 });
-      }
-      data.amount = n;
-    }
-
-    if (paymentMethod !== undefined) {
-      if (paymentMethod !== null && !PAYMENT_METHODS.includes(paymentMethod)) {
-        return NextResponse.json({ error: money.paymentMethodInvalid }, { status: 400 });
-      }
-      data.paymentMethod = paymentMethod;
-    }
+    if (anonymous !== undefined) data.anonymous = anonymous;
+    if (donorName !== undefined) data.donorName = donorName;
+    if (donorPhone !== undefined) data.donorPhone = donorPhone;
+    if (donorPhoto !== undefined) data.donorPhoto = donorPhoto;
+    if (proof !== undefined) data.proof = proof;
+    if (amount !== undefined) data.amount = amount;
+    if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
 
     if (tagIds !== undefined) {
       data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
@@ -137,22 +102,9 @@ export const PATCH = withRoute(
     const donation = await prisma.donation.update({
       where: { id },
       data,
-      include: { member: { select: { user: { select: { fullName: true } } } } },
+      include: { user: { select: { fullName: true } } },
     });
-    await mirrorDonation(prisma, {
-      donationId: donation.id,
-      amount: donation.amount,
-      method: donation.paymentMethod,
-      proof: donation.proof,
-      status: donation.status,
-      donorName: donation.donorName,
-      donorPhoto: donation.donorPhoto,
-      donorPhone: donation.donorPhone,
-      tagIds,
-      memberId: donation.memberId,
-      userId: donation.userId,
-      activityId: donation.activityId,
-    });
+    await mirrorDonation(prisma, donationMirrorOf(donation, tagIds));
 
     const target = {
       ...auditContext(session, req),
@@ -164,25 +116,27 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donation.member?.user.fullName || existing.donorName || money.anonymousDonor,
+        donorNameOnRecord({ donorName: existing.donorName, user: donation.user }),
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
-    if (memberId !== undefined) {
+    if (userId !== undefined) {
+      const wasNamed = await namedAccount(existing.userId);
+      const nowNamed = userId ? donorNameOnRecord(donation) : null;
+      const typed = donorNameOnRecord({ donorName: existing.donorName });
       await logAction(
         session.username,
-        memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
-        memberId
-          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.user.fullName}`
-          : existing.donorName || money.anonymousDonor,
+        userId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
+        nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed),
         {
           ...target,
-          before: { memberId: existing.memberId },
-          after: { memberId: donation.memberId },
+          before: { memberId: existing.memberId, userId: existing.userId },
+          after: { memberId: donation.memberId, userId: donation.userId },
         },
       );
     }
     if (
+      anonymous !== undefined ||
       donorName !== undefined ||
       donorPhone !== undefined ||
       donorPhoto !== undefined ||
@@ -190,23 +144,18 @@ export const PATCH = withRoute(
       paymentMethod !== undefined ||
       proof !== undefined
     ) {
-      await logAction(
-        session.username,
-        "UPDATE_DONATION",
-        donation.member?.user.fullName || donation.donorName || money.anonymousDonor,
-        {
-          ...target,
-          before: existing,
-          after: {
-            donorName: donation.donorName,
-            donorPhone: donation.donorPhone,
-            donorPhoto: donation.donorPhoto,
-            amount: donation.amount,
-            paymentMethod: donation.paymentMethod,
-            proof: donation.proof,
-          },
+      await logAction(session.username, "UPDATE_DONATION", donorNameOnRecord(donation), {
+        ...target,
+        before: existing,
+        after: {
+          donorName: donation.donorName,
+          donorPhone: donation.donorPhone,
+          donorPhoto: donation.donorPhoto,
+          amount: donation.amount,
+          paymentMethod: donation.paymentMethod,
+          proof: donation.proof,
         },
-      );
+      });
     }
 
     return NextResponse.json({ donation });
@@ -221,13 +170,10 @@ export const DELETE = withRoute(
 
     const existing = await prisma.donation.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "التبرع غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
     if (existing.source === "MEMBERSHIP") {
-      return NextResponse.json(
-        { error: "هذا التبرع مُدار تلقائياً ولا يمكن حذفه يدوياً" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
     }
 
     await prisma.donation.delete({ where: { id } });
@@ -235,7 +181,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_DONATION",
-      `${existing.donorName || money.anonymousDonor} — ${existing.amount ?? 0} أوقية`,
+      `${donorNameOnRecord({ donorName: existing.donorName })} — ${existing.amount ?? 0} أوقية`,
       {
         ...auditContext(session, req),
         targetType: "Donation",

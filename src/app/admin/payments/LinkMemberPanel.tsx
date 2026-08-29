@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { matchesSearch, searchTokens } from "@/lib/arabicText";
+import { memberPicker } from "@/lib/texts";
+import MemberIdentity, { identityText } from "./MemberIdentity";
 import type { MemberOption } from "./paymentTypes";
 
 const LIMIT = 8;
@@ -12,14 +15,15 @@ export default function LinkMemberPanel({
 }: {
   members: MemberOption[];
   busy: boolean;
-  onPick: (memberId: string) => void;
+  onPick: (userId: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const query = search.trim();
-  const results = (query ? members.filter((m) => m.fullName.includes(query)) : members).slice(
-    0,
-    LIMIT,
-  );
+  const tokens = searchTokens(search);
+  const matched = tokens.length
+    ? members.filter((m) => matchesSearch(identityText(m), tokens))
+    : members;
+  const results = matched.slice(0, LIMIT);
+  const hidden = matched.length - results.length;
 
   return (
     <div
@@ -29,31 +33,37 @@ export default function LinkMemberPanel({
       <input
         type="text"
         autoFocus
-        placeholder="ابحث باسم العضو..."
+        placeholder={memberPicker.search}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="input text-xs"
         style={{ background: "white" }}
       />
-      <div className="mt-1.5 space-y-1 max-h-40 overflow-y-auto">
+      <div className="mt-1.5 space-y-1 max-h-52 overflow-y-auto">
         {results.length === 0 ? (
           <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
-            لا يوجد عضو مطابق
+            {memberPicker.noMatch}
           </p>
         ) : (
           results.map((m) => (
             <button
               key={m.id}
-              onClick={() => onPick(m.id)}
+              type="button"
+              onClick={() => onPick(m.userId)}
               disabled={busy}
-              className="w-full text-right text-xs px-2.5 py-1.5 rounded-lg font-semibold"
-              style={{ background: "white", color: "var(--text-main)" }}
+              className="w-full text-right text-xs px-2.5 py-1.5 rounded-lg"
+              style={{ background: "white" }}
             >
-              {m.fullName}
+              <MemberIdentity member={m} />
             </button>
           ))
         )}
       </div>
+      {hidden > 0 && (
+        <p className="text-[11px] text-center pt-1.5" style={{ color: "var(--text-muted)" }}>
+          {memberPicker.more(hidden)}
+        </p>
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ describe("the surplus of a membership payment", () => {
     const { member } = await aMemberWhoGaveMore();
 
     const { leaderboard } = await getLeaderboardData();
-    const row = leaderboard.find((e) => e.memberIds.includes(member.id));
+    const row = leaderboard.find((e) => e.accountIds.includes(member.userId));
 
     expect(row?.total).toBe(1900);
   });

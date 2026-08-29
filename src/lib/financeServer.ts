@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { money } from "@/lib/messages";
 import { splitPayment } from "@/lib/membershipPayment";
+import { publicDonorName } from "@/lib/donorName";
+import { nameOf } from "@/lib/person";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -56,8 +57,9 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         feeApplied: true,
         method: true,
         createdAt: true,
+        anonymous: true,
         donorName: true,
-        member: { select: { user: { select: { fullName: true } } } },
+        user: { select: { fullName: true } },
       },
     }),
     prisma.payment.groupBy({
@@ -68,7 +70,13 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
     prisma.expense.aggregate({ where: scope, _sum: { amount: true } }),
     prisma.payment.findMany({
       where: { status: "ACTIVE", ...scope, method: null, purpose: { not: "MEMBERSHIP" } },
-      select: { id: true, amount: true, donorName: true },
+      select: {
+        id: true,
+        amount: true,
+        anonymous: true,
+        donorName: true,
+        user: { select: { fullName: true } },
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.$queryRaw<DetailRow[]>`
@@ -80,21 +88,23 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
                     THEN p."amount" - LEAST(p."amount", COALESCE(p."feeApplied", 0))
                     ELSE p."amount" END AS support,
                u."fullName" AS "memberName",
-               NULLIF(BTRIM(p."donorName"), '') AS "donorName"
+               CASE WHEN p."anonymous" THEN NULL ELSE COALESCE(
+                 NULLIF(BTRIM(u."fullName"), ''),
+                 NULLIF(BTRIM(p."donorName"), '')
+               ) END AS "supporterName"
         FROM "Payment" p
-        LEFT JOIN "Member" m ON m.id = p."memberId"
-        LEFT JOIN "User" u ON u.id = m."userId"
+        LEFT JOIN "User" u ON u.id = p."userId"
         WHERE p."status" = 'ACTIVE'
           AND (${activity}::text IS NULL OR p."activityId" = ${activity}::text)
       )
       SELECT method, 'intisab' AS kind, "memberName" AS name, SUM(fee)::int AS amount
       FROM parts WHERE fee > 0 GROUP BY method, "memberName"
       UNION ALL
-      SELECT method, 'daem' AS kind, "donorName" AS name, SUM(support)::int AS amount
-      FROM parts WHERE support > 0 AND "donorName" IS NOT NULL GROUP BY method, "donorName"
+      SELECT method, 'daem' AS kind, "supporterName" AS name, SUM(support)::int AS amount
+      FROM parts WHERE support > 0 AND "supporterName" IS NOT NULL GROUP BY method, "supporterName"
       UNION ALL
       SELECT method, 'anon' AS kind, NULL AS name, SUM(support)::int AS amount
-      FROM parts WHERE support > 0 AND "donorName" IS NULL GROUP BY method
+      FROM parts WHERE support > 0 AND "supporterName" IS NULL GROUP BY method
     `,
   ]);
 
@@ -143,19 +153,13 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   for (const p of payments) {
     if (p.purpose !== "MEMBERSHIP") {
-      addRecord(
-        p.amount,
-        p.method,
-        p.createdAt,
-        p.donorName?.trim() || money.anonymousDonor,
-        "دعم",
-      );
+      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p), "دعم");
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
-    addRecord(fee, p.method, p.createdAt, p.member?.user.fullName ?? "", "انتساب");
+    addRecord(fee, p.method, p.createdAt, p.user ? nameOf(p.user) : "", "انتساب");
     if (surplus > 0) {
-      addRecord(surplus, p.method, p.createdAt, p.donorName?.trim() || money.anonymousDonor, "دعم");
+      addRecord(surplus, p.method, p.createdAt, publicDonorName(p), "دعم");
     }
   }
 
@@ -170,7 +174,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   const unassigned = unassignedRows.map((p) => ({
     id: p.id,
-    name: p.donorName?.trim() || money.anonymousDonor,
+    name: publicDonorName(p),
     amount: p.amount,
   }));
 

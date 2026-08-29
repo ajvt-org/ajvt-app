@@ -84,7 +84,7 @@ function AdminPaymentsPageInner() {
         busyId={actions.busyId}
         onReview={(proof, status) => actions.review(proof.id, status)}
         onDelete={(proof) => actions.destroy(proof.id)}
-        onLink={(proof, memberId) => actions.link(proof.id, memberId)}
+        onLink={(proof, userId) => actions.link(proof.id, userId)}
         onPatch={(proof, changes) =>
           setProofs((prev) =>
             prev.map((p) =>
@@ -98,6 +98,7 @@ function AdminPaymentsPageInner() {
       {adding && (
         <ManualDonationDialog
           activities={activities}
+          members={members}
           onClose={() => setAdding(false)}
           onCreated={(proof) => setProofs((prev) => [proof, ...prev])}
         />

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getFinanceSummary } from "@/lib/financeServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { mirrorDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { resetDb, makeMember } from "./helpers";
 
 const ANON = "فاعل خير";
@@ -20,24 +20,13 @@ async function gift(amount: number, opts: { name?: string | null; method?: strin
   const donation = await prisma.donation.create({
     data: {
       amount,
+      anonymous: opts.name == null,
       donorName: opts.name ?? null,
       paymentMethod: opts.method ?? null,
       status: "ACTIVE",
     },
   });
-  await mirrorDonation(prisma, {
-    donationId: donation.id,
-    amount,
-    method: opts.method ?? null,
-    proof: null,
-    status: "ACTIVE",
-    donorName: donation.donorName,
-    donorPhoto: null,
-    donorPhone: null,
-    memberId: null,
-    userId: null,
-    activityId: null,
-  });
+  await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
 

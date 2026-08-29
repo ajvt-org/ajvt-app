@@ -65,15 +65,8 @@ export default function MatchResult({
       />
 
       {match.forfeitWinnerTeamId && (
-        <p
-          className="text-xs font-bold text-center rounded-lg py-1.5 px-2"
-          style={{ background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}
-        >
-          {matchDisplay.forfeitNote(
-            match.forfeitWinnerTeamId === match.homeTeam.id
-              ? match.homeTeam.name
-              : match.awayTeam.name,
-          )}
+        <p className="text-center">
+          <span className="badge badge-pending">{matchDisplay.forfeitBadge}</span>
         </p>
       )}
 
@@ -99,7 +92,7 @@ export default function MatchResult({
           {matchDisplay.priorMeetings}{" "}
           {priorMeetings.map((pm, i) => (
             <span key={pm.id}>
-              {i > 0 && "، "}
+              {i > 0 && matchDisplay.meetingSeparator}
               {pm.status === "PLAYED" ? (
                 <Scoreline home={pm.homeScore} away={pm.awayScore} />
               ) : (

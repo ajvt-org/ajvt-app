@@ -8,6 +8,14 @@ import {
   matchTimeline,
 } from "./matchEvents";
 
+function at(label: string) {
+  return { kind: "minute" as const, label };
+}
+
+function unknown(count: number) {
+  return { kind: "unknown" as const, count };
+}
+
 function goal(over: Partial<Parameters<typeof goalRows>[0][number]> = {}) {
   return {
     memberId: "p1",
@@ -25,31 +33,37 @@ describe("goalRows", () => {
     const rows = goalRows([goal(), goal({ minute: 30 })]);
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].minutes).toEqual(["7'", "30'"]);
+    expect(rows[0].minutes).toEqual([at("7'"), at("30'")]);
   });
 
   it("orders the minutes even when the goals arrive out of order", () => {
     const rows = goalRows([goal({ minute: 30 }), goal({ minute: 7 })]);
 
-    expect(rows[0].minutes).toEqual(["7'", "30'"]);
+    expect(rows[0].minutes).toEqual([at("7'"), at("30'")]);
   });
 
   it("marks how a goal was scored next to its minute", () => {
     const rows = goalRows([goal({ kind: "PENALTY" }), goal({ minute: 12, kind: "OWN_GOAL" })]);
 
-    expect(rows[0].minutes).toEqual(["7' (ج)", "12' (ع)"]);
+    expect(rows[0].minutes).toEqual([at("7' (ج)"), at("12' (ع)")]);
   });
 
-  it("falls back to a tally when the minutes were never recorded", () => {
+  it("counts the goals whose minute was never recorded into one token", () => {
     const rows = goalRows([goal({ minute: null, count: 2 })]);
 
-    expect(rows[0].minutes).toEqual(["(2)"]);
+    expect(rows[0].minutes).toEqual([unknown(2)]);
   });
 
-  it("keeps the known minute and tallies the rest of a multiple-goal row", () => {
+  it("keeps the known minute and counts the rest of a multiple-goal row apart", () => {
     const rows = goalRows([goal({ count: 3 })]);
 
-    expect(rows[0].minutes).toEqual(["7'", "(3)"]);
+    expect(rows[0].minutes).toEqual([at("7'"), unknown(2)]);
+  });
+
+  it("gathers the unrecorded goals of a scorer who also has a timed one", () => {
+    const rows = goalRows([goal(), goal({ minute: null }), goal({ minute: null })]);
+
+    expect(rows[0].minutes).toEqual([at("7'"), unknown(2)]);
   });
 
   it("keeps two unknown scorers apart from a named one", () => {
@@ -109,7 +123,7 @@ describe("bookingRows", () => {
     const rows = bookingRows([booking(), booking({ minute: 55 })]);
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].minutes).toEqual(["40'", "55'"]);
+    expect(rows[0].minutes).toEqual([at("40'"), at("55'")]);
   });
 
   it("leaves the minutes out when none was recorded", () => {
@@ -139,15 +153,22 @@ describe("bookingRows", () => {
 
 describe("minuteLines", () => {
   it("breaks the minutes into rows of two", () => {
-    expect(minuteLines(["7'", "30'", "45'", "60'", "88'"])).toEqual([
-      ["7'", "30'"],
-      ["45'", "60'"],
-      ["88'"],
+    expect(minuteLines([at("7'"), at("30'"), at("45'"), at("60'"), at("88'")])).toEqual([
+      [at("7'"), at("30'")],
+      [at("45'"), at("60'")],
+      [at("88'")],
     ]);
   });
 
   it("has nothing to break when there are no minutes", () => {
     expect(minuteLines([])).toEqual([]);
+  });
+
+  it("counts an unrecorded token as one entry on its line", () => {
+    expect(minuteLines([at("7'"), unknown(2), at("60'")])).toEqual([
+      [at("7'"), unknown(2)],
+      [at("60'")],
+    ]);
   });
 });
 

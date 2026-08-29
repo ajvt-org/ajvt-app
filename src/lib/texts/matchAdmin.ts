@@ -1,3 +1,5 @@
+import { matchDisplay } from "./publicTournament";
+
 export const matchAdmin = {
   upcoming: "مباريات قادمة",
   results: "نتائج",
@@ -81,7 +83,7 @@ export const matchAdmin = {
   firstKick: "من يبدأ",
   kickScored: "سجّل",
   kickMissed: "أضاع",
-  forfeitHeading: "انسحاب",
+  forfeitHeading: matchDisplay.forfeitBadge,
   forfeitHint: "تُحتسب النتيجة لصالح الفريق الفائز، ويخسر المنسحب أهدافه. البطاقات تبقى كما هي.",
   forfeitWinnerLabel: "الفريق الفائز",
   forfeitPickWinner: "اختر الفريق الفائز",

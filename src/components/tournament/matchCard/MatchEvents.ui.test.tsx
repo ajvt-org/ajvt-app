@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import MatchEvents from "./MatchEvents";
 import type { MatchEventRow } from "@/lib/matchEvents";
+import { matchDisplay } from "@/lib/texts";
+
+const at = (label: string) => ({ kind: "minute" as const, label });
+const unknown = (count: number) => ({ kind: "unknown" as const, count });
 
 const base: MatchEventRow = {
   key: "p1",
@@ -9,7 +13,7 @@ const base: MatchEventRow = {
   type: "goal",
   name: "أسامه محمد",
   photo: null,
-  minutes: ["7'"],
+  minutes: [at("7'")],
 };
 
 const goal = (over: Partial<MatchEventRow> = {}): MatchEventRow => ({ ...base, ...over });
@@ -29,7 +33,9 @@ describe("MatchEvents", () => {
   it("shows the goal icon once for the whole section", () => {
     cleanup();
     const { container } = render(
-      <MatchEvents rows={[goal(), goal({ key: "p2", name: "باه الصبار", minutes: ["30'"] })]} />,
+      <MatchEvents
+        rows={[goal(), goal({ key: "p2", name: "باه الصبار", minutes: [at("30'")] })]}
+      />,
     );
 
     expect(sections(container)).toHaveLength(1);
@@ -58,7 +64,7 @@ describe("MatchEvents", () => {
     cleanup();
     const { container } = render(
       <MatchEvents
-        rows={[goal(), goal({ key: "a", side: "away", name: "سالم", minutes: ["9'"] })]}
+        rows={[goal(), goal({ key: "a", side: "away", name: "سالم", minutes: [at("9'")] })]}
       />,
     );
 
@@ -72,12 +78,39 @@ describe("MatchEvents", () => {
   it("breaks a hat-trick's minutes into rows of two", () => {
     cleanup();
     const { container } = render(
-      <MatchEvents rows={[goal({ minutes: ["7'", "30'", "45'", "60'", "88'"] })]} />,
+      <MatchEvents
+        rows={[goal({ minutes: [at("7'"), at("30'"), at("45'"), at("60'"), at("88'")] })]}
+      />,
     );
 
     const minutes = sections(container)[0].children[0].children[2];
     expect(minutes.childElementCount).toBe(3);
     expect(minutes.children[0].textContent).toBe("7'30'");
+  });
+
+  it("marks a goal with no recorded minute instead of printing a number", () => {
+    cleanup();
+    const { container } = render(<MatchEvents rows={[goal({ minutes: [unknown(1)] })]} />);
+
+    const minutes = sections(container)[0].children[0].children[2];
+    expect(minutes.textContent).toBe("");
+    expect(minutes.querySelector("svg")).not.toBeNull();
+    expect(
+      container.querySelector(`[aria-label='${matchDisplay.unknownMinute(1)}']`),
+    ).not.toBeNull();
+  });
+
+  it("keeps a timed goal beside the ones nobody wrote a minute for", () => {
+    cleanup();
+    const { container } = render(
+      <MatchEvents rows={[goal({ minutes: [at("7'"), unknown(2)] })]} />,
+    );
+
+    const minutes = sections(container)[0].children[0].children[2];
+    expect(minutes.textContent).toBe(`7'${matchDisplay.unknownMinuteTally(2)}`);
+    expect(
+      container.querySelector(`[aria-label='${matchDisplay.unknownMinute(2)}']`),
+    ).not.toBeNull();
   });
 
   it("gives the reds a section of their own and leaves the yellows out", () => {

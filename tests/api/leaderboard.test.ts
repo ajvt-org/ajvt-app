@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
-import { mirrorDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 import { get, makeMember } from "./helpers";
 import { resetDb } from "./helpers";
 
@@ -29,6 +29,7 @@ async function gift(
   const donation = await prisma.donation.create({
     data: {
       amount,
+      anonymous: opts.name == null,
       donorName: opts.name ?? null,
       memberId: opts.memberId ?? null,
       userId: owner?.userId ?? null,
@@ -36,19 +37,7 @@ async function gift(
       source: opts.memberId ? "SELF" : "PUBLIC",
     },
   });
-  await mirrorDonation(prisma, {
-    donationId: donation.id,
-    amount,
-    method: null,
-    proof: null,
-    status,
-    donorName: donation.donorName,
-    donorPhoto: null,
-    donorPhone: null,
-    memberId: donation.memberId,
-    userId: donation.userId,
-    activityId: null,
-  });
+  await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
 
@@ -78,7 +67,7 @@ describe("the supporters board", () => {
 
     const { leaderboard } = await getLeaderboardData();
 
-    expect(leaderboard.filter((e) => e.memberIds.includes(m.id))).toHaveLength(2);
+    expect(leaderboard.filter((e) => e.accountIds.includes(m.userId))).toHaveLength(2);
   });
 
   it("keeps one person's repeated unnamed giving in a single row", async () => {
@@ -101,7 +90,7 @@ describe("the supporters board", () => {
 
     expect(leaderboard).toHaveLength(2);
     expect(leaderboard.every((e) => e.anonymous)).toBe(true);
-    expect(leaderboard.every((e) => e.memberIds.length === 0)).toBe(true);
+    expect(leaderboard.every((e) => e.accountIds.length === 0)).toBe(true);
   });
 
   it("never names an unnamed giver", async () => {
@@ -144,7 +133,7 @@ describe("the supporters board", () => {
     const { leaderboard } = await getLeaderboardData();
     const sent = leaderboard.map(toPublicEntry);
 
-    expect(leaderboard[0].memberIds).toEqual([m.id]);
+    expect(leaderboard[0].accountIds).toEqual([m.userId]);
     expect(Object.keys(sent[0])).toEqual(["rank", "name", "photoUrl", "total", "anonymous"]);
     expect(JSON.stringify(sent)).not.toContain(m.id);
   });
@@ -170,23 +159,41 @@ describe("the supporters board", () => {
     expect(leaderboard).toHaveLength(0);
   });
 
+  it("shows the account name, not the name typed onto a linked gift", async () => {
+    const m = await member("أبوبكر لمرابط");
+    await gift(2000, { memberId: m.id, name: "ابو" });
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard[0].name).toBe("أبوبكر لمرابط");
+  });
+
+  it("keeps one row for an account however its gifts were named", async () => {
+    const m = await member("أبوبكر لمرابط");
+    await gift(500, { memberId: m.id, name: "ابو" });
+    await gift(300, { memberId: m.id, name: "أبوبكر" });
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard).toHaveLength(1);
+    expect(leaderboard[0].name).toBe("أبوبكر لمرابط");
+    expect(leaderboard[0].total).toBe(800);
+  });
+
+  it("hides a linked giver who asked to stay unnamed, account name and all", async () => {
+    const m = await member("أبوبكر لمرابط");
+    await gift(2000, { memberId: m.id });
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard[0].name).toBe(ANON);
+  });
+
   it("keeps the photo of a donor who has no account", async () => {
     const donation = await prisma.donation.create({
       data: { amount: 500, donorName: "زائر", donorPhoto: "guest.webp", status: "ACTIVE" },
     });
-    await mirrorDonation(prisma, {
-      donationId: donation.id,
-      amount: 500,
-      method: null,
-      proof: null,
-      status: "ACTIVE",
-      donorName: "زائر",
-      donorPhoto: "guest.webp",
-      donorPhone: null,
-      memberId: null,
-      userId: null,
-      activityId: null,
-    });
+    await mirrorDonation(prisma, donationMirrorOf(donation));
 
     const { leaderboard } = await getLeaderboardData();
 
