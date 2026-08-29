@@ -1,13 +1,15 @@
 import { z } from "zod";
-import { common, money } from "@/lib/messages";
+import { common, money, receipts } from "@/lib/messages";
 import { MAX_SPELLED } from "@/lib/arabicNumberWords";
 
 const INVALID = common.invalidBody;
-const PAYER_REQUIRED = "الجهة الدافعة مطلوبة";
-const PAYER_TOO_LONG = "اسم الجهة الدافعة طويل جداً (80 حرفاً كحد أقصى)";
-const REASON_REQUIRED = "موجب القبض مطلوب";
-const REASON_TOO_LONG = "موجب القبض طويل جداً (120 حرفاً كحد أقصى)";
-const VOID_REASON_REQUIRED = "سبب الإلغاء مطلوب";
+const {
+  payerRequired: PAYER_REQUIRED,
+  payerTooLong: PAYER_TOO_LONG,
+  reasonRequired: REASON_REQUIRED,
+  reasonTooLong: REASON_TOO_LONG,
+  voidReasonRequired: VOID_REASON_REQUIRED,
+} = receipts;
 
 const payerName = z
   .string(PAYER_REQUIRED)
