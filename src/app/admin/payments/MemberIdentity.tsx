@@ -1,0 +1,37 @@
+"use client";
+
+import PlayerAvatar from "@/components/tournament/PlayerAvatar";
+import { memberPicker } from "@/lib/texts";
+import type { MemberOption } from "./paymentTypes";
+
+export function identityText(member: MemberOption): string {
+  return [member.fullName, member.memberNumber, member.phone, member.village, member.age]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export default function MemberIdentity({
+  member,
+  size = 30,
+}: {
+  member: MemberOption;
+  size?: number;
+}) {
+  const details = [member.phone, member.village, member.age].filter(Boolean).join(" · ");
+
+  return (
+    <span className="flex items-center gap-2 min-w-0">
+      <PlayerAvatar photo={member.photo} fullName={member.fullName} size={size} />
+      <span className="min-w-0 flex-1 text-right">
+        <span className="block truncate font-semibold" style={{ color: "var(--text-main)" }}>
+          {member.fullName}
+        </span>
+        <span className="block truncate text-[11px]" style={{ color: "var(--text-muted)" }}>
+          <bdi>{member.memberNumber || memberPicker.noNumber}</bdi>
+          {details && " · "}
+          <bdi>{details}</bdi>
+        </span>
+      </span>
+    </span>
+  );
+}
