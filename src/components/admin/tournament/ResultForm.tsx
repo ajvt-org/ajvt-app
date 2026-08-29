@@ -11,6 +11,13 @@ import ForfeitToggle from "./ForfeitToggle";
 import KickAdder from "./KickAdder";
 import type { GoalDraft, KickDraft } from "./goalDraft";
 import { forfeitScore } from "@/lib/forfeit";
+import {
+  extraTimeAllowed,
+  hasExtraTime,
+  kicksAllowed,
+  nextKickTeamId,
+  playedScore,
+} from "@/lib/matchScores";
 import { discipline as disciplineTexts, matchAdmin as texts } from "@/lib/texts";
 
 export default function ResultForm({
@@ -69,9 +76,7 @@ export default function ResultForm({
       scored: k.scored,
     })),
   );
-  const [showExtraTime, setShowExtraTime] = useState(
-    match.goals.some((g) => g.period === "EXTRA_TIME"),
-  );
+  const [extraOpen, setExtraOpen] = useState(false);
   const [manOfTheMatchId, setManOfTheMatchId] = useState(match.manOfTheMatch?.id ?? "");
   const [forfeitWinnerTeamId, setForfeitWinnerTeamId] = useState<string | null>(
     match.forfeitWinnerTeamId,
@@ -81,18 +86,22 @@ export default function ResultForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const scored = {
-    home: goals.filter((g) => g.teamId === match.homeTeam.id).length,
-    away: 0,
-  };
-  scored.away = goals.length - scored.home;
+  const played = playedScore(goals, match.homeTeam.id);
   const awarded = forfeitWinnerTeamId
-    ? forfeitScore(scored, forfeitWinnerTeamId, match.homeTeam.id)
-    : scored;
+    ? forfeitScore(played, forfeitWinnerTeamId, match.homeTeam.id)
+    : played;
   const hs = awarded.home;
   const as = awarded.away;
-  const tied = hs === as;
-  const showKicks = football && match.isKnockout && tied && !forfeitWinnerTeamId;
+
+  const extraAllowed = extraTimeAllowed(match.isKnockout, goals, match.homeTeam.id);
+  const showExtra = hasExtraTime(goals) || (extraAllowed && extraOpen);
+  const extraBlocked = hasExtraTime(goals) && !extraAllowed;
+
+  const kicksOk = kicksAllowed(match.isKnockout, goals, match.homeTeam.id);
+  const showKicks = kicks.length > 0 || kicksOk;
+  const kicksBlocked = kicks.length > 0 && !kicksOk;
+  const stale = extraBlocked || kicksBlocked;
+
   const kickTally = {
     home: kicks.filter((k) => k.teamId === match.homeTeam.id && k.scored).length,
     away: kicks.filter((k) => k.teamId === match.awayTeam.id && k.scored).length,
@@ -100,6 +109,10 @@ export default function ResultForm({
 
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (stale) {
+      setError(extraBlocked ? texts.extraTimeBlocked : texts.shootoutBlocked);
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -112,7 +125,7 @@ export default function ResultForm({
             period: g.period,
             minute: g.minute || null,
           })),
-          penaltyKicks: showKicks ? kicks : [],
+          penaltyKicks: kicks,
           manOfTheMatchId: manOfTheMatchId || null,
           forfeitWinnerTeamId,
         });
@@ -202,7 +215,7 @@ export default function ResultForm({
       <ForfeitToggle
         sides={sides}
         homeTeamId={match.homeTeam.id}
-        scored={scored}
+        scored={played}
         winnerTeamId={forfeitWinnerTeamId}
         onChange={setForfeitWinnerTeamId}
       />
@@ -217,33 +230,39 @@ export default function ResultForm({
         nameOf={nameOf}
       />
 
-      {showExtraTime ? (
-        <GoalSection
-          title={texts.extraTimeHeading}
-          period="EXTRA_TIME"
-          goals={goals}
-          setGoals={setGoals}
-          sides={sides}
-          scorerRoster={scorerRoster}
-          nameOf={nameOf}
-        />
+      {showExtra ? (
+        <>
+          {extraBlocked && <StaleNotice text={texts.extraTimeBlocked} />}
+          <GoalSection
+            title={texts.extraTimeHeading}
+            period="EXTRA_TIME"
+            goals={goals}
+            setGoals={setGoals}
+            sides={sides}
+            scorerRoster={scorerRoster}
+            nameOf={nameOf}
+          />
+        </>
       ) : (
-        <button
-          type="button"
-          onClick={() => setShowExtraTime(true)}
-          className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
-          style={{
-            background: "white",
-            color: "var(--mint-700)",
-            border: "1px solid var(--mint-200)",
-          }}
-        >
-          <IconLabel name="clock">{texts.extraTimeToggle}</IconLabel>
-        </button>
+        extraAllowed && (
+          <button
+            type="button"
+            onClick={() => setExtraOpen(true)}
+            className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+            style={{
+              background: "white",
+              color: "var(--mint-700)",
+              border: "1px solid var(--mint-200)",
+            }}
+          >
+            <IconLabel name="clock">{texts.extraTimeToggle}</IconLabel>
+          </button>
+        )
       )}
 
       {showKicks && (
         <div className="space-y-2">
+          {kicksBlocked && <StaleNotice text={texts.shootoutBlocked} />}
           <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
             <IconLabel name="target">{texts.shootoutHeading}</IconLabel>{" "}
             {kicks.length > 0 && (
@@ -278,18 +297,31 @@ export default function ResultForm({
               >
                 {k.scored ? texts.kickScored : texts.kickMissed}
               </span>
-              <button
-                type="button"
-                onClick={() => setKicks((prev) => prev.filter((_, j) => j !== i))}
-                aria-label={texts.remove}
-                className="px-1.5 rounded-lg"
-                style={{ background: "#fee2e2", color: "#991b1b" }}
-              >
-                <Icon name="close" size={12} />
-              </button>
+              {i === kicks.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => setKicks((prev) => prev.slice(0, -1))}
+                  aria-label={texts.remove}
+                  className="px-1.5 rounded-lg"
+                  style={{ background: "#fee2e2", color: "#991b1b" }}
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              )}
             </div>
           ))}
-          <KickAdder sides={sides} rosterOf={rosterOf} onAdd={(k) => setKicks((p) => [...p, k])} />
+          {kicksOk && (
+            <KickAdder
+              sides={sides}
+              turnTeamId={
+                kicks.length === 0
+                  ? null
+                  : nextKickTeamId(kicks, sides[0].id, match.homeTeam.id, match.awayTeam.id)
+              }
+              rosterOf={rosterOf}
+              onAdd={(k) => setKicks((p) => [...p, k])}
+            />
+          )}
         </div>
       )}
 
@@ -329,9 +361,20 @@ export default function ResultForm({
         </div>
       )}
 
-      <button type="submit" disabled={loading} className="btn btn-primary text-sm">
+      <button type="submit" disabled={loading || stale} className="btn btn-primary text-sm">
         {loading ? "..." : texts.saveResult}
       </button>
     </form>
+  );
+}
+
+function StaleNotice({ text }: { text: string }) {
+  return (
+    <p
+      className="p-2.5 rounded-xl text-xs font-semibold"
+      style={{ background: "#fffbeb", color: "#92400e" }}
+    >
+      <IconLabel name="warning">{text}</IconLabel>
+    </p>
   );
 }

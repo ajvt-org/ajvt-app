@@ -4,6 +4,7 @@ import {
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
+  type ActivitiesView,
 } from "./activitiesView";
 import type { Activity } from "./activityTypes";
 
@@ -19,6 +20,7 @@ function activity(over: Partial<Activity> = {}): Activity {
     photo: null,
     capacity: null,
     isOpen: true,
+    published: true,
     isTournament: false,
     isVolunteer: false,
     whatsappLink: null,
@@ -31,36 +33,86 @@ function activity(over: Partial<Activity> = {}): Activity {
 }
 
 describe("carrying the activities search in the address", () => {
+  const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
+    q: "",
+    type: "",
+    state: "",
+    waiting: "",
+    ...over,
+  });
+
   it("reads an empty query as no opinion", () => {
-    expect(readActivitiesView(new URLSearchParams())).toEqual({ q: "", kind: "" });
+    expect(readActivitiesView(new URLSearchParams())).toEqual(view());
   });
 
   it("survives a round trip, which is what a shared link is", () => {
-    const chosen = { q: "دوري", kind: "tournament" };
+    const chosen = view({ q: "دوري", type: "tournament", state: "open" });
+
     expect(readActivitiesView(new URLSearchParams(writeActivitiesView(chosen).toString()))).toEqual(
       chosen,
     );
   });
 
   it("lists exactly the keys it owns in the address", () => {
-    expect(ACTIVITIES_VIEW_KEYS).toEqual(["q", "kind"]);
+    expect(ACTIVITIES_VIEW_KEYS).toEqual(["q", "type", "state", "waiting"]);
   });
 });
 
 describe("narrowing the list", () => {
-  it("matches by title text", () => {
-    expect(matchesActivitiesView(activity(), { q: "دوري", kind: "" })).toBe(true);
-    expect(matchesActivitiesView(activity(), { q: "حملة", kind: "" })).toBe(false);
+  const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
+    q: "",
+    type: "",
+    state: "",
+    waiting: "",
+    ...over,
   });
 
-  it("keeps each kind to itself", () => {
+  it("matches by title text", () => {
+    expect(matchesActivitiesView(activity(), view({ q: "دوري" }))).toBe(true);
+    expect(matchesActivitiesView(activity(), view({ q: "حملة" }))).toBe(false);
+  });
+
+  it("keeps each type to itself", () => {
     expect(
-      matchesActivitiesView(activity({ isTournament: true }), { q: "", kind: "tournament" }),
+      matchesActivitiesView(activity({ isTournament: true }), view({ type: "tournament" })),
     ).toBe(true);
-    expect(matchesActivitiesView(activity(), { q: "", kind: "tournament" })).toBe(false);
+    expect(matchesActivitiesView(activity(), view({ type: "tournament" }))).toBe(false);
     expect(
-      matchesActivitiesView(activity({ isVolunteer: true }), { q: "", kind: "volunteer" }),
+      matchesActivitiesView(activity({ isVolunteer: true }), view({ type: "volunteer" })),
     ).toBe(true);
-    expect(matchesActivitiesView(activity({ isOpen: false }), { q: "", kind: "open" })).toBe(false);
+  });
+
+  it("counts an activity that is neither a tournament nor a campaign as ordinary", () => {
+    expect(matchesActivitiesView(activity(), view({ type: "plain" }))).toBe(true);
+    expect(matchesActivitiesView(activity({ isTournament: true }), view({ type: "plain" }))).toBe(
+      false,
+    );
+    expect(matchesActivitiesView(activity({ isVolunteer: true }), view({ type: "plain" }))).toBe(
+      false,
+    );
+  });
+
+  it("tells an open registration from a closed one", () => {
+    expect(matchesActivitiesView(activity(), view({ state: "open" }))).toBe(true);
+    expect(matchesActivitiesView(activity({ isOpen: false }), view({ state: "open" }))).toBe(false);
+    expect(matchesActivitiesView(activity({ isOpen: false }), view({ state: "closed" }))).toBe(
+      true,
+    );
+    expect(matchesActivitiesView(activity(), view({ state: "closed" }))).toBe(false);
+  });
+
+  it("puts the type and the state together rather than choosing between them", () => {
+    const openTournament = activity({ isTournament: true, isOpen: true });
+    const closedTournament = activity({ isTournament: true, isOpen: false });
+    const chosen = view({ type: "tournament", state: "open" });
+
+    expect(matchesActivitiesView(openTournament, chosen)).toBe(true);
+    expect(matchesActivitiesView(closedTournament, chosen)).toBe(false);
+  });
+
+  it("asks for everything when neither is chosen", () => {
+    expect(matchesActivitiesView(activity({ isVolunteer: true, isOpen: false }), view())).toBe(
+      true,
+    );
   });
 });

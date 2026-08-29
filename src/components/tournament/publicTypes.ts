@@ -48,6 +48,7 @@ export type PublicMatch = {
   mvpVote: {
     id: string;
     status: string;
+    closesAt: string | Date;
     candidates: {
       id: string;
       member: { id: string; fullName: string };

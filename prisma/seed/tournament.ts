@@ -185,6 +185,10 @@ async function seedMatches(
   }
 }
 
+function hoursFromNow(hours: number): Date {
+  return new Date(Date.now() + hours * 3_600_000);
+}
+
 async function seedMvp(
   matchId: string,
   memberIds: string[],
@@ -192,7 +196,12 @@ async function seedMvp(
   status: "OPEN" | "CLOSED",
 ) {
   const vote = await prisma.matchMvpVote.create({
-    data: { matchId, status, closedAt: status === "CLOSED" ? daysAgo(1) : null },
+    data: {
+      matchId,
+      status,
+      closesAt: status === "CLOSED" ? daysAgo(1) : hoursFromNow(2),
+      closedAt: status === "CLOSED" ? daysAgo(1) : null,
+    },
   });
 
   const candidates = [];

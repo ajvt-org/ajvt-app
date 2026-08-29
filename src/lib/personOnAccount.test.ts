@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { sourceFiles } from "@tests/sourceFiles";
 
 // The person moved onto the account. Prisma's create input is a union, so a
 // leftover `fullName` on a member write is not an excess property and the
@@ -10,14 +10,6 @@ const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyTo
 const MEMBER_CALL = /(?:prisma|tx|db)\.member\.\w+\(\{/g;
 
 const ROOTS = ["src", "tests", "prisma"];
-
-function sourceFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return entry.name === "node_modules" ? [] : sourceFiles(path);
-    return /\.tsx?$/.test(entry.name) ? [path] : [];
-  });
-}
 
 function closingBrace(source: string, open: number): number {
   let depth = 0;

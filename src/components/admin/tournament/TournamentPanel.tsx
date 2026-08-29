@@ -104,6 +104,7 @@ export default function TournamentPanel({
           profile={info?.profile ?? "FOOTBALL"}
           matches={matches}
           suspendedIds={suspendedIds}
+          mvpVoteMinutes={data.mvpVoteMinutes}
           onChange={() => {
             data.reloadMatches();
             data.reloadDiscipline();

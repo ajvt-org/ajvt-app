@@ -69,6 +69,7 @@ export interface MvpCandidate {
 export interface MvpVote {
   id: string;
   status: "OPEN" | "CLOSED";
+  closesAt: string;
   candidates: MvpCandidate[];
 }
 

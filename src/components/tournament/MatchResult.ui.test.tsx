@@ -87,11 +87,14 @@ describe("MatchResult by sport profile", () => {
 });
 
 describe("a match won by forfeit", () => {
-  function showForfeit(forfeitWinnerTeamId: string | null) {
+  function showForfeit(
+    forfeitWinnerTeamId: string | null,
+    over: { homePenalties?: number | null; awayPenalties?: number | null } = {},
+  ) {
     rtlCleanup();
     render(
       <MatchResult
-        match={{ ...match(), forfeitWinnerTeamId, homeScore: 3, awayScore: 0 }}
+        match={{ ...match(), forfeitWinnerTeamId, homeScore: 3, awayScore: 0, ...over }}
         day={{ round: null, venue: null }}
         allMatches={[match()]}
         football
@@ -112,6 +115,19 @@ describe("a match won by forfeit", () => {
     showForfeit(null);
 
     expect(screen.queryByText(/انسحاب/)).toBeNull();
+  });
+
+  it("stops the shootout reading as the decider once a forfeit is awarded", () => {
+    showForfeit("t1", { homePenalties: 4, awayPenalties: 3 });
+
+    expect(screen.queryByText(matchDisplay.penalties)).toBeNull();
+    expect(screen.getByText(matchDisplay.forfeitNote("الصقور"))).toBeDefined();
+  });
+
+  it("still shows the shootout on a match nobody forfeited", () => {
+    showForfeit(null, { homePenalties: 4, awayPenalties: 3 });
+
+    expect(screen.getByText(matchDisplay.penalties)).toBeDefined();
   });
 
   it("keeps the forfeiting side's goal out of the events", () => {

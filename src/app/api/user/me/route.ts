@@ -6,7 +6,8 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
-import { personOf } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
+import { getAppSettings } from "@/lib/settingsServer";
 
 const MEMBER_SELECT = {
   id: true,
@@ -42,17 +43,12 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
 
+  const { membershipYear: currentYear } = await getAppSettings();
+
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
-      phone: true,
-      fullName: true,
-      age: true,
-      village: true,
-      photo: true,
-      photoLocked: true,
-      memberNumber: true,
-      verifyToken: true,
+      ...PERSON_WITH_PHONE_SELECT,
       members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
     },
   });
@@ -68,9 +64,13 @@ export const GET = withRoute("GET /api/user/me", async () => {
     person = { ...person, ...issued };
   }
 
+  // The year the association is collecting for. The member's own row carries
+  // the year they last paid into, and /home needs both to tell whether they
+  // are paid up or a year behind.
   return NextResponse.json({
     ...person,
     phone: user.phone,
+    currentYear,
     members: user.members.map(({ payments, ...member }) => {
       const paid = paidForYear(payments, member.membershipYear);
       return {

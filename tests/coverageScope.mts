@@ -1,5 +1,6 @@
 export const DATABASE_BOUND_LIB = [
   "src/lib/activityAccessServer.ts",
+  "src/lib/activityAttentionServer.ts",
   "src/lib/activityReportServer.ts",
   "src/lib/adminHomeServer.ts",
   "src/lib/ageGroups.ts",
@@ -17,6 +18,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/financeServer.ts",
   "src/lib/member.ts",
   "src/lib/officialReceiptServer.ts",
+  "src/lib/mvpVoteServer.ts",
   "src/lib/paymentReconcile.ts",
   "src/lib/prisma.ts",
   "src/lib/proofReuse.ts",

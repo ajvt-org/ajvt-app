@@ -24,6 +24,7 @@ export default function MatchCard({
   allMatches,
   profile,
   suspendedIds,
+  mvpVoteMinutes,
   onDelete,
   showResultForm,
   onToggleResultForm,
@@ -41,6 +42,7 @@ export default function MatchCard({
   allMatches: Match[];
   profile: "FOOTBALL" | "BOARD";
   suspendedIds: string[];
+  mvpVoteMinutes: number;
   onDelete: () => void;
   showResultForm: boolean;
   onToggleResultForm: () => void;
@@ -151,7 +153,14 @@ export default function MatchCard({
           )}
         </>
       )}
-      {football && showMvp && <MvpVoteAdmin match={match} teams={teams} onChange={onChange} />}
+      {football && showMvp && (
+        <MvpVoteAdmin
+          match={match}
+          teams={teams}
+          defaultMinutes={mvpVoteMinutes}
+          onChange={onChange}
+        />
+      )}
       {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
     </div>
   );

@@ -71,8 +71,14 @@ export const matchAdmin = {
   unknownScorer: "مجهول",
   extraTimeHeading: "الوقت الإضافي",
   extraTimeToggle: "المباراة ذهبت إلى وقت إضافي",
+  extraTimeBlocked:
+    "هذه الأهداف مسجّلة في وقت إضافي لم تعد المباراة تستحقه. احذفها أو أعد الوقت الأصلي إلى التعادل قبل الحفظ.",
   shootoutHeading: "ركلات الترجيح",
-  shootoutHint: "سجّل الركلات بترتيبها — النتيجة تُحسب وحدها",
+  shootoutHint: "سجّل الركلات بترتيبها، النتيجة تُحسب وحدها والدور يتناوب بين الفريقين",
+  shootoutBlocked:
+    "ركلات الترجيح مسجّلة على مباراة لم تعد متعادلة. احذفها أو أعد النتيجة إلى التعادل قبل الحفظ.",
+  kickTurn: (team: string) => `دور ${team}`,
+  firstKick: "من يبدأ",
   kickScored: "سجّل",
   kickMissed: "أضاع",
   forfeitHeading: "انسحاب",

@@ -80,14 +80,18 @@ describe("goal events", () => {
   });
 
   it("keeps extra time goals in the final score", async () => {
-    const { home, players, match } = await football();
+    const { home, away, players, match } = await football(true);
 
     await save(match.id, {
-      goalEvents: [{ teamId: home.id, memberId: players[0].id, period: "EXTRA_TIME", minute: 100 }],
+      goalEvents: [
+        { teamId: home.id, memberId: players[0].id, minute: 20 },
+        { teamId: away.id, memberId: players[1].id, minute: 70 },
+        { teamId: home.id, memberId: players[0].id, period: "EXTRA_TIME", minute: 100 },
+      ],
     });
 
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
-    expect(saved).toMatchObject({ homeScore: 1, awayScore: 0 });
+    expect(saved).toMatchObject({ homeScore: 2, awayScore: 1 });
   });
 
   it("derives the shootout from the kicks on a tied knockout match", async () => {

@@ -1,4 +1,5 @@
 export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
+export { activityAttention } from "./activityAttention";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
 export { pendingAgeGroups } from "./ageGroups";
@@ -16,7 +17,9 @@ export { manualAdd } from "./manualAdd";
 export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
 export { memberProof } from "./memberProof";
+export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
+export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";

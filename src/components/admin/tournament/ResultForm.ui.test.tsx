@@ -203,3 +203,170 @@ describe("the goal form", () => {
     expect(screen.getByText(texts.ownGoalHint)).toBeDefined();
   });
 });
+
+describe("the extra time section", () => {
+  beforeEach(() => {
+    cleanup();
+    patchMock.mockReset().mockResolvedValue({});
+  });
+
+  function show(over: Partial<Match> = {}) {
+    render(
+      <ResultForm
+        match={{ ...MATCH, ...over }}
+        teams={TEAMS}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+  }
+
+  const goalRow = (teamId: string, period: "REGULAR" | "EXTRA_TIME") => ({
+    id: `g-${teamId}-${period}`,
+    count: 1,
+    minute: null,
+    teamId,
+    kind: "GOAL" as const,
+    period,
+    member: null,
+  });
+
+  it("is not offered on a group-stage match", () => {
+    show({ isKnockout: false });
+
+    expect(screen.queryByText(texts.extraTimeToggle)).toBeNull();
+  });
+
+  it("is offered on a knockout still level after ninety minutes", () => {
+    show({ isKnockout: true });
+
+    expect(screen.getByText(texts.extraTimeToggle)).toBeDefined();
+  });
+
+  it("goes away once a goal decides the ninety minutes", () => {
+    show({ isKnockout: true });
+
+    fireEvent.click(screen.getByRole("button", { name: texts.addGoal }));
+
+    expect(screen.queryByText(texts.extraTimeToggle)).toBeNull();
+  });
+
+  it("opens the section when the admin says the match went to extra time", () => {
+    show({ isKnockout: true });
+
+    fireEvent.click(screen.getByText(texts.extraTimeToggle));
+
+    expect(screen.getByText(texts.extraTimeHeading)).toBeDefined();
+  });
+
+  it("stays open once an extra time goal breaks the tie", () => {
+    show({
+      isKnockout: true,
+      goals: [goalRow("t1", "REGULAR"), goalRow("t2", "REGULAR"), goalRow("t1", "EXTRA_TIME")],
+    });
+
+    expect(screen.getByText(texts.extraTimeHeading)).toBeDefined();
+    expect(screen.queryByText(texts.extraTimeBlocked)).toBeNull();
+  });
+
+  it("keeps goals the match no longer qualifies for visible, and blocks the save", () => {
+    show({ isKnockout: false, goals: [goalRow("t1", "EXTRA_TIME")] });
+
+    expect(screen.getByText(texts.extraTimeHeading)).toBeDefined();
+    expect(screen.getByText(texts.extraTimeBlocked)).toBeDefined();
+    expect(screen.getByText("حفظ النتيجة").closest("button")?.disabled).toBe(true);
+  });
+});
+
+describe("the shootout", () => {
+  beforeEach(() => {
+    cleanup();
+    patchMock.mockReset().mockResolvedValue({});
+  });
+
+  const kickRow = (teamId: string, order: number) => ({
+    id: `k${order}`,
+    teamId,
+    order,
+    scored: true,
+    member: null,
+  });
+
+  function show(over: Partial<Match> = {}) {
+    render(
+      <ResultForm
+        match={{ ...MATCH, ...over }}
+        teams={TEAMS}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+  }
+
+  it("lets the admin pick who takes the first kick", () => {
+    show({ isKnockout: true });
+
+    expect(screen.getByLabelText(texts.firstKick)).toBeDefined();
+  });
+
+  it("hands the turn to the other side once a kick is in", () => {
+    show({ isKnockout: true });
+
+    fireEvent.click(screen.getByRole("button", { name: texts.addKick }));
+
+    expect(screen.getByText(texts.kickTurn("النسور"))).toBeDefined();
+    expect(screen.queryByLabelText(texts.firstKick)).toBeNull();
+  });
+
+  it("alternates again on the kick after that", () => {
+    show({ isKnockout: true });
+
+    fireEvent.click(screen.getByRole("button", { name: texts.addKick }));
+    fireEvent.click(screen.getByRole("button", { name: texts.addKick }));
+
+    expect(screen.getByText(texts.kickTurn("الصقور"))).toBeDefined();
+  });
+
+  it("offers to remove the last kick only", () => {
+    show({ isKnockout: true, penaltyKicks: [kickRow("t1", 1), kickRow("t2", 2)] });
+
+    expect(screen.getAllByRole("button", { name: texts.remove })).toHaveLength(1);
+  });
+
+  it("keeps a recorded shootout when a forfeit is awarded afterwards", async () => {
+    show({
+      isKnockout: true,
+      forfeitWinnerTeamId: "t1",
+      penaltyKicks: [kickRow("t1", 1), kickRow("t2", 2)],
+    });
+
+    fireEvent.click(screen.getByText("حفظ النتيجة"));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    const body = patchMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(body.penaltyKicks).toHaveLength(2);
+  });
+
+  it("keeps kicks visible on a match that stopped being level, and blocks the save", () => {
+    show({
+      isKnockout: true,
+      goals: [
+        {
+          id: "g1",
+          count: 1,
+          minute: null,
+          teamId: "t1",
+          kind: "GOAL" as const,
+          period: "REGULAR" as const,
+          member: null,
+        },
+      ],
+      penaltyKicks: [kickRow("t1", 1)],
+    });
+
+    expect(screen.getByText(texts.shootoutBlocked)).toBeDefined();
+    expect(screen.getByText("حفظ النتيجة").closest("button")?.disabled).toBe(true);
+  });
+});

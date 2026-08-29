@@ -6,6 +6,8 @@ import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import Icon from "@/components/Icon";
+import { countdownLabel } from "@/lib/voteCountdown";
+import { mvpVote as voteTexts } from "@/lib/texts";
 
 interface Candidate {
   id: string;
@@ -16,6 +18,7 @@ interface Candidate {
 interface MvpVoteWidgetProps {
   matchId: string;
   status: "OPEN" | "CLOSED";
+  closesAt: string | Date;
   candidates: Candidate[];
   loggedIn: boolean;
   initialMyVoteCandidateId: string | null;
@@ -24,6 +27,7 @@ interface MvpVoteWidgetProps {
 export default function MvpVoteWidget({
   matchId,
   status,
+  closesAt,
   candidates,
   loggedIn,
   initialMyVoteCandidateId,
@@ -48,6 +52,7 @@ export default function MvpVoteWidget({
   }
 
   const closed = status === "CLOSED";
+  const countdown = closed ? null : countdownLabel(closesAt);
   const totalVotes = candidates.reduce((s, c) => s + c.voteCount, 0);
   const topVoteCount = closed ? Math.max(0, ...candidates.map((c) => c.voteCount)) : 0;
 
@@ -58,6 +63,11 @@ export default function MvpVoteWidget({
           {closed ? "نتيجة تصويت أفضل لاعب" : "صوّت لأفضل لاعب في المباراة"}
         </IconLabel>
       </p>
+      {countdown && (
+        <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+          {voteTexts.closesIn(countdown)}
+        </p>
+      )}
 
       {closed ? (
         <div className="space-y-1.5">

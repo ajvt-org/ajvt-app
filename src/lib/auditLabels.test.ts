@@ -1,20 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { sourceFiles } from "@tests/sourceFiles";
 import { ACTION_LABELS, auditActionLabel } from "./auditLabels";
-
-// prisma/migrations holds .sql only, and migrationStamp.test.ts creates and
-// removes a folder in it while this walk is running in another worker, which
-// made the walk fail on entries that had already gone.
-const SKIP = new Set(["migrations", "node_modules"]);
-
-function sourceFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return SKIP.has(entry.name) ? [] : sourceFiles(path);
-    return /\.tsx?$/.test(entry.name) ? [path] : [];
-  });
-}
 
 function loggedActions(): string[] {
   const found = new Set<string>();

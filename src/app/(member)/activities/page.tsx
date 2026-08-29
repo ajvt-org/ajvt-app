@@ -7,6 +7,7 @@ import { landingActivities as texts } from "@/lib/texts";
 
 export default async function ActivitiesPage() {
   const rows = await prisma.activity.findMany({
+    where: { published: true },
     orderBy: { order: "asc" },
     select: {
       id: true,
