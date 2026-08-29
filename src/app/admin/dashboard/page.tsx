@@ -416,14 +416,12 @@ function AdminDashboardInner() {
               onReason={setBulkReason}
               onAge={setBulkAge}
               onClear={() => setSelectedIds(new Set())}
-              onApprove={() =>
-                runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفعة واحدة؟`)
-              }
+              onApprove={() => runOnSelection("ACTIVE", null, `قبول ${selectedIds.size} طلب دفع؟`)}
               onReject={() =>
                 runOnSelection(
                   "REJECTED",
                   bulkReason,
-                  `رفض ${selectedIds.size} طلب دفعة واحدة بسبب: ${bulkReason}؟`,
+                  `رفض ${selectedIds.size} طلب دفع بسبب: ${bulkReason}؟`,
                 )
               }
               onMoveAge={bulkMoveAge}
