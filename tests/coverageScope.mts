@@ -1,5 +1,6 @@
 export const DATABASE_BOUND_LIB = [
   "src/lib/activityAccessServer.ts",
+  "src/lib/activityReportServer.ts",
   "src/lib/adminHomeServer.ts",
   "src/lib/ageGroups.ts",
   "src/lib/ageStandingsServer.ts",
