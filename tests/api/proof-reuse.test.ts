@@ -66,6 +66,25 @@ describe("spotting a payment screenshot that has been sent before", () => {
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });
 
+  it("does not report a donation against itself", async () => {
+    await fingerprint("one.webp", HASH);
+    await fingerprint("two.webp", HASH);
+    const mine = await prisma.donation.create({
+      data: {
+        amount: 500,
+        donorName: "محمد",
+        status: "PENDING",
+        source: "PUBLIC",
+        proof: "one.webp",
+      },
+    });
+    await memberWithProof("أحمد", "two.webp");
+
+    const reuse = await findProofReuse("one.webp", { kind: "donation", id: mine.id });
+
+    expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
+  });
+
   it("keeps a different image apart", async () => {
     await fingerprint("one.webp", HASH);
     await fingerprint("two.webp", OTHER);
