@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountsFor } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -134,6 +135,7 @@ export const PATCH = withRoute(
       homePenalties?: number | null;
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
+      manOfTheMatchUserId?: string | null;
       forfeitWinnerTeamId?: string | null;
       status?: MatchStatus;
       suspensionsServedAt?: Date;
@@ -422,6 +424,20 @@ export const PATCH = withRoute(
       }
     }
 
+    const accountOfMember = await accountsFor(prisma, [
+      ...parsedHomeGoals.map((g) => g.memberId),
+      ...parsedAwayGoals.map((g) => g.memberId),
+      ...[...eventGoals, ...eventKicks]
+        .map((e) => e.memberId)
+        .filter((id): id is string => id !== null),
+      ...(updateData.manOfTheMatchId ? [updateData.manOfTheMatchId] : []),
+    ]);
+    if (updateData.manOfTheMatchId !== undefined) {
+      updateData.manOfTheMatchUserId = updateData.manOfTheMatchId
+        ? (accountOfMember.get(updateData.manOfTheMatchId) ?? null)
+        : null;
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       if (eventsMode) {
         await tx.matchGoal.deleteMany({ where: { matchId } });
@@ -430,6 +446,7 @@ export const PATCH = withRoute(
             data: eventGoals.map((g) => ({
               matchId,
               memberId: g.memberId,
+              userId: g.memberId ? (accountOfMember.get(g.memberId) ?? null) : null,
               teamId: g.teamId,
               kind: g.kind,
               period: g.period,
@@ -444,6 +461,7 @@ export const PATCH = withRoute(
               matchId,
               teamId: k.teamId,
               memberId: k.memberId,
+              userId: k.memberId ? (accountOfMember.get(k.memberId) ?? null) : null,
               order: i + 1,
               scored: k.scored,
             })),
@@ -460,6 +478,7 @@ export const PATCH = withRoute(
             data: parsedHomeGoals.map((g) => ({
               matchId,
               memberId: g.memberId,
+              userId: accountOfMember.get(g.memberId) ?? null,
               teamId: match.homeTeamId,
               count: g.count,
               minute: g.minute,
@@ -471,6 +490,7 @@ export const PATCH = withRoute(
             data: parsedAwayGoals.map((g) => ({
               matchId,
               memberId: g.memberId,
+              userId: accountOfMember.get(g.memberId) ?? null,
               teamId: match.awayTeamId,
               count: g.count,
               minute: g.minute,
