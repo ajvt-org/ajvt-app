@@ -27,17 +27,6 @@ async function lastYearSurplus(memberId: string, amount: number) {
     where: { id: memberId },
     select: { userId: true },
   });
-  const donation = await prisma.donation.create({
-    data: {
-      memberId,
-      userId,
-      membershipYear: LAST,
-      source: "MEMBERSHIP",
-      amount,
-      status: "ACTIVE",
-      donorName: "محمد ولد أحمد",
-    },
-  });
   await mirrorMembershipPayment(prisma, {
     memberId,
     userId,
@@ -50,7 +39,6 @@ async function lastYearSurplus(memberId: string, amount: number) {
     anonymous: false,
     donorName: "محمد ولد أحمد",
   });
-  return donation;
 }
 
 const renew = (id: string, paidAmount: number) =>
@@ -59,11 +47,21 @@ const renew = (id: string, paidAmount: number) =>
     withId(id),
   );
 
-const surplusRows = (memberId: string) =>
-  prisma.donation.findMany({
-    where: { memberId, source: "MEMBERSHIP" },
-    orderBy: { membershipYear: "asc" },
+// One payment a year, each carrying its own surplus above the fee it was
+// taken under.
+const surplusRows = async (memberId: string) => {
+  const payments = await prisma.payment.findMany({
+    where: { memberId, purpose: "MEMBERSHIP" },
+    orderBy: { year: "asc" },
   });
+  return payments
+    .map((p) => ({
+      membershipYear: p.year,
+      amount: p.amount - (p.feeApplied ?? 0),
+      status: p.status,
+    }))
+    .filter((row) => row.amount > 0);
+};
 
 describe("a surplus belongs to the year it was paid for", () => {
   beforeEach(async () => {
