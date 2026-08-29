@@ -15,6 +15,7 @@ export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
+export { quizRecap } from "./quizRecap";
 export { treasury } from "./treasury";
 export { villageField, villagesDialog } from "./villages";
 export { matchDisplay, publicTournament } from "./publicTournament";
