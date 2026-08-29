@@ -10,6 +10,7 @@ export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
+export { accountPhone } from "./accountPhone";
 export { adminTabs } from "./adminNav";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";

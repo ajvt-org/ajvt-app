@@ -4,20 +4,19 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
+import { accountPhone as texts } from "@/lib/texts";
 
-// The number an account signs in with, and the only one the association has
-// for a person. A typo at signup used to be permanent.
 export default function AccountPhoneForm({
   memberId,
   phone,
   onChanged,
 }: {
   memberId: string;
-  phone: string;
+  phone: string | null;
   onChanged: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(phone);
+  const [value, setValue] = useState(phone ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,21 +37,27 @@ export default function AccountPhoneForm({
   if (!editing) {
     return (
       <div className="flex items-center justify-between gap-3">
-        <span style={{ color: "var(--text-muted)" }}>رقم الحساب</span>
+        <span style={{ color: "var(--text-muted)" }}>{texts.label}</span>
         <span className="flex items-center gap-2">
-          <span className="font-bold" dir="ltr">
-            {phone}
-          </span>
+          {phone ? (
+            <span className="font-bold" dir="ltr">
+              {phone}
+            </span>
+          ) : (
+            <span className="font-bold" style={{ color: "var(--text-muted)" }}>
+              {texts.none}
+            </span>
+          )}
           <button
             onClick={() => {
-              setValue(phone);
+              setValue(phone ?? "");
               setError("");
               setEditing(true);
             }}
             className="text-xs font-bold px-2 py-1 rounded-lg"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <IconLabel name="pencil">تصحيح</IconLabel>
+            <IconLabel name={phone ? "pencil" : "plus"}>{phone ? texts.edit : texts.add}</IconLabel>
           </button>
         </span>
       </div>
@@ -62,7 +67,7 @@ export default function AccountPhoneForm({
   return (
     <div className="space-y-2">
       <label className="block text-xs font-bold" htmlFor="account-phone">
-        رقم الحساب
+        {texts.label}
       </label>
       <input
         id="account-phone"
@@ -75,7 +80,7 @@ export default function AccountPhoneForm({
         className="input"
       />
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        العضو يسجّل الدخول بهذا الرقم. كلمة المرور لا تتغير.
+        {phone ? texts.hint : texts.noneHint}
       </p>
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
@@ -84,14 +89,14 @@ export default function AccountPhoneForm({
       )}
       <div className="flex gap-2">
         <button onClick={save} disabled={saving} className="btn btn-primary text-sm flex-1">
-          {saving ? "..." : "حفظ"}
+          {saving ? "..." : texts.save}
         </button>
         <button
           onClick={() => setEditing(false)}
           className="btn text-sm"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          إلغاء
+          {texts.cancel}
         </button>
       </div>
     </div>
