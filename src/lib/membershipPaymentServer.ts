@@ -158,12 +158,12 @@ export async function setSurplusVisibility(db: Db, memberId: string, anonymous: 
 export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
   const member = await db.member.findUnique({
     where: { id: memberId },
-    select: { userId: true, paidAmount: true, membershipYear: true },
+    select: { userId: true, membershipYear: true },
   });
-  if (!member || member.paidAmount === null) return null;
-  const surplus = await db.donation.findFirst({
-    where: { userId: member.userId, source: "MEMBERSHIP", membershipYear: member.membershipYear },
+  if (!member) return null;
+  const payment = await db.payment.findFirst({
+    where: { userId: member.userId, purpose: "MEMBERSHIP", year: member.membershipYear },
     select: { amount: true },
   });
-  return member.paidAmount + (surplus?.amount ?? 0);
+  return payment?.amount ?? null;
 }

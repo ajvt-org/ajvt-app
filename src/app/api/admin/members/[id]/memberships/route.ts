@@ -34,7 +34,6 @@ export const GET = withRoute(
         year: true,
         status: true,
         rejectionReason: true,
-        paidAmount: true,
         paymentMethod: true,
         recordedBy: true,
         createdAt: true,
