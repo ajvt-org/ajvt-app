@@ -3,21 +3,20 @@
 import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import PickList from "@/components/admin/PickList";
+import { useAdminVillages } from "@/components/admin/useAdminVillages";
 import { api, errorMessage } from "@/lib/api";
 import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
 import { uploadFile } from "@/lib/upload";
+import { memberEdit, memberForm, villageField } from "@/lib/texts";
+import { members as memberMessages } from "@/lib/messages";
+import { OTHER_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 
-// Correcting what a member wrote on their own form: the wrong age group above
-// all, which is what most of them get wrong, and the payment method, which no
-// screen could change at all before this.
-//
-// The age group is a list rather than a text box, so an edit cannot invent a
-// group that does not exist. A member whose group was deleted keeps it as an
-// extra option, or saving anything else would silently move them.
 type Member = {
   id: string;
   fullName: string;
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string | null;
   paidAmount: number | null;
   supportAmount: number;
@@ -34,13 +33,15 @@ export default function MemberEditForm({
   onCancel: () => void;
 }) {
   const [fullName, setFullName] = useState(member.fullName);
-  const [age, setAge] = useState(member.age);
+  const [age, setAge] = useState(member.age ?? "");
+  const [village, setVillage] = useState(member.village);
   const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
   const [paidAmount, setPaidAmount] = useState(
     member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
   );
   const [photo, setPhoto] = useState(member.photo);
   const [ageGroups, setAgeGroups] = useState<string[]>([]);
+  const { villages } = useAdminVillages();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +70,11 @@ export default function MemberEditForm({
   async function save() {
     setError("");
     if (!fullName.trim()) {
-      setError("الاسم الكامل مطلوب");
+      setError(memberMessages.fullNameRequired);
+      return;
+    }
+    if (requiresAgeGroup(village) && !age) {
+      setError(memberMessages.pickAgeGroup);
       return;
     }
     const amountError = paidAmount.trim() ? validatePaidAmount(paidAmount) : null;
@@ -81,7 +86,8 @@ export default function MemberEditForm({
     try {
       await api.patch(`/api/admin/members/${member.id}`, {
         fullName: fullName.trim(),
-        age,
+        village,
+        age: ageForVillage(village, age),
         photo,
       });
       await api.put(`/api/admin/members/${member.id}/payment`, {
@@ -96,6 +102,7 @@ export default function MemberEditForm({
     }
   }
 
+  const villageOptions = villages.includes(village) ? villages : [village, ...villages];
   const groups = ageGroups.includes(age) || !age ? ageGroups : [age, ...ageGroups];
   const methods =
     !paymentMethod || PAYMENT_METHODS.includes(paymentMethod)
@@ -125,7 +132,7 @@ export default function MemberEditForm({
         </label>
         <div className="flex-1 min-w-0">
           <label className="block text-xs font-bold mb-1" htmlFor="edit-name">
-            الاسم الكامل
+            {memberEdit.fullNameLabel}
           </label>
           <input
             id="edit-name"
@@ -138,45 +145,40 @@ export default function MemberEditForm({
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-bold mb-1" htmlFor="edit-age">
-          العصر
-        </label>
-        <select
-          id="edit-age"
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-          className="input"
-        >
-          {groups.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PickList
+        id="edit-village"
+        label={villageField.label}
+        value={village}
+        options={villageOptions}
+        onChange={(next) => {
+          setVillage(next);
+          if (!requiresAgeGroup(next)) setAge("");
+        }}
+        hint={village === OTHER_VILLAGE ? villageField.otherNote : undefined}
+      />
 
-      <div>
-        <label className="block text-xs font-bold mb-1" htmlFor="edit-method">
-          طريقة الدفع
-        </label>
-        <select
-          id="edit-method"
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-          className="input"
-        >
-          {methods.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-      </div>
+      {requiresAgeGroup(village) && (
+        <PickList
+          id="edit-age"
+          label={memberForm.ageLabel}
+          value={age}
+          options={groups}
+          onChange={setAge}
+          placeholder={memberForm.agePlaceholder}
+        />
+      )}
+
+      <PickList
+        id="edit-method"
+        label={memberEdit.paymentMethodLabel}
+        value={paymentMethod}
+        options={methods}
+        onChange={setPaymentMethod}
+      />
 
       <div>
         <label className="block text-xs font-bold mb-1" htmlFor="edit-amount">
-          المبلغ المسدد (أوقية)
+          {memberEdit.paidAmountLabel}
         </label>
         <input
           id="edit-amount"
@@ -203,14 +205,14 @@ export default function MemberEditForm({
           disabled={saving || uploading}
           className="btn btn-primary text-sm flex-1"
         >
-          {uploading ? "جاري الرفع..." : saving ? "جاري الحفظ..." : "حفظ"}
+          {uploading ? memberEdit.uploading : saving ? memberEdit.saving : memberEdit.save}
         </button>
         <button
           onClick={onCancel}
           className="btn text-sm"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="close">إلغاء</IconLabel>
+          <IconLabel name="close">{memberEdit.cancel}</IconLabel>
         </button>
       </div>
     </div>

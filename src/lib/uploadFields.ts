@@ -36,18 +36,18 @@ function paymentKind(purpose: string): ProofKind {
 
 export const UPLOAD_FIELDS: UploadField[] = [
   {
-    id: "member.photo",
+    id: "user.photo",
     names: async () =>
-      (await prisma.member.findMany({ select: { photo: true } })).map((r) => r.photo),
-    rename: (from, to) => prisma.member.updateMany({ where: { photo: from }, data: { photo: to } }),
+      (await prisma.user.findMany({ select: { photo: true } })).map((r) => r.photo),
+    rename: (from, to) => prisma.user.updateMany({ where: { photo: from }, data: { photo: to } }),
     serve: {
       via: "authenticated",
       locate: async (base) => {
-        const row = await prisma.member.findFirst({
+        const row = await prisma.user.findFirst({
           where: { photo: base },
-          select: { userId: true },
+          select: { id: true },
         });
-        return row ? { kind: "photo", ownerId: row.userId } : null;
+        return row ? { kind: "photo", ownerId: row.id } : null;
       },
     },
   },

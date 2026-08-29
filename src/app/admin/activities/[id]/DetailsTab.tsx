@@ -8,6 +8,7 @@ import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import ActivityDatesEditor from "../ActivityDatesEditor";
 import ConvertTournamentCard from "./ConvertTournamentCard";
+import ConvertCampaignCard from "./ConvertCampaignCard";
 import DeleteActivityCard from "./DeleteActivityCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityForm as texts } from "@/lib/texts";
@@ -174,6 +175,7 @@ export default function DetailsTab({
       </div>
 
       {!activity.isVolunteer && <ConvertTournamentCard activity={activity} onChanged={onSaved} />}
+      {!activity.isTournament && <ConvertCampaignCard activity={activity} onChanged={onSaved} />}
 
       <DeleteActivityCard activityId={activity.id} />
     </div>

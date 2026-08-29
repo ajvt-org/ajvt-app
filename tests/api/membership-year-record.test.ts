@@ -1,11 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
-import { resetDb, post, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  createUser,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  adminAddsMember,
+} from "./helpers";
 
 import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 
 const submission = {
   fullName: "محمد ولد أحمد",
@@ -21,18 +28,30 @@ async function submitAs(body: Record<string, unknown> = {}) {
   return prisma.member.findFirstOrThrow();
 }
 
-describe("the year record written when a membership is approved", () => {
+describe("the year record a membership request opens", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("does not exist while the membership is still waiting", async () => {
+  it("opens as soon as the member asks, waiting on a decision", async () => {
     const member = await submitAs();
 
-    expect(await prisma.membership.count({ where: { memberId: member.id } })).toBe(0);
+    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    expect(record.year).toBe(member.membershipYear);
+    expect(record.status).toBe("PENDING");
+    expect(record.reviewedBy).toBeNull();
   });
 
-  it("is written the moment an admin approves", async () => {
+  it("carries what the member sent with the request", async () => {
+    const member = await submitAs();
+
+    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    expect(record.paidAmount).toBe(100);
+    expect(record.paymentMethod).toBe("بنكيلي");
+    expect(record.paymentProof).toBe("proof.webp");
+  });
+
+  it("is stamped the moment an admin approves", async () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
@@ -40,9 +59,12 @@ describe("the year record written when a membership is approved", () => {
 
     const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
     expect(record.year).toBe(member.membershipYear);
+    expect(record.status).toBe("ACTIVE");
     expect(record.paidAmount).toBe(100);
     expect(record.paymentMethod).toBe("بنكيلي");
     expect(record.recordedBy).toBe("admin");
+    expect(record.reviewedBy).toBe("admin");
+    expect(record.reviewedAt).not.toBeNull();
   });
 
   it("keeps only the fee when the member paid more", async () => {
@@ -66,7 +88,7 @@ describe("the year record written when a membership is approved", () => {
     expect(record.paidAmount).toBe(250);
   });
 
-  it("is not written when the membership is refused", async () => {
+  it("carries the refusal and its reason when the payment is turned down", async () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
@@ -78,10 +100,10 @@ describe("the year record written when a membership is approved", () => {
       }),
     );
 
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).status).toBe(
-      "REJECTED",
-    );
-    expect(await prisma.membership.count({ where: { memberId: member.id } })).toBe(0);
+    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    expect(record.status).toBe("REJECTED");
+    expect(record.rejectionReason).toBe("الصورة غير واضحة");
+    expect(record.reviewedBy).toBe("admin");
   });
 
   it("survives a second approval without changing what was banked", async () => {
@@ -102,16 +124,14 @@ describe("the year record written when a membership is approved", () => {
   it("is written for a member an admin adds as already active", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "ACTIVE",
-        paidAmount: 300,
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "ACTIVE",
+      paidAmount: 300,
+    });
 
     const member = await prisma.member.findFirstOrThrow();
     const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
@@ -119,19 +139,19 @@ describe("the year record written when a membership is approved", () => {
     expect(record.year).toBe(member.membershipYear);
   });
 
-  it("is not written for a member an admin adds as still waiting", async () => {
+  it("waits on a decision for a member an admin adds as still waiting", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "PENDING",
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "PENDING",
+    });
 
-    expect(await prisma.membership.count()).toBe(0);
+    const record = await prisma.membership.findFirstOrThrow();
+    expect(record.status).toBe("PENDING");
+    expect(record.reviewedBy).toBeNull();
   });
 });

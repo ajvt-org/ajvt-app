@@ -4,7 +4,16 @@ import { PATCH as UPDATE_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { PATCH as UPDATE_DONATION } from "@/app/api/admin/donations/[id]/route";
 import { GET as SUMMARY } from "@/app/api/admin/finance/summary/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  patch,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 
 async function activity(title: string) {
   return prisma.activity.create({ data: { title, description: "وصف" } });
@@ -117,13 +126,11 @@ describe("attaching finance to an activity", () => {
 
   it("keeps membership fees out of an activity summary", async () => {
     const a = await activity("القافلة الصحية");
-    const m = await prisma.member.create({
-      data: {
-        fullName: "عضو",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const m = await makeMember({
+      fullName: "عضو",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 100, 100);

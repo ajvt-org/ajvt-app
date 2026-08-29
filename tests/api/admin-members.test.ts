@@ -1,17 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { POST } from "@/app/api/admin/members/route";
 import { PATCH } from "@/app/api/admin/members/[id]/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 import { prisma } from "@/lib/prisma";
 import {
   resetDb,
-  post,
   patch,
   put,
   createAdmin,
   createUser,
   signInAsAdmin,
   withId,
+  personFor,
+  makeMember,
+  adminAddsMember,
 } from "./helpers";
 
 const ALREADY = "لهذا الحساب عضو مسبقاً";
@@ -30,15 +31,14 @@ async function signIn() {
 }
 
 async function memberFor(userId: string | null, over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      ...over,
-    },
+  const owner = userId ?? (await prisma.user.create({ data: {} })).id;
+  return makeMember({
+    userId: owner,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    ...over,
   });
 }
 
@@ -50,7 +50,7 @@ describe("admin membership is one per account", () => {
   it("adds a member manually against a fresh phone number", async () => {
     await signIn();
 
-    const res = await POST(post("/api/admin/members", validBody));
+    const res = await adminAddsMember(validBody);
 
     expect(res.status).toBe(201);
     const created = await prisma.member.findFirstOrThrow();
@@ -58,16 +58,16 @@ describe("admin membership is one per account", () => {
     expect(await prisma.member.count()).toBe(1);
   });
 
-  it("refuses a manual add onto an account that already has a member", async () => {
+  it("refuses a manual add onto a number that already belongs to someone", async () => {
     await signIn();
     const user = await createUser("22334455");
     await memberFor(user.id);
 
-    const res = await POST(post("/api/admin/members", validBody));
+    const res = await adminAddsMember(validBody);
 
     expect(res.status).toBe(409);
-    expect(await res.json()).toEqual({ error: ALREADY });
     expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.user.count()).toBe(1);
   });
 
   it("attaches an account to a member added without one", async () => {
@@ -101,9 +101,10 @@ describe("admin membership is one per account", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(updated.age).toBe("الفائزين");
-    expect(updated.paymentMethod).toBe("السداد");
+    expect((await personFor(member.id)).age).toBe("الفائزين");
+    expect(
+      (await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paymentMethod,
+    ).toBe("السداد");
 
     const log = await prisma.auditLog.findFirstOrThrow({
       where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER" },
@@ -125,7 +126,7 @@ describe("admin membership is one per account", () => {
 
     const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(updated.paymentMethod).toBe("بنكيلي");
-    expect(updated.fullName).toBe("عضو");
+    expect((await personFor(member.id)).fullName).toBe("عضو");
   });
 
   it("refuses an empty payment method rather than blanking it", async () => {
@@ -159,6 +160,6 @@ describe("admin membership is one per account", () => {
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: ALREADY });
     const untouched = await prisma.member.findUniqueOrThrow({ where: { id: orphan.id } });
-    expect(untouched.userId).toBeNull();
+    expect(untouched.userId).toBe(orphan.userId);
   });
 });

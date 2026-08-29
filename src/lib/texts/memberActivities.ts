@@ -4,7 +4,9 @@ export const memberActivities = {
   quizLocked: "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
   play: "العب",
   closedChip: "مغلق",
+  renewToJoin: "جدّد اشتراكك للتسجيل في نشاط جديد",
   registeredChip: "مسجَّل",
-  pendingNotice: "طلب انضمامك قيد المراجعة — بمجرد قبوله يمكنك التسجيل في الأنشطة.",
-  rejectedNotice: "طلب انضمامك مرفوض حالياً — تواصل مع المشرف للتسجيل في الأنشطة.",
+  // Why the activities below cannot be joined yet. What to do about it is
+  // said once, at the top of the page, by the standing card.
+  browseNotice: "تصفح الأنشطة المتاحة — التسجيل فيها متاح للمنتسبين بعد قبول اشتراكهم.",
 } as const;

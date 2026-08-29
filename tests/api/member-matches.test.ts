@@ -1,14 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, createUser, signInAs } from "./helpers";
+import { resetDb, createUser, signInAs, makeMember } from "./helpers";
 
 vi.mock("@/lib/push", () => ({ sendPushToUser: vi.fn(async () => {}) }));
 
 const { GET } = await import("@/app/api/user/matches/route");
 
 async function memberFor(userId: string | null, fullName: string) {
-  return prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE", userId },
+  const owner = userId ?? (await prisma.user.create({ data: {} })).id;
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    userId: owner,
   });
 }
 
@@ -21,8 +26,17 @@ async function tournament(title: string) {
 async function teamWith(activityId: string, name: string, memberId?: string, status = "ACTIVE") {
   const team = await prisma.team.create({ data: { activityId, name } });
   if (memberId) {
+    const owner = await prisma.member.findUniqueOrThrow({
+      where: { id: memberId },
+      select: { userId: true },
+    });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId, status: status as "ACTIVE" | "PENDING" },
+      data: {
+        teamId: team.id,
+        memberId,
+        userId: owner.userId,
+        status: status as "ACTIVE" | "PENDING",
+      },
     });
   }
   return team;

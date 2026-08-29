@@ -12,6 +12,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
 import { stampRecordedBy } from "@/lib/paymentMirror";
+import { nameOf } from "@/lib/person";
 
 const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
   notActive: messages.renewNotActive,
@@ -31,21 +32,31 @@ export const POST = withRoute(
     const paidAmountError = validatePaidAmount(paidAmount, membershipFee);
     if (paidAmountError) throw new ValidationError(paidAmountError);
 
-    const member = await prisma.member.findUnique({ where: { id } });
+    const member = await prisma.member.findUnique({
+      where: { id },
+      include: { user: { select: { fullName: true, memberNumber: true } } },
+    });
     if (!member) throw new NotFoundError(messages.notFound);
 
-    const refusal = renewalRefusal(member, membershipYear);
+    const refusal = renewalRefusal(
+      { ...member, memberNumber: member.user.memberNumber },
+      membershipYear,
+    );
     if (refusal) throw new ConflictError(REFUSALS[refusal]);
 
     const renewed = await prisma.$transaction(async (tx) => {
       await tx.membership.create({
         data: {
           memberId: id,
+          userId: member.userId,
           year: membershipYear,
+          status: "ACTIVE",
           paidAmount: Math.min(Number(paidAmount), membershipFee),
           paymentMethod,
           paymentProof: paymentProof || null,
           recordedBy: session.username,
+          reviewedBy: session.username,
+          reviewedAt: new Date(),
         },
       });
       await tx.member.update({
@@ -57,17 +68,22 @@ export const POST = withRoute(
         },
       });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
-      await stampRecordedBy(tx, id, membershipYear, session.username);
+      await stampRecordedBy(tx, member.userId, membershipYear, session.username);
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
-    await logAction(session.username, "RENEW_MEMBER", `${member.fullName} — ${membershipYear}`, {
-      ...auditContext(session, req),
-      targetType: "Member",
-      targetId: id,
-      before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
-      after: { membershipYear, paidAmount: Number(paidAmount) },
-    });
+    await logAction(
+      session.username,
+      "RENEW_MEMBER",
+      `${nameOf(member.user)} — ${membershipYear}`,
+      {
+        ...auditContext(session, req),
+        targetType: "Member",
+        targetId: id,
+        before: { membershipYear: member.membershipYear, paidAmount: member.paidAmount },
+        after: { membershipYear, paidAmount: Number(paidAmount) },
+      },
+    );
 
     return NextResponse.json({ member: renewed }, { status: 201 });
   },

@@ -9,6 +9,8 @@ import ShareResultButton from "./ShareResultButton";
 import MvpVoteWidget from "./MvpVoteWidget";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline } from "@/lib/matchEvents";
+import { forfeitLoserTeamId } from "@/lib/forfeit";
+import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
@@ -35,6 +37,9 @@ export default function MatchResult({
   const round = day.round ? null : match.round;
   const venue = day.venue ? null : match.venue;
   const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const hideGoalsOfTeamId = match.forfeitWinnerTeamId
+    ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.homeTeam.id, match.awayTeam.id)
+    : null;
 
   return (
     <div className="card p-4 space-y-2">
@@ -43,7 +48,9 @@ export default function MatchResult({
           round={round}
           venue={venue}
           penalties={
-            match.homePenalties !== null && match.awayPenalties !== null
+            match.forfeitWinnerTeamId === null &&
+            match.homePenalties !== null &&
+            match.awayPenalties !== null
               ? { home: match.homePenalties, away: match.awayPenalties }
               : null
           }
@@ -57,13 +64,31 @@ export default function MatchResult({
         layout="stacked"
       />
 
+      {match.forfeitWinnerTeamId && (
+        <p
+          className="text-xs font-bold text-center rounded-lg py-1.5 px-2"
+          style={{ background: "#fffbeb", color: "#92400e", border: "1px solid #fcd34d" }}
+        >
+          {matchDisplay.forfeitNote(
+            match.forfeitWinnerTeamId === match.homeTeam.id
+              ? match.homeTeam.name
+              : match.awayTeam.name,
+          )}
+        </p>
+      )}
+
       {football && (
         <>
           <MatchEvents
-            rows={matchEventRows({ ...match, homeTeamId: match.homeTeam.id, manOfTheMatchTeam })}
+            rows={matchEventRows({
+              ...match,
+              homeTeamId: match.homeTeam.id,
+              manOfTheMatchTeam,
+              hideGoalsOfTeamId,
+            })}
           />
           <MatchTimeline
-            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
+            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id, hideGoalsOfTeamId })}
             teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
           />
         </>
@@ -88,7 +113,15 @@ export default function MatchResult({
       {football && match.mvpVote && (
         <MvpVoteWidget
           matchId={match.id}
-          status={match.mvpVote.status as "OPEN" | "CLOSED"}
+          status={
+            isVoteClosed({
+              status: match.mvpVote.status as "OPEN" | "CLOSED",
+              closesAt: match.mvpVote.closesAt,
+            })
+              ? "CLOSED"
+              : "OPEN"
+          }
+          closesAt={match.mvpVote.closesAt}
           candidates={match.mvpVote.candidates.map((c) => ({
             id: c.id,
             fullName: c.member.fullName,
@@ -109,15 +142,17 @@ export default function MatchResult({
           awayScore={match.awayScore ?? 0}
           round={match.round}
           tournamentTitle={tournamentTitle}
-          goals={(football ? match.goals : []).map((g) => ({
-            memberId: g.member?.id ?? null,
-            fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
-            photo: g.member?.photo ?? null,
-            count: g.count,
-            minute: g.minute,
-            kind: g.kind,
-            isHome: g.teamId === match.homeTeam.id,
-          }))}
+          goals={(football ? match.goals : [])
+            .filter((g) => g.teamId !== hideGoalsOfTeamId)
+            .map((g) => ({
+              memberId: g.member?.id ?? null,
+              fullName: g.member?.fullName ?? matchDisplay.unknownScorer,
+              photo: g.member?.photo ?? null,
+              count: g.count,
+              minute: g.minute,
+              kind: g.kind,
+              isHome: g.teamId === match.homeTeam.id,
+            }))}
           manOfTheMatch={
             football && match.manOfTheMatch
               ? { ...match.manOfTheMatch, team: manOfTheMatchTeam }

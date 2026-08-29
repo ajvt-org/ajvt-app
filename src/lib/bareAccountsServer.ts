@@ -6,6 +6,7 @@ export async function bareAccounts() {
     select: {
       id: true,
       phone: true,
+      fullName: true,
       createdAt: true,
       lastActiveDate: true,
       _count: { select: { pushSubscriptions: true } },

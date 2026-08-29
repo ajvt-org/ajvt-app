@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // A 1x1 png is enough: the route only checks that the upload is a real image.
 const PROOF = Buffer.from(
@@ -14,17 +14,48 @@ const MEMBER = {
   paymentMethod: "بنكيلي",
 };
 
+const STANDING = {
+  fullName: "سيدي ولد الحالة",
+  phone: "22119966",
+  password: "test1234",
+  age: "البدريين",
+  paymentMethod: "بنكيلي",
+};
+
+const NEIGHBOUR = {
+  fullName: "أحمد ولد افجار",
+  phone: "22119977",
+  password: "test1234",
+  village: "أفجار",
+  paymentMethod: "بنكيلي",
+};
+
+interface Person {
+  phone: string;
+  password: string;
+  fullName: string;
+  village?: string;
+  age?: string;
+}
+
+async function signUp(page: Page, person: Person) {
+  await page.goto("/register");
+
+  await page.fill('input[type="tel"]', person.phone);
+  await page.fill('input[type="password"] >> nth=0', person.password);
+  await page.fill('input[type="password"] >> nth=1', person.password);
+  await page.getByRole("button", { name: "التالي" }).click();
+
+  await page.fill('input[name="fullName"]', person.fullName);
+  if (person.village) await page.selectOption("#signup-village", person.village);
+  if (person.age) await page.selectOption("#signup-age", person.age);
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL("**/home");
+}
+
 test("a visitor joins and an admin approves them", async ({ page }) => {
-  await page.goto("/form");
-
-  await page.fill('input[name="fullName"]', MEMBER.fullName);
-  await page.fill('input[type="tel"]', MEMBER.phone);
-  await page.selectOption("select", MEMBER.age);
-  await page.getByRole("button", { name: "التالي" }).click();
-
-  await page.fill('input[type="password"] >> nth=0', MEMBER.password);
-  await page.fill('input[type="password"] >> nth=1', MEMBER.password);
-  await page.getByRole("button", { name: "التالي" }).click();
+  await signUp(page, MEMBER);
+  await page.goto("/membership");
 
   await page.click(`text=${MEMBER.paymentMethod}`);
   await page.fill('input[type="number"]', "100");
@@ -48,7 +79,7 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
 
   await adminPage.getByText(MEMBER.fullName).first().click();
-  await adminPage.getByRole("button", { name: "قبول", exact: true }).click();
+  await adminPage.getByRole("button", { name: "قبول الدفع", exact: true }).click();
 
   await adminPage.getByRole("button", { name: "الكل" }).click();
   await expect(adminPage.locator(".card", { hasText: MEMBER.fullName }).first()).toContainText(
@@ -56,8 +87,58 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
   );
   await admin.close();
 
-  // The account now holds a membership, so the join form has nothing left to
-  // ask: a second request is what put a rejection on an approved account.
-  await page.goto("/form");
+  // The account now holds a membership, so the payment screen has nothing left
+  // to ask: a second request is what put a rejection on an approved account.
+  await page.goto("/membership");
   await page.waitForURL("**/profile");
+});
+
+test("a neighbour from another village joins without an age group", async ({ page }) => {
+  await page.goto("/register");
+  await page.fill('input[type="tel"]', NEIGHBOUR.phone);
+  await page.fill('input[type="password"] >> nth=0', NEIGHBOUR.password);
+  await page.fill('input[type="password"] >> nth=1', NEIGHBOUR.password);
+  await page.getByRole("button", { name: "التالي" }).click();
+
+  await page.fill('input[name="fullName"]', NEIGHBOUR.fullName);
+  await page.selectOption("#signup-village", NEIGHBOUR.village);
+  await expect(page.locator("#signup-age")).toHaveCount(0);
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL("**/home");
+
+  await page.goto("/membership");
+  await page.click(`text=${NEIGHBOUR.paymentMethod}`);
+  await page.fill('input[type="number"]', "100");
+  await page
+    .locator('input[type="file"]')
+    .last()
+    .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
+  await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
+
+  await expect(page.getByText(NEIGHBOUR.fullName).first()).toBeVisible();
+});
+
+// The account-only state used to send people to /register, the one page they
+// have no use for once they have an account.
+test("home tells a new account what it still owes, and where to pay it", async ({ page }) => {
+  await signUp(page, STANDING);
+
+  await expect(page.getByText("لم ترسل اشتراكك بعد")).toBeVisible();
+  const pay = page.getByRole("link", { name: /إرسال الاشتراك/ });
+  await expect(pay).toHaveAttribute("href", "/membership");
+  await pay.click();
+  await page.waitForURL("**/membership");
+
+  await page.click(`text=${STANDING.paymentMethod}`);
+  await page.fill('input[type="number"]', "100");
+  await page
+    .locator('input[type="file"]')
+    .last()
+    .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
+  await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
+  await expect(page.getByText(STANDING.fullName).first()).toBeVisible();
+
+  await page.goto("/home");
+  await expect(page.getByText("دفعك قيد المراجعة")).toBeVisible();
+  await expect(page.getByRole("link", { name: /إرسال الاشتراك/ })).toHaveCount(0);
 });

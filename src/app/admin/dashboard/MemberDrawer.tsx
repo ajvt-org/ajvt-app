@@ -5,8 +5,10 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
+import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
+import { villageField } from "@/lib/texts";
 import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
@@ -87,7 +89,8 @@ function paidRows(member: Member): Row[] {
 function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
   const rows: Row[] = [
     ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
-    ["العصر", member.age, undefined],
+    [villageField.label, member.village, undefined],
+    ...((member.age ? [["العصر", member.age, undefined]] : []) as Row[]),
     ["طريقة الدفع", member.paymentMethod, undefined],
     ["سنة العضوية", String(member.membershipYear), "ltr"],
     ...paidRows(member),
@@ -120,7 +123,15 @@ function Facts({ member, settingsYear }: { member: Member; settingsYear: number 
   );
 }
 
-function Proof({ member, onZoom }: { member: Member; onZoom: () => void }) {
+function Proof({
+  member,
+  onZoom,
+  onProofSaved,
+}: {
+  member: Member;
+  onZoom: () => void;
+  onProofSaved: () => void;
+}) {
   return (
     <div>
       <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
@@ -151,6 +162,9 @@ function Proof({ member, onZoom }: { member: Member; onZoom: () => void }) {
           أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع
         </p>
       )}
+      <div className="mt-2">
+        <MemberProofForm memberId={member.id} proof={member.paymentProof} onSaved={onProofSaved} />
+      </div>
     </div>
   );
 }
@@ -169,6 +183,7 @@ export interface MemberDrawerProps {
   rejectReason: string;
   onClose: () => void;
   onZoomProof: () => void;
+  onProofSaved: () => void;
   onResetPassword: () => void;
   onAccountPhone: (phone: string) => void;
   onAttachAccount: () => void;
@@ -193,6 +208,7 @@ export default function MemberDrawer({
   rejectReason,
   onClose,
   onZoomProof,
+  onProofSaved,
   onResetPassword,
   onAccountPhone,
   onAttachAccount,
@@ -274,7 +290,7 @@ export default function MemberDrawer({
             <ArrowLabel>الملف الكامل للعضو</ArrowLabel>
           </Link>
 
-          <Proof member={member} onZoom={onZoomProof} />
+          <Proof member={member} onZoom={onZoomProof} onProofSaved={onProofSaved} />
 
           <MemberDecision
             member={member}

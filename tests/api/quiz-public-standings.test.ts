@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUsers, signInAs } from "./helpers";
+import { resetDb, get, createUsers, signInAs, makeMember } from "./helpers";
 import { clearCookies } from "./cookieJar";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
@@ -52,15 +52,13 @@ async function attempt(competitionId: string, userId: string, index: number, sco
 }
 
 async function member(userId: string, fullName: string) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  return makeMember({
+    userId,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
 }
 

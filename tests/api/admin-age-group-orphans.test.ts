@@ -2,16 +2,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/age-groups/route";
 import { POST } from "@/app/api/admin/age-groups/reassign/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, post, createAdmin, signInAsAdmin, personFor, makeMember } from "./helpers";
 
 function reassign(body: unknown) {
   return post("/api/admin/age-groups/reassign", body);
 }
 
 async function aMember(fullName: string, age: string) {
-  return prisma.member.create({
-    data: { fullName, age, paymentMethod: "بنكيلي" },
-  });
+  return makeMember({ user: { create: {} }, fullName, age, paymentMethod: "بنكيلي" });
 }
 
 describe("GET /api/admin/age-groups", () => {
@@ -80,7 +78,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
     const res = await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
     expect(res.status).toBe(401);
-    expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 
   it("moves the stranded members onto the real group", async () => {
@@ -94,8 +92,8 @@ describe("POST /api/admin/age-groups/reassign", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ moved: 2 });
-    expect(await prisma.member.count({ where: { age: "المنصورون" } })).toBe(2);
-    expect(await prisma.member.count({ where: { age: "المبشرين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
+    expect(await prisma.member.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
   });
 
   it("does not touch updatedAt, the member page reads it as their decision date", async () => {
@@ -106,7 +104,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
 
     await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.age).toBe("المنصورون");
     expect(after.updatedAt.getTime()).toBe(before.getTime());
   });
@@ -118,7 +116,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
     const res = await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
     expect(res.status).toBe(404);
-    expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 
   it("says so when the old value matches nobody", async () => {

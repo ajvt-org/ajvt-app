@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/members/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createUser, signInAs } from "./helpers";
+import { resetDb, post, createUser, signInAs, personFor } from "./helpers";
 import { saveAppSettings } from "@/lib/settingsServer";
 
 const validBody = {
@@ -34,7 +34,7 @@ describe("POST /api/members", () => {
     const member = await prisma.member.findFirst();
     expect(member?.status).toBe("PENDING");
     expect(member?.userId).toBe(user.id);
-    expect(member?.memberNumber).toBeNull();
+    expect((await personFor(member!.id)).memberNumber).toBeNull();
   });
 
   it("ignores a number the client sends, since the account carries it", async () => {
@@ -64,8 +64,6 @@ describe("POST /api/members", () => {
     await signInAs(user);
 
     const expected: Record<string, string> = {
-      fullName: "الاسم الكامل مطلوب",
-      age: "يرجى اختيار العصر",
       paymentMethod: "يرجى اختيار طريقة الدفع",
       paymentProof: "يرجى إرفاق صورة الكابتير",
     };
@@ -83,10 +81,7 @@ describe("POST /api/members", () => {
     await signInAs(user);
 
     const cases: [Record<string, unknown>, string][] = [
-      [{ fullName: "a".repeat(31) }, "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)"],
-      [{ age: "b".repeat(31) }, "اسم العصر طويل جداً (30 حرفاً كحد أقصى)"],
       [{ paidAmount: 10 }, "يرجى إدخال مبلغ صحيح (100 أوقية على الأقل)"],
-      [{ photo: 42 }, "بيانات غير صالحة"],
       [{ referenceCode: "nope" }, "بيانات غير صالحة"],
     ];
 
@@ -135,13 +130,35 @@ describe("POST /api/members", () => {
     const member = await prisma.member.findFirstOrThrow();
 
     const res = await POST(
-      post("/api/members", { ...validBody, id: member.id, fullName: "اسم آخر" }),
+      post("/api/members", { ...validBody, id: member.id, paymentMethod: "السداد" }),
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(updated.fullName).toBe("اسم آخر");
+    const updated = await prisma.member.findFirstOrThrow();
+    expect(updated.paymentMethod).toBe("السداد");
     expect(await prisma.member.count()).toBe(1);
+  });
+
+  it("leaves the person alone, since the payment screen never asks for them", async () => {
+    const user = await createUser();
+    await signInAs(user);
+    await POST(post("/api/members", validBody));
+    const member = await prisma.member.findFirstOrThrow();
+
+    await POST(post("/api/members", { ...validBody, id: member.id, fullName: "اسم آخر" }));
+
+    expect((await personFor(member.id)).fullName).toBe("محمد ولد أحمد");
+  });
+
+  it("refuses a payment from an account with no name yet", async () => {
+    const user = await createUser("22119933");
+    await prisma.user.update({ where: { id: user.id }, data: { fullName: null } });
+    await signInAs(user);
+
+    const res = await POST(post("/api/members", validBody));
+
+    expect(res.status).toBe(400);
+    expect(await prisma.member.count()).toBe(0);
   });
 
   it("will not let one user edit another user's member", async () => {
@@ -157,7 +174,7 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(404);
-    const untouched = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const untouched = await personFor(member.id);
     expect(untouched.fullName).toBe(validBody.fullName);
   });
 
@@ -181,7 +198,7 @@ describe("POST /api/members", () => {
     await POST(post("/api/members", validBody));
     await prisma.member.updateMany({
       where: { userId: user.id },
-      data: { status: "REJECTED", rejectionReason: "طلب مكرر" },
+      data: { status: "REJECTED", rejectionReason: "معلومات ناقصة أو غير صحيحة" },
     });
 
     const res = await POST(post("/api/members", validBody));

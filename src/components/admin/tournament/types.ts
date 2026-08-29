@@ -69,6 +69,7 @@ export interface MvpCandidate {
 export interface MvpVote {
   id: string;
   status: "OPEN" | "CLOSED";
+  closesAt: string;
   candidates: MvpCandidate[];
 }
 
@@ -87,6 +88,7 @@ export interface Match {
   homePenalties: number | null;
   awayPenalties: number | null;
   manOfTheMatch: { id: string; fullName: string; photo: string | null } | null;
+  forfeitWinnerTeamId: string | null;
   status: "SCHEDULED" | "PLAYED";
   goals: MatchGoal[];
   bookings: MatchBooking[];

@@ -6,6 +6,7 @@ import { parse } from "@/lib/validation";
 import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
+import { PERSON_SELECT, withPerson } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -18,11 +19,9 @@ export const GET = withRoute(
       select: {
         id: true,
         userId: true,
-        fullName: true,
-        age: true,
+        user: { select: PERSON_SELECT },
         paymentMethod: true,
         paymentProof: true,
-        photo: true,
         paidAmount: true,
         surplusAnonymous: true,
         referenceCode: true,
@@ -35,7 +34,7 @@ export const GET = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { userId: _userId, ...rest } = member;
+    const { userId: _userId, ...rest } = withPerson(member);
     void _userId;
     return NextResponse.json(rest);
   },
@@ -48,23 +47,35 @@ export const PATCH = withRoute(
     const { id } = await params;
     const { photo, surplusAnonymous } = parse(memberSelfSchema, await req.json());
 
-    const existing = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
+    const existing = await prisma.member.findUnique({
+      where: { id },
+      select: { userId: true, user: { select: { photoLocked: true } } },
+    });
     if (!existing || existing.userId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
+    }
+    if (photo !== undefined && existing.user.photoLocked) {
+      return NextResponse.json({ error: members.photoLocked }, { status: 403 });
     }
 
     if (surplusAnonymous !== undefined) {
       await prisma.$transaction((tx) => setSurplusVisibility(tx, id, surplusAnonymous));
     }
     if (photo !== undefined) {
-      await prisma.member.update({ where: { id }, data: { photo } });
+      await prisma.user.update({ where: { id: existing.userId }, data: { photo } });
     }
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { id: true, photo: true, surplusAnonymous: true },
+      select: {
+        id: true,
+        surplusAnonymous: true,
+        user: { select: { photo: true, photoLocked: true } },
+      },
     });
 
-    return NextResponse.json(member);
+    return NextResponse.json(
+      member && { ...member, photo: member.user.photo, photoLocked: member.user.photoLocked },
+    );
   },
 );

@@ -32,3 +32,21 @@ export interface AttemptSummary {
   voided: boolean;
   closed: boolean;
 }
+
+export interface RecapQuestion {
+  id: string;
+  text: string;
+  category: string;
+  correct: string[];
+  answered: number;
+  right: number;
+  rate: number | null;
+}
+
+export interface RoundRecapData {
+  round: number;
+  category: string | null;
+  closesAt: string;
+  players: number;
+  questions: RecapQuestion[];
+}

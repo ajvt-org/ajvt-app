@@ -3,6 +3,7 @@ import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
+import { forgetRateLimits } from "@/lib/rateLimit";
 import { setCookie, clearCookies } from "./cookieJar";
 
 export async function resetDb() {
@@ -14,6 +15,7 @@ export async function resetDb() {
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
   await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
   forgetShared();
+  forgetRateLimits();
   clearCookies();
 }
 
@@ -64,9 +66,16 @@ export function get(url: string, headers: Record<string, string> = {}): NextRequ
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }
 
+// An account is a person: every one made here carries a name, the way signing
+// up leaves it.
 export async function createUser(phone = "22334455", password = "secret") {
   return prisma.user.create({
-    data: { phone, password: await bcrypt.hash(password, 4) },
+    data: {
+      phone,
+      password: await bcrypt.hash(password, 4),
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+    },
   });
 }
 
@@ -113,4 +122,56 @@ export function withParams<T extends Record<string, string>>(params: T) {
 
 export function withId(id: string) {
   return withParams({ id });
+}
+
+export function personFor(memberId: string) {
+  return prisma.user.findFirstOrThrow({ where: { members: { some: { id: memberId } } } });
+}
+
+const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyToken"] as const;
+
+// A member and the account that carries the person, from one flat object: the
+// person's own fields land on the account, the rest on the membership.
+export async function makeMember(data: Record<string, unknown>) {
+  const person: Record<string, unknown> = {};
+  const membership: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if ((PERSON as readonly string[]).includes(key)) person[key] = value;
+    else membership[key] = value;
+  }
+
+  const userId = membership.userId as string | undefined;
+  if (userId) {
+    if (Object.keys(person).length > 0) {
+      await prisma.user.update({ where: { id: userId }, data: person });
+    }
+    return prisma.member.create({ data: membership as never });
+  }
+  return prisma.member.create({
+    data: { ...membership, user: { create: person } } as never,
+  });
+}
+
+export async function adminAddsMember(body: Record<string, unknown>) {
+  const { POST: ADD_PERSON } = await import("@/app/api/admin/people/route");
+  const { POST: ADD_PAYMENT } = await import("@/app/api/admin/people/[id]/membership/route");
+
+  const { paymentMethod, paymentProof, paidAmount, surplusAnonymous, status, ...person } = body;
+
+  const created = await ADD_PERSON(post("/api/admin/people", person));
+  if (created.status !== 201) return created;
+
+  const { person: saved } = await created.json();
+  if (!paymentMethod) return created;
+
+  return ADD_PAYMENT(
+    post(`/api/admin/people/${saved.id}/membership`, {
+      paymentMethod,
+      paymentProof,
+      paidAmount,
+      surplusAnonymous,
+      status: status ?? "PENDING",
+    }),
+    withId(saved.id),
+  );
 }

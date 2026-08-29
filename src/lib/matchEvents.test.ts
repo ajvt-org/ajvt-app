@@ -57,6 +57,34 @@ describe("goalRows", () => {
 
     expect(rows).toHaveLength(2);
   });
+
+  it("puts the earliest scorer first however the goals arrive", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: 44 }),
+      goal({ minute: 10 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
+
+  it("orders a scorer by his first goal rather than his last", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: 20 }),
+      goal({ minute: 5 }),
+      goal({ minute: 80 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
+
+  it("sends a scorer with no minute after the ones with one", () => {
+    const rows = goalRows([
+      goal({ memberId: "p2", fullName: "سالم ولد علي", minute: null }),
+      goal({ minute: 60 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["أسامه محمد", "سالم ولد علي"]);
+  });
 });
 
 describe("bookingRows", () => {
@@ -88,6 +116,24 @@ describe("bookingRows", () => {
     const rows = bookingRows([booking({ minute: null })]);
 
     expect(rows[0].minutes).toEqual([]);
+  });
+
+  it("puts the earliest card first however the bookings arrive", () => {
+    const rows = bookingRows([
+      booking({ minute: 62 }),
+      booking({ memberId: "p3", fullName: "محمد الأمين", minute: 12 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["محمد الأمين", "سالم ولد علي"]);
+  });
+
+  it("sends a card with no minute after the ones with one", () => {
+    const rows = bookingRows([
+      booking({ minute: null }),
+      booking({ memberId: "p3", fullName: "محمد الأمين", minute: 30 }),
+    ]);
+
+    expect(rows.map((row) => row.name)).toEqual(["محمد الأمين", "سالم ولد علي"]);
   });
 });
 
@@ -288,5 +334,42 @@ describe("matchTimeline", () => {
     });
 
     expect(entries[0].side).toBe("away");
+  });
+});
+
+describe("a forfeited match, seen from outside", () => {
+  const player = (id: string) => ({ id, fullName: id, photo: null });
+  const match = {
+    homeTeamId: "home",
+    goals: [
+      { count: 1, minute: 10, kind: "GOAL", teamId: "home", member: player("winner") },
+      { count: 1, minute: 20, kind: "GOAL", teamId: "away", member: player("loser") },
+    ],
+    bookings: [{ cardType: "YELLOW", minute: 30, teamId: "away", member: player("booked") }],
+  };
+
+  it("shows both scorers while nothing is hidden", () => {
+    expect(matchEventRows(match).map((r) => r.name)).toContain("loser");
+  });
+
+  it("drops the forfeiting side's goals from the rows", () => {
+    const rows = matchEventRows({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(rows.map((r) => r.name)).toContain("winner");
+    expect(rows.map((r) => r.name)).not.toContain("loser");
+  });
+
+  it("drops them from the timeline too", () => {
+    const entries = matchTimeline({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(entries.filter((e) => e.type === "goal").map((e) => e.name)).toEqual(["winner"]);
+  });
+
+  it("keeps the cards, which a forfeit does not annul", () => {
+    const rows = matchEventRows({ ...match, hideGoalsOfTeamId: "away" });
+    const entries = matchTimeline({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(rows.map((r) => r.name)).toContain("booked");
+    expect(entries.map((e) => e.type)).toContain("yellow");
   });
 });

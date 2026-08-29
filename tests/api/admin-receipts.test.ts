@@ -1,29 +1,38 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUser, createAdmin, signInAsAdmin, signInAs, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  createUser,
+  createAdmin,
+  signInAsAdmin,
+  signInAs,
+  withId,
+  makeMember,
+} from "./helpers";
 
 import { GET as ADMIN_RECEIPTS } from "@/app/api/admin/members/[id]/receipts/route";
 import { GET as MY_RECEIPTS } from "@/app/api/user/receipts/route";
+import { ensureReceiptsFor } from "@/lib/paymentReceiptServer";
 
 const read = (memberId: string) =>
   ADMIN_RECEIPTS(get(`/api/admin/members/${memberId}/receipts`), withId(memberId));
 
 async function memberWithPayment(phone: string, fullName: string, amount: number) {
   const user = await createUser(phone);
-  const member = await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      memberNumber: `AJVT-${phone.slice(-4)}`,
-      paidAmount: amount,
-    },
+  const member = await makeMember({
+    userId: user.id,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    memberNumber: `AJVT-${phone.slice(-4)}`,
+    paidAmount: amount,
   });
   await prisma.payment.create({
     data: { purpose: "MEMBERSHIP", amount, year: 2026, status: "ACTIVE", memberId: member.id },
   });
+  await ensureReceiptsFor(prisma, {});
   return { user, member };
 }
 
@@ -41,9 +50,11 @@ describe("a receipt an admin can produce for a member", () => {
     expect(body.receipts).toHaveLength(1);
     expect(body.receipts[0]).toMatchObject({
       amount: 1000,
-      memberNumber: member.memberNumber,
       payerName: "محمد",
+      reason: "اشتراك عضوية 2026",
+      status: "ACTIVE",
     });
+    expect(body.receipts[0].number).toMatch(/^R-\d{4}-\d{4}$/);
   });
 
   it("never mixes in another member's payments", async () => {
@@ -61,6 +72,7 @@ describe("a receipt an admin can produce for a member", () => {
     await prisma.payment.create({
       data: { purpose: "DONATION", amount: 500, status: "PENDING", memberId: member.id },
     });
+    await ensureReceiptsFor(prisma, {});
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
     const body = await (await read(member.id)).json();
@@ -94,16 +106,22 @@ describe("a receipt an admin can produce for a member", () => {
     expect(asMember).toEqual(asAdmin);
   });
 
+  it("leaves a cancelled receipt out of the list", async () => {
+    const { member } = await memberWithPayment("22000001", "محمد", 1000);
+    await prisma.receipt.updateMany({ data: { status: "VOID" } });
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    expect((await (await read(member.id)).json()).receipts).toEqual([]);
+  });
+
   it("answers an empty list for a member who has paid nothing", async () => {
     const user = await createUser("22000009");
-    const member = await prisma.member.create({
-      data: {
-        userId: user.id,
-        fullName: "بلا دفع",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    const member = await makeMember({
+      userId: user.id,
+      fullName: "بلا دفع",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 

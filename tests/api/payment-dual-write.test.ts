@@ -14,6 +14,8 @@ import {
   signInAsAdmin,
   withId,
   postForm,
+  makeMember,
+  adminAddsMember,
 } from "./helpers";
 
 vi.mock("@/lib/imageProcessing", async (orig) => {
@@ -28,7 +30,6 @@ import { POST as REGISTER } from "@/app/api/members/route";
 import { POST as VALIDATE } from "@/app/api/admin/validate/route";
 import { PUT as PAY } from "@/app/api/admin/members/[id]/payment/route";
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
-import { POST as ADMIN_ADD } from "@/app/api/admin/members/route";
 import { POST as DONATE } from "@/app/api/donations/route";
 import { POST as ADMIN_DONATION } from "@/app/api/admin/donations/route";
 import { PATCH as EDIT_DONATION } from "@/app/api/admin/donations/[id]/route";
@@ -164,40 +165,37 @@ describe("every path that touches money writes both shapes", () => {
   it("agrees after an admin adds a member by hand", async () => {
     await signInAsAdmin(await createAdmin());
 
-    await ADMIN_ADD(
-      post("/api/admin/members", {
-        fullName: "أحمد ولد سالم",
-        age: "البدريين",
-        paymentMethod: "نقداً",
-        phoneUnknown: true,
-        status: "ACTIVE",
-        paidAmount: 900,
-      }),
-    );
+    await adminAddsMember({
+      fullName: "أحمد ولد سالم",
+      age: "البدريين",
+      paymentMethod: "نقداً",
+      phoneUnknown: true,
+      status: "ACTIVE",
+      paidAmount: 900,
+    });
 
     expect((await bothShapesAgree()).agrees).toBe(true);
   });
 
   it("agrees after a renewal, keeping each year its own payment", async () => {
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
-    const m = await prisma.member.create({
-      data: {
-        fullName: "محمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        paidAmount: 100,
-        membershipYear: YEAR - 1,
-        memberNumber: "AJVT-2025-0001",
-      },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 100,
+      membershipYear: YEAR - 1,
+      memberNumber: "AJVT-2025-0001",
     });
     await prisma.membership.create({
-      data: { memberId: m.id, year: YEAR - 1, paidAmount: 100 },
+      data: { memberId: m.id, userId: m.userId, year: YEAR - 1, paidAmount: 100 },
     });
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",
         memberId: m.id,
+        userId: m.userId,
         year: YEAR - 1,
         amount: 100,
         feeApplied: 100,

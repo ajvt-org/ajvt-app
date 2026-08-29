@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/members/[id]/same-person/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, createUser, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 import { clearCookies } from "./cookieJar";
 
 async function member(
@@ -12,15 +20,15 @@ async function member(
     status?: "PENDING" | "ACTIVE" | "REJECTED";
   } = {},
 ) {
-  const user = over.accountPhone ? await createUser(over.accountPhone) : null;
-  return prisma.member.create({
-    data: {
-      userId: user?.id ?? null,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: over.status ?? "PENDING",
-    },
+  const user = over.accountPhone
+    ? await createUser(over.accountPhone)
+    : await prisma.user.create({ data: {} });
+  return makeMember({
+    userId: user.id,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: over.status ?? "PENDING",
   });
 }
 

@@ -20,7 +20,7 @@ import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 // here, and there is no refresh button — pulling the page down reloads it.
 export default function ProfilePage() {
   const router = useRouter();
-  const { member, setMember, loading, reload, logout } = useMember();
+  const { member, setMember, currentYear, loading, reload, logout } = useMember();
   const headings = useMemo(
     () => (member ? [{ id: member.id, label: member.fullName }] : []),
     [member],
@@ -40,6 +40,7 @@ export default function ProfilePage() {
           {member ? (
             <MemberProfile
               member={member}
+              currentYear={currentYear}
               whatsappLink={whatsappLink}
               delayIndex={0}
               onPhotoUpdated={(photo) => setMember((prev) => (prev ? { ...prev, photo } : prev))}
@@ -57,7 +58,7 @@ export default function ProfilePage() {
               <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
                 أكمل استمارة الانضمام للانضمام إلى رابطة شباب قرية التاكلالت
               </p>
-              <button onClick={() => router.push("/form")} className="btn btn-primary">
+              <button onClick={() => router.push("/membership")} className="btn btn-primary">
                 <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
               </button>
             </div>

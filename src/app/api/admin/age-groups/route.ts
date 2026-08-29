@@ -11,14 +11,18 @@ import { ageGroups } from "@/lib/messages";
 export const GET = withRoute("GET /api/admin/age-groups", async () => {
   await requireAdminRole("MEMBERS");
   const [ageGroups, used] = await Promise.all([
-    prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" } }),
-    prisma.member.groupBy({ by: ["age"], _count: { _all: true } }),
+    prisma.ageGroup.findMany({ orderBy: [{ approved: "asc" }, { createdAt: "asc" }] }),
+    prisma.member.findMany({ select: { user: { select: { age: true } } } }),
   ]);
-  const counts = new Map(used.map((row) => [row.age, row._count._all]));
+  const counts = new Map<string, number>();
+  for (const row of used) {
+    if (!row.user.age) continue;
+    counts.set(row.user.age, (counts.get(row.user.age) ?? 0) + 1);
+  }
   const known = new Set(ageGroups.map((g) => g.name));
-  const orphans = used
-    .filter((row) => row.age && !known.has(row.age))
-    .map((row) => ({ name: row.age, count: row._count._all }))
+  const orphans = [...counts.entries()]
+    .filter(([name]) => !known.has(name))
+    .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
   return NextResponse.json({
     ageGroups: ageGroups.map((g) => ({ ...g, count: counts.get(g.name) ?? 0 })),
@@ -42,7 +46,7 @@ export const POST = withRoute("POST /api/admin/age-groups", async (req: NextRequ
     return NextResponse.json({ error: ageGroups.alreadyExists }, { status: 409 });
   }
 
-  const ageGroup = await prisma.ageGroup.create({ data: { name: name.trim() } });
+  const ageGroup = await prisma.ageGroup.create({ data: { name: name.trim(), approved: true } });
   await logAction(session.username, "CREATE_AGE_GROUP", ageGroup.name);
 
   return NextResponse.json({ ageGroup }, { status: 201 });

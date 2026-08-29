@@ -1,14 +1,21 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Page, type Browser } from "@playwright/test";
+import { Client } from "pg";
+import { localDatabase } from "../localDatabase.mjs";
 
 const PAGES = [
   "/",
   "/activities",
+  "/ages",
+  "/matches",
   "/donate",
   "/quiz",
   "/leaderboard",
   "/login",
+  "/register",
   "/forgot-password",
+  "/change-password",
   "/form",
+  "/membership",
   "/home",
   "/profile",
 ];
@@ -47,20 +54,21 @@ async function sweep(page: Page, label: string) {
   expect(failures, `${label}: ${failures.join(" | ")}`).toEqual([]);
 }
 
-async function createAccountOnly(page: Page, phone: string) {
-  await page.goto("/form");
-  await page.fill('input[name="fullName"]', "حساب بلا طلب");
+async function createAccountOnly(page: Page, phone: string, fullName = "حساب بلا طلب") {
+  await page.goto("/register");
   await page.fill('input[type="tel"]', phone);
-  await page.selectOption("select", "البدريين");
-  await page.getByRole("button", { name: "التالي" }).click();
   await page.fill('input[type="password"] >> nth=0', "test1234");
   await page.fill('input[type="password"] >> nth=1', "test1234");
   await page.getByRole("button", { name: "التالي" }).click();
-  await page.waitForTimeout(1500);
+  await page.fill('input[name="fullName"]', fullName);
+  await page.selectOption("#signup-age", "البدريين");
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL("**/home");
 }
 
-async function createMember(page: Page, phone: string) {
-  await createAccountOnly(page, phone);
+async function createMember(page: Page, phone: string, fullName = "حساب بلا طلب") {
+  await createAccountOnly(page, phone, fullName);
+  await page.goto("/membership");
   await page.click("text=بنكيلي");
   await page.fill('input[type="number"]', "100");
   await page
@@ -92,4 +100,55 @@ test("every page renders for an account with no membership request", async ({ pa
 test("every page renders for a member", async ({ page }) => {
   await createMember(page, freshPhone());
   await sweep(page, "member");
+});
+
+async function withDb<T>(run: (client: Client) => Promise<T>): Promise<T> {
+  const client = new Client({
+    connectionString: process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e"),
+  });
+  await client.connect();
+  try {
+    return await run(client);
+  } finally {
+    await client.end();
+  }
+}
+
+async function approveNewest(browser: Browser) {
+  const context = await browser.newContext();
+  const admin = await context.newPage();
+  await admin.goto("/admin/login");
+  await admin.fill('input[type="text"]', "admin");
+  await admin.fill('input[type="password"]', "admin123");
+  await admin.click('button[type="submit"]');
+  await admin.waitForURL("**/admin");
+  await admin.goto("/admin/dashboard");
+  await admin.getByText(APPROVED.fullName).first().click();
+  await admin.getByRole("button", { name: "قبول الدفع", exact: true }).click();
+  await expect(admin.getByText(APPROVED.fullName).first()).toBeVisible();
+  await context.close();
+}
+
+const APPROVED = { fullName: "عضو مقبول" };
+const BEHIND = { fullName: "عضو متأخر" };
+
+test("every page renders for an approved member", async ({ page, browser }) => {
+  const phone = freshPhone();
+  await createMember(page, phone, APPROVED.fullName);
+  await approveNewest(browser);
+  await sweep(page, "approved member");
+});
+
+test("every page renders for a member a year behind", async ({ page, browser }) => {
+  const phone = freshPhone();
+  await createMember(page, phone, BEHIND.fullName);
+  await withDb((client) =>
+    client.query(
+      `UPDATE "Member" SET "membershipYear" = "membershipYear" - 1
+       WHERE "userId" = (SELECT id FROM "User" WHERE phone = $1)`,
+      [phone],
+    ),
+  );
+  void browser;
+  await sweep(page, "member a year behind");
 });

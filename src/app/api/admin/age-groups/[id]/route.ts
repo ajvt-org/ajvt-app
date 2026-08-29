@@ -11,7 +11,24 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { name } = await req.json();
+    const body = await req.json();
+    const { name, approved } = body;
+
+    if (approved === true && name === undefined) {
+      const group = await prisma.ageGroup.findUnique({ where: { id } });
+      if (!group) {
+        return NextResponse.json({ error: "العصر غير موجود" }, { status: 404 });
+      }
+      const ageGroup = await prisma.ageGroup.update({ where: { id }, data: { approved: true } });
+      await logAction(session.username, "APPROVE_AGE_GROUP", ageGroup.name, {
+        ...auditContext(session, req),
+        targetType: "AgeGroup",
+        targetId: ageGroup.id,
+        before: { approved: false },
+        after: { approved: true },
+      });
+      return NextResponse.json({ ageGroup });
+    }
 
     if (!name?.trim()) {
       return NextResponse.json({ error: ageGroups.nameRequired }, { status: 400 });

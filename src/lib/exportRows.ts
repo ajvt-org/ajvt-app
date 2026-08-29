@@ -1,8 +1,13 @@
 import { memberStatusLabels } from "./messages";
 import type { AgeStanding } from "./ageStandings";
+import type { ActivityReportRow } from "./activityReport";
+import { activityReport } from "./texts/activityReport";
 
-export const DATASETS = ["members", "donations", "ages"] as const;
+export const DATASETS = ["members", "donations", "ages", "activities"] as const;
 export type Dataset = (typeof DATASETS)[number];
+
+export const PLAIN_DATASETS = ["members", "donations", "ages"] as const;
+export type PlainDataset = (typeof PLAIN_DATASETS)[number];
 
 export function isDataset(value: string): value is Dataset {
   return (DATASETS as readonly string[]).includes(value);
@@ -18,7 +23,8 @@ const SOURCE_LABEL: Record<string, string> = {
 
 export interface ExportableMember {
   fullName: string;
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paidAmount: number | null;
   supportAmount?: number;
@@ -26,7 +32,7 @@ export interface ExportableMember {
   memberNumber: string | null;
   referenceCode: string | null;
   createdAt: Date;
-  user: { phone: string } | null;
+  user: { phone: string | null } | null;
 }
 
 export interface ExportableDonation {
@@ -37,13 +43,10 @@ export interface ExportableDonation {
   status: string;
   source: string;
   createdAt: Date;
-  member: { fullName: string } | null;
+  member: { user: { fullName: string | null } } | null;
   tags: { name: string }[];
 }
 
-// A payment records what it was for, not where it came from, so the source
-// column is read back off it: a membership payment is a surplus, and anything
-// else is a member's own gift or a gift from outside.
 export function sourceOf(purpose: string, memberId: string | null): string {
   if (purpose === "MEMBERSHIP") return "MEMBERSHIP";
   return memberId ? "SELF" : "PUBLIC";
@@ -56,6 +59,7 @@ function day(date: Date): string {
 export const MEMBER_HEADERS = [
   "الاسم الكامل",
   "رقم الهاتف",
+  "القرية",
   "العصر",
   "طريقة الدفع",
   "رسوم الاشتراك",
@@ -71,7 +75,8 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
   return members.map((m) => [
     m.fullName,
     m.user?.phone ?? "",
-    m.age,
+    m.village,
+    m.age ?? "",
     m.paymentMethod,
     m.paidAmount ?? 0,
     m.supportAmount ?? 0,
@@ -103,7 +108,7 @@ export function donationRows(donations: ExportableDonation[]): (string | number)
     d.paymentMethod ?? "",
     STATUS_LABEL[d.status] ?? d.status,
     SOURCE_LABEL[d.source] ?? d.source,
-    d.member?.fullName ?? "",
+    d.member?.user.fullName ?? "",
     d.tags.map((t) => t.name).join(" / "),
     day(d.createdAt),
   ]);
@@ -115,8 +120,37 @@ export function ageRows(standings: AgeStanding[]): (string | number)[][] {
   return standings.map((s) => [s.name, s.members, s.total, `${s.rate}%`]);
 }
 
+export const ACTIVITY_HEADERS = [
+  "النشاط",
+  "دخل",
+  "صرف",
+  "الرصيد",
+  "الحالة",
+  "الصرف حسب الوسم",
+  "الوصولات",
+];
+
+function balanceLabel(balance: number): string {
+  if (balance > 0) return activityReport.surplus;
+  if (balance < 0) return activityReport.deficit;
+  return activityReport.even;
+}
+
+export function activityRows(rows: ActivityReportRow[]): (string | number)[][] {
+  return rows.map((row) => [
+    row.title,
+    row.income,
+    row.spending,
+    row.balance,
+    balanceLabel(row.balance),
+    row.spendingByTag.map((t) => `${t.tag} ${t.amount}`).join(" / "),
+    row.receiptNumbers.join(" / "),
+  ]);
+}
+
 export const FILENAMES: Record<Dataset, string> = {
   members: "members",
   donations: "donations",
   ages: "age-groups",
+  activities: "activities",
 };

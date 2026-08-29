@@ -29,15 +29,23 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
           rejectionReason: true,
           createdAt: true,
           member: {
-            select: { id: true, fullName: true, age: true, user: { select: { phone: true } } },
+            select: { id: true, user: { select: { phone: true, fullName: true, age: true } } },
           },
         },
         orderBy: { createdAt: "asc" },
       },
+      teams: {
+        select: { _count: { select: { members: { where: { status: "PENDING" } } } } },
+      },
     },
   });
 
-  return NextResponse.json({ activities });
+  return NextResponse.json({
+    activities: activities.map(({ teams, ...activity }) => ({
+      ...activity,
+      pendingJoinRequests: teams.reduce((sum, team) => sum + team._count.members, 0),
+    })),
+  });
 });
 
 export const POST = withRoute("POST /api/admin/activities", async (req: NextRequest) => {
@@ -84,6 +92,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       teamSize: isTournament ? normalizeTeamSize(teamSize) : null,
       isVolunteer: !!isVolunteer,
       whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
+      published: false,
       order: (_max.order ?? -1) + 1,
     },
   });

@@ -40,6 +40,7 @@ export type PublicMatch = {
   homePenalties: number | null;
   awayPenalties: number | null;
   status: string;
+  forfeitWinnerTeamId: string | null;
   manOfTheMatch: MatchPlayer | null;
   goals: MatchGoal[];
   penaltyKicks: MatchKick[];
@@ -47,6 +48,7 @@ export type PublicMatch = {
   mvpVote: {
     id: string;
     status: string;
+    closesAt: string | Date;
     candidates: {
       id: string;
       member: { id: string; fullName: string };

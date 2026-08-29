@@ -7,6 +7,7 @@ import MemberIdentity from "@/components/MemberIdentity";
 import MemberInfoCard from "@/components/MemberInfoCard";
 import MemberRejected from "@/components/MemberRejected";
 import MemberStatusCard from "@/components/MemberStatusCard";
+import MembershipStanding from "@/components/MembershipStanding";
 import StatusTimeline from "@/components/StatusTimeline";
 import type { MemberData } from "@/lib/useMember";
 
@@ -18,6 +19,7 @@ import type { MemberData } from "@/lib/useMember";
 // out entirely — the acceptance date moves into the details instead.
 export default function MemberProfile({
   member,
+  currentYear,
   whatsappLink,
   delayIndex,
   onPhotoUpdated,
@@ -25,6 +27,7 @@ export default function MemberProfile({
   nameRef,
 }: {
   member: MemberData;
+  currentYear: number | null;
   whatsappLink: string;
   delayIndex: number;
   onPhotoUpdated: (photo: string | null) => void;
@@ -51,10 +54,16 @@ export default function MemberProfile({
         </>
       )}
 
+      {/* An accepted payment for an earlier year still reads as "you are a
+          member" above. The standing card is what says the year has moved on,
+          and it draws nothing for a member who is paid up. */}
+      {active && <MembershipStanding member={member} currentYear={currentYear} />}
+
       {active && (
         <>
           <MemberCard
             fullName={member.fullName}
+            village={member.village}
             age={member.age}
             memberNumber={member.memberNumber}
             verifyToken={member.verifyToken}
@@ -75,9 +84,7 @@ export default function MemberProfile({
 
       <MemberInfoCard
         member={member}
-        onEdit={
-          member.status === "PENDING" ? () => router.push(`/form?id=${member.id}`) : undefined
-        }
+        onEdit={active ? undefined : () => router.push(`/membership?id=${member.id}`)}
       />
     </div>
   );

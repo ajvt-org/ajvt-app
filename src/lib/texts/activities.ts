@@ -19,8 +19,74 @@ export const activityForm = {
   autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
 } as const;
 
+export const convertCampaign = {
+  heading: "وضع الحملة التطوعية",
+  hint: "حوّل النشاط إلى حملة تطوعية بمجموعة واتساب يلتحق بها المتطوعون.",
+  isCampaign: "النشاط حملة تطوعية.",
+  convert: "تحويل إلى حملة تطوعية",
+  confirm: "تأكيد التحويل",
+  unconvert: "إلغاء وضع الحملة",
+  dialogTitle: "تحويل إلى حملة تطوعية",
+  whatsappLabel: "رابط مجموعة الواتساب",
+  pendingHeading: (n: number) =>
+    n === 1 ? "طلب تسجيل واحد ما يزال في الانتظار" : `${n} طلبات تسجيل ما تزال في الانتظار`,
+  pendingHint: "الحملة التطوعية لا تدير طلبات التسجيل، فاحسم ما ينتظر قبل التحويل.",
+  acceptAll: "اقبلها كلها",
+  rejectAll: "ارفضها كلها",
+  converted: "أصبح النشاط حملة تطوعية",
+  unconverted: "لم يعد النشاط حملة تطوعية",
+} as const;
+
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
+  joinRequestChip: (n: number) => `${n} طلب انضمام`,
+  filters: {
+    anyType: "كل الأنواع",
+    tournament: "بطولات",
+    volunteer: "حملات",
+    plain: "أنشطة عادية",
+    anyState: "الكل",
+    open: "التسجيل مفتوح",
+    closed: "التسجيل مغلق",
+  },
+  sections: {
+    current: "جارية وقادمة",
+    finished: (n: number) => `منتهية (${n})`,
+  },
+  registeredOf: (registered: number, capacity: number) => `${registered} من ${capacity}`,
+  rowMenu: (title: string) => `خيارات ${title}`,
+  draftChip: "مسودة",
+  publish: "نشر النشاط",
+  unpublish: "إخفاء من صفحات الأعضاء",
+  openRegistration: "فتح التسجيل",
+  closeRegistration: "إغلاق التسجيل",
+  duplicate: "نسخ النشاط",
+  duplicated: "أُنشئت نسخة كمسودة",
+  pickRow: (title: string) => `تحديد ${title}`,
+  picked: (n: number) => `${n} محدَّد`,
+  bulkClose: "إغلاق التسجيل",
+  bulkDelete: "حذف",
+  bulkClear: "إلغاء التحديد",
+  bulkFailed: (n: number) => `تعذّر تنفيذ ${n} منها`,
+  bulkDeleteTitle: "حذف الأنشطة المحدَّدة",
+  bulkDeleteMessage: (n: number) =>
+    `سيُحذف ${n} نشاطاً نهائياً، ومعها تسجيلات الأعضاء وفرقها ومبارياتها.`,
+  bulkDeleteConfirm: "حذف نهائي",
+  arrangeLink: "ترتيب الظهور",
+  arrangeTitle: "ترتيب ظهور الأنشطة",
+  arrangeNote:
+    "المرحلة تُقرَّر أولاً: الجاري ثم القادم ثم المنتهي. الأسهم ترتّب النشاط داخل مرحلته فقط.",
+  arrangeBack: "الأنشطة",
+  arrangeEmpty: "لا توجد أنشطة لترتيبها",
+  stages: {
+    live: "جارية الآن",
+    upcoming: "قادمة",
+    undatedOpen: "بلا تاريخ — التسجيل مفتوح",
+    undatedClosed: "بلا تاريخ — التسجيل مغلق",
+    finished: "منتهية",
+  },
+  orderHint:
+    "الأسهم ترتّب النشاط داخل مجموعته على صفحات الأعضاء. الجاري ثم القادم ثم المنتهي، وهذا الترتيب لا يتغيّر.",
   tournamentChip: "بطولة",
   volunteerChip: "حملة تطوعية",
   closedChip: "التسجيل مغلق",
@@ -36,6 +102,7 @@ export const activityStandingTexts = {
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
   finished: "انتهى",
+  notScheduled: "غير مبرمج بعد",
 } as const;
 
 export const tournamentSetup = {

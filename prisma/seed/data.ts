@@ -1,3 +1,5 @@
+import { HOME_VILLAGE, OTHER_VILLAGE } from "../../src/lib/villages";
+
 export interface AgeGroupRoster {
   name: string;
   active: number;
@@ -31,9 +33,29 @@ export const AGE_GROUP_ROSTER: AgeGroupRoster[] = [
   { name: "الممدوحين", active: 1, pending: 0, rejected: 0, total: 30 },
   { name: "النجميين", active: 1, pending: 0, rejected: 0, total: 44 },
   { name: "الحافظين", active: 0, pending: 0, rejected: 0, total: 30 },
+  { name: "الاتحاد", active: 1, pending: 0, rejected: 0, total: 30 },
 ];
 
 export const AGE_GROUPS = AGE_GROUP_ROSTER.map((group) => group.name);
+
+export interface NeighbourRoster {
+  village: string;
+  active: number;
+  pending: number;
+  rejected: number;
+}
+
+// Members from outside the home village. They hold no age group: the عصر are
+// التاكلالت lineages, so the form never asks anyone else for one.
+export const NEIGHBOUR_ROSTER: NeighbourRoster[] = [
+  { village: "أفجار", active: 9, pending: 3, rejected: 1 },
+  { village: OTHER_VILLAGE, active: 3, pending: 2, rejected: 0 },
+];
+
+export const SEED_VILLAGES = [HOME_VILLAGE, "أفجار"];
+
+// One عصر nobody has approved yet, so the moderation panel has something in it.
+export const SUGGESTED_AGE_GROUP = "المقترحين";
 
 export const FIRST_NAMES = [
   "محمد",
@@ -78,7 +100,6 @@ export const REJECTION_REASONS = [
   "المبلغ المدفوع غير مطابق",
   "لم يتم العثور على العملية",
   "معلومات ناقصة أو غير صحيحة",
-  "طلب مكرر",
 ];
 
 export const REFERENCE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
+import { villagesDialog } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 
 const OUTLINE = {
@@ -15,11 +16,13 @@ function MoreMenu({
   onToggleStats,
   onExport,
   onManageAgeGroups,
+  onManageVillages,
 }: {
   statsOpen: boolean;
   onToggleStats: () => void;
   onExport: () => void;
   onManageAgeGroups: () => void;
+  onManageVillages: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -31,6 +34,7 @@ function MoreMenu({
     },
     { label: "تصدير", icon: "download" as const, run: onExport },
     { label: "الأعصار", icon: "tag" as const, run: onManageAgeGroups },
+    { label: villagesDialog.title, icon: "tag" as const, run: onManageVillages },
   ];
 
   return (
@@ -84,6 +88,7 @@ export default function MemberSearch({
   onToggleStats,
   onExport,
   onManageAgeGroups,
+  onManageVillages,
   onManualAdd,
 }: {
   value: string;
@@ -94,6 +99,7 @@ export default function MemberSearch({
   onToggleStats: () => void;
   onExport: () => void;
   onManageAgeGroups: () => void;
+  onManageVillages: () => void;
   onManualAdd: () => void;
 }) {
   return (
@@ -128,6 +134,7 @@ export default function MemberSearch({
         onToggleStats={onToggleStats}
         onExport={onExport}
         onManageAgeGroups={onManageAgeGroups}
+        onManageVillages={onManageVillages}
       />
       <button onClick={onManualAdd} className="btn btn-primary btn-sm text-xs">
         <IconLabel name="plus">إضافة عضو</IconLabel>

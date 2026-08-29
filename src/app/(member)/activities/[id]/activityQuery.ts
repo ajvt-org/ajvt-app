@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { settleMvpVotes } from "@/lib/mvpVoteServer";
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -9,7 +10,7 @@ export const ACTIVITY_SELECT = {
   _count: { select: { registrations: { where: { status: { not: "REJECTED" } } } } },
 } as const;
 
-export async function loadActivityPage(id: string) {
+async function loadActivity(id: string) {
   return prisma.activity.findUnique({
     where: { id },
     select: {
@@ -32,8 +33,10 @@ export async function loadActivityPage(id: string) {
           logo: true,
           groupId: true,
           members: {
-            select: { member: { select: { id: true, fullName: true, photo: true } } },
-            orderBy: { member: { fullName: "asc" } },
+            select: {
+              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+            },
+            orderBy: { member: { user: { fullName: "asc" } } },
           },
         },
       },
@@ -54,15 +57,20 @@ export async function loadActivityPage(id: string) {
           homePenalties: true,
           awayPenalties: true,
           status: true,
-          manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
+          forfeitWinnerTeamId: true,
+          manOfTheMatchId: true,
+          manOfTheMatch: {
+            select: { id: true, user: { select: { fullName: true, photo: true } } },
+          },
           goals: {
+            orderBy: { minute: "asc" as const },
             select: {
               count: true,
               minute: true,
               teamId: true,
               kind: true,
               period: true,
-              member: { select: { id: true, fullName: true, photo: true } },
+              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
             },
           },
           penaltyKicks: {
@@ -71,25 +79,28 @@ export async function loadActivityPage(id: string) {
               teamId: true,
               order: true,
               scored: true,
-              member: { select: { id: true, fullName: true, photo: true } },
+              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
             },
           },
           bookings: {
+            orderBy: { minute: "asc" as const },
             select: {
               cardType: true,
               minute: true,
               teamId: true,
-              member: { select: { id: true, fullName: true, photo: true } },
+              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
             },
           },
           mvpVote: {
             select: {
               id: true,
               status: true,
+              closesAt: true,
               candidates: {
                 select: {
                   id: true,
-                  member: { select: { id: true, fullName: true } },
+                  memberId: true,
+                  member: { select: { id: true, user: { select: { fullName: true } } } },
                   _count: { select: { votes: true } },
                 },
               },
@@ -99,6 +110,57 @@ export async function loadActivityPage(id: string) {
       },
     },
   });
+}
+
+type Named = { id: string; user: { fullName: string | null } };
+type Pictured = { id: string; user: { fullName: string | null; photo: string | null } };
+
+function person<T extends Pictured>(m: T) {
+  return { id: m.id, fullName: m.user.fullName ?? "", photo: m.user.photo };
+}
+
+function named<T extends Named>(m: T) {
+  return { id: m.id, fullName: m.user.fullName ?? "" };
+}
+
+function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) {
+  return {
+    ...activity,
+    teams: activity.teams.map((team) => ({
+      ...team,
+      members: team.members.map((tm) => ({ member: person(tm.member) })),
+    })),
+    matches: activity.matches.map((match) => ({
+      ...match,
+      manOfTheMatch: match.manOfTheMatch ? person(match.manOfTheMatch) : null,
+      goals: match.goals.map((goal) => ({
+        ...goal,
+        member: goal.member ? person(goal.member) : null,
+      })),
+      penaltyKicks: match.penaltyKicks.map((kick) => ({
+        ...kick,
+        member: kick.member ? person(kick.member) : null,
+      })),
+      bookings: match.bookings.map((booking) => ({ ...booking, member: person(booking.member) })),
+      mvpVote: match.mvpVote
+        ? {
+            ...match.mvpVote,
+            candidates: match.mvpVote.candidates.map((c) => ({ ...c, member: named(c.member) })),
+          }
+        : null,
+    })),
+  };
+}
+
+export async function loadActivityPage(id: string) {
+  const activity = await loadActivity(id);
+  if (!activity) return null;
+
+  const applied = await settleMvpVotes(activity.matches);
+  if (applied.size === 0) return shape(activity);
+
+  const settled = await loadActivity(id);
+  return settled ? shape(settled) : null;
 }
 
 export type ActivityPageData = NonNullable<Awaited<ReturnType<typeof loadActivityPage>>>;

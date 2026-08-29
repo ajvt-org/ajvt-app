@@ -1,10 +1,11 @@
 import { FIRST_MEMBERSHIP_YEAR, runningYear } from "@/lib/membershipYear";
 import type { AppSettingsValues } from "@/lib/settings";
+import { settingsForm } from "@/lib/texts";
 
 export interface SettingsField {
   key: keyof AppSettingsValues;
   label: string;
-  kind: "number" | "phone" | "url";
+  kind: "number" | "phone" | "url" | "text";
   hint?: string;
   min?: number;
   max?: number;
@@ -15,39 +16,53 @@ export interface SettingsField {
 export const SETTINGS_FIELDS: SettingsField[] = [
   {
     key: "membershipFee",
-    label: "رسم العضوية (أوقية)",
+    label: settingsForm.membershipFeeLabel,
     kind: "number",
     min: 1,
-    hint: "المبلغ الأدنى المقبول في استمارة الانضمام.",
+    hint: settingsForm.membershipFeeHint,
   },
   {
     key: "membershipYear",
-    label: "سنة العضوية الجارية",
+    label: settingsForm.membershipYearLabel,
     kind: "number",
     min: FIRST_MEMBERSHIP_YEAR,
     max: runningYear() + 1,
-    hint: "السنة التي تُسجَّل عليها طلبات الانضمام الجديدة.",
+    hint: settingsForm.membershipYearHint,
   },
   {
     key: "tempPasswordHours",
-    label: "صلاحية كلمة المرور المؤقتة (ساعة)",
+    label: settingsForm.tempPasswordHoursLabel,
     kind: "number",
     min: 1,
     max: 720,
-    hint: "بعد هذه المدة تتوقف كلمة المرور المؤقتة عن العمل ويحتاج العضو إلى واحدة جديدة.",
+    hint: settingsForm.tempPasswordHoursHint,
   },
   {
     key: "supportWhatsapp",
-    label: "رقم واتساب الدعم",
+    label: settingsForm.supportWhatsappLabel,
     kind: "phone",
-    hint: "يُستعمل في صفحة استعادة كلمة المرور، مع رمز الدولة ودون علامة +.",
+    hint: settingsForm.supportWhatsappHint,
   },
   {
     key: "whatsappGroup",
-    label: "رابط مجموعة الواتساب",
+    label: settingsForm.whatsappGroupLabel,
     kind: "url",
     placeholder: "https://chat.whatsapp.com/...",
     optional: true,
+  },
+  {
+    key: "secretaryName",
+    label: settingsForm.secretaryNameLabel,
+    kind: "text",
+    optional: true,
+    hint: settingsForm.officerHint,
+  },
+  {
+    key: "treasurerName",
+    label: settingsForm.treasurerNameLabel,
+    kind: "text",
+    optional: true,
+    hint: settingsForm.officerHint,
   },
 ];
 

@@ -3,7 +3,8 @@ export type FilterTab = "ALL" | Status | "NO_REQUEST";
 
 export interface BareAccount {
   id: string;
-  phone: string;
+  phone: string | null;
+  fullName: string | null;
   createdAt: string;
   lastActiveDate: string | null;
   hasPush: boolean;
@@ -11,10 +12,11 @@ export interface BareAccount {
 
 export interface Member {
   id: string;
-  userId: string | null; // null = admin-added with an unknown phone number, no account yet
+  userId: string | null;
   fullName: string;
-  phone: string | null; // null alongside userId — see above
-  age: string;
+  phone: string | null;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paymentProof: string | null;
   photo: string | null;
@@ -35,6 +37,13 @@ export interface AgeGroup {
   name: string;
   count?: number;
   totalCount?: number;
+  approved?: boolean;
+}
+
+export interface Village {
+  id: string;
+  name: string;
+  count?: number;
 }
 
 export interface OrphanAge {

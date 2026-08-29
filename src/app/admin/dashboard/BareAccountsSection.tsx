@@ -10,7 +10,12 @@ import { push } from "@/lib/messages";
 import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { daysWaiting } from "@/lib/waitingRequests";
 import TempPasswordBox from "./TempPasswordBox";
+import { bareAccounts as texts } from "@/lib/texts";
 import type { BareAccount } from "./types";
+
+function identify(user: BareAccount): string {
+  return user.fullName?.trim() || user.phone || user.id;
+}
 
 function daysSince(createdAt: string): string {
   const days = daysWaiting(new Date(createdAt), new Date());
@@ -99,34 +104,41 @@ function Row({
             <Icon name="user" size={20} />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }} dir="ltr">
-              {user.phone}
+            <p className="text-sm font-bold truncate" style={{ color: "var(--text-main)" }}>
+              {identify(user)}
             </p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {daysSince(user.createdAt)}
+              {user.fullName && user.phone && (
+                <>
+                  <span dir="ltr">{user.phone}</span> ·{" "}
+                </>
+              )}
+              {user.phone ? daysSince(user.createdAt) : texts.addedByHand}
             </p>
           </div>
         </div>
-        <div className="shrink-0">
-          <NudgeButton user={user} />
-        </div>
+        <div className="shrink-0">{user.phone && <NudgeButton user={user} />}</div>
       </div>
       <div className="flex items-center gap-2 mt-2 flex-wrap" style={{ paddingRight: "52px" }}>
-        <button
-          onClick={resetPassword}
-          disabled={resetBusy}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          {resetBusy ? "..." : <IconLabel name="lock">إعادة تعيين</IconLabel>}
-        </button>
-        <button
-          onClick={onFill}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
-          style={{ background: "var(--mint-700)", color: "white" }}
-        >
-          <IconLabel name="plus">إضافة طلب</IconLabel>
-        </button>
+        {user.phone && (
+          <>
+            <button
+              onClick={resetPassword}
+              disabled={resetBusy}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+            >
+              {resetBusy ? "..." : <IconLabel name="lock">إعادة تعيين</IconLabel>}
+            </button>
+            <button
+              onClick={onFill}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
+              style={{ background: "var(--mint-700)", color: "white" }}
+            >
+              <IconLabel name="plus">إضافة طلب</IconLabel>
+            </button>
+          </>
+        )}
         <span className="flex-1" aria-hidden />
         <button
           onClick={onDelete}
@@ -149,7 +161,7 @@ export default function BareAccountsSection({
 }: {
   users: BareAccount[];
   loading: boolean;
-  onFill: (phone: string) => void;
+  onFill: (person: { id: string; fullName: string }) => void;
   onChanged: () => Promise<void> | void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState<BareAccount | null>(null);
@@ -173,25 +185,25 @@ export default function BareAccountsSection({
   return (
     <div className="space-y-2">
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        حسابات سجّلت في التطبيق ولم ترسل طلب عضوية بعد.
+        {texts.lead}
       </p>
       {users.length === 0 ? (
         <div className="card p-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          لا توجد حسابات بدون طلب
+          {texts.empty}
         </div>
       ) : (
         users.map((user) => (
           <Row
             key={user.id}
             user={user}
-            onFill={() => onFill(user.phone)}
+            onFill={() => onFill({ id: user.id, fullName: identify(user) })}
             onDelete={() => setConfirmDelete(user)}
           />
         ))
       )}
       {confirmDelete && (
         <ConfirmDeleteDialog
-          name={confirmDelete.phone}
+          name={identify(confirmDelete)}
           loading={deleteLoading}
           onConfirm={(typed) => deleteUser(confirmDelete.id, typed)}
           onClose={() => setConfirmDelete(null)}

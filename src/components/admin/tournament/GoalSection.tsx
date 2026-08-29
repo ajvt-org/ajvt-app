@@ -29,8 +29,33 @@ export default function GoalSection({
   const [kind, setKind] = useState<GoalKind>("GOAL");
   const [memberId, setMemberId] = useState("");
   const [minute, setMinute] = useState("");
+  const [editing, setEditing] = useState<number | null>(null);
 
   const mine = goals.map((g, index) => ({ g, index })).filter(({ g }) => g.period === period);
+
+  function reset() {
+    setEditing(null);
+    setTeamId(sides[0].id);
+    setKind("GOAL");
+    setMemberId("");
+    setMinute("");
+  }
+
+  function startEditing(index: number) {
+    const goal = goals[index];
+    setEditing(index);
+    setTeamId(goal.teamId);
+    setKind(goal.kind);
+    setMemberId(goal.memberId ?? "");
+    setMinute(goal.minute);
+  }
+
+  function submit() {
+    const draft: GoalDraft = { teamId, kind, memberId: memberId || null, period, minute };
+    if (editing === null) setGoals((prev) => [...prev, draft]);
+    else setGoals((prev) => prev.map((g, i) => (i === editing ? draft : g)));
+    reset();
+  }
 
   return (
     <div className="space-y-2">
@@ -43,7 +68,15 @@ export default function GoalSection({
         </p>
       )}
       {mine.map(({ g, index }) => (
-        <div key={index} className="flex items-center gap-2 text-xs font-semibold flex-wrap">
+        <div
+          key={index}
+          className="flex items-center gap-2 text-xs font-semibold flex-wrap rounded-lg"
+          style={
+            editing === index
+              ? { background: "var(--mint-100)", padding: "2px 6px" }
+              : { padding: "2px 6px" }
+          }
+        >
           <Icon name="ball" size={13} />
           <span className="min-w-0">
             {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.memberId)}
@@ -52,7 +85,19 @@ export default function GoalSection({
           </span>
           <button
             type="button"
-            onClick={() => setGoals((prev) => prev.filter((_, j) => j !== index))}
+            onClick={() => startEditing(index)}
+            aria-label={texts.edit}
+            className="px-1.5 rounded-lg"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <Icon name="pencil" size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGoals((prev) => prev.filter((_, j) => j !== index));
+              reset();
+            }}
             aria-label={texts.remove}
             className="px-1.5 rounded-lg"
             style={{ background: "#fee2e2", color: "#991b1b" }}
@@ -62,6 +107,11 @@ export default function GoalSection({
         </div>
       ))}
       <div className="rounded-xl p-3 space-y-2.5" style={{ background: "var(--mint-50)" }}>
+        {editing !== null && (
+          <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
+            <IconLabel name="pencil">{texts.editingGoal}</IconLabel>
+          </p>
+        )}
         <FieldRow label={texts.fieldTeam}>
           {(id) => (
             <select
@@ -138,20 +188,18 @@ export default function GoalSection({
           )}
         </FieldRow>
 
-        <button
-          type="button"
-          onClick={() => {
-            setGoals((prev) => [
-              ...prev,
-              { teamId, kind, memberId: memberId || null, period, minute },
-            ]);
-            setMemberId("");
-            setMinute("");
-          }}
-          className="btn btn-primary text-sm"
-        >
-          <IconLabel name="plus">{texts.addGoal}</IconLabel>
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={submit} className="btn btn-primary text-sm">
+            <IconLabel name={editing === null ? "plus" : "check"}>
+              {editing === null ? texts.addGoal : texts.saveEdit}
+            </IconLabel>
+          </button>
+          {editing !== null && (
+            <button type="button" onClick={reset} className="btn btn-ghost text-sm">
+              {texts.cancelEdit}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

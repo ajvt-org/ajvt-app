@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin, createUser } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, createUser, makeMember } from "./helpers";
 
 import { GET as HOME } from "@/app/api/admin/home/route";
 
@@ -8,17 +8,15 @@ const read = () => HOME(get("/api/admin/home"));
 
 async function member(fullName: string, over: Record<string, unknown> = {}) {
   const user = await createUser(`2${String(Math.random()).slice(2, 9)}`);
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 1000,
-      membershipYear: 2026,
-      ...over,
-    },
+  return makeMember({
+    userId: user.id,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 1000,
+    membershipYear: 2026,
+    ...over,
   });
 }
 

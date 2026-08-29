@@ -1,9 +1,11 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
+import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export interface MembershipMirror {
   memberId: string;
+  userId: string;
   year: number;
   amount: number | null;
   feeApplied: number;
@@ -17,7 +19,7 @@ export interface MembershipMirror {
 
 export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
   const existing = await db.payment.findFirst({
-    where: { memberId: m.memberId, year: m.year, purpose: "MEMBERSHIP" },
+    where: { userId: m.userId, year: m.year, purpose: "MEMBERSHIP" },
     select: { id: true },
   });
 
@@ -36,31 +38,35 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
 
   if (existing) {
     await db.payment.update({ where: { id: existing.id }, data });
+    await syncReceiptsFor(db, { id: existing.id });
     return;
   }
-  await db.payment.create({
+  const created = await db.payment.create({
     data: {
       ...data,
       purpose: "MEMBERSHIP",
       memberId: m.memberId,
+      userId: m.userId,
       year: m.year,
       anonymous: m.anonymous,
       donorName: m.donorName,
       recordedBy: m.recordedBy ?? null,
     },
   });
+  await ensureReceiptsFor(db, { id: created.id });
 }
 
 export async function mirrorMembershipStatus(
   db: Db,
-  memberId: string,
+  userId: string,
   year: number,
   status: "PENDING" | "ACTIVE" | "REJECTED",
 ) {
   await db.payment.updateMany({
-    where: { memberId, year, purpose: "MEMBERSHIP" },
+    where: { userId, year, purpose: "MEMBERSHIP" },
     data: { status },
   });
+  await syncReceiptsFor(db, { userId, year, purpose: "MEMBERSHIP" });
 }
 
 export interface DonationMirror {
@@ -73,6 +79,7 @@ export interface DonationMirror {
   donorPhoto: string | null;
   donorPhone: string | null;
   memberId: string | null;
+  userId: string | null;
   activityId: string | null;
   tagIds?: string[];
 }
@@ -99,6 +106,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     donorPhoto: d.donorPhoto,
     donorPhone: d.donorPhone,
     memberId: d.memberId,
+    userId: d.userId,
     activityId: d.activityId,
   };
 
@@ -107,6 +115,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
       where: { id: existing.id },
       data: { ...data, ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}) },
     });
+    await syncReceiptsFor(db, { id: existing.id });
     return;
   }
   await db.payment.create({
@@ -116,6 +125,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
       ...(d.tagIds ? { tags: { connect: d.tagIds.map((id) => ({ id })) } } : {}),
     },
   });
+  await ensureReceiptsFor(db, { id: d.donationId });
 }
 
 export async function removeMirroredDonation(db: Db, donationId: string) {
@@ -125,9 +135,9 @@ export async function removeMirroredDonation(db: Db, donationId: string) {
 // The admin who recorded a year is stamped on the membership row after the
 // payment itself was written, and only the first time: a later edit does not
 // take the year away from whoever took it.
-export async function stampRecordedBy(db: Db, memberId: string, year: number, username: string) {
+export async function stampRecordedBy(db: Db, userId: string, year: number, username: string) {
   await db.payment.updateMany({
-    where: { memberId, year, purpose: "MEMBERSHIP", recordedBy: null },
+    where: { userId, year, purpose: "MEMBERSHIP", recordedBy: null },
     data: { recordedBy: username },
   });
 }

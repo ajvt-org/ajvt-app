@@ -13,6 +13,7 @@ function renderSearch(over: Partial<Parameters<typeof MemberSearch>[0]> = {}) {
     onToggleStats: vi.fn(),
     onExport: vi.fn(),
     onManageAgeGroups: vi.fn(),
+    onManageVillages: vi.fn(),
     onManualAdd: vi.fn(),
     ...over,
   };

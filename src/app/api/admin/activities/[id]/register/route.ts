@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { accountOf } from "@/lib/memberAccount";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
@@ -8,6 +9,7 @@ import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 import { activities, members, notify } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -17,7 +19,10 @@ export const POST = withRoute(
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const [member, activity] = await Promise.all([
-      prisma.member.findUnique({ where: { id: memberId }, select: { id: true, fullName: true } }),
+      prisma.member.findUnique({
+        where: { id: memberId },
+        select: { id: true, userId: true, user: { select: { fullName: true } } },
+      }),
       prisma.activity.findUnique({
         where: { id },
         select: {
@@ -33,7 +38,7 @@ export const POST = withRoute(
 
     if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
       const already = await prisma.activityRegistration.findUnique({
-        where: { memberId_activityId: { memberId, activityId: id } },
+        where: { userId_activityId: { userId: member.userId, activityId: id } },
       });
       if (!already) {
         return NextResponse.json({ error: "اكتمل عدد المسجلين في هذا النشاط" }, { status: 409 });
@@ -41,15 +46,15 @@ export const POST = withRoute(
     }
 
     const registration = await prisma.activityRegistration.upsert({
-      where: { memberId_activityId: { memberId, activityId: id } },
+      where: { userId_activityId: { userId: member.userId, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
-      create: { memberId, activityId: id, status: "ACTIVE" },
+      create: { memberId, userId: member.userId, activityId: id, status: "ACTIVE" },
     });
 
     await logAction(
       session.username,
       "ADMIN_REGISTER_ACTIVITY",
-      `${member.fullName} → ${activity.title}`,
+      `${nameOf(member.user)} → ${activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
@@ -75,7 +80,7 @@ export const PATCH = withRoute(
         activityId: true,
         status: true,
         rejectionReason: true,
-        member: { select: { fullName: true, userId: true } },
+        member: { select: { userId: true, user: { select: { fullName: true } } } },
         activity: { select: { title: true } },
       },
     });
@@ -94,7 +99,7 @@ export const PATCH = withRoute(
     await logAction(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
-      `${registration.member.fullName} → ${registration.activity.title}`,
+      `${registration.member.user.fullName} → ${registration.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
@@ -127,12 +132,12 @@ export const DELETE = withRoute(
     const session = await requireActivityAccess(id);
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
-    const existing = await prisma.activityRegistration.findUnique({
-      where: { memberId_activityId: { memberId, activityId: id } },
+    const existing = await prisma.activityRegistration.findFirst({
+      where: { userId: await accountOf(prisma, memberId), activityId: id },
       select: {
         id: true,
         status: true,
-        member: { select: { fullName: true } },
+        member: { select: { user: { select: { fullName: true } } } },
         activity: { select: { title: true } },
       },
     });
@@ -142,7 +147,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "ADMIN_UNREGISTER_ACTIVITY",
-      `${existing.member.fullName} — ${existing.activity.title}`,
+      `${existing.member.user.fullName} — ${existing.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",

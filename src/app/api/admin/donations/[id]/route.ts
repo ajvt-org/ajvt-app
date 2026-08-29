@@ -57,18 +57,22 @@ export const PATCH = withRoute(
       proof?: string | null;
       tags?: { set: { id: string }[] };
       activityId?: string | null;
+      userId?: string | null;
     } = {};
     if (status !== undefined) data.status = status;
 
     if (memberId !== undefined) {
+      let account: string | null = null;
       if (memberId !== null) {
         const member = await prisma.member.findUnique({
           where: { id: memberId },
-          select: { id: true },
+          select: { userId: true },
         });
         if (!member) return NextResponse.json({ error: members.notFound }, { status: 404 });
+        account = member.userId;
       }
       data.memberId = memberId;
+      data.userId = account;
     }
 
     if (donorName !== undefined) {
@@ -124,7 +128,7 @@ export const PATCH = withRoute(
     const donation = await prisma.donation.update({
       where: { id },
       data,
-      include: { member: { select: { fullName: true } } },
+      include: { member: { select: { user: { select: { fullName: true } } } } },
     });
     await mirrorDonation(prisma, {
       donationId: donation.id,
@@ -137,6 +141,7 @@ export const PATCH = withRoute(
       donorPhone: donation.donorPhone,
       tagIds,
       memberId: donation.memberId,
+      userId: donation.userId,
       activityId: donation.activityId,
     });
 
@@ -150,7 +155,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donation.member?.fullName || existing.donorName || money.anonymousDonor,
+        donation.member?.user.fullName || existing.donorName || money.anonymousDonor,
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
@@ -159,7 +164,7 @@ export const PATCH = withRoute(
         session.username,
         memberId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
         memberId
-          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.fullName}`
+          ? `${existing.donorName || money.anonymousDonor} → ${donation.member?.user.fullName}`
           : existing.donorName || money.anonymousDonor,
         {
           ...target,
@@ -179,7 +184,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "UPDATE_DONATION",
-        donation.member?.fullName || donation.donorName || money.anonymousDonor,
+        donation.member?.user.fullName || donation.donorName || money.anonymousDonor,
         {
           ...target,
           before: existing,

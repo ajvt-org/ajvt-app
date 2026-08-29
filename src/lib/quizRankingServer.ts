@@ -37,12 +37,9 @@ async function named(rows: Ranked[], limit?: number): Promise<Board[]> {
   const wanted = typeof limit === "number" ? rows.slice(0, limit) : rows;
   const users = await prisma.user.findMany({
     where: { id: { in: wanted.map((r) => r.userId) } },
-    select: {
-      id: true,
-      members: { select: { fullName: true, photo: true }, orderBy: { createdAt: "asc" }, take: 1 },
-    },
+    select: { id: true, fullName: true, photo: true },
   });
-  const byId = new Map(users.map((u) => [u.id, u.members[0]]));
+  const byId = new Map(users.map((u) => [u.id, u]));
 
   return wanted.map((r) => {
     const member = byId.get(r.userId);

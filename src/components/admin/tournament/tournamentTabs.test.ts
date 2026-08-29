@@ -63,3 +63,20 @@ describe("telling a tournament tab from an activity one", () => {
     }
   });
 });
+
+describe("the badge on the teams tab", () => {
+  const teamsTab = (requests: number) =>
+    tournamentTabs(football, 0, requests).find((t) => t.key === "teams");
+
+  it("carries the join requests still waiting", () => {
+    expect(teamsTab(2)?.badge).toBe(2);
+  });
+
+  it("carries nothing when none are waiting", () => {
+    expect(teamsTab(0)?.badge).toBe(0);
+  });
+
+  it("counts nothing when the caller says nothing", () => {
+    expect(tournamentTabs(football, 0).find((t) => t.key === "teams")?.badge).toBe(0);
+  });
+});

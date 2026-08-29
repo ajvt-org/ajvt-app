@@ -55,7 +55,15 @@ describe("mvpVoteStatusSchema", () => {
     expect(rejectionOf(mvpVoteStatusSchema, { status: "PAUSED" })).toBe("بيانات غير صالحة");
   });
 
-  it("rejects a missing status", () => {
-    expect(rejectionOf(mvpVoteStatusSchema, {})).toBe("بيانات غير صالحة");
+  it("takes minutes on their own, for extending a running vote", () => {
+    expect(parse(mvpVoteStatusSchema, { minutes: 30 }).minutes).toBe(30);
+  });
+
+  it("rejects minutes outside the range", () => {
+    expect(rejectionOf(mvpVoteStatusSchema, { minutes: 0 })).toContain("مدة التصويت");
+  });
+
+  it("takes an empty body, which the route refuses as nothing to change", () => {
+    expect(parse(mvpVoteStatusSchema, {})).toEqual({});
   });
 });

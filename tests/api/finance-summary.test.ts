@@ -3,13 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getFinanceSummary } from "@/lib/financeServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb } from "./helpers";
+import { resetDb, makeMember } from "./helpers";
 
 const ANON = "فاعل خير";
 
 async function member(fullName: string, status: "ACTIVE" | "PENDING" = "ACTIVE") {
-  return prisma.member.create({
-    data: { fullName, age: "البدريين", paymentMethod: "بنكيلي", status },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status,
   });
 }
 
@@ -32,6 +35,7 @@ async function gift(amount: number, opts: { name?: string | null; method?: strin
     donorPhoto: null,
     donorPhone: null,
     memberId: null,
+    userId: null,
     activityId: null,
   });
   return donation;

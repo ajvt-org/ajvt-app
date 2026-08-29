@@ -12,6 +12,7 @@ import {
   signInAs,
   signInAsAdmin,
   withParams,
+  makeMember,
 } from "./helpers";
 import { clearCookies } from "./cookieJar";
 
@@ -43,15 +44,13 @@ afterAll(async () => {
 });
 
 async function memberFor(user: { id: string }, over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      ...over,
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    ...over,
   });
 }
 
@@ -66,11 +65,21 @@ async function seedEverything() {
   });
   await memberFor(other, { paymentProof: "other-proof.webp" });
   await prisma.membership.create({
-    data: { memberId: mine.id, year: 2026, paymentProof: "membership-proof.webp" },
+    data: {
+      memberId: mine.id,
+      userId: mine.userId,
+      year: 2026,
+      paymentProof: "membership-proof.webp",
+    },
   });
   const activity = await prisma.activity.create({ data: { title: "نشاط", description: "وصف" } });
   await prisma.activityRegistration.create({
-    data: { memberId: mine.id, activityId: activity.id, paymentProof: "registration-proof.webp" },
+    data: {
+      memberId: mine.id,
+      userId: mine.userId,
+      activityId: activity.id,
+      paymentProof: "registration-proof.webp",
+    },
   });
   await prisma.donation.create({ data: { proof: "donation-proof.webp", amount: 100 } });
   await prisma.payment.create({

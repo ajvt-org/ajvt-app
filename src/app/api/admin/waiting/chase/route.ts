@@ -16,7 +16,7 @@ export const POST = withRoute("POST /api/admin/waiting/chase", async (req: NextR
     {
       title: push.chaseTitle,
       body: kind === "pending" ? push.chasePending : push.chaseUnfinished,
-      url: kind === "pending" ? "/profile" : "/form",
+      url: kind === "pending" ? "/profile" : "/membership",
     },
     "REQUEST_REMINDER",
   );

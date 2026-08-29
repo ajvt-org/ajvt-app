@@ -1,20 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as PROFILE } from "@/app/api/admin/members/[id]/profile/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withId, makeMember } from "./helpers";
 
 function ask(id: string) {
   return [get(`/api/admin/members/${id}/profile`), withId(id)] as const;
 }
 
 async function aMember(fullName = "محمد") {
-  return prisma.member.create({
-    data: {
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 
@@ -42,11 +40,16 @@ describe("a member's whole file, in one answer", () => {
       data: { title: "دوري", description: "d", isTournament: true },
     });
     await prisma.activityRegistration.create({
-      data: { memberId: member.id, activityId: activity.id, status: "ACTIVE" },
+      data: {
+        memberId: member.id,
+        userId: member.userId,
+        activityId: activity.id,
+        status: "ACTIVE",
+      },
     });
     const team = await prisma.team.create({ data: { activityId: activity.id, name: "النجم" } });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId: member.id, status: "ACTIVE" },
+      data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
     });
     await prisma.donation.create({
       data: { amount: 500, memberId: member.id, status: "ACTIVE", source: "SELF" },

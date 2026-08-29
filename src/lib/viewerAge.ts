@@ -9,8 +9,8 @@ export async function getViewerAge(): Promise<string | null> {
   const member = await prisma.member.findFirst({
     where: { userId, status: "ACTIVE" },
     orderBy: { createdAt: "asc" },
-    select: { age: true },
+    select: { user: { select: { age: true } } },
   });
 
-  return member?.age ?? null;
+  return member?.user.age ?? null;
 }

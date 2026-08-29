@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, createUser } from "./helpers";
+import { resetDb, createUser, makeMember } from "./helpers";
 
 const sendPushToUsers = vi.hoisted(() =>
   vi.fn<(userIds: string[], payload: { title: string; body: string }) => Promise<void>>(
@@ -22,16 +22,16 @@ async function scheduledMatch() {
   const home = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
   const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
   const user = await createUser("22000001");
-  const member = await prisma.member.create({
-    data: {
-      fullName: "لاعب",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      userId: user.id,
-      status: "ACTIVE",
-    },
+  const member = await makeMember({
+    fullName: "لاعب",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    userId: user.id,
+    status: "ACTIVE",
   });
-  await prisma.teamMember.create({ data: { teamId: home.id, memberId: member.id } });
+  await prisma.teamMember.create({
+    data: { teamId: home.id, memberId: member.id, userId: member.userId },
+  });
 
   return prisma.match.create({
     data: {
@@ -68,15 +68,13 @@ describe("sendMatchReminders", () => {
 
 async function eligibleUserWithQuestion() {
   const user = await createUser("22000002");
-  await prisma.member.create({
-    data: {
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      userId: user.id,
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  await makeMember({
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    userId: user.id,
+    status: "ACTIVE",
+    paidAmount: 100,
   });
   await prisma.quizQuestion.create({
     data: { text: "سؤال", category: "عام", createdBy: "admin" },

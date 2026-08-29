@@ -7,25 +7,31 @@ import { NotFoundError } from "@/lib/errors";
 import { toCsv } from "@/lib/csv";
 import { splitPayment } from "@/lib/membershipPayment";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
+import { activityFinanceReport } from "@/lib/activityReportServer";
+import { dateSpanSchema, spanBounds } from "@/lib/dateSpan";
+import { parse } from "@/lib/validation";
 import {
   isDataset,
   memberRows,
   donationRows,
   ageRows,
+  activityRows,
   sourceOf,
   MEMBER_HEADERS,
   DONATION_HEADERS,
   AGE_HEADERS,
+  ACTIVITY_HEADERS,
   FILENAMES,
   type Dataset,
 } from "@/lib/exportRows";
+import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
-async function buildCsv(dataset: Dataset): Promise<string> {
+async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
   if (dataset === "members") {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        user: { select: { phone: true } },
+        user: { select: PERSON_WITH_PHONE_SELECT },
         payments: {
           where: { purpose: "MEMBERSHIP" },
           select: { amount: true, feeApplied: true, year: true },
@@ -39,7 +45,7 @@ async function buildCsv(dataset: Dataset): Promise<string> {
           const paid = m.payments.find((p) => p.year === m.membershipYear);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
-            ...m,
+            ...withPerson(m),
             paidAmount: split ? split.fee : null,
             supportAmount: split ? split.surplus : 0,
           };
@@ -52,7 +58,7 @@ async function buildCsv(dataset: Dataset): Promise<string> {
     const payments = await prisma.payment.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        member: { select: { fullName: true } },
+        member: { select: { user: { select: { fullName: true } } } },
         tags: { select: { name: true } },
       },
     });
@@ -74,6 +80,16 @@ async function buildCsv(dataset: Dataset): Promise<string> {
     );
   }
 
+  if (dataset === "activities") {
+    const { from, to } = parse(dateSpanSchema, {
+      from: req.nextUrl.searchParams.get("from"),
+      to: req.nextUrl.searchParams.get("to"),
+    });
+    const span = spanBounds(from, to);
+    const report = await activityFinanceReport(span.from, span.to);
+    return toCsv(ACTIVITY_HEADERS, activityRows(report.rows));
+  }
+
   return toCsv(AGE_HEADERS, ageRows(await getAgeStandings()));
 }
 
@@ -84,7 +100,7 @@ export const GET = withRoute(
     const { dataset } = await params;
     if (!isDataset(dataset)) throw new NotFoundError("لا يوجد تصدير بهذا الاسم");
 
-    const csv = await buildCsv(dataset);
+    const csv = await buildCsv(dataset, req);
     const day = new Date().toISOString().slice(0, 10);
 
     await logAction(session.username, "EXPORT_DATA", dataset, {

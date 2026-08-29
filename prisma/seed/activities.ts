@@ -139,6 +139,7 @@ export async function seedRegistrations(
     await prisma.activityRegistration.create({
       data: {
         memberId: active[i].id,
+        userId: active[i].userId,
         activityId: activities.lecture.id,
         status: i < 8 ? "ACTIVE" : i < 11 ? "PENDING" : "REJECTED",
         paymentProof: i % 4 === 0 ? placeholder(`seed-reg-${next()}.webp`) : null,
@@ -154,25 +155,36 @@ export async function seedRegistrations(
   ] as const) {
     for (let i = 0; i < Math.min(count, active.length); i++) {
       await prisma.activityRegistration.create({
-        data: { memberId: active[i].id, activityId: activity.id, status: "ACTIVE" },
+        data: {
+          memberId: active[i].id,
+          userId: active[i].userId,
+          activityId: activity.id,
+          status: "ACTIVE",
+        },
       });
     }
   }
 
   for (let i = 0; i < Math.min(3, pending.length); i++) {
     await prisma.activityRegistration.create({
-      data: { memberId: pending[i].id, activityId: activities.volunteer.id, status: "PENDING" },
+      data: {
+        memberId: pending[i].id,
+        userId: pending[i].userId,
+        activityId: activities.volunteer.id,
+        status: "PENDING",
+      },
     });
   }
 }
 
 export async function seedRosterRegistrations() {
   const rostered = await prisma.teamMember.findMany({
-    select: { memberId: true, team: { select: { activityId: true } } },
+    select: { memberId: true, userId: true, team: { select: { activityId: true } } },
   });
   await prisma.activityRegistration.createMany({
     data: rostered.map((r) => ({
       memberId: r.memberId,
+      userId: r.userId,
       activityId: r.team.activityId,
       status: "ACTIVE" as const,
     })),

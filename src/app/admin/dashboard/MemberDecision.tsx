@@ -24,7 +24,7 @@ function RejectPicker({
         style={{ color: "var(--text-main)" }}
         htmlFor="dash-field-3"
       >
-        سبب الرفض — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
+        سبب رفض الدفع — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
       </label>
       <select
         id="dash-field-3"
@@ -57,7 +57,7 @@ function RejectPicker({
           className="btn text-sm font-bold flex-1"
           style={{ background: "#dc2626", color: "white" }}
         >
-          {loading ? "..." : "تأكيد الرفض"}
+          {loading ? "..." : "تأكيد رفض الدفع"}
         </button>
       </div>
     </div>
@@ -91,14 +91,14 @@ export default function MemberDecision({
     <>
       {decidable && (
         <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="list">اختصارات: A قبول — R رفض — N التالي</IconLabel>
+          <IconLabel name="list">اختصارات: A قبول الدفع — R رفض الدفع — N التالي</IconLabel>
         </p>
       )}
 
       {member.status === "PENDING" && !showRejectPicker && (
         <div className="grid grid-cols-2 gap-3">
           <button onClick={onApprove} disabled={loading} className="btn btn-primary text-sm">
-            {loading ? "..." : <IconLabel name="check">قبول</IconLabel>}
+            {loading ? "..." : <IconLabel name="check">قبول الدفع</IconLabel>}
           </button>
           <button
             onClick={onOpenRejectPicker}
@@ -106,7 +106,7 @@ export default function MemberDecision({
             className="btn text-sm font-bold"
             style={{ background: "#dc2626", color: "white" }}
           >
-            <IconLabel name="close">رفض</IconLabel>
+            <IconLabel name="close">رفض الدفع</IconLabel>
           </button>
         </div>
       )}
@@ -118,7 +118,7 @@ export default function MemberDecision({
           className="btn w-full text-sm font-bold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          تغيير إلى مرفوض
+          تغيير الدفع إلى مرفوض
         </button>
       )}
 
@@ -136,11 +136,11 @@ export default function MemberDecision({
         <>
           {member.rejectionReason && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              سبب الرفض: <span className="font-bold">{member.rejectionReason}</span>
+              سبب رفض الدفع: <span className="font-bold">{member.rejectionReason}</span>
             </p>
           )}
           <button onClick={onApprove} disabled={loading} className="btn btn-primary w-full text-sm">
-            {loading ? "..." : "تغيير إلى معتمد"}
+            {loading ? "..." : "تغيير الدفع إلى معتمد"}
           </button>
         </>
       )}

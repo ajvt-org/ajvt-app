@@ -1,3 +1,4 @@
+import { matchAdmin as texts } from "@/lib/texts";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import MatchCard from "./MatchCard";
@@ -21,6 +22,7 @@ function match(): Match {
     homePenalties: null,
     awayPenalties: null,
     manOfTheMatch: { id: "p1", fullName: "أحمد", photo: null },
+    forfeitWinnerTeamId: null,
     status: "PLAYED",
     goals: [
       {
@@ -56,6 +58,7 @@ function show(profile: "FOOTBALL" | "BOARD", showResultForm = false) {
       allMatches={[match()]}
       profile={profile}
       suspendedIds={[]}
+      mvpVoteMinutes={120}
       onDelete={noop}
       showResultForm={showResultForm}
       onToggleResultForm={noop}
@@ -85,6 +88,7 @@ describe("a team name carrying Latin letters", () => {
         allMatches={[]}
         profile="FOOTBALL"
         suspendedIds={[]}
+        mvpVoteMinutes={120}
         onDelete={noop}
         showResultForm={false}
         onToggleResultForm={noop}
@@ -136,14 +140,14 @@ describe("MatchCard by sport profile", () => {
   it("opens card entry with the result form on a football match", () => {
     show("FOOTBALL", true);
 
-    expect(screen.getByText(/البطاقات/)).toBeDefined();
+    expect(screen.getByText(texts.addCard)).toBeDefined();
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 
   it("keeps card entry out of a board result form", () => {
     show("BOARD", true);
 
-    expect(screen.queryByText(/البطاقات/)).toBeNull();
+    expect(screen.queryByText(texts.addCard)).toBeNull();
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 });

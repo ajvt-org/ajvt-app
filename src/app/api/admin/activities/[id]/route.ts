@@ -52,7 +52,10 @@ export const PATCH = withRoute(
       teamSize,
       yellowsForBan,
       redBanMatches,
+      mvpVoteMinutes,
       isVolunteer,
+      published,
+      settlePending,
       whatsappLink,
       order,
       startsAt,
@@ -79,7 +82,9 @@ export const PATCH = withRoute(
       teamSize?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
+      mvpVoteMinutes?: number;
       isVolunteer?: boolean;
+      published?: boolean;
       whatsappLink?: string | null;
       order?: number;
       startsAt?: Date | null;
@@ -118,7 +123,9 @@ export const PATCH = withRoute(
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;
+    if (mvpVoteMinutes !== undefined) data.mvpVoteMinutes = mvpVoteMinutes;
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
+    if (published !== undefined) data.published = !!published;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
     if (order !== undefined) data.order = Number(order);
     if (startsAt !== undefined) data.startsAt = startsAt;
@@ -136,7 +143,69 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: activities.whatsappRequired }, { status: 400 });
     }
 
-    const activity = await prisma.activity.update({ where: { id }, data });
+    const pending =
+      nextIsVolunteer && !existing.isVolunteer
+        ? await prisma.activityRegistration.count({ where: { activityId: id, status: "PENDING" } })
+        : 0;
+    if (pending > 0 && !settlePending) {
+      return NextResponse.json(
+        { error: activities.pendingBeforeCampaign, pending },
+        { status: 409 },
+      );
+    }
+    const settled = pending > 0 ? (settlePending === "accept" ? "ACTIVE" : "REJECTED") : null;
+
+    const activity = await prisma.$transaction(async (tx) => {
+      if (settled) {
+        await tx.activityRegistration.updateMany({
+          where: { activityId: id, status: "PENDING" },
+          data: { status: settled },
+        });
+      }
+      return tx.activity.update({ where: { id }, data });
+    });
+    if (published !== undefined && !!published !== existing.published) {
+      await logAction(
+        session.username,
+        published ? "PUBLISH_ACTIVITY" : "UNPUBLISH_ACTIVITY",
+        activity.title,
+        {
+          ...auditContext(session, req),
+          targetType: "Activity",
+          targetId: activity.id,
+          before: { published: existing.published },
+          after: { published: !!published },
+        },
+      );
+    }
+    if (isOpen !== undefined && !!isOpen !== existing.isOpen) {
+      await logAction(
+        session.username,
+        isOpen ? "OPEN_ACTIVITY_REGISTRATION" : "CLOSE_ACTIVITY_REGISTRATION",
+        activity.title,
+        {
+          ...auditContext(session, req),
+          targetType: "Activity",
+          targetId: activity.id,
+          before: { isOpen: existing.isOpen },
+          after: { isOpen: !!isOpen },
+        },
+      );
+    }
+    if (settled) {
+      await logAction(
+        session.username,
+        settled === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
+        `${activity.title} — ${pending}`,
+        {
+          ...auditContext(session, req),
+          targetType: "Activity",
+          targetId: activity.id,
+          before: { pendingRegistrations: pending },
+          after: { status: settled },
+        },
+      );
+    }
     await logAction(session.username, "UPDATE_ACTIVITY", activity.title, {
       ...auditContext(session, req),
       targetType: "Activity",

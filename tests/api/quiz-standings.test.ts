@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, createUsers, createAdmin, signInAs, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  createUsers,
+  createAdmin,
+  signInAs,
+  signInAsAdmin,
+  withId,
+  makeMember,
+} from "./helpers";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
 
 import { GET as STANDINGS } from "@/app/api/quiz/standings/route";
@@ -64,15 +73,13 @@ async function attempt(
 }
 
 async function member(userId: string, fullName: string) {
-  return prisma.member.create({
-    data: {
-      userId,
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  return makeMember({
+    userId,
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
 }
 

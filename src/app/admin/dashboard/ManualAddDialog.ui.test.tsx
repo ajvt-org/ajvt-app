@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManualAddDialog from "./ManualAddDialog";
+import { HOME_VILLAGE } from "@/lib/villages";
 
 const ageGroups = [
   { id: "1", name: "أشبال" },
@@ -13,6 +14,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ManualAddDialog>> 
     ageGroups,
     onCreated: vi.fn(),
     onManageAgeGroups: vi.fn(),
+    onManageVillages: vi.fn(),
     onClose: vi.fn(),
     ...overrides,
   };
@@ -53,50 +55,90 @@ describe("ManualAddDialog", () => {
     expect(screen.getByRole("option", { name: "شباب" })).toBeDefined();
   });
 
-  it("sends the filled form to the admin members endpoint", async () => {
-    const fetchMock = mockFetch({ id: "m1" });
-    const props = setup();
-
+  async function fillPerson() {
     await userEvent.click(screen.getByLabelText(/رقم الهاتف غير معروف/));
     await userEvent.type(screen.getByLabelText("الاسم الكامل"), "محمد");
     await userEvent.selectOptions(screen.getByLabelText("العصر"), "شباب");
-    await userEvent.selectOptions(screen.getByLabelText("طريقة الدفع"), "نقداً");
-    await userEvent.click(screen.getByRole("button", { name: "إنشاء العضو" }));
+    await userEvent.click(screen.getByRole("button", { name: "حفظ الشخص" }));
+  }
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("/api/admin/members");
-    expect(JSON.parse(init.body)).toMatchObject({
+  it("saves the person on its own, with nothing about money", async () => {
+    const fetchMock = mockFetch({ person: { id: "u1" } });
+    const props = setup();
+
+    await fillPerson();
+
+    await waitFor(() => expect(props.onCreated).toHaveBeenCalled());
+    const call = fetchMock.mock.calls.find((c) => c[0] === "/api/admin/people");
+    expect(call).toBeDefined();
+    const body = JSON.parse(call![1].body);
+    expect(body).toMatchObject({
       fullName: "محمد",
       age: "شباب",
-      paymentMethod: "نقداً",
+      village: HOME_VILLAGE,
       phoneUnknown: true,
     });
-    expect(props.onCreated).toHaveBeenCalled();
+    expect(body.paymentMethod).toBeUndefined();
+  });
+
+  it("moves on to the payment once the person is saved", async () => {
+    mockFetch({ person: { id: "u1" } });
+    setup();
+
+    await fillPerson();
+
+    expect(await screen.findByLabelText("طريقة الدفع")).toBeDefined();
+    expect(screen.queryByLabelText("الاسم الكامل")).toBeNull();
+  });
+
+  it("posts the payment against the person it just saved", async () => {
+    const fetchMock = mockFetch({ person: { id: "u1" } });
+    setup();
+
+    await fillPerson();
+    await userEvent.selectOptions(await screen.findByLabelText("طريقة الدفع"), "نقداً");
+    await userEvent.click(screen.getByRole("button", { name: "تسجيل الاشتراك" }));
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.find((c) => c[0] === "/api/admin/people/u1/membership"),
+      ).toBeDefined(),
+    );
+  });
+
+  it("lets the admin stop after the person, with no payment at all", async () => {
+    const fetchMock = mockFetch({ person: { id: "u1" } });
+    setup();
+
+    await fillPerson();
+    await userEvent.click(await screen.findByRole("button", { name: "بدون اشتراك الآن" }));
+
+    expect(fetchMock.mock.calls.find((c) => String(c[0]).includes("/membership"))).toBeUndefined();
+  });
+
+  it("starts at the payment when the admin picked an existing person", async () => {
+    mockFetch({});
+    setup({ payFor: { id: "u9", fullName: "سيدي ولد أحمد" } });
+
+    expect(screen.getByLabelText("طريقة الدفع")).toBeDefined();
+    expect(screen.queryByLabelText("الاسم الكامل")).toBeNull();
   });
 
   it("shows the temporary password the server sends back", async () => {
-    mockFetch({ id: "m1", tempPassword: "AB12CD" });
+    mockFetch({ person: { id: "u1" }, tempPassword: "AB12CD" });
     setup();
 
-    await userEvent.click(screen.getByLabelText(/رقم الهاتف غير معروف/));
-    await userEvent.type(screen.getByLabelText("الاسم الكامل"), "محمد");
-    await userEvent.selectOptions(screen.getByLabelText("العصر"), "شباب");
-    await userEvent.selectOptions(screen.getByLabelText("طريقة الدفع"), "نقداً");
-    await userEvent.click(screen.getByRole("button", { name: "إنشاء العضو" }));
+    await fillPerson();
+    await userEvent.click(await screen.findByRole("button", { name: "بدون اشتراك الآن" }));
 
     expect(await screen.findByText("AB12CD")).toBeDefined();
   });
 
-  it("shows the server message when the create fails", async () => {
+  it("shows the server message when saving the person fails", async () => {
     mockFetch({ error: "رقم الهاتف مستخدم بالفعل" }, false);
     const props = setup();
 
-    await userEvent.click(screen.getByLabelText(/رقم الهاتف غير معروف/));
-    await userEvent.type(screen.getByLabelText("الاسم الكامل"), "محمد");
-    await userEvent.selectOptions(screen.getByLabelText("العصر"), "شباب");
-    await userEvent.selectOptions(screen.getByLabelText("طريقة الدفع"), "نقداً");
-    await userEvent.click(screen.getByRole("button", { name: "إنشاء العضو" }));
+    await fillPerson();
 
     expect(await screen.findByText(/رقم الهاتف مستخدم بالفعل/)).toBeDefined();
     expect(props.onCreated).not.toHaveBeenCalled();

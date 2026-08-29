@@ -17,12 +17,14 @@ export interface Activity {
   photo: string | null;
   capacity: number | null;
   isOpen: boolean;
+  published: boolean;
   isTournament: boolean;
   isVolunteer: boolean;
   whatsappLink: string | null;
   order: number;
   createdAt: string;
   registrations: Registration[];
+  pendingJoinRequests: number;
 }
 
 export interface MemberOption {

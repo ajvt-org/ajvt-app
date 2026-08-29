@@ -3,8 +3,10 @@ export type MemberProfile = {
     id: string;
     fullName: string;
     phone: string | null;
-    age: string;
+    age: string | null;
+    village: string;
     photo: string | null;
+    photoLocked: boolean;
     status: string;
     memberNumber: string | null;
     paidAmount: number | null;
@@ -12,7 +14,7 @@ export type MemberProfile = {
     paymentMethod: string | null;
     paymentProof: string | null;
     createdAt: string;
-    user: { id: string; phone: string; createdAt: string } | null;
+    user: { id: string; phone: string | null; createdAt: string } | null;
     registrations: {
       id: string;
       status: string;

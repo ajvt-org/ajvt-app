@@ -88,7 +88,7 @@ function MemberRow({
         <span className={`badge ${STATUS_BADGE[member.status]}`}>
           {STATUS_LABEL[member.status]}
         </span>
-        <span>العصر: {member.age}</span>
+        <span>{member.age ? `العصر: ${member.age}` : `القرية: ${member.village}`}</span>
         <span>•</span>
         <span>{member.paymentMethod}</span>
         <span>•</span>

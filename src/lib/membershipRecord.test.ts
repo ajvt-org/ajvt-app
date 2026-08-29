@@ -14,4 +14,12 @@ describe("membershipEdit", () => {
     expect(membershipEdit({ paymentMethod: "بنكيلي" })).toEqual({ paymentMethod: "بنكيلي" });
     expect(membershipEdit({})).toEqual({});
   });
+
+  it("carries a proof added after the fact", () => {
+    expect(membershipEdit({ paymentProof: "proof.webp" })).toEqual({ paymentProof: "proof.webp" });
+  });
+
+  it("carries a cleared proof rather than dropping it", () => {
+    expect(membershipEdit({ paymentProof: null })).toEqual({ paymentProof: null });
+  });
 });

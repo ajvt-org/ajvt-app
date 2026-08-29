@@ -2,6 +2,7 @@ export type MemberFilters = {
   status: string;
   q: string;
   age: string;
+  village: string;
   method: string;
   paid: string;
   year: string;
@@ -14,6 +15,7 @@ export const NO_FILTERS: MemberFilters = {
   status: "ALL",
   q: "",
   age: "",
+  village: "",
   method: "",
   paid: "",
   year: "",
@@ -26,7 +28,8 @@ export type FilterableMember = {
   status: string;
   fullName: string;
   referenceCode: string | null;
-  age: string;
+  age: string | null;
+  village: string;
   paymentMethod: string;
   paidAmount: number | null;
   membershipYear: number;
@@ -42,6 +45,7 @@ export function readFilters(params: URLSearchParams): MemberFilters {
     status: params.get("status") || NO_FILTERS.status,
     q: params.get("q") || "",
     age: params.get("age") || "",
+    village: params.get("village") || "",
     method: params.get("method") || "",
     paid: params.get("paid") || "",
     year: params.get("year") || "",
@@ -56,6 +60,7 @@ export function writeFilters(filters: MemberFilters, page = 1): URLSearchParams 
   if (filters.status && filters.status !== "ALL") params.set("status", filters.status);
   if (filters.q.trim()) params.set("q", filters.q.trim());
   if (filters.age) params.set("age", filters.age);
+  if (filters.village) params.set("village", filters.village);
   if (filters.method) params.set("method", filters.method);
   if (filters.paid) params.set("paid", filters.paid);
   if (filters.year) params.set("year", filters.year);
@@ -71,6 +76,7 @@ export function activeFilterCount(filters: MemberFilters): number {
     filters.status !== "ALL" && filters.status !== "",
     !!filters.q.trim(),
     !!filters.age,
+    !!filters.village,
     !!filters.method,
     !!filters.paid,
     !!filters.year,
@@ -132,6 +138,7 @@ export function matchesFilters(
 ): boolean {
   if (filters.status && filters.status !== "ALL" && member.status !== filters.status) return false;
   if (filters.age && member.age !== filters.age) return false;
+  if (filters.village && member.village !== filters.village) return false;
   if (filters.method && member.paymentMethod !== filters.method) return false;
   if (filters.year && String(member.membershipYear) !== filters.year) return false;
   if (!matchesPaid(member, filters.paid, membership.fee)) return false;

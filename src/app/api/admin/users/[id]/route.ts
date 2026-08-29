@@ -3,11 +3,26 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { ValidationError, ConflictError } from "@/lib/errors";
+import { ValidationError } from "@/lib/errors";
 import { confirmationMatches } from "@/lib/deletedRecords";
 import { archive, purgeExpired } from "@/lib/deletedRecordsServer";
+import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
 import { accounts } from "@/lib/messages";
 import type { Prisma } from "@prisma/client";
+
+// Deleting the person, everything at once: the account, the membership
+// payment on it, and everything hanging off both. It used to refuse whenever
+// a payment existed, which left an admin removing one person through two
+// screens and two confirmations, and left an orphan account behind whenever
+// they only got through the first.
+//
+// The admin confirms by typing what identifies the person on the screen they
+// came from — their name on the member page, their number on the accounts
+// list — so either is accepted. An account carrying neither cannot be
+// confirmed at all, and is refused rather than deleted on an empty string.
+function identifiers(user: { fullName: string | null; phone: string | null }): string[] {
+  return [user.fullName, user.phone].map((v) => v?.trim() ?? "").filter(Boolean);
+}
 
 export const DELETE = withRoute(
   "DELETE /api/admin/users/[id]",
@@ -19,29 +34,43 @@ export const DELETE = withRoute(
     if (!user) {
       return NextResponse.json({ error: accounts.notFound }, { status: 404 });
     }
-    if (await prisma.member.count({ where: { userId: id } })) {
-      throw new ConflictError(accounts.hasMember);
+
+    const body = await req.json().catch(() => ({}));
+    const typed = String(body?.confirmName ?? body?.confirmPhone ?? "");
+    const expected = identifiers(user);
+    if (!expected.length || !expected.some((value) => confirmationMatches(typed, value))) {
+      throw new ValidationError(accounts.confirmPerson);
     }
 
-    const { confirmPhone } = await req.json().catch(() => ({ confirmPhone: undefined }));
-    if (!confirmationMatches(String(confirmPhone ?? ""), user.phone)) {
-      throw new ValidationError(accounts.confirmPhone);
-    }
+    const membership = await prisma.member.findUnique({ where: { userId: id } });
+    const label = user.fullName?.trim() || user.phone || user.id;
 
-    await archive(
-      "User",
-      id,
-      user.phone,
-      user as unknown as Prisma.InputJsonValue,
-      session.username,
-    );
-    await prisma.user.delete({ where: { id } });
+    if (membership) {
+      await archive(
+        "Member",
+        membership.id,
+        label,
+        membership as unknown as Prisma.InputJsonValue,
+        session.username,
+      );
+    }
+    await archive("User", id, label, user as unknown as Prisma.InputJsonValue, session.username);
+
+    // Before the delete: the account cascades its quiz rows away, so counting
+    // them afterwards would always report nothing removed.
+    const forgotten = await forgetQuizFootprint(id);
+    await prisma.$transaction(async (tx) => {
+      if (membership) await tx.member.delete({ where: { id: membership.id } });
+      await tx.user.delete({ where: { id } });
+    });
     await purgeExpired();
-    await logAction(session.username, "DELETE_USER", user.phone, {
+
+    await logAction(session.username, "DELETE_USER", label, {
       ...auditContext(session, req),
       targetType: "User",
       targetId: id,
-      before: { phone: user.phone },
+      before: { fullName: user.fullName, phone: user.phone, memberId: membership?.id ?? null },
+      meta: forgotten ?? undefined,
     });
 
     return NextResponse.json({ ok: true });

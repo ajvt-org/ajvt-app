@@ -59,7 +59,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         method: true,
         createdAt: true,
         donorName: true,
-        member: { select: { fullName: true } },
+        member: { select: { user: { select: { fullName: true } } } },
       },
     }),
     prisma.payment.groupBy({
@@ -81,10 +81,11 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
                CASE WHEN p."purpose" = 'MEMBERSHIP'
                     THEN p."amount" - LEAST(p."amount", COALESCE(p."feeApplied", 0))
                     ELSE p."amount" END AS support,
-               m."fullName" AS "memberName",
+               u."fullName" AS "memberName",
                NULLIF(BTRIM(p."donorName"), '') AS "donorName"
         FROM "Payment" p
         LEFT JOIN "Member" m ON m.id = p."memberId"
+        LEFT JOIN "User" u ON u.id = m."userId"
         WHERE p."status" = 'ACTIVE'
           AND (${activity}::text IS NULL OR p."activityId" = ${activity}::text)
       )
@@ -154,7 +155,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
-    addRecord(fee, p.method, p.createdAt, p.member?.fullName ?? "", "انتساب");
+    addRecord(fee, p.method, p.createdAt, p.member?.user.fullName ?? "", "انتساب");
     if (surplus > 0) {
       addRecord(surplus, p.method, p.createdAt, p.donorName?.trim() || money.anonymousDonor, "دعم");
     }

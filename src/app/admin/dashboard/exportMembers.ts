@@ -6,6 +6,7 @@ import type { Member } from "./types";
 const HEADERS = [
   "الاسم الكامل",
   "رقم الهاتف",
+  "القرية",
   "العصر",
   "طريقة الدفع",
   "الحالة",
@@ -18,7 +19,8 @@ export function exportMembers(members: Member[]) {
   const rows = members.map((m) => [
     m.fullName,
     m.user?.phone || "",
-    m.age,
+    m.village,
+    m.age ?? "",
     m.paymentMethod,
     STATUS_LABEL[m.status],
     String(m.membershipYear),

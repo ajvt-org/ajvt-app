@@ -5,8 +5,11 @@ import { POST as ADMIN_CHANGE } from "@/app/api/admin/change-password/route";
 import { POST as MEMBER_CHANGE } from "@/app/api/user/password/route";
 import { resetDb, post, createUser, createAdmin, signInAs, signInAsAdmin } from "./helpers";
 import { clearAttempts } from "@/lib/rateLimit";
+import { HOME_VILLAGE } from "@/lib/villages";
 
 const TOO_SHORT = "كلمة المرور يجب أن تكون 8 أحرف على الأقل";
+
+const person = { fullName: "محمد ولد أحمد", village: HOME_VILLAGE, age: "البدريين" };
 
 describe("the eight character password floor", () => {
   beforeEach(async () => {
@@ -16,7 +19,7 @@ describe("the eight character password floor", () => {
 
   it("refuses a seven character password at registration and says why", async () => {
     const res = await REGISTER(
-      post("/api/auth/register", { phone: "22334455", password: "1234567" }),
+      post("/api/auth/register", { phone: "22334455", password: "1234567", ...person }),
     );
 
     expect(res.status).toBe(400);
@@ -25,7 +28,7 @@ describe("the eight character password floor", () => {
 
   it("accepts eight characters at registration", async () => {
     const res = await REGISTER(
-      post("/api/auth/register", { phone: "22334455", password: "12345678" }),
+      post("/api/auth/register", { phone: "22334455", password: "12345678", ...person }),
     );
 
     expect(res.status).toBe(201);
@@ -66,7 +69,7 @@ describe("the eight character password floor", () => {
     await createUser("22334455", "secret");
 
     const res = await REGISTER(
-      post("/api/auth/register", { phone: "22334455", password: "12345678" }),
+      post("/api/auth/register", { phone: "22334455", password: "12345678", ...person }),
     );
 
     expect(res.status).toBe(409);

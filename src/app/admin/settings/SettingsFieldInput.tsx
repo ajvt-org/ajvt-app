@@ -3,7 +3,7 @@
 import { arabicValidity } from "@/lib/validationMessage";
 import { cleanValue, type SettingsField } from "./settingsFields";
 
-const INPUT_TYPE = { number: "number", phone: "tel", url: "url" } as const;
+const INPUT_TYPE = { number: "number", phone: "tel", url: "url", text: "text" } as const;
 
 export default function SettingsFieldInput({
   field,
@@ -37,7 +37,7 @@ export default function SettingsFieldInput({
         required={!field.optional}
         {...(field.optional ? {} : arabicValidity())}
         className="input"
-        dir={field.kind === "number" ? undefined : "ltr"}
+        dir={field.kind === "number" || field.kind === "text" ? undefined : "ltr"}
       />
       {field.hint && (
         <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>

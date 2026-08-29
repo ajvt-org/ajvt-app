@@ -37,4 +37,10 @@ describe("ActivityStandingChip", () => {
 
     expect(container.innerHTML).toBe("");
   });
+
+  it("shows the unscheduled badge without dates when the caller asks for it", () => {
+    render(<ActivityStandingChip startsAt={null} showUnscheduled />);
+
+    expect(screen.getByText("غير مبرمج بعد")).toBeDefined();
+  });
 });

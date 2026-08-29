@@ -6,9 +6,11 @@ import { sortActivities } from "@/lib/activityOrder";
 
 export const GET = withRoute("GET /api/activities", async () => {
   const activities = await prisma.activity.findMany({
-    orderBy: { createdAt: "asc" },
+    where: { published: true },
+    orderBy: { order: "asc" },
     select: {
       id: true,
+      order: true,
       title: true,
       description: true,
       period: true,

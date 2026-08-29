@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { findProofReuse } from "@/lib/proofReuse";
-import { resetDb } from "./helpers";
+import { resetDb, makeMember } from "./helpers";
 
 const HASH = "a".repeat(64);
 const OTHER = "b".repeat(64);
@@ -11,14 +11,12 @@ async function fingerprint(filename: string, sha256: string) {
 }
 
 async function memberWithProof(fullName: string, paymentProof: string) {
-  return prisma.member.create({
-    data: {
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "PENDING",
-      paymentProof,
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "PENDING",
+    paymentProof,
   });
 }
 
@@ -64,6 +62,25 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await memberWithProof("أحمد", "two.webp");
 
     const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.id });
+
+    expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
+  });
+
+  it("does not report a donation against itself", async () => {
+    await fingerprint("one.webp", HASH);
+    await fingerprint("two.webp", HASH);
+    const mine = await prisma.donation.create({
+      data: {
+        amount: 500,
+        donorName: "محمد",
+        status: "PENDING",
+        source: "PUBLIC",
+        proof: "one.webp",
+      },
+    });
+    await memberWithProof("أحمد", "two.webp");
+
+    const reuse = await findProofReuse("one.webp", { kind: "donation", id: mine.id });
 
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });

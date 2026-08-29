@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "photoLocked" BOOLEAN NOT NULL DEFAULT false;

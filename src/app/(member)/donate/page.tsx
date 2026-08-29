@@ -178,7 +178,7 @@ function DonatePageInner() {
           </div>
 
           <div className="space-y-2.5 fade-up delay-2">
-            <button onClick={() => router.push("/form")} className="btn btn-primary">
+            <button onClick={() => router.push("/membership")} className="btn btn-primary">
               <IconLabel name="user">إنشاء حساب والانضمام للرابطة</IconLabel>
             </button>
             <button

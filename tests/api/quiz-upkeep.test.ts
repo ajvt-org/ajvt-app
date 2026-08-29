@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_BOARDS, DEFAULT_CURVE } from "@/lib/competitionConfig";
-import { resetDb, get, createUser, signInAs } from "./helpers";
+import { resetDb, get, createUser, signInAs, makeMember } from "./helpers";
 
 const announceOpenDay = vi.hoisted(() => vi.fn(async () => 0));
 const closeExpiredAttempts = vi.hoisted(() => vi.fn(async () => 0));
@@ -13,15 +13,13 @@ const { GET } = await import("@/app/api/quiz/standings/route");
 
 async function signedInMember() {
   const user = await createUser("22334455");
-  await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "عضو",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 100,
-    },
+  await makeMember({
+    userId: user.id,
+    fullName: "عضو",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 100,
   });
   await prisma.competition.create({
     data: {

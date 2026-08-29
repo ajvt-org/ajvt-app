@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { nameKey } from "@/lib/nameKey";
+import { nameOf } from "./person";
 
 // "Is this person already a member?" — the question an admin cannot answer
 // from a new request, because a second phone number makes a second account and
@@ -26,21 +27,19 @@ export type SamePerson = {
 export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
   const mine = await prisma.member.findUnique({
     where: { id: memberId },
-    select: { id: true, fullName: true, userId: true },
+    select: { id: true, userId: true, user: { select: { fullName: true } } },
   });
   if (!mine) return [];
 
-  const key = nameKey(mine.fullName);
+  const key = nameKey(nameOf(mine.user));
   const others = await prisma.member.findMany({
     where: { id: { not: memberId } },
     select: {
       id: true,
-      fullName: true,
       status: true,
-      memberNumber: true,
       createdAt: true,
       userId: true,
-      user: { select: { phone: true } },
+      user: { select: { fullName: true, memberNumber: true, phone: true } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -51,15 +50,15 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
     // detached row left behind is the admin's own doing.
     if (mine.userId && other.userId === mine.userId) continue;
 
-    if (key.length === 0 || key !== nameKey(other.fullName)) continue;
+    if (key.length === 0 || key !== nameKey(nameOf(other.user))) continue;
 
     found.push({
       id: other.id,
-      fullName: other.fullName,
+      fullName: nameOf(other.user),
       status: other.status,
-      memberNumber: other.memberNumber,
+      memberNumber: other.user.memberNumber,
       createdAt: other.createdAt,
-      accountPhone: other.user?.phone ?? null,
+      accountPhone: other.user.phone ?? null,
     });
   }
   return found;

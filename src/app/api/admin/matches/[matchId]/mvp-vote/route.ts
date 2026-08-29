@@ -8,13 +8,14 @@ import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { mvpVoteCreateSchema, mvpVoteStatusSchema } from "./schema";
 import { notify, tournament } from "@/lib/messages";
+import { closesAtFrom } from "@/lib/mvpVote";
 
 const VOTE_INCLUDE = {
   candidates: {
     select: {
       id: true,
       memberId: true,
-      member: { select: { id: true, fullName: true } },
+      member: { select: { id: true, user: { select: { fullName: true } } } },
       _count: { select: { votes: true } },
     },
   },
@@ -25,7 +26,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const { matchId } = await params;
     const session = await requireMatchAccess(matchId);
-    const { candidateMemberIds } = parse(mvpVoteCreateSchema, await req.json());
+    const { candidateMemberIds, minutes } = parse(mvpVoteCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -33,10 +34,14 @@ export const POST = withRoute(
         homeTeam: { select: { id: true, name: true } },
         awayTeam: { select: { id: true, name: true } },
         mvpVote: { select: { id: true } },
+        activity: { select: { mvpVoteMinutes: true } },
       },
     });
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
+    }
+    if (match.status !== "PLAYED") {
+      return NextResponse.json({ error: tournament.voteNeedsResult }, { status: 400 });
     }
     if (match.mvpVote) {
       return NextResponse.json(
@@ -59,10 +64,18 @@ export const POST = withRoute(
       );
     }
 
+    const candidates = await prisma.member.findMany({
+      where: { id: { in: candidateMemberIds } },
+      select: { id: true, userId: true },
+    });
+
     const vote = await prisma.matchMvpVote.create({
       data: {
         matchId,
-        candidates: { create: candidateMemberIds.map((memberId) => ({ memberId })) },
+        closesAt: closesAtFrom(new Date(), minutes ?? match.activity.mvpVoteMinutes),
+        candidates: {
+          create: candidates.map((m) => ({ memberId: m.id, userId: m.userId })),
+        },
       },
       include: VOTE_INCLUDE,
     });
@@ -88,22 +101,40 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const { matchId } = await params;
     const session = await requireMatchAccess(matchId);
-    const { status } = parse(mvpVoteStatusSchema, await req.json());
+    const { status, minutes } = parse(mvpVoteStatusSchema, await req.json());
+    if (status === undefined && minutes === undefined) {
+      return NextResponse.json({ error: tournament.voteNothingToChange }, { status: 400 });
+    }
 
-    const existing = await prisma.matchMvpVote.findUnique({ where: { matchId } });
+    const existing = await prisma.matchMvpVote.findUnique({
+      where: { matchId },
+      select: { id: true, match: { select: { activity: { select: { mvpVoteMinutes: true } } } } },
+    });
     if (!existing) {
       return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
     }
 
+    const now = new Date();
+    const reopening = status === "OPEN";
+    const window =
+      minutes !== undefined ? minutes : reopening ? existing.match.activity.mvpVoteMinutes : null;
+
     const vote = await prisma.matchMvpVote.update({
       where: { matchId },
-      data: { status, closedAt: status === "CLOSED" ? new Date() : null },
+      data: {
+        ...(status ? { status, closedAt: status === "CLOSED" ? now : null } : {}),
+        ...(window !== null ? { closesAt: closesAtFrom(now, window) } : {}),
+      },
       include: VOTE_INCLUDE,
     });
 
     await logAction(
       session.username,
-      status === "CLOSED" ? "CLOSE_MVP_VOTE" : "REOPEN_MVP_VOTE",
+      status === "CLOSED"
+        ? "CLOSE_MVP_VOTE"
+        : status === "OPEN"
+          ? "REOPEN_MVP_VOTE"
+          : "EXTEND_MVP_VOTE",
       matchId,
     );
 

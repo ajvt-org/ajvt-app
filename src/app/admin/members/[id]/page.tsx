@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
+import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
@@ -16,6 +17,7 @@ import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
+import MemberPhotoCard from "./MemberPhotoCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
 import { STATUS_LABEL as REGISTRATION_LABEL } from "@/app/admin/activities/activityTypes";
@@ -117,7 +119,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             {member.fullName}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.age}
+            <span dir="ltr">{member.user?.phone || "—"}</span> · {member.village}
+            {member.age ? ` · ${member.age}` : ""}
             {member.memberNumber ? ` · ${member.memberNumber}` : ""}
           </p>
         </div>
@@ -156,6 +159,13 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         </ProfileSection>
       )}
 
+      <MemberPhotoCard
+        memberId={member.id}
+        photo={member.photo}
+        locked={member.photoLocked}
+        onChanged={load}
+      />
+
       <ProfileSection icon="wallet" title="الدفع">
         <dl className="text-sm space-y-1">
           <div className="flex justify-between gap-3">
@@ -185,6 +195,9 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
             <ProofReuseWarning filename={member.paymentProof} kind="member" id={member.id} />
           </div>
         )}
+        <div className="mt-3">
+          <MemberProofForm memberId={member.id} proof={member.paymentProof} onSaved={load} />
+        </div>
       </ProfileSection>
 
       <ProfileSection icon="trophy" title={`الأنشطة (${member.registrations.length})`}>
@@ -268,7 +281,11 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         )}
       </ProfileSection>
 
-      <DeleteMemberCard memberId={member.id} fullName={member.fullName} />
+      <DeleteMemberCard
+        memberId={member.id}
+        userId={member.user?.id ?? null}
+        fullName={member.fullName}
+      />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
+import BracketSuggestion from "./BracketSuggestion";
+import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
@@ -21,6 +23,7 @@ export default function MatchesTab({
   profile,
   matches,
   suspendedIds,
+  mvpVoteMinutes,
   onChange,
 }: {
   activityId: string;
@@ -30,6 +33,7 @@ export default function MatchesTab({
   profile: "FOOTBALL" | "BOARD";
   matches: Match[];
   suspendedIds: string[];
+  mvpVoteMinutes: number;
   onChange: () => void;
 }) {
   const [form, setForm] = useState({
@@ -152,6 +156,9 @@ export default function MatchesTab({
 
   return (
     <div className="space-y-4">
+      {profile === "FOOTBALL" && (
+        <MvpVoteMinutesCard activityId={activityId} minutes={mvpVoteMinutes} onChange={onChange} />
+      )}
       {error && (
         <div
           className="p-3 rounded-xl text-sm font-semibold"
@@ -194,14 +201,11 @@ export default function MatchesTab({
           <p className="text-xs" style={{ color: "#065f46" }}>
             {texts.groupStageDoneHint}
           </p>
-          <button
-            onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
-            disabled={generating}
-            className="btn btn-primary text-sm"
-            style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-          >
-            {generating ? "..." : <IconLabel name="swords">{texts.generateSemis}</IconLabel>}
-          </button>
+          <BracketSuggestion
+            activityId={activityId}
+            busy={generating}
+            onValidate={(redo) => runBracketAction("suggestion", texts.confirmSemis, { redo })}
+          />
         </div>
       )}
 
@@ -219,6 +223,7 @@ export default function MatchesTab({
                 allMatches={matches}
                 profile={profile}
                 suspendedIds={suspendedIds}
+                mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -255,6 +260,7 @@ export default function MatchesTab({
                 allMatches={matches}
                 profile={profile}
                 suspendedIds={suspendedIds}
+                mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -286,19 +292,11 @@ export default function MatchesTab({
                 <Icon name="lock" size={14} className="icon-inline" /> {texts.knockoutLockedHint}
               </p>
             ) : isTwoGroupFormat ? (
-              <>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {texts.crossSemisHint}
-                </p>
-                <button
-                  onClick={() => runBracketAction("semis-from-groups", texts.confirmSemis)}
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                  style={{ width: "auto" }}
-                >
-                  <IconLabel name="swords">{texts.generateSemis}</IconLabel>
-                </button>
-              </>
+              <BracketSuggestion
+                activityId={activityId}
+                busy={generating}
+                onValidate={(redo) => runBracketAction("suggestion", texts.confirmSemis, { redo })}
+              />
             ) : (
               <>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
@@ -321,7 +319,7 @@ export default function MatchesTab({
                 <button
                   onClick={() =>
                     isTwoGroupFormat
-                      ? runBracketAction("semis-from-groups", texts.confirmRegenerateSemis, {
+                      ? runBracketAction("suggestion", texts.confirmRegenerateSemis, {
                           redo: true,
                         })
                       : runBracketAction("draw", texts.confirmRedraw, { redo: true })

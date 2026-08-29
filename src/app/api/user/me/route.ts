@@ -6,15 +6,13 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
+import { getAppSettings } from "@/lib/settingsServer";
 
 const MEMBER_SELECT = {
   id: true,
-  fullName: true,
-  user: { select: { phone: true } },
-  age: true,
   paymentMethod: true,
   paymentProof: true,
-  photo: true,
   paidAmount: true,
   surplusAnonymous: true,
   membershipYear: true,
@@ -26,8 +24,6 @@ const MEMBER_SELECT = {
   rejectionReason: true,
   createdAt: true,
   updatedAt: true,
-  memberNumber: true,
-  verifyToken: true,
   registrations: {
     select: {
       id: true,
@@ -47,33 +43,43 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
 
+  const { membershipYear: currentYear } = await getAppSettings();
+
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    include: { members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } } },
+    select: {
+      ...PERSON_WITH_PHONE_SELECT,
+      members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
+    },
   });
 
   if (!user) {
     return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
   }
 
-  const members = await Promise.all(
-    user.members.map(async (member) => {
-      if (member.status === "ACTIVE" && !member.memberNumber) {
-        return prisma.member.update({
-          where: { id: member.id },
-          data: await issueMembership(),
-          select: MEMBER_SELECT,
-        });
-      }
-      return member;
-    }),
-  );
+  let person = personOf(user);
+  if (!user.memberNumber && user.members.some((member) => member.status === "ACTIVE")) {
+    const issued = await issueMembership();
+    await prisma.user.update({ where: { id: session.userId }, data: issued });
+    person = { ...person, ...issued };
+  }
 
+  // The year the association is collecting for. The member's own row carries
+  // the year they last paid into, and /home needs both to tell whether they
+  // are paid up or a year behind.
   return NextResponse.json({
+    ...person,
     phone: user.phone,
-    members: members.map(({ payments, ...member }) => {
+    currentYear,
+    members: user.members.map(({ payments, ...member }) => {
       const paid = paidForYear(payments, member.membershipYear);
-      return { ...member, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+      return {
+        ...member,
+        ...person,
+        user: { phone: user.phone },
+        paidAmount: paid?.fee ?? null,
+        supportAmount: paid?.support ?? 0,
+      };
     }),
   });
 });

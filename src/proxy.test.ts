@@ -79,6 +79,20 @@ const MATRIX: Record<string, Record<State, string>> = {
     forged: LOGIN("/form?id=m1"),
     admin: LOGIN("/form?id=m1"),
   },
+  "/membership": {
+    visitor: LOGIN("/membership"),
+    member: "self",
+    locked: CHANGE,
+    forged: LOGIN("/membership"),
+    admin: LOGIN("/membership"),
+  },
+  "/membership?id=m1": {
+    visitor: LOGIN("/membership?id=m1"),
+    member: "self",
+    locked: CHANGE,
+    forged: LOGIN("/membership?id=m1"),
+    admin: LOGIN("/membership?id=m1"),
+  },
   "/home": {
     visitor: LOGIN("/home"),
     member: "self",
@@ -156,6 +170,7 @@ describe("the proxy matcher", () => {
     "/activities/abc",
     "/change-password",
     "/form",
+    "/membership",
     "/admin/dashboard",
   ])("covers %s", (path) => {
     expect(pattern.test(path)).toBe(true);

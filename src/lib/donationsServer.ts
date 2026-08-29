@@ -38,7 +38,7 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
       donorName: true,
       donorPhoto: true,
       memberId: true,
-      member: { select: { fullName: true, photo: true } },
+      member: { select: { user: { select: { photo: true } } } },
     },
   });
 
@@ -71,7 +71,7 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     const named = p.donorName?.trim();
 
     if (p.memberId && named) {
-      const photoUrl = p.member?.photo ? `/api/files/member/${p.member.photo}` : null;
+      const photoUrl = p.member?.user.photo ? `/api/files/member/${p.member.user.photo}` : null;
       add(`m:${p.memberId}`, { name: named, photoUrl, anonymous: false }, amount, p.memberId);
     } else if (!p.memberId && named) {
       const photoUrl = p.donorPhoto ? `/api/files/donation/${p.donorPhoto}` : null;

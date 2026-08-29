@@ -7,9 +7,13 @@ import { runningYear } from "../../src/lib/membershipYear";
 import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
+import { saveMembershipSnapshot } from "../../src/lib/membershipRecord";
+import { splitPayment } from "../../src/lib/membershipPayment";
 
-export type SeededUser = { id: string; phone: string };
-export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>>;
+export type SeededUser = { id: string; phone: string | null };
+export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>> & {
+  fullName: string;
+};
 
 export interface SeededMembers {
   all: SeededMember[];
@@ -19,6 +23,7 @@ export interface SeededMembers {
 }
 
 const NO_ACCOUNT_EVERY = 33;
+const RENEWED_EVERY = 3;
 const NO_PROOF_EVERY = 4;
 const PHOTO_EVERY = 2;
 
@@ -45,37 +50,94 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
   const current = runningYear();
 
   for (let i = 0; i < slots.length; i++) {
-    const { age, status } = slots[i];
+    const { age, village, status } = slots[i];
     const isActive = status === "ACTIVE";
     const membershipYear = yearFor(i, slots.length, current);
     if (isActive) memberNumber += 1;
 
-    const member = await prisma.member.create({
+    const addedByHand = i % NO_ACCOUNT_EVERY === NO_ACCOUNT_EVERY - 1;
+    const owner = addedByHand
+      ? (await prisma.user.create({ data: { fullName: fullName(i) } })).id
+      : users[i].id;
+
+    await prisma.user.update({
+      where: { id: owner },
       data: {
-        userId: i % NO_ACCOUNT_EVERY === NO_ACCOUNT_EVERY - 1 ? null : users[i].id,
         fullName: fullName(i),
         age,
+        village,
+        photo: i % PHOTO_EVERY === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
+        memberNumber: isActive
+          ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
+          : null,
+        verifyToken: isActive ? generateVerifyToken() : null,
+      },
+    });
+
+    const member = await prisma.member.create({
+      data: {
+        userId: owner,
         paymentMethod: paymentMethod(i),
         paymentProof:
           i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1
             ? null
             : placeholder(`seed-proof-${next()}.webp`),
-        photo: i % PHOTO_EVERY === 0 ? placeholder(`seed-photo-${next()}.webp`) : null,
         paidAmount: [500, 1000, 1500, 2000, 3000][i % 5],
         referenceCode: referenceCode(i),
         status,
         rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
         membershipYear,
-        memberNumber: isActive
-          ? `AJVT-${membershipYear}-${String(memberNumber).padStart(4, "0")}`
-          : null,
-        verifyToken: isActive ? generateVerifyToken() : null,
         createdAt: daysAgo(Math.max(1, 130 - i)),
       },
     });
 
+    const banked = splitPayment(member.paidAmount ?? 0, MEMBERSHIP_FEE).fee;
+    const snapshot = {
+      status,
+      rejectionReason: member.rejectionReason,
+      paidAmount: banked,
+      paymentMethod: member.paymentMethod,
+      paymentProof: member.paymentProof,
+      referenceCode: member.referenceCode,
+      surplusAnonymous: member.surplusAnonymous,
+    };
+    await saveMembershipSnapshot(prisma, member.userId, membershipYear, snapshot);
+    if (isActive) {
+      await prisma.membership.updateMany({
+        where: { memberId: member.id, year: membershipYear },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
+      });
+    }
+
+    // A few members carry last year as well, so the years panel has a history
+    // to show rather than a single row.
+    if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
+      await saveMembershipSnapshot(prisma, member.userId, current - 1, {
+        ...snapshot,
+        referenceCode: null,
+      });
+      await prisma.membership.updateMany({
+        where: { userId: member.userId, year: current - 1 },
+        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
+      });
+      await mirrorMembershipPayment(prisma, {
+        memberId: member.id,
+        userId: member.userId,
+        year: current - 1,
+        amount: MEMBERSHIP_FEE,
+        feeApplied: MEMBERSHIP_FEE,
+        method: member.paymentMethod,
+        proof: member.paymentProof,
+        status,
+        anonymous: member.surplusAnonymous,
+        donorName: fullName(i),
+        recordedBy: "admin",
+      });
+    }
+
     await mirrorMembershipPayment(prisma, {
       memberId: member.id,
+      userId: member.userId,
       year: membershipYear,
       amount: member.paidAmount,
       feeApplied: MEMBERSHIP_FEE,
@@ -83,12 +145,13 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       proof: member.paymentProof,
       status,
       anonymous: member.surplusAnonymous,
-      donorName: member.fullName,
+      donorName: fullName(i),
     });
 
-    all.push(member);
-    if (isActive) active.push(member);
-    if (status === "PENDING") pending.push(member);
+    const withName = { ...member, fullName: fullName(i) };
+    all.push(withName);
+    if (isActive) active.push(withName);
+    if (status === "PENDING") pending.push(withName);
   }
 
   await prisma.counter.upsert({

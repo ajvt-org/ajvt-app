@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/admin/export/[dataset]/route";
 import { prisma } from "@/lib/prisma";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { resetDb, get, createAdmin, signInAsAdmin, withParams } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
 
 function download(dataset: string) {
   return GET(get(`/api/admin/export/${dataset}`), withParams({ dataset }));
@@ -27,14 +27,12 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("sends the members as a downloadable csv", async () => {
     await signInAsAdmin(await createAdmin());
-    await prisma.member.create({
-      data: {
-        fullName: "محمد ولد أحمد",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-        paidAmount: 100,
-      },
+    await makeMember({
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
+      paidAmount: 100,
     });
 
     const res = await download("members");
@@ -68,6 +66,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       donorPhoto: null,
       donorPhone: null,
       memberId: null,
+      userId: null,
       activityId: null,
       tagIds: [tag.id],
     });
@@ -80,21 +79,27 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("splits a membership payment into the fee and the support it carried", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
 
     const row = (await (await download("members")).text()).split("\n")[1];
 
-    expect(row.split(",").slice(4, 7)).toEqual(['"100"', '"900"', '"1000"']);
+    expect(row.split(",").slice(5, 8)).toEqual(['"100"', '"900"', '"1000"']);
   });
 
   it("carries the support half of a membership payment as a surplus gift", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 1000, 100);
@@ -108,8 +113,11 @@ describe("GET /api/admin/export/[dataset]", () => {
 
   it("leaves a membership payment that carried nothing off the donations export", async () => {
     await signInAsAdmin(await createAdmin());
-    const m = await prisma.member.create({
-      data: { fullName: "محمد", age: "البدريين", paymentMethod: "بنكيلي", status: "ACTIVE" },
+    const m = await makeMember({
+      fullName: "محمد",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.id, 100, 100);
@@ -122,13 +130,11 @@ describe("GET /api/admin/export/[dataset]", () => {
   it("exports the age groups with their rate", async () => {
     await signInAsAdmin(await createAdmin());
     await prisma.ageGroup.create({ data: { name: "البدريين", totalCount: 10 } });
-    await prisma.member.create({
-      data: {
-        fullName: "عضو",
-        age: "البدريين",
-        paymentMethod: "بنكيلي",
-        status: "ACTIVE",
-      },
+    await makeMember({
+      fullName: "عضو",
+      age: "البدريين",
+      paymentMethod: "بنكيلي",
+      status: "ACTIVE",
     });
 
     const body = await (await download("ages")).text();

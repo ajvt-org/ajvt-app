@@ -47,6 +47,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
 
   let memberId: string | null = null;
+  let accountId: string | null = null;
   let selfName: string | null = null;
   let selfAnonymous = false;
   if (typeof memberIdRaw === "string" && memberIdRaw.trim()) {
@@ -55,13 +56,14 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     const { userId } = session as { userId: string };
     const member = await prisma.member.findUnique({
       where: { id: memberIdRaw.trim() },
-      select: { userId: true, status: true, fullName: true },
+      select: { userId: true, status: true, user: { select: { fullName: true } } },
     });
     if (!member || member.userId !== userId || member.status !== "ACTIVE") {
       return NextResponse.json({ error: "عضو غير صالح" }, { status: 403 });
     }
     memberId = memberIdRaw.trim();
-    selfName = member.fullName;
+    accountId = userId;
+    selfName = member.user.fullName;
     selfAnonymous = formData.get("anonymous") === "true";
   }
 
@@ -111,12 +113,14 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       paymentMethod,
       proof: filename,
       memberId,
+      userId: accountId,
       source: memberId ? "SELF" : "PUBLIC",
       status: "PENDING",
     },
   });
   await mirrorDonation(prisma, {
     donationId: donation.id,
+    userId: donation.userId,
     amount,
     method: paymentMethod,
     proof: filename,

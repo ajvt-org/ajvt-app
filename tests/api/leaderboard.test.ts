@@ -3,17 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
 import { mirrorDonation } from "@/lib/paymentMirror";
-import { get } from "./helpers";
+import { get, makeMember } from "./helpers";
 import { resetDb } from "./helpers";
 
 async function member(fullName: string) {
-  return prisma.member.create({
-    data: {
-      fullName,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-    },
+  return makeMember({
+    fullName,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
   });
 }
 
@@ -22,11 +20,18 @@ async function gift(
   opts: { name?: string | null; memberId?: string; status?: "ACTIVE" | "PENDING" } = {},
 ) {
   const status = opts.status ?? "ACTIVE";
+  const owner = opts.memberId
+    ? await prisma.member.findUniqueOrThrow({
+        where: { id: opts.memberId },
+        select: { userId: true },
+      })
+    : null;
   const donation = await prisma.donation.create({
     data: {
       amount,
       donorName: opts.name ?? null,
       memberId: opts.memberId ?? null,
+      userId: owner?.userId ?? null,
       status,
       source: opts.memberId ? "SELF" : "PUBLIC",
     },
@@ -41,6 +46,7 @@ async function gift(
     donorPhoto: null,
     donorPhone: null,
     memberId: donation.memberId,
+    userId: donation.userId,
     activityId: null,
   });
   return donation;
@@ -178,6 +184,7 @@ describe("the supporters board", () => {
       donorPhoto: "guest.webp",
       donorPhone: null,
       memberId: null,
+      userId: null,
       activityId: null,
     });
 

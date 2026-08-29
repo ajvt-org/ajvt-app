@@ -1,0 +1,56 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+
+const ARABIC = /[؀-ۿ]/;
+
+const KEPT_CLEAN = [
+  "src/app/admin/members/[id]/AccountPhoneForm.tsx",
+  "src/app/admin/receipts",
+  "src/app/admin/settings",
+  "src/app/api/admin/receipts",
+  "src/app/api/admin/settings",
+  "src/app/receipt",
+  "src/components/receipt",
+  "src/components/MemberCard.tsx",
+  "src/components/PaymentReceipts.tsx",
+  "src/components/admin/shell/navTabs.ts",
+  "src/lib/officialReceipt.ts",
+  "src/lib/officialReceiptServer.ts",
+  "src/lib/paymentReceiptServer.ts",
+  "src/lib/receipts.ts",
+  "src/lib/receiptsServer.ts",
+];
+
+function sourceFiles(path: string): string[] {
+  if (statSync(path).isFile()) return [path];
+  return readdirSync(path, { withFileTypes: true }).flatMap((entry) => {
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) return sourceFiles(child);
+    if (!/\.tsx?$/.test(entry.name)) return [];
+    if (/\.(test|ui\.test)\.tsx?$/.test(entry.name)) return [];
+    return [child];
+  });
+}
+
+function inlineArabic(path: string): number[] {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .map((line, index) => (ARABIC.test(line) ? index + 1 : 0))
+    .filter(Boolean);
+}
+
+describe("where the Arabic lives", () => {
+  it("keeps every cleaned file free of inline text, so labels stay in the texts module", () => {
+    const offenders = KEPT_CLEAN.flatMap(sourceFiles)
+      .map((path) => ({ path, lines: inlineArabic(path) }))
+      .filter((file) => file.lines.length > 0)
+      .map((file) => `${file.path}:${file.lines.join(",")}`);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("names nothing that has left the tree", () => {
+    expect(() => KEPT_CLEAN.forEach((path) => statSync(path))).not.toThrow();
+  });
+});

@@ -1,12 +1,18 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH, DELETE } from "@/app/api/admin/age-groups/[id]/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  personFor,
+  makeMember,
+} from "./helpers";
 
 async function aMember(fullName: string, age: string) {
-  return prisma.member.create({
-    data: { fullName, age, paymentMethod: "بنكيلي" },
-  });
+  return makeMember({ user: { create: {} }, fullName, age, paymentMethod: "بنكيلي" });
 }
 
 describe("PATCH /api/admin/age-groups/[id]", () => {
@@ -41,9 +47,9 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { age: "المنصورون" } })).toBe(2);
-    expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(0);
-    expect(await prisma.member.count({ where: { age: "المبشرين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(0);
+    expect(await prisma.member.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
   });
 
   it("records how many members moved", async () => {
@@ -69,7 +75,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
 
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await personFor(member.id);
     expect(after.age).toBe("المنصورون");
     expect(after.updatedAt.getTime()).toBe(before.getTime());
   });
@@ -77,11 +83,17 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
   it("keeps the payment proof order, that list sorts on the same field", async () => {
     await signInAsAdmin(await createAdmin());
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
-    const older = await prisma.member.create({
-      data: { fullName: "محمد", age: "المنصورين", paymentMethod: "بنكيلي", paymentProof: "a.webp" },
+    const older = await makeMember({
+      fullName: "محمد",
+      age: "المنصورين",
+      paymentMethod: "بنكيلي",
+      paymentProof: "a.webp",
     });
-    const newer = await prisma.member.create({
-      data: { fullName: "أحمد", age: "المبشرين", paymentMethod: "بنكيلي", paymentProof: "b.webp" },
+    const newer = await makeMember({
+      fullName: "أحمد",
+      age: "المبشرين",
+      paymentMethod: "بنكيلي",
+      paymentProof: "b.webp",
     });
 
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
@@ -107,7 +119,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 });
 
@@ -124,6 +136,6 @@ describe("DELETE /api/admin/age-groups/[id]", () => {
     const res = await DELETE(post(`/api/admin/age-groups/${group.id}`, {}), withId(group.id));
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { age: "المنصورين" } })).toBe(1);
+    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 });

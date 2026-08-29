@@ -2,6 +2,8 @@ import { prisma } from "./prisma";
 import type { Prisma, SuspensionReason, SuspensionScope } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
+import { nameOf } from "./person";
+import { accountOf } from "./memberAccount";
 
 type Tx = Prisma.TransactionClient;
 
@@ -37,9 +39,9 @@ export async function suspendedMemberIds(activityId: string, now = new Date()) {
   return new Set((await runningSuspensions(activityId, now)).map((s) => s.memberId));
 }
 
-async function hasOpenSuspension(tx: Tx, activityId: string, memberId: string) {
+async function hasOpenSuspension(tx: Tx, activityId: string, userId: string) {
   const open = await tx.suspension.findFirst({
-    where: { activityId, memberId, status: { in: ["PROPOSED", "ACTIVE"] } },
+    where: { activityId, userId, status: { in: ["PROPOSED", "ACTIVE"] } },
     select: { id: true },
   });
   return open !== null;
@@ -56,13 +58,15 @@ export async function proposeFromBooking(
     select: { yellowsForBan: true, redBanMatches: true },
   });
 
-  if (await hasOpenSuspension(tx, activityId, memberId)) return null;
+  const userId = await accountOf(tx, memberId);
+  if (await hasOpenSuspension(tx, activityId, userId)) return null;
 
   if (cardType === "RED") {
     return tx.suspension.create({
       data: {
         activityId,
         memberId,
+        userId,
         reason: "RED_CARD",
         scope: "MATCHES",
         matches: activity.redBanMatches,
@@ -72,7 +76,7 @@ export async function proposeFromBooking(
   }
 
   const lastBan = await tx.suspension.findFirst({
-    where: { activityId, memberId, reason: "YELLOW_CARDS" },
+    where: { activityId, userId, reason: "YELLOW_CARDS" },
     orderBy: { createdAt: "desc" },
     select: { createdAt: true },
   });
@@ -89,6 +93,7 @@ export async function proposeFromBooking(
       data: {
         activityId,
         memberId,
+        userId,
         reason: "YELLOW_CARDS",
         scope: "MATCHES",
         matches: 1,
@@ -147,18 +152,20 @@ export async function proposeSuspension(
     throw new ValidationError(messages.suspensionUntilRequired);
   }
   return prisma.$transaction(async (tx) => {
+    const userId = await accountOf(tx, input.memberId);
     const member = await tx.teamMember.findFirst({
-      where: { memberId: input.memberId, team: { activityId } },
+      where: { userId, team: { activityId } },
       select: { id: true },
     });
     if (!member) throw new NotFoundError(messages.memberNotInTournament);
-    if (await hasOpenSuspension(tx, activityId, input.memberId)) {
+    if (await hasOpenSuspension(tx, activityId, userId)) {
       throw new ConflictError(messages.suspensionAlreadyOpen);
     }
     return tx.suspension.create({
       data: {
         activityId,
         memberId: input.memberId,
+        userId,
         reason: input.reason ?? "CONDUCT",
         scope: input.scope,
         matches: input.scope === "MATCHES" ? input.matches : null,
@@ -218,9 +225,13 @@ export async function listSuspensions(activityId: string) {
       createdBy: true,
       decidedBy: true,
       createdAt: true,
-      member: { select: { id: true, fullName: true, photo: true } },
+      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
     },
   });
   const now = new Date();
-  return rows.map((s) => ({ ...s, running: suspensionIsRunning(s, now) }));
+  return rows.map((s) => ({
+    ...s,
+    member: { id: s.member.id, fullName: nameOf(s.member.user), photo: s.member.user.photo },
+    running: suspensionIsRunning(s, now),
+  }));
 }

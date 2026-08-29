@@ -34,6 +34,7 @@ export type MatchEventRow = {
 };
 
 const MINUTES_PER_LINE = 2;
+const NO_MINUTE = 999;
 
 function kindSuffix(kind: GoalSource["kind"]): string {
   if (kind === "PENALTY") return ` (${matchDisplay.penaltyShort})`;
@@ -43,6 +44,15 @@ function kindSuffix(kind: GoalSource["kind"]): string {
 
 function sortMinutes(minutes: string[]): string[] {
   return [...minutes].sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0));
+}
+
+function firstMinute(row: MatchEventRow): number {
+  const minute = parseInt(row.minutes[0] ?? "", 10);
+  return Number.isNaN(minute) ? NO_MINUTE : minute;
+}
+
+function byFirstMinute(rows: MatchEventRow[]): MatchEventRow[] {
+  return [...rows].sort((a, b) => firstMinute(a) - firstMinute(b));
 }
 
 export function goalRows(goals: GoalSource[]): MatchEventRow[] {
@@ -67,13 +77,15 @@ export function goalRows(goals: GoalSource[]): MatchEventRow[] {
     }
     rows.set(key, row);
   }
-  return [...rows.values()].map(({ unnamed, ...row }) => ({
-    ...row,
-    minutes:
-      unnamed > 0
-        ? [...sortMinutes(row.minutes), `(${row.minutes.length + unnamed})`]
-        : sortMinutes(row.minutes),
-  }));
+  return byFirstMinute(
+    [...rows.values()].map(({ unnamed, ...row }) => ({
+      ...row,
+      minutes:
+        unnamed > 0
+          ? [...sortMinutes(row.minutes), `(${row.minutes.length + unnamed})`]
+          : sortMinutes(row.minutes),
+    })),
+  );
 }
 
 export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
@@ -93,7 +105,9 @@ export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
     if (booking.minute !== null) row.minutes.push(`${booking.minute}'`);
     rows.set(key, row);
   }
-  return [...rows.values()].map((row) => ({ ...row, minutes: sortMinutes(row.minutes) }));
+  return byFirstMinute(
+    [...rows.values()].map((row) => ({ ...row, minutes: sortMinutes(row.minutes) })),
+  );
 }
 
 export function minuteLines(minutes: string[], perLine = MINUTES_PER_LINE): string[][] {
@@ -107,6 +121,7 @@ type EventPlayer = { id: string; fullName: string; photo: string | null };
 export type EventMatch = {
   homeTeamId?: string;
   manOfTheMatchTeam?: string | null;
+  hideGoalsOfTeamId?: string | null;
   goals: {
     count: number;
     minute: number | null;
@@ -128,10 +143,15 @@ function sideOf(teamId: string | undefined, homeTeamId: string | undefined): Eve
   return teamId === homeTeamId ? "home" : "away";
 }
 
+function shownGoals(match: EventMatch) {
+  if (!match.hideGoalsOfTeamId) return match.goals;
+  return match.goals.filter((goal) => goal.teamId !== match.hideGoalsOfTeamId);
+}
+
 export function matchEventRows(match: EventMatch): MatchEventRow[] {
   const rows = [
     ...goalRows(
-      match.goals.map((goal) => ({
+      shownGoals(match).map((goal) => ({
         memberId: goal.member?.id ?? null,
         fullName: goal.member?.fullName ?? matchDisplay.unknownScorer,
         photo: goal.member?.photo ?? null,
@@ -187,7 +207,7 @@ export type TimelineEntry = {
 
 export function matchTimeline(match: EventMatch): TimelineEntry[] {
   const entries: TimelineEntry[] = [];
-  match.goals.forEach((goal, i) => {
+  shownGoals(match).forEach((goal, i) => {
     entries.push({
       key: `goal:${i}`,
       minute: goal.minute,
@@ -211,5 +231,5 @@ export function matchTimeline(match: EventMatch): TimelineEntry[] {
       note: "",
     });
   });
-  return entries.sort((a, b) => (a.minute ?? 999) - (b.minute ?? 999));
+  return entries.sort((a, b) => (a.minute ?? NO_MINUTE) - (b.minute ?? NO_MINUTE));
 }

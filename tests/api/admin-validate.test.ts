@@ -1,20 +1,26 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/validate/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, post, createAdmin, createUser, signInAsAdmin } from "./helpers";
+import {
+  resetDb,
+  post,
+  createAdmin,
+  createUser,
+  signInAsAdmin,
+  personFor,
+  makeMember,
+} from "./helpers";
 import { logAction } from "@/lib/audit";
 
 async function pendingMember() {
   const user = await createUser();
-  return prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      paidAmount: 1000,
-      status: "PENDING",
-    },
+  return makeMember({
+    userId: user.id,
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    paidAmount: 1000,
+    status: "PENDING",
   });
 }
 
@@ -53,7 +59,7 @@ describe("POST /api/admin/validate", () => {
     expect(res.status).toBe(200);
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.status).toBe("ACTIVE");
-    expect(after.memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
+    expect((await personFor(member.id)).memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
   });
 
   it("lets a SUPER admin through as well", async () => {
@@ -68,20 +74,18 @@ describe("POST /api/admin/validate", () => {
   it("hands out member numbers in sequence and never reuses one", async () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
     const first = await pendingMember();
-    const second = await prisma.member.create({
-      data: {
-        fullName: "أحمد ولد سيدي",
-        age: "الفائزين",
-        paymentMethod: "السداد",
-        status: "PENDING",
-      },
+    const second = await makeMember({
+      fullName: "أحمد ولد سيدي",
+      age: "الفائزين",
+      paymentMethod: "السداد",
+      status: "PENDING",
     });
 
     await POST(post("/api/admin/validate", { id: first.id, action: "ACTIVE" }));
     await POST(post("/api/admin/validate", { id: second.id, action: "ACTIVE" }));
 
-    const numbers = (await prisma.member.findMany({ select: { memberNumber: true } }))
-      .map((m) => m.memberNumber)
+    const numbers = (await prisma.user.findMany({ select: { memberNumber: true } }))
+      .map((u) => u.memberNumber)
       .filter(Boolean);
     expect(new Set(numbers).size).toBe(2);
   });
@@ -91,9 +95,9 @@ describe("POST /api/admin/validate", () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
-    const first = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const first = await personFor(member.id);
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
-    const second = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const second = await personFor(member.id);
 
     expect(second.memberNumber).toBe(first.memberNumber);
   });
@@ -127,7 +131,7 @@ describe("POST /api/admin/validate", () => {
     ]) {
       const res = await POST(post("/api/admin/validate", body));
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "سبب الرفض مطلوب" });
+      expect(await res.json()).toEqual({ error: "سبب رفض الدفع مطلوب" });
     }
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
@@ -168,13 +172,51 @@ describe("POST /api/admin/validate", () => {
       post("/api/admin/validate", {
         id: member.id,
         action: "REJECTED",
-        rejectionReason: "طلب مكرر",
+        rejectionReason: "معلومات ناقصة أو غير صحيحة",
       }),
     );
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.rejectionReason).toBeNull();
+  });
+
+  // Refusing a payment must not reach the person. There is no rejected state
+  // for an account to be in, and nothing about them changes when the money is
+  // turned away: they keep their name, their village, their photo and their
+  // login, and the same request is theirs to send again.
+  it("leaves the account exactly as it was when the payment is refused", async () => {
+    const member = await pendingMember();
+    const before = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    await POST(
+      post("/api/admin/validate", {
+        id: member.id,
+        action: "REJECTED",
+        rejectionReason: "الصورة غير واضحة",
+      }),
+    );
+
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
+    expect(after).toEqual(before);
+  });
+
+  it("keeps the refused payment on the account rather than removing either", async () => {
+    const member = await pendingMember();
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    await POST(
+      post("/api/admin/validate", {
+        id: member.id,
+        action: "REJECTED",
+        rejectionReason: "الصورة غير واضحة",
+      }),
+    );
+
+    expect(await prisma.user.count({ where: { id: member.userId } })).toBe(1);
+    const still = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(still.userId).toBe(member.userId);
   });
 
   it("rejects an unknown action", async () => {

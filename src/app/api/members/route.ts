@@ -6,7 +6,7 @@ import { parse } from "@/lib/validation";
 import { memberSubmissionSchema } from "./schema";
 import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
-import { ConflictError, NotFoundError } from "@/lib/errors";
+import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { members } from "@/lib/messages";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
@@ -16,17 +16,18 @@ const CODE_ATTEMPTS = 5;
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
-  const {
-    id,
-    fullName,
-    age,
-    paymentMethod,
-    paymentProof,
-    photo,
-    paidAmount,
-    referenceCode,
-    surplusAnonymous,
-  } = parse(memberSubmissionSchema(membershipFee), await req.json());
+  const { id, paymentMethod, paymentProof, paidAmount, referenceCode, surplusAnonymous } = parse(
+    memberSubmissionSchema(membershipFee),
+    await req.json(),
+  );
+
+  const person = await prisma.user.findUniqueOrThrow({
+    where: { id: session.userId },
+    select: { fullName: true, members: { select: { id: true }, take: 1 } },
+  });
+  if (!person.fullName?.trim()) {
+    throw new ValidationError(members.profileIncomplete);
+  }
 
   if (id) {
     const existing = await prisma.member.findUnique({ where: { id } });
@@ -41,11 +42,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       const m = await tx.member.update({
         where: { id },
         data: {
-          fullName: fullName.trim(),
-          age: age.trim(),
           paymentMethod,
           paymentProof,
-          ...(photo !== undefined ? { photo } : {}),
           ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
           ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
           status: "PENDING",
@@ -58,11 +56,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     return NextResponse.json({ id: updated.id }, { status: 200 });
   }
 
-  const account = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { members: { select: { id: true }, take: 1 } },
-  });
-  if (account?.members.length) {
+  if (person.members.length) {
     throw new ConflictError(members.alreadyHasRequest);
   }
 
@@ -74,11 +68,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         const created = await tx.member.create({
           data: {
             userId: session.userId,
-            fullName: fullName.trim(),
-            age: age.trim(),
             paymentMethod,
             paymentProof,
-            photo: photo || null,
             surplusAnonymous: surplusAnonymous ?? false,
             referenceCode: code,
             status: "PENDING",

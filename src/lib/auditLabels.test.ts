@@ -1,15 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { sourceFiles } from "@tests/sourceFiles";
 import { ACTION_LABELS, auditActionLabel } from "./auditLabels";
-
-function sourceFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) return sourceFiles(path);
-    return /\.tsx?$/.test(entry.name) ? [path] : [];
-  });
-}
 
 function loggedActions(): string[] {
   const found = new Set<string>();

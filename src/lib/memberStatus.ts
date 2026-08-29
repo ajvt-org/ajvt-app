@@ -4,6 +4,10 @@ import type { Status } from "@/lib/useMember";
 
 // One description of each status, so the badge at the top of the profile and
 // the card explaining it can never say different things.
+//
+// The status belongs to the membership payment. None of these three says
+// anything about the person: a refused payment is a refused payment, and the
+// account behind it carries on.
 export const STATUS: Record<
   Status,
   {
@@ -22,7 +26,7 @@ export const STATUS: Record<
     icon: "clock",
     label: memberStatusLabels.PENDING,
     title: "الطلب قيد المراجعة",
-    desc: "تم استلام الطلب. سيقوم المشرف بمراجعة البيانات وإثبات الدفع وإعلامك بالنتيجة قريباً.",
+    desc: "تم استلام الدفع. سيراجع المشرف الإثبات ويعلمك بالنتيجة قريباً.",
     bg: "#fef9ee",
     border: "#fcd34d",
     badgeClass: "badge-pending",
@@ -43,8 +47,8 @@ export const STATUS: Record<
   REJECTED: {
     icon: "close",
     label: memberStatusLabels.REJECTED,
-    title: "لم يتم قبول الطلب",
-    desc: "نأسف لإعلامك أنه لم يتم قبول هذا الطلب. يمكنك التواصل مع المشرف لمزيد من المعلومات.",
+    title: "لم يُقبل إثبات الدفع",
+    desc: "حسابك وبياناتك كما هي. راجع السبب أدناه، أرفق إثباتاً جديداً وأعد الإرسال.",
     bg: "#fff5f5",
     border: "#fca5a5",
     badgeClass: "badge-rejected",

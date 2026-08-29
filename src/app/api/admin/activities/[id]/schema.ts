@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { capacity, activityDate, endsAfterStart, DATE_ORDER_INVALID } from "../schema";
 import { activities, common } from "@/lib/messages";
+import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
 
 const INVALID = common.invalidBody;
 const TITLE_REQUIRED = "العنوان مطلوب";
@@ -38,9 +39,12 @@ export const activityUpdateSchema = z
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
     profile: z.enum(["FOOTBALL", "BOARD"], INVALID).optional(),
     yellowsForBan: z.number().int().min(1).max(10).optional(),
+    mvpVoteMinutes: z.number().int().min(MVP_VOTE_MINUTES_MIN).max(MVP_VOTE_MINUTES_MAX).optional(),
     redBanMatches: z.number().int().min(1).max(10).optional(),
     teamSize: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
+    published: z.unknown().optional(),
+    settlePending: z.enum(["accept", "reject"], INVALID).optional(),
     whatsappLink: z.string(INVALID).nullish(),
     order: order.optional(),
     startsAt: activityDate.optional(),

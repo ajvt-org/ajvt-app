@@ -1,4 +1,5 @@
 import TeamLogo from "./TeamLogo";
+import { matchDisplay } from "@/lib/texts";
 import FollowTeamButton from "./FollowTeamButton";
 
 type Row = {
@@ -13,6 +14,7 @@ type Row = {
   gf: number;
   ga: number;
   gd: number;
+  unresolved?: boolean;
 };
 
 const COLUMNS: { label: string; detail: boolean; start?: boolean }[] = [
@@ -70,6 +72,15 @@ export default function StandingsTable({
                 <span className="flex items-center gap-1.5 justify-start">
                   <TeamLogo logo={row.logo} name={row.name} size={18} />
                   <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
+                  {row.unresolved && (
+                    <span
+                      className="badge shrink-0"
+                      title={matchDisplay.tieUnresolved}
+                      style={{ background: "#fef3c7", color: "#92400e" }}
+                    >
+                      {matchDisplay.tieMark}
+                    </span>
+                  )}
                 </span>
               </td>
               <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>

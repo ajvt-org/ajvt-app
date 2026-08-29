@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
-import Icon from "@/components/Icon";
+import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import { toThumbUrl } from "@/lib/utils";
 
 export default function ActivityRowBody({
   title,
   photo,
+  icon,
   isVolunteer,
   when,
   meta,
@@ -13,6 +14,7 @@ export default function ActivityRowBody({
 }: {
   title: string;
   photo?: string | null;
+  icon?: IconName;
   isVolunteer?: boolean;
   when?: string | null;
   meta?: ReactNode;
@@ -33,7 +35,7 @@ export default function ActivityRowBody({
         />
       ) : (
         <span className="activity-thumb">
-          <Icon name={isVolunteer ? "handshake" : "trophy"} size={22} />
+          <Icon name={icon ?? (isVolunteer ? "handshake" : "trophy")} size={22} />
         </span>
       )}
 

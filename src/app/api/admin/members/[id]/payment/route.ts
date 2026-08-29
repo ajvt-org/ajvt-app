@@ -12,6 +12,7 @@ import { splitPayment } from "@/lib/membershipPayment";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
+import { nameOf } from "@/lib/person";
 
 export const PUT = withRoute(
   "PUT /api/admin/members/[id]/payment",
@@ -26,11 +27,17 @@ export const PUT = withRoute(
 
     const existing = await prisma.member.findUnique({
       where: { id },
-      select: { fullName: true, membershipYear: true, paidAmount: true },
+      select: {
+        userId: true,
+        membershipYear: true,
+        paidAmount: true,
+        paymentProof: true,
+        user: { select: { fullName: true } },
+      },
     });
     if (!existing) throw new NotFoundError(messages.notFound);
 
-    if (amountTransferred !== null) {
+    if (amountTransferred !== undefined && amountTransferred !== null) {
       const amountError = validatePaidAmount(amountTransferred, membershipFee);
       if (amountError) throw new ValidationError(amountError);
     }
@@ -47,21 +54,33 @@ export const PUT = withRoute(
           },
         });
       }
-      await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
-      await syncMembershipRecord(tx, id, existing.membershipYear, {
-        paidAmount:
-          amountTransferred === null ? null : splitPayment(amountTransferred, membershipFee).fee,
+      if (amountTransferred !== undefined) {
+        await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
+      }
+      await syncMembershipRecord(tx, existing.userId, existing.membershipYear, {
+        ...(amountTransferred !== undefined
+          ? {
+              paidAmount:
+                amountTransferred === null
+                  ? null
+                  : splitPayment(amountTransferred, membershipFee).fee,
+            }
+          : {}),
         ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+        ...(paymentProof !== undefined ? { paymentProof } : {}),
       });
       return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
-    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", existing.fullName, {
+    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(existing.user), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { amountTransferred: before },
-      after: { amountTransferred },
+      before: { amountTransferred: before, paymentProof: existing.paymentProof },
+      after: {
+        amountTransferred: amountTransferred === undefined ? before : amountTransferred,
+        paymentProof: paymentProof === undefined ? existing.paymentProof : paymentProof,
+      },
     });
 
     return NextResponse.json({

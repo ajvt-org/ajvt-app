@@ -1,4 +1,5 @@
 import { memberStatusLabels } from "@/lib/messages";
+import { HOME_VILLAGE } from "@/lib/villages";
 import type { Status } from "./types";
 
 export const STATUS_LABEL: Record<Status, string> = memberStatusLabels;
@@ -17,11 +18,15 @@ export const STATUS_ICON = {
 
 export const PAGE_SIZE = 30;
 
-export const emptyManualForm = {
+export const emptyPersonForm = {
   accountPhone: "",
   fullName: "",
   phoneUnknown: false,
+  village: HOME_VILLAGE,
   age: "",
+};
+
+export const emptyPaymentForm = {
   paymentMethod: "",
   paidAmount: "",
   status: "ACTIVE" as "PENDING" | "ACTIVE",

@@ -1,7 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { WAITING_DAYS } from "@/lib/waitingRequests";
-import { resetDb, get, post, createUser, createAdmin, signInAsAdmin, signInAs } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  createUser,
+  createAdmin,
+  signInAsAdmin,
+  signInAs,
+  makeMember,
+} from "./helpers";
 
 process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "test-public-key";
 process.env.VAPID_PRIVATE_KEY = "test-private-key";
@@ -26,15 +35,13 @@ const read = () => WAITING(get("/api/admin/waiting"));
 async function pendingMember(phone: string, name: string, days: number) {
   const user = await createUser(phone);
   await prisma.user.update({ where: { id: user.id }, data: { createdAt: ago(days) } });
-  const member = await prisma.member.create({
-    data: {
-      userId: user.id,
-      fullName: name,
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "PENDING",
-      createdAt: ago(days),
-    },
+  const member = await makeMember({
+    userId: user.id,
+    fullName: name,
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "PENDING",
+    createdAt: ago(days),
   });
   return { user, member };
 }

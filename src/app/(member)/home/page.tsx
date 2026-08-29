@@ -1,6 +1,7 @@
 "use client";
 
 import ActivitiesSection from "@/components/ActivitiesSection";
+import MembershipStanding from "@/components/MembershipStanding";
 import MyActivities from "@/components/MyActivities";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
@@ -9,7 +10,7 @@ import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { useMember } from "@/lib/useMember";
 
 export default function HomePage() {
-  const { member, loading } = useMember();
+  const { member, currentYear, loading } = useMember();
 
   if (loading) {
     return (
@@ -25,16 +26,17 @@ export default function HomePage() {
       <PageHeader title="الأنشطة" />
 
       <div className="flex-1 px-5 py-6 space-y-6">
+        <MembershipStanding member={member} currentYear={currentYear} />
+
         <MyActivities />
 
         <ActivitiesSection
-          memberStatus={member?.status ?? null}
           quizAccess={
             member?.status === "ACTIVE" &&
             member.paidAmount !== null &&
             member.paidAmount >= MEMBERSHIP_FEE
           }
-          eligibleMember={toEligibleMember(member)}
+          eligibleMember={toEligibleMember(member, currentYear)}
         />
       </div>
     </div>

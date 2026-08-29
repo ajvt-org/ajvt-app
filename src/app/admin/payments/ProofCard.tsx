@@ -5,20 +5,20 @@ import { formatDate, formatTime } from "@/lib/utils";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import RecordHistory from "@/components/admin/RecordHistory";
-import type { HistoryTarget } from "@/app/api/admin/history/schema";
+import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import DonationTags from "./DonationTags";
 import DonationActions from "./DonationActions";
 import DonationEditForm from "./DonationEditForm";
 import LinkMemberPanel from "./LinkMemberPanel";
 import ProofThumb from "./ProofThumb";
+import { HISTORY_TARGET, REUSE_KIND } from "./proofKinds";
 import {
   STATUS_CLASS,
   STATUS_LABEL,
   type ActivityOption,
   type MemberOption,
   type Proof,
-  type ProofKind,
 } from "./paymentTypes";
 
 function Origin({ proof }: { proof: Proof }) {
@@ -31,12 +31,6 @@ function statusText(proof: Proof) {
   const label = STATUS_LABEL[proof.status] || proof.status;
   return proof.kind === "DONATION" && proof.amount ? `${label} — ${proof.amount} أوقية` : label;
 }
-
-const HISTORY_TARGET: Record<ProofKind, HistoryTarget> = {
-  MEMBERSHIP: "Member",
-  ACTIVITY: "ActivityRegistration",
-  DONATION: "Donation",
-};
 
 export default function ProofCard({
   proof,
@@ -63,6 +57,7 @@ export default function ProofCard({
   const [showHistory, setShowHistory] = useState(false);
   const [linking, setLinking] = useState(false);
   const isDonation = proof.kind === "DONATION";
+  const reuseKind = REUSE_KIND[proof.kind];
 
   return (
     <div className="card p-3">
@@ -101,6 +96,8 @@ export default function ProofCard({
             {" — "}
             {formatTime(proof.uploadedAt)}
           </p>
+
+          {reuseKind && <ProofReuseWarning filename={proof.proof} kind={reuseKind} id={proof.id} />}
 
           {isDonation && (
             <>

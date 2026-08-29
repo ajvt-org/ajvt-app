@@ -2,6 +2,7 @@ import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import type { MemberData } from "@/lib/useMember";
 import PaidAmountRows from "@/components/PaidAmountRows";
+import { villageField } from "@/lib/texts";
 
 export default function MemberInfoCard({
   member,
@@ -25,13 +26,14 @@ export default function MemberInfoCard({
             className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <IconLabel name="pencil">تعديل</IconLabel>
+            <IconLabel name="pencil">تعديل الدفع</IconLabel>
           </button>
         )}
       </div>
       <div className="space-y-2.5">
         <InfoRow label="رقم الهاتف" value={member.user?.phone ?? "—"} dir="ltr" />
-        <InfoRow label="العصر" value={member.age} />
+        <InfoRow label={villageField.label} value={member.village} />
+        {member.age && <InfoRow label="العصر" value={member.age} />}
         <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
         <PaidAmountRows
           paidAmount={member.paidAmount}

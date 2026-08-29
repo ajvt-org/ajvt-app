@@ -3,7 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { resetDb, get, post, createAdmin, signInAsAdmin, withId } from "./helpers";
+import {
+  resetDb,
+  get,
+  post,
+  createAdmin,
+  signInAsAdmin,
+  withId,
+  personFor,
+  makeMember,
+} from "./helpers";
 
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 import { GET as LIST_YEARS } from "@/app/api/admin/members/[id]/memberships/route";
@@ -14,17 +23,17 @@ const LAST = YEAR - 1;
 const payment = { paidAmount: 1000, paymentMethod: "بنكيلي" };
 
 function member(over: Record<string, unknown> = {}) {
-  return prisma.member.create({
-    data: {
-      fullName: "محمد ولد أحمد",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-      status: "ACTIVE",
-      paidAmount: 500,
-      membershipYear: LAST,
-      memberNumber: "AJVT-2025-0001",
-      ...over,
-    },
+  const { userId, ...rest } = over;
+  return makeMember({
+    ...(userId ? { userId: userId as string } : { user: { create: {} } }),
+    fullName: "محمد ولد أحمد",
+    age: "البدريين",
+    paymentMethod: "بنكيلي",
+    status: "ACTIVE",
+    paidAmount: 500,
+    membershipYear: LAST,
+    memberNumber: "AJVT-2025-0001",
+    ...rest,
   });
 }
 
@@ -48,14 +57,20 @@ describe("renewing a membership", () => {
     expect(res.status).toBe(201);
     const after = await prisma.member.findUniqueOrThrow({ where: { id: existing.id } });
     expect(after.membershipYear).toBe(YEAR);
-    expect(after.memberNumber).toBe("AJVT-2025-0001");
+    expect((await personFor(existing.id)).memberNumber).toBe("AJVT-2025-0001");
     expect(after.paidAmount).toBe(100);
   });
 
   it("leaves the previous year readable beside the new one", async () => {
     const existing = await member();
     await prisma.membership.create({
-      data: { memberId: existing.id, year: LAST, paidAmount: 500, paymentMethod: "بنكيلي" },
+      data: {
+        memberId: existing.id,
+        userId: existing.userId,
+        year: LAST,
+        paidAmount: 500,
+        paymentMethod: "بنكيلي",
+      },
     });
 
     await renew(existing.id);
@@ -151,7 +166,7 @@ describe("reading a member's years", () => {
   it("lists the years newest first, with who took each payment", async () => {
     const existing = await member();
     await prisma.membership.create({
-      data: { memberId: existing.id, year: LAST, paidAmount: 500 },
+      data: { memberId: existing.id, userId: existing.userId, year: LAST, paidAmount: 500 },
     });
     await renew(existing.id);
 

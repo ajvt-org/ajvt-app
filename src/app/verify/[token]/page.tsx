@@ -1,82 +1,62 @@
-import { prisma } from "@/lib/prisma";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import VerifyEnrollments from "@/components/VerifyEnrollments";
 import { formatDate } from "@/lib/utils";
+import { nameOf } from "@/lib/person";
+import { verifyPage, villageField } from "@/lib/texts";
+import { loadVerifiedMember } from "@/lib/verifyEnrollmentsServer";
 
 export const dynamic = "force-dynamic";
 
-// Reached by scanning the QR on a membership card, so it answers to anyone.
-// It is looked up by verifyToken and never by memberNumber: the number runs in
-// sequence, and a page keyed on it can be counted through from a single card.
-//
-// It shows what someone checking a card at a door needs and nothing else. The
-// activities a member signed up for are not that.
-//
-// The answer is the page rather than a card sitting on one: whoever scanned
-// this came for one fact, and it should be the first thing their eye lands on.
-// There is no back button at all — arriving by camera means there is nothing
-// behind this page, and a member who opens their own card has the bar. The
-// link at the foot goes into the app instead, which is the way anyone here
-// actually wants to travel.
 export default async function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-
-  const member = await prisma.member.findUnique({
-    where: { verifyToken: token },
-    select: {
-      fullName: true,
-      age: true,
-      status: true,
-      memberNumber: true,
-      createdAt: true,
-      photo: true,
-    },
-  });
-
-  const valid = !!member && member.status === "ACTIVE";
+  const member = await loadVerifiedMember(token);
 
   return (
     <div className="app-shell">
-      <PageHeader title="التحقق من العضوية" />
+      <PageHeader title={verifyPage.title} />
 
-      {valid ? (
+      {member ? (
         <>
           <div className="verify-hero">
             <div className="verify-avatar">
-              <PlayerAvatar photo={member.photo} fullName={member.fullName} size={92} bg="copper" />
-              <span className="verify-seal" role="img" aria-label="عضوية سارية">
+              <PlayerAvatar photo={member.photo} fullName={nameOf(member)} size={92} bg="copper" />
+              <span className="verify-seal" role="img" aria-label={verifyPage.validSeal}>
                 <Icon name="check" size={16} color="#065f46" />
               </span>
             </div>
-            <h2 className="font-black text-xl text-white">عضوية سارية المفعول</h2>
+            <h2 className="font-black text-xl text-white">{verifyPage.validHeading}</h2>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.85)" }}>
-              {member.fullName}
+              {nameOf(member)}
             </p>
           </div>
 
-          <dl className="flex-1 px-5 py-5 space-y-0">
-            <Row label="رقم العضوية" value={member.memberNumber || "—"} dir="ltr" />
-            <Row label="العصر" value={member.age} />
-            <Row label="عضو منذ" value={formatDate(member.createdAt)} />
+          <dl className="px-5 py-5 space-y-0">
+            <Row label={verifyPage.memberNumber} value={member.memberNumber || "—"} dir="ltr" />
+            <Row label={villageField.label} value={member.village} />
+            {member.age && <Row label={verifyPage.age} value={member.age} />}
+            <Row label={verifyPage.memberSince} value={formatDate(member.memberSince)} />
           </dl>
 
-          <div className="px-5 pb-8">
+          <VerifyEnrollments items={member.enrollments} />
+
+          <div className="px-5 pb-8 mt-auto">
             <HomeLink />
           </div>
         </>
       ) : (
         <div className="flex-1 px-5 py-16 text-center space-y-3">
-          <span className="verify-refused" role="img" aria-label="بطاقة غير صالحة">
+          <span className="verify-refused" role="img" aria-label={verifyPage.invalidHeading}>
             <Icon name="ban" size={34} color="#991b1b" />
           </span>
           <h2 className="font-black text-lg" style={{ color: "var(--text-main)" }}>
-            بطاقة غير صالحة
+            {verifyPage.invalidHeading}
           </h2>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            رقم العضوية غير موجود أو العضوية غير سارية المفعول
+            {verifyPage.invalidDescription}
           </p>
           <div className="pt-3">
             <HomeLink />
@@ -87,12 +67,10 @@ export default async function VerifyPage({ params }: { params: Promise<{ token: 
   );
 }
 
-// Not a back button: whoever scanned this arrived from a camera, from outside
-// the app entirely. This is the way in rather than the way back.
 function HomeLink() {
   return (
     <Link href="/" className="btn btn-ghost">
-      <IconLabel name="home">الصفحة الرئيسية للرابطة</IconLabel>
+      <IconLabel name="home">{verifyPage.homeLink}</IconLabel>
     </Link>
   );
 }

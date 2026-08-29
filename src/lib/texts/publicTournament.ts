@@ -1,4 +1,8 @@
 export const matchDisplay = {
+  tieUnresolved: "متساويان تماماً — يفصل بينهما القرعة",
+  tieMark: "قرعة",
+  forfeitBadge: "فوز بالانسحاب",
+  forfeitNote: (team: string) => `انسحاب — احتُسبت المباراة لصالح ${team}`,
   unknownScorer: "مجهول",
   ownGoal: "ع",
   penaltyShort: "ج",

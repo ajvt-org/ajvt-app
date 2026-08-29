@@ -1,25 +1,65 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import PageLoading from "@/components/PageLoading";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
+import { useRowControls } from "./useRowControls";
+import { useActivityBulk } from "./useActivityBulk";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import {
   ACTIVITIES_VIEW_KEYS,
-  ACTIVITY_KINDS,
+  ACTIVITY_STATES,
+  ACTIVITY_TYPES,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
 } from "./activitiesView";
-import ActivityRow from "./ActivityRow";
+import { splitByStage } from "./activitiesList";
+import ActivityRow, { type RowControls } from "./ActivityRow";
+import AttentionPanel from "./AttentionPanel";
+import FilterChips from "./FilterChips";
+import BulkBar from "./BulkBar";
+import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
+import type { Activity } from "./activityTypes";
+
+function Rows({
+  rows,
+  controls,
+  picked,
+  onPick,
+}: {
+  rows: Activity[];
+  controls: RowControls;
+  picked: Set<string>;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {rows.map((a) => (
+        <ActivityRow
+          key={a.id}
+          activity={a}
+          controls={controls}
+          picked={picked.has(a.id)}
+          onPick={onPick}
+        />
+      ))}
+    </div>
+  );
+}
 
 function AdminActivitiesPageInner() {
   const { activities, loading, reload } = useActivitiesData();
-  const actions = useActivityActions(activities, reload);
+  const actions = useActivityActions(reload);
+  const controls = useRowControls(reload);
+  const bulk = useActivityBulk(reload);
   const [showCreate, setShowCreate] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
@@ -29,10 +69,15 @@ function AdminActivitiesPageInner() {
   if (loading) return <PageLoading />;
 
   const visible = activities.filter((a) => matchesActivitiesView(a, filters));
-  const unfiltered = !filters.q.trim() && !filters.kind;
+  const { current, finished } = splitByStage(visible);
 
   return (
     <div className="admin-page space-y-3">
+      <AttentionPanel
+        newestFirst={filters.waiting === "newest"}
+        onOrderChange={(newestFirst) => go({ ...filters, waiting: newestFirst ? "newest" : "" })}
+      />
+
       <div className="flex gap-2 flex-wrap">
         <input
           type="text"
@@ -42,30 +87,40 @@ function AdminActivitiesPageInner() {
           className="input input-sm flex-1"
           style={{ background: "white", minWidth: "10rem" }}
         />
+        <Link
+          href="/admin/activities/order"
+          className="btn btn-sm text-xs font-bold"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <IconLabel name="list">{texts.arrangeLink}</IconLabel>
+        </Link>
         <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-sm text-xs">
           <IconLabel name="plus">إضافة نشاط</IconLabel>
         </button>
       </div>
 
-      <div className="flex gap-1.5 flex-wrap">
-        {ACTIVITY_KINDS.map((k) => {
-          const on = filters.kind === k.value;
-          return (
-            <button
-              key={k.value}
-              onClick={() => go({ ...filters, kind: k.value })}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{
-                background: on ? "var(--mint-600)" : "white",
-                color: on ? "white" : "var(--mint-700)",
-                border: on ? "none" : "1px solid var(--mint-100)",
-              }}
-            >
-              {k.label}
-            </button>
-          );
-        })}
+      <div className="space-y-1.5">
+        <FilterChips
+          options={ACTIVITY_TYPES}
+          value={filters.type}
+          onPick={(type) => go({ ...filters, type })}
+          label={texts.filters.anyType}
+        />
+        <FilterChips
+          options={ACTIVITY_STATES}
+          value={filters.state}
+          onPick={(state) => go({ ...filters, state })}
+          label={texts.filters.anyState}
+        />
       </div>
+
+      <BulkBar
+        count={bulk.picked.size}
+        busy={bulk.busy}
+        onClose={bulk.closeRegistration}
+        onDelete={bulk.remove}
+        onClear={bulk.clear}
+      />
 
       {visible.length === 0 ? (
         <div className="card p-6 text-center space-y-3">
@@ -79,30 +134,39 @@ function AdminActivitiesPageInner() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
-          {visible.map((a) => {
-            const index = activities.indexOf(a);
-            return (
-              <ActivityRow
-                key={a.id}
-                activity={a}
-                canReorder={
-                  unfiltered ? { up: index > 0, down: index < activities.length - 1 } : null
-                }
-                reorderLoading={actions.reorderLoading}
-                onMove={(direction) =>
-                  actions.moveActivity(index, direction === -1 ? "up" : "down")
-                }
-              />
-            );
-          })}
-        </div>
-      )}
+        <div className="space-y-3">
+          {current.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
+                {texts.sections.current}
+              </p>
+              <Rows rows={current} controls={controls} picked={bulk.picked} onPick={bulk.toggle} />
+            </div>
+          )}
 
-      {unfiltered && activities.length > 1 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          الأسهم تغيّر ترتيب الظهور في الصفحة الرئيسية.
-        </p>
+          {finished.length > 0 && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowFinished((shown) => !shown)}
+                aria-expanded={showFinished}
+                className="text-xs font-bold flex items-center gap-1"
+                style={{ color: "var(--mint-700)" }}
+              >
+                <Icon name={showFinished ? "chevronUp" : "chevronDown"} size={13} />
+                {texts.sections.finished(finished.length)}
+              </button>
+              {showFinished && (
+                <Rows
+                  rows={finished}
+                  controls={controls}
+                  picked={bulk.picked}
+                  onPick={bulk.toggle}
+                />
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {showCreate && (
