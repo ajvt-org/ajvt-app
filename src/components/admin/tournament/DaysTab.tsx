@@ -10,6 +10,7 @@ import { formatActivityDates } from "@/lib/activityDates";
 import DayCard from "./DayCard";
 import { timeOf } from "@/lib/tournamentDays";
 import { dayLabel, type DaysPayload } from "./daysTypes";
+import { daysTab } from "@/lib/texts";
 
 function RestInserter({ onInsert, busy }: { onInsert: () => void; busy: boolean }) {
   return (
@@ -20,7 +21,7 @@ function RestInserter({ onInsert, busy }: { onInsert: () => void; busy: boolean 
         className="text-xs px-3 py-1 rounded-full font-bold"
         style={{ background: "var(--cream)", color: "#b45309", border: "1px dashed #fcd34d" }}
       >
-        <IconLabel name="plus">أضف يوم راحة هنا</IconLabel>
+        <IconLabel name="plus">{daysTab.addRestHere}</IconLabel>
       </button>
     </div>
   );
@@ -44,7 +45,7 @@ export default function DaysTab({
   }, [activityId]);
 
   useEffect(() => {
-    reload().catch(() => showToast("فشل تحميل الأيام", "error"));
+    reload().catch(() => showToast(daysTab.loadFailed, "error"));
   }, [reload, showToast]);
 
   async function run(action: () => Promise<unknown>, done?: string) {
@@ -67,16 +68,16 @@ export default function DaysTab({
     return (
       <div className="card p-6 text-center space-y-3">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          حدد تاريخ بداية البطولة أولاً
+          {daysTab.needStartDate}
         </p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          الأيام تُحسب من تاريخ البداية، ويُحسب تاريخ النهاية تلقائياً من عدد الأيام.
+          {daysTab.countedFromStart}
         </p>
         <Link
           href={`/admin/activities/${activityId}?tab=details`}
           className="btn btn-sm btn-primary mx-auto"
         >
-          <IconLabel name="calendar">فتح تفاصيل النشاط</IconLabel>
+          <IconLabel name="calendar">{daysTab.openActivity}</IconLabel>
         </Link>
       </div>
     );
@@ -98,7 +99,7 @@ export default function DaysTab({
           </IconLabel>
         </p>
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-          تاريخ النهاية يُحسب تلقائياً من آخر يوم.
+          {daysTab.endFromLastDay}
         </span>
         <label className="flex items-center gap-2 text-xs font-bold w-full">
           <input
@@ -107,7 +108,7 @@ export default function DaysTab({
             onChange={(e) => setNotifyFollowers(e.target.checked)}
             className="w-4 h-4"
           />
-          إشعار اللاعبين والمتابعين عند تحريك الجدول
+          {daysTab.notifyOnMove}
         </label>
       </div>
 
@@ -124,7 +125,7 @@ export default function DaysTab({
                       isRest: true,
                       notify: notifyFollowers,
                     }),
-                  "أُضيف يوم راحة وتحرّك ما بعده يوماً",
+                  daysTab.restAdded,
                 )
               }
             />
@@ -133,16 +134,19 @@ export default function DaysTab({
             day={day}
             busy={busy}
             onSetRest={(isRest) =>
-              run(() => api.patch(`${base}/${day.id}`, { isRest }), "تم تغيير اليوم")
+              run(() => api.patch(`${base}/${day.id}`, { isRest }), daysTab.dayChanged)
             }
             onRemove={() =>
               run(
                 () => api.del(`${base}/${day.id}`, { notify: notifyFollowers }),
-                "حُذف اليوم وتحرّك ما بعده يوماً",
+                daysTab.dayRemoved,
               )
             }
             onRetime={(matchId, time) =>
-              run(() => api.post(`${base}/assign`, { matchId, dayId: day.id, time }), "تغيّر الوقت")
+              run(
+                () => api.post(`${base}/assign`, { matchId, dayId: day.id, time }),
+                daysTab.timeChanged,
+              )
             }
           />
         </div>
@@ -150,25 +154,25 @@ export default function DaysTab({
 
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => run(() => api.post(base, { isRest: false }), "أُضيف يوم في النهاية")}
+          onClick={() => run(() => api.post(base, { isRest: false }), daysTab.matchDayAppended)}
           disabled={busy}
           className="btn btn-sm btn-ghost"
         >
-          <IconLabel name="plus">إضافة يوم مباريات</IconLabel>
+          <IconLabel name="plus">{daysTab.addMatchDay}</IconLabel>
         </button>
         <button
-          onClick={() => run(() => api.post(base, { isRest: true }), "أُضيف يوم راحة في النهاية")}
+          onClick={() => run(() => api.post(base, { isRest: true }), daysTab.restDayAppended)}
           disabled={busy}
           className="btn btn-sm btn-ghost"
         >
-          <IconLabel name="plus">إضافة يوم راحة</IconLabel>
+          <IconLabel name="plus">{daysTab.addRestDay}</IconLabel>
         </button>
       </div>
 
       {data.unscheduled.length > 0 && (
         <div className="card p-3 sm:p-4 space-y-2">
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="clock">مباريات بلا يوم ({data.unscheduled.length})</IconLabel>
+            <IconLabel name="clock">{daysTab.unscheduled(data.unscheduled.length)}</IconLabel>
           </p>
           {data.unscheduled.map((match) => {
             const chosen = schedule[match.id] ?? {
@@ -185,16 +189,16 @@ export default function DaysTab({
                   onChange={(e) =>
                     setSchedule((p) => ({ ...p, [match.id]: { ...chosen, dayId: e.target.value } }))
                   }
-                  aria-label="اختيار اليوم"
+                  aria-label={daysTab.pickDayLabel}
                   className="input input-sm"
                   style={{ width: "auto" }}
                 >
-                  <option value="">اختر اليوم...</option>
+                  <option value="">{daysTab.pickDay}</option>
                   {data.days
                     .filter((d) => !d.isRest)
                     .map((d) => (
                       <option key={d.id} value={d.id}>
-                        اليوم {d.position} — {dayLabel(d.date)}
+                        {daysTab.dayOption(d.position, dayLabel(d.date))}
                       </option>
                     ))}
                 </select>
@@ -204,7 +208,7 @@ export default function DaysTab({
                   onChange={(e) =>
                     setSchedule((p) => ({ ...p, [match.id]: { ...chosen, time: e.target.value } }))
                   }
-                  aria-label="وقت المباراة"
+                  aria-label={daysTab.matchTime}
                   className="input input-sm"
                   style={{ width: "auto" }}
                 />
@@ -217,14 +221,14 @@ export default function DaysTab({
                           dayId: chosen.dayId,
                           time: chosen.time,
                         }),
-                      "جُدولت المباراة",
+                      daysTab.scheduled,
                     )
                   }
                   disabled={busy || !chosen.dayId}
                   className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-40"
                   style={{ background: "var(--mint-700)", color: "white" }}
                 >
-                  جدولة
+                  {daysTab.schedule}
                 </button>
               </div>
             );

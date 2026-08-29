@@ -15,6 +15,7 @@ export { accountPhone } from "./accountPhone";
 export { adminTabs } from "./adminNav";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
+export { daysTab } from "./daysTab";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { expenseForm } from "./expenses";
