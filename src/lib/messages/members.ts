@@ -1,7 +1,10 @@
+// These label a membership payment, not the person who made it. A refused
+// payment leaves the account, the profile and the person exactly as they
+// were, so the label has to name what was refused.
 export const memberStatusLabels = {
   PENDING: "قيد الانتظار",
   ACTIVE: "معتمد",
-  REJECTED: "غير مقبول",
+  REJECTED: "الدفع مرفوض",
 } as const;
 
 export const members = {
@@ -13,7 +16,8 @@ export const members = {
   pickAgeGroup: "يرجى اختيار العصر",
   profileIncomplete: "أكمل بيانات حسابك قبل إرسال طلب الانتساب",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
-  rejectionReasonRequired: "سبب الرفض مطلوب",
+  rejectionReasonRequired: "سبب رفض الدفع مطلوب",
+  rejectionReasonInvalid: "سبب رفض الدفع غير صالح",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
   accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",

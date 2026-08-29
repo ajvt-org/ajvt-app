@@ -59,7 +59,7 @@ export default function MemberRejected({
           style={{ background: "#fff5f5", border: "1px solid #fca5a5" }}
         >
           <p className="text-xs font-bold mb-0.5" style={{ color: "#991b1b" }}>
-            سبب الرفض
+            سبب رفض الدفع
           </p>
           <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>
             {member.rejectionReason}

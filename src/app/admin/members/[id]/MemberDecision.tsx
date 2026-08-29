@@ -43,7 +43,7 @@ export default function MemberDecision({
       {picking ? (
         <>
           <label className="block text-xs font-bold" htmlFor="decide-reason">
-            سبب الرفض
+            سبب رفض الدفع
           </label>
           <select
             id="decide-reason"
@@ -64,7 +64,7 @@ export default function MemberDecision({
               className="btn text-sm flex-1"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              {busy ? "..." : "تأكيد الرفض"}
+              {busy ? "..." : "تأكيد رفض الدفع"}
             </button>
             <button
               onClick={() => setPicking(false)}
@@ -83,7 +83,7 @@ export default function MemberDecision({
               disabled={busy}
               className="btn btn-primary text-sm flex-1"
             >
-              {busy ? "..." : <IconLabel name="check">قبول</IconLabel>}
+              {busy ? "..." : <IconLabel name="check">قبول الدفع</IconLabel>}
             </button>
           )}
           {status !== "REJECTED" && (
@@ -93,7 +93,7 @@ export default function MemberDecision({
               className={`btn text-sm ${status === "PENDING" ? "flex-1" : ""}`}
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              <IconLabel name="close">رفض</IconLabel>
+              <IconLabel name="close">رفض الدفع</IconLabel>
             </button>
           )}
         </div>

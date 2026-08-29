@@ -26,7 +26,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       throw new ValidationError(members.rejectionReasonRequired);
     }
     if (!REJECTION_REASONS.includes(rejectionReason)) {
-      throw new ValidationError("سبب الرفض غير صالح");
+      throw new ValidationError(members.rejectionReasonInvalid);
     }
   }
 

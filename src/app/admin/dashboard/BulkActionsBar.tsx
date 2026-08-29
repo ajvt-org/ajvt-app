@@ -86,7 +86,7 @@ export default function BulkActionsBar({
             className="text-xs font-bold shrink-0"
             style={{ color: "var(--text-muted)" }}
           >
-            سبب الرفض
+            سبب رفض الدفع
           </label>
           <select
             id="bulk-reason"
