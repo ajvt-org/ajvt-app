@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // A 1x1 png is enough: the route only checks that the upload is a real image.
 const PROOF = Buffer.from(
@@ -16,17 +16,32 @@ const MEMBER = {
 
 const QUESTION = "هل تريد ذكر اسمك مع التبرع؟";
 
+interface Person {
+  phone: string;
+  password: string;
+  fullName: string;
+  village?: string;
+  age?: string;
+}
+
+async function signUp(page: Page, person: Person) {
+  await page.goto("/register");
+
+  await page.fill('input[type="tel"]', person.phone);
+  await page.fill('input[type="password"] >> nth=0', person.password);
+  await page.fill('input[type="password"] >> nth=1', person.password);
+  await page.getByRole("button", { name: "التالي" }).click();
+
+  await page.fill('input[name="fullName"]', person.fullName);
+  if (person.village) await page.selectOption("#signup-village", person.village);
+  if (person.age) await page.selectOption("#signup-age", person.age);
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL("**/home");
+}
+
 test("a member who pays above the fee says how the surplus appears", async ({ page }) => {
-  await page.goto("/form");
-
-  await page.fill('input[name="fullName"]', MEMBER.fullName);
-  await page.fill('input[type="tel"]', MEMBER.phone);
-  await page.selectOption("#member-age", MEMBER.age);
-  await page.getByRole("button", { name: "التالي" }).click();
-
-  await page.fill('input[type="password"] >> nth=0', MEMBER.password);
-  await page.fill('input[type="password"] >> nth=1', MEMBER.password);
-  await page.getByRole("button", { name: "التالي" }).click();
+  await signUp(page, MEMBER);
+  await page.goto("/membership");
 
   await page.click(`text=${MEMBER.paymentMethod}`);
 

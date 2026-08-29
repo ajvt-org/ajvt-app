@@ -57,7 +57,7 @@ export default function ProfilePage() {
               <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
                 أكمل استمارة الانضمام للانضمام إلى رابطة شباب قرية التاكلالت
               </p>
-              <button onClick={() => router.push("/form")} className="btn btn-primary">
+              <button onClick={() => router.push("/membership")} className="btn btn-primary">
                 <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
               </button>
             </div>

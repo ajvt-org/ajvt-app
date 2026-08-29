@@ -11,6 +11,7 @@ export const members = {
   fullNameTooLong: "الاسم الكامل طويل جداً (30 حرفاً كحد أقصى)",
   fullNameArabicOnly: "الاسم الكامل يجب أن يكون بالحروف العربية فقط",
   pickAgeGroup: "يرجى اختيار العصر",
+  profileIncomplete: "أكمل بيانات حسابك قبل إرسال طلب الانتساب",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
   rejectionReasonRequired: "سبب الرفض مطلوب",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",

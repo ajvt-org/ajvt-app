@@ -8,7 +8,7 @@ const PAGES = [
   "/leaderboard",
   "/login",
   "/forgot-password",
-  "/form",
+  "/membership",
   "/home",
   "/profile",
 ];
@@ -48,19 +48,20 @@ async function sweep(page: Page, label: string) {
 }
 
 async function createAccountOnly(page: Page, phone: string) {
-  await page.goto("/form");
-  await page.fill('input[name="fullName"]', "حساب بلا طلب");
+  await page.goto("/register");
   await page.fill('input[type="tel"]', phone);
-  await page.selectOption("#member-age", "البدريين");
-  await page.getByRole("button", { name: "التالي" }).click();
   await page.fill('input[type="password"] >> nth=0', "test1234");
   await page.fill('input[type="password"] >> nth=1', "test1234");
   await page.getByRole("button", { name: "التالي" }).click();
-  await page.waitForTimeout(1500);
+  await page.fill('input[name="fullName"]', "حساب بلا طلب");
+  await page.selectOption("#signup-age", "البدريين");
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
+  await page.waitForURL("**/home");
 }
 
 async function createMember(page: Page, phone: string) {
   await createAccountOnly(page, phone);
+  await page.goto("/membership");
   await page.click("text=بنكيلي");
   await page.fill('input[type="number"]', "100");
   await page

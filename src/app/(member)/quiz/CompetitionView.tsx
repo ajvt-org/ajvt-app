@@ -368,7 +368,7 @@ export default function CompetitionView({
                 </button>
               ) : visitor ? (
                 <Link
-                  href="/form"
+                  href="/membership"
                   className="btn mt-1 text-sm font-extrabold text-white"
                   style={CALL_STYLE}
                 >
