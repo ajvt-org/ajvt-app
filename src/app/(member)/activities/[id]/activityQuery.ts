@@ -37,7 +37,7 @@ async function loadActivity(id: string) {
             select: {
               member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
             },
-            orderBy: { member: { user: { fullName: "asc" } } },
+            orderBy: { user: { fullName: "asc" } },
           },
         },
       },
