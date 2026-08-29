@@ -59,7 +59,12 @@ export async function seedGroupsOfFour(active: SeededMember[]) {
       });
       for (let i = 0; i < 3 && player < active.length; i++, player++) {
         await prisma.teamMember.create({
-          data: { teamId: team.id, memberId: active[player].id, status: "ACTIVE" },
+          data: {
+            teamId: team.id,
+            memberId: active[player].id,
+            userId: active[player].userId,
+            status: "ACTIVE",
+          },
         });
       }
       groupTeams.push(team);

@@ -48,6 +48,18 @@ model User {
   memberNumber          String?                  @unique
   verifyToken           String?                  @unique
   members               Member[]
+  registrations         ActivityRegistration[]
+  teamMemberships       TeamMember[]
+  matchGoals            MatchGoal[]
+  penaltyKicks          MatchPenaltyKick[]
+  matchBookings         MatchBooking[]
+  motmMatches           Match[]                  @relation("ManOfTheMatchUser")
+  mvpCandidacies        MvpCandidate[]
+  donations             Donation[]
+  memberships           Membership[]
+  payments              Payment[]
+  suspensions           Suspension[]
+  receipts              Receipt[]
   pushSubscriptions     PushSubscription[]
   notificationPrefs     NotificationPreference[]
   teamFollows           TeamFollow[]
@@ -97,8 +109,10 @@ model Member {
 
 model Membership {
   id               String       @id @default(cuid())
-  memberId         String
-  member           Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId         String?
+  member           Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   year             Int
   status           ReviewStatus @default(PENDING)
   rejectionReason  String?
@@ -114,45 +128,46 @@ model Membership {
   updatedAt        DateTime     @updatedAt
 
   @@unique([memberId, year])
+  @@unique([userId, year])
   @@index([year])
   @@index([status])
 }
 
 model Activity {
-  id            String                 @id @default(cuid())
-  title         String
-  description   String
-  period        String? // legacy free text, shown only when startsAt is unset
-  startsAt      DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
-  endsAt        DateTime?
-  withTime      Boolean                @default(false)
-  photo         String?
-  capacity      Int?
-  isOpen        Boolean                @default(true)
-  autoApprove   Boolean                @default(false)
-  isTournament  Boolean                @default(false)
-  format        TournamentFormat?
-  profile       SportProfile           @default(FOOTBALL)
-  teamSize      Int?
-  yellowsForBan Int                    @default(2) // yellows across the tournament that propose a suspension
-  redBanMatches Int                    @default(1) // matches a proposed red-card ban carries
-  published     Boolean                @default(true)
-  mvpVoteMinutes Int                   @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
-  isVolunteer   Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
-  whatsappLink  String?
-  order         Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  registrations ActivityRegistration[]
-  teams         Team[]
-  matches       Match[]
-  groups        Group[]
-  expenses      Expense[]
-  donations     Donation[]
-  admins        AdminActivity[]
-  payments      Payment[]
-  days          TournamentDay[]
-  suspensions   Suspension[]
+  id             String                 @id @default(cuid())
+  title          String
+  description    String
+  period         String? // legacy free text, shown only when startsAt is unset
+  startsAt       DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
+  endsAt         DateTime?
+  withTime       Boolean                @default(false)
+  photo          String?
+  capacity       Int?
+  isOpen         Boolean                @default(true)
+  autoApprove    Boolean                @default(false)
+  isTournament   Boolean                @default(false)
+  format         TournamentFormat?
+  profile        SportProfile           @default(FOOTBALL)
+  teamSize       Int?
+  yellowsForBan  Int                    @default(2) // yellows across the tournament that propose a suspension
+  redBanMatches  Int                    @default(1) // matches a proposed red-card ban carries
+  published      Boolean                @default(true)
+  mvpVoteMinutes Int                    @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
+  isVolunteer    Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
+  whatsappLink   String?
+  order          Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  registrations  ActivityRegistration[]
+  teams          Team[]
+  matches        Match[]
+  groups         Group[]
+  expenses       Expense[]
+  donations      Donation[]
+  admins         AdminActivity[]
+  payments       Payment[]
+  days           TournamentDay[]
+  suspensions    Suspension[]
 }
 
 // The tournament's spine: an ordered run of days counted from the activity's
@@ -221,12 +236,15 @@ model TeamMember {
   id        String           @id @default(cuid())
   teamId    String
   team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String?
+  member    Member?          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   status    TeamMemberStatus @default(ACTIVE) // PENDING = self-service join awaiting approval, ACTIVE = locked in
   createdAt DateTime         @default(now())
 
   @@unique([teamId, memberId])
+  @@unique([teamId, userId])
 }
 
 model Match {
@@ -251,6 +269,8 @@ model Match {
   awayPenalties       Int?
   manOfTheMatchId     String?
   manOfTheMatch       Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
+  manOfTheMatchUserId String?
+  manOfTheMatchUser   User?              @relation("ManOfTheMatchUser", fields: [manOfTheMatchUserId], references: [id], onDelete: SetNull)
   forfeitWinnerTeamId String?
   forfeitWinnerTeam   Team?              @relation("ForfeitWinner", fields: [forfeitWinnerTeamId], references: [id], onDelete: SetNull)
   status              MatchStatus        @default(SCHEDULED)
@@ -283,11 +303,14 @@ model MvpCandidate {
   id       String       @id @default(cuid())
   voteId   String
   vote     MatchMvpVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
-  memberId String
-  member   Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String?
+  member   Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   votes    MvpVote[]
 
   @@unique([voteId, memberId])
+  @@unique([voteId, userId])
 }
 
 model MvpVote {
@@ -308,8 +331,10 @@ model MatchBooking {
   id        String   @id @default(cuid())
   matchId   String
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId  String?
+  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   cardType  String
@@ -339,6 +364,8 @@ model MatchGoal {
   match     Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
   memberId  String?
   member    Member?    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId    String
   team      Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
   count     Int        @default(1)
@@ -358,6 +385,8 @@ model MatchPenaltyKick {
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   memberId  String?
   member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   order     Int
   scored    Boolean
   createdAt DateTime @default(now())
@@ -367,8 +396,10 @@ model MatchPenaltyKick {
 
 model ActivityRegistration {
   id              String       @id @default(cuid())
-  memberId        String
-  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId        String?
+  member          Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   activityId      String
   activity        Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
   status          ReviewStatus @default(PENDING)
@@ -378,6 +409,7 @@ model ActivityRegistration {
   updatedAt       DateTime     @updatedAt
 
   @@unique([memberId, activityId])
+  @@unique([userId, activityId])
   @@index([activityId])
 }
 
@@ -440,6 +472,8 @@ model Donation {
   paymentMethod  String? // بنكيلي | السداد | مصرفي | نقداً — set manually by admin (proof screenshots aren't parsed automatically)
   memberId       String?
   member         Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   membershipYear Int?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -448,6 +482,7 @@ model Donation {
   activity       Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
   @@index([memberId])
+  @@index([userId])
   @@index([status])
   @@index([activityId])
 }
@@ -783,6 +818,8 @@ model Payment {
   donorPhone String? // contact note for a manually entered donor with no account
   memberId   String?
   member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags       FinanceTag[]
   activityId String?
   activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
@@ -795,6 +832,7 @@ model Payment {
   receipt Receipt?
 
   @@index([memberId, year, purpose])
+  @@index([userId, year, purpose])
   @@index([status])
   @@index([activityId])
 }
@@ -823,10 +861,13 @@ model Receipt {
   payment    Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   memberId   String?
   member     Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  userId     String?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
   @@index([memberId])
+  @@index([userId])
   @@index([status])
   @@index([issuedOn])
 }
@@ -870,8 +911,10 @@ model Suspension {
   id         String           @id @default(cuid())
   activityId String
   activity   Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  memberId   String
-  member     Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId   String?
+  member     Member?          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   reason     SuspensionReason
   scope      SuspensionScope
   matches    Int?
@@ -884,5 +927,6 @@ model Suspension {
   updatedAt  DateTime         @updatedAt
 
   @@index([activityId, memberId])
+  @@index([activityId, userId])
   @@index([activityId, status])
 }
