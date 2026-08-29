@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { ensureReceiptsFor } from "./paymentReceiptServer";
+import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -37,7 +37,7 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
 
   if (existing) {
     await db.payment.update({ where: { id: existing.id }, data });
-    await ensureReceiptsFor(db, { id: existing.id });
+    await syncReceiptsFor(db, { id: existing.id });
     return;
   }
   const created = await db.payment.create({
@@ -64,7 +64,7 @@ export async function mirrorMembershipStatus(
     where: { memberId, year, purpose: "MEMBERSHIP" },
     data: { status },
   });
-  await ensureReceiptsFor(db, { memberId, year, purpose: "MEMBERSHIP" });
+  await syncReceiptsFor(db, { memberId, year, purpose: "MEMBERSHIP" });
 }
 
 export interface DonationMirror {
@@ -111,7 +111,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
       where: { id: existing.id },
       data: { ...data, ...(d.tagIds ? { tags: { set: d.tagIds.map((id) => ({ id })) } } : {}) },
     });
-    await ensureReceiptsFor(db, { id: existing.id });
+    await syncReceiptsFor(db, { id: existing.id });
     return;
   }
   await db.payment.create({
