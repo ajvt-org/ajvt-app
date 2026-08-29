@@ -99,7 +99,6 @@ export const REJECTION_REASONS = [
   "المبلغ المدفوع غير مطابق",
   "لم يتم العثور على العملية",
   "معلومات ناقصة أو غير صحيحة",
-  "طلب مكرر",
 ];
 
 export const REFERENCE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";

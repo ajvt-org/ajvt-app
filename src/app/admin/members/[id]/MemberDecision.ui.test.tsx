@@ -62,14 +62,14 @@ describe("MemberDecision", () => {
     await userEvent.click(screen.getByRole("button", { name: /رفض/ }));
     expect(fetchMock).not.toHaveBeenCalled();
 
-    await userEvent.selectOptions(screen.getByLabelText("سبب الرفض"), "طلب مكرر");
+    await userEvent.selectOptions(screen.getByLabelText("سبب الرفض"), "معلومات ناقصة أو غير صحيحة");
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الرفض" }));
 
     await waitFor(() => expect(onDecided).toHaveBeenCalled());
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       id: "m1",
       action: "REJECTED",
-      rejectionReason: "طلب مكرر",
+      rejectionReason: "معلومات ناقصة أو غير صحيحة",
     });
   });
 

@@ -172,7 +172,7 @@ describe("POST /api/admin/validate", () => {
       post("/api/admin/validate", {
         id: member.id,
         action: "REJECTED",
-        rejectionReason: "طلب مكرر",
+        rejectionReason: "معلومات ناقصة أو غير صحيحة",
       }),
     );
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
