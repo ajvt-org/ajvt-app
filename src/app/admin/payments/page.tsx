@@ -98,6 +98,7 @@ function AdminPaymentsPageInner() {
       {adding && (
         <ManualDonationDialog
           activities={activities}
+          members={members}
           onClose={() => setAdding(false)}
           onCreated={(proof) => setProofs((prev) => [proof, ...prev])}
         />

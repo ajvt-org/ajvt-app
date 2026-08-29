@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { validatePhone } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/donations";
+import { donationFormError } from "@/lib/donationFields";
+import { manualDonation } from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
 import ActivitySelect from "./ActivitySelect";
-import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
+import LinkMemberPanel from "./LinkMemberPanel";
+import MemberIdentity from "./MemberIdentity";
+import { proofFromDonation } from "./donationProof";
+import { DANGER_BOX, QUIET } from "./donationTones";
+import type { ActivityOption, DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
 const EMPTY = {
   donorName: "",
@@ -22,50 +27,20 @@ const EMPTY = {
   proof: "",
 };
 
-function toProof(d: DonationResponse["donation"], activities: ActivityOption[]): Proof {
-  return {
-    id: d.id,
-    kind: "DONATION",
-    proof: d.proof,
-    memberName: d.donorName || "فاعل خير",
-    activityId: d.activityId,
-    activityTitle: activities.find((a) => a.id === d.activityId)?.title ?? null,
-    amount: d.amount,
-    status: d.status,
-    source: d.source,
-    paymentMethod: d.paymentMethod,
-    memberId: d.memberId,
-    userId: d.userId,
-    anonymous: d.anonymous,
-    donorName: d.donorName,
-    donorPhone: d.donorPhone,
-    donorPhoto: d.donorPhoto,
-    uploadedAt: d.updatedAt,
-    submittedAt: d.createdAt,
-  };
-}
-
-function validate(form: typeof EMPTY): string {
-  if (!form.donorName.trim()) return "الاسم مطلوب";
-  if (form.donorPhone.trim()) {
-    const phoneError = validatePhone(form.donorPhone);
-    if (phoneError) return phoneError;
-  }
-  const amount = Number(form.amount);
-  if (!Number.isInteger(amount) || amount <= 0) return "المبلغ يجب أن يكون رقماً صحيحاً موجباً";
-  return "";
-}
-
 export default function ManualDonationDialog({
   activities,
+  members,
   onClose,
   onCreated,
 }: {
   activities: ActivityOption[];
+  members: MemberOption[];
   onClose: () => void;
   onCreated: (proof: Proof) => void;
 }) {
   const [form, setForm] = useState(EMPTY);
+  const [account, setAccount] = useState<MemberOption | null>(null);
+  const [picking, setPicking] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -73,7 +48,7 @@ export default function ManualDonationDialog({
 
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const invalid = validate(form);
+    const invalid = donationFormError(form, true);
     setError(invalid);
     if (invalid) return;
 
@@ -87,8 +62,9 @@ export default function ManualDonationDialog({
         paymentMethod: form.paymentMethod || null,
         activityId: form.activityId || null,
         proof: form.proof || null,
+        userId: account?.userId ?? null,
       });
-      onCreated(toProof(donation, activities));
+      onCreated(proofFromDonation(donation, activities, account));
       onClose();
     } catch (e) {
       setError(errorMessage(e));
@@ -100,27 +76,27 @@ export default function ManualDonationDialog({
   return (
     <Sheet onClose={onClose}>
       <DialogHeader
-        title={<IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>}
+        title={<IconLabel name="plus">{manualDonation.title}</IconLabel>}
         onClose={onClose}
       />
 
       <form onSubmit={submit} className="p-5 space-y-3">
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          لتبرع تلقيته خارج التطبيق نقداً أو تحويلاً — يُحتسب مباشرة في لوحة شرف المتبرعين.
+          {manualDonation.intro}
         </p>
 
         <PhotoUpload
           photo={form.donorPhoto || null}
           imageUrlPrefix="/api/files/donation"
           variant="avatar"
-          label="صورة المتبرع (اختياري)"
+          label={manualDonation.donorPhoto}
           placeholderIcon="user"
           onUpload={(filename) => set({ donorPhoto: filename })}
         />
         <PhotoUpload
           photo={form.proof || null}
           variant="cover"
-          label="إثبات الدفع (اختياري — يمكن إضافته لاحقاً)"
+          label={manualDonation.proof}
           placeholderIcon="receipt"
           onUpload={(filename) => set({ proof: filename })}
         />
@@ -131,7 +107,7 @@ export default function ManualDonationDialog({
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-donor-name"
           >
-            اسم المتبرع <span style={{ color: "var(--copper-500)" }}>*</span>
+            {manualDonation.donorName} <span style={{ color: "var(--copper-500)" }}>*</span>
           </label>
           <input
             id="manual-donor-name"
@@ -145,12 +121,52 @@ export default function ManualDonationDialog({
         </div>
 
         <div>
+          <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+            {manualDonation.account}
+          </p>
+          <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+            {manualDonation.accountHint}
+          </p>
+          {account ? (
+            <div className="flex items-center justify-between gap-2">
+              <MemberIdentity member={account} />
+              <button
+                type="button"
+                onClick={() => setAccount(null)}
+                className="text-xs px-2.5 py-1 rounded-lg font-bold shrink-0"
+                style={QUIET}
+              >
+                {manualDonation.clearAccount}
+              </button>
+            </div>
+          ) : picking ? (
+            <LinkMemberPanel
+              members={members}
+              busy={saving}
+              onPick={(userId) => {
+                setAccount(members.find((m) => m.userId === userId) ?? null);
+                setPicking(false);
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="text-xs px-2.5 py-1.5 rounded-lg font-bold"
+              style={QUIET}
+            >
+              <IconLabel name="link">{manualDonation.account}</IconLabel>
+            </button>
+          )}
+        </div>
+
+        <div>
           <label
             className="block text-sm font-bold mb-1.5"
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-donor-phone"
           >
-            رقم الهاتف (اختياري)
+            {manualDonation.phone}
           </label>
           <input
             id="manual-donor-phone"
@@ -170,7 +186,7 @@ export default function ManualDonationDialog({
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-amount"
           >
-            المبلغ (MRU) <span style={{ color: "var(--copper-500)" }}>*</span>
+            {manualDonation.amount} <span style={{ color: "var(--copper-500)" }}>*</span>
           </label>
           <input
             id="manual-amount"
@@ -190,7 +206,7 @@ export default function ManualDonationDialog({
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-payment-method"
           >
-            طريقة الدفع
+            {manualDonation.paymentMethod}
           </label>
           <select
             id="manual-payment-method"
@@ -198,7 +214,7 @@ export default function ManualDonationDialog({
             onChange={(e) => set({ paymentMethod: e.target.value })}
             className="input"
           >
-            <option value="">غير محددة</option>
+            <option value="">{manualDonation.methodUnset}</option>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>
                 {m}
@@ -213,7 +229,7 @@ export default function ManualDonationDialog({
             style={{ color: "var(--text-main)" }}
             htmlFor="manual-activity"
           >
-            وجهة الدعم
+            {manualDonation.destination}
           </label>
           <ActivitySelect
             id="manual-activity"
@@ -225,16 +241,13 @@ export default function ManualDonationDialog({
         </div>
 
         {error && (
-          <div
-            className="p-3 rounded-xl text-sm font-semibold"
-            style={{ background: "#fee2e2", color: "#991b1b" }}
-          >
+          <div className="p-3 rounded-xl text-sm font-semibold" style={DANGER_BOX}>
             <Icon name="warning" size={13} className="icon-inline" /> {error}
           </div>
         )}
 
         <button type="submit" disabled={saving} className="btn btn-primary text-sm">
-          {saving ? "..." : "تسجيل التبرع"}
+          {saving ? "..." : manualDonation.submit}
         </button>
       </form>
     </Sheet>
