@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
-import { mirrorDonation } from "@/lib/paymentMirror";
+import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -67,16 +67,18 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     selfAnonymous = formData.get("anonymous") === "true";
   }
 
+  let anonymous = selfAnonymous;
   let donorName: string | null = selfAnonymous ? null : selfName;
   if (!memberId) {
     const anonymousRaw = formData.get("anonymous");
-    const anonymous = anonymousRaw === "true" ? true : anonymousRaw === "false" ? false : null;
+    const choice = anonymousRaw === "true" ? true : anonymousRaw === "false" ? false : null;
     const typed = typeof donorNameRaw === "string" ? donorNameRaw : "";
-    const choiceError = validateDonorChoice(anonymous, typed);
-    if (choiceError || anonymous === null) {
+    const choiceError = validateDonorChoice(choice, typed);
+    if (choiceError || choice === null) {
       return NextResponse.json({ error: choiceError ?? money.nameChoiceRequired }, { status: 400 });
     }
-    donorName = donorNameFor(anonymous, typed);
+    anonymous = choice;
+    donorName = donorNameFor(choice, typed);
   }
 
   const n = Number(amountRaw);
@@ -108,6 +110,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
 
   const donation = await prisma.donation.create({
     data: {
+      anonymous,
       donorName,
       amount,
       paymentMethod,
@@ -118,19 +121,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       status: "PENDING",
     },
   });
-  await mirrorDonation(prisma, {
-    donationId: donation.id,
-    userId: donation.userId,
-    amount,
-    method: paymentMethod,
-    proof: filename,
-    status: "PENDING",
-    donorName,
-    donorPhoto: null,
-    donorPhone: null,
-    memberId,
-    activityId: null,
-  });
+  await mirrorDonation(prisma, donationMirrorOf(donation));
 
   return NextResponse.json({ ok: true }, { status: 201 });
 });

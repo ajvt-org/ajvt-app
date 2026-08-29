@@ -20,6 +20,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
 
   const donation = await prisma.donation.create({
     data: {
+      anonymous: false,
       donorName,
       donorPhone: donorPhone ?? null,
       amount,
