@@ -14,6 +14,7 @@ import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
 import MembershipPanel from "./MembershipPanel";
+import { memberDrawer as texts, ouguiya } from "@/lib/texts";
 
 function Header({ onClose }: { onClose: () => void }) {
   return (
@@ -21,10 +22,10 @@ function Header({ onClose }: { onClose: () => void }) {
       className="px-5 py-4 flex items-center justify-between"
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
-      <h2 className="font-black text-white text-lg">تفاصيل الطلب</h2>
+      <h2 className="font-black text-white text-lg">{texts.title}</h2>
       <button
         onClick={onClose}
-        aria-label="إغلاق"
+        aria-label={texts.close}
         className="w-8 h-8 rounded-full flex items-center justify-center text-white"
         style={{ background: "rgba(255,255,255,0.15)" }}
       >
@@ -66,7 +67,7 @@ function Identity({ member }: { member: Member }) {
         className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        <IconLabel name="pencil">تعديل</IconLabel>
+        <IconLabel name="pencil">{texts.edit}</IconLabel>
       </Link>
     </div>
   );
@@ -77,26 +78,26 @@ type Row = [string, string, string | undefined];
 function paidRows(member: Member): Row[] {
   const fee = member.paidAmount ?? 0;
   if (member.supportAmount <= 0) {
-    return [["المبلغ المسدد", member.paidAmount ? `${fee} أوقية` : "—", undefined]];
+    return [[texts.paid, member.paidAmount ? ouguiya.amount(fee) : "—", undefined]];
   }
   return [
-    ["رسوم الاشتراك", `${fee} أوقية`, undefined],
-    ["مبلغ الدعم", `${member.supportAmount} أوقية`, undefined],
-    ["إجمالي ما دُفع", `${fee + member.supportAmount} أوقية`, undefined],
+    [texts.fee, ouguiya.amount(fee), undefined],
+    [texts.support, ouguiya.amount(member.supportAmount), undefined],
+    [texts.totalPaid, ouguiya.amount(fee + member.supportAmount), undefined],
   ];
 }
 
 function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
   const rows: Row[] = [
-    ["رقم الهاتف", member.user?.phone || "غير معروف", "ltr"],
+    [texts.phone, member.user?.phone || texts.phoneUnknown, "ltr"],
     [villageField.label, member.village, undefined],
-    ...((member.age ? [["العصر", member.age, undefined]] : []) as Row[]),
-    ["طريقة الدفع", member.paymentMethod, undefined],
-    ["سنة العضوية", String(member.membershipYear), "ltr"],
+    ...((member.age ? [[texts.age, member.age, undefined]] : []) as Row[]),
+    [texts.method, member.paymentMethod, undefined],
+    [texts.membershipYear, String(member.membershipYear), "ltr"],
     ...paidRows(member),
-    ["رقم العضوية", member.memberNumber || "—", "ltr"],
-    ["تاريخ الطلب", formatDate(member.createdAt), undefined],
-    ["وقت الطلب", formatTime(member.createdAt), "ltr"],
+    [texts.memberNumber, member.memberNumber || "—", "ltr"],
+    [texts.requestDate, formatDate(member.createdAt), undefined],
+    [texts.requestTime, formatTime(member.createdAt), "ltr"],
   ];
 
   return (
@@ -116,7 +117,7 @@ function Facts({ member, settingsYear }: { member: Member; settingsYear: number 
           className="text-xs font-bold rounded-lg px-3 py-2"
           style={{ background: "#fef3c7", color: "#92400e" }}
         >
-          المبالغ أعلاه تخص عضوية {member.membershipYear}، ولم يجدد عضوية {settingsYear} بعد.
+          {texts.staleYear(member.membershipYear, settingsYear)}
         </p>
       )}
     </div>
@@ -135,7 +136,7 @@ function Proof({
   return (
     <div>
       <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="camera">صورة الكابتير</IconLabel>
+        <IconLabel name="camera">{texts.proofTitle}</IconLabel>
       </p>
       {member.paymentProof ? (
         <>
@@ -147,19 +148,19 @@ function Proof({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/api/files/${member.paymentProof}`}
-              alt="كابتير"
+              alt={texts.proofAlt}
               className="w-full object-contain max-h-56"
               style={{ background: "#f3f4f6" }}
             />
           </div>
           <p className="text-xs text-center mt-1" style={{ color: "var(--text-muted)" }}>
-            انقر للتكبير
+            {texts.proofZoom}
           </p>
           <ProofReuseWarning filename={member.paymentProof} kind="member" id={member.id} />
         </>
       ) : (
         <p className="text-sm card p-3 text-center" style={{ color: "var(--text-muted)" }}>
-          أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع
+          {texts.addedByAdmin}
         </p>
       )}
       <div className="mt-2">
@@ -247,7 +248,7 @@ export default function MemberDrawer({
               className="text-sm font-semibold flex items-center"
               style={{ color: "var(--text-muted)" }}
             >
-              <IconLabel name="flag">الحالة</IconLabel>
+              <IconLabel name="flag">{texts.status}</IconLabel>
             </span>
             <span className={`badge ${STATUS_BADGE[member.status]}`}>
               <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
@@ -257,7 +258,7 @@ export default function MemberDrawer({
           {member.registrations && member.registrations.length > 0 && (
             <div className="card p-4">
               <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
-                الأنشطة المسجل بها
+                {texts.registrations}
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {member.registrations.map((r) => (
@@ -287,7 +288,7 @@ export default function MemberDrawer({
             className="text-xs font-bold block"
             style={{ color: "var(--mint-600)" }}
           >
-            <ArrowLabel>الملف الكامل للعضو</ArrowLabel>
+            <ArrowLabel>{texts.fullProfile}</ArrowLabel>
           </Link>
 
           <Proof member={member} onZoom={onZoomProof} onProofSaved={onProofSaved} />
