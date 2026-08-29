@@ -1,3 +1,5 @@
+import { receiptPurpose } from "./texts/receipt";
+
 export type ReceiptState = "ACTIVE" | "VOID";
 
 export interface OfficialReceiptView {
@@ -29,7 +31,7 @@ export function receiptDate(date: Date | string): string {
 }
 
 export function receiptFileName(number: string, extension: string): string {
-  return `وصل-${number}.${extension}`;
+  return receiptPurpose.fileName(number, extension);
 }
 
 export function verifyPath(token: string): string {

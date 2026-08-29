@@ -11,6 +11,8 @@ export { auth } from "./auth";
 export { push } from "./push";
 export { notify } from "./notify";
 export { expenses } from "./expenses";
+export { receipts } from "./receipts";
+export { settings } from "./settings";
 export {
   ACCEPTED,
   ACCOUNT,

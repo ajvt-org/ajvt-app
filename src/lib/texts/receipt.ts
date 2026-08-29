@@ -1,3 +1,5 @@
+import { ouguiya } from "./currency";
+
 export const receiptSheet = {
   org: "رابطة شباب قرية التاكلالت",
   secretariat: "الأمانة العامة للرابطة",
@@ -6,7 +8,7 @@ export const receiptSheet = {
   reason: "موجب القبض",
   inWords: "المبلغ بالاحرف",
   inFigures: "المبلغ بالأرقام",
-  currency: "أوقية",
+  currency: ouguiya.singular,
   date: "التاريخ",
   secretary: "الأمين العام",
   treasurer: "مسؤول المالية",
@@ -14,6 +16,13 @@ export const receiptSheet = {
   voided: "ملغى",
   logoAlt: "شعار الرابطة",
   qrAlt: "رمز التحقق",
+} as const;
+
+export const receiptPurpose = {
+  membership: "اشتراك عضوية",
+  activity: "دعم نشاط",
+  donation: "تبرع",
+  fileName: (number: string, extension: string) => `وصل-${number}.${extension}`,
 } as const;
 
 export const receiptAdmin = {
