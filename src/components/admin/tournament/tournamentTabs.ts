@@ -22,7 +22,11 @@ export function isTournamentTab(key: string): key is TournamentTabKey {
   return (TOURNAMENT_TAB_KEYS as readonly string[]).includes(key);
 }
 
-export function tournamentTabs(shape: TournamentShape, pendingProposals: number): WorkspaceTab[] {
+export function tournamentTabs(
+  shape: TournamentShape,
+  pendingProposals: number,
+  pendingJoinRequests = 0,
+): WorkspaceTab[] {
   if (!shape.isTournament) return [];
   const singles = shape.teamSize === 1;
   const tabs: WorkspaceTab[] = [
@@ -30,6 +34,7 @@ export function tournamentTabs(shape: TournamentShape, pendingProposals: number)
       key: "teams",
       label: singles ? texts.tabs.players : texts.tabs.teams,
       icon: singles ? "user" : "users",
+      badge: pendingJoinRequests,
     },
     { key: "days", label: texts.tabs.days, icon: "calendar" },
     { key: "matches", label: texts.tabs.matches, icon: "swords" },

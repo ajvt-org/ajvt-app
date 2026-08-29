@@ -23,6 +23,7 @@ export interface Activity {
   order: number;
   createdAt: string;
   registrations: Registration[];
+  pendingJoinRequests: number;
 }
 
 export interface MemberOption {

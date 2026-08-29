@@ -58,6 +58,10 @@ function AdminActivityPageInner({ id }: { id: string }) {
   const isTournament = data?.activity.isTournament ?? false;
   const tournament = useTournamentData(id, isTournament);
   const pendingProposals = tournament.suspensions.filter((s) => s.status === "PROPOSED").length;
+  const pendingJoinRequests = tournament.teams.reduce(
+    (sum, team) => sum + team.members.filter((m) => m.status === "PENDING").length,
+    0,
+  );
 
   if (loading) {
     return (
@@ -86,7 +90,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
   const { activity, history } = data;
   const accepted = activity.registrations.filter((r) => r.status === "ACTIVE").length;
-  const tabs = activityTabs(activity, pendingProposals);
+  const tabs = activityTabs(activity, pendingProposals, pendingJoinRequests);
   const requested = searchParams.get("tab") || tabs[0].key;
   const tab = tabs.some((t) => t.key === requested) ? requested : tabs[0].key;
 

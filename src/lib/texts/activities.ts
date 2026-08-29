@@ -21,6 +21,7 @@ export const activityForm = {
 
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
+  joinRequestChip: (n: number) => `${n} طلب انضمام`,
   tournamentChip: "بطولة",
   volunteerChip: "حملة تطوعية",
   closedChip: "التسجيل مغلق",
