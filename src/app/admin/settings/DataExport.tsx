@@ -1,8 +1,8 @@
 import IconLabel from "@/components/IconLabel";
-import { DATASETS, type Dataset } from "@/lib/exportRows";
+import { PLAIN_DATASETS, type PlainDataset } from "@/lib/exportRows";
 import { settingsPage } from "@/lib/texts";
 
-const LABEL: Record<Dataset, string> = {
+const LABEL: Record<PlainDataset, string> = {
   members: settingsPage.exportMembers,
   donations: settingsPage.exportDonations,
   ages: settingsPage.exportAges,
@@ -16,7 +16,7 @@ export default function DataExport() {
       </p>
 
       <div className="flex flex-wrap gap-2">
-        {DATASETS.map((dataset) => (
+        {PLAIN_DATASETS.map((dataset) => (
           <a
             key={dataset}
             href={`/api/admin/export/${dataset}`}

@@ -1,5 +1,6 @@
 export { activityForm, activityRow, activityStandingTexts, tournamentSetup } from "./activities";
 export { activityPage } from "./activityPage";
+export { activityReport } from "./activityReport";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { adminTabs } from "./adminNav";

@@ -4,14 +4,17 @@ import {
   memberRows,
   donationRows,
   ageRows,
+  activityRows,
   MEMBER_HEADERS,
   DONATION_HEADERS,
+  ACTIVITY_HEADERS,
+  PLAIN_DATASETS,
 } from "@/lib/exportRows";
 import { HOME_VILLAGE } from "./villages";
 
 describe("isDataset", () => {
-  it("accepts the three the issue asks for", () => {
-    expect(["members", "donations", "ages"].every(isDataset)).toBe(true);
+  it("accepts every dataset the export route serves", () => {
+    expect(["members", "donations", "ages", "activities"].every(isDataset)).toBe(true);
   });
 
   it("refuses anything else", () => {
@@ -112,5 +115,44 @@ describe("ageRows", () => {
       { rank: 1, name: "البدريين", members: 15, users: 18, total: 30, rate: 50, userRate: 60 },
     ]);
     expect(rows[0]).toEqual(["البدريين", 15, 30, "50%"]);
+  });
+});
+
+describe("activityRows", () => {
+  const row = {
+    activityId: "a1",
+    title: "بطولة الصيف",
+    income: 900,
+    spending: 400,
+    balance: 500,
+    incomeByTag: [{ tag: "دعم", amount: 900 }],
+    spendingByTag: [
+      { tag: "نقل", amount: 300 },
+      { tag: "طعام", amount: 100 },
+    ],
+    receiptNumbers: ["0001", "0002"],
+  };
+
+  it("lays one row out under the headers it declares", () => {
+    expect(activityRows([row])[0]).toHaveLength(ACTIVITY_HEADERS.length);
+  });
+
+  it("names a surplus, a deficit and a balanced activity", () => {
+    const states = activityRows([row, { ...row, balance: -500 }, { ...row, balance: 0 }]).map(
+      (r) => r[4],
+    );
+
+    expect(states).toEqual(["فائض", "عجز", "متعادل"]);
+  });
+
+  it("writes the spending tags and the receipts into one cell each", () => {
+    const [made] = activityRows([row]);
+
+    expect(made[5]).toBe("نقل 300 / طعام 100");
+    expect(made[6]).toBe("0001 / 0002");
+  });
+
+  it("leaves the parameterless export list alone", () => {
+    expect([...PLAIN_DATASETS]).toEqual(["members", "donations", "ages"]);
   });
 });
