@@ -7,8 +7,6 @@ const WRITE =
 
 const HANDLER = /export const (GET|POST|PATCH|PUT|DELETE)\s*=/g;
 
-// Reading a request never needs an audit entry, and these two write rows that
-// belong to the visitor rather than to an admin decision.
 const NOT_AN_ADMIN_DECISION = ["admin/visits/route.ts"];
 
 function routeFiles(dir: string): string[] {
@@ -19,9 +17,6 @@ function routeFiles(dir: string): string[] {
   });
 }
 
-// One entry per exported handler, plus whatever sits above the first one.
-// Checking a whole file at a time let a handler with no logAction hide behind
-// a sibling that had one, which is how REMOVE_TEAM_MEMBER went unrecorded.
 function handlers(source: string): { name: string; body: string }[] {
   const marks = [...source.matchAll(HANDLER)];
   if (marks.length === 0) return [{ name: "file", body: source }];

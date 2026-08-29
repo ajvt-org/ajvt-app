@@ -78,7 +78,6 @@ describe("computeStandings", () => {
   it("ranks on points, then goal difference, then goals scored", () => {
     const four = [...teams, { id: "d", name: "دال" }];
     const table = computeStandings(four, [
-      // a: 3 pts, gd +1   b: 3 pts, gd +3   c: 3 pts, gd +3 but fewer goals
       match("a", "d", 1, 0),
       match("b", "d", 4, 1),
       match("c", "d", 3, 0),

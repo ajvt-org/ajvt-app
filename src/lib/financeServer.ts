@@ -39,8 +39,6 @@ interface DetailRow {
 
 const byAmountDesc = (a: NamedEntry, b: NamedEntry) => b.amount - a.amount;
 
-// Totals stay all-time but aggregate in the database; only the recentDays
-// window is read as rows. The fee/support split in the SQL mirrors splitPayment.
 export async function getFinanceSummary(recentDays = 30, activityId?: string) {
   const scope = activityId !== undefined ? { activityId } : {};
   const activity = activityId ?? null;

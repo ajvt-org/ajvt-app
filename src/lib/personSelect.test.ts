@@ -3,14 +3,6 @@ import { readFileSync } from "node:fs";
 import { sourceFiles } from "@tests/sourceFiles";
 import { PERSON_SELECT } from "./person";
 
-// The person lives on the account, and every screen that shows one needs the
-// same seven fields. Written out at the call site they drift: the admin list
-// and the member profile once served undefined for every name and village
-// because one select was added without them, and four test tiers said nothing.
-//
-// So the full shape is spelled once, in person.ts, and this fails the build if
-// a second copy appears. A select that deliberately wants fewer fields is left
-// alone — the rule is about the whole person, not about the words.
 const PERSON_FIELDS = Object.keys(PERSON_SELECT);
 
 const ALLOWED = ["src/lib/person.ts"];
@@ -34,8 +26,6 @@ function selectBlocks(source: string): string[] {
   return blocks;
 }
 
-// Only the block's own keys count. A nested select that happens to hold the
-// rest of the fields is a different shape, not this one.
 function ownKeys(block: string): Set<string> {
   let depth = 0;
   let own = "";

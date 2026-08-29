@@ -6,11 +6,6 @@ import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { loginPathWithNext } from "@/lib/utils";
 import { goAfterAuthChange } from "@/lib/authNav";
 
-// The membership on the signed-in account, for the two tabs that need it: the
-// activities list, which asks whether it may register, and the profile, which
-// shows it. Both also inherit the session handling, so an expired cookie lands
-// on the login page from either. An account carries at most one membership,
-// so /api/user/me returns a list of nought or one.
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 export type Status = "PENDING" | "ACTIVE" | "REJECTED";
@@ -58,10 +53,6 @@ export function useMember() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // A 401 here means the token was revoked, by a password change or an admin
-  // reset. Dropping the cookie on the way out matters: left in place it still
-  // parses, so the server keeps drawing the member bar for a session that
-  // nothing will actually serve.
   function signOutAndReturnToLogin() {
     return fetch("/api/auth/logout", { method: "POST" })
       .catch(() => {})

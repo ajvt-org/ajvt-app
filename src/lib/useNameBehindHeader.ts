@@ -2,12 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Which heading has scrolled up behind the sticky banner. The banner shows
-// that one's label, so a name is never on screen twice, and a profile holding
-// several people names whichever one you have scrolled to.
-//
-// The line is the banner's own measured height rather than a constant, since
-// the banner grows with the safe area and with the text size the reader picked.
 const HEADER_SELECTOR = ".page-header";
 
 export type Heading = { id: string; label: string };

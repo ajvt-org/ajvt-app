@@ -1,9 +1,3 @@
-// Builds the Arabic phrasing for an activity's dates instead of asking an
-// admin to type it. Everything reads in UTC: the club sits at UTC+0 and the
-// dates are calendar facts, so a reader in another zone sees the same day.
-// The year is dropped when it is the current one, and the parts are ordered
-// here rather than left to toLocaleDateString, which embeds directional
-// marks that reorder a range on screen.
 const MONTHS = [
   "يناير",
   "فبراير",
