@@ -121,6 +121,7 @@ type EventPlayer = { id: string; fullName: string; photo: string | null };
 export type EventMatch = {
   homeTeamId?: string;
   manOfTheMatchTeam?: string | null;
+  hideGoalsOfTeamId?: string | null;
   goals: {
     count: number;
     minute: number | null;
@@ -142,10 +143,15 @@ function sideOf(teamId: string | undefined, homeTeamId: string | undefined): Eve
   return teamId === homeTeamId ? "home" : "away";
 }
 
+function shownGoals(match: EventMatch) {
+  if (!match.hideGoalsOfTeamId) return match.goals;
+  return match.goals.filter((goal) => goal.teamId !== match.hideGoalsOfTeamId);
+}
+
 export function matchEventRows(match: EventMatch): MatchEventRow[] {
   const rows = [
     ...goalRows(
-      match.goals.map((goal) => ({
+      shownGoals(match).map((goal) => ({
         memberId: goal.member?.id ?? null,
         fullName: goal.member?.fullName ?? matchDisplay.unknownScorer,
         photo: goal.member?.photo ?? null,
@@ -201,7 +207,7 @@ export type TimelineEntry = {
 
 export function matchTimeline(match: EventMatch): TimelineEntry[] {
   const entries: TimelineEntry[] = [];
-  match.goals.forEach((goal, i) => {
+  shownGoals(match).forEach((goal, i) => {
     entries.push({
       key: `goal:${i}`,
       minute: goal.minute,

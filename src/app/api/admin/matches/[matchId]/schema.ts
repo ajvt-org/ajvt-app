@@ -24,4 +24,5 @@ export const matchUpdateSchema = z.object({
   manOfTheMatchId: z.string(INVALID).nullish(),
   homeTeamId: z.string(INVALID).optional(),
   awayTeamId: z.string(INVALID).optional(),
+  forfeitWinnerTeamId: z.string(INVALID).nullish(),
 });
