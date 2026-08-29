@@ -38,6 +38,7 @@ export interface MemberData {
   paymentProof: string | null;
   paidAmount: number | null;
   supportAmount: number;
+  membershipYear: number;
   surplusAnonymous: boolean;
   status: Status;
   rejectionReason: string | null;
@@ -54,6 +55,7 @@ export interface MemberData {
 export function useMember() {
   const router = useRouter();
   const [member, setMember] = useState<MemberData | null>(null);
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // A 401 here means the token was revoked, by a password change or an admin
@@ -78,6 +80,7 @@ export function useMember() {
       .then((data) => {
         if (!data) return;
         setMember(data.members?.[0] ?? null);
+        setCurrentYear(data.currentYear ?? null);
       })
       .catch(() => signOutAndReturnToLogin());
   }
@@ -97,5 +100,5 @@ export function useMember() {
 
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 
-  return { member, setMember, loading, reload, logout };
+  return { member, setMember, currentYear, loading, reload, logout };
 }

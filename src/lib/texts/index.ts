@@ -17,6 +17,7 @@ export { manualAdd } from "./manualAdd";
 export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
 export { memberProof } from "./memberProof";
+export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { memberPhoto } from "./memberPhoto";
