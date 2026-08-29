@@ -19,7 +19,7 @@ export const memberDrawer = {
   proofTitle: "صورة الكابتير",
   proofAlt: "كابتير",
   proofZoom: "انقر للتكبير",
-  addedByAdmin: "أُضيف يدوياً من طرف المشرف، لا يوجد إثبات دفع",
+  addedByAdmin: "أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع",
   status: "الحالة",
   registrations: "الأنشطة المسجل بها",
   fullProfile: "الملف الكامل للعضو",
