@@ -52,4 +52,5 @@ export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
+export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
