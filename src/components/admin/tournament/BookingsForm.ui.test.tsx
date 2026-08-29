@@ -5,9 +5,15 @@ import type { Match, Team } from "./types";
 import { matchAdmin as texts } from "@/lib/texts";
 
 const postMock = vi.fn();
+const patchMock = vi.fn();
+const delMock = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { post: (...args: unknown[]) => postMock(...args) },
+  api: {
+    post: (...args: unknown[]) => postMock(...args),
+    patch: (...args: unknown[]) => patchMock(...args),
+    del: (...args: unknown[]) => delMock(...args),
+  },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
@@ -26,6 +32,7 @@ const MATCH: Match = {
   homePenalties: null,
   awayPenalties: null,
   manOfTheMatch: null,
+  forfeitWinnerTeamId: null,
   status: "SCHEDULED",
   goals: [],
   penaltyKicks: [],
@@ -59,13 +66,30 @@ const TEAMS: Team[] = [
   },
 ];
 
-function show() {
+const BOOKING = {
+  id: "b1",
+  cardType: "YELLOW" as const,
+  minute: 40,
+  teamId: "t1",
+  member: { id: "p1", fullName: "سالم", photo: null },
+};
+
+function show(bookings: Match["bookings"] = []) {
   cleanup();
-  render(<BookingsForm match={MATCH} teams={TEAMS} suspendedIds={[]} onChange={vi.fn()} />);
+  render(
+    <BookingsForm
+      match={{ ...MATCH, bookings }}
+      teams={TEAMS}
+      suspendedIds={[]}
+      onChange={vi.fn()}
+    />,
+  );
 }
 
 afterEach(() => {
   postMock.mockReset();
+  patchMock.mockReset();
+  delMock.mockReset();
 });
 
 describe("the cards form", () => {
@@ -111,5 +135,56 @@ describe("the cards form", () => {
 
     await waitFor(() => expect(postMock).toHaveBeenCalled());
     expect(postMock.mock.calls[0][1]).toMatchObject({ minute: null });
+  });
+});
+
+describe("fixing a card that was entered wrong", () => {
+  it("offers an edit next to every card", () => {
+    show([BOOKING]);
+
+    expect(screen.getAllByLabelText(texts.edit)).toHaveLength(1);
+  });
+
+  it("loads the card into the form when editing starts", () => {
+    show([BOOKING]);
+
+    fireEvent.click(screen.getByLabelText(texts.edit));
+
+    expect(screen.getByText(texts.editingCard)).toBeDefined();
+    expect(screen.getByLabelText(texts.fieldMinute)).toHaveProperty("value", "40");
+    expect(screen.getByLabelText(texts.fieldPlayer)).toHaveProperty("value", "p1");
+  });
+
+  it("saves against that card rather than adding another", async () => {
+    patchMock.mockResolvedValue({});
+    show([BOOKING]);
+
+    fireEvent.click(screen.getByLabelText(texts.edit));
+    fireEvent.change(screen.getByLabelText(texts.fieldMinute), { target: { value: "55" } });
+    fireEvent.click(screen.getByRole("button", { name: texts.saveEdit }));
+
+    await waitFor(() => expect(patchMock).toHaveBeenCalled());
+    expect(patchMock.mock.calls[0][0]).toBe("/api/admin/bookings/b1");
+    expect(patchMock.mock.calls[0][1]).toMatchObject({ minute: "55", cardType: "YELLOW" });
+    expect(postMock).not.toHaveBeenCalled();
+  });
+
+  it("goes back to adding when the edit is cancelled", () => {
+    show([BOOKING]);
+
+    fireEvent.click(screen.getByLabelText(texts.edit));
+    fireEvent.click(screen.getByRole("button", { name: texts.cancelEdit }));
+
+    expect(screen.queryByText(texts.editingCard)).toBeNull();
+    expect(screen.getByRole("button", { name: texts.addCard })).toBeDefined();
+  });
+
+  it("removes a card through the api, so an error can be shown", async () => {
+    delMock.mockResolvedValue({});
+    show([BOOKING]);
+
+    fireEvent.click(screen.getByLabelText(texts.remove));
+
+    await waitFor(() => expect(delMock).toHaveBeenCalledWith("/api/admin/bookings/b1"));
   });
 });

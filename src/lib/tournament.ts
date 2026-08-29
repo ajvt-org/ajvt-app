@@ -1,3 +1,4 @@
+import { countsForScorers } from "./forfeit";
 export interface StandingsTeamInput {
   id: string;
   name: string;
@@ -113,6 +114,7 @@ export interface ScorerGoalInput {
 
 export interface ScorerMatchInput {
   goals: ScorerGoalInput[];
+  forfeitWinnerTeamId?: string | null;
 }
 
 export interface TopScorerRow {
@@ -132,6 +134,7 @@ export function computeTopScorers(
   for (const m of matches) {
     for (const g of m.goals) {
       if (g.member === null || g.kind === "OWN_GOAL") continue;
+      if (!countsForScorers(g, m.forfeitWinnerTeamId)) continue;
       const existing = tally.get(g.member.id);
       if (existing) {
         existing.goals += g.count;

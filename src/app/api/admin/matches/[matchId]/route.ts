@@ -19,6 +19,7 @@ import {
   type GoalInput,
   type KickEvent,
 } from "@/lib/matchInput";
+import { forfeitScore } from "@/lib/forfeit";
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
@@ -98,6 +99,7 @@ export const PATCH = withRoute(
       awayTeamId,
       goalEvents,
       penaltyKicks,
+      forfeitWinnerTeamId,
     } = parse(matchUpdateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
@@ -125,6 +127,7 @@ export const PATCH = withRoute(
       homePenalties?: number | null;
       awayPenalties?: number | null;
       manOfTheMatchId?: string | null;
+      forfeitWinnerTeamId?: string | null;
       status?: MatchStatus;
       suspensionsServedAt?: Date;
       homeTeamId?: string;
@@ -226,7 +229,10 @@ export const PATCH = withRoute(
         }
       }
 
-      const score = scoreFromGoals(evGoals, match.homeTeamId);
+      const scored = scoreFromGoals(evGoals, match.homeTeamId);
+      const winner =
+        forfeitWinnerTeamId === undefined ? match.forfeitWinnerTeamId : forfeitWinnerTeamId;
+      const score = winner ? forfeitScore(scored, winner, match.homeTeamId) : scored;
       updateData.homeScore = score.home;
       updateData.awayScore = score.away;
       updateData.status = "PLAYED";
@@ -341,6 +347,31 @@ export const PATCH = withRoute(
       }
     }
 
+    if (forfeitWinnerTeamId !== undefined) {
+      if (forfeitWinnerTeamId === null) {
+        updateData.forfeitWinnerTeamId = null;
+      } else if (
+        forfeitWinnerTeamId !== match.homeTeamId &&
+        forfeitWinnerTeamId !== match.awayTeamId
+      ) {
+        return NextResponse.json({ error: tournament.forfeitWinnerNotInMatch }, { status: 400 });
+      } else {
+        updateData.forfeitWinnerTeamId = forfeitWinnerTeamId;
+      }
+      if (!eventsMode && match.status === "PLAYED") {
+        const stored = await prisma.matchGoal.findMany({
+          where: { matchId },
+          select: { teamId: true },
+        });
+        const scored = scoreFromGoals(stored, match.homeTeamId);
+        const score = forfeitWinnerTeamId
+          ? forfeitScore(scored, forfeitWinnerTeamId, match.homeTeamId)
+          : scored;
+        updateData.homeScore = score.home;
+        updateData.awayScore = score.away;
+      }
+    }
+
     if (manOfTheMatchId !== undefined) {
       if (manOfTheMatchId === null) {
         updateData.manOfTheMatchId = null;
@@ -439,6 +470,31 @@ export const PATCH = withRoute(
       }
       return tx.match.update({ where: { id: matchId }, data: updateData, include: MATCH_INCLUDE });
     });
+
+    if (forfeitWinnerTeamId !== undefined) {
+      const winnerName =
+        forfeitWinnerTeamId === match.homeTeamId ? match.homeTeam.name : match.awayTeam.name;
+      await logAction(
+        session.username,
+        forfeitWinnerTeamId ? "SET_MATCH_FORFEIT" : "CLEAR_MATCH_FORFEIT",
+        `${match.homeTeam.name} × ${match.awayTeam.name}${forfeitWinnerTeamId ? ` — ${winnerName}` : ""}`,
+        {
+          ...auditContext(session, req),
+          targetType: "Match",
+          targetId: matchId,
+          before: {
+            forfeitWinnerTeamId: match.forfeitWinnerTeamId,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+          },
+          after: {
+            forfeitWinnerTeamId,
+            homeScore: updateData.homeScore,
+            awayScore: updateData.awayScore,
+          },
+        },
+      );
+    }
 
     if ((enteringResult || eventsMode) && updateData.status === "PLAYED") {
       await logAction(

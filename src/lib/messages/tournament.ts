@@ -7,6 +7,9 @@ export const tournament = {
   groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
   targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   matchNotFound: "المباراة غير موجودة",
+  bookingNotFound: "البطاقة غير موجودة",
+  teamNotInMatch: "الفريق لا ينتمي إلى هذه المباراة",
+  playerNotInTeam: "اللاعب لا ينتمي إلى هذا الفريق",
   teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
   teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
@@ -44,6 +47,8 @@ export const tournament = {
   leaguePairing:
     "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
   goalEventsInvalid: "بيانات الأهداف غير صالحة",
+  forfeitWinnerNotInMatch: "الفريق الفائز بالانسحاب ليس من فريقي المباراة",
+  forfeitNeedsResult: "سجّل نتيجة المباراة قبل تسجيل الانسحاب",
   kicksInvalid: "بيانات ركلات الترجيح غير صالحة",
   scorerWrongTeam: "أحد الهدافين ليس ضمن الفريق الصحيح",
   ownGoalScorerWrongTeam: "مسجل الهدف العكسي يجب أن يكون من الفريق الآخر",

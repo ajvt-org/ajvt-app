@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, cleanup as rtlCleanup } from "@testing-library/react";
 import MatchResult from "./MatchResult";
 import type { PublicMatch } from "./publicTypes";
+import { matchDisplay } from "@/lib/texts";
 
 function match(): PublicMatch {
   return {
@@ -19,6 +20,7 @@ function match(): PublicMatch {
     homePenalties: null,
     awayPenalties: null,
     status: "PLAYED",
+    forfeitWinnerTeamId: null,
     manOfTheMatch: { id: "p1", fullName: "أحمد ولد محمد", photo: null },
     goals: [
       {
@@ -81,5 +83,46 @@ describe("MatchResult by sport profile", () => {
     expect(screen.queryByText(/سالم ولد علي/)).toBeNull();
     expect(screen.queryByText(/مجريات المباراة/)).toBeNull();
     expect(screen.getAllByText(/الصقور/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("a match won by forfeit", () => {
+  function showForfeit(forfeitWinnerTeamId: string | null) {
+    rtlCleanup();
+    render(
+      <MatchResult
+        match={{ ...match(), forfeitWinnerTeamId, homeScore: 3, awayScore: 0 }}
+        day={{ round: null, venue: null }}
+        allMatches={[match()]}
+        football
+        tournamentTitle="كأس"
+        loggedIn={false}
+        myVoteCandidateId={null}
+      />,
+    );
+  }
+
+  it("says so, naming the side it was awarded to", () => {
+    showForfeit("t1");
+
+    expect(screen.getByText(matchDisplay.forfeitNote("الصقور"))).toBeDefined();
+  });
+
+  it("says nothing on a match that was played out", () => {
+    showForfeit(null);
+
+    expect(screen.queryByText(/انسحاب/)).toBeNull();
+  });
+
+  it("keeps the forfeiting side's goal out of the events", () => {
+    showForfeit("t2");
+
+    expect(screen.queryByText(/12/)).toBeNull();
+  });
+
+  it("still shows it when that side is the one awarded the win", () => {
+    showForfeit("t1");
+
+    expect(screen.getAllByText(/12/).length).toBeGreaterThan(0);
   });
 });

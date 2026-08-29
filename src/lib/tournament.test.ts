@@ -198,6 +198,44 @@ describe("computeStats", () => {
   });
 });
 
+describe("a forfeit and the scorers table", () => {
+  const teams = [
+    { id: "t1", name: "الأول", members: [] },
+    { id: "t2", name: "الثاني", members: [] },
+  ];
+  const goal = (teamId: string, id: string) => ({
+    teamId,
+    count: 1,
+    kind: "GOAL" as const,
+    member: { id, fullName: id, photo: null },
+  });
+
+  it("keeps the winner's scorers and drops the loser's", () => {
+    const rows = computeTopScorers(teams, [
+      { goals: [goal("t1", "winner"), goal("t2", "loser")], forfeitWinnerTeamId: "t1" },
+    ]);
+
+    expect(rows.map((r) => r.memberId)).toEqual(["winner"]);
+  });
+
+  it("counts both sides when the match was actually played out", () => {
+    const rows = computeTopScorers(teams, [
+      { goals: [goal("t1", "one"), goal("t2", "two")], forfeitWinnerTeamId: null },
+    ]);
+
+    expect(rows).toHaveLength(2);
+  });
+
+  it("leaves a scorer their goals from other matches", () => {
+    const rows = computeTopScorers(teams, [
+      { goals: [goal("t2", "player")], forfeitWinnerTeamId: "t1" },
+      { goals: [goal("t2", "player")] },
+    ]);
+
+    expect(rows).toEqual([expect.objectContaining({ memberId: "player", goals: 1 })]);
+  });
+});
+
 describe("computeTopScorers", () => {
   it("adds a player's goals across matches", () => {
     const rows = computeTopScorers(teams, [

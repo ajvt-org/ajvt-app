@@ -7,8 +7,10 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import Scoreline from "@/components/tournament/Scoreline";
 import GoalSection from "./GoalSection";
+import ForfeitToggle from "./ForfeitToggle";
 import KickAdder from "./KickAdder";
 import type { GoalDraft, KickDraft } from "./goalDraft";
+import { forfeitScore } from "@/lib/forfeit";
 import { discipline as disciplineTexts, matchAdmin as texts } from "@/lib/texts";
 
 export default function ResultForm({
@@ -71,15 +73,26 @@ export default function ResultForm({
     match.goals.some((g) => g.period === "EXTRA_TIME"),
   );
   const [manOfTheMatchId, setManOfTheMatchId] = useState(match.manOfTheMatch?.id ?? "");
+  const [forfeitWinnerTeamId, setForfeitWinnerTeamId] = useState<string | null>(
+    match.forfeitWinnerTeamId,
+  );
   const [homeScore, setHomeScore] = useState(match.homeScore?.toString() ?? "");
   const [awayScore, setAwayScore] = useState(match.awayScore?.toString() ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const hs = goals.filter((g) => g.teamId === match.homeTeam.id).length;
-  const as = goals.length - hs;
+  const scored = {
+    home: goals.filter((g) => g.teamId === match.homeTeam.id).length,
+    away: 0,
+  };
+  scored.away = goals.length - scored.home;
+  const awarded = forfeitWinnerTeamId
+    ? forfeitScore(scored, forfeitWinnerTeamId, match.homeTeam.id)
+    : scored;
+  const hs = awarded.home;
+  const as = awarded.away;
   const tied = hs === as;
-  const showKicks = football && match.isKnockout && tied;
+  const showKicks = football && match.isKnockout && tied && !forfeitWinnerTeamId;
   const kickTally = {
     home: kicks.filter((k) => k.teamId === match.homeTeam.id && k.scored).length,
     away: kicks.filter((k) => k.teamId === match.awayTeam.id && k.scored).length,
@@ -101,6 +114,7 @@ export default function ResultForm({
           })),
           penaltyKicks: showKicks ? kicks : [],
           manOfTheMatchId: manOfTheMatchId || null,
+          forfeitWinnerTeamId,
         });
       } else {
         await api.patch(`/api/admin/matches/${match.id}`, {
@@ -184,6 +198,14 @@ export default function ResultForm({
           </IconLabel>
         </p>
       )}
+
+      <ForfeitToggle
+        sides={sides}
+        homeTeamId={match.homeTeam.id}
+        scored={scored}
+        winnerTeamId={forfeitWinnerTeamId}
+        onChange={setForfeitWinnerTeamId}
+      />
 
       <GoalSection
         title={texts.goalsHeading}

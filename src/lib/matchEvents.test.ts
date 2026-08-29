@@ -336,3 +336,40 @@ describe("matchTimeline", () => {
     expect(entries[0].side).toBe("away");
   });
 });
+
+describe("a forfeited match, seen from outside", () => {
+  const player = (id: string) => ({ id, fullName: id, photo: null });
+  const match = {
+    homeTeamId: "home",
+    goals: [
+      { count: 1, minute: 10, kind: "GOAL", teamId: "home", member: player("winner") },
+      { count: 1, minute: 20, kind: "GOAL", teamId: "away", member: player("loser") },
+    ],
+    bookings: [{ cardType: "YELLOW", minute: 30, teamId: "away", member: player("booked") }],
+  };
+
+  it("shows both scorers while nothing is hidden", () => {
+    expect(matchEventRows(match).map((r) => r.name)).toContain("loser");
+  });
+
+  it("drops the forfeiting side's goals from the rows", () => {
+    const rows = matchEventRows({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(rows.map((r) => r.name)).toContain("winner");
+    expect(rows.map((r) => r.name)).not.toContain("loser");
+  });
+
+  it("drops them from the timeline too", () => {
+    const entries = matchTimeline({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(entries.filter((e) => e.type === "goal").map((e) => e.name)).toEqual(["winner"]);
+  });
+
+  it("keeps the cards, which a forfeit does not annul", () => {
+    const rows = matchEventRows({ ...match, hideGoalsOfTeamId: "away" });
+    const entries = matchTimeline({ ...match, hideGoalsOfTeamId: "away" });
+
+    expect(rows.map((r) => r.name)).toContain("booked");
+    expect(entries.map((e) => e.type)).toContain("yellow");
+  });
+});
