@@ -23,6 +23,8 @@ export type BookingSource = {
 
 export type MatchEventType = "goal" | "yellow" | "red" | "motm";
 
+export type MinuteToken = { kind: "minute"; label: string } | { kind: "unknown"; count: number };
+
 export type MatchEventRow = {
   key: string;
   side: EventSide;
@@ -30,7 +32,7 @@ export type MatchEventRow = {
   name: string;
   team?: string | null;
   photo: string | null;
-  minutes: string[];
+  minutes: MinuteToken[];
 };
 
 const MINUTES_PER_LINE = 2;
@@ -42,13 +44,18 @@ function kindSuffix(kind: GoalSource["kind"]): string {
   return "";
 }
 
-function sortMinutes(minutes: string[]): string[] {
-  return [...minutes].sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0));
+function minuteValue(token: MinuteToken | undefined): number {
+  if (token?.kind !== "minute") return NO_MINUTE;
+  const minute = parseInt(token.label, 10);
+  return Number.isNaN(minute) ? NO_MINUTE : minute;
+}
+
+function sortMinutes(minutes: MinuteToken[]): MinuteToken[] {
+  return [...minutes].sort((a, b) => minuteValue(a) - minuteValue(b));
 }
 
 function firstMinute(row: MatchEventRow): number {
-  const minute = parseInt(row.minutes[0] ?? "", 10);
-  return Number.isNaN(minute) ? NO_MINUTE : minute;
+  return minuteValue(row.minutes[0]);
 }
 
 function byFirstMinute(rows: MatchEventRow[]): MatchEventRow[] {
@@ -72,7 +79,7 @@ export function goalRows(goals: GoalSource[]): MatchEventRow[] {
     const total = Math.max(goal.count, 1);
     if (goal.minute === null) row.unnamed += total;
     else {
-      row.minutes.push(`${goal.minute}'${kindSuffix(goal.kind)}`);
+      row.minutes.push({ kind: "minute", label: `${goal.minute}'${kindSuffix(goal.kind)}` });
       if (total > 1) row.unnamed += total - 1;
     }
     rows.set(key, row);
@@ -82,7 +89,7 @@ export function goalRows(goals: GoalSource[]): MatchEventRow[] {
       ...row,
       minutes:
         unnamed > 0
-          ? [...sortMinutes(row.minutes), `(${row.minutes.length + unnamed})`]
+          ? [...sortMinutes(row.minutes), { kind: "unknown" as const, count: unnamed }]
           : sortMinutes(row.minutes),
     })),
   );
@@ -102,7 +109,7 @@ export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
       photo: booking.photo,
       minutes: [],
     };
-    if (booking.minute !== null) row.minutes.push(`${booking.minute}'`);
+    if (booking.minute !== null) row.minutes.push({ kind: "minute", label: `${booking.minute}'` });
     rows.set(key, row);
   }
   return byFirstMinute(
@@ -110,8 +117,8 @@ export function bookingRows(bookings: BookingSource[]): MatchEventRow[] {
   );
 }
 
-export function minuteLines(minutes: string[], perLine = MINUTES_PER_LINE): string[][] {
-  const lines: string[][] = [];
+export function minuteLines(minutes: MinuteToken[], perLine = MINUTES_PER_LINE): MinuteToken[][] {
+  const lines: MinuteToken[][] = [];
   for (let i = 0; i < minutes.length; i += perLine) lines.push(minutes.slice(i, i + perLine));
   return lines;
 }
