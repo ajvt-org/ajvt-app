@@ -54,6 +54,11 @@ export default function AgeGroupField({
         options={options}
         onChange={pick}
         extraOption={{ value: ADD, label: memberForm.addAge }}
+        search={{
+          placeholder: memberForm.ageSearchPlaceholder,
+          label: memberForm.ageSearchLabel,
+          empty: memberForm.ageNoMatch,
+        }}
       />
 
       {adding && (
