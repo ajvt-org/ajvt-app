@@ -56,6 +56,7 @@ export async function loadActivityPage(id: string) {
           status: true,
           manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
           goals: {
+            orderBy: { minute: "asc" as const },
             select: {
               count: true,
               minute: true,
@@ -75,6 +76,7 @@ export async function loadActivityPage(id: string) {
             },
           },
           bookings: {
+            orderBy: { minute: "asc" as const },
             select: {
               cardType: true,
               minute: true,

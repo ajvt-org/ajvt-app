@@ -29,6 +29,7 @@ const MATCH_INCLUDE = {
   awayTeam: { select: { id: true, name: true, logo: true } },
   manOfTheMatch: { select: { id: true, fullName: true, photo: true } },
   goals: {
+    orderBy: { minute: "asc" },
     select: {
       id: true,
       count: true,
@@ -50,6 +51,7 @@ const MATCH_INCLUDE = {
     },
   },
   bookings: {
+    orderBy: { minute: "asc" },
     select: {
       id: true,
       cardType: true,
