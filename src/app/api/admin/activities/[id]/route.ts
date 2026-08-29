@@ -53,6 +53,7 @@ export const PATCH = withRoute(
       yellowsForBan,
       redBanMatches,
       isVolunteer,
+      settlePending,
       whatsappLink,
       order,
       startsAt,
@@ -136,7 +137,41 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: activities.whatsappRequired }, { status: 400 });
     }
 
-    const activity = await prisma.activity.update({ where: { id }, data });
+    const pending =
+      nextIsVolunteer && !existing.isVolunteer
+        ? await prisma.activityRegistration.count({ where: { activityId: id, status: "PENDING" } })
+        : 0;
+    if (pending > 0 && !settlePending) {
+      return NextResponse.json(
+        { error: activities.pendingBeforeCampaign, pending },
+        { status: 409 },
+      );
+    }
+    const settled = pending > 0 ? (settlePending === "accept" ? "ACTIVE" : "REJECTED") : null;
+
+    const activity = await prisma.$transaction(async (tx) => {
+      if (settled) {
+        await tx.activityRegistration.updateMany({
+          where: { activityId: id, status: "PENDING" },
+          data: { status: settled },
+        });
+      }
+      return tx.activity.update({ where: { id }, data });
+    });
+    if (settled) {
+      await logAction(
+        session.username,
+        settled === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
+        `${activity.title} — ${pending}`,
+        {
+          ...auditContext(session, req),
+          targetType: "Activity",
+          targetId: activity.id,
+          before: { pendingRegistrations: pending },
+          after: { status: settled },
+        },
+      );
+    }
     await logAction(session.username, "UPDATE_ACTIVITY", activity.title, {
       ...auditContext(session, req),
       targetType: "Activity",

@@ -5,6 +5,8 @@ export const activities = {
   notATournament: "هذا النشاط ليس بطولة",
   tournamentAndVolunteer: "لا يمكن أن يكون النشاط بطولة وحملة تطوعية في آن واحد",
   whatsappRequired: "رابط مجموعة الواتساب مطلوب لحملات التطوع",
+  pendingBeforeCampaign:
+    "هناك طلبات تسجيل قيد المراجعة على هذا النشاط. اقبلها أو ارفضها قبل تحويله إلى حملة تطوعية",
   registrationClosed: "التسجيل في هذا النشاط مغلق",
   membershipNotApproved: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً",
   alreadyRegistered: "مسجَّل بالفعل في هذا النشاط",
