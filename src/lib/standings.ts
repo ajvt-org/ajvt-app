@@ -150,9 +150,6 @@ function byKeys(rows: StandingsRow[], keys: Key[]): StandingsRow[] {
   });
 }
 
-// Points first, then the meetings between the teams still level, then the
-// whole-group figures, then cards. Anything still level after all of that is
-// a drawing of lots, so it is marked rather than settled by team name.
 function rank(rows: StandingsRow[], matches: StandingsMatchInput[]): StandingsRow[] {
   if (rows.length < 2) return rows;
 
