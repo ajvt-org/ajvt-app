@@ -5,7 +5,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import { arabicValidity } from "@/lib/validationMessage";
 import { loginPathWithNext } from "@/lib/utils";
-import ErrorNotice from "./ErrorNotice";
+import ErrorNotice from "@/components/form/ErrorNotice";
 
 // The one error this step reads rather than only shows: a number that is
 // already registered means the visitor has an account, so offer the way in.

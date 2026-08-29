@@ -8,11 +8,13 @@ import FormSelect from "./FormSelect";
 const ADD = "__add__";
 
 export default function AgeGroupField({
+  idPrefix = "member",
   value,
   ages,
   onChange,
   onAdd,
 }: {
+  idPrefix?: string;
   value: string;
   ages: string[];
   onChange: (age: string) => void;
@@ -45,7 +47,7 @@ export default function AgeGroupField({
   return (
     <div>
       <FormSelect
-        id="member-age"
+        id={`${idPrefix}-age`}
         label={memberForm.ageLabel}
         placeholder={memberForm.agePlaceholder}
         value={adding ? ADD : value}
