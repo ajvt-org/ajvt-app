@@ -1,5 +1,5 @@
 import { receiptSheet } from "@/lib/texts/receipt";
-import { RECEIPT_DOTS, RECEIPT_INK, RECEIPT_LOGO, RECEIPT_MUTED } from "./receiptStyle";
+import { RECEIPT_DOTS, RECEIPT_INK, RECEIPT_MUTED, RECEIPT_SEAL } from "./receiptStyle";
 
 function Officer({ role, name }: { role: string; name: string | null }) {
   return (
@@ -44,11 +44,11 @@ export default function ReceiptFooter({
       <Officer role={receiptSheet.secretary} name={secretary} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={RECEIPT_LOGO}
+        src={RECEIPT_SEAL}
         alt={receiptSheet.sealAlt}
-        width={44}
-        height={44}
-        style={{ flex: "none", opacity: 0.85, alignSelf: "center" }}
+        width={64}
+        height={64}
+        style={{ flex: "none", opacity: 0.9, alignSelf: "center" }}
       />
       <Officer role={receiptSheet.treasurer} name={treasurer} />
       <div style={{ flex: "none", textAlign: "center" }}>
