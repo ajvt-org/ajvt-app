@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
+import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
 import { api, errorMessage } from "@/lib/api";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
@@ -21,6 +22,7 @@ export default function MatchesTab({
   profile,
   matches,
   suspendedIds,
+  mvpVoteMinutes,
   onChange,
 }: {
   activityId: string;
@@ -30,6 +32,7 @@ export default function MatchesTab({
   profile: "FOOTBALL" | "BOARD";
   matches: Match[];
   suspendedIds: string[];
+  mvpVoteMinutes: number;
   onChange: () => void;
 }) {
   const [form, setForm] = useState({
@@ -152,6 +155,9 @@ export default function MatchesTab({
 
   return (
     <div className="space-y-4">
+      {profile === "FOOTBALL" && (
+        <MvpVoteMinutesCard activityId={activityId} minutes={mvpVoteMinutes} onChange={onChange} />
+      )}
       {error && (
         <div
           className="p-3 rounded-xl text-sm font-semibold"
@@ -219,6 +225,7 @@ export default function MatchesTab({
                 allMatches={matches}
                 profile={profile}
                 suspendedIds={suspendedIds}
+                mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
@@ -255,6 +262,7 @@ export default function MatchesTab({
                 allMatches={matches}
                 profile={profile}
                 suspendedIds={suspendedIds}
+                mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
                 showResultForm={resultFormFor === m.id}
                 onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}

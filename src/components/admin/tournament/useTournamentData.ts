@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import { tournamentWorkspace as texts } from "@/lib/texts";
+import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
 import type {
   DisciplineRules,
   Group,
@@ -36,6 +37,7 @@ export function useTournamentData(activityId: string, enabled = true) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [mvpVoteMinutes, setMvpVoteMinutes] = useState(DEFAULT_MVP_VOTE_MINUTES);
   const [suspensions, setSuspensions] = useState<Suspension[]>([]);
   const [rules, setRules] = useState<DisciplineRules | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,11 @@ export function useTournamentData(activityId: string, enabled = true) {
     [load],
   );
   const reloadMatches = useCallback(
-    () => load("matches", (d: { matches: Match[] }) => setMatches(d.matches || [])),
+    () =>
+      load("matches", (d: { matches: Match[]; mvpVoteMinutes?: number }) => {
+        setMatches(d.matches || []);
+        if (d.mvpVoteMinutes) setMvpVoteMinutes(d.mvpVoteMinutes);
+      }),
     [load],
   );
   const reloadDiscipline = useCallback(
@@ -112,6 +118,7 @@ export function useTournamentData(activityId: string, enabled = true) {
     groups,
     teams,
     matches,
+    mvpVoteMinutes,
     suspensions,
     rules,
     loading,
