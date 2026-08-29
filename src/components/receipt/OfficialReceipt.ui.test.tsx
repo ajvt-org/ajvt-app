@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import OfficialReceipt from "./OfficialReceipt";
-import ReceiptSheet from "./ReceiptSheet";
+import ReceiptSheet, { ReceiptCard } from "./ReceiptSheet";
 import { receiptSheet } from "@/lib/texts/receipt";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
 
@@ -16,6 +16,15 @@ const RECEIPT: OfficialReceiptView = {
   treasurer: "أحمد سالم",
   status: "ACTIVE",
 };
+
+describe("the card a member saves", () => {
+  it("holds its own width so a narrow screen cannot crop what is captured", () => {
+    const { container } = render(<ReceiptCard receipt={RECEIPT} />);
+    const card = container.firstElementChild as HTMLElement;
+
+    expect(card.style.width).toBe("max-content");
+  });
+});
 
 describe("the sheet an admin hands over", () => {
   it("names the association the way the form does", () => {
