@@ -59,6 +59,9 @@ export default function ActivityRow({
                 <Chip text={`${registered} ${countedNoun(registered, REGISTERED)}`} tone="muted" />
               )}
               {pending > 0 && <Chip text={texts.pendingChip(pending)} tone="warn" />}
+              {a.pendingJoinRequests > 0 && (
+                <Chip text={texts.joinRequestChip(a.pendingJoinRequests)} tone="warn" />
+              )}
               {a.isTournament && <Chip text={texts.tournamentChip} tone="brand" />}
               {a.isVolunteer && <Chip text={texts.volunteerChip} tone="brand" />}
               {!a.isOpen && <Chip text={texts.closedChip} tone="muted" />}

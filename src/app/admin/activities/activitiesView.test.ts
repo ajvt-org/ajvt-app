@@ -25,6 +25,7 @@ function activity(over: Partial<Activity> = {}): Activity {
     order: 0,
     createdAt: "2026-08-01T00:00:00.000Z",
     registrations: [],
+    pendingJoinRequests: 0,
     ...over,
   };
 }

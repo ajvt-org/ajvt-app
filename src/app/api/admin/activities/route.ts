@@ -34,10 +34,18 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
         },
         orderBy: { createdAt: "asc" },
       },
+      teams: {
+        select: { _count: { select: { members: { where: { status: "PENDING" } } } } },
+      },
     },
   });
 
-  return NextResponse.json({ activities });
+  return NextResponse.json({
+    activities: activities.map(({ teams, ...activity }) => ({
+      ...activity,
+      pendingJoinRequests: teams.reduce((sum, team) => sum + team._count.members, 0),
+    })),
+  });
 });
 
 export const POST = withRoute("POST /api/admin/activities", async (req: NextRequest) => {

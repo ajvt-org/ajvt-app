@@ -7,7 +7,11 @@ export interface TabbedActivity extends TournamentShape {
   registrations: { status: string }[];
 }
 
-export function activityTabs(activity: TabbedActivity, pendingProposals: number): WorkspaceTab[] {
+export function activityTabs(
+  activity: TabbedActivity,
+  pendingProposals: number,
+  pendingJoinRequests = 0,
+): WorkspaceTab[] {
   const pending = activity.registrations.filter((r) => r.status === "PENDING").length;
   const tabs: WorkspaceTab[] = [{ key: "details", label: texts.tabs.details, icon: "pencil" }];
 
@@ -20,7 +24,7 @@ export function activityTabs(activity: TabbedActivity, pendingProposals: number)
     });
   }
 
-  tabs.push(...tournamentTabs(activity, pendingProposals));
+  tabs.push(...tournamentTabs(activity, pendingProposals, pendingJoinRequests));
   tabs.push({ key: "finance", label: texts.tabs.finance, icon: "wallet" });
   tabs.push({ key: "log", label: texts.tabs.log, icon: "list" });
   return tabs;
