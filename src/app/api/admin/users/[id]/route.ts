@@ -10,16 +10,6 @@ import { forgetQuizFootprint } from "@/lib/quizAttemptServer";
 import { accounts } from "@/lib/messages";
 import type { Prisma } from "@prisma/client";
 
-// Deleting the person, everything at once: the account, the membership
-// payment on it, and everything hanging off both. It used to refuse whenever
-// a payment existed, which left an admin removing one person through two
-// screens and two confirmations, and left an orphan account behind whenever
-// they only got through the first.
-//
-// The admin confirms by typing what identifies the person on the screen they
-// came from — their name on the member page, their number on the accounts
-// list — so either is accepted. An account carrying neither cannot be
-// confirmed at all, and is refused rather than deleted on an empty string.
 function identifiers(user: { fullName: string | null; phone: string | null }): string[] {
   return [user.fullName, user.phone].map((v) => v?.trim() ?? "").filter(Boolean);
 }
@@ -56,8 +46,6 @@ export const DELETE = withRoute(
     }
     await archive("User", id, label, user as unknown as Prisma.InputJsonValue, session.username);
 
-    // Before the delete: the account cascades its quiz rows away, so counting
-    // them afterwards would always report nothing removed.
     const forgotten = await forgetQuizFootprint(id);
     await prisma.$transaction(async (tx) => {
       if (membership) await tx.member.delete({ where: { id: membership.id } });
