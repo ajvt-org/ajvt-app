@@ -18,25 +18,14 @@ import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { adminMemberCreateSchema } from "./schema";
 import { paidForYear } from "@/lib/paidBreakdown";
-import { nameOf, withPerson } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, nameOf, withPerson } from "@/lib/person";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
   const members = await prisma.member.findMany({
     include: {
-      user: {
-        select: {
-          phone: true,
-          fullName: true,
-          age: true,
-          village: true,
-          photo: true,
-          photoLocked: true,
-          memberNumber: true,
-          verifyToken: true,
-        },
-      },
+      user: { select: PERSON_WITH_PHONE_SELECT },
       registrations: {
         select: { activityId: true, activity: { select: { id: true, title: true } } },
       },

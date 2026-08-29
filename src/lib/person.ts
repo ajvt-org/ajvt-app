@@ -8,6 +8,13 @@ export interface Person {
   verifyToken: string | null;
 }
 
+// The whole person, in one place. Spelling these seven out at a call site is
+// how the admin list once served undefined for every name and village: one
+// select was written without them and nothing said so. person-select.test.ts
+// fails the build if a new one appears.
+//
+// A select that deliberately wants fewer fields writes those fields itself —
+// the rule is about the full shape, not about the words.
 export const PERSON_SELECT = {
   fullName: true,
   age: true,
@@ -17,6 +24,10 @@ export const PERSON_SELECT = {
   memberNumber: true,
   verifyToken: true,
 } as const;
+
+// The same person plus the way to reach them, which the admin screens need
+// and the member's own does too.
+export const PERSON_WITH_PHONE_SELECT = { ...PERSON_SELECT, phone: true } as const;
 
 export const PERSON_NAME_SELECT = { fullName: true } as const;
 

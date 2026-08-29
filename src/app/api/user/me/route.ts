@@ -6,7 +6,7 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
-import { personOf } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
 
 const MEMBER_SELECT = {
@@ -48,14 +48,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
-      phone: true,
-      fullName: true,
-      age: true,
-      village: true,
-      photo: true,
-      photoLocked: true,
-      memberNumber: true,
-      verifyToken: true,
+      ...PERSON_WITH_PHONE_SELECT,
       members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
     },
   });

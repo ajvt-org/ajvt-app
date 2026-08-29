@@ -24,25 +24,14 @@ import {
   FILENAMES,
   type Dataset,
 } from "@/lib/exportRows";
-import { withPerson } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
 async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
   if (dataset === "members") {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        user: {
-          select: {
-            phone: true,
-            fullName: true,
-            age: true,
-            village: true,
-            photo: true,
-            photoLocked: true,
-            memberNumber: true,
-            verifyToken: true,
-          },
-        },
+        user: { select: PERSON_WITH_PHONE_SELECT },
         payments: {
           where: { purpose: "MEMBERSHIP" },
           select: { amount: true, feeApplied: true, year: true },
