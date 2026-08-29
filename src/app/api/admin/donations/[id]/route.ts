@@ -36,9 +36,18 @@ export const PATCH = withRoute(
     }
     if (
       existing.source === "MEMBERSHIP" &&
-      [status, memberId, donorName, donorPhone, donorPhoto, amount, proof].some(
-        (v) => v !== undefined,
-      )
+      [
+        status,
+        memberId,
+        donorName,
+        donorPhone,
+        donorPhoto,
+        amount,
+        proof,
+        paymentMethod,
+        tagIds,
+        activityId,
+      ].some((v) => v !== undefined)
     ) {
       return NextResponse.json(
         { error: "هذا التبرع مُدار تلقائياً ولا يمكن تعديله يدوياً" },
