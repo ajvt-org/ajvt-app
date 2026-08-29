@@ -44,6 +44,16 @@ export const activityRow = {
   closeRegistration: "إغلاق التسجيل",
   duplicate: "نسخ النشاط",
   duplicated: "أُنشئت نسخة كمسودة",
+  pickRow: (title: string) => `تحديد ${title}`,
+  picked: (n: number) => `${n} محدَّد`,
+  bulkClose: "إغلاق التسجيل",
+  bulkDelete: "حذف",
+  bulkClear: "إلغاء التحديد",
+  bulkFailed: (n: number) => `تعذّر تنفيذ ${n} منها`,
+  bulkDeleteTitle: "حذف الأنشطة المحدَّدة",
+  bulkDeleteMessage: (n: number) =>
+    `سيُحذف ${n} نشاطاً نهائياً، ومعها تسجيلات الأعضاء وفرقها ومبارياتها.`,
+  bulkDeleteConfirm: "حذف نهائي",
   arrangeLink: "ترتيب الظهور",
   arrangeTitle: "ترتيب ظهور الأنشطة",
   arrangeNote:

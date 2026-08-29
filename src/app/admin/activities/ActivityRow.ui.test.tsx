@@ -4,6 +4,8 @@ import { render, screen } from "@testing-library/react";
 import ActivityRow from "./ActivityRow";
 import type { Activity } from "./activityTypes";
 
+const onPick = vi.fn();
+
 const controls = {
   busy: false,
   setPublished: vi.fn(),
@@ -36,7 +38,9 @@ function activity(over: Partial<Activity> = {}): Activity {
 }
 
 function show(over: Partial<Activity> = {}) {
-  render(<ActivityRow activity={activity(over)} controls={controls} />);
+  render(
+    <ActivityRow activity={activity(over)} controls={controls} picked={false} onPick={onPick} />,
+  );
 }
 
 beforeEach(() => {
