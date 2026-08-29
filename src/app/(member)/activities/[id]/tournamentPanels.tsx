@@ -248,9 +248,7 @@ export async function tournamentPanels(
               matchesPlayed={stats.matchesPlayed}
               totalGoals={stats.totalGoals}
               avgGoalsPerMatch={stats.avgGoalsPerMatch}
-              bestAttack={
-                stats.bestAttack ? `${stats.bestAttack.name} (${stats.bestAttack.gf})` : "\u2014"
-              }
+              bestAttack={stats.bestAttack}
             />
           )}
           <TournamentTabs panels={statPanels} variant="sub" />
