@@ -138,24 +138,23 @@ export interface ReceiptDrift {
 }
 
 function driftOf(receipt: StandingReceipt, payment: PaymentRow): ReceiptDrift | null {
-  const at = { receiptId: receipt.id, number: receipt.number, paymentId: payment.id };
-
-  if (receipt.amount !== payment.amount) {
-    return {
-      ...at,
-      action: "reissue",
-      changes: [{ field: "amount", from: receipt.amount, to: payment.amount }],
-    };
-  }
-
   const wanted: ReceiptChange[] = [
+    { field: "amount", from: receipt.amount, to: payment.amount },
     { field: "payerName", from: receipt.payerName, to: payerOf(payment) },
     { field: "reason", from: receipt.reason, to: reasonOf(payment) },
     { field: "memberId", from: receipt.memberId, to: payment.memberId },
     { field: "userId", from: receipt.userId, to: payment.userId },
   ];
   const changes = wanted.filter((c) => c.from !== c.to);
-  return changes.length > 0 ? { ...at, action: "correct", changes } : null;
+  if (changes.length === 0) return null;
+
+  return {
+    receiptId: receipt.id,
+    number: receipt.number,
+    paymentId: payment.id,
+    action: changes.some((c) => c.field === "amount") ? "reissue" : "correct",
+    changes,
+  };
 }
 
 export async function receiptDriftFor(

@@ -248,6 +248,16 @@ describe("reconciling a receipt with its payment", () => {
     expect(drift.changes).toEqual([{ field: "amount", from: 2000, to: 1000 }]);
   });
 
+  it("reports what else drifted on a receipt that needs a new number", async () => {
+    const [drift] = await receiptDriftFor(
+      drifting({ amount: 2000, payerName: "ابو", userId: null }),
+      {},
+    );
+
+    expect(drift.action).toBe("reissue");
+    expect(drift.changes.map((c) => c.field)).toEqual(["amount", "payerName", "userId"]);
+  });
+
   it("asks for a correction in place when only the payer changed", async () => {
     const [drift] = await receiptDriftFor(drifting({ payerName: "ابو" }), {});
 
