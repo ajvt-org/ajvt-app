@@ -20,6 +20,9 @@ execSync("npx prisma migrate deploy", { stdio: "inherit" });
 console.log("→ Seeding admin (skipped if exists)...");
 execSync("npx tsx prisma/seed.ts", { stdio: "inherit" });
 
+console.log("→ Issuing receipts for accepted payments (skipped if none)...");
+execSync("npx tsx prisma/backfillReceipts.ts", { stdio: "inherit" });
+
 await new Promise((resolve) => holding.close(resolve));
 
 // The two steps above are boot work and block on purpose: nothing serves a
