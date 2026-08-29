@@ -2,8 +2,6 @@
 
 import IconLabel from "@/components/IconLabel";
 
-// The three rows of the payment card: a label, the value to transcribe, and a
-// button that turns green once it has been copied.
 export default function CopyRow({
   label,
   value,

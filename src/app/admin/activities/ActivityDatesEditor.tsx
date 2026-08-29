@@ -5,10 +5,6 @@ import { api, errorMessage } from "@/lib/api";
 import { formatActivityDates } from "@/lib/activityDates";
 import IconLabel from "@/components/IconLabel";
 
-// Activities written before the dates existed carry a free-text period, and
-// that text is what an admin typed, backwards ranges included. This is where
-// one gets converted: fill the days in and the text stops being used.
-// Everything is composed in UTC, matching how the formatter reads it back.
 function dayValue(value: string | null): string {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
 }
@@ -35,8 +31,6 @@ export default function ActivityDatesEditor({
   };
   onSaved: () => void;
 }) {
-  // One editor is drawn per activity in the list, so the ids have to be unique
-  // per instance or a label would focus another activity's field.
   const uid = useId();
   const [startDay, setStartDay] = useState(dayValue(activity.startsAt));
   const [endDay, setEndDay] = useState(dayValue(activity.endsAt));
