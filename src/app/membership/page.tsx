@@ -145,9 +145,7 @@ function MembershipPageInner() {
       try {
         await navigator.share({ text });
         return;
-      } catch {
-        // the share sheet was dismissed, so fall through to copying
-      }
+      } catch {}
     }
     copyCode(form.referenceCode);
   }

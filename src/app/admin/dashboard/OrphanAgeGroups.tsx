@@ -6,10 +6,6 @@ import type { AgeGroup, OrphanAge } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { MEMBER } from "@/lib/messages";
 
-// An orphan is an age value members still carry that matches no group. They
-// exist because renaming a group used to leave the members behind. Nothing
-// else in the panel lists them, so without this they can only be fixed one
-// member at a time.
 export default function OrphanAgeGroups({
   orphans,
   ageGroups,
