@@ -39,6 +39,7 @@ function activity(over: Partial<ActivityDetail["activity"]> = {}): ActivityDetai
     capacity: null,
     isOpen: true,
     autoApprove: false,
+    showScorersAndCards: true,
     isTournament: false,
     format: null,
     profile: "FOOTBALL",

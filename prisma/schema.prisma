@@ -134,40 +134,41 @@ model Membership {
 }
 
 model Activity {
-  id             String                 @id @default(cuid())
-  title          String
-  description    String
-  period         String? // legacy free text, shown only when startsAt is unset
-  startsAt       DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
-  endsAt         DateTime?
-  withTime       Boolean                @default(false)
-  photo          String?
-  capacity       Int?
-  isOpen         Boolean                @default(true)
-  autoApprove    Boolean                @default(false)
-  isTournament   Boolean                @default(false)
-  format         TournamentFormat?
-  profile        SportProfile           @default(FOOTBALL)
-  teamSize       Int?
-  yellowsForBan  Int                    @default(2) // yellows across the tournament that propose a suspension
-  redBanMatches  Int                    @default(1) // matches a proposed red-card ban carries
-  published      Boolean                @default(true)
-  mvpVoteMinutes Int                    @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
-  isVolunteer    Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
-  whatsappLink   String?
-  order          Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  registrations  ActivityRegistration[]
-  teams          Team[]
-  matches        Match[]
-  groups         Group[]
-  expenses       Expense[]
-  donations      Donation[]
-  admins         AdminActivity[]
-  payments       Payment[]
-  days           TournamentDay[]
-  suspensions    Suspension[]
+  id                  String                 @id @default(cuid())
+  title               String
+  description         String
+  period              String? // legacy free text, shown only when startsAt is unset
+  startsAt            DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
+  endsAt              DateTime?
+  withTime            Boolean                @default(false)
+  photo               String?
+  capacity            Int?
+  isOpen              Boolean                @default(true)
+  autoApprove         Boolean                @default(false)
+  isTournament        Boolean                @default(false)
+  format              TournamentFormat?
+  profile             SportProfile           @default(FOOTBALL)
+  teamSize            Int?
+  yellowsForBan       Int                    @default(2) // yellows across the tournament that propose a suspension
+  redBanMatches       Int                    @default(1) // matches a proposed red-card ban carries
+  showScorersAndCards Boolean                @default(true) // public match cards list the scorers and the red cards; the man of the match and the timeline stay either way
+  published           Boolean                @default(true)
+  mvpVoteMinutes      Int                    @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
+  isVolunteer         Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
+  whatsappLink        String?
+  order               Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  registrations       ActivityRegistration[]
+  teams               Team[]
+  matches             Match[]
+  groups              Group[]
+  expenses            Expense[]
+  donations           Donation[]
+  admins              AdminActivity[]
+  payments            Payment[]
+  days                TournamentDay[]
+  suspensions         Suspension[]
 }
 
 // The tournament's spine: an ordered run of days counted from the activity's

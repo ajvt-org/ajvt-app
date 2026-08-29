@@ -12,6 +12,7 @@ export type ActivityDetail = {
     isOpen: boolean;
     autoApprove: boolean;
     isTournament: boolean;
+    showScorersAndCards: boolean;
     format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
     profile: "FOOTBALL" | "BOARD";
     teamSize: number | null;
