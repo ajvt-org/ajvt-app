@@ -26,6 +26,7 @@ const member: EligibleMember = {
   id: "m1",
   fullName: "محمد ولد أحمد",
   photo: null,
+  canJoinNew: true,
   registrations: [],
   teamMemberships: [],
 };
@@ -135,5 +136,37 @@ describe("ActivityRegistrations", () => {
 
     expect(screen.getByText("تم التأكيد — لا يمكن تغييره")).toBeDefined();
     expect(screen.queryByRole("button", { name: "الفريق الأول" })).toBeNull();
+  });
+});
+
+describe("a membership a year behind", () => {
+  it("is told to renew instead of being offered the activity", () => {
+    render(
+      <ActivityRegistrations
+        member={{ ...member, canJoinNew: false }}
+        activity={activity}
+        onReload={() => {}}
+      />,
+    );
+
+    expect(screen.getByText(/جدّد اشتراكك/)).toBeDefined();
+    expect(screen.queryByRole("button", { name: /التسجيل|تسجيل/ })).toBeNull();
+  });
+
+  it("still shows what it already joined, and can still cancel a pending one", () => {
+    render(
+      <ActivityRegistrations
+        member={{
+          ...member,
+          canJoinNew: false,
+          registrations: [{ activityId: activity.id, status: "PENDING", rejectionReason: null }],
+        }}
+        activity={activity}
+        onReload={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText(/جدّد اشتراكك/)).toBeNull();
+    expect(screen.getByRole("button", { name: "إلغاء" })).toBeDefined();
   });
 });

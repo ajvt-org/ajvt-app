@@ -4,6 +4,7 @@ export const memberActivities = {
   quizLocked: "متاحة فقط للمنتسبين الذين دفعوا رسوم الانتساب",
   play: "العب",
   closedChip: "مغلق",
+  renewToJoin: "جدّد اشتراكك للتسجيل في نشاط جديد",
   registeredChip: "مسجَّل",
   // Why the activities below cannot be joined yet. What to do about it is
   // said once, at the top of the page, by the standing card.

@@ -22,8 +22,8 @@ export default function ActivityStatus({ activity }: { activity: Activity }) {
         setMember(null);
         return;
       }
-      const { members } = await res.json();
-      setMember(toEligibleMember(members?.[0]));
+      const { members, currentYear } = await res.json();
+      setMember(toEligibleMember(members?.[0], currentYear));
       setSignedIn(true);
     } catch {
       setSignedIn(false);

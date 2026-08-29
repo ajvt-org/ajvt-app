@@ -6,6 +6,8 @@ import { parse } from "@/lib/validation";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { activityRegisterSchema } from "./schema";
 import { activities, members } from "@/lib/messages";
+import { getAppSettings } from "@/lib/settingsServer";
+import { membershipState } from "@/lib/membershipState";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
@@ -28,6 +30,11 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
   if (!activity.isOpen) throw new ConflictError(activities.registrationClosed);
   if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
   if (member.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
+
+  const { membershipYear } = await getAppSettings();
+  if (membershipState(member, membershipYear) === "BEHIND") {
+    throw new ForbiddenError(activities.membershipBehind);
+  }
 
   const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
 
