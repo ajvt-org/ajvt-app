@@ -25,6 +25,7 @@ export const GET = withRoute(
             age: true,
             village: true,
             photo: true,
+            photoLocked: true,
             memberNumber: true,
             verifyToken: true,
           },
@@ -56,9 +57,15 @@ export const PATCH = withRoute(
     const { id } = await params;
     const { photo, surplusAnonymous } = parse(memberSelfSchema, await req.json());
 
-    const existing = await prisma.member.findUnique({ where: { id }, select: { userId: true } });
+    const existing = await prisma.member.findUnique({
+      where: { id },
+      select: { userId: true, user: { select: { photoLocked: true } } },
+    });
     if (!existing || existing.userId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
+    }
+    if (photo !== undefined && existing.user.photoLocked) {
+      return NextResponse.json({ error: members.photoLocked }, { status: 403 });
     }
 
     if (surplusAnonymous !== undefined) {
@@ -70,9 +77,15 @@ export const PATCH = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      select: { id: true, surplusAnonymous: true, user: { select: { photo: true } } },
+      select: {
+        id: true,
+        surplusAnonymous: true,
+        user: { select: { photo: true, photoLocked: true } },
+      },
     });
 
-    return NextResponse.json(member && { ...member, photo: member.user.photo });
+    return NextResponse.json(
+      member && { ...member, photo: member.user.photo, photoLocked: member.user.photoLocked },
+    );
   },
 );
