@@ -52,6 +52,7 @@ export const PATCH = withRoute(
       teamSize,
       yellowsForBan,
       redBanMatches,
+      mvpVoteMinutes,
       isVolunteer,
       published,
       settlePending,
@@ -81,6 +82,7 @@ export const PATCH = withRoute(
       teamSize?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
+      mvpVoteMinutes?: number;
       isVolunteer?: boolean;
       published?: boolean;
       whatsappLink?: string | null;
@@ -121,6 +123,7 @@ export const PATCH = withRoute(
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;
+    if (mvpVoteMinutes !== undefined) data.mvpVoteMinutes = mvpVoteMinutes;
     if (isVolunteer !== undefined) data.isVolunteer = !!isVolunteer;
     if (published !== undefined) data.published = !!published;
     if (whatsappLink !== undefined) data.whatsappLink = whatsappLink?.trim() || null;
