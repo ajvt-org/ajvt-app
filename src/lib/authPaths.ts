@@ -1,4 +1,4 @@
-export const USER_PROTECTED = ["/home", "/profile", "/change-password"];
+export const USER_PROTECTED = ["/home", "/profile", "/change-password", "/membership"];
 export const ADMIN_PROTECTED = ["/admin/dashboard"];
 export const CHANGE_PASSWORD_PATH = "/change-password";
 

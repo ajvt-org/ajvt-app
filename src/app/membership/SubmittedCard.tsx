@@ -3,8 +3,7 @@
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import type { FormValues } from "./constants";
-import { villageField } from "@/lib/texts";
+import type { PaymentValues } from "./constants";
 
 export default function SubmittedCard({
   form,
@@ -14,7 +13,7 @@ export default function SubmittedCard({
   onShare,
   onProfile,
 }: {
-  form: FormValues;
+  form: PaymentValues & { fullName: string };
   editing: boolean;
   copied: string | null;
   onCopy: (code: string) => void;
@@ -78,16 +77,6 @@ export default function SubmittedCard({
               <span style={{ color: "var(--text-muted)" }}>الاسم</span>
               <span className="font-bold">{form.fullName}</span>
             </div>
-            <div className="flex justify-between">
-              <span style={{ color: "var(--text-muted)" }}>{villageField.label}</span>
-              <span className="font-bold">{form.village}</span>
-            </div>
-            {form.age && (
-              <div className="flex justify-between">
-                <span style={{ color: "var(--text-muted)" }}>العصر</span>
-                <span className="font-bold">{form.age}</span>
-              </div>
-            )}
             <div className="flex justify-between">
               <span style={{ color: "var(--text-muted)" }}>طريقة الدفع</span>
               <span className="font-bold">{form.paymentMethod}</span>

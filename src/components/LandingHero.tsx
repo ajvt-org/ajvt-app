@@ -58,7 +58,7 @@ export default function LandingHero() {
       />
 
       <div className="fade-up delay-3 w-full max-w-xs space-y-3">
-        <Link href="/form" className="btn btn-copper block">
+        <Link href="/register" className="btn btn-copper block">
           إنشاء حساب جديد
         </Link>
         <Link

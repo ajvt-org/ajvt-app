@@ -113,7 +113,7 @@ export default function ActivitiesSection({
               ) : (
                 <>
                   تصفح الأنشطة المتاحة —{" "}
-                  <a href="/form" className="font-bold" style={{ color: "var(--mint-600)" }}>
+                  <a href="/register" className="font-bold" style={{ color: "var(--mint-600)" }}>
                     سجّل طلب انضمام
                   </a>{" "}
                   لتتمكن من التسجيل.

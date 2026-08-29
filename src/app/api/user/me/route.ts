@@ -69,6 +69,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
   }
 
   return NextResponse.json({
+    ...person,
     phone: user.phone,
     members: user.members.map(({ payments, ...member }) => {
       const paid = paidForYear(payments, member.membershipYear);

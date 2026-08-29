@@ -4,18 +4,16 @@ import type { Dispatch, SetStateAction } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import DonorNameChoice from "@/components/DonorNameChoice";
-import PhotoUpload from "@/components/PhotoUpload";
 import ProofUpload from "@/components/ProofUpload";
 import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import { PAYMENT_CODES, type FormValues } from "./constants";
+import { PAYMENT_CODES, type PaymentValues } from "./constants";
 
 export default function StepPayment({
   form,
   setForm,
-  photo,
-  setPhoto,
+  fullName,
   membershipFee,
   copied,
   onCopy,
@@ -29,13 +27,11 @@ export default function StepPayment({
   loading,
   proofUploading,
   editing,
-  onBack,
   onSubmit,
 }: {
-  form: FormValues;
-  setForm: Dispatch<SetStateAction<FormValues>>;
-  photo: string | null;
-  setPhoto: (filename: string | null) => void;
+  form: PaymentValues;
+  setForm: Dispatch<SetStateAction<PaymentValues>>;
+  fullName: string;
   membershipFee: number;
   copied: string | null;
   onCopy: (value: string) => void;
@@ -49,25 +45,12 @@ export default function StepPayment({
   loading: boolean;
   proofUploading: boolean;
   editing: boolean;
-  onBack: () => void;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
   const amount = String(form.paidAmount || membershipFee);
 
   return (
     <>
-      <div className="card p-4 mb-4 fade-up">
-        <PhotoUpload
-          photo={photo}
-          onUpload={(filename) => setPhoto(filename)}
-          label="الصورة الشخصية (اختياري)"
-          placeholderIcon="user"
-        />
-        <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-          يمكنك إضافتها الآن أو لاحقاً من صفحتك الشخصية
-        </p>
-      </div>
-
       <div className="fade-up">
         <p
           id="member-method-label"
@@ -168,7 +151,7 @@ export default function StepPayment({
           <DonorNameChoice
             wantsName={wantsName}
             onPick={setWantsName}
-            memberName={form.fullName.trim() || undefined}
+            memberName={fullName.trim() || undefined}
           />
         )}
 
@@ -181,14 +164,6 @@ export default function StepPayment({
         <ErrorNotice error={error} />
 
         <div className="flex gap-2 mt-2">
-          <button
-            type="button"
-            onClick={onBack}
-            className="btn px-4"
-            style={{ width: "auto", background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            <ArrowLabel direction="back">السابق</ArrowLabel>
-          </button>
           <button
             type="submit"
             disabled={loading || proofUploading}

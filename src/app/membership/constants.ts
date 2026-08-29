@@ -1,10 +1,4 @@
-export { isArabicName } from "@/lib/arabicName";
-
-export interface FormValues {
-  fullName: string;
-  phone: string;
-  village: string;
-  age: string;
+export interface PaymentValues {
   paymentMethod: string;
   paidAmount: string;
   referenceCode: string;
@@ -19,6 +13,3 @@ export const PAYMENT_CODES: Record<string, string> = {
 };
 
 export const DRAFT_KEY = "ajvt_form_draft";
-
-export const STEPS_NEW = [1, 2, 3] as const;
-export const STEPS_AUTHENTICATED = [1, 3] as const;

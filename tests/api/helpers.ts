@@ -66,9 +66,16 @@ export function get(url: string, headers: Record<string, string> = {}): NextRequ
   return new NextRequest(`http://localhost${url}`, { method: "GET", headers });
 }
 
+// An account is a person: every one made here carries a name, the way signing
+// up leaves it.
 export async function createUser(phone = "22334455", password = "secret") {
   return prisma.user.create({
-    data: { phone, password: await bcrypt.hash(password, 4) },
+    data: {
+      phone,
+      password: await bcrypt.hash(password, 4),
+      fullName: "محمد ولد أحمد",
+      age: "البدريين",
+    },
   });
 }
 

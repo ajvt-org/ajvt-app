@@ -1,33 +1,21 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET as PUBLIC_AGES } from "@/app/api/ages/route";
-import { POST as CREATE_MEMBER } from "@/app/api/members/route";
+import { POST as REGISTER } from "@/app/api/auth/register/route";
 import { GET as ADMIN_AGES, POST as ADMIN_CREATE } from "@/app/api/admin/age-groups/route";
 import { PATCH } from "@/app/api/admin/age-groups/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { HOME_VILLAGE } from "@/lib/villages";
-import {
-  resetDb,
-  get,
-  post,
-  patch,
-  createUser,
-  createAdmin,
-  signInAs,
-  signInAsAdmin,
-  withId,
-  personFor,
-} from "./helpers";
+import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 const validBody = {
+  phone: "22119911",
+  password: "secret12",
   fullName: "محمد ولد أحمد",
   age: "البدريين",
   village: HOME_VILLAGE,
-  paymentMethod: "بنكيلي",
-  paymentProof: "proof.webp",
-  paidAmount: 1000,
 };
 
-describe("suggesting an age group from the form", () => {
+describe("suggesting an age group when signing up", () => {
   beforeEach(async () => {
     await resetDb();
     await prisma.village.create({ data: { name: HOME_VILLAGE } });
@@ -35,38 +23,34 @@ describe("suggesting an age group from the form", () => {
   });
 
   it("keeps a suggested group out of the public list", async () => {
-    await signInAs(await createUser());
-
-    await CREATE_MEMBER(post("/api/members", { ...validBody, age: "الفلانيين" }));
+    await REGISTER(post("/api/auth/register", { ...validBody, age: "الفلانيين" }));
 
     const group = await prisma.ageGroup.findUniqueOrThrow({ where: { name: "الفلانيين" } });
     expect(group.approved).toBe(false);
     expect((await (await PUBLIC_AGES(get("/api/ages"))).json()).ages).toEqual(["البدريين"]);
   });
 
-  it("still files the member under the group they typed", async () => {
-    await signInAs(await createUser());
+  it("still files the person under the group they typed", async () => {
+    await REGISTER(post("/api/auth/register", { ...validBody, age: "الفلانيين" }));
 
-    await CREATE_MEMBER(post("/api/members", { ...validBody, age: "الفلانيين" }));
-
-    expect((await personFor((await prisma.member.findFirstOrThrow()).id)).age).toBe("الفلانيين");
+    expect((await prisma.user.findFirstOrThrow({ where: { phone: validBody.phone } })).age).toBe(
+      "الفلانيين",
+    );
   });
 
   it("does not demote a group that is already approved", async () => {
-    await signInAs(await createUser());
-
-    await CREATE_MEMBER(post("/api/members", validBody));
+    await REGISTER(post("/api/auth/register", validBody));
 
     expect(
       (await prisma.ageGroup.findUniqueOrThrow({ where: { name: "البدريين" } })).approved,
     ).toBe(true);
   });
 
-  it("creates nothing extra for a member outside the home village", async () => {
+  it("creates nothing extra for someone outside the home village", async () => {
     await prisma.village.create({ data: { name: "أفجار" } });
-    await signInAs(await createUser());
-
-    await CREATE_MEMBER(post("/api/members", { ...validBody, village: "أفجار", age: "الفلانيين" }));
+    await REGISTER(
+      post("/api/auth/register", { ...validBody, village: "أفجار", age: "الفلانيين" }),
+    );
 
     expect(await prisma.ageGroup.count()).toBe(1);
   });

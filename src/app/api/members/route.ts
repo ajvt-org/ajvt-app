@@ -8,34 +8,26 @@ import { getAppSettings } from "@/lib/settingsServer";
 import { withRoute } from "@/lib/route";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
-import { members, villages as villageMessages } from "@/lib/messages";
-import { ageForVillage, isKnownVillage } from "@/lib/villages";
-import { villageNames } from "@/lib/villagesServer";
+import { members } from "@/lib/messages";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
-import { suggestAgeGroup } from "@/lib/ageGroups";
 
 const CODE_ATTEMPTS = 5;
 
 export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
-  const {
-    id,
-    fullName,
-    age,
-    village,
-    paymentMethod,
-    paymentProof,
-    photo,
-    paidAmount,
-    referenceCode,
-    surplusAnonymous,
-  } = parse(memberSubmissionSchema(membershipFee), await req.json());
+  const { id, paymentMethod, paymentProof, paidAmount, referenceCode, surplusAnonymous } = parse(
+    memberSubmissionSchema(membershipFee),
+    await req.json(),
+  );
 
-  if (!isKnownVillage(village, await villageNames())) {
-    throw new ValidationError(villageMessages.unknownVillage);
+  const person = await prisma.user.findUniqueOrThrow({
+    where: { id: session.userId },
+    select: { fullName: true, members: { select: { id: true }, take: 1 } },
+  });
+  if (!person.fullName?.trim()) {
+    throw new ValidationError(members.profileIncomplete);
   }
-  const ageForRecord = ageForVillage(village, age);
 
   if (id) {
     const existing = await prisma.member.findUnique({ where: { id } });
@@ -47,15 +39,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: session.userId },
-        data: {
-          fullName: fullName.trim(),
-          age: ageForRecord,
-          village: village.trim(),
-          ...(photo !== undefined ? { photo } : {}),
-        },
-      });
       const m = await tx.member.update({
         where: { id },
         data: {
@@ -67,18 +50,13 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           rejectionReason: null,
         },
       });
-      if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
       return m;
     });
     return NextResponse.json({ id: updated.id }, { status: 200 });
   }
 
-  const account = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { members: { select: { id: true }, take: 1 } },
-  });
-  if (account?.members.length) {
+  if (person.members.length) {
     throw new ConflictError(members.alreadyHasRequest);
   }
 
@@ -87,15 +65,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   for (let attempt = 0; ; attempt++) {
     try {
       const member = await prisma.$transaction(async (tx) => {
-        await tx.user.update({
-          where: { id: session.userId },
-          data: {
-            fullName: fullName.trim(),
-            age: ageForRecord,
-            village: village.trim(),
-            photo: photo || null,
-          },
-        });
         const created = await tx.member.create({
           data: {
             userId: session.userId,
@@ -107,7 +76,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
             membershipYear,
           },
         });
-        if (ageForRecord) await suggestAgeGroup(tx, ageForRecord);
         await recordMembershipPayment(tx, created.id, Number(paidAmount), membershipFee);
         return created;
       });
