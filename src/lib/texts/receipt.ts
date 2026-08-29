@@ -44,6 +44,12 @@ export const receiptAdmin = {
   officersMissing: "أضف اسم الأمين العام ومسؤول المالية في الإعدادات ليظهرا على الوصل.",
 } as const;
 
+export const memberReceipts = {
+  title: "وصولات الدفع",
+  pdf: "حفظ PDF",
+  share: "مشاركة",
+} as const;
+
 export const receiptVerify = {
   title: "التحقق من وصل القبض",
   valid: "وصل صحيح",

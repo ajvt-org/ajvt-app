@@ -18,7 +18,7 @@ export { photoLock } from "./photoLock";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
 export { quizRecap } from "./quizRecap";
-export { receiptAdmin, receiptSheet, receiptVerify } from "./receipt";
+export { memberReceipts, receiptAdmin, receiptSheet, receiptVerify } from "./receipt";
 export { signUp } from "./signUp";
 export { treasury } from "./treasury";
 export { villageField, villagesDialog } from "./villages";

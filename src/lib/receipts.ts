@@ -1,13 +1,8 @@
 export type ReceiptPurpose = "MEMBERSHIP" | "ACTIVITY" | "DONATION";
 
-export interface ReceiptRow {
-  id: string;
-  amount: number;
+export interface ReceiptSubject {
   purpose: ReceiptPurpose;
-  paidAt: string;
   year: number | null;
-  memberNumber: string | null;
-  payerName: string;
   activityTitle: string | null;
 }
 
@@ -17,20 +12,12 @@ export const PURPOSE_LABEL: Record<ReceiptPurpose, string> = {
   DONATION: "تبرع",
 };
 
-export function receiptTitle(row: Pick<ReceiptRow, "purpose" | "year" | "activityTitle">): string {
-  if (row.purpose === "MEMBERSHIP") {
-    return row.year ? `${PURPOSE_LABEL.MEMBERSHIP} ${row.year}` : PURPOSE_LABEL.MEMBERSHIP;
+export function receiptTitle(subject: ReceiptSubject): string {
+  if (subject.purpose === "MEMBERSHIP") {
+    return subject.year ? `${PURPOSE_LABEL.MEMBERSHIP} ${subject.year}` : PURPOSE_LABEL.MEMBERSHIP;
   }
-  if (row.purpose === "ACTIVITY" && row.activityTitle) {
-    return `${PURPOSE_LABEL.ACTIVITY} — ${row.activityTitle}`;
+  if (subject.purpose === "ACTIVITY" && subject.activityTitle) {
+    return `${PURPOSE_LABEL.ACTIVITY} — ${subject.activityTitle}`;
   }
-  return PURPOSE_LABEL[row.purpose];
-}
-
-export function receiptReference(row: ReceiptRow): string {
-  return row.id.slice(-8).toUpperCase();
-}
-
-export function receiptFilename(row: ReceiptRow): string {
-  return `وصل-${receiptReference(row)}.png`;
+  return PURPOSE_LABEL[subject.purpose];
 }
