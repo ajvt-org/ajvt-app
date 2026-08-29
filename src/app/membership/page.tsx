@@ -226,7 +226,7 @@ function MembershipPageInner() {
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
             رابطة شباب قرية التاكلالت
           </p>
-          <h1 className="text-base font-black text-white">{editId ? "تعديل الطلب" : "الانتساب"}</h1>
+          <h1 className="text-base font-black text-white">{editId ? "تعديل الدفع" : "الانتساب"}</h1>
         </div>
       </div>
 

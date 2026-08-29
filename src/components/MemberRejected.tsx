@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofUpload from "@/components/ProofUpload";
-import { errorMessage } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import type { MemberData } from "@/lib/useMember";
 
-// A rejected request is almost always a bad payment proof, so the shortest
-// path back is a new photo and one button, without walking the whole form
-// again. Everything else is still reachable through the link underneath.
+// A refused payment is almost always a bad proof, so the shortest path back
+// is a new photo and one button, without walking the whole form again.
+// Everything else is still reachable through the link underneath.
+//
+// The amount resent is what the member actually paid, fee and surplus
+// together, which is what the form field holds too. Resending the fee alone
+// would quietly drop their donation on the way back through review.
 export default function MemberRejected({
   member,
   onReload,
@@ -28,21 +32,13 @@ export default function MemberRejected({
     setResubmitting(true);
     setError("");
     try {
-      const res = await fetch("/api/members", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: member.id,
-          fullName: member.fullName,
-          age: member.age,
-          paymentMethod: member.paymentMethod,
-          paidAmount: member.paidAmount,
-          paymentProof: newProof,
-          photo: member.photo,
-        }),
+      await api.post("/api/members", {
+        id: member.id,
+        paymentMethod: member.paymentMethod,
+        paidAmount: (member.paidAmount ?? 0) + member.supportAmount,
+        surplusAnonymous: member.surplusAnonymous,
+        paymentProof: newProof,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل إرسال الطلب");
       onReload();
     } catch (err) {
       setError(errorMessage(err));
@@ -59,7 +55,7 @@ export default function MemberRejected({
           style={{ background: "#fff5f5", border: "1px solid #fca5a5" }}
         >
           <p className="text-xs font-bold mb-0.5" style={{ color: "#991b1b" }}>
-            سبب الرفض
+            سبب رفض الدفع
           </p>
           <p className="text-sm font-semibold" style={{ color: "#991b1b" }}>
             {member.rejectionReason}
@@ -87,11 +83,11 @@ export default function MemberRejected({
       </button>
 
       <button
-        onClick={() => router.push(`/form?id=${member.id}`)}
+        onClick={() => router.push(`/membership?id=${member.id}`)}
         className="text-xs font-bold mt-3 w-full text-center"
         style={{ color: "var(--mint-600)" }}
       >
-        أو عدّل بيانات أخرى في الطلب
+        أو عدّل الدفع بالكامل
       </button>
     </div>
   );

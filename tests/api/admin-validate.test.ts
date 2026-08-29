@@ -131,7 +131,7 @@ describe("POST /api/admin/validate", () => {
     ]) {
       const res = await POST(post("/api/admin/validate", body));
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "سبب الرفض مطلوب" });
+      expect(await res.json()).toEqual({ error: "سبب رفض الدفع مطلوب" });
     }
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
@@ -172,13 +172,51 @@ describe("POST /api/admin/validate", () => {
       post("/api/admin/validate", {
         id: member.id,
         action: "REJECTED",
-        rejectionReason: "طلب مكرر",
+        rejectionReason: "معلومات ناقصة أو غير صحيحة",
       }),
     );
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
     expect(after.rejectionReason).toBeNull();
+  });
+
+  // Refusing a payment must not reach the person. There is no rejected state
+  // for an account to be in, and nothing about them changes when the money is
+  // turned away: they keep their name, their village, their photo and their
+  // login, and the same request is theirs to send again.
+  it("leaves the account exactly as it was when the payment is refused", async () => {
+    const member = await pendingMember();
+    const before = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    await POST(
+      post("/api/admin/validate", {
+        id: member.id,
+        action: "REJECTED",
+        rejectionReason: "الصورة غير واضحة",
+      }),
+    );
+
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
+    expect(after).toEqual(before);
+  });
+
+  it("keeps the refused payment on the account rather than removing either", async () => {
+    const member = await pendingMember();
+    await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
+
+    await POST(
+      post("/api/admin/validate", {
+        id: member.id,
+        action: "REJECTED",
+        rejectionReason: "الصورة غير واضحة",
+      }),
+    );
+
+    expect(await prisma.user.count({ where: { id: member.userId } })).toBe(1);
+    const still = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    expect(still.userId).toBe(member.userId);
   });
 
   it("rejects an unknown action", async () => {
