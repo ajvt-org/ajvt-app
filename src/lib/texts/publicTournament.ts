@@ -1,4 +1,6 @@
 export const matchDisplay = {
+  forfeitBadge: "فوز بالانسحاب",
+  forfeitNote: (team: string) => `انسحاب — احتُسبت المباراة لصالح ${team}`,
   unknownScorer: "مجهول",
   ownGoal: "ع",
   penaltyShort: "ج",
