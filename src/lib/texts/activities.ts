@@ -22,6 +22,21 @@ export const activityForm = {
 export const activityRow = {
   pendingChip: (n: number) => `${n} في الانتظار`,
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
+  filters: {
+    anyType: "كل الأنواع",
+    tournament: "بطولات",
+    volunteer: "حملات",
+    plain: "أنشطة عادية",
+    anyState: "الكل",
+    open: "التسجيل مفتوح",
+    closed: "التسجيل مغلق",
+  },
+  sections: {
+    current: "جارية وقادمة",
+    finished: (n: number) => `منتهية (${n})`,
+  },
+  registeredOf: (registered: number, capacity: number) => `${registered} من ${capacity}`,
+  rowMenu: (title: string) => `خيارات ${title}`,
   arrangeLink: "ترتيب الظهور",
   arrangeTitle: "ترتيب ظهور الأنشطة",
   arrangeNote:
