@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { surplusForYear } from "@/lib/paidBreakdown";
 import {
   resetDb,
   get,
@@ -44,14 +43,18 @@ async function overpaidMember() {
   return m;
 }
 
-const surplusOf = async (memberId: string) =>
-  surplusForYear(
-    await prisma.donation.findMany({
-      where: { memberId, source: "MEMBERSHIP" },
-      select: { amount: true, membershipYear: true },
-    }),
-    YEAR,
-  );
+const paymentOf = (memberId: string) =>
+  prisma.payment.findFirstOrThrow({ where: { memberId, purpose: "MEMBERSHIP", year: YEAR } });
+
+const surplusOf = async (memberId: string) => {
+  const payment = await paymentOf(memberId);
+  return payment.amount - (payment.feeApplied ?? 0);
+};
+
+const feeOf = async (memberId: string) => {
+  const payment = await paymentOf(memberId);
+  return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
+};
 
 describe("a form that sends back what it was given changes nothing", () => {
   beforeEach(async () => {
@@ -89,7 +92,7 @@ describe("a form that sends back what it was given changes nothing", () => {
     );
 
     expect(await surplusOf(m.id)).toBe(2000);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
+    expect(await feeOf(m.id)).toBe(100);
   });
 
   it("cannot touch the money at all through the identity endpoint", async () => {
@@ -117,7 +120,7 @@ describe("a form that sends back what it was given changes nothing", () => {
     await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 500 }), withId(m.id));
 
     expect(await surplusOf(m.id)).toBe(400);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
+    expect(await feeOf(m.id)).toBe(100);
   });
 
   it("still lets an admin drop the surplus on purpose", async () => {

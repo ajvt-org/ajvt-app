@@ -41,12 +41,11 @@ describe("addMembership", () => {
         userId: "u1",
         paymentMethod: "بنكيلي",
         paymentProof: null,
-        surplusAnonymous: false,
         status: "PENDING",
         membershipYear: 2026,
       },
     });
-    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "m1", 100, 100);
+    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "m1", 100, 100, false);
   });
 
   it("records no year while the payment is still under review", async () => {
@@ -66,7 +65,6 @@ describe("addMembership", () => {
     await addMembership(db as never, input({ status: "ACTIVE" }));
 
     expect(recordMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, 100, {
-      paidAmount: 100,
       paymentMethod: "بنكيلي",
       paymentProof: null,
       recordedBy: "admin",

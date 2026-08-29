@@ -49,7 +49,7 @@ describe("the admin home", () => {
 
     const body = await (await read()).json();
 
-    expect(body.money).toEqual({ revenue: 5000, spending: 2000, net: 3000 });
+    expect(body.money).toEqual({ revenue: 6000, spending: 2000, net: 4000 });
   });
 
   it("leaves a payment still awaiting review out of the money that came in", async () => {
@@ -60,7 +60,7 @@ describe("the admin home", () => {
 
     const body = await (await read()).json();
 
-    expect(body.money.revenue).toBe(0);
+    expect(body.money.revenue).toBe(1000);
     expect(body.handling.pendingPayments).toBe(1);
   });
 
@@ -70,7 +70,8 @@ describe("the admin home", () => {
     const body = await (await read()).json();
 
     expect(body.handling.pendingMembers).toBe(1);
-    expect(body.handling.total).toBe(1);
+    expect(body.handling.pendingPayments).toBe(1);
+    expect(body.handling.total).toBe(2);
   });
 
   it("answers zero on an empty association rather than failing", async () => {

@@ -1,19 +1,16 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
-import { splitPayment } from "./membershipPayment";
 import { stampRecordedBy } from "./paymentMirror";
 import { memberOf } from "./memberAccount";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export interface MembershipEdit {
-  paidAmount?: number | null;
   paymentMethod?: string | null;
   paymentProof?: string | null;
 }
 
 export function membershipEdit(data: MembershipEdit): MembershipEdit {
   const edit: MembershipEdit = {};
-  if (data.paidAmount !== undefined) edit.paidAmount = data.paidAmount;
   if (data.paymentMethod !== undefined) edit.paymentMethod = data.paymentMethod;
   if (data.paymentProof !== undefined) edit.paymentProof = data.paymentProof;
   return edit;
@@ -31,7 +28,6 @@ export async function syncMembershipRecord(
 }
 
 export interface MembershipYearPayment {
-  paidAmount: number | null;
   paymentMethod: string | null;
   paymentProof: string | null;
   recordedBy?: string | null;
@@ -44,8 +40,6 @@ export async function recordMembershipYear(
   fee: number,
   payment: MembershipYearPayment,
 ) {
-  const paidAmount = payment.paidAmount === null ? null : splitPayment(payment.paidAmount, fee).fee;
-
   await db.membership.upsert({
     where: { userId_year: { userId, year } },
     update: {},
@@ -54,7 +48,6 @@ export async function recordMembershipYear(
       userId,
       year,
       status: "ACTIVE",
-      paidAmount,
       paymentMethod: payment.paymentMethod,
       paymentProof: payment.paymentProof,
       recordedBy: payment.recordedBy ?? null,
@@ -97,11 +90,9 @@ export async function setMembershipStatus(
 export interface MembershipSnapshot {
   status: ReviewStatus;
   rejectionReason: string | null;
-  paidAmount: number | null;
   paymentMethod: string | null;
   paymentProof: string | null;
   referenceCode: string | null;
-  surplusAnonymous: boolean;
 }
 
 export async function saveMembershipSnapshot(

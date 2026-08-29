@@ -30,21 +30,38 @@ async function join(body: Record<string, unknown> = {}) {
   return prisma.member.findFirstOrThrow();
 }
 
-const surplus = (memberId: string) =>
-  prisma.donation.findFirst({ where: { memberId, source: "MEMBERSHIP" } });
+// The fee and the surplus are both worked out from the one payment.
+const fee = async (memberId: string) => {
+  const payment = await prisma.payment.findFirst({
+    where: { memberId, purpose: "MEMBERSHIP" },
+  });
+  if (!payment) return null;
+  return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
+};
 
-describe("the fee and the surplus live in one place each", () => {
+// The surplus is the part of the payment above the fee. There is no surplus
+// when the payment covers the fee and no more.
+const surplus = async (memberId: string) => {
+  const payment = await prisma.payment.findFirst({
+    where: { memberId, purpose: "MEMBERSHIP" },
+  });
+  if (!payment) return null;
+  const amount = payment.amount - (payment.feeApplied ?? 0);
+  return amount > 0 ? { amount, status: payment.status } : null;
+};
+
+describe("the fee and the surplus are worked out from one payment", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("banks only the fee on the member", async () => {
+  it("counts only the fee as the fee", async () => {
     const member = await join();
 
-    expect(member.paidAmount).toBe(100);
+    expect(await fee(member.id)).toBe(100);
   });
 
-  it("puts the rest in the donations table", async () => {
+  it("counts the rest as support", async () => {
     const member = await join();
 
     expect((await surplus(member.id))?.amount).toBe(2000);
@@ -90,14 +107,14 @@ describe("the fee and the surplus live in one place each", () => {
     expect((await getLeaderboardData()).leaderboard).toHaveLength(0);
   });
 
-  it("creates no donation when the member paid exactly the fee", async () => {
+  it("leaves no surplus when the member paid exactly the fee", async () => {
     const member = await join({ paidAmount: 100 });
 
-    expect(member.paidAmount).toBe(100);
+    expect(await fee(member.id)).toBe(100);
     expect(await surplus(member.id)).toBeNull();
   });
 
-  it("drops the donation when an admin corrects the amount down to the fee", async () => {
+  it("drops the surplus when an admin corrects the amount down to the fee", async () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
@@ -106,9 +123,7 @@ describe("the fee and the surplus live in one place each", () => {
       withId(member.id),
     );
 
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paidAmount).toBe(
-      100,
-    );
+    expect(await fee(member.id)).toBe(100);
     expect(await surplus(member.id)).toBeNull();
   });
 
@@ -121,9 +136,7 @@ describe("the fee and the surplus live in one place each", () => {
       withId(member.id),
     );
 
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paidAmount).toBe(
-      100,
-    );
+    expect(await fee(member.id)).toBe(100);
     expect((await surplus(member.id))?.amount).toBe(500);
   });
 
@@ -133,18 +146,16 @@ describe("the fee and the surplus live in one place each", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
-    expect(record.paidAmount).toBe(100);
+    await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    expect(await fee(member.id)).toBe(100);
   });
 
-  it("clears both sides when the amount is removed altogether", async () => {
+  it("clears the payment when the amount is removed altogether", async () => {
     const member = await join();
 
     await recordMembershipPayment(prisma, member.id, null, 100);
 
-    expect(
-      (await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paidAmount,
-    ).toBeNull();
+    expect(await fee(member.id)).toBeNull();
     expect(await surplus(member.id)).toBeNull();
     expect(await totalPaidFor(prisma, member.id)).toBeNull();
   });

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
-import { reconcilePayments } from "@/lib/paymentReconcile";
 import {
   resetDb,
   post,
@@ -52,13 +51,18 @@ function donateForm(fields: Record<string, string>) {
   return postForm("/api/donations", fd, { "x-forwarded-for": `10.1.0.${++ip}` });
 }
 
-async function bothShapesAgree() {
-  const r = await reconcilePayments();
-  if (!r.agrees) console.log("mismatches", r.mismatches);
-  return r;
+// The payment is the only place money is kept. If any path leaves a figure on
+// a member, a membership year or a surplus donation, the two can disagree.
+async function moneyKeptAnywhereElse() {
+  const [members, years, surplus] = await Promise.all([
+    prisma.member.count({ where: { paidAmount: { not: null } } }),
+    prisma.membership.count({ where: { paidAmount: { not: null } } }),
+    prisma.donation.count({ where: { source: "MEMBERSHIP" } }),
+  ]);
+  return members + years + surplus;
 }
 
-describe("every path that touches money writes both shapes", () => {
+describe("every path that touches money writes only the payment", () => {
   beforeEach(async () => {
     await resetDb();
     await saveAppSettings({ membershipYear: YEAR, membershipFee: 100 });
@@ -68,7 +72,7 @@ describe("every path that touches money writes both shapes", () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
   });
 
   it("agrees after an admin approves that member", async () => {
@@ -79,7 +83,7 @@ describe("every path that touches money writes both shapes", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
     expect(payment.amount).toBe(2100);
     expect(payment.status).toBe("ACTIVE");
@@ -134,7 +138,7 @@ describe("every path that touches money writes both shapes", () => {
       }),
     );
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).status).toBe("REJECTED");
   });
 
@@ -146,7 +150,7 @@ describe("every path that touches money writes both shapes", () => {
 
     await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 600 }), withId(m.id));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).amount).toBe(600);
   });
 
@@ -158,7 +162,7 @@ describe("every path that touches money writes both shapes", () => {
 
     await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: null }), withId(m.id));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count()).toBe(0);
   });
 
@@ -174,7 +178,7 @@ describe("every path that touches money writes both shapes", () => {
       paidAmount: 900,
     });
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
   });
 
   it("agrees after a renewal, keeping each year its own payment", async () => {
@@ -189,18 +193,7 @@ describe("every path that touches money writes both shapes", () => {
       memberNumber: "AJVT-2025-0001",
     });
     await prisma.membership.create({
-      data: { memberId: m.id, userId: m.userId, year: YEAR - 1, paidAmount: 100 },
-    });
-    await prisma.payment.create({
-      data: {
-        purpose: "MEMBERSHIP",
-        memberId: m.id,
-        userId: m.userId,
-        year: YEAR - 1,
-        amount: 100,
-        feeApplied: 100,
-        status: "ACTIVE",
-      },
+      data: { memberId: m.id, userId: m.userId, year: YEAR - 1, status: "ACTIVE" },
     });
 
     await RENEW(
@@ -208,14 +201,14 @@ describe("every path that touches money writes both shapes", () => {
       withId(m.id),
     );
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count({ where: { purpose: "MEMBERSHIP" } })).toBe(2);
   });
 
   it("agrees after a donation from someone with no account", async () => {
     await DONATE(donateForm({ amount: "5000", paymentMethod: "بنكيلي", anonymous: "true" }));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     const p = await prisma.payment.findFirstOrThrow({ where: { purpose: "DONATION" } });
     expect(p.amount).toBe(5000);
     expect(p.anonymous).toBe(true);
@@ -227,7 +220,7 @@ describe("every path that touches money writes both shapes", () => {
 
     await ADMIN_DONATION(post("/api/admin/donations", { donorName: "أحمد", amount: 3000 }));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
   });
 
   it("agrees after an admin edits a donation", async () => {
@@ -237,7 +230,7 @@ describe("every path that touches money writes both shapes", () => {
 
     await EDIT_DONATION(patch(`/api/admin/donations/${d.id}`, { amount: 4000 }), withId(d.id));
 
-    expect((await bothShapesAgree()).agrees).toBe(true);
+    expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow({ where: { id: d.id } })).amount).toBe(4000);
   });
 });

@@ -31,6 +31,10 @@ async function memberMissingAmount() {
   return m;
 }
 
+// The amount an admin enters lands on the payment for that year.
+const paidFor = (memberId: string) =>
+  prisma.payment.findFirst({ where: { memberId, purpose: "MEMBERSHIP", year: YEAR } });
+
 describe("entering an amount that was never recorded", () => {
   beforeEach(async () => {
     await resetDb();
@@ -47,8 +51,9 @@ describe("entering an amount that was never recorded", () => {
     );
     expect(res.status).toBe(200);
 
-    const year = await prisma.membership.findFirst({ where: { memberId: m.id, year: YEAR } });
-    expect(year?.paidAmount).toBe(100);
+    const payment = await paidFor(m.id);
+    expect(payment?.amount).toBe(100);
+    expect(payment?.feeApplied).toBe(100);
   });
 
   it("turns an amount above the fee into support for that member", async () => {
@@ -56,33 +61,26 @@ describe("entering an amount that was never recorded", () => {
 
     await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
 
-    const year = await prisma.membership.findFirst({ where: { memberId: m.id, year: YEAR } });
-    expect(year?.paidAmount).toBe(100);
-
-    const support = await prisma.donation.findFirst({
-      where: { memberId: m.id, source: "MEMBERSHIP" },
-    });
-    expect(support?.amount).toBe(200);
+    const payment = await paidFor(m.id);
+    expect(payment?.amount).toBe(300);
+    expect((payment?.amount ?? 0) - (payment?.feeApplied ?? 0)).toBe(200);
   });
 
-  it("keeps the fee off the member row once the surplus is split out", async () => {
+  it("counts only the fee as the fee once the surplus is split out", async () => {
     const m = await memberMissingAmount();
 
     await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
 
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: m.id } })).paidAmount).toBe(100);
+    const payment = await paidFor(m.id);
+    expect(Math.min(payment?.amount ?? 0, payment?.feeApplied ?? 0)).toBe(100);
   });
 
   it("leaves the year alone when the edit does not touch the payment", async () => {
     const m = await memberMissingAmount();
-    await prisma.membership.updateMany({
-      where: { memberId: m.id, year: YEAR },
-      data: { paidAmount: 100 },
-    });
+    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }), withId(m.id));
 
     await UPDATE(patch(`/api/admin/members/${m.id}`, { fullName: "أحمد ولد محمد" }), withId(m.id));
 
-    const year = await prisma.membership.findFirst({ where: { memberId: m.id, year: YEAR } });
-    expect(year?.paidAmount).toBe(100);
+    expect((await paidFor(m.id))?.amount).toBe(100);
   });
 });
