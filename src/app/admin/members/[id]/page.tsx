@@ -16,6 +16,7 @@ import MemberEditForm from "./MemberEditForm";
 import MemberDecision from "./MemberDecision";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
+import PhotoLockCard from "./PhotoLockCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
 import { STATUS_LABEL as REGISTRATION_LABEL } from "@/app/admin/activities/activityTypes";
@@ -156,6 +157,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           </div>
         </ProfileSection>
       )}
+
+      <PhotoLockCard memberId={member.id} locked={member.photoLocked} onChanged={load} />
 
       <ProfileSection icon="wallet" title="الدفع">
         <dl className="text-sm space-y-1">

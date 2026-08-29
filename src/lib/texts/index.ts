@@ -13,6 +13,7 @@ export { memberEdit } from "./memberAdmin";
 export { memberForm } from "./memberForm";
 export { memberMatches } from "./memberMatches";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
+export { photoLock } from "./photoLock";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
 export { treasury } from "./treasury";
