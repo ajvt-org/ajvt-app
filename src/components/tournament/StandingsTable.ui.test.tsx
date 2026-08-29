@@ -107,7 +107,7 @@ describe("a long team name", () => {
 });
 
 describe("a tie no rule can settle", () => {
-  it("marks both teams so nobody reads the order as a ranking", () => {
+  it("says nothing about it in the table, the rules book settles it away from here", () => {
     cleanup();
     render(
       <StandingsTable
@@ -117,13 +117,19 @@ describe("a tie no rule can settle", () => {
       />,
     );
 
-    expect(screen.getAllByText(matchDisplay.tieMark)).toHaveLength(rows.length);
+    expect(screen.queryByText(matchDisplay.tieMark)).toBeNull();
   });
 
-  it("says nothing on a table that is settled", () => {
+  it("leaves the team name room to be read", () => {
     cleanup();
-    render(<StandingsTable title="المجموعة 1" showFollow={false} rows={rows} />);
+    render(
+      <StandingsTable
+        title="المجموعة 2"
+        showFollow={false}
+        rows={rows.map((r) => ({ ...r, unresolved: true }))}
+      />,
+    );
 
-    expect(screen.queryByText(matchDisplay.tieMark)).toBeNull();
+    expect(screen.getByText(rows[0].name)).toBeDefined();
   });
 });
