@@ -160,17 +160,38 @@ export async function makeMember(data: Record<string, unknown>) {
         data: { ...membership, user: { create: person } } as never,
       });
 
+  const owner = await prisma.member.findUniqueOrThrow({
+    where: { id: member.id },
+    select: {
+      userId: true,
+      membershipYear: true,
+      status: true,
+      rejectionReason: true,
+      paymentMethod: true,
+      paymentProof: true,
+      referenceCode: true,
+      user: { select: { fullName: true } },
+    },
+  });
+
+  // The membership year is the record. The app writes it beside the member on
+  // every path that makes one, so the fixture does too.
+  await prisma.membership.upsert({
+    where: { userId_year: { userId: owner.userId, year: owner.membershipYear } },
+    update: {},
+    create: {
+      userId: owner.userId,
+      year: owner.membershipYear,
+      status: owner.status,
+      rejectionReason: owner.rejectionReason,
+      paymentMethod: owner.paymentMethod,
+      paymentProof: owner.paymentProof,
+      referenceCode: owner.referenceCode,
+      surplusAnonymous: anonymous,
+    },
+  });
+
   if (paid !== undefined && paid !== null) {
-    const owner = await prisma.member.findUniqueOrThrow({
-      where: { id: member.id },
-      select: {
-        userId: true,
-        membershipYear: true,
-        status: true,
-        paymentMethod: true,
-        user: { select: { fullName: true } },
-      },
-    });
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",

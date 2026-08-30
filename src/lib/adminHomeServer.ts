@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { getAppSettings } from "./settingsServer";
 import { membershipStanding, needsHandling, netMoney } from "./adminHome";
+import { currentMemberships } from "./currentMembershipServer";
+import { asMembershipState } from "./currentMembership";
 import { matchDateKey } from "./clubTime";
 
 const DAY_MS = 86_400_000;
@@ -29,25 +31,18 @@ export async function matchesToday(now = new Date()) {
 export async function adminHomeSummary() {
   const settings = await getAppSettings();
 
-  const [
-    members,
-    payments,
-    expenses,
-    pendingMembers,
-    pendingRegistrations,
-    pendingPayments,
-    today,
-  ] = await Promise.all([
-    prisma.member.findMany({
-      select: { status: true, membershipYear: true },
-    }),
-    prisma.payment.aggregate({ where: { status: "ACTIVE" }, _sum: { amount: true } }),
-    prisma.expense.aggregate({ _sum: { amount: true } }),
-    prisma.member.count({ where: { status: "PENDING" } }),
-    prisma.activityRegistration.count({ where: { status: "PENDING" } }),
-    prisma.payment.count({ where: { status: "PENDING" } }),
-    matchesToday(),
-  ]);
+  const [memberships, payments, expenses, pendingRegistrations, pendingPayments, today] =
+    await Promise.all([
+      currentMemberships(prisma),
+      prisma.payment.aggregate({ where: { status: "ACTIVE" }, _sum: { amount: true } }),
+      prisma.expense.aggregate({ _sum: { amount: true } }),
+      prisma.activityRegistration.count({ where: { status: "PENDING" } }),
+      prisma.payment.count({ where: { status: "PENDING" } }),
+      matchesToday(),
+    ]);
+
+  const members = memberships.map((m) => asMembershipState(m));
+  const pendingMembers = memberships.filter((m) => m.status === "PENDING").length;
 
   const revenue = payments._sum.amount ?? 0;
   const spending = expenses._sum.amount ?? 0;

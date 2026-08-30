@@ -24,8 +24,10 @@ export function latestByAccount<T extends AccountMembership>(rows: T[]): Map<str
   return latest;
 }
 
-export function asMembershipState(
-  row: (MembershipOfAYear & { status: StatefulMembership["status"] }) | null,
-): StatefulMembership | null {
+type StatedMembership = MembershipOfAYear & { status: StatefulMembership["status"] };
+
+export function asMembershipState(row: StatedMembership): StatefulMembership;
+export function asMembershipState(row: StatedMembership | null): StatefulMembership | null;
+export function asMembershipState(row: StatedMembership | null): StatefulMembership | null {
   return row === null ? null : { status: row.status, membershipYear: row.year };
 }

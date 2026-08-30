@@ -76,13 +76,6 @@ describe("renewing a membership", () => {
 
   it("leaves the previous year readable beside the new one", async () => {
     const existing = await member();
-    await prisma.membership.create({
-      data: {
-        userId: existing.userId,
-        year: LAST,
-        paymentMethod: "بنكيلي",
-      },
-    });
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",
@@ -132,7 +125,7 @@ describe("renewing a membership", () => {
     const res = await renew(existing.id);
 
     expect(res.status).toBe(409);
-    expect(await prisma.membership.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("refuses a member who was never accepted", async () => {
@@ -148,7 +141,7 @@ describe("renewing a membership", () => {
     const res = await renew(existing.id);
 
     expect(res.status).toBe(400);
-    expect(await prisma.membership.count()).toBe(0);
+    expect(await prisma.membership.count({ where: { year: YEAR } })).toBe(0);
   });
 
   it("refuses a payment method that is not one of the accepted ones", async () => {
@@ -184,9 +177,6 @@ describe("reading a member's years", () => {
 
   it("lists the years newest first, with who took each payment", async () => {
     const existing = await member();
-    await prisma.membership.create({
-      data: { userId: existing.userId, year: LAST },
-    });
     await renew(existing.id);
 
     const { memberships } = await (await YEARS(existing.id)).json();

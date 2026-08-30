@@ -25,6 +25,21 @@ describe("GET /api/ages/standings", () => {
     await resetDb();
   });
 
+  it("counts a member who renewed once, not once for every year", async () => {
+    await group("البدريين", 10);
+    const renewed = await member("البدريين", "ACTIVE");
+    await prisma.membership.create({
+      data: {
+        userId: renewed.userId,
+        year: new Date().getUTCFullYear() + 1,
+        status: "ACTIVE",
+        paymentMethod: "بنكيلي",
+      },
+    });
+
+    expect(await standings()).toMatchObject([{ name: "البدريين", members: 1, rate: 10 }]);
+  });
+
   it("counts only approved members", async () => {
     await group("البدريين", 10);
     await member("البدريين", "ACTIVE");

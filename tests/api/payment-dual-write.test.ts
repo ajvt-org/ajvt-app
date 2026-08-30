@@ -192,9 +192,6 @@ describe("every path that touches money writes only the payment", () => {
       membershipYear: YEAR - 1,
       memberNumber: "AJVT-2025-0001",
     });
-    await prisma.membership.create({
-      data: { userId: m.userId, year: YEAR - 1, status: "ACTIVE" },
-    });
 
     await RENEW(
       post(`/api/admin/members/${m.id}/renew`, { paidAmount: 1000, paymentMethod: "بنكيلي" }),
