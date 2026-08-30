@@ -21,24 +21,9 @@ export function useActivitiesData() {
       })
       .then((activitiesData) => {
         if (!activitiesData) return;
-        interface RawRegistration {
-          member: { user?: { phone: string } | null } & Record<string, unknown>;
-        }
-        setActivities(
-          (activitiesData.activities || []).map(
-            (a: { registrations: RawRegistration[] } & Record<string, unknown>) => ({
-              ...a,
-              registrations: a.registrations.map(({ member, ...r }) => ({
-                ...r,
-                member: { ...member, phone: member.user?.phone ?? null },
-              })),
-            }),
-          ),
-        );
+        setActivities(activitiesData.activities || []);
       })
-      .catch(() => {
-        router.push(loginPathWithNext("/admin/login"));
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }
 
