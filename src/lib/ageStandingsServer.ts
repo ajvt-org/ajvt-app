@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { rankAgeGroups, type AgeStanding } from "./ageStandings";
+import { latestByAccount } from "./currentMembership";
 
 function tally(rows: { user: { age: string | null } }[]): Map<string, number> {
   const counts = new Map<string, number>();
@@ -11,17 +12,18 @@ function tally(rows: { user: { age: string | null } }[]): Map<string, number> {
 }
 
 export async function getAgeStandings(): Promise<AgeStanding[]> {
-  const [groups, counts, accounts] = await Promise.all([
+  const [groups, rows] = await Promise.all([
     prisma.ageGroup.findMany({
       orderBy: { createdAt: "asc" },
       select: { name: true, totalCount: true },
     }),
-    prisma.member.findMany({
-      where: { status: "ACTIVE" },
-      select: { user: { select: { age: true } } },
+    prisma.membership.findMany({
+      select: { userId: true, year: true, status: true, user: { select: { age: true } } },
     }),
-    prisma.member.findMany({ select: { user: { select: { age: true } } } }),
   ]);
 
-  return rankAgeGroups(groups, tally(counts), tally(accounts));
+  const accounts = [...latestByAccount(rows).values()];
+  const active = accounts.filter((row) => row.status === "ACTIVE");
+
+  return rankAgeGroups(groups, tally(active), tally(accounts));
 }

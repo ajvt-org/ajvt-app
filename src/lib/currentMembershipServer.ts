@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { latestMembership } from "./currentMembership";
+import { latestByAccount, latestMembership } from "./currentMembership";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -19,4 +19,11 @@ export const MEMBERSHIP_SELECT = {
 export async function currentMembership(db: Db, userId: string) {
   const rows = await db.membership.findMany({ where: { userId }, select: MEMBERSHIP_SELECT });
   return latestMembership(rows);
+}
+
+export async function currentMemberships(db: Db) {
+  const rows = await db.membership.findMany({
+    select: { userId: true, year: true, status: true },
+  });
+  return [...latestByAccount(rows).values()];
 }

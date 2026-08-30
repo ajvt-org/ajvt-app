@@ -62,4 +62,11 @@ describe("asMembershipState", () => {
   it("passes an account with no membership straight through", () => {
     expect(asMembershipState(null)).toBeNull();
   });
+
+  it("keeps the status a year was left in", () => {
+    expect(asMembershipState(row(2025, { status: "PENDING" as const }))).toEqual({
+      status: "PENDING",
+      membershipYear: 2025,
+    });
+  });
 });
