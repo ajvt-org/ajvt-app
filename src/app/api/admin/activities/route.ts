@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "@/lib/person";
 import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import { requireAdmin, requireAdminRole } from "@/lib/auth";
 import { scopedActivityIds } from "@/lib/activityAccessServer";
@@ -44,9 +45,18 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
   });
 
   return NextResponse.json({
-    activities: activities.map(({ teams, _count, ...activity }) => ({
+    activities: activities.map(({ teams, _count, registrations, ...activity }) => ({
       ...activity,
       unplayedMatches: _count.matches,
+      registrations: registrations.map(({ user, userId, ...registration }) => ({
+        ...registration,
+        member: {
+          id: user.members[0]?.id ?? userId,
+          fullName: nameOf(user),
+          phone: user.phone,
+          age: user.age ?? "",
+        },
+      })),
       pendingJoinRequests: teams.reduce((sum, team) => sum + team._count.members, 0),
     })),
   });
