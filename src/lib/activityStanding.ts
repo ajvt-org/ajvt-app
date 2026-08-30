@@ -11,7 +11,7 @@ export type ActivityStanding =
   | { state: "upcoming"; daysUntil: number }
   | { state: "today" }
   | { state: "running" }
-  | { state: "awaiting" }
+  | { state: "awaiting"; unplayed: number }
   | { state: "finished" }
   | null;
 
@@ -27,7 +27,11 @@ export function activityStanding(a: StandingInput, now = new Date()): ActivitySt
   const start = dayNumber(matchDateKey(a.startsAt));
   const end = a.endsAt ? dayNumber(matchDateKey(a.endsAt)) : start;
   if (today < start) return { state: "upcoming", daysUntil: start - today };
-  if (today > end) return a.unplayedMatches ? { state: "awaiting" } : { state: "finished" };
+  if (today > end) {
+    return a.unplayedMatches
+      ? { state: "awaiting", unplayed: a.unplayedMatches }
+      : { state: "finished" };
+  }
   if (today === start) return { state: "today" };
   return { state: "running" };
 }

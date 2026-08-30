@@ -69,7 +69,7 @@ export default function ActivityStandingChip({
         style={{ background: "#fef3c7", color: "#b45309", fontSize: "10px" }}
       >
         <Icon name="hourglass" size={10} />
-        {texts.awaiting}
+        {texts.awaiting(standing.unplayed)}
       </span>
     );
   }

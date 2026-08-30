@@ -1,3 +1,4 @@
+import { countedNoun, MATCHES } from "../arabicPlural";
 export const activityForm = {
   natures: {
     normal: "نشاط عادي",
@@ -93,7 +94,7 @@ export const activityRow = {
   arrangeEmpty: "لا توجد أنشطة لترتيبها",
   stages: {
     live: "جارية الآن",
-    awaiting: "بقيت مباريات",
+    awaiting: "لم تنته بعد",
     upcoming: "قادمة",
     undatedOpen: "بلا تاريخ — التسجيل مفتوح",
     undatedClosed: "بلا تاريخ — التسجيل مغلق",
@@ -115,7 +116,7 @@ export const activityStandingTexts = {
   startsIn: (days: number) =>
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
-  awaiting: "بقيت مباريات",
+  awaiting: (count: number) => `بقيت ${countedNoun(count, MATCHES)}`,
   finished: "انتهى",
   notScheduled: "غير مبرمج بعد",
 } as const;
