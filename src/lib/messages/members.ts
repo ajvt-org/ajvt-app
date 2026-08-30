@@ -18,6 +18,7 @@ export const members = {
   rejectionReasonInvalid: "سبب رفض الدفع غير صالح",
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   alreadyAccepted: "هذا العضو مقبول بالفعل",
+  invalidMember: "عضو غير صالح",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
   accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",
   noAccountToCorrect: "لا يوجد حساب لهذا العضو",

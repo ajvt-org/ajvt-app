@@ -1,14 +1,20 @@
 import { prisma } from "./prisma";
 import { money } from "./messages";
 import { daysWaiting, longestFirst, WAITING_DAYS, type WaitingRow } from "./waitingRequests";
+import { latestByAccount } from "./currentMembership";
 
 export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
   const cutoff = new Date(now.getTime() - days * 86_400_000);
 
   const [pending, unfinished] = await Promise.all([
-    prisma.member.findMany({
+    prisma.membership.findMany({
       where: { status: "PENDING", createdAt: { lte: cutoff } },
-      select: { id: true, userId: true, createdAt: true, user: { select: { fullName: true } } },
+      select: {
+        userId: true,
+        year: true,
+        createdAt: true,
+        user: { select: { fullName: true, members: { select: { id: true }, take: 1 } } },
+      },
     }),
     prisma.user.findMany({
       where: { members: { none: {} }, phone: { not: null }, createdAt: { lte: cutoff } },
@@ -27,8 +33,17 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
   return {
     days,
     pending: longestFirst(
-      pending.map((m) =>
-        asRow(m.id, m.userId, m.user.fullName || money.anonymousDonor, m.createdAt),
+      [...latestByAccount(pending).values()].flatMap((m) =>
+        m.user.members.length === 0
+          ? []
+          : [
+              asRow(
+                m.user.members[0].id,
+                m.userId,
+                m.user.fullName || money.anonymousDonor,
+                m.createdAt,
+              ),
+            ],
       ),
     ),
     unfinished: longestFirst(unfinished.map((u) => asRow(u.id, u.id, u.phone ?? "", u.createdAt))),

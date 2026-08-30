@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { getAppSettings } from "@/lib/settingsServer";
 import { renewalRefusal } from "@/lib/renewal";
+import { membershipForMember } from "@/lib/currentMembershipServer";
 import { NotFoundError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
@@ -15,16 +16,12 @@ export const GET = withRoute(
     const { id } = await params;
     const { membershipYear } = await getAppSettings();
 
-    const member = await prisma.member.findUnique({
-      where: { id },
-      select: {
-        userId: true,
-        status: true,
-        membershipYear: true,
-        user: { select: { memberNumber: true } },
-      },
-    });
+    const member = await membershipForMember(prisma, id);
     if (!member) throw new NotFoundError(messages.notFound);
+    const account = await prisma.user.findUniqueOrThrow({
+      where: { id: member.userId },
+      select: { memberNumber: true },
+    });
 
     const memberships = await prisma.membership.findMany({
       where: { userId: member.userId },
@@ -52,7 +49,11 @@ export const GET = withRoute(
       }),
       currentYear: membershipYear,
       refusal: renewalRefusal(
-        { ...member, memberNumber: member.user.memberNumber },
+        {
+          status: member.membership.status,
+          membershipYear: member.membership.year,
+          memberNumber: account.memberNumber,
+        },
         membershipYear,
       ),
     });

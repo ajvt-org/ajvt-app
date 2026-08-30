@@ -52,14 +52,13 @@ function donateForm(fields: Record<string, string>) {
 }
 
 // The payment is the only place money is kept. If any path leaves a figure on
-// a member, a membership year or a surplus donation, the two can disagree.
+// a membership year or a surplus donation, the two can disagree.
 async function moneyKeptAnywhereElse() {
-  const [members, years, surplus] = await Promise.all([
-    prisma.member.count({ where: { paidAmount: { not: null } } }),
+  const [years, surplus] = await Promise.all([
     prisma.membership.count({ where: { paidAmount: { not: null } } }),
     prisma.donation.count({ where: { source: "MEMBERSHIP" } }),
   ]);
-  return members + years + surplus;
+  return years + surplus;
 }
 
 describe("every path that touches money writes only the payment", () => {

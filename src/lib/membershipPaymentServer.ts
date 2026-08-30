@@ -1,17 +1,9 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
 import { setMembershipStatus } from "./membershipRecord";
-import { currentMembership } from "./currentMembershipServer";
-import { accountOf } from "./memberAccount";
+import { membershipForMember } from "./currentMembershipServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
-
-async function currentYearOf(db: Db, memberId: string) {
-  const userId = await accountOf(db, memberId).catch(() => null);
-  if (!userId) return null;
-  const membership = await currentMembership(db, userId);
-  return membership ? { userId, membership } : null;
-}
 
 export async function recordMembershipPayment(
   db: Db,
@@ -20,7 +12,7 @@ export async function recordMembershipPayment(
   fee: number,
   choice?: boolean,
 ) {
-  const current = await currentYearOf(db, memberId);
+  const current = await membershipForMember(db, memberId);
   if (!current) return;
   const { userId, membership } = current;
 
@@ -48,7 +40,7 @@ export async function recordMembershipPayment(
 }
 
 export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: string) {
-  const current = await currentYearOf(db, memberId);
+  const current = await membershipForMember(db, memberId);
   if (!current) return;
   const { userId, membership } = current;
 
@@ -67,7 +59,7 @@ export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: s
 }
 
 export async function setSurplusVisibility(db: Db, memberId: string, anonymous: boolean) {
-  const current = await currentYearOf(db, memberId);
+  const current = await membershipForMember(db, memberId);
   if (!current) return;
   const { userId, membership } = current;
 
@@ -83,7 +75,7 @@ export async function setSurplusVisibility(db: Db, memberId: string, anonymous: 
 }
 
 export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
-  const current = await currentYearOf(db, memberId);
+  const current = await membershipForMember(db, memberId);
   if (!current) return null;
 
   const payment = await db.payment.findFirst({

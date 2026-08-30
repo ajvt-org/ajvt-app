@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { runningYear } from "@/lib/membershipYear";
+import type { ReviewStatus } from "@prisma/client";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
@@ -162,33 +164,24 @@ export async function makeMember(data: Record<string, unknown>) {
 
   const owner = await prisma.member.findUniqueOrThrow({
     where: { id: member.id },
-    select: {
-      userId: true,
-      membershipYear: true,
-      status: true,
-      rejectionReason: true,
-      paymentMethod: true,
-      paymentProof: true,
-      referenceCode: true,
-      user: { select: { fullName: true } },
-    },
+    select: { userId: true, user: { select: { fullName: true } } },
   });
+  const year = (membership.membershipYear as number | undefined) ?? runningYear();
+  const state = {
+    status: (membership.status as ReviewStatus | undefined) ?? "PENDING",
+    rejectionReason: (membership.rejectionReason as string | null | undefined) ?? null,
+    paymentMethod: (membership.paymentMethod as string | null | undefined) ?? null,
+    paymentProof: (membership.paymentProof as string | null | undefined) ?? null,
+    referenceCode: (membership.referenceCode as string | null | undefined) ?? null,
+    ...(membership.createdAt ? { createdAt: membership.createdAt as Date } : {}),
+  };
 
   // The membership year is the record. The app writes it beside the member on
   // every path that makes one, so the fixture does too.
   await prisma.membership.upsert({
-    where: { userId_year: { userId: owner.userId, year: owner.membershipYear } },
+    where: { userId_year: { userId: owner.userId, year } },
     update: {},
-    create: {
-      userId: owner.userId,
-      year: owner.membershipYear,
-      status: owner.status,
-      rejectionReason: owner.rejectionReason,
-      paymentMethod: owner.paymentMethod,
-      paymentProof: owner.paymentProof,
-      referenceCode: owner.referenceCode,
-      surplusAnonymous: anonymous,
-    },
+    create: { userId: owner.userId, year, ...state, surplusAnonymous: anonymous },
   });
 
   if (paid !== undefined && paid !== null) {
@@ -197,9 +190,9 @@ export async function makeMember(data: Record<string, unknown>) {
         purpose: "MEMBERSHIP",
         amount: paid,
         feeApplied: MEMBERSHIP_FEE,
-        year: owner.membershipYear,
-        status: owner.status,
-        method: owner.paymentMethod,
+        year,
+        status: state.status,
+        method: state.paymentMethod,
         userId: owner.userId,
         anonymous,
         donorName: anonymous ? null : owner.user.fullName,
