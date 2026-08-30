@@ -125,7 +125,7 @@ describe("admin membership is one per account", () => {
 
     await PATCH(patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }), withId(member.id));
 
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const updated = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(updated.paymentMethod).toBe("بنكيلي");
     expect((await personFor(member.id)).fullName).toBe("عضو");
   });
@@ -143,7 +143,9 @@ describe("admin membership is one per account", () => {
     );
 
     expect(res.status).toBe(400);
-    const untouched = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const untouched = await prisma.membership.findFirstOrThrow({
+      where: { userId: member.userId },
+    });
     expect(untouched.paymentMethod).toBe("بنكيلي");
   });
 

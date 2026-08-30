@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { runningYear } from "@/lib/membershipYear";
 import { saveAppSettings } from "@/lib/settingsServer";
 import {
   resetDb,
@@ -47,7 +48,7 @@ describe("the year record a membership request opens", () => {
     const member = await submitAs();
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(record.year).toBe(member.membershipYear);
+    expect(record.year).toBe(runningYear());
     expect(record.status).toBe("PENDING");
     expect(record.reviewedBy).toBeNull();
   });
@@ -68,7 +69,7 @@ describe("the year record a membership request opens", () => {
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(record.year).toBe(member.membershipYear);
+    expect(record.year).toBe(runningYear());
     expect(record.status).toBe("ACTIVE");
     expect(await feeFor(member.id, record.year)).toBe(100);
     expect(record.paymentMethod).toBe("بنكيلي");
@@ -145,7 +146,7 @@ describe("the year record a membership request opens", () => {
     const member = await prisma.member.findFirstOrThrow();
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(100);
-    expect(record.year).toBe(member.membershipYear);
+    expect(record.year).toBe(runningYear());
   });
 
   it("waits on a decision for a member an admin adds as still waiting", async () => {

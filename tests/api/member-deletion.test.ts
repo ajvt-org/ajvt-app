@@ -108,7 +108,10 @@ describe("DELETE /api/admin/members/[id]", () => {
 
     expect(res.status).toBe(200);
     const restored = await prisma.member.findUniqueOrThrow({ where: { id: m.id } });
-    expect(restored).toMatchObject({ status: "ACTIVE" });
+    expect(restored.userId).toBe(m.userId);
+    expect((await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } })).status).toBe(
+      "ACTIVE",
+    );
     expect((await personFor(m.id)).fullName).toBe("محمد ولد أحمد");
     expect(await prisma.deletedRecord.count()).toBe(0);
   });

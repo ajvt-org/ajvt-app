@@ -6,6 +6,7 @@ import { POST as VALIDATE } from "@/app/api/admin/validate/route";
 import { POST as RENEW } from "@/app/api/admin/members/[id]/renew/route";
 import { PUT as EDIT_PAYMENT } from "@/app/api/admin/members/[id]/payment/route";
 import { saveAppSettings } from "@/lib/settingsServer";
+import { runningYear } from "@/lib/membershipYear";
 import {
   resetDb,
   post,
@@ -169,7 +170,7 @@ describe("the membership year record after each way it is written", () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
-    const firstYear = member.membershipYear;
+    const firstYear = runningYear();
     await saveAppSettings({ membershipYear: firstYear + 1 });
 
     await RENEW(
@@ -203,9 +204,7 @@ describe("the membership year record after each way it is written", () => {
 
     const members = await prisma.member.findMany();
     for (const member of members) {
-      const record = await prisma.membership.findUnique({
-        where: { userId_year: { userId: member.userId, year: member.membershipYear } },
-      });
+      const record = await prisma.membership.findFirst({ where: { userId: member.userId } });
       expect(record).not.toBeNull();
     }
   });

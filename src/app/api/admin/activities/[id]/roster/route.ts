@@ -14,7 +14,7 @@ export const GET = withRoute(
       where: {
         activityId: id,
         status: "ACTIVE",
-        user: { members: { some: { status: { not: "REJECTED" } } } },
+        user: { memberships: { some: { status: { not: "REJECTED" } } } },
       },
       select: {
         user: {

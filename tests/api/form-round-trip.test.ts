@@ -29,10 +29,6 @@ async function overpaidMember() {
     membershipYear: YEAR,
     memberNumber: "AJVT-2026-0001",
   });
-  await prisma.membership.updateMany({
-    where: { userId: m.userId, year: YEAR },
-    data: { paidAmount: 100, paymentMethod: "بنكيلي" },
-  });
   const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
   await recordMembershipPayment(prisma, m.id, 2100, 100);
   return m;

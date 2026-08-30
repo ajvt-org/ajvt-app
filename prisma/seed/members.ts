@@ -79,11 +79,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     const paid = [500, 1000, 1500, 2000, 3000][i % 5];
 
     const member = await prisma.member.create({
-      data: {
-        userId: owner,
-        paymentMethod: method,
-        createdAt: daysAgo(Math.max(1, 130 - i)),
-      },
+      data: { userId: owner, createdAt: daysAgo(Math.max(1, 130 - i)) },
     });
 
     const snapshot = {

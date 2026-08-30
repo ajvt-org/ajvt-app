@@ -69,9 +69,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   for (let attempt = 0; ; attempt++) {
     try {
       const member = await prisma.$transaction(async (tx) => {
-        const created = await tx.member.create({
-          data: { userId: session.userId, paymentMethod },
-        });
+        const created = await tx.member.create({ data: { userId: session.userId } });
         await saveMembershipYear(tx, session.userId, membershipYear, {
           paymentMethod,
           paymentProof,

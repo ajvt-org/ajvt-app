@@ -64,7 +64,7 @@ describe("POST /api/admin/people/[id]/membership", () => {
     expect(res.status).toBe(201);
     const member = await prisma.member.findFirstOrThrow();
     expect(member.userId).toBe(target.id);
-    expect(member.status).toBe("PENDING");
+    expect((await prisma.membership.findFirstOrThrow()).status).toBe("PENDING");
   });
 
   it("adds a payment to a person who has no number", async () => {

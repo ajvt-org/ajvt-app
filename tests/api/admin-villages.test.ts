@@ -182,12 +182,13 @@ describe("PATCH /api/admin/villages/[id]", () => {
     await signInAsAdmin(await createAdmin());
     const village = await prisma.village.create({ data: { name: "أفجار" } });
     const member = await aMember("محمد", "أفجار");
+    const before = (await personFor(member.id)).updatedAt;
 
     await PATCH(post(`/api/admin/villages/${village.id}`, { name: "افجار" }), withId(village.id));
 
     const after = await personFor(member.id);
     expect(after.village).toBe("افجار");
-    expect(after.updatedAt.getTime()).toBe(member.updatedAt.getTime());
+    expect(after.updatedAt.getTime()).toBe(before.getTime());
   });
 
   it("records how many members moved", async () => {

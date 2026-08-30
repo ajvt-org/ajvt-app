@@ -32,7 +32,7 @@ describe("POST /api/members", () => {
 
     expect(res.status).toBe(201);
     const member = await prisma.member.findFirst();
-    expect(member?.status).toBe("PENDING");
+    expect((await prisma.membership.findFirstOrThrow()).status).toBe("PENDING");
     expect(member?.userId).toBe(user.id);
     expect((await personFor(member!.id)).memberNumber).toBeNull();
   });

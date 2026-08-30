@@ -12,7 +12,7 @@ async function anActivity(title: string, over: Record<string, unknown> = {}) {
 async function someoneRegistered(activityId: string, name: string) {
   const user = await prisma.user.create({ data: { fullName: name } });
   const member = await prisma.member.create({
-    data: { userId: user.id, paymentMethod: "بنكيلي" },
+    data: { userId: user.id },
   });
   return prisma.activityRegistration.create({
     data: { activityId, userId: member.userId, status: "ACTIVE" },
