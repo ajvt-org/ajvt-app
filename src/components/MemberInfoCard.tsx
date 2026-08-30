@@ -34,7 +34,7 @@ export default function MemberInfoCard({
         <InfoRow label="رقم الهاتف" value={member.user?.phone ?? "—"} dir="ltr" />
         <InfoRow label={villageField.label} value={member.village} />
         {member.age && <InfoRow label="العصر" value={member.age} />}
-        <InfoRow label="طريقة الدفع" value={member.paymentMethod} />
+        <InfoRow label="طريقة الدفع" value={member.paymentMethod ?? "—"} />
         <PaidAmountRows
           paidAmount={member.paidAmount}
           supportAmount={member.supportAmount}

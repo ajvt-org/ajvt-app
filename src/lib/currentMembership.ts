@@ -31,3 +31,13 @@ export function asMembershipState(row: StatedMembership | null): StatefulMembers
 export function asMembershipState(row: StatedMembership | null): StatefulMembership | null {
   return row === null ? null : { status: row.status, membershipYear: row.year };
 }
+
+const REVIEW_ORDER = ["PENDING", "ACTIVE", "REJECTED"];
+
+export function byReviewOrder<T extends { status: string; createdAt: Date }>(rows: T[]): T[] {
+  return [...rows].sort(
+    (a, b) =>
+      REVIEW_ORDER.indexOf(a.status) - REVIEW_ORDER.indexOf(b.status) ||
+      b.createdAt.getTime() - a.createdAt.getTime(),
+  );
+}

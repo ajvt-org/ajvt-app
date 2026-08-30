@@ -7,6 +7,7 @@ import { NotFoundError } from "@/lib/errors";
 import { toCsv } from "@/lib/csv";
 import { splitPayment } from "@/lib/membershipPayment";
 import { getAgeStandings } from "@/lib/ageStandingsServer";
+import { latestByAccount } from "@/lib/currentMembership";
 import { activityFinanceReport } from "@/lib/activityReportServer";
 import { dateSpanSchema, spanBounds } from "@/lib/dateSpan";
 import { parse } from "@/lib/validation";
@@ -28,9 +29,14 @@ import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
 async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
   if (dataset === "members") {
-    const members = await prisma.member.findMany({
-      orderBy: { createdAt: "asc" },
-      include: {
+    const memberships = await prisma.membership.findMany({
+      select: {
+        userId: true,
+        year: true,
+        status: true,
+        paymentMethod: true,
+        referenceCode: true,
+        createdAt: true,
         user: {
           select: {
             ...PERSON_WITH_PHONE_SELECT,
@@ -42,14 +48,18 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
         },
       },
     });
+    const current = [...latestByAccount(memberships).values()].sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+    );
     return toCsv(
       MEMBER_HEADERS,
       memberRows(
-        members.map((m) => {
-          const paid = m.user.payments.find((p) => p.year === m.membershipYear);
+        current.map((membership) => {
+          const { year, user, ...rest } = membership;
+          const paid = user.payments.find((p) => p.year === year);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
-            ...withPerson(m),
+            ...withPerson({ ...rest, membershipYear: year, user }),
             paidAmount: split ? split.fee : null,
             supportAmount: split ? split.surplus : 0,
           };

@@ -30,7 +30,7 @@ export type FilterableMember = {
   referenceCode: string | null;
   age: string | null;
   village: string;
-  paymentMethod: string;
+  paymentMethod: string | null;
   paidAmount: number | null;
   membershipYear: number;
   createdAt?: string;

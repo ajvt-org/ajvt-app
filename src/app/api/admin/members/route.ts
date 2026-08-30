@@ -5,16 +5,28 @@ import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { byReviewOrder, latestByAccount } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
-  const members = await prisma.member.findMany({
-    include: {
+
+  const memberships = await prisma.membership.findMany({
+    select: {
+      userId: true,
+      year: true,
+      status: true,
+      rejectionReason: true,
+      paymentMethod: true,
+      paymentProof: true,
+      referenceCode: true,
+      createdAt: true,
+      updatedAt: true,
       user: {
         select: {
           ...PERSON_WITH_PHONE_SELECT,
+          members: { select: { id: true }, orderBy: { createdAt: "asc" } },
           registrations: {
             select: { activityId: true, activity: { select: { id: true, title: true } } },
           },
@@ -25,18 +37,25 @@ export const GET = withRoute("GET /api/admin/members", async () => {
         },
       },
     },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
   });
+
+  const current = byReviewOrder([...latestByAccount(memberships).values()]);
+
   return NextResponse.json({
-    members: members.map((member) => {
-      const { payments, registrations, ...account } = member.user;
-      const paid = paidForYear(payments, member.membershipYear);
-      return {
-        ...withPerson({ ...member, user: account }),
-        registrations,
-        paidAmount: paid?.fee ?? null,
-        supportAmount: paid?.support ?? 0,
-      };
+    members: current.flatMap((membership) => {
+      const { year, user, ...rest } = membership;
+      const { payments, registrations, members, ...account } = user;
+      const id = members[0]?.id;
+      if (!id) return [];
+      const paid = paidForYear(payments, year);
+      return [
+        {
+          ...withPerson({ ...rest, id, membershipYear: year, user: account }),
+          registrations,
+          paidAmount: paid?.fee ?? null,
+          supportAmount: paid?.support ?? 0,
+        },
+      ];
     }),
   });
 });

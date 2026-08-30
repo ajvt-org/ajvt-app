@@ -30,7 +30,6 @@ export const PATCH = withRoute(
       where: { id },
       select: {
         userId: true,
-        paymentMethod: true,
         user: {
           select: {
             fullName: true,
@@ -98,15 +97,11 @@ export const PATCH = withRoute(
         ...auditContext(session, req),
         targetType: "Member",
         targetId: member.id,
-        before: {
-          ...existing.user,
-          paymentMethod: existing.paymentMethod,
-        },
+        before: { ...existing.user },
         after: {
           fullName: person.fullName,
           age: person.age,
           village: person.village,
-          paymentMethod: member.paymentMethod,
         },
       },
     );
