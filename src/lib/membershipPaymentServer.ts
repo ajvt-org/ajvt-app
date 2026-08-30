@@ -1,7 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
 import { setMembershipStatus } from "./membershipRecord";
-import { membershipForMember } from "./currentMembershipServer";
+import { currentMembership, membershipForMember } from "./currentMembershipServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -58,10 +58,9 @@ export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: s
   );
 }
 
-export async function setSurplusVisibility(db: Db, memberId: string, anonymous: boolean) {
-  const current = await membershipForMember(db, memberId);
-  if (!current) return;
-  const { userId, membership } = current;
+export async function setSurplusVisibility(db: Db, userId: string, anonymous: boolean) {
+  const membership = await currentMembership(db, userId);
+  if (!membership) return;
 
   const account = await db.user.findUnique({
     where: { id: userId },

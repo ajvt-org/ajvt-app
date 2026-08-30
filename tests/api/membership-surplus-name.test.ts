@@ -39,10 +39,10 @@ function mirrorOf(memberId: string) {
   });
 }
 
-function changeVisibility(memberId: string, anonymous: boolean) {
+function changeVisibility(userId: string, anonymous: boolean) {
   return UPDATE_MEMBER(
-    patch(`/api/members/${memberId}`, { surplusAnonymous: anonymous }),
-    withId(memberId),
+    patch(`/api/members/${userId}`, { surplusAnonymous: anonymous }),
+    withId(userId),
   );
 }
 
@@ -104,7 +104,7 @@ describe("who the membership surplus is credited to", () => {
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
     await signInAs(user);
 
-    const res = await changeVisibility(member.id, true);
+    const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(200);
     expect((await surplusOf(member.id)).donorName).toBeNull();
@@ -122,7 +122,7 @@ describe("who the membership surplus is credited to", () => {
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
     await signInAs(user);
 
-    await changeVisibility(member.id, false);
+    await changeVisibility(member.userId, false);
 
     expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
     expect((await mirrorOf(member.id)).anonymous).toBe(false);
@@ -135,7 +135,7 @@ describe("who the membership surplus is credited to", () => {
     const member = await prisma.member.findFirstOrThrow();
     await signInAs(await createUser("22119900"));
 
-    const res = await changeVisibility(member.id, true);
+    const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(404);
     expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");

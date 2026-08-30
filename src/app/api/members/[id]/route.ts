@@ -6,9 +6,24 @@ import { parse } from "@/lib/validation";
 import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
-import { PERSON_SELECT, withPerson } from "@/lib/person";
+import { PERSON_SELECT, personOf } from "@/lib/person";
 import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
 import { latestMembership } from "@/lib/currentMembership";
+
+const MEMBERSHIP_SELECT = {
+  year: true,
+  status: true,
+  rejectionReason: true,
+  paymentMethod: true,
+  paymentProof: true,
+  referenceCode: true,
+  createdAt: true,
+} as const;
+
+const PAYMENTS_SELECT = {
+  where: { purpose: "MEMBERSHIP" },
+  select: { amount: true, feeApplied: true, year: true, anonymous: true },
+} as const;
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -16,53 +31,31 @@ export const GET = withRoute(
     const session = await requireUser();
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        userId: true,
-        user: {
-          select: {
-            ...PERSON_SELECT,
-            payments: {
-              where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true, anonymous: true },
+    const account =
+      id === session.userId
+        ? await prisma.user.findUnique({
+            where: { id },
+            select: {
+              ...PERSON_SELECT,
+              payments: PAYMENTS_SELECT,
+              memberships: { select: MEMBERSHIP_SELECT },
             },
-            memberships: {
-              select: {
-                year: true,
-                status: true,
-                rejectionReason: true,
-                paymentMethod: true,
-                paymentProof: true,
-                referenceCode: true,
-                createdAt: true,
-              },
-            },
-          },
-        },
-      },
-    });
+          })
+        : null;
 
-    if (!member || member.userId !== session.userId) {
+    const current = account ? latestMembership(account.memberships) : null;
+    if (!account || !current) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { payments, memberships, ...account } = member.user;
-    const current = latestMembership(memberships);
-    if (!current) {
-      return NextResponse.json({ error: members.notFound }, { status: 404 });
-    }
-
-    const { userId: _userId, ...person } = withPerson({ ...member, user: account });
-    void _userId;
     const { year, ...rest } = current;
-    const paid = paidForYear(payments, year);
+    const paid = paidForYear(account.payments, year);
     return NextResponse.json({
-      ...person,
+      ...personOf(account),
       ...rest,
+      id,
       membershipYear: year,
-      surplusAnonymous: anonymousForYear(payments, year),
+      surplusAnonymous: anonymousForYear(account.payments, year),
       paidAmount: paid?.fee ?? null,
       supportAmount: paid?.support ?? 0,
     });
@@ -76,14 +69,18 @@ export const PATCH = withRoute(
     const { id } = await params;
     const { photo, surplusAnonymous } = parse(memberSelfSchema, await req.json());
 
-    const existing = await prisma.member.findUnique({
-      where: { id },
-      select: { userId: true, user: { select: { photoLocked: true } } },
-    });
-    if (!existing || existing.userId !== session.userId) {
+    if (id !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
-    if (photo !== undefined && existing.user.photoLocked) {
+
+    const existing = await prisma.user.findUnique({
+      where: { id },
+      select: { photoLocked: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
+    }
+    if (photo !== undefined && existing.photoLocked) {
       return NextResponse.json({ error: members.photoLocked }, { status: 403 });
     }
 
@@ -91,18 +88,15 @@ export const PATCH = withRoute(
       await prisma.$transaction((tx) => setSurplusVisibility(tx, id, surplusAnonymous));
     }
     if (photo !== undefined) {
-      await prisma.user.update({ where: { id: existing.userId }, data: { photo } });
+      await prisma.user.update({ where: { id }, data: { photo } });
     }
 
     const account = await prisma.user.findUniqueOrThrow({
-      where: { id: existing.userId },
+      where: { id },
       select: {
         photo: true,
         photoLocked: true,
-        payments: {
-          where: { purpose: "MEMBERSHIP" },
-          select: { amount: true, feeApplied: true, year: true, anonymous: true },
-        },
+        payments: PAYMENTS_SELECT,
         memberships: { select: { year: true } },
       },
     });

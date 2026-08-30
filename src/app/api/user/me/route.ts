@@ -87,7 +87,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
     select: {
       ...PERSON_WITH_PHONE_SELECT,
       ...ACCOUNT_SELECT,
-      members: { select: { id: true }, orderBy: { createdAt: "asc" } },
       memberships: { select: MEMBERSHIP_SELECT },
     },
   });
@@ -97,7 +96,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
   }
 
   const current = latestMembership(user.memberships);
-  const memberId = user.members[0]?.id;
 
   let person = personOf(user);
   if (!user.memberNumber && current?.status === "ACTIVE") {
@@ -110,6 +108,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
     ...person,
     phone: user.phone,
     currentYear,
-    members: current && memberId ? [membershipView(memberId, current, user, person)] : [],
+    members: current ? [membershipView(session.userId, current, user, person)] : [],
   });
 });

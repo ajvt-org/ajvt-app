@@ -15,12 +15,10 @@ async function getViewer() {
   const session = await getUserSession();
   if (!session) return null;
   const { userId } = session as { userId: string };
-  const member = await prisma.member.findUnique({ where: { userId }, select: { id: true } });
   const current = await currentMembership(prisma, userId);
   return {
     userId,
-    donateHref:
-      member && current?.status === "ACTIVE" ? `/donate?memberId=${member.id}` : "/donate",
+    donateHref: current?.status === "ACTIVE" ? `/donate?memberId=${userId}` : "/donate",
   };
 }
 
