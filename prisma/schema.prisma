@@ -72,11 +72,11 @@ model User {
 }
 
 model Member {
-  id               String                 @id @default(cuid())
+  id               String       @id @default(cuid())
   // One membership per account. The account is the person: their name, عصر,
   // village, photo and membership number all live on it.
-  userId           String                 @unique
-  user             User                   @relation(fields: [userId], references: [id])
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id])
   paymentMethod    String
   paymentProof     String?
   paidAmount       Int?
@@ -84,33 +84,19 @@ model Member {
   // support board. Read when the surplus donation is created. Only the member
   // changing their own answer rewrites a year already published; a renewal or
   // an edit never does.
-  surplusAnonymous Boolean                @default(false)
-  referenceCode    String?                @unique // short code the member writes in their bank transfer note, for admin reconciliation
-  status           ReviewStatus           @default(PENDING)
+  surplusAnonymous Boolean      @default(false)
+  referenceCode    String?      @unique // short code the member writes in their bank transfer note, for admin reconciliation
+  status           ReviewStatus @default(PENDING)
   rejectionReason  String? // one of src/lib/rejectionReasons.ts, set on REJECTED, cleared on resubmit/approval
-  membershipYear   Int                    @default(dbgenerated("EXTRACT(YEAR FROM now() AT TIME ZONE 'UTC')::INTEGER"))
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  registrations    ActivityRegistration[]
-  teamMemberships  TeamMember[]
-  matchGoals       MatchGoal[]
-  penaltyKicks     MatchPenaltyKick[]
-  matchBookings    MatchBooking[]
-  motmMatches      Match[]                @relation("ManOfTheMatch")
-  mvpCandidacies   MvpCandidate[]
-  donations        Donation[]
-  memberships      Membership[]
-  payments         Payment[]
-  suspensions      Suspension[]
-  receipts         Receipt[]
+  membershipYear   Int          @default(dbgenerated("EXTRACT(YEAR FROM now() AT TIME ZONE 'UTC')::INTEGER"))
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([membershipYear])
 }
 
 model Membership {
   id               String       @id @default(cuid())
-  memberId         String
-  member           Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId           String
   user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   year             Int
@@ -127,47 +113,47 @@ model Membership {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  @@unique([memberId, year])
   @@unique([userId, year])
   @@index([year])
   @@index([status])
 }
 
 model Activity {
-  id             String                 @id @default(cuid())
-  title          String
-  description    String
-  period         String? // legacy free text, shown only when startsAt is unset
-  startsAt       DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
-  endsAt         DateTime?
-  withTime       Boolean                @default(false)
-  photo          String?
-  capacity       Int?
-  isOpen         Boolean                @default(true)
-  autoApprove    Boolean                @default(false)
-  isTournament   Boolean                @default(false)
-  format         TournamentFormat?
-  profile        SportProfile           @default(FOOTBALL)
-  teamSize       Int?
-  yellowsForBan  Int                    @default(2) // yellows across the tournament that propose a suspension
-  redBanMatches  Int                    @default(1) // matches a proposed red-card ban carries
-  published      Boolean                @default(true)
-  mvpVoteMinutes Int                    @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
-  isVolunteer    Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
-  whatsappLink   String?
-  order          Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  registrations  ActivityRegistration[]
-  teams          Team[]
-  matches        Match[]
-  groups         Group[]
-  expenses       Expense[]
-  donations      Donation[]
-  admins         AdminActivity[]
-  payments       Payment[]
-  days           TournamentDay[]
-  suspensions    Suspension[]
+  id                  String                 @id @default(cuid())
+  title               String
+  description         String
+  period              String? // legacy free text, shown only when startsAt is unset
+  startsAt            DateTime? // stored at UTC midnight for an all-day activity; the club sits at UTC+0
+  endsAt              DateTime?
+  withTime            Boolean                @default(false)
+  photo               String?
+  capacity            Int?
+  isOpen              Boolean                @default(true)
+  autoApprove         Boolean                @default(false)
+  isTournament        Boolean                @default(false)
+  format              TournamentFormat?
+  profile             SportProfile           @default(FOOTBALL)
+  teamSize            Int?
+  yellowsForBan       Int                    @default(2) // yellows across the tournament that propose a suspension
+  redBanMatches       Int                    @default(1) // matches a proposed red-card ban carries
+  showScorersAndCards Boolean                @default(true) // public match cards list the scorers and the red cards; the man of the match and the timeline stay either way
+  published           Boolean                @default(true)
+  mvpVoteMinutes      Int                    @default(120) // how long a man-of-the-match vote stays open, per match, adjustable when it is opened
+  isVolunteer         Boolean                @default(false) // volunteer campaign (حملة تطوعية) — no in-app registration, "تطوع معنا" links straight to whatsappLink
+  whatsappLink        String?
+  order               Int                    @default(0) // display order on the public landing page (ascending); admin-controlled
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  registrations       ActivityRegistration[]
+  teams               Team[]
+  matches             Match[]
+  groups              Group[]
+  expenses            Expense[]
+  donations           Donation[]
+  admins              AdminActivity[]
+  payments            Payment[]
+  days                TournamentDay[]
+  suspensions         Suspension[]
 }
 
 // The tournament's spine: an ordered run of days counted from the activity's
@@ -236,14 +222,11 @@ model TeamMember {
   id        String           @id @default(cuid())
   teamId    String
   team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId    String
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   status    TeamMemberStatus @default(ACTIVE) // PENDING = self-service join awaiting approval, ACTIVE = locked in
   createdAt DateTime         @default(now())
 
-  @@unique([teamId, memberId])
   @@unique([teamId, userId])
 }
 
@@ -267,8 +250,6 @@ model Match {
   awayScore           Int?
   homePenalties       Int?
   awayPenalties       Int?
-  manOfTheMatchId     String?
-  manOfTheMatch       Member?            @relation("ManOfTheMatch", fields: [manOfTheMatchId], references: [id], onDelete: SetNull)
   manOfTheMatchUserId String?
   manOfTheMatchUser   User?              @relation("ManOfTheMatchUser", fields: [manOfTheMatchUserId], references: [id], onDelete: SetNull)
   forfeitWinnerTeamId String?
@@ -300,16 +281,13 @@ model MatchMvpVote {
 }
 
 model MvpCandidate {
-  id       String       @id @default(cuid())
-  voteId   String
-  vote     MatchMvpVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
-  memberId String
-  member   Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  userId   String
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  votes    MvpVote[]
+  id     String       @id @default(cuid())
+  voteId String
+  vote   MatchMvpVote @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  userId String
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes  MvpVote[]
 
-  @@unique([voteId, memberId])
   @@unique([voteId, userId])
 }
 
@@ -331,8 +309,6 @@ model MatchBooking {
   id        String   @id @default(cuid())
   matchId   String
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId    String
@@ -362,8 +338,6 @@ model MatchGoal {
   id        String     @id @default(cuid())
   matchId   String
   match     Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  memberId  String?
-  member    Member?    @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId    String?
   user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   teamId    String
@@ -383,8 +357,6 @@ model MatchPenaltyKick {
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  memberId  String?
-  member    Member?  @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   order     Int
@@ -396,8 +368,6 @@ model MatchPenaltyKick {
 
 model ActivityRegistration {
   id              String       @id @default(cuid())
-  memberId        String
-  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId          String
   user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   activityId      String
@@ -408,7 +378,6 @@ model ActivityRegistration {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  @@unique([memberId, activityId])
   @@unique([userId, activityId])
   @@index([activityId])
 }
@@ -474,8 +443,6 @@ model Donation {
   status         ReviewStatus @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
   source         String       @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
   paymentMethod  String? // بنكيلي | السداد | مصرفي | نقداً — set manually by admin (proof screenshots aren't parsed automatically)
-  memberId       String?
-  member         Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId         String?
   user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   membershipYear Int?
@@ -485,7 +452,6 @@ model Donation {
   activityId     String?
   activity       Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
 
-  @@index([memberId])
   @@index([userId])
   @@index([status])
   @@index([activityId])
@@ -820,8 +786,6 @@ model Payment {
   donorName  String?
   donorPhoto String? // donor with no linked Member — shown on the honour board
   donorPhone String? // contact note for a manually entered donor with no account
-  memberId   String?
-  member     Member?        @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId     String?
   user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags       FinanceTag[]
@@ -835,7 +799,6 @@ model Payment {
 
   receipt Receipt?
 
-  @@index([memberId, year, purpose])
   @@index([userId, year, purpose])
   @@index([status])
   @@index([activityId])
@@ -863,14 +826,11 @@ model Receipt {
   voidedBy   String?
   paymentId  String?       @unique
   payment    Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  memberId   String?
-  member     Member?       @relation(fields: [memberId], references: [id], onDelete: SetNull)
   userId     String?
   user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  @@index([memberId])
   @@index([userId])
   @@index([status])
   @@index([issuedOn])
@@ -915,8 +875,6 @@ model Suspension {
   id         String           @id @default(cuid())
   activityId String
   activity   Activity         @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  memberId   String
-  member     Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
   userId     String
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   reason     SuspensionReason
@@ -930,7 +888,6 @@ model Suspension {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
-  @@index([activityId, memberId])
   @@index([activityId, userId])
   @@index([activityId, status])
 }

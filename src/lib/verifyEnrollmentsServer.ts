@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import { MAX_ENROLLMENTS, mapEnrollments, type EnrollmentItem } from "@/lib/verifyEnrollments";
 
 export type VerifiedMember = {
@@ -20,29 +21,24 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
       village: true,
       memberNumber: true,
       photo: true,
-      members: {
+      members: { select: { status: true, createdAt: true }, take: 1 },
+      registrations: {
+        where: { status: "ACTIVE" },
         select: {
-          status: true,
-          createdAt: true,
-          registrations: {
-            where: { status: "ACTIVE" },
+          id: true,
+          activity: {
             select: {
-              id: true,
-              activity: {
-                select: {
-                  title: true,
-                  photo: true,
-                  startsAt: true,
-                  endsAt: true,
-                  isVolunteer: true,
-                },
-              },
+              title: true,
+              photo: true,
+              startsAt: true,
+              endsAt: true,
+              isVolunteer: true,
+              _count: { select: { matches: { where: STILL_TO_PLAY } } },
             },
-            orderBy: { activity: { startsAt: { sort: "desc", nulls: "last" } } },
-            take: MAX_ENROLLMENTS,
           },
         },
-        take: 1,
+        orderBy: { activity: { startsAt: { sort: "desc", nulls: "last" } } },
+        take: MAX_ENROLLMENTS,
       },
       quizParticipations: {
         select: {
@@ -73,6 +69,6 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
     memberNumber: person.memberNumber,
     photo: person.photo,
     memberSince: member.createdAt,
-    enrollments: mapEnrollments(member.registrations, person.quizParticipations),
+    enrollments: mapEnrollments(person.registrations, person.quizParticipations),
   };
 }

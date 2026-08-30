@@ -34,7 +34,9 @@ async function joinAndApprove(body: Record<string, unknown> = {}) {
 }
 
 function mirrorOf(memberId: string) {
-  return prisma.payment.findFirstOrThrow({ where: { memberId, purpose: "MEMBERSHIP" } });
+  return prisma.payment.findFirstOrThrow({
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+  });
 }
 
 function changeVisibility(memberId: string, anonymous: boolean) {

@@ -1,22 +1,21 @@
 import { prisma } from "./prisma";
-import { accountsFor } from "./memberAccount";
 import { isVoteClosed, mvpWinner } from "./mvpVote";
 
 export type SettleableMatch = {
   id: string;
-  manOfTheMatchId: string | null;
+  manOfTheMatchUserId: string | null;
   mvpVote: {
     status: "OPEN" | "CLOSED";
     closesAt: Date;
-    candidates: { memberId: string; _count: { votes: number } }[];
+    candidates: { userId: string; _count: { votes: number } }[];
   } | null;
 };
 
 function winnerFor(match: SettleableMatch, now: Date): string | null {
-  if (!match.mvpVote || match.manOfTheMatchId) return null;
+  if (!match.mvpVote || match.manOfTheMatchUserId) return null;
   if (!isVoteClosed(match.mvpVote, now)) return null;
   return mvpWinner(
-    match.mvpVote.candidates.map((c) => ({ memberId: c.memberId, votes: c._count.votes })),
+    match.mvpVote.candidates.map((c) => ({ memberId: c.userId, votes: c._count.votes })),
   );
 }
 
@@ -31,15 +30,11 @@ export async function settleMvpVotes(
   }
   if (applied.size === 0) return applied;
 
-  const accountOfMember = await accountsFor(prisma, [...applied.values()]);
   await prisma.$transaction(
-    [...applied].map(([matchId, memberId]) =>
+    [...applied].map(([matchId, userId]) =>
       prisma.match.updateMany({
-        where: { id: matchId, manOfTheMatchId: null },
-        data: {
-          manOfTheMatchId: memberId,
-          manOfTheMatchUserId: accountOfMember.get(memberId) ?? null,
-        },
+        where: { id: matchId, manOfTheMatchUserId: null },
+        data: { manOfTheMatchUserId: userId },
       }),
     ),
   );

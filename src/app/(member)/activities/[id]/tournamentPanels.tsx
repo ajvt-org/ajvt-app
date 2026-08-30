@@ -20,7 +20,7 @@ import TournamentSection from "@/components/tournament/TournamentSection";
 import TournamentSummary from "@/components/tournament/TournamentSummary";
 import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
-import { suspendedMemberIds } from "@/lib/suspensionServer";
+import { suspendedUserIds } from "@/lib/suspensionServer";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -58,7 +58,7 @@ export async function tournamentPanels(
 
   const board = activity.profile === "BOARD";
   const suspended =
-    !board && discipline.length > 0 ? await suspendedMemberIds(activity.id) : new Set<string>();
+    !board && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
   const singles = activity.teamSize === 1;
   const participantsLabel = singles ? texts.players : texts.teams;
   const hasStats = board
@@ -122,6 +122,7 @@ export async function tournamentPanels(
           scheduled={scheduled}
           allMatches={matches}
           football={!board}
+          showScorersAndCards={activity.showScorersAndCards}
           tournamentTitle={activity.title}
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}

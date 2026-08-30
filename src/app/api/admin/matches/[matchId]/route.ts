@@ -4,7 +4,7 @@ import { accountsFor } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
-import { serveMatch, suspendedMemberIds } from "@/lib/suspensionServer";
+import { serveMatch, suspendedUserIds } from "@/lib/suspensionServer";
 import { isValidLeaguePairing } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
 import { withRoute } from "@/lib/route";
@@ -36,7 +36,7 @@ import { notify, tournament } from "@/lib/messages";
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
   awayTeam: { select: { id: true, name: true, logo: true } },
-  manOfTheMatch: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+  manOfTheMatchUser: { select: { fullName: true, photo: true } },
   goals: {
     orderBy: { minute: "asc" },
     select: {
@@ -46,7 +46,8 @@ const MATCH_INCLUDE = {
       teamId: true,
       kind: true,
       period: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   penaltyKicks: {
@@ -56,7 +57,8 @@ const MATCH_INCLUDE = {
       teamId: true,
       order: true,
       scored: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   bookings: {
@@ -66,7 +68,8 @@ const MATCH_INCLUDE = {
       cardType: true,
       minute: true,
       teamId: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   mvpVote: {
@@ -76,8 +79,8 @@ const MATCH_INCLUDE = {
       candidates: {
         select: {
           id: true,
-          memberId: true,
-          member: { select: { id: true, user: { select: { fullName: true } } } },
+          userId: true,
+          user: { select: { fullName: true } },
           _count: { select: { votes: true } },
         },
       },
@@ -134,7 +137,6 @@ export const PATCH = withRoute(
       awayScore?: number | null;
       homePenalties?: number | null;
       awayPenalties?: number | null;
-      manOfTheMatchId?: string | null;
       manOfTheMatchUserId?: string | null;
       forfeitWinnerTeamId?: string | null;
       status?: MatchStatus;
@@ -200,27 +202,28 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: tournament.kicksInvalid }, { status: 400 });
       }
 
-      const memberIds = [...evGoals, ...evKicks]
-        .map((e) => e.memberId)
-        .filter((id): id is string => id !== null);
+      const accountOfEvent = await accountsFor(
+        prisma,
+        [...evGoals, ...evKicks].map((e) => e.memberId).filter((id): id is string => id !== null),
+      );
       const rosterRows = await prisma.teamMember.findMany({
         where: {
-          memberId: { in: memberIds },
+          userId: { in: [...accountOfEvent.values()] },
           teamId: { in: [match.homeTeamId, match.awayTeamId] },
         },
-        select: { memberId: true, teamId: true },
+        select: { userId: true, teamId: true },
       });
       const teamsOf = new Map<string, Set<string>>();
       for (const r of rosterRows) {
-        if (!teamsOf.has(r.memberId)) teamsOf.set(r.memberId, new Set());
-        teamsOf.get(r.memberId)!.add(r.teamId);
+        if (!teamsOf.has(r.userId)) teamsOf.set(r.userId, new Set());
+        teamsOf.get(r.userId)!.add(r.teamId);
       }
       const other = (teamId: string) =>
         teamId === match.homeTeamId ? match.awayTeamId : match.homeTeamId;
       for (const g of evGoals) {
         if (g.memberId === null) continue;
         const expected = g.kind === "OWN_GOAL" ? other(g.teamId) : g.teamId;
-        if (!teamsOf.get(g.memberId)?.has(expected)) {
+        if (!teamsOf.get(accountOfEvent.get(g.memberId) ?? "")?.has(expected)) {
           return NextResponse.json(
             {
               error:
@@ -233,7 +236,10 @@ export const PATCH = withRoute(
         }
       }
       for (const k of evKicks) {
-        if (k.memberId !== null && !teamsOf.get(k.memberId)?.has(k.teamId)) {
+        if (
+          k.memberId !== null &&
+          !teamsOf.get(accountOfEvent.get(k.memberId) ?? "")?.has(k.teamId)
+        ) {
           return NextResponse.json({ error: tournament.kickerWrongTeam }, { status: 400 });
         }
       }
@@ -308,22 +314,26 @@ export const PATCH = withRoute(
         }
 
         if (hg.length > 0 || ag.length > 0) {
-          const memberIds = [...hg, ...ag].map((g) => g.memberId);
-          const validMembers = await prisma.teamMember.findMany({
+          const accounts = await accountsFor(
+            prisma,
+            [...hg, ...ag].map((g) => g.memberId),
+          );
+          const squad = await prisma.teamMember.findMany({
             where: {
-              memberId: { in: memberIds },
+              userId: { in: [...accounts.values()] },
               teamId: { in: [match.homeTeamId, match.awayTeamId] },
             },
-            select: { memberId: true, teamId: true },
+            select: { userId: true, teamId: true },
           });
-          const memberTeam = new Map(validMembers.map((m) => [m.memberId, m.teamId]));
+          const teamOf = new Map(squad.map((m) => [m.userId, m.teamId]));
+          const teamOfScorer = (memberId: string) => teamOf.get(accounts.get(memberId) ?? "");
           for (const g of hg) {
-            if (memberTeam.get(g.memberId) !== match.homeTeamId) {
+            if (teamOfScorer(g.memberId) !== match.homeTeamId) {
               return NextResponse.json({ error: tournament.scorerNotInHome }, { status: 400 });
             }
           }
           for (const g of ag) {
-            if (memberTeam.get(g.memberId) !== match.awayTeamId) {
+            if (teamOfScorer(g.memberId) !== match.awayTeamId) {
               return NextResponse.json({ error: tournament.scorerNotInAway }, { status: 400 });
             }
           }
@@ -394,33 +404,19 @@ export const PATCH = withRoute(
 
     if (manOfTheMatchId !== undefined) {
       if (manOfTheMatchId === null) {
-        updateData.manOfTheMatchId = null;
+        updateData.manOfTheMatchUserId = null;
       } else {
-        const inRoster = await prisma.teamMember.findFirst({
-          where: {
-            memberId: manOfTheMatchId,
-            teamId: { in: [match.homeTeamId, match.awayTeamId] },
-          },
-        });
+        const chosen = await accountsFor(prisma, [manOfTheMatchId]);
+        const account = chosen.get(manOfTheMatchId) ?? null;
+        const inRoster =
+          account &&
+          (await prisma.teamMember.findFirst({
+            where: { userId: account, teamId: { in: [match.homeTeamId, match.awayTeamId] } },
+          }));
         if (!inRoster) {
           return NextResponse.json({ error: tournament.motmNotInMatch }, { status: 400 });
         }
-        updateData.manOfTheMatchId = manOfTheMatchId;
-      }
-    }
-
-    if (enteringResult || eventsMode) {
-      const suspended = await suspendedMemberIds(match.activityId);
-      const involved = [
-        ...parsedHomeGoals.map((g) => g.memberId),
-        ...parsedAwayGoals.map((g) => g.memberId),
-        ...[...eventGoals, ...eventKicks]
-          .map((e) => e.memberId)
-          .filter((id): id is string => id !== null),
-        ...(updateData.manOfTheMatchId ? [updateData.manOfTheMatchId] : []),
-      ];
-      if (involved.some((memberId) => suspended.has(memberId))) {
-        return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
+        updateData.manOfTheMatchUserId = account;
       }
     }
 
@@ -430,12 +426,17 @@ export const PATCH = withRoute(
       ...[...eventGoals, ...eventKicks]
         .map((e) => e.memberId)
         .filter((id): id is string => id !== null),
-      ...(updateData.manOfTheMatchId ? [updateData.manOfTheMatchId] : []),
     ]);
-    if (updateData.manOfTheMatchId !== undefined) {
-      updateData.manOfTheMatchUserId = updateData.manOfTheMatchId
-        ? (accountOfMember.get(updateData.manOfTheMatchId) ?? null)
-        : null;
+
+    if (enteringResult || eventsMode) {
+      const suspended = await suspendedUserIds(match.activityId);
+      const involved = [
+        ...[...accountOfMember.values()],
+        ...(updateData.manOfTheMatchUserId ? [updateData.manOfTheMatchUserId] : []),
+      ];
+      if (involved.some((userId) => suspended.has(userId))) {
+        return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
+      }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -445,7 +446,6 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: eventGoals.map((g) => ({
               matchId,
-              memberId: g.memberId,
               userId: g.memberId ? (accountOfMember.get(g.memberId) ?? null) : null,
               teamId: g.teamId,
               kind: g.kind,
@@ -460,7 +460,6 @@ export const PATCH = withRoute(
             data: eventKicks.map((k, i) => ({
               matchId,
               teamId: k.teamId,
-              memberId: k.memberId,
               userId: k.memberId ? (accountOfMember.get(k.memberId) ?? null) : null,
               order: i + 1,
               scored: k.scored,
@@ -477,7 +476,6 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedHomeGoals.map((g) => ({
               matchId,
-              memberId: g.memberId,
               userId: accountOfMember.get(g.memberId) ?? null,
               teamId: match.homeTeamId,
               count: g.count,
@@ -489,7 +487,6 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedAwayGoals.map((g) => ({
               matchId,
-              memberId: g.memberId,
               userId: accountOfMember.get(g.memberId) ?? null,
               teamId: match.awayTeamId,
               count: g.count,

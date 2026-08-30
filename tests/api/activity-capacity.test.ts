@@ -43,7 +43,6 @@ describe("registering for an activity with a seat limit", () => {
     const activity = await aFullActivity();
     await prisma.activityRegistration.create({
       data: {
-        memberId: holder.id,
         userId: holder.userId,
         activityId: activity.id,
         status: "PENDING",
@@ -63,7 +62,6 @@ describe("registering for an activity with a seat limit", () => {
     const activity = await aFullActivity();
     await prisma.activityRegistration.create({
       data: {
-        memberId: holder.id,
         userId: holder.userId,
         activityId: activity.id,
         status: "PENDING",
@@ -75,7 +73,6 @@ describe("registering for an activity with a seat limit", () => {
     const member = await anActiveMemberOf(user, "محمد");
     await prisma.activityRegistration.create({
       data: {
-        memberId: member.id,
         userId: member.userId,
         activityId: activity.id,
         status: "REJECTED",
@@ -97,7 +94,6 @@ describe("registering for an activity with a seat limit", () => {
     const member = await anActiveMemberOf(user, "محمد");
     await prisma.activityRegistration.create({
       data: {
-        memberId: member.id,
         userId: member.userId,
         activityId: activity.id,
         status: "REJECTED",
@@ -106,7 +102,7 @@ describe("registering for an activity with a seat limit", () => {
 
     expect((await REGISTER(ask(activity.id, member.id))).status).toBe(200);
     const row = await prisma.activityRegistration.findFirstOrThrow({
-      where: { memberId: member.id, activityId: activity.id },
+      where: { userId: member.userId, activityId: activity.id },
     });
     expect(row.status).toBe("PENDING");
   });

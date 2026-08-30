@@ -21,46 +21,31 @@ async function seedEverything() {
   execSync("npx tsx prisma/seed.ts", { stdio: "pipe", env: process.env });
 }
 
-describe("every link carries the person as well as the membership", () => {
+async function accountsNamedBy(table: (typeof LINKED)[number]): Promise<string[]> {
+  const rows = await (
+    prisma[table] as unknown as {
+      findMany: (a: unknown) => Promise<{ userId: string | null }[]>;
+    }
+  ).findMany({ select: { userId: true } });
+  return rows.map((row) => row.userId).filter((id): id is string => id !== null);
+}
+
+describe("every link names the person", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("leaves no row pointing at a member without pointing at their account", async () => {
+  it("points every link at an account that exists", async () => {
     await seedEverything();
 
-    const wrong: string[] = [];
+    const dangling: string[] = [];
     for (const table of LINKED) {
-      const rows = await (
-        prisma[table] as unknown as {
-          findMany: (a: unknown) => Promise<{ memberId: string | null; userId: string | null }[]>;
-        }
-      ).findMany({ select: { memberId: true, userId: true } });
-      for (const row of rows) {
-        if (row.memberId && !row.userId) wrong.push(table);
-      }
+      const ids = [...new Set(await accountsNamedBy(table))];
+      if (ids.length === 0) continue;
+      const found = await prisma.user.count({ where: { id: { in: ids } } });
+      if (found !== ids.length) dangling.push(table);
     }
 
-    expect([...new Set(wrong)]).toEqual([]);
-  });
-
-  it("points both columns at the same person", async () => {
-    await seedEverything();
-
-    const mismatched: string[] = [];
-    for (const table of LINKED) {
-      const rows = await (
-        prisma[table] as unknown as {
-          findMany: (
-            a: unknown,
-          ) => Promise<{ userId: string | null; member: { userId: string } | null }[]>;
-        }
-      ).findMany({ select: { userId: true, member: { select: { userId: true } } } });
-      for (const row of rows) {
-        if (row.member && row.member.userId !== row.userId) mismatched.push(table);
-      }
-    }
-
-    expect([...new Set(mismatched)]).toEqual([]);
+    expect(dangling).toEqual([]);
   });
 });

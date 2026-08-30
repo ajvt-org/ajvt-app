@@ -61,7 +61,6 @@ export async function seedGroupsOfFour(active: SeededMember[]) {
         await prisma.teamMember.create({
           data: {
             teamId: team.id,
-            memberId: active[player].id,
             userId: active[player].userId,
             status: "ACTIVE",
           },

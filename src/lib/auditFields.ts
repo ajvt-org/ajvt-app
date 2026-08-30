@@ -28,6 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   membersRenamed: "الأعضاء المحدَّثون",
   isOpen: "التسجيل مفتوح",
   autoApprove: "قبول تلقائي",
+  showScorersAndCards: "عرض الهدافين والبطاقات الحمراء",
 };
 
 const VALUE_LABELS: Record<string, string> = {

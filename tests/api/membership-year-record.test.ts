@@ -32,7 +32,7 @@ async function submitAs(body: Record<string, unknown> = {}) {
 // the payment for that year.
 const feeFor = async (memberId: string, year: number) => {
   const payment = await prisma.payment.findFirst({
-    where: { memberId, purpose: "MEMBERSHIP", year },
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year },
   });
   if (!payment) return null;
   return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
@@ -46,7 +46,7 @@ describe("the year record a membership request opens", () => {
   it("opens as soon as the member asks, waiting on a decision", async () => {
     const member = await submitAs();
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.year).toBe(member.membershipYear);
     expect(record.status).toBe("PENDING");
     expect(record.reviewedBy).toBeNull();
@@ -55,7 +55,7 @@ describe("the year record a membership request opens", () => {
   it("carries what the member sent with the request", async () => {
     const member = await submitAs();
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(100);
     expect(record.paymentMethod).toBe("بنكيلي");
     expect(record.paymentProof).toBe("proof.webp");
@@ -67,7 +67,7 @@ describe("the year record a membership request opens", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.year).toBe(member.membershipYear);
     expect(record.status).toBe("ACTIVE");
     expect(await feeFor(member.id, record.year)).toBe(100);
@@ -83,7 +83,7 @@ describe("the year record a membership request opens", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(100);
   });
 
@@ -94,7 +94,7 @@ describe("the year record a membership request opens", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(250);
   });
 
@@ -110,7 +110,7 @@ describe("the year record a membership request opens", () => {
       }),
     );
 
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.status).toBe("REJECTED");
     expect(record.rejectionReason).toBe("الصورة غير واضحة");
     expect(record.reviewedBy).toBe("admin");
@@ -125,7 +125,7 @@ describe("the year record a membership request opens", () => {
     await validate();
     await validate();
 
-    const records = await prisma.membership.findMany({ where: { memberId: member.id } });
+    const records = await prisma.membership.findMany({ where: { userId: member.userId } });
     expect(records).toHaveLength(1);
     expect(await feeFor(member.id, records[0].year)).toBe(100);
   });
@@ -143,7 +143,7 @@ describe("the year record a membership request opens", () => {
     });
 
     const member = await prisma.member.findFirstOrThrow();
-    const record = await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(100);
     expect(record.year).toBe(member.membershipYear);
   });

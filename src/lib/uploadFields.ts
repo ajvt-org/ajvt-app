@@ -81,9 +81,9 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.membership.findFirst({
           where: { paymentProof: base },
-          select: { member: { select: { userId: true } } },
+          select: { userId: true },
         });
-        return row ? { kind: "membership", ownerId: row.member.userId } : null;
+        return row ? { kind: "membership", ownerId: row.userId } : null;
       },
     },
   },
@@ -103,9 +103,9 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.activityRegistration.findFirst({
           where: { paymentProof: base },
-          select: { member: { select: { userId: true } } },
+          select: { userId: true },
         });
-        return row ? { kind: "activity", ownerId: row.member.userId } : null;
+        return row ? { kind: "activity", ownerId: row.userId } : null;
       },
     },
   },
@@ -120,9 +120,9 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.donation.findFirst({
           where: { proof: base },
-          select: { member: { select: { userId: true } } },
+          select: { userId: true },
         });
-        return row ? { kind: "donations", ownerId: row.member?.userId ?? null } : null;
+        return row ? { kind: "donations", ownerId: row.userId } : null;
       },
     },
   },
@@ -137,9 +137,9 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.payment.findFirst({
           where: { proof: base },
-          select: { purpose: true, member: { select: { userId: true } } },
+          select: { purpose: true, userId: true },
         });
-        return row ? { kind: paymentKind(row.purpose), ownerId: row.member?.userId ?? null } : null;
+        return row ? { kind: paymentKind(row.purpose), ownerId: row.userId } : null;
       },
     },
   },

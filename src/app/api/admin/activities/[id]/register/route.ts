@@ -80,7 +80,8 @@ export const PATCH = withRoute(
         activityId: true,
         status: true,
         rejectionReason: true,
-        member: { select: { userId: true, user: { select: { fullName: true } } } },
+        userId: true,
+        user: { select: { fullName: true } },
         activity: { select: { title: true } },
       },
     });
@@ -99,7 +100,7 @@ export const PATCH = withRoute(
     await logAction(
       session.username,
       status === "ACTIVE" ? "APPROVE_ACTIVITY_REGISTRATION" : "REJECT_ACTIVITY_REGISTRATION",
-      `${registration.member.user.fullName} → ${registration.activity.title}`,
+      `${nameOf(registration.user)} → ${registration.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",
@@ -109,9 +110,9 @@ export const PATCH = withRoute(
       },
     );
 
-    if (registration.member.userId) {
+    if (registration.userId) {
       sendPushToUser(
-        registration.member.userId,
+        registration.userId,
         notify.registrationDecision(
           status === "ACTIVE",
           registration.activity.title,
@@ -137,7 +138,7 @@ export const DELETE = withRoute(
       select: {
         id: true,
         status: true,
-        member: { select: { user: { select: { fullName: true } } } },
+        user: { select: { fullName: true } },
         activity: { select: { title: true } },
       },
     });
@@ -147,7 +148,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "ADMIN_UNREGISTER_ACTIVITY",
-      `${existing.member.user.fullName} — ${existing.activity.title}`,
+      `${nameOf(existing.user)} — ${existing.activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",

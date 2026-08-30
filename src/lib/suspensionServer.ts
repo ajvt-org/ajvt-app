@@ -24,7 +24,7 @@ export async function runningSuspensions(activityId: string, now = new Date()) {
     where: { activityId, status: "ACTIVE" },
     select: {
       id: true,
-      memberId: true,
+      userId: true,
       scope: true,
       matches: true,
       until: true,
@@ -35,8 +35,8 @@ export async function runningSuspensions(activityId: string, now = new Date()) {
   return rows.filter((s) => suspensionIsRunning(s, now));
 }
 
-export async function suspendedMemberIds(activityId: string, now = new Date()) {
-  return new Set((await runningSuspensions(activityId, now)).map((s) => s.memberId));
+export async function suspendedUserIds(activityId: string, now = new Date()) {
+  return new Set((await runningSuspensions(activityId, now)).map((s) => s.userId));
 }
 
 async function hasOpenSuspension(tx: Tx, activityId: string, userId: string) {
@@ -50,7 +50,7 @@ async function hasOpenSuspension(tx: Tx, activityId: string, userId: string) {
 export async function proposeFromBooking(
   tx: Tx,
   activityId: string,
-  memberId: string,
+  userId: string,
   cardType: string,
 ) {
   const activity = await tx.activity.findUniqueOrThrow({
@@ -58,14 +58,12 @@ export async function proposeFromBooking(
     select: { yellowsForBan: true, redBanMatches: true },
   });
 
-  const userId = await accountOf(tx, memberId);
   if (await hasOpenSuspension(tx, activityId, userId)) return null;
 
   if (cardType === "RED") {
     return tx.suspension.create({
       data: {
         activityId,
-        memberId,
         userId,
         reason: "RED_CARD",
         scope: "MATCHES",
@@ -82,7 +80,7 @@ export async function proposeFromBooking(
   });
   const yellows = await tx.matchBooking.count({
     where: {
-      memberId,
+      userId,
       cardType: "YELLOW",
       match: { activityId },
       ...(lastBan ? { createdAt: { gt: lastBan.createdAt } } : {}),
@@ -92,7 +90,6 @@ export async function proposeFromBooking(
     return tx.suspension.create({
       data: {
         activityId,
-        memberId,
         userId,
         reason: "YELLOW_CARDS",
         scope: "MATCHES",
@@ -107,10 +104,10 @@ export async function proposeFromBooking(
 export async function serveMatch(tx: Tx, activityId: string, teamIds: string[]) {
   const squadMembers = await tx.teamMember.findMany({
     where: { teamId: { in: teamIds } },
-    select: { memberId: true },
+    select: { userId: true },
   });
-  const memberIds = squadMembers.map((m) => m.memberId);
-  if (memberIds.length === 0) return;
+  const userIds = squadMembers.map((m) => m.userId);
+  if (userIds.length === 0) return;
 
   const running = await tx.suspension.findMany({
     where: {
@@ -118,7 +115,7 @@ export async function serveMatch(tx: Tx, activityId: string, teamIds: string[]) 
       status: "ACTIVE",
       scope: "MATCHES",
       matches: { gt: 0 },
-      memberId: { in: memberIds },
+      userId: { in: userIds },
     },
     select: { id: true, matches: true },
   });
@@ -164,7 +161,6 @@ export async function proposeSuspension(
     return tx.suspension.create({
       data: {
         activityId,
-        memberId: input.memberId,
         userId,
         reason: input.reason ?? "CONDUCT",
         scope: input.scope,
@@ -225,13 +221,13 @@ export async function listSuspensions(activityId: string) {
       createdBy: true,
       decidedBy: true,
       createdAt: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      user: { select: { fullName: true, photo: true } },
     },
   });
   const now = new Date();
   return rows.map((s) => ({
     ...s,
-    member: { id: s.member.id, fullName: nameOf(s.member.user), photo: s.member.user.photo },
+    member: { fullName: nameOf(s.user), photo: s.user.photo },
     running: suspensionIsRunning(s, now),
   }));
 }

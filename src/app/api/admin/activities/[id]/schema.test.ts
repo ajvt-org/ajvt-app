@@ -43,4 +43,10 @@ describe("activityUpdateSchema", () => {
   it("rejects an order that is not a whole number", () => {
     expect(rejectionOf(activityUpdateSchema, { order: "third" })).toBe("بيانات غير صالحة");
   });
+
+  it("carries the scorers and cards toggle", () => {
+    expect(parse(activityUpdateSchema, { showScorersAndCards: false }).showScorersAndCards).toBe(
+      false,
+    );
+  });
 });

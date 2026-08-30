@@ -31,10 +31,14 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
     const members = await prisma.member.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        user: { select: PERSON_WITH_PHONE_SELECT },
-        payments: {
-          where: { purpose: "MEMBERSHIP" },
-          select: { amount: true, feeApplied: true, year: true },
+        user: {
+          select: {
+            ...PERSON_WITH_PHONE_SELECT,
+            payments: {
+              where: { purpose: "MEMBERSHIP" },
+              select: { amount: true, feeApplied: true, year: true },
+            },
+          },
         },
       },
     });
@@ -42,7 +46,7 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
       MEMBER_HEADERS,
       memberRows(
         members.map((m) => {
-          const paid = m.payments.find((p) => p.year === m.membershipYear);
+          const paid = m.user.payments.find((p) => p.year === m.membershipYear);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
             ...withPerson(m),

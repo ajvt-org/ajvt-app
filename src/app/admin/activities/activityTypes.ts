@@ -13,6 +13,7 @@ export interface Activity {
   period: string | null;
   startsAt: string | null;
   endsAt: string | null;
+  unplayedMatches?: number;
   withTime: boolean;
   photo: string | null;
   capacity: number | null;

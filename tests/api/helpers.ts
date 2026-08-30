@@ -179,7 +179,6 @@ export async function makeMember(data: Record<string, unknown>) {
         year: owner.membershipYear,
         status: owner.status,
         method: owner.paymentMethod,
-        memberId: member.id,
         userId: owner.userId,
         anonymous,
         donorName: anonymous ? null : owner.user.fullName,
@@ -218,7 +217,7 @@ export async function adminAddsMember(body: Record<string, unknown>) {
 // out from the payment, which is the only place the money is kept.
 export async function membershipSurplus(memberId: string) {
   const payment = await prisma.payment.findFirstOrThrow({
-    where: { memberId, purpose: "MEMBERSHIP" },
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
   });
   return {
     amount: payment.amount - (payment.feeApplied ?? 0),

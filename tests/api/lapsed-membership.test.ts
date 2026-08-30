@@ -49,7 +49,6 @@ describe("a membership that was never renewed", () => {
     const activity = await anActivity();
     await prisma.activityRegistration.create({
       data: {
-        memberId: member.id,
         userId: member.userId,
         activityId: activity.id,
         status: "ACTIVE",

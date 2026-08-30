@@ -18,7 +18,6 @@ const SELECT = {
   createdAt: true,
   anonymous: true,
   donorName: true,
-  memberId: true,
   userId: true,
   activity: { select: { title: true } },
   user: { select: { fullName: true } },
@@ -75,7 +74,6 @@ export async function ensureReceiptsFor(
           issuedBy: ISSUED_BY,
           secretary: settings?.secretaryName ?? null,
           treasurer: settings?.treasurerName ?? null,
-          memberId: payment.memberId,
           userId: payment.userId,
           paymentId: payment.id,
         },
@@ -116,7 +114,6 @@ const STANDING_SELECT = {
   amount: true,
   payerName: true,
   reason: true,
-  memberId: true,
   userId: true,
   payment: { select: SELECT },
 } as const;
@@ -124,7 +121,7 @@ const STANDING_SELECT = {
 type StandingReceipt = Prisma.ReceiptGetPayload<{ select: typeof STANDING_SELECT }>;
 
 export type ReceiptChange = {
-  field: "amount" | "payerName" | "reason" | "memberId" | "userId";
+  field: "amount" | "payerName" | "reason" | "userId";
   from: string | number | null;
   to: string | number | null;
 };
@@ -142,7 +139,6 @@ function driftOf(receipt: StandingReceipt, payment: PaymentRow): ReceiptDrift | 
     { field: "amount", from: receipt.amount, to: payment.amount },
     { field: "payerName", from: receipt.payerName, to: payerOf(payment) },
     { field: "reason", from: receipt.reason, to: reasonOf(payment) },
-    { field: "memberId", from: receipt.memberId, to: payment.memberId },
     { field: "userId", from: receipt.userId, to: payment.userId },
   ];
   const changes = wanted.filter((c) => c.from !== c.to);

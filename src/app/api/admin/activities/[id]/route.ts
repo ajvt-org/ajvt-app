@@ -47,6 +47,7 @@ export const PATCH = withRoute(
       autoApprove,
       photo,
       isTournament,
+      showScorersAndCards,
       format,
       profile,
       teamSize,
@@ -77,6 +78,7 @@ export const PATCH = withRoute(
       autoApprove?: boolean;
       photo?: string | null;
       isTournament?: boolean;
+      showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
       profile?: SportProfile;
       teamSize?: number | null;
@@ -100,6 +102,7 @@ export const PATCH = withRoute(
     if (autoApprove !== undefined) data.autoApprove = !!autoApprove;
     if (photo !== undefined) data.photo = photo;
     if (isTournament !== undefined) data.isTournament = !!isTournament;
+    if (showScorersAndCards !== undefined) data.showScorersAndCards = !!showScorersAndCards;
     if (format !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });
       if (played > 0 && format !== existing.format) {
@@ -218,6 +221,7 @@ export const PATCH = withRoute(
         isOpen: activity.isOpen,
         autoApprove: activity.autoApprove,
         isTournament: activity.isTournament,
+        showScorersAndCards: activity.showScorersAndCards,
         format: activity.format,
         isVolunteer: activity.isVolunteer,
         whatsappLink: activity.whatsappLink,

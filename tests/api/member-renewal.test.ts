@@ -26,7 +26,7 @@ const payment = { paidAmount: 1000, paymentMethod: "بنكيلي" };
 // force, the rest is support.
 const paidForYearOf = async (memberId: string, year: number) => {
   const row = await prisma.payment.findFirst({
-    where: { memberId, purpose: "MEMBERSHIP", year },
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year },
   });
   if (!row) return null;
   return {
@@ -78,7 +78,6 @@ describe("renewing a membership", () => {
     const existing = await member();
     await prisma.membership.create({
       data: {
-        memberId: existing.id,
         userId: existing.userId,
         year: LAST,
         paymentMethod: "بنكيلي",
@@ -87,7 +86,6 @@ describe("renewing a membership", () => {
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",
-        memberId: existing.id,
         userId: existing.userId,
         year: LAST,
         amount: 500,
@@ -99,7 +97,7 @@ describe("renewing a membership", () => {
     await renew(existing.id);
 
     const years = await prisma.membership.findMany({
-      where: { memberId: existing.id },
+      where: { userId: existing.userId },
       orderBy: { year: "asc" },
     });
     expect(years.map((m) => m.year)).toEqual([LAST, YEAR]);
@@ -187,7 +185,7 @@ describe("reading a member's years", () => {
   it("lists the years newest first, with who took each payment", async () => {
     const existing = await member();
     await prisma.membership.create({
-      data: { memberId: existing.id, userId: existing.userId, year: LAST },
+      data: { userId: existing.userId, year: LAST },
     });
     await renew(existing.id);
 

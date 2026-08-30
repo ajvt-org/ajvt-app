@@ -14,8 +14,8 @@ const VOTE_INCLUDE = {
   candidates: {
     select: {
       id: true,
-      memberId: true,
-      member: { select: { id: true, user: { select: { fullName: true } } } },
+      userId: true,
+      user: { select: { fullName: true } },
       _count: { select: { votes: true } },
     },
   },
@@ -50,12 +50,17 @@ export const POST = withRoute(
       );
     }
 
+    const candidates = await prisma.member.findMany({
+      where: { id: { in: candidateMemberIds } },
+      select: { id: true, userId: true },
+    });
+
     const rosterEntries = await prisma.teamMember.findMany({
       where: {
-        memberId: { in: candidateMemberIds },
+        userId: { in: candidates.map((m) => m.userId) },
         teamId: { in: [match.homeTeamId, match.awayTeamId] },
       },
-      select: { memberId: true },
+      select: { userId: true },
     });
     if (rosterEntries.length !== candidateMemberIds.length) {
       return NextResponse.json(
@@ -64,17 +69,12 @@ export const POST = withRoute(
       );
     }
 
-    const candidates = await prisma.member.findMany({
-      where: { id: { in: candidateMemberIds } },
-      select: { id: true, userId: true },
-    });
-
     const vote = await prisma.matchMvpVote.create({
       data: {
         matchId,
         closesAt: closesAtFrom(new Date(), minutes ?? match.activity.mvpVoteMinutes),
         candidates: {
-          create: candidates.map((m) => ({ memberId: m.id, userId: m.userId })),
+          create: candidates.map((m) => ({ userId: m.userId })),
         },
       },
       include: VOTE_INCLUDE,

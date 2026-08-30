@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { nameOf } from "@/lib/person";
 import { accountOf } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
@@ -7,7 +8,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { bookingCreateSchema } from "./schema";
 import { tournament } from "@/lib/messages";
-import { proposeFromBooking, suspendedMemberIds } from "@/lib/suspensionServer";
+import { proposeFromBooking, suspendedUserIds } from "@/lib/suspensionServer";
 
 export const POST = withRoute(
   "POST /api/admin/matches/[matchId]/bookings",
@@ -27,15 +28,16 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
 
+    const account = await accountOf(prisma, memberId);
     const inRoster = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId: await accountOf(prisma, memberId) } },
+      where: { teamId_userId: { teamId, userId: account } },
     });
     if (!inRoster) {
       return NextResponse.json({ error: tournament.playerNotInTeam }, { status: 400 });
     }
 
-    const suspended = await suspendedMemberIds(match.activityId);
-    if (suspended.has(memberId)) {
+    const suspended = await suspendedUserIds(match.activityId);
+    if (suspended.has(account)) {
       return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
     }
 
@@ -43,8 +45,7 @@ export const POST = withRoute(
       const created = await tx.matchBooking.create({
         data: {
           matchId,
-          memberId,
-          userId: await accountOf(tx, memberId),
+          userId: account,
           teamId,
           cardType,
           minute: minute ?? null,
@@ -54,24 +55,25 @@ export const POST = withRoute(
           cardType: true,
           minute: true,
           teamId: true,
-          member: { select: { id: true, user: { select: { fullName: true } } } },
+          userId: true,
+          user: { select: { fullName: true } },
         },
       });
-      const proposal = await proposeFromBooking(tx, match.activityId, memberId, cardType);
+      const proposal = await proposeFromBooking(tx, match.activityId, account, cardType);
       return { booking: created, proposed: proposal !== null };
     });
 
     await logAction(
       session.username,
       "CREATE_BOOKING",
-      `${booking.member.user.fullName} — ${booking.cardType}`,
+      `${nameOf(booking.user)} — ${booking.cardType}`,
       {
         ...auditContext(session, req),
         targetType: "MatchBooking",
         targetId: booking.id,
         after: {
           matchId,
-          memberId: booking.member.id,
+          userId: booking.userId,
           teamId: booking.teamId,
           cardType: booking.cardType,
           minute: booking.minute,

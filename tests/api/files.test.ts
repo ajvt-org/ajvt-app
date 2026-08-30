@@ -66,7 +66,6 @@ async function seedEverything() {
   await memberFor(other, { paymentProof: "other-proof.webp" });
   await prisma.membership.create({
     data: {
-      memberId: mine.id,
       userId: mine.userId,
       year: 2026,
       paymentProof: "membership-proof.webp",
@@ -75,7 +74,6 @@ async function seedEverything() {
   const activity = await prisma.activity.create({ data: { title: "نشاط", description: "وصف" } });
   await prisma.activityRegistration.create({
     data: {
-      memberId: mine.id,
       userId: mine.userId,
       activityId: activity.id,
       paymentProof: "registration-proof.webp",
@@ -87,7 +85,6 @@ async function seedEverything() {
       purpose: "MEMBERSHIP",
       amount: 100,
       proof: "payment-proof.webp",
-      memberId: mine.id,
       userId: mine.userId,
     },
   });

@@ -15,7 +15,7 @@ async function someoneRegistered(activityId: string, name: string) {
     data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
   });
   return prisma.activityRegistration.create({
-    data: { activityId, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+    data: { activityId, userId: member.userId, status: "ACTIVE" },
   });
 }
 

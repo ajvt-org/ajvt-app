@@ -14,14 +14,14 @@ async function aGift(amount: number, over: Record<string, unknown> = {}) {
 
 async function anAccount(fullName: string) {
   const [user] = await createUsers(1);
-  const member = await makeMember({
+  await makeMember({
     userId: user.id,
     fullName,
     age: "البدريين",
     paymentMethod: "بنكيلي",
     status: "ACTIVE",
   });
-  return { userId: user.id, memberId: member.id };
+  return { userId: user.id };
 }
 
 describe("a receipt follows the payment it was issued for", () => {
@@ -78,26 +78,24 @@ describe("a receipt follows the payment it was issued for", () => {
 
     await prisma.payment.update({
       where: { id: payment.id },
-      data: { userId: account.userId, memberId: account.memberId },
+      data: { userId: account.userId },
     });
     await syncReceiptsFor(prisma, { id: payment.id });
 
     const receipt = await prisma.receipt.findFirstOrThrow();
     expect(receipt.payerName).toBe("أبوبكر لمرابط");
     expect(receipt.userId).toBe(account.userId);
-    expect(receipt.memberId).toBe(account.memberId);
   });
 
   it("gives back the typed name when the account is unlinked again", async () => {
     const account = await anAccount("أبوبكر لمرابط");
     const payment = await aGift(2000, {
       userId: account.userId,
-      memberId: account.memberId,
     });
 
     await prisma.payment.update({
       where: { id: payment.id },
-      data: { userId: null, memberId: null },
+      data: { userId: null },
     });
     await syncReceiptsFor(prisma, { id: payment.id });
 

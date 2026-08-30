@@ -29,6 +29,7 @@ export const POST = withRoute(
         isOpen: source.isOpen,
         autoApprove: source.autoApprove,
         isTournament: source.isTournament,
+        showScorersAndCards: source.showScorersAndCards,
         format: source.format,
         profile: source.profile,
         teamSize: source.teamSize,

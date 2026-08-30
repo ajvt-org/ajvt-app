@@ -36,7 +36,6 @@ async function tournament(mvpVoteMinutes = 120) {
     await prisma.teamMember.create({
       data: {
         teamId: i === 0 ? home.id : away.id,
-        memberId: member.id,
         userId: member.userId,
         status: "ACTIVE",
       },
@@ -204,7 +203,7 @@ describe("settling the winner once the window closes", () => {
     await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({
       where: { matchId: match.id },
-      include: { candidates: { orderBy: { memberId: "asc" } } },
+      include: { candidates: { orderBy: { userId: "asc" } } },
     });
     let phone = 31000000;
     for (const [index, votes] of tally.entries()) {
@@ -227,7 +226,7 @@ describe("settling the winner once the window closes", () => {
     await readMatches(activity.id);
 
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
-    expect(saved.manOfTheMatchId).toBeNull();
+    expect(saved.manOfTheMatchUserId).toBeNull();
   });
 
   it("applies the leader the first time anyone reads after the deadline", async () => {
@@ -242,9 +241,9 @@ describe("settling the winner once the window closes", () => {
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
     const winner = await prisma.mvpCandidate.findFirstOrThrow({
       where: { voteId: vote.id },
-      orderBy: { memberId: "asc" },
+      orderBy: { userId: "asc" },
     });
-    expect(saved.manOfTheMatchId).toBe(winner.memberId);
+    expect(saved.manOfTheMatchUserId).toBe(winner.userId);
   });
 
   it("applies nobody on a tie, leaving the manual pick to the admin", async () => {
@@ -257,18 +256,18 @@ describe("settling the winner once the window closes", () => {
     await readMatches(activity.id);
 
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
-    expect(saved.manOfTheMatchId).toBeNull();
+    expect(saved.manOfTheMatchUserId).toBeNull();
   });
 
   it("never overwrites a pick the admin made by hand", async () => {
     const { activity, match, vote } = await voteWith([2, 1]);
     const chosen = await prisma.mvpCandidate.findFirstOrThrow({
       where: { voteId: vote.id },
-      orderBy: { memberId: "desc" },
+      orderBy: { userId: "desc" },
     });
     await prisma.match.update({
       where: { id: match.id },
-      data: { manOfTheMatchId: chosen.memberId },
+      data: { manOfTheMatchUserId: chosen.userId },
     });
     await prisma.matchMvpVote.update({
       where: { id: vote.id },
@@ -278,7 +277,7 @@ describe("settling the winner once the window closes", () => {
     await readMatches(activity.id);
 
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
-    expect(saved.manOfTheMatchId).toBe(chosen.memberId);
+    expect(saved.manOfTheMatchUserId).toBe(chosen.userId);
   });
 
   it("settles once and stays settled on a second read", async () => {
@@ -293,7 +292,7 @@ describe("settling the winner once the window closes", () => {
     await readMatches(activity.id);
     const second = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
 
-    expect(second.manOfTheMatchId).toBe(first.manOfTheMatchId);
-    expect(second.manOfTheMatchId).not.toBeNull();
+    expect(second.manOfTheMatchUserId).toBe(first.manOfTheMatchUserId);
+    expect(second.manOfTheMatchUserId).not.toBeNull();
   });
 });

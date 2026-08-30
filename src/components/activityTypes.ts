@@ -20,6 +20,7 @@ export interface Activity {
   isVolunteer: boolean;
   whatsappLink: string | null;
   registrantCount: number;
+  unplayedMatches?: number;
   teams: Team[];
 }
 

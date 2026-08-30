@@ -17,6 +17,19 @@ export const activityForm = {
   registrationOpen: "التسجيل مفتوح",
   autoApprove: "قبول التسجيل تلقائياً",
   autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
+  showScorersAndCards: "عرض الهدافين والبطاقات الحمراء",
+  showScorersAndCardsHint:
+    "بطاقة المباراة تعرض الهدافين والبطاقات الحمراء. عند الإطفاء تبقى النتيجة ورجل المباراة والمجريات.",
+  detailsHeading: "تفاصيل النشاط",
+  title: "العنوان",
+  description: "الوصف",
+  capacity: "السعة",
+  noCapacity: "بدون حد",
+  whatsappLink: "رابط الواتساب",
+  photoHeading: "الصورة",
+  save: "حفظ التفاصيل",
+  saved: "تم حفظ التفاصيل",
+  datesHeading: "التواريخ",
 } as const;
 
 export const convertCampaign = {
@@ -80,6 +93,7 @@ export const activityRow = {
   arrangeEmpty: "لا توجد أنشطة لترتيبها",
   stages: {
     live: "جارية الآن",
+    awaiting: "بقيت مباريات",
     upcoming: "قادمة",
     undatedOpen: "بلا تاريخ — التسجيل مفتوح",
     undatedClosed: "بلا تاريخ — التسجيل مغلق",
@@ -101,6 +115,7 @@ export const activityStandingTexts = {
   startsIn: (days: number) =>
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
+  awaiting: "بقيت مباريات",
   finished: "انتهى",
   notScheduled: "غير مبرمج بعد",
 } as const;

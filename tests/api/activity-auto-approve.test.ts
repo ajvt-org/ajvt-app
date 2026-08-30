@@ -33,9 +33,9 @@ async function activeMember(user: { id: string }) {
 const register = (activityId: string, memberId: string) =>
   REGISTER(post("/api/activities/register", { activityId, memberId }));
 
-async function statusOf(activityId: string, memberId: string) {
+async function statusOf(activityId: string, userId: string) {
   const row = await prisma.activityRegistration.findUniqueOrThrow({
-    where: { memberId_activityId: { memberId, activityId } },
+    where: { userId_activityId: { userId, activityId } },
   });
   return row.status;
 }
@@ -53,7 +53,7 @@ describe("an activity that approves registrations itself", () => {
 
     await register(a.id, member.id);
 
-    expect(await statusOf(a.id, member.id)).toBe("PENDING");
+    expect(await statusOf(a.id, user.id)).toBe("PENDING");
   });
 
   it("takes the member in straight away when the flag is on", async () => {
@@ -64,7 +64,7 @@ describe("an activity that approves registrations itself", () => {
 
     await register(a.id, member.id);
 
-    expect(await statusOf(a.id, member.id)).toBe("ACTIVE");
+    expect(await statusOf(a.id, user.id)).toBe("ACTIVE");
   });
 
   it("still refuses a closed activity", async () => {
@@ -85,7 +85,7 @@ describe("an activity that approves registrations itself", () => {
       status: "ACTIVE",
     });
     await prisma.activityRegistration.create({
-      data: { memberId: holder.id, userId: holder.userId, activityId: a.id, status: "ACTIVE" },
+      data: { userId: holder.userId, activityId: a.id, status: "ACTIVE" },
     });
     const user = await createUser();
     const member = await activeMember(user);

@@ -43,4 +43,23 @@ describe("ActivityStandingChip", () => {
 
     expect(screen.getByText("غير مبرمج بعد")).toBeDefined();
   });
+
+  it("says matches remain when the dates ran out but a match did not", () => {
+    render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={2} />);
+
+    expect(screen.getByText("بقيت مباريات")).toBeDefined();
+    expect(screen.queryByText("انتهى")).toBeNull();
+  });
+
+  it("finishes once nothing is left to play", () => {
+    render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={0} />);
+
+    expect(screen.getByText("انتهى")).toBeDefined();
+  });
+
+  it("finishes an activity that has no matches at all", () => {
+    render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} />);
+
+    expect(screen.getByText("انتهى")).toBeDefined();
+  });
 });

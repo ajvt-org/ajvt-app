@@ -30,7 +30,7 @@ async function scheduledMatch() {
     status: "ACTIVE",
   });
   await prisma.teamMember.create({
-    data: { teamId: home.id, memberId: member.id, userId: member.userId },
+    data: { teamId: home.id, userId: member.userId },
   });
 
   return prisma.match.create({

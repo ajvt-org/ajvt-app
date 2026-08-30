@@ -104,7 +104,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     await saveMembershipSnapshot(prisma, member.userId, membershipYear, snapshot);
     if (isActive) {
       await prisma.membership.updateMany({
-        where: { memberId: member.id, year: membershipYear },
+        where: { userId: member.userId, year: membershipYear },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
       });
     }
@@ -121,7 +121,6 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
       });
       await mirrorMembershipPayment(prisma, {
-        memberId: member.id,
         userId: member.userId,
         year: current - 1,
         amount: MEMBERSHIP_FEE,
@@ -136,7 +135,6 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     }
 
     await mirrorMembershipPayment(prisma, {
-      memberId: member.id,
       userId: member.userId,
       year: membershipYear,
       amount: member.paidAmount,
