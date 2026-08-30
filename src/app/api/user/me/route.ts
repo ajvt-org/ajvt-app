@@ -5,7 +5,7 @@ import { issueMembership } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { paidForYear } from "@/lib/paidBreakdown";
+import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
 
@@ -13,7 +13,6 @@ const MEMBER_SELECT = {
   id: true,
   paymentMethod: true,
   paymentProof: true,
-  surplusAnonymous: true,
   membershipYear: true,
   status: true,
   rejectionReason: true,
@@ -24,7 +23,7 @@ const MEMBER_SELECT = {
 const ACCOUNT_SELECT = {
   payments: {
     where: { purpose: "MEMBERSHIP" },
-    select: { amount: true, feeApplied: true, year: true },
+    select: { amount: true, feeApplied: true, year: true, anonymous: true },
   },
   registrations: {
     select: {
@@ -76,6 +75,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
       return {
         ...member,
         ...person,
+        surplusAnonymous: anonymousForYear(user.payments, member.membershipYear),
         registrations: user.registrations,
         teamMemberships: user.teamMemberships,
         user: { phone: user.phone },
