@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nameOf } from "@/lib/person";
-import { accountOf } from "@/lib/memberAccount";
 import { requireBookingAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
@@ -31,7 +30,7 @@ export const PATCH = withRoute(
     }
 
     const nextTeamId = teamId ?? booking.teamId;
-    const nextUserId = memberId ? await accountOf(prisma, memberId) : booking.userId;
+    const nextUserId = memberId ?? booking.userId;
     if (nextTeamId !== booking.match.homeTeamId && nextTeamId !== booking.match.awayTeamId) {
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }

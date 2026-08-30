@@ -7,7 +7,6 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
 import { resolveDonationActivity } from "@/lib/donationActivity";
-import { personLink } from "@/lib/memberAccount";
 import { members } from "@/lib/messages";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
@@ -15,8 +14,10 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod, activityId, userId } =
     parse(donationCreateSchema, await req.json());
 
-  const link = await personLink(prisma, userId ?? null);
-  if (!link) return NextResponse.json({ error: members.notFound }, { status: 404 });
+  const giver = userId
+    ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+    : null;
+  if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
 
   const donation = await prisma.donation.create({
     data: {
@@ -28,8 +29,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
       activityId: await resolveDonationActivity(activityId),
-      userId: link.userId,
-      source: link.userId ? "SELF" : "PUBLIC",
+      userId: giver?.id ?? null,
+      source: giver ? "SELF" : "PUBLIC",
       status: "ACTIVE",
     },
   });
