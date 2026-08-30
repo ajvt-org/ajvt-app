@@ -34,3 +34,10 @@ export function paidForYear(rows: MembershipPaymentRow[], year: number): PaidBre
   const { fee, surplus } = splitPayment(row.amount, row.feeApplied ?? 0);
   return { fee, support: surplus, total: fee + surplus };
 }
+
+export function anonymousForYear(
+  rows: (MembershipPaymentRow & { anonymous: boolean })[],
+  year: number,
+): boolean {
+  return rows.find((r) => r.year === year)?.anonymous ?? false;
+}

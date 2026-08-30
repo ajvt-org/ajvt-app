@@ -7,7 +7,7 @@ import { memberSelfSchema } from "./schema";
 import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
 import { PERSON_SELECT, withPerson } from "@/lib/person";
-import { paidForYear } from "@/lib/paidBreakdown";
+import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -25,13 +25,12 @@ export const GET = withRoute(
             ...PERSON_SELECT,
             payments: {
               where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true },
+              select: { amount: true, feeApplied: true, year: true, anonymous: true },
             },
           },
         },
         paymentMethod: true,
         paymentProof: true,
-        surplusAnonymous: true,
         membershipYear: true,
         referenceCode: true,
         status: true,
@@ -49,6 +48,7 @@ export const GET = withRoute(
     const paid = paidForYear(payments, rest.membershipYear);
     return NextResponse.json({
       ...rest,
+      surplusAnonymous: anonymousForYear(payments, rest.membershipYear),
       paidAmount: paid?.fee ?? null,
       supportAmount: paid?.support ?? 0,
     });
@@ -84,13 +84,27 @@ export const PATCH = withRoute(
       where: { id },
       select: {
         id: true,
-        surplusAnonymous: true,
-        user: { select: { photo: true, photoLocked: true } },
+        membershipYear: true,
+        user: {
+          select: {
+            photo: true,
+            photoLocked: true,
+            payments: {
+              where: { purpose: "MEMBERSHIP" },
+              select: { amount: true, feeApplied: true, year: true, anonymous: true },
+            },
+          },
+        },
       },
     });
 
     return NextResponse.json(
-      member && { ...member, photo: member.user.photo, photoLocked: member.user.photoLocked },
+      member && {
+        id: member.id,
+        surplusAnonymous: anonymousForYear(member.user.payments, member.membershipYear),
+        photo: member.user.photo,
+        photoLocked: member.user.photoLocked,
+      },
     );
   },
 );
