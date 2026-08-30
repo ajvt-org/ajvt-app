@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { accountOf } from "@/lib/memberAccount";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
@@ -30,7 +28,7 @@ export const POST = withRoute("POST /api/admin/receipts", async (req: NextReques
     amount,
     issuedOn: issuedOn ? new Date(issuedOn as string) : new Date(),
     issuedBy: session.username,
-    userId: memberId ? await accountOf(prisma, memberId) : null,
+    userId: memberId ?? null,
   });
 
   await logAction(session.username, "ISSUE_RECEIPT", `${row.number} — ${payerName}`, {

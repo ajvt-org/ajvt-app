@@ -59,7 +59,7 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
 
     await save(match.id, {
-      goalEvents: [{ teamId: away.id, memberId: players[1].id, minute: 10 }],
+      goalEvents: [{ teamId: away.id, memberId: players[1].userId, minute: 10 }],
       forfeitWinnerTeamId: home.id,
     });
 
@@ -72,7 +72,7 @@ describe("a match won by forfeit", () => {
     await save(match.id, {
       goalEvents: Array.from({ length: 5 }, (_, i) => ({
         teamId: home.id,
-        memberId: players[0].id,
+        memberId: players[0].userId,
         minute: i + 1,
       })),
       forfeitWinnerTeamId: home.id,
@@ -87,8 +87,8 @@ describe("a match won by forfeit", () => {
 
     await save(match.id, {
       goalEvents: [
-        { teamId: away.id, memberId: players[1].id, minute: 10 },
-        { teamId: away.id, memberId: players[1].id, minute: 20 },
+        { teamId: away.id, memberId: players[1].userId, minute: 10 },
+        { teamId: away.id, memberId: players[1].userId, minute: 20 },
       ],
       forfeitWinnerTeamId: home.id,
     });
@@ -101,9 +101,9 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
     await save(match.id, {
       goalEvents: [
-        { teamId: away.id, memberId: players[1].id, minute: 10 },
-        { teamId: away.id, memberId: players[1].id, minute: 20 },
-        { teamId: home.id, memberId: players[0].id, minute: 30 },
+        { teamId: away.id, memberId: players[1].userId, minute: 10 },
+        { teamId: away.id, memberId: players[1].userId, minute: 20 },
+        { teamId: home.id, memberId: players[0].userId, minute: 30 },
       ],
       forfeitWinnerTeamId: home.id,
     });
@@ -121,7 +121,7 @@ describe("a match won by forfeit", () => {
   it("recomputes the score when a forfeit is set on its own", async () => {
     const { away, players, match } = await football();
     await save(match.id, {
-      goalEvents: [{ teamId: away.id, memberId: players[1].id, minute: 10 }],
+      goalEvents: [{ teamId: away.id, memberId: players[1].userId, minute: 10 }],
     });
     expect(await stored(match.id)).toMatchObject({ homeScore: 0, awayScore: 1 });
 
@@ -134,7 +134,7 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
     await ADD_BOOKING(
       post(`/api/admin/matches/${match.id}/bookings`, {
-        memberId: players[1].id,
+        memberId: players[1].userId,
         teamId: away.id,
         cardType: "RED",
         minute: 50,
@@ -181,7 +181,7 @@ describe("correcting a card after the fact", () => {
     const built = await football();
     const res = await ADD_BOOKING(
       post(`/api/admin/matches/${built.match.id}/bookings`, {
-        memberId: built.players[0].id,
+        memberId: built.players[0].userId,
         teamId: built.home.id,
         cardType: "YELLOW",
         minute: 20,
@@ -226,7 +226,7 @@ describe("correcting a card after the fact", () => {
   it("refuses a player who is not in the team the card is against", async () => {
     const { booking, players } = await bookedMatch();
 
-    const res = await edit(booking.id, { memberId: players[1].id });
+    const res = await edit(booking.id, { memberId: players[1].userId });
 
     expect(res.status).toBe(400);
   });
@@ -234,7 +234,7 @@ describe("correcting a card after the fact", () => {
   it("moves the card to the other side when both are given together", async () => {
     const { booking, away, players } = await bookedMatch();
 
-    const res = await edit(booking.id, { memberId: players[1].id, teamId: away.id });
+    const res = await edit(booking.id, { memberId: players[1].userId, teamId: away.id });
 
     expect(res.status).toBe(200);
     const saved = await prisma.matchBooking.findUniqueOrThrow({ where: { id: booking.id } });

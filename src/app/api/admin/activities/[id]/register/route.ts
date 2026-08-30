@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { accountOf } from "@/lib/memberAccount";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { sendPushToUser } from "@/lib/push";
@@ -134,7 +133,7 @@ export const DELETE = withRoute(
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const existing = await prisma.activityRegistration.findFirst({
-      where: { userId: await accountOf(prisma, memberId), activityId: id },
+      where: { userId: memberId, activityId: id },
       select: {
         id: true,
         status: true,

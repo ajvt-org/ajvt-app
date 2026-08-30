@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { accountsFor } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -202,13 +201,12 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: tournament.kicksInvalid }, { status: 400 });
       }
 
-      const accountOfEvent = await accountsFor(
-        prisma,
-        [...evGoals, ...evKicks].map((e) => e.memberId).filter((id): id is string => id !== null),
-      );
+      const eventAccounts = [...evGoals, ...evKicks]
+        .map((e) => e.memberId)
+        .filter((id): id is string => id !== null);
       const rosterRows = await prisma.teamMember.findMany({
         where: {
-          userId: { in: [...accountOfEvent.values()] },
+          userId: { in: eventAccounts },
           teamId: { in: [match.homeTeamId, match.awayTeamId] },
         },
         select: { userId: true, teamId: true },
@@ -223,7 +221,7 @@ export const PATCH = withRoute(
       for (const g of evGoals) {
         if (g.memberId === null) continue;
         const expected = g.kind === "OWN_GOAL" ? other(g.teamId) : g.teamId;
-        if (!teamsOf.get(accountOfEvent.get(g.memberId) ?? "")?.has(expected)) {
+        if (!teamsOf.get(g.memberId)?.has(expected)) {
           return NextResponse.json(
             {
               error:
@@ -236,10 +234,7 @@ export const PATCH = withRoute(
         }
       }
       for (const k of evKicks) {
-        if (
-          k.memberId !== null &&
-          !teamsOf.get(accountOfEvent.get(k.memberId) ?? "")?.has(k.teamId)
-        ) {
+        if (k.memberId !== null && !teamsOf.get(k.memberId)?.has(k.teamId)) {
           return NextResponse.json({ error: tournament.kickerWrongTeam }, { status: 400 });
         }
       }
@@ -314,19 +309,15 @@ export const PATCH = withRoute(
         }
 
         if (hg.length > 0 || ag.length > 0) {
-          const accounts = await accountsFor(
-            prisma,
-            [...hg, ...ag].map((g) => g.memberId),
-          );
           const squad = await prisma.teamMember.findMany({
             where: {
-              userId: { in: [...accounts.values()] },
+              userId: { in: [...hg, ...ag].map((g) => g.memberId) },
               teamId: { in: [match.homeTeamId, match.awayTeamId] },
             },
             select: { userId: true, teamId: true },
           });
           const teamOf = new Map(squad.map((m) => [m.userId, m.teamId]));
-          const teamOfScorer = (memberId: string) => teamOf.get(accounts.get(memberId) ?? "");
+          const teamOfScorer = (memberId: string) => teamOf.get(memberId);
           for (const g of hg) {
             if (teamOfScorer(g.memberId) !== match.homeTeamId) {
               return NextResponse.json({ error: tournament.scorerNotInHome }, { status: 400 });
@@ -406,32 +397,31 @@ export const PATCH = withRoute(
       if (manOfTheMatchId === null) {
         updateData.manOfTheMatchUserId = null;
       } else {
-        const chosen = await accountsFor(prisma, [manOfTheMatchId]);
-        const account = chosen.get(manOfTheMatchId) ?? null;
-        const inRoster =
-          account &&
-          (await prisma.teamMember.findFirst({
-            where: { userId: account, teamId: { in: [match.homeTeamId, match.awayTeamId] } },
-          }));
+        const inRoster = await prisma.teamMember.findFirst({
+          where: {
+            userId: manOfTheMatchId,
+            teamId: { in: [match.homeTeamId, match.awayTeamId] },
+          },
+        });
         if (!inRoster) {
           return NextResponse.json({ error: tournament.motmNotInMatch }, { status: 400 });
         }
-        updateData.manOfTheMatchUserId = account;
+        updateData.manOfTheMatchUserId = manOfTheMatchId;
       }
     }
 
-    const accountOfMember = await accountsFor(prisma, [
+    const involvedAccounts = [
       ...parsedHomeGoals.map((g) => g.memberId),
       ...parsedAwayGoals.map((g) => g.memberId),
       ...[...eventGoals, ...eventKicks]
         .map((e) => e.memberId)
         .filter((id): id is string => id !== null),
-    ]);
+    ];
 
     if (enteringResult || eventsMode) {
       const suspended = await suspendedUserIds(match.activityId);
       const involved = [
-        ...[...accountOfMember.values()],
+        ...involvedAccounts,
         ...(updateData.manOfTheMatchUserId ? [updateData.manOfTheMatchUserId] : []),
       ];
       if (involved.some((userId) => suspended.has(userId))) {
@@ -446,7 +436,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: eventGoals.map((g) => ({
               matchId,
-              userId: g.memberId ? (accountOfMember.get(g.memberId) ?? null) : null,
+              userId: g.memberId,
               teamId: g.teamId,
               kind: g.kind,
               period: g.period,
@@ -460,7 +450,7 @@ export const PATCH = withRoute(
             data: eventKicks.map((k, i) => ({
               matchId,
               teamId: k.teamId,
-              userId: k.memberId ? (accountOfMember.get(k.memberId) ?? null) : null,
+              userId: k.memberId,
               order: i + 1,
               scored: k.scored,
             })),
@@ -476,7 +466,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedHomeGoals.map((g) => ({
               matchId,
-              userId: accountOfMember.get(g.memberId) ?? null,
+              userId: g.memberId,
               teamId: match.homeTeamId,
               count: g.count,
               minute: g.minute,
@@ -487,7 +477,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedAwayGoals.map((g) => ({
               matchId,
-              userId: accountOfMember.get(g.memberId) ?? null,
+              userId: g.memberId,
               teamId: match.awayTeamId,
               count: g.count,
               minute: g.minute,

@@ -43,7 +43,7 @@ describe("a receipt an admin can produce for a member", () => {
     const { member } = await memberWithPayment("22000001", "محمد", 1000);
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    const body = await (await read(member.id)).json();
+    const body = await (await read(member.userId)).json();
 
     expect(body.receipts).toHaveLength(1);
     expect(body.receipts[0]).toMatchObject({
@@ -60,7 +60,7 @@ describe("a receipt an admin can produce for a member", () => {
     await memberWithPayment("22000002", "أحمد", 9000);
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    const body = await (await read(mine.member.id)).json();
+    const body = await (await read(mine.member.userId)).json();
 
     expect(body.receipts.map((r: { amount: number }) => r.amount)).toEqual([1000]);
   });
@@ -78,7 +78,7 @@ describe("a receipt an admin can produce for a member", () => {
     await ensureReceiptsFor(prisma, {});
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    const body = await (await read(member.id)).json();
+    const body = await (await read(member.userId)).json();
 
     expect(body.receipts).toHaveLength(1);
   });
@@ -87,19 +87,19 @@ describe("a receipt an admin can produce for a member", () => {
     const { user, member } = await memberWithPayment("22000001", "محمد", 1000);
     await signInAs(user);
 
-    expect((await read(member.id)).status).toBe(401);
+    expect((await read(member.userId)).status).toBe(401);
   });
 
   it("is closed to nobody at all", async () => {
     const { member } = await memberWithPayment("22000001", "محمد", 1000);
 
-    expect((await read(member.id)).status).toBe(401);
+    expect((await read(member.userId)).status).toBe(401);
   });
 
   it("shows the member the same receipt the admin sees", async () => {
     const { user, member } = await memberWithPayment("22000001", "محمد", 1000);
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
-    const asAdmin = (await (await read(member.id)).json()).receipts;
+    const asAdmin = (await (await read(member.userId)).json()).receipts;
 
     const { clearCookies } = await import("./cookieJar");
     clearCookies();
@@ -114,7 +114,7 @@ describe("a receipt an admin can produce for a member", () => {
     await prisma.receipt.updateMany({ data: { status: "VOID" } });
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    expect((await (await read(member.id)).json()).receipts).toEqual([]);
+    expect((await (await read(member.userId)).json()).receipts).toEqual([]);
   });
 
   it("answers an empty list for a member who has paid nothing", async () => {
@@ -128,6 +128,6 @@ describe("a receipt an admin can produce for a member", () => {
     });
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    expect((await (await read(member.id)).json()).receipts).toEqual([]);
+    expect((await (await read(member.userId)).json()).receipts).toEqual([]);
   });
 });
