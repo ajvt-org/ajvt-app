@@ -43,7 +43,7 @@ describe("activityStanding", () => {
   it("keeps a tournament out of finished while a match is still to play", () => {
     expect(
       activityStanding({ startsAt: day(-6), endsAt: day(-1), unplayedMatches: 2 }, NOW),
-    ).toEqual({ state: "awaiting" });
+    ).toEqual({ state: "awaiting", unplayed: 2 });
   });
 
   it("finishes it once nothing is left to play", () => {

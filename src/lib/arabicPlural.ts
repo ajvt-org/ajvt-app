@@ -37,6 +37,14 @@ export const SECONDS: NounForms = {
   other: "ثانية",
 };
 
+export const MATCHES: NounForms = {
+  one: "مباراة واحدة",
+  two: "مباراتان",
+  few: "مباريات",
+  many: "مباراة",
+  other: "مباراة",
+};
+
 export const ROUNDS: NounForms = {
   one: "جولة واحدة",
   two: "جولتين",

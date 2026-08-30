@@ -47,7 +47,7 @@ describe("ActivityStandingChip", () => {
   it("says matches remain when the dates ran out but a match did not", () => {
     render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={2} />);
 
-    expect(screen.getByText("بقيت مباريات")).toBeDefined();
+    expect(screen.getByText("بقيت مباراتان")).toBeDefined();
     expect(screen.queryByText("انتهى")).toBeNull();
   });
 
@@ -61,5 +61,17 @@ describe("ActivityStandingChip", () => {
     render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} />);
 
     expect(screen.getByText("انتهى")).toBeDefined();
+  });
+
+  it("counts one remaining match in the singular", () => {
+    render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={1} />);
+
+    expect(screen.getByText("بقيت مباراة واحدة")).toBeDefined();
+  });
+
+  it("counts several remaining matches as a number", () => {
+    render(<ActivityStandingChip startsAt={day(-6)} endsAt={day(-1)} unplayedMatches={3} />);
+
+    expect(screen.getByText("بقيت 3 مباريات")).toBeDefined();
   });
 });
