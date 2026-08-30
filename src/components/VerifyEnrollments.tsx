@@ -22,7 +22,7 @@ export default function VerifyEnrollments({ items }: { items: EnrollmentItem[] }
         {items.map((item) => (
           <li
             key={item.id}
-            className={`card activity-row ${activityAccent({ startsAt: item.startsAt, endsAt: item.endsAt })} p-3.5 flex items-center gap-3`}
+            className={`card activity-row ${activityAccent({ startsAt: item.startsAt, endsAt: item.endsAt, unplayedMatches: item.unplayedMatches })} p-3.5 flex items-center gap-3`}
           >
             <ActivityRowBody
               title={item.label}
@@ -32,6 +32,7 @@ export default function VerifyEnrollments({ items }: { items: EnrollmentItem[] }
                 <ActivityStandingChip
                   startsAt={item.startsAt}
                   endsAt={item.endsAt}
+                  unplayedMatches={item.unplayedMatches}
                   showUnscheduled
                 />
               }

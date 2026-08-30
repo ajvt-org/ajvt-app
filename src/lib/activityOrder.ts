@@ -1,27 +1,28 @@
-import { activityStanding } from "./activityStanding";
+import { activityStanding, type StandingInput } from "./activityStanding";
 
-export type OrderedActivity = {
-  startsAt: string | Date | null;
-  endsAt?: string | Date | null;
+export type OrderedActivity = StandingInput & {
   isOpen: boolean;
   order?: number;
 };
 
 const LIVE = 0;
-const UPCOMING = 1;
-const UNDATED_OPEN = 2;
-const UNDATED_CLOSED = 3;
-const FINISHED = 4;
+const AWAITING = 1;
+const UPCOMING = 2;
+const UNDATED_OPEN = 3;
+const UNDATED_CLOSED = 4;
+const FINISHED = 5;
 
 function endTime(activity: OrderedActivity): number {
   const end = activity.endsAt ?? activity.startsAt;
   return end ? new Date(end).getTime() : 0;
 }
 
-export type ActivityStage = "live" | "upcoming" | "undatedOpen" | "undatedClosed" | "finished";
+export type ActivityStage =
+  "live" | "awaiting" | "upcoming" | "undatedOpen" | "undatedClosed" | "finished";
 
 const STAGE_KEYS: ActivityStage[] = [
   "live",
+  "awaiting",
   "upcoming",
   "undatedOpen",
   "undatedClosed",
@@ -32,6 +33,7 @@ export function activityRank(activity: OrderedActivity, now = new Date()): [numb
   const standing = activityStanding(activity, now);
   if (!standing) return [activity.isOpen ? UNDATED_OPEN : UNDATED_CLOSED, 0];
   if (standing.state === "today" || standing.state === "running") return [LIVE, 0];
+  if (standing.state === "awaiting") return [AWAITING, -endTime(activity)];
   if (standing.state === "upcoming") return [UPCOMING, standing.daysUntil];
   return [FINISHED, -endTime(activity)];
 }

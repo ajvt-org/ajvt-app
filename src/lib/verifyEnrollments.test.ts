@@ -4,7 +4,12 @@ import { MAX_ENROLLMENTS, mapEnrollments } from "./verifyEnrollments";
 const makeActivity = (
   id: string,
   startsAt: Date | null,
-  extra: { endsAt?: Date | null; photo?: string | null; isVolunteer?: boolean } = {},
+  extra: {
+    endsAt?: Date | null;
+    photo?: string | null;
+    isVolunteer?: boolean;
+    unplayedMatches?: number;
+  } = {},
 ) => ({
   id,
   activity: {
@@ -13,6 +18,7 @@ const makeActivity = (
     startsAt,
     endsAt: extra.endsAt ?? null,
     isVolunteer: extra.isVolunteer ?? false,
+    _count: { matches: extra.unplayedMatches ?? 0 },
   },
 });
 

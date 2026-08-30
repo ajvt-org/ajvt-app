@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import { MAX_ENROLLMENTS, mapEnrollments, type EnrollmentItem } from "@/lib/verifyEnrollments";
 
 export type VerifiedMember = {
@@ -32,6 +33,7 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
               startsAt: true,
               endsAt: true,
               isVolunteer: true,
+              _count: { select: { matches: { where: STILL_TO_PLAY } } },
             },
           },
         },

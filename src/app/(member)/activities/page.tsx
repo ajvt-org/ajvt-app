@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { formatActivityDates } from "@/lib/activityDates";
 import { sortActivities } from "@/lib/activityOrder";
+import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import LandingActivities from "@/components/LandingActivities";
 import PageHeader from "@/components/PageHeader";
 import { landingActivities as texts } from "@/lib/texts";
@@ -20,6 +21,7 @@ export default async function ActivitiesPage() {
       photo: true,
       isVolunteer: true,
       isOpen: true,
+      _count: { select: { matches: { where: STILL_TO_PLAY } } },
     },
   });
 
@@ -28,7 +30,9 @@ export default async function ActivitiesPage() {
       <PageHeader title={texts.pageTitle} />
       <LandingActivities
         heading={false}
-        activities={sortActivities(rows).map((a) => ({
+        activities={sortActivities(
+          rows.map((a) => ({ ...a, unplayedMatches: a._count.matches })),
+        ).map((a) => ({
           id: a.id,
           title: a.title,
           when: formatActivityDates(a),
@@ -37,6 +41,7 @@ export default async function ActivitiesPage() {
           photo: a.photo,
           isVolunteer: a.isVolunteer,
           isOpen: a.isOpen,
+          unplayedMatches: a.unplayedMatches,
         }))}
       />
     </div>
