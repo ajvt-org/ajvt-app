@@ -37,7 +37,7 @@ describe("a proof added after the member was registered", () => {
   it("lands on the year record", async () => {
     const member = await addedByHand();
 
-    const res = await pay(member.id, { paymentProof: "late.webp" });
+    const res = await pay(member.userId, { paymentProof: "late.webp" });
 
     expect(res.status).toBe(200);
     expect((await recordOf(member.id)).paymentProof).toBe("late.webp");
@@ -46,7 +46,7 @@ describe("a proof added after the member was registered", () => {
   it("leaves the amount alone when only the proof is sent", async () => {
     const member = await addedByHand();
 
-    const body = await (await pay(member.id, { paymentProof: "late.webp" })).json();
+    const body = await (await pay(member.userId, { paymentProof: "late.webp" })).json();
 
     expect(body.amountTransferred).toBe(1000);
   });
@@ -54,7 +54,7 @@ describe("a proof added after the member was registered", () => {
   it("replaces a proof that was already there", async () => {
     const member = await addedByHand({ paymentProof: "first.webp" });
 
-    await pay(member.id, { paymentProof: "second.webp" });
+    await pay(member.userId, { paymentProof: "second.webp" });
 
     expect((await recordOf(member.id)).paymentProof).toBe("second.webp");
   });
@@ -62,7 +62,7 @@ describe("a proof added after the member was registered", () => {
   it("clears the proof when it is sent as nothing", async () => {
     const member = await addedByHand({ paymentProof: "first.webp" });
 
-    await pay(member.id, { paymentProof: null });
+    await pay(member.userId, { paymentProof: null });
 
     expect((await recordOf(member.id)).paymentProof).toBeNull();
   });
@@ -70,10 +70,10 @@ describe("a proof added after the member was registered", () => {
   it("records the proof in the audit trail", async () => {
     const member = await addedByHand();
 
-    await pay(member.id, { paymentProof: "late.webp" });
+    await pay(member.userId, { paymentProof: "late.webp" });
 
     const entry = await prisma.auditLog.findFirstOrThrow({
-      where: { action: "UPDATE_MEMBER_PAYMENT", targetId: member.id },
+      where: { action: "UPDATE_MEMBER_PAYMENT", targetId: member.userId },
       orderBy: { createdAt: "desc" },
     });
     expect(JSON.stringify(entry.after)).toContain("late.webp");
@@ -83,7 +83,7 @@ describe("a proof added after the member was registered", () => {
     const member = await addedByHand();
 
     const body = await (
-      await pay(member.id, { amountTransferred: 2000, paymentProof: "late.webp" })
+      await pay(member.userId, { amountTransferred: 2000, paymentProof: "late.webp" })
     ).json();
 
     expect(body.amountTransferred).toBe(2000);
@@ -93,7 +93,7 @@ describe("a proof added after the member was registered", () => {
   it("still clears the amount when it is sent as nothing", async () => {
     const member = await addedByHand();
 
-    const body = await (await pay(member.id, { amountTransferred: null })).json();
+    const body = await (await pay(member.userId, { amountTransferred: null })).json();
 
     expect(body.amountTransferred).toBeNull();
   });
@@ -101,7 +101,7 @@ describe("a proof added after the member was registered", () => {
   it("refuses an amount under the fee", async () => {
     const member = await addedByHand();
 
-    expect((await pay(member.id, { amountTransferred: 1 })).status).toBe(400);
+    expect((await pay(member.userId, { amountTransferred: 1 })).status).toBe(400);
   });
 
   it("is closed to a member that does not exist", async () => {

@@ -32,14 +32,10 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   }
 
   if (id) {
-    const existing = await prisma.member.findUnique({
-      where: { id },
-      select: { userId: true },
-    });
-    if (!existing || existing.userId !== session.userId) {
+    if (id !== session.userId) {
       throw new NotFoundError(members.notFound);
     }
-    const current = await currentMembership(prisma, existing.userId);
+    const current = await currentMembership(prisma, session.userId);
     if (!current) {
       throw new NotFoundError(members.notFound);
     }
@@ -48,14 +44,20 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     }
 
     await prisma.$transaction(async (tx) => {
-      await saveMembershipYear(tx, existing.userId, current.year, {
+      await saveMembershipYear(tx, session.userId, current.year, {
         paymentMethod,
         paymentProof,
         ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
         status: "PENDING",
         rejectionReason: null,
       });
-      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, surplusAnonymous);
+      await recordMembershipPayment(
+        tx,
+        session.userId,
+        Number(paidAmount),
+        membershipFee,
+        surplusAnonymous,
+      );
     });
     return NextResponse.json({ id }, { status: 200 });
   }
@@ -78,7 +80,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         });
         await recordMembershipPayment(
           tx,
-          created.id,
+          session.userId,
           Number(paidAmount),
           membershipFee,
           surplusAnonymous,

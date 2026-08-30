@@ -38,7 +38,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("refuses without the typed name", async () => {
     const m = await member();
 
-    const res = await DELETE(...asDelete(m.id, {}));
+    const res = await DELETE(...asDelete(m.userId, {}));
 
     expect(res.status).toBe(400);
     expect(await prisma.member.count()).toBe(1);
@@ -47,7 +47,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("refuses when the typed name is wrong", async () => {
     const m = await member();
 
-    const res = await DELETE(...asDelete(m.id, { confirmName: "محمد" }));
+    const res = await DELETE(...asDelete(m.userId, { confirmName: "محمد" }));
 
     expect(res.status).toBe(400);
     expect(await prisma.member.count()).toBe(1);
@@ -56,7 +56,7 @@ describe("DELETE /api/admin/members/[id]", () => {
   it("deletes and keeps a restorable copy when the name matches", async () => {
     const m = await member();
 
-    const res = await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    const res = await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
 
     expect(res.status).toBe(200);
     expect(await prisma.member.count()).toBe(0);
@@ -73,7 +73,7 @@ describe("DELETE /api/admin/members/[id]", () => {
       data: { userId: m.userId, year: runningYear() - 1, status: "ACTIVE" },
     });
 
-    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
 
     expect(await prisma.membership.count({ where: { userId: m.userId } })).toBe(0);
   });
@@ -83,7 +83,7 @@ describe("DELETE /api/admin/members/[id]", () => {
     await prisma.membership.create({
       data: { userId: m.userId, year: runningYear() - 1, status: "ACTIVE" },
     });
-    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
     const record = await prisma.deletedRecord.findFirstOrThrow();
 
     await RESTORE(post(`/api/admin/deleted/${record.id}/restore`, {}), withId(record.id));
@@ -98,7 +98,7 @@ describe("DELETE /api/admin/members/[id]", () => {
 
   it("brings the member back on restore", async () => {
     const m = await member();
-    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
     const record = await prisma.deletedRecord.findFirstOrThrow();
 
     const res = await RESTORE(
@@ -118,7 +118,7 @@ describe("DELETE /api/admin/members/[id]", () => {
 
   it("drops a backup once its window has passed", async () => {
     const m = await member();
-    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
     await prisma.deletedRecord.updateMany({ data: { expiresAt: new Date("2020-01-01") } });
 
     const { records } = await (await LIST_DELETED()).json();

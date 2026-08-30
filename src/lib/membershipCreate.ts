@@ -26,7 +26,7 @@ export async function addMembership(db: Db, m: NewMembership) {
     paymentProof: m.paymentProof,
   });
 
-  await recordMembershipPayment(db, member.id, m.paidAmount, m.fee, m.surplusAnonymous);
+  await recordMembershipPayment(db, m.userId, m.paidAmount, m.fee, m.surplusAnonymous);
 
   if (m.status === "ACTIVE") {
     await recordMembershipYear(db, m.userId, m.membershipYear, m.fee, {

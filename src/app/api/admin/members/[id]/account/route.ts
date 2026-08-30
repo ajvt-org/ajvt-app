@@ -21,14 +21,14 @@ export const PATCH = withRoute(
     if (phoneError) throw new ValidationError(phoneError);
     const next = phone.trim();
 
-    const member = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
-      select: { userId: true, user: { select: { id: true, phone: true, fullName: true } } },
+      select: { id: true, phone: true, fullName: true },
     });
-    if (!member) throw new NotFoundError(members.notFound);
-    if (!member.user?.phone) throw new ConflictError(members.noAccountToCorrect);
+    if (!account) throw new NotFoundError(members.notFound);
+    if (!account.phone) throw new ConflictError(members.noAccountToCorrect);
 
-    if (member.user.phone === next) return NextResponse.json({ phone: next });
+    if (account.phone === next) return NextResponse.json({ phone: next });
 
     const taken = await prisma.user.findUnique({
       where: { phone: next },
@@ -36,10 +36,10 @@ export const PATCH = withRoute(
     });
     if (taken) throw new ConflictError(members.accountPhoneTaken);
 
-    const before = member.user.phone;
-    await prisma.user.update({ where: { id: member.user.id }, data: { phone: next } });
+    const before = account.phone;
+    await prisma.user.update({ where: { id }, data: { phone: next } });
 
-    await logAction(session.username, "CHANGE_ACCOUNT_PHONE", `${nameOf(member.user)} — ${next}`, {
+    await logAction(session.username, "CHANGE_ACCOUNT_PHONE", `${nameOf(account)} — ${next}`, {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,

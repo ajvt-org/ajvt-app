@@ -32,21 +32,21 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   }
 
   const { membershipFee } = await getAppSettings();
-  const member = await prisma.member.findUnique({
+  const account = await prisma.user.findUnique({
     where: { id },
-    select: { userId: true, user: { select: { memberNumber: true } } },
+    select: { memberNumber: true },
   });
-  const existing = member ? await currentMembership(prisma, member.userId) : null;
+  const existing = account ? await currentMembership(prisma, id) : null;
   let issued: { memberNumber: string; verifyToken: string } | undefined;
-  if (action === "ACTIVE" && !member?.user.memberNumber) {
+  if (action === "ACTIVE" && !account?.memberNumber) {
     issued = await issueMembership();
   }
 
   const updated = await prisma.$transaction(async (tx) => {
-    if (!member || !existing) throw new ValidationError(members.notFound);
+    if (!account || !existing) throw new ValidationError(members.notFound);
     await setMembershipStatus(
       tx,
-      member.userId,
+      id,
       existing.year,
       {
         status: action,
@@ -55,16 +55,16 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       },
       new Date(),
     );
-    if (issued) await tx.user.update({ where: { id: member.userId }, data: issued });
+    if (issued) await tx.user.update({ where: { id }, data: issued });
     if (action === "ACTIVE") {
-      await recordMembershipYear(tx, member.userId, existing.year, membershipFee, {
+      await recordMembershipYear(tx, id, existing.year, membershipFee, {
         paymentMethod: existing.paymentMethod,
         paymentProof: existing.paymentProof,
         recordedBy: session.username,
       });
     }
-    await mirrorMembershipStatus(tx, member.userId, existing.year, action);
-    return { userId: member.userId };
+    await mirrorMembershipStatus(tx, id, existing.year, action);
+    return { userId: id };
   });
 
   const person = await prisma.user.findUniqueOrThrow({
@@ -84,7 +84,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { status: existing?.status, memberNumber: member?.user.memberNumber ?? null },
+      before: { status: existing?.status, memberNumber: account?.memberNumber ?? null },
       after: {
         status: action,
         memberNumber: person.memberNumber,

@@ -13,7 +13,7 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
         userId: true,
         year: true,
         createdAt: true,
-        user: { select: { fullName: true, members: { select: { id: true }, take: 1 } } },
+        user: { select: { fullName: true } },
       },
     }),
     prisma.user.findMany({
@@ -33,17 +33,8 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
   return {
     days,
     pending: longestFirst(
-      [...latestByAccount(pending).values()].flatMap((m) =>
-        m.user.members.length === 0
-          ? []
-          : [
-              asRow(
-                m.user.members[0].id,
-                m.userId,
-                m.user.fullName || money.anonymousDonor,
-                m.createdAt,
-              ),
-            ],
+      [...latestByAccount(pending).values()].map((m) =>
+        asRow(m.userId, m.userId, m.user.fullName || money.anonymousDonor, m.createdAt),
       ),
     ),
     unfinished: longestFirst(unfinished.map((u) => asRow(u.id, u.id, u.phone ?? "", u.createdAt))),

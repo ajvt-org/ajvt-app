@@ -29,7 +29,6 @@ export const GET = withRoute(
                 fullName: true,
                 age: true,
                 photo: true,
-                members: { select: { id: true } },
               },
             },
           },
@@ -43,7 +42,7 @@ export const GET = withRoute(
         members: team.members.map(({ user, ...m }) => ({
           ...m,
           member: {
-            id: user.members[0]?.id ?? m.userId,
+            id: m.userId,
             fullName: nameOf(user),
             phone: user.phone ?? "",
             age: user.age ?? "",

@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { getAppSettings } from "@/lib/settingsServer";
 import { renewalRefusal } from "@/lib/renewal";
-import { membershipForMember } from "@/lib/currentMembershipServer";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import { NotFoundError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
@@ -16,15 +16,15 @@ export const GET = withRoute(
     const { id } = await params;
     const { membershipYear } = await getAppSettings();
 
-    const member = await membershipForMember(prisma, id);
-    if (!member) throw new NotFoundError(messages.notFound);
+    const current = await currentMembership(prisma, id);
+    if (!current) throw new NotFoundError(messages.notFound);
     const account = await prisma.user.findUniqueOrThrow({
-      where: { id: member.userId },
+      where: { id },
       select: { memberNumber: true },
     });
 
     const memberships = await prisma.membership.findMany({
-      where: { userId: member.userId },
+      where: { userId: id },
       orderBy: { year: "desc" },
       select: {
         id: true,
@@ -38,7 +38,7 @@ export const GET = withRoute(
     });
 
     const payments = await prisma.payment.findMany({
-      where: { userId: member.userId, purpose: "MEMBERSHIP" },
+      where: { userId: id, purpose: "MEMBERSHIP" },
       select: { amount: true, feeApplied: true, year: true },
     });
 
@@ -50,8 +50,8 @@ export const GET = withRoute(
       currentYear: membershipYear,
       refusal: renewalRefusal(
         {
-          status: member.membership.status,
-          membershipYear: member.membership.year,
+          status: current.status,
+          membershipYear: current.year,
           memberNumber: account.memberNumber,
         },
         membershipYear,

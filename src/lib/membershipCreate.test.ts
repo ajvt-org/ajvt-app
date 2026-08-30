@@ -45,7 +45,7 @@ describe("addMembership", () => {
       paymentMethod: "بنكيلي",
       paymentProof: null,
     });
-    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "m1", 100, 100, false);
+    expect(recordMembershipPayment).toHaveBeenCalledWith(db, "u1", 100, 100, false);
   });
 
   it("saves the year a membership waiting on review belongs to", async () => {

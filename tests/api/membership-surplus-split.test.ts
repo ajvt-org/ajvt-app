@@ -70,7 +70,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
   it("adds back up to what the member actually transferred", async () => {
     const member = await join();
 
-    expect(await totalPaidFor(prisma, member.id)).toBe(2100);
+    expect(await totalPaidFor(prisma, member.userId)).toBe(2100);
   });
 
   it("keeps the surplus out of the honour board until an admin approves", async () => {
@@ -85,7 +85,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     expect((await surplus(member.id))?.status).toBe("ACTIVE");
   });
@@ -96,7 +96,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
@@ -119,8 +119,8 @@ describe("the fee and the surplus are worked out from one payment", () => {
     await signInAsAdmin(await createAdmin());
 
     await PAY(
-      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 100 }),
-      withId(member.id),
+      put(`/api/admin/members/${member.userId}/payment`, { amountTransferred: 100 }),
+      withId(member.userId),
     );
 
     expect(await fee(member.id)).toBe(100);
@@ -132,8 +132,8 @@ describe("the fee and the surplus are worked out from one payment", () => {
     await signInAsAdmin(await createAdmin());
 
     await PAY(
-      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 600 }),
-      withId(member.id),
+      put(`/api/admin/members/${member.userId}/payment`, { amountTransferred: 600 }),
+      withId(member.userId),
     );
 
     expect(await fee(member.id)).toBe(100);
@@ -144,7 +144,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await fee(member.id)).toBe(100);
@@ -153,10 +153,10 @@ describe("the fee and the surplus are worked out from one payment", () => {
   it("clears the payment when the amount is removed altogether", async () => {
     const member = await join();
 
-    await recordMembershipPayment(prisma, member.id, null, 100);
+    await recordMembershipPayment(prisma, member.userId, null, 100);
 
     expect(await fee(member.id)).toBeNull();
     expect(await surplus(member.id)).toBeNull();
-    expect(await totalPaidFor(prisma, member.id)).toBeNull();
+    expect(await totalPaidFor(prisma, member.userId)).toBeNull();
   });
 });

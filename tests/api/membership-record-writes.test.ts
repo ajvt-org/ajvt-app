@@ -69,7 +69,7 @@ describe("the membership year record after each way it is written", () => {
     await REGISTER(
       post("/api/members", {
         ...submission,
-        id: member.id,
+        id: member.userId,
         paidAmount: 500,
         paymentMethod: "السداد",
       }),
@@ -82,7 +82,7 @@ describe("the membership year record after each way it is written", () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
   });
@@ -93,7 +93,7 @@ describe("the membership year record after each way it is written", () => {
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "المبلغ المدفوع غير مطابق",
       }),
@@ -110,13 +110,13 @@ describe("the membership year record after each way it is written", () => {
     await signInAsAdmin(await createAdmin());
     await VALIDATE(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
     );
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
   });
@@ -126,8 +126,8 @@ describe("the membership year record after each way it is written", () => {
     await signInAsAdmin(await createAdmin());
 
     await EDIT_PAYMENT(
-      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 700 }),
-      withId(member.id),
+      put(`/api/admin/members/${member.userId}/payment`, { amountTransferred: 700 }),
+      withId(member.userId),
     );
 
     await expectRecorded(member.id, { status: "PENDING", paymentMethod: "بنكيلي" });
@@ -169,16 +169,16 @@ describe("the membership year record after each way it is written", () => {
   it("opens a fresh record for the year a renewal covers, leaving the old one alone", async () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
     const firstYear = runningYear();
     await saveAppSettings({ membershipYear: firstYear + 1 });
 
     await RENEW(
-      post(`/api/admin/members/${member.id}/renew`, {
+      post(`/api/admin/members/${member.userId}/renew`, {
         paidAmount: 100,
         paymentMethod: "بنكيلي",
       }),
-      withId(member.id),
+      withId(member.userId),
     );
 
     const records = await prisma.membership.findMany({

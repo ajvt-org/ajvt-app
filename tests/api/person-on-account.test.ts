@@ -76,8 +76,8 @@ describe("the account carries the person", () => {
     await signInAsAdmin(await createAdmin());
 
     await ADMIN_EDIT(
-      patch(`/api/admin/members/${member.id}`, { fullName: "أحمد ولد محمد" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { fullName: "أحمد ولد محمد" }),
+      withId(member.userId),
     );
 
     await expectNoDrift(member.id);
@@ -87,7 +87,7 @@ describe("the account carries the person", () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await expectNoDrift(member.id);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });

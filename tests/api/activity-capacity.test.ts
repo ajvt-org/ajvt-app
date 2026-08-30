@@ -34,7 +34,7 @@ describe("registering for an activity with a seat limit", () => {
     const activity = await aFullActivity();
     const member = await anActiveMemberOf(user, "محمد");
 
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(200);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(200);
   });
 
   it("refuses once the seats are gone", async () => {
@@ -53,7 +53,7 @@ describe("registering for an activity with a seat limit", () => {
     await signInAs(user);
     const member = await anActiveMemberOf(user, "محمد");
 
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(409);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(409);
   });
 
   it("still refuses a member it rejected earlier", async () => {
@@ -79,7 +79,7 @@ describe("registering for an activity with a seat limit", () => {
       },
     });
 
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(409);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(409);
     expect(
       await prisma.activityRegistration.count({
         where: { activityId: activity.id, status: { not: "REJECTED" } },
@@ -100,7 +100,7 @@ describe("registering for an activity with a seat limit", () => {
       },
     });
 
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(200);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(200);
     const row = await prisma.activityRegistration.findFirstOrThrow({
       where: { userId: member.userId, activityId: activity.id },
     });
@@ -115,7 +115,7 @@ describe("registering for an activity with a seat limit", () => {
     await signInAs(user);
     const member = await anActiveMemberOf(user, "محمد");
 
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(200);
-    expect((await REGISTER(ask(activity.id, member.id))).status).toBe(409);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(200);
+    expect((await REGISTER(ask(activity.id, member.userId))).status).toBe(409);
   });
 });

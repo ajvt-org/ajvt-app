@@ -19,11 +19,11 @@ export const GET = withRoute(
       select: {
         user: {
           select: {
+            id: true,
             phone: true,
             fullName: true,
             age: true,
             photo: true,
-            members: { select: { id: true } },
             teamMemberships: {
               where: { team: { activityId: id } },
               select: { team: { select: { id: true, name: true } } },
@@ -36,7 +36,7 @@ export const GET = withRoute(
 
     const roster = registrations
       .map(({ user }) => ({
-        id: user.members[0]?.id ?? null,
+        id: user.id,
         fullName: nameOf(user),
         phone: user.phone ?? null,
         age: user.age,

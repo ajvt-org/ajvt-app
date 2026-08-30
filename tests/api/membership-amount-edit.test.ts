@@ -39,8 +39,8 @@ describe("entering an amount that was never recorded", () => {
     const m = await memberMissingAmount();
 
     const res = await PAY(
-      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }),
-      withId(m.id),
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 100 }),
+      withId(m.userId),
     );
     expect(res.status).toBe(200);
 
@@ -52,7 +52,10 @@ describe("entering an amount that was never recorded", () => {
   it("turns an amount above the fee into support for that member", async () => {
     const m = await memberMissingAmount();
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 300 }),
+      withId(m.userId),
+    );
 
     const payment = await paidFor(m.id);
     expect(payment?.amount).toBe(300);
@@ -62,7 +65,10 @@ describe("entering an amount that was never recorded", () => {
   it("counts only the fee as the fee once the surplus is split out", async () => {
     const m = await memberMissingAmount();
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 300 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 300 }),
+      withId(m.userId),
+    );
 
     const payment = await paidFor(m.id);
     expect(Math.min(payment?.amount ?? 0, payment?.feeApplied ?? 0)).toBe(100);
@@ -70,9 +76,15 @@ describe("entering an amount that was never recorded", () => {
 
   it("leaves the year alone when the edit does not touch the payment", async () => {
     const m = await memberMissingAmount();
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 100 }),
+      withId(m.userId),
+    );
 
-    await UPDATE(patch(`/api/admin/members/${m.id}`, { fullName: "أحمد ولد محمد" }), withId(m.id));
+    await UPDATE(
+      patch(`/api/admin/members/${m.userId}`, { fullName: "أحمد ولد محمد" }),
+      withId(m.userId),
+    );
 
     expect((await paidFor(m.id))?.amount).toBe(100);
   });

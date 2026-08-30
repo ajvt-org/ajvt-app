@@ -27,7 +27,7 @@ function accept(id: string) {
 async function acceptedMember(phone?: string) {
   const member = await submitted(phone);
   await asAdmin();
-  await accept(member.id);
+  await accept(member.userId);
   return member;
 }
 
@@ -56,7 +56,7 @@ describe("a receipt for money that was given back", () => {
   it("is withdrawn when the accepted payment is refused", async () => {
     const member = await acceptedMember();
 
-    await refuse(member.id);
+    await refuse(member.userId);
 
     const receipt = await prisma.receipt.findFirstOrThrow();
     expect(receipt.status).toBe("VOID");
@@ -68,7 +68,7 @@ describe("a receipt for money that was given back", () => {
     const member = await acceptedMember();
     const before = await prisma.receipt.findFirstOrThrow();
 
-    await refuse(member.id);
+    await refuse(member.userId);
 
     const after = await prisma.receipt.findUniqueOrThrow({ where: { id: before.id } });
     expect(after.number).toBe(before.number);
@@ -78,9 +78,9 @@ describe("a receipt for money that was given back", () => {
 
   it("stays withdrawn when the payment is accepted again, since a void is final", async () => {
     const member = await acceptedMember();
-    await refuse(member.id);
+    await refuse(member.userId);
 
-    await accept(member.id);
+    await accept(member.userId);
 
     const receipt = await prisma.receipt.findFirstOrThrow();
     expect(receipt.status).toBe("VOID");

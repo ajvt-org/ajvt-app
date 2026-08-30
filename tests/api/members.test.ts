@@ -130,7 +130,7 @@ describe("POST /api/members", () => {
     const member = await prisma.member.findFirstOrThrow();
 
     const res = await POST(
-      post("/api/members", { ...validBody, id: member.id, paymentMethod: "السداد" }),
+      post("/api/members", { ...validBody, id: member.userId, paymentMethod: "السداد" }),
     );
 
     expect(res.status).toBe(200);
@@ -145,7 +145,7 @@ describe("POST /api/members", () => {
     await POST(post("/api/members", validBody));
     const member = await prisma.member.findFirstOrThrow();
 
-    await POST(post("/api/members", { ...validBody, id: member.id, fullName: "اسم آخر" }));
+    await POST(post("/api/members", { ...validBody, id: member.userId, fullName: "اسم آخر" }));
 
     expect((await personFor(member.id)).fullName).toBe("محمد ولد أحمد");
   });
@@ -170,7 +170,7 @@ describe("POST /api/members", () => {
     const attacker = await createUser("33445566");
     await signInAs(attacker);
     const res = await POST(
-      post("/api/members", { ...validBody, id: member.id, fullName: "مخترق" }),
+      post("/api/members", { ...validBody, id: member.userId, fullName: "مخترق" }),
     );
 
     expect(res.status).toBe(404);
@@ -218,7 +218,7 @@ describe("POST /api/members", () => {
     });
 
     const res = await POST(
-      post("/api/members", { ...validBody, id: member.id, paymentProof: "better.webp" }),
+      post("/api/members", { ...validBody, id: member.userId, paymentProof: "better.webp" }),
     );
 
     expect(res.status).toBe(200);
@@ -239,7 +239,7 @@ describe("POST /api/members", () => {
       data: { status: "ACTIVE" },
     });
 
-    const res = await POST(post("/api/members", { ...validBody, id: member.id }));
+    const res = await POST(post("/api/members", { ...validBody, id: member.userId }));
 
     expect(res.status).toBe(409);
   });

@@ -51,7 +51,7 @@ describe("an activity that approves registrations itself", () => {
     const member = await activeMember(user);
     await signInAs(user);
 
-    await register(a.id, member.id);
+    await register(a.id, member.userId);
 
     expect(await statusOf(a.id, user.id)).toBe("PENDING");
   });
@@ -62,7 +62,7 @@ describe("an activity that approves registrations itself", () => {
     const member = await activeMember(user);
     await signInAs(user);
 
-    await register(a.id, member.id);
+    await register(a.id, member.userId);
 
     expect(await statusOf(a.id, user.id)).toBe("ACTIVE");
   });
@@ -73,7 +73,7 @@ describe("an activity that approves registrations itself", () => {
     const member = await activeMember(user);
     await signInAs(user);
 
-    expect((await register(a.id, member.id)).status).toBe(409);
+    expect((await register(a.id, member.userId)).status).toBe(409);
   });
 
   it("still refuses once the seats are gone", async () => {
@@ -91,7 +91,7 @@ describe("an activity that approves registrations itself", () => {
     const member = await activeMember(user);
     await signInAs(user);
 
-    expect((await register(a.id, member.id)).status).toBe(409);
+    expect((await register(a.id, member.userId)).status).toBe(409);
   });
 
   it("is turned on from the admin panel", async () => {

@@ -65,7 +65,7 @@ describe("renewing a membership", () => {
   it("moves the member onto the running year without touching their number", async () => {
     const existing = await member();
 
-    const res = await renew(existing.id);
+    const res = await renew(existing.userId);
 
     expect(res.status).toBe(201);
     const after = await prisma.membership.findFirstOrThrow({
@@ -90,7 +90,7 @@ describe("renewing a membership", () => {
       },
     });
 
-    await renew(existing.id);
+    await renew(existing.userId);
 
     const years = await prisma.membership.findMany({
       where: { userId: existing.userId },
@@ -104,7 +104,7 @@ describe("renewing a membership", () => {
   it("records who took the payment", async () => {
     const existing = await member();
 
-    await renew(existing.id);
+    await renew(existing.userId);
 
     const latest = await prisma.membership.findFirstOrThrow({ where: { year: YEAR } });
     expect(latest.recordedBy).toBe("boss");
@@ -114,7 +114,7 @@ describe("renewing a membership", () => {
     const user = await prisma.user.create({ data: { phone: "22334455", password: "x" } });
     const existing = await member({ userId: user.id });
 
-    await renew(existing.id);
+    await renew(existing.userId);
 
     expect(await prisma.member.count()).toBe(1);
     expect((await prisma.member.findUniqueOrThrow({ where: { id: existing.id } })).userId).toBe(
@@ -125,7 +125,7 @@ describe("renewing a membership", () => {
   it("refuses a second renewal for the same year and writes nothing", async () => {
     const existing = await member({ membershipYear: YEAR });
 
-    const res = await renew(existing.id);
+    const res = await renew(existing.userId);
 
     expect(res.status).toBe(409);
     expect(await prisma.membership.count()).toBe(1);
@@ -134,14 +134,14 @@ describe("renewing a membership", () => {
   it("refuses a member who was never accepted", async () => {
     const existing = await member({ status: "PENDING", memberNumber: null });
 
-    expect((await renew(existing.id)).status).toBe(409);
+    expect((await renew(existing.userId)).status).toBe(409);
   });
 
   it("refuses an amount below the fee the association set", async () => {
     await saveAppSettings({ membershipFee: 2000 });
     const existing = await member();
 
-    const res = await renew(existing.id);
+    const res = await renew(existing.userId);
 
     expect(res.status).toBe(400);
     expect(await prisma.membership.count({ where: { year: YEAR } })).toBe(0);
@@ -150,7 +150,7 @@ describe("renewing a membership", () => {
   it("refuses a payment method that is not one of the accepted ones", async () => {
     const existing = await member();
 
-    const res = await renew(existing.id, { ...payment, paymentMethod: "بيتكوين" });
+    const res = await renew(existing.userId, { ...payment, paymentMethod: "بيتكوين" });
 
     expect(res.status).toBe(400);
   });
@@ -159,13 +159,13 @@ describe("renewing a membership", () => {
     const existing = await member();
     await signInAsAdmin(await createAdmin("quiz", "QUIZ"));
 
-    expect((await renew(existing.id)).status).toBe(403);
+    expect((await renew(existing.userId)).status).toBe(403);
   });
 
   it("counts the surplus over the fee as support, as a first payment does", async () => {
     const existing = await member();
 
-    await renew(existing.id, { ...payment, paidAmount: 1000 });
+    await renew(existing.userId, { ...payment, paidAmount: 1000 });
 
     expect((await paidForYearOf(existing.id, YEAR))?.support).toBe(1000 - MEMBERSHIP_FEE);
   });
@@ -180,9 +180,9 @@ describe("reading a member's years", () => {
 
   it("lists the years newest first, with who took each payment", async () => {
     const existing = await member();
-    await renew(existing.id);
+    await renew(existing.userId);
 
-    const { memberships } = await (await YEARS(existing.id)).json();
+    const { memberships } = await (await YEARS(existing.userId)).json();
 
     expect(memberships.map((m: { year: number }) => m.year)).toEqual([YEAR, LAST]);
     expect(memberships[0].recordedBy).toBe("boss");
@@ -194,15 +194,15 @@ describe("reading a member's years", () => {
     const done = await member({ membershipYear: YEAR, memberNumber: "AJVT-2026-0002" });
     const pending = await member({ status: "PENDING", memberNumber: null });
 
-    expect((await (await YEARS(owing.id)).json()).refusal).toBeNull();
-    expect((await (await YEARS(done.id)).json()).refusal).toBe("alreadyRenewed");
-    expect((await (await YEARS(pending.id)).json()).refusal).toBe("notActive");
+    expect((await (await YEARS(owing.userId)).json()).refusal).toBeNull();
+    expect((await (await YEARS(done.userId)).json()).refusal).toBe("alreadyRenewed");
+    expect((await (await YEARS(pending.userId)).json()).refusal).toBe("notActive");
   });
 
   it("is closed to an admin without the members section", async () => {
     const existing = await member();
     await signInAsAdmin(await createAdmin("quiz", "QUIZ"));
 
-    expect((await YEARS(existing.id)).status).toBe(403);
+    expect((await YEARS(existing.userId)).status).toBe(403);
   });
 });

@@ -12,45 +12,38 @@ export type SamePerson = {
   accountPhone: string | null;
 };
 
-export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
-  const mine = await prisma.member.findUnique({
-    where: { id: memberId },
-    select: { id: true, userId: true, user: { select: { fullName: true } } },
+export async function findSamePerson(userId: string): Promise<SamePerson[]> {
+  const mine = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { fullName: true },
   });
   if (!mine) return [];
 
-  const key = nameKey(nameOf(mine.user));
-  const others = await prisma.member.findMany({
-    where: { id: { not: memberId } },
+  const key = nameKey(nameOf(mine));
+  const others = await prisma.user.findMany({
+    where: { id: { not: userId }, memberships: { some: {} } },
     select: {
       id: true,
+      fullName: true,
+      memberNumber: true,
+      phone: true,
       createdAt: true,
-      userId: true,
-      user: {
-        select: {
-          fullName: true,
-          memberNumber: true,
-          phone: true,
-          memberships: { select: { year: true, status: true } },
-        },
-      },
+      memberships: { select: { year: true, status: true } },
     },
     orderBy: { createdAt: "asc" },
   });
 
   const found: SamePerson[] = [];
   for (const other of others) {
-    if (mine.userId && other.userId === mine.userId) continue;
-
-    if (key.length === 0 || key !== nameKey(nameOf(other.user))) continue;
+    if (key.length === 0 || key !== nameKey(nameOf(other))) continue;
 
     found.push({
       id: other.id,
-      fullName: nameOf(other.user),
-      status: latestMembership(other.user.memberships)?.status ?? "PENDING",
-      memberNumber: other.user.memberNumber,
+      fullName: nameOf(other),
+      status: latestMembership(other.memberships)?.status ?? "PENDING",
+      memberNumber: other.memberNumber,
       createdAt: other.createdAt,
-      accountPhone: other.user.phone ?? null,
+      accountPhone: other.phone ?? null,
     });
   }
   return found;

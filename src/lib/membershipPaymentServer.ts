@@ -1,20 +1,19 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { mirrorMembershipPayment, mirrorMembershipStatus } from "./paymentMirror";
 import { setMembershipStatus } from "./membershipRecord";
-import { currentMembership, membershipForMember } from "./currentMembershipServer";
+import { currentMembership } from "./currentMembershipServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export async function recordMembershipPayment(
   db: Db,
-  memberId: string,
+  userId: string,
   total: number | null,
   fee: number,
   choice?: boolean,
 ) {
-  const current = await membershipForMember(db, memberId);
-  if (!current) return;
-  const { userId, membership } = current;
+  const membership = await currentMembership(db, userId);
+  if (!membership) return;
 
   const account = await db.user.findUnique({
     where: { id: userId },
@@ -39,10 +38,9 @@ export async function recordMembershipPayment(
   });
 }
 
-export async function syncSurplusStatus(db: Db, memberId: string, reviewedBy?: string) {
-  const current = await membershipForMember(db, memberId);
-  if (!current) return;
-  const { userId, membership } = current;
+export async function syncSurplusStatus(db: Db, userId: string, reviewedBy?: string) {
+  const membership = await currentMembership(db, userId);
+  if (!membership) return;
 
   await mirrorMembershipStatus(db, userId, membership.year, membership.status);
   await setMembershipStatus(
@@ -73,12 +71,12 @@ export async function setSurplusVisibility(db: Db, userId: string, anonymous: bo
   });
 }
 
-export async function totalPaidFor(db: Db, memberId: string): Promise<number | null> {
-  const current = await membershipForMember(db, memberId);
-  if (!current) return null;
+export async function totalPaidFor(db: Db, userId: string): Promise<number | null> {
+  const membership = await currentMembership(db, userId);
+  if (!membership) return null;
 
   const payment = await db.payment.findFirst({
-    where: { userId: current.userId, purpose: "MEMBERSHIP", year: current.membership.year },
+    where: { userId, purpose: "MEMBERSHIP", year: membership.year },
     select: { amount: true },
   });
   return payment?.amount ?? null;

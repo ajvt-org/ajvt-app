@@ -76,7 +76,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 1000, 100);
+    await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
     const row = (await (await download("members")).text()).split("\n")[1];
 
@@ -92,7 +92,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 1000, 100);
+    await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
     const body = await (await download("donations")).text();
 
@@ -110,7 +110,7 @@ describe("GET /api/admin/export/[dataset]", () => {
       status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 100, 100);
+    await recordMembershipPayment(prisma, m.userId, 100, 100);
 
     const body = await (await download("donations")).text();
 

@@ -19,9 +19,9 @@ export const POST = withRoute(
     const { memberId } = parse(adminRegisterSchema, await req.json());
 
     const [member, activity] = await Promise.all([
-      prisma.member.findUnique({
+      prisma.user.findUnique({
         where: { id: memberId },
-        select: { id: true, userId: true, user: { select: { fullName: true } } },
+        select: { id: true, fullName: true },
       }),
       prisma.activity.findUnique({
         where: { id },
@@ -38,7 +38,7 @@ export const POST = withRoute(
 
     if (activity.capacity !== null && activity._count.registrations >= activity.capacity) {
       const already = await prisma.activityRegistration.findUnique({
-        where: { userId_activityId: { userId: member.userId, activityId: id } },
+        where: { userId_activityId: { userId: member.id, activityId: id } },
       });
       if (!already) {
         return NextResponse.json({ error: "اكتمل عدد المسجلين في هذا النشاط" }, { status: 409 });
@@ -46,15 +46,15 @@ export const POST = withRoute(
     }
 
     const registration = await prisma.activityRegistration.upsert({
-      where: { userId_activityId: { userId: member.userId, activityId: id } },
+      where: { userId_activityId: { userId: member.id, activityId: id } },
       update: { status: "ACTIVE", rejectionReason: null },
-      create: { memberId, userId: member.userId, activityId: id, status: "ACTIVE" },
+      create: { memberId, userId: member.id, activityId: id, status: "ACTIVE" },
     });
 
     await logAction(
       session.username,
       "ADMIN_REGISTER_ACTIVITY",
-      `${nameOf(member.user)} → ${activity.title}`,
+      `${nameOf(member)} → ${activity.title}`,
       {
         ...auditContext(session, req),
         targetType: "ActivityRegistration",

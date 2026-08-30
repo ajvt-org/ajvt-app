@@ -25,12 +25,12 @@ export const PUT = withRoute(
     );
     const { membershipFee } = await getAppSettings();
 
-    const existing = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
-      select: { userId: true, user: { select: { fullName: true } } },
+      select: { fullName: true },
     });
-    if (!existing) throw new NotFoundError(messages.notFound);
-    const current = await currentMembership(prisma, existing.userId);
+    if (!account) throw new NotFoundError(messages.notFound);
+    const current = await currentMembership(prisma, id);
     if (!current) throw new NotFoundError(messages.notFound);
 
     if (amountTransferred !== undefined && amountTransferred !== null) {
@@ -42,7 +42,7 @@ export const PUT = withRoute(
 
     await prisma.$transaction(async (tx) => {
       if (paymentMethod !== undefined || paymentProof !== undefined) {
-        await saveMembershipYear(tx, existing.userId, current.year, {
+        await saveMembershipYear(tx, id, current.year, {
           ...(paymentMethod !== undefined ? { paymentMethod } : {}),
           ...(paymentProof !== undefined ? { paymentProof } : {}),
         });
@@ -52,7 +52,7 @@ export const PUT = withRoute(
       }
     });
 
-    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(existing.user), {
+    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(account), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,

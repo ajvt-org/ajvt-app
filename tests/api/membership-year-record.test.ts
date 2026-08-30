@@ -66,7 +66,7 @@ describe("the year record a membership request opens", () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(record.year).toBe(runningYear());
@@ -82,7 +82,7 @@ describe("the year record a membership request opens", () => {
     const member = await submitAs({ paidAmount: 2100 });
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(100);
@@ -93,7 +93,7 @@ describe("the year record a membership request opens", () => {
     const member = await submitAs({ paidAmount: 900 });
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     const record = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await feeFor(member.id, record.year)).toBe(250);
@@ -105,7 +105,7 @@ describe("the year record a membership request opens", () => {
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
@@ -121,7 +121,7 @@ describe("the year record a membership request opens", () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
     const validate = () =>
-      VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+      VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await validate();
     await validate();

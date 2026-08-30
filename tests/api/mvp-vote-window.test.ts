@@ -68,7 +68,7 @@ describe("the man of the match voting window", () => {
     const { match, players } = await tournament();
     await prisma.match.update({ where: { id: match.id }, data: { status: "SCHEDULED" } });
 
-    const res = await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    const res = await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
 
     expect(res.status).toBe(400);
   });
@@ -76,7 +76,7 @@ describe("the man of the match voting window", () => {
   it("takes its window from the tournament when the admin names no minutes", async () => {
     const { match, players } = await tournament(45);
 
-    const res = await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    const res = await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
 
     expect(res.status).toBe(201);
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({ where: { matchId: match.id } });
@@ -87,7 +87,7 @@ describe("the man of the match voting window", () => {
   it("takes the minutes given for this match over the tournament default", async () => {
     const { match, players } = await tournament(120);
 
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id), minutes: 10 });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId), minutes: 10 });
 
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({ where: { matchId: match.id } });
     const minutes = Math.round((vote.closesAt.getTime() - vote.createdAt.getTime()) / 60_000);
@@ -98,7 +98,7 @@ describe("the man of the match voting window", () => {
     const { match, players } = await tournament();
 
     const res = await openVote(match.id, {
-      candidateMemberIds: players.map((p) => p.id),
+      candidateMemberIds: players.map((p) => p.userId),
       minutes: 0,
     });
 
@@ -107,7 +107,7 @@ describe("the man of the match voting window", () => {
 
   it("takes a ballot while the window is open", async () => {
     const { match, players } = await tournament();
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({
       where: { matchId: match.id },
       include: { candidates: true },
@@ -124,7 +124,7 @@ describe("the man of the match voting window", () => {
 
   it("refuses a ballot once the window has passed, with no admin action", async () => {
     const { match, players } = await tournament();
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({
       where: { matchId: match.id },
       include: { candidates: true },
@@ -147,7 +147,7 @@ describe("the man of the match voting window", () => {
 
   it("gives a reopened vote a fresh window, so it is not shut again at once", async () => {
     const { match, players } = await tournament(30);
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
     await prisma.matchMvpVote.update({
       where: { matchId: match.id },
       data: { status: "CLOSED", closesAt: new Date(Date.now() - 60_000) },
@@ -166,7 +166,7 @@ describe("the man of the match voting window", () => {
 
   it("extends a running vote without touching its status", async () => {
     const { match, players } = await tournament();
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id), minutes: 5 });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId), minutes: 5 });
     const before = await prisma.matchMvpVote.findUniqueOrThrow({ where: { matchId: match.id } });
 
     await SET(
@@ -181,7 +181,7 @@ describe("the man of the match voting window", () => {
 
   it("refuses a change that names neither a status nor minutes", async () => {
     const { match, players } = await tournament();
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
 
     const res = await SET(
       patch(`/api/admin/matches/${match.id}/mvp-vote`, {}),
@@ -200,7 +200,7 @@ describe("settling the winner once the window closes", () => {
 
   async function voteWith(tally: number[], minutes = 120) {
     const { activity, match, players } = await tournament(minutes);
-    await openVote(match.id, { candidateMemberIds: players.map((p) => p.id) });
+    await openVote(match.id, { candidateMemberIds: players.map((p) => p.userId) });
     const vote = await prisma.matchMvpVote.findUniqueOrThrow({
       where: { matchId: match.id },
       include: { candidates: { orderBy: { userId: "asc" } } },

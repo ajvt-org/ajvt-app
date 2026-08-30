@@ -32,8 +32,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember();
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: "أفجار" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: "أفجار" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(401);
@@ -45,8 +45,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember();
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: "أفجار" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: "أفجار" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(200);
@@ -60,8 +60,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember({ village: OTHER_VILLAGE, age: null });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: "أفجار" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: "أفجار" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(200);
@@ -73,8 +73,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember({ village: "أفجار", age: null });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: HOME_VILLAGE, age: "المجاهدين" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: HOME_VILLAGE, age: "المجاهدين" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(200);
@@ -88,8 +88,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember({ village: "أفجار", age: null });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: HOME_VILLAGE }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: HOME_VILLAGE }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(400);
@@ -101,8 +101,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember();
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { age: "" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { age: "" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(400);
@@ -114,8 +114,8 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     const member = await aMember();
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { village: "بوتلميت" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { village: "بوتلميت" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(400);
@@ -126,7 +126,10 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     await signInAsAdmin(await createAdmin());
     const member = await aMember({ village: "أفجار", age: null });
 
-    await PATCH(patch(`/api/admin/members/${member.id}`, { fullName: "أحمد" }), withId(member.id));
+    await PATCH(
+      patch(`/api/admin/members/${member.userId}`, { fullName: "أحمد" }),
+      withId(member.userId),
+    );
 
     const after = await personFor(member.id);
     expect(after.village).toBe("أفجار");
@@ -137,7 +140,10 @@ describe("PATCH /api/admin/members/[id] — the village", () => {
     await signInAsAdmin(await createAdmin());
     const member = await aMember();
 
-    await PATCH(patch(`/api/admin/members/${member.id}`, { village: "أفجار" }), withId(member.id));
+    await PATCH(
+      patch(`/api/admin/members/${member.userId}`, { village: "أفجار" }),
+      withId(member.userId),
+    );
 
     const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "UPDATE_MEMBER" } });
     expect(entry.after).toMatchObject({ village: "أفجار" });
