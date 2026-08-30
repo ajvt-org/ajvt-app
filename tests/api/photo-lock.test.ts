@@ -117,7 +117,7 @@ describe("a blocked member changing their own picture", () => {
     const { user, member: row } = await member({ photoLocked: true });
     await signInAs(user);
 
-    const res = await changePhoto(row.id, "new.webp");
+    const res = await changePhoto(row.userId, "new.webp");
     const body = await res.json();
 
     expect(res.status).toBe(403);
@@ -129,14 +129,14 @@ describe("a blocked member changing their own picture", () => {
     const { user, member: row } = await member({ photoLocked: true });
     await signInAs(user);
 
-    expect((await changePhoto(row.id, null)).status).toBe(403);
+    expect((await changePhoto(row.userId, null)).status).toBe(403);
   });
 
   it("may still change it while the block is off", async () => {
     const { user, member: row } = await member();
     await signInAs(user);
 
-    expect((await changePhoto(row.id, "new.webp")).status).toBe(200);
+    expect((await changePhoto(row.userId, "new.webp")).status).toBe(200);
     expect((await accountOf(user.id)).photo).toBe("new.webp");
   });
 
@@ -144,7 +144,7 @@ describe("a blocked member changing their own picture", () => {
     const { user, member: row } = await member();
     await signInAs(user);
 
-    const body = await (await changePhoto(row.id, "new.webp")).json();
+    const body = await (await changePhoto(row.userId, "new.webp")).json();
 
     expect(body.photo).toBe("new.webp");
     expect(body.photoLocked).toBe(false);
@@ -155,8 +155,8 @@ describe("a blocked member changing their own picture", () => {
     await signInAs(user);
 
     const res = await SELF_PATCH(
-      patch(`/api/members/${row.id}`, { surplusAnonymous: true }),
-      withId(row.id),
+      patch(`/api/members/${row.userId}`, { surplusAnonymous: true }),
+      withId(row.userId),
     );
 
     expect(res.status).toBe(200);
@@ -167,8 +167,8 @@ describe("a blocked member changing their own picture", () => {
     await signInAs(user);
 
     const res = await SELF_PATCH(
-      patch(`/api/members/${row.id}`, { surplusAnonymous: false }),
-      withId(row.id),
+      patch(`/api/members/${row.userId}`, { surplusAnonymous: false }),
+      withId(row.userId),
     );
 
     expect((await res.json()).photoLocked).toBe(true);
@@ -206,7 +206,9 @@ describe("the screens that read the block back", () => {
     const { user, member: row } = await member({ photoLocked: true });
     await signInAs(user);
 
-    const body = await (await SELF_GET(get(`/api/members/${row.id}`), withId(row.id))).json();
+    const body = await (
+      await SELF_GET(get(`/api/members/${row.userId}`), withId(row.userId))
+    ).json();
 
     expect(body.photoLocked).toBe(true);
   });

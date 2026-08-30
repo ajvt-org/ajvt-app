@@ -39,11 +39,11 @@ async function aMember(phone: string, name: string) {
 
 let seq = 0;
 
-function give(memberId: string) {
+function give(userId: string) {
   const form = new FormData();
   form.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
   form.append("amount", "5000");
-  form.append("memberId", memberId);
+  form.append("memberId", userId);
   form.append("paymentMethod", "بنكيلي");
   return GIVE(postForm("/api/donations", form, { "x-forwarded-for": `10.0.1.${++seq}` }));
 }
@@ -57,7 +57,7 @@ describe("the account behind a donation", () => {
     const { user, member } = await aMember("22110011", "محمد ولد أحمد");
     await signInAs(user);
 
-    const res = await give(member.id);
+    const res = await give(member.userId);
     expect(res.status).toBe(201);
 
     const donation = await prisma.donation.findFirstOrThrow({ where: { userId: member.userId } });
@@ -68,7 +68,7 @@ describe("the account behind a donation", () => {
     const { user, member } = await aMember("22110022", "أحمد سالم");
     await signInAs(user);
 
-    await give(member.id);
+    await give(member.userId);
 
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: member.userId } });
     expect(payment.userId).toBe(user.id);

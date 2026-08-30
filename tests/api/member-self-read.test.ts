@@ -67,11 +67,10 @@ describe("what a member reads about their own membership", () => {
     });
   });
 
-  it("still names the member row, which the screens ask about by id", async () => {
+  it("names the account, which is what the screens ask about by id", async () => {
     const account = await member();
-    const row = await prisma.member.findFirstOrThrow({ where: { userId: account.id } });
 
-    expect((await mine()).id).toBe(row.id);
+    expect((await mine()).id).toBe(account.id);
   });
 
   it("is empty for an account that never joined", async () => {

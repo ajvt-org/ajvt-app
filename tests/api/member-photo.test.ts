@@ -23,8 +23,8 @@ describe("a member changing their own picture", () => {
     await signInAs(user);
 
     const res = await SELF_PATCH(
-      patch(`/api/members/${row.id}`, { photo: "new.webp" }),
-      withId(row.id),
+      patch(`/api/members/${row.userId}`, { photo: "new.webp" }),
+      withId(row.userId),
     );
 
     expect(res.status).toBe(200);
@@ -37,7 +37,10 @@ describe("a member changing their own picture", () => {
     const { user, member: row } = await member();
     await signInAs(user);
 
-    const res = await SELF_PATCH(patch(`/api/members/${row.id}`, { photo: null }), withId(row.id));
+    const res = await SELF_PATCH(
+      patch(`/api/members/${row.userId}`, { photo: null }),
+      withId(row.userId),
+    );
 
     expect(res.status).toBe(200);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
@@ -48,7 +51,10 @@ describe("a member changing their own picture", () => {
     const { user, member: row } = await member();
     await signInAs(user);
 
-    await SELF_PATCH(patch(`/api/members/${row.id}`, { surplusAnonymous: true }), withId(row.id));
+    await SELF_PATCH(
+      patch(`/api/members/${row.userId}`, { surplusAnonymous: true }),
+      withId(row.userId),
+    );
 
     const account = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     expect(account.photo).toBe("old.webp");
@@ -60,8 +66,8 @@ describe("a member changing their own picture", () => {
     await signInAs(stranger);
 
     const res = await SELF_PATCH(
-      patch(`/api/members/${row.id}`, { photo: "new.webp" }),
-      withId(row.id),
+      patch(`/api/members/${row.userId}`, { photo: "new.webp" }),
+      withId(row.userId),
     );
 
     expect(res.status).toBe(404);

@@ -12,7 +12,7 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
 import { common, members, money, uploads } from "@/lib/messages";
-import { membershipForMember } from "@/lib/currentMembershipServer";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import { validateDonorChoice, donorNameFor } from "@/lib/donorChoice";
 import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
 
@@ -55,11 +55,12 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
     const session = await getUserSession();
     if (!session) return NextResponse.json({ error: common.unauthorized }, { status: 401 });
     const { userId } = session as { userId: string };
-    const member = await membershipForMember(prisma, memberIdRaw.trim());
-    const account = member
-      ? await prisma.user.findUnique({ where: { id: member.userId }, select: { fullName: true } })
+    const membership =
+      memberIdRaw.trim() === userId ? await currentMembership(prisma, userId) : null;
+    const account = membership
+      ? await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true } })
       : null;
-    if (!member || member.userId !== userId || member.membership.status !== "ACTIVE") {
+    if (!membership || membership.status !== "ACTIVE") {
       return NextResponse.json({ error: members.invalidMember }, { status: 403 });
     }
     memberId = memberIdRaw.trim();

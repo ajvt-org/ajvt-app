@@ -137,8 +137,8 @@ describe("the membership year record after each way it is written", () => {
     const member = await submitAs({ paidAmount: 2100 });
 
     await SELF_PATCH(
-      patch(`/api/members/${member.id}`, { surplusAnonymous: true }),
-      withId(member.id),
+      patch(`/api/members/${member.userId}`, { surplusAnonymous: true }),
+      withId(member.userId),
     );
 
     const payment = await prisma.payment.findFirstOrThrow({

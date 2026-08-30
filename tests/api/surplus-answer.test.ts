@@ -19,13 +19,13 @@ async function supporter(paid = MEMBERSHIP_FEE * 5) {
   return member;
 }
 
-const answer = (memberId: string, surplusAnonymous: boolean) =>
-  PATCH(patch(`/api/members/${memberId}`, { surplusAnonymous }), withId(memberId));
+const answer = (userId: string, surplusAnonymous: boolean) =>
+  PATCH(patch(`/api/members/${userId}`, { surplusAnonymous }), withId(userId));
 
 const asProfileReadsIt = async () => (await (await ME(get("/api/user/me"))).json()).members[0];
 
-const asTheFormReadsIt = async (memberId: string) =>
-  (await (await MEMBER(get(`/api/members/${memberId}`), withId(memberId))).json()).surplusAnonymous;
+const asTheFormReadsIt = async (userId: string) =>
+  (await (await MEMBER(get(`/api/members/${userId}`), withId(userId))).json()).surplusAnonymous;
 
 const onTheBoard = async () =>
   (await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } })).anonymous;
@@ -38,28 +38,28 @@ describe("the answer a member gives on showing their support", () => {
   it("reads back as given once they ask to stay unnamed", async () => {
     const member = await supporter();
 
-    await answer(member.id, true);
+    await answer(member.userId, true);
 
     expect(await onTheBoard()).toBe(true);
     expect((await asProfileReadsIt()).surplusAnonymous).toBe(true);
-    expect(await asTheFormReadsIt(member.id)).toBe(true);
+    expect(await asTheFormReadsIt(member.userId)).toBe(true);
   });
 
   it("reads back as given once they ask to be named again", async () => {
     const member = await supporter();
-    await answer(member.id, true);
+    await answer(member.userId, true);
 
-    await answer(member.id, false);
+    await answer(member.userId, false);
 
     expect(await onTheBoard()).toBe(false);
     expect((await asProfileReadsIt()).surplusAnonymous).toBe(false);
-    expect(await asTheFormReadsIt(member.id)).toBe(false);
+    expect(await asTheFormReadsIt(member.userId)).toBe(false);
   });
 
   it("comes back on the patch that saved it", async () => {
     const member = await supporter();
 
-    const body = await (await answer(member.id, true)).json();
+    const body = await (await answer(member.userId, true)).json();
 
     expect(body.surplusAnonymous).toBe(true);
   });
