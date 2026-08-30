@@ -103,7 +103,8 @@ describe("admin membership is one per account", () => {
     expect(res.status).toBe(200);
     expect((await personFor(member.id)).age).toBe("الفائزين");
     expect(
-      (await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paymentMethod,
+      (await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } }))
+        .paymentMethod,
     ).toBe("السداد");
 
     const log = await prisma.auditLog.findFirstOrThrow({

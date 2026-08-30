@@ -68,8 +68,11 @@ describe("renewing a membership", () => {
     const res = await renew(existing.id);
 
     expect(res.status).toBe(201);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: existing.id } });
-    expect(after.membershipYear).toBe(YEAR);
+    const after = await prisma.membership.findFirstOrThrow({
+      where: { userId: existing.userId },
+      orderBy: { year: "desc" },
+    });
+    expect(after.year).toBe(YEAR);
     expect((await personFor(existing.id)).memberNumber).toBe("AJVT-2025-0001");
     expect((await paidForYearOf(existing.id, YEAR))?.fee).toBe(100);
   });

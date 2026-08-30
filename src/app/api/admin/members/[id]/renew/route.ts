@@ -12,6 +12,7 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
 import { stampRecordedBy } from "@/lib/paymentMirror";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import { nameOf } from "@/lib/person";
 
 const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
@@ -34,12 +35,19 @@ export const POST = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      include: { user: { select: { fullName: true, memberNumber: true } } },
+      select: { userId: true, user: { select: { fullName: true, memberNumber: true } } },
     });
     if (!member) throw new NotFoundError(messages.notFound);
 
+    const current = await currentMembership(prisma, member.userId);
+    if (!current) throw new NotFoundError(messages.notFound);
+
     const refusal = renewalRefusal(
-      { ...member, memberNumber: member.user.memberNumber },
+      {
+        status: current.status,
+        membershipYear: current.year,
+        memberNumber: member.user.memberNumber,
+      },
       membershipYear,
     );
     if (refusal) throw new ConflictError(REFUSALS[refusal]);
@@ -59,17 +67,9 @@ export const POST = withRoute(
           reviewedAt: new Date(),
         },
       });
-      await tx.member.update({
-        where: { id },
-        data: {
-          membershipYear,
-          paymentMethod,
-          paymentProof: paymentProof || member.paymentProof,
-        },
-      });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
       await stampRecordedBy(tx, member.userId, membershipYear, session.username);
-      return tx.member.findUniqueOrThrow({ where: { id } });
+      return { id, userId: member.userId, membershipYear };
     });
 
     await logAction(
@@ -80,7 +80,7 @@ export const POST = withRoute(
         ...auditContext(session, req),
         targetType: "Member",
         targetId: id,
-        before: { membershipYear: member.membershipYear, paidAmount: before },
+        before: { membershipYear: current.year, paidAmount: before },
         after: { membershipYear, paidAmount: Number(paidAmount) },
       },
     );

@@ -57,7 +57,7 @@ describe("POST /api/admin/validate", () => {
     const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("ACTIVE");
     expect((await personFor(member.id)).memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
   });
@@ -115,7 +115,7 @@ describe("POST /api/admin/validate", () => {
     );
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("REJECTED");
     expect(after.rejectionReason).toBe("الصورة غير واضحة");
   });
@@ -160,7 +160,7 @@ describe("POST /api/admin/validate", () => {
     );
 
     expect(res.status).toBe(400);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -177,7 +177,7 @@ describe("POST /api/admin/validate", () => {
     );
     await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.rejectionReason).toBeNull();
   });
 

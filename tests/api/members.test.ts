@@ -134,9 +134,9 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findFirstOrThrow();
+    const updated = await prisma.membership.findFirstOrThrow();
     expect(updated.paymentMethod).toBe("السداد");
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("leaves the person alone, since the payment screen never asks for them", async () => {
@@ -212,8 +212,8 @@ describe("POST /api/members", () => {
     await signInAs(user);
     await POST(post("/api/members", validBody));
     const member = await prisma.member.findFirstOrThrow();
-    await prisma.member.update({
-      where: { id: member.id },
+    await prisma.membership.updateMany({
+      where: { userId: member.userId },
       data: { status: "REJECTED", rejectionReason: "الصورة غير واضحة" },
     });
 
@@ -222,11 +222,11 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const updated = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(updated.status).toBe("PENDING");
     expect(updated.rejectionReason).toBeNull();
     expect(updated.paymentProof).toBe("better.webp");
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("will not reopen a member who is already approved", async () => {
@@ -234,7 +234,10 @@ describe("POST /api/members", () => {
     await signInAs(user);
     await POST(post("/api/members", validBody));
     const member = await prisma.member.findFirstOrThrow();
-    await prisma.member.update({ where: { id: member.id }, data: { status: "ACTIVE" } });
+    await prisma.membership.updateMany({
+      where: { userId: member.userId },
+      data: { status: "ACTIVE" },
+    });
 
     const res = await POST(post("/api/members", { ...validBody, id: member.id }));
 

@@ -33,7 +33,6 @@ describe("the upload field registry", () => {
   it("lists every column that can hold an upload filename", () => {
     expect(UPLOAD_FIELDS.map((f) => f.id)).toEqual([
       "user.photo",
-      "member.paymentProof",
       "membership.paymentProof",
       "activityRegistration.paymentProof",
       "donation.proof",
@@ -50,7 +49,6 @@ describe("the upload field registry", () => {
     const served = UPLOAD_FIELDS.filter((f) => f.serve.via === "authenticated").map((f) => f.id);
     expect(served).toEqual([
       "user.photo",
-      "member.paymentProof",
       "membership.paymentProof",
       "activityRegistration.paymentProof",
       "donation.proof",
@@ -87,7 +85,7 @@ describe("renameUpload", () => {
 
     await renameUpload("old.png", "new.webp", "newhash");
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.paymentProof).toBe("new.webp");
     expect((await personFor(member.id)).photo).toBe("new.webp");
     expect((await prisma.expense.findFirstOrThrow()).proof).toBe("new.webp");
