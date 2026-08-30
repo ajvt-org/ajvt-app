@@ -13,6 +13,7 @@ import {
   signInAs,
   signInAsAdmin,
   withId,
+  makeMember,
 } from "./helpers";
 
 async function member(person: Record<string, unknown> = {}) {
@@ -21,9 +22,7 @@ async function member(person: Record<string, unknown> = {}) {
     where: { id: user.id },
     data: { fullName: "عضو", age: "البدريين", photo: "old.webp", ...person },
   });
-  const row = await prisma.member.create({
-    data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
-  });
+  const row = await makeMember({ userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" });
   return { user, member: row };
 }
 

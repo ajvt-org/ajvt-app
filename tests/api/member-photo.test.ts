@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { PATCH as SELF_PATCH } from "@/app/api/members/[id]/route";
-import { resetDb, patch, createUsers, signInAs, withId } from "./helpers";
+import { resetDb, patch, createUsers, signInAs, withId, makeMember } from "./helpers";
 
 async function member() {
   const [user] = await createUsers(1);
@@ -9,9 +9,7 @@ async function member() {
     where: { id: user.id },
     data: { fullName: "عضو", age: "البدريين", photo: "old.webp" },
   });
-  const row = await prisma.member.create({
-    data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
-  });
+  const row = await makeMember({ userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" });
   return { user, member: row };
 }
 
