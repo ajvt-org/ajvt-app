@@ -5,17 +5,18 @@ import { issueMembership } from "@/lib/member";
 import { sendMatchReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
+import { anonymousForYear, paidForYear, type MembershipPaymentRow } from "@/lib/paidBreakdown";
+import { latestMembership } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
 
-const MEMBER_SELECT = {
-  id: true,
-  paymentMethod: true,
-  paymentProof: true,
-  membershipYear: true,
+const MEMBERSHIP_SELECT = {
+  year: true,
   status: true,
   rejectionReason: true,
+  paymentMethod: true,
+  paymentProof: true,
+  referenceCode: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -39,6 +40,41 @@ const ACCOUNT_SELECT = {
   },
 } as const;
 
+type Membership = {
+  year: number;
+  status: string;
+  rejectionReason: string | null;
+  paymentMethod: string | null;
+  paymentProof: string | null;
+  referenceCode: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type Account = {
+  phone: string | null;
+  payments: (MembershipPaymentRow & { anonymous: boolean })[];
+  registrations: unknown[];
+  teamMemberships: unknown[];
+};
+
+function membershipView(id: string, membership: Membership, account: Account, person: object) {
+  const { year, ...rest } = membership;
+  const paid = paidForYear(account.payments, year);
+  return {
+    ...rest,
+    ...person,
+    id,
+    membershipYear: year,
+    surplusAnonymous: anonymousForYear(account.payments, year),
+    registrations: account.registrations,
+    teamMemberships: account.teamMemberships,
+    user: { phone: account.phone },
+    paidAmount: paid?.fee ?? null,
+    supportAmount: paid?.support ?? 0,
+  };
+}
+
 export const GET = withRoute("GET /api/user/me", async () => {
   const session = await requireUser();
 
@@ -51,7 +87,8 @@ export const GET = withRoute("GET /api/user/me", async () => {
     select: {
       ...PERSON_WITH_PHONE_SELECT,
       ...ACCOUNT_SELECT,
-      members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
+      members: { select: { id: true }, orderBy: { createdAt: "asc" } },
+      memberships: { select: MEMBERSHIP_SELECT },
     },
   });
 
@@ -59,8 +96,11 @@ export const GET = withRoute("GET /api/user/me", async () => {
     return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
   }
 
+  const current = latestMembership(user.memberships);
+  const memberId = user.members[0]?.id;
+
   let person = personOf(user);
-  if (!user.memberNumber && user.members.some((member) => member.status === "ACTIVE")) {
+  if (!user.memberNumber && current?.status === "ACTIVE") {
     const issued = await issueMembership();
     await prisma.user.update({ where: { id: session.userId }, data: issued });
     person = { ...person, ...issued };
@@ -70,18 +110,6 @@ export const GET = withRoute("GET /api/user/me", async () => {
     ...person,
     phone: user.phone,
     currentYear,
-    members: user.members.map((member) => {
-      const paid = paidForYear(user.payments, member.membershipYear);
-      return {
-        ...member,
-        ...person,
-        surplusAnonymous: anonymousForYear(user.payments, member.membershipYear),
-        registrations: user.registrations,
-        teamMemberships: user.teamMemberships,
-        user: { phone: user.phone },
-        paidAmount: paid?.fee ?? null,
-        supportAmount: paid?.support ?? 0,
-      };
-    }),
+    members: current && memberId ? [membershipView(memberId, current, user, person)] : [],
   });
 });

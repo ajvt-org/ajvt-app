@@ -8,6 +8,7 @@ import { setSurplusVisibility } from "@/lib/membershipPaymentServer";
 import { members } from "@/lib/messages";
 import { PERSON_SELECT, withPerson } from "@/lib/person";
 import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
+import { latestMembership } from "@/lib/currentMembership";
 
 export const GET = withRoute(
   "GET /api/members/[id]",
@@ -27,14 +28,19 @@ export const GET = withRoute(
               where: { purpose: "MEMBERSHIP" },
               select: { amount: true, feeApplied: true, year: true, anonymous: true },
             },
+            memberships: {
+              select: {
+                year: true,
+                status: true,
+                rejectionReason: true,
+                paymentMethod: true,
+                paymentProof: true,
+                referenceCode: true,
+                createdAt: true,
+              },
+            },
           },
         },
-        paymentMethod: true,
-        paymentProof: true,
-        membershipYear: true,
-        referenceCode: true,
-        status: true,
-        createdAt: true,
       },
     });
 
@@ -42,13 +48,21 @@ export const GET = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { payments, ...account } = member.user;
-    const { userId: _userId, ...rest } = withPerson({ ...member, user: account });
+    const { payments, memberships, ...account } = member.user;
+    const current = latestMembership(memberships);
+    if (!current) {
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
+    }
+
+    const { userId: _userId, ...person } = withPerson({ ...member, user: account });
     void _userId;
-    const paid = paidForYear(payments, rest.membershipYear);
+    const { year, ...rest } = current;
+    const paid = paidForYear(payments, year);
     return NextResponse.json({
+      ...person,
       ...rest,
-      surplusAnonymous: anonymousForYear(payments, rest.membershipYear),
+      membershipYear: year,
+      surplusAnonymous: anonymousForYear(payments, year),
       paidAmount: paid?.fee ?? null,
       supportAmount: paid?.support ?? 0,
     });
@@ -80,31 +94,25 @@ export const PATCH = withRoute(
       await prisma.user.update({ where: { id: existing.userId }, data: { photo } });
     }
 
-    const member = await prisma.member.findUnique({
-      where: { id },
+    const account = await prisma.user.findUniqueOrThrow({
+      where: { id: existing.userId },
       select: {
-        id: true,
-        membershipYear: true,
-        user: {
-          select: {
-            photo: true,
-            photoLocked: true,
-            payments: {
-              where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true, anonymous: true },
-            },
-          },
+        photo: true,
+        photoLocked: true,
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true, anonymous: true },
         },
+        memberships: { select: { year: true } },
       },
     });
+    const current = latestMembership(account.memberships);
 
-    return NextResponse.json(
-      member && {
-        id: member.id,
-        surplusAnonymous: anonymousForYear(member.user.payments, member.membershipYear),
-        photo: member.user.photo,
-        photoLocked: member.user.photoLocked,
-      },
-    );
+    return NextResponse.json({
+      id,
+      surplusAnonymous: current ? anonymousForYear(account.payments, current.year) : false,
+      photo: account.photo,
+      photoLocked: account.photoLocked,
+    });
   },
 );
