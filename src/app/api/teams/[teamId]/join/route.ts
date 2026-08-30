@@ -72,11 +72,7 @@ export const DELETE = withRoute(
     const { teamId } = await params;
     const { memberId } = parse(teamMemberSchema, await req.json());
 
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      select: { userId: true },
-    });
-    if (!member || member.userId !== session.userId) {
+    if (memberId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 

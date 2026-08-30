@@ -19,6 +19,7 @@ export const members = {
   alreadyHasRequest: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
   alreadyAccepted: "هذا العضو مقبول بالفعل",
   invalidMember: "عضو غير صالح",
+  alreadyHasAccount: "لهذا العضو حساب مسبقاً",
   accountAlreadyHasMember: "لهذا الحساب عضو مسبقاً",
   accountPhoneTaken: "هذا الرقم مستعمل لحساب آخر",
   noAccountToCorrect: "لا يوجد حساب لهذا العضو",

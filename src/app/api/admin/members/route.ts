@@ -26,7 +26,6 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       user: {
         select: {
           ...PERSON_WITH_PHONE_SELECT,
-          members: { select: { id: true }, orderBy: { createdAt: "asc" } },
           registrations: {
             select: { activityId: true, activity: { select: { id: true, title: true } } },
           },
@@ -42,20 +41,16 @@ export const GET = withRoute("GET /api/admin/members", async () => {
   const current = byReviewOrder([...latestByAccount(memberships).values()]);
 
   return NextResponse.json({
-    members: current.flatMap((membership) => {
-      const { year, user, ...rest } = membership;
-      const { payments, registrations, members, ...account } = user;
-      const id = members[0]?.id;
-      if (!id) return [];
+    members: current.map((membership) => {
+      const { year, user, userId, ...rest } = membership;
+      const { payments, registrations, ...account } = user;
       const paid = paidForYear(payments, year);
-      return [
-        {
-          ...withPerson({ ...rest, id, membershipYear: year, user: account }),
-          registrations,
-          paidAmount: paid?.fee ?? null,
-          supportAmount: paid?.support ?? 0,
-        },
-      ];
+      return {
+        ...withPerson({ ...rest, id: userId, membershipYear: year, user: account }),
+        registrations,
+        paidAmount: paid?.fee ?? null,
+        supportAmount: paid?.support ?? 0,
+      };
     }),
   });
 });

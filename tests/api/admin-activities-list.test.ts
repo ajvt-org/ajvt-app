@@ -34,7 +34,7 @@ describe("the activities the admin list is built from", () => {
     const body = await (await LIST(get("/api/admin/activities"))).json();
 
     expect(body.activities[0].registrations[0].member).toEqual({
-      id: member.id,
+      id: member.userId,
       fullName: "أبوبكر لمرابط",
       phone: "33655124",
       age: "البدريين",

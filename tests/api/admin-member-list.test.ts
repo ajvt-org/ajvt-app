@@ -65,11 +65,10 @@ describe("the admin member list", () => {
     expect(rows[0]).toMatchObject({ membershipYear: YEAR, paymentMethod: "مصرفي" });
   });
 
-  it("names the member row, which the admin screens ask about by id", async () => {
+  it("names the account, which the admin screens ask about by id", async () => {
     const user = await member("محمد");
-    const row = await prisma.member.findFirstOrThrow({ where: { userId: user.id } });
 
-    expect((await listed())[0].id).toBe(row.id);
+    expect((await listed())[0].id).toBe(user.id);
   });
 
   it("exports a member once, on their newest year", async () => {

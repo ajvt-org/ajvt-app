@@ -75,8 +75,8 @@ describe("admin membership is one per account", () => {
     const member = await memberFor(null);
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { accountPhone: "22334455" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { accountPhone: "22334455" }),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(200);
@@ -89,15 +89,15 @@ describe("admin membership is one per account", () => {
     const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { age: "الفائزين" }),
+      withId(member.userId),
     );
     await PAY(
-      put(`/api/admin/members/${member.id}/payment`, {
+      put(`/api/admin/members/${member.userId}/payment`, {
         amountTransferred: null,
         paymentMethod: "السداد",
       }),
-      withId(member.id),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(200);
@@ -108,13 +108,13 @@ describe("admin membership is one per account", () => {
     ).toBe("السداد");
 
     const log = await prisma.auditLog.findFirstOrThrow({
-      where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER" },
+      where: { targetType: "Member", targetId: member.userId, action: "UPDATE_MEMBER" },
     });
     expect(log.before).toMatchObject({ age: "البدريين" });
     expect(log.after).toMatchObject({ age: "الفائزين" });
 
     const paymentLog = await prisma.auditLog.findFirstOrThrow({
-      where: { targetType: "Member", targetId: member.id, action: "UPDATE_MEMBER_PAYMENT" },
+      where: { targetType: "Member", targetId: member.userId, action: "UPDATE_MEMBER_PAYMENT" },
     });
     expect(paymentLog.adminUsername).toBe("admin");
   });
@@ -123,7 +123,10 @@ describe("admin membership is one per account", () => {
     await signIn();
     const member = await memberFor(null, { age: "البدريين", paymentMethod: "بنكيلي" });
 
-    await PATCH(patch(`/api/admin/members/${member.id}`, { age: "الفائزين" }), withId(member.id));
+    await PATCH(
+      patch(`/api/admin/members/${member.userId}`, { age: "الفائزين" }),
+      withId(member.userId),
+    );
 
     const updated = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(updated.paymentMethod).toBe("بنكيلي");
@@ -135,11 +138,11 @@ describe("admin membership is one per account", () => {
     const member = await memberFor(null, { paymentMethod: "بنكيلي" });
 
     const res = await PAY(
-      put(`/api/admin/members/${member.id}/payment`, {
+      put(`/api/admin/members/${member.userId}/payment`, {
         amountTransferred: null,
         paymentMethod: "   ",
       }),
-      withId(member.id),
+      withId(member.userId),
     );
 
     expect(res.status).toBe(400);
@@ -156,8 +159,8 @@ describe("admin membership is one per account", () => {
     const orphan = await memberFor(null, { fullName: "آخر" });
 
     const res = await PATCH(
-      patch(`/api/admin/members/${orphan.id}`, { accountPhone: "22334455" }),
-      withId(orphan.id),
+      patch(`/api/admin/members/${orphan.userId}`, { accountPhone: "22334455" }),
+      withId(orphan.userId),
     );
 
     expect(res.status).toBe(409);

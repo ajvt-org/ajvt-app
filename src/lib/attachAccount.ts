@@ -13,7 +13,7 @@ export interface AttachedAccount {
 }
 
 export async function attachAccount(
-  memberId: string,
+  userId: string,
   phone: string,
   options: { allowed: boolean },
 ): Promise<AttachedAccount> {
@@ -23,37 +23,34 @@ export async function attachAccount(
   if (phoneError) throw new ValidationError(phoneError);
   const trimmed = phone.trim();
 
-  const member = await prisma.member.findUnique({
-    where: { id: memberId },
-    include: { user: true },
-  });
-  if (!member) throw new NotFoundError(members.notFound);
-  if (member.user.phone) throw new ValidationError("لهذا العضو حساب مسبقاً");
+  const placeholder = await prisma.user.findUnique({ where: { id: userId } });
+  if (!placeholder) throw new NotFoundError(members.notFound);
+  if (placeholder.phone) throw new ValidationError(members.alreadyHasAccount);
 
   const found = await prisma.user.findUnique({
     where: { phone: trimmed },
-    select: { id: true, members: { select: { id: true }, take: 1 } },
+    select: { id: true, memberships: { select: { id: true }, take: 1 } },
   });
-  if (found?.members.length) throw new ConflictError(members.accountAlreadyHasMember);
+  if (found?.memberships.length) throw new ConflictError(members.accountAlreadyHasMember);
 
   if (!found) {
     const tempPassword = generateTempPassword();
     const { tempPasswordHours } = await getAppSettings();
     await prisma.user.update({
-      where: { id: member.userId },
+      where: { id: userId },
       data: {
         phone: trimmed,
         password: await bcrypt.hash(tempPassword, 12),
         tempPasswordExpiresAt: tempPasswordExpiry(tempPasswordHours),
       },
     });
-    return { userId: member.userId, tempPassword };
+    return { userId, tempPassword };
   }
 
-  const placeholder = member.user;
   await prisma.$transaction(async (tx) => {
-    await tx.member.update({ where: { id: memberId }, data: { userId: found.id } });
-    await tx.user.delete({ where: { id: placeholder.id } });
+    await tx.membership.updateMany({ where: { userId }, data: { userId: found.id } });
+    await tx.member.updateMany({ where: { userId }, data: { userId: found.id } });
+    await tx.user.delete({ where: { id: userId } });
     await tx.user.update({
       where: { id: found.id },
       data: {

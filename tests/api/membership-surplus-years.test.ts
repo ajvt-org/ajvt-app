@@ -73,7 +73,7 @@ describe("a surplus belongs to the year it was paid for", () => {
     const m = await memberOnLastYear();
     await lastYearSurplus(m.id, 400);
 
-    await renew(m.id, 1000);
+    await renew(m.userId, 1000);
 
     const rows = await surplusRows(m.id);
     expect(rows.map((r) => r.membershipYear)).toEqual([LAST, YEAR]);
@@ -84,7 +84,7 @@ describe("a surplus belongs to the year it was paid for", () => {
     const m = await memberOnLastYear();
     await lastYearSurplus(m.id, 400);
 
-    await renew(m.id, 1000);
+    await renew(m.userId, 1000);
 
     const { getLeaderboardData } = await import("@/lib/donationsServer");
     const { leaderboard } = await getLeaderboardData();
@@ -93,10 +93,10 @@ describe("a surplus belongs to the year it was paid for", () => {
 
   it("still corrects this year's row rather than adding a second one", async () => {
     const m = await memberOnLastYear();
-    await renew(m.id, 1000);
+    await renew(m.userId, 1000);
 
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 600, 100);
+    await recordMembershipPayment(prisma, m.userId, 600, 100);
 
     const rows = await surplusRows(m.id);
     expect(rows).toHaveLength(1);
@@ -107,14 +107,14 @@ describe("a surplus belongs to the year it was paid for", () => {
   it("does not withdraw last year's surplus when this year's membership is refused", async () => {
     const m = await memberOnLastYear();
     await lastYearSurplus(m.id, 400);
-    await renew(m.id, 1000);
+    await renew(m.userId, 1000);
 
     const { syncSurplusStatus } = await import("@/lib/membershipPaymentServer");
     await prisma.membership.updateMany({
       where: { userId: m.userId, year: YEAR },
       data: { status: "REJECTED" },
     });
-    await syncSurplusStatus(prisma, m.id);
+    await syncSurplusStatus(prisma, m.userId);
 
     const rows = await surplusRows(m.id);
     expect(rows.map((r) => r.status)).toEqual(["ACTIVE", "REJECTED"]);
@@ -130,7 +130,7 @@ describe("a surplus belongs to the year it was paid for", () => {
     });
 
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 300, 100);
+    await recordMembershipPayment(prisma, m.userId, 300, 100);
 
     const rows = await surplusRows(m.id);
     expect(rows[0].membershipYear).toBe(YEAR);

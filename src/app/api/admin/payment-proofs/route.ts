@@ -25,9 +25,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
             status: true,
             createdAt: true,
             updatedAt: true,
-            user: {
-              select: { fullName: true, members: { select: { id: true }, take: 1 } },
-            },
+            user: { select: { fullName: true } },
           },
         })
       : Promise.resolve([]),
@@ -79,13 +77,11 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   });
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
 
-  const latestWithProof = [...latestByAccount(memberships).values()].filter(
-    (membership) => membership.user.members.length > 0,
-  );
+  const latestWithProof = [...latestByAccount(memberships).values()];
 
   const proofs = [
     ...latestWithProof.map((m) => ({
-      id: m.user.members[0].id,
+      id: m.userId,
       kind: "MEMBERSHIP" as const,
       proof: m.paymentProof as string,
       memberName: nameOf(m.user),

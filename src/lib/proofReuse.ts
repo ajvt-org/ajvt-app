@@ -28,10 +28,7 @@ export async function findProofReuse(
   const [members, donations, expenses] = await Promise.all([
     prisma.membership.findMany({
       where: { paymentProof: { in: names } },
-      select: {
-        createdAt: true,
-        user: { select: { fullName: true, members: { select: { id: true }, take: 1 } } },
-      },
+      select: { userId: true, createdAt: true, user: { select: { fullName: true } } },
     }),
     prisma.donation.findMany({
       where: { proof: { in: names } },
@@ -49,18 +46,12 @@ export async function findProofReuse(
   ]);
 
   const found: ProofReuse[] = [
-    ...members.flatMap((m) =>
-      m.user.members.length === 0
-        ? []
-        : [
-            {
-              kind: "member" as const,
-              id: m.user.members[0].id,
-              label: nameOf(m.user),
-              date: m.createdAt,
-            },
-          ],
-    ),
+    ...members.map((m) => ({
+      kind: "member" as const,
+      id: m.userId,
+      label: nameOf(m.user),
+      date: m.createdAt,
+    })),
     ...donations.map((d) => ({
       kind: "donation" as const,
       id: d.id,

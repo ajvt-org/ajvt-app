@@ -140,7 +140,7 @@ describe("the supporters board", () => {
   it("counts what a membership payment carried past the fee, and not the fee", async () => {
     const m = await member("محمد");
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 1000, 100);
+    await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
     const { leaderboard } = await getLeaderboardData();
 
@@ -151,7 +151,7 @@ describe("the supporters board", () => {
   it("leaves a member who paid the fee and nothing more off the board", async () => {
     const m = await member("محمد");
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 100, 100);
+    await recordMembershipPayment(prisma, m.userId, 100, 100);
 
     const { leaderboard } = await getLeaderboardData();
 

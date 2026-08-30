@@ -47,7 +47,7 @@ describe("an admin blocking a member's picture", () => {
     const { user, member: row } = await member();
     await signInAsAdmin(await createAdmin());
 
-    expect((await lock(row.id, true)).status).toBe(200);
+    expect((await lock(row.userId, true)).status).toBe(200);
 
     const after = await accountOf(user.id);
     expect(after.photoLocked).toBe(true);
@@ -58,17 +58,17 @@ describe("an admin blocking a member's picture", () => {
     const { member: row } = await member();
     await signInAsAdmin(await createAdmin());
 
-    await lock(row.id, true);
+    await lock(row.userId, true);
 
     const entry = await prisma.auditLog.findFirst({ where: { action: "LOCK_MEMBER_PHOTO" } });
-    expect(entry?.targetId).toBe(row.id);
+    expect(entry?.targetId).toBe(row.userId);
   });
 
   it("records lifting the block too", async () => {
     const { user, member: row } = await member({ photoLocked: true, photo: null });
     await signInAsAdmin(await createAdmin());
 
-    await lock(row.id, false);
+    await lock(row.userId, false);
 
     expect((await accountOf(user.id)).photoLocked).toBe(false);
     expect(await prisma.auditLog.count({ where: { action: "UNLOCK_MEMBER_PHOTO" } })).toBe(1);
@@ -78,7 +78,7 @@ describe("an admin blocking a member's picture", () => {
     const { member: row } = await member({ photoLocked: true });
     await signInAsAdmin(await createAdmin());
 
-    await lock(row.id, true);
+    await lock(row.userId, true);
 
     expect(await prisma.auditLog.count({ where: { action: "LOCK_MEMBER_PHOTO" } })).toBe(0);
   });
@@ -87,7 +87,7 @@ describe("an admin blocking a member's picture", () => {
     const { user, member: row } = await member({ photoLocked: true, photo: "kept.webp" });
     await signInAsAdmin(await createAdmin());
 
-    await lock(row.id, false);
+    await lock(row.userId, false);
 
     expect((await accountOf(user.id)).photo).toBe("kept.webp");
   });
@@ -97,8 +97,8 @@ describe("an admin blocking a member's picture", () => {
     await signInAsAdmin(await createAdmin());
 
     const res = await ADMIN_PATCH(
-      patch(`/api/admin/members/${row.id}`, { photo: "admin.webp" }),
-      withId(row.id),
+      patch(`/api/admin/members/${row.userId}`, { photo: "admin.webp" }),
+      withId(row.userId),
     );
 
     expect(res.status).toBe(200);
@@ -185,7 +185,7 @@ describe("the screens that read the block back", () => {
     await signInAsAdmin(await createAdmin());
 
     const body = await (
-      await PROFILE(get(`/api/admin/members/${row.id}/profile`), withId(row.id))
+      await PROFILE(get(`/api/admin/members/${row.userId}/profile`), withId(row.userId))
     ).json();
 
     expect(body.member.photoLocked).toBe(true);
@@ -196,7 +196,7 @@ describe("the screens that read the block back", () => {
     await signInAsAdmin(await createAdmin());
 
     const body = await (
-      await PROFILE(get(`/api/admin/members/${row.id}/profile`), withId(row.id))
+      await PROFILE(get(`/api/admin/members/${row.userId}/profile`), withId(row.userId))
     ).json();
 
     expect(body.member.photoLocked).toBe(false);
@@ -224,8 +224,8 @@ describe("an admin removing the picture", () => {
     const { user, member: row } = await member();
 
     const res = await ADMIN_PATCH(
-      patch(`/api/admin/members/${row.id}`, { photo: null }),
-      withId(row.id),
+      patch(`/api/admin/members/${row.userId}`, { photo: null }),
+      withId(row.userId),
     );
 
     expect(res.status).toBe(200);
@@ -235,7 +235,10 @@ describe("an admin removing the picture", () => {
   it("leaves the block where it was", async () => {
     const { user, member: row } = await member({ photoLocked: true });
 
-    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+    await ADMIN_PATCH(
+      patch(`/api/admin/members/${row.userId}`, { photo: null }),
+      withId(row.userId),
+    );
 
     expect((await accountOf(user.id)).photoLocked).toBe(true);
   });
@@ -243,10 +246,13 @@ describe("an admin removing the picture", () => {
   it("records the removal under its own name in the trail", async () => {
     const { member: row } = await member();
 
-    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+    await ADMIN_PATCH(
+      patch(`/api/admin/members/${row.userId}`, { photo: null }),
+      withId(row.userId),
+    );
 
     const entry = await prisma.auditLog.findFirstOrThrow({
-      where: { action: "REMOVE_MEMBER_PHOTO", targetId: row.id },
+      where: { action: "REMOVE_MEMBER_PHOTO", targetId: row.userId },
     });
     expect(JSON.stringify(entry.before)).toContain("old.webp");
   });
@@ -254,7 +260,10 @@ describe("an admin removing the picture", () => {
   it("says nothing to the trail when there was no picture to remove", async () => {
     const { member: row } = await member({ photo: null });
 
-    await ADMIN_PATCH(patch(`/api/admin/members/${row.id}`, { photo: null }), withId(row.id));
+    await ADMIN_PATCH(
+      patch(`/api/admin/members/${row.userId}`, { photo: null }),
+      withId(row.userId),
+    );
 
     expect(await prisma.auditLog.count({ where: { action: "REMOVE_MEMBER_PHOTO" } })).toBe(0);
   });
@@ -262,7 +271,7 @@ describe("an admin removing the picture", () => {
   it("keeps the removal out of the trail when the block cleared the picture", async () => {
     const { member: row } = await member();
 
-    await lock(row.id, true);
+    await lock(row.userId, true);
 
     expect(await prisma.auditLog.count({ where: { action: "REMOVE_MEMBER_PHOTO" } })).toBe(0);
     expect(await prisma.auditLog.count({ where: { action: "LOCK_MEMBER_PHOTO" } })).toBe(1);

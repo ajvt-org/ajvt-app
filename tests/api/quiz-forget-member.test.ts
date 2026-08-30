@@ -76,7 +76,7 @@ describe("deleting a member", () => {
     await played(c.id, leaving.id, 1, 90);
     await played(c.id, staying.id, 1, 40);
 
-    expect((await removeMember(gone.id, "راحل")).status).toBe(200);
+    expect((await removeMember(gone.userId, "راحل")).status).toBe(200);
 
     const rows = (await getStandings(c.id, staying.id, 10, AT)).boards[0].rows;
     expect(rows.map((r) => r.name)).toEqual(["باق"]);
@@ -99,7 +99,7 @@ describe("deleting a member", () => {
       },
     });
 
-    await removeMember(gone.id, "راحل");
+    await removeMember(gone.userId, "راحل");
 
     expect(await prisma.quizAttempt.count({ where: { userId: leaving.id } })).toBe(0);
     expect(await prisma.quizAttemptAnswer.count()).toBe(0);
@@ -111,7 +111,7 @@ describe("deleting a member", () => {
     const gone = await member(leaving.id, "راحل");
     await prisma.quizParticipant.create({ data: { competitionId: c.id, userId: leaving.id } });
 
-    await removeMember(gone.id, "راحل");
+    await removeMember(gone.userId, "راحل");
 
     expect(await prisma.quizParticipant.count({ where: { userId: leaving.id } })).toBe(0);
   });
@@ -124,7 +124,7 @@ describe("deleting a member", () => {
     await played(c.id, leaving.id, 1, 90);
     await played(c.id, staying.id, 1, 40);
 
-    await removeMember(gone.id, "راحل");
+    await removeMember(gone.userId, "راحل");
 
     expect(await prisma.quizAttempt.count({ where: { userId: staying.id } })).toBe(1);
   });
@@ -135,7 +135,7 @@ describe("deleting a member", () => {
     const gone = await member(leaving.id, "راحل");
     await played(c.id, leaving.id, 1, 90);
 
-    await removeMember(gone.id, "راحل");
+    await removeMember(gone.userId, "راحل");
 
     const entry = await prisma.auditLog.findFirstOrThrow({ where: { action: "DELETE_MEMBER" } });
     expect(JSON.stringify(entry.meta)).toContain("attempts");

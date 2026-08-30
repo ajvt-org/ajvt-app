@@ -5,7 +5,7 @@ import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
 import { latestMembership } from "@/lib/currentMembership";
-import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
+import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
@@ -13,71 +13,64 @@ export const GET = withRoute(
     await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
-        userId: true,
-        user: {
+        createdAt: true,
+        memberships: {
+          select: {
+            year: true,
+            status: true,
+            rejectionReason: true,
+            paymentMethod: true,
+            paymentProof: true,
+            referenceCode: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        ...PERSON_WITH_PHONE_SELECT,
+        registrations: {
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
+            status: true,
+            rejectionReason: true,
             createdAt: true,
-            memberships: {
-              select: {
-                year: true,
-                status: true,
-                rejectionReason: true,
-                paymentMethod: true,
-                paymentProof: true,
-                referenceCode: true,
-                createdAt: true,
-                updatedAt: true,
-              },
+            activity: { select: { id: true, title: true, startsAt: true } },
+          },
+        },
+        teamMemberships: {
+          select: {
+            status: true,
+            team: {
+              select: { id: true, name: true, activity: { select: { id: true, title: true } } },
             },
-            ...PERSON_WITH_PHONE_SELECT,
-            registrations: {
-              orderBy: { createdAt: "desc" },
-              select: {
-                id: true,
-                status: true,
-                rejectionReason: true,
-                createdAt: true,
-                activity: { select: { id: true, title: true, startsAt: true } },
-              },
-            },
-            teamMemberships: {
-              select: {
-                status: true,
-                team: {
-                  select: { id: true, name: true, activity: { select: { id: true, title: true } } },
-                },
-              },
-            },
-            payments: {
-              where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true },
-            },
-            donations: {
-              orderBy: { createdAt: "desc" },
-              select: {
-                id: true,
-                amount: true,
-                status: true,
-                source: true,
-                membershipYear: true,
-                paymentMethod: true,
-                createdAt: true,
-              },
-            },
+          },
+        },
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true },
+        },
+        donations: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            source: true,
+            membershipYear: true,
+            paymentMethod: true,
+            createdAt: true,
           },
         },
       },
     });
 
-    if (!member) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+    if (!account) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
-    const { registrations, teamMemberships, payments, donations, memberships, ...account } =
-      member.user;
+    const { registrations, teamMemberships, payments, donations, memberships, ...person } = account;
     const current = latestMembership(memberships);
     if (!current) return NextResponse.json({ error: messages.notFound }, { status: 404 });
     const { year, ...membership } = current;
@@ -91,7 +84,11 @@ export const GET = withRoute(
 
     return NextResponse.json({
       member: {
-        ...withPerson({ ...member, ...membership, membershipYear: year, user: account }),
+        ...personOf(person),
+        ...membership,
+        id,
+        user: { id: person.id, phone: person.phone, createdAt: person.createdAt },
+        membershipYear: year,
         registrations,
         teamMemberships,
         donations,

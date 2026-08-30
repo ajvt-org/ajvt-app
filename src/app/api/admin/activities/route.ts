@@ -32,7 +32,7 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
           createdAt: true,
           userId: true,
           user: {
-            select: { phone: true, fullName: true, age: true, members: { select: { id: true } } },
+            select: { phone: true, fullName: true, age: true },
           },
         },
         orderBy: { createdAt: "asc" },
@@ -51,7 +51,7 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
       registrations: registrations.map(({ user, userId, ...registration }) => ({
         ...registration,
         member: {
-          id: user.members[0]?.id ?? userId,
+          id: userId,
           fullName: nameOf(user),
           phone: user.phone,
           age: user.age ?? "",

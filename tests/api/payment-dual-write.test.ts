@@ -76,7 +76,7 @@ describe("every path that touches money writes only the payment", () => {
     const m = await prisma.member.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
@@ -90,7 +90,7 @@ describe("every path that touches money writes only the payment", () => {
     const m = await prisma.member.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     const membership = await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } });
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
@@ -103,15 +103,15 @@ describe("every path that touches money writes only the payment", () => {
     await REGISTER(post("/api/members", submission));
     const m = await prisma.member.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     await signInAsAdmin(await createAdmin("second", "SUPER"));
     await PAY(
-      put(`/api/admin/members/${m.id}/payment`, {
+      put(`/api/admin/members/${m.userId}/payment`, {
         amountTransferred: 3000,
         paymentMethod: "بنكيلي",
       }),
-      withId(m.id),
+      withId(m.userId),
     );
 
     expect(
@@ -127,7 +127,7 @@ describe("every path that touches money writes only the payment", () => {
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: m.id,
+        id: m.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
@@ -143,7 +143,10 @@ describe("every path that touches money writes only the payment", () => {
     const m = await prisma.member.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 600 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 600 }),
+      withId(m.userId),
+    );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).amount).toBe(600);
@@ -155,7 +158,10 @@ describe("every path that touches money writes only the payment", () => {
     const m = await prisma.member.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: null }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: null }),
+      withId(m.userId),
+    );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count()).toBe(0);
@@ -189,8 +195,8 @@ describe("every path that touches money writes only the payment", () => {
     });
 
     await RENEW(
-      post(`/api/admin/members/${m.id}/renew`, { paidAmount: 1000, paymentMethod: "بنكيلي" }),
-      withId(m.id),
+      post(`/api/admin/members/${m.userId}/renew`, { paidAmount: 1000, paymentMethod: "بنكيلي" }),
+      withId(m.userId),
     );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);

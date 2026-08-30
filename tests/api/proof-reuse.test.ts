@@ -52,7 +52,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const reuse = await findProofReuse("two.webp");
 
     expect(reuse).toHaveLength(1);
-    expect(reuse[0]).toMatchObject({ kind: "member", id: first.id, label: "محمد" });
+    expect(reuse[0]).toMatchObject({ kind: "member", id: first.userId, label: "محمد" });
   });
 
   it("does not report a record against itself", async () => {
@@ -61,7 +61,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const mine = await memberWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
-    const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.id });
+    const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.userId });
 
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });
