@@ -93,6 +93,27 @@ describe("POST /api/admin/notifications/broadcast", () => {
     expect(reached()).toEqual([registered.userId]);
   });
 
+  it("follows the newest year, leaving out a member whose renewal is still waiting", async () => {
+    const settled = await member("مسدد");
+    const waiting = await member("منتظر التجديد");
+    await prisma.membership.updateMany({
+      where: { userId: waiting.userId },
+      data: { year: new Date().getUTCFullYear() - 1 },
+    });
+    await prisma.membership.create({
+      data: {
+        userId: waiting.userId,
+        year: new Date().getUTCFullYear(),
+        status: "PENDING",
+        paymentMethod: "بنكيلي",
+      },
+    });
+
+    await broadcast({ target: "ALL" });
+
+    expect(reached()).toEqual([settled.userId]);
+  });
+
   it("counts the accounts it reached", async () => {
     await member("محمد ولد أحمد");
     await member("سالم ولد علي");
