@@ -39,9 +39,7 @@ describe("addMembership", () => {
 
     await addMembership(db as never, input());
 
-    expect(db.member.create).toHaveBeenCalledWith({
-      data: { userId: "u1", paymentMethod: "بنكيلي" },
-    });
+    expect(db.member.create).toHaveBeenCalledWith({ data: { userId: "u1" } });
     expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, {
       status: "PENDING",
       paymentMethod: "بنكيلي",
