@@ -104,10 +104,29 @@ describe("a receipt follows the payment it was issued for", () => {
     expect(receipt.userId).toBeNull();
   });
 
-  it("hides the payer once the gift is marked anonymous", async () => {
+  it("keeps naming the payer when the gift is hidden from the board", async () => {
     const payment = await aGift(2000);
 
     await prisma.payment.update({ where: { id: payment.id }, data: { anonymous: true } });
+    await syncReceiptsFor(prisma, { id: payment.id });
+
+    const receipt = await prisma.receipt.findFirstOrThrow();
+    expect(receipt.payerName).toBe("ابو");
+  });
+
+  it("names the account on a hidden gift rather than the typed name", async () => {
+    const account = await anAccount("أبوبكر لمرابط");
+    const payment = await aGift(2000, { userId: account.userId, anonymous: true });
+
+    await syncReceiptsFor(prisma, { id: payment.id });
+
+    const receipt = await prisma.receipt.findFirstOrThrow();
+    expect(receipt.payerName).toBe("أبوبكر لمرابط");
+  });
+
+  it("still has nothing to name when the giver left no name at all", async () => {
+    const payment = await aGift(2000, { anonymous: true, donorName: null });
+
     await syncReceiptsFor(prisma, { id: payment.id });
 
     const receipt = await prisma.receipt.findFirstOrThrow();

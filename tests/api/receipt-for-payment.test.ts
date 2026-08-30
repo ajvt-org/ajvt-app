@@ -35,7 +35,7 @@ describe("a receipt follows every accepted payment", () => {
     expect(receipt.paymentId).toBe(payment.id);
   });
 
-  it("names an anonymous donor the way the board does", async () => {
+  it("has nothing to name when a giver left no name at all", async () => {
     await prisma.payment.create({
       data: { purpose: "DONATION", amount: 2000, status: "ACTIVE", anonymous: true },
     });

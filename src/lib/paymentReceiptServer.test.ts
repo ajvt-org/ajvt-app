@@ -113,6 +113,14 @@ describe("issuing a receipt for a payment", () => {
     expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
   });
 
+  it("names the payer even when the gift is hidden from the board", async () => {
+    const db = fakeDb([{ ...MEMBERSHIP, anonymous: true }]);
+
+    await ensureReceiptsFor(db, {});
+
+    expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
+  });
+
   it("names the account over a donor name typed onto a linked payment", async () => {
     const db = fakeDb([{ ...MEMBERSHIP, donorName: "ابو" }]);
 
@@ -121,7 +129,7 @@ describe("issuing a receipt for a payment", () => {
     expect(db.receipt.create.mock.calls[0][0].data.payerName).toBe("محمد ولد أحمد");
   });
 
-  it("names an anonymous donor the way the board does", async () => {
+  it("has nothing to name when a giver left no name at all", async () => {
     const db = fakeDb([
       { ...MEMBERSHIP, purpose: "DONATION", year: null, anonymous: true, user: null },
     ]);
