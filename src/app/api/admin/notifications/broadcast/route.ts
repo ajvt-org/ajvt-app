@@ -7,7 +7,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { broadcastSchema } from "./schema";
 import { logger } from "@/lib/logger";
-import type { ReviewStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { counted } from "@/lib/arabicCount";
 import { RECIPIENT } from "@/lib/messages";
 
@@ -20,18 +20,12 @@ export const POST = withRoute(
       await req.json(),
     );
 
-    const where: {
-      status: ReviewStatus;
-      registrations?: { some: { activityId: string } };
-      age?: string;
-    } = { status: "ACTIVE" };
+    const where: Prisma.UserWhereInput = { members: { some: { status: "ACTIVE" } } };
     if (target === "ACTIVITY") where.registrations = { some: { activityId: activityId! } };
     if (target === "AGE") where.age = age!.trim();
 
-    const members = await prisma.member.findMany({ where, select: { userId: true } });
-    const userIds = Array.from(
-      new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)),
-    );
+    const accounts = await prisma.user.findMany({ where, select: { id: true } });
+    const userIds = accounts.map((account) => account.id);
 
     const payload = { title: title.trim(), body: body.trim() };
     await (
