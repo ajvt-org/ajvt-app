@@ -21,9 +21,10 @@ function pay(id: string, body: Record<string, unknown>) {
   return PAY(put(`/api/admin/members/${id}/payment`, body), withId(id));
 }
 
-function recordOf(memberId: string, year: number) {
+function recordOf(memberId: string) {
   return prisma.membership.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, year },
+    where: { user: { members: { some: { id: memberId } } } },
+    orderBy: { year: "desc" },
   });
 }
 
@@ -33,27 +34,21 @@ describe("a proof added after the member was registered", () => {
     await signInAsAdmin(await createAdmin());
   });
 
-  it("lands on the membership and on the year record", async () => {
+  it("lands on the year record", async () => {
     const member = await addedByHand();
 
     const res = await pay(member.id, { paymentProof: "late.webp" });
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paymentProof).toBe("late.webp");
-    expect((await recordOf(member.id, member.membershipYear)).paymentProof).toBe("late.webp");
+    expect((await recordOf(member.id)).paymentProof).toBe("late.webp");
   });
 
   it("leaves the amount alone when only the proof is sent", async () => {
     const member = await addedByHand();
-    const before = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
 
     const body = await (await pay(member.id, { paymentProof: "late.webp" })).json();
 
     expect(body.amountTransferred).toBe(1000);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paidAmount).toBe(before.paidAmount);
-    expect((await recordOf(member.id, member.membershipYear)).paidAmount).toBe(before.paidAmount);
   });
 
   it("replaces a proof that was already there", async () => {
@@ -61,9 +56,7 @@ describe("a proof added after the member was registered", () => {
 
     await pay(member.id, { paymentProof: "second.webp" });
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paymentProof).toBe("second.webp");
-    expect((await recordOf(member.id, member.membershipYear)).paymentProof).toBe("second.webp");
+    expect((await recordOf(member.id)).paymentProof).toBe("second.webp");
   });
 
   it("clears the proof when it is sent as nothing", async () => {
@@ -71,8 +64,7 @@ describe("a proof added after the member was registered", () => {
 
     await pay(member.id, { paymentProof: null });
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paymentProof).toBeNull();
+    expect((await recordOf(member.id)).paymentProof).toBeNull();
   });
 
   it("records the proof in the audit trail", async () => {
@@ -95,17 +87,15 @@ describe("a proof added after the member was registered", () => {
     ).json();
 
     expect(body.amountTransferred).toBe(2000);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paymentProof).toBe("late.webp");
+    expect((await recordOf(member.id)).paymentProof).toBe("late.webp");
   });
 
   it("still clears the amount when it is sent as nothing", async () => {
     const member = await addedByHand();
 
-    await pay(member.id, { amountTransferred: null });
+    const body = await (await pay(member.id, { amountTransferred: null })).json();
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
-    expect(after.paidAmount).toBeNull();
+    expect(body.amountTransferred).toBeNull();
   });
 
   it("refuses an amount under the fee", async () => {

@@ -10,6 +10,8 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { members } from "@/lib/messages";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { saveMembershipYear } from "@/lib/membershipRecord";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 const CODE_ATTEMPTS = 5;
 
@@ -30,30 +32,32 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   }
 
   if (id) {
-    const existing = await prisma.member.findUnique({ where: { id } });
+    const existing = await prisma.member.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
     if (!existing || existing.userId !== session.userId) {
       throw new NotFoundError(members.notFound);
     }
-    if (existing.status === "ACTIVE") {
-      throw new ConflictError("هذا العضو مقبول بالفعل");
+    const current = await currentMembership(prisma, existing.userId);
+    if (!current) {
+      throw new NotFoundError(members.notFound);
+    }
+    if (current.status === "ACTIVE") {
+      throw new ConflictError(members.alreadyAccepted);
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
-      const m = await tx.member.update({
-        where: { id },
-        data: {
-          paymentMethod,
-          paymentProof,
-          ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
-          ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
-          status: "PENDING",
-          rejectionReason: null,
-        },
+    await prisma.$transaction(async (tx) => {
+      await saveMembershipYear(tx, existing.userId, current.year, {
+        paymentMethod,
+        paymentProof,
+        ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
+        status: "PENDING",
+        rejectionReason: null,
       });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, surplusAnonymous);
-      return m;
     });
-    return NextResponse.json({ id: updated.id }, { status: 200 });
+    return NextResponse.json({ id }, { status: 200 });
   }
 
   if (person.members.length) {
@@ -66,15 +70,13 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     try {
       const member = await prisma.$transaction(async (tx) => {
         const created = await tx.member.create({
-          data: {
-            userId: session.userId,
-            paymentMethod,
-            paymentProof,
-            surplusAnonymous: surplusAnonymous ?? false,
-            referenceCode: code,
-            status: "PENDING",
-            membershipYear,
-          },
+          data: { userId: session.userId, paymentMethod },
+        });
+        await saveMembershipYear(tx, session.userId, membershipYear, {
+          paymentMethod,
+          paymentProof,
+          referenceCode: code,
+          status: "PENDING",
         });
         await recordMembershipPayment(
           tx,
@@ -83,7 +85,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           membershipFee,
           surplusAnonymous,
         );
-        return created;
+        return { id: created.id, referenceCode: code };
       });
       return NextResponse.json(
         { id: member.id, referenceCode: member.referenceCode },

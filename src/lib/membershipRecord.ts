@@ -3,27 +3,25 @@ import { stampRecordedBy } from "./paymentMirror";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
-export interface MembershipEdit {
+export interface MembershipYearEdit {
+  status?: ReviewStatus;
+  rejectionReason?: string | null;
   paymentMethod?: string | null;
   paymentProof?: string | null;
+  referenceCode?: string | null;
 }
 
-export function membershipEdit(data: MembershipEdit): MembershipEdit {
-  const edit: MembershipEdit = {};
-  if (data.paymentMethod !== undefined) edit.paymentMethod = data.paymentMethod;
-  if (data.paymentProof !== undefined) edit.paymentProof = data.paymentProof;
-  return edit;
-}
-
-export async function syncMembershipRecord(
+export async function saveMembershipYear(
   db: Db,
   userId: string,
   year: number,
-  data: MembershipEdit,
+  edit: MembershipYearEdit,
 ) {
-  const edit = membershipEdit(data);
-  if (Object.keys(edit).length === 0) return;
-  await db.membership.updateMany({ where: { userId, year }, data: edit });
+  await db.membership.upsert({
+    where: { userId_year: { userId, year } },
+    update: edit,
+    create: { userId, year, ...edit },
+  });
 }
 
 export interface MembershipYearPayment {
@@ -82,26 +80,5 @@ export async function setMembershipStatus(
       rejectionReason: verdict.rejectionReason ?? null,
       ...(verdict.reviewedBy ? { reviewedBy: verdict.reviewedBy, reviewedAt: now } : {}),
     },
-  });
-}
-
-export interface MembershipSnapshot {
-  status: ReviewStatus;
-  rejectionReason: string | null;
-  paymentMethod: string | null;
-  paymentProof: string | null;
-  referenceCode: string | null;
-}
-
-export async function saveMembershipSnapshot(
-  db: Db,
-  userId: string,
-  year: number,
-  snapshot: MembershipSnapshot,
-) {
-  await db.membership.upsert({
-    where: { userId_year: { userId, year } },
-    update: snapshot,
-    create: { userId, year, ...snapshot },
   });
 }

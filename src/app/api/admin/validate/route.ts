@@ -4,8 +4,9 @@ import { requireAdminRole } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
 import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
-import { syncSurplusStatus } from "@/lib/membershipPaymentServer";
-import { recordMembershipYear } from "@/lib/membershipRecord";
+import { mirrorMembershipStatus } from "@/lib/paymentMirror";
+import { recordMembershipYear, setMembershipStatus } from "@/lib/membershipRecord";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
@@ -31,37 +32,39 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
   }
 
   const { membershipFee } = await getAppSettings();
-  const existing = await prisma.member.findUnique({
+  const member = await prisma.member.findUnique({
     where: { id },
-    select: {
-      status: true,
-      rejectionReason: true,
-      user: { select: { memberNumber: true } },
-    },
+    select: { userId: true, user: { select: { memberNumber: true } } },
   });
+  const existing = member ? await currentMembership(prisma, member.userId) : null;
   let issued: { memberNumber: string; verifyToken: string } | undefined;
-  if (action === "ACTIVE" && !existing?.user.memberNumber) {
+  if (action === "ACTIVE" && !member?.user.memberNumber) {
     issued = await issueMembership();
   }
 
   const updated = await prisma.$transaction(async (tx) => {
-    const m = await tx.member.update({
-      where: { id },
-      data: {
+    if (!member || !existing) throw new ValidationError(members.notFound);
+    await setMembershipStatus(
+      tx,
+      member.userId,
+      existing.year,
+      {
         status: action,
         rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
+        reviewedBy: session.username,
       },
-    });
-    if (issued) await tx.user.update({ where: { id: m.userId }, data: issued });
+      new Date(),
+    );
+    if (issued) await tx.user.update({ where: { id: member.userId }, data: issued });
     if (action === "ACTIVE") {
-      await recordMembershipYear(tx, m.userId, m.membershipYear, membershipFee, {
-        paymentMethod: m.paymentMethod,
-        paymentProof: m.paymentProof,
+      await recordMembershipYear(tx, member.userId, existing.year, membershipFee, {
+        paymentMethod: existing.paymentMethod,
+        paymentProof: existing.paymentProof,
         recordedBy: session.username,
       });
     }
-    await syncSurplusStatus(tx, id, session.username);
-    return m;
+    await mirrorMembershipStatus(tx, member.userId, existing.year, action);
+    return { userId: member.userId };
   });
 
   const person = await prisma.user.findUniqueOrThrow({
@@ -80,12 +83,12 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     {
       ...auditContext(session, req),
       targetType: "Member",
-      targetId: updated.id,
-      before: { status: existing?.status, memberNumber: existing?.user.memberNumber ?? null },
+      targetId: id,
+      before: { status: existing?.status, memberNumber: member?.user.memberNumber ?? null },
       after: {
-        status: updated.status,
+        status: action,
         memberNumber: person.memberNumber,
-        rejectionReason: updated.rejectionReason,
+        rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
       },
     },
   );
@@ -98,5 +101,5 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     ).catch((err) => logger.error("push.notify.error", err));
   }
 
-  return NextResponse.json({ member: updated });
+  return NextResponse.json({ member: { id, userId: updated.userId, status: action } });
 });

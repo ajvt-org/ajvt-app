@@ -29,18 +29,16 @@ const submission = {
 
 async function currentRecord(memberId: string) {
   const member = await prisma.member.findUniqueOrThrow({ where: { id: memberId } });
-  const record = await prisma.membership.findUniqueOrThrow({
-    where: { userId_year: { userId: member.userId, year: member.membershipYear } },
+  const record = await prisma.membership.findFirstOrThrow({
+    where: { userId: member.userId },
+    orderBy: { year: "desc" },
   });
   return { member, record };
 }
 
-async function expectNoDrift(memberId: string) {
-  const { member, record } = await currentRecord(memberId);
-  expect(record.status).toBe(member.status);
-  expect(record.rejectionReason).toBe(member.rejectionReason);
-  expect(record.paymentMethod).toBe(member.paymentMethod);
-  expect(record.referenceCode).toBe(member.referenceCode);
+async function expectRecorded(memberId: string, expected: Record<string, unknown>) {
+  const { record } = await currentRecord(memberId);
+  expect(record).toMatchObject(expected);
 }
 
 async function submitAs(body: Record<string, unknown> = {}) {
@@ -49,15 +47,19 @@ async function submitAs(body: Record<string, unknown> = {}) {
   return prisma.member.findFirstOrThrow();
 }
 
-describe("the membership year record follows the member it belongs to", () => {
+describe("the membership year record after each way it is written", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
-  it("matches after the member sends their request", async () => {
+  it("holds what the member sent", async () => {
     const member = await submitAs();
 
-    await expectNoDrift(member.id);
+    await expectRecorded(member.id, {
+      status: "PENDING",
+      paymentMethod: "بنكيلي",
+      paymentProof: "proof.webp",
+    });
   });
 
   it("matches after the member corrects and resends it", async () => {
@@ -72,8 +74,7 @@ describe("the membership year record follows the member it belongs to", () => {
       }),
     );
 
-    await expectNoDrift(member.id);
-    expect((await currentRecord(member.id)).record.paymentMethod).toBe("السداد");
+    await expectRecorded(member.id, { status: "PENDING", paymentMethod: "السداد" });
   });
 
   it("matches after an admin approves", async () => {
@@ -82,7 +83,7 @@ describe("the membership year record follows the member it belongs to", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    await expectNoDrift(member.id);
+    await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
   });
 
   it("matches after an admin refuses the payment", async () => {
@@ -97,7 +98,10 @@ describe("the membership year record follows the member it belongs to", () => {
       }),
     );
 
-    await expectNoDrift(member.id);
+    await expectRecorded(member.id, {
+      status: "REJECTED",
+      rejectionReason: "المبلغ المدفوع غير مطابق",
+    });
   });
 
   it("matches after a refusal is overturned", async () => {
@@ -113,8 +117,7 @@ describe("the membership year record follows the member it belongs to", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    await expectNoDrift(member.id);
-    expect((await currentRecord(member.id)).record.rejectionReason).toBeNull();
+    await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
   });
 
   it("matches after an admin edits what was paid", async () => {
@@ -126,7 +129,7 @@ describe("the membership year record follows the member it belongs to", () => {
       withId(member.id),
     );
 
-    await expectNoDrift(member.id);
+    await expectRecorded(member.id, { status: "PENDING", paymentMethod: "بنكيلي" });
   });
 
   it("matches after the member hides their name on the support board", async () => {
@@ -137,7 +140,6 @@ describe("the membership year record follows the member it belongs to", () => {
       withId(member.id),
     );
 
-    await expectNoDrift(member.id);
     const payment = await prisma.payment.findFirstOrThrow({
       where: { userId: member.userId, purpose: "MEMBERSHIP" },
     });
@@ -157,7 +159,10 @@ describe("the membership year record follows the member it belongs to", () => {
       paidAmount: 300,
     });
 
-    await expectNoDrift((await prisma.member.findFirstOrThrow()).id);
+    await expectRecorded((await prisma.member.findFirstOrThrow()).id, {
+      status: "ACTIVE",
+      paymentMethod: "نقداً",
+    });
   });
 
   it("opens a fresh record for the year a renewal covers, leaving the old one alone", async () => {
@@ -183,7 +188,6 @@ describe("the membership year record follows the member it belongs to", () => {
       [firstYear, "ACTIVE"],
       [firstYear + 1, "ACTIVE"],
     ]);
-    await expectNoDrift(member.id);
   });
 
   it("never leaves a member without a record for the year they are on", async () => {

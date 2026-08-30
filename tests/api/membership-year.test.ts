@@ -35,7 +35,7 @@ describe("the year a membership covers", () => {
 
     await REGISTER(post("/api/members", submission));
 
-    expect((await prisma.member.findFirstOrThrow()).membershipYear).toBe(pinned);
+    expect((await prisma.membership.findFirstOrThrow()).year).toBe(pinned);
   });
 
   it("comes from the settings when an admin adds a member by hand", async () => {
@@ -52,7 +52,7 @@ describe("the year a membership covers", () => {
     });
 
     expect(res.status).toBe(201);
-    expect((await prisma.member.findFirstOrThrow()).membershipYear).toBe(pinned);
+    expect((await prisma.membership.findFirstOrThrow()).year).toBe(pinned);
   });
 
   it("falls back to the running year when the association has pinned nothing", async () => {
@@ -60,16 +60,12 @@ describe("the year a membership covers", () => {
 
     await REGISTER(post("/api/members", submission));
 
-    expect((await prisma.member.findFirstOrThrow()).membershipYear).toBe(runningYear());
+    expect((await prisma.membership.findFirstOrThrow()).year).toBe(runningYear());
   });
 
-  it("is never missing, even on a row written without one", async () => {
-    const member = await makeMember({
-      fullName: "سالم",
-      age: "البدريين",
-      paymentMethod: "بنكيلي",
-    });
+  it("is never missing, even on a membership written without one", async () => {
+    await makeMember({ fullName: "سالم", age: "البدريين", paymentMethod: "بنكيلي" });
 
-    expect(member.membershipYear).toBe(runningYear());
+    expect((await prisma.membership.findFirstOrThrow()).year).toBe(runningYear());
   });
 });

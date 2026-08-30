@@ -110,7 +110,10 @@ describe("a surplus belongs to the year it was paid for", () => {
     await renew(m.id, 1000);
 
     const { syncSurplusStatus } = await import("@/lib/membershipPaymentServer");
-    await prisma.member.update({ where: { id: m.id }, data: { status: "REJECTED" } });
+    await prisma.membership.updateMany({
+      where: { userId: m.userId, year: YEAR },
+      data: { status: "REJECTED" },
+    });
     await syncSurplusStatus(prisma, m.id);
 
     const rows = await surplusRows(m.id);

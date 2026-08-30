@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { addMembership, type NewMembership } from "./membershipCreate";
 
-vi.mock("./membershipRecord", () => ({ recordMembershipYear: vi.fn() }));
+vi.mock("./membershipRecord", () => ({
+  recordMembershipYear: vi.fn(),
+  saveMembershipYear: vi.fn(),
+}));
 vi.mock("./membershipPaymentServer", () => ({ recordMembershipPayment: vi.fn() }));
 
-import { recordMembershipYear } from "./membershipRecord";
+import { recordMembershipYear, saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
 
 function fakeDb() {
@@ -37,18 +40,30 @@ describe("addMembership", () => {
     await addMembership(db as never, input());
 
     expect(db.member.create).toHaveBeenCalledWith({
-      data: {
-        userId: "u1",
-        paymentMethod: "بنكيلي",
-        paymentProof: null,
-        status: "PENDING",
-        membershipYear: 2026,
-      },
+      data: { userId: "u1", paymentMethod: "بنكيلي" },
+    });
+    expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, {
+      status: "PENDING",
+      paymentMethod: "بنكيلي",
+      paymentProof: null,
     });
     expect(recordMembershipPayment).toHaveBeenCalledWith(db, "m1", 100, 100, false);
   });
 
-  it("records no year while the payment is still under review", async () => {
+  it("saves the year a membership waiting on review belongs to", async () => {
+    vi.mocked(saveMembershipYear).mockClear();
+    const waiting = fakeDb();
+
+    await addMembership(waiting as never, input({ status: "PENDING" }));
+
+    expect(saveMembershipYear).toHaveBeenCalledWith(waiting, "u1", 2026, {
+      status: "PENDING",
+      paymentMethod: "بنكيلي",
+      paymentProof: null,
+    });
+  });
+
+  it("records no accepted year while the payment is still under review", async () => {
     vi.mocked(recordMembershipYear).mockClear();
     const db = fakeDb();
 
