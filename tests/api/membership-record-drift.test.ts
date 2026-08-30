@@ -30,7 +30,7 @@ const submission = {
 async function currentRecord(memberId: string) {
   const member = await prisma.member.findUniqueOrThrow({ where: { id: memberId } });
   const record = await prisma.membership.findUniqueOrThrow({
-    where: { memberId_year: { memberId, year: member.membershipYear } },
+    where: { userId_year: { userId: member.userId, year: member.membershipYear } },
   });
   return { member, record };
 }
@@ -139,7 +139,7 @@ describe("the membership year record follows the member it belongs to", () => {
 
     await expectNoDrift(member.id);
     const payment = await prisma.payment.findFirstOrThrow({
-      where: { memberId: member.id, purpose: "MEMBERSHIP" },
+      where: { userId: member.userId, purpose: "MEMBERSHIP" },
     });
     expect(payment.anonymous).toBe(true);
     expect(payment.donorName).toBeNull();
@@ -176,7 +176,7 @@ describe("the membership year record follows the member it belongs to", () => {
     );
 
     const records = await prisma.membership.findMany({
-      where: { memberId: member.id },
+      where: { userId: member.userId },
       orderBy: { year: "asc" },
     });
     expect(records.map((r) => [r.year, r.status])).toEqual([
@@ -200,7 +200,7 @@ describe("the membership year record follows the member it belongs to", () => {
     const members = await prisma.member.findMany();
     for (const member of members) {
       const record = await prisma.membership.findUnique({
-        where: { memberId_year: { memberId: member.id, year: member.membershipYear } },
+        where: { userId_year: { userId: member.userId, year: member.membershipYear } },
       });
       expect(record).not.toBeNull();
     }

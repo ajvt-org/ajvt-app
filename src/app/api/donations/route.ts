@@ -115,7 +115,6 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
       amount,
       paymentMethod,
       proof: filename,
-      memberId,
       userId: accountId,
       source: memberId ? "SELF" : "PUBLIC",
       status: "PENDING",

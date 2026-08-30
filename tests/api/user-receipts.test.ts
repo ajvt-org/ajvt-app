@@ -36,7 +36,6 @@ describe("the receipts a member can take away", () => {
         amount: 1000,
         year: 2026,
         status: "ACTIVE",
-        memberId: member.id,
         userId: member.userId,
       },
     });
@@ -63,7 +62,6 @@ describe("the receipts a member can take away", () => {
         purpose: "DONATION",
         amount: 5000,
         status: "ACTIVE",
-        memberId: member.id,
         userId: member.userId,
       },
     });
@@ -82,7 +80,6 @@ describe("the receipts a member can take away", () => {
         purpose: "DONATION",
         amount: 500,
         status: "PENDING",
-        memberId: member.id,
         userId: member.userId,
       },
     });
@@ -101,7 +98,6 @@ describe("the receipts a member can take away", () => {
         purpose: "DONATION",
         amount: 9000,
         status: "ACTIVE",
-        memberId: theirs.id,
         userId: theirs.userId,
       },
     });
@@ -121,7 +117,6 @@ describe("the receipts a member can take away", () => {
         purpose: "ACTIVITY",
         amount: 2000,
         status: "ACTIVE",
-        memberId: member.id,
         userId: member.userId,
         activityId: activity.id,
       },
@@ -139,7 +134,6 @@ describe("the receipts a member can take away", () => {
         purpose: "DONATION",
         amount: 100,
         status: "ACTIVE",
-        memberId: member.id,
         userId: member.userId,
         createdAt: new Date("2026-01-01T00:00:00Z"),
       },
@@ -149,7 +143,6 @@ describe("the receipts a member can take away", () => {
         purpose: "DONATION",
         amount: 200,
         status: "ACTIVE",
-        memberId: member.id,
         userId: member.userId,
         createdAt: new Date("2026-06-01T00:00:00Z"),
       },

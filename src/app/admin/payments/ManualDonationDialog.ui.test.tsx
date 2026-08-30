@@ -32,7 +32,6 @@ function mockPost() {
         source: "SELF",
         paymentMethod: "بنكيلي",
         proof: null,
-        memberId: "m1",
         userId: "u1",
         anonymous: false,
         activityId: null,

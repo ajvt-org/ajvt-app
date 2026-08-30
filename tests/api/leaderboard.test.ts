@@ -31,7 +31,6 @@ async function gift(
       amount,
       anonymous: opts.name == null,
       donorName: opts.name ?? null,
-      memberId: opts.memberId ?? null,
       userId: owner?.userId ?? null,
       status,
       source: opts.memberId ? "SELF" : "PUBLIC",

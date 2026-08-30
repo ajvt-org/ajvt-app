@@ -43,7 +43,7 @@ export async function seedDonations(
         status: "ACTIVE",
         source: "MEMBERSHIP",
         paymentMethod: member.paymentMethod,
-        memberId: member.id,
+        userId: member.userId,
         createdAt: member.createdAt,
       },
     });
@@ -93,7 +93,7 @@ export async function seedDonations(
           status: "ACTIVE",
           source: "SELF",
           paymentMethod: pick(PAYMENT_METHODS, i),
-          memberId: shy[i].id,
+          userId: shy[i].userId,
           createdAt: daysAgo(30 - i * 2),
         },
       });

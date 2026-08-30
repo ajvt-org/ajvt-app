@@ -20,46 +20,48 @@ export const GET = withRoute(
             id: true,
             createdAt: true,
             ...PERSON_WITH_PHONE_SELECT,
-          },
-        },
-        registrations: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            status: true,
-            rejectionReason: true,
-            createdAt: true,
-            activity: { select: { id: true, title: true, startsAt: true } },
-          },
-        },
-        teamMemberships: {
-          select: {
-            status: true,
-            team: {
-              select: { id: true, name: true, activity: { select: { id: true, title: true } } },
+            registrations: {
+              orderBy: { createdAt: "desc" },
+              select: {
+                id: true,
+                status: true,
+                rejectionReason: true,
+                createdAt: true,
+                activity: { select: { id: true, title: true, startsAt: true } },
+              },
             },
-          },
-        },
-        payments: {
-          where: { purpose: "MEMBERSHIP" },
-          select: { amount: true, feeApplied: true, year: true },
-        },
-        donations: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            amount: true,
-            status: true,
-            source: true,
-            membershipYear: true,
-            paymentMethod: true,
-            createdAt: true,
+            teamMemberships: {
+              select: {
+                status: true,
+                team: {
+                  select: { id: true, name: true, activity: { select: { id: true, title: true } } },
+                },
+              },
+            },
+            payments: {
+              where: { purpose: "MEMBERSHIP" },
+              select: { amount: true, feeApplied: true, year: true },
+            },
+            donations: {
+              orderBy: { createdAt: "desc" },
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+                source: true,
+                membershipYear: true,
+                paymentMethod: true,
+                createdAt: true,
+              },
+            },
           },
         },
       },
     });
 
     if (!member) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+
+    const { registrations, teamMemberships, payments, donations, ...account } = member.user;
 
     const history = await prisma.auditLog.findMany({
       where: { targetType: "Member", targetId: id },
@@ -70,9 +72,12 @@ export const GET = withRoute(
 
     return NextResponse.json({
       member: {
-        ...withPerson(member),
-        paidAmount: paidForYear(member.payments, member.membershipYear)?.fee ?? null,
-        supportAmount: paidForYear(member.payments, member.membershipYear)?.support ?? 0,
+        ...withPerson({ ...member, user: account }),
+        registrations,
+        teamMemberships,
+        donations,
+        paidAmount: paidForYear(payments, member.membershipYear)?.fee ?? null,
+        supportAmount: paidForYear(payments, member.membershipYear)?.support ?? 0,
       },
       history,
     });

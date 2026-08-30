@@ -97,8 +97,8 @@ describe("every path that touches money writes only the payment", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
 
-    const membership = await prisma.membership.findFirstOrThrow({ where: { memberId: m.id } });
-    const payment = await prisma.payment.findFirstOrThrow({ where: { memberId: m.id } });
+    const membership = await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } });
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
     expect(payment.recordedBy).toBe(membership.recordedBy);
     expect(payment.recordedBy).toBe("boss");
   });
@@ -119,9 +119,9 @@ describe("every path that touches money writes only the payment", () => {
       withId(m.id),
     );
 
-    expect((await prisma.payment.findFirstOrThrow({ where: { memberId: m.id } })).recordedBy).toBe(
-      "boss",
-    );
+    expect(
+      (await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } })).recordedBy,
+    ).toBe("boss");
   });
 
   it("agrees after an admin refuses that member", async () => {
@@ -193,7 +193,7 @@ describe("every path that touches money writes only the payment", () => {
       memberNumber: "AJVT-2025-0001",
     });
     await prisma.membership.create({
-      data: { memberId: m.id, userId: m.userId, year: YEAR - 1, status: "ACTIVE" },
+      data: { userId: m.userId, year: YEAR - 1, status: "ACTIVE" },
     });
 
     await RENEW(

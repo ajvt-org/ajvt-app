@@ -45,7 +45,6 @@ describe("the admin home", () => {
         purpose: "DONATION",
         amount: 5000,
         status: "ACTIVE",
-        memberId: paid.id,
         userId: paid.userId,
       },
     });
@@ -65,7 +64,6 @@ describe("the admin home", () => {
         purpose: "DONATION",
         amount: 5000,
         status: "PENDING",
-        memberId: m.id,
         userId: m.userId,
       },
     });

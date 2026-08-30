@@ -52,7 +52,6 @@ function mockPatch(donation: Record<string, unknown> = {}) {
         source: "PUBLIC",
         paymentMethod: null,
         proof: null,
-        memberId: "m1",
         userId: "u1",
         anonymous: false,
         activityId: null,
@@ -94,7 +93,7 @@ afterEach(() => {
 describe("editing a support payment", () => {
   it("lets the name be corrected even though a member is linked", async () => {
     const fetchMock = mockPatch();
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     const field = screen.getByLabelText(donationEdit.storedName);
     await userEvent.clear(field);
@@ -105,14 +104,14 @@ describe("editing a support payment", () => {
   });
 
   it("shows the account name as the one people will see", () => {
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     expect(screen.getByText(donationEdit.shownAs)).toBeTruthy();
     expect(screen.getAllByText("أبوبكر لمرابط").length).toBeGreaterThan(0);
   });
 
   it("calls the typed name a fallback when an account is linked", () => {
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     expect(screen.getByLabelText(donationEdit.storedName)).toBeTruthy();
     expect(screen.getByText(new RegExp(donationEdit.storedNameHint))).toBeTruthy();
@@ -120,7 +119,7 @@ describe("editing a support payment", () => {
 
   it("asks for a name only when nothing is linked", async () => {
     mockPatch();
-    show({ userId: null, memberId: null }, undefined);
+    show({ userId: null }, undefined);
 
     const field = screen.getByLabelText(donationEdit.donorName);
     await userEvent.clear(field);
@@ -131,7 +130,7 @@ describe("editing a support payment", () => {
 
   it("keeps a linked payment saveable with no typed name at all", async () => {
     const fetchMock = mockPatch();
-    show({ userId: "u1", memberId: "m1", donorName: null });
+    show({ userId: "u1", donorName: null });
 
     await userEvent.click(screen.getByText(donationEdit.save));
 
@@ -140,7 +139,7 @@ describe("editing a support payment", () => {
 
   it("hides the giver behind فاعل خير once the toggle is on", async () => {
     mockPatch();
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     await userEvent.click(screen.getByLabelText(donationEdit.anonymous));
 
@@ -149,7 +148,7 @@ describe("editing a support payment", () => {
 
   it("sends the anonymity choice with the rest of the edit", async () => {
     const fetchMock = mockPatch();
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     await userEvent.click(screen.getByLabelText(donationEdit.anonymous));
     await userEvent.click(screen.getByText(donationEdit.save));
@@ -159,7 +158,7 @@ describe("editing a support payment", () => {
 
   it("refuses an amount that is not a positive whole number", async () => {
     mockPatch();
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     const field = screen.getByLabelText(donationEdit.amount);
     await userEvent.clear(field);
@@ -170,7 +169,7 @@ describe("editing a support payment", () => {
   });
 
   it("opens the picker to change a link from inside the form", async () => {
-    const { onRelink } = show({ userId: "u1", memberId: "m1" });
+    const { onRelink } = show({ userId: "u1" });
 
     await userEvent.click(screen.getByText(donationEdit.changeLink));
 
@@ -178,7 +177,7 @@ describe("editing a support payment", () => {
   });
 
   it("shows who the payment is linked to, not just their name", () => {
-    show({ userId: "u1", memberId: "m1" });
+    show({ userId: "u1" });
 
     expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
   });

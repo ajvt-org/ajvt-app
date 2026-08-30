@@ -20,15 +20,19 @@ export const GET = withRoute(
       select: {
         id: true,
         userId: true,
-        user: { select: PERSON_SELECT },
+        user: {
+          select: {
+            ...PERSON_SELECT,
+            payments: {
+              where: { purpose: "MEMBERSHIP" },
+              select: { amount: true, feeApplied: true, year: true },
+            },
+          },
+        },
         paymentMethod: true,
         paymentProof: true,
         surplusAnonymous: true,
         membershipYear: true,
-        payments: {
-          where: { purpose: "MEMBERSHIP" },
-          select: { amount: true, feeApplied: true, year: true },
-        },
         referenceCode: true,
         status: true,
         createdAt: true,
@@ -39,7 +43,8 @@ export const GET = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
-    const { userId: _userId, payments, ...rest } = withPerson(member);
+    const { payments, ...account } = member.user;
+    const { userId: _userId, ...rest } = withPerson({ ...member, user: account });
     void _userId;
     const paid = paidForYear(payments, rest.membershipYear);
     return NextResponse.json({

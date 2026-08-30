@@ -22,7 +22,9 @@ function pay(id: string, body: Record<string, unknown>) {
 }
 
 function recordOf(memberId: string, year: number) {
-  return prisma.membership.findFirstOrThrow({ where: { memberId, year } });
+  return prisma.membership.findFirstOrThrow({
+    where: { user: { members: { some: { id: memberId } } }, year },
+  });
 }
 
 describe("a proof added after the member was registered", () => {

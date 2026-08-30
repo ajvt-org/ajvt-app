@@ -56,20 +56,18 @@ export async function seedLeague(
     );
   }
 
-  const userOf = new Map(active.map((m) => [m.id, m.userId]));
   const roster: Record<string, string[]> = {};
   for (let i = 0; i < active.length; i++) {
     const team = teams[i % teams.length];
     await prisma.teamMember.create({
       data: {
         teamId: team.id,
-        memberId: active[i].id,
         userId: active[i].userId,
         status: i % 11 === 10 ? "PENDING" : "ACTIVE",
       },
     });
     roster[team.id] = roster[team.id] || [];
-    roster[team.id].push(active[i].id);
+    roster[team.id].push(active[i].userId);
   }
 
   for (let i = 0; i < users.length; i++) {
@@ -78,7 +76,7 @@ export async function seedLeague(
     });
   }
 
-  await seedMatches(activity, teams, roster, users, userOf);
+  await seedMatches(activity, teams, roster, users);
 
   return { groups, teams, roster, matchCount: PAIRS.length };
 }
@@ -88,7 +86,6 @@ async function seedMatches(
   teams: { id: string }[],
   roster: Record<string, string[]>,
   users: SeededUser[],
-  userOf: Map<string, string>,
 ) {
   const todayLate = new Date();
   todayLate.setUTCHours(16, 0, 0, 0);
@@ -128,7 +125,7 @@ async function seedMatches(
         await prisma.matchGoal.create({
           data: {
             matchId: match.id,
-            memberId: oneManShow ? scorers[0] : pick(scorers, g),
+            userId: oneManShow ? scorers[0] : pick(scorers, g),
             teamId: teams[teamIndex].id,
             minute: 10 + g * 17 + (teamIndex === a ? 5 : 0),
           },
@@ -141,8 +138,7 @@ async function seedMatches(
       await prisma.matchBooking.create({
         data: {
           matchId: match.id,
-          memberId: awayRoster[0],
-          userId: userOf.get(awayRoster[0])!,
+          userId: awayRoster[0],
           teamId: teams[a].id,
           cardType: i % 4 === 0 ? "YELLOW" : "RED",
           minute: 55 + i,
@@ -156,8 +152,7 @@ async function seedMatches(
       await prisma.matchBooking.create({
         data: {
           matchId: match.id,
-          memberId: homeRoster[1],
-          userId: userOf.get(homeRoster[1])!,
+          userId: homeRoster[1],
           teamId: teams[h].id,
           cardType: "YELLOW",
           minute: 30 + i,
@@ -176,13 +171,13 @@ async function seedMatches(
       if (g && opponent) {
         await prisma.matchGoal.update({
           where: { id: g.id },
-          data: { kind: "OWN_GOAL", memberId: opponent },
+          data: { kind: "OWN_GOAL", userId: opponent },
         });
       }
     }
     if (i === 6) {
       const g = await prisma.matchGoal.findFirst({ where: { matchId: match.id } });
-      if (g) await prisma.matchGoal.update({ where: { id: g.id }, data: { memberId: null } });
+      if (g) await prisma.matchGoal.update({ where: { id: g.id }, data: { userId: null } });
     }
 
     if (i === 0) await seedMvp(match.id, roster[teams[h].id] ?? [], users, "OPEN");
@@ -196,7 +191,7 @@ function hoursFromNow(hours: number): Date {
 
 async function seedMvp(
   matchId: string,
-  memberIds: string[],
+  userIds: string[],
   users: SeededUser[],
   status: "OPEN" | "CLOSED",
 ) {
@@ -210,16 +205,8 @@ async function seedMvp(
   });
 
   const candidates = [];
-  for (const memberId of memberIds.slice(0, 3)) {
-    const owner = await prisma.member.findUniqueOrThrow({
-      where: { id: memberId },
-      select: { userId: true },
-    });
-    candidates.push(
-      await prisma.mvpCandidate.create({
-        data: { voteId: vote.id, memberId, userId: owner.userId },
-      }),
-    );
+  for (const userId of userIds.slice(0, 3)) {
+    candidates.push(await prisma.mvpCandidate.create({ data: { voteId: vote.id, userId } }));
   }
   if (!candidates.length) return;
 
@@ -242,7 +229,6 @@ export async function seedDoubles(activity: SeededActivity, active: SeededMember
       await prisma.teamMember.create({
         data: {
           teamId: team.id,
-          memberId: active[cursor].id,
           userId: active[cursor].userId,
           status: "ACTIVE",
         },
@@ -308,7 +294,6 @@ export async function seedFinishedCup(
     );
   }
 
-  const userOf = new Map(active.map((m) => [m.id, m.userId]));
   const teams = [];
   const roster: Record<string, string[]> = {};
   for (let i = 0; i < names.length; i++) {
@@ -319,9 +304,9 @@ export async function seedFinishedCup(
     for (let m = 0; m < 5; m++) {
       const member = active[(i * 5 + m + 40) % active.length];
       await prisma.teamMember.create({
-        data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+        data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
       });
-      roster[team.id].push(member.id);
+      roster[team.id].push(member.userId);
     }
     teams.push(team);
   }
@@ -372,8 +357,7 @@ export async function seedFinishedCup(
         await prisma.matchGoal.create({
           data: {
             matchId: match.id,
-            memberId: pick(roster[teams[teamIndex].id], g),
-            userId: userOf.get(pick(roster[teams[teamIndex].id], g))!,
+            userId: pick(roster[teams[teamIndex].id], g),
             teamId: teams[teamIndex].id,
             minute: 12 + g * 21 + (teamIndex === a ? 7 : 0),
           },
@@ -394,9 +378,9 @@ export async function seedFinishedCup(
         [teams[h].id, null, true],
         [teams[a].id, awayKickers[2] ?? awayKickers[0] ?? null, false],
       ];
-      for (const [idx, [teamId, memberId, scored]] of sequence.entries()) {
+      for (const [idx, [teamId, userId, scored]] of sequence.entries()) {
         await prisma.matchPenaltyKick.create({
-          data: { matchId: match.id, teamId, memberId, order: idx + 1, scored },
+          data: { matchId: match.id, teamId, userId, order: idx + 1, scored },
         });
       }
       const equalizer = await prisma.matchGoal.findFirst({
@@ -414,8 +398,7 @@ export async function seedFinishedCup(
       await prisma.matchBooking.create({
         data: {
           matchId: match.id,
-          memberId: roster[teams[a].id][1],
-          userId: userOf.get(roster[teams[a].id][1])!,
+          userId: roster[teams[a].id][1],
           teamId: teams[a].id,
           cardType: i === 6 ? "RED" : "YELLOW",
           minute: 40 + i,
@@ -438,7 +421,7 @@ export async function seedSingles(activity: SeededActivity, active: SeededMember
     const member = active[active.length - 1 - i];
     if (member) {
       await prisma.teamMember.create({
-        data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+        data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
       });
     }
     teams.push(team);

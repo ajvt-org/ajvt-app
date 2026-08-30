@@ -198,7 +198,7 @@ describe("duplicating an activity", () => {
       data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
     });
     await prisma.activityRegistration.create({
-      data: { activityId: source.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+      data: { activityId: source.id, userId: member.userId, status: "ACTIVE" },
     });
 
     const body = await (

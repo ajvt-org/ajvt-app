@@ -21,7 +21,7 @@ export const PATCH = withRoute(
       select: {
         cardType: true,
         minute: true,
-        memberId: true,
+        userId: true,
         teamId: true,
         match: { select: { homeTeamId: true, awayTeamId: true } },
       },
@@ -31,13 +31,13 @@ export const PATCH = withRoute(
     }
 
     const nextTeamId = teamId ?? booking.teamId;
-    const nextMemberId = memberId ?? booking.memberId;
+    const nextUserId = memberId ? await accountOf(prisma, memberId) : booking.userId;
     if (nextTeamId !== booking.match.homeTeamId && nextTeamId !== booking.match.awayTeamId) {
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
     const inRoster = await prisma.teamMember.findUnique({
       where: {
-        teamId_userId: { teamId: nextTeamId, userId: await accountOf(prisma, nextMemberId) },
+        teamId_userId: { teamId: nextTeamId, userId: nextUserId },
       },
     });
     if (!inRoster) {
@@ -47,7 +47,7 @@ export const PATCH = withRoute(
     const updated = await prisma.matchBooking.update({
       where: { id: bookingId },
       data: {
-        memberId: nextMemberId,
+        userId: nextUserId,
         teamId: nextTeamId,
         cardType: cardType ?? booking.cardType,
         minute: minute === undefined ? booking.minute : minute,
@@ -57,7 +57,7 @@ export const PATCH = withRoute(
         cardType: true,
         minute: true,
         teamId: true,
-        memberId: true,
+        userId: true,
         user: { select: { fullName: true } },
       },
     });
@@ -71,13 +71,13 @@ export const PATCH = withRoute(
         targetType: "MatchBooking",
         targetId: bookingId,
         before: {
-          memberId: booking.memberId,
+          userId: booking.userId,
           teamId: booking.teamId,
           cardType: booking.cardType,
           minute: booking.minute,
         },
         after: {
-          memberId: updated.memberId,
+          userId: updated.userId,
           teamId: updated.teamId,
           cardType: updated.cardType,
           minute: updated.minute,
@@ -102,7 +102,7 @@ export const DELETE = withRoute(
         minute: true,
         matchId: true,
         teamId: true,
-        memberId: true,
+        userId: true,
         user: { select: { fullName: true } },
       },
     });
@@ -119,7 +119,7 @@ export const DELETE = withRoute(
         targetId: bookingId,
         before: {
           matchId: booking.matchId,
-          memberId: booking.memberId,
+          userId: booking.userId,
           teamId: booking.teamId,
           cardType: booking.cardType,
           minute: booking.minute,

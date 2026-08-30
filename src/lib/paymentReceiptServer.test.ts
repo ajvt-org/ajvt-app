@@ -10,7 +10,6 @@ const MEMBERSHIP = {
   createdAt: new Date(2026, 7, 24),
   anonymous: false,
   donorName: null,
-  memberId: "m1",
   userId: "u1",
   activity: null,
   user: { fullName: "محمد ولد أحمد" },
@@ -39,7 +38,6 @@ const STANDING = {
   amount: 1000,
   payerName: "محمد ولد أحمد",
   reason: "اشتراك عضوية 2026",
-  memberId: "m1",
   userId: "u1",
   payment: MEMBERSHIP,
 };
@@ -56,10 +54,10 @@ describe("issuing a receipt for a payment", () => {
   it("only looks at active payments that have none yet", async () => {
     const db = fakeDb([]);
 
-    await ensureReceiptsFor(db, { memberId: "m1" });
+    await ensureReceiptsFor(db, { userId: "u1" });
 
     expect(db.payment.findMany.mock.calls[0][0].where).toMatchObject({
-      memberId: "m1",
+      userId: "u1",
       status: "ACTIVE",
       receipt: { is: null },
     });
@@ -97,11 +95,10 @@ describe("issuing a receipt for a payment", () => {
     await ensureReceiptsFor(db, {});
 
     expect(db.receipt.create.mock.calls[0][0].data.userId).toBe("u1");
-    expect(db.receipt.create.mock.calls[0][0].data.memberId).toBe("m1");
   });
 
   it("leaves the account off a receipt for a payment with no account", async () => {
-    const db = fakeDb([{ ...MEMBERSHIP, memberId: null, userId: null, user: null }]);
+    const db = fakeDb([{ ...MEMBERSHIP, userId: null, user: null }]);
 
     await ensureReceiptsFor(db, {});
 
@@ -184,14 +181,14 @@ describe("issuing a receipt for a payment", () => {
     });
   });
 
-  it("ties the receipt to the payment and the member", async () => {
+  it("ties the receipt to the payment and the account", async () => {
     const db = fakeDb([MEMBERSHIP]);
 
     await ensureReceiptsFor(db, {});
 
     expect(db.receipt.create.mock.calls[0][0].data).toMatchObject({
       paymentId: "p1",
-      memberId: "m1",
+      userId: "u1",
       amount: 1000,
     });
   });
@@ -266,13 +263,10 @@ describe("reconciling a receipt with its payment", () => {
   });
 
   it("asks for the account to be filled in on a receipt issued before the link", async () => {
-    const [drift] = await receiptDriftFor(drifting({ memberId: null, userId: null }), {});
+    const [drift] = await receiptDriftFor(drifting({ userId: null }), {});
 
     expect(drift.action).toBe("correct");
-    expect(drift.changes).toEqual([
-      { field: "memberId", from: null, to: "m1" },
-      { field: "userId", from: null, to: "u1" },
-    ]);
+    expect(drift.changes).toEqual([{ field: "userId", from: null, to: "u1" }]);
   });
 
   it("voids and lets go of the payment when the amount was corrected", async () => {

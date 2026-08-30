@@ -52,7 +52,7 @@ describe("a giver's choice to stay unnamed", () => {
 
   it("hides the account too, not just the typed name", async () => {
     const [user] = await createUsers(1);
-    const member = await makeMember({
+    await makeMember({
       userId: user.id,
       fullName: "أبوبكر لمرابط",
       age: "البدريين",
@@ -62,7 +62,6 @@ describe("a giver's choice to stay unnamed", () => {
     await aGift({
       anonymous: true,
       donorName: "ابو",
-      memberId: member.id,
       userId: user.id,
       source: "SELF",
     });

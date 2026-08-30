@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
-import { flatNamed, flatPerson } from "@/lib/person";
+import { accountNamed, accountPerson } from "@/lib/person";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -16,7 +16,7 @@ import { notify, tournament } from "@/lib/messages";
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
   awayTeam: { select: { id: true, name: true, logo: true } },
-  manOfTheMatch: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+  manOfTheMatchUser: { select: { fullName: true, photo: true } },
   goals: {
     orderBy: { minute: "asc" },
     select: {
@@ -26,7 +26,8 @@ const MATCH_INCLUDE = {
       teamId: true,
       kind: true,
       period: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   penaltyKicks: {
@@ -36,7 +37,8 @@ const MATCH_INCLUDE = {
       teamId: true,
       order: true,
       scored: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   bookings: {
@@ -46,7 +48,8 @@ const MATCH_INCLUDE = {
       cardType: true,
       minute: true,
       teamId: true,
-      member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+      userId: true,
+      user: { select: { fullName: true, photo: true } },
     },
   },
   mvpVote: {
@@ -57,8 +60,8 @@ const MATCH_INCLUDE = {
       candidates: {
         select: {
           id: true,
-          memberId: true,
-          member: { select: { id: true, user: { select: { fullName: true } } } },
+          userId: true,
+          user: { select: { fullName: true } },
           _count: { select: { votes: true } },
         },
       },
@@ -71,17 +74,23 @@ type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
 function flatMatch(match: LoadedMatch) {
   return {
     ...match,
-    manOfTheMatch: match.manOfTheMatch ? flatPerson(match.manOfTheMatch) : null,
-    goals: match.goals.map((g) => ({ ...g, member: g.member ? flatPerson(g.member) : null })),
+    manOfTheMatch: match.manOfTheMatchUser
+      ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
+      : null,
+    goals: match.goals.map((g) => ({ ...g, member: g.userId ? accountPerson(g) : null })),
     penaltyKicks: match.penaltyKicks.map((k) => ({
       ...k,
-      member: k.member ? flatPerson(k.member) : null,
+      member: k.userId ? accountPerson(k) : null,
     })),
-    bookings: match.bookings.map((b) => ({ ...b, member: flatPerson(b.member) })),
+    bookings: match.bookings.map((b) => ({ ...b, member: accountPerson(b) })),
     mvpVote: match.mvpVote
       ? {
           ...match.mvpVote,
-          candidates: match.mvpVote.candidates.map((c) => ({ ...c, member: flatNamed(c.member) })),
+          candidates: match.mvpVote.candidates.map((c) => ({
+            ...c,
+            memberId: c.userId,
+            member: accountNamed(c),
+          })),
         }
       : null,
   };

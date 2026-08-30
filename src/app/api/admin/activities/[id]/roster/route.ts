@@ -11,12 +11,19 @@ export const GET = withRoute(
     await requireActivityAccess(id);
 
     const registrations = await prisma.activityRegistration.findMany({
-      where: { activityId: id, status: "ACTIVE", member: { status: { not: "REJECTED" } } },
+      where: {
+        activityId: id,
+        status: "ACTIVE",
+        user: { members: { some: { status: { not: "REJECTED" } } } },
+      },
       select: {
-        member: {
+        user: {
           select: {
-            id: true,
-            user: { select: { phone: true, fullName: true, age: true, photo: true } },
+            phone: true,
+            fullName: true,
+            age: true,
+            photo: true,
+            members: { select: { id: true } },
             teamMemberships: {
               where: { team: { activityId: id } },
               select: { team: { select: { id: true, name: true } } },
@@ -27,14 +34,16 @@ export const GET = withRoute(
       orderBy: { user: { fullName: "asc" } },
     });
 
-    const roster = registrations.map(({ member }) => ({
-      id: member.id,
-      fullName: nameOf(member.user),
-      phone: member.user.phone ?? null,
-      age: member.user.age,
-      photo: member.user.photo,
-      team: member.teamMemberships[0]?.team || null,
-    }));
+    const roster = registrations
+      .map(({ user }) => ({
+        id: user.members[0]?.id ?? null,
+        fullName: nameOf(user),
+        phone: user.phone ?? null,
+        age: user.age,
+        photo: user.photo,
+        team: user.teamMemberships[0]?.team || null,
+      }))
+      .filter((entry): entry is typeof entry & { id: string } => entry.id !== null);
 
     return NextResponse.json({ roster });
   },

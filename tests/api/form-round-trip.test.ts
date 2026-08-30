@@ -31,7 +31,6 @@ async function overpaidMember() {
   });
   await prisma.membership.create({
     data: {
-      memberId: m.id,
       userId: m.userId,
       year: YEAR,
       paidAmount: 100,
@@ -44,7 +43,9 @@ async function overpaidMember() {
 }
 
 const paymentOf = (memberId: string) =>
-  prisma.payment.findFirstOrThrow({ where: { memberId, purpose: "MEMBERSHIP", year: YEAR } });
+  prisma.payment.findFirstOrThrow({
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year: YEAR },
+  });
 
 const surplusOf = async (memberId: string) => {
   const payment = await paymentOf(memberId);

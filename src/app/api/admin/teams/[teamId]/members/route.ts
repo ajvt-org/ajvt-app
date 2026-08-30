@@ -65,10 +65,9 @@ export const POST = withRoute(
     }
 
     const teamMember = await prisma.teamMember.create({
-      data: { teamId, memberId, userId },
+      data: { teamId, userId },
       select: {
         id: true,
-        memberId: true,
         user: { select: { phone: true, fullName: true, age: true } },
       },
     });
