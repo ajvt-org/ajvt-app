@@ -98,13 +98,13 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
 
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
-    const rows = await prisma.member.findMany({
+    const rows = await prisma.membership.findMany({
       where: { paymentProof: { not: null } },
       orderBy: { updatedAt: "desc" },
-      select: { id: true },
+      select: { userId: true },
     });
-    expect(rows[0].id).toBe(newer.id);
-    expect(rows[1].id).toBe(older.id);
+    expect(rows[0].userId).toBe(newer.userId);
+    expect(rows[1].userId).toBe(older.userId);
   });
 
   it("leaves members alone when the new name is taken", async () => {

@@ -196,7 +196,7 @@ describe("POST /api/members", () => {
     const user = await createUser();
     await signInAs(user);
     await POST(post("/api/members", validBody));
-    await prisma.member.updateMany({
+    await prisma.membership.updateMany({
       where: { userId: user.id },
       data: { status: "REJECTED", rejectionReason: "معلومات ناقصة أو غير صحيحة" },
     });

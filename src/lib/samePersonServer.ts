@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { nameKey } from "@/lib/nameKey";
 import { nameOf } from "./person";
+import { latestMembership } from "./currentMembership";
 
 export type SamePerson = {
   id: string;
@@ -23,10 +24,16 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
     where: { id: { not: memberId } },
     select: {
       id: true,
-      status: true,
       createdAt: true,
       userId: true,
-      user: { select: { fullName: true, memberNumber: true, phone: true } },
+      user: {
+        select: {
+          fullName: true,
+          memberNumber: true,
+          phone: true,
+          memberships: { select: { year: true, status: true } },
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -40,7 +47,7 @@ export async function findSamePerson(memberId: string): Promise<SamePerson[]> {
     found.push({
       id: other.id,
       fullName: nameOf(other.user),
-      status: other.status,
+      status: latestMembership(other.user.memberships)?.status ?? "PENDING",
       memberNumber: other.user.memberNumber,
       createdAt: other.createdAt,
       accountPhone: other.user.phone ?? null,

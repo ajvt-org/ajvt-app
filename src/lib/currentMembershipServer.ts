@@ -27,3 +27,13 @@ export async function currentMemberships(db: Db) {
   });
   return [...latestByAccount(rows).values()];
 }
+
+export async function membershipForMember(db: Db, memberId: string) {
+  const member = await db.member.findUnique({
+    where: { id: memberId },
+    select: { userId: true },
+  });
+  if (!member) return null;
+  const membership = await currentMembership(db, member.userId);
+  return membership ? { userId: member.userId, membership } : null;
+}

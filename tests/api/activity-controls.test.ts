@@ -195,7 +195,7 @@ describe("duplicating an activity", () => {
     const source = await anActivity();
     const [user] = [await prisma.user.create({ data: { fullName: "محمد" } })];
     const member = await prisma.member.create({
-      data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
+      data: { userId: user.id, paymentMethod: "بنكيلي" },
     });
     await prisma.activityRegistration.create({
       data: { activityId: source.id, userId: member.userId, status: "ACTIVE" },
