@@ -39,4 +39,42 @@ describe("activityStanding", () => {
     expect(activityStanding({ startsAt: day(-1) }, NOW)).toEqual({ state: "finished" });
     expect(activityStanding({ startsAt: day(0) }, NOW)).toEqual({ state: "today" });
   });
+
+  it("keeps a tournament out of finished while a match is still to play", () => {
+    expect(
+      activityStanding({ startsAt: day(-6), endsAt: day(-1), unplayedMatches: 2 }, NOW),
+    ).toEqual({ state: "awaiting" });
+  });
+
+  it("finishes it once nothing is left to play", () => {
+    expect(
+      activityStanding({ startsAt: day(-6), endsAt: day(-1), unplayedMatches: 0 }, NOW),
+    ).toEqual({ state: "finished" });
+  });
+
+  it("leaves an activity with no matches to its dates", () => {
+    expect(activityStanding({ startsAt: day(-6), endsAt: day(-1) }, NOW)).toEqual({
+      state: "finished",
+    });
+  });
+
+  it("says nothing new while the dates still cover today", () => {
+    expect(
+      activityStanding({ startsAt: day(-2), endsAt: day(2), unplayedMatches: 5 }, NOW),
+    ).toEqual({ state: "running" });
+    expect(activityStanding({ startsAt: day(0), endsAt: day(2), unplayedMatches: 5 }, NOW)).toEqual(
+      {
+        state: "today",
+      },
+    );
+  });
+
+  it("waits for the start whatever is left to play", () => {
+    expect(activityStanding({ startsAt: day(3), endsAt: day(5), unplayedMatches: 4 }, NOW)).toEqual(
+      {
+        state: "upcoming",
+        daysUntil: 3,
+      },
+    );
+  });
 });

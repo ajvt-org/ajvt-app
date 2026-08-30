@@ -141,7 +141,11 @@ function ActivityCard({ activity, member }: { activity: Activity; member: Eligib
         }
         chips={
           <>
-            <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
+            <ActivityStandingChip
+              startsAt={activity.startsAt}
+              endsAt={activity.endsAt}
+              unplayedMatches={activity.unplayedMatches}
+            />
             {!activity.isOpen && (
               <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
                 {texts.closedChip}

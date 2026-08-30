@@ -5,13 +5,15 @@ import { activityStandingTexts as texts } from "@/lib/texts";
 export default function ActivityStandingChip({
   startsAt,
   endsAt,
+  unplayedMatches,
   showUnscheduled,
 }: {
   startsAt: string | Date | null;
   endsAt?: string | Date | null;
+  unplayedMatches?: number;
   showUnscheduled?: boolean;
 }) {
-  const standing = activityStanding({ startsAt, endsAt });
+  const standing = activityStanding({ startsAt, endsAt, unplayedMatches });
   if (!standing) {
     if (!showUnscheduled) return null;
     return (
@@ -56,6 +58,18 @@ export default function ActivityStandingChip({
       >
         <span className="live-dot" />
         {texts.running}
+      </span>
+    );
+  }
+
+  if (standing.state === "awaiting") {
+    return (
+      <span
+        className="badge shrink-0 inline-flex items-center gap-1"
+        style={{ background: "#fef3c7", color: "#b45309", fontSize: "10px" }}
+      >
+        <Icon name="hourglass" size={10} />
+        {texts.awaiting}
       </span>
     );
   }

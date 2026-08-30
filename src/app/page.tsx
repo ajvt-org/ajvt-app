@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import { getUserSession } from "@/lib/auth";
 import { formatActivityDates } from "@/lib/activityDates";
 import { sortActivities } from "@/lib/activityOrder";
@@ -27,6 +28,7 @@ export default async function LandingPage() {
             photo: true,
             isVolunteer: true,
             isOpen: true,
+            _count: { select: { matches: { where: STILL_TO_PLAY } } },
           },
         })
       : Promise.resolve([]),
@@ -34,7 +36,9 @@ export default async function LandingPage() {
 
   if (session) redirect("/home");
 
-  const activities = sortActivities(rows).map((a) => ({
+  const activities = sortActivities(
+    rows.map((a) => ({ ...a, unplayedMatches: a._count.matches })),
+  ).map((a) => ({
     id: a.id,
     title: a.title,
     when: formatActivityDates(a),
@@ -43,6 +47,7 @@ export default async function LandingPage() {
     photo: a.photo,
     isVolunteer: a.isVolunteer,
     isOpen: a.isOpen,
+    unplayedMatches: a.unplayedMatches,
   }));
 
   return (

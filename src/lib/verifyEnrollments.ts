@@ -9,6 +9,7 @@ export type EnrollmentItem = {
   startsAt: Date | null;
   endsAt: Date | null;
   isVolunteer: boolean;
+  unplayedMatches?: number;
   kind: "activity" | "competition";
 };
 
@@ -20,6 +21,7 @@ export type ActivityRegistration = {
     startsAt: Date | null;
     endsAt: Date | null;
     isVolunteer: boolean;
+    _count: { matches: number };
   };
 };
 
@@ -53,6 +55,7 @@ export function mapEnrollments(
       startsAt: r.activity.startsAt,
       endsAt: r.activity.endsAt,
       isVolunteer: r.activity.isVolunteer,
+      unplayedMatches: r.activity._count.matches,
       kind: "activity" as const,
     })),
     ...quizParticipations.map((p) => ({

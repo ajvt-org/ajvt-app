@@ -15,6 +15,7 @@ export type LandingActivity = {
   photo: string | null;
   isVolunteer: boolean;
   isOpen: boolean;
+  unplayedMatches?: number;
 };
 
 export default function LandingActivities({
@@ -80,7 +81,11 @@ export default function LandingActivities({
               when={activity.when}
               chips={
                 <>
-                  <ActivityStandingChip startsAt={activity.startsAt} endsAt={activity.endsAt} />
+                  <ActivityStandingChip
+                    startsAt={activity.startsAt}
+                    endsAt={activity.endsAt}
+                    unplayedMatches={activity.unplayedMatches}
+                  />
                   {!activity.isOpen && (
                     <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>
                       {texts.closedChip}
