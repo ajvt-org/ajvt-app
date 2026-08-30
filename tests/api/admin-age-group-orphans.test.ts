@@ -100,7 +100,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
     await signInAsAdmin(await createAdmin());
     await prisma.ageGroup.create({ data: { name: "المنصورون" } });
     const member = await aMember("محمد", "المنصورين");
-    const before = member.updatedAt;
+    const before = (await personFor(member.id)).updatedAt;
 
     await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 

@@ -4,6 +4,7 @@ import { sourceFiles } from "@tests/sourceFiles";
 
 const MEMBERSHIP = [
   "status",
+  "paymentMethod",
   "rejectionReason",
   "paymentProof",
   "paidAmount",
@@ -13,6 +14,7 @@ const MEMBERSHIP = [
 ];
 
 const MEMBER_CALL = /(?:prisma|tx|db)\.member\.\w+\(\{/g;
+const ACCOUNT_CALL = /(?:prisma|tx|db)\.user\.\w+\(\{/g;
 
 const ROOTS = ["src", "tests", "prisma"];
 
@@ -32,7 +34,7 @@ function withoutAccountBlocks(block: string): string {
   let rest = block;
   let out = "";
   for (;;) {
-    const at = rest.search(/user:\s*\{/);
+    const at = rest.search(/(?:user|memberships):\s*\{/);
     if (at === -1) return out + rest;
     const open = rest.indexOf("{", at);
     out += rest.slice(0, at);
@@ -40,17 +42,43 @@ function withoutAccountBlocks(block: string): string {
   }
 }
 
+function fieldNamed(block: string): string | undefined {
+  return MEMBERSHIP.find((name) => new RegExp(`(?<![\\w.])${name}\\s*:`).test(block));
+}
+
+function memberBlocksIn(block: string): string[] {
+  const blocks: string[] = [];
+  let rest = block;
+  for (;;) {
+    const at = rest.search(/(?<![\w.])members:\s*\{/);
+    if (at === -1) return blocks;
+    const open = rest.indexOf("{", at);
+    const end = closingBrace(rest, open);
+    blocks.push(rest.slice(open, end + 1));
+    rest = rest.slice(end + 1);
+  }
+}
+
 function membershipNamedOnMember(): string[] {
   return ROOTS.flatMap(sourceFiles).flatMap((path) => {
     const source = readFileSync(path, "utf8");
     const found: string[] = [];
+    const report = (index: number, field: string) =>
+      found.push(`${path}:${source.slice(0, index).split("\n").length} ${field}`);
+
     for (const call of source.matchAll(MEMBER_CALL)) {
       const open = call.index + call[0].length - 1;
       const own = withoutAccountBlocks(source.slice(open, closingBrace(source, open) + 1));
-      const field = MEMBERSHIP.find((name) => new RegExp(`(?<![\\w.])${name}\\s*:`).test(own));
-      if (field) {
-        const line = source.slice(0, call.index).split("\n").length;
-        found.push(`${path}:${line} ${field}`);
+      const field = fieldNamed(own);
+      if (field) report(call.index, field);
+    }
+
+    for (const call of source.matchAll(ACCOUNT_CALL)) {
+      const open = call.index + call[0].length - 1;
+      const body = source.slice(open, closingBrace(source, open) + 1);
+      for (const block of memberBlocksIn(body)) {
+        const field = fieldNamed(withoutAccountBlocks(block));
+        if (field) report(call.index, field);
       }
     }
     return found;
@@ -64,11 +92,21 @@ describe("the membership lives on the year record", () => {
 
   it("sees a membership field named straight on a member", () => {
     const own = withoutAccountBlocks(
-      `{ data: { status: "ACTIVE", user: { create: { memberships: { create: { status: "x" } } } } } }`,
+      `{ data: { status: "ACTIVE", memberships: { create: { status: "x" } } } }`,
     );
 
     expect(own).toContain("status");
     expect(own.split("status").length - 1).toBe(1);
+  });
+
+  it("reads a member block hanging off an account too", () => {
+    expect(memberBlocksIn(`{ select: { members: { select: { status: true } } } }`)).toEqual([
+      `{ select: { status: true } }`,
+    ]);
+  });
+
+  it("leaves a team's own members alone, which are a different row", () => {
+    expect(memberBlocksIn(`{ select: { teamMembers: { select: { status: true } } } }`)).toEqual([]);
   });
 
   it("leaves no member query naming a membership field of its own", () => {

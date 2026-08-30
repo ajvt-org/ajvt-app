@@ -185,7 +185,7 @@ export const DELETE = withRoute(
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { fullName: person.fullName, age: person.age, status: member.status },
+      before: { fullName: person.fullName, age: person.age },
       meta: forgotten ?? undefined,
     });
 

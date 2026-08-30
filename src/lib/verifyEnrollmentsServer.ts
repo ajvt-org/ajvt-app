@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { STILL_TO_PLAY } from "@/lib/activityMatches";
 import { MAX_ENROLLMENTS, mapEnrollments, type EnrollmentItem } from "@/lib/verifyEnrollments";
+import { latestMembership } from "@/lib/currentMembership";
 
 export type VerifiedMember = {
   fullName: string | null;
@@ -21,7 +22,8 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
       village: true,
       memberNumber: true,
       photo: true,
-      members: { select: { status: true, createdAt: true }, take: 1 },
+      members: { select: { createdAt: true }, take: 1 },
+      memberships: { select: { year: true, status: true } },
       registrations: {
         where: { status: "ACTIVE" },
         select: {
@@ -60,7 +62,8 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
   });
 
   const member = person?.members[0];
-  if (!person || !member || member.status !== "ACTIVE") return null;
+  const current = person ? latestMembership(person.memberships) : null;
+  if (!person || !member || current?.status !== "ACTIVE") return null;
 
   return {
     fullName: person.fullName,

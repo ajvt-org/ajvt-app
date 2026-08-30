@@ -108,9 +108,9 @@ describe("renameUpload", () => {
     await expect(renameUpload("old.png", "new.webp", "newhash")).rejects.toThrow();
     broken.mockRestore();
 
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).paymentProof).toBe(
-      "old.png",
-    );
+    expect(
+      (await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } })).paymentProof,
+    ).toBe("old.png");
     expect(
       (await prisma.proofImage.findUniqueOrThrow({ where: { filename: "old.png" } })).sha256,
     ).toBe("oldhash");

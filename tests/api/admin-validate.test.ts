@@ -35,7 +35,7 @@ describe("POST /api/admin/validate", () => {
     const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     expect(res.status).toBe(401);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -46,7 +46,7 @@ describe("POST /api/admin/validate", () => {
     const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
     expect(res.status).toBe(403);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -134,7 +134,7 @@ describe("POST /api/admin/validate", () => {
       expect(await res.json()).toEqual({ error: "سبب رفض الدفع مطلوب" });
     }
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 

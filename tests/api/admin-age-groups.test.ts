@@ -71,7 +71,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     await signInAsAdmin(await createAdmin());
     const group = await prisma.ageGroup.create({ data: { name: "المنصورين" } });
     const member = await aMember("محمد", "المنصورين");
-    const before = member.updatedAt;
+    const before = (await personFor(member.id)).updatedAt;
 
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 

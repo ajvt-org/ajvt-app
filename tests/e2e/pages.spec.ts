@@ -144,7 +144,7 @@ test("every page renders for a member a year behind", async ({ page, browser }) 
   await createMember(page, phone, BEHIND.fullName);
   await withDb((client) =>
     client.query(
-      `UPDATE "Member" SET "membershipYear" = "membershipYear" - 1
+      `UPDATE "Membership" SET year = year - 1
        WHERE "userId" = (SELECT id FROM "User" WHERE phone = $1)`,
       [phone],
     ),

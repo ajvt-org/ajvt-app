@@ -35,20 +35,6 @@ export async function seedDonations(
   health: SeededActivity,
   tags: { id: string }[],
 ) {
-  for (const member of active) {
-    await prisma.donation.create({
-      data: {
-        donorName: member.fullName,
-        amount: member.paidAmount,
-        status: "ACTIVE",
-        source: "MEMBERSHIP",
-        paymentMethod: member.paymentMethod,
-        userId: member.userId,
-        createdAt: member.createdAt,
-      },
-    });
-  }
-
   for (let i = 0; i < 12; i++) {
     const anonymous = i % 3 === 0;
     await prisma.donation.create({
@@ -100,7 +86,7 @@ export async function seedDonations(
     }
   }
 
-  return active.length + 12 + 4 + shy.length * 2;
+  return 12 + 4 + shy.length * 2;
 }
 
 export async function seedExpenses(health: SeededActivity, tags: { id: string }[]) {

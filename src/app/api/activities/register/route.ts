@@ -8,6 +8,8 @@ import { activityRegisterSchema } from "./schema";
 import { activities, members } from "@/lib/messages";
 import { getAppSettings } from "@/lib/settingsServer";
 import { membershipState } from "@/lib/membershipState";
+import { asMembershipState } from "@/lib/currentMembership";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
@@ -29,10 +31,12 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
   if (!activity) throw new NotFoundError(activities.notFound);
   if (!activity.isOpen) throw new ConflictError(activities.registrationClosed);
   if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
-  if (member.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
+
+  const current = await currentMembership(prisma, member.userId);
+  if (current?.status !== "ACTIVE") throw new ForbiddenError(activities.membershipNotApproved);
 
   const { membershipYear } = await getAppSettings();
-  if (membershipState(member, membershipYear) === "BEHIND") {
+  if (membershipState(asMembershipState(current), membershipYear) === "BEHIND") {
     throw new ForbiddenError(activities.membershipBehind);
   }
 

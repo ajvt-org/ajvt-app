@@ -12,7 +12,6 @@ export const MEMBERSHIP_SELECT = {
   paymentMethod: true,
   paymentProof: true,
   referenceCode: true,
-  surplusAnonymous: true,
   createdAt: true,
 } as const;
 

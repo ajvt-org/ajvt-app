@@ -18,9 +18,7 @@ export interface NewMembership {
 }
 
 export async function addMembership(db: Db, m: NewMembership) {
-  const member = await db.member.create({
-    data: { userId: m.userId, paymentMethod: m.paymentMethod },
-  });
+  const member = await db.member.create({ data: { userId: m.userId } });
 
   await saveMembershipYear(db, m.userId, m.membershipYear, {
     status: m.status,
