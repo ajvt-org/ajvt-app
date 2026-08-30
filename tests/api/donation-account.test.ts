@@ -60,7 +60,7 @@ describe("the account behind a donation", () => {
     const res = await give(member.id);
     expect(res.status).toBe(201);
 
-    const donation = await prisma.donation.findFirstOrThrow({ where: { memberId: member.id } });
+    const donation = await prisma.donation.findFirstOrThrow({ where: { userId: member.userId } });
     expect(donation.userId).toBe(user.id);
   });
 
@@ -70,7 +70,7 @@ describe("the account behind a donation", () => {
 
     await give(member.id);
 
-    const payment = await prisma.payment.findFirstOrThrow({ where: { memberId: member.id } });
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: member.userId } });
     expect(payment.userId).toBe(user.id);
   });
 
@@ -90,7 +90,6 @@ describe("the account behind a donation", () => {
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
     expect(after.userId).toBe(second.user.id);
-    expect(after.memberId).toBe(second.member.id);
     expect(after.userId).not.toBe(first.user.id);
   });
 
@@ -117,7 +116,6 @@ describe("the account behind a donation", () => {
         amount: 5000,
         source: "PUBLIC",
         status: "ACTIVE",
-        memberId: first.member.id,
         userId: first.user.id,
       },
     });
@@ -137,14 +135,13 @@ describe("the account behind a donation", () => {
   });
 
   it("clears the account when an admin unlinks the member", async () => {
-    const { user, member } = await aMember("22110055", "محمد الأمين");
+    const { user } = await aMember("22110055", "محمد الأمين");
     const gift = await prisma.donation.create({
       data: {
         donorName: "فاعل خير",
         amount: 5000,
         source: "PUBLIC",
         status: "ACTIVE",
-        memberId: member.id,
         userId: user.id,
       },
     });
@@ -154,11 +151,10 @@ describe("the account behind a donation", () => {
 
     const after = await prisma.donation.findUniqueOrThrow({ where: { id: gift.id } });
     expect(after.userId).toBeNull();
-    expect(after.memberId).toBeNull();
   });
 
   it("links a gift to an account as it is recorded, in one step", async () => {
-    const { user, member } = await aMember("22110088", "أبوبكر لمرابط");
+    const { user } = await aMember("22110088", "أبوبكر لمرابط");
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
     const res = await RECORD(
@@ -173,12 +169,11 @@ describe("the account behind a donation", () => {
 
     const donation = await prisma.donation.findFirstOrThrow();
     expect(donation.userId).toBe(user.id);
-    expect(donation.memberId).toBe(member.id);
     expect(donation.donorName).toBe("ابو");
   });
 
   it("carries a link made at creation onto the mirrored payment", async () => {
-    const { user, member } = await aMember("22110099", "أبوبكر لمرابط");
+    const { user } = await aMember("22110099", "أبوبكر لمرابط");
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
     await RECORD(
@@ -192,7 +187,6 @@ describe("the account behind a donation", () => {
 
     const payment = await prisma.payment.findFirstOrThrow();
     expect(payment.userId).toBe(user.id);
-    expect(payment.memberId).toBe(member.id);
   });
 
   it("records a gift with no account when none is given", async () => {

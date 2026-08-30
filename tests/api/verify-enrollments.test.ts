@@ -36,7 +36,6 @@ async function enrol(memberId: string, activityId: string, status = "ACTIVE") {
   });
   return prisma.activityRegistration.create({
     data: {
-      memberId,
       userId: owner.userId,
       activityId,
       status: status as "ACTIVE" | "PENDING" | "REJECTED",

@@ -41,7 +41,6 @@ describe("a member's whole file, in one answer", () => {
     });
     await prisma.activityRegistration.create({
       data: {
-        memberId: member.id,
         userId: member.userId,
         activityId: activity.id,
         status: "ACTIVE",
@@ -49,10 +48,10 @@ describe("a member's whole file, in one answer", () => {
     });
     const team = await prisma.team.create({ data: { activityId: activity.id, name: "النجم" } });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+      data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
     });
     await prisma.donation.create({
-      data: { amount: 500, memberId: member.id, status: "ACTIVE", source: "SELF" },
+      data: { amount: 500, userId: member.userId, status: "ACTIVE", source: "SELF" },
     });
 
     const body = await (await PROFILE(...ask(member.id))).json();

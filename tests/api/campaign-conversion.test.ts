@@ -29,7 +29,7 @@ async function someoneWaiting(activityId: string, name: string, status = "PENDIN
     userId: user.id,
   });
   return prisma.activityRegistration.create({
-    data: { memberId: member.id, userId: member.userId, activityId, status: status as "PENDING" },
+    data: { userId: member.userId, activityId, status: status as "PENDING" },
   });
 }
 

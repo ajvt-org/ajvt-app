@@ -22,10 +22,13 @@ export const GET = withRoute(
             createdAt: true,
             paymentProof: true,
             rejectionReason: true,
-            member: {
+            user: {
               select: {
-                id: true,
-                user: { select: { phone: true, fullName: true, age: true, photo: true } },
+                phone: true,
+                fullName: true,
+                age: true,
+                photo: true,
+                members: { select: { id: true } },
               },
             },
           },
@@ -50,14 +53,14 @@ export const GET = withRoute(
     return NextResponse.json({
       activity: {
         ...activity,
-        registrations: activity.registrations.map(({ member, ...r }) => ({
+        registrations: activity.registrations.map(({ user, ...r }) => ({
           ...r,
           member: {
-            id: member.id,
-            fullName: nameOf(member.user),
-            age: member.user.age,
-            photo: member.user.photo,
-            phone: member.user.phone ?? null,
+            id: user.members[0]?.id ?? "",
+            fullName: nameOf(user),
+            age: user.age,
+            photo: user.photo,
+            phone: user.phone ?? null,
           },
         })),
       },

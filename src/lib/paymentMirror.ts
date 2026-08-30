@@ -4,7 +4,6 @@ import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
 type Db = PrismaClient | Prisma.TransactionClient;
 
 export interface MembershipMirror {
-  memberId: string;
   userId: string;
   year: number;
   amount: number | null;
@@ -45,7 +44,6 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
     data: {
       ...data,
       purpose: "MEMBERSHIP",
-      memberId: m.memberId,
       userId: m.userId,
       year: m.year,
       anonymous: m.anonymous,
@@ -79,7 +77,6 @@ export interface DonationMirror {
   donorName: string | null;
   donorPhoto: string | null;
   donorPhone: string | null;
-  memberId: string | null;
   userId: string | null;
   activityId: string | null;
   tagIds?: string[];
@@ -95,7 +92,6 @@ export interface MirroredDonation {
   donorName: string | null;
   donorPhoto: string | null;
   donorPhone: string | null;
-  memberId: string | null;
   userId: string | null;
   activityId: string | null;
 }
@@ -111,7 +107,6 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
     donorName: donation.donorName,
     donorPhoto: donation.donorPhoto,
     donorPhone: donation.donorPhone,
-    memberId: donation.memberId,
     userId: donation.userId,
     activityId: donation.activityId,
     ...(tagIds ? { tagIds } : {}),
@@ -139,7 +134,6 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     donorName: d.donorName,
     donorPhoto: d.donorPhoto,
     donorPhone: d.donorPhone,
-    memberId: d.memberId,
     userId: d.userId,
     activityId: d.activityId,
   };

@@ -90,3 +90,21 @@ export function flatPlayer<
     photo: row.user.photo,
   };
 }
+
+type WithAccount<U> = { userId: string | null; user: U | null };
+
+export function accountPerson<
+  T extends WithAccount<{ fullName: string | null; photo: string | null }>,
+>(row: T): { id: string; fullName: string; photo: string | null } {
+  return {
+    id: row.userId ?? "",
+    fullName: row.user ? nameOf(row.user) : "",
+    photo: row.user?.photo ?? null,
+  };
+}
+
+export function accountNamed<T extends WithAccount<{ fullName: string | null }>>(
+  row: T,
+): { id: string; fullName: string } {
+  return { id: row.userId ?? "", fullName: row.user ? nameOf(row.user) : "" };
+}

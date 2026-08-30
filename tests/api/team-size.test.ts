@@ -35,7 +35,7 @@ async function player(activityId: string, fullName: string) {
     status: "ACTIVE",
   });
   await prisma.activityRegistration.create({
-    data: { memberId: member.id, userId: member.userId, activityId, status: "ACTIVE" },
+    data: { userId: member.userId, activityId, status: "ACTIVE" },
   });
   return member;
 }

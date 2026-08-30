@@ -33,7 +33,7 @@ async function join(body: Record<string, unknown> = {}) {
 // The fee and the surplus are both worked out from the one payment.
 const fee = async (memberId: string) => {
   const payment = await prisma.payment.findFirst({
-    where: { memberId, purpose: "MEMBERSHIP" },
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
   });
   if (!payment) return null;
   return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
@@ -43,7 +43,7 @@ const fee = async (memberId: string) => {
 // when the payment covers the fee and no more.
 const surplus = async (memberId: string) => {
   const payment = await prisma.payment.findFirst({
-    where: { memberId, purpose: "MEMBERSHIP" },
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
   });
   if (!payment) return null;
   const amount = payment.amount - (payment.feeApplied ?? 0);
@@ -146,7 +146,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
 
-    await prisma.membership.findFirstOrThrow({ where: { memberId: member.id } });
+    await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(await fee(member.id)).toBe(100);
   });
 

@@ -49,7 +49,6 @@ export const POST = withRoute(
     const renewed = await prisma.$transaction(async (tx) => {
       await tx.membership.create({
         data: {
-          memberId: id,
           userId: member.userId,
           year: membershipYear,
           status: "ACTIVE",

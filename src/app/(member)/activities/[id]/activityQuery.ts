@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { accountNamed, accountPerson } from "@/lib/person";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 
 export const ACTIVITY_SELECT = {
@@ -35,7 +36,8 @@ async function loadActivity(id: string) {
           groupId: true,
           members: {
             select: {
-              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+              userId: true,
+              user: { select: { fullName: true, photo: true } },
             },
             orderBy: { user: { fullName: "asc" } },
           },
@@ -59,10 +61,8 @@ async function loadActivity(id: string) {
           awayPenalties: true,
           status: true,
           forfeitWinnerTeamId: true,
-          manOfTheMatchId: true,
-          manOfTheMatch: {
-            select: { id: true, user: { select: { fullName: true, photo: true } } },
-          },
+          manOfTheMatchUserId: true,
+          manOfTheMatchUser: { select: { fullName: true, photo: true } },
           goals: {
             orderBy: { minute: "asc" as const },
             select: {
@@ -71,7 +71,8 @@ async function loadActivity(id: string) {
               teamId: true,
               kind: true,
               period: true,
-              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+              userId: true,
+              user: { select: { fullName: true, photo: true } },
             },
           },
           penaltyKicks: {
@@ -80,7 +81,8 @@ async function loadActivity(id: string) {
               teamId: true,
               order: true,
               scored: true,
-              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+              userId: true,
+              user: { select: { fullName: true, photo: true } },
             },
           },
           bookings: {
@@ -89,7 +91,8 @@ async function loadActivity(id: string) {
               cardType: true,
               minute: true,
               teamId: true,
-              member: { select: { id: true, user: { select: { fullName: true, photo: true } } } },
+              userId: true,
+              user: { select: { fullName: true, photo: true } },
             },
           },
           mvpVote: {
@@ -100,8 +103,8 @@ async function loadActivity(id: string) {
               candidates: {
                 select: {
                   id: true,
-                  memberId: true,
-                  member: { select: { id: true, user: { select: { fullName: true } } } },
+                  userId: true,
+                  user: { select: { fullName: true } },
                   _count: { select: { votes: true } },
                 },
               },
@@ -113,40 +116,35 @@ async function loadActivity(id: string) {
   });
 }
 
-type Named = { id: string; user: { fullName: string | null } };
-type Pictured = { id: string; user: { fullName: string | null; photo: string | null } };
-
-function person<T extends Pictured>(m: T) {
-  return { id: m.id, fullName: m.user.fullName ?? "", photo: m.user.photo };
-}
-
-function named<T extends Named>(m: T) {
-  return { id: m.id, fullName: m.user.fullName ?? "" };
-}
-
 function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) {
   return {
     ...activity,
     teams: activity.teams.map((team) => ({
       ...team,
-      members: team.members.map((tm) => ({ member: person(tm.member) })),
+      members: team.members.map((tm) => ({ member: accountPerson(tm) })),
     })),
     matches: activity.matches.map((match) => ({
       ...match,
-      manOfTheMatch: match.manOfTheMatch ? person(match.manOfTheMatch) : null,
+      manOfTheMatch: match.manOfTheMatchUser
+        ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
+        : null,
       goals: match.goals.map((goal) => ({
         ...goal,
-        member: goal.member ? person(goal.member) : null,
+        member: goal.userId ? accountPerson(goal) : null,
       })),
       penaltyKicks: match.penaltyKicks.map((kick) => ({
         ...kick,
-        member: kick.member ? person(kick.member) : null,
+        member: kick.userId ? accountPerson(kick) : null,
       })),
-      bookings: match.bookings.map((booking) => ({ ...booking, member: person(booking.member) })),
+      bookings: match.bookings.map((booking) => ({ ...booking, member: accountPerson(booking) })),
       mvpVote: match.mvpVote
         ? {
             ...match.mvpVote,
-            candidates: match.mvpVote.candidates.map((c) => ({ ...c, member: named(c.member) })),
+            candidates: match.mvpVote.candidates.map((c) => ({
+              ...c,
+              memberId: c.userId,
+              member: accountNamed(c),
+            })),
           }
         : null,
     })),

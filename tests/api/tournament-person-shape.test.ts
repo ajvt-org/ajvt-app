@@ -34,7 +34,7 @@ async function aTeamWith(activityId: string, name: string, playerName: string) {
   const team = await prisma.team.create({ data: { activityId, name } });
   const member = await aPlayer(playerName);
   await prisma.teamMember.create({
-    data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+    data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
   });
   return { team, member };
 }
@@ -75,7 +75,6 @@ describe("the person on the tournament admin payloads", () => {
     await prisma.matchGoal.create({
       data: {
         matchId: match.id,
-        memberId: home.member.id,
         userId: home.member.userId,
         teamId: home.team.id,
         count: 1,
@@ -104,7 +103,6 @@ describe("the person on the tournament admin payloads", () => {
         status: "PLAYED",
         homeScore: 1,
         awayScore: 0,
-        manOfTheMatchId: home.member.id,
         manOfTheMatchUserId: home.member.userId,
       },
     });

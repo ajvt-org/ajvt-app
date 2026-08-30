@@ -46,7 +46,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
     prisma.teamMember.findMany({
       where: { status: "ACTIVE", userId: session.userId },
       select: {
-        memberId: true,
+        userId: true,
         team: {
           select: {
             id: true,
@@ -56,7 +56,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
             members: {
               where: { status: "ACTIVE" },
               select: {
-                memberId: true,
+                userId: true,
                 user: { select: { fullName: true } },
               },
             },
@@ -122,7 +122,7 @@ export const GET = withRoute("GET /api/user/activities", async () => {
       name: membership.team.name,
       autoNamed: membership.team.autoNamed,
       teammates: membership.team.members
-        .filter((m) => m.memberId !== membership.memberId)
+        .filter((m) => m.userId !== membership.userId)
         .map((m) => nameOf(m.user)),
     };
     entry.fixtures = fixtures.filter((f) => f.myTeamId === membership.team.id);

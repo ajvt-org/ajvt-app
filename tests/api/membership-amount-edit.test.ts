@@ -21,7 +21,6 @@ async function memberMissingAmount() {
   });
   await prisma.membership.create({
     data: {
-      memberId: m.id,
       userId: m.userId,
       year: YEAR,
       paidAmount: null,
@@ -33,7 +32,9 @@ async function memberMissingAmount() {
 
 // The amount an admin enters lands on the payment for that year.
 const paidFor = (memberId: string) =>
-  prisma.payment.findFirst({ where: { memberId, purpose: "MEMBERSHIP", year: YEAR } });
+  prisma.payment.findFirst({
+    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year: YEAR },
+  });
 
 describe("entering an amount that was never recorded", () => {
   beforeEach(async () => {

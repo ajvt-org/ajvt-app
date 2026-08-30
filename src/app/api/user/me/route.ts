@@ -15,14 +15,17 @@ const MEMBER_SELECT = {
   paymentProof: true,
   surplusAnonymous: true,
   membershipYear: true,
-  payments: {
-    where: { purpose: "MEMBERSHIP" },
-    select: { amount: true, feeApplied: true, year: true },
-  },
   status: true,
   rejectionReason: true,
   createdAt: true,
   updatedAt: true,
+} as const;
+
+const ACCOUNT_SELECT = {
+  payments: {
+    where: { purpose: "MEMBERSHIP" },
+    select: { amount: true, feeApplied: true, year: true },
+  },
   registrations: {
     select: {
       id: true,
@@ -48,6 +51,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
     where: { id: session.userId },
     select: {
       ...PERSON_WITH_PHONE_SELECT,
+      ...ACCOUNT_SELECT,
       members: { select: MEMBER_SELECT, orderBy: { createdAt: "asc" } },
     },
   });
@@ -67,11 +71,13 @@ export const GET = withRoute("GET /api/user/me", async () => {
     ...person,
     phone: user.phone,
     currentYear,
-    members: user.members.map(({ payments, ...member }) => {
-      const paid = paidForYear(payments, member.membershipYear);
+    members: user.members.map((member) => {
+      const paid = paidForYear(user.payments, member.membershipYear);
       return {
         ...member,
         ...person,
+        registrations: user.registrations,
+        teamMemberships: user.teamMemberships,
         user: { phone: user.phone },
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,

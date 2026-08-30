@@ -25,14 +25,14 @@ async function joinRequest(activityId: string, name: string, teamName = "الش�
   const team = await prisma.team.create({ data: { activityId, name: teamName } });
   const member = await aMember(name);
   return prisma.teamMember.create({
-    data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "PENDING" },
+    data: { teamId: team.id, userId: member.userId, status: "PENDING" },
   });
 }
 
 async function registrationRequest(activityId: string, name: string) {
   const member = await aMember(name);
   return prisma.activityRegistration.create({
-    data: { activityId, memberId: member.id, userId: member.userId, status: "PENDING" },
+    data: { activityId, userId: member.userId, status: "PENDING" },
   });
 }
 
@@ -41,7 +41,6 @@ async function proposedSuspension(activityId: string, name: string) {
   return prisma.suspension.create({
     data: {
       activityId,
-      memberId: member.id,
       userId: member.userId,
       reason: "RED_CARD",
       scope: "MATCHES",
@@ -100,11 +99,11 @@ describe("what is waiting across the activities", () => {
     const member = await aMember("محمد");
     const team = await prisma.team.create({ data: { activityId: activity.id, name: "الشناقطة" } });
     await prisma.teamMember.create({
-      data: { teamId: team.id, memberId: member.id, userId: member.userId, status: "ACTIVE" },
+      data: { teamId: team.id, userId: member.userId, status: "ACTIVE" },
     });
     const other = await aMember("أحمد");
     await prisma.activityRegistration.create({
-      data: { activityId: activity.id, memberId: other.id, userId: other.userId, status: "ACTIVE" },
+      data: { activityId: activity.id, userId: other.userId, status: "ACTIVE" },
     });
 
     expect(await waiting()).toEqual([]);

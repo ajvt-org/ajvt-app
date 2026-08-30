@@ -119,7 +119,7 @@ describe("the other kinds on the same list", () => {
 
   it("shows the name typed by hand when it differs from the one on show", () => {
     mockFetch([]);
-    show({ memberName: "أبوبكر لمرابط", donorName: "ابو", userId: "u1", memberId: "m1" });
+    show({ memberName: "أبوبكر لمرابط", donorName: "ابو", userId: "u1" });
 
     expect(screen.getByText(paymentCard.storedName("ابو"))).toBeTruthy();
   });
@@ -147,7 +147,7 @@ describe("the other kinds on the same list", () => {
 
   it("shows who the gift is linked to, with enough to confirm it", () => {
     mockFetch([]);
-    show({ userId: "u1", memberId: "m1" }, [ACCOUNT]);
+    show({ userId: "u1" }, [ACCOUNT]);
 
     expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
   });

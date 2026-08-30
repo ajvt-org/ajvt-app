@@ -33,7 +33,6 @@ async function teamWith(activityId: string, name: string, memberId?: string, sta
     await prisma.teamMember.create({
       data: {
         teamId: team.id,
-        memberId,
         userId: owner.userId,
         status: status as "ACTIVE" | "PENDING",
       },

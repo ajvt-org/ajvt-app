@@ -28,7 +28,6 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
       activityId: await resolveDonationActivity(activityId),
-      memberId: link.memberId,
       userId: link.userId,
       source: link.userId ? "SELF" : "PUBLIC",
       status: "ACTIVE",
@@ -46,7 +45,6 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       paymentMethod: donation.paymentMethod,
       status: donation.status,
       source: donation.source,
-      memberId: donation.memberId,
       userId: donation.userId,
     },
   });

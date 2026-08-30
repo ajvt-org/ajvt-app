@@ -44,7 +44,6 @@ async function tournament() {
     await prisma.teamMember.create({
       data: {
         teamId: i === 0 ? home.id : away.id,
-        memberId: member.id,
         userId: member.userId,
         status: "ACTIVE",
       },

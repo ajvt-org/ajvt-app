@@ -21,7 +21,7 @@ async function football() {
   });
   const home = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
   const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
-  const players: { id: string }[] = [];
+  const players: { id: string; userId: string }[] = [];
   for (let i = 0; i < 2; i++) {
     const member = await makeMember({
       fullName: `لاعب ${i}`,
@@ -32,7 +32,6 @@ async function football() {
     await prisma.teamMember.create({
       data: {
         teamId: i === 0 ? home.id : away.id,
-        memberId: member.id,
         userId: member.userId,
         status: "ACTIVE",
       },
@@ -239,7 +238,7 @@ describe("correcting a card after the fact", () => {
 
     expect(res.status).toBe(200);
     const saved = await prisma.matchBooking.findUniqueOrThrow({ where: { id: booking.id } });
-    expect(saved).toMatchObject({ teamId: away.id, memberId: players[1].id });
+    expect(saved).toMatchObject({ teamId: away.id, userId: players[1].userId });
   });
 
   it("refuses a minute outside a match", async () => {

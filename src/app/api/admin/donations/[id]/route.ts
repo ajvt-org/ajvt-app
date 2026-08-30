@@ -66,7 +66,6 @@ export const PATCH = withRoute(
     const data: {
       status?: ReviewStatus;
       anonymous?: boolean;
-      memberId?: string | null;
       donorName?: string | null;
       donorPhone?: string | null;
       donorPhoto?: string | null;
@@ -82,7 +81,6 @@ export const PATCH = withRoute(
     if (userId !== undefined) {
       const link = await personLink(prisma, userId ?? null);
       if (!link) return NextResponse.json({ error: members.notFound }, { status: 404 });
-      data.memberId = link.memberId;
       data.userId = link.userId;
     }
 
@@ -130,8 +128,8 @@ export const PATCH = withRoute(
         nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed),
         {
           ...target,
-          before: { memberId: existing.memberId, userId: existing.userId },
-          after: { memberId: donation.memberId, userId: donation.userId },
+          before: { userId: existing.userId },
+          after: { userId: donation.userId },
         },
       );
     }

@@ -72,7 +72,6 @@ describe("a receipt an admin can produce for a member", () => {
         purpose: "DONATION",
         amount: 500,
         status: "PENDING",
-        memberId: member.id,
         userId: member.userId,
       },
     });

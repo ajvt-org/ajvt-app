@@ -47,7 +47,6 @@ export async function recordMembershipPayment(
   if (total === null) {
     await saveMembershipSnapshot(db, userId, membershipYear, snapshot);
     await mirrorMembershipPayment(db, {
-      memberId,
       userId,
       year: membershipYear,
       amount: null,
@@ -63,7 +62,6 @@ export async function recordMembershipPayment(
 
   await saveMembershipSnapshot(db, userId, membershipYear, snapshot);
   await mirrorMembershipPayment(db, {
-    memberId,
     userId,
     year: membershipYear,
     amount: total,

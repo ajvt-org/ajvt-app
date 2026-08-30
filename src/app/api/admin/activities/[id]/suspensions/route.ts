@@ -37,7 +37,7 @@ export const POST = withRoute(
       { memberId, scope, matches: matches ?? null, until: until ?? null, note: note ?? null },
       session.username,
     );
-    await logAction(session.username, "PROPOSE_SUSPENSION", suspension.memberId, {
+    await logAction(session.username, "PROPOSE_SUSPENSION", suspension.userId, {
       ...auditContext(session, req),
       targetType: "Suspension",
       targetId: suspension.id,

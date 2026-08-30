@@ -56,7 +56,7 @@ export const POST = withRoute(
         await tx.teamMember.delete({ where: { id: existingMembership.id } });
       }
       await tx.teamMember.create({
-        data: { teamId, memberId, userId: session.userId, status: "PENDING" },
+        data: { teamId, userId: session.userId, status: "PENDING" },
       });
     });
 

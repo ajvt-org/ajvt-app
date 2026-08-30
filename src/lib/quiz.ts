@@ -15,7 +15,7 @@ const COVERS_THE_FEE = {
 
 export async function isQuizEligible(userId: string): Promise<boolean> {
   const member = await prisma.member.findFirst({
-    where: { userId, status: "ACTIVE", payments: { some: COVERS_THE_FEE } },
+    where: { userId, status: "ACTIVE", user: { payments: { some: COVERS_THE_FEE } } },
     select: { id: true },
   });
   return !!member;
@@ -23,7 +23,7 @@ export async function isQuizEligible(userId: string): Promise<boolean> {
 
 export async function eligibleMembers() {
   const members = await prisma.member.findMany({
-    where: { status: "ACTIVE", payments: { some: COVERS_THE_FEE } },
+    where: { status: "ACTIVE", user: { payments: { some: COVERS_THE_FEE } } },
     select: { userId: true, user: { select: { fullName: true } } },
     orderBy: { user: { fullName: "asc" } },
     distinct: ["userId"],

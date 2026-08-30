@@ -4,7 +4,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { placeholderTeamName } from "@/lib/teamSize";
-import { flatPlayer } from "@/lib/person";
+import { nameOf } from "@/lib/person";
 import { activities, tournament } from "@/lib/messages";
 
 export const GET = withRoute(
@@ -22,10 +22,14 @@ export const GET = withRoute(
           select: {
             id: true,
             status: true,
-            member: {
+            userId: true,
+            user: {
               select: {
-                id: true,
-                user: { select: { phone: true, fullName: true, age: true, photo: true } },
+                phone: true,
+                fullName: true,
+                age: true,
+                photo: true,
+                members: { select: { id: true } },
               },
             },
           },
@@ -36,7 +40,16 @@ export const GET = withRoute(
     return NextResponse.json({
       teams: teams.map((team) => ({
         ...team,
-        members: team.members.map((m) => ({ ...m, member: flatPlayer(m.member) })),
+        members: team.members.map(({ user, ...m }) => ({
+          ...m,
+          member: {
+            id: user.members[0]?.id ?? m.userId,
+            fullName: nameOf(user),
+            phone: user.phone ?? "",
+            age: user.age ?? "",
+            photo: user.photo,
+          },
+        })),
       })),
     });
   },

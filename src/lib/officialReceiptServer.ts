@@ -10,7 +10,7 @@ export interface ReceiptDraft {
   amount: number;
   issuedOn: Date;
   issuedBy: string;
-  memberId?: string | null;
+  userId?: string | null;
   paymentId?: string | null;
 }
 
@@ -36,7 +36,7 @@ export async function issueReceipt(draft: ReceiptDraft): Promise<Receipt> {
       issuedBy: draft.issuedBy,
       secretary: settings.secretaryName,
       treasurer: settings.treasurerName,
-      memberId: draft.memberId ?? null,
+      userId: draft.userId ?? null,
       paymentId: draft.paymentId ?? null,
     },
   });
