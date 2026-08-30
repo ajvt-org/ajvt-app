@@ -4,6 +4,7 @@ import { GET as LIST_DELETED } from "@/app/api/admin/deleted/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
 import { RETENTION_DAYS } from "@/lib/deletedRecords";
+import { runningYear } from "@/lib/membershipYear";
 import {
   resetDb,
   post,
@@ -64,6 +65,35 @@ describe("DELETE /api/admin/members/[id]", () => {
     expect(records).toHaveLength(1);
     expect(records[0]).toMatchObject({ kind: "Member", label: "محمد ولد أحمد" });
     expect(records[0].daysLeft).toBe(RETENTION_DAYS);
+  });
+
+  it("takes the years of the membership with it", async () => {
+    const m = await member();
+    await prisma.membership.create({
+      data: { userId: m.userId, year: runningYear() - 1, status: "ACTIVE" },
+    });
+
+    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+
+    expect(await prisma.membership.count({ where: { userId: m.userId } })).toBe(0);
+  });
+
+  it("brings those years back on restore", async () => {
+    const m = await member();
+    await prisma.membership.create({
+      data: { userId: m.userId, year: runningYear() - 1, status: "ACTIVE" },
+    });
+    await DELETE(...asDelete(m.id, { confirmName: "محمد ولد أحمد" }));
+    const record = await prisma.deletedRecord.findFirstOrThrow();
+
+    await RESTORE(post(`/api/admin/deleted/${record.id}/restore`, {}), withId(record.id));
+
+    const years = await prisma.membership.findMany({
+      where: { userId: m.userId },
+      orderBy: { year: "asc" },
+    });
+    expect(years.map((y) => y.year)).toEqual([runningYear() - 1, runningYear()]);
+    expect(years[1].status).toBe("ACTIVE");
   });
 
   it("brings the member back on restore", async () => {

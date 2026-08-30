@@ -167,14 +167,18 @@ export const DELETE = withRoute(
     }
 
     const { user: person, ...membership } = member;
+    const years = await prisma.membership.findMany({ where: { userId: member.userId } });
     await archive(
       "Member",
       id,
       nameOf(person),
-      membership as unknown as Prisma.InputJsonValue,
+      { ...membership, memberships: years } as unknown as Prisma.InputJsonValue,
       session.username,
     );
-    await prisma.member.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.membership.deleteMany({ where: { userId: member.userId } }),
+      prisma.member.delete({ where: { id } }),
+    ]);
     const forgotten = await forgetQuizFootprint(member.userId);
     await purgeExpired();
     await logAction(session.username, "DELETE_MEMBER", nameOf(member.user), {
