@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { latestMembership, latestByAccount, asMembershipState } from "./currentMembership";
+import {
+  latestMembership,
+  latestByAccount,
+  asMembershipState,
+  byReviewOrder,
+} from "./currentMembership";
 
 const row = (year: number, over: Record<string, unknown> = {}) => ({
   userId: "u1",
@@ -68,5 +73,32 @@ describe("asMembershipState", () => {
       status: "PENDING",
       membershipYear: 2025,
     });
+  });
+});
+
+describe("byReviewOrder", () => {
+  const at = (status: string, day: number) => ({
+    status,
+    createdAt: new Date(Date.UTC(2026, 0, day)),
+  });
+
+  it("puts what is waiting first, then what was accepted, then what was refused", () => {
+    const sorted = byReviewOrder([at("REJECTED", 1), at("ACTIVE", 2), at("PENDING", 3)]);
+
+    expect(sorted.map((row) => row.status)).toEqual(["PENDING", "ACTIVE", "REJECTED"]);
+  });
+
+  it("puts the newest first within one status", () => {
+    const sorted = byReviewOrder([at("ACTIVE", 1), at("ACTIVE", 3), at("ACTIVE", 2)]);
+
+    expect(sorted.map((row) => row.createdAt.getUTCDate())).toEqual([3, 2, 1]);
+  });
+
+  it("leaves the rows it was given alone", () => {
+    const rows = [at("REJECTED", 1), at("PENDING", 2)];
+
+    byReviewOrder(rows);
+
+    expect(rows.map((row) => row.status)).toEqual(["REJECTED", "PENDING"]);
   });
 });

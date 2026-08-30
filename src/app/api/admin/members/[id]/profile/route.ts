@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
+import { latestMembership } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 
 export const GET = withRoute(
@@ -14,11 +15,25 @@ export const GET = withRoute(
 
     const member = await prisma.member.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
         user: {
           select: {
             id: true,
             createdAt: true,
+            memberships: {
+              select: {
+                year: true,
+                status: true,
+                rejectionReason: true,
+                paymentMethod: true,
+                paymentProof: true,
+                referenceCode: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
             ...PERSON_WITH_PHONE_SELECT,
             registrations: {
               orderBy: { createdAt: "desc" },
@@ -61,7 +76,11 @@ export const GET = withRoute(
 
     if (!member) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
-    const { registrations, teamMemberships, payments, donations, ...account } = member.user;
+    const { registrations, teamMemberships, payments, donations, memberships, ...account } =
+      member.user;
+    const current = latestMembership(memberships);
+    if (!current) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+    const { year, ...membership } = current;
 
     const history = await prisma.auditLog.findMany({
       where: { targetType: "Member", targetId: id },
@@ -72,12 +91,12 @@ export const GET = withRoute(
 
     return NextResponse.json({
       member: {
-        ...withPerson({ ...member, user: account }),
+        ...withPerson({ ...member, ...membership, membershipYear: year, user: account }),
         registrations,
         teamMemberships,
         donations,
-        paidAmount: paidForYear(payments, member.membershipYear)?.fee ?? null,
-        supportAmount: paidForYear(payments, member.membershipYear)?.support ?? 0,
+        paidAmount: paidForYear(payments, year)?.fee ?? null,
+        supportAmount: paidForYear(payments, year)?.support ?? 0,
       },
       history,
     });

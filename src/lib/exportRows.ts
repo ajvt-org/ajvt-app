@@ -27,7 +27,7 @@ export interface ExportableMember {
   fullName: string;
   age: string | null;
   village: string;
-  paymentMethod: string;
+  paymentMethod: string | null;
   paidAmount: number | null;
   supportAmount?: number;
   status: string;
@@ -79,7 +79,7 @@ export function memberRows(members: ExportableMember[]): (string | number)[][] {
     m.user?.phone ?? "",
     m.village,
     m.age ?? "",
-    m.paymentMethod,
+    m.paymentMethod ?? "",
     m.paidAmount ?? 0,
     m.supportAmount ?? 0,
     (m.paidAmount ?? 0) + (m.supportAmount ?? 0),
