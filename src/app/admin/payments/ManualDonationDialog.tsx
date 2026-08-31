@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { donationFormError } from "@/lib/donationFields";
+import { linkedAccount } from "@/lib/linkedAccount";
 import { manualDonation } from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
@@ -144,7 +145,7 @@ export default function ManualDonationDialog({
               members={members}
               busy={saving}
               onPick={(userId) => {
-                setAccount(members.find((m) => m.userId === userId) ?? null);
+                setAccount(linkedAccount(members, userId) ?? null);
                 setPicking(false);
               }}
             />

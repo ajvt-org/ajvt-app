@@ -17,6 +17,18 @@ const ACCOUNT: MemberOption = {
   photo: null,
 };
 
+const SECOND: MemberOption = {
+  ...ACCOUNT,
+  id: "m2",
+  userId: "u2",
+  fullName: "الداه الحسن",
+  memberNumber: "AJVT-2026-0062",
+};
+
+const NO_ACCOUNT_IDS = [ACCOUNT, SECOND].map(
+  (m) => ({ ...m, userId: undefined }) as unknown as MemberOption,
+);
+
 function mockPost() {
   const fetchMock = vi.fn().mockResolvedValue({
     ok: true,
@@ -83,6 +95,33 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.submit));
 
     expect(bodyOf(fetchMock).userId).toBe("u1");
+  });
+
+  it("confirms the person who was picked, not the first of the list", async () => {
+    const fetchMock = mockPost();
+    show([ACCOUNT, SECOND]);
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    expect(screen.getByText(/AJVT-2026-0062/)).toBeTruthy();
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+    expect(bodyOf(fetchMock).userId).toBe("u2");
+  });
+
+  it("confirms nobody rather than the first of the list when no account id arrived", async () => {
+    mockPost();
+    show(NO_ACCOUNT_IDS);
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
   });
 
   it("records it against nobody when no account is picked", async () => {
