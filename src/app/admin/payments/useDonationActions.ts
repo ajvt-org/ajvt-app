@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { money } from "@/lib/messages";
+import { donationActions } from "@/lib/texts";
+import { linkedAccount } from "@/lib/linkedAccount";
 import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
-
-const CONFIRM_DELETE = "هل أنت متأكد من حذف هذا التبرع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.";
 
 export function useDonationActions({
   members,
@@ -33,7 +33,7 @@ export function useDonationActions({
     busyId,
 
     destroy: (id: string) => {
-      if (!confirm(CONFIRM_DELETE)) return;
+      if (!confirm(donationActions.confirmRemove)) return;
       run(id, async () => {
         await api.del(`/api/admin/donations/${id}`);
         remove(id);
@@ -51,7 +51,7 @@ export function useDonationActions({
         const { donation } = await api.patch<DonationResponse>(`/api/admin/donations/${id}`, {
           userId,
         });
-        const account = userId ? members.find((m) => m.userId === userId) : undefined;
+        const account = linkedAccount(members, userId);
         patch(id, {
           memberId: donation.memberId,
           userId: donation.userId,
