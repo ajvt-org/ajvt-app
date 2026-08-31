@@ -5,3 +5,14 @@ export const memberImportErrors = {
   missingName: "عمود الاسم الكامل غير موجود في الملف",
   tooManyRows: (max: number) => `الملف يتجاوز الحد المسموح (${max} سطراً)`,
 } as const;
+
+export const memberImportRow = {
+  unknownVillage: "قرية غير معروفة، اخترها من القائمة",
+  unknownAgeGroup: "عصر غير معروف، اخترها من القائمة",
+  phoneInFileTwice: (row: number) => `نفس رقم الهاتف موجود في السطر ${row}`,
+  phoneOnAnotherAccount: "هذا الرقم مستعمل لحساب موجود",
+  nameLooksExisting: "يوجد شخص بنفس الاسم والقرية والعصر، تأكد قبل الإضافة",
+  nameInFileTwice: (row: number) => `نفس الاسم موجود في السطر ${row}`,
+  alreadyHasMembership: "لهذا الشخص اشتراك مسجل بالفعل",
+  paymentMethodUnknown: "طريقة دفع غير معروفة",
+} as const;

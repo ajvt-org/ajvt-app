@@ -8,4 +8,6 @@ export const memberImport = {
     paidAmount: ["المبلغ المدفوع", "المبلغ", "amount", "paid amount"],
     paid: ["دفع الاشتراك", "مشترك", "الاشتراك", "paid", "membership"],
   },
+  paidYes: ["نعم", "مدفوع", "دفع", "yes", "y", "true", "1", "x"],
+  paidNo: ["لا", "غير مدفوع", "no", "n", "false", "0", ""],
 } as const;
