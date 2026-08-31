@@ -3,6 +3,7 @@ import { GET } from "@/app/api/admin/users/route";
 import { DELETE } from "@/app/api/admin/users/[id]/route";
 import { POST as RESTORE } from "@/app/api/admin/deleted/[id]/restore/route";
 import { prisma } from "@/lib/prisma";
+import { runningYear } from "@/lib/membershipYear";
 import {
   resetDb,
   post,
@@ -108,13 +109,12 @@ describe("DELETE /api/admin/users/[id]", () => {
 
   it("keeps a restorable copy of both the person and their payment", async () => {
     const user = await userWithMember();
-    const member = await prisma.member.findFirstOrThrow();
 
     await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
 
     const kinds = await prisma.deletedRecord.findMany({ orderBy: { kind: "asc" } });
     expect(kinds.map((r) => [r.kind, r.recordId])).toEqual([
-      ["Member", member.id],
+      ["Member", user.id],
       ["User", user.id],
     ]);
   });
@@ -227,5 +227,41 @@ describe("DELETE /api/admin/users/[id]", () => {
 
     expect(res.status).toBe(409);
     expect(await prisma.deletedRecord.count()).toBe(1);
+  });
+});
+
+describe("deleting the account of a member", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+  });
+
+  it("keeps the years of their membership in the archive", async () => {
+    const user = await userWithMember();
+    await prisma.membership.create({
+      data: { userId: user.id, year: 2025, status: "ACTIVE", paymentMethod: "بنكيلي" },
+    });
+
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+
+    const record = await prisma.deletedRecord.findFirstOrThrow({ where: { kind: "Member" } });
+    const years = (record.data as { memberships?: { year: number }[] }).memberships ?? [];
+    expect(years.map((y) => y.year).sort()).toEqual([2025, runningYear()]);
+  });
+
+  it("brings those years back when the person is restored", async () => {
+    const user = await userWithMember();
+    await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));
+    const [memberRecord, userRecord] = await prisma.deletedRecord.findMany({
+      orderBy: { kind: "asc" },
+    });
+
+    await RESTORE(post(`/api/admin/deleted/${userRecord.id}/restore`, {}), withId(userRecord.id));
+    await RESTORE(
+      post(`/api/admin/deleted/${memberRecord.id}/restore`, {}),
+      withId(memberRecord.id),
+    );
+
+    expect(await prisma.membership.count({ where: { userId: user.id } })).toBe(1);
   });
 });

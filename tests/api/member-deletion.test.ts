@@ -127,3 +127,33 @@ describe("DELETE /api/admin/members/[id]", () => {
     expect(await prisma.deletedRecord.count()).toBe(0);
   });
 });
+
+describe("an archive written before the membership moved", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("says so rather than restoring a membership with no years", async () => {
+    const user = await prisma.user.create({ data: { fullName: "قديم" } });
+    const record = await prisma.deletedRecord.create({
+      data: {
+        kind: "Member",
+        recordId: user.id,
+        label: "قديم",
+        data: { id: "old-member-row", userId: user.id },
+        deletedBy: "admin",
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
+    });
+
+    const res = await RESTORE(
+      post(`/api/admin/deleted/${record.id}/restore`, {}),
+      withId(record.id),
+    );
+
+    expect(res.status).toBe(409);
+    expect(await prisma.membership.count()).toBe(0);
+    expect(await prisma.deletedRecord.count()).toBe(1);
+  });
+});

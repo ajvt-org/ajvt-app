@@ -71,8 +71,7 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
   const session = await requireUser();
   const { memberId, activityId } = parse(activityRegisterSchema, await req.json());
 
-  const member = await prisma.member.findUnique({ where: { id: memberId } });
-  if (!member || member.userId !== session.userId) throw new NotFoundError(members.notFound);
+  if (memberId !== session.userId) throw new NotFoundError(members.notFound);
 
   await prisma.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
 
