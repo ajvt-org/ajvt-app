@@ -75,7 +75,8 @@ describe("what an activity row says is waiting", () => {
           status: "PENDING",
           paymentProof: null,
           rejectionReason: null,
-          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين" },
+          team: null,
+          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين", photo: null },
         },
       ],
     });
@@ -96,7 +97,8 @@ describe("what an activity row counts", () => {
           status: "ACTIVE",
           paymentProof: null,
           rejectionReason: null,
-          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين" },
+          team: null,
+          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين", photo: null },
         },
       ],
     });
@@ -113,7 +115,8 @@ describe("what an activity row counts", () => {
           status: "ACTIVE",
           paymentProof: null,
           rejectionReason: null,
-          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين" },
+          team: null,
+          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين", photo: null },
         },
       ],
     });
@@ -130,7 +133,8 @@ describe("what an activity row counts", () => {
           status: "REJECTED",
           paymentProof: null,
           rejectionReason: null,
-          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين" },
+          team: null,
+          member: { id: "m1", fullName: "محمد", phone: null, age: "البدريين", photo: null },
         },
       ],
     });
