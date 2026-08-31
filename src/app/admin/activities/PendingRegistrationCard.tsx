@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
+import RegistrantIdentity from "./RegistrantIdentity";
+import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration } from "./activityTypes";
 
 export default function PendingRegistrationCard({
@@ -27,14 +29,7 @@ export default function PendingRegistrationCard({
 
   return (
     <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--mint-50)" }}>
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-semibold" style={{ color: "var(--text-main)" }}>
-          {r.member.fullName}
-        </span>
-        <span style={{ color: "var(--text-muted)" }} dir="ltr">
-          {r.member.phone || "غير معروف"}
-        </span>
-      </div>
+      <RegistrantIdentity registration={r} />
       {r.paymentProof && (
         <a
           href={`/api/files/${r.paymentProof}`}
@@ -44,7 +39,7 @@ export default function PendingRegistrationCard({
           style={{ color: "var(--mint-700)" }}
         >
           <ArrowLabel>
-            <IconLabel name="receipt">عرض إثبات الدفع</IconLabel>
+            <IconLabel name="receipt">{texts.viewProof}</IconLabel>
           </ArrowLabel>
         </a>
       )}
@@ -53,7 +48,7 @@ export default function PendingRegistrationCard({
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="سبب الرفض (اختياري)..."
+            placeholder={texts.rejectReason}
             maxLength={300}
             rows={2}
             className="input text-xs"
@@ -71,7 +66,7 @@ export default function PendingRegistrationCard({
               className="text-xs px-2.5 py-1 rounded-lg font-bold"
               style={{ background: "#991b1b", color: "white" }}
             >
-              تأكيد الرفض
+              {texts.confirmReject}
             </button>
             <button
               onClick={() => {
@@ -85,7 +80,7 @@ export default function PendingRegistrationCard({
                 border: "1px solid var(--mint-200)",
               }}
             >
-              إلغاء
+              {texts.cancel}
             </button>
           </div>
         </div>
@@ -97,7 +92,7 @@ export default function PendingRegistrationCard({
             className="text-xs px-2.5 py-1 rounded-lg font-bold"
             style={{ background: "var(--mint-600)", color: "white" }}
           >
-            <IconLabel name="check">قبول</IconLabel>
+            <IconLabel name="check">{texts.accept}</IconLabel>
           </button>
           <button
             onClick={() => setRejecting(true)}
@@ -105,7 +100,7 @@ export default function PendingRegistrationCard({
             className="text-xs px-2.5 py-1 rounded-lg font-bold"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
-            <IconLabel name="close">رفض</IconLabel>
+            <IconLabel name="close">{texts.reject}</IconLabel>
           </button>
         </div>
       )}
