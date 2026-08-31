@@ -864,3 +864,14 @@ model Suspension {
   @@index([activityId, userId])
   @@index([activityId, status])
 }
+
+model ImportBatch {
+  id        String   @id
+  fileHash  String
+  fileName  String
+  rowCount  Int
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([fileHash])
+}
