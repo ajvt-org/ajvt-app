@@ -18,8 +18,9 @@ export async function claimImportBatch(claim: BatchClaim): Promise<boolean> {
   try {
     await prisma.importBatch.create({ data: claim });
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if ((error as { code?: string })?.code === "P2002") return false;
+    throw error;
   }
 }
 
