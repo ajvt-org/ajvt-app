@@ -7,13 +7,10 @@ import { runningYear } from "../../src/lib/membershipYear";
 import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
-import { saveMembershipSnapshot } from "../../src/lib/membershipRecord";
-import { splitPayment } from "../../src/lib/membershipPayment";
+import { saveMembershipYear } from "../../src/lib/membershipRecord";
 
 export type SeededUser = { id: string; phone: string | null };
-export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>> & {
-  fullName: string;
-};
+export type SeededMember = { userId: string; createdAt: Date; fullName: string };
 
 export interface SeededMembers {
   all: SeededMember[];
@@ -74,37 +71,24 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       },
     });
 
-    const member = await prisma.member.create({
-      data: {
-        userId: owner,
-        paymentMethod: paymentMethod(i),
-        paymentProof:
-          i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1
-            ? null
-            : placeholder(`seed-proof-${next()}.webp`),
-        paidAmount: [500, 1000, 1500, 2000, 3000][i % 5],
-        referenceCode: referenceCode(i),
-        status,
-        rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
-        membershipYear,
-        createdAt: daysAgo(Math.max(1, 130 - i)),
-      },
-    });
+    const method = paymentMethod(i);
+    const proof =
+      i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1 ? null : placeholder(`seed-proof-${next()}.webp`);
+    const paid = [500, 1000, 1500, 2000, 3000][i % 5];
 
-    const banked = splitPayment(member.paidAmount ?? 0, MEMBERSHIP_FEE).fee;
+    const joined = daysAgo(Math.max(1, 130 - i));
+
     const snapshot = {
       status,
-      rejectionReason: member.rejectionReason,
-      paidAmount: banked,
-      paymentMethod: member.paymentMethod,
-      paymentProof: member.paymentProof,
-      referenceCode: member.referenceCode,
-      surplusAnonymous: member.surplusAnonymous,
+      rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
+      paymentMethod: method,
+      paymentProof: proof,
+      referenceCode: referenceCode(i),
     };
-    await saveMembershipSnapshot(prisma, member.userId, membershipYear, snapshot);
+    await saveMembershipYear(prisma, owner, membershipYear, snapshot);
     if (isActive) {
       await prisma.membership.updateMany({
-        where: { userId: member.userId, year: membershipYear },
+        where: { userId: owner, year: membershipYear },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
       });
     }
@@ -112,41 +96,41 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     // A few members carry last year as well, so the years panel has a history
     // to show rather than a single row.
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
-      await saveMembershipSnapshot(prisma, member.userId, current - 1, {
+      await saveMembershipYear(prisma, owner, current - 1, {
         ...snapshot,
         referenceCode: null,
       });
       await prisma.membership.updateMany({
-        where: { userId: member.userId, year: current - 1 },
+        where: { userId: owner, year: current - 1 },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
       });
       await mirrorMembershipPayment(prisma, {
-        userId: member.userId,
+        userId: owner,
         year: current - 1,
         amount: MEMBERSHIP_FEE,
         feeApplied: MEMBERSHIP_FEE,
-        method: member.paymentMethod,
-        proof: member.paymentProof,
+        method,
+        proof,
         status,
-        anonymous: member.surplusAnonymous,
+        anonymous: false,
         donorName: fullName(i),
         recordedBy: "admin",
       });
     }
 
     await mirrorMembershipPayment(prisma, {
-      userId: member.userId,
+      userId: owner,
       year: membershipYear,
-      amount: member.paidAmount,
+      amount: paid,
       feeApplied: MEMBERSHIP_FEE,
-      method: member.paymentMethod,
-      proof: member.paymentProof,
+      method,
+      proof,
       status,
-      anonymous: member.surplusAnonymous,
+      anonymous: false,
       donorName: fullName(i),
     });
 
-    const withName = { ...member, fullName: fullName(i) };
+    const withName = { userId: owner, createdAt: joined, fullName: fullName(i) };
     all.push(withName);
     if (isActive) active.push(withName);
     if (status === "PENDING") pending.push(withName);

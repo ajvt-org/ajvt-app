@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { runningYear } from "@/lib/membershipYear";
+import type { ReviewStatus } from "@prisma/client";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
@@ -125,14 +127,15 @@ export function withId(id: string) {
   return withParams({ id });
 }
 
-export function personFor(memberId: string) {
-  return prisma.user.findFirstOrThrow({ where: { members: { some: { id: memberId } } } });
+export function personFor(userId: string) {
+  return prisma.user.findUniqueOrThrow({ where: { id: userId } });
 }
 
 const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyToken"] as const;
 
-// A member and the account that carries the person, from one flat object: the
-// person's own fields land on the account, the rest on the membership.
+// A membership and the account that carries the person, from one flat object:
+// the person's own fields land on the account, the rest on the year record,
+// and what was paid lands on the payment, which is where the app puts them.
 export async function makeMember(data: Record<string, unknown>) {
   const person: Record<string, unknown> = {};
   const membership: Record<string, unknown> = {};
@@ -141,52 +144,62 @@ export async function makeMember(data: Record<string, unknown>) {
     else membership[key] = value;
   }
 
-  // What was paid is a payment. The fixture records one so a member set up
-  // here looks like a member the app itself made.
-  const paid = membership.paidAmount as number | null | undefined;
-  const anonymous = membership.surplusAnonymous === true;
-  delete membership.paidAmount;
-  delete membership.surplusAnonymous;
+  const given = membership as {
+    userId?: string;
+    membershipYear?: number;
+    status?: ReviewStatus;
+    rejectionReason?: string | null;
+    paymentMethod?: string | null;
+    paymentProof?: string | null;
+    referenceCode?: string | null;
+    paidAmount?: number | null;
+    surplusAnonymous?: boolean;
+    createdAt?: Date;
+  };
 
-  const userId = membership.userId as string | undefined;
-  const member = userId
-    ? await (async () => {
-        if (Object.keys(person).length > 0) {
-          await prisma.user.update({ where: { id: userId }, data: person });
-        }
-        return prisma.member.create({ data: membership as never });
-      })()
-    : await prisma.member.create({
-        data: { ...membership, user: { create: person } } as never,
-      });
+  const userId =
+    given.userId ?? (await prisma.user.create({ data: person as { fullName?: string } })).id;
+  if (given.userId && Object.keys(person).length > 0) {
+    await prisma.user.update({ where: { id: userId }, data: person });
+  }
 
-  if (paid !== undefined && paid !== null) {
-    const owner = await prisma.member.findUniqueOrThrow({
-      where: { id: member.id },
-      select: {
-        userId: true,
-        membershipYear: true,
-        status: true,
-        paymentMethod: true,
-        user: { select: { fullName: true } },
-      },
+  const year = given.membershipYear ?? runningYear();
+  const state = {
+    status: given.status ?? "PENDING",
+    rejectionReason: given.rejectionReason ?? null,
+    paymentMethod: given.paymentMethod ?? null,
+    paymentProof: given.paymentProof ?? null,
+    referenceCode: given.referenceCode ?? null,
+    ...(given.createdAt ? { createdAt: given.createdAt } : {}),
+  };
+  const record = await prisma.membership.upsert({
+    where: { userId_year: { userId, year } },
+    update: {},
+    create: { userId, year, ...state },
+  });
+
+  if (given.paidAmount !== undefined && given.paidAmount !== null) {
+    const anonymous = given.surplusAnonymous === true;
+    const account = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { fullName: true },
     });
     await prisma.payment.create({
       data: {
         purpose: "MEMBERSHIP",
-        amount: paid,
+        amount: given.paidAmount,
         feeApplied: MEMBERSHIP_FEE,
-        year: owner.membershipYear,
-        status: owner.status,
-        method: owner.paymentMethod,
-        userId: owner.userId,
+        year,
+        status: state.status,
+        method: state.paymentMethod,
+        userId,
         anonymous,
-        donorName: anonymous ? null : owner.user.fullName,
+        donorName: anonymous ? null : account.fullName,
       },
     });
   }
 
-  return member;
+  return { id: userId, userId, createdAt: record.createdAt };
 }
 
 export async function adminAddsMember(body: Record<string, unknown>) {
@@ -217,7 +230,7 @@ export async function adminAddsMember(body: Record<string, unknown>) {
 // out from the payment, which is the only place the money is kept.
 export async function membershipSurplus(memberId: string) {
   const payment = await prisma.payment.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
   });
   return {
     amount: payment.amount - (payment.feeApplied ?? 0),

@@ -50,14 +50,14 @@ export const POST = withRoute(
       );
     }
 
-    const candidates = await prisma.member.findMany({
+    const candidates = await prisma.user.findMany({
       where: { id: { in: candidateMemberIds } },
-      select: { id: true, userId: true },
+      select: { id: true },
     });
 
     const rosterEntries = await prisma.teamMember.findMany({
       where: {
-        userId: { in: candidates.map((m) => m.userId) },
+        userId: { in: candidates.map((m) => m.id) },
         teamId: { in: [match.homeTeamId, match.awayTeamId] },
       },
       select: { userId: true },
@@ -74,7 +74,7 @@ export const POST = withRoute(
         matchId,
         closesAt: closesAtFrom(new Date(), minutes ?? match.activity.mvpVoteMinutes),
         candidates: {
-          create: candidates.map((m) => ({ userId: m.userId })),
+          create: candidates.map((m) => ({ userId: m.id })),
         },
       },
       include: VOTE_INCLUDE,

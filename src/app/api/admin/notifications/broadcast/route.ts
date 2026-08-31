@@ -7,8 +7,9 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { broadcastSchema } from "./schema";
 import { logger } from "@/lib/logger";
-import type { ReviewStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { counted } from "@/lib/arabicCount";
+import { latestByAccount } from "@/lib/currentMembership";
 import { RECIPIENT } from "@/lib/messages";
 
 export const POST = withRoute(
@@ -20,18 +21,18 @@ export const POST = withRoute(
       await req.json(),
     );
 
-    const where: {
-      status: ReviewStatus;
-      registrations?: { some: { activityId: string } };
-      age?: string;
-    } = { status: "ACTIVE" };
-    if (target === "ACTIVITY") where.registrations = { some: { activityId: activityId! } };
-    if (target === "AGE") where.age = age!.trim();
+    const where: Prisma.MembershipWhereInput = {};
+    if (target === "ACTIVITY")
+      where.user = { registrations: { some: { activityId: activityId! } } };
+    if (target === "AGE") where.user = { age: age!.trim() };
 
-    const members = await prisma.member.findMany({ where, select: { userId: true } });
-    const userIds = Array.from(
-      new Set(members.map((m) => m.userId).filter((id): id is string => id !== null)),
-    );
+    const rows = await prisma.membership.findMany({
+      where,
+      select: { userId: true, year: true, status: true },
+    });
+    const userIds = [...latestByAccount(rows).values()]
+      .filter((row) => row.status === "ACTIVE")
+      .map((row) => row.userId);
 
     const payload = { title: title.trim(), body: body.trim() };
     await (

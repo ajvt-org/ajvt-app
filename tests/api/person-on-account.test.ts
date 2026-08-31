@@ -25,12 +25,15 @@ const submission = {
   paidAmount: 100,
 };
 
-async function expectNoDrift(memberId: string) {
-  const member = await prisma.member.findUniqueOrThrow({ where: { id: memberId } });
-  const account = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
+async function expectNoDrift(userId: string) {
+  const account = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  const current = await prisma.membership.findFirstOrThrow({
+    where: { userId },
+    orderBy: { year: "desc" },
+  });
   expect(account.fullName?.trim()).toBeTruthy();
   expect(account.village).toBeTruthy();
-  if (member.status === "ACTIVE") {
+  if (current.status === "ACTIVE") {
     expect(account.memberNumber).toBeTruthy();
     expect(account.verifyToken).toBeTruthy();
   }
@@ -39,7 +42,7 @@ async function expectNoDrift(memberId: string) {
 async function submitAs(body: Record<string, unknown> = {}) {
   await signInAs(await createUser());
   await REGISTER(post("/api/members", { ...submission, ...body }));
-  return prisma.member.findFirstOrThrow();
+  return prisma.membership.findFirstOrThrow();
 }
 
 describe("the account carries the person", () => {
@@ -52,7 +55,7 @@ describe("the account carries the person", () => {
   it("copies the person onto the account when they send their request", async () => {
     const member = await submitAs();
 
-    await expectNoDrift(member.id);
+    await expectNoDrift(member.userId);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
     expect(account.fullName).toBe("محمد ولد أحمد");
   });
@@ -61,10 +64,10 @@ describe("the account carries the person", () => {
     const member = await submitAs();
 
     await REGISTER(
-      post("/api/members", { ...submission, id: member.id, village: "أفجار", age: null }),
+      post("/api/members", { ...submission, id: member.userId, village: "أفجار", age: null }),
     );
 
-    await expectNoDrift(member.id);
+    await expectNoDrift(member.userId);
   });
 
   it("follows a correction an admin makes", async () => {
@@ -72,20 +75,20 @@ describe("the account carries the person", () => {
     await signInAsAdmin(await createAdmin());
 
     await ADMIN_EDIT(
-      patch(`/api/admin/members/${member.id}`, { fullName: "أحمد ولد محمد" }),
-      withId(member.id),
+      patch(`/api/admin/members/${member.userId}`, { fullName: "أحمد ولد محمد" }),
+      withId(member.userId),
     );
 
-    await expectNoDrift(member.id);
+    await expectNoDrift(member.userId);
   });
 
   it("carries the number the card is built from once the payment is approved", async () => {
     const member = await submitAs();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
-    await expectNoDrift(member.id);
+    await expectNoDrift(member.userId);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
     expect(account.memberNumber).not.toBeNull();
     expect(account.verifyToken).not.toBeNull();
@@ -102,8 +105,8 @@ describe("the account carries the person", () => {
       status: "ACTIVE",
     });
 
-    const member = await prisma.member.findFirstOrThrow();
-    await expectNoDrift(member.id);
+    const member = await prisma.membership.findFirstOrThrow();
+    await expectNoDrift(member.userId);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: member.userId } });
     expect(account.phone).toBeNull();
     expect(account.password).toBeNull();
@@ -120,9 +123,9 @@ describe("the account carries the person", () => {
       status: "PENDING",
     });
 
-    for (const member of await prisma.member.findMany()) {
+    for (const member of await prisma.membership.findMany()) {
       expect(member.userId).toBeTruthy();
-      await expectNoDrift(member.id);
+      await expectNoDrift(member.userId);
     }
   });
 });

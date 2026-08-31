@@ -4,7 +4,8 @@ import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
-import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
+import { latestMembership } from "@/lib/currentMembership";
+import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
@@ -12,56 +13,67 @@ export const GET = withRoute(
     await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
-      include: {
-        user: {
+      select: {
+        id: true,
+        createdAt: true,
+        memberships: {
+          select: {
+            year: true,
+            status: true,
+            rejectionReason: true,
+            paymentMethod: true,
+            paymentProof: true,
+            referenceCode: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        ...PERSON_WITH_PHONE_SELECT,
+        registrations: {
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
+            status: true,
+            rejectionReason: true,
             createdAt: true,
-            ...PERSON_WITH_PHONE_SELECT,
-            registrations: {
-              orderBy: { createdAt: "desc" },
-              select: {
-                id: true,
-                status: true,
-                rejectionReason: true,
-                createdAt: true,
-                activity: { select: { id: true, title: true, startsAt: true } },
-              },
+            activity: { select: { id: true, title: true, startsAt: true } },
+          },
+        },
+        teamMemberships: {
+          select: {
+            status: true,
+            team: {
+              select: { id: true, name: true, activity: { select: { id: true, title: true } } },
             },
-            teamMemberships: {
-              select: {
-                status: true,
-                team: {
-                  select: { id: true, name: true, activity: { select: { id: true, title: true } } },
-                },
-              },
-            },
-            payments: {
-              where: { purpose: "MEMBERSHIP" },
-              select: { amount: true, feeApplied: true, year: true },
-            },
-            donations: {
-              orderBy: { createdAt: "desc" },
-              select: {
-                id: true,
-                amount: true,
-                status: true,
-                source: true,
-                membershipYear: true,
-                paymentMethod: true,
-                createdAt: true,
-              },
-            },
+          },
+        },
+        payments: {
+          where: { purpose: "MEMBERSHIP" },
+          select: { amount: true, feeApplied: true, year: true },
+        },
+        donations: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            source: true,
+            membershipYear: true,
+            paymentMethod: true,
+            createdAt: true,
           },
         },
       },
     });
 
-    if (!member) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+    if (!account) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
-    const { registrations, teamMemberships, payments, donations, ...account } = member.user;
+    const { registrations, teamMemberships, payments, donations, memberships, ...person } = account;
+    const current = latestMembership(memberships);
+    if (!current) return NextResponse.json({ error: messages.notFound }, { status: 404 });
+    const { year, ...membership } = current;
 
     const history = await prisma.auditLog.findMany({
       where: { targetType: "Member", targetId: id },
@@ -72,12 +84,16 @@ export const GET = withRoute(
 
     return NextResponse.json({
       member: {
-        ...withPerson({ ...member, user: account }),
+        ...personOf(person),
+        ...membership,
+        id,
+        user: { id: person.id, phone: person.phone, createdAt: person.createdAt },
+        membershipYear: year,
         registrations,
         teamMemberships,
         donations,
-        paidAmount: paidForYear(payments, member.membershipYear)?.fee ?? null,
-        supportAmount: paidForYear(payments, member.membershipYear)?.support ?? 0,
+        paidAmount: paidForYear(payments, year)?.fee ?? null,
+        supportAmount: paidForYear(payments, year)?.support ?? 0,
       },
       history,
     });

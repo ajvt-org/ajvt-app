@@ -25,10 +25,15 @@ export const POST = withRoute(
 
     const person = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, fullName: true, memberNumber: true, members: { select: { id: true } } },
+      select: {
+        id: true,
+        fullName: true,
+        memberNumber: true,
+        memberships: { select: { id: true }, take: 1 },
+      },
     });
     if (!person) throw new NotFoundError(accounts.notFound);
-    if (person.members.length) throw new ConflictError(members.accountAlreadyHasMember);
+    if (person.memberships.length) throw new ConflictError(members.accountAlreadyHasMember);
 
     const { membershipFee, membershipYear } = await getAppSettings();
 
@@ -42,7 +47,7 @@ export const POST = withRoute(
     const issued =
       status === "ACTIVE" && !person.memberNumber ? await issueMembership() : undefined;
 
-    const member = await prisma.$transaction((tx) =>
+    await prisma.$transaction((tx) =>
       addMembership(tx, {
         userId: person.id,
         paymentMethod: paymentMethod.trim(),
@@ -60,10 +65,10 @@ export const POST = withRoute(
     await logAction(session.username, "ADD_MEMBERSHIP", nameOf(person), {
       ...auditContext(session, req),
       targetType: "Member",
-      targetId: member.id,
+      targetId: person.id,
       after: { paymentMethod, paidAmount: paidAmountValue, status, year: membershipYear },
     });
 
-    return NextResponse.json({ member }, { status: 201 });
+    return NextResponse.json({ member: { id: person.id } }, { status: 201 });
   },
 );

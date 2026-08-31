@@ -18,6 +18,7 @@ export const GET = withRoute(
           orderBy: { createdAt: "desc" },
           select: {
             id: true,
+            userId: true,
             status: true,
             createdAt: true,
             paymentProof: true,
@@ -28,7 +29,6 @@ export const GET = withRoute(
                 fullName: true,
                 age: true,
                 photo: true,
-                members: { select: { id: true } },
               },
             },
           },
@@ -56,7 +56,7 @@ export const GET = withRoute(
         registrations: activity.registrations.map(({ user, ...r }) => ({
           ...r,
           member: {
-            id: user.members[0]?.id ?? "",
+            id: r.userId,
             fullName: nameOf(user),
             age: user.age,
             photo: user.photo,

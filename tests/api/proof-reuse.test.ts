@@ -52,7 +52,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const reuse = await findProofReuse("two.webp");
 
     expect(reuse).toHaveLength(1);
-    expect(reuse[0]).toMatchObject({ kind: "member", id: first.id, label: "محمد" });
+    expect(reuse[0]).toMatchObject({ kind: "member", id: first.userId, label: "محمد" });
   });
 
   it("does not report a record against itself", async () => {
@@ -61,7 +61,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const mine = await memberWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
-    const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.id });
+    const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.userId });
 
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });
@@ -123,13 +123,13 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await fingerprint("two.webp", HASH);
     await fingerprint("three.webp", HASH);
     const older = await memberWithProof("محمد", "one.webp");
-    await prisma.member.update({
-      where: { id: older.id },
+    await prisma.membership.updateMany({
+      where: { userId: older.userId },
       data: { createdAt: new Date("2026-01-01T00:00:00Z") },
     });
     const newer = await memberWithProof("أحمد", "two.webp");
-    await prisma.member.update({
-      where: { id: newer.id },
+    await prisma.membership.updateMany({
+      where: { userId: newer.userId },
       data: { createdAt: new Date("2026-06-01T00:00:00Z") },
     });
 

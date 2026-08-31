@@ -38,6 +38,29 @@ describe("the admin home", () => {
     expect(body.membership).toEqual({ current: 1, active: 2, former: 1 });
   });
 
+  it("counts a member who renewed once, on the year they renewed into", async () => {
+    const renewed = await member("جدد", { membershipYear: 2025 });
+    await prisma.membership.create({
+      data: { userId: renewed.userId, year: 2026, status: "ACTIVE", paymentMethod: "بنكيلي" },
+    });
+
+    const body = await (await read()).json();
+
+    expect(body.membership).toEqual({ current: 1, active: 1, former: 0 });
+  });
+
+  it("reads the newest year when an older one was left waiting", async () => {
+    const member2026 = await member("منتظر", { status: "PENDING", membershipYear: 2025 });
+    await prisma.membership.create({
+      data: { userId: member2026.userId, year: 2026, status: "ACTIVE", paymentMethod: "بنكيلي" },
+    });
+
+    const body = await (await read()).json();
+
+    expect(body.membership).toEqual({ current: 1, active: 1, former: 0 });
+    expect(body.handling.pendingMembers).toBe(0);
+  });
+
   it("answers what came in and what went out", async () => {
     const paid = await member("سدد");
     await prisma.payment.create({

@@ -3,7 +3,6 @@ import type { Prisma, SuspensionReason, SuspensionScope } from "@prisma/client";
 import { ConflictError, NotFoundError, ValidationError } from "./errors";
 import { tournament as messages } from "./messages";
 import { nameOf } from "./person";
-import { accountOf } from "./memberAccount";
 
 type Tx = Prisma.TransactionClient;
 
@@ -149,7 +148,7 @@ export async function proposeSuspension(
     throw new ValidationError(messages.suspensionUntilRequired);
   }
   return prisma.$transaction(async (tx) => {
-    const userId = await accountOf(tx, input.memberId);
+    const userId = input.memberId;
     const member = await tx.teamMember.findFirst({
       where: { userId, team: { activityId } },
       select: { id: true },

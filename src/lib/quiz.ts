@@ -2,6 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { MEMBERSHIP_FEE } from "./donations";
 import { nameOf } from "./person";
+import { latestByAccount } from "./currentMembership";
+import { currentMembership } from "./currentMembershipServer";
 
 const SETTINGS_ID = "singleton";
 
@@ -14,21 +16,25 @@ const COVERS_THE_FEE = {
 } satisfies Prisma.PaymentWhereInput;
 
 export async function isQuizEligible(userId: string): Promise<boolean> {
-  const member = await prisma.member.findFirst({
-    where: { userId, status: "ACTIVE", user: { payments: { some: COVERS_THE_FEE } } },
+  const current = await currentMembership(prisma, userId);
+  if (current?.status !== "ACTIVE") return false;
+
+  const paid = await prisma.payment.findFirst({
+    where: { userId, ...COVERS_THE_FEE },
     select: { id: true },
   });
-  return !!member;
+  return !!paid;
 }
 
 export async function eligibleMembers() {
-  const members = await prisma.member.findMany({
-    where: { status: "ACTIVE", user: { payments: { some: COVERS_THE_FEE } } },
-    select: { userId: true, user: { select: { fullName: true } } },
+  const rows = await prisma.membership.findMany({
+    where: { user: { payments: { some: COVERS_THE_FEE } } },
+    select: { userId: true, year: true, status: true, user: { select: { fullName: true } } },
     orderBy: { user: { fullName: "asc" } },
-    distinct: ["userId"],
   });
-  return members.map((m) => ({ userId: m.userId, fullName: nameOf(m.user) }));
+  return [...latestByAccount(rows).values()]
+    .filter((row) => row.status === "ACTIVE")
+    .map((row) => ({ userId: row.userId, fullName: nameOf(row.user) }));
 }
 
 export async function getQuizSettings() {

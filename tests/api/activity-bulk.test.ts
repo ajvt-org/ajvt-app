@@ -11,11 +11,8 @@ async function anActivity(title: string, over: Record<string, unknown> = {}) {
 
 async function someoneRegistered(activityId: string, name: string) {
   const user = await prisma.user.create({ data: { fullName: name } });
-  const member = await prisma.member.create({
-    data: { userId: user.id, paymentMethod: "بنكيلي", status: "ACTIVE" },
-  });
   return prisma.activityRegistration.create({
-    data: { activityId, userId: member.userId, status: "ACTIVE" },
+    data: { activityId, userId: user.id, status: "ACTIVE" },
   });
 }
 
@@ -74,13 +71,13 @@ describe("acting on several activities at once", () => {
     expect(await prisma.activityRegistration.count()).toBe(0);
   });
 
-  it("keeps the members themselves", async () => {
+  it("keeps the people themselves", async () => {
     const activity = await anActivity("الأول");
     await someoneRegistered(activity.id, "محمد");
 
     await DELETE(del(`/api/admin/activities/${activity.id}`), withId(activity.id));
 
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.user.count()).toBe(1);
   });
 
   it("writes one line in the trail per activity deleted", async () => {

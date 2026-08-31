@@ -10,7 +10,6 @@ import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { donorNameOnRecord } from "@/lib/donorName";
-import { personLink } from "@/lib/memberAccount";
 
 async function namedAccount(userId: string | null): Promise<string | null> {
   if (!userId) return null;
@@ -79,9 +78,11 @@ export const PATCH = withRoute(
     if (status !== undefined) data.status = status;
 
     if (userId !== undefined) {
-      const link = await personLink(prisma, userId ?? null);
-      if (!link) return NextResponse.json({ error: members.notFound }, { status: 404 });
-      data.userId = link.userId;
+      const giver = userId
+        ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+        : null;
+      if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
+      data.userId = giver?.id ?? null;
     }
 
     if (anonymous !== undefined) data.anonymous = anonymous;

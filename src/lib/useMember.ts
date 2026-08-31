@@ -29,7 +29,7 @@ export interface MemberData {
   user: { phone: string } | null;
   age: string | null;
   village: string;
-  paymentMethod: string;
+  paymentMethod: string | null;
   paymentProof: string | null;
   paidAmount: number | null;
   supportAmount: number;

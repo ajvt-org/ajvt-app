@@ -14,7 +14,7 @@ async function aMemberWhoGaveMore() {
     userId: user.id,
     membershipYear: 2026,
   });
-  await recordMembershipPayment(prisma, member.id, 2000, 100);
+  await recordMembershipPayment(prisma, member.userId, 2000, 100);
   return { member };
 }
 

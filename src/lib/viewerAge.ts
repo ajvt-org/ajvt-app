@@ -1,16 +1,17 @@
 import { prisma } from "./prisma";
 import { getUserSession } from "./auth";
+import { latestMembership } from "./currentMembership";
 
 export async function getViewerAge(): Promise<string | null> {
   const session = await getUserSession();
   if (!session) return null;
 
   const { userId } = session as { userId: string };
-  const member = await prisma.member.findFirst({
-    where: { userId, status: "ACTIVE" },
-    orderBy: { createdAt: "asc" },
-    select: { user: { select: { age: true } } },
+  const rows = await prisma.membership.findMany({
+    where: { userId },
+    select: { year: true, status: true, user: { select: { age: true } } },
   });
+  const current = latestMembership(rows);
 
-  return member?.user.age ?? null;
+  return current?.status === "ACTIVE" ? (current.user.age ?? null) : null;
 }

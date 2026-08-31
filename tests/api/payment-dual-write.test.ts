@@ -52,14 +52,9 @@ function donateForm(fields: Record<string, string>) {
 }
 
 // The payment is the only place money is kept. If any path leaves a figure on
-// a member, a membership year or a surplus donation, the two can disagree.
+// a membership year or a surplus donation, the two can disagree.
 async function moneyKeptAnywhereElse() {
-  const [members, years, surplus] = await Promise.all([
-    prisma.member.count({ where: { paidAmount: { not: null } } }),
-    prisma.membership.count({ where: { paidAmount: { not: null } } }),
-    prisma.donation.count({ where: { source: "MEMBERSHIP" } }),
-  ]);
-  return members + years + surplus;
+  return prisma.donation.count({ where: { source: "MEMBERSHIP" } });
 }
 
 describe("every path that touches money writes only the payment", () => {
@@ -78,10 +73,10 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin approves that member", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
@@ -92,10 +87,10 @@ describe("every path that touches money writes only the payment", () => {
   it("keeps the admin who recorded the year on the payment as well", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     const membership = await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } });
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
@@ -106,17 +101,17 @@ describe("every path that touches money writes only the payment", () => {
   it("leaves the first admin on the year when a second one edits it", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
-    await VALIDATE(post("/api/admin/validate", { id: m.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
     await signInAsAdmin(await createAdmin("second", "SUPER"));
     await PAY(
-      put(`/api/admin/members/${m.id}/payment`, {
+      put(`/api/admin/members/${m.userId}/payment`, {
         amountTransferred: 3000,
         paymentMethod: "بنكيلي",
       }),
-      withId(m.id),
+      withId(m.userId),
     );
 
     expect(
@@ -127,12 +122,12 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin refuses that member", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: m.id,
+        id: m.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
@@ -145,10 +140,13 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin corrects the amount", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 600 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 600 }),
+      withId(m.userId),
+    );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     expect((await prisma.payment.findFirstOrThrow()).amount).toBe(600);
@@ -157,10 +155,13 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin clears the amount", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: null }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: null }),
+      withId(m.userId),
+    );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);
     expect(await prisma.payment.count()).toBe(0);
@@ -192,13 +193,10 @@ describe("every path that touches money writes only the payment", () => {
       membershipYear: YEAR - 1,
       memberNumber: "AJVT-2025-0001",
     });
-    await prisma.membership.create({
-      data: { userId: m.userId, year: YEAR - 1, status: "ACTIVE" },
-    });
 
     await RENEW(
-      post(`/api/admin/members/${m.id}/renew`, { paidAmount: 1000, paymentMethod: "بنكيلي" }),
-      withId(m.id),
+      post(`/api/admin/members/${m.userId}/renew`, { paidAmount: 1000, paymentMethod: "بنكيلي" }),
+      withId(m.userId),
     );
 
     expect(await moneyKeptAnywhereElse()).toBe(0);

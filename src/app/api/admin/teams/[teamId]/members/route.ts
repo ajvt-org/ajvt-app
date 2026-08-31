@@ -8,6 +8,7 @@ import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
 import { members, tournament } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 export const POST = withRoute(
   "POST /api/admin/teams/[teamId]/members",
@@ -32,17 +33,14 @@ export const POST = withRoute(
       );
     }
 
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      select: { userId: true, status: true, user: { select: { fullName: true } } },
-    });
-    if (!member) {
+    const membership = await currentMembership(prisma, memberId);
+    if (!membership) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
-    if (member.status === "REJECTED") {
+    if (membership.status === "REJECTED") {
       return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });
     }
-    const userId = member.userId;
+    const userId = memberId;
 
     const registered = await prisma.activityRegistration.findUnique({
       where: { userId_activityId: { userId, activityId: team.activityId } },

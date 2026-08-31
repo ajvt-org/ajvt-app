@@ -133,7 +133,7 @@ describe("attaching finance to an activity", () => {
       status: "ACTIVE",
     });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-    await recordMembershipPayment(prisma, m.id, 100, 100);
+    await recordMembershipPayment(prisma, m.userId, 100, 100);
 
     expect((await summaryFor(a.id)).totalRevenue).toBe(0);
     expect((await summaryFor()).totalRevenue).toBe(100);

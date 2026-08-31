@@ -5,6 +5,7 @@ import { proofScope } from "@/lib/proofScope";
 import { withRoute } from "@/lib/route";
 import { nameOf } from "@/lib/person";
 import { donorNameOnRecord } from "@/lib/donorName";
+import { latestByAccount } from "@/lib/currentMembership";
 
 export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const session = await requireUnscopedAdmin();
@@ -13,19 +14,19 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   const includeActivity = scope.activity;
   const includeDonations = scope.donations;
 
-  const [members, registrations, donations] = await Promise.all([
+  const [memberships, registrations, donations] = await Promise.all([
     includeMembership
-      ? prisma.member.findMany({
+      ? prisma.membership.findMany({
           where: { paymentProof: { not: null } },
           select: {
-            id: true,
-            user: { select: { fullName: true } },
+            userId: true,
+            year: true,
             paymentProof: true,
             status: true,
             createdAt: true,
             updatedAt: true,
+            user: { select: { fullName: true } },
           },
-          orderBy: { updatedAt: "desc" },
         })
       : Promise.resolve([]),
     includeActivity
@@ -76,9 +77,11 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
   });
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
 
+  const latestWithProof = [...latestByAccount(memberships).values()];
+
   const proofs = [
-    ...members.map((m) => ({
-      id: m.id,
+    ...latestWithProof.map((m) => ({
+      id: m.userId,
       kind: "MEMBERSHIP" as const,
       proof: m.paymentProof as string,
       memberName: nameOf(m.user),

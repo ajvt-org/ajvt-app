@@ -48,7 +48,7 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     const m = await member("محمد");
     clearCookies();
 
-    const res = await GET(get(`/api/admin/members/${m.id}/same-person`), withId(m.id));
+    const res = await GET(get(`/api/admin/members/${m.userId}/same-person`), withId(m.userId));
 
     expect(res.status).toBe(401);
   });
@@ -57,7 +57,7 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     await member("أحمد ولد سالم", { accountPhone: "22334455", status: "ACTIVE" });
     const second = await member("احمد سالم", { accountPhone: "33445566" });
 
-    const found = await others(second.id);
+    const found = await others(second.userId);
 
     expect(found).toHaveLength(1);
     expect(found[0]).toMatchObject({ fullName: "أحمد ولد سالم" });
@@ -67,34 +67,34 @@ describe("GET /api/admin/members/[id]/same-person", () => {
     await member("سيدي محمد", { accountPhone: "22334455", status: "ACTIVE" });
     const second = await member("سيد محمد", { accountPhone: "33445566" });
 
-    expect(await others(second.id)).toEqual([]);
+    expect(await others(second.userId)).toEqual([]);
   });
 
   it("says nothing about two brothers", async () => {
     await member("الشيخ التجاني عارف", { accountPhone: "22334455", status: "ACTIVE" });
     const brother = await member("يسلم عارف", { accountPhone: "33445566" });
 
-    expect(await others(brother.id)).toEqual([]);
+    expect(await others(brother.userId)).toEqual([]);
   });
 
   it("says nothing when nobody matches", async () => {
     await member("محمد الأمين", { accountPhone: "22334455" });
     const alone = await member("فاطمة بنت أحمد", { accountPhone: "33445566" });
 
-    expect(await others(alone.id)).toEqual([]);
+    expect(await others(alone.userId)).toEqual([]);
   });
 
   it("does not report a member against itself", async () => {
     const only = await member("محمد الأمين", { accountPhone: "22334455" });
 
-    expect(await others(only.id)).toEqual([]);
+    expect(await others(only.userId)).toEqual([]);
   });
 
   it("reports the other membership's account, so the admin knows which number to call", async () => {
     await member("مراد وجاه", { accountPhone: "43262978", status: "ACTIVE" });
     const second = await member("مراد ولد وجاه", { accountPhone: "22119988" });
 
-    const found = await others(second.id);
+    const found = await others(second.userId);
 
     expect(found[0].accountPhone).toBe("43262978");
   });

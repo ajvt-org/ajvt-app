@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nameOf } from "@/lib/person";
-import { accountOf } from "@/lib/memberAccount";
 import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { logAction, auditContext } from "@/lib/audit";
@@ -28,7 +27,7 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
 
-    const account = await accountOf(prisma, memberId);
+    const account = memberId;
     const inRoster = await prisma.teamMember.findUnique({
       where: { teamId_userId: { teamId, userId: account } },
     });

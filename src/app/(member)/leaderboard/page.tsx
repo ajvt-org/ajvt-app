@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import SupportersTable from "@/components/SupportersTable";
@@ -14,13 +15,10 @@ async function getViewer() {
   const session = await getUserSession();
   if (!session) return null;
   const { userId } = session as { userId: string };
-  const member = await prisma.member.findUnique({
-    where: { userId },
-    select: { id: true, status: true },
-  });
+  const current = await currentMembership(prisma, userId);
   return {
     userId,
-    donateHref: member?.status === "ACTIVE" ? `/donate?memberId=${member.id}` : "/donate",
+    donateHref: current?.status === "ACTIVE" ? `/donate?memberId=${userId}` : "/donate",
   };
 }
 

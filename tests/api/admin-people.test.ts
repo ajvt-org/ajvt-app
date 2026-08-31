@@ -43,7 +43,7 @@ describe("POST /api/admin/people", () => {
       age: "البدريين",
       village: "التاكلالت",
     });
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("hands back a temporary password that actually signs in", async () => {

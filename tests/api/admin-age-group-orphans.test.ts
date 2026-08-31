@@ -78,7 +78,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
     const res = await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
     expect(res.status).toBe(401);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 
   it("moves the stranded members onto the real group", async () => {
@@ -92,15 +92,15 @@ describe("POST /api/admin/age-groups/reassign", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ moved: 2 });
-    expect(await prisma.member.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
-    expect(await prisma.member.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
+    expect(await prisma.membership.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
   });
 
   it("does not touch updatedAt, the member page reads it as their decision date", async () => {
     await signInAsAdmin(await createAdmin());
     await prisma.ageGroup.create({ data: { name: "المنصورون" } });
     const member = await aMember("محمد", "المنصورين");
-    const before = member.updatedAt;
+    const before = (await personFor(member.id)).updatedAt;
 
     await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
@@ -116,7 +116,7 @@ describe("POST /api/admin/age-groups/reassign", () => {
     const res = await POST(reassign({ from: "المنصورين", to: "المنصورون" }));
 
     expect(res.status).toBe(404);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 
   it("says so when the old value matches nobody", async () => {

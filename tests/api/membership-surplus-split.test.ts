@@ -27,13 +27,13 @@ const submission = {
 async function join(body: Record<string, unknown> = {}) {
   await signInAs(await createUser());
   await REGISTER(post("/api/members", { ...submission, ...body }));
-  return prisma.member.findFirstOrThrow();
+  return prisma.membership.findFirstOrThrow();
 }
 
 // The fee and the surplus are both worked out from the one payment.
 const fee = async (memberId: string) => {
   const payment = await prisma.payment.findFirst({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
   });
   if (!payment) return null;
   return Math.min(payment.amount, payment.feeApplied ?? payment.amount);
@@ -43,7 +43,7 @@ const fee = async (memberId: string) => {
 // when the payment covers the fee and no more.
 const surplus = async (memberId: string) => {
   const payment = await prisma.payment.findFirst({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
   });
   if (!payment) return null;
   const amount = payment.amount - (payment.feeApplied ?? 0);
@@ -58,25 +58,25 @@ describe("the fee and the surplus are worked out from one payment", () => {
   it("counts only the fee as the fee", async () => {
     const member = await join();
 
-    expect(await fee(member.id)).toBe(100);
+    expect(await fee(member.userId)).toBe(100);
   });
 
   it("counts the rest as support", async () => {
     const member = await join();
 
-    expect((await surplus(member.id))?.amount).toBe(2000);
+    expect((await surplus(member.userId))?.amount).toBe(2000);
   });
 
   it("adds back up to what the member actually transferred", async () => {
     const member = await join();
 
-    expect(await totalPaidFor(prisma, member.id)).toBe(2100);
+    expect(await totalPaidFor(prisma, member.userId)).toBe(2100);
   });
 
   it("keeps the surplus out of the honour board until an admin approves", async () => {
     const member = await join();
 
-    expect((await surplus(member.id))?.status).toBe("PENDING");
+    expect((await surplus(member.userId))?.status).toBe("PENDING");
     const { getLeaderboardData } = await import("@/lib/donationsServer");
     expect((await getLeaderboardData()).leaderboard).toHaveLength(0);
   });
@@ -85,9 +85,9 @@ describe("the fee and the surplus are worked out from one payment", () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
-    expect((await surplus(member.id))?.status).toBe("ACTIVE");
+    expect((await surplus(member.userId))?.status).toBe("ACTIVE");
   });
 
   it("withdraws the surplus when the membership is refused", async () => {
@@ -96,13 +96,13 @@ describe("the fee and the surplus are worked out from one payment", () => {
 
     await VALIDATE(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
     );
 
-    expect((await surplus(member.id))?.status).toBe("REJECTED");
+    expect((await surplus(member.userId))?.status).toBe("REJECTED");
     const { getLeaderboardData } = await import("@/lib/donationsServer");
     expect((await getLeaderboardData()).leaderboard).toHaveLength(0);
   });
@@ -110,8 +110,8 @@ describe("the fee and the surplus are worked out from one payment", () => {
   it("leaves no surplus when the member paid exactly the fee", async () => {
     const member = await join({ paidAmount: 100 });
 
-    expect(await fee(member.id)).toBe(100);
-    expect(await surplus(member.id)).toBeNull();
+    expect(await fee(member.userId)).toBe(100);
+    expect(await surplus(member.userId)).toBeNull();
   });
 
   it("drops the surplus when an admin corrects the amount down to the fee", async () => {
@@ -119,12 +119,12 @@ describe("the fee and the surplus are worked out from one payment", () => {
     await signInAsAdmin(await createAdmin());
 
     await PAY(
-      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 100 }),
-      withId(member.id),
+      put(`/api/admin/members/${member.userId}/payment`, { amountTransferred: 100 }),
+      withId(member.userId),
     );
 
-    expect(await fee(member.id)).toBe(100);
-    expect(await surplus(member.id)).toBeNull();
+    expect(await fee(member.userId)).toBe(100);
+    expect(await surplus(member.userId)).toBeNull();
   });
 
   it("moves the surplus when an admin corrects the amount up", async () => {
@@ -132,31 +132,31 @@ describe("the fee and the surplus are worked out from one payment", () => {
     await signInAsAdmin(await createAdmin());
 
     await PAY(
-      put(`/api/admin/members/${member.id}/payment`, { amountTransferred: 600 }),
-      withId(member.id),
+      put(`/api/admin/members/${member.userId}/payment`, { amountTransferred: 600 }),
+      withId(member.userId),
     );
 
-    expect(await fee(member.id)).toBe(100);
-    expect((await surplus(member.id))?.amount).toBe(500);
+    expect(await fee(member.userId)).toBe(100);
+    expect((await surplus(member.userId))?.amount).toBe(500);
   });
 
   it("keeps the year record on the fee, never the whole transfer", async () => {
     const member = await join();
     await signInAsAdmin(await createAdmin());
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
-    expect(await fee(member.id)).toBe(100);
+    expect(await fee(member.userId)).toBe(100);
   });
 
   it("clears the payment when the amount is removed altogether", async () => {
     const member = await join();
 
-    await recordMembershipPayment(prisma, member.id, null, 100);
+    await recordMembershipPayment(prisma, member.userId, null, 100);
 
-    expect(await fee(member.id)).toBeNull();
-    expect(await surplus(member.id)).toBeNull();
-    expect(await totalPaidFor(prisma, member.id)).toBeNull();
+    expect(await fee(member.userId)).toBeNull();
+    expect(await surplus(member.userId)).toBeNull();
+    expect(await totalPaidFor(prisma, member.userId)).toBeNull();
   });
 });

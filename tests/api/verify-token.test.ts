@@ -23,7 +23,7 @@ describe("membership verification", () => {
     await signInAsAdmin(admin);
     const member = await pendingMember("محمد");
 
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     const after = await personFor(member.id);
     expect(after.memberNumber).toBeTruthy();
@@ -36,8 +36,8 @@ describe("membership verification", () => {
     const first = await pendingMember("الأول");
     const second = await pendingMember("الثاني");
 
-    await VALIDATE(post("/api/admin/validate", { id: first.id, action: "ACTIVE" }));
-    await VALIDATE(post("/api/admin/validate", { id: second.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: first.userId, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: second.userId, action: "ACTIVE" }));
 
     const a = await personFor(first.id);
     const b = await personFor(second.id);

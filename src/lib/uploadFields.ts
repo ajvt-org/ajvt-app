@@ -52,23 +52,6 @@ export const UPLOAD_FIELDS: UploadField[] = [
     },
   },
   {
-    id: "member.paymentProof",
-    names: async () =>
-      (await prisma.member.findMany({ select: { paymentProof: true } })).map((r) => r.paymentProof),
-    rename: (from, to) =>
-      prisma.member.updateMany({ where: { paymentProof: from }, data: { paymentProof: to } }),
-    serve: {
-      via: "authenticated",
-      locate: async (base) => {
-        const row = await prisma.member.findFirst({
-          where: { paymentProof: base },
-          select: { userId: true },
-        });
-        return row ? { kind: "membership", ownerId: row.userId } : null;
-      },
-    },
-  },
-  {
     id: "membership.paymentProof",
     names: async () =>
       (await prisma.membership.findMany({ select: { paymentProof: true } })).map(

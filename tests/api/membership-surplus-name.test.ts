@@ -27,22 +27,22 @@ const submission = {
 async function joinAndApprove(body: Record<string, unknown> = {}) {
   await signInAs(await createUser());
   await REGISTER(post("/api/members", { ...submission, ...body }));
-  const member = await prisma.member.findFirstOrThrow();
+  const member = await prisma.membership.findFirstOrThrow();
   await signInAsAdmin(await createAdmin());
-  await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+  await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
   return member;
 }
 
 function mirrorOf(memberId: string) {
   return prisma.payment.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
   });
 }
 
-function changeVisibility(memberId: string, anonymous: boolean) {
+function changeVisibility(userId: string, anonymous: boolean) {
   return UPDATE_MEMBER(
-    patch(`/api/members/${memberId}`, { surplusAnonymous: anonymous }),
-    withId(memberId),
+    patch(`/api/members/${userId}`, { surplusAnonymous: anonymous }),
+    withId(userId),
   );
 }
 
@@ -54,7 +54,7 @@ describe("who the membership surplus is credited to", () => {
   it("carries the member name when they agreed to be named", async () => {
     const member = await joinAndApprove({ surplusAnonymous: false });
 
-    const donation = await surplusOf(member.id);
+    const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(400);
     expect(donation.donorName).toBe("محمد ولد أحمد");
   });
@@ -62,7 +62,7 @@ describe("who the membership surplus is credited to", () => {
   it("stays unnamed when the member asked to remain anonymous", async () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
 
-    const donation = await surplusOf(member.id);
+    const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(400);
     expect(donation.donorName).toBeNull();
   });
@@ -70,7 +70,7 @@ describe("who the membership surplus is credited to", () => {
   it("defaults to naming them when the form said nothing", async () => {
     const member = await joinAndApprove();
 
-    expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
+    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
   });
 
   it("keeps an anonymous surplus off the honour board by name", async () => {
@@ -88,9 +88,9 @@ describe("who the membership surplus is credited to", () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
-    await recordMembershipPayment(prisma, member.id, 900, 100);
+    await recordMembershipPayment(prisma, member.userId, 900, 100);
 
-    const donation = await surplusOf(member.id);
+    const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(800);
     expect(donation.donorName).toBeNull();
   });
@@ -99,16 +99,16 @@ describe("who the membership surplus is credited to", () => {
     const user = await createUser();
     await signInAs(user);
     await REGISTER(post("/api/members", { ...submission, surplusAnonymous: false }));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
     await signInAs(user);
 
-    const res = await changeVisibility(member.id, true);
+    const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(200);
-    expect((await surplusOf(member.id)).donorName).toBeNull();
-    const mirrored = await mirrorOf(member.id);
+    expect((await surplusOf(member.userId)).donorName).toBeNull();
+    const mirrored = await mirrorOf(member.userId);
     expect(mirrored.anonymous).toBe(true);
     expect(mirrored.donorName).toBeNull();
   });
@@ -117,28 +117,28 @@ describe("who the membership surplus is credited to", () => {
     const user = await createUser();
     await signInAs(user);
     await REGISTER(post("/api/members", { ...submission, surplusAnonymous: true }));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
-    await VALIDATE(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
     await signInAs(user);
 
-    await changeVisibility(member.id, false);
+    await changeVisibility(member.userId, false);
 
-    expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
-    expect((await mirrorOf(member.id)).anonymous).toBe(false);
+    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
+    expect((await mirrorOf(member.userId)).anonymous).toBe(false);
   });
 
   it("refuses to change a surplus that belongs to another account", async () => {
     const owner = await createUser();
     await signInAs(owner);
     await REGISTER(post("/api/members", { ...submission, surplusAnonymous: false }));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     await signInAs(await createUser("22119900"));
 
-    const res = await changeVisibility(member.id, true);
+    const res = await changeVisibility(member.userId, true);
 
     expect(res.status).toBe(404);
-    expect((await surplusOf(member.id)).donorName).toBe("محمد ولد أحمد");
+    expect((await surplusOf(member.userId)).donorName).toBe("محمد ولد أحمد");
   });
 
   it("does not rename a named surplus either, once it is published", async () => {
@@ -146,9 +146,9 @@ describe("who the membership surplus is credited to", () => {
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
 
     await prisma.user.update({ where: { id: member.userId }, data: { fullName: "اسم آخر" } });
-    await recordMembershipPayment(prisma, member.id, 700, 100);
+    await recordMembershipPayment(prisma, member.userId, 700, 100);
 
-    const donation = await surplusOf(member.id);
+    const donation = await surplusOf(member.userId);
     expect(donation.amount).toBe(600);
     expect(donation.donorName).toBe("محمد ولد أحمد");
   });

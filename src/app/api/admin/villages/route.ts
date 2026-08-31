@@ -10,11 +10,11 @@ export const GET = withRoute("GET /api/admin/villages", async () => {
   await requireAdminRole("MEMBERS");
   const [rows, used] = await Promise.all([
     prisma.village.findMany({ orderBy: { createdAt: "asc" } }),
-    prisma.member.findMany({ select: { user: { select: { village: true } } } }),
+    prisma.user.findMany({ where: { memberships: { some: {} } }, select: { village: true } }),
   ]);
   const counts = new Map<string, number>();
   for (const row of used) {
-    counts.set(row.user.village, (counts.get(row.user.village) ?? 0) + 1);
+    counts.set(row.village, (counts.get(row.village) ?? 0) + 1);
   }
   const known = new Set(rows.map((row) => row.name));
   const unlisted = [...counts.entries()]

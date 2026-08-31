@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
 import { members, tournament } from "@/lib/messages";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 export const POST = withRoute(
   "POST /api/teams/[teamId]/join",
@@ -13,14 +14,14 @@ export const POST = withRoute(
     const { teamId } = await params;
     const { memberId } = parse(teamMemberSchema, await req.json());
 
-    const [member, team] = await Promise.all([
-      prisma.member.findUnique({ where: { id: memberId }, select: { userId: true, status: true } }),
+    const [membership, team] = await Promise.all([
+      memberId === session.userId ? currentMembership(prisma, memberId) : null,
       prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
     ]);
-    if (!member || member.userId !== session.userId) {
+    if (!membership) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
-    if (member.status !== "ACTIVE") {
+    if (membership.status !== "ACTIVE") {
       return NextResponse.json({ error: "يجب أن تكون العضوية مقبولة أولاً" }, { status: 403 });
     }
     if (!team) {
@@ -71,11 +72,7 @@ export const DELETE = withRoute(
     const { teamId } = await params;
     const { memberId } = parse(teamMemberSchema, await req.json());
 
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      select: { userId: true },
-    });
-    if (!member || member.userId !== session.userId) {
+    if (memberId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 

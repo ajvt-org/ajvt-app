@@ -10,6 +10,8 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { isUniqueViolation, uniqueViolationFields } from "@/lib/prismaError";
 import { members } from "@/lib/messages";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
+import { saveMembershipYear } from "@/lib/membershipRecord";
+import { currentMembership } from "@/lib/currentMembershipServer";
 
 const CODE_ATTEMPTS = 5;
 
@@ -23,40 +25,44 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
   const person = await prisma.user.findUniqueOrThrow({
     where: { id: session.userId },
-    select: { fullName: true, members: { select: { id: true }, take: 1 } },
+    select: { fullName: true, memberships: { select: { id: true }, take: 1 } },
   });
   if (!person.fullName?.trim()) {
     throw new ValidationError(members.profileIncomplete);
   }
 
   if (id) {
-    const existing = await prisma.member.findUnique({ where: { id } });
-    if (!existing || existing.userId !== session.userId) {
+    if (id !== session.userId) {
       throw new NotFoundError(members.notFound);
     }
-    if (existing.status === "ACTIVE") {
-      throw new ConflictError("هذا العضو مقبول بالفعل");
+    const current = await currentMembership(prisma, session.userId);
+    if (!current) {
+      throw new NotFoundError(members.notFound);
+    }
+    if (current.status === "ACTIVE") {
+      throw new ConflictError(members.alreadyAccepted);
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
-      const m = await tx.member.update({
-        where: { id },
-        data: {
-          paymentMethod,
-          paymentProof,
-          ...(!existing.referenceCode && referenceCode ? { referenceCode } : {}),
-          ...(surplusAnonymous !== undefined ? { surplusAnonymous } : {}),
-          status: "PENDING",
-          rejectionReason: null,
-        },
+    await prisma.$transaction(async (tx) => {
+      await saveMembershipYear(tx, session.userId, current.year, {
+        paymentMethod,
+        paymentProof,
+        ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
+        status: "PENDING",
+        rejectionReason: null,
       });
-      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, surplusAnonymous);
-      return m;
+      await recordMembershipPayment(
+        tx,
+        session.userId,
+        Number(paidAmount),
+        membershipFee,
+        surplusAnonymous,
+      );
     });
-    return NextResponse.json({ id: updated.id }, { status: 200 });
+    return NextResponse.json({ id }, { status: 200 });
   }
 
-  if (person.members.length) {
+  if (person.memberships.length) {
     throw new ConflictError(members.alreadyHasRequest);
   }
 
@@ -64,31 +70,22 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
   for (let attempt = 0; ; attempt++) {
     try {
-      const member = await prisma.$transaction(async (tx) => {
-        const created = await tx.member.create({
-          data: {
-            userId: session.userId,
-            paymentMethod,
-            paymentProof,
-            surplusAnonymous: surplusAnonymous ?? false,
-            referenceCode: code,
-            status: "PENDING",
-            membershipYear,
-          },
+      await prisma.$transaction(async (tx) => {
+        await saveMembershipYear(tx, session.userId, membershipYear, {
+          paymentMethod,
+          paymentProof,
+          referenceCode: code,
+          status: "PENDING",
         });
         await recordMembershipPayment(
           tx,
-          created.id,
+          session.userId,
           Number(paidAmount),
           membershipFee,
           surplusAnonymous,
         );
-        return created;
       });
-      return NextResponse.json(
-        { id: member.id, referenceCode: member.referenceCode },
-        { status: 201 },
-      );
+      return NextResponse.json({ id: session.userId, referenceCode: code }, { status: 201 });
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
       if (uniqueViolationFields(err).includes("userId")) {

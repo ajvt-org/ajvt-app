@@ -65,11 +65,7 @@ async function seedEverything() {
   });
   await memberFor(other, { paymentProof: "other-proof.webp" });
   await prisma.membership.create({
-    data: {
-      userId: mine.userId,
-      year: 2026,
-      paymentProof: "membership-proof.webp",
-    },
+    data: { userId: mine.userId, year: 2020, paymentProof: "membership-proof.webp" },
   });
   const activity = await prisma.activity.create({ data: { title: "نشاط", description: "وصف" } });
   await prisma.activityRegistration.create({

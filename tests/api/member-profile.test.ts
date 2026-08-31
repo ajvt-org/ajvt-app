@@ -24,7 +24,7 @@ describe("a member's whole file, in one answer", () => {
   it("refuses an anonymous caller", async () => {
     const member = await aMember();
 
-    expect((await PROFILE(...ask(member.id))).status).toBe(401);
+    expect((await PROFILE(...ask(member.userId))).status).toBe(401);
   });
 
   it("says not found for an id that is not a member", async () => {
@@ -54,7 +54,7 @@ describe("a member's whole file, in one answer", () => {
       data: { amount: 500, userId: member.userId, status: "ACTIVE", source: "SELF" },
     });
 
-    const body = await (await PROFILE(...ask(member.id))).json();
+    const body = await (await PROFILE(...ask(member.userId))).json();
 
     expect(body.member.registrations).toHaveLength(1);
     expect(body.member.teamMemberships[0].team.name).toBe("النجم");
@@ -72,7 +72,7 @@ describe("a member's whole file, in one answer", () => {
         adminUsername: "admin",
         action: "APPROVE_MEMBER",
         targetType: "Member",
-        targetId: mine.id,
+        targetId: mine.userId,
       },
     });
     await prisma.auditLog.create({
@@ -80,11 +80,11 @@ describe("a member's whole file, in one answer", () => {
         adminUsername: "admin",
         action: "REJECT_MEMBER",
         targetType: "Member",
-        targetId: other.id,
+        targetId: other.userId,
       },
     });
 
-    const body = await (await PROFILE(...ask(mine.id))).json();
+    const body = await (await PROFILE(...ask(mine.userId))).json();
 
     expect(body.history).toHaveLength(1);
     expect(body.history[0].action).toBe("APPROVE_MEMBER");

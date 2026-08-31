@@ -26,20 +26,14 @@ export const PATCH = withRoute(
       await req.json(),
     );
 
-    const existing = await prisma.member.findUnique({
+    const existing = await prisma.user.findUnique({
       where: { id },
       select: {
-        userId: true,
-        paymentMethod: true,
-        user: {
-          select: {
-            fullName: true,
-            age: true,
-            village: true,
-            photo: true,
-            photoLocked: true,
-          },
-        },
+        fullName: true,
+        age: true,
+        village: true,
+        photo: true,
+        photoLocked: true,
       },
     });
     if (!existing) {
@@ -72,8 +66,8 @@ export const PATCH = withRoute(
 
     if (village !== undefined) data.village = village;
     if (age !== undefined || village !== undefined) {
-      const nextVillage = village ?? existing.user.village;
-      const nextAge = ageForVillage(nextVillage, age === undefined ? existing.user.age : age);
+      const nextVillage = village ?? existing.village;
+      const nextAge = ageForVillage(nextVillage, age === undefined ? existing.age : age);
       if (requiresAgeGroup(nextVillage) && !nextAge) {
         return NextResponse.json({ error: members.pickAgeGroup }, { status: 400 });
       }
@@ -84,42 +78,32 @@ export const PATCH = withRoute(
       data.photoLocked = photoLocked;
       if (photoLocked) data.photo = null;
     }
-    const member = await prisma.member.findUniqueOrThrow({ where: { id } });
     const person = await prisma.user.update({
-      where: { id: member.userId },
+      where: { id: attachedUserId ?? id },
       data,
       select: { fullName: true, age: true, village: true },
     });
-    await logAction(
-      session.username,
-      "UPDATE_MEMBER",
-      `${nameOf(existing.user)} → ${nameOf(person)}`,
-      {
-        ...auditContext(session, req),
-        targetType: "Member",
-        targetId: member.id,
-        before: {
-          ...existing.user,
-          paymentMethod: existing.paymentMethod,
-        },
-        after: {
-          fullName: person.fullName,
-          age: person.age,
-          village: person.village,
-          paymentMethod: member.paymentMethod,
-        },
+    await logAction(session.username, "UPDATE_MEMBER", `${nameOf(existing)} → ${nameOf(person)}`, {
+      ...auditContext(session, req),
+      targetType: "Member",
+      targetId: id,
+      before: { ...existing },
+      after: {
+        fullName: person.fullName,
+        age: person.age,
+        village: person.village,
       },
-    );
-    if (photo === null && existing.user.photo !== null) {
+    });
+    if (photo === null && existing.photo !== null) {
       await logAction(session.username, "REMOVE_MEMBER_PHOTO", nameOf(person), {
         ...auditContext(session, req),
         targetType: "Member",
-        targetId: member.id,
-        before: { photo: existing.user.photo },
+        targetId: id,
+        before: { photo: existing.photo },
         after: { photo: null },
       });
     }
-    if (photoLocked !== undefined && photoLocked !== existing.user.photoLocked) {
+    if (photoLocked !== undefined && photoLocked !== existing.photoLocked) {
       await logAction(
         session.username,
         photoLocked ? "LOCK_MEMBER_PHOTO" : "UNLOCK_MEMBER_PHOTO",
@@ -127,8 +111,8 @@ export const PATCH = withRoute(
         {
           ...auditContext(session, req),
           targetType: "Member",
-          targetId: member.id,
-          before: { photoLocked: existing.user.photoLocked },
+          targetId: id,
+          before: { photoLocked: existing.photoLocked },
           after: { photoLocked },
         },
       );
@@ -141,14 +125,14 @@ export const PATCH = withRoute(
         {
           ...auditContext(session, req),
           targetType: "Member",
-          targetId: member.id,
+          targetId: id,
           before: { userId: null },
           after: { userId: attachedUserId, account: accountPhone!.trim() },
         },
       );
     }
 
-    return NextResponse.json({ member, tempPassword });
+    return NextResponse.json({ member: { id, ...person }, tempPassword });
   },
 );
 
@@ -158,35 +142,37 @@ export const DELETE = withRoute(
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
 
-    const member = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
-      include: { user: { select: { fullName: true, age: true } } },
+      select: { fullName: true, age: true, memberships: { select: { id: true }, take: 1 } },
     });
-    if (!member) {
+    if (!account || account.memberships.length === 0) {
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
     const { confirmName } = await req.json().catch(() => ({ confirmName: undefined }));
-    if (!confirmationMatches(String(confirmName ?? ""), nameOf(member.user))) {
+    if (!confirmationMatches(String(confirmName ?? ""), nameOf(account))) {
       throw new ValidationError("اكتب اسم العضو كما هو للتأكيد");
     }
 
-    const { user: person, ...membership } = member;
+    const { memberships: _held, ...person } = account;
+    void _held;
+    const years = await prisma.membership.findMany({ where: { userId: id } });
     await archive(
       "Member",
       id,
       nameOf(person),
-      membership as unknown as Prisma.InputJsonValue,
+      { userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
       session.username,
     );
-    await prisma.member.delete({ where: { id } });
-    const forgotten = await forgetQuizFootprint(member.userId);
+    await prisma.membership.deleteMany({ where: { userId: id } });
+    const forgotten = await forgetQuizFootprint(id);
     await purgeExpired();
-    await logAction(session.username, "DELETE_MEMBER", nameOf(member.user), {
+    await logAction(session.username, "DELETE_MEMBER", nameOf(person), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { fullName: person.fullName, age: person.age, status: member.status },
+      before: { fullName: person.fullName, age: person.age },
       meta: forgotten ?? undefined,
     });
 

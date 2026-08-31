@@ -62,9 +62,9 @@ describe("POST /api/admin/people/[id]/membership", () => {
     const res = await add(target.id);
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     expect(member.userId).toBe(target.id);
-    expect(member.status).toBe("PENDING");
+    expect((await prisma.membership.findFirstOrThrow()).status).toBe("PENDING");
   });
 
   it("adds a payment to a person who has no number", async () => {
@@ -72,7 +72,7 @@ describe("POST /api/admin/people/[id]/membership", () => {
     const target = await person(null);
 
     expect((await add(target.id)).status).toBe(201);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("refuses a second payment on the same account", async () => {
@@ -83,7 +83,7 @@ describe("POST /api/admin/people/[id]/membership", () => {
     const res = await add(target.id);
 
     expect(res.status).toBe(409);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("issues a membership number when the payment is accepted", async () => {
@@ -144,7 +144,7 @@ describe("POST /api/admin/people/[id]/membership", () => {
     const target = await person();
 
     expect((await add(target.id, { ...PAYMENT, paidAmount: 5 })).status).toBe(400);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("refuses a status the admin may not set", async () => {

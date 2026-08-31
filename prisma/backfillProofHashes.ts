@@ -15,8 +15,8 @@ function uploadDir(): string {
 }
 
 async function main() {
-  const [members, donations, expenses, known] = await Promise.all([
-    prisma.member.findMany({
+  const [memberships, donations, expenses, known] = await Promise.all([
+    prisma.membership.findMany({
       where: { paymentProof: { not: null } },
       select: { paymentProof: true },
     }),
@@ -28,7 +28,7 @@ async function main() {
   const seen = new Set(known.map((row) => row.filename));
   const names = new Set(
     [
-      ...members.map((m) => m.paymentProof),
+      ...memberships.map((m) => m.paymentProof),
       ...donations.map((d) => d.proof),
       ...expenses.map((e) => e.proof),
     ].filter((n): n is string => !!n),

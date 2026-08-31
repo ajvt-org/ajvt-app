@@ -17,14 +17,16 @@ export const POST = withRoute(
 
     const data = record.data as Record<string, unknown>;
     if (record.kind === "Member") {
-      const existing = await prisma.member.findUnique({ where: { id: record.recordId } });
-      if (existing) throw new ConflictError("العضو موجود بالفعل");
+      const existing = await prisma.membership.findFirst({ where: { userId: record.recordId } });
+      if (existing) throw new ConflictError(accounts.memberExists);
 
       const account = await prisma.user.findUnique({ where: { id: String(data.userId) } });
       if (!account) throw new ConflictError(accounts.restoreAccountFirst);
 
+      const { memberships } = data as { memberships?: Record<string, unknown>[] };
+      if (!memberships) throw new ConflictError(accounts.archivePredatesTheRecord);
       await prisma.$transaction([
-        prisma.member.create({ data: data as never }),
+        prisma.membership.createMany({ data: memberships as never, skipDuplicates: true }),
         prisma.deletedRecord.delete({ where: { id } }),
       ]);
 

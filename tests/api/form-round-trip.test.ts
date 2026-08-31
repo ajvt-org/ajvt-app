@@ -29,22 +29,14 @@ async function overpaidMember() {
     membershipYear: YEAR,
     memberNumber: "AJVT-2026-0001",
   });
-  await prisma.membership.create({
-    data: {
-      userId: m.userId,
-      year: YEAR,
-      paidAmount: 100,
-      paymentMethod: "بنكيلي",
-    },
-  });
   const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
-  await recordMembershipPayment(prisma, m.id, 2100, 100);
+  await recordMembershipPayment(prisma, m.userId, 2100, 100);
   return m;
 }
 
 const paymentOf = (memberId: string) =>
   prisma.payment.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year: YEAR },
+    where: { userId: memberId, purpose: "MEMBERSHIP", year: YEAR },
   });
 
 const surplusOf = async (memberId: string) => {
@@ -68,7 +60,7 @@ describe("a form that sends back what it was given changes nothing", () => {
     const m = await overpaidMember();
 
     const { member } = await (
-      await PROFILE(get(`/api/admin/members/${m.id}/profile`), withId(m.id))
+      await PROFILE(get(`/api/admin/members/${m.userId}/profile`), withId(m.userId))
     ).json();
 
     expect(member.paidAmount + member.supportAmount).toBe(2100);
@@ -77,19 +69,19 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("keeps the surplus when the edit form saves an untouched amount", async () => {
     const m = await overpaidMember();
     const { member } = await (
-      await PROFILE(get(`/api/admin/members/${m.id}/profile`), withId(m.id))
+      await PROFILE(get(`/api/admin/members/${m.userId}/profile`), withId(m.userId))
     ).json();
 
     await EDIT(
-      patch(`/api/admin/members/${m.id}`, { fullName: member.fullName, age: member.age }),
-      withId(m.id),
+      patch(`/api/admin/members/${m.userId}`, { fullName: member.fullName, age: member.age }),
+      withId(m.userId),
     );
     await PAY(
-      put(`/api/admin/members/${m.id}/payment`, {
+      put(`/api/admin/members/${m.userId}/payment`, {
         amountTransferred: member.paidAmount + member.supportAmount,
         paymentMethod: member.paymentMethod,
       }),
-      withId(m.id),
+      withId(m.userId),
     );
 
     expect(await surplusOf(m.id)).toBe(2000);
@@ -99,7 +91,10 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("cannot touch the money at all through the identity endpoint", async () => {
     const m = await overpaidMember();
 
-    await EDIT(patch(`/api/admin/members/${m.id}`, { fullName: "محمد ولد أحمدُ" }), withId(m.id));
+    await EDIT(
+      patch(`/api/admin/members/${m.userId}`, { fullName: "محمد ولد أحمدُ" }),
+      withId(m.userId),
+    );
 
     expect(await surplusOf(m.id)).toBe(2000);
   });
@@ -108,7 +103,7 @@ describe("a form that sends back what it was given changes nothing", () => {
     const m = await overpaidMember();
 
     const { memberships } = await (
-      await YEARS(get(`/api/admin/members/${m.id}/memberships`), withId(m.id))
+      await YEARS(get(`/api/admin/members/${m.userId}/memberships`), withId(m.userId))
     ).json();
 
     const current = memberships.find((y: { year: number }) => y.year === YEAR);
@@ -118,7 +113,10 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("still lets an admin genuinely lower the amount", async () => {
     const m = await overpaidMember();
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 500 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 500 }),
+      withId(m.userId),
+    );
 
     expect(await surplusOf(m.id)).toBe(400);
     expect(await feeOf(m.id)).toBe(100);
@@ -127,7 +125,10 @@ describe("a form that sends back what it was given changes nothing", () => {
   it("still lets an admin drop the surplus on purpose", async () => {
     const m = await overpaidMember();
 
-    await PAY(put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 100 }), withId(m.id));
+    await PAY(
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 100 }),
+      withId(m.userId),
+    );
 
     expect(await surplusOf(m.id)).toBe(0);
   });
@@ -144,8 +145,8 @@ describe("the identity endpoint owns no money", () => {
     const m = await overpaidMember();
 
     await EDIT(
-      patch(`/api/admin/members/${m.id}`, { fullName: "اسم آخر", paidAmount: 100 }),
-      withId(m.id),
+      patch(`/api/admin/members/${m.userId}`, { fullName: "اسم آخر", paidAmount: 100 }),
+      withId(m.userId),
     );
 
     expect(await surplusOf(m.id)).toBe(2000);
@@ -155,8 +156,8 @@ describe("the identity endpoint owns no money", () => {
     const m = await overpaidMember();
 
     const res = await PAY(
-      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 40 }),
-      withId(m.id),
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 40 }),
+      withId(m.userId),
     );
 
     expect(res.status).toBe(400);
@@ -168,8 +169,8 @@ describe("the identity endpoint owns no money", () => {
     await signInAsAdmin(await createAdmin("quiz", "QUIZ"));
 
     const res = await PAY(
-      put(`/api/admin/members/${m.id}/payment`, { amountTransferred: 500 }),
-      withId(m.id),
+      put(`/api/admin/members/${m.userId}/payment`, { amountTransferred: 500 }),
+      withId(m.userId),
     );
 
     expect(res.status).toBe(403);

@@ -72,11 +72,11 @@ describe("fixed-size teams", () => {
     const { team } = await makeTeam(activity.id);
     for (const name of ["أحمد", "محمد"]) {
       const member = await player(activity.id, name);
-      expect((await addMember(team.id, member.id)).status).toBe(201);
+      expect((await addMember(team.id, member.userId)).status).toBe(201);
     }
 
     const third = await player(activity.id, "سالم");
-    const res = await addMember(team.id, third.id);
+    const res = await addMember(team.id, third.userId);
 
     expect(res.status).toBe(409);
     expect(await prisma.teamMember.count({ where: { teamId: team.id } })).toBe(2);
@@ -87,7 +87,7 @@ describe("fixed-size teams", () => {
     const { team } = await makeTeam(activity.id, "النجم");
     for (const name of ["أ", "ب", "ج"]) {
       const member = await player(activity.id, name);
-      expect((await addMember(team.id, member.id)).status).toBe(201);
+      expect((await addMember(team.id, member.userId)).status).toBe(201);
     }
 
     expect(await prisma.teamMember.count({ where: { teamId: team.id } })).toBe(3);
@@ -114,7 +114,7 @@ describe("fixed-size teams", () => {
     for (const pair of names) {
       const { team } = await makeTeam(activity.id);
       for (const name of pair) {
-        await addMember(team.id, (await player(activity.id, name)).id);
+        await addMember(team.id, (await player(activity.id, name)).userId);
       }
     }
 
@@ -139,7 +139,7 @@ describe("fixed-size teams", () => {
     for (const pair of names) {
       const { team } = await makeTeam(activity.id);
       for (const name of pair) {
-        await addMember(team.id, (await player(activity.id, name)).id);
+        await addMember(team.id, (await player(activity.id, name)).userId);
       }
     }
 

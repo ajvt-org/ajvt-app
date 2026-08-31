@@ -7,8 +7,8 @@ import { parse } from "@/lib/validation";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
-import { syncMembershipRecord } from "@/lib/membershipRecord";
-import { splitPayment } from "@/lib/membershipPayment";
+import { saveMembershipYear } from "@/lib/membershipRecord";
+import { currentMembership } from "@/lib/currentMembershipServer";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
@@ -25,16 +25,13 @@ export const PUT = withRoute(
     );
     const { membershipFee } = await getAppSettings();
 
-    const existing = await prisma.member.findUnique({
+    const account = await prisma.user.findUnique({
       where: { id },
-      select: {
-        userId: true,
-        membershipYear: true,
-        paymentProof: true,
-        user: { select: { fullName: true } },
-      },
+      select: { fullName: true },
     });
-    if (!existing) throw new NotFoundError(messages.notFound);
+    if (!account) throw new NotFoundError(messages.notFound);
+    const current = await currentMembership(prisma, id);
+    if (!current) throw new NotFoundError(messages.notFound);
 
     if (amountTransferred !== undefined && amountTransferred !== null) {
       const amountError = validatePaidAmount(amountTransferred, membershipFee);
@@ -43,48 +40,29 @@ export const PUT = withRoute(
 
     const before = await totalPaidFor(prisma, id);
 
-    const member = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       if (paymentMethod !== undefined || paymentProof !== undefined) {
-        await tx.member.update({
-          where: { id },
-          data: {
-            ...(paymentMethod !== undefined ? { paymentMethod } : {}),
-            ...(paymentProof !== undefined ? { paymentProof } : {}),
-          },
+        await saveMembershipYear(tx, id, current.year, {
+          ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+          ...(paymentProof !== undefined ? { paymentProof } : {}),
         });
       }
       if (amountTransferred !== undefined) {
         await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
       }
-      await syncMembershipRecord(tx, existing.userId, existing.membershipYear, {
-        ...(amountTransferred !== undefined
-          ? {
-              paidAmount:
-                amountTransferred === null
-                  ? null
-                  : splitPayment(amountTransferred, membershipFee).fee,
-            }
-          : {}),
-        ...(paymentMethod !== undefined ? { paymentMethod } : {}),
-        ...(paymentProof !== undefined ? { paymentProof } : {}),
-      });
-      return tx.member.findUniqueOrThrow({ where: { id } });
     });
 
-    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(existing.user), {
+    await logAction(session.username, "UPDATE_MEMBER_PAYMENT", nameOf(account), {
       ...auditContext(session, req),
       targetType: "Member",
       targetId: id,
-      before: { amountTransferred: before, paymentProof: existing.paymentProof },
+      before: { amountTransferred: before, paymentProof: current.paymentProof },
       after: {
         amountTransferred: amountTransferred === undefined ? before : amountTransferred,
-        paymentProof: paymentProof === undefined ? existing.paymentProof : paymentProof,
+        paymentProof: paymentProof === undefined ? current.paymentProof : paymentProof,
       },
     });
 
-    return NextResponse.json({
-      member,
-      amountTransferred: await totalPaidFor(prisma, id),
-    });
+    return NextResponse.json({ amountTransferred: await totalPaidFor(prisma, id) });
   },
 );

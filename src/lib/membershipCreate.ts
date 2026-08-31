@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { recordMembershipYear } from "./membershipRecord";
+import { recordMembershipYear, saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -17,29 +17,23 @@ export interface NewMembership {
   issued?: { memberNumber: string; verifyToken: string };
 }
 
-export async function addMembership(db: Db, m: NewMembership) {
-  const member = await db.member.create({
-    data: {
-      userId: m.userId,
-      paymentMethod: m.paymentMethod,
-      paymentProof: m.paymentProof,
-      status: m.status,
-      membershipYear: m.membershipYear,
-    },
+export async function addMembership(db: Db, m: NewMembership): Promise<void> {
+  await saveMembershipYear(db, m.userId, m.membershipYear, {
+    status: m.status,
+    paymentMethod: m.paymentMethod,
+    paymentProof: m.paymentProof,
   });
 
-  await recordMembershipPayment(db, member.id, m.paidAmount, m.fee, m.surplusAnonymous);
+  await recordMembershipPayment(db, m.userId, m.paidAmount, m.fee, m.surplusAnonymous);
 
   if (m.status === "ACTIVE") {
-    await recordMembershipYear(db, m.userId, member.membershipYear, m.fee, {
-      paymentMethod: member.paymentMethod,
-      paymentProof: member.paymentProof,
+    await recordMembershipYear(db, m.userId, m.membershipYear, m.fee, {
+      paymentMethod: m.paymentMethod,
+      paymentProof: m.paymentProof,
       recordedBy: m.recordedBy,
     });
     if (m.issued) {
       await db.user.update({ where: { id: m.userId }, data: m.issued });
     }
   }
-
-  return member;
 }

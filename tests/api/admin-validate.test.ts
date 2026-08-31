@@ -32,10 +32,10 @@ describe("POST /api/admin/validate", () => {
   it("refuses an anonymous caller", async () => {
     const member = await pendingMember();
 
-    const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    const res = await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     expect(res.status).toBe(401);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -43,10 +43,10 @@ describe("POST /api/admin/validate", () => {
     const member = await pendingMember();
     await signInAsAdmin(await createAdmin("activities-admin", "ACTIVITIES"));
 
-    const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    const res = await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     expect(res.status).toBe(403);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -54,10 +54,10 @@ describe("POST /api/admin/validate", () => {
     const member = await pendingMember();
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
-    const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    const res = await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("ACTIVE");
     expect((await personFor(member.id)).memberNumber).toMatch(/^AJVT-\d{4}-\d{4}$/);
   });
@@ -67,7 +67,7 @@ describe("POST /api/admin/validate", () => {
     await signInAsAdmin(await createAdmin("super-admin", "SUPER"));
 
     expect(
-      (await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }))).status,
+      (await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }))).status,
     ).toBe(200);
   });
 
@@ -81,8 +81,8 @@ describe("POST /api/admin/validate", () => {
       status: "PENDING",
     });
 
-    await POST(post("/api/admin/validate", { id: first.id, action: "ACTIVE" }));
-    await POST(post("/api/admin/validate", { id: second.id, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: first.userId, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: second.userId, action: "ACTIVE" }));
 
     const numbers = (await prisma.user.findMany({ select: { memberNumber: true } }))
       .map((u) => u.memberNumber)
@@ -94,9 +94,9 @@ describe("POST /api/admin/validate", () => {
     const member = await pendingMember();
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
-    await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
     const first = await personFor(member.id);
-    await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
     const second = await personFor(member.id);
 
     expect(second.memberNumber).toBe(first.memberNumber);
@@ -108,14 +108,14 @@ describe("POST /api/admin/validate", () => {
 
     const res = await POST(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
     );
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("REJECTED");
     expect(after.rejectionReason).toBe("الصورة غير واضحة");
   });
@@ -125,16 +125,16 @@ describe("POST /api/admin/validate", () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
     for (const body of [
-      { id: member.id, action: "REJECTED" },
-      { id: member.id, action: "REJECTED", rejectionReason: null },
-      { id: member.id, action: "REJECTED", rejectionReason: "" },
+      { id: member.userId, action: "REJECTED" },
+      { id: member.userId, action: "REJECTED", rejectionReason: null },
+      { id: member.userId, action: "REJECTED", rejectionReason: "" },
     ]) {
       const res = await POST(post("/api/admin/validate", body));
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: "سبب رفض الدفع مطلوب" });
     }
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -142,7 +142,7 @@ describe("POST /api/admin/validate", () => {
     const member = await pendingMember();
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
-    const res = await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    const res = await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     expect(res.status).toBe(200);
   });
@@ -153,14 +153,14 @@ describe("POST /api/admin/validate", () => {
 
     const res = await POST(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "whatever the client felt like sending",
       }),
     );
 
     expect(res.status).toBe(400);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.status).toBe("PENDING");
   });
 
@@ -170,14 +170,14 @@ describe("POST /api/admin/validate", () => {
 
     await POST(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "معلومات ناقصة أو غير صحيحة",
       }),
     );
-    await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.rejectionReason).toBeNull();
   });
 
@@ -192,7 +192,7 @@ describe("POST /api/admin/validate", () => {
 
     await POST(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
@@ -208,14 +208,14 @@ describe("POST /api/admin/validate", () => {
 
     await POST(
       post("/api/admin/validate", {
-        id: member.id,
+        id: member.userId,
         action: "REJECTED",
         rejectionReason: "الصورة غير واضحة",
       }),
     );
 
     expect(await prisma.user.count({ where: { id: member.userId } })).toBe(1);
-    const still = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const still = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(still.userId).toBe(member.userId);
   });
 
@@ -224,7 +224,7 @@ describe("POST /api/admin/validate", () => {
     await signInAsAdmin(await createAdmin("members-admin", "MEMBERS"));
 
     expect(
-      (await POST(post("/api/admin/validate", { id: member.id, action: "DELETED" }))).status,
+      (await POST(post("/api/admin/validate", { id: member.userId, action: "DELETED" }))).status,
     ).toBe(400);
   });
 });
@@ -239,7 +239,7 @@ describe("what an approval records in the audit log", () => {
     const admin = await createAdmin("members-admin", "MEMBERS");
     await signInAsAdmin(admin);
 
-    await POST(post("/api/admin/validate", { id: member.id, action: "ACTIVE" }));
+    await POST(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
     const entry = await prisma.auditLog.findFirstOrThrow({ orderBy: { createdAt: "desc" } });
     return { member, admin, entry };
@@ -257,7 +257,7 @@ describe("what an approval records in the audit log", () => {
     const { member, entry } = await approveAndReadLog();
 
     expect(entry.targetType).toBe("Member");
-    expect(entry.targetId).toBe(member.id);
+    expect(entry.targetId).toBe(member.userId);
   });
 
   it("keeps the status on both sides of the change", async () => {
