@@ -37,6 +37,13 @@ async function gift(
 
 const ANON = "فاعل خير";
 
+async function reachedAt(paymentId: string, when: string) {
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { createdAt: new Date(when) },
+  });
+}
+
 describe("the supporters board", () => {
   beforeEach(async () => {
     await resetDb();
@@ -128,7 +135,14 @@ describe("the supporters board", () => {
     const sent = leaderboard.map(toPublicEntry);
 
     expect(leaderboard[0].accountIds).toEqual([m.userId]);
-    expect(Object.keys(sent[0])).toEqual(["rank", "name", "photoUrl", "total", "anonymous"]);
+    expect(Object.keys(sent[0])).toEqual([
+      "rank",
+      "position",
+      "name",
+      "photoUrl",
+      "total",
+      "anonymous",
+    ]);
     expect(JSON.stringify(sent)).not.toContain(m.id);
   });
 
@@ -216,5 +230,96 @@ describe("the supporters board", () => {
 
     expect(second.rows).toHaveLength(5);
     expect(second.rows[0].rank).toBe(SUPPORTERS_PAGE_SIZE + 1);
+  });
+
+  it("lists the one who reached a shared total first ahead of the other", async () => {
+    const early = await gift(500, { name: "أحمد" });
+    const late = await gift(500, { name: "سالم" });
+    await reachedAt(early.id, "2026-01-01T00:00:00Z");
+    await reachedAt(late.id, "2026-03-01T00:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
+  });
+
+  it("separates two who finished on the same day by the time of day", async () => {
+    const morning = await gift(500, { name: "أحمد" });
+    const evening = await gift(500, { name: "سالم" });
+    await reachedAt(morning.id, "2026-01-01T08:00:00Z");
+    await reachedAt(evening.id, "2026-01-01T20:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
+  });
+
+  it("reads the moment from the last gift that counted, not from the first one", async () => {
+    const opening = await gift(100, { name: "أحمد" });
+    const topUp = await gift(400, { name: "أحمد" });
+    const other = await gift(500, { name: "سالم" });
+    await reachedAt(opening.id, "2026-01-01T00:00:00Z");
+    await reachedAt(topUp.id, "2026-06-01T00:00:00Z");
+    await reachedAt(other.id, "2026-03-01T00:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.name)).toEqual(["سالم", "أحمد"]);
+  });
+
+  it("ignores a membership fee that carried no surplus when reading that moment", async () => {
+    const m = await member("أحمد");
+    const donation = await gift(500, { memberId: m.id, name: "أحمد" });
+    await reachedAt(donation.id, "2026-01-01T00:00:00Z");
+
+    const other = await gift(500, { name: "سالم" });
+    await reachedAt(other.id, "2026-03-01T00:00:00Z");
+
+    const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
+    await recordMembershipPayment(prisma, m.userId, 100, 100);
+    const fee = await prisma.payment.findFirstOrThrow({
+      where: { userId: m.userId, purpose: "MEMBERSHIP" },
+      select: { id: true },
+    });
+    await reachedAt(fee.id, "2026-12-01T00:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
+  });
+
+  it("settles a tie the same way on every read, even with the moments identical", async () => {
+    for (let i = 0; i < 6; i++) await gift(500, { name: `داعم ${i}` });
+    await prisma.payment.updateMany({ data: { createdAt: new Date("2026-01-01T00:00:00Z") } });
+
+    const first = await getLeaderboardData();
+    const second = await getLeaderboardData();
+
+    expect(second.leaderboard.map((e) => e.name)).toEqual(first.leaderboard.map((e) => e.name));
+  });
+
+  it("neither repeats nor drops a supporter when a tie spans the page boundary", async () => {
+    const extra = SUPPORTERS_PAGE_SIZE + 5;
+    for (let i = 0; i < extra; i++) await gift(500, { name: `داعم ${i}` });
+    await prisma.payment.updateMany({ data: { createdAt: new Date("2026-01-01T00:00:00Z") } });
+
+    const firstPage = await (await BOARD(get("/api/leaderboard"))).json();
+    const secondPage = await (
+      await BOARD(get(`/api/leaderboard?offset=${SUPPORTERS_PAGE_SIZE}`))
+    ).json();
+
+    const seen = [...firstPage.rows, ...secondPage.rows].map((r: { name: string }) => r.name);
+
+    expect(seen).toHaveLength(extra);
+    expect(new Set(seen).size).toBe(extra);
+  });
+
+  it("gives every row a position of its own, so the browser can tell two rows apart", async () => {
+    for (let i = 0; i < 4; i++) await gift(500, { name: `داعم ${i}` });
+    await prisma.payment.updateMany({ data: { createdAt: new Date("2026-01-01T00:00:00Z") } });
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.position)).toEqual([1, 2, 3, 4]);
   });
 });
