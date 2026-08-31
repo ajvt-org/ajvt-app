@@ -1,5 +1,6 @@
 export const memberImportDialog = {
   title: "إضافة مجموعة من ملف",
+  stepTitle: (step: string) => `إضافة مجموعة من ملف، ${step}`,
   uploadStep: "اختر الملف",
   reviewStep: "مراجعة السطور",
   pickFile: "انقر لاختيار ملف CSV",

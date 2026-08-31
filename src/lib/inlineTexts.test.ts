@@ -56,6 +56,8 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/memberImportState.ts",
   "src/app/api/admin/people/import",
   "src/lib/memberImportParse.ts",
+  "src/app/api/admin/validate/route.ts",
+  "src/app/api/user/me/route.ts",
   "src/lib/memberImportRow.ts",
   "src/lib/memberImportValues.ts",
   "src/lib/officialReceipt.ts",
