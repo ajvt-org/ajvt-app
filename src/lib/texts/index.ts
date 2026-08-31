@@ -9,6 +9,7 @@ export { activityAttention } from "./activityAttention";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
 export { activityRegistration } from "./activityRegistration";
+export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
 export { pendingAgeGroups } from "./ageGroups";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";

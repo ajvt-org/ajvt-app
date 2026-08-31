@@ -20,8 +20,7 @@ import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
-import { STATUS_LABEL as REGISTRATION_LABEL } from "@/app/admin/activities/activityTypes";
-import { memberPage as texts, ouguiya } from "@/lib/texts";
+import { memberPage as texts, ouguiya, registrationStatusLabels } from "@/lib/texts";
 
 const MEMBER_STATUS: Record<string, string> = memberStatusLabels;
 
@@ -212,7 +211,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
               <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate">{r.activity.title}</span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                  {REGISTRATION_LABEL[r.status] ?? r.status} ·{" "}
+                  {registrationStatusLabels[r.status] ?? r.status} ·{" "}
                   <span dir="ltr">{day(r.createdAt)}</span>
                 </span>
               </li>
