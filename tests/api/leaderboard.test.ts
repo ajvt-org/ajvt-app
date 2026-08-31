@@ -322,4 +322,38 @@ describe("the supporters board", () => {
 
     expect(leaderboard.map((e) => e.position)).toEqual([1, 2, 3, 4]);
   });
+
+  it("puts two supporters on one total in the same place", async () => {
+    const early = await gift(500, { name: "أحمد" });
+    const late = await gift(500, { name: "سالم" });
+    await gift(300, { name: "خديجة" });
+    await reachedAt(early.id, "2026-01-01T00:00:00Z");
+    await reachedAt(late.id, "2026-02-01T00:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.rank)).toEqual([1, 1, 3]);
+    expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم", "خديجة"]);
+  });
+
+  it("still tells two rows sharing a place apart by their position", async () => {
+    const early = await gift(500, { name: "أحمد" });
+    const late = await gift(500, { name: "سالم" });
+    await reachedAt(early.id, "2026-01-01T00:00:00Z");
+    await reachedAt(late.id, "2026-02-01T00:00:00Z");
+
+    const { leaderboard } = await getLeaderboardData();
+
+    expect(leaderboard.map((e) => e.position)).toEqual([1, 2]);
+  });
+
+  it("hands the place and the position to the browser and nothing else new", async () => {
+    await gift(500, { name: "أحمد" });
+    await gift(500, { name: "سالم" });
+
+    const body = await (await BOARD(get("/api/leaderboard"))).json();
+
+    expect(body.rows.map((r: { rank: number }) => r.rank)).toEqual([1, 1]);
+    expect(body.rows.map((r: { position: number }) => r.position)).toEqual([1, 2]);
+  });
 });
