@@ -17,6 +17,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/financeReportServer.ts",
   "src/lib/financeServer.ts",
   "src/lib/importBatchServer.ts",
+  "src/lib/memberImportServer.ts",
   "src/lib/member.ts",
   "src/lib/officialReceiptServer.ts",
   "src/lib/mvpVoteServer.ts",

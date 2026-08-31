@@ -34,6 +34,7 @@ export { memberPicker } from "./memberPicker";
 export { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "./paymentCard";
 export { memberForm } from "./memberForm";
 export { memberImport } from "./memberImport";
+export { memberImportDialog } from "./memberImportDialog";
 export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";

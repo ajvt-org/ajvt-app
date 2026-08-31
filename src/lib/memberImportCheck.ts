@@ -36,12 +36,15 @@ export interface CheckedRow {
   match: RowMatch | null;
 }
 
-export interface ImportContext {
-  people: ExistingPerson[];
+export interface CheckContext {
   villageNames: string[];
   ageGroupNames: string[];
   membershipFee: number;
   paymentMethods: readonly string[];
+}
+
+export interface ImportContext extends CheckContext {
+  people: ExistingPerson[];
 }
 
 function block(field: ImportColumn, message: string): RowIssue {
@@ -65,7 +68,7 @@ function matchOf(kind: RowMatch["kind"], person: ExistingPerson): RowMatch {
   };
 }
 
-function fieldIssues(values: RowValues, context: ImportContext): RowIssue[] {
+function fieldIssues(values: RowValues, context: CheckContext): RowIssue[] {
   const issues: RowIssue[] = [];
 
   if (!values.fullName) issues.push(block("fullName", members.fullNameRequired));
@@ -99,36 +102,26 @@ function fieldIssues(values: RowValues, context: ImportContext): RowIssue[] {
   return issues;
 }
 
-export function checkRows(rows: ImportRow[], context: ImportContext): CheckedRow[] {
-  const byPhone = new Map(
-    context.people
-      .filter((person) => person.phone)
-      .map((person) => [person.phone as string, person]),
-  );
-  const byName = new Map<string, ExistingPerson>();
-  for (const person of context.people) {
-    const key = nameKey(person.fullName ?? "", person.village, person.age ?? "");
-    if (!byName.has(key)) byName.set(key, person);
-  }
+export interface ValuedRow {
+  row: number;
+  values: RowValues;
+  match?: RowMatch | null;
+}
 
+export function checkValues(rows: ValuedRow[], context: CheckContext): RowIssue[][] {
   const phoneSeen = new Map<string, number>();
   const nameSeen = new Map<string, number>();
 
-  return rows.map(({ row, cells }) => {
-    const values = valuesOf(cells);
+  return rows.map(({ row, values, match }) => {
     const issues = fieldIssues(values, context);
-    let match: RowMatch | null = null;
 
     if (values.phone) {
       const earlier = phoneSeen.get(values.phone);
       if (earlier) issues.push(block("phone", memberImportRow.phoneInFileTwice(earlier)));
       else phoneSeen.set(values.phone, row);
 
-      const owner = byPhone.get(values.phone);
-      if (owner) {
-        match = matchOf("phone", owner);
+      if (match?.kind === "phone")
         issues.push(warn("phone", memberImportRow.phoneOnAnotherAccount));
-      }
     }
 
     if (values.fullName) {
@@ -137,19 +130,48 @@ export function checkRows(rows: ImportRow[], context: ImportContext): CheckedRow
       if (earlier) issues.push(warn("fullName", memberImportRow.nameInFileTwice(earlier)));
       else nameSeen.set(key, row);
 
-      const namesake = byName.get(key);
-      if (namesake && !match) {
-        match = matchOf("name", namesake);
-        issues.push(warn("fullName", memberImportRow.nameLooksExisting));
-      }
+      if (match?.kind === "name") issues.push(warn("fullName", memberImportRow.nameLooksExisting));
     }
 
     if (values.paid && match?.hasMembership) {
       issues.push(warn("paid", memberImportRow.alreadyHasMembership));
     }
 
-    return { row, values, issues, match };
+    return issues;
   });
+}
+
+export function matchesFor(rows: ValuedRow[], people: ExistingPerson[]): (RowMatch | null)[] {
+  const byPhone = new Map(
+    people.filter((person) => person.phone).map((person) => [person.phone as string, person]),
+  );
+  const byName = new Map<string, ExistingPerson>();
+  for (const person of people) {
+    const key = nameKey(person.fullName ?? "", person.village, person.age ?? "");
+    if (!byName.has(key)) byName.set(key, person);
+  }
+
+  return rows.map(({ values }) => {
+    const owner = values.phone ? byPhone.get(values.phone) : undefined;
+    if (owner) return matchOf("phone", owner);
+
+    if (!values.fullName) return null;
+    const namesake = byName.get(nameKey(values.fullName, values.village, values.age));
+    return namesake ? matchOf("name", namesake) : null;
+  });
+}
+
+export function checkRows(rows: ImportRow[], context: ImportContext): CheckedRow[] {
+  const valued = rows.map(({ row, cells }) => ({ row, values: valuesOf(cells) }));
+  const matches = matchesFor(valued, context.people);
+  const matched = valued.map((row, at) => ({ ...row, match: matches[at] }));
+
+  return checkValues(matched, context).map((issues, at) => ({
+    row: matched[at].row,
+    values: matched[at].values,
+    issues,
+    match: matched[at].match,
+  }));
 }
 
 export function isBlocked(row: CheckedRow): boolean {
