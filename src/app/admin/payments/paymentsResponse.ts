@@ -45,41 +45,43 @@ export const activitySchema = z.object({ id: z.string(), title: z.string() });
 
 export const financeTagSchema = z.object({ id: z.string(), name: z.string() });
 
-const proofsResponse = z.object({ proofs: z.array(proofSchema) });
-const membersResponse = z.object({ members: z.array(memberRowSchema) });
-const activitiesResponse = z.object({ activities: z.array(activitySchema) });
-const tagsResponse = z.object({ tags: z.array(financeTagSchema) });
+function readRows<T>(event: string, item: z.ZodType<T>, body: unknown, key: string): T[] {
+  const rows = (body as Record<string, unknown> | null | undefined)?.[key];
+  if (!Array.isArray(rows)) {
+    logger.error(event, { reason: "not a list" });
+    return [];
+  }
 
-function read<T>(event: string, schema: z.ZodType<T>, body: unknown, fallback: T): T {
-  const result = schema.safeParse(body);
-  if (result.success) return result.data;
-  logger.error(event, result.error.issues[0]);
-  return fallback;
+  const kept: T[] = [];
+  for (const row of rows) {
+    const result = item.safeParse(row);
+    if (result.success) kept.push(result.data);
+    else logger.error(event, result.error.issues[0]);
+  }
+  return kept;
 }
 
 export function readProofs(body: unknown) {
-  return read("payments.proofs.shape", proofsResponse, body, { proofs: [] }).proofs;
+  return readRows("payments.proofs.shape", proofSchema, body, "proofs");
 }
 
 export function readActivities(body: unknown) {
-  return read("payments.activities.shape", activitiesResponse, body, { activities: [] }).activities;
+  return readRows("payments.activities.shape", activitySchema, body, "activities");
 }
 
 export function readFinanceTags(body: unknown) {
-  return read("payments.tags.shape", tagsResponse, body, { tags: [] }).tags;
+  return readRows("payments.tags.shape", financeTagSchema, body, "tags");
 }
 
 export function readMembers(body: unknown): MemberOption[] {
-  return read("payments.members.shape", membersResponse, body, { members: [] }).members.map(
-    (m) => ({
-      id: m.id,
-      userId: m.userId,
-      fullName: m.fullName,
-      memberNumber: m.memberNumber,
-      phone: m.user?.phone ?? null,
-      village: m.village,
-      age: m.age,
-      photo: m.photo,
-    }),
-  );
+  return readRows("payments.members.shape", memberRowSchema, body, "members").map((m) => ({
+    id: m.id,
+    userId: m.userId,
+    fullName: m.fullName,
+    memberNumber: m.memberNumber,
+    phone: m.user?.phone ?? null,
+    village: m.village,
+    age: m.age,
+    photo: m.photo,
+  }));
 }
