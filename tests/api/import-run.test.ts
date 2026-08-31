@@ -11,7 +11,7 @@ const AGE = "البدريين";
 interface RunBody {
   batchId: string;
   results: ImportedRow[];
-  summary: { created: number; updated: number; skipped: number; failed: number };
+  summary: { created: number; updated: number; failed: number };
   error?: string;
 }
 
@@ -92,7 +92,7 @@ describe("POST /api/admin/people/import", () => {
     const data: RunBody = await response.json();
 
     expect(response.status).toBe(201);
-    expect(data.summary).toEqual({ created: 3, updated: 0, skipped: 0, failed: 0 });
+    expect(data.summary).toEqual({ created: 3, updated: 0, failed: 0 });
     expect(await prisma.user.count()).toBe(3);
     expect((await prisma.user.findFirstOrThrow({ where: { fullName: "علي" } })).age).toBeNull();
   });

@@ -24,7 +24,6 @@ function tally(results: ImportedRow[]) {
   return {
     created: results.filter((row) => row.outcome === "created").length,
     updated: results.filter((row) => row.outcome === "updated").length,
-    skipped: results.filter((row) => row.outcome === "skipped").length,
     failed: results.filter((row) => row.outcome === "failed").length,
   };
 }

@@ -10,7 +10,7 @@ import IconLabel from "@/components/IconLabel";
 
 export interface ImportOutcome {
   results: ImportedRow[];
-  summary: { created: number; updated: number; skipped: number; failed: number };
+  summary: { created: number; updated: number; failed: number };
 }
 
 export default function MemberImportResult({

@@ -19,7 +19,7 @@ function row(over: Partial<ImportedRow> = {}): ImportedRow {
 function outcome(over: Partial<ImportOutcome> = {}): ImportOutcome {
   return {
     results: [row({ tempPassword: "123456" })],
-    summary: { created: 1, updated: 0, skipped: 0, failed: 0 },
+    summary: { created: 1, updated: 0, failed: 0 },
     ...over,
   };
 }
@@ -51,7 +51,7 @@ afterEach(() => {
 
 describe("MemberImportResult", () => {
   it("counts what happened", () => {
-    setup({ summary: { created: 3, updated: 2, skipped: 0, failed: 1 } });
+    setup({ summary: { created: 3, updated: 2, failed: 1 } });
 
     expect(screen.getByText(memberImportDialog.resultCreated(3))).toBeDefined();
     expect(screen.getByText(memberImportDialog.resultUpdated(2))).toBeDefined();
@@ -83,7 +83,7 @@ describe("MemberImportResult", () => {
         row({ tempPassword: "123456" }),
         row({ row: 2, outcome: "failed", fullName: "أحمد", error: "سبب الفشل" }),
       ],
-      summary: { created: 1, updated: 0, skipped: 0, failed: 1 },
+      summary: { created: 1, updated: 0, failed: 1 },
     });
 
     expect(screen.getByText(memberImportDialog.failedTitle)).toBeDefined();
