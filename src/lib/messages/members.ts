@@ -5,6 +5,7 @@ export const memberStatusLabels = {
 } as const;
 
 export const members = {
+  statusTransition: (from: string, to: string) => ` (من ${from} إلى ${to})`,
   notFound: "العضو غير موجود",
   requestNotFound: "الطلب غير موجود",
   fullNameRequired: "الاسم الكامل مطلوب",

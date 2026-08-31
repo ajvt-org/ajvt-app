@@ -72,7 +72,7 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
 
   const statusLabel: Record<string, string> = memberStatusLabels;
   const transition = existing
-    ? ` (من ${statusLabel[existing.status]} إلى ${statusLabel[action]})`
+    ? members.statusTransition(statusLabel[existing.status], statusLabel[action])
     : "";
   await logAction(
     session.username,
