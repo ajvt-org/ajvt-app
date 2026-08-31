@@ -34,6 +34,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
           where: { paymentProof: { not: null } },
           select: {
             id: true,
+            userId: true,
             paymentProof: true,
             status: true,
             createdAt: true,
@@ -83,6 +84,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
     ...latestWithProof.map((m) => ({
       id: m.userId,
       kind: "MEMBERSHIP" as const,
+      userId: m.userId,
       proof: m.paymentProof as string,
       memberName: nameOf(m.user),
       activityTitle: null as string | null,
@@ -94,6 +96,7 @@ export const GET = withRoute("GET /api/admin/payment-proofs", async () => {
     ...registrations.map((r) => ({
       id: r.id,
       kind: "ACTIVITY" as const,
+      userId: r.userId,
       proof: r.paymentProof as string,
       memberName: nameOf(r.user),
       activityTitle: r.activity.title,

@@ -46,7 +46,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       const { payments, registrations, ...account } = user;
       const paid = paidForYear(payments, year);
       return {
-        ...withPerson({ ...rest, id: userId, membershipYear: year, user: account }),
+        ...withPerson({ ...rest, id: userId, userId, membershipYear: year, user: account }),
         registrations,
         paidAmount: paid?.fee ?? null,
         supportAmount: paid?.support ?? 0,

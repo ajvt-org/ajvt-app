@@ -62,6 +62,41 @@ describe("what the payments list hands the card", () => {
     expect(proof.memberName).toBe("أبوبكر لمرابط");
   });
 
+  it("names the account behind a membership proof", async () => {
+    const [user] = await createUsers(1);
+    await makeMember({
+      userId: user.id,
+      fullName: "محمد المصطفى",
+      paymentMethod: "بنكيلي",
+      paymentProof: "membership.webp",
+      status: "PENDING",
+    });
+
+    expect((await proofFor(user.id)).userId).toBe(user.id);
+  });
+
+  it("names the account behind an activity proof, which is not the proof's own id", async () => {
+    const [user] = await createUsers(1);
+    const activity = await prisma.activity.create({
+      data: { title: "دوري الرابطة", description: "وصف" },
+    });
+    const registration = await prisma.activityRegistration.create({
+      data: { userId: user.id, activityId: activity.id, paymentProof: "activity.webp" },
+    });
+
+    const proof = await proofFor(registration.id);
+    expect(proof.userId).toBe(user.id);
+    expect(proof.id).not.toBe(proof.userId);
+  });
+
+  it("leaves the account off a gift nobody has linked", async () => {
+    const gift = await prisma.donation.create({
+      data: { donorName: "زائر", amount: 500, source: "PUBLIC", status: "ACTIVE" },
+    });
+
+    expect((await proofFor(gift.id)).userId).toBeNull();
+  });
+
   it("leaves the receipt out of a gift that has none yet", async () => {
     const gift = await prisma.donation.create({
       data: { donorName: "زائر", amount: 500, source: "PUBLIC", status: "PENDING" },

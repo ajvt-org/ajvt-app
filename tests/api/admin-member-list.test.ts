@@ -53,6 +53,13 @@ describe("the admin member list", () => {
     ]);
   });
 
+  it("names the account each member belongs to, so a payment can be linked to it", async () => {
+    const user = await member("صاحب حساب");
+
+    const [row] = await listed();
+    expect(row.userId).toBe(user.id);
+  });
+
   it("reads a renewed member on the year they renewed into, once", async () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1, paymentMethod: "بنكيلي" });
     await prisma.membership.create({
