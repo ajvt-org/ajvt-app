@@ -46,6 +46,10 @@ describe("import batches", () => {
     expect(await prisma.importBatch.count()).toBe(1);
   });
 
+  it("raises a failure that is not a batch already claimed", async () => {
+    await expect(claimImportBatch(claim({ rowCount: undefined }))).rejects.toThrow();
+  });
+
   it("claims two batches carrying the same file under different ids", async () => {
     expect(await claimImportBatch(claim())).toBe(true);
     expect(await claimImportBatch(claim({ id: "batch-2" }))).toBe(true);
