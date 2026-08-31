@@ -15,6 +15,8 @@ const ACCOUNT: MemberOption = {
   photo: null,
 };
 
+const NO_ACCOUNT_ID = { ...ACCOUNT, userId: undefined } as unknown as MemberOption;
+
 const REUSE = [{ kind: "member", id: "m9", label: "أحمد", date: "2026-08-01T00:00:00.000Z" }];
 
 function mockFetch(reuse: unknown[] = REUSE) {
@@ -166,5 +168,51 @@ describe("the other kinds on the same list", () => {
     show({ receipt: { number: "R-2026-0242", status: "VOID", token: "t".repeat(32) } });
 
     expect(screen.getByText(new RegExp(paymentCard.receiptVoid))).toBeTruthy();
+  });
+});
+
+describe("the account shown under a payment", () => {
+  it("is the one who paid, on a membership card", () => {
+    mockFetch([]);
+    show({ id: "u1", kind: "MEMBERSHIP", amount: null, userId: "u1" }, [ACCOUNT]);
+
+    expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
+  });
+
+  it("is the one who paid, on an activity card", () => {
+    mockFetch([]);
+    show({ id: "r1", kind: "ACTIVITY", activityTitle: "الدوري", amount: null, userId: "u1" }, [
+      ACCOUNT,
+    ]);
+
+    expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
+  });
+
+  it("is nobody on a gift nobody linked", () => {
+    mockFetch([]);
+    show({ userId: null }, [ACCOUNT]);
+
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+  });
+
+  it("is nobody when the payment names an account that is not on the list", () => {
+    mockFetch([]);
+    show({ userId: "u9" }, [ACCOUNT]);
+
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+  });
+
+  it("is nobody when neither the payment nor the list carries an account id", () => {
+    mockFetch([]);
+    show({ id: "u1", kind: "MEMBERSHIP", amount: null, userId: undefined }, [NO_ACCOUNT_ID]);
+
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+  });
+
+  it("does not fall on the first of the list when a gift carries no account", () => {
+    mockFetch([]);
+    show({ userId: undefined }, [NO_ACCOUNT_ID, ACCOUNT]);
+
+    expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
   });
 });
