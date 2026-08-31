@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { logger } from "./logger";
 import { redact } from "./redact";
 import { getClientIp } from "./rateLimit";
+import type { AuditAction } from "./auditLabels";
 import type { NextRequest } from "next/server";
 import type { Prisma } from "@prisma/client";
 
@@ -36,7 +37,7 @@ function snapshot(value: unknown): Prisma.InputJsonValue | undefined {
 
 export async function logAction(
   adminUsername: string,
-  action: string,
+  action: AuditAction,
   targetLabel?: string,
   details: AuditDetails = {},
 ) {
