@@ -2,7 +2,7 @@ import { validatePhone } from "./utils";
 import { validatePaidAmount } from "./donations";
 import { isKnownVillage, requiresAgeGroup } from "./villages";
 import { members, memberImportRow, villages } from "./messages";
-import { valuesOf, type RowValues } from "./memberImportValues";
+import { paidIsClear, valuesOf, type RowValues } from "./memberImportValues";
 import type { ImportColumn, ImportRow } from "./memberImportRow";
 
 const NAME_MAX = 30;
@@ -169,7 +169,9 @@ export function checkRows(rows: ImportRow[], context: ImportContext): CheckedRow
   return checkValues(matched, context).map((issues, at) => ({
     row: matched[at].row,
     values: matched[at].values,
-    issues,
+    issues: paidIsClear(rows[at].cells.paid)
+      ? issues
+      : [...issues, warn("paid", memberImportRow.paidUnclear)],
     match: matched[at].match,
   }));
 }
