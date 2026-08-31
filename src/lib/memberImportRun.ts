@@ -7,7 +7,7 @@ import type { RowValues } from "./memberImportValues";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
-export type RowOutcome = "created" | "updated" | "skipped" | "failed";
+export type RowOutcome = "created" | "updated" | "failed";
 
 export interface ImportedRow {
   row: number;
