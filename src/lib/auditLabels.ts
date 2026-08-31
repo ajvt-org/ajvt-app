@@ -1,4 +1,4 @@
-export const ACTION_LABELS: Record<string, string> = {
+export const ACTION_LABELS = {
   APPROVE_MEMBER: "قبول طلب",
   REJECT_MEMBER: "رفض طلب",
   DELETE_MEMBER: "حذف طلب",
@@ -112,8 +112,10 @@ export const ACTION_LABELS: Record<string, string> = {
   CREATE_BOOKING: "تسجيل بطاقة",
   DELETE_BOOKING: "حذف بطاقة",
   ADD_TEAM_MEMBER: "إضافة لاعب إلى فريق",
-};
+} as const;
+
+export type AuditAction = keyof typeof ACTION_LABELS;
 
 export function auditActionLabel(action: string): string {
-  return ACTION_LABELS[action] ?? action;
+  return ACTION_LABELS[action as AuditAction] ?? action;
 }
