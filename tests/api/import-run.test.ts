@@ -32,13 +32,20 @@ function paid(over: Record<string, unknown> = {}) {
   return values({ paid: true, paymentMethod: "نقداً", ...over });
 }
 
-function run(rows: ReturnType<typeof values>[], over: Record<string, unknown> = {}) {
+type RowValuesFixture = ReturnType<typeof values>;
+type RunRow = RowValuesFixture | { values: RowValuesFixture; personId: string | null };
+
+function run(rows: RunRow[], over: Record<string, unknown> = {}) {
   return POST(
     post("/api/admin/people/import", {
       batchId: "batch-1",
       fileHash: "hash",
       fileName: "members.csv",
-      rows: rows.map((v, at) => ({ row: at + 1, personId: null, values: v })),
+      rows: rows.map((row, at) =>
+        "values" in row
+          ? { row: at + 1, personId: row.personId, values: row.values }
+          : { row: at + 1, personId: null, values: row },
+      ),
       ...over,
     }),
   );
@@ -155,7 +162,9 @@ describe("POST /api/admin/people/import", () => {
     });
 
     const data: RunBody = await (
-      await run([values({ fullName: "الاسم الجديد", phone: "36000123" })])
+      await run([
+        { values: values({ fullName: "الاسم الجديد", phone: "36000123" }), personId: existing.id },
+      ])
     ).json();
 
     expect(data.results[0].outcome).toBe("updated");
@@ -174,7 +183,7 @@ describe("POST /api/admin/people/import", () => {
       data: { userId: existing.id, year: membershipYear, status: "ACTIVE" },
     });
 
-    await run([paid({ phone: "36000123" })]);
+    await run([{ values: paid({ phone: "36000123" }), personId: existing.id }]);
 
     expect(await prisma.membership.count()).toBe(1);
     expect(await prisma.receipt.count()).toBe(0);
@@ -188,7 +197,7 @@ describe("POST /api/admin/people/import", () => {
       data: { userId: existing.id, year: new Date().getFullYear(), status: "ACTIVE" },
     });
 
-    await run([paid({ phone: "36000123" })]);
+    await run([{ values: paid({ phone: "36000123" }), personId: existing.id }]);
 
     expect(await prisma.auditLog.count({ where: { action: "UPDATE_PERSON" } })).toBe(1);
     expect(await prisma.auditLog.count({ where: { action: "ADD_MEMBERSHIP" } })).toBe(0);
@@ -228,13 +237,42 @@ describe("POST /api/admin/people/import", () => {
   });
 
   it("does not double the accounts when the same file is uploaded again under a new batch", async () => {
-    const rows = [values({ fullName: "أحمد", phone: "36000123" })];
+    const row = values({ fullName: "أحمد", phone: "36000123" });
 
-    await run(rows);
-    const second: RunBody = await (await run(rows, { batchId: "batch-2" })).json();
+    await run([row]);
+    const account = await prisma.user.findFirstOrThrow({ where: { phone: "36000123" } });
+    const second: RunBody = await (
+      await run([{ values: row, personId: account.id }], { batchId: "batch-2" })
+    ).json();
 
     expect(second.results[0].outcome).toBe("updated");
     expect(await prisma.user.count()).toBe(1);
+  });
+
+  it("refuses a row that names no account when the phone now belongs to one", async () => {
+    await prisma.user.create({
+      data: { phone: "36000123", fullName: "موجود", village: HOME_VILLAGE, age: AGE },
+    });
+
+    const data: RunBody = await (await run([values({ phone: "36000123" })])).json();
+
+    expect(data.results[0].outcome).toBe("failed");
+    expect(data.results[0].error).toBe(memberImportRun.matchChanged);
+    expect(await prisma.user.count()).toBe(1);
+  });
+
+  it("refuses a row naming an account the file no longer matches", async () => {
+    const other = await prisma.user.create({
+      data: { phone: "36000900", fullName: "آخر", village: HOME_VILLAGE, age: AGE },
+    });
+
+    const data: RunBody = await (
+      await run([{ values: values({ phone: "36000123" }), personId: other.id }])
+    ).json();
+
+    expect(data.results[0].outcome).toBe("failed");
+    expect(data.results[0].error).toBe(memberImportRun.matchChanged);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: other.id } })).fullName).toBe("آخر");
   });
 
   it("writes one audit entry for the import beside the per person entries", async () => {
