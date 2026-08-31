@@ -66,6 +66,7 @@ export const ACTION_LABELS = {
   DELETE_COMPETITION: "حذف مسابقة",
   SET_QUIZ_PARTICIPANTS: "تحديد المشاركين في مسابقة",
   SET_QUIZ_ROUND_POOL: "تحديد أسئلة جولة",
+  FILL_QUIZ_ROUNDS: "توزيع الأسئلة على الجولات",
   RESET_QUIZ_SCORES: "تصفير نقاط المسابقة",
   REOPEN_QUIZ_ATTEMPT: "إعادة فتح الأسئلة الفائتة لمشارك",
   VOID_QUIZ_SCORE: "إلغاء نقاط مشارك",
