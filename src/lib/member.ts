@@ -1,18 +1,21 @@
 import { randomInt } from "crypto";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "./prisma";
 import { generateVerifyToken } from "./verifyToken";
 
-export async function issueMembership(): Promise<{
+type Db = PrismaClient | Prisma.TransactionClient;
+
+export async function issueMembership(db: Db = prisma): Promise<{
   memberNumber: string;
   verifyToken: string;
 }> {
-  return { memberNumber: await generateMemberNumber(), verifyToken: generateVerifyToken() };
+  return { memberNumber: await generateMemberNumber(db), verifyToken: generateVerifyToken() };
 }
 
-export async function generateMemberNumber(): Promise<string> {
+export async function generateMemberNumber(db: Db = prisma): Promise<string> {
   const year = new Date().getFullYear();
 
-  const counter = await prisma.counter.upsert({
+  const counter = await db.counter.upsert({
     where: { id: "memberNumber" },
     update: { value: { increment: 1 } },
     create: { id: "memberNumber", value: 1 },
@@ -21,9 +24,6 @@ export async function generateMemberNumber(): Promise<string> {
   return `AJVT-${year}-${seq}`;
 }
 
-// randomInt, not Math.random: this is a password, and Math.random's output is
-// predictable from earlier values, which matters most for a code an attacker
-// knows was just issued.
 export function generateTempPassword(): string {
   return String(randomInt(100000, 1000000));
 }

@@ -37,13 +37,11 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     select: { memberNumber: true },
   });
   const existing = account ? await currentMembership(prisma, id) : null;
-  let issued: { memberNumber: string; verifyToken: string } | undefined;
-  if (action === "ACTIVE" && !account?.memberNumber) {
-    issued = await issueMembership();
-  }
+  const needsNumber = action === "ACTIVE" && !account?.memberNumber;
 
   const updated = await prisma.$transaction(async (tx) => {
     if (!account || !existing) throw new ValidationError(members.notFound);
+    const issued = needsNumber ? await issueMembership(tx) : undefined;
     await setMembershipStatus(
       tx,
       id,
