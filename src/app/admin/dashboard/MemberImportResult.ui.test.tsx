@@ -11,7 +11,7 @@ function row(over: Partial<ImportedRow> = {}): ImportedRow {
     outcome: "created",
     fullName: "محمد ولد أحمد",
     phone: "36000123",
-    paid: false,
+    membership: false,
     ...over,
   };
 }

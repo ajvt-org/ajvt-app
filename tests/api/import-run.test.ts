@@ -180,6 +180,20 @@ describe("POST /api/admin/people/import", () => {
     expect(await prisma.receipt.count()).toBe(0);
   });
 
+  it("logs no membership for a paid row the account already covers", async () => {
+    const existing = await prisma.user.create({
+      data: { phone: "36000123", fullName: "موجود", village: HOME_VILLAGE, age: AGE },
+    });
+    await prisma.membership.create({
+      data: { userId: existing.id, year: new Date().getFullYear(), status: "ACTIVE" },
+    });
+
+    await run([paid({ phone: "36000123" })]);
+
+    expect(await prisma.auditLog.count({ where: { action: "UPDATE_PERSON" } })).toBe(1);
+    expect(await prisma.auditLog.count({ where: { action: "ADD_MEMBERSHIP" } })).toBe(0);
+  });
+
   it("fails a row that is still flagged rather than writing it", async () => {
     const data: RunBody = await (
       await run([values({ age: "" }), values({ fullName: "علي", phone: "36000124" })])

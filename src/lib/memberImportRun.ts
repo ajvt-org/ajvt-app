@@ -16,7 +16,7 @@ export interface ImportedRow {
   phone: string;
   personId?: string;
   tempPassword?: string;
-  paid: boolean;
+  membership: boolean;
   error?: string;
 }
 
@@ -62,7 +62,7 @@ export async function createFromRow(
   values: RowValues,
   credential: Credential,
   settings: RunSettings,
-): Promise<{ personId: string; tempPassword?: string }> {
+): Promise<{ personId: string; tempPassword?: string; membership: boolean }> {
   const person = await db.user.create({
     data: {
       phone: values.phone || null,
@@ -76,7 +76,11 @@ export async function createFromRow(
 
   if (values.paid) await payFor(db, person.id, values, settings);
 
-  return { personId: person.id, tempPassword: credential.tempPassword };
+  return {
+    personId: person.id,
+    tempPassword: credential.tempPassword,
+    membership: values.paid,
+  };
 }
 
 export async function updateFromRow(
@@ -84,7 +88,7 @@ export async function updateFromRow(
   personId: string,
   values: RowValues,
   settings: RunSettings,
-): Promise<void> {
+): Promise<{ membership: boolean }> {
   await db.user.update({
     where: { id: personId },
     data: {
@@ -94,13 +98,14 @@ export async function updateFromRow(
     },
   });
 
-  if (!values.paid) return;
+  if (!values.paid) return { membership: false };
 
-  const membership = await db.membership.findFirst({
+  const held = await db.membership.findFirst({
     where: { userId: personId, year: settings.membershipYear },
     select: { id: true },
   });
-  if (membership) return;
+  if (held) return { membership: false };
 
   await payFor(db, personId, values, settings);
+  return { membership: true };
 }

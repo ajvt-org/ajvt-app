@@ -80,12 +80,11 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
       row: row.row,
       fullName: values.fullName,
       phone: values.phone,
-      paid: values.paid,
     };
 
     const blocking = issues[at].find((issue) => issue.blocking);
     if (blocking) {
-      results.push({ ...base, outcome: "failed", error: blocking.message });
+      results.push({ ...base, outcome: "failed", membership: false, error: blocking.message });
       continue;
     }
 
@@ -93,8 +92,10 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
 
     try {
       if (personId) {
-        await prisma.$transaction((tx) => updateFromRow(tx, personId, values, settings));
-        results.push({ ...base, outcome: "updated", personId });
+        const updated = await prisma.$transaction((tx) =>
+          updateFromRow(tx, personId, values, settings),
+        );
+        results.push({ ...base, outcome: "updated", personId, ...updated });
         continue;
       }
 
@@ -105,7 +106,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
       results.push({ ...base, outcome: "created", ...created });
     } catch (error) {
       logger.error("import row failed", { batchId: run.batchId, row: row.row, error });
-      results.push({ ...base, outcome: "failed", error: failureOf(error) });
+      results.push({ ...base, outcome: "failed", membership: false, error: failureOf(error) });
     }
   }
 
@@ -124,7 +125,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
         meta: { batchId: run.batchId, row: result.row },
       },
     );
-    if (result.paid) {
+    if (result.membership) {
       await logAction(session.username, "ADD_MEMBERSHIP", result.fullName, {
         ...auditContext(session, req),
         targetType: "Member",
