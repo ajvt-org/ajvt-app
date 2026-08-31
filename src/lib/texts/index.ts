@@ -31,6 +31,7 @@ export { manualDonation } from "./manualDonation";
 export { memberEdit } from "./memberAdmin";
 export { memberDrawer } from "./memberDrawer";
 export { memberPicker } from "./memberPicker";
+export { memberSearch } from "./memberSearch";
 export { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "./paymentCard";
 export { memberForm } from "./memberForm";
 export { memberImport } from "./memberImport";

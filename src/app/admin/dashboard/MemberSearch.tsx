@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Icon from "@/components/Icon";
-import { villagesDialog } from "@/lib/texts";
+import { memberSearch, villagesDialog } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 
 const OUTLINE = {
@@ -17,23 +17,26 @@ function MoreMenu({
   onExport,
   onManageAgeGroups,
   onManageVillages,
+  onImport,
 }: {
   statsOpen: boolean;
   onToggleStats: () => void;
   onExport: () => void;
   onManageAgeGroups: () => void;
   onManageVillages: () => void;
+  onImport: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
   const items = [
     {
-      label: statsOpen ? "إخفاء الإحصائيات" : "الإحصائيات",
+      label: statsOpen ? memberSearch.hideStats : memberSearch.showStats,
       icon: "chart" as const,
       run: onToggleStats,
     },
-    { label: "تصدير", icon: "download" as const, run: onExport },
-    { label: "الأعصار", icon: "tag" as const, run: onManageAgeGroups },
+    { label: memberSearch.importFromFile, icon: "upload" as const, run: onImport },
+    { label: memberSearch.export, icon: "download" as const, run: onExport },
+    { label: memberSearch.ageGroups, icon: "tag" as const, run: onManageAgeGroups },
     { label: villagesDialog.title, icon: "tag" as const, run: onManageVillages },
   ];
 
@@ -41,7 +44,7 @@ function MoreMenu({
     <div className="relative shrink-0">
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="المزيد"
+        aria-label={memberSearch.more}
         aria-expanded={open}
         className="btn btn-sm text-xs"
         style={OUTLINE}
@@ -51,7 +54,7 @@ function MoreMenu({
       {open && (
         <>
           <button
-            aria-label="إغلاق القائمة"
+            aria-label={memberSearch.closeMenu}
             className="fixed inset-0 z-10 cursor-default"
             onClick={() => setOpen(false)}
           />
@@ -90,6 +93,7 @@ export default function MemberSearch({
   onManageAgeGroups,
   onManageVillages,
   onManualAdd,
+  onImport,
 }: {
   value: string;
   filterCount: number;
@@ -101,19 +105,20 @@ export default function MemberSearch({
   onManageAgeGroups: () => void;
   onManageVillages: () => void;
   onManualAdd: () => void;
+  onImport: () => void;
 }) {
   return (
     <div className="flex gap-2 mb-3 flex-wrap">
       <input
         type="text"
-        placeholder="بحث بالاسم أو الهاتف أو رمز الطلب..."
+        placeholder={memberSearch.searchPlaceholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="input input-sm flex-1"
         style={{ background: "white", minWidth: "10rem" }}
       />
       <button onClick={onOpenFilters} className="btn btn-sm text-xs relative" style={OUTLINE}>
-        <IconLabel name="filter">تصفية</IconLabel>
+        <IconLabel name="filter">{memberSearch.filter}</IconLabel>
         {filterCount > 0 && (
           <span
             dir="ltr"
@@ -135,9 +140,10 @@ export default function MemberSearch({
         onExport={onExport}
         onManageAgeGroups={onManageAgeGroups}
         onManageVillages={onManageVillages}
+        onImport={onImport}
       />
       <button onClick={onManualAdd} className="btn btn-primary btn-sm text-xs">
-        <IconLabel name="plus">إضافة عضو</IconLabel>
+        <IconLabel name="plus">{memberSearch.add}</IconLabel>
       </button>
     </div>
   );
