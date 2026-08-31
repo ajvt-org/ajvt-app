@@ -3,6 +3,7 @@
 import IconLabel from "@/components/IconLabel";
 import PendingRegistrationCard from "./PendingRegistrationCard";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
+import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration, MemberOption } from "./activityTypes";
 
 export default function ActivityRegistrationsPanel({
@@ -36,10 +37,17 @@ export default function ActivityRegistrationsPanel({
 
   return (
     <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <AddMemberToActivityForm
+        activityId={activityId}
+        candidates={candidates}
+        actionLoading={actionLoading}
+        onRegister={onRegister}
+      />
+
       {pending.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="clock">طلبات قيد المراجعة</IconLabel>
+            <IconLabel name="clock">{texts.pending}</IconLabel>
           </p>
           {pending.map((r) => (
             <PendingRegistrationCard
@@ -55,11 +63,11 @@ export default function ActivityRegistrationsPanel({
 
       <div className="space-y-1.5">
         <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="check">مسجَّلون مؤكَّدون</IconLabel>
+          <IconLabel name="check">{texts.confirmed}</IconLabel>
         </p>
         {active.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            لا يوجد مسجلون مؤكَّدون بعد
+            {texts.noneConfirmed}
           </p>
         ) : (
           active.map((r) => (
@@ -67,27 +75,20 @@ export default function ActivityRegistrationsPanel({
               <span style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
               <div className="flex items-center gap-2">
                 <span style={{ color: "var(--text-muted)" }} dir="ltr">
-                  {r.member.phone || "غير معروف"}
+                  {r.member.phone || texts.unknownPhone}
                 </span>
                 <button
                   onClick={() => onUnregister(activityId, r.member.id)}
                   className="font-bold px-2 py-0.5 rounded"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  إزالة
+                  {texts.remove}
                 </button>
               </div>
             </div>
           ))
         )}
       </div>
-
-      <AddMemberToActivityForm
-        activityId={activityId}
-        candidates={candidates}
-        actionLoading={actionLoading}
-        onRegister={onRegister}
-      />
     </div>
   );
 }

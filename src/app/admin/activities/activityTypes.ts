@@ -35,12 +35,6 @@ export interface MemberOption {
   status: "PENDING" | "ACTIVE" | "REJECTED";
 }
 
-export const STATUS_LABEL: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "غير مقبول",
-};
-
 export interface NewActivityDraft {
   title: string;
   description: string;
