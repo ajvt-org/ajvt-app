@@ -43,14 +43,30 @@ function preview(over: Partial<ImportPreview> = {}): ImportPreview {
   };
 }
 
+const outcome = {
+  results: [] as unknown[],
+  summary: { created: 1, updated: 0, skipped: 0, failed: 0 },
+};
+
 function mockPreview(body: ImportPreview) {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => body }));
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    void init;
+    return { ok: true, json: async () => (url.endsWith("/preview") ? body : outcome) };
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+function sentImport(fetchMock: ReturnType<typeof mockPreview>) {
+  const call = fetchMock.mock.calls.find(([url]) => !url.endsWith("/preview"));
+  if (!call) return null;
+  return JSON.parse(String(call[1]?.body));
 }
 
 function setup(overrides: Partial<React.ComponentProps<typeof MemberImportDialog>> = {}) {
   const props = {
     ageGroups,
-    onImport: vi.fn().mockResolvedValue(undefined),
+    onImported: vi.fn(),
     onClose: vi.fn(),
     ...overrides,
   };
@@ -138,8 +154,8 @@ describe("MemberImportDialog, a flagged row", () => {
     });
 
   it("will not import until the age group is chosen", async () => {
-    mockPreview(flagged());
-    const props = setup();
+    const fetchMock = mockPreview(flagged());
+    setup();
     await upload();
 
     const button = screen.getByRole("button", { name: memberImportDialog.importAll });
@@ -150,7 +166,7 @@ describe("MemberImportDialog, a flagged row", () => {
 
     await waitFor(() => expect(button).toHaveProperty("disabled", false));
     await userEvent.click(button);
-    expect(props.onImport).toHaveBeenCalled();
+    await waitFor(() => expect(sentImport(fetchMock)).not.toBeNull());
   });
 
   it("fills the age group on every selected row in one action", async () => {
@@ -205,7 +221,7 @@ describe("MemberImportDialog, a flagged row", () => {
 
 describe("MemberImportDialog, what gets sent", () => {
   it("leaves out a skipped row and carries the matched account of the rest", async () => {
-    mockPreview(
+    const fetchMock = mockPreview(
       preview({
         rows: [
           { row: 1, values: values(), issues: [], match: null },
@@ -218,17 +234,17 @@ describe("MemberImportDialog, what gets sent", () => {
         ],
       }),
     );
-    const props = setup();
+    setup();
     await upload();
 
     await userEvent.click(screen.getByRole("button", { name: `${memberImportDialog.skipRow} 2` }));
     await userEvent.click(screen.getByRole("button", { name: `${memberImportDialog.skipRow} 1` }));
     await userEvent.click(screen.getByRole("button", { name: memberImportDialog.importAll }));
 
-    expect(props.onImport).toHaveBeenCalledWith(
-      expect.objectContaining({
+    await waitFor(() =>
+      expect(sentImport(fetchMock)).toMatchObject({
         batchId: "batch-1",
-        rows: [expect.objectContaining({ row: 2, personId: "p1" })],
+        rows: [{ row: 2, personId: "p1" }],
       }),
     );
   });
@@ -257,8 +273,8 @@ describe("MemberImportDialog, what gets sent", () => {
   });
 
   it("drops the age group when the row moves to a village that does not use one", async () => {
-    mockPreview(preview());
-    const props = setup();
+    const fetchMock = mockPreview(preview());
+    setup();
     await upload();
 
     await userEvent.selectOptions(
@@ -267,10 +283,8 @@ describe("MemberImportDialog, what gets sent", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: memberImportDialog.importAll }));
 
-    expect(props.onImport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rows: [expect.objectContaining({ values: expect.objectContaining({ age: "" }) })],
-      }),
+    await waitFor(() =>
+      expect(sentImport(fetchMock)).toMatchObject({ rows: [{ values: { age: "" } }] }),
     );
   });
 });

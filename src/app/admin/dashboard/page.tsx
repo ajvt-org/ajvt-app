@@ -30,6 +30,7 @@ import { exportMembers } from "./exportMembers";
 import AgeGroupsDialog from "./AgeGroupsDialog";
 import VillagesDialog from "./VillagesDialog";
 import ManualAddDialog from "./ManualAddDialog";
+import MemberImportDialog from "./MemberImportDialog";
 import StatTabs from "./StatTabs";
 import StatsPanel from "./StatsPanel";
 import MemberSearch from "./MemberSearch";
@@ -82,6 +83,7 @@ function AdminDashboardInner() {
   const [showStats, setShowStats] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showManualAdd, setShowManualAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [payFor, setPayFor] = useState<{ id: string; fullName: string } | null>(null);
   const bare = useBareAccounts();
   const [showAgeGroups, setShowAgeGroups] = useState(false);
@@ -374,6 +376,7 @@ function AdminDashboardInner() {
             onManageAgeGroups={() => setShowAgeGroups(true)}
             onManageVillages={() => setShowVillages(true)}
             onManualAdd={() => setShowManualAdd(true)}
+            onImport={() => setShowImport(true)}
           />
 
           {showStats && (
@@ -516,6 +519,17 @@ function AdminDashboardInner() {
             setShowManualAdd(false);
             setPayFor(null);
           }}
+        />
+      )}
+
+      {showImport && (
+        <MemberImportDialog
+          ageGroups={ageGroups}
+          onImported={async () => {
+            await fetchMembers();
+            await bare.refresh();
+          }}
+          onClose={() => setShowImport(false)}
         />
       )}
 

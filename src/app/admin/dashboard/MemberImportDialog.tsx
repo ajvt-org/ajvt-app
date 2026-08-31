@@ -11,6 +11,7 @@ import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
 import MemberImportUpload from "./MemberImportUpload";
 import MemberImportReview from "./MemberImportReview";
+import MemberImportResult, { type ImportOutcome } from "./MemberImportResult";
 import {
   clearSelection,
   editRow,
@@ -45,7 +46,7 @@ export interface ImportRequest {
 
 type Props = {
   ageGroups: AgeGroup[];
-  onImport: (request: ImportRequest) => Promise<void>;
+  onImported: () => Promise<void> | void;
   onClose: () => void;
 };
 
@@ -69,8 +70,9 @@ function noticeOf(preview: ImportPreview): string {
   return parts.join(memberImportDialog.noticeSeparator);
 }
 
-export default function MemberImportDialog({ ageGroups, onImport, onClose }: Props) {
+export default function MemberImportDialog({ ageGroups, onImported, onClose }: Props) {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
   const [rows, setRows] = useState<EditableRow[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -109,7 +111,7 @@ export default function MemberImportDialog({ ageGroups, onImport, onClose }: Pro
     setError("");
     setLoading(true);
     try {
-      await onImport({
+      const request: ImportRequest = {
         batchId: preview.batchId,
         fileHash: preview.fileHash,
         fileName: preview.fileName,
@@ -120,7 +122,9 @@ export default function MemberImportDialog({ ageGroups, onImport, onClose }: Pro
             values: row.values,
             personId: row.match?.kind === "phone" ? row.match.personId : null,
           })),
-      });
+      };
+      setOutcome(await api.post<ImportOutcome>("/api/admin/people/import", request));
+      await onImported();
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -130,11 +134,16 @@ export default function MemberImportDialog({ ageGroups, onImport, onClose }: Pro
 
   function back() {
     setPreview(null);
+    setOutcome(null);
     setRows([]);
     setError("");
   }
 
-  const step = preview ? memberImportDialog.reviewStep : memberImportDialog.uploadStep;
+  const step = outcome
+    ? memberImportDialog.resultStep
+    : preview
+      ? memberImportDialog.reviewStep
+      : memberImportDialog.uploadStep;
 
   return (
     <div
@@ -154,7 +163,9 @@ export default function MemberImportDialog({ ageGroups, onImport, onClose }: Pro
         />
 
         <div className="p-4">
-          {preview ? (
+          {outcome ? (
+            <MemberImportResult outcome={outcome} onImportAnother={back} onDone={onClose} />
+          ) : preview ? (
             <MemberImportReview
               rows={rows}
               villages={preview.villages}
