@@ -6,8 +6,11 @@ SET "targetId" = m."userId"
 FROM "Member" m
 WHERE a."targetType" = 'Member' AND a."targetId" = m.id;
 
+-- An archive of a member an admin added without an account carries the key
+-- with nothing in it, so the account has to be read out and checked rather
+-- than the key looked for.
 UPDATE "DeletedRecord" d
 SET "recordId" = d.data ->> 'userId'
 WHERE d.kind = 'Member'
-  AND d.data ? 'userId'
+  AND d.data ->> 'userId' IS NOT NULL
   AND d."recordId" IS DISTINCT FROM d.data ->> 'userId';
