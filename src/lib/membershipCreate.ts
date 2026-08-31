@@ -17,9 +17,7 @@ export interface NewMembership {
   issued?: { memberNumber: string; verifyToken: string };
 }
 
-export async function addMembership(db: Db, m: NewMembership) {
-  const member = await db.member.create({ data: { userId: m.userId } });
-
+export async function addMembership(db: Db, m: NewMembership): Promise<void> {
   await saveMembershipYear(db, m.userId, m.membershipYear, {
     status: m.status,
     paymentMethod: m.paymentMethod,
@@ -38,6 +36,4 @@ export async function addMembership(db: Db, m: NewMembership) {
       await db.user.update({ where: { id: m.userId }, data: m.issued });
     }
   }
-
-  return member;
 }

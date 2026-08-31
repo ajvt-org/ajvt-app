@@ -17,7 +17,7 @@ export async function waitingRequests(now = new Date(), days = WAITING_DAYS) {
       },
     }),
     prisma.user.findMany({
-      where: { members: { none: {} }, phone: { not: null }, createdAt: { lte: cutoff } },
+      where: { memberships: { none: {} }, phone: { not: null }, createdAt: { lte: cutoff } },
       select: { id: true, phone: true, createdAt: true },
     }),
   ]);

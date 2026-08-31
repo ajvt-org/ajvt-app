@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 
 export async function bareAccounts() {
   const users = await prisma.user.findMany({
-    where: { members: { none: {} } },
+    where: { memberships: { none: {} } },
     select: {
       id: true,
       phone: true,

@@ -9,12 +9,12 @@ export const GET = withRoute("GET /api/admin/age-groups", async () => {
   await requireAdminRole("MEMBERS");
   const [ageGroups, used] = await Promise.all([
     prisma.ageGroup.findMany({ orderBy: [{ approved: "asc" }, { createdAt: "asc" }] }),
-    prisma.member.findMany({ select: { user: { select: { age: true } } } }),
+    prisma.user.findMany({ where: { memberships: { some: {} } }, select: { age: true } }),
   ]);
   const counts = new Map<string, number>();
   for (const row of used) {
-    if (!row.user.age) continue;
-    counts.set(row.user.age, (counts.get(row.user.age) ?? 0) + 1);
+    if (!row.age) continue;
+    counts.set(row.age, (counts.get(row.age) ?? 0) + 1);
   }
   const known = new Set(ageGroups.map((g) => g.name));
   const orphans = [...counts.entries()]

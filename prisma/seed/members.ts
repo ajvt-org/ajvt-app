@@ -10,9 +10,7 @@ import { rosterSlots } from "./roster";
 import { saveMembershipYear } from "../../src/lib/membershipRecord";
 
 export type SeededUser = { id: string; phone: string | null };
-export type SeededMember = Awaited<ReturnType<typeof prisma.member.create>> & {
-  fullName: string;
-};
+export type SeededMember = { userId: string; createdAt: Date; fullName: string };
 
 export interface SeededMembers {
   all: SeededMember[];
@@ -78,9 +76,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       i % NO_PROOF_EVERY === NO_PROOF_EVERY - 1 ? null : placeholder(`seed-proof-${next()}.webp`);
     const paid = [500, 1000, 1500, 2000, 3000][i % 5];
 
-    const member = await prisma.member.create({
-      data: { userId: owner, createdAt: daysAgo(Math.max(1, 130 - i)) },
-    });
+    const joined = daysAgo(Math.max(1, 130 - i));
 
     const snapshot = {
       status,
@@ -89,10 +85,10 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       paymentProof: proof,
       referenceCode: referenceCode(i),
     };
-    await saveMembershipYear(prisma, member.userId, membershipYear, snapshot);
+    await saveMembershipYear(prisma, owner, membershipYear, snapshot);
     if (isActive) {
       await prisma.membership.updateMany({
-        where: { userId: member.userId, year: membershipYear },
+        where: { userId: owner, year: membershipYear },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(1) },
       });
     }
@@ -100,16 +96,16 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     // A few members carry last year as well, so the years panel has a history
     // to show rather than a single row.
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
-      await saveMembershipYear(prisma, member.userId, current - 1, {
+      await saveMembershipYear(prisma, owner, current - 1, {
         ...snapshot,
         referenceCode: null,
       });
       await prisma.membership.updateMany({
-        where: { userId: member.userId, year: current - 1 },
+        where: { userId: owner, year: current - 1 },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: daysAgo(370) },
       });
       await mirrorMembershipPayment(prisma, {
-        userId: member.userId,
+        userId: owner,
         year: current - 1,
         amount: MEMBERSHIP_FEE,
         feeApplied: MEMBERSHIP_FEE,
@@ -123,7 +119,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     }
 
     await mirrorMembershipPayment(prisma, {
-      userId: member.userId,
+      userId: owner,
       year: membershipYear,
       amount: paid,
       feeApplied: MEMBERSHIP_FEE,
@@ -134,7 +130,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       donorName: fullName(i),
     });
 
-    const withName = { ...member, fullName: fullName(i) };
+    const withName = { userId: owner, createdAt: joined, fullName: fullName(i) };
     all.push(withName);
     if (isActive) active.push(withName);
     if (status === "PENDING") pending.push(withName);

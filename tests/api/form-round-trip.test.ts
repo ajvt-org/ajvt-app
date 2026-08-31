@@ -36,7 +36,7 @@ async function overpaidMember() {
 
 const paymentOf = (memberId: string) =>
   prisma.payment.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year: YEAR },
+    where: { userId: memberId, purpose: "MEMBERSHIP", year: YEAR },
   });
 
 const surplusOf = async (memberId: string) => {

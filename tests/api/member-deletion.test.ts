@@ -41,7 +41,7 @@ describe("DELETE /api/admin/members/[id]", () => {
     const res = await DELETE(...asDelete(m.userId, {}));
 
     expect(res.status).toBe(400);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("refuses when the typed name is wrong", async () => {
@@ -50,7 +50,7 @@ describe("DELETE /api/admin/members/[id]", () => {
     const res = await DELETE(...asDelete(m.userId, { confirmName: "محمد" }));
 
     expect(res.status).toBe(400);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("deletes and keeps a restorable copy when the name matches", async () => {
@@ -59,7 +59,7 @@ describe("DELETE /api/admin/members/[id]", () => {
     const res = await DELETE(...asDelete(m.userId, { confirmName: "محمد ولد أحمد" }));
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
 
     const { records } = await (await LIST_DELETED()).json();
     expect(records).toHaveLength(1);
@@ -107,7 +107,7 @@ describe("DELETE /api/admin/members/[id]", () => {
     );
 
     expect(res.status).toBe(200);
-    const restored = await prisma.member.findUniqueOrThrow({ where: { id: m.id } });
+    const restored = await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } });
     expect(restored.userId).toBe(m.userId);
     expect((await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } })).status).toBe(
       "ACTIVE",

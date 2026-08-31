@@ -47,9 +47,9 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(0);
-    expect(await prisma.member.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورون" } } })).toBe(2);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورين" } } })).toBe(0);
+    expect(await prisma.membership.count({ where: { user: { age: "المبشرين" } } })).toBe(1);
   });
 
   it("records how many members moved", async () => {
@@ -119,7 +119,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 });
 
@@ -136,6 +136,6 @@ describe("DELETE /api/admin/age-groups/[id]", () => {
     const res = await DELETE(post(`/api/admin/age-groups/${group.id}`, {}), withId(group.id));
 
     expect(res.status).toBe(200);
-    expect(await prisma.member.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
+    expect(await prisma.membership.count({ where: { user: { age: "المنصورين" } } })).toBe(1);
   });
 });

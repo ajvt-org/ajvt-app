@@ -21,7 +21,7 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(401);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("creates a pending member for the signed-in user", async () => {
@@ -31,10 +31,10 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirst();
-    expect((await prisma.membership.findFirstOrThrow()).status).toBe("PENDING");
-    expect(member?.userId).toBe(user.id);
-    expect((await personFor(member!.id)).memberNumber).toBeNull();
+    const record = await prisma.membership.findFirstOrThrow();
+    expect(record.status).toBe("PENDING");
+    expect(record.userId).toBe(user.id);
+    expect((await personFor(record.userId)).memberNumber).toBeNull();
   });
 
   it("ignores a number the client sends, since the account carries it", async () => {
@@ -44,8 +44,8 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", { ...validBody, phone: "22119988" }));
 
     expect(res.status).toBe(201);
-    const member = await prisma.member.findFirstOrThrow({ include: { user: true } });
-    expect(member.user?.phone).toBe("33445566");
+    const record = await prisma.membership.findFirstOrThrow({ include: { user: true } });
+    expect(record.user.phone).toBe("33445566");
   });
 
   it("refuses a session whose tokenVersion is stale", async () => {
@@ -56,7 +56,7 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(401);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("requires the fields the form requires, with the same message as before", async () => {
@@ -73,7 +73,7 @@ describe("POST /api/members", () => {
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: message });
     }
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("keeps the exact wording of the length and amount errors", async () => {
@@ -127,7 +127,7 @@ describe("POST /api/members", () => {
     const user = await createUser();
     await signInAs(user);
     await POST(post("/api/members", validBody));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
 
     const res = await POST(
       post("/api/members", { ...validBody, id: member.userId, paymentMethod: "السداد" }),
@@ -143,11 +143,11 @@ describe("POST /api/members", () => {
     const user = await createUser();
     await signInAs(user);
     await POST(post("/api/members", validBody));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
 
     await POST(post("/api/members", { ...validBody, id: member.userId, fullName: "اسم آخر" }));
 
-    expect((await personFor(member.id)).fullName).toBe("محمد ولد أحمد");
+    expect((await personFor(member.userId)).fullName).toBe("محمد ولد أحمد");
   });
 
   it("refuses a payment from an account with no name yet", async () => {
@@ -158,14 +158,14 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(400);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("will not let one user edit another user's member", async () => {
     const owner = await createUser("22334455");
     await signInAs(owner);
     await POST(post("/api/members", validBody));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
 
     const attacker = await createUser("33445566");
     await signInAs(attacker);
@@ -174,7 +174,7 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(404);
-    const untouched = await personFor(member.id);
+    const untouched = await personFor(member.userId);
     expect(untouched.fullName).toBe(validBody.fullName);
   });
 
@@ -189,7 +189,7 @@ describe("POST /api/members", () => {
     expect(await res.json()).toEqual({
       error: "لديك طلب انضمام بالفعل، يمكنك تعديله بدل إرسال طلب جديد",
     });
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("refuses a second form even after the first was rejected", async () => {
@@ -204,14 +204,14 @@ describe("POST /api/members", () => {
     const res = await POST(post("/api/members", validBody));
 
     expect(res.status).toBe(409);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("lets a rejected member fix the form they already have", async () => {
     const user = await createUser();
     await signInAs(user);
     await POST(post("/api/members", validBody));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     await prisma.membership.updateMany({
       where: { userId: member.userId },
       data: { status: "REJECTED", rejectionReason: "الصورة غير واضحة" },
@@ -233,7 +233,7 @@ describe("POST /api/members", () => {
     const user = await createUser();
     await signInAs(user);
     await POST(post("/api/members", validBody));
-    const member = await prisma.member.findFirstOrThrow();
+    const member = await prisma.membership.findFirstOrThrow();
     await prisma.membership.updateMany({
       where: { userId: member.userId },
       data: { status: "ACTIVE" },
@@ -267,7 +267,7 @@ describe("POST /api/members", () => {
     const { referenceCode } = await res.json();
     expect(referenceCode).not.toBe("AJ-ABCDE");
     expect(referenceCode).toMatch(/^AJ-[23456789A-HJKMNP-Z]{5}$/);
-    expect(await prisma.member.count()).toBe(2);
+    expect(await prisma.membership.count()).toBe(2);
   });
 
   it("refuses a code the client invented in the wrong shape", async () => {
@@ -279,7 +279,7 @@ describe("POST /api/members", () => {
         400,
       );
     }
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("still allows a submission with no code at all", async () => {

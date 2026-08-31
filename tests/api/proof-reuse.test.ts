@@ -123,13 +123,13 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await fingerprint("two.webp", HASH);
     await fingerprint("three.webp", HASH);
     const older = await memberWithProof("محمد", "one.webp");
-    await prisma.member.update({
-      where: { id: older.id },
+    await prisma.membership.updateMany({
+      where: { userId: older.userId },
       data: { createdAt: new Date("2026-01-01T00:00:00Z") },
     });
     const newer = await memberWithProof("أحمد", "two.webp");
-    await prisma.member.update({
-      where: { id: newer.id },
+    await prisma.membership.updateMany({
+      where: { userId: newer.userId },
       data: { createdAt: new Date("2026-06-01T00:00:00Z") },
     });
 

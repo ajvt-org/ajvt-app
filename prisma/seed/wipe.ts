@@ -31,7 +31,6 @@ export async function wipe() {
   await prisma.siteVisit.deleteMany();
   await prisma.pushSubscription.deleteMany();
   await prisma.auditLog.deleteMany();
-  await prisma.member.deleteMany();
   await prisma.user.deleteMany();
   await prisma.village.deleteMany();
   await prisma.counter.deleteMany();

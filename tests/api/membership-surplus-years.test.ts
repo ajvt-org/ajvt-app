@@ -23,10 +23,7 @@ function memberOnLastYear() {
 }
 
 async function lastYearSurplus(memberId: string, amount: number) {
-  const { userId } = await prisma.member.findUniqueOrThrow({
-    where: { id: memberId },
-    select: { userId: true },
-  });
+  const userId = memberId;
   await mirrorMembershipPayment(prisma, {
     userId,
     year: LAST,
@@ -50,7 +47,7 @@ const renew = (id: string, paidAmount: number) =>
 // taken under.
 const surplusRows = async (memberId: string) => {
   const payments = await prisma.payment.findMany({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
     orderBy: { year: "asc" },
   });
   return payments

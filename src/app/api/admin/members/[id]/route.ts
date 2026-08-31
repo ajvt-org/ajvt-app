@@ -144,9 +144,9 @@ export const DELETE = withRoute(
 
     const account = await prisma.user.findUnique({
       where: { id },
-      select: { fullName: true, age: true, members: { select: { id: true }, take: 1 } },
+      select: { fullName: true, age: true, memberships: { select: { id: true }, take: 1 } },
     });
-    if (!account || account.members.length === 0) {
+    if (!account || account.memberships.length === 0) {
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
@@ -155,19 +155,17 @@ export const DELETE = withRoute(
       throw new ValidationError("اكتب اسم العضو كما هو للتأكيد");
     }
 
-    const { members: rows, ...person } = account;
+    const { memberships: _held, ...person } = account;
+    void _held;
     const years = await prisma.membership.findMany({ where: { userId: id } });
     await archive(
       "Member",
       id,
       nameOf(person),
-      { id: rows[0].id, userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
+      { userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
       session.username,
     );
-    await prisma.$transaction([
-      prisma.membership.deleteMany({ where: { userId: id } }),
-      prisma.member.deleteMany({ where: { userId: id } }),
-    ]);
+    await prisma.membership.deleteMany({ where: { userId: id } });
     const forgotten = await forgetQuizFootprint(id);
     await purgeExpired();
     await logAction(session.username, "DELETE_MEMBER", nameOf(person), {

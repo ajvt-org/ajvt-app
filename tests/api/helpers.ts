@@ -127,8 +127,8 @@ export function withId(id: string) {
   return withParams({ id });
 }
 
-export function personFor(memberId: string) {
-  return prisma.user.findFirstOrThrow({ where: { members: { some: { id: memberId } } } });
+export function personFor(userId: string) {
+  return prisma.user.findUniqueOrThrow({ where: { id: userId } });
 }
 
 const PERSON = ["fullName", "age", "village", "photo", "memberNumber", "verifyToken"] as const;
@@ -163,10 +163,6 @@ export async function makeMember(data: Record<string, unknown>) {
     await prisma.user.update({ where: { id: userId }, data: person });
   }
 
-  const member = await prisma.member.create({
-    data: { userId, ...(given.createdAt ? { createdAt: given.createdAt } : {}) },
-  });
-
   const year = given.membershipYear ?? runningYear();
   const state = {
     status: given.status ?? "PENDING",
@@ -176,7 +172,7 @@ export async function makeMember(data: Record<string, unknown>) {
     referenceCode: given.referenceCode ?? null,
     ...(given.createdAt ? { createdAt: given.createdAt } : {}),
   };
-  await prisma.membership.upsert({
+  const record = await prisma.membership.upsert({
     where: { userId_year: { userId, year } },
     update: {},
     create: { userId, year, ...state },
@@ -203,7 +199,7 @@ export async function makeMember(data: Record<string, unknown>) {
     });
   }
 
-  return member;
+  return { id: userId, userId, createdAt: record.createdAt };
 }
 
 export async function adminAddsMember(body: Record<string, unknown>) {
@@ -234,7 +230,7 @@ export async function adminAddsMember(body: Record<string, unknown>) {
 // out from the payment, which is the only place the money is kept.
 export async function membershipSurplus(memberId: string) {
   const payment = await prisma.payment.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP" },
+    where: { userId: memberId, purpose: "MEMBERSHIP" },
   });
   return {
     amount: payment.amount - (payment.feeApplied ?? 0),

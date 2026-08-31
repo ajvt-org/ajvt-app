@@ -25,7 +25,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
   const person = await prisma.user.findUniqueOrThrow({
     where: { id: session.userId },
-    select: { fullName: true, members: { select: { id: true }, take: 1 } },
+    select: { fullName: true, memberships: { select: { id: true }, take: 1 } },
   });
   if (!person.fullName?.trim()) {
     throw new ValidationError(members.profileIncomplete);
@@ -62,7 +62,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     return NextResponse.json({ id }, { status: 200 });
   }
 
-  if (person.members.length) {
+  if (person.memberships.length) {
     throw new ConflictError(members.alreadyHasRequest);
   }
 
@@ -70,8 +70,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
   for (let attempt = 0; ; attempt++) {
     try {
-      const member = await prisma.$transaction(async (tx) => {
-        const created = await tx.member.create({ data: { userId: session.userId } });
+      await prisma.$transaction(async (tx) => {
         await saveMembershipYear(tx, session.userId, membershipYear, {
           paymentMethod,
           paymentProof,
@@ -85,12 +84,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           membershipFee,
           surplusAnonymous,
         );
-        return { id: created.id, referenceCode: code };
       });
-      return NextResponse.json(
-        { id: member.id, referenceCode: member.referenceCode },
-        { status: 201 },
-      );
+      return NextResponse.json({ id: session.userId, referenceCode: code }, { status: 201 });
     } catch (err) {
       if (!isUniqueViolation(err)) throw err;
       if (uniqueViolationFields(err).includes("userId")) {

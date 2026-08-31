@@ -32,16 +32,15 @@ export const DELETE = withRoute(
       throw new ValidationError(accounts.confirmPerson);
     }
 
-    const membership = await prisma.member.findUnique({ where: { userId: id } });
     const years = await prisma.membership.findMany({ where: { userId: id } });
     const label = user.fullName?.trim() || user.phone || user.id;
 
-    if (membership) {
+    if (years.length > 0) {
       await archive(
         "Member",
         id,
         label,
-        { ...membership, memberships: years } as unknown as Prisma.InputJsonValue,
+        { userId: id, memberships: years } as unknown as Prisma.InputJsonValue,
         session.username,
       );
     }
@@ -49,7 +48,6 @@ export const DELETE = withRoute(
 
     const forgotten = await forgetQuizFootprint(id);
     await prisma.$transaction(async (tx) => {
-      if (membership) await tx.member.delete({ where: { id: membership.id } });
       await tx.user.delete({ where: { id } });
     });
     await purgeExpired();
@@ -58,7 +56,7 @@ export const DELETE = withRoute(
       ...auditContext(session, req),
       targetType: "User",
       targetId: id,
-      before: { fullName: user.fullName, phone: user.phone, memberId: membership?.id ?? null },
+      before: { fullName: user.fullName, phone: user.phone, years: years.length },
       meta: forgotten ?? undefined,
     });
 

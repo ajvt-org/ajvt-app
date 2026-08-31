@@ -104,7 +104,7 @@ describe("DELETE /api/admin/users/[id]", () => {
 
     expect(res.status).toBe(200);
     expect(await prisma.user.count()).toBe(0);
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
   });
 
   it("keeps a restorable copy of both the person and their payment", async () => {
@@ -140,7 +140,7 @@ describe("DELETE /api/admin/users/[id]", () => {
 
     expect(late.status).toBe(200);
     expect(await prisma.user.count()).toBe(1);
-    expect(await prisma.member.count()).toBe(1);
+    expect(await prisma.membership.count()).toBe(1);
   });
 
   it("accepts the number instead of the name, whichever screen the admin came from", async () => {
