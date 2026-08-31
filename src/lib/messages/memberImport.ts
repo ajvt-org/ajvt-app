@@ -17,3 +17,11 @@ export const memberImportRow = {
   alreadyHasMembership: "لهذا الشخص اشتراك مسجل بالفعل",
   paymentMethodUnknown: "طريقة دفع غير معروفة",
 } as const;
+
+export const memberImportRun = {
+  batchAlreadyRan: "تم تنفيذ هذا الاستيراد بالفعل",
+  nothingToImport: "لا يوجد سطر للاستيراد",
+  accountGone: "الحساب غير موجود",
+  phoneTaken: "هذا الرقم مستعمل لحساب آخر",
+  rowFailed: "تعذّر إنشاء هذا السطر",
+} as const;

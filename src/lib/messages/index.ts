@@ -1,7 +1,7 @@
 export { common } from "./common";
 export { uploads } from "./uploads";
 export { members, ageGroups, memberStatusLabels } from "./members";
-export { memberImportErrors, memberImportRow } from "./memberImport";
+export { memberImportErrors, memberImportRow, memberImportRun } from "./memberImport";
 export { villages } from "./villages";
 export { accounts } from "./accounts";
 export { money } from "./money";
