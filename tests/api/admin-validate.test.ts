@@ -215,7 +215,7 @@ describe("POST /api/admin/validate", () => {
     );
 
     expect(await prisma.user.count({ where: { id: member.userId } })).toBe(1);
-    const still = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const still = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(still.userId).toBe(member.userId);
   });
 

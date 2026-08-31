@@ -26,7 +26,7 @@ const payment = { paidAmount: 1000, paymentMethod: "بنكيلي" };
 // force, the rest is support.
 const paidForYearOf = async (memberId: string, year: number) => {
   const row = await prisma.payment.findFirst({
-    where: { user: { members: { some: { id: memberId } } }, purpose: "MEMBERSHIP", year },
+    where: { userId: memberId, purpose: "MEMBERSHIP", year },
   });
   if (!row) return null;
   return {
@@ -116,10 +116,10 @@ describe("renewing a membership", () => {
 
     await renew(existing.userId);
 
-    expect(await prisma.member.count()).toBe(1);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: existing.id } })).userId).toBe(
-      user.id,
-    );
+    expect(await prisma.membership.count({ where: { userId: user.id } })).toBe(2);
+    expect(
+      (await prisma.membership.findFirstOrThrow({ where: { userId: existing.userId } })).userId,
+    ).toBe(user.id);
   });
 
   it("refuses a second renewal for the same year and writes nothing", async () => {

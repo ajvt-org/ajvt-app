@@ -14,7 +14,7 @@ const manual = {
 
 async function addedByHand(over: Record<string, unknown> = {}) {
   await adminAddsMember({ ...manual, ...over });
-  return prisma.member.findFirstOrThrow();
+  return prisma.membership.findFirstOrThrow();
 }
 
 function pay(id: string, body: Record<string, unknown>) {
@@ -23,7 +23,7 @@ function pay(id: string, body: Record<string, unknown>) {
 
 function recordOf(memberId: string) {
   return prisma.membership.findFirstOrThrow({
-    where: { user: { members: { some: { id: memberId } } } },
+    where: { userId: memberId },
     orderBy: { year: "desc" },
   });
 }
@@ -40,7 +40,7 @@ describe("a proof added after the member was registered", () => {
     const res = await pay(member.userId, { paymentProof: "late.webp" });
 
     expect(res.status).toBe(200);
-    expect((await recordOf(member.id)).paymentProof).toBe("late.webp");
+    expect((await recordOf(member.userId)).paymentProof).toBe("late.webp");
   });
 
   it("leaves the amount alone when only the proof is sent", async () => {
@@ -56,7 +56,7 @@ describe("a proof added after the member was registered", () => {
 
     await pay(member.userId, { paymentProof: "second.webp" });
 
-    expect((await recordOf(member.id)).paymentProof).toBe("second.webp");
+    expect((await recordOf(member.userId)).paymentProof).toBe("second.webp");
   });
 
   it("clears the proof when it is sent as nothing", async () => {
@@ -64,7 +64,7 @@ describe("a proof added after the member was registered", () => {
 
     await pay(member.userId, { paymentProof: null });
 
-    expect((await recordOf(member.id)).paymentProof).toBeNull();
+    expect((await recordOf(member.userId)).paymentProof).toBeNull();
   });
 
   it("records the proof in the audit trail", async () => {
@@ -87,7 +87,7 @@ describe("a proof added after the member was registered", () => {
     ).json();
 
     expect(body.amountTransferred).toBe(2000);
-    expect((await recordOf(member.id)).paymentProof).toBe("late.webp");
+    expect((await recordOf(member.userId)).paymentProof).toBe("late.webp");
   });
 
   it("still clears the amount when it is sent as nothing", async () => {

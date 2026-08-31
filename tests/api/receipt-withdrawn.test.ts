@@ -12,7 +12,7 @@ async function submitted(phone?: string) {
   await signInAs(user);
   await SUBMIT(post("/api/members", PAYMENT));
   clearCookies();
-  return prisma.member.findFirstOrThrow({ where: { userId: user.id } });
+  return prisma.membership.findFirstOrThrow({ where: { userId: user.id } });
 }
 
 async function asAdmin() {

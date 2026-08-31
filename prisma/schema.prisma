@@ -47,7 +47,6 @@ model User {
   photoLocked           Boolean                  @default(false)
   memberNumber          String?                  @unique
   verifyToken           String?                  @unique
-  members               Member[]
   registrations         ActivityRegistration[]
   teamMemberships       TeamMember[]
   matchGoals            MatchGoal[]
@@ -69,17 +68,6 @@ model User {
   currentStreak         Int                      @default(0) // consecutive days of app activity ("flame")
   longestStreak         Int                      @default(0)
   lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
-}
-
-model Member {
-  id        String   @id @default(cuid())
-  // One membership per account. The account is the person: their name, عصر,
-  // village, photo and membership number all live on it. What the membership
-  // itself holds lives on Membership, one row per year.
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Membership {

@@ -42,7 +42,7 @@ describe("attaching an account to someone an admin added", () => {
     const res = await attach(member.userId, "22119911");
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(after.userId).toBe(member.userId);
     const account = await prisma.user.findUniqueOrThrow({ where: { id: after.userId } });
     expect(account.phone).toBe("22119911");
@@ -67,7 +67,7 @@ describe("attaching an account to someone an admin added", () => {
     const res = await attach(member.userId, "22119911");
 
     expect(res.status).toBe(200);
-    const after = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const after = await prisma.membership.findFirstOrThrow({ where: { userId: existing.id } });
     expect(after.userId).toBe(existing.id);
     expect(await prisma.user.findUnique({ where: { id: placeholder } })).toBeNull();
   });
@@ -107,9 +107,9 @@ describe("attaching an account to someone an admin added", () => {
     const res = await attach(member.userId, "22119911");
 
     expect(res.status).toBe(409);
-    expect((await prisma.member.findUniqueOrThrow({ where: { id: member.id } })).userId).toBe(
-      member.userId,
-    );
+    expect(
+      (await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } })).userId,
+    ).toBe(member.userId);
   });
 
   it("refuses to attach a second number to someone who already has one", async () => {

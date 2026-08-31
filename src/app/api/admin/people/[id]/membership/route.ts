@@ -25,10 +25,15 @@ export const POST = withRoute(
 
     const person = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, fullName: true, memberNumber: true, members: { select: { id: true } } },
+      select: {
+        id: true,
+        fullName: true,
+        memberNumber: true,
+        memberships: { select: { id: true }, take: 1 },
+      },
     });
     if (!person) throw new NotFoundError(accounts.notFound);
-    if (person.members.length) throw new ConflictError(members.accountAlreadyHasMember);
+    if (person.memberships.length) throw new ConflictError(members.accountAlreadyHasMember);
 
     const { membershipFee, membershipYear } = await getAppSettings();
 

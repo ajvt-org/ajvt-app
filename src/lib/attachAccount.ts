@@ -49,7 +49,6 @@ export async function attachAccount(
 
   await prisma.$transaction(async (tx) => {
     await tx.membership.updateMany({ where: { userId }, data: { userId: found.id } });
-    await tx.member.updateMany({ where: { userId }, data: { userId: found.id } });
     await tx.user.delete({ where: { id: userId } });
     await tx.user.update({
       where: { id: found.id },

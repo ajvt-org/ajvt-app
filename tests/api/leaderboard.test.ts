@@ -20,12 +20,7 @@ async function gift(
   opts: { name?: string | null; memberId?: string; status?: "ACTIVE" | "PENDING" } = {},
 ) {
   const status = opts.status ?? "ACTIVE";
-  const owner = opts.memberId
-    ? await prisma.member.findUniqueOrThrow({
-        where: { id: opts.memberId },
-        select: { userId: true },
-      })
-    : null;
+  const owner = opts.memberId ? { userId: opts.memberId } : null;
   const donation = await prisma.donation.create({
     data: {
       amount,

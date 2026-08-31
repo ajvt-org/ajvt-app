@@ -30,10 +30,7 @@ async function competition(name: string, startsAt: Date) {
 }
 
 async function enrol(memberId: string, activityId: string, status = "ACTIVE") {
-  const owner = await prisma.member.findUniqueOrThrow({
-    where: { id: memberId },
-    select: { userId: true },
-  });
+  const owner = { userId: memberId };
   return prisma.activityRegistration.create({
     data: {
       userId: owner.userId,
@@ -100,7 +97,7 @@ describe("the enrollments behind a verify token", () => {
 
   it("lists the quiz competitions the account joined", async () => {
     const member = await activeMember();
-    const person = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const person = { userId: member.userId };
     const ramadan = await competition("مسابقة رمضان", new Date("2026-03-01T00:00:00Z"));
     await prisma.quizParticipant.create({
       data: { competitionId: ramadan.id, userId: person.userId },
@@ -116,7 +113,7 @@ describe("the enrollments behind a verify token", () => {
 
   it("puts the newest enrollment first whichever kind it is", async () => {
     const member = await activeMember();
-    const person = await prisma.member.findUniqueOrThrow({ where: { id: member.id } });
+    const person = { userId: member.userId };
     const old = await activity("نشاط قديم", new Date("2026-01-01"));
     await enrol(member.id, old.id);
     const recent = await competition("مسابقة حديثة", new Date("2026-08-01T00:00:00Z"));

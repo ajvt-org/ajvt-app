@@ -26,10 +26,7 @@ async function tournament(title: string) {
 async function teamWith(activityId: string, name: string, memberId?: string, status = "ACTIVE") {
   const team = await prisma.team.create({ data: { activityId, name } });
   if (memberId) {
-    const owner = await prisma.member.findUniqueOrThrow({
-      where: { id: memberId },
-      select: { userId: true },
-    });
+    const owner = { userId: memberId };
     await prisma.teamMember.create({
       data: {
         teamId: team.id,

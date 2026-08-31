@@ -17,16 +17,15 @@ export const POST = withRoute(
 
     const data = record.data as Record<string, unknown>;
     if (record.kind === "Member") {
-      const existing = await prisma.member.findFirst({ where: { userId: record.recordId } });
+      const existing = await prisma.membership.findFirst({ where: { userId: record.recordId } });
       if (existing) throw new ConflictError(accounts.memberExists);
 
       const account = await prisma.user.findUnique({ where: { id: String(data.userId) } });
       if (!account) throw new ConflictError(accounts.restoreAccountFirst);
 
-      const { memberships, ...row } = data as { memberships?: Record<string, unknown>[] };
+      const { memberships } = data as { memberships?: Record<string, unknown>[] };
       if (!memberships) throw new ConflictError(accounts.archivePredatesTheRecord);
       await prisma.$transaction([
-        prisma.member.create({ data: row as never }),
         prisma.membership.createMany({ data: memberships as never, skipDuplicates: true }),
         prisma.deletedRecord.delete({ where: { id } }),
       ]);

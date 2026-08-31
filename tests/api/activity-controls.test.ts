@@ -194,11 +194,8 @@ describe("duplicating an activity", () => {
   it("never copies who signed up", async () => {
     const source = await anActivity();
     const [user] = [await prisma.user.create({ data: { fullName: "محمد" } })];
-    const member = await prisma.member.create({
-      data: { userId: user.id },
-    });
     await prisma.activityRegistration.create({
-      data: { activityId: source.id, userId: member.userId, status: "ACTIVE" },
+      data: { activityId: source.id, userId: user.id, status: "ACTIVE" },
     });
 
     const body = await (

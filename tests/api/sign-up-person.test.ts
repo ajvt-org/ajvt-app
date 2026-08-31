@@ -33,7 +33,7 @@ describe("signing up creates the whole person", () => {
   it("creates no membership, since signing up is not paying", async () => {
     await REGISTER(post("/api/auth/register", signUp));
 
-    expect(await prisma.member.count()).toBe(0);
+    expect(await prisma.membership.count()).toBe(0);
     expect(await prisma.membership.count()).toBe(0);
   });
 

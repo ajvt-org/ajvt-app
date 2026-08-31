@@ -28,13 +28,12 @@ const submission = {
   paidAmount: 100,
 };
 
-async function currentRecord(memberId: string) {
-  const member = await prisma.member.findUniqueOrThrow({ where: { id: memberId } });
+async function currentRecord(userId: string) {
   const record = await prisma.membership.findFirstOrThrow({
-    where: { userId: member.userId },
+    where: { userId },
     orderBy: { year: "desc" },
   });
-  return { member, record };
+  return { record };
 }
 
 async function expectRecorded(memberId: string, expected: Record<string, unknown>) {
@@ -45,7 +44,7 @@ async function expectRecorded(memberId: string, expected: Record<string, unknown
 async function submitAs(body: Record<string, unknown> = {}) {
   await signInAs(await createUser());
   await REGISTER(post("/api/members", { ...submission, ...body }));
-  return prisma.member.findFirstOrThrow();
+  return prisma.membership.findFirstOrThrow();
 }
 
 describe("the membership year record after each way it is written", () => {
@@ -56,7 +55,7 @@ describe("the membership year record after each way it is written", () => {
   it("holds what the member sent", async () => {
     const member = await submitAs();
 
-    await expectRecorded(member.id, {
+    await expectRecorded(member.userId, {
       status: "PENDING",
       paymentMethod: "بنكيلي",
       paymentProof: "proof.webp",
@@ -75,7 +74,7 @@ describe("the membership year record after each way it is written", () => {
       }),
     );
 
-    await expectRecorded(member.id, { status: "PENDING", paymentMethod: "السداد" });
+    await expectRecorded(member.userId, { status: "PENDING", paymentMethod: "السداد" });
   });
 
   it("matches after an admin approves", async () => {
@@ -84,7 +83,7 @@ describe("the membership year record after each way it is written", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
-    await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
+    await expectRecorded(member.userId, { status: "ACTIVE", rejectionReason: null });
   });
 
   it("matches after an admin refuses the payment", async () => {
@@ -99,7 +98,7 @@ describe("the membership year record after each way it is written", () => {
       }),
     );
 
-    await expectRecorded(member.id, {
+    await expectRecorded(member.userId, {
       status: "REJECTED",
       rejectionReason: "المبلغ المدفوع غير مطابق",
     });
@@ -118,7 +117,7 @@ describe("the membership year record after each way it is written", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: member.userId, action: "ACTIVE" }));
 
-    await expectRecorded(member.id, { status: "ACTIVE", rejectionReason: null });
+    await expectRecorded(member.userId, { status: "ACTIVE", rejectionReason: null });
   });
 
   it("matches after an admin edits what was paid", async () => {
@@ -130,7 +129,7 @@ describe("the membership year record after each way it is written", () => {
       withId(member.userId),
     );
 
-    await expectRecorded(member.id, { status: "PENDING", paymentMethod: "بنكيلي" });
+    await expectRecorded(member.userId, { status: "PENDING", paymentMethod: "بنكيلي" });
   });
 
   it("matches after the member hides their name on the support board", async () => {
@@ -160,7 +159,7 @@ describe("the membership year record after each way it is written", () => {
       paidAmount: 300,
     });
 
-    await expectRecorded((await prisma.member.findFirstOrThrow()).id, {
+    await expectRecorded((await prisma.membership.findFirstOrThrow()).userId, {
       status: "ACTIVE",
       paymentMethod: "نقداً",
     });
@@ -202,7 +201,7 @@ describe("the membership year record after each way it is written", () => {
       status: "PENDING",
     });
 
-    const members = await prisma.member.findMany();
+    const members = await prisma.membership.findMany();
     for (const member of members) {
       const record = await prisma.membership.findFirst({ where: { userId: member.userId } });
       expect(record).not.toBeNull();

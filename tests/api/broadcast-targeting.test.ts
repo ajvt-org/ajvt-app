@@ -32,7 +32,7 @@ async function member(fullName: string, over: Record<string, unknown> = {}) {
     status: "ACTIVE",
     ...over,
   });
-  return prisma.member.findUniqueOrThrow({ where: { id: created.id }, select: { userId: true } });
+  return { userId: created.userId };
 }
 
 async function activityWith(userId: string) {

@@ -23,7 +23,7 @@ async function prepare() {
   const fresh = new Client({ connectionString: url.toString() });
   await fresh.connect();
   await fresh.query(
-    `TRUNCATE "Member", "User", "Admin", "AgeGroup", "AuditLog", "Donation" RESTART IDENTITY CASCADE`,
+    `TRUNCATE "Membership", "User", "Admin", "AgeGroup", "AuditLog", "Donation" RESTART IDENTITY CASCADE`,
   );
   await fresh.end();
 

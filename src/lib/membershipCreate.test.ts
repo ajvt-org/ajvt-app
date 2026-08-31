@@ -11,11 +11,7 @@ import { recordMembershipYear, saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
 
 function fakeDb() {
-  const created = { id: "m1", paymentMethod: "بنكيلي", paymentProof: null, membershipYear: 2026 };
-  return {
-    member: { create: vi.fn().mockResolvedValue(created) },
-    user: { update: vi.fn().mockResolvedValue({}) },
-  };
+  return { user: { update: vi.fn().mockResolvedValue({}) } };
 }
 
 function input(over: Partial<NewMembership> = {}): NewMembership {
@@ -34,12 +30,11 @@ function input(over: Partial<NewMembership> = {}): NewMembership {
 }
 
 describe("addMembership", () => {
-  it("writes the payment onto the account", async () => {
+  it("writes the year and the payment onto the account", async () => {
     const db = fakeDb();
 
     await addMembership(db as never, input());
 
-    expect(db.member.create).toHaveBeenCalledWith({ data: { userId: "u1" } });
     expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, {
       status: "PENDING",
       paymentMethod: "بنكيلي",

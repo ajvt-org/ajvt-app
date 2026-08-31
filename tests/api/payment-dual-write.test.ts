@@ -73,7 +73,7 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin approves that member", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
     await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
@@ -87,7 +87,7 @@ describe("every path that touches money writes only the payment", () => {
   it("keeps the admin who recorded the year on the payment as well", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
 
     await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
@@ -101,7 +101,7 @@ describe("every path that touches money writes only the payment", () => {
   it("leaves the first admin on the year when a second one edits it", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin("boss", "SUPER"));
     await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
@@ -122,7 +122,7 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin refuses that member", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
     await VALIDATE(
@@ -140,7 +140,7 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin corrects the amount", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
     await PAY(
@@ -155,7 +155,7 @@ describe("every path that touches money writes only the payment", () => {
   it("agrees after an admin clears the amount", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
-    const m = await prisma.member.findFirstOrThrow();
+    const m = await prisma.membership.findFirstOrThrow();
     await signInAsAdmin(await createAdmin());
 
     await PAY(
