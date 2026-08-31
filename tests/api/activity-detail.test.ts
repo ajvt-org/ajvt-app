@@ -115,3 +115,67 @@ describe("one activity with everything hanging off it", () => {
     expect(body.history[0].action).toBe("UPDATE_ACTIVITY");
   });
 });
+
+describe("the team a registrant belongs to", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  async function aRegistrant(activityId: string, fullName: string) {
+    const member = await makeMember({ fullName, age: "البدريين", status: "ACTIVE" });
+    await prisma.activityRegistration.create({
+      data: { userId: member.userId, activityId, status: "ACTIVE" },
+    });
+    return member;
+  }
+
+  it("names the team of a registrant who is on one", async () => {
+    const activity = await anActivity();
+    const member = await aRegistrant(activity.id, "محمد");
+    const team = await prisma.team.create({
+      data: { activityId: activity.id, name: "الشناقطة" },
+    });
+    await prisma.teamMember.create({ data: { teamId: team.id, userId: member.userId } });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0].team).toEqual({ id: team.id, name: "الشناقطة" });
+  });
+
+  it("says nothing for a registrant on no team", async () => {
+    const activity = await anActivity();
+    await aRegistrant(activity.id, "سالم");
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0].team).toBeNull();
+  });
+
+  it("leaves out a join that is still waiting on the admin", async () => {
+    const activity = await anActivity();
+    const member = await aRegistrant(activity.id, "أحمد");
+    const team = await prisma.team.create({
+      data: { activityId: activity.id, name: "أهل الساحل" },
+    });
+    await prisma.teamMember.create({
+      data: { teamId: team.id, userId: member.userId, status: "PENDING" },
+    });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0].team).toBeNull();
+  });
+
+  it("keeps a team from another activity out of it", async () => {
+    const activity = await anActivity();
+    const other = await anActivity();
+    const member = await aRegistrant(activity.id, "الشيخ");
+    const team = await prisma.team.create({ data: { activityId: other.id, name: "فريق آخر" } });
+    await prisma.teamMember.create({ data: { teamId: team.id, userId: member.userId } });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0].team).toBeNull();
+  });
+});
