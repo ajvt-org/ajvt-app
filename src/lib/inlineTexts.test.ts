@@ -43,6 +43,7 @@ const KEPT_CLEAN = [
   "src/lib/memberImportColumns.ts",
   "src/lib/memberImportCheck.ts",
   "src/lib/memberImportServer.ts",
+  "src/lib/memberImportRun.ts",
   "src/lib/memberImportTemplate.ts",
   "src/app/admin/dashboard/MemberImportDialog.tsx",
   "src/app/admin/dashboard/MemberImportUpload.tsx",
