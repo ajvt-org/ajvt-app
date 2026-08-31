@@ -1,10 +1,17 @@
 "use client";
 
-import IconLabel from "@/components/IconLabel";
-import PendingRegistrationCard from "./PendingRegistrationCard";
-import AddMemberToActivityForm from "./AddMemberToActivityForm";
+import { useState } from "react";
+import { matchesSearch, searchTokens } from "@/lib/arabicText";
 import { activityRegistrants as texts } from "@/lib/texts";
+import PendingRegistrationCard from "./PendingRegistrationCard";
+import ConfirmedRegistrantCard from "./ConfirmedRegistrantCard";
+import RegistrantSection from "./RegistrantSection";
+import AddMemberToActivityForm from "./AddMemberToActivityForm";
 import type { Registration, MemberOption } from "./activityTypes";
+
+function registrantText(r: Registration): string {
+  return `${r.member.fullName} ${r.member.phone ?? ""} ${r.team?.name ?? ""}`;
+}
 
 export default function ActivityRegistrationsPanel({
   activityId,
@@ -28,8 +35,15 @@ export default function ActivityRegistrationsPanel({
   onRegister: (activityId: string, memberId: string) => Promise<boolean>;
   onUnregister: (activityId: string, memberId: string) => void;
 }) {
-  const pending = registrations.filter((r) => r.status === "PENDING");
-  const active = registrations.filter((r) => r.status === "ACTIVE");
+  const [search, setSearch] = useState("");
+
+  const tokens = searchTokens(search);
+  const shown = tokens.length
+    ? registrations.filter((r) => matchesSearch(registrantText(r), tokens))
+    : registrations;
+
+  const pending = shown.filter((r) => r.status === "PENDING");
+  const active = shown.filter((r) => r.status === "ACTIVE");
   const registeredIds = new Set(
     registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
   );
@@ -44,51 +58,47 @@ export default function ActivityRegistrationsPanel({
         onRegister={onRegister}
       />
 
+      <input
+        type="text"
+        placeholder={texts.searchRegistrants}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="input text-sm"
+      />
+
       {pending.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="clock">{texts.pending}</IconLabel>
-          </p>
-          {pending.map((r) => (
-            <PendingRegistrationCard
-              key={r.id}
-              activityId={activityId}
-              registration={r}
-              actionLoading={actionLoading}
-              onReview={onReview}
-            />
-          ))}
-        </div>
+        <RegistrantSection icon="clock" title={texts.pending} count={pending.length}>
+          <div className="space-y-2">
+            {pending.map((r) => (
+              <PendingRegistrationCard
+                key={r.id}
+                activityId={activityId}
+                registration={r}
+                actionLoading={actionLoading}
+                onReview={onReview}
+              />
+            ))}
+          </div>
+        </RegistrantSection>
       )}
 
-      <div className="space-y-1.5">
-        <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="check">{texts.confirmed}</IconLabel>
-        </p>
+      <RegistrantSection icon="check" title={texts.confirmed} count={active.length}>
         {active.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {texts.noneConfirmed}
+            {tokens.length ? texts.noneMatch : texts.noneConfirmed}
           </p>
         ) : (
-          active.map((r) => (
-            <div key={r.id} className="flex items-center justify-between text-xs">
-              <span style={{ color: "var(--text-main)" }}>{r.member.fullName}</span>
-              <div className="flex items-center gap-2">
-                <span style={{ color: "var(--text-muted)" }} dir="ltr">
-                  {r.member.phone || texts.unknownPhone}
-                </span>
-                <button
-                  onClick={() => onUnregister(activityId, r.member.id)}
-                  className="font-bold px-2 py-0.5 rounded"
-                  style={{ background: "#fee2e2", color: "#991b1b" }}
-                >
-                  {texts.remove}
-                </button>
-              </div>
-            </div>
-          ))
+          <div className="space-y-1.5">
+            {active.map((r) => (
+              <ConfirmedRegistrantCard
+                key={r.id}
+                registration={r}
+                onUnregister={(memberId) => onUnregister(activityId, memberId)}
+              />
+            ))}
+          </div>
         )}
-      </div>
+      </RegistrantSection>
     </div>
   );
 }
