@@ -40,7 +40,7 @@ export const POST = withRoute(
         where: { userId_activityId: { userId: account.id, activityId: id } },
       });
       if (!already) {
-        return NextResponse.json({ error: "اكتمل عدد المسجلين في هذا النشاط" }, { status: 409 });
+        return NextResponse.json({ error: activities.capacityReached }, { status: 409 });
       }
     }
 
@@ -85,7 +85,7 @@ export const PATCH = withRoute(
       },
     });
     if (!registration || registration.activityId !== id) {
-      return NextResponse.json({ error: "طلب التسجيل غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: activities.registrationNotFound }, { status: 404 });
     }
 
     const updated = await prisma.activityRegistration.update({
