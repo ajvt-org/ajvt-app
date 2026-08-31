@@ -24,4 +24,5 @@ export const memberImportRun = {
   accountGone: "الحساب غير موجود",
   phoneTaken: "هذا الرقم مستعمل لحساب آخر",
   rowFailed: "تعذّر إنشاء هذا السطر",
+  matchChanged: "تغيّر الحساب المطابق لهذا السطر بعد المراجعة، راجع الملف من جديد",
 } as const;
