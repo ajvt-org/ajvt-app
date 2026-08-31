@@ -9,5 +9,6 @@ export const memberImport = {
     paid: ["دفع الاشتراك", "مشترك", "الاشتراك", "paid", "membership"],
   },
   paidYes: ["نعم", "مدفوع", "دفع", "yes", "y", "true", "1", "x"],
+  exampleName: "محمد ولد أحمد",
   paidNo: ["لا", "غير مدفوع", "no", "n", "false", "0", ""],
 } as const;
