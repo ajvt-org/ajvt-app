@@ -23,9 +23,8 @@ export const POST = withRoute(
       const account = await prisma.user.findUnique({ where: { id: String(data.userId) } });
       if (!account) throw new ConflictError(accounts.restoreAccountFirst);
 
-      const { memberships = [], ...row } = data as {
-        memberships?: Record<string, unknown>[];
-      };
+      const { memberships, ...row } = data as { memberships?: Record<string, unknown>[] };
+      if (!memberships) throw new ConflictError(accounts.archivePredatesTheRecord);
       await prisma.$transaction([
         prisma.member.create({ data: row as never }),
         prisma.membership.createMany({ data: memberships as never, skipDuplicates: true }),

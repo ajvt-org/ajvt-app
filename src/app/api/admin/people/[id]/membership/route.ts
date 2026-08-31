@@ -42,7 +42,7 @@ export const POST = withRoute(
     const issued =
       status === "ACTIVE" && !person.memberNumber ? await issueMembership() : undefined;
 
-    const member = await prisma.$transaction((tx) =>
+    await prisma.$transaction((tx) =>
       addMembership(tx, {
         userId: person.id,
         paymentMethod: paymentMethod.trim(),
@@ -60,10 +60,10 @@ export const POST = withRoute(
     await logAction(session.username, "ADD_MEMBERSHIP", nameOf(person), {
       ...auditContext(session, req),
       targetType: "Member",
-      targetId: member.id,
+      targetId: person.id,
       after: { paymentMethod, paidAmount: paidAmountValue, status, year: membershipYear },
     });
 
-    return NextResponse.json({ member }, { status: 201 });
+    return NextResponse.json({ member: { id: person.id } }, { status: 201 });
   },
 );

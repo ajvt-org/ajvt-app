@@ -33,14 +33,15 @@ export const DELETE = withRoute(
     }
 
     const membership = await prisma.member.findUnique({ where: { userId: id } });
+    const years = await prisma.membership.findMany({ where: { userId: id } });
     const label = user.fullName?.trim() || user.phone || user.id;
 
     if (membership) {
       await archive(
         "Member",
-        membership.id,
+        id,
         label,
-        membership as unknown as Prisma.InputJsonValue,
+        { ...membership, memberships: years } as unknown as Prisma.InputJsonValue,
         session.username,
       );
     }
