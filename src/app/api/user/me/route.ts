@@ -99,8 +99,11 @@ export const GET = withRoute("GET /api/user/me", async () => {
 
   let person = personOf(user);
   if (!user.memberNumber && current?.status === "ACTIVE") {
-    const issued = await issueMembership();
-    await prisma.user.update({ where: { id: session.userId }, data: issued });
+    const issued = await prisma.$transaction(async (tx) => {
+      const next = await issueMembership(tx);
+      await tx.user.update({ where: { id: session.userId }, data: next });
+      return next;
+    });
     person = { ...person, ...issued };
   }
 

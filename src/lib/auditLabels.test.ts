@@ -1,26 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { sourceFiles } from "@tests/sourceFiles";
-import { ACTION_LABELS, auditActionLabel } from "./auditLabels";
+import { ACTION_LABELS, auditActionLabel, type AuditAction } from "./auditLabels";
 
-function loggedActions(): string[] {
+const RETIRED: AuditAction[] = ["CREATE_MEMBER_MANUAL", "SEND_QUIZ_QUESTION"];
+
+const retired = new Set<string>(RETIRED);
+
+function actionsNamedInSource(): Set<string> {
   const found = new Set<string>();
   for (const file of [...sourceFiles("src"), ...sourceFiles("prisma")]) {
-    const source = readFileSync(file, "utf8");
-    for (const [, action] of source.matchAll(/logAction\(\s*[^,]+,\s*"([A-Z_]+)"/g)) {
-      found.add(action);
-    }
-    for (const [, , a, b] of source.matchAll(
-      /logAction\(\s*[^,]+,\s*(\w+)\s*===\s*"[^"]*"\s*\?\s*"([A-Z_]+)"\s*:\s*"([A-Z_]+)"/g,
-    )) {
-      found.add(a);
-      found.add(b);
-    }
-    for (const [, action] of source.matchAll(/\baction:\s*"([A-Z]+(?:_[A-Z]+)+)"/g)) {
+    if (file.endsWith("auditLabels.ts") || file.endsWith("auditLabels.test.ts")) continue;
+    for (const [, action] of readFileSync(file, "utf8").matchAll(/"([A-Z][A-Z0-9_]*)"/g)) {
       found.add(action);
     }
   }
-  return [...found].sort();
+  return found;
 }
 
 describe("auditActionLabel", () => {
@@ -32,12 +27,28 @@ describe("auditActionLabel", () => {
     expect(auditActionLabel("SOMETHING_NEW")).toBe("SOMETHING_NEW");
   });
 
-  it("finds the actions the routes actually log", () => {
-    expect(loggedActions().length).toBeGreaterThan(30);
+  it("translates an action that only old entries carry", () => {
+    expect(auditActionLabel("CREATE_MEMBER_MANUAL")).toBe("إضافة عضو يدوياً");
+  });
+});
+
+describe("the labels and the code they name", () => {
+  it("reads the actions the source names", () => {
+    expect(actionsNamedInSource().size).toBeGreaterThan(30);
   });
 
-  it("has an arabic label for every action the routes log", () => {
-    const missing = loggedActions().filter((action) => !ACTION_LABELS[action]);
-    expect(missing).toEqual([]);
+  it("keeps no label for an action nothing writes and nothing retired", () => {
+    const named = actionsNamedInSource();
+    const orphans = Object.keys(ACTION_LABELS).filter(
+      (action) => !named.has(action) && !retired.has(action),
+    );
+
+    expect(orphans).toEqual([]);
+  });
+
+  it("retires nothing the code still writes", () => {
+    const named = actionsNamedInSource();
+
+    expect(RETIRED.filter((action) => named.has(action))).toEqual([]);
   });
 });

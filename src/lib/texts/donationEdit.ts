@@ -25,4 +25,5 @@ export const donationActions = {
   restore: "إعادة تفعيل",
   edit: "تعديل",
   remove: "حذف نهائياً",
+  confirmRemove: "هل أنت متأكد من حذف هذا التبرع نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
 } as const;

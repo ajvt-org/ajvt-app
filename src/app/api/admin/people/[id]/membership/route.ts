@@ -44,10 +44,9 @@ export const POST = withRoute(
       paidAmountValue = Number(paidAmount);
     }
 
-    const issued =
-      status === "ACTIVE" && !person.memberNumber ? await issueMembership() : undefined;
+    const needsNumber = status === "ACTIVE" && !person.memberNumber;
 
-    await prisma.$transaction((tx) =>
+    await prisma.$transaction(async (tx) =>
       addMembership(tx, {
         userId: person.id,
         paymentMethod: paymentMethod.trim(),
@@ -58,7 +57,7 @@ export const POST = withRoute(
         membershipYear,
         fee: membershipFee,
         recordedBy: session.username,
-        issued,
+        issued: needsNumber ? await issueMembership(tx) : undefined,
       }),
     );
 

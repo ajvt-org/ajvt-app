@@ -6,8 +6,8 @@ import { currentMembership } from "@/lib/currentMembershipServer";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import SupportersTable from "@/components/SupportersTable";
-import { countedLabel } from "@/lib/arabicPlural";
 import IconLabel from "@/components/IconLabel";
+import { supporters } from "@/lib/texts";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,7 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="app-shell">
-      <PageHeader title="لوحة شرف المتبرعين" />
+      <PageHeader title={supporters.title} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {mine.length > 0 && (
@@ -40,16 +40,11 @@ export default async function LeaderboardPage() {
             style={{ background: "var(--mint-50)", border: "1.5px solid var(--mint-300)" }}
           >
             <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-              {countedLabel(
-                mine.length,
-                "مركزك بين الداعمين",
-                "مركزاك بين الداعمين",
-                "مراكزك بين الداعمين",
-              )}
+              {supporters.yourPlaces(mine.length)}
             </p>
 
             {mine.map((entry) => (
-              <div key={entry.rank} className="flex items-center justify-between gap-3">
+              <div key={entry.position} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <span
                     className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-black"
@@ -62,12 +57,12 @@ export default async function LeaderboardPage() {
                       {entry.name}
                     </p>
                     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      {entry.anonymous ? "تبرعاتك دون اسم" : "تبرعاتك باسمك"}
+                      {entry.anonymous ? supporters.unnamedGiving : supporters.namedGiving}
                     </p>
                   </div>
                 </div>
                 <span className="font-black shrink-0" style={{ color: "var(--mint-700)" }}>
-                  {entry.total} أوقية
+                  {supporters.amount(entry.total)}
                 </span>
               </div>
             ))}
@@ -76,7 +71,7 @@ export default async function LeaderboardPage() {
 
         <Link href={donateHref} className="btn btn-primary fade-up">
           <IconLabel name="heart" filled>
-            ادعم الرابطة الآن
+            {supporters.donate}
           </IconLabel>
         </Link>
 
@@ -86,17 +81,17 @@ export default async function LeaderboardPage() {
               <Icon name="heart" size={40} color="var(--mint-400)" />
             </div>
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              لا يوجد متبرعون بعد
+              {supporters.emptyTitle}
             </p>
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              كن أول داعم للرابطة!
+              {supporters.emptyHint}
             </p>
           </div>
         ) : (
           <SupportersTable
             initial={leaderboard.slice(0, SUPPORTERS_PAGE_SIZE).map(toPublicEntry)}
             total={leaderboard.length}
-            mineRanks={mine.map((e) => e.rank)}
+            minePositions={mine.map((e) => e.position)}
           />
         )}
       </div>

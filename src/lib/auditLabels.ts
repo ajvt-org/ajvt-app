@@ -1,4 +1,4 @@
-export const ACTION_LABELS: Record<string, string> = {
+export const ACTION_LABELS = {
   APPROVE_MEMBER: "قبول طلب",
   REJECT_MEMBER: "رفض طلب",
   DELETE_MEMBER: "حذف طلب",
@@ -14,6 +14,8 @@ export const ACTION_LABELS: Record<string, string> = {
   UPDATE_ADMIN_ACTIVITIES: "تحديد أنشطة مشرف",
   CREATE_MEMBER_MANUAL: "إضافة عضو يدوياً",
   CREATE_PERSON: "إضافة شخص يدوياً",
+  UPDATE_PERSON: "تعديل بيانات شخص",
+  IMPORT_PEOPLE: "استيراد أشخاص من ملف",
   ADD_MEMBERSHIP: "إضافة اشتراك",
   RESET_MEMBER_PASSWORD: "إعادة تعيين كلمة مرور عضو",
   CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
@@ -40,6 +42,7 @@ export const ACTION_LABELS: Record<string, string> = {
   UPDATE_GROUP: "تعديل مجموعة",
   DELETE_GROUP: "حذف مجموعة",
   SEND_BROADCAST: "إرسال إشعار جماعي",
+  SEND_BROADCAST_TO_EVERYONE: "إرسال إشعار للجميع",
   CHASE_WAITING_REQUEST: "تذكير بطلب معلق",
   APPROVE_TEAM_JOIN: "قبول طلب انضمام لفريق",
   DELETE_DONATION: "حذف تبرع نهائياً",
@@ -63,7 +66,6 @@ export const ACTION_LABELS: Record<string, string> = {
   DELETE_COMPETITION: "حذف مسابقة",
   SET_QUIZ_PARTICIPANTS: "تحديد المشاركين في مسابقة",
   SET_QUIZ_ROUND_POOL: "تحديد أسئلة جولة",
-  FILL_QUIZ_ROUNDS: "توزيع الأسئلة على الجولات",
   RESET_QUIZ_SCORES: "تصفير نقاط المسابقة",
   REOPEN_QUIZ_ATTEMPT: "إعادة فتح الأسئلة الفائتة لمشارك",
   VOID_QUIZ_SCORE: "إلغاء نقاط مشارك",
@@ -88,6 +90,8 @@ export const ACTION_LABELS: Record<string, string> = {
   REJECT_DONATION: "رفض تبرع",
   UPDATE_DONATION: "تعديل تبرع",
   CREATE_DONATION_MANUAL: "إضافة تبرع يدوياً",
+  LINK_DONATION_MEMBER: "ربط تبرع بعضو",
+  UNLINK_DONATION_MEMBER: "إلغاء ربط تبرع بعضو",
   APPROVE_ACTIVITY_REGISTRATION: "قبول تسجيل في نشاط",
   REJECT_ACTIVITY_REGISTRATION: "رفض تسجيل في نشاط",
   ADMIN_REGISTER_ACTIVITY: "تسجيل عضو في نشاط",
@@ -109,8 +113,10 @@ export const ACTION_LABELS: Record<string, string> = {
   CREATE_BOOKING: "تسجيل بطاقة",
   DELETE_BOOKING: "حذف بطاقة",
   ADD_TEAM_MEMBER: "إضافة لاعب إلى فريق",
-};
+} as const;
+
+export type AuditAction = keyof typeof ACTION_LABELS;
 
 export function auditActionLabel(action: string): string {
-  return ACTION_LABELS[action] ?? action;
+  return ACTION_LABELS[action as AuditAction] ?? action;
 }

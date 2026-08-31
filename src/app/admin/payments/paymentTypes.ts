@@ -10,7 +10,7 @@ export interface Proof {
   activityTitle: string | null;
   amount: number | null;
   status: string;
-  source?: "PUBLIC" | "SELF";
+  source?: string;
   paymentMethod?: string | null;
   memberId?: string | null;
   userId?: string | null;
