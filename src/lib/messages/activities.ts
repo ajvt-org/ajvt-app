@@ -14,4 +14,7 @@ export const activities = {
   membershipNotApproved: "يجب أن تكون عضوية هذا الشخص مقبولة أولاً",
   alreadyRegistered: "مسجَّل بالفعل في هذا النشاط",
   noSeatsLeft: "لا يوجد عدد كافٍ من الأماكن المتبقية في هذا النشاط",
+  capacityReached: "اكتمل عدد المسجلين في هذا النشاط",
+  registrationNotFound: "طلب التسجيل غير موجود",
+  rejectionReasonTooLong: "النص طويل جداً (300 حرف كحد أقصى)",
 } as const;

@@ -28,6 +28,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/RegistrantIdentity.tsx",
   "src/app/admin/activities/RegistrantSection.tsx",
   "src/app/api/admin/activities/[id]/detail/route.ts",
+  "src/app/api/admin/activities/[id]/register",
   "src/app/admin/receipts",
   "src/app/admin/settings",
   "src/app/api/admin/receipts",

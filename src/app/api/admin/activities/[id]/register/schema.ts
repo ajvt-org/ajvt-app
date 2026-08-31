@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { common } from "@/lib/messages";
+import { activities, common } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
-const REASON_TOO_LONG = "النص طويل جداً (300 حرف كحد أقصى)";
+const REASON_TOO_LONG = activities.rejectionReasonTooLong;
 
 const REASON_MAX = 300;
 
