@@ -119,11 +119,22 @@ describe("the payments the screen loads", () => {
     expect(proofs.map((p) => p.userId)).toEqual(["u1", "u2", null]);
   });
 
-  it("takes nothing from a response missing a field the card reads", () => {
+  it("drops a row missing a field the card reads", () => {
     const { memberName, ...withoutName } = DONATION_PROOF;
     void memberName;
 
     expect(readProofs({ proofs: [withoutName] })).toEqual([]);
+  });
+
+  it("keeps the rows that fit when one of them does not", () => {
+    const { memberName, ...withoutName } = DONATION_PROOF;
+    void memberName;
+
+    const proofs = readProofs({
+      proofs: [DONATION_PROOF, withoutName, { ...DONATION_PROOF, id: "d2" }],
+    });
+
+    expect(proofs.map((p) => p.id)).toEqual([DONATION_PROOF.id, "d2"]);
   });
 
   it("takes nothing from a response that never arrived", () => {
