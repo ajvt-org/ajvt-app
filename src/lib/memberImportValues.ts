@@ -16,10 +16,12 @@ export interface RowValues {
 }
 
 export function readPaid(cell: string): boolean {
+  return TRUE_WORDS.includes(cell.trim().toLowerCase());
+}
+
+export function paidIsClear(cell: string): boolean {
   const value = cell.trim().toLowerCase();
-  if (TRUE_WORDS.includes(value)) return true;
-  if (FALSE_WORDS.includes(value)) return false;
-  return Boolean(value);
+  return TRUE_WORDS.includes(value) || FALSE_WORDS.includes(value);
 }
 
 export function readPhone(cell: string): string {
