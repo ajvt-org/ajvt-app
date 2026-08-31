@@ -12,16 +12,16 @@ const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 export default function SupportersTable({
   initial,
   total,
-  mineRanks,
+  minePositions,
 }: {
   initial: PublicLeaderboardEntry[];
   total: number;
-  mineRanks: number[];
+  minePositions: number[];
 }) {
   const [rows, setRows] = useState(initial);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const mine = new Set(mineRanks);
+  const mine = new Set(minePositions);
 
   async function loadMore() {
     setLoading(true);
@@ -64,8 +64,8 @@ export default function SupportersTable({
           <tbody>
             {rows.map((entry) => (
               <tr
-                key={entry.rank}
-                className={mine.has(entry.rank) ? "row-mine" : undefined}
+                key={entry.position}
+                className={mine.has(entry.position) ? "row-mine" : undefined}
                 style={{ borderTop: "1px solid var(--mint-100)" }}
               >
                 <td className="px-3 py-2.5 text-center font-bold">
