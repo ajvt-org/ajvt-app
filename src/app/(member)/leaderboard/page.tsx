@@ -44,7 +44,7 @@ export default async function LeaderboardPage() {
             </p>
 
             {mine.map((entry) => (
-              <div key={entry.rank} className="flex items-center justify-between gap-3">
+              <div key={entry.position} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <span
                     className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-black"
@@ -91,7 +91,7 @@ export default async function LeaderboardPage() {
           <SupportersTable
             initial={leaderboard.slice(0, SUPPORTERS_PAGE_SIZE).map(toPublicEntry)}
             total={leaderboard.length}
-            mineRanks={mine.map((e) => e.rank)}
+            minePositions={mine.map((e) => e.position)}
           />
         )}
       </div>

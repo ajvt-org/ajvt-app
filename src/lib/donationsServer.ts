@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
 import { splitPayment } from "@/lib/membershipPayment";
 import { attributedDonorName } from "@/lib/donorName";
-import { orderSupporters } from "@/lib/supportersOrder";
+import { rankSupporters } from "@/lib/supportersOrder";
 
 export const SUPPORTERS_PAGE_SIZE = 20;
 
@@ -114,8 +114,8 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
 
   const rows = [...byKey.entries()].map(([key, row]) => ({ ...row, key }));
 
-  const leaderboard = orderSupporters(rows).map((e) => ({
-    rank: e.position,
+  const leaderboard = rankSupporters(rows).map((e) => ({
+    rank: e.rank,
     position: e.position,
     name: e.name,
     photoUrl: e.photoUrl,
