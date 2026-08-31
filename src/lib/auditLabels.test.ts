@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { sourceFiles } from "@tests/sourceFiles";
 import { ACTION_LABELS, auditActionLabel, type AuditAction } from "./auditLabels";
 
-const RETIRED: AuditAction[] = ["CREATE_MEMBER_MANUAL", "SEND_QUIZ_QUESTION"];
+const RETIRED: AuditAction[] = ["CREATE_MEMBER_MANUAL", "SEND_QUIZ_QUESTION", "FILL_QUIZ_ROUNDS"];
 
 const retired = new Set<string>(RETIRED);
 
@@ -29,6 +29,7 @@ describe("auditActionLabel", () => {
 
   it("translates an action that only old entries carry", () => {
     expect(auditActionLabel("CREATE_MEMBER_MANUAL")).toBe("إضافة عضو يدوياً");
+    expect(auditActionLabel("FILL_QUIZ_ROUNDS")).toBe("توزيع الأسئلة على الجولات");
   });
 });
 

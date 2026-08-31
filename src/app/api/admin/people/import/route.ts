@@ -24,7 +24,6 @@ function tally(results: ImportedRow[]) {
   return {
     created: results.filter((row) => row.outcome === "created").length,
     updated: results.filter((row) => row.outcome === "updated").length,
-    skipped: results.filter((row) => row.outcome === "skipped").length,
     failed: results.filter((row) => row.outcome === "failed").length,
   };
 }
@@ -88,7 +87,18 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
       continue;
     }
 
-    const personId = row.personId ?? (matches[at]?.kind === "phone" ? matches[at].personId : null);
+    const match = matches[at];
+    const personId = match?.kind === "phone" ? match.personId : null;
+
+    if ((row.personId ?? null) !== personId) {
+      results.push({
+        ...base,
+        outcome: "failed",
+        membership: false,
+        error: memberImportRun.matchChanged,
+      });
+      continue;
+    }
 
     try {
       if (personId) {

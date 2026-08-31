@@ -144,6 +144,21 @@ describe("checkRows, the payment", () => {
     expect(checked.map((r) => r.values.paid)).toEqual([true, true, false, false]);
   });
 
+  it("reads a paid column it does not recognise as unpaid and says so", () => {
+    const checked = check([row({ fullName: "أ", age: AGE, paid: "peut-etre" })]);
+
+    expect(checked[0].values.paid).toBe(false);
+    expect(checked[0].issues).toContainEqual(
+      expect.objectContaining({ field: "paid", blocking: false }),
+    );
+  });
+
+  it("says nothing about a paid column it does recognise", () => {
+    const checked = check([row({ fullName: "أ", age: AGE, paid: "لا" })]);
+
+    expect(checked[0].issues.filter((i) => i.field === "paid")).toEqual([]);
+  });
+
   it("blocks a paid row with no payment method", () => {
     const checked = check([row({ fullName: "محمد", age: AGE, paid: "نعم" })]);
 

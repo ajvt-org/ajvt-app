@@ -9,6 +9,7 @@ import { anonymousForYear, paidForYear, type MembershipPaymentRow } from "@/lib/
 import { latestMembership } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 import { getAppSettings } from "@/lib/settingsServer";
+import { accounts } from "@/lib/messages";
 
 const MEMBERSHIP_SELECT = {
   year: true,
@@ -92,7 +93,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "المستخدم غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: accounts.notFound }, { status: 404 });
   }
 
   const current = latestMembership(user.memberships);

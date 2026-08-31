@@ -16,6 +16,7 @@ export const memberImportRow = {
   nameInFileTwice: (row: number) => `نفس الاسم موجود في السطر ${row}`,
   alreadyHasMembership: "لهذا الشخص اشتراك مسجل بالفعل",
   paymentMethodUnknown: "طريقة دفع غير معروفة",
+  paidUnclear: "تعذّرت قراءة خانة الاشتراك، اعتُبرت غير مدفوعة",
 } as const;
 
 export const memberImportRun = {
@@ -24,4 +25,5 @@ export const memberImportRun = {
   accountGone: "الحساب غير موجود",
   phoneTaken: "هذا الرقم مستعمل لحساب آخر",
   rowFailed: "تعذّر إنشاء هذا السطر",
+  matchChanged: "تغيّر الحساب المطابق لهذا السطر بعد المراجعة، راجع الملف من جديد",
 } as const;

@@ -158,7 +158,7 @@ export default function MemberImportDialog({ ageGroups, onImported, onClose }: P
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
         <DialogHeader
-          title={<IconLabel name="upload">{`${memberImportDialog.title} — ${step}`}</IconLabel>}
+          title={<IconLabel name="upload">{memberImportDialog.stepTitle(step)}</IconLabel>}
           onClose={onClose}
         />
 
