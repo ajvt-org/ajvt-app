@@ -27,26 +27,23 @@ describe("issuing a receipt", () => {
     await resetDb();
   });
 
-  it("links the receipt to the account sent as userId", async () => {
+  it.each(["userId", "memberId"])("refuses an account named as %s", async (field) => {
     await asBoss();
     const member = await makeMember({ fullName: "أحمد ولد سالم", status: "ACTIVE" });
 
-    const res = await issue({ ...DRAFT, userId: member.userId });
-
-    expect(res.status).toBe(201);
-    const { receipt } = await res.json();
-    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
-    expect(row.userId).toBe(member.userId);
-  });
-
-  it("refuses an account sent as memberId", async () => {
-    await asBoss();
-    const member = await makeMember({ fullName: "أحمد ولد سالم", status: "ACTIVE" });
-
-    const res = await issue({ ...DRAFT, memberId: member.userId });
+    const res = await issue({ ...DRAFT, [field]: member.userId });
 
     expect(res.status).toBe(400);
     expect(await prisma.receipt.count()).toBe(0);
+  });
+
+  it("leaves a hand written receipt with no account attached", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue()).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.userId).toBeNull();
   });
 
   it("hands back a numbered, tokened receipt", async () => {

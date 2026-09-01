@@ -2,7 +2,6 @@ import { z } from "zod";
 import { common, money, receipts } from "@/lib/messages";
 import { MAX_SPELLED } from "@/lib/arabicNumberWords";
 
-const INVALID = common.invalidBody;
 const {
   payerRequired: PAYER_REQUIRED,
   payerTooLong: PAYER_TOO_LONG,
@@ -46,7 +45,6 @@ export const receiptCreateSchema = z
     reason,
     amount,
     issuedOn: issuedOn.optional(),
-    userId: z.string(INVALID).nullish(),
   })
   .strict();
 
