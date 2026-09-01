@@ -47,10 +47,7 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.voteNeedsResult }, { status: 400 });
     }
     if (match.mvpVote) {
-      return NextResponse.json(
-        { error: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء" },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: tournament.mvpVoteExists }, { status: 409 });
     }
 
     const candidates = await prisma.user.findMany({
@@ -66,10 +63,7 @@ export const POST = withRoute(
       select: { userId: true },
     });
     if (rosterEntries.length !== candidateMemberIds.length) {
-      return NextResponse.json(
-        { error: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.mvpCandidateOutsideMatch }, { status: 400 });
     }
 
     const vote = await prisma.matchMvpVote.create({

@@ -1,5 +1,6 @@
 export const setupLabels = {
-  groupRound: (groupName: string, round: number) => `${groupName} — الجولة ${round}`,
+  round: (round: number) => `الجولة ${round}`,
+  groupRound: (groupName: string, round: number) => `${groupName} — ${setupLabels.round(round)}`,
   groupName: (index: number) => `المجموعة ${index + 1}`,
 } as const;
 

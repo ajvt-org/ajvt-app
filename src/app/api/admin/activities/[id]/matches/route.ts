@@ -28,7 +28,7 @@ export const POST = withRoute(
     const { homeTeamId, awayTeamId, matchDate, round, venue, isKnockout } = await req.json();
 
     if (!homeTeamId || !awayTeamId) {
-      return NextResponse.json({ error: "يجب اختيار الفريقين" }, { status: 400 });
+      return NextResponse.json({ error: tournament.bothTeamsRequired }, { status: 400 });
     }
     if (homeTeamId === awayTeamId) {
       return NextResponse.json({ error: tournament.teamAgainstItself }, { status: 400 });
@@ -44,25 +44,13 @@ export const POST = withRoute(
     const homeGroupId = teams.find((t) => t.id === homeTeamId)!.groupId;
     const awayGroupId = teams.find((t) => t.id === awayTeamId)!.groupId;
     if (!isValidLeaguePairing(!!isKnockout, homeGroupId, awayGroupId)) {
-      return NextResponse.json(
-        {
-          error:
-            "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
-        },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.leaguePairingAcrossGroups }, { status: 400 });
     }
     if (round !== undefined && round !== null && String(round).trim().length > 40) {
-      return NextResponse.json(
-        { error: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.roundNameTooLong }, { status: 400 });
     }
     if (venue !== undefined && venue !== null && String(venue).trim().length > 60) {
-      return NextResponse.json(
-        { error: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: tournament.venueNameTooLong }, { status: 400 });
     }
 
     const maxOrderRow = await prisma.match.findFirst({
