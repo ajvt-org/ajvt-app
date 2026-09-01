@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ActivityRegistrationsPanel from "./ActivityRegistrationsPanel";
 import type { MemberOption, Registration } from "./activityTypes";
@@ -30,12 +30,17 @@ function registration(over: Partial<Registration> = {}): Registration {
   };
 }
 
-function show(members: MemberOption[], registrations: Registration[] = []) {
+function show(
+  members: MemberOption[],
+  registrations: Registration[] = [],
+  teams: { id: string; name: string }[] = [],
+) {
   render(
     <ActivityRegistrationsPanel
       activityId="a1"
       registrations={registrations}
       members={members}
+      teams={teams}
       actionLoading={false}
       onReview={onReview}
       onRegister={onRegister}
@@ -151,5 +156,74 @@ describe("the list of registrants", () => {
 
     expect(screen.getByRole("button", { name: /مسجَّلون مؤكَّدون \(1\)/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: /طلبات قيد المراجعة \(1\)/ })).toBeTruthy();
+  });
+});
+
+const SHANAQITA = { id: "t1", name: "الشناقطة" };
+const SAHEL = { id: "t2", name: "أهل الساحل" };
+
+function player(id: string, fullName: string, team: Registration["team"]): Registration {
+  return registration({
+    id,
+    team,
+    member: { id: `u-${id}`, fullName, phone: null, age: "البدريين", photo: null },
+  });
+}
+
+describe("looking at one team's registrants", () => {
+  it("offers no chips at all when the activity has no teams", () => {
+    show([], [registration()]);
+
+    expect(screen.queryByRole("group", { name: "تصفية حسب الفريق" })).toBeNull();
+  });
+
+  it("offers every team, one nobody joined included, and having none", () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
+
+    const chips = screen.getByRole("group", { name: "تصفية حسب الفريق" });
+
+    for (const label of ["كل الفرق", "الشناقطة", "أهل الساحل", "بلا فريق"]) {
+      expect(within(chips).getByRole("button", { name: label })).toBeDefined();
+    }
+  });
+
+  it("keeps only the players of the team picked", async () => {
+    show([], [player("r1", "محمد", SHANAQITA), player("r2", "سالم", SAHEL)], [SHANAQITA, SAHEL]);
+
+    await userEvent.click(screen.getByRole("button", { name: "الشناقطة" }));
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.queryByText("سالم")).toBeNull();
+  });
+
+  it("finds the people who still have no team", async () => {
+    show([], [player("r1", "محمد", SHANAQITA), player("r2", "سالم", null)], [SHANAQITA]);
+
+    await userEvent.click(screen.getByRole("button", { name: "بلا فريق" }));
+
+    expect(screen.getByText("سالم")).toBeDefined();
+    expect(screen.queryByText("محمد")).toBeNull();
+  });
+
+  it("says nobody matched when the team picked is empty", async () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
+
+    await userEvent.click(screen.getByRole("button", { name: "أهل الساحل" }));
+
+    expect(screen.getByText("لا يوجد مسجل مطابق")).toBeDefined();
+  });
+
+  it("searches inside the team it is filtered to", async () => {
+    show(
+      [],
+      [player("r1", "أحمد ولد محمد", SHANAQITA), player("r2", "أحمد ولد سالم", SAHEL)],
+      [SHANAQITA, SAHEL],
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "الشناقطة" }));
+    await userEvent.type(screen.getByPlaceholderText(/ابحث في المسجلين/), "احمد");
+
+    expect(screen.getByText("أحمد ولد محمد")).toBeDefined();
+    expect(screen.queryByText("أحمد ولد سالم")).toBeNull();
   });
 });
