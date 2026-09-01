@@ -51,7 +51,7 @@ describe("naming the squad tab", () => {
     const tab = tournamentRosterTab(football, 0)[0];
 
     expect(tab.label).toBe("الفرق");
-    expect(tab.icon).toBe("users");
+    expect(tab.icon).toBe("shield");
   });
 });
 
