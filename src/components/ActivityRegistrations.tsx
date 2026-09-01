@@ -56,7 +56,7 @@ export default function ActivityRegistrations({
 
   function register() {
     return run(
-      () => api.post("/api/activities/register", { activityId: activity.id, memberId: member.id }),
+      () => api.post("/api/activities/register", { activityId: activity.id, userId: member.id }),
       activity.isVolunteer ? activityRegistration.volunteered : activityRegistration.registered,
     );
   }
@@ -73,7 +73,7 @@ export default function ActivityRegistrations({
       await fetch("/api/activities/register", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: member.id, activityId: activity.id }),
+        body: JSON.stringify({ userId: member.id, activityId: activity.id }),
       });
       showToast(activityRegistration.requestCancelled);
       onReload();

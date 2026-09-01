@@ -18,7 +18,7 @@ export default function AddMemberToActivityForm({
   activityId: string;
   candidates: MemberOption[];
   actionLoading: boolean;
-  onRegister: (activityId: string, memberId: string) => Promise<boolean>;
+  onRegister: (activityId: string, userId: string) => Promise<boolean>;
 }) {
   const [search, setSearch] = useState("");
 

@@ -8,10 +8,10 @@ export function useRegistrationActions(reload: () => Promise<void> | void) {
   const showToast = useToast();
   const [actionLoading, setActionLoading] = useState(false);
 
-  async function registerMember(activityId: string, memberId: string): Promise<boolean> {
+  async function registerMember(activityId: string, userId: string): Promise<boolean> {
     setActionLoading(true);
     try {
-      await api.post(`/api/admin/activities/${activityId}/register`, { memberId });
+      await api.post(`/api/admin/activities/${activityId}/register`, { userId });
       await reload();
       return true;
     } catch (e) {
@@ -45,10 +45,10 @@ export function useRegistrationActions(reload: () => Promise<void> | void) {
     }
   }
 
-  async function unregisterMember(activityId: string, memberId: string) {
+  async function unregisterMember(activityId: string, userId: string) {
     setActionLoading(true);
     try {
-      await api.del(`/api/admin/activities/${activityId}/register`, { memberId });
+      await api.del(`/api/admin/activities/${activityId}/register`, { userId });
       await reload();
     } catch (e) {
       showToast(errorMessage(e), "error");

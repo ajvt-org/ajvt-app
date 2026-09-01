@@ -19,8 +19,8 @@ async function anActiveMemberOf(user: { id: string }, fullName: string) {
   });
 }
 
-function ask(activityId: string, memberId: string) {
-  return post("/api/activities/register", { activityId, memberId });
+function ask(activityId: string, userId: string) {
+  return post("/api/activities/register", { activityId, userId });
 }
 
 describe("registering for an activity with a seat limit", () => {

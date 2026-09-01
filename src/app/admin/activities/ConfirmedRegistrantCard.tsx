@@ -9,7 +9,7 @@ export default function ConfirmedRegistrantCard({
   onUnregister,
 }: {
   registration: Registration;
-  onUnregister: (memberId: string) => void;
+  onUnregister: (userId: string) => void;
 }) {
   return (
     <div
