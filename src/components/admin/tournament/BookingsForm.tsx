@@ -21,7 +21,7 @@ export default function BookingsForm({
   onChange: () => void;
 }) {
   const [teamId, setTeamId] = useState(match.homeTeam.id);
-  const [memberId, setMemberId] = useState("");
+  const [userId, setUserId] = useState("");
   const [cardType, setCardType] = useState<"YELLOW" | "RED">("YELLOW");
   const [minute, setMinute] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,13 +30,13 @@ export default function BookingsForm({
 
   const banned = new Set(suspendedIds);
   const roster = (teams.find((t) => t.id === teamId)?.members.map((m) => m.member) || []).filter(
-    (m) => !banned.has(m.id) || m.id === memberId,
+    (m) => !banned.has(m.id) || m.id === userId,
   );
 
   function reset() {
     setEditingId(null);
     setTeamId(match.homeTeam.id);
-    setMemberId("");
+    setUserId("");
     setCardType("YELLOW");
     setMinute("");
   }
@@ -44,18 +44,18 @@ export default function BookingsForm({
   function startEditing(booking: Match["bookings"][number]) {
     setEditingId(booking.id);
     setTeamId(booking.teamId);
-    setMemberId(booking.member.id);
+    setUserId(booking.member.id);
     setCardType(booking.cardType === "RED" ? "RED" : "YELLOW");
     setMinute(booking.minute != null ? String(booking.minute) : "");
   }
 
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!memberId) return;
+    if (!userId) return;
     setError("");
     setLoading(true);
     try {
-      const body = { memberId, teamId, cardType, minute: minute || null };
+      const body = { userId, teamId, cardType, minute: minute || null };
       if (editingId) await api.patch(`/api/admin/bookings/${editingId}`, body);
       else await api.post(`/api/admin/matches/${match.id}/bookings`, body);
       reset();
@@ -144,7 +144,7 @@ export default function BookingsForm({
               value={teamId}
               onChange={(e) => {
                 setTeamId(e.target.value);
-                setMemberId("");
+                setUserId("");
               }}
               className="input text-sm"
             >
@@ -158,8 +158,8 @@ export default function BookingsForm({
           {(id) => (
             <select
               id={id}
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
               className="input text-sm"
             >
               <option value="">{texts.pickPlayer}</option>
@@ -202,7 +202,7 @@ export default function BookingsForm({
         </FieldRow>
 
         <div className="flex gap-2">
-          <button type="submit" disabled={!memberId || loading} className="btn btn-primary text-sm">
+          <button type="submit" disabled={!userId || loading} className="btn btn-primary text-sm">
             <IconLabel name={editingId ? "check" : "plus"}>
               {editingId ? texts.saveEdit : texts.addCard}
             </IconLabel>

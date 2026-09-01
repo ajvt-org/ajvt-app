@@ -69,12 +69,28 @@ describe("the discipline engine", () => {
     await signInAsAdmin(await createAdmin());
   });
 
-  it("proposes the tournament's ban when a red card lands, and only proposes", async () => {
+  it("refuses a card that names the player as memberId", async () => {
     const { away, players, match } = await tournament();
 
     const res = await BOOK(
       post(`/api/admin/matches/${match.id}/bookings`, {
         memberId: players[1].userId,
+        teamId: away.id,
+        cardType: "RED",
+      }),
+      withMatch(match.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.matchBooking.count()).toBe(0);
+  });
+
+  it("proposes the tournament's ban when a red card lands, and only proposes", async () => {
+    const { away, players, match } = await tournament();
+
+    const res = await BOOK(
+      post(`/api/admin/matches/${match.id}/bookings`, {
+        userId: players[1].userId,
         teamId: away.id,
         cardType: "RED",
       }),
@@ -104,7 +120,7 @@ describe("the discipline engine", () => {
     const book = (matchId: string) =>
       BOOK(
         post(`/api/admin/matches/${matchId}/bookings`, {
-          memberId: players[1].userId,
+          userId: players[1].userId,
           teamId: away.id,
           cardType: "YELLOW",
         }),
@@ -303,7 +319,7 @@ describe("the discipline engine", () => {
     const book = () =>
       BOOK(
         post(`/api/admin/matches/${match.id}/bookings`, {
-          memberId: players[1].userId,
+          userId: players[1].userId,
           teamId: away.id,
           cardType: "YELLOW",
         }),

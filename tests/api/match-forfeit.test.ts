@@ -134,7 +134,7 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
     await ADD_BOOKING(
       post(`/api/admin/matches/${match.id}/bookings`, {
-        memberId: players[1].userId,
+        userId: players[1].userId,
         teamId: away.id,
         cardType: "RED",
         minute: 50,
@@ -181,7 +181,7 @@ describe("correcting a card after the fact", () => {
     const built = await football();
     const res = await ADD_BOOKING(
       post(`/api/admin/matches/${built.match.id}/bookings`, {
-        memberId: built.players[0].userId,
+        userId: built.players[0].userId,
         teamId: built.home.id,
         cardType: "YELLOW",
         minute: 20,
@@ -223,10 +223,21 @@ describe("correcting a card after the fact", () => {
     expect(saved.minute).toBeNull();
   });
 
+  it("refuses a player named as memberId", async () => {
+    const { booking, away, players } = await bookedMatch();
+    const before = await prisma.matchBooking.findUniqueOrThrow({ where: { id: booking.id } });
+
+    const res = await edit(booking.id, { memberId: players[1].userId, teamId: away.id });
+
+    expect(res.status).toBe(400);
+    const saved = await prisma.matchBooking.findUniqueOrThrow({ where: { id: booking.id } });
+    expect(saved).toMatchObject({ userId: before.userId, teamId: before.teamId });
+  });
+
   it("refuses a player who is not in the team the card is against", async () => {
     const { booking, players } = await bookedMatch();
 
-    const res = await edit(booking.id, { memberId: players[1].userId });
+    const res = await edit(booking.id, { userId: players[1].userId });
 
     expect(res.status).toBe(400);
   });
@@ -234,7 +245,7 @@ describe("correcting a card after the fact", () => {
   it("moves the card to the other side when both are given together", async () => {
     const { booking, away, players } = await bookedMatch();
 
-    const res = await edit(booking.id, { memberId: players[1].userId, teamId: away.id });
+    const res = await edit(booking.id, { userId: players[1].userId, teamId: away.id });
 
     expect(res.status).toBe(200);
     const saved = await prisma.matchBooking.findUniqueOrThrow({ where: { id: booking.id } });

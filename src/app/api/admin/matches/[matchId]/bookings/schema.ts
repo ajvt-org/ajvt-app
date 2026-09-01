@@ -19,14 +19,14 @@ const minute = z
   .transform((v) => (v === null || v === "" ? null : Number(v)));
 
 export const bookingCreateSchema = z.object({
-  memberId: z.string(INVALID).min(1, INVALID),
+  userId: z.string(INVALID).min(1, INVALID),
   teamId: z.string(INVALID).min(1, INVALID),
   cardType: z.enum(["YELLOW", "RED"], INVALID),
   minute: minute.optional(),
 });
 
 export const bookingUpdateSchema = z.object({
-  memberId: z.string(INVALID).min(1, INVALID).optional(),
+  userId: z.string(INVALID).min(1, INVALID).optional(),
   teamId: z.string(INVALID).min(1, INVALID).optional(),
   cardType: z.enum(["YELLOW", "RED"], INVALID).optional(),
   minute: minute.optional(),
