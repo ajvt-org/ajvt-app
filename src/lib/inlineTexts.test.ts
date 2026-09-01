@@ -51,6 +51,7 @@ const KEPT_CLEAN = [
   "src/app/admin/receipts",
   "src/app/admin/settings",
   "src/app/api/admin/receipts",
+  "src/app/api/admin/matches/[matchId]/bookings",
   "src/app/api/admin/teams/[teamId]/members/route.ts",
   "src/app/api/teams/[teamId]/join",
   "src/app/api/admin/settings",
