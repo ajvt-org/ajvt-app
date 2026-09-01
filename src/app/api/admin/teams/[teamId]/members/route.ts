@@ -27,10 +27,7 @@ export const POST = withRoute(
 
     const teamSize = team.activity.teamSize;
     if (teamIsFull(team._count.members, teamSize)) {
-      return NextResponse.json(
-        { error: `هذا الفريق مكتمل — الحد الأقصى ${teamSize} لاعبين` },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: tournament.teamFull(teamSize) }, { status: 409 });
     }
 
     const membership = await currentMembership(prisma, memberId);
@@ -38,7 +35,7 @@ export const POST = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
     if (membership.status === "REJECTED") {
-      return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });
+      return NextResponse.json({ error: tournament.playerRejected }, { status: 400 });
     }
     const userId = memberId;
 
@@ -46,7 +43,7 @@ export const POST = withRoute(
       where: { userId_activityId: { userId, activityId: team.activityId } },
     });
     if (!registered) {
-      return NextResponse.json({ error: "هذا العضو غير مسجل في هذه البطولة" }, { status: 400 });
+      return NextResponse.json({ error: tournament.playerNotRegistered }, { status: 400 });
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
@@ -55,9 +52,7 @@ export const POST = withRoute(
     });
     if (existingMembership) {
       return NextResponse.json(
-        {
-          error: `هذا العضو منضم بالفعل إلى فريق "${existingMembership.team.name}" في هذه البطولة`,
-        },
+        { error: tournament.playerInAnotherTeam(existingMembership.team.name) },
         { status: 409 },
       );
     }
