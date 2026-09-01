@@ -1,4 +1,4 @@
-import type { Group, Match, Team, TournamentFormat } from "./types";
+import type { Group, Match, TournamentFormat } from "./types";
 
 export interface MatchesState {
   bracketMatches: (Match & { bracketRound: number })[];
@@ -8,7 +8,6 @@ export interface MatchesState {
   canAdvanceBracket: boolean;
   firstRoundWaiting: boolean;
   firstRoundRedoable: boolean;
-  poolsReady: boolean;
   groupStageDone: boolean;
   knockoutLocked: boolean;
   isTwoGroupFormat: boolean;
@@ -18,12 +17,10 @@ export interface MatchesState {
 export function matchesState({
   format,
   groups,
-  teams,
   matches,
 }: {
   format: TournamentFormat;
   groups: Group[];
-  teams: Team[];
   matches: Match[];
 }): MatchesState {
   const hasGroupStage = format === "GROUPS_THEN_KNOCKOUT";
@@ -35,14 +32,6 @@ export function matchesState({
     bracketMatches.length > 0 ? Math.max(...bracketMatches.map((m) => m.bracketRound)) : 0;
   const finalRound = bracketMatches.filter((m) => m.bracketRound === maxBracketRound);
   const bracketIsFinalDone = finalRound.length === 1 && finalRound[0].status === "PLAYED";
-
-  const poolsReady =
-    hasGroupStage &&
-    groups.length > 0 &&
-    groups.every(
-      (g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity,
-    ) &&
-    matches.length === 0;
 
   const leagueMatches = matches.filter((m) => !m.isKnockout);
   const groupStageDone =
@@ -67,7 +56,6 @@ export function matchesState({
     canAdvanceBracket: bracketMatches.length > 0 && !bracketIsFinalDone && !firstRoundWaiting,
     firstRoundWaiting,
     firstRoundRedoable,
-    poolsReady,
     groupStageDone,
     knockoutLocked: hasGroupStage && groups.length > 0 && !groupStageDone,
     isTwoGroupFormat,

@@ -8,7 +8,6 @@ import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
 import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
 import { api, errorMessage } from "@/lib/api";
-import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
 import SetupWizard from "./wizard/SetupWizard";
 import { matchAdmin as texts, setupWizard as wizardTexts } from "@/lib/texts";
@@ -44,7 +43,6 @@ export default function MatchesTab({
   });
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
-  const [showGenerate, setShowGenerate] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
@@ -65,8 +63,8 @@ export default function MatchesTab({
     }
   }
 
-  const state = matchesState({ format, groups, teams, matches });
-  const { poolsReady, groupStageComplete } = state;
+  const state = matchesState({ format, groups, matches });
+  const { groupStageComplete } = state;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -167,28 +165,6 @@ export default function MatchesTab({
         <IconLabel name="sparkle">{wizardTexts.open}</IconLabel>
       </button>
 
-      {poolsReady && (
-        <div
-          className="card p-4 space-y-2"
-          style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
-        >
-          <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">{texts.poolsReadyTitle}</IconLabel>
-          </p>
-          <p className="text-xs" style={{ color: "#065f46" }}>
-            {texts.poolsReadyHint}
-          </p>
-          <button
-            onClick={() => setShowGenerate(true)}
-            disabled={generating}
-            className="btn btn-primary text-sm"
-            style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-          >
-            {generating ? "..." : <IconLabel name="dice">{texts.generateGroupSchedule}</IconLabel>}
-          </button>
-        </div>
-      )}
-
       {groupStageComplete && (
         <div
           className="card p-4 space-y-2"
@@ -287,17 +263,6 @@ export default function MatchesTab({
         />
       )}
 
-      {teams.length >= 2 && (
-        <button
-          onClick={() => setShowGenerate(true)}
-          disabled={generating}
-          className="btn btn-primary text-sm"
-          style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-        >
-          {generating ? "..." : <IconLabel name="dice">{texts.suggestSchedule}</IconLabel>}
-        </button>
-      )}
-
       <form onSubmit={createMatch} className="card p-4 space-y-3">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="plus">{texts.newMatch}</IconLabel>
@@ -369,14 +334,6 @@ export default function MatchesTab({
           {loadingAction ? "..." : texts.addMatch}
         </button>
       </form>
-
-      {showGenerate && (
-        <GenerateScheduleDialog
-          activityId={activityId}
-          onDone={onChange}
-          onClose={() => setShowGenerate(false)}
-        />
-      )}
 
       {showWizard && (
         <SetupWizard

@@ -1,16 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { matchesState } from "./matchesState";
-import type { Group, Match, Team } from "./types";
-
-const team = (id: string, groupId: string | null = null): Team => ({
-  id,
-  name: id,
-  autoNamed: false,
-  logo: null,
-  groupId,
-  group: null,
-  members: [],
-});
+import type { Group, Match } from "./types";
 
 const group = (id: string, capacity: number | null = 2): Group => ({ id, name: id, capacity });
 
@@ -41,7 +31,7 @@ const match = (over: Partial<Match> = {}): Match => ({
 const played = (over: Partial<Match> = {}) => match({ status: "PLAYED", ...over });
 
 describe("a knockout tournament", () => {
-  const base = { format: "KNOCKOUT" as const, groups: [], teams: [], matches: [] };
+  const base = { format: "KNOCKOUT" as const, groups: [], matches: [] };
 
   it("never locks the draw behind a group stage", () => {
     expect(matchesState(base).knockoutLocked).toBe(false);
@@ -51,33 +41,19 @@ describe("a knockout tournament", () => {
     expect(matchesState(base).isTwoGroupFormat).toBe(false);
   });
 
-  it("never proposes pools or semis from groups", () => {
+  it("never proposes semis from groups", () => {
     const state = matchesState({ ...base, matches: [played()] });
-    expect(state.poolsReady).toBe(false);
     expect(state.groupStageComplete).toBe(false);
   });
 });
 
 describe("a groups-then-knockout tournament", () => {
   const twoGroups = [group("g1"), group("g2")];
-  const teams = [team("t1", "g1"), team("t2", "g1"), team("t3", "g2"), team("t4", "g2")];
-
-  it("offers the schedule once every pool is filled and nothing is played", () => {
-    const state = matchesState({
-      format: "GROUPS_THEN_KNOCKOUT",
-      groups: twoGroups,
-      teams,
-      matches: [],
-    });
-
-    expect(state.poolsReady).toBe(true);
-  });
 
   it("locks the draw until every group match is played", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: twoGroups,
-      teams,
       matches: [played({ id: "a" }), match({ id: "b" })],
     });
 
@@ -89,7 +65,6 @@ describe("a groups-then-knockout tournament", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: twoGroups,
-      teams,
       matches: [played({ id: "a" }), played({ id: "b" })],
     });
 
@@ -101,7 +76,6 @@ describe("a groups-then-knockout tournament", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: [group("g1"), group("g2"), group("g3")],
-      teams,
       matches: [played({ id: "a" }), played({ id: "b" })],
     });
 
@@ -113,7 +87,6 @@ describe("a groups-then-knockout tournament", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: twoGroups,
-      teams,
       matches: [played({ id: "a" }), match({ id: "s", bracketRound: 1, isKnockout: true })],
     });
 
@@ -122,7 +95,7 @@ describe("a groups-then-knockout tournament", () => {
 });
 
 describe("advancing the bracket", () => {
-  const base = { format: "KNOCKOUT" as const, groups: [], teams: [] };
+  const base = { format: "KNOCKOUT" as const, groups: [] };
 
   it("has nothing to advance without a bracket", () => {
     expect(matchesState({ ...base, matches: [] }).canAdvanceBracket).toBe(false);
@@ -159,9 +132,8 @@ const drawn = (id: string, bracketRound: number, over: Partial<Match> = {}) =>
 
 describe("a bracket laid out before the teams are known", () => {
   const groups = [group("g1"), group("g2")];
-  const teams = [team("t1", "g1"), team("t2", "g1"), team("t3", "g2"), team("t4", "g2")];
   const groupStage = [played({ id: "l1" }), played({ id: "l2" })];
-  const base = { format: "GROUPS_THEN_KNOCKOUT" as const, groups, teams };
+  const base = { format: "GROUPS_THEN_KNOCKOUT" as const, groups };
 
   const acrossTwoRounds = [waiting("b1", 1), waiting("b2", 1), waiting("b3", 2)];
 
@@ -224,11 +196,7 @@ describe("a bracket laid out before the teams are known", () => {
 });
 
 describe("a knockout tournament laid out before the teams are known", () => {
-  const base = {
-    format: "KNOCKOUT" as const,
-    groups: [],
-    teams: [team("t1"), team("t2"), team("t3"), team("t4")],
-  };
+  const base = { format: "KNOCKOUT" as const, groups: [] };
 
   it("offers the draw on a bracket that is more than one round long", () => {
     const state = matchesState({
