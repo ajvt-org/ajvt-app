@@ -22,6 +22,20 @@ export const deleteActivity = {
   confirmLabel: "حذف نهائي",
 } as const;
 
+export const resetTournament = {
+  heading: "تصفير البطولة",
+  hint: "يعيد البطولة إلى فرقها وحدها، ليمكن إعدادها من جديد بالمعالج.",
+  action: "تصفير البطولة",
+  confirmTitle: "تصفير البطولة",
+  confirmLabel: "احذف وابدأ من جديد",
+  goesHeading: "سيُحذف نهائياً",
+  staysHeading: "يبقى كما هو",
+  stays: "الفرق وتشكيلاتها وتسجيلات المشاركين",
+  alreadyClear: "لا يوجد ما يُحذف، البطولة عند فرقها بالفعل.",
+  countsFailed: "تعذّر قراءة ما سيُحذف",
+  done: "أُعيدت البطولة إلى فرقها",
+} as const;
+
 export const activityFinance = {
   heading: (count: number) => `المالية (${count})`,
   income: "الإيرادات",
