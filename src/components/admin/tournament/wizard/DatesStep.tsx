@@ -94,9 +94,12 @@ export default function DatesStep({
       </div>
 
       {dayCount > 0 && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="calendar">{texts.lastDay(dayCount)}</IconLabel>
-        </p>
+        <div className="text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
+          <p>
+            <IconLabel name="calendar">{texts.lastDay(dayCount)}</IconLabel>
+          </p>
+          <p>{texts.backToBackDays}</p>
+        </div>
       )}
 
       <p

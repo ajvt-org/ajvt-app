@@ -68,6 +68,8 @@ export const setupWizard = {
   venue: "الملعب",
   venueOptional: "اختياري",
   lastDay: (days: number) => `تحتاج البطولة ${days} يوماً`,
+  backToBackDays:
+    "الأيام متتالية بلا راحة بينها، ويمكن إضافة أيام راحة من تبويب الأيام بعد الإنشاء",
 
   replaceWarning: "سيُحذف ما سبق من مجموعات ومباريات غير ملعوبة ويُستبدل بهذا الجدول",
 } as const;

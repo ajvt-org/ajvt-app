@@ -159,6 +159,32 @@ describe("the setup wizard", () => {
     expect(showToast).toHaveBeenCalledWith(texts.done);
   });
 
+  it("starts the tournament at the first kick off that is actually set", async () => {
+    open(8);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText(texts.firstDay), { target: { value: "2026-09-20" } });
+    fireEvent.change(screen.getByLabelText(`${texts.matchTimes} 1`), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: texts.write }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    const body = post.mock.calls[0][1] as { startsAt: string; times: string[] };
+    expect(body.times).toEqual(["18:00"]);
+    expect(body.startsAt).toBe("2026-09-20T18:00");
+    expect(Number.isNaN(Date.parse(body.startsAt))).toBe(false);
+  });
+
+  it("says the days it lays out run back to back", () => {
+    open(8);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText(texts.firstDay), { target: { value: "2026-09-20" } });
+
+    expect(screen.getByText(texts.backToBackDays)).toBeDefined();
+  });
+
   it("sends the draw it was shown", async () => {
     open(8);
     fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));
