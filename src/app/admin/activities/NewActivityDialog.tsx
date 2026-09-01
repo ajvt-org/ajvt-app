@@ -3,6 +3,7 @@
 import DialogHeader from "@/components/DialogHeader";
 import NewActivityForm from "./NewActivityForm";
 import type { NewActivityDraft } from "./activityTypes";
+import { activityForm as texts } from "@/lib/texts";
 
 export default function NewActivityDialog({
   onCreate,
@@ -23,7 +24,7 @@ export default function NewActivityDialog({
         className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
-        <DialogHeader title="إضافة نشاط" onClose={onClose} />
+        <DialogHeader title={texts.dialogTitle} onClose={onClose} />
         <div className="p-4">
           <NewActivityForm
             onCreate={async (draft) => {

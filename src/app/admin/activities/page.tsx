@@ -81,7 +81,7 @@ function AdminActivitiesPageInner() {
       <div className="flex gap-2 flex-wrap">
         <input
           type="text"
-          placeholder="بحث باسم النشاط..."
+          placeholder={texts.searchPlaceholder}
           value={filters.q}
           onChange={(e) => go({ ...filters, q: e.target.value })}
           className="input input-sm flex-1"
@@ -95,7 +95,7 @@ function AdminActivitiesPageInner() {
           <IconLabel name="list">{texts.arrangeLink}</IconLabel>
         </Link>
         <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-sm text-xs">
-          <IconLabel name="plus">إضافة نشاط</IconLabel>
+          <IconLabel name="plus">{texts.add}</IconLabel>
         </button>
       </div>
 
@@ -125,11 +125,11 @@ function AdminActivitiesPageInner() {
       {visible.length === 0 ? (
         <div className="card p-6 text-center space-y-3">
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {activities.length === 0 ? "لا توجد أنشطة بعد" : "لا يطابق أي نشاط هذا البحث"}
+            {activities.length === 0 ? texts.emptyList : texts.emptySearch}
           </p>
           {activities.length === 0 && (
             <button onClick={() => setShowCreate(true)} className="btn btn-sm btn-primary mx-auto">
-              <IconLabel name="plus">أضف أول نشاط</IconLabel>
+              <IconLabel name="plus">{texts.addFirst}</IconLabel>
             </button>
           )}
         </div>

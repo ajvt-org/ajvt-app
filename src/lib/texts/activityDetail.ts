@@ -34,3 +34,13 @@ export const activityLog = {
   heading: "سجل التغييرات",
   empty: "لا توجد تغييرات مسجلة",
 } as const;
+
+export const activityDatesEditor = {
+  legacyPeriod: (period: string) =>
+    `هذا النشاط يعرض نصاً قديماً: ${period} — حدّد التواريخ ليحل محله`,
+  from: "من",
+  to: "إلى",
+  withTime: "تحديد الساعة",
+  preview: (formatted: string) => `سيظهر هكذا: ${formatted}`,
+  save: "حفظ التواريخ",
+} as const;
