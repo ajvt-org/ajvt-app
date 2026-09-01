@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { acceptPayment, attachProof, openAdmin, signUp } from "./helpers";
+import { acceptPayment, attachProof, freshPerson, openAdmin, signUp } from "./helpers";
 
-const MEMBER = {
+const BASE_MEMBER = {
   fullName: "أحمد ولد الفائض",
-  phone: "22117766",
   password: "test1234",
   age: "البدريين",
   paymentMethod: "بنكيلي",
@@ -12,10 +11,12 @@ const MEMBER = {
 const QUESTION = "هل تريد ذكر اسمك مع التبرع؟";
 
 test("a member who pays above the fee says how the surplus appears", async ({ page }) => {
-  await signUp(page, MEMBER);
+  const member = freshPerson(BASE_MEMBER);
+
+  await signUp(page, member);
   await page.goto("/membership");
 
-  await page.click(`text=${MEMBER.paymentMethod}`);
+  await page.click(`text=${member.paymentMethod}`);
 
   await page.fill('input[type="number"]', "100");
   await expect(page.getByText(QUESTION)).toHaveCount(0);
@@ -30,12 +31,12 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
 
   await page.getByRole("radio", { name: "أفضّل أن أبقى مجهولاً" }).click();
   await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
-  await expect(page.getByText(MEMBER.fullName).first()).toBeVisible();
+  await expect(page.getByText(member.fullName).first()).toBeVisible();
 
   const { context: admin, page: adminPage } = await openAdmin(page.context().browser()!);
 
-  await acceptPayment(adminPage, MEMBER.fullName);
-  await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
+  await acceptPayment(adminPage, member.fullName);
+  await expect(adminPage.getByText(member.fullName).first()).toBeVisible();
 
   async function board() {
     const res = await adminPage.request.get("/api/leaderboard");
@@ -43,13 +44,13 @@ test("a member who pays above the fee says how the surplus appears", async ({ pa
   }
 
   await expect.poll(board).toContain("فاعل خير");
-  expect(await board()).not.toContain(MEMBER.fullName);
+  expect(await board()).not.toContain(member.fullName);
 
   await page.goto("/profile");
-  await page.getByRole("radio", { name: new RegExp(MEMBER.fullName) }).click();
+  await page.getByRole("radio", { name: new RegExp(member.fullName) }).click();
   await expect(page.getByText("تم الحفظ")).toBeVisible();
 
-  await expect.poll(board).toContain(MEMBER.fullName);
+  await expect.poll(board).toContain(member.fullName);
 
   await admin.close();
 });
