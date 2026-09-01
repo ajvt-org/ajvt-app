@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import { matchAdmin as texts } from "@/lib/texts";
 
 export default function MatchDetailsForm({
   match,
@@ -21,16 +22,16 @@ export default function MatchDetailsForm({
   const [round, setRound] = useState(match.round || "");
   const [venue, setVenue] = useState(match.venue || "");
   const [isKnockout, setIsKnockout] = useState(match.isKnockout);
-  const [homeTeamId, setHomeTeamId] = useState(match.homeTeam.id);
-  const [awayTeamId, setAwayTeamId] = useState(match.awayTeam.id);
+  const [homeTeamId, setHomeTeamId] = useState(match.homeTeam?.id ?? "");
+  const [awayTeamId, setAwayTeamId] = useState(match.awayTeam?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!awayTeamId) {
-      setError("يجب اختيار الفريق الضيف");
+    if (!homeTeamId || !awayTeamId) {
+      setError(texts.pickBothTeams);
       return;
     }
     if (homeTeamId === awayTeamId) {
@@ -78,6 +79,7 @@ export default function MatchDetailsForm({
           }}
           className="input text-sm"
         >
+          <option value="">{texts.homeTeamPlaceholder}</option>
           {teams.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -89,7 +91,7 @@ export default function MatchDetailsForm({
           onChange={(e) => setAwayTeamId(e.target.value)}
           className="input text-sm"
         >
-          <option value="">اختر الفريق الضيف...</option>
+          <option value="">{texts.awayTeamPlaceholder}</option>
           {awayTeamOptionsForEdit.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}

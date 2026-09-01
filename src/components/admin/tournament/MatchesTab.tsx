@@ -5,6 +5,7 @@ import { getMatchWinnerTeamId } from "@/lib/tournament";
 import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
+import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import MatchCard from "./MatchCard";
 import BracketSuggestion from "./BracketSuggestion";
 import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
@@ -355,6 +356,7 @@ export default function MatchesTab({
               {bracketIsFinalDone &&
                 (() => {
                   const finalMatch = finalRound[0];
+                  if (!bothTeamsKnown(finalMatch)) return null;
                   const winnerId = getMatchWinnerTeamId({
                     ...finalMatch,
                     homeTeamId: finalMatch.homeTeam.id,

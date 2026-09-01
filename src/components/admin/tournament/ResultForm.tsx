@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { GoalKind, Match, Team } from "./types";
+import type { DecidedMatch, GoalKind, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -27,7 +27,7 @@ export default function ResultForm({
   suspendedIds,
   onSaved,
 }: {
-  match: Match;
+  match: DecidedMatch;
   teams: Team[];
   profile: "FOOTBALL" | "BOARD";
   suspendedIds: string[];

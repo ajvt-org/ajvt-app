@@ -5,6 +5,7 @@ import StandingsTable from "@/components/tournament/StandingsTable";
 import { computeStats } from "@/lib/tournament";
 import type { StandingsRow } from "@/lib/standings";
 import { formatMatchDateTime } from "@/lib/clubTime";
+import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import type { Group, Match } from "./types";
 import IconLabel from "@/components/IconLabel";
 import { standingsAdmin as texts } from "@/lib/texts";
@@ -55,6 +56,7 @@ export default function StandingsTab({
     rows.push([...texts.csvResultsColumns]);
     matches
       .filter((m) => m.status === "PLAYED")
+      .filter(bothTeamsKnown)
       .forEach((m) => {
         rows.push([
           m.round || "",

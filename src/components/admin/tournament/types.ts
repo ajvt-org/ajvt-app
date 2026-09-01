@@ -75,8 +75,8 @@ export interface MvpVote {
 
 export interface Match {
   id: string;
-  homeTeam: { id: string; name: string; logo: string | null };
-  awayTeam: { id: string; name: string; logo: string | null };
+  homeTeam: { id: string; name: string; logo: string | null } | null;
+  awayTeam: { id: string; name: string; logo: string | null } | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;
@@ -95,6 +95,11 @@ export interface Match {
   penaltyKicks: PenaltyKick[];
   mvpVote: MvpVote | null;
 }
+
+export type DecidedMatch = Match & {
+  homeTeam: NonNullable<Match["homeTeam"]>;
+  awayTeam: NonNullable<Match["awayTeam"]>;
+};
 
 export interface Suspension {
   id: string;

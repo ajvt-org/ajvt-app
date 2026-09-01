@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import MatchCard from "./MatchCard";
 import type { Match } from "./types";
+import { publicTournament } from "@/lib/texts";
 
 const noop = vi.fn();
 
@@ -107,6 +108,64 @@ describe("a team name carrying Latin letters", () => {
 
     const score = [...container.querySelectorAll("span")].find((el) => el.textContent === "0-4");
     expect(score?.getAttribute("dir")).toBe("rtl");
+  });
+});
+
+describe("a fixture whose teams are not known yet", () => {
+  function waiting(over: Partial<Match> = {}) {
+    cleanup();
+    return render(
+      <MatchCard
+        match={{
+          ...match(),
+          homeTeam: null,
+          awayTeam: null,
+          status: "SCHEDULED",
+          homeScore: null,
+          awayScore: null,
+          manOfTheMatch: null,
+          goals: [],
+          bookings: [],
+          ...over,
+        }}
+        teams={[]}
+        allMatches={[match()]}
+        profile="FOOTBALL"
+        suspendedIds={[]}
+        mvpVoteMinutes={120}
+        onDelete={noop}
+        showResultForm
+        onToggleResultForm={noop}
+        showMvp
+        onToggleMvp={noop}
+        showDetails={false}
+        onToggleDetails={noop}
+        onSaved={noop}
+        onChange={noop}
+      />,
+    );
+  }
+
+  it("names both sides as decided later", () => {
+    const { container } = waiting();
+
+    const names = [...container.querySelectorAll("bdi")].map((b) => b.textContent);
+    expect(names).toEqual([publicTournament.teamDecidedLater, publicTournament.teamDecidedLater]);
+  });
+
+  it("offers nothing that needs two teams", () => {
+    waiting();
+
+    expect(screen.queryByText(texts.enterResult)).toBeNull();
+    expect(screen.queryByText(texts.mvpVote)).toBeNull();
+    expect(screen.queryByText(/مجريات المباراة/)).toBeNull();
+    expect(screen.getByText(texts.editDetails)).toBeDefined();
+  });
+
+  it("keeps a prior meeting off a fixture with no teams to compare", () => {
+    waiting();
+
+    expect(screen.queryByText(texts.priorMeetings)).toBeNull();
   });
 });
 
