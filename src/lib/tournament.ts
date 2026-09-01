@@ -51,8 +51,8 @@ export function computeTopScorers(
 
 export interface HeadToHeadMatchInput {
   id: string;
-  homeTeam: { id: string };
-  awayTeam: { id: string };
+  homeTeam: { id: string } | null;
+  awayTeam: { id: string } | null;
 }
 
 export function getHeadToHead<T extends HeadToHeadMatchInput>(
@@ -63,6 +63,7 @@ export function getHeadToHead<T extends HeadToHeadMatchInput>(
 ): T[] {
   return matches.filter((m) => {
     if (m.id === excludeMatchId) return false;
+    if (!m.homeTeam || !m.awayTeam) return false;
     const pair = new Set([m.homeTeam.id, m.awayTeam.id]);
     return pair.has(teamAId) && pair.has(teamBId) && teamAId !== teamBId;
   });
@@ -80,9 +81,16 @@ export function computeStats(
   teams: StandingsTeamInput[],
   matches: StandingsMatchInput[],
 ): TournamentStats {
-  const played = matches.filter(
-    (m) => m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null,
-  );
+  const played = matches
+    .filter(
+      (m) =>
+        m.status === "PLAYED" &&
+        m.homeScore !== null &&
+        m.awayScore !== null &&
+        m.homeTeam !== null &&
+        m.awayTeam !== null,
+    )
+    .map((m) => ({ ...m, homeTeam: m.homeTeam!, awayTeam: m.awayTeam! }));
   const matchesPlayed = played.length;
   const totalGoals = played.reduce((sum, m) => sum + (m.homeScore ?? 0) + (m.awayScore ?? 0), 0);
 
@@ -216,8 +224,8 @@ export function generateMatchSchedule(
 }
 
 export interface BracketMatchInput {
-  homeTeamId: string;
-  awayTeamId: string;
+  homeTeamId: string | null;
+  awayTeamId: string | null;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -226,6 +234,7 @@ export interface BracketMatchInput {
 }
 
 export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
+  if (m.homeTeamId === null || m.awayTeamId === null) return null;
   if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) return null;
   if (m.homeScore > m.awayScore) return m.homeTeamId;
   if (m.awayScore > m.homeScore) return m.awayTeamId;
@@ -315,8 +324,8 @@ export function computeDisciplineStats(
 }
 
 export interface CleanSheetMatchInput {
-  homeTeam: { id: string };
-  awayTeam: { id: string };
+  homeTeam: { id: string } | null;
+  awayTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -337,6 +346,7 @@ export function computeCleanSheets(
   for (const t of teams) table.set(t.id, { teamId: t.id, name: t.name, played: 0, cleanSheets: 0 });
   for (const m of matches) {
     if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) continue;
+    if (!m.homeTeam || !m.awayTeam) continue;
     const home = table.get(m.homeTeam.id);
     const away = table.get(m.awayTeam.id);
     if (home) {
@@ -399,8 +409,8 @@ export function computeMotmLeaders(teams: TeamRosterInput[], matches: MotmMatchI
 }
 
 export interface TeamMatchInput {
-  homeTeam: { id: string; name: string };
-  awayTeam: { id: string; name: string };
+  homeTeam: { id: string; name: string } | null;
+  awayTeam: { id: string; name: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -420,8 +430,16 @@ export function computeTeamAdvancedStats(
   matches: TeamMatchInput[],
 ): TeamAdvancedRow[] {
   const played = matches
-    .filter((m) => m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null)
-    .sort((a, b) => a.order - b.order);
+    .filter(
+      (m) =>
+        m.status === "PLAYED" &&
+        m.homeScore !== null &&
+        m.awayScore !== null &&
+        m.homeTeam !== null &&
+        m.awayTeam !== null,
+    )
+    .sort((a, b) => a.order - b.order)
+    .map((m) => ({ ...m, homeTeam: m.homeTeam!, awayTeam: m.awayTeam! }));
 
   return teams.map((t) => {
     const teamMatches = played.filter((m) => m.homeTeam.id === t.id || m.awayTeam.id === t.id);
