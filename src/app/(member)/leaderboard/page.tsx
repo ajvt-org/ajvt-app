@@ -18,7 +18,7 @@ async function getViewer() {
   const current = await currentMembership(prisma, userId);
   return {
     userId,
-    donateHref: current?.status === "ACTIVE" ? `/donate?memberId=${userId}` : "/donate",
+    donateHref: current?.status === "ACTIVE" ? `/donate?userId=${userId}` : "/donate",
   };
 }
 

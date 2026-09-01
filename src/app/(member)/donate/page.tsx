@@ -32,7 +32,7 @@ export default function DonatePage() {
 function DonatePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const memberId = searchParams.get("memberId");
+  const userId = searchParams.get("userId");
 
   const [lockedMember, setLockedMember] = useState<{ id: string; fullName: string } | null>(null);
   const [checkingMember, setCheckingMember] = useState(true);
@@ -49,8 +49,8 @@ function DonatePageInner() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const lookup = memberId
-      ? fetch(`/api/members/${memberId}`)
+    const lookup = userId
+      ? fetch(`/api/members/${userId}`)
           .then((r) => (r.ok ? r.json() : null))
           .then((data) =>
             data && data.status === "ACTIVE" ? [{ id: data.id, fullName: data.fullName }] : [],
@@ -72,7 +72,7 @@ function DonatePageInner() {
       })
       .catch(() => {})
       .finally(() => setCheckingMember(false));
-  }, [memberId]);
+  }, [userId]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -114,7 +114,7 @@ function DonatePageInner() {
       fd.append("amount", amount.trim());
       fd.append("paymentMethod", paymentMethod);
       if (lockedMember) {
-        fd.append("memberId", lockedMember.id);
+        fd.append("userId", lockedMember.id);
         if (wantsName === false) fd.append("anonymous", "true");
       } else {
         fd.append("anonymous", wantsName === false ? "true" : "false");
