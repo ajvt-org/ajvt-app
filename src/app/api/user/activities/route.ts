@@ -74,22 +74,29 @@ export const GET = withRoute("GET /api/user/activities", async () => {
       })
     : [];
 
-  const fixtures: Fixture[] = matches.map((m) => ({
-    id: m.id,
-    matchDate: m.matchDate ? m.matchDate.toISOString() : null,
-    round: m.round,
-    venue: m.venue,
-    status: m.status,
-    isKnockout: m.isKnockout,
-    homeTeam: m.homeTeam,
-    awayTeam: m.awayTeam,
-    homeScore: m.homeScore,
-    awayScore: m.awayScore,
-    homePenalties: m.homePenalties,
-    awayPenalties: m.awayPenalties,
-    activity: m.activity,
-    myTeamId: teamIds.includes(m.homeTeam.id) ? m.homeTeam.id : m.awayTeam.id,
-  }));
+  const fixtures: Fixture[] = matches.flatMap((m) => {
+    if (m.homeTeam === null || m.awayTeam === null) return [];
+    const home = m.homeTeam;
+    const away = m.awayTeam;
+    return [
+      {
+        id: m.id,
+        matchDate: m.matchDate ? m.matchDate.toISOString() : null,
+        round: m.round,
+        venue: m.venue,
+        status: m.status,
+        isKnockout: m.isKnockout,
+        homeTeam: home,
+        awayTeam: away,
+        homeScore: m.homeScore,
+        awayScore: m.awayScore,
+        homePenalties: m.homePenalties,
+        awayPenalties: m.awayPenalties,
+        activity: m.activity,
+        myTeamId: teamIds.includes(home.id) ? home.id : away.id,
+      },
+    ];
+  });
 
   const byActivity = new Map<string, MemberActivity>();
 

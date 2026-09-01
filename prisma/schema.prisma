@@ -207,10 +207,10 @@ model Match {
   id                  String             @id @default(cuid())
   activityId          String
   activity            Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  homeTeamId          String
-  homeTeam            Team               @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
-  awayTeamId          String
-  awayTeam            Team               @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  homeTeamId          String?
+  homeTeam            Team?              @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId          String?
+  awayTeam            Team?              @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)

@@ -78,6 +78,9 @@ export const tournament = {
   needTwoGroups:
     "يجب أن يكون هناك مجموعتان بالضبط (المجموعة أ والمجموعة ب) لتوليد نصف النهائي التلقائي",
   groupNeedsTwoTeams: "كل مجموعة تحتاج فريقين على الأقل",
+  teamNotSetYet: "فريق لم يُحدد بعد",
+  fixtureHasNoTeams: "لم يُحدد فريقا هذه المباراة بعد",
+  fixtureNeedsBothTeams: "المباراة تحتاج فريقين",
   bracketNeedsGroups: "هذه البطولة ليست مقسّمة إلى مجموعات",
   bracketQualifierCount:
     "عدد المتأهلين من المجموعات يجب أن يكون 2 أو 4 أو 8 أو 16 ليكتمل جدول الإقصاء",

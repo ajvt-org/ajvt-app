@@ -48,4 +48,5 @@ export const publicTournament = {
   noMatchesYet: "لم تُحدَّد المباريات بعد",
   noTeamsYet: "لم تُحدَّد الفرق بعد",
   noPlayersYet: "لم يُحدَّد اللاعبون بعد",
+  teamDecidedLater: "يُحدد لاحقاً",
 } as const;

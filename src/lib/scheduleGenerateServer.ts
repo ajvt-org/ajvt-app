@@ -40,6 +40,7 @@ export async function generateGroupSchedule(activityId: string, options: Generat
   const existingCounts = new Map<string, number>();
   const existingPairs = new Set<string>();
   for (const m of existingMatches) {
+    if (m.homeTeamId === null || m.awayTeamId === null) continue;
     existingCounts.set(m.homeTeamId, (existingCounts.get(m.homeTeamId) || 0) + 1);
     existingCounts.set(m.awayTeamId, (existingCounts.get(m.awayTeamId) || 0) + 1);
     existingPairs.add([m.homeTeamId, m.awayTeamId].sort().join("|"));
