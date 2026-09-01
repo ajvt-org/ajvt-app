@@ -1,5 +1,8 @@
+import { ouguiya } from "../texts/currency";
+
 export const money = {
   amountInvalid: "المبلغ يجب أن يكون رقماً صحيحاً موجباً",
+  paidAmountTooLow: (fee: number) => `يرجى إدخال مبلغ صحيح (${ouguiya.amount(fee)} على الأقل)`,
   proofRequired: "يرجى إرفاق صورة إثبات الدفع",
   tooManyDonations: "محاولات كثيرة جداً، حاول لاحقاً",
   anonymousDonor: "فاعل خير",
