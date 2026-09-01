@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import BracketTree from "./BracketTree";
+import { CARD_HEIGHT } from "@/lib/bracketLayout";
+import { bracketRoundLabel } from "@/lib/tournament";
 import { publicTournament as texts } from "@/lib/texts";
 
 const SEMI = {
@@ -63,5 +65,76 @@ describe("BracketTree", () => {
     const { container } = render(<BracketTree matches={[]} />);
 
     expect(container.firstChild).toBeNull();
+  });
+});
+
+const bracketOf = (firstRoundCount: number) => {
+  const matches = [];
+  for (let round = 1, size = firstRoundCount; size >= 1; round++, size /= 2) {
+    for (let order = 1; order <= size; order++) {
+      matches.push({
+        ...FINAL,
+        id: `r${round}-${order}`,
+        bracketRound: round,
+        order,
+        round: bracketRoundLabel(size),
+      });
+    }
+  }
+  return matches;
+};
+
+const columnsOf = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll("p + div.relative"));
+
+const cardTops = (column: Element) =>
+  Array.from(column.querySelectorAll<HTMLElement>(":scope > div")).map((card) =>
+    Number.parseFloat(card.style.top),
+  );
+
+describe("BracketTree, how the rounds are laid out", () => {
+  it.each([2, 4, 8])("gives a first round of %i one column per round", (firstRoundCount) => {
+    const { container } = render(<BracketTree matches={bracketOf(firstRoundCount)} />);
+
+    expect(columnsOf(container)).toHaveLength(Math.log2(firstRoundCount) + 1);
+  });
+
+  it.each([2, 4, 8])("groups every fixture under the round it belongs to, from %i", (count) => {
+    const { container } = render(<BracketTree matches={bracketOf(count)} />);
+
+    expect(columnsOf(container).map((column) => cardTops(column).length)).toEqual(
+      Array.from({ length: Math.log2(count) + 1 }, (_, round) => count / 2 ** round),
+    );
+  });
+
+  it.each([2, 4, 8])("never lets two cards of a first round of %i overlap", (count) => {
+    const { container } = render(<BracketTree matches={bracketOf(count)} />);
+    const tops = cardTops(columnsOf(container)[0]);
+
+    const gaps = tops.slice(1).map((top, index) => top - tops[index]);
+    expect(gaps.every((gap) => gap > CARD_HEIGHT)).toBe(true);
+    expect(new Set(gaps).size).toBe(1);
+  });
+
+  it.each([4, 8])("centres a fixture between the two that feed it, from %i", (count) => {
+    const { container } = render(<BracketTree matches={bracketOf(count)} />);
+    const [feeders, next] = columnsOf(container).map(cardTops);
+
+    expect(next).toEqual(next.map((_, index) => (feeders[index * 2] + feeders[index * 2 + 1]) / 2));
+  });
+
+  it("draws a joining line into every round after the first, and none before it", () => {
+    const { container } = render(<BracketTree matches={bracketOf(4)} />);
+    const columns = columnsOf(container);
+
+    expect(columns[0].querySelector(":scope > svg")).toBeNull();
+    expect(columns[1].querySelectorAll(":scope > svg path")).toHaveLength(2);
+    expect(columns[2].querySelectorAll(":scope > svg path")).toHaveLength(1);
+  });
+
+  it("names a round the fixtures do not label themselves", () => {
+    render(<BracketTree matches={[{ ...FINAL, round: null, bracketRound: 3 }]} />);
+
+    expect(screen.getByText(texts.bracketRound(3))).toBeTruthy();
   });
 });
