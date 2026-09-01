@@ -24,6 +24,8 @@ export const GET = withRoute(
               createdAt: true,
               paymentProof: true,
               rejectionReason: true,
+              source: true,
+              recordedBy: true,
               user: {
                 select: {
                   phone: true,

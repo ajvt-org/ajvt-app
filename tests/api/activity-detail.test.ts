@@ -179,3 +179,44 @@ describe("the team a registrant belongs to", () => {
     expect(body.activity.registrations[0].team).toBeNull();
   });
 });
+
+describe("what the detail says about how a registration came about", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("carries how it came about and who recorded it", async () => {
+    const activity = await anActivity();
+    const member = await makeMember({ fullName: "محمد", age: "البدريين", status: "ACTIVE" });
+    await prisma.activityRegistration.create({
+      data: {
+        userId: member.userId,
+        activityId: activity.id,
+        status: "ACTIVE",
+        source: "ADMIN",
+        recordedBy: "مسؤول",
+      },
+    });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0]).toMatchObject({
+      source: "ADMIN",
+      recordedBy: "مسؤول",
+    });
+  });
+
+  it("leaves a row written before the record with nothing rather than a guess", async () => {
+    const activity = await anActivity();
+    const member = await makeMember({ fullName: "سالم", age: "البدريين", status: "ACTIVE" });
+    await prisma.activityRegistration.create({
+      data: { userId: member.userId, activityId: activity.id, status: "ACTIVE" },
+    });
+
+    const body = await (await DETAIL(...ask(activity.id))).json();
+
+    expect(body.activity.registrations[0].source).toBeNull();
+    expect(body.activity.registrations[0].recordedBy).toBeNull();
+  });
+});
