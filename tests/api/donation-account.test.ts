@@ -39,11 +39,11 @@ async function aMember(phone: string, name: string) {
 
 let seq = 0;
 
-function give(userId: string) {
+function give(userId: string, field = "userId") {
   const form = new FormData();
   form.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
   form.append("amount", "5000");
-  form.append("memberId", userId);
+  form.append(field, userId);
   form.append("paymentMethod", "بنكيلي");
   return GIVE(postForm("/api/donations", form, { "x-forwarded-for": `10.0.1.${++seq}` }));
 }
@@ -51,6 +51,24 @@ function give(userId: string) {
 describe("the account behind a donation", () => {
   beforeEach(async () => {
     await resetDb();
+  });
+
+  it("refuses an account sent as memberId rather than giving it away", async () => {
+    const { user, member } = await aMember("22110044", "سالم ولد محمد");
+    await signInAs(user);
+
+    const form = new FormData();
+    form.append("file", new File([new Uint8Array([1, 2, 3])], "p.png", { type: "image/png" }));
+    form.append("amount", "5000");
+    form.append("memberId", member.userId);
+    form.append("paymentMethod", "بنكيلي");
+    form.append("anonymous", "true");
+
+    const res = await GIVE(postForm("/api/donations", form, { "x-forwarded-for": "10.0.9.1" }));
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "بيانات غير صالحة" });
+    expect(await prisma.donation.count()).toBe(0);
   });
 
   it("stamps the giver's account on a donation they send themselves", async () => {
