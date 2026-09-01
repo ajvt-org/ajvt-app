@@ -39,56 +39,65 @@ export default function MatchCardActions({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-2">
-      {(onMoveUp || onMoveDown) && (
-        <>
+    <div className="mt-2 space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {(onMoveUp || onMoveDown) && (
+          <>
+            <button
+              onClick={onMoveUp}
+              disabled={!onMoveUp}
+              title={texts.moveUp}
+              aria-label={texts.moveUp}
+              className={SQUARE}
+              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
+            >
+              <Icon name="chevronUp" size={15} />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={!onMoveDown}
+              title={texts.moveDown}
+              aria-label={texts.moveDown}
+              className={SQUARE}
+              style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
+            >
+              <Icon name="chevronDown" size={15} />
+            </button>
+          </>
+        )}
+        {decided && (
           <button
-            onClick={onMoveUp}
-            disabled={!onMoveUp}
-            title={texts.moveUp}
-            aria-label={texts.moveUp}
-            className={SQUARE}
-            style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
+            onClick={onToggleResultForm}
+            className={CHIP}
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <Icon name="chevronUp" size={15} />
+            {played ? texts.editResult : texts.enterResult}
           </button>
-          <button
-            onClick={onMoveDown}
-            disabled={!onMoveDown}
-            title={texts.moveDown}
-            aria-label={texts.moveDown}
-            className={SQUARE}
-            style={{ background: "var(--mint-50)", color: "var(--mint-700)" }}
-          >
-            <Icon name="chevronDown" size={15} />
+        )}
+        {decided && football && (
+          <button onClick={onToggleMvp} className={CHIP} style={outline}>
+            {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
           </button>
-        </>
-      )}
-      {decided && (
+        )}
+        <button onClick={onToggleDetails} className={CHIP} style={outline}>
+          {showDetails ? (
+            texts.hideDetails
+          ) : (
+            <IconLabel name="pencil">{texts.editDetails}</IconLabel>
+          )}
+        </button>
+      </div>
+
+      <div className="flex justify-end pt-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
         <button
-          onClick={onToggleResultForm}
+          onClick={onDelete}
+          aria-label={texts.confirmDeleteMatch}
           className={CHIP}
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          {played ? texts.editResult : texts.enterResult}
+          <IconLabel name="trash">{texts.remove}</IconLabel>
         </button>
-      )}
-      {decided && football && (
-        <button onClick={onToggleMvp} className={CHIP} style={outline}>
-          {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
-        </button>
-      )}
-      <button onClick={onToggleDetails} className={CHIP} style={outline}>
-        {showDetails ? texts.hideDetails : <IconLabel name="pencil">{texts.editDetails}</IconLabel>}
-      </button>
-      <button
-        onClick={onDelete}
-        aria-label={texts.confirmDeleteMatch}
-        className={`${CHIP} ms-auto`}
-        style={{ background: "#fee2e2", color: "#991b1b" }}
-      >
-        <Icon name="trash" size={13} />
-      </button>
+      </div>
     </div>
   );
 }
