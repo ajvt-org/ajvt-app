@@ -35,7 +35,7 @@ describe("a membership that was never renewed", () => {
     const activity = await anActivity();
 
     const res = await REGISTER(
-      post("/api/activities/register", { activityId: activity.id, memberId: member.userId }),
+      post("/api/activities/register", { activityId: activity.id, userId: member.userId }),
     );
 
     expect(res.status).toBe(403);
@@ -65,7 +65,7 @@ describe("a membership that was never renewed", () => {
     const activity = await anActivity();
 
     const res = await REGISTER(
-      post("/api/activities/register", { activityId: activity.id, memberId: member.userId }),
+      post("/api/activities/register", { activityId: activity.id, userId: member.userId }),
     );
 
     expect(res.status).toBe(200);
@@ -80,7 +80,7 @@ describe("a membership that was never renewed", () => {
     expect(
       (
         await REGISTER(
-          post("/api/activities/register", { activityId: activity.id, memberId: member.userId }),
+          post("/api/activities/register", { activityId: activity.id, userId: member.userId }),
         )
       ).status,
     ).toBe(200);

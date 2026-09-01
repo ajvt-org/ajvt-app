@@ -50,7 +50,7 @@ async function makeTeam(activityId: string, name?: string) {
 
 function addMember(teamId: string, memberId: string) {
   return ADD_MEMBER(
-    post(`/api/admin/teams/${teamId}/members`, { memberId }),
+    post(`/api/admin/teams/${teamId}/members`, { userId: memberId }),
     withParams({ teamId }),
   );
 }

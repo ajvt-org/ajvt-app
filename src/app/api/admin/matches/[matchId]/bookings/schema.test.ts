@@ -3,7 +3,7 @@ import { parse } from "@/lib/validation";
 import { rejectionOf } from "@tests/schema";
 import { bookingCreateSchema } from "./schema";
 
-const valid = { memberId: "m1", teamId: "t1", cardType: "YELLOW" };
+const valid = { userId: "u1", teamId: "t1", cardType: "YELLOW" };
 
 describe("bookingCreateSchema", () => {
   it("accepts a card without a minute", () => {
@@ -43,7 +43,7 @@ describe("bookingCreateSchema", () => {
   });
 
   it("rejects a missing team", () => {
-    expect(rejectionOf(bookingCreateSchema, { memberId: "m1", cardType: "RED" })).toBe(
+    expect(rejectionOf(bookingCreateSchema, { userId: "u1", cardType: "RED" })).toBe(
       "بيانات غير صالحة",
     );
   });

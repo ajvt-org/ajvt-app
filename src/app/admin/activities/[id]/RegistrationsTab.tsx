@@ -10,6 +10,9 @@ import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 interface RawMember {
   id: string;
   fullName: string;
+  photo: string | null;
+  age: string | null;
+  village: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   user: { phone: string } | null;
 }
@@ -33,6 +36,9 @@ export default function RegistrationsTab({
             id: m.id,
             fullName: m.fullName,
             phone: m.user?.phone ?? null,
+            photo: m.photo,
+            age: m.age,
+            village: m.village,
             status: m.status,
           })),
         ),
@@ -46,6 +52,7 @@ export default function RegistrationsTab({
         activityId={activity.id}
         registrations={activity.registrations}
         members={members}
+        teams={activity.teams}
         actionLoading={actions.actionLoading}
         onReview={actions.reviewRegistration}
         onRegister={actions.registerMember}

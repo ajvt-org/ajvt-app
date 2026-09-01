@@ -30,8 +30,8 @@ async function activeMember(user: { id: string }) {
   });
 }
 
-const register = (activityId: string, memberId: string) =>
-  REGISTER(post("/api/activities/register", { activityId, memberId }));
+const register = (activityId: string, userId: string) =>
+  REGISTER(post("/api/activities/register", { activityId, userId }));
 
 async function statusOf(activityId: string, userId: string) {
   const row = await prisma.activityRegistration.findUniqueOrThrow({
@@ -43,6 +43,20 @@ async function statusOf(activityId: string, userId: string) {
 describe("an activity that approves registrations itself", () => {
   beforeEach(async () => {
     await resetDb();
+  });
+
+  it("refuses a registration sent as memberId", async () => {
+    const a = await activity();
+    const user = await createUser();
+    const member = await activeMember(user);
+    await signInAs(user);
+
+    const res = await REGISTER(
+      post("/api/activities/register", { activityId: a.id, memberId: member.userId }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.activityRegistration.count()).toBe(0);
   });
 
   it("waits for the admin by default", async () => {

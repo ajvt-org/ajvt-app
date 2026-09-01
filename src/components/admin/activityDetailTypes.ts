@@ -24,6 +24,8 @@ export type ActivityDetail = {
       createdAt: string;
       paymentProof: string | null;
       rejectionReason: string | null;
+      source: "SELF" | "ADMIN" | null;
+      recordedBy: string | null;
       team: { id: string; name: string } | null;
       member: {
         id: string;

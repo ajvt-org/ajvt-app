@@ -18,7 +18,7 @@ const ROSTER = [
 
 const GOAL: GoalDraft = {
   teamId: "t1",
-  memberId: "p1",
+  userId: "p1",
   kind: "GOAL",
   period: "REGULAR",
   minute: "12",
@@ -113,7 +113,7 @@ describe("fixing a goal that was entered wrong", () => {
 
     expect(onGoals).toHaveBeenLastCalledWith([
       GOAL,
-      { teamId: "t1", memberId: null, kind: "GOAL", period: "REGULAR", minute: "70" },
+      { teamId: "t1", userId: null, kind: "GOAL", period: "REGULAR", minute: "70" },
     ]);
   });
 

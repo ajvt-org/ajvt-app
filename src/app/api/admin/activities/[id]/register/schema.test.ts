@@ -4,16 +4,20 @@ import { rejectionOf } from "@tests/schema";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 
 describe("adminRegisterSchema", () => {
-  it("accepts a member", () => {
-    expect(parse(adminRegisterSchema, { memberId: "m1" })).toEqual({ memberId: "m1" });
+  it("accepts an account", () => {
+    expect(parse(adminRegisterSchema, { userId: "u1" })).toEqual({ userId: "u1" });
   });
 
-  it("rejects a missing member", () => {
+  it("rejects a missing account", () => {
     expect(rejectionOf(adminRegisterSchema, {})).toBe("بيانات غير صالحة");
   });
 
-  it("rejects an empty member id", () => {
-    expect(rejectionOf(adminRegisterSchema, { memberId: "" })).toBe("بيانات غير صالحة");
+  it("rejects an empty account id", () => {
+    expect(rejectionOf(adminRegisterSchema, { userId: "" })).toBe("بيانات غير صالحة");
+  });
+
+  it("refuses the old memberId name rather than reading it", () => {
+    expect(rejectionOf(adminRegisterSchema, { memberId: "u1" })).toBe("بيانات غير صالحة");
   });
 });
 

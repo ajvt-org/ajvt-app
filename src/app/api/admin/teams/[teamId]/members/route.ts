@@ -15,7 +15,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const { teamId } = await params;
     const session = await requireTeamAccess(teamId);
-    const { memberId } = parse(teamMemberSchema, await req.json());
+    const { userId } = parse(teamMemberSchema, await req.json());
 
     const team = await prisma.team.findUnique({
       where: { id: teamId },
@@ -27,26 +27,22 @@ export const POST = withRoute(
 
     const teamSize = team.activity.teamSize;
     if (teamIsFull(team._count.members, teamSize)) {
-      return NextResponse.json(
-        { error: `هذا الفريق مكتمل — الحد الأقصى ${teamSize} لاعبين` },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: tournament.teamFull(teamSize) }, { status: 409 });
     }
 
-    const membership = await currentMembership(prisma, memberId);
+    const membership = await currentMembership(prisma, userId);
     if (!membership) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
     if (membership.status === "REJECTED") {
-      return NextResponse.json({ error: "لا يمكن إضافة لاعب طلبه مرفوض" }, { status: 400 });
+      return NextResponse.json({ error: tournament.playerRejected }, { status: 400 });
     }
-    const userId = memberId;
 
     const registered = await prisma.activityRegistration.findUnique({
       where: { userId_activityId: { userId, activityId: team.activityId } },
     });
     if (!registered) {
-      return NextResponse.json({ error: "هذا العضو غير مسجل في هذه البطولة" }, { status: 400 });
+      return NextResponse.json({ error: tournament.playerNotRegistered }, { status: 400 });
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
@@ -55,9 +51,7 @@ export const POST = withRoute(
     });
     if (existingMembership) {
       return NextResponse.json(
-        {
-          error: `هذا العضو منضم بالفعل إلى فريق "${existingMembership.team.name}" في هذه البطولة`,
-        },
+        { error: tournament.playerInAnotherTeam(existingMembership.team.name) },
         { status: 409 },
       );
     }
@@ -78,7 +72,7 @@ export const POST = withRoute(
         ...auditContext(session, req),
         targetType: "TeamMember",
         targetId: teamMember.id,
-        after: { teamId, memberId, teamName: team.name },
+        after: { teamId, userId, teamName: team.name },
       },
     );
 

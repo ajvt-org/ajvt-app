@@ -22,23 +22,31 @@ export function isTournamentTab(key: string): key is TournamentTabKey {
   return (TOURNAMENT_TAB_KEYS as readonly string[]).includes(key);
 }
 
-export function tournamentTabs(
+export function tournamentRosterTab(
   shape: TournamentShape,
-  pendingProposals: number,
   pendingJoinRequests = 0,
 ): WorkspaceTab[] {
   if (!shape.isTournament) return [];
   const singles = shape.teamSize === 1;
-  const tabs: WorkspaceTab[] = [
+  return [
     {
       key: "teams",
       label: singles ? texts.tabs.players : texts.tabs.teams,
-      icon: singles ? "user" : "users",
+      icon: singles ? "user" : "shield",
       badge: pendingJoinRequests,
     },
+  ];
+}
+
+export function tournamentPlayTabs(
+  shape: TournamentShape,
+  pendingProposals: number,
+): WorkspaceTab[] {
+  if (!shape.isTournament) return [];
+  const tabs: WorkspaceTab[] = [
     { key: "days", label: texts.tabs.days, icon: "calendar" },
     { key: "matches", label: texts.tabs.matches, icon: "swords" },
-    { key: "standings", label: texts.tabs.standings, icon: "list" },
+    { key: "standings", label: texts.tabs.standings, icon: "medal" },
     { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
   ];
   if (shape.profile === "FOOTBALL") {

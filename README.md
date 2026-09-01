@@ -62,9 +62,23 @@ Plain `npm run db:seed` only creates the `admin` account and the age groups. Tha
 npm test          # unit tests, no database
 npm run test:ui   # components, in jsdom
 npm run test:api  # route handlers against a real database
+npm run test:e2e  # the whole app, in a browser
 ```
 
 `test:api` needs the container from `npm run db:up`. It creates its own database on it, migrates it, and truncates every table between tests, so it never touches your dev data. The name ends in a short hash of the checkout path, so a git worktree gets its own and two checkouts can run the suite at the same time. Point `TEST_DATABASE_URL` somewhere else if you want another target.
+
+`test:e2e` needs the same container. It creates and migrates its own database, seeds the admin and the age groups, then truncates once before the whole run. Playwright starts the app itself, on a port derived from the checkout path so two worktrees never fight over one. It steps past anything already listening, and `E2E_PORT` pins it if you need a fixed one.
+
+Run it against a build rather than the dev server:
+
+```bash
+npm run build
+E2E_PRODUCTION=1 npm run test:e2e
+```
+
+That is what CI does, and locally it is the difference between a run that finishes and a run that dies with `OS file watch limit reached`. Without it Playwright starts `next dev`, whose watcher opens a handle on every file it can reach. A machine carrying several git worktrees runs out of inotify capacity long before it runs out of memory or disk, and the failure names the watcher rather than anything you changed.
+
+Worktrees are the usual reason there are so many files. `git worktree list` shows the ones on this machine and `git worktree prune` drops the entries whose folders have already gone. A worktree that is still there belongs to whoever made it, so remove it with `git worktree remove` only when you know it is yours.
 
 The route handlers are plain exported functions, so the tests import `POST` and call it. Only `next/headers` is faked, to supply the session cookie. Everything else is real: the JWT is signed and verified, and the queries hit Postgres.
 

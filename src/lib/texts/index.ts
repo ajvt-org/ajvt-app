@@ -6,6 +6,13 @@ export {
   tournamentSetup,
 } from "./activities";
 export { activityAttention } from "./activityAttention";
+export {
+  activityDatesEditor,
+  activityFinance,
+  activityLog,
+  convertTournament,
+  deleteActivity,
+} from "./activityDetail";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
 export { activityRegistration } from "./activityRegistration";

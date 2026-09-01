@@ -17,10 +17,7 @@ export const GET = withRoute("GET /api/admin/receipts", async (req: NextRequest)
 
 export const POST = withRoute("POST /api/admin/receipts", async (req: NextRequest) => {
   const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
-  const { payerName, reason, amount, issuedOn, memberId } = parse(
-    receiptCreateSchema,
-    await req.json(),
-  );
+  const { payerName, reason, amount, issuedOn } = parse(receiptCreateSchema, await req.json());
 
   const row = await issueReceipt({
     payerName,
@@ -28,7 +25,6 @@ export const POST = withRoute("POST /api/admin/receipts", async (req: NextReques
     amount,
     issuedOn: issuedOn ? new Date(issuedOn as string) : new Date(),
     issuedBy: session.username,
-    userId: memberId ?? null,
   });
 
   await logAction(session.username, "ISSUE_RECEIPT", `${row.number} — ${payerName}`, {

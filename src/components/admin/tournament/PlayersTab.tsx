@@ -57,7 +57,7 @@ export default function PlayersTab({
         `/api/admin/activities/${activityId}/teams`,
         { name: "", groupId: null, logo: null },
       );
-      await api.post(`/api/admin/teams/${team.id}/members`, { memberId: selected });
+      await api.post(`/api/admin/teams/${team.id}/members`, { userId: selected });
       setSelected("");
     }, playersTab.added);
   }

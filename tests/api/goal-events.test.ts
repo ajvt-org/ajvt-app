@@ -45,14 +45,40 @@ describe("goal events", () => {
     await signInAsAdmin(await createAdmin());
   });
 
+  it("refuses a scorer named as memberId", async () => {
+    const { home, players, match } = await football();
+
+    const res = await save(match.id, {
+      goalEvents: [{ teamId: home.id, memberId: players[0].userId, minute: 10 }],
+    });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.matchGoal.count()).toBe(0);
+  });
+
+  it("refuses a penalty kick taker named as memberId", async () => {
+    const { home, away, players, match } = await football();
+
+    const res = await save(match.id, {
+      goalEvents: [
+        { teamId: home.id, userId: players[0].userId },
+        { teamId: away.id, userId: players[1].userId },
+      ],
+      penaltyKicks: [{ teamId: home.id, memberId: players[0].userId, scored: true }],
+    });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.matchPenaltyKick.count()).toBe(0);
+  });
+
   it("derives the score from the events, own goal included", async () => {
     const { home, away, players, match } = await football();
 
     const res = await save(match.id, {
       goalEvents: [
-        { teamId: home.id, memberId: players[0].userId, minute: 10 },
-        { teamId: home.id, memberId: players[1].userId, kind: "OWN_GOAL", minute: 40 },
-        { teamId: away.id, memberId: null, kind: "PENALTY" },
+        { teamId: home.id, userId: players[0].userId, minute: 10 },
+        { teamId: home.id, userId: players[1].userId, kind: "OWN_GOAL", minute: 40 },
+        { teamId: away.id, userId: null, kind: "PENALTY" },
       ],
     });
 
@@ -67,7 +93,7 @@ describe("goal events", () => {
     const { home, players, match } = await football();
 
     const res = await save(match.id, {
-      goalEvents: [{ teamId: home.id, memberId: players[0].userId, kind: "OWN_GOAL" }],
+      goalEvents: [{ teamId: home.id, userId: players[0].userId, kind: "OWN_GOAL" }],
     });
 
     expect(res.status).toBe(400);
@@ -77,7 +103,7 @@ describe("goal events", () => {
     const { home, players, match } = await football();
 
     const res = await save(match.id, {
-      goalEvents: [{ teamId: home.id, memberId: players[1].userId }],
+      goalEvents: [{ teamId: home.id, userId: players[1].userId }],
     });
 
     expect(res.status).toBe(400);
@@ -88,9 +114,9 @@ describe("goal events", () => {
 
     await save(match.id, {
       goalEvents: [
-        { teamId: home.id, memberId: players[0].userId, minute: 20 },
-        { teamId: away.id, memberId: players[1].userId, minute: 70 },
-        { teamId: home.id, memberId: players[0].userId, period: "EXTRA_TIME", minute: 100 },
+        { teamId: home.id, userId: players[0].userId, minute: 20 },
+        { teamId: away.id, userId: players[1].userId, minute: 70 },
+        { teamId: home.id, userId: players[0].userId, period: "EXTRA_TIME", minute: 100 },
       ],
     });
 
@@ -104,10 +130,10 @@ describe("goal events", () => {
     const res = await save(match.id, {
       goalEvents: [],
       penaltyKicks: [
-        { teamId: home.id, memberId: players[0].userId, scored: true },
-        { teamId: away.id, memberId: players[1].userId, scored: false },
-        { teamId: home.id, memberId: null, scored: true },
-        { teamId: away.id, memberId: null, scored: true },
+        { teamId: home.id, userId: players[0].userId, scored: true },
+        { teamId: away.id, userId: players[1].userId, scored: false },
+        { teamId: home.id, userId: null, scored: true },
+        { teamId: away.id, userId: null, scored: true },
       ],
     });
 
@@ -122,8 +148,8 @@ describe("goal events", () => {
     await save(match.id, {
       goalEvents: [],
       penaltyKicks: [
-        { teamId: home.id, memberId: players[0].userId, scored: true },
-        { teamId: away.id, memberId: players[1].userId, scored: false },
+        { teamId: home.id, userId: players[0].userId, scored: true },
+        { teamId: away.id, userId: players[1].userId, scored: false },
       ],
     });
 
@@ -146,8 +172,8 @@ describe("goal events", () => {
     const level = await save(knockout.match.id, {
       goalEvents: [],
       penaltyKicks: [
-        { teamId: knockout.home.id, memberId: null, scored: true },
-        { teamId: knockout.away.id, memberId: null, scored: true },
+        { teamId: knockout.home.id, userId: null, scored: true },
+        { teamId: knockout.away.id, userId: null, scored: true },
       ],
     });
     expect(level.status).toBe(400);
@@ -155,7 +181,7 @@ describe("goal events", () => {
     const league = await football();
     const res = await save(league.match.id, {
       goalEvents: [],
-      penaltyKicks: [{ teamId: league.home.id, memberId: null, scored: true }],
+      penaltyKicks: [{ teamId: league.home.id, userId: null, scored: true }],
     });
     expect(res.status).toBe(400);
   });
@@ -164,12 +190,12 @@ describe("goal events", () => {
     const { home, away, players, match } = await football();
     await save(match.id, {
       goalEvents: [
-        { teamId: home.id, memberId: players[0].userId },
-        { teamId: home.id, memberId: null },
+        { teamId: home.id, userId: players[0].userId },
+        { teamId: home.id, userId: null },
       ],
     });
 
-    await save(match.id, { goalEvents: [{ teamId: away.id, memberId: players[1].userId }] });
+    await save(match.id, { goalEvents: [{ teamId: away.id, userId: players[1].userId }] });
 
     const saved = await prisma.match.findUniqueOrThrow({ where: { id: match.id } });
     expect(saved).toMatchObject({ homeScore: 0, awayScore: 1 });
@@ -183,7 +209,7 @@ describe("goal events", () => {
       goalEvents: [
         {
           teamId: home.id,
-          memberId: players[0].userId,
+          userId: players[0].userId,
           kind: "GOAL",
           period: "REGULAR",
           minute: 10,
@@ -207,7 +233,7 @@ describe("goal events", () => {
       goalEvents: [
         {
           teamId: home.id,
-          memberId: players[0].userId,
+          userId: players[0].userId,
           kind: "GOAL",
           period: "REGULAR",
           minute: 10,
@@ -230,7 +256,7 @@ describe("goal events", () => {
       goalEvents: [
         {
           teamId: home.id,
-          memberId: players[0].userId,
+          userId: players[0].userId,
           kind: "GOAL",
           period: "REGULAR",
           minute: 10,

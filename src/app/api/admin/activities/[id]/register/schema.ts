@@ -7,7 +7,7 @@ const REASON_TOO_LONG = activities.rejectionReasonTooLong;
 const REASON_MAX = 300;
 
 export const adminRegisterSchema = z.object({
-  memberId: z.string(INVALID).min(1, INVALID),
+  userId: z.string(INVALID).min(1, INVALID),
 });
 
 export const registrationReviewSchema = z.object({

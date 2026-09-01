@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { common } from "@/lib/messages";
+import { common, tournament } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
-const MINUTE_INVALID = "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130";
+const MINUTE_INVALID = tournament.minuteInvalid;
 
 const MINUTE_MIN = 1;
 const MINUTE_MAX = 130;
@@ -19,14 +19,14 @@ const minute = z
   .transform((v) => (v === null || v === "" ? null : Number(v)));
 
 export const bookingCreateSchema = z.object({
-  memberId: z.string(INVALID).min(1, INVALID),
+  userId: z.string(INVALID).min(1, INVALID),
   teamId: z.string(INVALID).min(1, INVALID),
   cardType: z.enum(["YELLOW", "RED"], INVALID),
   minute: minute.optional(),
 });
 
 export const bookingUpdateSchema = z.object({
-  memberId: z.string(INVALID).min(1, INVALID).optional(),
+  userId: z.string(INVALID).min(1, INVALID).optional(),
   teamId: z.string(INVALID).min(1, INVALID).optional(),
   cardType: z.enum(["YELLOW", "RED"], INVALID).optional(),
   minute: minute.optional(),

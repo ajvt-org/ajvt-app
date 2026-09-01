@@ -12,17 +12,17 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = parse(teamMemberSchema, await req.json());
+    const { userId } = parse(teamMemberSchema, await req.json());
 
     const [membership, team] = await Promise.all([
-      memberId === session.userId ? currentMembership(prisma, memberId) : null,
+      userId === session.userId ? currentMembership(prisma, userId) : null,
       prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
     ]);
     if (!membership) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
     if (membership.status !== "ACTIVE") {
-      return NextResponse.json({ error: "يجب أن تكون العضوية مقبولة أولاً" }, { status: 403 });
+      return NextResponse.json({ error: tournament.joinNeedsMembership }, { status: 403 });
     }
     if (!team) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
@@ -32,10 +32,7 @@ export const POST = withRoute(
       where: { userId_activityId: { userId: session.userId, activityId: team.activityId } },
     });
     if (!registered || registered.status !== "ACTIVE") {
-      return NextResponse.json(
-        { error: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: tournament.joinNeedsRegistration }, { status: 403 });
     }
 
     const existingMembership = await prisma.teamMember.findFirst({
@@ -46,10 +43,7 @@ export const POST = withRoute(
       return NextResponse.json({ ok: true });
     }
     if (existingMembership?.status === "ACTIVE") {
-      return NextResponse.json(
-        { error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: tournament.teamChoiceLocked }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -70,9 +64,9 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = parse(teamMemberSchema, await req.json());
+    const { userId } = parse(teamMemberSchema, await req.json());
 
-    if (memberId !== session.userId) {
+    if (userId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
@@ -81,10 +75,7 @@ export const DELETE = withRoute(
       select: { status: true },
     });
     if (existing?.status === "ACTIVE") {
-      return NextResponse.json(
-        { error: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: tournament.teamChoiceLocked }, { status: 403 });
     }
 
     await prisma.teamMember.deleteMany({ where: { teamId, userId: session.userId } });

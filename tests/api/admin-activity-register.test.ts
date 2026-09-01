@@ -15,7 +15,7 @@ async function anAccount(fullName: string) {
 
 function register(activityId: string, accountId: string) {
   return POST(
-    post(`/api/admin/activities/${activityId}/register`, { memberId: accountId }),
+    post(`/api/admin/activities/${activityId}/register`, { userId: accountId }),
     withId(activityId),
   );
 }
@@ -24,6 +24,19 @@ describe("an admin registering somebody to an activity", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAsAdmin(await createAdmin());
+  });
+
+  it("refuses an account sent as memberId", async () => {
+    const activity = await anActivity();
+    const account = await anAccount("محمد");
+
+    const res = await POST(
+      post(`/api/admin/activities/${activity.id}/register`, { memberId: account.userId }),
+      withId(activity.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.activityRegistration.count()).toBe(0);
   });
 
   it("registers an account that has never been registered", async () => {

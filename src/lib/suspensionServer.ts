@@ -128,7 +128,7 @@ export async function serveMatch(tx: Tx, activityId: string, teamIds: string[]) 
 }
 
 export interface ManualSuspension {
-  memberId: string;
+  userId: string;
   scope: SuspensionScope;
   matches: number | null;
   until: Date | null;
@@ -148,7 +148,7 @@ export async function proposeSuspension(
     throw new ValidationError(messages.suspensionUntilRequired);
   }
   return prisma.$transaction(async (tx) => {
-    const userId = input.memberId;
+    const { userId } = input;
     const member = await tx.teamMember.findFirst({
       where: { userId, team: { activityId } },
       select: { id: true },

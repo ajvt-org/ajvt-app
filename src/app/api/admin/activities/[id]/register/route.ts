@@ -15,7 +15,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     const session = await requireActivityAccess(id);
-    const { memberId: userId } = parse(adminRegisterSchema, await req.json());
+    const { userId } = parse(adminRegisterSchema, await req.json());
 
     const [account, activity] = await Promise.all([
       prisma.user.findUnique({
@@ -46,8 +46,19 @@ export const POST = withRoute(
 
     const registration = await prisma.activityRegistration.upsert({
       where: { userId_activityId: { userId: account.id, activityId: id } },
-      update: { status: "ACTIVE", rejectionReason: null },
-      create: { userId: account.id, activityId: id, status: "ACTIVE" },
+      update: {
+        status: "ACTIVE",
+        rejectionReason: null,
+        source: "ADMIN",
+        recordedBy: session.username,
+      },
+      create: {
+        userId: account.id,
+        activityId: id,
+        status: "ACTIVE",
+        source: "ADMIN",
+        recordedBy: session.username,
+      },
     });
 
     await logAction(
@@ -130,7 +141,7 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     const session = await requireActivityAccess(id);
-    const { memberId: userId } = parse(adminRegisterSchema, await req.json());
+    const { userId } = parse(adminRegisterSchema, await req.json());
 
     const existing = await prisma.activityRegistration.findFirst({
       where: { userId, activityId: id },

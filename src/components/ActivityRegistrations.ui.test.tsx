@@ -73,7 +73,7 @@ describe("ActivityRegistrations", () => {
     await waitFor(() => expect(onReload).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/activities/register");
-    expect(JSON.parse(init.body)).toEqual({ activityId: "a1", memberId: "m1" });
+    expect(JSON.parse(init.body)).toEqual({ activityId: "a1", userId: "m1" });
     expect(screen.queryByText("محمد ولد أحمد")).toBeNull();
   });
 

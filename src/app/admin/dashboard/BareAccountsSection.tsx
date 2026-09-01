@@ -7,8 +7,9 @@ import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import { push } from "@/lib/messages";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { daysWaiting } from "@/lib/waitingRequests";
+import { personDetails } from "@/lib/personDetails";
+import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "./TempPasswordBox";
 import { bareAccounts as texts } from "@/lib/texts";
 import type { BareAccount } from "./types";
@@ -19,8 +20,8 @@ function identify(user: BareAccount): string {
 
 function daysSince(createdAt: string): string {
   const days = daysWaiting(new Date(createdAt), new Date());
-  if (days <= 0) return "سجّل اليوم";
-  return `سجّل منذ ${countedNoun(days, DAYS)}`;
+  if (days <= 0) return texts.signedUpToday;
+  return texts.signedUpAgo(days);
 }
 
 function NudgeButton({ user }: { user: BareAccount }) {
@@ -61,7 +62,7 @@ function NudgeButton({ user }: { user: BareAccount }) {
       className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
     >
-      <IconLabel name="bell">تذكير</IconLabel>
+      <IconLabel name="bell">{texts.nudge}</IconLabel>
     </button>
   );
 }
@@ -77,6 +78,14 @@ function Row({
 }) {
   const [resetBusy, setResetBusy] = useState(false);
   const [temp, setTemp] = useState<{ password: string; hours: number } | null>(null);
+
+  const age = ageForVillage(user.village, user.age);
+  const details = personDetails({
+    phone: user.fullName ? user.phone : null,
+    village: user.village,
+    age,
+  });
+  const missingAgeGroup = requiresAgeGroup(user.village) && !age;
 
   async function resetPassword() {
     setResetBusy(true);
@@ -107,14 +116,19 @@ function Row({
             <p className="text-sm font-bold truncate" style={{ color: "var(--text-main)" }}>
               {identify(user)}
             </p>
+            {details && (
+              <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                <bdi>{details}</bdi>
+              </p>
+            )}
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {user.fullName && user.phone && (
-                <>
-                  <span dir="ltr">{user.phone}</span> ·{" "}
-                </>
-              )}
               {user.phone ? daysSince(user.createdAt) : texts.addedByHand}
             </p>
+            {missingAgeGroup && (
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {texts.noAgeGroup}
+              </p>
+            )}
           </div>
         </div>
         <div className="shrink-0">{user.phone && <NudgeButton user={user} />}</div>
@@ -128,14 +142,14 @@ function Row({
               className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              {resetBusy ? "..." : <IconLabel name="lock">إعادة تعيين</IconLabel>}
+              {resetBusy ? "..." : <IconLabel name="lock">{texts.resetPassword}</IconLabel>}
             </button>
             <button
               onClick={onFill}
               className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-700)", color: "white" }}
             >
-              <IconLabel name="plus">إضافة طلب</IconLabel>
+              <IconLabel name="plus">{texts.addRequest}</IconLabel>
             </button>
           </>
         )}
@@ -145,7 +159,7 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
         >
-          <IconLabel name="trash">حذف</IconLabel>
+          <IconLabel name="trash">{texts.remove}</IconLabel>
         </button>
       </div>
       {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}

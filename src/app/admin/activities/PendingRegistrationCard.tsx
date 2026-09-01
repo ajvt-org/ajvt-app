@@ -4,6 +4,7 @@ import { useState } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import RegistrantIdentity from "./RegistrantIdentity";
+import RegistrationRecord from "./RegistrationRecord";
 import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration } from "./activityTypes";
 
@@ -30,6 +31,7 @@ export default function PendingRegistrationCard({
   return (
     <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--mint-50)" }}>
       <RegistrantIdentity registration={r} />
+      <RegistrationRecord registration={r} />
       {r.paymentProof && (
         <a
           href={`/api/files/${r.paymentProof}`}

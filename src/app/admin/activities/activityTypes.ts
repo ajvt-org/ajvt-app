@@ -3,6 +3,9 @@ export interface Registration {
   status: "PENDING" | "ACTIVE" | "REJECTED";
   paymentProof: string | null;
   rejectionReason: string | null;
+  createdAt: string;
+  source: "SELF" | "ADMIN" | null;
+  recordedBy: string | null;
   team: { id: string; name: string } | null;
   member: { id: string; fullName: string; phone: string | null; age: string; photo: string | null };
 }
@@ -33,6 +36,9 @@ export interface MemberOption {
   id: string;
   fullName: string;
   phone: string | null;
+  photo: string | null;
+  age: string | null;
+  village: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
 }
 

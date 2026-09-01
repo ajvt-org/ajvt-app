@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, createAdmin, signInAsAdmin, withParams } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
 import { GET as LIST, POST as ISSUE } from "@/app/api/admin/receipts/route";
 import { POST as VOID } from "@/app/api/admin/receipts/[number]/void/route";
 import { PATCH as SAVE_SETTINGS } from "@/app/api/admin/settings/route";
@@ -25,6 +25,25 @@ async function asBoss() {
 describe("issuing a receipt", () => {
   beforeEach(async () => {
     await resetDb();
+  });
+
+  it.each(["userId", "memberId"])("refuses an account named as %s", async (field) => {
+    await asBoss();
+    const member = await makeMember({ fullName: "أحمد ولد سالم", status: "ACTIVE" });
+
+    const res = await issue({ ...DRAFT, [field]: member.userId });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.receipt.count()).toBe(0);
+  });
+
+  it("leaves a hand written receipt with no account attached", async () => {
+    await asBoss();
+
+    const { receipt } = await (await issue()).json();
+
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.userId).toBeNull();
   });
 
   it("hands back a numbered, tokened receipt", async () => {

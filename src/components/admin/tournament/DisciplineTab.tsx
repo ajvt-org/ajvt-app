@@ -81,7 +81,7 @@ export default function DisciplineTab({
   const past = suspensions.filter((s) => s.status === "LIFTED");
 
   const [form, setForm] = useState({
-    memberId: "",
+    userId: "",
     scope: "MATCHES",
     matches: "1",
     until: "",
@@ -118,13 +118,13 @@ export default function DisciplineTab({
     e.preventDefault();
     return run(async () => {
       await api.post(`/api/admin/activities/${activityId}/suspensions`, {
-        memberId: form.memberId,
+        userId: form.userId,
         scope: form.scope,
         matches: form.scope === "MATCHES" ? Number(form.matches) : null,
         until: form.scope === "DAYS" && form.until ? form.until : null,
         note: form.note || null,
       });
-      setForm({ memberId: "", scope: "MATCHES", matches: "1", until: "", note: "" });
+      setForm({ userId: "", scope: "MATCHES", matches: "1", until: "", note: "" });
     });
   }
 
@@ -224,8 +224,8 @@ export default function DisciplineTab({
           <IconLabel name="ban">{texts.proposeTitle}</IconLabel>
         </p>
         <select
-          value={form.memberId}
-          onChange={(e) => setForm((p) => ({ ...p, memberId: e.target.value }))}
+          value={form.userId}
+          onChange={(e) => setForm((p) => ({ ...p, userId: e.target.value }))}
           required
           className="input"
         >
@@ -303,7 +303,7 @@ export default function DisciplineTab({
         />
         <button
           type="submit"
-          disabled={loading || !form.memberId}
+          disabled={loading || !form.userId}
           className="btn btn-primary text-sm"
         >
           {loading ? "..." : texts.propose}

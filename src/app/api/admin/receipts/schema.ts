@@ -2,7 +2,6 @@ import { z } from "zod";
 import { common, money, receipts } from "@/lib/messages";
 import { MAX_SPELLED } from "@/lib/arabicNumberWords";
 
-const INVALID = common.invalidBody;
 const {
   payerRequired: PAYER_REQUIRED,
   payerTooLong: PAYER_TOO_LONG,
@@ -40,13 +39,14 @@ const issuedOn = z.unknown().superRefine((v, ctx) => {
   }
 });
 
-export const receiptCreateSchema = z.object({
-  payerName,
-  reason,
-  amount,
-  issuedOn: issuedOn.optional(),
-  memberId: z.string(INVALID).nullish(),
-});
+export const receiptCreateSchema = z
+  .object({
+    payerName,
+    reason,
+    amount,
+    issuedOn: issuedOn.optional(),
+  })
+  .strict();
 
 export const receiptVoidSchema = z.object({
   reason: z

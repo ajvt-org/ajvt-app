@@ -1,11 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
-import { localDatabase } from "./tests/localDatabase.mjs";
+import { localDatabase, localPort } from "./tests/localDatabase.mjs";
 
 const DATABASE_URL = process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e");
-const PORT = 3100;
+const PORT = Number(process.env.E2E_PORT) || localPort(3100, 1000);
 const PRODUCTION = process.env.E2E_PRODUCTION === "1";
 
 process.env.E2E_DATABASE_URL = DATABASE_URL;
+process.env.E2E_PORT = String(PORT);
 
 export default defineConfig({
   testDir: "tests/e2e",

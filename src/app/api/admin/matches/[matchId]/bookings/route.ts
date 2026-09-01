@@ -14,7 +14,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) => {
     const { matchId } = await params;
     const session = await requireMatchAccess(matchId);
-    const { memberId, teamId, cardType, minute } = parse(bookingCreateSchema, await req.json());
+    const { userId, teamId, cardType, minute } = parse(bookingCreateSchema, await req.json());
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -27,16 +27,15 @@ export const POST = withRoute(
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
 
-    const account = memberId;
     const inRoster = await prisma.teamMember.findUnique({
-      where: { teamId_userId: { teamId, userId: account } },
+      where: { teamId_userId: { teamId, userId } },
     });
     if (!inRoster) {
       return NextResponse.json({ error: tournament.playerNotInTeam }, { status: 400 });
     }
 
     const suspended = await suspendedUserIds(match.activityId);
-    if (suspended.has(account)) {
+    if (suspended.has(userId)) {
       return NextResponse.json({ error: tournament.memberSuspended }, { status: 409 });
     }
 
@@ -44,7 +43,7 @@ export const POST = withRoute(
       const created = await tx.matchBooking.create({
         data: {
           matchId,
-          userId: account,
+          userId,
           teamId,
           cardType,
           minute: minute ?? null,
@@ -58,7 +57,7 @@ export const POST = withRoute(
           user: { select: { fullName: true } },
         },
       });
-      const proposal = await proposeFromBooking(tx, match.activityId, account, cardType);
+      const proposal = await proposeFromBooking(tx, match.activityId, userId, cardType);
       return { booking: created, proposed: proposal !== null };
     });
 

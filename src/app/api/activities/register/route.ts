@@ -13,10 +13,10 @@ import { currentMembership } from "@/lib/currentMembershipServer";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
-  const { activityId, memberId } = parse(activityRegisterSchema, await req.json());
+  const { activityId, userId } = parse(activityRegisterSchema, await req.json());
 
   const [membership, activity] = await Promise.all([
-    memberId === session.userId ? currentMembership(prisma, memberId) : null,
+    userId === session.userId ? currentMembership(prisma, userId) : null,
     prisma.activity.findUnique({
       where: { id: activityId },
       select: {
@@ -57,8 +57,8 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
       }
       await tx.activityRegistration.upsert({
         where: { userId_activityId: { userId: session.userId, activityId } },
-        update: { status, rejectionReason: null },
-        create: { userId: session.userId, activityId, status },
+        update: { status, rejectionReason: null, source: "SELF", recordedBy: null },
+        create: { userId: session.userId, activityId, status, source: "SELF" },
       });
     },
     { isolationLevel: "Serializable" },
@@ -69,9 +69,9 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
 
 export const DELETE = withRoute("DELETE /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
-  const { memberId, activityId } = parse(activityRegisterSchema, await req.json());
+  const { userId, activityId } = parse(activityRegisterSchema, await req.json());
 
-  if (memberId !== session.userId) throw new NotFoundError(members.notFound);
+  if (userId !== session.userId) throw new NotFoundError(members.notFound);
 
   await prisma.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
 

@@ -12,6 +12,19 @@ export const activityRegistrants = {
   noTeam: "بلا فريق",
   searchRegistrants: "ابحث في المسجلين بالاسم أو الهاتف أو الفريق...",
   noneMatch: "لا يوجد مسجل مطابق",
+  filterByTeam: "تصفية حسب الفريق",
+  allTeams: "كل الفرق",
+  searchToBegin: "اكتب اسماً أو رقم هاتف للبحث عن عضو",
+  alreadyRegistered: "مسجَّل بالفعل",
+  addedBySelf: "سجّل نفسه",
+  addedByAdmin: (admin: string) => `أضافه ${admin}`,
+  addedByAdminUnnamed: "أضافه مشرف",
+  addedUnknown: "غير معروف",
+  sortByRequested: "ترتيب حسب تاريخ الطلب",
+  newestFirst: "الأحدث أولاً",
+  oldestFirst: "الأقدم أولاً",
+  candidateDetail: (village: string | null, age: string | null) =>
+    [village, age].filter(Boolean).join(" · "),
   viewProof: "عرض إثبات الدفع",
   rejectReason: "سبب الرفض (اختياري)...",
   confirmReject: "تأكيد الرفض",
@@ -22,6 +35,6 @@ export const activityRegistrants = {
 
 export const registrationStatusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "غير مقبول",
+  ACTIVE: "مؤكَّد",
+  REJECTED: "مرفوض",
 };

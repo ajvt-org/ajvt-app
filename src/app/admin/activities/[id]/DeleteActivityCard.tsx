@@ -6,6 +6,7 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import { deleteActivity as texts } from "@/lib/texts";
 
 export default function DeleteActivityCard({ activityId }: { activityId: string }) {
   const router = useRouter();
@@ -28,10 +29,10 @@ export default function DeleteActivityCard({ activityId }: { activityId: string 
   return (
     <div className="card p-4 space-y-2" style={{ border: "1.5px solid #fecaca" }}>
       <p className="text-sm font-black" style={{ color: "#991b1b" }}>
-        <IconLabel name="warning">حذف النشاط</IconLabel>
+        <IconLabel name="warning">{texts.heading}</IconLabel>
       </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        يحذف النشاط ويلغي تسجيل جميع الأعضاء فيه.
+        {texts.hint}
       </p>
       <button
         onClick={() => setConfirming(true)}
@@ -39,13 +40,13 @@ export default function DeleteActivityCard({ activityId }: { activityId: string 
         className="btn text-sm font-bold"
         style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
       >
-        {busy ? "..." : <IconLabel name="trash">حذف النشاط نهائياً</IconLabel>}
+        {busy ? "..." : <IconLabel name="trash">{texts.action}</IconLabel>}
       </button>
       {confirming && (
         <ConfirmDialog
-          title="حذف النشاط"
-          message="هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه."
-          confirmLabel="حذف نهائي"
+          title={texts.confirmTitle}
+          message={texts.confirmMessage}
+          confirmLabel={texts.confirmLabel}
           danger
           loading={busy}
           onConfirm={remove}

@@ -8,7 +8,7 @@ import {
   parseScorePair,
 } from "./matchInput";
 
-const goal = { memberId: "m1", count: 1, minute: 10 };
+const goal = { userId: "m1", count: 1, minute: 10 };
 
 describe("validateGoals", () => {
   it("treats a missing list as no goals, not as an error", () => {
@@ -20,7 +20,7 @@ describe("validateGoals", () => {
   });
 
   it("keeps a well-formed goal", () => {
-    expect(validateGoals([goal])).toEqual([{ memberId: "m1", count: 1, minute: 10 }]);
+    expect(validateGoals([goal])).toEqual([{ userId: "m1", count: 1, minute: 10 }]);
   });
 
   it("rejects anything that is not a list", () => {
@@ -31,7 +31,7 @@ describe("validateGoals", () => {
 
   it("requires a member id", () => {
     expect(validateGoals([{ count: 1, minute: 5 }])).toBeNull();
-    expect(validateGoals([{ ...goal, memberId: 42 }])).toBeNull();
+    expect(validateGoals([{ ...goal, userId: 42 }])).toBeNull();
     expect(validateGoals([null])).toBeNull();
   });
 
@@ -42,14 +42,14 @@ describe("validateGoals", () => {
   });
 
   it("treats an absent or blank minute as unknown rather than invalid", () => {
-    expect(validateGoals([{ memberId: "m1", count: 1 }])).toEqual([
-      { memberId: "m1", count: 1, minute: null },
+    expect(validateGoals([{ userId: "m1", count: 1 }])).toEqual([
+      { userId: "m1", count: 1, minute: null },
     ]);
     expect(validateGoals([{ ...goal, minute: "" }])).toEqual([
-      { memberId: "m1", count: 1, minute: null },
+      { userId: "m1", count: 1, minute: null },
     ]);
     expect(validateGoals([{ ...goal, minute: null }])).toEqual([
-      { memberId: "m1", count: 1, minute: null },
+      { userId: "m1", count: 1, minute: null },
     ]);
   });
 
@@ -65,8 +65,8 @@ describe("validateGoals", () => {
   });
 
   it("accepts numeric strings, the form sends strings", () => {
-    expect(validateGoals([{ memberId: "m1", count: "2", minute: "77" }])).toEqual([
-      { memberId: "m1", count: 2, minute: 77 },
+    expect(validateGoals([{ userId: "m1", count: "2", minute: "77" }])).toEqual([
+      { userId: "m1", count: 2, minute: 77 },
     ]);
   });
 
@@ -118,28 +118,28 @@ describe("validateGoalEvents", () => {
   const A = "away";
 
   it("fills the defaults for a plain goal", () => {
-    const events = validateGoalEvents([{ teamId: H, memberId: "m1" }], H, A);
+    const events = validateGoalEvents([{ teamId: H, userId: "m1" }], H, A);
 
     expect(events).toEqual([
-      { teamId: H, memberId: "m1", kind: "GOAL", period: "REGULAR", minute: null },
+      { teamId: H, userId: "m1", kind: "GOAL", period: "REGULAR", minute: null },
     ]);
   });
 
   it("accepts an unknown scorer", () => {
-    const events = validateGoalEvents([{ teamId: A, memberId: null, kind: "PENALTY" }], H, A);
+    const events = validateGoalEvents([{ teamId: A, userId: null, kind: "PENALTY" }], H, A);
 
-    expect(events![0].memberId).toBeNull();
+    expect(events![0].userId).toBeNull();
     expect(events![0].kind).toBe("PENALTY");
   });
 
   it("rejects a goal for a team not in the match", () => {
-    expect(validateGoalEvents([{ teamId: "zzz", memberId: null }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: "zzz", userId: null }], H, A)).toBeNull();
   });
 
   it("rejects a bad kind, period or minute", () => {
-    expect(validateGoalEvents([{ teamId: H, memberId: null, kind: "X" }], H, A)).toBeNull();
-    expect(validateGoalEvents([{ teamId: H, memberId: null, period: "X" }], H, A)).toBeNull();
-    expect(validateGoalEvents([{ teamId: H, memberId: null, minute: 300 }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: H, userId: null, kind: "X" }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: H, userId: null, period: "X" }], H, A)).toBeNull();
+    expect(validateGoalEvents([{ teamId: H, userId: null, minute: 300 }], H, A)).toBeNull();
   });
 });
 
@@ -153,11 +153,11 @@ describe("scoreFromGoals and shootoutFromKicks", () => {
 
   it("counts only the scored kicks", () => {
     const kicks = [
-      { teamId: "h", memberId: null, scored: true },
-      { teamId: "a", memberId: null, scored: false },
-      { teamId: "h", memberId: null, scored: false },
-      { teamId: "a", memberId: null, scored: true },
-      { teamId: "h", memberId: null, scored: true },
+      { teamId: "h", userId: null, scored: true },
+      { teamId: "a", userId: null, scored: false },
+      { teamId: "h", userId: null, scored: false },
+      { teamId: "a", userId: null, scored: true },
+      { teamId: "h", userId: null, scored: true },
     ];
 
     expect(shootoutFromKicks(kicks, "h")).toEqual({ home: 2, away: 1 });
@@ -170,6 +170,6 @@ describe("validateKicks", () => {
   });
 
   it("rejects a kick without a verdict", () => {
-    expect(validateKicks([{ teamId: "h", memberId: null }], "h", "a")).toBeNull();
+    expect(validateKicks([{ teamId: "h", userId: null }], "h", "a")).toBeNull();
   });
 });

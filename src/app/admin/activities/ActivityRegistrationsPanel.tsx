@@ -7,6 +7,9 @@ import PendingRegistrationCard from "./PendingRegistrationCard";
 import ConfirmedRegistrantCard from "./ConfirmedRegistrantCard";
 import RegistrantSection from "./RegistrantSection";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
+import FilterChips from "./FilterChips";
+import { ALL_TEAMS, inTeam, teamFilterOptions } from "./registrantFilter";
+import { NEWEST_FIRST, byRequestedDate, sortOptions } from "./registrationRecord";
 import type { Registration, MemberOption } from "./activityTypes";
 
 function registrantText(r: Registration): string {
@@ -17,6 +20,7 @@ export default function ActivityRegistrationsPanel({
   activityId,
   registrations,
   members,
+  teams,
   actionLoading,
   onReview,
   onRegister,
@@ -25,6 +29,7 @@ export default function ActivityRegistrationsPanel({
   activityId: string;
   registrations: Registration[];
   members: MemberOption[];
+  teams: { id: string; name: string }[];
   actionLoading: boolean;
   onReview: (
     activityId: string,
@@ -32,28 +37,32 @@ export default function ActivityRegistrationsPanel({
     status: "ACTIVE" | "REJECTED",
     reason?: string,
   ) => Promise<boolean>;
-  onRegister: (activityId: string, memberId: string) => Promise<boolean>;
-  onUnregister: (activityId: string, memberId: string) => void;
+  onRegister: (activityId: string, userId: string) => Promise<boolean>;
+  onUnregister: (activityId: string, userId: string) => void;
 }) {
   const [search, setSearch] = useState("");
+  const [team, setTeam] = useState(ALL_TEAMS);
+  const [order, setOrder] = useState(NEWEST_FIRST);
 
   const tokens = searchTokens(search);
+  const inChosenTeam = registrations.filter((r) => inTeam(r, team));
   const shown = tokens.length
-    ? registrations.filter((r) => matchesSearch(registrantText(r), tokens))
-    : registrations;
+    ? inChosenTeam.filter((r) => matchesSearch(registrantText(r), tokens))
+    : inChosenTeam;
 
-  const pending = shown.filter((r) => r.status === "PENDING");
-  const active = shown.filter((r) => r.status === "ACTIVE");
+  const ordered = byRequestedDate(shown, order);
+  const pending = ordered.filter((r) => r.status === "PENDING");
+  const active = ordered.filter((r) => r.status === "ACTIVE");
   const registeredIds = new Set(
     registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
   );
-  const candidates = members.filter((m) => !registeredIds.has(m.id));
 
   return (
     <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <AddMemberToActivityForm
         activityId={activityId}
-        candidates={candidates}
+        candidates={members}
+        registeredIds={registeredIds}
         actionLoading={actionLoading}
         onRegister={onRegister}
       />
@@ -65,6 +74,22 @@ export default function ActivityRegistrationsPanel({
         onChange={(e) => setSearch(e.target.value)}
         className="input text-sm"
       />
+
+      <FilterChips
+        options={sortOptions()}
+        value={order}
+        onPick={setOrder}
+        label={texts.sortByRequested}
+      />
+
+      {teams.length > 0 && (
+        <FilterChips
+          options={teamFilterOptions(teams)}
+          value={team}
+          onPick={setTeam}
+          label={texts.filterByTeam}
+        />
+      )}
 
       {pending.length > 0 && (
         <RegistrantSection icon="clock" title={texts.pending} count={pending.length}>
@@ -85,7 +110,7 @@ export default function ActivityRegistrationsPanel({
       <RegistrantSection icon="check" title={texts.confirmed} count={active.length}>
         {active.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {tokens.length ? texts.noneMatch : texts.noneConfirmed}
+            {tokens.length || team !== ALL_TEAMS ? texts.noneMatch : texts.noneConfirmed}
           </p>
         ) : (
           <div className="space-y-1.5">
@@ -93,7 +118,7 @@ export default function ActivityRegistrationsPanel({
               <ConfirmedRegistrantCard
                 key={r.id}
                 registration={r}
-                onUnregister={(memberId) => onUnregister(activityId, memberId)}
+                onUnregister={(userId) => onUnregister(activityId, userId)}
               />
             ))}
           </div>

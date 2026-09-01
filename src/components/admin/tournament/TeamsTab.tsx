@@ -138,12 +138,12 @@ export default function TeamsTab({
   }
 
   async function addMember(teamId: string) {
-    const memberId = selectedMember[teamId];
-    if (!memberId) return;
+    const userId = selectedMember[teamId];
+    if (!userId) return;
     setError("");
     setLoadingAction(true);
     try {
-      await api.post(`/api/admin/teams/${teamId}/members`, { memberId });
+      await api.post(`/api/admin/teams/${teamId}/members`, { userId });
       setSelectedMember((p) => ({ ...p, [teamId]: "" }));
       setAddingTo(null);
       onChange();

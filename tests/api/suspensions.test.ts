@@ -69,12 +69,28 @@ describe("the discipline engine", () => {
     await signInAsAdmin(await createAdmin());
   });
 
-  it("proposes the tournament's ban when a red card lands, and only proposes", async () => {
+  it("refuses a card that names the player as memberId", async () => {
     const { away, players, match } = await tournament();
 
     const res = await BOOK(
       post(`/api/admin/matches/${match.id}/bookings`, {
         memberId: players[1].userId,
+        teamId: away.id,
+        cardType: "RED",
+      }),
+      withMatch(match.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.matchBooking.count()).toBe(0);
+  });
+
+  it("proposes the tournament's ban when a red card lands, and only proposes", async () => {
+    const { away, players, match } = await tournament();
+
+    const res = await BOOK(
+      post(`/api/admin/matches/${match.id}/bookings`, {
+        userId: players[1].userId,
         teamId: away.id,
         cardType: "RED",
       }),
@@ -104,7 +120,7 @@ describe("the discipline engine", () => {
     const book = (matchId: string) =>
       BOOK(
         post(`/api/admin/matches/${matchId}/bookings`, {
-          memberId: players[1].userId,
+          userId: players[1].userId,
           teamId: away.id,
           cardType: "YELLOW",
         }),
@@ -122,7 +138,7 @@ describe("the discipline engine", () => {
     const proposal = await (
       await PROPOSE(
         post(`/api/admin/activities/${activity.id}/suspensions`, {
-          memberId: players[0].userId,
+          userId: players[0].userId,
           scope: "INDEFINITE",
         }),
         withId(activity.id),
@@ -134,7 +150,7 @@ describe("the discipline engine", () => {
       patch(`/api/admin/matches/${match.id}`, {
         homeScore: 1,
         awayScore: 0,
-        homeGoals: [{ memberId: players[0].userId, count: 1 }],
+        homeGoals: [{ userId: players[0].userId, count: 1 }],
       }),
       withMatch(match.id),
     );
@@ -147,7 +163,7 @@ describe("the discipline engine", () => {
     const proposal = await (
       await PROPOSE(
         post(`/api/admin/activities/${activity.id}/suspensions`, {
-          memberId: players[0].userId,
+          userId: players[0].userId,
           scope: "MATCHES",
           matches: 1,
         }),
@@ -170,7 +186,7 @@ describe("the discipline engine", () => {
     const proposal = await (
       await PROPOSE(
         post(`/api/admin/activities/${activity.id}/suspensions`, {
-          memberId: players[0].userId,
+          userId: players[0].userId,
           scope: "INDEFINITE",
         }),
         withId(activity.id),
@@ -192,7 +208,7 @@ describe("the discipline engine", () => {
     const proposal = await (
       await PROPOSE(
         post(`/api/admin/activities/${activity.id}/suspensions`, {
-          memberId: players[0].userId,
+          userId: players[0].userId,
           scope: "INDEFINITE",
         }),
         withId(activity.id),
@@ -209,9 +225,10 @@ describe("the discipline engine", () => {
     expect((await prisma.suspension.findFirstOrThrow()).status).toBe("LIFTED");
   });
 
-  it("refuses a second open suspension for the same player", async () => {
+  it("refuses a proposal that names the player as memberId", async () => {
     const { activity, players } = await tournament();
-    await PROPOSE(
+
+    const res = await PROPOSE(
       post(`/api/admin/activities/${activity.id}/suspensions`, {
         memberId: players[0].userId,
         scope: "INDEFINITE",
@@ -219,9 +236,23 @@ describe("the discipline engine", () => {
       withId(activity.id),
     );
 
+    expect(res.status).toBe(400);
+    expect(await prisma.suspension.count()).toBe(0);
+  });
+
+  it("refuses a second open suspension for the same player", async () => {
+    const { activity, players } = await tournament();
+    await PROPOSE(
+      post(`/api/admin/activities/${activity.id}/suspensions`, {
+        userId: players[0].userId,
+        scope: "INDEFINITE",
+      }),
+      withId(activity.id),
+    );
+
     const res = await PROPOSE(
       post(`/api/admin/activities/${activity.id}/suspensions`, {
-        memberId: players[0].userId,
+        userId: players[0].userId,
         scope: "MATCHES",
         matches: 2,
       }),
@@ -235,7 +266,7 @@ describe("the discipline engine", () => {
     const { activity, players } = await tournament();
     await PROPOSE(
       post(`/api/admin/activities/${activity.id}/suspensions`, {
-        memberId: players[0].userId,
+        userId: players[0].userId,
         scope: "DAYS",
         until: "2027-01-01T00:00:00.000Z",
       }),
@@ -255,7 +286,7 @@ describe("the discipline engine", () => {
     const proposal = await (
       await PROPOSE(
         post(`/api/admin/activities/${activity.id}/suspensions`, {
-          memberId: players[0].userId,
+          userId: players[0].userId,
           scope: "MATCHES",
           matches: 2,
         }),
@@ -288,7 +319,7 @@ describe("the discipline engine", () => {
     const book = () =>
       BOOK(
         post(`/api/admin/matches/${match.id}/bookings`, {
-          memberId: players[1].userId,
+          userId: players[1].userId,
           teamId: away.id,
           cardType: "YELLOW",
         }),
