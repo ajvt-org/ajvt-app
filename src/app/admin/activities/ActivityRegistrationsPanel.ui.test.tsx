@@ -97,10 +97,51 @@ describe("the manual add on the registrants tab", () => {
     expect(screen.getByText("لا يوجد عضو مطابق")).toBeTruthy();
   });
 
-  it("leaves out somebody already registered", () => {
+  it("says so when everybody is already registered", () => {
     show([candidate({ id: "u9" })], [registration()]);
 
     expect(screen.getByText("كل الأعضاء مسجلون في هذا النشاط")).toBeTruthy();
+  });
+
+  it("shows somebody already registered rather than hiding them", async () => {
+    show(
+      [candidate({ id: "u9", fullName: "سالم ولد علي" }), candidate({ id: "u1" })],
+      [registration()],
+    );
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "سالم");
+
+    const row = screen.getAllByText("سالم ولد علي")[0].closest("button")!;
+
+    expect(row).toBeTruthy();
+    expect(within(row).getByText("مسجَّل بالفعل")).toBeTruthy();
+  });
+
+  it("will not register somebody who is already on the list", async () => {
+    show(
+      [candidate({ id: "u9", fullName: "سالم ولد علي" }), candidate({ id: "u1" })],
+      [registration()],
+    );
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "سالم");
+    const row = screen.getAllByText("سالم ولد علي")[0].closest("button")!;
+    await userEvent.click(row);
+
+    expect(row.hasAttribute("disabled")).toBe(true);
+    expect(onRegister).not.toHaveBeenCalled();
+  });
+
+  it("still offers somebody whose registration was refused", async () => {
+    show(
+      [candidate({ id: "u9", fullName: "سالم ولد علي" })],
+      [registration({ status: "REJECTED" })],
+    );
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "سالم");
+    const row = screen.getAllByText("سالم ولد علي")[0].closest("button")!;
+
+    expect(within(row).queryByText("مسجَّل بالفعل")).toBeNull();
+    expect(row.hasAttribute("disabled")).toBe(false);
   });
 
   it("lists nobody until the admin types", () => {
