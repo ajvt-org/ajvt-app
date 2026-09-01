@@ -30,7 +30,12 @@ Before pushing:
 ```bash
 npm run lint && npm run typecheck && npm run format:check
 npm test && npm run test:ui && npm run test:api
+npm run build && E2E_PRODUCTION=1 npm run test:e2e
 ```
+
+`E2E_PRODUCTION=1` is not optional advice. Without it the end to end run starts the
+dev server, and its file watcher runs out of inotify capacity on any machine holding
+a few git worktrees. See [Tests](README.md#tests).
 
 Commit subjects are plain imperative and short — "Keep the fee on the member and
 the surplus in donations", not "fix: membership fee". No `feat:` or `fix:`
