@@ -4,6 +4,8 @@ export const matchAdmin = {
   upcoming: "مباريات قادمة",
   results: "نتائج",
   newMatch: "مباراة جديدة",
+  newMatchOutsidePlan:
+    "المباراة المضافة هنا تبقى خارج خطة الأيام، وتظهر في قائمة غير المجدولة حتى تُسند إلى يوم من تبويب الأيام.",
   homeTeamPlaceholder: "الفريق المضيف...",
   awayTeamPlaceholder: "الفريق الضيف...",
   roundPlaceholder: "الجولة (اختياري)",
