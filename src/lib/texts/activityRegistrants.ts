@@ -16,6 +16,13 @@ export const activityRegistrants = {
   allTeams: "كل الفرق",
   searchToBegin: "اكتب اسماً أو رقم هاتف للبحث عن عضو",
   alreadyRegistered: "مسجَّل بالفعل",
+  addedBySelf: "سجّل نفسه",
+  addedByAdmin: (admin: string) => `أضافه ${admin}`,
+  addedByAdminUnnamed: "أضافه مشرف",
+  addedUnknown: "غير معروف",
+  sortByRequested: "ترتيب حسب تاريخ الطلب",
+  newestFirst: "الأحدث أولاً",
+  oldestFirst: "الأقدم أولاً",
   candidateDetail: (village: string | null, age: string | null) =>
     [village, age].filter(Boolean).join(" · "),
   viewProof: "عرض إثبات الدفع",

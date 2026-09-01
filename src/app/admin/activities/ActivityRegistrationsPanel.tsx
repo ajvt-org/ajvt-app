@@ -9,6 +9,7 @@ import RegistrantSection from "./RegistrantSection";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
 import FilterChips from "./FilterChips";
 import { ALL_TEAMS, inTeam, teamFilterOptions } from "./registrantFilter";
+import { NEWEST_FIRST, byRequestedDate, sortOptions } from "./registrationRecord";
 import type { Registration, MemberOption } from "./activityTypes";
 
 function registrantText(r: Registration): string {
@@ -41,6 +42,7 @@ export default function ActivityRegistrationsPanel({
 }) {
   const [search, setSearch] = useState("");
   const [team, setTeam] = useState(ALL_TEAMS);
+  const [order, setOrder] = useState(NEWEST_FIRST);
 
   const tokens = searchTokens(search);
   const inChosenTeam = registrations.filter((r) => inTeam(r, team));
@@ -48,8 +50,9 @@ export default function ActivityRegistrationsPanel({
     ? inChosenTeam.filter((r) => matchesSearch(registrantText(r), tokens))
     : inChosenTeam;
 
-  const pending = shown.filter((r) => r.status === "PENDING");
-  const active = shown.filter((r) => r.status === "ACTIVE");
+  const ordered = byRequestedDate(shown, order);
+  const pending = ordered.filter((r) => r.status === "PENDING");
+  const active = ordered.filter((r) => r.status === "ACTIVE");
   const registeredIds = new Set(
     registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
   );
@@ -70,6 +73,13 @@ export default function ActivityRegistrationsPanel({
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="input text-sm"
+      />
+
+      <FilterChips
+        options={sortOptions()}
+        value={order}
+        onPick={setOrder}
+        label={texts.sortByRequested}
       />
 
       {teams.length > 0 && (

@@ -8,6 +8,9 @@ function registration(team: Registration["team"]): Registration {
     status: "ACTIVE",
     paymentProof: null,
     rejectionReason: null,
+    createdAt: "2026-09-01T00:00:00.000Z",
+    source: null,
+    recordedBy: null,
     team,
     member: { id: "u1", fullName: "محمد", phone: null, age: "البدريين", photo: null },
   };

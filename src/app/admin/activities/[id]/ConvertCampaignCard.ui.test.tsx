@@ -22,6 +22,8 @@ function waiting(id: string, status: Registration["status"]): Registration {
     createdAt: "2026-01-01",
     paymentProof: null,
     rejectionReason: null,
+    source: null,
+    recordedBy: null,
     team: null,
     member: { id: `m-${id}`, fullName: "محمد", age: "البدريين", photo: null, phone: null },
   };

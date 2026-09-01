@@ -1,6 +1,7 @@
 "use client";
 
 import RegistrantIdentity from "./RegistrantIdentity";
+import RegistrationRecord from "./RegistrationRecord";
 import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration } from "./activityTypes";
 
@@ -16,7 +17,10 @@ export default function ConfirmedRegistrantCard({
       className="rounded-xl p-2 flex items-center justify-between gap-2"
       style={{ background: "var(--mint-50)" }}
     >
-      <RegistrantIdentity registration={registration} />
+      <div className="min-w-0 space-y-1">
+        <RegistrantIdentity registration={registration} />
+        <RegistrationRecord registration={registration} />
+      </div>
       <button
         onClick={() => onUnregister(registration.member.id)}
         className="text-xs font-bold px-2 py-0.5 rounded shrink-0"
