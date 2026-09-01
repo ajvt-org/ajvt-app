@@ -119,7 +119,7 @@ describe("the cards form", () => {
 
     await waitFor(() => expect(postMock).toHaveBeenCalled());
     expect(postMock.mock.calls[0][1]).toMatchObject({
-      memberId: "p1",
+      userId: "p1",
       teamId: "t1",
       cardType: "RED",
       minute: "63",

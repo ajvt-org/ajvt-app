@@ -13,7 +13,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ bookingId: string }> }) => {
     const { bookingId } = await params;
     const session = await requireBookingAccess(bookingId);
-    const { memberId, teamId, cardType, minute } = parse(bookingUpdateSchema, await req.json());
+    const { userId, teamId, cardType, minute } = parse(bookingUpdateSchema, await req.json());
 
     const booking = await prisma.matchBooking.findUnique({
       where: { id: bookingId },
@@ -30,7 +30,7 @@ export const PATCH = withRoute(
     }
 
     const nextTeamId = teamId ?? booking.teamId;
-    const nextUserId = memberId ?? booking.userId;
+    const nextUserId = userId ?? booking.userId;
     if (nextTeamId !== booking.match.homeTeamId && nextTeamId !== booking.match.awayTeamId) {
       return NextResponse.json({ error: tournament.teamNotInMatch }, { status: 400 });
     }
