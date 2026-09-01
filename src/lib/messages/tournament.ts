@@ -1,3 +1,5 @@
+import { resetTournament } from "../texts/activityDetail";
+
 export const tournament = {
   teamNotFound: "الفريق غير موجود",
   teamNameRequired: "اسم الفريق مطلوب",
@@ -91,7 +93,7 @@ export const tournament = {
   fixtureHasNoTeams: "لم يُحدد فريقا هذه المباراة بعد",
   fixtureNeedsBothTeams: "المباراة تحتاج فريقين",
   setupHasResults: (played: number) =>
-    `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج. امسح نتائج ${played} مباراة أولاً`,
+    `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل أولاً`,
   setupGroupsIncomplete: "كل فريق يجب أن يكون في مجموعة واحدة",
   setupGroupsUneven: "المجموعات يجب أن تكون متساوية",
   setupShapeInvalid: "عدد المجموعات وعدد المتأهلين لا يتفقان",
