@@ -22,6 +22,14 @@ export const tournament = {
   playerInAnotherTeam: (teamName: string) =>
     `هذا العضو منضم بالفعل إلى فريق "${teamName}" في هذه البطولة`,
   teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
+  bothTeamsRequired: "يجب اختيار الفريقين",
+  roundNameTooLong: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)",
+  venueNameTooLong: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)",
+  leaguePairingAcrossGroups:
+    "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
+  mvpVoteExists: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء",
+  mvpCandidateOutsideMatch: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين",
+  noGroupPool: "بدون مجموعة",
   teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
   voteNeedsResult: "سجّل نتيجة المباراة قبل فتح التصويت",
