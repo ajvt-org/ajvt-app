@@ -104,6 +104,7 @@ export const ACTION_LABELS = {
   GENERATE_MATCH_SCHEDULE: "توليد جدول المباريات",
   GENERATE_BRACKET_DRAW: "توليد قرعة الأدوار الإقصائية",
   SET_UP_TOURNAMENT: "إعداد البطولة",
+  RESET_TOURNAMENT: "تصفير البطولة",
   GENERATE_BRACKET_SEMIS: "توليد نصف النهائي",
   GENERATE_BRACKET_NEXT_ROUND: "توليد الدور التالي",
   UPDATE_SETTINGS: "تعديل إعدادات الرابطة",
