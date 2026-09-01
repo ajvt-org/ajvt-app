@@ -12,6 +12,8 @@ export const activityRegistrants = {
   noTeam: "بلا فريق",
   searchRegistrants: "ابحث في المسجلين بالاسم أو الهاتف أو الفريق...",
   noneMatch: "لا يوجد مسجل مطابق",
+  filterByTeam: "تصفية حسب الفريق",
+  allTeams: "كل الفرق",
   viewProof: "عرض إثبات الدفع",
   rejectReason: "سبب الرفض (اختياري)...",
   confirmReject: "تأكيد الرفض",
