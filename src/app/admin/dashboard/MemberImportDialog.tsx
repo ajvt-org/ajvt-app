@@ -16,7 +16,7 @@ import {
   clearSelection,
   editRow,
   editableRows,
-  fillAgeGroup,
+  fillValues,
   selectMissingAgeGroup,
   selectRow,
   toggleSkip,
@@ -179,7 +179,7 @@ export default function MemberImportDialog({ ageGroups, onImported, onClose }: P
               onSelect={(row, value) => setRows((all) => selectRow(all, row, value))}
               onSelectMissing={() => setRows(selectMissingAgeGroup)}
               onClear={() => setRows(clearSelection)}
-              onFillAgeGroup={(age) => setRows((all) => fillAgeGroup(all, age, context))}
+              onFillAgeGroup={(age) => setRows((all) => fillValues(all, { age }, context))}
               onBack={back}
               onImport={send}
             />
