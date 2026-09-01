@@ -18,7 +18,7 @@ import {
   nextKickTeamId,
   playedScore,
 } from "@/lib/matchScores";
-import { discipline as disciplineTexts, matchAdmin as texts } from "@/lib/texts";
+import { discipline as disciplineTexts, lists, matchAdmin as texts } from "@/lib/texts";
 
 export default function ResultForm({
   match,
@@ -207,7 +207,9 @@ export default function ResultForm({
       {suspendedPresent.length > 0 && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
           <IconLabel name="ban">
-            {disciplineTexts.hiddenSuspended(suspendedPresent.map((m) => m.fullName).join("، "))}
+            {disciplineTexts.hiddenSuspended(
+              suspendedPresent.map((m) => m.fullName).join(lists.separator),
+            )}
           </IconLabel>
         </p>
       )}
@@ -332,7 +334,7 @@ export default function ResultForm({
           style={{ color: "var(--text-muted)" }}
         >
           <IconLabel name="star" filled>
-            رجل المباراة (اختياري)
+            {texts.motmOptional}
           </IconLabel>
         </label>
         <select
@@ -343,7 +345,7 @@ export default function ResultForm({
           onChange={(e) => setManOfTheMatchId(e.target.value)}
           className="input"
         >
-          <option value="">بدون</option>
+          <option value="">{texts.motmNone}</option>
           {[...rosterOf(match.homeTeam.id), ...rosterOf(match.awayTeam.id)].map((m) => (
             <option key={m.id} value={m.id}>
               {m.fullName}

@@ -1,3 +1,5 @@
+import { lists } from "./lists";
+
 export const memberImportDialog = {
   title: "إضافة مجموعة من ملف",
   stepTitle: (step: string) => `إضافة مجموعة من ملف، ${step}`,
@@ -14,7 +16,7 @@ export const memberImportDialog = {
   rowsReady: (count: number) => `${count} سطراً جاهزاً`,
   rowsBlocked: (count: number) => `${count} سطراً يحتاج تصحيحاً`,
   rowsSkipped: (count: number) => `${count} سطراً متروكاً`,
-  listSeparator: "، ",
+  listSeparator: lists.separator,
   noticeSeparator: " · ",
   columnRow: "السطر",
   columnName: "الاسم الكامل",

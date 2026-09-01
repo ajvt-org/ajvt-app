@@ -24,6 +24,7 @@ export { adminTabs } from "./adminNav";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { daysTab } from "./daysTab";
+export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationActions, donationEdit } from "./donationEdit";

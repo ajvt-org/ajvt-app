@@ -17,7 +17,7 @@ import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, lists } from "@/lib/texts";
 
 export default function MatchCard({
   match,
@@ -103,7 +103,7 @@ export default function MatchCard({
             <span>
               {priorMeetings.map((pm, i) => (
                 <span key={pm.id}>
-                  {i > 0 && "، "}
+                  {i > 0 && lists.separator}
                   {pm.status === "PLAYED" ? (
                     <Scoreline home={pm.homeScore} away={pm.awayScore} />
                   ) : (

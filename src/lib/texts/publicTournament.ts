@@ -1,3 +1,5 @@
+import { lists } from "./lists";
+
 import { countedNoun, type NounForms } from "../arabicPlural";
 
 const UNKNOWN_MINUTE_GOALS: NounForms = {
@@ -21,7 +23,7 @@ export const matchDisplay = {
   penalties: "ركلات ترجيح",
   motm: "رجل المباراة",
   priorMeetings: "مواجهات سابقة:",
-  meetingSeparator: "، ",
+  meetingSeparator: lists.separator,
   upcomingShort: "قادمة",
   todayMatches: "مباريات اليوم",
   clubName: "رابطة شباب قرية التاكلالت",
