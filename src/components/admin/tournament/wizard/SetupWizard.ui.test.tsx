@@ -30,6 +30,17 @@ function open(teamCount: number, playedCount = 0) {
 
 const next = () => fireEvent.click(screen.getByRole("button", { name: texts.next }));
 
+const drawnTeams = () =>
+  screen.getAllByRole("button", { name: /^فريق / }).map((b) => b.textContent ?? "");
+
+function firstOfEachOfTwoGroups(): [string, string] {
+  const groups = screen
+    .getAllByText(/^المجموعة /)
+    .map((heading) => heading.parentElement as HTMLElement)
+    .map((card) => within(card).getAllByRole("button", { name: /^فريق / })[0].textContent ?? "");
+  return [groups[0], groups[1]];
+}
+
 describe("the setup wizard", () => {
   beforeEach(() => {
     cleanup();
@@ -104,15 +115,17 @@ describe("the setup wizard", () => {
     next();
 
     expect(screen.getByText(texts.drawTitle)).toBeTruthy();
-    const before = screen.getAllByRole("button", { name: /^فريق / }).map((b) => b.textContent);
-    fireEvent.click(screen.getByRole("button", { name: "فريق 1" }));
+    const before = drawnTeams();
+    const [first, second] = firstOfEachOfTwoGroups();
+    fireEvent.click(screen.getByRole("button", { name: first }));
 
     expect(screen.getByText(texts.swapWith)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "فريق 2" }));
+    fireEvent.click(screen.getByRole("button", { name: second }));
 
-    const after = screen.getAllByRole("button", { name: /^فريق / }).map((b) => b.textContent);
+    const after = drawnTeams();
     expect(after).not.toEqual(before);
     expect([...after].sort()).toEqual([...before].sort());
+    expect(after.indexOf(first)).toBe(before.indexOf(second));
   });
 
   it("shows the qualifier slots rather than teams in the bracket", () => {
