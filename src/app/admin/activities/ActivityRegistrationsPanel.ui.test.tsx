@@ -9,7 +9,16 @@ const onUnregister = vi.fn();
 const onReview = vi.fn();
 
 function candidate(over: Partial<MemberOption> = {}): MemberOption {
-  return { id: "u1", fullName: "أحمد ولد محمد", phone: "22334455", status: "ACTIVE", ...over };
+  return {
+    id: "u1",
+    fullName: "أحمد ولد محمد",
+    phone: "22334455",
+    photo: null,
+    age: "البدريين",
+    village: "التاكلالت",
+    status: "ACTIVE",
+    ...over,
+  };
 }
 
 function registration(over: Partial<Registration> = {}): Registration {
@@ -94,10 +103,53 @@ describe("the manual add on the registrants tab", () => {
     expect(screen.getByText("كل الأعضاء مسجلون في هذا النشاط")).toBeTruthy();
   });
 
-  it("says a candidate's membership standing in the words the rest of the admin uses", () => {
+  it("lists nobody until the admin types", () => {
+    show([candidate()]);
+
+    expect(screen.queryByText("أحمد ولد محمد")).toBeNull();
+    expect(screen.getByText("اكتب اسماً أو رقم هاتف للبحث عن عضو")).toBeTruthy();
+  });
+
+  it("tells two people of the same name apart by phone, village and عصر", async () => {
+    show([
+      candidate({ id: "u1", phone: "22334455", village: "التاكلالت", age: "البدريين" }),
+      candidate({ id: "u2", phone: "22990011", village: "أجوير", age: "الأشبال" }),
+    ]);
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "احمد");
+
+    expect(screen.getByText("22334455")).toBeTruthy();
+    expect(screen.getByText("22990011")).toBeTruthy();
+    expect(screen.getByText("التاكلالت · البدريين")).toBeTruthy();
+    expect(screen.getByText("أجوير · الأشبال")).toBeTruthy();
+  });
+
+  it("stays quiet about a membership that is approved", async () => {
     show([candidate({ status: "ACTIVE" })]);
 
-    expect(screen.getByText("معتمد")).toBeTruthy();
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "احمد");
+
+    expect(screen.queryByText("معتمد")).toBeNull();
+  });
+
+  it("warns when a membership is not approved", async () => {
+    show([candidate({ status: "PENDING" })]);
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "احمد");
+
+    expect(screen.getByText("قيد الانتظار")).toBeTruthy();
+  });
+
+  it("finds a candidate by their village", async () => {
+    show([
+      candidate({ id: "u1", fullName: "محمد", village: "التاكلالت" }),
+      candidate({ id: "u2", fullName: "سالم", village: "أجوير" }),
+    ]);
+
+    await userEvent.type(screen.getByPlaceholderText("ابحث بالاسم أو الهاتف..."), "اجوير");
+
+    expect(screen.getByText("سالم")).toBeTruthy();
+    expect(screen.queryByText("محمد")).toBeNull();
   });
 });
 
