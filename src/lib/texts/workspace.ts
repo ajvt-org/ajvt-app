@@ -5,6 +5,12 @@ export const activityWorkspace = {
   capacity: "السعة",
   acceptedOfRequests: (accepted: string, requests: string) => `${accepted} من ${requests}`,
   publicPage: "الصفحة العامة",
+  sections: {
+    setup: "الإعداد",
+    people: "المشاركون",
+    play: "المنافسة",
+    records: "السجلات",
+  },
   tabs: {
     details: "التفاصيل",
     registrations: "المسجلون",

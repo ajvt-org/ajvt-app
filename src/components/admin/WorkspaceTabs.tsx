@@ -10,6 +10,12 @@ export interface WorkspaceTab {
   badge?: number;
 }
 
+export interface WorkspaceSection {
+  key: string;
+  label: string;
+  tabs: WorkspaceTab[];
+}
+
 export default function WorkspaceTabs({
   tabs,
   active,
