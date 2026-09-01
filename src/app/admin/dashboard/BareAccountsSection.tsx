@@ -7,7 +7,6 @@ import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import { push } from "@/lib/messages";
-import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
@@ -21,8 +20,8 @@ function identify(user: BareAccount): string {
 
 function daysSince(createdAt: string): string {
   const days = daysWaiting(new Date(createdAt), new Date());
-  if (days <= 0) return "سجّل اليوم";
-  return `سجّل منذ ${countedNoun(days, DAYS)}`;
+  if (days <= 0) return texts.signedUpToday;
+  return texts.signedUpAgo(days);
 }
 
 function NudgeButton({ user }: { user: BareAccount }) {
@@ -63,7 +62,7 @@ function NudgeButton({ user }: { user: BareAccount }) {
       className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
       style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
     >
-      <IconLabel name="bell">تذكير</IconLabel>
+      <IconLabel name="bell">{texts.nudge}</IconLabel>
     </button>
   );
 }
@@ -143,14 +142,14 @@ function Row({
               className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              {resetBusy ? "..." : <IconLabel name="lock">إعادة تعيين</IconLabel>}
+              {resetBusy ? "..." : <IconLabel name="lock">{texts.resetPassword}</IconLabel>}
             </button>
             <button
               onClick={onFill}
               className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
               style={{ background: "var(--mint-700)", color: "white" }}
             >
-              <IconLabel name="plus">إضافة طلب</IconLabel>
+              <IconLabel name="plus">{texts.addRequest}</IconLabel>
             </button>
           </>
         )}
@@ -160,7 +159,7 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
         >
-          <IconLabel name="trash">حذف</IconLabel>
+          <IconLabel name="trash">{texts.remove}</IconLabel>
         </button>
       </div>
       {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
