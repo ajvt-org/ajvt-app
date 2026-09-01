@@ -33,6 +33,9 @@ export interface MemberOption {
   id: string;
   fullName: string;
   phone: string | null;
+  photo: string | null;
+  age: string | null;
+  village: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
 }
 
