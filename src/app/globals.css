@@ -875,22 +875,22 @@ body {
   border-bottom: 1px solid var(--mint-100);
 }
 
-/* A team card opens onto its squad. Preflight drops the disclosure triangle,
-   so without a chevron nothing says the card opens at all. */
-.team-summary {
+/* Preflight drops the disclosure triangle, so without a chevron nothing says a
+   card opens at all. */
+.disclosure-summary {
   list-style: none;
 }
 
-.team-summary::-webkit-details-marker {
+.disclosure-summary::-webkit-details-marker {
   display: none;
 }
 
-.team-chevron {
+.disclosure-chevron {
   color: var(--text-muted);
   transition: transform 0.15s ease;
 }
 
-details[open] > .team-summary .team-chevron {
+details[open] > .disclosure-summary .disclosure-chevron {
   transform: rotate(180deg);
 }
 
