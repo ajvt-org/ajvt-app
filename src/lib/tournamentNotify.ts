@@ -80,18 +80,19 @@ export async function sendMatchReminders() {
       id: true,
       homeTeamId: true,
       awayTeamId: true,
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
+      homeTeam: { select: { id: true, name: true } },
+      awayTeam: { select: { id: true, name: true } },
       activityId: true,
     },
   });
 
   for (const m of matches) {
+    if (m.homeTeam === null || m.awayTeam === null) continue;
     if (!(await claimReminder(m.id, now))) continue;
 
     await notifyTeams(
-      m.homeTeamId,
-      m.awayTeamId,
+      m.homeTeam.id,
+      m.awayTeam.id,
       notify.matchReminder(m.homeTeam.name, m.awayTeam.name, m.activityId),
       "MATCH_REMINDER",
     ).catch((err) => logger.error("match.reminder.push.error", err));

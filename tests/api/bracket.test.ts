@@ -66,7 +66,7 @@ describe("the knockout draw", () => {
     });
     expect(matches).toHaveLength(2);
     for (const m of matches) {
-      expect(m.homeTeam.groupId).not.toBe(m.awayTeam.groupId);
+      expect(m.homeTeam?.groupId).not.toBe(m.awayTeam?.groupId);
     }
   });
 

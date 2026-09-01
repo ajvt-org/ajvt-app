@@ -1,13 +1,12 @@
-import Icon from "@/components/Icon";
-import TeamLogo from "@/components/tournament/TeamLogo";
+import BracketSide, { type BracketSideTeam } from "@/components/tournament/BracketSide";
 
 interface BracketMatch {
   id: string;
   bracketRound: number;
   order: number;
   round: string | null;
-  homeTeam: { id: string; name: string; logo?: string | null };
-  awayTeam: { id: string; name: string; logo?: string | null };
+  homeTeam: BracketSideTeam | null;
+  awayTeam: BracketSideTeam | null;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -56,55 +55,25 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                     style={{ border: "1px solid var(--mint-200)", height: CARD_HEIGHT }}
                     dir="rtl"
                   >
-                    <div
-                      className="flex items-center justify-between gap-1 px-2 text-xs"
-                      style={{
-                        height: CARD_HEIGHT / 2,
-                        background: homeWinner ? "#d1fae5" : "white",
-                        fontWeight: homeWinner ? 700 : 400,
-                      }}
-                    >
-                      <span className="flex items-center gap-1 truncate">
-                        <TeamLogo logo={m.homeTeam.logo} name={m.homeTeam.name} size={16} />
-                        {homeWinner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
-                        <span className="truncate" style={{ color: "var(--text-main)" }}>
-                          {m.homeTeam.name}
-                        </span>
-                      </span>
-                      {m.status === "PLAYED" && (
-                        <span className="shrink-0">
-                          {m.homeScore}
-                          {m.homePenalties !== null && (
-                            <span style={{ color: "var(--text-muted)" }}> ({m.homePenalties})</span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      className="flex items-center justify-between gap-1 px-2 text-xs"
-                      style={{
-                        height: CARD_HEIGHT / 2,
-                        background: awayWinner ? "#d1fae5" : "var(--mint-50)",
-                        fontWeight: awayWinner ? 700 : 400,
-                        borderTop: "1px solid var(--mint-100)",
-                      }}
-                    >
-                      <span className="flex items-center gap-1 truncate">
-                        <TeamLogo logo={m.awayTeam.logo} name={m.awayTeam.name} size={16} />
-                        {awayWinner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
-                        <span className="truncate" style={{ color: "var(--text-main)" }}>
-                          {m.awayTeam.name}
-                        </span>
-                      </span>
-                      {m.status === "PLAYED" && (
-                        <span className="shrink-0">
-                          {m.awayScore}
-                          {m.awayPenalties !== null && (
-                            <span style={{ color: "var(--text-muted)" }}> ({m.awayPenalties})</span>
-                          )}
-                        </span>
-                      )}
-                    </div>
+                    <BracketSide
+                      team={m.homeTeam}
+                      score={m.homeScore}
+                      penalties={m.homePenalties}
+                      played={m.status === "PLAYED"}
+                      winner={homeWinner}
+                      height={CARD_HEIGHT / 2}
+                      background={homeWinner ? "#d1fae5" : "white"}
+                    />
+                    <BracketSide
+                      team={m.awayTeam}
+                      score={m.awayScore}
+                      penalties={m.awayPenalties}
+                      played={m.status === "PLAYED"}
+                      winner={awayWinner}
+                      height={CARD_HEIGHT / 2}
+                      background={awayWinner ? "#d1fae5" : "var(--mint-50)"}
+                      borderTop="1px solid var(--mint-100)"
+                    />
                   </div>
                 );
               })}

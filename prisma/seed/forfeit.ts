@@ -14,6 +14,7 @@ export async function seedForfeit(activityId: string) {
     select: { id: true, homeTeamId: true, awayTeamId: true, homeScore: true, awayScore: true },
   });
   if (!match) return null;
+  if (match.homeTeamId === null || match.awayTeamId === null) return null;
 
   const winnerTeamId = match.awayTeamId;
   const score = forfeitScore(
