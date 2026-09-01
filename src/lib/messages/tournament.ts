@@ -5,6 +5,8 @@ export const tournament = {
   groupNotFound: "المجموعة غير موجودة",
   groupNameRequired: "اسم المجموعة مطلوب",
   groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
+  groupHasMatches:
+    "لا يمكن حذف مجموعة بعد جدولة المباريات، أعد إعداد البطولة إن أردت تغيير المجموعات",
   targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   matchNotFound: "المباراة غير موجودة",
   bookingNotFound: "البطاقة غير موجودة",
