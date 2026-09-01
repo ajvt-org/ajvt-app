@@ -82,6 +82,8 @@ const KEPT_CLEAN = [
   "src/components/tournament/publicTypes.ts",
   "src/lib/fixtureTeams.ts",
   "src/lib/adminMatchesServer.ts",
+  "src/lib/tournamentResetServer.ts",
+  "src/app/api/admin/activities/[id]/tournament-reset/route.ts",
   "src/components/admin/tournament/TeamsTab.tsx",
   "src/components/ProofUpload.tsx",
   "src/components/admin/tournament/PlayersTab.tsx",
