@@ -43,6 +43,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/treasuryServer.ts",
   "src/lib/tournamentNotify.ts",
   "src/lib/tournamentSetupServer.ts",
+  "src/lib/tournamentResetServer.ts",
   "src/lib/uploadFields.ts",
   "src/lib/verifyEnrollmentsServer.ts",
   "src/lib/viewerAge.ts",
