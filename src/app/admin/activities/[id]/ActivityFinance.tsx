@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ProfileSection from "@/components/admin/ProfileSection";
 import { formatDate } from "@/lib/utils";
 import { withRunningBalance, type LedgerInput, type LedgerTotals } from "@/lib/activityLedger";
+import { activityFinance as texts } from "@/lib/texts";
 
 interface FinanceResponse {
   rows: LedgerInput[];
@@ -38,16 +39,16 @@ export default function ActivityFinance({ activityId }: { activityId: string }) 
   const entries = withRunningBalance(data.rows);
 
   return (
-    <ProfileSection icon="wallet" title={`المالية (${entries.length})`}>
+    <ProfileSection icon="wallet" title={texts.heading(entries.length)}>
       <div className="grid grid-cols-3 gap-2 mb-3">
-        <Total label="الإيرادات" value={data.totals.income} color="var(--mint-600)" />
-        <Total label="المصاريف" value={data.totals.expenses} color="var(--copper-500)" />
-        <Total label="الرصيد" value={data.totals.balance} color="var(--text-main)" />
+        <Total label={texts.income} value={data.totals.income} color="var(--mint-600)" />
+        <Total label={texts.expenses} value={data.totals.expenses} color="var(--copper-500)" />
+        <Total label={texts.balance} value={data.totals.balance} color="var(--text-main)" />
       </div>
 
       {entries.length === 0 ? (
         <p className="text-sm text-center py-4" style={{ color: "var(--text-muted)" }}>
-          لا توجد حركات مالية على هذا النشاط
+          {texts.empty}
         </p>
       ) : (
         <div className="space-y-1.5">
