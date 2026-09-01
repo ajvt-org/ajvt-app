@@ -86,7 +86,7 @@ describe("PlayersTab", () => {
         logo: null,
       });
       expect(post).toHaveBeenNthCalledWith(2, "/api/admin/teams/team-new/members", {
-        memberId: "p9",
+        userId: "p9",
       });
       expect(onChange).toHaveBeenCalled();
     });

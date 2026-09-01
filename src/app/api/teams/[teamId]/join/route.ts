@@ -12,10 +12,10 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = parse(teamMemberSchema, await req.json());
+    const { userId } = parse(teamMemberSchema, await req.json());
 
     const [membership, team] = await Promise.all([
-      memberId === session.userId ? currentMembership(prisma, memberId) : null,
+      userId === session.userId ? currentMembership(prisma, userId) : null,
       prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
     ]);
     if (!membership) {
@@ -64,9 +64,9 @@ export const DELETE = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const session = await requireUser();
     const { teamId } = await params;
-    const { memberId } = parse(teamMemberSchema, await req.json());
+    const { userId } = parse(teamMemberSchema, await req.json());
 
-    if (memberId !== session.userId) {
+    if (userId !== session.userId) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 

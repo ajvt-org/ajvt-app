@@ -42,14 +42,14 @@ export default function ActivityRegistrations({
 
   function pickTeam(teamId: string) {
     return run(
-      () => api.post(`/api/teams/${teamId}/join`, { memberId: member.id }),
+      () => api.post(`/api/teams/${teamId}/join`, { userId: member.id }),
       activityRegistration.joinRequested,
     );
   }
 
   function leaveTeam(teamId: string) {
     return run(
-      () => api.del(`/api/teams/${teamId}/join`, { memberId: member.id }),
+      () => api.del(`/api/teams/${teamId}/join`, { userId: member.id }),
       activityRegistration.requestCancelled,
     );
   }

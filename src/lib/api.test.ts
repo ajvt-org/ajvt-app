@@ -45,12 +45,12 @@ describe("api", () => {
   it("sends a delete body as json when one is given", async () => {
     const fetchMock = mockFetch(200, {});
 
-    await api.del("/api/teams/t1/join", { memberId: "m1" });
+    await api.del("/api/teams/t1/join", { userId: "u1" });
 
     expect(fetchMock).toHaveBeenCalledWith("/api/teams/t1/join", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId: "m1" }),
+      body: JSON.stringify({ userId: "u1" }),
     });
   });
 
