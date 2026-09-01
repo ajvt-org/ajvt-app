@@ -1,6 +1,6 @@
 "use client";
 
-import type { Match, Team } from "./types";
+import type { DecidedMatch, Team } from "./types";
 import MvpVoteOpen from "./MvpVoteOpen";
 import MvpVoteResults from "./MvpVoteResults";
 
@@ -10,7 +10,7 @@ export default function MvpVoteAdmin({
   defaultMinutes,
   onChange,
 }: {
-  match: Match;
+  match: DecidedMatch;
   teams: Team[];
   defaultMinutes: number;
   onChange: () => void;

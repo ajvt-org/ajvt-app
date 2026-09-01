@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Scoreline from "./Scoreline";
 import MatchResult from "./MatchResult";
-import type { PublicMatch } from "./publicTypes";
+import type { DecidedMatch } from "./publicTypes";
 
-const MATCH: PublicMatch = {
+const MATCH: DecidedMatch = {
   id: "m1",
   homeTeam: { id: "t1", name: "الصقور", logo: null },
   awayTeam: { id: "t2", name: "النسور", logo: null },

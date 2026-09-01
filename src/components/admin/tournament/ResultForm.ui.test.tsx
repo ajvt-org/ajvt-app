@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import ResultForm from "./ResultForm";
-import type { Match, Team } from "./types";
+import type { DecidedMatch, Team } from "./types";
 import { matchAdmin as texts } from "@/lib/texts";
 
 const patchMock = vi.fn();
@@ -11,7 +11,7 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-const MATCH: Match = {
+const MATCH: DecidedMatch = {
   id: "m1",
   homeTeam: { id: "t1", name: "الصقور", logo: null },
   awayTeam: { id: "t2", name: "النسور", logo: null },
@@ -96,7 +96,7 @@ describe("ResultForm as goal events", () => {
     patchMock.mockReset().mockResolvedValue({});
   });
 
-  function show(over: Partial<Match> = {}) {
+  function show(over: Partial<DecidedMatch> = {}) {
     render(
       <ResultForm
         match={{ ...MATCH, ...over }}
@@ -210,7 +210,7 @@ describe("the extra time section", () => {
     patchMock.mockReset().mockResolvedValue({});
   });
 
-  function show(over: Partial<Match> = {}) {
+  function show(over: Partial<DecidedMatch> = {}) {
     render(
       <ResultForm
         match={{ ...MATCH, ...over }}
@@ -293,7 +293,7 @@ describe("the shootout", () => {
     member: null,
   });
 
-  function show(over: Partial<Match> = {}) {
+  function show(over: Partial<DecidedMatch> = {}) {
     render(
       <ResultForm
         match={{ ...MATCH, ...over }}

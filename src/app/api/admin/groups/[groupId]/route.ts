@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireGroupAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { ConflictError } from "@/lib/errors";
 import { tournament } from "@/lib/messages";
 
 export const PATCH = withRoute(
@@ -54,10 +55,16 @@ export const DELETE = withRoute(
     const { groupId } = await params;
     const session = await requireGroupAccess(groupId);
 
-    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } });
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true, activityId: true },
+    });
     if (!group) {
       return NextResponse.json({ error: tournament.groupNotFound }, { status: 404 });
     }
+
+    const fixtures = await prisma.match.count({ where: { activityId: group.activityId } });
+    if (fixtures > 0) throw new ConflictError(tournament.groupHasMatches);
 
     await prisma.group.delete({ where: { id: groupId } });
     await logAction(session.username, "DELETE_GROUP", group.name);

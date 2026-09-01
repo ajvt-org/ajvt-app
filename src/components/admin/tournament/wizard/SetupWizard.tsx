@@ -125,6 +125,7 @@ export default function SetupWizard({
   }
 
   async function write() {
+    const kickOffs = state.times.filter(Boolean);
     setError("");
     setBusy(true);
     try {
@@ -137,8 +138,8 @@ export default function SetupWizard({
             }))
           : [],
         qualifierCount: grouped ? qualifierCount : 0,
-        startsAt: `${state.startsAt}T${state.times[0]}`,
-        times: state.times.filter(Boolean),
+        startsAt: `${state.startsAt}T${kickOffs[0]}`,
+        times: kickOffs,
         venue: venue.trim() || null,
       });
       showToast(texts.done);

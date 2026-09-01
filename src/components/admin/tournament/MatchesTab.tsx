@@ -1,16 +1,13 @@
 "use client";
 
-import BracketTree from "@/components/tournament/BracketTree";
-import { getMatchWinnerTeamId } from "@/lib/tournament";
 import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
+import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
 import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
 import { api, errorMessage } from "@/lib/api";
-import ArrowLabel from "@/components/ArrowLabel";
-import Icon from "@/components/Icon";
 import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
 import SetupWizard from "./wizard/SetupWizard";
@@ -68,16 +65,8 @@ export default function MatchesTab({
     }
   }
 
-  const {
-    bracketMatches,
-    finalRound,
-    bracketIsFinalDone,
-    canAdvanceBracket,
-    poolsReady,
-    knockoutLocked,
-    isTwoGroupFormat,
-    groupStageComplete,
-  } = matchesState({ format, groups, teams, matches });
+  const state = matchesState({ format, groups, teams, matches });
+  const { poolsReady, groupStageComplete } = state;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -290,94 +279,12 @@ export default function MatchesTab({
       )}
 
       {teams.length >= 2 && (
-        <div className="card p-4 space-y-3">
-          <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="trophy">
-              {isTwoGroupFormat ? texts.bracketTwoGroups : texts.bracketKnockout}
-            </IconLabel>
-          </p>
-          {bracketMatches.length === 0 ? (
-            knockoutLocked ? (
-              <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-                <Icon name="lock" size={14} className="icon-inline" /> {texts.knockoutLockedHint}
-              </p>
-            ) : isTwoGroupFormat ? (
-              <BracketSuggestion
-                activityId={activityId}
-                busy={generating}
-                onValidate={(redo) => runBracketAction("suggestion", texts.confirmSemis, { redo })}
-              />
-            ) : (
-              <>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {texts.drawHint}
-                </p>
-                <button
-                  onClick={() => runBracketAction("draw", texts.confirmDraw)}
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                  style={{ width: "auto" }}
-                >
-                  <IconLabel name="dice">{texts.draw}</IconLabel>
-                </button>
-              </>
-            )
-          ) : (
-            <>
-              <BracketTree matches={bracketMatches} />
-              {bracketMatches.every((m) => m.bracketRound === 1 && m.status === "SCHEDULED") && (
-                <button
-                  onClick={() =>
-                    isTwoGroupFormat
-                      ? runBracketAction("suggestion", texts.confirmRegenerateSemis, {
-                          redo: true,
-                        })
-                      : runBracketAction("draw", texts.confirmRedraw, { redo: true })
-                  }
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                  style={{ width: "auto" }}
-                >
-                  <IconLabel name="dice">
-                    {isTwoGroupFormat ? texts.regenerateSemis : texts.redraw}
-                  </IconLabel>
-                </button>
-              )}
-              {canAdvanceBracket && (
-                <button
-                  onClick={() => runBracketAction("next-round", texts.confirmNextRound)}
-                  disabled={generating}
-                  className="btn btn-primary text-sm"
-                >
-                  <ArrowLabel>{texts.nextRound}</ArrowLabel>
-                </button>
-              )}
-              {bracketIsFinalDone &&
-                (() => {
-                  const finalMatch = finalRound[0];
-                  const winnerId = getMatchWinnerTeamId({
-                    ...finalMatch,
-                    homeTeamId: finalMatch.homeTeam.id,
-                    awayTeamId: finalMatch.awayTeam.id,
-                  });
-                  const winnerName =
-                    winnerId === finalMatch.homeTeam.id
-                      ? finalMatch.homeTeam.name
-                      : finalMatch.awayTeam.name;
-                  return (
-                    <p
-                      className="text-sm font-black text-center"
-                      style={{ color: "var(--mint-700)" }}
-                    >
-                      <IconLabel name="trophy">
-                        {texts.champion} {winnerName}
-                      </IconLabel>
-                    </p>
-                  );
-                })()}
-            </>
-          )}
-        </div>
+        <BracketPanel
+          activityId={activityId}
+          busy={generating}
+          state={state}
+          onAction={runBracketAction}
+        />
       )}
 
       {teams.length >= 2 && (

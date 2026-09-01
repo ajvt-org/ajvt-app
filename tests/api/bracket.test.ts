@@ -206,6 +206,42 @@ describe("a bracket laid out before the teams are known", () => {
     );
   });
 
+  it("refuses a draw the scheduled first round cannot hold", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 4);
+
+    const res = await draw(activity.id);
+
+    expect(res.status).toBe(409);
+  });
+
+  it("leaves every round and every kick off alone when it refuses", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 4);
+    const before = await bracket(activity.id);
+
+    await draw(activity.id);
+
+    const after = await bracket(activity.id);
+    expect(after.map((m) => m.id)).toEqual(before.map((m) => m.id));
+    expect(after.map((m) => m.bracketRound)).toEqual([1, 1, 1, 1, 2, 2, 3]);
+    expect(after.map((m) => m.matchDate?.toISOString())).toEqual(
+      before.map((m) => m.matchDate?.toISOString()),
+    );
+    expect(after.every((m) => m.homeTeamId === null && m.awayTeamId === null)).toBe(true);
+  });
+
+  it("creates the first round when no bracket is scheduled at all", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+
+    const res = await draw(activity.id);
+
+    expect(res.status).toBe(200);
+    const after = await bracket(activity.id);
+    expect(after).toHaveLength(2);
+    expect(after.every((m) => m.bracketRound === 1 && m.homeTeamId !== null)).toBe(true);
+  });
+
   it("refuses a second draw that is not a redo", async () => {
     const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
     await bracketOfPlaceholders(activity.id, 2);

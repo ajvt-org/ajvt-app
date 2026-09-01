@@ -108,7 +108,7 @@ async function seedMatches(
         homeScore,
         awayScore,
         status: played ? "PLAYED" : "SCHEDULED",
-        manOfTheMatchId: played ? (roster[teams[h].id]?.[0] ?? null) : null,
+        manOfTheMatchUserId: played ? (roster[teams[h].id]?.[0] ?? null) : null,
       },
     });
 
@@ -345,7 +345,7 @@ export async function seedFinishedCup(
         homePenalties: shootout ? 4 : null,
         awayPenalties: shootout ? 2 : null,
         status: "PLAYED",
-        manOfTheMatchId: roster[teams[h].id][0],
+        manOfTheMatchUserId: roster[teams[h].id][0],
       },
     });
 

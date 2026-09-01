@@ -12,7 +12,7 @@ import { matchEventRows, matchTimeline, withoutScorersAndCards } from "@/lib/mat
 import { forfeitLoserTeamId } from "@/lib/forfeit";
 import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
-import type { PublicMatch } from "./publicTypes";
+import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
 
 export default function MatchResult({
@@ -26,7 +26,7 @@ export default function MatchResult({
   myVoteCandidateId,
   manOfTheMatchTeam = null,
 }: {
-  match: PublicMatch;
+  match: DecidedMatch;
   day: { round: string | null; venue: string | null };
   allMatches: PublicMatch[];
   football?: boolean;

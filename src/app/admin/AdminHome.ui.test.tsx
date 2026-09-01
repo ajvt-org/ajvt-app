@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import AdminHome from "./AdminHome";
+import { publicTournament } from "@/lib/texts";
 
 const get = vi.fn();
 const replace = vi.fn();
@@ -37,12 +38,14 @@ const TODAY_MATCH = {
   awayTeam: { name: "النسور" },
 };
 
+const WAITING_MATCH = { ...TODAY_MATCH, id: "m2", homeTeam: null, awayTeam: null };
+
 const SUMMARY = {
   year: 2026,
   membership: { current: 8, active: 10, former: 2 },
   money: { revenue: 5000, spending: 2000, net: 3000 },
   handling: { pendingMembers: 1, pendingRegistrations: 2, pendingPayments: 0, total: 3 },
-  matchesToday: [] as (typeof TODAY_MATCH)[],
+  matchesToday: [] as (typeof TODAY_MATCH | typeof WAITING_MATCH)[],
 };
 
 const WAITING = { pending: [], unfinished: [] };
@@ -79,6 +82,15 @@ describe("the admin home", () => {
     expect(await screen.findByText("مباريات اليوم")).toBeTruthy();
     const row = screen.getByText(/الصقور/).closest("a");
     expect(row?.getAttribute("href")).toBe("/admin/activities/a1?tab=matches");
+  });
+
+  it("names a fixture whose teams are not known yet", async () => {
+    answer({ ...SUMMARY, matchesToday: [WAITING_MATCH] });
+
+    render(<AdminHome />);
+
+    expect(await screen.findByText("مباريات اليوم")).toBeTruthy();
+    expect(screen.getAllByText(publicTournament.teamDecidedLater)).toHaveLength(2);
   });
 
   it("keeps the card away on a day without matches", async () => {

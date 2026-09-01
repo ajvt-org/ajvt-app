@@ -5,6 +5,8 @@ export const tournament = {
   groupNotFound: "المجموعة غير موجودة",
   groupNameRequired: "اسم المجموعة مطلوب",
   groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
+  groupHasMatches:
+    "لا يمكن حذف مجموعة بعد جدولة المباريات، أعد إعداد البطولة إن أردت تغيير المجموعات",
   targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   matchNotFound: "المباراة غير موجودة",
   bookingNotFound: "البطاقة غير موجودة",
@@ -20,6 +22,14 @@ export const tournament = {
   playerInAnotherTeam: (teamName: string) =>
     `هذا العضو منضم بالفعل إلى فريق "${teamName}" في هذه البطولة`,
   teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
+  bothTeamsRequired: "يجب اختيار الفريقين",
+  roundNameTooLong: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)",
+  venueNameTooLong: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)",
+  leaguePairingAcrossGroups:
+    "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
+  mvpVoteExists: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء",
+  mvpCandidateOutsideMatch: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين",
+  noGroupPool: "بدون مجموعة",
   teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
   voteNeedsResult: "سجّل نتيجة المباراة قبل فتح التصويت",
@@ -72,6 +82,8 @@ export const tournament = {
     `فرق غير مكتملة (${size} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
   needPowerOfTwo: (count: number) =>
     `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${count}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح`,
+  bracketSlotsMismatch: (slots: number, pairs: number) =>
+    `الدور الأول المجدول يضم ${slots} مباراة والقرعة تحتاج ${pairs}، احذف مباريات الأدوار الإقصائية أو أعد إعداد البطولة`,
   bracketExists: "توجد قرعة بالفعل لهذه البطولة — استخدم زر إعادة القرعة",
   bracketHasResults: "الدور الإقصائي الحالي فيه نتائج مسجلة — لا يمكن إعادة القرعة",
   groupStageIncomplete: "أكمل جميع نتائج دور المجموعات أولاً قبل بدء الدور الإقصائي",

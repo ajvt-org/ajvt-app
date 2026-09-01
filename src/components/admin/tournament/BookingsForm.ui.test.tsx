@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import BookingsForm from "./BookingsForm";
-import type { Match, Team } from "./types";
+import type { DecidedMatch, Match, Team } from "./types";
 import { matchAdmin as texts } from "@/lib/texts";
 
 const postMock = vi.fn();
@@ -17,7 +17,7 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-const MATCH: Match = {
+const MATCH: DecidedMatch = {
   id: "m1",
   homeTeam: { id: "t1", name: "الصقور", logo: null },
   awayTeam: { id: "t2", name: "النسور", logo: null },

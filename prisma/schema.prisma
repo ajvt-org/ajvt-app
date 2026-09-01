@@ -219,7 +219,7 @@ model Match {
   venue               String?
   order               Int                @default(0)
   isKnockout          Boolean            @default(false)
-  bracketRound        Int? // set only for matches created by the bracket generator (round 1 = first knockout round, increasing towards the final)
+  bracketRound        Int?
   homeScore           Int?
   awayScore           Int?
   homePenalties       Int?

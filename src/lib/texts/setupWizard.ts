@@ -1,5 +1,6 @@
 export const setupLabels = {
-  groupRound: (groupName: string, round: number) => `${groupName} — الجولة ${round}`,
+  round: (round: number) => `الجولة ${round}`,
+  groupRound: (groupName: string, round: number) => `${groupName} — ${setupLabels.round(round)}`,
   groupName: (index: number) => `المجموعة ${index + 1}`,
 } as const;
 
@@ -68,6 +69,8 @@ export const setupWizard = {
   venue: "الملعب",
   venueOptional: "اختياري",
   lastDay: (days: number) => `تحتاج البطولة ${days} يوماً`,
+  backToBackDays:
+    "الأيام متتالية بلا راحة بينها، ويمكن إضافة أيام راحة من تبويب الأيام بعد الإنشاء",
 
   replaceWarning: "سيُحذف ما سبق من مجموعات ومباريات غير ملعوبة ويُستبدل بهذا الجدول",
 } as const;

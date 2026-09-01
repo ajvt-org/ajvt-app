@@ -3,6 +3,8 @@
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import { timeOf } from "@/lib/tournamentDays";
+import { fixtureName } from "@/lib/fixtureTeams";
+import { daysTab as texts, lists } from "@/lib/texts";
 import { dayLabel, doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
@@ -29,7 +31,7 @@ export default function DayCard({
       <div className="flex items-center gap-2 flex-wrap">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>
-            اليوم {day.position}
+            {texts.dayNumber(day.position)}
             <span className="font-semibold text-xs mr-2" style={{ color: "var(--text-muted)" }}>
               {dayLabel(day.date)}
             </span>
@@ -41,7 +43,7 @@ export default function DayCard({
               className="text-xs px-2 py-0.5 rounded-lg font-bold"
               style={{ background: "#fef3c7", color: "#b45309" }}
             >
-              يوم راحة
+              {texts.restDay}
             </span>
             <button
               onClick={() => onSetRest(false)}
@@ -49,7 +51,7 @@ export default function DayCard({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              جعله يوم مباريات
+              {texts.makeMatchDay}
             </button>
             <button
               onClick={onRemove}
@@ -57,7 +59,7 @@ export default function DayCard({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
             >
-              <IconLabel name="trash">حذف اليوم</IconLabel>
+              <IconLabel name="trash">{texts.removeDay}</IconLabel>
             </button>
           </>
         ) : day.matches.length === 0 ? (
@@ -68,7 +70,7 @@ export default function DayCard({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              جعله يوم راحة
+              {texts.makeRestDay}
             </button>
             <button
               onClick={onRemove}
@@ -76,7 +78,7 @@ export default function DayCard({
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
             >
-              <IconLabel name="trash">حذف اليوم</IconLabel>
+              <IconLabel name="trash">{texts.removeDay}</IconLabel>
             </button>
           </>
         ) : null}
@@ -87,7 +89,9 @@ export default function DayCard({
           className="text-xs font-bold mt-2 rounded-lg px-3 py-2"
           style={{ background: "#fef3c7", color: "#92400e" }}
         >
-          <IconLabel name="warning">يلعب مرتين في نفس اليوم: {conflicts.join("، ")}</IconLabel>
+          <IconLabel name="warning">
+            {texts.doubleBooked(conflicts.join(lists.separator))}
+          </IconLabel>
         </p>
       )}
 
@@ -108,20 +112,18 @@ export default function DayCard({
                   }
                 }}
                 disabled={busy}
-                aria-label="وقت المباراة"
+                aria-label={texts.matchTime}
                 className="input input-sm"
                 style={{ width: "auto" }}
               />
-              <span className="font-bold min-w-0">
-                {match.homeTeam.name} × {match.awayTeam.name}
-              </span>
+              <span className="font-bold min-w-0">{fixtureName(match)}</span>
               {match.venue && (
                 <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                   {match.venue}
                 </span>
               )}
               {match.status === "PLAYED" && (
-                <span className="badge badge-active text-xs">انتهت</span>
+                <span className="badge badge-active text-xs">{texts.finished}</span>
               )}
             </li>
           ))}

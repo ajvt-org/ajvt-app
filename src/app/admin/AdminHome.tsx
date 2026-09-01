@@ -14,6 +14,7 @@ import { counted } from "@/lib/arabicCount";
 import { ACTIVE_MEMBER, REQUEST } from "@/lib/messages";
 import { adminHome as texts } from "@/lib/texts";
 import { formatMatchTime } from "@/lib/clubTime";
+import { teamName } from "@/lib/fixtureTeams";
 
 export interface HomeMatch {
   id: string;
@@ -22,8 +23,8 @@ export interface HomeMatch {
   homeScore: number | null;
   awayScore: number | null;
   activity: { id: string; title: string };
-  homeTeam: { name: string };
-  awayTeam: { name: string };
+  homeTeam: { name: string } | null;
+  awayTeam: { name: string } | null;
 }
 
 export interface HomeSummary {
@@ -130,13 +131,13 @@ export default function AdminHome() {
                 style={{ color: "var(--text-main)" }}
               >
                 <span className="min-w-0 truncate font-semibold">
-                  <bdi>{m.homeTeam.name}</bdi>{" "}
+                  <bdi>{teamName(m.homeTeam)}</bdi>{" "}
                   {m.status === "PLAYED" ? (
                     <Scoreline home={m.homeScore} away={m.awayScore} />
                   ) : (
                     <span>×</span>
                   )}{" "}
-                  <bdi>{m.awayTeam.name}</bdi>
+                  <bdi>{teamName(m.awayTeam)}</bdi>
                 </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {m.activity.title}

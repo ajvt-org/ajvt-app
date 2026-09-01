@@ -21,6 +21,7 @@ import TournamentSummary from "@/components/tournament/TournamentSummary";
 import TournamentTabs, { type TournamentPanel } from "@/components/tournament/TournamentTabs";
 import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
 import { suspendedUserIds } from "@/lib/suspensionServer";
+import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -46,7 +47,7 @@ export async function tournamentPanels(
   const groupNameById = new Map(activity.groups.map((g) => [g.id, g.name]));
   const singleFlatTable = standingsByGroup.length === 1 && standingsByGroup[0].groupId === null;
 
-  const played = matches.filter((m) => m.status === "PLAYED");
+  const played = matches.filter((m) => m.status === "PLAYED").filter(bothTeamsKnown);
   const scheduled = matches.filter((m) => m.status === "SCHEDULED");
   const bracketMatches = activity.matches.filter(
     (m): m is typeof m & { bracketRound: number } => m.bracketRound !== null,

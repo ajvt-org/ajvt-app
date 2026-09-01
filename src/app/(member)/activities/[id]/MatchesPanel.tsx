@@ -2,7 +2,7 @@ import MatchDayList from "@/components/tournament/MatchDayList";
 import MatchFixture from "@/components/tournament/MatchFixture";
 import MatchResult from "@/components/tournament/MatchResult";
 import TournamentSection from "@/components/tournament/TournamentSection";
-import type { PublicMatch } from "@/components/tournament/publicTypes";
+import type { DecidedMatch, PublicMatch } from "@/components/tournament/publicTypes";
 import { memberTeamName } from "@/lib/matchEvents";
 import { publicTournament as texts } from "@/lib/texts";
 
@@ -17,7 +17,7 @@ export default function MatchesPanel({
   myVoteByVoteId,
   teams,
 }: {
-  played: PublicMatch[];
+  played: DecidedMatch[];
   scheduled: PublicMatch[];
   allMatches: PublicMatch[];
   football: boolean;

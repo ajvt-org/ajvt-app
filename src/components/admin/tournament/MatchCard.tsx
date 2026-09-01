@@ -9,6 +9,7 @@ import MatchCardHead from "@/components/tournament/matchCard/MatchCardHead";
 import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, memberTeamName } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
+import { bothTeamsKnown, teamName } from "@/lib/fixtureTeams";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
@@ -16,7 +17,7 @@ import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, lists } from "@/lib/texts";
 
 export default function MatchCard({
   match,
@@ -55,15 +56,19 @@ export default function MatchCard({
   onSaved: () => void;
   onChange: () => void;
 }) {
-  const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const decided = bothTeamsKnown(match);
   const football = profile === "FOOTBALL";
-  const events = football
-    ? matchEventRows({
-        ...match,
-        homeTeamId: match.homeTeam.id,
-        manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
-      })
+  const priorMeetings = decided
+    ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
     : [];
+  const events =
+    decided && football
+      ? matchEventRows({
+          ...match,
+          homeTeamId: match.homeTeam.id,
+          manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
+        })
+      : [];
   return (
     <div className="card p-4">
       <MatchCardHead time={match.matchDate ? formatMatchDateTime(match.matchDate) : null}>
@@ -82,8 +87,8 @@ export default function MatchCard({
 
       <div className="mt-2">
         <MatchTeams
-          home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
-          away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+          home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
+          away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
           score={
             match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
           }
@@ -98,7 +103,7 @@ export default function MatchCard({
             <span>
               {priorMeetings.map((pm, i) => (
                 <span key={pm.id}>
-                  {i > 0 && "، "}
+                  {i > 0 && lists.separator}
                   {pm.status === "PLAYED" ? (
                     <Scoreline home={pm.homeScore} away={pm.awayScore} />
                   ) : (
@@ -111,7 +116,7 @@ export default function MatchCard({
         )}
       </div>
 
-      {events.length > 0 && (
+      {decided && events.length > 0 && (
         <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <MatchEvents rows={events} />
           <MatchTimeline
@@ -123,6 +128,7 @@ export default function MatchCard({
 
       <MatchCardActions
         played={match.status === "PLAYED"}
+        decided={decided}
         football={football}
         showMvp={showMvp}
         showDetails={showDetails}
@@ -134,7 +140,7 @@ export default function MatchCard({
         onMoveDown={onMoveDown}
       />
 
-      {showResultForm && (
+      {decided && showResultForm && (
         <>
           <ResultForm
             match={match}
@@ -153,7 +159,7 @@ export default function MatchCard({
           )}
         </>
       )}
-      {football && showMvp && (
+      {decided && football && showMvp && (
         <MvpVoteAdmin
           match={match}
           teams={teams}

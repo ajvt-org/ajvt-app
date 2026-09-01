@@ -2,6 +2,7 @@ import MatchTeams from "./matchCard/MatchTeams";
 import MatchMeta from "./matchCard/MatchMeta";
 import MatchCardHead from "./matchCard/MatchCardHead";
 import { formatMatchTime } from "@/lib/clubTime";
+import { teamName } from "@/lib/fixtureTeams";
 import type { PublicMatch } from "./publicTypes";
 
 export default function MatchFixture({
@@ -17,8 +18,8 @@ export default function MatchFixture({
         <MatchMeta round={day.round ? null : match.round} venue={day.venue ? null : match.venue} />
       </MatchCardHead>
       <MatchTeams
-        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
-        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+        home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
+        away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
         size="sm"
         layout="stacked"
       />

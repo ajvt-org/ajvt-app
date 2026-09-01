@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Match, Team } from "./types";
+import type { DecidedMatch, Match, Team } from "./types";
 import CardChip from "@/components/tournament/CardChip";
 import { api, errorMessage } from "@/lib/api";
 import { matchAdmin as texts } from "@/lib/texts";
@@ -15,7 +15,7 @@ export default function BookingsForm({
   suspendedIds,
   onChange,
 }: {
-  match: Match;
+  match: DecidedMatch;
   teams: Team[];
   suspendedIds: string[];
   onChange: () => void;

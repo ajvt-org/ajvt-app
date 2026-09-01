@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent, cleanup as rtlCleanup } from "@testing-library/react";
 import MatchResult from "./MatchResult";
-import type { PublicMatch } from "./publicTypes";
+import type { DecidedMatch } from "./publicTypes";
 import { matchDisplay } from "@/lib/texts";
 
-function match(): PublicMatch {
+function match(): DecidedMatch {
   return {
     id: "m1",
     homeTeam: { id: "t1", name: "الصقور", logo: null },
@@ -87,7 +87,7 @@ describe("MatchResult by sport profile", () => {
 });
 
 describe("a tournament that hides the scorers and the red cards", () => {
-  function onCard(showScorersAndCards: boolean | undefined, over: Partial<PublicMatch> = {}) {
+  function onCard(showScorersAndCards: boolean | undefined, over: Partial<DecidedMatch> = {}) {
     rtlCleanup();
     const { container } = render(
       <MatchResult
