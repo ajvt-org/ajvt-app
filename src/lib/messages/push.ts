@@ -5,6 +5,7 @@ export const push = {
   quizRound: "جولة جديدة في المسابقة",
   tournamentMatch: "أخبار المباريات",
   matchReminder: "تذكير قبل المباراة",
+  teamChoiceReminder: "تذكير باختيار الفريق",
   broadcast: "إعلانات الرابطة",
   membershipDecision: "قرار العضوية",
   activityDecision: "قرار التسجيل في نشاط",
