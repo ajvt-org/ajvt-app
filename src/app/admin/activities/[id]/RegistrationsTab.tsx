@@ -46,6 +46,7 @@ export default function RegistrationsTab({
         activityId={activity.id}
         registrations={activity.registrations}
         members={members}
+        teams={activity.teams}
         actionLoading={actions.actionLoading}
         onReview={actions.reviewRegistration}
         onRegister={actions.registerMember}
