@@ -19,11 +19,13 @@ function candidateText(candidate: MemberOption): string {
 export default function AddMemberToActivityForm({
   activityId,
   candidates,
+  registeredIds,
   actionLoading,
   onRegister,
 }: {
   activityId: string;
   candidates: MemberOption[];
+  registeredIds: Set<string>;
   actionLoading: boolean;
   onRegister: (activityId: string, userId: string) => Promise<boolean>;
 }) {
@@ -35,6 +37,8 @@ export default function AddMemberToActivityForm({
     : [];
   const results = matched.slice(0, LIMIT);
   const hidden = matched.length - results.length;
+  const everyoneRegistered =
+    candidates.length > 0 && candidates.every((c) => registeredIds.has(c.id));
 
   async function pick(userId: string) {
     if (await onRegister(activityId, userId)) setSearch("");
@@ -54,7 +58,7 @@ export default function AddMemberToActivityForm({
       />
       {tokens.length === 0 ? (
         <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
-          {candidates.length === 0 ? texts.allRegistered : texts.searchToBegin}
+          {everyoneRegistered ? texts.allRegistered : texts.searchToBegin}
         </p>
       ) : results.length === 0 ? (
         <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
@@ -62,24 +66,32 @@ export default function AddMemberToActivityForm({
         </p>
       ) : (
         <div className="space-y-1">
-          {results.map((candidate) => (
-            <button
-              key={candidate.id}
-              type="button"
-              onClick={() => pick(candidate.id)}
-              disabled={actionLoading}
-              className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg"
-              style={{ background: "var(--mint-50)" }}
-            >
-              <PersonIdentity
-                person={candidate}
-                detail={<span>{texts.candidateDetail(candidate.village, candidate.age)}</span>}
-              />
-              {candidate.status !== "ACTIVE" && (
-                <span className="badge shrink-0">{memberStatusLabels[candidate.status]}</span>
-              )}
-            </button>
-          ))}
+          {results.map((candidate) => {
+            const taken = registeredIds.has(candidate.id);
+            return (
+              <button
+                key={candidate.id}
+                type="button"
+                onClick={() => pick(candidate.id)}
+                disabled={actionLoading || taken}
+                aria-disabled={taken}
+                className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg"
+                style={{ background: "var(--mint-50)", opacity: taken ? 0.6 : 1 }}
+              >
+                <PersonIdentity
+                  person={candidate}
+                  detail={<span>{texts.candidateDetail(candidate.village, candidate.age)}</span>}
+                />
+                {taken ? (
+                  <span className="badge shrink-0">{texts.alreadyRegistered}</span>
+                ) : (
+                  candidate.status !== "ACTIVE" && (
+                    <span className="badge shrink-0">{memberStatusLabels[candidate.status]}</span>
+                  )
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
       {hidden > 0 && (
