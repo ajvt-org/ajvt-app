@@ -54,6 +54,7 @@ export const memberImportDialog = {
   resultStep: "النتيجة",
   resultCreated: (count: number) => `${count} حساباً جديداً`,
   resultUpdated: (count: number) => `${count} حساباً محدّثاً`,
+  resultMemberships: (count: number) => `${count} اشتراكاً مسجلاً`,
   resultFailed: (count: number) => `${count} سطراً فشل`,
   passwordsTitle: "كلمات المرور المؤقتة",
   passwordsOnce:

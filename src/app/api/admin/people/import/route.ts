@@ -25,6 +25,7 @@ function tally(results: ImportedRow[]) {
     created: results.filter((row) => row.outcome === "created").length,
     updated: results.filter((row) => row.outcome === "updated").length,
     failed: results.filter((row) => row.outcome === "failed").length,
+    memberships: results.filter((row) => row.membership).length,
   };
 }
 
