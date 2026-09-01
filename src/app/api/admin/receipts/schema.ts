@@ -40,13 +40,15 @@ const issuedOn = z.unknown().superRefine((v, ctx) => {
   }
 });
 
-export const receiptCreateSchema = z.object({
-  payerName,
-  reason,
-  amount,
-  issuedOn: issuedOn.optional(),
-  memberId: z.string(INVALID).nullish(),
-});
+export const receiptCreateSchema = z
+  .object({
+    payerName,
+    reason,
+    amount,
+    issuedOn: issuedOn.optional(),
+    userId: z.string(INVALID).nullish(),
+  })
+  .strict();
 
 export const receiptVoidSchema = z.object({
   reason: z
