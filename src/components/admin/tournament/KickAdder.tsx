@@ -18,7 +18,7 @@ export default function KickAdder({
   onAdd: (kick: KickDraft) => void;
 }) {
   const [firstTeamId, setFirstTeamId] = useState(sides[0].id);
-  const [memberId, setMemberId] = useState("");
+  const [userId, setUserId] = useState("");
   const [scored, setScored] = useState(true);
 
   const teamId = turnTeamId ?? firstTeamId;
@@ -34,7 +34,7 @@ export default function KickAdder({
               value={firstTeamId}
               onChange={(e) => {
                 setFirstTeamId(e.target.value);
-                setMemberId("");
+                setUserId("");
               }}
               className="input text-sm"
             >
@@ -56,8 +56,8 @@ export default function KickAdder({
         {(id) => (
           <select
             id={id}
-            value={memberId}
-            onChange={(e) => setMemberId(e.target.value)}
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
             className="input text-sm"
           >
             <option value="">{texts.unknownScorer}</option>
@@ -87,8 +87,8 @@ export default function KickAdder({
       <button
         type="button"
         onClick={() => {
-          onAdd({ teamId, memberId: memberId || null, scored });
-          setMemberId("");
+          onAdd({ teamId, userId: userId || null, scored });
+          setUserId("");
         }}
         className="btn btn-primary text-sm"
       >

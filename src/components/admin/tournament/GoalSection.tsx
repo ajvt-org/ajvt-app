@@ -23,11 +23,11 @@ export default function GoalSection({
   setGoals: React.Dispatch<React.SetStateAction<GoalDraft[]>>;
   sides: { id: string; name: string }[];
   scorerRoster: (teamId: string, kind: GoalKind) => { id: string; fullName: string }[];
-  nameOf: (memberId: string | null) => string;
+  nameOf: (userId: string | null) => string;
 }) {
   const [teamId, setTeamId] = useState(sides[0].id);
   const [kind, setKind] = useState<GoalKind>("GOAL");
-  const [memberId, setMemberId] = useState("");
+  const [userId, setUserId] = useState("");
   const [minute, setMinute] = useState("");
   const [editing, setEditing] = useState<number | null>(null);
 
@@ -37,7 +37,7 @@ export default function GoalSection({
     setEditing(null);
     setTeamId(sides[0].id);
     setKind("GOAL");
-    setMemberId("");
+    setUserId("");
     setMinute("");
   }
 
@@ -46,12 +46,12 @@ export default function GoalSection({
     setEditing(index);
     setTeamId(goal.teamId);
     setKind(goal.kind);
-    setMemberId(goal.memberId ?? "");
+    setUserId(goal.userId ?? "");
     setMinute(goal.minute);
   }
 
   function submit() {
-    const draft: GoalDraft = { teamId, kind, memberId: memberId || null, period, minute };
+    const draft: GoalDraft = { teamId, kind, userId: userId || null, period, minute };
     if (editing === null) setGoals((prev) => [...prev, draft]);
     else setGoals((prev) => prev.map((g, i) => (i === editing ? draft : g)));
     reset();
@@ -79,7 +79,7 @@ export default function GoalSection({
         >
           <Icon name="ball" size={13} />
           <span className="min-w-0">
-            {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.memberId)}
+            {sides.find((t) => t.id === g.teamId)?.name} — {nameOf(g.userId)}
             {g.minute ? ` ${g.minute}'` : ""}
             {goalSuffix(g.kind)}
           </span>
@@ -119,7 +119,7 @@ export default function GoalSection({
               value={teamId}
               onChange={(e) => {
                 setTeamId(e.target.value);
-                setMemberId("");
+                setUserId("");
               }}
               className="input text-sm"
             >
@@ -139,7 +139,7 @@ export default function GoalSection({
               value={kind}
               onChange={(e) => {
                 setKind(e.target.value as GoalKind);
-                setMemberId("");
+                setUserId("");
               }}
               className="input text-sm"
             >
@@ -159,8 +159,8 @@ export default function GoalSection({
           {(id) => (
             <select
               id={id}
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
               className="input text-sm"
             >
               <option value="">{texts.unknownScorer}</option>

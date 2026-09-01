@@ -202,7 +202,7 @@ export const PATCH = withRoute(
       }
 
       const eventAccounts = [...evGoals, ...evKicks]
-        .map((e) => e.memberId)
+        .map((e) => e.userId)
         .filter((id): id is string => id !== null);
       const rosterRows = await prisma.teamMember.findMany({
         where: {
@@ -219,9 +219,9 @@ export const PATCH = withRoute(
       const other = (teamId: string) =>
         teamId === match.homeTeamId ? match.awayTeamId : match.homeTeamId;
       for (const g of evGoals) {
-        if (g.memberId === null) continue;
+        if (g.userId === null) continue;
         const expected = g.kind === "OWN_GOAL" ? other(g.teamId) : g.teamId;
-        if (!teamsOf.get(g.memberId)?.has(expected)) {
+        if (!teamsOf.get(g.userId)?.has(expected)) {
           return NextResponse.json(
             {
               error:
@@ -234,7 +234,7 @@ export const PATCH = withRoute(
         }
       }
       for (const k of evKicks) {
-        if (k.memberId !== null && !teamsOf.get(k.memberId)?.has(k.teamId)) {
+        if (k.userId !== null && !teamsOf.get(k.userId)?.has(k.teamId)) {
           return NextResponse.json({ error: tournament.kickerWrongTeam }, { status: 400 });
         }
       }
@@ -311,20 +311,20 @@ export const PATCH = withRoute(
         if (hg.length > 0 || ag.length > 0) {
           const squad = await prisma.teamMember.findMany({
             where: {
-              userId: { in: [...hg, ...ag].map((g) => g.memberId) },
+              userId: { in: [...hg, ...ag].map((g) => g.userId) },
               teamId: { in: [match.homeTeamId, match.awayTeamId] },
             },
             select: { userId: true, teamId: true },
           });
           const teamOf = new Map(squad.map((m) => [m.userId, m.teamId]));
-          const teamOfScorer = (memberId: string) => teamOf.get(memberId);
+          const teamOfScorer = (id: string) => teamOf.get(id);
           for (const g of hg) {
-            if (teamOfScorer(g.memberId) !== match.homeTeamId) {
+            if (teamOfScorer(g.userId) !== match.homeTeamId) {
               return NextResponse.json({ error: tournament.scorerNotInHome }, { status: 400 });
             }
           }
           for (const g of ag) {
-            if (teamOfScorer(g.memberId) !== match.awayTeamId) {
+            if (teamOfScorer(g.userId) !== match.awayTeamId) {
               return NextResponse.json({ error: tournament.scorerNotInAway }, { status: 400 });
             }
           }
@@ -411,10 +411,10 @@ export const PATCH = withRoute(
     }
 
     const involvedAccounts = [
-      ...parsedHomeGoals.map((g) => g.memberId),
-      ...parsedAwayGoals.map((g) => g.memberId),
+      ...parsedHomeGoals.map((g) => g.userId),
+      ...parsedAwayGoals.map((g) => g.userId),
       ...[...eventGoals, ...eventKicks]
-        .map((e) => e.memberId)
+        .map((e) => e.userId)
         .filter((id): id is string => id !== null),
     ];
 
@@ -436,7 +436,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: eventGoals.map((g) => ({
               matchId,
-              userId: g.memberId,
+              userId: g.userId,
               teamId: g.teamId,
               kind: g.kind,
               period: g.period,
@@ -450,7 +450,7 @@ export const PATCH = withRoute(
             data: eventKicks.map((k, i) => ({
               matchId,
               teamId: k.teamId,
-              userId: k.memberId,
+              userId: k.userId,
               order: i + 1,
               scored: k.scored,
             })),
@@ -466,7 +466,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedHomeGoals.map((g) => ({
               matchId,
-              userId: g.memberId,
+              userId: g.userId,
               teamId: match.homeTeamId,
               count: g.count,
               minute: g.minute,
@@ -477,7 +477,7 @@ export const PATCH = withRoute(
           await tx.matchGoal.createMany({
             data: parsedAwayGoals.map((g) => ({
               matchId,
-              userId: g.memberId,
+              userId: g.userId,
               teamId: match.awayTeamId,
               count: g.count,
               minute: g.minute,
