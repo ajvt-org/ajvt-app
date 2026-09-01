@@ -32,8 +32,8 @@ function groups(count: number, perGroup = 4): SuggestionGroup[] {
   }));
 }
 
-const pairNames = (gs: SuggestionGroup[]) =>
-  suggestFirstKnockoutRound(gs).pairs.map((p) => `${p.home.teamId}-${p.away.teamId}`);
+const pairNames = (gs: SuggestionGroup[], perGroup?: number) =>
+  suggestFirstKnockoutRound(gs, perGroup).pairs.map((p) => `${p.home.teamId}-${p.away.teamId}`);
 
 describe("suggesting the first knockout round", () => {
   it("puts each group winner against another group's runner up", () => {
@@ -89,10 +89,16 @@ describe("when a bracket cannot be suggested", () => {
     expect(suggestFirstKnockoutRound(groups(1))).toEqual({ pairs: [], problem: "notGrouped" });
   });
 
-  it("refuses a group count that cannot fill a bracket", () => {
+  it("refuses a group count that leaves a qualifier field the bracket cannot halve", () => {
     for (const count of [3, 5, 6, 7]) {
-      expect(suggestFirstKnockoutRound(groups(count)).problem, String(count)).toBe("groupCount");
+      expect(suggestFirstKnockoutRound(groups(count)).problem, String(count)).toBe(
+        "qualifierCount",
+      );
     }
+  });
+
+  it("refuses a qualifier count per group that does not fill a bracket", () => {
+    expect(suggestFirstKnockoutRound(groups(4), 3).problem).toBe("qualifierCount");
   });
 
   it("refuses a group with nobody to send through", () => {
@@ -137,5 +143,33 @@ describe("when the group table is not settled", () => {
     gs[0].standings[1] = row("g0p2", true);
 
     expect(suggestFirstKnockoutRound(gs).problem).toBe("unresolvedTie");
+  });
+});
+
+describe("when more than two qualify from each group", () => {
+  it("takes the top four of two groups into a round of eight", () => {
+    expect(pairNames(groups(2, 4), 4)).toEqual([
+      "g0p1-g1p4",
+      "g0p2-g1p3",
+      "g1p2-g0p3",
+      "g1p1-g0p4",
+    ]);
+  });
+
+  it("takes only the winners when one qualifies from each group", () => {
+    expect(pairNames(groups(4), 1)).toEqual(["g0p1-g1p1", "g2p1-g3p1"]);
+  });
+
+  it("refuses a group that is too small to send that many through", () => {
+    expect(suggestFirstKnockoutRound(groups(2, 3), 4).problem).toBe("groupTooSmall");
+  });
+
+  it("only looks at the qualifying places when it warns about a tie", () => {
+    const gs = groups(4, 4);
+    gs[0].standings[1] = row("g0p2", true);
+    gs[0].standings[2] = row("g0p3", true);
+
+    expect(suggestFirstKnockoutRound(gs, 1).problem).toBeNull();
+    expect(suggestFirstKnockoutRound(gs, 2).problem).toBe("unresolvedTie");
   });
 });

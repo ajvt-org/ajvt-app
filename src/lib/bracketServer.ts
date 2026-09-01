@@ -109,7 +109,7 @@ export async function drawBracket(activityId: string, redo = false) {
 
 const SUGGESTION_ERROR: Record<string, string> = {
   notGrouped: messages.bracketNeedsGroups,
-  groupCount: messages.bracketGroupCount,
+  qualifierCount: messages.bracketQualifierCount,
   groupTooSmall: messages.groupNeedsTwoTeams,
   unresolvedTie: messages.bracketTieUnresolved,
 };
