@@ -27,6 +27,9 @@ function registration(over: Partial<Registration> = {}): Registration {
     status: "ACTIVE",
     paymentProof: null,
     rejectionReason: null,
+    createdAt: "2026-09-01T00:00:00.000Z",
+    source: null,
+    recordedBy: null,
     team: null,
     member: {
       id: "u9",
@@ -318,5 +321,52 @@ describe("looking at one team's registrants", () => {
 
     expect(screen.getByText("أحمد ولد محمد")).toBeDefined();
     expect(screen.queryByText("أحمد ولد سالم")).toBeNull();
+  });
+});
+
+describe("who put a registrant there and when", () => {
+  it("says it on the card in the quiet register", () => {
+    show([], [registration({ source: "ADMIN", recordedBy: "مسؤول" })]);
+
+    expect(screen.getByText("أضافه مسؤول")).toBeTruthy();
+    expect(screen.getByText("2026-09-01")).toBeTruthy();
+  });
+
+  it("says a row written before the record is unknown rather than guessing", () => {
+    show([], [registration()]);
+
+    expect(screen.getByText("غير معروف")).toBeTruthy();
+  });
+
+  it("orders the registrants by when they asked, newest first and back again", async () => {
+    show(
+      [],
+      [
+        registration({
+          id: "r1",
+          createdAt: "2026-08-01T00:00:00.000Z",
+          member: { id: "u1", fullName: "الأول", phone: null, age: "البدريين", photo: null },
+        }),
+        registration({
+          id: "r2",
+          createdAt: "2026-08-30T00:00:00.000Z",
+          member: { id: "u2", fullName: "الأخير", phone: null, age: "البدريين", photo: null },
+        }),
+      ],
+    );
+
+    const names = () => screen.getAllByText(/الأول|الأخير/).map((node) => node.textContent);
+
+    expect(names()).toEqual(["الأخير", "الأول"]);
+
+    await userEvent.click(screen.getByRole("button", { name: "الأقدم أولاً" }));
+
+    expect(names()).toEqual(["الأول", "الأخير"]);
+  });
+
+  it("names the date it sorts on", () => {
+    show([], [registration()]);
+
+    expect(screen.getByRole("group", { name: "ترتيب حسب تاريخ الطلب" })).toBeTruthy();
   });
 });
