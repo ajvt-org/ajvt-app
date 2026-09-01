@@ -10,6 +10,7 @@ import { formatActivityDates } from "@/lib/activityDates";
 import DayCard from "./DayCard";
 import { timeOf } from "@/lib/tournamentDays";
 import { dayLabel, type DaysPayload } from "./daysTypes";
+import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab } from "@/lib/texts";
 
 function RestInserter({ onInsert, busy }: { onInsert: () => void; busy: boolean }) {
@@ -181,9 +182,7 @@ export default function DaysTab({
             };
             return (
               <div key={match.id} className="flex items-center gap-2 flex-wrap text-sm">
-                <span className="font-bold min-w-0 flex-1">
-                  {match.homeTeam.name} × {match.awayTeam.name}
-                </span>
+                <span className="font-bold min-w-0 flex-1">{fixtureName(match)}</span>
                 <select
                   value={chosen.dayId}
                   onChange={(e) =>

@@ -6,8 +6,8 @@ export interface DayMatch {
   round: string | null;
   venue: string | null;
   status: "SCHEDULED" | "PLAYED";
-  homeTeam: { id: string; name: string };
-  awayTeam: { id: string; name: string };
+  homeTeam: { id: string; name: string } | null;
+  awayTeam: { id: string; name: string } | null;
 }
 
 export interface TournamentDayRow {
@@ -40,6 +40,7 @@ export function doubleBookedTeams(day: TournamentDayRow): string[] {
   const twice = new Set<string>();
   for (const match of day.matches) {
     for (const team of [match.homeTeam, match.awayTeam]) {
+      if (!team) continue;
       if (seen.has(team.id)) twice.add(team.name);
       seen.set(team.id, team.name);
     }

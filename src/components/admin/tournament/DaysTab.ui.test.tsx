@@ -3,6 +3,7 @@ import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/re
 import DaysTab from "./DaysTab";
 import { doubleBookedTeams } from "./daysTypes";
 import type { DaysPayload, TournamentDayRow } from "./daysTypes";
+import { publicTournament } from "@/lib/texts";
 
 const get = vi.fn();
 const post = vi.fn();
@@ -29,6 +30,10 @@ function match(id: string, home: string, away: string, iso: string) {
     homeTeam: { id: `${home}-id`, name: home },
     awayTeam: { id: `${away}-id`, name: away },
   };
+}
+
+function waiting(id: string, iso: string) {
+  return { ...match(id, "x", "y", iso), homeTeam: null, awayTeam: null };
 }
 
 const PAYLOAD: DaysPayload = {
@@ -105,6 +110,25 @@ describe("DaysTab", () => {
     );
   });
 
+  it("names a fixture whose teams are not known yet", async () => {
+    await show({
+      ...PAYLOAD,
+      days: [
+        {
+          id: "d1",
+          position: 1,
+          isRest: false,
+          date: "2026-08-24T00:00:00.000Z",
+          matches: [waiting("m5", "2026-08-24T16:00:00.000Z")],
+        },
+      ],
+      unscheduled: [{ ...waiting("m6", ""), matchDate: null }],
+    });
+
+    expect(await screen.findByText("اليوم 1")).toBeDefined();
+    expect(screen.getAllByText(new RegExp(publicTournament.teamDecidedLater))).toHaveLength(2);
+  });
+
   it("points at the activity details when no start date exists", async () => {
     await show({ startsAt: null, endsAt: null, days: [], unscheduled: [] });
 
@@ -131,5 +155,20 @@ describe("doubleBookedTeams", () => {
 
   it("stays quiet for a clean day", () => {
     expect(doubleBookedTeams(PAYLOAD.days[0])).toEqual([]);
+  });
+
+  it("passes over a fixture whose teams are not known yet", () => {
+    const day: TournamentDayRow = {
+      id: "d1",
+      position: 1,
+      isRest: false,
+      date: null,
+      matches: [
+        waiting("m1", "2026-08-24T16:00:00.000Z"),
+        waiting("m2", "2026-08-24T17:00:00.000Z"),
+      ],
+    };
+
+    expect(doubleBookedTeams(day)).toEqual([]);
   });
 });
