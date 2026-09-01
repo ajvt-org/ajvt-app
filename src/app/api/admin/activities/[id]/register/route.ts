@@ -46,8 +46,19 @@ export const POST = withRoute(
 
     const registration = await prisma.activityRegistration.upsert({
       where: { userId_activityId: { userId: account.id, activityId: id } },
-      update: { status: "ACTIVE", rejectionReason: null },
-      create: { userId: account.id, activityId: id, status: "ACTIVE" },
+      update: {
+        status: "ACTIVE",
+        rejectionReason: null,
+        source: "ADMIN",
+        recordedBy: session.username,
+      },
+      create: {
+        userId: account.id,
+        activityId: id,
+        status: "ACTIVE",
+        source: "ADMIN",
+        recordedBy: session.username,
+      },
     });
 
     await logAction(

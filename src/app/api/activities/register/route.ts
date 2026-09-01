@@ -57,8 +57,8 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
       }
       await tx.activityRegistration.upsert({
         where: { userId_activityId: { userId: session.userId, activityId } },
-        update: { status, rejectionReason: null },
-        create: { userId: session.userId, activityId, status },
+        update: { status, rejectionReason: null, source: "SELF", recordedBy: null },
+        create: { userId: session.userId, activityId, status, source: "SELF" },
       });
     },
     { isolationLevel: "Serializable" },
