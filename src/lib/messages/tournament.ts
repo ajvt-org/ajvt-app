@@ -8,6 +8,7 @@ export const tournament = {
   targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   matchNotFound: "المباراة غير موجودة",
   bookingNotFound: "البطاقة غير موجودة",
+  minuteInvalid: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130",
   teamNotInMatch: "الفريق لا ينتمي إلى هذه المباراة",
   playerNotInTeam: "اللاعب لا ينتمي إلى هذا الفريق",
   joinNeedsMembership: "يجب أن تكون العضوية مقبولة أولاً",

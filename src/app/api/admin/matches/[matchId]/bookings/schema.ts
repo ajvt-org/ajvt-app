@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { common } from "@/lib/messages";
+import { common, tournament } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
-const MINUTE_INVALID = "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130";
+const MINUTE_INVALID = tournament.minuteInvalid;
 
 const MINUTE_MIN = 1;
 const MINUTE_MAX = 130;
