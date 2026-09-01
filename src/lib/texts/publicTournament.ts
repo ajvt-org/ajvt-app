@@ -51,4 +51,6 @@ export const publicTournament = {
   noTeamsYet: "لم تُحدَّد الفرق بعد",
   noPlayersYet: "لم يُحدَّد اللاعبون بعد",
   teamDecidedLater: "يُحدد لاحقاً",
+  bracketRound: (round: number) => `الدور ${round}`,
+  bracketWaitingHint: "تُحدَّد فرق الدور الإقصائي من ترتيب المجموعات بعد انتهاء دور المجموعات",
 } as const;

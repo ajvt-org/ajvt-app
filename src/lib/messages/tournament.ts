@@ -1,3 +1,5 @@
+import { resetTournament } from "../texts/activityDetail";
+
 export const tournament = {
   teamNotFound: "الفريق غير موجود",
   teamNameRequired: "اسم الفريق مطلوب",
@@ -29,7 +31,6 @@ export const tournament = {
     "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
   mvpVoteExists: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء",
   mvpCandidateOutsideMatch: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين",
-  noGroupPool: "بدون مجموعة",
   teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
   voteNeedsResult: "سجّل نتيجة المباراة قبل فتح التصويت",
@@ -53,8 +54,6 @@ export const tournament = {
   suspensionUntilRequired: "حدد تاريخ نهاية الإيقاف",
   memberNotInTournament: "اللاعب ليس ضمن هذه البطولة",
   memberSuspended: "اللاعب موقوف — لا يمكن تسجيله في هذه المباراة",
-  nothingToGenerate: (perTeam: number) =>
-    `لا توجد مباريات جديدة لاقتراحها — كل الفرق لديها بالفعل ${perTeam} مباريات`,
   resultNotNumber: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب",
   scorersInvalid: "بيانات الهدافين غير صالحة",
   homeGoalsMismatch: "مجموع أهداف لاعبي الفريق المضيف لا يطابق النتيجة",
@@ -94,7 +93,7 @@ export const tournament = {
   fixtureHasNoTeams: "لم يُحدد فريقا هذه المباراة بعد",
   fixtureNeedsBothTeams: "المباراة تحتاج فريقين",
   setupHasResults: (played: number) =>
-    `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج. امسح نتائج ${played} مباراة أولاً`,
+    `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل أولاً`,
   setupGroupsIncomplete: "كل فريق يجب أن يكون في مجموعة واحدة",
   setupGroupsUneven: "المجموعات يجب أن تكون متساوية",
   setupShapeInvalid: "عدد المجموعات وعدد المتأهلين لا يتفقان",

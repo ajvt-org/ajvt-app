@@ -15,7 +15,7 @@ export default function TeamsGrid({ teams }: { teams: Team[] }) {
       {teams.map((team) => (
         <details key={team.id} className="card p-3">
           <summary
-            className="team-summary font-bold text-sm cursor-pointer flex items-center gap-1.5"
+            className="disclosure-summary font-bold text-sm cursor-pointer flex items-center gap-1.5"
             style={{ color: "var(--text-main)" }}
           >
             <TeamLogo logo={team.logo} name={team.name} size={20} />
@@ -23,7 +23,7 @@ export default function TeamsGrid({ teams }: { teams: Team[] }) {
             <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
               {team.members.length}
             </span>
-            <Icon name="chevronDown" size={14} className="team-chevron" />
+            <Icon name="chevronDown" size={14} className="disclosure-chevron" />
           </summary>
           {team.members.length === 0 ? (
             <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>

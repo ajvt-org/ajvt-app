@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-library/react";
 import SetupWizard from "./SetupWizard";
-import { setupWizard as texts } from "@/lib/texts";
+import { resetTournament, setupWizard as texts } from "@/lib/texts";
 
 const post = vi.fn();
 const showToast = vi.fn();
@@ -54,6 +54,12 @@ describe("the setup wizard", () => {
 
     expect(screen.getByText(texts.hasResults(3))).toBeTruthy();
     expect(screen.queryByRole("button", { name: texts.next })).toBeNull();
+  });
+
+  it("sends the admin to the reset rather than asking for results to be erased by hand", () => {
+    open(12, 3);
+
+    expect(screen.getByText(texts.hasResults(3)).textContent).toContain(resetTournament.action);
   });
 
   it("refuses to run with fewer than two teams", () => {

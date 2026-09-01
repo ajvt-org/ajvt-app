@@ -4,6 +4,8 @@ export const matchAdmin = {
   upcoming: "مباريات قادمة",
   results: "نتائج",
   newMatch: "مباراة جديدة",
+  newMatchOutsidePlan:
+    "المباراة المضافة هنا تبقى خارج خطة الأيام، وتظهر في قائمة غير المجدولة حتى تُسند إلى يوم من تبويب الأيام.",
   homeTeamPlaceholder: "الفريق المضيف...",
   awayTeamPlaceholder: "الفريق الضيف...",
   roundPlaceholder: "الجولة (اختياري)",
@@ -16,13 +18,9 @@ export const matchAdmin = {
   venuePlaceholder: "الملعب (اختياري)",
   knockoutFlag: "مباراة خروج المغلوب (لا تُحتسب في ترتيب المجموعات)",
   addMatch: "إضافة المباراة",
-  suggestSchedule: "اقترح جدول المباريات",
   pickBothTeams: "يجب اختيار الفريقين",
   confirmDeleteMatch: "هل تريد حذف هذه المباراة؟",
   reorderFailed: "خطأ في إعادة الترتيب",
-  poolsReadyTitle: "كل المجموعات مكتملة!",
-  poolsReadyHint: "يمكنك الآن توليد جدول مباريات دور المجموعات وتوزيعه على أيام البطولة.",
-  generateGroupSchedule: "توليد جدول مباريات دور المجموعات",
   groupStageDoneTitle: "انتهى دور المجموعات!",
   groupStageDoneHint: "كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.",
   generateSemis: "توليد نصف النهائي",
@@ -45,6 +43,8 @@ export const matchAdmin = {
   bracketKnockout: "القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)",
   knockoutLockedHint:
     "أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.",
+  bracketWaitingHint:
+    "مباريات الدور الإقصائي مجدولة بمواعيدها وتنتظر فرقها — تُملأ من ترتيب المجموعات بعد انتهاء دور المجموعات.",
   crossSemisHint:
     "نصف نهائي متقاطع من ترتيب المجموعتين (الأول من كل مجموعة أمام الثاني من الأخرى)، ثم النهائي.",
   drawHint:

@@ -3,7 +3,7 @@ import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import BracketPanel from "./BracketPanel";
 import { matchesState } from "./matchesState";
 import { matchAdmin as texts } from "@/lib/texts";
-import type { Group, Match, Team } from "./types";
+import type { Group, Match } from "./types";
 
 const get = vi.fn();
 
@@ -11,16 +11,6 @@ vi.mock("@/lib/api", () => ({
   api: { get: (...args: unknown[]) => get(...args) },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
-
-const team = (id: string, groupId: string | null = null): Team => ({
-  id,
-  name: id,
-  autoNamed: false,
-  logo: null,
-  groupId,
-  group: null,
-  members: [],
-});
 
 const match = (over: Partial<Match> = {}): Match => ({
   id: "m",
@@ -57,8 +47,6 @@ const groups: Group[] = [
   { id: "g2", name: "المجموعة 2", capacity: 2 },
 ];
 
-const teams = [team("t1", "g1"), team("t2", "g1"), team("t3", "g2"), team("t4", "g2")];
-
 function show(matches: Match[], format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT", withGroups = true) {
   cleanup();
   const usedGroups = withGroups ? groups : [];
@@ -66,7 +54,7 @@ function show(matches: Match[], format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT", wit
     <BracketPanel
       activityId="a1"
       busy={false}
-      state={matchesState({ format, groups: usedGroups, teams, matches })}
+      state={matchesState({ format, groups: usedGroups, matches })}
       onAction={vi.fn()}
     />,
   );
@@ -116,10 +104,11 @@ describe("a bracket whose first round is waiting", () => {
     expect(screen.queryByText(texts.nextRound)).toBeNull();
   });
 
-  it("says the knockout is locked while a group match is still to play", () => {
+  it("says the drawn fixtures are waiting for the group tables, not that the knockout is still to come", () => {
     show([match({ id: "l1" }), ...waitingBracket], "GROUPS_THEN_KNOCKOUT");
 
-    expect(screen.getByText(new RegExp(texts.knockoutLockedHint))).toBeDefined();
+    expect(screen.getByText(new RegExp(texts.bracketWaitingHint))).toBeDefined();
+    expect(screen.queryByText(new RegExp(texts.knockoutLockedHint))).toBeNull();
     expect(screen.queryByText(texts.suggestionValidate)).toBeNull();
   });
 
@@ -136,5 +125,20 @@ describe("a bracket whose first round is waiting", () => {
 
     expect(screen.getByText(texts.regenerateSemis)).toBeDefined();
     expect(screen.getByText(texts.nextRound)).toBeDefined();
+  });
+});
+
+describe("a bracket that has not been drawn at all", () => {
+  it("says the knockout options arrive once the group stage is over", () => {
+    show([match({ id: "l1" })], "GROUPS_THEN_KNOCKOUT");
+
+    expect(screen.getByText(new RegExp(texts.knockoutLockedHint))).toBeDefined();
+    expect(screen.queryByText(new RegExp(texts.bracketWaitingHint))).toBeNull();
+  });
+
+  it("offers the draw instead of the hint once the group stage is over", () => {
+    show([match({ id: "l1", status: "PLAYED" })], "GROUPS_THEN_KNOCKOUT");
+
+    expect(screen.queryByText(new RegExp(texts.knockoutLockedHint))).toBeNull();
   });
 });

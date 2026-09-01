@@ -50,15 +50,25 @@ export function editRow(
   return recheck(next, context);
 }
 
-export function fillAgeGroup(
+function fillable(field: keyof RowValues, values: RowValues): boolean {
+  if (field === "age") return requiresAgeGroup(values.village);
+  return true;
+}
+
+function fillFor(values: RowValues, change: Partial<RowValues>): Partial<RowValues> {
+  const fields = Object.entries(change).filter(([field]) =>
+    fillable(field as keyof RowValues, values),
+  );
+  return Object.fromEntries(fields) as Partial<RowValues>;
+}
+
+export function fillValues(
   rows: EditableRow[],
-  age: string,
+  change: Partial<RowValues>,
   context: CheckContext,
 ): EditableRow[] {
   const next = rows.map((row) =>
-    row.selected && requiresAgeGroup(row.values.village)
-      ? { ...row, values: { ...row.values, age } }
-      : row,
+    row.selected ? { ...row, values: { ...row.values, ...fillFor(row.values, change) } } : row,
   );
   return recheck(next, context);
 }
@@ -72,6 +82,14 @@ export function toggleSkip(rows: EditableRow[], at: number, context: CheckContex
 
 export function selectRow(rows: EditableRow[], at: number, selected: boolean): EditableRow[] {
   return rows.map((row) => (row.row === at ? { ...row, selected } : row));
+}
+
+export function takesPayment(row: EditableRow): boolean {
+  return !row.skip && !row.match?.hasMembership;
+}
+
+export function selectAll(rows: EditableRow[]): EditableRow[] {
+  return rows.map((row) => ({ ...row, selected: takesPayment(row) }));
 }
 
 export function selectMissingAgeGroup(rows: EditableRow[]): EditableRow[] {

@@ -1,4 +1,5 @@
-import type { Group, Match, Team, TournamentFormat } from "./types";
+import { bracketUntouched, firstRoundIsWaiting } from "@/lib/bracketState";
+import type { Group, Match, TournamentFormat } from "./types";
 
 export interface MatchesState {
   bracketMatches: (Match & { bracketRound: number })[];
@@ -8,7 +9,6 @@ export interface MatchesState {
   canAdvanceBracket: boolean;
   firstRoundWaiting: boolean;
   firstRoundRedoable: boolean;
-  poolsReady: boolean;
   groupStageDone: boolean;
   knockoutLocked: boolean;
   isTwoGroupFormat: boolean;
@@ -18,12 +18,10 @@ export interface MatchesState {
 export function matchesState({
   format,
   groups,
-  teams,
   matches,
 }: {
   format: TournamentFormat;
   groups: Group[];
-  teams: Team[];
   matches: Match[];
 }): MatchesState {
   const hasGroupStage = format === "GROUPS_THEN_KNOCKOUT";
@@ -36,14 +34,6 @@ export function matchesState({
   const finalRound = bracketMatches.filter((m) => m.bracketRound === maxBracketRound);
   const bracketIsFinalDone = finalRound.length === 1 && finalRound[0].status === "PLAYED";
 
-  const poolsReady =
-    hasGroupStage &&
-    groups.length > 0 &&
-    groups.every(
-      (g) => g.capacity != null && teams.filter((t) => t.groupId === g.id).length >= g.capacity,
-    ) &&
-    matches.length === 0;
-
   const leagueMatches = matches.filter((m) => !m.isKnockout);
   const groupStageDone =
     leagueMatches.length > 0 && leagueMatches.every((m) => m.status === "PLAYED");
@@ -51,13 +41,9 @@ export function matchesState({
   const isTwoGroupFormat = hasGroupStage && groups.length === 2;
 
   const firstRound = bracketMatches.filter((m) => m.bracketRound === 1);
-  const bracketUntouched =
-    bracketMatches.length > 0 && bracketMatches.every((m) => m.status === "SCHEDULED");
-  const firstRoundWaiting =
-    firstRound.length > 0 &&
-    bracketUntouched &&
-    firstRound.every((m) => m.homeTeam === null && m.awayTeam === null);
-  const firstRoundRedoable = firstRound.length > 0 && bracketUntouched && !firstRoundWaiting;
+  const firstRoundWaiting = firstRoundIsWaiting(bracketMatches);
+  const firstRoundRedoable =
+    firstRound.length > 0 && bracketUntouched(bracketMatches) && !firstRoundWaiting;
 
   return {
     bracketMatches,
@@ -67,7 +53,6 @@ export function matchesState({
     canAdvanceBracket: bracketMatches.length > 0 && !bracketIsFinalDone && !firstRoundWaiting,
     firstRoundWaiting,
     firstRoundRedoable,
-    poolsReady,
     groupStageDone,
     knockoutLocked: hasGroupStage && groups.length > 0 && !groupStageDone,
     isTwoGroupFormat,

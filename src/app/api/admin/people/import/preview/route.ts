@@ -20,9 +20,9 @@ export const POST = withRoute("POST /api/admin/people/import/preview", async (re
   const parsed = parseMemberCsv(content);
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-  const { membershipFee } = await getAppSettings();
+  const { membershipFee, membershipYear } = await getAppSettings();
   const names = await villageNames();
-  const { people, ageGroupNames } = await importContext();
+  const { people, ageGroupNames } = await importContext(membershipYear);
 
   const rows = checkRows(parsed.rows, {
     people,

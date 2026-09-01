@@ -25,6 +25,7 @@ function tally(results: ImportedRow[]) {
     created: results.filter((row) => row.outcome === "created").length,
     updated: results.filter((row) => row.outcome === "updated").length,
     failed: results.filter((row) => row.outcome === "failed").length,
+    memberships: results.filter((row) => row.membership).length,
   };
 }
 
@@ -45,7 +46,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
 
   const { membershipFee, membershipYear } = await getAppSettings();
   const names = await villageNames();
-  const { people, ageGroupNames } = await importContext();
+  const { people, ageGroupNames } = await importContext(membershipYear);
 
   const valued = run.rows.map((row) => ({ row: row.row, values: row.values }));
   const matches = matchesFor(valued, people);

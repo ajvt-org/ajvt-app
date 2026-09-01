@@ -14,7 +14,6 @@ export const memberImportRow = {
   phoneOnAnotherAccount: "هذا الرقم مستعمل لحساب موجود",
   nameLooksExisting: "يوجد شخص بنفس الاسم والقرية والعصر، تأكد قبل الإضافة",
   nameInFileTwice: (row: number) => `نفس الاسم موجود في السطر ${row}`,
-  alreadyHasMembership: "لهذا الشخص اشتراك مسجل بالفعل",
   paymentMethodUnknown: "طريقة دفع غير معروفة",
   paidUnclear: "تعذّرت قراءة خانة الاشتراك، اعتُبرت غير مدفوعة",
 } as const;

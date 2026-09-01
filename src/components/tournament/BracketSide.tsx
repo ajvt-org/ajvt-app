@@ -34,7 +34,7 @@ export default function BracketSide({
       className="flex items-center justify-between gap-1 px-2 text-xs"
       style={{ height, background, fontWeight: winner ? 700 : 400, borderTop }}
     >
-      <span className="flex items-center gap-1 truncate">
+      <span className="flex items-center gap-1 min-w-0">
         {team ? (
           <TeamLogo logo={team.logo} name={team.name} size={16} />
         ) : (
@@ -46,12 +46,13 @@ export default function BracketSide({
           </span>
         )}
         {winner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
-        <span
+        <bdi
           className="truncate"
+          title={team?.name}
           style={{ color: team ? "var(--text-main)" : "var(--text-muted)" }}
         >
           {team ? team.name : texts.teamDecidedLater}
-        </span>
+        </bdi>
       </span>
       {played && (
         <span className="shrink-0">

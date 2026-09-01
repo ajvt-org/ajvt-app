@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { validatePaidAmount } from "@/lib/donations";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { memberImportDialog } from "@/lib/texts";
+import { memberImportDialog, ouguiya } from "@/lib/texts";
 import { members } from "@/lib/messages";
 import MemberImportDialog, { type ImportPreview } from "./MemberImportDialog";
 
 const AGE = "البدريين";
 const OTHER_AGE = "الإتحاد";
+const METHOD = "بنكيلي";
 
 const ageGroups = [
   { id: "1", name: AGE },
@@ -45,7 +47,7 @@ function preview(over: Partial<ImportPreview> = {}): ImportPreview {
 
 const outcome = {
   results: [] as unknown[],
-  summary: { created: 1, updated: 0, failed: 0 },
+  summary: { created: 1, updated: 0, failed: 0, memberships: 0 },
 };
 
 function mockPreview(body: ImportPreview) {
@@ -183,14 +185,14 @@ describe("MemberImportDialog, a flagged row", () => {
     setup();
     await upload();
 
-    await userEvent.click(screen.getByText(memberImportDialog.bulkSelectAllBlocked));
-    expect(screen.getByText(memberImportDialog.bulkSelected(3))).toBeDefined();
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.selectMissingAgeGroup));
+    expect(screen.getByText(memberImportDialog.bulk.selected(3))).toBeDefined();
 
     await userEvent.selectOptions(
-      screen.getByLabelText(memberImportDialog.bulkAgeGroup),
+      screen.getByLabelText(memberImportDialog.bulk.ageGroup),
       OTHER_AGE,
     );
-    await userEvent.click(screen.getByText(memberImportDialog.bulkApply));
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.apply));
 
     await waitFor(() =>
       expect(screen.getByRole("button", { name: memberImportDialog.importAll })).toHaveProperty(
@@ -202,6 +204,155 @@ describe("MemberImportDialog, a flagged row", () => {
       "value",
       OTHER_AGE,
     );
+  });
+
+  it("pays for the whole selection in one action", async () => {
+    mockPreview(
+      preview({
+        rows: [1, 2, 3].map((row) => ({
+          row,
+          values: values(),
+          issues: [],
+          match: null,
+        })),
+      }),
+    );
+    setup();
+    await upload();
+
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.selectAll));
+    expect(screen.getByText(memberImportDialog.bulk.selected(3))).toBeDefined();
+
+    await userEvent.selectOptions(screen.getByLabelText(memberImportDialog.bulk.method), METHOD);
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.apply));
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(`${memberImportDialog.columnMethod} 1`)).toHaveProperty(
+        "value",
+        METHOD,
+      ),
+    );
+    expect(screen.getByLabelText(`${memberImportDialog.columnAmount} 3`)).toHaveProperty(
+      "value",
+      "",
+    );
+    expect(screen.getByText(memberImportDialog.rowsReady(3))).toBeDefined();
+  });
+
+  it("leaves out a row whose person already holds a membership, and says so", async () => {
+    mockPreview(
+      preview({
+        rows: [
+          { row: 1, values: values(), issues: [], match: null },
+          {
+            row: 2,
+            values: values(),
+            issues: [],
+            match: {
+              kind: "name" as const,
+              personId: "p2",
+              fullName: "مطابق",
+              hasMembership: true,
+            },
+          },
+        ],
+      }),
+    );
+    setup();
+    await upload();
+
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.selectAll));
+
+    expect(screen.getByText(memberImportDialog.bulk.selected(1))).toBeDefined();
+    expect(screen.getByText(memberImportDialog.bulk.withMembership(1))).toBeDefined();
+  });
+
+  it("refuses an amount below the fee once, before it reaches any row", async () => {
+    mockPreview(
+      preview({ rows: [1, 2].map((row) => ({ row, values: values(), issues: [], match: null })) }),
+    );
+    setup();
+    await upload();
+
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.selectAll));
+    await userEvent.selectOptions(screen.getByLabelText(memberImportDialog.bulk.method), METHOD);
+    await userEvent.type(screen.getByLabelText(memberImportDialog.bulk.amount), "50");
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.apply));
+
+    expect(await screen.findByText(String(validatePaidAmount("50", 100)))).toBeDefined();
+    expect(screen.queryByLabelText(`${memberImportDialog.columnMethod} 1`)).toBeNull();
+    expect(screen.getByText(memberImportDialog.rowsReady(2))).toBeDefined();
+  });
+
+  it("names the surplus before an amount above the fee is applied to more than one", async () => {
+    mockPreview(
+      preview({ rows: [1, 2].map((row) => ({ row, values: values(), issues: [], match: null })) }),
+    );
+    setup();
+    await upload();
+
+    await userEvent.click(screen.getByText(memberImportDialog.bulk.selectAll));
+    await userEvent.type(screen.getByLabelText(memberImportDialog.bulk.amount), "300");
+
+    expect(screen.getByText(memberImportDialog.bulk.surplus(2, ouguiya.amount(200)))).toBeDefined();
+
+    await userEvent.click(screen.getAllByLabelText(memberImportDialog.selectRow)[0]);
+
+    expect(screen.getByText(memberImportDialog.bulk.selected(1))).toBeDefined();
+    expect(screen.queryByText(memberImportDialog.bulk.surplus(1, ouguiya.amount(200)))).toBeNull();
+  });
+
+  it("says on the row that the matched person already holds a membership", async () => {
+    mockPreview(
+      preview({
+        rows: [
+          {
+            row: 1,
+            values: values(),
+            issues: [],
+            match: {
+              kind: "name" as const,
+              personId: "p1",
+              fullName: "مطابق",
+              hasMembership: true,
+            },
+          },
+        ],
+      }),
+    );
+    setup();
+    await upload();
+
+    expect(screen.getByText(memberImportDialog.matchHasMembership)).toBeDefined();
+    expect(screen.getByLabelText(`${memberImportDialog.columnPaid} 1`)).toHaveProperty(
+      "checked",
+      false,
+    );
+  });
+
+  it("says nothing about a membership when the matched person holds none", async () => {
+    mockPreview(
+      preview({
+        rows: [
+          {
+            row: 1,
+            values: values(),
+            issues: [],
+            match: {
+              kind: "name" as const,
+              personId: "p1",
+              fullName: "مطابق",
+              hasMembership: false,
+            },
+          },
+        ],
+      }),
+    );
+    setup();
+    await upload();
+
+    expect(screen.getByText(memberImportDialog.matchName("مطابق"))).toBeDefined();
+    expect(screen.queryByText(memberImportDialog.matchHasMembership)).toBeNull();
   });
 
   it("flags a row again when an edit breaks it", async () => {
