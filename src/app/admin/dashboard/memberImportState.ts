@@ -84,6 +84,14 @@ export function selectRow(rows: EditableRow[], at: number, selected: boolean): E
   return rows.map((row) => (row.row === at ? { ...row, selected } : row));
 }
 
+export function takesPayment(row: EditableRow): boolean {
+  return !row.skip && !row.match?.hasMembership;
+}
+
+export function selectAll(rows: EditableRow[]): EditableRow[] {
+  return rows.map((row) => ({ ...row, selected: takesPayment(row) }));
+}
+
 export function selectMissingAgeGroup(rows: EditableRow[]): EditableRow[] {
   return rows.map((row) => ({
     ...row,

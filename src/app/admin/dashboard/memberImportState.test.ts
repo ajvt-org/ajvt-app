@@ -6,9 +6,12 @@ import type { RowValues } from "@/lib/memberImportValues";
 import {
   editableRows,
   fillValues,
+  isRowBlocked,
   recheck,
+  selectAll,
   selectRow,
   tally,
+  toggleSkip,
   type EditableRow,
 } from "./memberImportState";
 
@@ -22,6 +25,10 @@ const context: CheckContext = {
   membershipFee: FEE,
   paymentMethods: PAYMENT_METHODS,
 };
+
+function match(kind: RowMatch["kind"], hasMembership: boolean): RowMatch {
+  return { kind, personId: `p${kind}`, fullName: "مطابق", hasMembership };
+}
 
 function checked(row: number, over: Partial<RowValues> = {}, found: RowMatch | null = null) {
   const values: RowValues = {
@@ -46,6 +53,50 @@ function rowAt(rows: EditableRow[], at: number): EditableRow {
   if (!found) throw new Error(`no row ${at}`);
   return found;
 }
+
+function selectedRows(rows: EditableRow[]): number[] {
+  return rows.filter((row) => row.selected).map((row) => row.row);
+}
+
+describe("selectAll", () => {
+  it("takes the rows a payment would land on and leaves the rest alone", () => {
+    const rows = build([
+      checked(1),
+      checked(2, { phone: "22334455" }, match("phone", false)),
+      checked(3, {}, match("name", true)),
+      checked(4, {}, match("name", false)),
+    ]);
+
+    expect(selectedRows(selectAll(rows))).toEqual([1, 4]);
+  });
+
+  it("keeps a person who already holds this year's membership out", () => {
+    const rows = build([checked(1, {}, match("name", true))]);
+
+    expect(selectedRows(selectAll(rows))).toEqual([]);
+  });
+
+  it("takes a blocked row, since the block is shown and has to be fixed before importing", () => {
+    const rows = build([checked(1, { age: "" })]);
+
+    expect(isRowBlocked(rowAt(rows, 1))).toBe(true);
+    expect(selectedRows(selectAll(rows))).toEqual([1]);
+  });
+
+  it("takes a matched row the admin chose to stop skipping", () => {
+    const rows = build([checked(1, { phone: "22334455" }, match("phone", false))]);
+
+    expect(selectedRows(selectAll(rows))).toEqual([]);
+    expect(selectedRows(selectAll(toggleSkip(rows, 1, context)))).toEqual([1]);
+  });
+
+  it("counts what it selected rather than how many rows there are", () => {
+    const rows = build([checked(1), checked(2, {}, match("name", true)), checked(3)]);
+
+    expect(selectedRows(selectAll(rows))).toHaveLength(2);
+    expect(rows).toHaveLength(3);
+  });
+});
 
 describe("fillValues", () => {
   function twoSelected() {
@@ -102,8 +153,9 @@ describe("fillValues", () => {
   });
 
   it("gives the age group only to the villages that take one", () => {
-    const built = build([checked(1, { age: "" }), checked(2, { village: OTHER_VILLAGE, age: "" })]);
-    const rows = selectRow(selectRow(built, 1, true), 2, true);
+    const rows = selectAll(
+      build([checked(1, { age: "" }), checked(2, { village: OTHER_VILLAGE, age: "" })]),
+    );
 
     const filled = fillValues(rows, { age: AGE }, context);
 
@@ -112,11 +164,11 @@ describe("fillValues", () => {
   });
 
   it("rechecks, so the counters follow the fill", () => {
-    const blocked = selectRow(build([checked(1, { age: "" })]), 1, true);
+    const blocked = selectAll(build([checked(1, { age: "" })]));
     expect(tally(blocked).blocked).toBe(1);
     expect(tally(fillValues(blocked, { age: AGE }, context)).ready).toBe(1);
 
-    const ready = selectRow(build([checked(1)]), 1, true);
+    const ready = selectAll(build([checked(1)]));
     expect(tally(ready).ready).toBe(1);
     expect(tally(fillValues(ready, { paid: true }, context)).blocked).toBe(1);
   });
