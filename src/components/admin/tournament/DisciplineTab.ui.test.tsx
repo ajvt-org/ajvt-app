@@ -103,7 +103,7 @@ describe("DisciplineTab", () => {
     fireEvent.click(screen.getByText("اقتراح الإيقاف"));
 
     await waitFor(() => expect(post).toHaveBeenCalled());
-    expect(post.mock.calls[0][1]).toMatchObject({ memberId: "p1", scope: "INDEFINITE" });
+    expect(post.mock.calls[0][1]).toMatchObject({ userId: "p1", scope: "INDEFINITE" });
   });
 
   it("saves the tournament's card rules", async () => {
