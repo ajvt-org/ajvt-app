@@ -15,6 +15,7 @@ export const activityRegistrants = {
   filterByTeam: "تصفية حسب الفريق",
   allTeams: "كل الفرق",
   searchToBegin: "اكتب اسماً أو رقم هاتف للبحث عن عضو",
+  alreadyRegistered: "مسجَّل بالفعل",
   candidateDetail: (village: string | null, age: string | null) =>
     [village, age].filter(Boolean).join(" · "),
   viewProof: "عرض إثبات الدفع",

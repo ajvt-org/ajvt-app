@@ -53,13 +53,13 @@ export default function ActivityRegistrationsPanel({
   const registeredIds = new Set(
     registrations.filter((r) => r.status !== "REJECTED").map((r) => r.member.id),
   );
-  const candidates = members.filter((m) => !registeredIds.has(m.id));
 
   return (
     <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <AddMemberToActivityForm
         activityId={activityId}
-        candidates={candidates}
+        candidates={members}
+        registeredIds={registeredIds}
         actionLoading={actionLoading}
         onRegister={onRegister}
       />
