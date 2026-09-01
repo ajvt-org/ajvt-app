@@ -41,11 +41,11 @@ const save = (matchId: string, body: object) =>
 
 const goal = (teamId: string, period: "REGULAR" | "EXTRA_TIME" = "REGULAR") => ({
   teamId,
-  memberId: null,
+  userId: null,
   period,
 });
 
-const kick = (teamId: string, scored = true) => ({ teamId, memberId: null, scored });
+const kick = (teamId: string, scored = true) => ({ teamId, userId: null, scored });
 
 describe("extra time", () => {
   beforeEach(async () => {

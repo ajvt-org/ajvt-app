@@ -59,7 +59,7 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
 
     await save(match.id, {
-      goalEvents: [{ teamId: away.id, memberId: players[1].userId, minute: 10 }],
+      goalEvents: [{ teamId: away.id, userId: players[1].userId, minute: 10 }],
       forfeitWinnerTeamId: home.id,
     });
 
@@ -72,7 +72,7 @@ describe("a match won by forfeit", () => {
     await save(match.id, {
       goalEvents: Array.from({ length: 5 }, (_, i) => ({
         teamId: home.id,
-        memberId: players[0].userId,
+        userId: players[0].userId,
         minute: i + 1,
       })),
       forfeitWinnerTeamId: home.id,
@@ -87,8 +87,8 @@ describe("a match won by forfeit", () => {
 
     await save(match.id, {
       goalEvents: [
-        { teamId: away.id, memberId: players[1].userId, minute: 10 },
-        { teamId: away.id, memberId: players[1].userId, minute: 20 },
+        { teamId: away.id, userId: players[1].userId, minute: 10 },
+        { teamId: away.id, userId: players[1].userId, minute: 20 },
       ],
       forfeitWinnerTeamId: home.id,
     });
@@ -101,9 +101,9 @@ describe("a match won by forfeit", () => {
     const { home, away, players, match } = await football();
     await save(match.id, {
       goalEvents: [
-        { teamId: away.id, memberId: players[1].userId, minute: 10 },
-        { teamId: away.id, memberId: players[1].userId, minute: 20 },
-        { teamId: home.id, memberId: players[0].userId, minute: 30 },
+        { teamId: away.id, userId: players[1].userId, minute: 10 },
+        { teamId: away.id, userId: players[1].userId, minute: 20 },
+        { teamId: home.id, userId: players[0].userId, minute: 30 },
       ],
       forfeitWinnerTeamId: home.id,
     });
@@ -121,7 +121,7 @@ describe("a match won by forfeit", () => {
   it("recomputes the score when a forfeit is set on its own", async () => {
     const { away, players, match } = await football();
     await save(match.id, {
-      goalEvents: [{ teamId: away.id, memberId: players[1].userId, minute: 10 }],
+      goalEvents: [{ teamId: away.id, userId: players[1].userId, minute: 10 }],
     });
     expect(await stored(match.id)).toMatchObject({ homeScore: 0, awayScore: 1 });
 

@@ -3,7 +3,7 @@ import { matchAdmin as texts } from "@/lib/texts";
 
 export interface GoalDraft {
   teamId: string;
-  memberId: string | null;
+  userId: string | null;
   kind: GoalKind;
   period: GoalPeriod;
   minute: string;
@@ -11,7 +11,7 @@ export interface GoalDraft {
 
 export interface KickDraft {
   teamId: string;
-  memberId: string | null;
+  userId: string | null;
   scored: boolean;
 }
 

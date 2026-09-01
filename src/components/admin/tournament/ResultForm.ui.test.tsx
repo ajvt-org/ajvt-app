@@ -144,7 +144,7 @@ describe("ResultForm as goal events", () => {
     await waitFor(() => expect(patchMock).toHaveBeenCalled());
     const body = patchMock.mock.calls[0][1] as Record<string, unknown>;
     expect(body.goalEvents).toEqual([
-      { teamId: "t1", memberId: null, kind: "GOAL", period: "REGULAR", minute: null },
+      { teamId: "t1", userId: null, kind: "GOAL", period: "REGULAR", minute: null },
     ]);
     expect(body.homeScore).toBeUndefined();
   });

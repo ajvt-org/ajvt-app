@@ -46,10 +46,10 @@ export default function ResultForm({
     teamId === match.homeTeam.id ? match.awayTeam.id : match.homeTeam.id;
   const scorerRoster = (teamId: string, kind: GoalKind) =>
     rosterOf(kind === "OWN_GOAL" ? otherTeam(teamId) : teamId);
-  const nameOf = (memberId: string | null) => {
-    if (memberId === null) return texts.unknownScorer;
+  const nameOf = (userId: string | null) => {
+    if (userId === null) return texts.unknownScorer;
     for (const t of teams) {
-      const hit = t.members.find((m) => m.member.id === memberId);
+      const hit = t.members.find((m) => m.member.id === userId);
       if (hit) return hit.member.fullName;
     }
     return texts.unknownScorer;
@@ -62,7 +62,7 @@ export default function ResultForm({
     match.goals.flatMap((g) =>
       Array.from({ length: g.count }, () => ({
         teamId: g.teamId,
-        memberId: g.member?.id ?? null,
+        userId: g.member?.id ?? null,
         kind: g.kind,
         period: g.period,
         minute: g.minute != null ? String(g.minute) : "",
@@ -72,7 +72,7 @@ export default function ResultForm({
   const [kicks, setKicks] = useState<KickDraft[]>(
     match.penaltyKicks.map((k) => ({
       teamId: k.teamId,
-      memberId: k.member?.id ?? null,
+      userId: k.member?.id ?? null,
       scored: k.scored,
     })),
   );
@@ -120,7 +120,7 @@ export default function ResultForm({
         await api.patch(`/api/admin/matches/${match.id}`, {
           goalEvents: goals.map((g) => ({
             teamId: g.teamId,
-            memberId: g.memberId,
+            userId: g.userId,
             kind: g.kind,
             period: g.period,
             minute: g.minute || null,
@@ -285,7 +285,7 @@ export default function ResultForm({
                 {i + 1}
               </span>
               <span className="min-w-0">
-                {sides.find((t) => t.id === k.teamId)?.name} — {nameOf(k.memberId)}
+                {sides.find((t) => t.id === k.teamId)?.name} — {nameOf(k.userId)}
               </span>
               <span
                 className="badge shrink-0"

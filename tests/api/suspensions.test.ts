@@ -150,7 +150,7 @@ describe("the discipline engine", () => {
       patch(`/api/admin/matches/${match.id}`, {
         homeScore: 1,
         awayScore: 0,
-        homeGoals: [{ memberId: players[0].userId, count: 1 }],
+        homeGoals: [{ userId: players[0].userId, count: 1 }],
       }),
       withMatch(match.id),
     );
