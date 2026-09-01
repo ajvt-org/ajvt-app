@@ -133,10 +133,6 @@ export function checkValues(rows: ValuedRow[], context: CheckContext): RowIssue[
       if (match?.kind === "name") issues.push(warn("fullName", memberImportRow.nameLooksExisting));
     }
 
-    if (values.paid && match?.hasMembership) {
-      issues.push(warn("paid", memberImportRow.alreadyHasMembership));
-    }
-
     return issues;
   });
 }

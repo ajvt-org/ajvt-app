@@ -45,6 +45,7 @@ export const memberImportDialog = {
   skipRow: "اترك هذا السطر",
   matchPhone: (name: string) => `حساب موجود بنفس الرقم: ${name}`,
   matchName: (name: string) => `قد يكون: ${name}`,
+  matchHasMembership: "لهذا الشخص اشتراك مسجل لهذه السنة",
   back: "رجوع",
   importAll: "استورد",
   importBlocked: "صحّح السطور المعلّمة قبل الاستيراد",
