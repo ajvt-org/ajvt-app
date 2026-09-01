@@ -144,7 +144,12 @@ export async function setUpTournament(activityId: string, input: SetupInput): Pr
 
     await tx.activity.update({
       where: { id: activityId },
-      data: { format: input.format, startsAt: input.startsAt, endsAt: plan.endsAt },
+      data: {
+        format: input.format,
+        startsAt: input.startsAt,
+        endsAt: plan.endsAt,
+        withTime: input.times.length === 1,
+      },
     });
   });
 
