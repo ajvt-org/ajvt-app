@@ -6,6 +6,7 @@ import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
+import { tournament as messages } from "@/lib/messages";
 
 export default function MatchDetailsForm({
   match,
@@ -35,7 +36,7 @@ export default function MatchDetailsForm({
       return;
     }
     if (homeTeamId === awayTeamId) {
-      setError("لا يمكن أن يلعب الفريق ضد نفسه");
+      setError(messages.teamAgainstItself);
       return;
     }
     setLoading(true);
@@ -108,7 +109,7 @@ export default function MatchDetailsForm({
         />
         <input
           type="text"
-          placeholder="الجولة"
+          placeholder={texts.roundLabel}
           value={round}
           onChange={(e) => setRound(e.target.value)}
           maxLength={40}
@@ -117,7 +118,7 @@ export default function MatchDetailsForm({
       </div>
       <input
         type="text"
-        placeholder="الملعب"
+        placeholder={texts.venueLabel}
         value={venue}
         onChange={(e) => setVenue(e.target.value)}
         maxLength={60}
@@ -135,7 +136,7 @@ export default function MatchDetailsForm({
             setAwayTeamId("");
           }}
         />
-        <IconLabel name="trophy">مباراة خروج المغلوب</IconLabel>
+        <IconLabel name="trophy">{texts.knockoutMatch}</IconLabel>
       </label>
       {error && (
         <p className="text-xs" style={{ color: "#dc2626" }}>
@@ -148,7 +149,7 @@ export default function MatchDetailsForm({
         className="btn btn-primary text-xs px-3"
         style={{ width: "auto" }}
       >
-        {loading ? "..." : "حفظ التفاصيل"}
+        {loading ? "..." : texts.saveDetails}
       </button>
     </form>
   );
