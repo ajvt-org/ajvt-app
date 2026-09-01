@@ -4,6 +4,7 @@ import { MAX_FILE_BYTES } from "@/app/api/admin/people/import/preview/schema";
 import { prisma } from "@/lib/prisma";
 import { memberImportErrors } from "@/lib/messages";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
+import { runningYear } from "@/lib/membershipYear";
 import { claimImportBatch, fileHashOf } from "@/lib/importBatchServer";
 import type { CheckedRow } from "@/lib/memberImportCheck";
 import { resetDb, post, createAdmin, signInAsAdmin } from "./helpers";
@@ -93,6 +94,35 @@ describe("POST /api/admin/people/import/preview", () => {
     const data = await body(await preview(`${HEADERS}\nمحمد,36000123,${HOME_VILLAGE},${AGE},,,`));
 
     expect(data.rows[0].match).toMatchObject({ kind: "phone", personId: account.id });
+  });
+
+  it("says the matched account holds a membership when it is for the running year", async () => {
+    await asMembersAdmin();
+    const account = await prisma.user.create({
+      data: { phone: "36000123", fullName: "شخص موجود", village: HOME_VILLAGE, age: AGE },
+    });
+    await prisma.membership.create({
+      data: { userId: account.id, year: runningYear(), status: "ACTIVE" },
+    });
+
+    const data = await body(await preview(`${HEADERS}\nمحمد,36000123,${HOME_VILLAGE},${AGE},,,`));
+
+    expect(data.rows[0].match?.hasMembership).toBe(true);
+  });
+
+  it("says the matched account holds none when the only membership is an earlier year", async () => {
+    await asMembersAdmin();
+    const account = await prisma.user.create({
+      data: { phone: "36000123", fullName: "شخص موجود", village: HOME_VILLAGE, age: AGE },
+    });
+    await prisma.membership.create({
+      data: { userId: account.id, year: runningYear() - 1, status: "ACTIVE" },
+    });
+
+    const data = await body(await preview(`${HEADERS}\nمحمد,36000123,${HOME_VILLAGE},${AGE},,,`));
+
+    expect(data.rows[0].match?.personId).toBe(account.id);
+    expect(data.rows[0].match?.hasMembership).toBe(false);
   });
 
   it("gives a fresh batch identifier to every preview of the same file", async () => {

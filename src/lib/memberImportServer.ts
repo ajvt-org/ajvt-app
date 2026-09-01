@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import type { ExistingPerson } from "./memberImportCheck";
 
-export async function importContext(): Promise<{
+export async function importContext(membershipYear: number): Promise<{
   people: ExistingPerson[];
   ageGroupNames: string[];
 }> {
@@ -13,7 +13,7 @@ export async function importContext(): Promise<{
         phone: true,
         village: true,
         age: true,
-        memberships: { select: { id: true }, take: 1 },
+        memberships: { where: { year: membershipYear }, select: { id: true }, take: 1 },
       },
     }),
     prisma.ageGroup.findMany({ orderBy: { createdAt: "asc" }, select: { name: true } }),
