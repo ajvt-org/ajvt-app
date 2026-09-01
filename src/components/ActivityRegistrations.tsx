@@ -19,6 +19,7 @@ export default function ActivityRegistrations({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [chosenTeamId, setChosenTeamId] = useState("");
   const showToast = useToast();
 
   const registration = member.registrations.find((r) => r.activityId === activity.id) || null;
@@ -56,7 +57,12 @@ export default function ActivityRegistrations({
 
   function register() {
     return run(
-      () => api.post("/api/activities/register", { activityId: activity.id, userId: member.id }),
+      () =>
+        api.post("/api/activities/register", {
+          activityId: activity.id,
+          userId: member.id,
+          chosenTeamId: chosenTeamId || null,
+        }),
       activity.isVolunteer ? activityRegistration.volunteered : activityRegistration.registered,
     );
   }
@@ -105,21 +111,48 @@ export default function ActivityRegistrations({
               <IconLabel name="hourglass">{texts.renewToJoin}</IconLabel>
             </p>
           ) : activity.isOpen && !full ? (
-            <button
-              onClick={activity.isVolunteer ? registerVolunteer : register}
-              disabled={busy}
-              className="btn btn-primary"
-            >
-              {busy ? (
-                "..."
-              ) : registration?.status === "REJECTED" ? (
-                <IconLabel name="refresh">{activityRegistration.retry}</IconLabel>
-              ) : activity.isVolunteer ? (
-                <IconLabel name="handshake">{activityRegistration.volunteer}</IconLabel>
-              ) : (
-                <IconLabel name="pencil">{activityRegistration.register}</IconLabel>
+            <>
+              {activity.isTournament && !activity.isVolunteer && activity.teams.length > 0 && (
+                <div>
+                  <label
+                    htmlFor={`choose-team-${activity.id}`}
+                    className="block text-xs mb-1"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    <Icon name="flag" size={12} className="icon-inline" />{" "}
+                    {activityRegistration.chooseTeamAtRegistration}
+                  </label>
+                  <select
+                    id={`choose-team-${activity.id}`}
+                    className="input input-sm"
+                    value={chosenTeamId}
+                    onChange={(e) => setChosenTeamId(e.target.value)}
+                  >
+                    <option value="">{activityRegistration.noTeamYet}</option>
+                    {activity.teams.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
-            </button>
+              <button
+                onClick={activity.isVolunteer ? registerVolunteer : register}
+                disabled={busy}
+                className="btn btn-primary"
+              >
+                {busy ? (
+                  "..."
+                ) : registration?.status === "REJECTED" ? (
+                  <IconLabel name="refresh">{activityRegistration.retry}</IconLabel>
+                ) : activity.isVolunteer ? (
+                  <IconLabel name="handshake">{activityRegistration.volunteer}</IconLabel>
+                ) : (
+                  <IconLabel name="pencil">{activityRegistration.register}</IconLabel>
+                )}
+              </button>
+            </>
           ) : (
             <span className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
               {!activity.isOpen ? activityRegistration.closed : activityRegistration.full}
