@@ -7,6 +7,9 @@ import {
   getMatchWinnerTeamId,
   bracketRoundLabel,
   isPowerOfTwo,
+  getHeadToHead,
+  computeCleanSheets,
+  computeTeamAdvancedStats,
 } from "./tournament";
 import type { StandingsMatchInput } from "./standings";
 
@@ -297,5 +300,87 @@ describe("isPowerOfTwo", () => {
     expect(isPowerOfTwo(1)).toBe(false);
     expect(isPowerOfTwo(0)).toBe(false);
     expect(isPowerOfTwo(-4)).toBe(false);
+  });
+});
+
+describe("a fixture with no teams yet", () => {
+  const empty: StandingsMatchInput = {
+    homeTeam: null,
+    awayTeam: null,
+    homeScore: 4,
+    awayScore: 2,
+    status: "PLAYED",
+    isKnockout: true,
+  };
+
+  it("is left out of the tournament totals", () => {
+    const stats = computeStats(teams, [match("a", "b", 1, 0), empty]);
+
+    expect(stats.matchesPlayed).toBe(1);
+    expect(stats.totalGoals).toBe(1);
+  });
+
+  it("has no winner", () => {
+    expect(
+      getMatchWinnerTeamId({
+        homeTeamId: null,
+        awayTeamId: null,
+        homeScore: 3,
+        awayScore: 1,
+        homePenalties: null,
+        awayPenalties: null,
+        status: "PLAYED",
+      }),
+    ).toBeNull();
+  });
+
+  it("is not a head to head between any two teams", () => {
+    const played = { id: "m1", homeTeam: { id: "a" }, awayTeam: { id: "b" } };
+    const placeholder = { id: "m2", homeTeam: null, awayTeam: null };
+
+    expect(getHeadToHead([played, placeholder], "a", "b")).toEqual([played]);
+  });
+
+  it("earns nobody a clean sheet", () => {
+    const rows = computeCleanSheets(teams, [
+      {
+        homeTeam: { id: "a" },
+        awayTeam: { id: "b" },
+        homeScore: 2,
+        awayScore: 0,
+        status: "PLAYED",
+      },
+      { homeTeam: null, awayTeam: null, homeScore: 1, awayScore: 0, status: "PLAYED" },
+    ]);
+    const by = Object.fromEntries(rows.map((r) => [r.teamId, r]));
+
+    expect(by.a.cleanSheets).toBe(1);
+    expect(by.a.played).toBe(1);
+    expect(by.c).toBeUndefined();
+  });
+
+  it("does not enter a team's form", () => {
+    const rows = computeTeamAdvancedStats(teams, [
+      {
+        homeTeam: { id: "a", name: "ألف" },
+        awayTeam: { id: "b", name: "باء" },
+        homeScore: 3,
+        awayScore: 0,
+        status: "PLAYED",
+        order: 1,
+      },
+      {
+        homeTeam: null,
+        awayTeam: null,
+        homeScore: 9,
+        awayScore: 0,
+        status: "PLAYED",
+        order: 2,
+      },
+    ]);
+    const by = Object.fromEntries(rows.map((r) => [r.teamId, r]));
+
+    expect(by.a.form).toEqual(["W"]);
+    expect(by.a.biggestWin).toEqual({ opponent: "باء", gf: 3, ga: 0, gd: 3 });
   });
 });

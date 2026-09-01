@@ -14,8 +14,8 @@ export interface StandingsBookingInput {
 }
 
 export interface StandingsMatchInput {
-  homeTeam: { id: string };
-  awayTeam: { id: string };
+  homeTeam: { id: string } | null;
+  awayTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -57,6 +57,11 @@ function blank(team: StandingsTeamInput): StandingsRow {
   };
 }
 
+function sides(m: StandingsMatchInput): { homeId: string; awayId: string } | null {
+  if (!m.homeTeam || !m.awayTeam) return null;
+  return { homeId: m.homeTeam.id, awayId: m.awayTeam.id };
+}
+
 function counts(matches: StandingsMatchInput[]): boolean[] {
   return matches.map(
     (m) => !m.isKnockout && m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null,
@@ -69,8 +74,10 @@ function tally(teams: StandingsTeamInput[], matches: StandingsMatchInput[]): Sta
 
   matches.forEach((m, i) => {
     if (!played[i]) return;
-    const home = table.get(m.homeTeam.id);
-    const away = table.get(m.awayTeam.id);
+    const pair = sides(m);
+    if (!pair) return;
+    const home = table.get(pair.homeId);
+    const away = table.get(pair.awayId);
     if (!home || !away) return;
     home.played++;
     away.played++;
@@ -108,9 +115,11 @@ function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<s
 
   matches.forEach((m, i) => {
     if (!played[i]) return;
-    if (!ids.has(m.homeTeam.id) || !ids.has(m.awayTeam.id)) return;
-    const home = mini.get(m.homeTeam.id)!;
-    const away = mini.get(m.awayTeam.id)!;
+    const pair = sides(m);
+    if (!pair) return;
+    if (!ids.has(pair.homeId) || !ids.has(pair.awayId)) return;
+    const home = mini.get(pair.homeId)!;
+    const away = mini.get(pair.awayId)!;
     home.gf += m.homeScore!;
     home.ga += m.awayScore!;
     away.gf += m.awayScore!;
