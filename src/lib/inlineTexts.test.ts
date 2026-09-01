@@ -56,6 +56,7 @@ const KEPT_CLEAN = [
   "src/lib/memberImportPasswords.ts",
   "src/app/admin/dashboard/MemberImportResult.tsx",
   "src/app/admin/dashboard/MemberSearch.tsx",
+  "src/app/admin/dashboard/BareAccountsSection.tsx",
   "src/lib/memberImportTemplate.ts",
   "src/app/admin/dashboard/MemberImportDialog.tsx",
   "src/app/admin/dashboard/MemberImportUpload.tsx",
