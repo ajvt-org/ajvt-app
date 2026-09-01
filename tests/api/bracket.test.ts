@@ -116,3 +116,145 @@ describe("the knockout draw", () => {
     expect(final.isKnockout).toBe(true);
   });
 });
+
+async function bracketOfPlaceholders(activityId: string, firstRoundSize: number) {
+  let order = 100;
+  let size = firstRoundSize;
+  let round = 1;
+  const day = new Date("2026-09-20T16:00:00.000Z");
+  while (size >= 1) {
+    for (let i = 0; i < size; i++) {
+      await prisma.match.create({
+        data: {
+          activityId,
+          isKnockout: true,
+          bracketRound: round,
+          order: order++,
+          matchDate: new Date(day.getTime() + round * 86_400_000),
+        },
+      });
+    }
+    size /= 2;
+    round++;
+  }
+}
+
+const bracket = (activityId: string) =>
+  prisma.match.findMany({
+    where: { activityId, bracketRound: { not: null } },
+    orderBy: [{ bracketRound: "asc" }, { order: "asc" }],
+  });
+
+describe("a bracket laid out before the teams are known", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("fills the waiting fixtures rather than creating new ones", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    const before = await bracket(activity.id);
+
+    const res = await draw(activity.id);
+
+    expect(res.status).toBe(200);
+    const after = await bracket(activity.id);
+    expect(after.map((m) => m.id)).toEqual(before.map((m) => m.id));
+    expect(after.filter((m) => m.bracketRound === 1).every((m) => m.homeTeamId !== null)).toBe(
+      true,
+    );
+  });
+
+  it("keeps the day and the kick off it was given", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    const before = await bracket(activity.id);
+
+    await draw(activity.id);
+
+    const after = await bracket(activity.id);
+    expect(after.map((m) => m.matchDate?.toISOString())).toEqual(
+      before.map((m) => m.matchDate?.toISOString()),
+    );
+  });
+
+  it("leaves the later rounds waiting", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+
+    await draw(activity.id);
+
+    const final = (await bracket(activity.id)).filter((m) => m.bracketRound === 2);
+    expect(final).toHaveLength(1);
+    expect(final[0]).toMatchObject({ homeTeamId: null, awayTeamId: null });
+  });
+
+  it("takes a redo without losing the schedule", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    await draw(activity.id);
+    const before = await bracket(activity.id);
+
+    const res = await draw(activity.id, { redo: true });
+
+    expect(res.status).toBe(200);
+    const after = await bracket(activity.id);
+    expect(after.map((m) => m.id)).toEqual(before.map((m) => m.id));
+    expect(after.map((m) => m.matchDate?.toISOString())).toEqual(
+      before.map((m) => m.matchDate?.toISOString()),
+    );
+  });
+
+  it("refuses a second draw that is not a redo", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    await draw(activity.id);
+
+    expect((await draw(activity.id)).status).toBe(409);
+  });
+
+  it("advances the winners into the waiting final", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    await draw(activity.id);
+    const first = (await bracket(activity.id)).filter((m) => m.bracketRound === 1);
+    for (const m of first) {
+      await prisma.match.update({
+        where: { id: m.id },
+        data: { status: "PLAYED", homeScore: 2, awayScore: 0 },
+      });
+    }
+
+    const res = await NEXT_ROUND(
+      post(`/api/admin/activities/${activity.id}/bracket/next-round`, {}),
+      withId(activity.id),
+    );
+
+    expect(res.status).toBe(200);
+    const final = (await bracket(activity.id)).filter((m) => m.bracketRound === 2);
+    expect(final).toHaveLength(1);
+    expect(final[0].homeTeamId).toBe(first[0].homeTeamId);
+    expect(final[0].awayTeamId).toBe(first[1].homeTeamId);
+  });
+
+  it("refuses to advance twice into the same round", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
+    await bracketOfPlaceholders(activity.id, 2);
+    await draw(activity.id);
+    for (const m of (await bracket(activity.id)).filter((m) => m.bracketRound === 1)) {
+      await prisma.match.update({
+        where: { id: m.id },
+        data: { status: "PLAYED", homeScore: 2, awayScore: 0 },
+      });
+    }
+    const advance = () =>
+      NEXT_ROUND(
+        post(`/api/admin/activities/${activity.id}/bracket/next-round`, {}),
+        withId(activity.id),
+      );
+    await advance();
+
+    expect((await advance()).status).toBe(409);
+  });
+});
