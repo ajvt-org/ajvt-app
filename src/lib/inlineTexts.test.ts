@@ -30,6 +30,8 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/page.tsx",
   "src/app/admin/activities/[id]/activityTabs.ts",
   "src/components/admin/WorkspaceTabs.tsx",
+  "src/components/admin/CountBadge.tsx",
+  "src/components/admin/shell/TabStrip.tsx",
   "src/components/admin/tournament/tournamentTabs.ts",
   "src/app/admin/activities/ActivityRegistrationsPanel.tsx",
   "src/app/admin/activities/AddMemberToActivityForm.tsx",

@@ -17,6 +17,13 @@ async function linesWithin(page: Page, strip: number): Promise<number> {
   return new Set(centres).size;
 }
 
+async function paddingTopOf(page: Page, strip: number): Promise<number> {
+  return page
+    .locator(".admin-page .tab-strip")
+    .nth(strip)
+    .evaluate((node) => parseFloat(getComputedStyle(node).paddingTop));
+}
+
 async function overflows(page: Page, strip: number): Promise<boolean> {
   return page
     .locator(".admin-page .tab-strip")
@@ -58,6 +65,10 @@ test("the workspace tabs hold to one line each on a phone", async ({ browser }) 
   expect(await linesWithin(page, 0)).toBe(1);
   expect(await linesWithin(page, 1)).toBe(1);
   expect(await overflows(page, 1)).toBe(true);
+
+  for (const strip of [0, 1]) {
+    expect(await paddingTopOf(page, strip)).toBeGreaterThanOrEqual(6);
+  }
 
   await context.close();
 });
