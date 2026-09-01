@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { common } from "@/lib/messages";
 
-const INVALID = { message: "قيمة غير صالحة" };
+const INVALID = common.invalidValue;
 
 export const suspensionCreateSchema = z
   .object({
