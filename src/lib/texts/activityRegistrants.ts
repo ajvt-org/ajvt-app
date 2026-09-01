@@ -22,6 +22,6 @@ export const activityRegistrants = {
 
 export const registrationStatusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "غير مقبول",
+  ACTIVE: "مؤكَّد",
+  REJECTED: "مرفوض",
 };
