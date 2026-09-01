@@ -1,5 +1,7 @@
 export const money = {
   amountInvalid: "المبلغ يجب أن يكون رقماً صحيحاً موجباً",
+  proofRequired: "يرجى إرفاق صورة إثبات الدفع",
+  tooManyDonations: "محاولات كثيرة جداً، حاول لاحقاً",
   anonymousDonor: "فاعل خير",
   nameChoiceRequired: "يرجى اختيار كيف تظهر مساهمتك",
   nameRequired: "الاسم مطلوب",

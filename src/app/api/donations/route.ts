@@ -22,7 +22,7 @@ const MAX_ATTEMPTS = 5;
 export const POST = withRoute("POST /api/donations", async (req: NextRequest) => {
   const key = `donate:${getClientIp(req)}`;
   if (isRateLimited(key, MAX_ATTEMPTS)) {
-    return NextResponse.json({ error: "محاولات كثيرة جداً، حاول لاحقاً" }, { status: 429 });
+    return NextResponse.json({ error: money.tooManyDonations }, { status: 429 });
   }
   recordFailedAttempt(key, WINDOW_MS);
 
@@ -39,7 +39,7 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   const memberIdRaw = formData.get("memberId");
   const paymentMethodRaw = formData.get("paymentMethod");
 
-  if (!file) return NextResponse.json({ error: "يرجى إرفاق صورة إثبات الدفع" }, { status: 400 });
+  if (!file) return NextResponse.json({ error: money.proofRequired }, { status: 400 });
   if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
     return NextResponse.json({ error: uploads.unsupportedType }, { status: 400 });
   }
