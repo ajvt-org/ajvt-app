@@ -1,3 +1,4 @@
+import { bracketUntouched, firstRoundIsWaiting } from "@/lib/bracketState";
 import type { Group, Match, TournamentFormat } from "./types";
 
 export interface MatchesState {
@@ -40,13 +41,9 @@ export function matchesState({
   const isTwoGroupFormat = hasGroupStage && groups.length === 2;
 
   const firstRound = bracketMatches.filter((m) => m.bracketRound === 1);
-  const bracketUntouched =
-    bracketMatches.length > 0 && bracketMatches.every((m) => m.status === "SCHEDULED");
-  const firstRoundWaiting =
-    firstRound.length > 0 &&
-    bracketUntouched &&
-    firstRound.every((m) => m.homeTeam === null && m.awayTeam === null);
-  const firstRoundRedoable = firstRound.length > 0 && bracketUntouched && !firstRoundWaiting;
+  const firstRoundWaiting = firstRoundIsWaiting(bracketMatches);
+  const firstRoundRedoable =
+    firstRound.length > 0 && bracketUntouched(bracketMatches) && !firstRoundWaiting;
 
   return {
     bracketMatches,
