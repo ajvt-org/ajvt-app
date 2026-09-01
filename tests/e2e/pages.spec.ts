@@ -1,6 +1,7 @@
 import { test, expect, type Page, type Browser } from "@playwright/test";
 import { Client } from "pg";
 import { localDatabase } from "../localDatabase.mjs";
+import { acceptPayment, openAdmin, submitMembership } from "./helpers";
 
 const PAGES = [
   "/",
@@ -19,11 +20,6 @@ const PAGES = [
   "/home",
   "/profile",
 ];
-
-const PROOF = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64",
-);
 
 const ERROR_BOUNDARY = "حدث خطأ غير متوقع";
 
@@ -69,13 +65,7 @@ async function createAccountOnly(page: Page, phone: string, fullName = "حساب
 async function createMember(page: Page, phone: string, fullName = "حساب بلا طلب") {
   await createAccountOnly(page, phone, fullName);
   await page.goto("/membership");
-  await page.click("text=بنكيلي");
-  await page.fill('input[type="number"]', "100");
-  await page
-    .locator('input[type="file"]')
-    .last()
-    .setInputFiles({ name: "proof.png", mimeType: "image/png", buffer: PROOF });
-  await page.getByRole("button", { name: "إرسال طلب الانضمام" }).click();
+  await submitMembership(page, "بنكيلي");
   await page.waitForTimeout(2000);
 }
 
@@ -115,16 +105,8 @@ async function withDb<T>(run: (client: Client) => Promise<T>): Promise<T> {
 }
 
 async function approveNewest(browser: Browser) {
-  const context = await browser.newContext();
-  const admin = await context.newPage();
-  await admin.goto("/admin/login");
-  await admin.fill('input[type="text"]', "admin");
-  await admin.fill('input[type="password"]', "admin123");
-  await admin.click('button[type="submit"]');
-  await admin.waitForURL("**/admin");
-  await admin.goto("/admin/dashboard");
-  await admin.getByText(APPROVED.fullName).first().click();
-  await admin.getByRole("button", { name: "قبول الدفع", exact: true }).click();
+  const { context, page: admin } = await openAdmin(browser);
+  await acceptPayment(admin, APPROVED.fullName);
   await expect(admin.getByText(APPROVED.fullName).first()).toBeVisible();
   await context.close();
 }
