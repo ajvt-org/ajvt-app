@@ -53,7 +53,7 @@ export interface PenaltyKick {
 
 export interface MatchBooking {
   id: string;
-  cardType: "YELLOW" | "RED";
+  cardType: string;
   minute: number | null;
   teamId: string;
   member: { id: string; fullName: string; photo: string | null };

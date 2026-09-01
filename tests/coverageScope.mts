@@ -3,6 +3,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/activityAttentionServer.ts",
   "src/lib/activityReportServer.ts",
   "src/lib/adminHomeServer.ts",
+  "src/lib/adminMatchesServer.ts",
   "src/lib/ageGroups.ts",
   "src/lib/ageStandingsServer.ts",
   "src/lib/attachAccount.ts",

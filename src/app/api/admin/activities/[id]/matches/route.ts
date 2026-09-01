@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { settleMvpVotes } from "@/lib/mvpVoteServer";
-import { DEFAULT_MVP_VOTE_MINUTES } from "@/lib/mvpVote";
-import { accountNamed, accountPerson } from "@/lib/person";
+import { MATCH_INCLUDE, listMatches } from "@/lib/adminMatchesServer";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
@@ -13,112 +10,13 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { notify, tournament } from "@/lib/messages";
 
-const MATCH_INCLUDE = {
-  homeTeam: { select: { id: true, name: true, logo: true } },
-  awayTeam: { select: { id: true, name: true, logo: true } },
-  manOfTheMatchUser: { select: { fullName: true, photo: true } },
-  goals: {
-    orderBy: { minute: "asc" },
-    select: {
-      id: true,
-      count: true,
-      minute: true,
-      teamId: true,
-      kind: true,
-      period: true,
-      userId: true,
-      user: { select: { fullName: true, photo: true } },
-    },
-  },
-  penaltyKicks: {
-    orderBy: { order: "asc" },
-    select: {
-      id: true,
-      teamId: true,
-      order: true,
-      scored: true,
-      userId: true,
-      user: { select: { fullName: true, photo: true } },
-    },
-  },
-  bookings: {
-    orderBy: { minute: "asc" },
-    select: {
-      id: true,
-      cardType: true,
-      minute: true,
-      teamId: true,
-      userId: true,
-      user: { select: { fullName: true, photo: true } },
-    },
-  },
-  mvpVote: {
-    select: {
-      id: true,
-      status: true,
-      closesAt: true,
-      candidates: {
-        select: {
-          id: true,
-          userId: true,
-          user: { select: { fullName: true } },
-          _count: { select: { votes: true } },
-        },
-      },
-    },
-  },
-} as const;
-
-type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
-
-function flatMatch(match: LoadedMatch) {
-  return {
-    ...match,
-    manOfTheMatch: match.manOfTheMatchUser
-      ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
-      : null,
-    goals: match.goals.map((g) => ({ ...g, member: g.userId ? accountPerson(g) : null })),
-    penaltyKicks: match.penaltyKicks.map((k) => ({
-      ...k,
-      member: k.userId ? accountPerson(k) : null,
-    })),
-    bookings: match.bookings.map((b) => ({ ...b, member: accountPerson(b) })),
-    mvpVote: match.mvpVote
-      ? {
-          ...match.mvpVote,
-          candidates: match.mvpVote.candidates.map((c) => ({
-            ...c,
-            memberId: c.userId,
-            member: accountNamed(c),
-          })),
-        }
-      : null,
-  };
-}
-
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/matches",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     await requireActivityAccess(id);
 
-    const read = () =>
-      prisma.match.findMany({
-        where: { activityId: id },
-        orderBy: [{ status: "asc" }, { order: "asc" }, { createdAt: "asc" }],
-        include: MATCH_INCLUDE,
-      });
-
-    const [matches, activity] = await Promise.all([
-      read(),
-      prisma.activity.findUnique({ where: { id }, select: { mvpVoteMinutes: true } }),
-    ]);
-    const applied = await settleMvpVotes(matches);
-
-    return NextResponse.json({
-      matches: (applied.size > 0 ? await read() : matches).map(flatMatch),
-      mvpVoteMinutes: activity?.mvpVoteMinutes ?? DEFAULT_MVP_VOTE_MINUTES,
-    });
+    return NextResponse.json(await listMatches(id));
   },
 );
 
