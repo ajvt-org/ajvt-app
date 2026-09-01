@@ -60,13 +60,3 @@ export function activityTabSections(
     tabs: tabsOf(key, activity, pendingProposals, pendingJoinRequests),
   })).filter((section) => section.tabs.length > 0);
 }
-
-export function activityTabs(
-  activity: TabbedActivity,
-  pendingProposals: number,
-  pendingJoinRequests = 0,
-): WorkspaceTab[] {
-  return activityTabSections(activity, pendingProposals, pendingJoinRequests).flatMap(
-    (section) => section.tabs,
-  );
-}

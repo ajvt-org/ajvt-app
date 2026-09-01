@@ -8,7 +8,7 @@ import Icon from "@/components/Icon";
 import ArrowLabel from "@/components/ArrowLabel";
 import ActivityFinance from "./ActivityFinance";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
-import { activityTabs } from "./activityTabs";
+import { activityTabSections } from "./activityTabs";
 import DetailsTab from "./DetailsTab";
 import RegistrationsTab from "./RegistrationsTab";
 import LogTab from "./LogTab";
@@ -90,7 +90,8 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
   const { activity, history } = data;
   const accepted = activity.registrations.filter((r) => r.status === "ACTIVE").length;
-  const tabs = activityTabs(activity, pendingProposals, pendingJoinRequests);
+  const sections = activityTabSections(activity, pendingProposals, pendingJoinRequests);
+  const tabs = sections.flatMap((section) => section.tabs);
   const requested = searchParams.get("tab") || tabs[0].key;
   const tab = tabs.some((t) => t.key === requested) ? requested : tabs[0].key;
 
@@ -156,7 +157,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         )}
       </div>
 
-      <WorkspaceTabs tabs={tabs} active={tab} onPick={pickTab} />
+      <WorkspaceTabs sections={sections} active={tab} onPick={pickTab} />
 
       {tab === "details" && <DetailsTab activity={activity} onSaved={load} />}
       {tab === "registrations" && <RegistrationsTab activity={activity} onChanged={load} />}
