@@ -7,6 +7,7 @@ import { ValidationError, ConflictError } from "./errors";
 import { tournament as messages } from "./messages";
 import { logAction } from "./audit";
 import { counted } from "./arabicCount";
+import { setupLabels } from "./texts/setupWizard";
 import { MATCH } from "./messages";
 
 export interface GenerateOptions {
@@ -49,7 +50,8 @@ export async function generateGroupSchedule(activityId: string, options: Generat
   const pools = new Map<string | null, { name: string; teamIds: string[] }>();
   for (const t of teams) {
     const key = t.groupId;
-    if (!pools.has(key)) pools.set(key, { name: t.group?.name || "بدون مجموعة", teamIds: [] });
+    if (!pools.has(key))
+      pools.set(key, { name: t.group?.name || messages.noGroupPool, teamIds: [] });
     pools.get(key)!.teamIds.push(t.id);
   }
   const multiplePools = pools.size > 1;
@@ -62,7 +64,9 @@ export async function generateGroupSchedule(activityId: string, options: Generat
     for (const f of fixtures) {
       allFixtures.push({
         ...f,
-        label: multiplePools ? `${pool.name} — الجولة ${f.round}` : `الجولة ${f.round}`,
+        label: multiplePools
+          ? setupLabels.groupRound(pool.name, f.round)
+          : setupLabels.round(f.round),
       });
     }
   }
