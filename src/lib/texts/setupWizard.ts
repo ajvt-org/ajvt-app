@@ -1,3 +1,5 @@
+import { resetTournament } from "./activityDetail";
+
 export const setupLabels = {
   round: (round: number) => `الجولة ${round}`,
   groupRound: (groupName: string, round: number) => `${groupName} — ${setupLabels.round(round)}`,
@@ -25,7 +27,7 @@ export const setupWizard = {
 
   tooFewTeams: "أضف فريقين على الأقل قبل إعداد البطولة",
   hasResults: (played: number) =>
-    `سُجلت نتائج في ${played} مباراة. امسحها أولاً إن أردت إعادة إعداد البطولة`,
+    `سُجلت نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل لإعادة البطولة إلى فرقها، ثم أعد الإعداد من هنا`,
   noShape: (teamCount: number) => `${teamCount} فريقاً لا يكفي لا لجدول إقصاء ولا لمجموعات متساوية`,
 
   formatLabel: "شكل البطولة",
