@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatActivityDates } from "@/lib/activityDates";
 import IconLabel from "@/components/IconLabel";
+import { activityDatesEditor as texts } from "@/lib/texts";
 
 function dayValue(value: string | null): string {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
@@ -68,7 +69,7 @@ export default function ActivityDatesEditor({
     <div className="space-y-2">
       {activity.period && !startDay && (
         <p className="text-xs" style={{ color: "#92400e" }}>
-          هذا النشاط يعرض نصاً قديماً: {activity.period} — حدّد التواريخ ليحل محله
+          {texts.legacyPeriod(activity.period)}
         </p>
       )}
 
@@ -78,7 +79,7 @@ export default function ActivityDatesEditor({
           className="text-xs shrink-0"
           style={{ color: "var(--text-muted)" }}
         >
-          من
+          {texts.from}
         </label>
         <input
           id={`${uid}-from`}
@@ -92,7 +93,7 @@ export default function ActivityDatesEditor({
           className="text-xs shrink-0"
           style={{ color: "var(--text-muted)" }}
         >
-          إلى
+          {texts.to}
         </label>
         <input
           id={`${uid}-to`}
@@ -106,7 +107,7 @@ export default function ActivityDatesEditor({
 
       <label className="flex items-center gap-2 text-xs font-semibold">
         <input type="checkbox" checked={withTime} onChange={(e) => setWithTime(e.target.checked)} />
-        تحديد الساعة
+        {texts.withTime}
       </label>
 
       {withTime && (
@@ -130,7 +131,7 @@ export default function ActivityDatesEditor({
 
       {preview && (
         <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
-          سيظهر هكذا: {preview}
+          {texts.preview(preview)}
         </p>
       )}
       {error && (
@@ -145,7 +146,7 @@ export default function ActivityDatesEditor({
         className="text-xs px-3 py-2 rounded-lg font-bold"
         style={{ background: "var(--mint-600)", color: "white" }}
       >
-        {saving ? "..." : <IconLabel name="save">حفظ التواريخ</IconLabel>}
+        {saving ? "..." : <IconLabel name="save">{texts.save}</IconLabel>}
       </button>
     </div>
   );
