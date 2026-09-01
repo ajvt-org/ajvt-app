@@ -108,6 +108,7 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/MemberImportBulkFill.tsx",
   "src/app/admin/dashboard/memberImportState.ts",
   "src/app/api/admin/people/import",
+  "src/lib/memberImportBulk.ts",
   "src/lib/memberImportParse.ts",
   "src/app/api/admin/validate/route.ts",
   "src/app/api/user/me/route.ts",
