@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import CountBadge from "@/components/admin/CountBadge";
 import { tabActive } from "@/lib/adminNav";
 import type { NavTab } from "./navTabs";
 import type { PendingCounts } from "./useAdminSession";
@@ -10,24 +11,6 @@ const BADGE_KEY: Record<string, keyof PendingCounts> = {
   "/admin/activities": "activityWork",
   "/admin/payments": "donations",
 };
-
-function Badge({ count }: { count: number }) {
-  return (
-    <span
-      dir="ltr"
-      className="absolute -top-1 -left-1 rounded-full text-white font-black flex items-center justify-center"
-      style={{
-        background: "#dc2626",
-        fontSize: "9px",
-        minWidth: "16px",
-        height: "16px",
-        padding: "0 3px",
-      }}
-    >
-      <span className="badge-numeral">{count > 9 ? "+9" : count}</span>
-    </span>
-  );
-}
 
 function Tab({
   tab,
@@ -50,7 +33,7 @@ function Tab({
       }}
     >
       <IconLabel name={tab.icon}>{tab.label}</IconLabel>
-      {count > 0 && <Badge count={count} />}
+      <CountBadge count={count} />
     </button>
   );
 }
