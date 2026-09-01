@@ -3,7 +3,7 @@ import { parse } from "@/lib/validation";
 import { rejectionOf } from "@tests/schema";
 import { suspensionCreateSchema, suspensionDecideSchema } from "./schema";
 
-const VALID = { memberId: "u1", scope: "MATCHES", matches: 2 };
+const VALID = { userId: "u1", scope: "MATCHES", matches: 2 };
 
 describe("suspensionCreateSchema", () => {
   it("accepts a suspension over a number of matches", () => {

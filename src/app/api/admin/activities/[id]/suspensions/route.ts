@@ -28,20 +28,17 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     const session = await requireActivityAccess(id);
-    const { memberId, scope, matches, until, note } = parse(
-      suspensionCreateSchema,
-      await req.json(),
-    );
+    const { userId, scope, matches, until, note } = parse(suspensionCreateSchema, await req.json());
     const suspension = await proposeSuspension(
       id,
-      { memberId, scope, matches: matches ?? null, until: until ?? null, note: note ?? null },
+      { userId, scope, matches: matches ?? null, until: until ?? null, note: note ?? null },
       session.username,
     );
     await logAction(session.username, "PROPOSE_SUSPENSION", suspension.userId, {
       ...auditContext(session, req),
       targetType: "Suspension",
       targetId: suspension.id,
-      after: { memberId, scope, matches: matches ?? null, until: until ?? null },
+      after: { userId, scope, matches: matches ?? null, until: until ?? null },
     });
     return NextResponse.json({ suspension }, { status: 201 });
   },
