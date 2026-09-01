@@ -77,6 +77,7 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/types.ts",
   "src/components/tournament/BracketTree.tsx",
   "src/components/tournament/BracketMatchCard.tsx",
+  "src/components/tournament/BracketSide.tsx",
   "src/components/tournament/BracketConnectors.tsx",
   "src/lib/bracketLayout.ts",
   "src/components/tournament/MatchFixture.tsx",
