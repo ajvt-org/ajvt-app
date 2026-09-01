@@ -11,35 +11,41 @@ export const GET = withRoute(
     const { id } = await params;
     await requireActivityAccess(id);
 
-    const activity = await prisma.activity.findUnique({
-      where: { id },
-      include: {
-        registrations: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            userId: true,
-            status: true,
-            createdAt: true,
-            paymentProof: true,
-            rejectionReason: true,
-            user: {
-              select: {
-                phone: true,
-                fullName: true,
-                age: true,
-                photo: true,
+    const [activity, rosters] = await Promise.all([
+      prisma.activity.findUnique({
+        where: { id },
+        include: {
+          registrations: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              userId: true,
+              status: true,
+              createdAt: true,
+              paymentProof: true,
+              rejectionReason: true,
+              user: {
+                select: {
+                  phone: true,
+                  fullName: true,
+                  age: true,
+                  photo: true,
+                },
               },
             },
           },
+          teams: {
+            orderBy: { name: "asc" },
+            select: { id: true, name: true, _count: { select: { members: true } } },
+          },
+          _count: { select: { matches: true, groups: true } },
         },
-        teams: {
-          orderBy: { name: "asc" },
-          select: { id: true, name: true, _count: { select: { members: true } } },
-        },
-        _count: { select: { matches: true, groups: true } },
-      },
-    });
+      }),
+      prisma.teamMember.findMany({
+        where: { status: "ACTIVE", team: { activityId: id } },
+        select: { userId: true, team: { select: { id: true, name: true } } },
+      }),
+    ]);
 
     if (!activity) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
@@ -50,11 +56,14 @@ export const GET = withRoute(
       select: { id: true, action: true, adminUsername: true, createdAt: true },
     });
 
+    const teamOf = new Map(rosters.map((m) => [m.userId, m.team]));
+
     return NextResponse.json({
       activity: {
         ...activity,
         registrations: activity.registrations.map(({ user, ...r }) => ({
           ...r,
+          team: teamOf.get(r.userId) ?? null,
           member: {
             id: r.userId,
             fullName: nameOf(user),

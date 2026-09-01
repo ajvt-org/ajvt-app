@@ -3,7 +3,8 @@ export interface Registration {
   status: "PENDING" | "ACTIVE" | "REJECTED";
   paymentProof: string | null;
   rejectionReason: string | null;
-  member: { id: string; fullName: string; phone: string | null; age: string };
+  team: { id: string; name: string } | null;
+  member: { id: string; fullName: string; phone: string | null; age: string; photo: string | null };
 }
 
 export interface Activity {
@@ -34,12 +35,6 @@ export interface MemberOption {
   phone: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
 }
-
-export const STATUS_LABEL: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  ACTIVE: "مقبول",
-  REJECTED: "غير مقبول",
-};
 
 export interface NewActivityDraft {
   title: string;
