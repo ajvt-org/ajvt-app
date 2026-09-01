@@ -3,6 +3,7 @@ export const activityWorkspace = {
   notFound: "لم نجد هذا النشاط.",
   backToIndex: "الأنشطة",
   capacity: "السعة",
+  acceptedOfRequests: (accepted: string, requests: string) => `${accepted} من ${requests}`,
   publicPage: "الصفحة العامة",
   tabs: {
     details: "التفاصيل",

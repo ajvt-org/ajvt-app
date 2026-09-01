@@ -7,11 +7,7 @@ import IconLabel from "@/components/IconLabel";
 import DialogHeader from "@/components/DialogHeader";
 import TournamentSetupFields, { TOURNAMENT_PRESETS, presetOf } from "../TournamentSetupFields";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
-
-const FORMAT_LABEL: Record<string, string> = {
-  KNOCKOUT: "خروج المغلوب مباشرة",
-  GROUPS_THEN_KNOCKOUT: "مجموعات ثم خروج المغلوب",
-};
+import { convertTournament as texts, tournamentSetup } from "@/lib/texts";
 
 export default function ConvertTournamentCard({
   activity,
@@ -51,7 +47,7 @@ export default function ConvertTournamentCard({
       });
       setSetup(null);
       await onChanged();
-      showToast(activity.isTournament ? "حُفظت إعدادات البطولة" : "أصبح النشاط بطولة");
+      showToast(activity.isTournament ? texts.settingsSaved : texts.converted);
     } catch (e) {
       showToast(errorMessage(e), "error");
     } finally {
@@ -64,7 +60,7 @@ export default function ConvertTournamentCard({
     try {
       await api.patch(`/api/admin/activities/${activity.id}`, { isTournament: false });
       await onChanged();
-      showToast("لم يعد النشاط بطولة");
+      showToast(texts.unconverted);
     } catch (e) {
       showToast(errorMessage(e), "error");
     } finally {
@@ -76,27 +72,27 @@ export default function ConvertTournamentCard({
     <div className="card p-4 flex items-center justify-between gap-3 flex-wrap">
       <div className="min-w-0">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="trophy">وضع البطولة</IconLabel>
+          <IconLabel name="trophy">{texts.heading}</IconLabel>
         </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {activity.isTournament
-            ? `${currentPreset?.label ?? ""} · ${FORMAT_LABEL[activity.format ?? "KNOCKOUT"]}`
-            : "حوّل النشاط إلى بطولة ليحصل على فرق ومباريات وترتيب."}
+            ? `${currentPreset?.label ?? ""} · ${tournamentSetup.formats[activity.format ?? "KNOCKOUT"]}`
+            : texts.hint}
         </p>
       </div>
       <div className="flex gap-2 shrink-0">
         {activity.isTournament ? (
           <>
             <button onClick={openDialog} disabled={busy} className="btn btn-sm btn-ghost">
-              <IconLabel name="pencil">تعديل الإعدادات</IconLabel>
+              <IconLabel name="pencil">{texts.editSettings}</IconLabel>
             </button>
             <button onClick={unconvert} disabled={busy} className="btn btn-sm btn-ghost">
-              {busy ? "..." : "إلغاء وضع البطولة"}
+              {busy ? "..." : texts.unconvert}
             </button>
           </>
         ) : (
           <button onClick={openDialog} disabled={busy} className="btn btn-sm btn-ghost">
-            {busy ? "..." : "تحويل إلى بطولة"}
+            {busy ? "..." : texts.convert}
           </button>
         )}
       </div>
@@ -114,7 +110,7 @@ export default function ConvertTournamentCard({
             style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
           >
             <DialogHeader
-              title={activity.isTournament ? "إعدادات البطولة" : "تحويل إلى بطولة"}
+              title={activity.isTournament ? texts.settingsTitle : texts.dialogTitle}
               onClose={() => setSetup(null)}
             />
             <div className="p-4 space-y-4">
@@ -128,10 +124,10 @@ export default function ConvertTournamentCard({
                 }
               />
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                النظام والنوع وحجم الفريق تُقفل جميعاً بعد إنشاء أول مباراة.
+                {texts.lockHint}
               </p>
               <button onClick={save} disabled={busy} className="btn btn-primary text-sm">
-                {busy ? "..." : activity.isTournament ? "حفظ الإعدادات" : "تحويل إلى بطولة"}
+                {busy ? "..." : activity.isTournament ? texts.saveSettings : texts.convert}
               </button>
             </div>
           </div>

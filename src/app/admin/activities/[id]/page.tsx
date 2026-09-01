@@ -133,8 +133,10 @@ function AdminActivityPageInner({ id }: { id: string }) {
               {activity.title}
             </p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {accepted} {countedNoun(accepted, ACCEPTED)} من {activity.registrations.length}{" "}
-              {countedNoun(activity.registrations.length, REQUEST)}
+              {texts.acceptedOfRequests(
+                `${accepted} ${countedNoun(accepted, ACCEPTED)}`,
+                `${activity.registrations.length} ${countedNoun(activity.registrations.length, REQUEST)}`,
+              )}
               {activity.capacity !== null ? ` · ${texts.capacity} ${activity.capacity}` : ""}
             </p>
           </div>
