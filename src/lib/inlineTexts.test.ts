@@ -22,6 +22,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/[id]/DetailsTab.tsx",
   "src/app/admin/activities/[id]/ConvertTournamentCard.tsx",
   "src/app/admin/activities/[id]/DeleteActivityCard.tsx",
+  "src/app/admin/activities/[id]/ResetTournamentCard.tsx",
   "src/app/admin/activities/[id]/ActivityFinance.tsx",
   "src/app/admin/activities/[id]/LogTab.tsx",
   "src/app/admin/activities/[id]/page.tsx",

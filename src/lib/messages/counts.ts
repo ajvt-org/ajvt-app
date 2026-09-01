@@ -132,3 +132,17 @@ export const ACTIVE_MEMBER: CountedNoun = {
   few: "أعضاء نشطين",
   many: "عضواً نشطاً",
 };
+
+export const DAY: CountedNoun = {
+  one: "يوم",
+  two: "يومان",
+  few: "أيام",
+  many: "يوماً",
+};
+
+export const SUSPENSION: CountedNoun = {
+  one: "إيقاف",
+  two: "إيقافان",
+  few: "إيقافات",
+  many: "إيقافاً",
+};

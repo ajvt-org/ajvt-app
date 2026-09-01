@@ -12,6 +12,7 @@ export {
   activityLog,
   convertTournament,
   deleteActivity,
+  resetTournament,
 } from "./activityDetail";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";

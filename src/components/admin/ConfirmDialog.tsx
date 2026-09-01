@@ -12,7 +12,7 @@ export default function ConfirmDialog({
   onClose,
 }: {
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmLabel?: string;
   danger?: boolean;
   loading?: boolean;
@@ -21,9 +21,9 @@ export default function ConfirmDialog({
 }) {
   return (
     <ConfirmDialogShell title={title} onClose={onClose}>
-      <p className="text-sm" style={{ color: "var(--text-main)" }}>
+      <div className="text-sm" style={{ color: "var(--text-main)" }}>
         {message}
-      </p>
+      </div>
 
       <button
         onClick={onConfirm}
