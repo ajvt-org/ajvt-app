@@ -6,7 +6,7 @@ import { groupRoundRobin, groupRoundSizes } from "./tournamentFixtures";
 import { knockoutRoundSizes } from "./knockoutSlots";
 import { planTournament } from "./tournamentPlan";
 import { isValidGroupShape, knockoutRefusal } from "./tournamentShape";
-import { setupLabels } from "./texts/tournamentSetup";
+import { setupLabels } from "./texts/setupWizard";
 
 export interface SetupGroup {
   name: string;

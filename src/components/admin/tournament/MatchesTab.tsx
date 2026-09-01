@@ -13,7 +13,8 @@ import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import GenerateScheduleDialog from "./GenerateScheduleDialog";
 import IconLabel from "@/components/IconLabel";
-import { matchAdmin as texts } from "@/lib/texts";
+import SetupWizard from "./wizard/SetupWizard";
+import { matchAdmin as texts, setupWizard as wizardTexts } from "@/lib/texts";
 
 export default function MatchesTab({
   activityId,
@@ -47,6 +48,7 @@ export default function MatchesTab({
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
   const [showGenerate, setShowGenerate] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [resultFormFor, setResultFormFor] = useState<string | null>(null);
   const [mvpFor, setMvpFor] = useState<string | null>(null);
   const [detailsFor, setDetailsFor] = useState<string | null>(null);
@@ -167,6 +169,14 @@ export default function MatchesTab({
           <IconLabel name="warning">{error}</IconLabel>
         </div>
       )}
+
+      <button
+        onClick={() => setShowWizard(true)}
+        className="btn btn-primary text-sm w-full"
+        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
+      >
+        <IconLabel name="sparkle">{wizardTexts.open}</IconLabel>
+      </button>
 
       {poolsReady && (
         <div
@@ -458,6 +468,16 @@ export default function MatchesTab({
           activityId={activityId}
           onDone={onChange}
           onClose={() => setShowGenerate(false)}
+        />
+      )}
+
+      {showWizard && (
+        <SetupWizard
+          activityId={activityId}
+          teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+          playedCount={played.length}
+          onDone={onChange}
+          onClose={() => setShowWizard(false)}
         />
       )}
     </div>
