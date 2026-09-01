@@ -251,21 +251,17 @@ describe("checkRows, matching", () => {
     expect(checked[0].match?.kind).toBe("phone");
   });
 
-  it("warns when a paid row matches somebody who already has a membership", () => {
-    const checked = check(
+  it("carries the membership the matched person holds, whether or not the row is paid", () => {
+    const paid = check(
       [row({ fullName: "محمد", age: AGE, phone: "36000123", paid: "نعم", paymentMethod: "نقداً" })],
       { people: [person({ hasMembership: true })] },
     );
-
-    expect(messages(checked)).toContain(memberImportRow.alreadyHasMembership);
-  });
-
-  it("says nothing about a membership when the row is not paid", () => {
-    const checked = check([row({ fullName: "محمد", age: AGE, phone: "36000123" })], {
+    const unpaid = check([row({ fullName: "محمد", age: AGE, phone: "36000123" })], {
       people: [person({ hasMembership: true })],
     });
 
-    expect(messages(checked)).not.toContain(memberImportRow.alreadyHasMembership);
+    expect(paid[0].match?.hasMembership).toBe(true);
+    expect(unpaid[0].match?.hasMembership).toBe(true);
   });
 });
 

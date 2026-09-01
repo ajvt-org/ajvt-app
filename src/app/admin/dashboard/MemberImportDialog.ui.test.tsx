@@ -302,6 +302,59 @@ describe("MemberImportDialog, a flagged row", () => {
     expect(screen.queryByText(memberImportDialog.bulk.surplus(1, ouguiya.amount(200)))).toBeNull();
   });
 
+  it("says on the row that the matched person already holds a membership", async () => {
+    mockPreview(
+      preview({
+        rows: [
+          {
+            row: 1,
+            values: values(),
+            issues: [],
+            match: {
+              kind: "name" as const,
+              personId: "p1",
+              fullName: "مطابق",
+              hasMembership: true,
+            },
+          },
+        ],
+      }),
+    );
+    setup();
+    await upload();
+
+    expect(screen.getByText(memberImportDialog.matchHasMembership)).toBeDefined();
+    expect(screen.getByLabelText(`${memberImportDialog.columnPaid} 1`)).toHaveProperty(
+      "checked",
+      false,
+    );
+  });
+
+  it("says nothing about a membership when the matched person holds none", async () => {
+    mockPreview(
+      preview({
+        rows: [
+          {
+            row: 1,
+            values: values(),
+            issues: [],
+            match: {
+              kind: "name" as const,
+              personId: "p1",
+              fullName: "مطابق",
+              hasMembership: false,
+            },
+          },
+        ],
+      }),
+    );
+    setup();
+    await upload();
+
+    expect(screen.getByText(memberImportDialog.matchName("مطابق"))).toBeDefined();
+    expect(screen.queryByText(memberImportDialog.matchHasMembership)).toBeNull();
+  });
+
   it("flags a row again when an edit breaks it", async () => {
     mockPreview(preview());
     setup();

@@ -4,6 +4,7 @@ import { memberImportDialog } from "@/lib/texts";
 import { requiresAgeGroup } from "@/lib/villages";
 import type { RowValues } from "@/lib/memberImportValues";
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import { isRowBlocked, type EditableRow } from "./memberImportState";
 
 const CELL = "px-1.5 py-1 align-top";
@@ -77,6 +78,13 @@ export default function MemberImportRow({
             {match.kind === "phone"
               ? memberImportDialog.matchPhone(match.fullName ?? "")
               : memberImportDialog.matchName(match.fullName ?? "")}
+          </p>
+        )}
+        {match?.hasMembership && (
+          <p className="text-[11px] mt-0.5 font-bold" style={{ color: "#92400e" }}>
+            <IconLabel name="warning" size={12}>
+              {memberImportDialog.matchHasMembership}
+            </IconLabel>
           </p>
         )}
         <Problems row={row} />
