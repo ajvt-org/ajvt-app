@@ -212,14 +212,17 @@ async function groupTables(activityId: string) {
 export async function suggestBracket(activityId: string) {
   const { groups, groupStageComplete } = await groupTables(activityId);
   const suggestion = suggestFirstKnockoutRound(groups);
-  const existing = await prisma.match.count({
-    where: { activityId, bracketRound: { not: null } },
-  });
+  const bracket = await bracketRows(activityId);
+  const firstRound = bracket.filter((m) => m.bracketRound === 1);
   return {
     ...suggestion,
     label: suggestion.pairs.length ? bracketRoundLabel(suggestion.pairs.length) : null,
     groupStageComplete,
-    bracketExists: existing > 0,
+    bracketExists: bracket.length > 0,
+    firstRoundWaiting:
+      firstRound.length > 0 &&
+      bracket.every((m) => m.status === "SCHEDULED") &&
+      firstRound.every((m) => m.homeTeamId === null && m.awayTeamId === null),
   };
 }
 
