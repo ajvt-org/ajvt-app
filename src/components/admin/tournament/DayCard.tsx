@@ -22,6 +22,7 @@ export default function DayCard({
 }) {
   const [times, setTimes] = useState<Record<string, string>>({});
   const conflicts = doubleBookedTeams(day);
+  const removable = day.isRest || day.matches.length === 0;
 
   return (
     <div
@@ -29,59 +30,44 @@ export default function DayCard({
       style={day.isRest ? { background: "var(--cream)", border: "1px dashed var(--mint-300)" } : {}}
     >
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>
+        <div className="min-w-0 grow basis-48 flex items-center gap-2">
+          <p className="text-sm font-black min-w-0" style={{ color: "var(--text-main)" }}>
             {texts.dayNumber(day.position)}
             <span className="font-semibold text-xs mr-2" style={{ color: "var(--text-muted)" }}>
               {dayLabel(day.date)}
             </span>
           </p>
-        </div>
-        {day.isRest ? (
-          <>
+          {day.isRest && (
             <span
-              className="text-xs px-2 py-0.5 rounded-lg font-bold"
+              className="text-xs px-2 py-0.5 rounded-lg font-bold shrink-0"
               style={{ background: "#fef3c7", color: "#b45309" }}
             >
               {texts.restDay}
             </span>
+          )}
+        </div>
+        {removable && (
+          <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => onSetRest(false)}
+              onClick={() => onSetRest(!day.isRest)}
               disabled={busy}
               className="text-xs px-3 py-1.5 rounded-lg font-bold"
               style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
             >
-              {texts.makeMatchDay}
+              {day.isRest ? texts.makeMatchDay : texts.makeRestDay}
             </button>
-            <button
-              onClick={onRemove}
-              disabled={busy}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
-            >
-              <IconLabel name="trash">{texts.removeDay}</IconLabel>
-            </button>
-          </>
-        ) : day.matches.length === 0 ? (
-          <>
-            <button
-              onClick={() => onSetRest(true)}
-              disabled={busy}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-            >
-              {texts.makeRestDay}
-            </button>
-            <button
-              onClick={onRemove}
-              disabled={busy}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
-            >
-              <IconLabel name="trash">{texts.removeDay}</IconLabel>
-            </button>
-          </>
-        ) : null}
+            <span className="ps-2" style={{ borderInlineStart: "1px solid var(--mint-200)" }}>
+              <button
+                onClick={onRemove}
+                disabled={busy}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
+              >
+                <IconLabel name="trash">{texts.removeDay}</IconLabel>
+              </button>
+            </span>
+          </div>
+        )}
       </div>
 
       {conflicts.length > 0 && (
@@ -98,7 +84,7 @@ export default function DayCard({
       {day.matches.length > 0 && (
         <ul className="mt-2 space-y-1.5">
           {day.matches.map((match) => (
-            <li key={match.id} className="flex items-center gap-2 flex-wrap text-sm">
+            <li key={match.id} className="flex items-start gap-2 text-sm">
               <input
                 type="time"
                 value={
@@ -113,18 +99,26 @@ export default function DayCard({
                 }}
                 disabled={busy}
                 aria-label={texts.matchTime}
-                className="input input-sm"
+                className="input input-sm shrink-0"
                 style={{ width: "auto" }}
               />
-              <span className="font-bold min-w-0">{fixtureName(match)}</span>
-              {match.venue && (
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {match.venue}
-                </span>
-              )}
-              {match.status === "PLAYED" && (
-                <span className="badge badge-active text-xs">{texts.finished}</span>
-              )}
+              <div className="min-w-0 flex-1">
+                <bdi className="font-bold block" style={{ wordBreak: "break-word" }}>
+                  {fixtureName(match)}
+                </bdi>
+                {(match.venue || match.status === "PLAYED") && (
+                  <span className="flex flex-wrap items-center gap-2 mt-0.5">
+                    {match.venue && (
+                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        <IconLabel name="pin">{match.venue}</IconLabel>
+                      </span>
+                    )}
+                    {match.status === "PLAYED" && (
+                      <span className="badge badge-active text-xs">{texts.finished}</span>
+                    )}
+                  </span>
+                )}
+              </div>
             </li>
           ))}
         </ul>
