@@ -1,7 +1,7 @@
 import { test, expect, type Page, type Browser } from "@playwright/test";
 import { Client } from "pg";
 import { localDatabase } from "../localDatabase.mjs";
-import { acceptPayment, openAdmin, submitMembership } from "./helpers";
+import { acceptPayment, freshName, freshPhone, openAdmin, submitMembership } from "./helpers";
 
 const PAGES = [
   "/",
@@ -50,7 +50,7 @@ async function sweep(page: Page, label: string) {
   expect(failures, `${label}: ${failures.join(" | ")}`).toEqual([]);
 }
 
-async function createAccountOnly(page: Page, phone: string, fullName = "حساب بلا طلب") {
+async function createAccountOnly(page: Page, phone: string, fullName: string) {
   await page.goto("/register");
   await page.fill('input[type="tel"]', phone);
   await page.fill('input[type="password"] >> nth=0', "test1234");
@@ -62,18 +62,11 @@ async function createAccountOnly(page: Page, phone: string, fullName = "حساب
   await page.waitForURL("**/home");
 }
 
-async function createMember(page: Page, phone: string, fullName = "حساب بلا طلب") {
+async function createMember(page: Page, phone: string, fullName: string) {
   await createAccountOnly(page, phone, fullName);
   await page.goto("/membership");
   await submitMembership(page, "بنكيلي");
   await page.waitForTimeout(2000);
-}
-
-let phoneSeq = 0;
-
-function freshPhone() {
-  phoneSeq += 1;
-  return "2" + String((Date.now() + phoneSeq * 1_000) % 10_000_000).padStart(7, "0");
 }
 
 test.use({ viewport: { width: 390, height: 844 } });
@@ -83,12 +76,12 @@ test("every page renders for a visitor", async ({ page }) => {
 });
 
 test("every page renders for an account with no membership request", async ({ page }) => {
-  await createAccountOnly(page, freshPhone());
+  await createAccountOnly(page, freshPhone(), freshName("حساب بلا طلب"));
   await sweep(page, "account with no member");
 });
 
 test("every page renders for a member", async ({ page }) => {
-  await createMember(page, freshPhone());
+  await createMember(page, freshPhone(), freshName("حساب بلا طلب"));
   await sweep(page, "member");
 });
 
@@ -104,26 +97,23 @@ async function withDb<T>(run: (client: Client) => Promise<T>): Promise<T> {
   }
 }
 
-async function approveNewest(browser: Browser) {
+async function approve(browser: Browser, fullName: string) {
   const { context, page: admin } = await openAdmin(browser);
-  await acceptPayment(admin, APPROVED.fullName);
-  await expect(admin.getByText(APPROVED.fullName).first()).toBeVisible();
+  await acceptPayment(admin, fullName);
+  await expect(admin.getByText(fullName).first()).toBeVisible();
   await context.close();
 }
 
-const APPROVED = { fullName: "عضو مقبول" };
-const BEHIND = { fullName: "عضو متأخر" };
-
 test("every page renders for an approved member", async ({ page, browser }) => {
-  const phone = freshPhone();
-  await createMember(page, phone, APPROVED.fullName);
-  await approveNewest(browser);
+  const fullName = freshName("عضو مقبول");
+  await createMember(page, freshPhone(), fullName);
+  await approve(browser, fullName);
   await sweep(page, "approved member");
 });
 
-test("every page renders for a member a year behind", async ({ page, browser }) => {
+test("every page renders for a member a year behind", async ({ page }) => {
   const phone = freshPhone();
-  await createMember(page, phone, BEHIND.fullName);
+  await createMember(page, phone, freshName("عضو متأخر"));
   await withDb((client) =>
     client.query(
       `UPDATE "Membership" SET year = year - 1
@@ -131,6 +121,5 @@ test("every page renders for a member a year behind", async ({ page, browser }) 
       [phone],
     ),
   );
-  void browser;
   await sweep(page, "member a year behind");
 });

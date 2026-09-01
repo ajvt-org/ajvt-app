@@ -1,45 +1,44 @@
 import { test, expect } from "@playwright/test";
-import { acceptPayment, openAdmin, signUp, submitMembership } from "./helpers";
+import { acceptPayment, freshPerson, openAdmin, signUp, submitMembership } from "./helpers";
 
-const MEMBER = {
+const BASE_MEMBER = {
   fullName: "محمد ولد اختبار",
-  phone: "22119988",
   password: "test1234",
   age: "البدريين",
   paymentMethod: "بنكيلي",
 };
 
-const STANDING = {
+const BASE_STANDING = {
   fullName: "سيدي ولد الحالة",
-  phone: "22119966",
   password: "test1234",
   age: "البدريين",
   paymentMethod: "بنكيلي",
 };
 
-const NEIGHBOUR = {
+const BASE_NEIGHBOUR = {
   fullName: "أحمد ولد افجار",
-  phone: "22119977",
   password: "test1234",
   village: "أفجار",
   paymentMethod: "بنكيلي",
 };
 
 test("a visitor joins and an admin approves them", async ({ page }) => {
-  await signUp(page, MEMBER);
+  const member = freshPerson(BASE_MEMBER);
+
+  await signUp(page, member);
   await page.goto("/membership");
 
-  await submitMembership(page, MEMBER.paymentMethod);
+  await submitMembership(page, member.paymentMethod);
 
-  await expect(page.getByText(MEMBER.fullName).first()).toBeVisible();
+  await expect(page.getByText(member.fullName).first()).toBeVisible();
 
   const { context: admin, page: adminPage } = await openAdmin(page.context().browser()!);
-  await expect(adminPage.getByText(MEMBER.fullName).first()).toBeVisible();
+  await expect(adminPage.getByText(member.fullName).first()).toBeVisible();
 
-  await acceptPayment(adminPage, MEMBER.fullName);
+  await acceptPayment(adminPage, member.fullName);
 
   await adminPage.getByRole("button", { name: "الكل" }).click();
-  await expect(adminPage.locator(".card", { hasText: MEMBER.fullName }).first()).toContainText(
+  await expect(adminPage.locator(".card", { hasText: member.fullName }).first()).toContainText(
     "معتمد",
   );
   await admin.close();
@@ -49,26 +48,30 @@ test("a visitor joins and an admin approves them", async ({ page }) => {
 });
 
 test("a neighbour from another village joins without an age group", async ({ page }) => {
+  const neighbour = freshPerson(BASE_NEIGHBOUR);
+
   await page.goto("/register");
-  await page.fill('input[type="tel"]', NEIGHBOUR.phone);
-  await page.fill('input[type="password"] >> nth=0', NEIGHBOUR.password);
-  await page.fill('input[type="password"] >> nth=1', NEIGHBOUR.password);
+  await page.fill('input[type="tel"]', neighbour.phone);
+  await page.fill('input[type="password"] >> nth=0', neighbour.password);
+  await page.fill('input[type="password"] >> nth=1', neighbour.password);
   await page.getByRole("button", { name: "التالي" }).click();
 
-  await page.fill('input[name="fullName"]', NEIGHBOUR.fullName);
-  await page.selectOption("#signup-village", NEIGHBOUR.village);
+  await page.fill('input[name="fullName"]', neighbour.fullName);
+  await page.selectOption("#signup-village", neighbour.village);
   await expect(page.locator("#signup-age")).toHaveCount(0);
   await page.getByRole("button", { name: "إنشاء الحساب" }).click();
   await page.waitForURL("**/home");
 
   await page.goto("/membership");
-  await submitMembership(page, NEIGHBOUR.paymentMethod);
+  await submitMembership(page, neighbour.paymentMethod);
 
-  await expect(page.getByText(NEIGHBOUR.fullName).first()).toBeVisible();
+  await expect(page.getByText(neighbour.fullName).first()).toBeVisible();
 });
 
 test("home tells a new account what it still owes, and where to pay it", async ({ page }) => {
-  await signUp(page, STANDING);
+  const standing = freshPerson(BASE_STANDING);
+
+  await signUp(page, standing);
 
   await expect(page.getByText("لم ترسل اشتراكك بعد")).toBeVisible();
   const pay = page.getByRole("link", { name: /إرسال الاشتراك/ });
@@ -76,8 +79,8 @@ test("home tells a new account what it still owes, and where to pay it", async (
   await pay.click();
   await page.waitForURL("**/membership");
 
-  await submitMembership(page, STANDING.paymentMethod);
-  await expect(page.getByText(STANDING.fullName).first()).toBeVisible();
+  await submitMembership(page, standing.paymentMethod);
+  await expect(page.getByText(standing.fullName).first()).toBeVisible();
 
   await page.goto("/home");
   await expect(page.getByText("دفعك قيد المراجعة")).toBeVisible();

@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 
 const PROOF = Buffer.from(
@@ -11,6 +12,31 @@ export interface Person {
   fullName: string;
   village?: string;
   age?: string;
+}
+
+const ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+const RUN = String(randomInt(10_000)).padStart(4, "0");
+const SEQUENCE_WIDTH = 3;
+
+let issued = 0;
+
+export function freshPhone(): string {
+  issued += 1;
+  if (issued >= 10 ** SEQUENCE_WIDTH) {
+    throw new Error("the run has issued every phone number it reserved");
+  }
+  return `2${RUN}${String(issued).padStart(SEQUENCE_WIDTH, "0")}`;
+}
+
+export function freshName(base: string): string {
+  const tag = [...RUN].map((digit) => ARABIC_DIGITS[Number(digit)]).join("");
+  return `${base} ${tag}`;
+}
+
+export function freshPerson<T extends { fullName: string; password: string }>(
+  person: T,
+): T & Person {
+  return { ...person, fullName: freshName(person.fullName), phone: freshPhone() };
 }
 
 export async function signUp(page: Page, person: Person) {
