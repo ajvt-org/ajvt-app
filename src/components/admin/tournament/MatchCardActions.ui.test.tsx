@@ -24,12 +24,12 @@ function show(over: Partial<Parameters<typeof MatchCardActions>[0]> = {}) {
 }
 
 describe("MatchCardActions", () => {
-  it("keeps every action on one row of its own", () => {
+  it("wraps the ordinary actions on a row of their own", () => {
     const { container } = show();
 
-    const row = container.firstElementChild as HTMLElement;
-    expect(row.className).toContain("flex-wrap");
-    expect(row.querySelectorAll("button").length).toBe(4);
+    const [ordinary] = container.firstElementChild!.children;
+    expect(ordinary.className).toContain("flex-wrap");
+    expect(ordinary.querySelectorAll("button").length).toBe(3);
   });
 
   it("holds back the result and the vote while the teams are not known", () => {
@@ -41,12 +41,19 @@ describe("MatchCardActions", () => {
     expect(screen.getByText(texts.editDetails)).toBeDefined();
   });
 
-  it("sends the delete button to the far end", () => {
-    const { container } = show();
+  it("keeps the delete off the row the ordinary actions wrap on", () => {
+    const { container } = show({ onMoveUp: noop, onMoveDown: noop });
+    const [ordinary, destructive] = container.firstElementChild!.children;
 
-    expect((container.firstElementChild?.lastElementChild as HTMLElement).className).toContain(
-      "ms-auto",
-    );
+    expect(ordinary.querySelector(`[aria-label="${texts.confirmDeleteMatch}"]`)).toBeNull();
+    expect(destructive.querySelectorAll("button").length).toBe(1);
+    expect(screen.getByLabelText(texts.confirmDeleteMatch)).toBeDefined();
+  });
+
+  it("says in words what the destructive button does", () => {
+    show();
+
+    expect(screen.getByLabelText(texts.confirmDeleteMatch).textContent).toContain(texts.remove);
   });
 
   it("offers the reorder arrows only where a match can move", () => {
