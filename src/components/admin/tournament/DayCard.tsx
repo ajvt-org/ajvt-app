@@ -3,6 +3,7 @@
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import { timeOf } from "@/lib/tournamentDays";
+import { fixtureName } from "@/lib/fixtureTeams";
 import { dayLabel, doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
@@ -112,9 +113,7 @@ export default function DayCard({
                 className="input input-sm"
                 style={{ width: "auto" }}
               />
-              <span className="font-bold min-w-0">
-                {match.homeTeam.name} × {match.awayTeam.name}
-              </span>
+              <span className="font-bold min-w-0">{fixtureName(match)}</span>
               {match.venue && (
                 <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                   {match.venue}
