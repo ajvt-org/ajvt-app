@@ -54,9 +54,9 @@ export default function BracketPanel({
     </>
   );
 
-  const locked = (
+  const lockedNote = (hint: string) => (
     <p className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-      <Icon name="lock" size={14} className="icon-inline" /> {texts.knockoutLockedHint}
+      <Icon name="lock" size={14} className="icon-inline" /> {hint}
     </p>
   );
 
@@ -69,14 +69,15 @@ export default function BracketPanel({
       </p>
       {bracketMatches.length === 0 ? (
         knockoutLocked ? (
-          locked
+          lockedNote(texts.knockoutLockedHint)
         ) : (
           fillFirstRound
         )
       ) : (
         <>
           <BracketTree matches={bracketMatches} />
-          {firstRoundWaiting && (knockoutLocked ? locked : fillFirstRound)}
+          {firstRoundWaiting &&
+            (knockoutLocked ? lockedNote(texts.bracketWaitingHint) : fillFirstRound)}
           {firstRoundRedoable && (
             <button
               onClick={() =>
