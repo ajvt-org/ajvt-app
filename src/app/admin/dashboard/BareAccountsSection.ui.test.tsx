@@ -19,6 +19,8 @@ function account(over: Partial<BareAccount> = {}): BareAccount {
     id: "u1",
     phone: "36000001",
     fullName: "محمد ولد أحمد",
+    village: "التاكلالت",
+    age: "أشبال",
     createdAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     lastActiveDate: null,
     hasPush: true,
@@ -53,7 +55,7 @@ describe("BareAccountsSection", () => {
   it("shows the phone and how long the account has waited", () => {
     renderSection([account()]);
 
-    expect(screen.getByText("36000001")).toBeDefined();
+    expect(screen.getByText(/36000001/)).toBeDefined();
     expect(screen.getByText(/سجّل منذ/)).toBeDefined();
   });
 
@@ -169,5 +171,41 @@ describe("someone an admin added without a number", () => {
     await waitFor(() =>
       expect(del).toHaveBeenCalledWith("/api/admin/users/u1", { confirmPhone: "سيدي ولد المشرف" }),
     );
+  });
+});
+
+describe("where the person is from", () => {
+  it("shows the village and the عصر next to the phone", () => {
+    renderSection([account({ village: "التاكلالت", age: "أشبال" })]);
+
+    expect(screen.getByText("36000001 · التاكلالت · أشبال")).toBeDefined();
+    expect(screen.queryByText("بدون عصر")).toBeNull();
+  });
+
+  it("marks a person from التاكلالت who has no عصر", () => {
+    renderSection([account({ village: "التاكلالت", age: null })]);
+
+    expect(screen.getByText("36000001 · التاكلالت")).toBeDefined();
+    expect(screen.getByText("بدون عصر")).toBeDefined();
+  });
+
+  it("leaves no عصر slot on a person from another village", () => {
+    renderSection([account({ village: "نواكشوط", age: null })]);
+
+    expect(screen.getByText("36000001 · نواكشوط")).toBeDefined();
+    expect(screen.queryByText("بدون عصر")).toBeNull();
+  });
+
+  it("drops an عصر kept on a person who has moved to another village", () => {
+    renderSection([account({ village: "نواكشوط", age: "أشبال" })]);
+
+    expect(screen.getByText("36000001 · نواكشوط")).toBeDefined();
+    expect(screen.queryByText(/أشبال/)).toBeNull();
+  });
+
+  it("shows the village of someone an admin added without a number", () => {
+    renderSection([account({ phone: null, fullName: "سيدي ولد المشرف", village: "نواكشوط" })]);
+
+    expect(screen.getByText("نواكشوط")).toBeDefined();
   });
 });
