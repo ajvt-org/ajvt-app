@@ -226,3 +226,50 @@ describe("setting a tournament up in one go", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("the clock on a tournament the wizard laid out", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  const saved = (id: string) => prisma.activity.findUniqueOrThrow({ where: { id } });
+
+  it("shows the hour when every match kicks off at the same one", async () => {
+    const { activity } = await tournamentWith(8);
+
+    await setUp(activity.id, {
+      ...base,
+      times: ["18:00"],
+      format: "KNOCKOUT",
+      groups: [],
+      qualifierCount: 0,
+    });
+
+    expect((await saved(activity.id)).withTime).toBe(true);
+  });
+
+  it("leaves the hour off when the days hold more than one kick off", async () => {
+    const { activity } = await tournamentWith(8);
+
+    await setUp(activity.id, {
+      ...base,
+      times: ["16:00", "18:00"],
+      format: "KNOCKOUT",
+      groups: [],
+      qualifierCount: 0,
+    });
+
+    expect((await saved(activity.id)).withTime).toBe(false);
+  });
+
+  it("turns the hour off again when a second kick off is added", async () => {
+    const { activity } = await tournamentWith(8);
+    const single = { ...base, times: ["18:00"], format: "KNOCKOUT", groups: [], qualifierCount: 0 };
+    await setUp(activity.id, single);
+
+    await setUp(activity.id, { ...single, times: ["16:00", "18:00"] });
+
+    expect((await saved(activity.id)).withTime).toBe(false);
+  });
+});
