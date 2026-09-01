@@ -36,9 +36,9 @@ describe("the two levels of the workspace row", () => {
   it("names every section whatever is open", () => {
     show();
 
-    expect(screen.getByRole("button", { name: "الإعداد" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "المشاركون" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "السجلات" })).toBeDefined();
+    expect(screen.getByRole("button", { name: /الإعداد/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /المشاركون/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /السجلات/ })).toBeDefined();
   });
 
   it("shows only the tabs of the section holding the open tab", () => {
@@ -53,7 +53,7 @@ describe("the two levels of the workspace row", () => {
   it("marks the open tab and the section it sits in", () => {
     show("log");
 
-    expect(screen.getByRole("button", { name: "السجلات" }).getAttribute("aria-current")).toBe(
+    expect(screen.getByRole("button", { name: /السجلات/ }).getAttribute("aria-current")).toBe(
       "true",
     );
     expect(screen.getByText("السجل").closest("button")?.getAttribute("aria-current")).toBe("page");
@@ -63,7 +63,7 @@ describe("the two levels of the workspace row", () => {
   it("opens the first tab of a section when the section is picked", () => {
     const { onPick } = show("details");
 
-    fireEvent.click(screen.getByRole("button", { name: "المشاركون" }));
+    fireEvent.click(screen.getByRole("button", { name: /المشاركون/ }));
 
     expect(onPick).toHaveBeenCalledWith("registrations");
   });
@@ -79,7 +79,9 @@ describe("the two levels of the workspace row", () => {
   it("counts what waits on the admin, and stays quiet at zero", () => {
     show("registrations");
 
-    expect(screen.getByText("3")).toBeDefined();
+    expect(
+      screen.getByText("المسجلون").closest("button")?.querySelector("span[dir='ltr']")?.textContent,
+    ).toBe("3");
     expect(screen.queryByText("0")).toBeNull();
   });
 
@@ -96,8 +98,48 @@ describe("the two levels of the workspace row", () => {
     show("nothing");
 
     expect(screen.getByText("التفاصيل")).toBeDefined();
-    expect(screen.getByRole("button", { name: "الإعداد" }).getAttribute("aria-current")).toBe(
+    expect(screen.getByRole("button", { name: /الإعداد/ }).getAttribute("aria-current")).toBe(
       "true",
     );
+  });
+});
+
+describe("the badge rule on the workspace row", () => {
+  it("rolls the work waiting inside a section up onto its name", () => {
+    show("details");
+
+    expect(
+      screen.getByRole("button", { name: /المشاركون/ }).querySelector("span[dir='ltr']")
+        ?.textContent,
+    ).toBe("3");
+  });
+
+  it("leaves a section alone when nothing inside it is waiting", () => {
+    show("details");
+
+    expect(
+      screen.getByRole("button", { name: /السجلات/ }).querySelector("span[dir='ltr']"),
+    ).toBeNull();
+  });
+
+  it("counts a tab that carries none as nothing waiting", () => {
+    show("finance");
+
+    for (const label of ["المالية", "السجل"]) {
+      expect(
+        screen.getByText(label).closest("button")?.querySelector("span[dir='ltr']"),
+      ).toBeNull();
+    }
+  });
+
+  it("keeps the count off a tab that can carry one but has nothing", () => {
+    show("registrations");
+
+    expect(
+      screen.getByText("الفرق").closest("button")?.querySelector("span[dir='ltr']"),
+    ).toBeNull();
+    expect(
+      screen.getByText("المسجلون").closest("button")?.querySelector("span[dir='ltr']")?.textContent,
+    ).toBe("3");
   });
 });

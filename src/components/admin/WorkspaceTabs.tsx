@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import CountBadge from "@/components/admin/CountBadge";
 import type { IconName } from "@/components/Icon";
 
 export interface WorkspaceTab {
@@ -14,6 +15,10 @@ export interface WorkspaceSection {
   key: string;
   label: string;
   tabs: WorkspaceTab[];
+}
+
+export function workWaiting(section: WorkspaceSection): number {
+  return section.tabs.reduce((total, tab) => total + (tab.badge ?? 0), 0);
 }
 
 export function sectionHolding(
@@ -37,7 +42,7 @@ export default function WorkspaceTabs({
 
   return (
     <div className="space-y-1.5">
-      <div className="tab-strip">
+      <div className="tab-strip py-1.5">
         {sections.map((section) => {
           const on = section.key === current.key;
           return (
@@ -45,13 +50,14 @@ export default function WorkspaceTabs({
               key={section.key}
               onClick={() => onPick(section.tabs[0].key)}
               aria-current={on ? "true" : undefined}
-              className="text-xs sm:text-sm font-bold px-3 py-1 rounded-lg"
+              className="text-xs sm:text-sm font-bold px-3 py-1 rounded-lg relative"
               style={{
                 background: on ? "var(--mint-100)" : "transparent",
                 color: on ? "var(--mint-700)" : "var(--text-muted)",
               }}
             >
               {section.label}
+              <CountBadge count={workWaiting(section)} />
             </button>
           );
         })}
@@ -73,20 +79,7 @@ export default function WorkspaceTabs({
               }}
             >
               <IconLabel name={tab.icon}>{tab.label}</IconLabel>
-              {tab.badge !== undefined && tab.badge > 0 && (
-                <span
-                  dir="ltr"
-                  className="absolute -top-1.5 -start-1.5 rounded-full text-white font-black flex items-center justify-center"
-                  style={{
-                    background: "#dc2626",
-                    fontSize: "9px",
-                    minWidth: "16px",
-                    height: "16px",
-                  }}
-                >
-                  {tab.badge > 9 ? "+9" : tab.badge}
-                </span>
-              )}
+              <CountBadge count={tab.badge ?? 0} />
             </button>
           );
         })}
