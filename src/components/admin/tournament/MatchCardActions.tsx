@@ -9,6 +9,7 @@ const SQUARE = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opa
 
 export default function MatchCardActions({
   played,
+  decided,
   football,
   showMvp,
   showDetails,
@@ -20,6 +21,7 @@ export default function MatchCardActions({
   onMoveDown,
 }: {
   played: boolean;
+  decided: boolean;
   football: boolean;
   showMvp: boolean;
   showDetails: boolean;
@@ -62,14 +64,16 @@ export default function MatchCardActions({
           </button>
         </>
       )}
-      <button
-        onClick={onToggleResultForm}
-        className={CHIP}
-        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-      >
-        {played ? texts.editResult : texts.enterResult}
-      </button>
-      {football && (
+      {decided && (
+        <button
+          onClick={onToggleResultForm}
+          className={CHIP}
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          {played ? texts.editResult : texts.enterResult}
+        </button>
+      )}
+      {decided && football && (
         <button onClick={onToggleMvp} className={CHIP} style={outline}>
           {showMvp ? texts.hideMvp : <IconLabel name="star">{texts.mvpVote}</IconLabel>}
         </button>
