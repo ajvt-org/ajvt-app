@@ -11,7 +11,7 @@ const AGE = "البدريين";
 interface RunBody {
   batchId: string;
   results: ImportedRow[];
-  summary: { created: number; updated: number; failed: number };
+  summary: { created: number; updated: number; failed: number; memberships: number };
   error?: string;
 }
 
@@ -92,7 +92,7 @@ describe("POST /api/admin/people/import", () => {
     const data: RunBody = await response.json();
 
     expect(response.status).toBe(201);
-    expect(data.summary).toEqual({ created: 3, updated: 0, failed: 0 });
+    expect(data.summary).toEqual({ created: 3, updated: 0, failed: 0, memberships: 0 });
     expect(await prisma.user.count()).toBe(3);
     expect((await prisma.user.findFirstOrThrow({ where: { fullName: "علي" } })).age).toBeNull();
   });
@@ -187,6 +187,36 @@ describe("POST /api/admin/people/import", () => {
 
     expect(await prisma.membership.count()).toBe(1);
     expect(await prisma.receipt.count()).toBe(0);
+  });
+
+  it("counts the memberships it made, which a row the account already covers is not one of", async () => {
+    const existing = await prisma.user.create({
+      data: { phone: "36000123", fullName: "موجود", village: HOME_VILLAGE, age: AGE },
+    });
+    await prisma.membership.create({
+      data: { userId: existing.id, year: new Date().getFullYear(), status: "ACTIVE" },
+    });
+
+    const data: RunBody = await (
+      await run([
+        { values: paid({ phone: "36000123" }), personId: existing.id },
+        paid({ fullName: "أحمد", phone: "36000124" }),
+        paid({ fullName: "علي", phone: "36000125" }),
+      ])
+    ).json();
+
+    expect(data.summary).toEqual({ created: 2, updated: 1, failed: 0, memberships: 2 });
+    expect(data.results.map((row) => row.membership)).toEqual([false, true, true]);
+    expect(await prisma.membership.count()).toBe(3);
+  });
+
+  it("counts no membership for a file nobody paid for", async () => {
+    const data: RunBody = await (
+      await run([values({ phone: "36000123" }), values({ fullName: "أحمد", phone: "36000124" })])
+    ).json();
+
+    expect(data.summary.memberships).toBe(0);
+    expect(data.summary.created).toBe(2);
   });
 
   it("logs no membership for a paid row the account already covers", async () => {

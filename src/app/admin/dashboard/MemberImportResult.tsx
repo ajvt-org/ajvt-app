@@ -10,7 +10,7 @@ import IconLabel from "@/components/IconLabel";
 
 export interface ImportOutcome {
   results: ImportedRow[];
-  summary: { created: number; updated: number; failed: number };
+  summary: { created: number; updated: number; failed: number; memberships: number };
 }
 
 export default function MemberImportResult({
@@ -37,6 +37,9 @@ export default function MemberImportResult({
             {memberImportDialog.resultUpdated(outcome.summary.updated)}
           </span>
         )}
+        <span className="badge badge-active">
+          {memberImportDialog.resultMemberships(outcome.summary.memberships)}
+        </span>
         {outcome.summary.failed > 0 && (
           <span className="badge badge-rejected">
             {memberImportDialog.resultFailed(outcome.summary.failed)}

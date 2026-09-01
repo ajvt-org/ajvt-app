@@ -45,7 +45,7 @@ function preview(over: Partial<ImportPreview> = {}): ImportPreview {
 
 const outcome = {
   results: [] as unknown[],
-  summary: { created: 1, updated: 0, failed: 0 },
+  summary: { created: 1, updated: 0, failed: 0, memberships: 0 },
 };
 
 function mockPreview(body: ImportPreview) {
