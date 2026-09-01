@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { issueMembership } from "@/lib/member";
-import { sendMatchReminders } from "@/lib/tournamentNotify";
+import { sendMatchReminders, sendTeamChoiceReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { anonymousForYear, paidForYear, type MembershipPaymentRow } from "@/lib/paidBreakdown";
@@ -80,6 +80,7 @@ export const GET = withRoute("GET /api/user/me", async () => {
   const session = await requireUser();
 
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
+  sendTeamChoiceReminders().catch((err) => logger.error("team.choice.reminders.error", err));
 
   const { membershipYear: currentYear } = await getAppSettings();
 

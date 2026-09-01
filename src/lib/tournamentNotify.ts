@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
-import { sendPushToUsers } from "./push";
+import { sendPushToUser, sendPushToUsers } from "./push";
+import { isQuietHour } from "./quietHours";
 import { logger } from "./logger";
 import { notify } from "@/lib/messages";
 import type { CategoryKey } from "./notificationCategories";
@@ -103,6 +104,54 @@ async function claimReminder(matchId: string, now: Date): Promise<boolean> {
   const claimed = await prisma.match.updateMany({
     where: { id: matchId, reminderSentAt: null },
     data: { reminderSentAt: now },
+  });
+  return claimed.count === 1;
+}
+
+const TEAM_NUDGE_INTERVAL_MS = 60 * 60 * 1000;
+
+export async function sendTeamChoiceReminders() {
+  const now = new Date();
+  if (isQuietHour(now)) return;
+  const since = new Date(now.getTime() - TEAM_NUDGE_INTERVAL_MS);
+
+  const waiting = await prisma.activityRegistration.findMany({
+    where: {
+      status: "ACTIVE",
+      activity: { isTournament: true, isOpen: true },
+      OR: [{ teamNudgeSentAt: null }, { teamNudgeSentAt: { lte: since } }],
+    },
+    select: {
+      id: true,
+      userId: true,
+      activityId: true,
+      activity: { select: { id: true, title: true, startsAt: true } },
+    },
+  });
+
+  for (const registration of waiting) {
+    if (registration.activity.startsAt && registration.activity.startsAt <= now) continue;
+    const onATeam = await prisma.teamMember.count({
+      where: { userId: registration.userId, team: { activityId: registration.activityId } },
+    });
+    if (onATeam > 0) continue;
+    if (!(await claimTeamNudge(registration.id, now, since))) continue;
+
+    await sendPushToUser(
+      registration.userId,
+      notify.teamChoiceReminder(registration.activity.title, registration.activity.id),
+      "TEAM_CHOICE_REMINDER",
+    ).catch((err) => logger.error("team.choice.reminder.push.error", err));
+  }
+}
+
+async function claimTeamNudge(registrationId: string, now: Date, since: Date): Promise<boolean> {
+  const claimed = await prisma.activityRegistration.updateMany({
+    where: {
+      id: registrationId,
+      OR: [{ teamNudgeSentAt: null }, { teamNudgeSentAt: { lte: since } }],
+    },
+    data: { teamNudgeSentAt: now },
   });
   return claimed.count === 1;
 }
