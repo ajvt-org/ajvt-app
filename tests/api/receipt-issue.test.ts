@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
-import { resetDb, get, post, createAdmin, signInAsAdmin, withParams } from "./helpers";
+import { resetDb, get, post, createAdmin, signInAsAdmin, withParams, makeMember } from "./helpers";
 import { GET as LIST, POST as ISSUE } from "@/app/api/admin/receipts/route";
 import { POST as VOID } from "@/app/api/admin/receipts/[number]/void/route";
 import { PATCH as SAVE_SETTINGS } from "@/app/api/admin/settings/route";
@@ -25,6 +25,28 @@ async function asBoss() {
 describe("issuing a receipt", () => {
   beforeEach(async () => {
     await resetDb();
+  });
+
+  it("links the receipt to the account sent as userId", async () => {
+    await asBoss();
+    const member = await makeMember({ fullName: "أحمد ولد سالم", status: "ACTIVE" });
+
+    const res = await issue({ ...DRAFT, userId: member.userId });
+
+    expect(res.status).toBe(201);
+    const { receipt } = await res.json();
+    const row = await prisma.receipt.findUniqueOrThrow({ where: { number: receipt.number } });
+    expect(row.userId).toBe(member.userId);
+  });
+
+  it("refuses an account sent as memberId", async () => {
+    await asBoss();
+    const member = await makeMember({ fullName: "أحمد ولد سالم", status: "ACTIVE" });
+
+    const res = await issue({ ...DRAFT, memberId: member.userId });
+
+    expect(res.status).toBe(400);
+    expect(await prisma.receipt.count()).toBe(0);
   });
 
   it("hands back a numbered, tokened receipt", async () => {
