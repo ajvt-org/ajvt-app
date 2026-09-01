@@ -150,3 +150,93 @@ describe("advancing the bracket", () => {
     expect(state.canAdvanceBracket).toBe(false);
   });
 });
+
+const waiting = (id: string, bracketRound: number) =>
+  match({ id, bracketRound, isKnockout: true, homeTeam: null, awayTeam: null });
+
+const drawn = (id: string, bracketRound: number, over: Partial<Match> = {}) =>
+  match({ id, bracketRound, isKnockout: true, ...over });
+
+describe("a bracket laid out before the teams are known", () => {
+  const groups = [group("g1"), group("g2")];
+  const teams = [team("t1", "g1"), team("t2", "g1"), team("t3", "g2"), team("t4", "g2")];
+  const groupStage = [played({ id: "l1" }), played({ id: "l2" })];
+  const base = { format: "GROUPS_THEN_KNOCKOUT" as const, groups, teams };
+
+  const acrossTwoRounds = [waiting("b1", 1), waiting("b2", 1), waiting("b3", 2)];
+
+  it("sees a first round that is waiting", () => {
+    const state = matchesState({ ...base, matches: [...groupStage, ...acrossTwoRounds] });
+
+    expect(state.firstRoundWaiting).toBe(true);
+    expect(state.firstRoundRedoable).toBe(false);
+  });
+
+  it("offers the semi final draw once the groups are done", () => {
+    const state = matchesState({ ...base, matches: [...groupStage, ...acrossTwoRounds] });
+
+    expect(state.groupStageComplete).toBe(true);
+  });
+
+  it("holds the draw back while a group match is still to play", () => {
+    const state = matchesState({
+      ...base,
+      matches: [played({ id: "l1" }), match({ id: "l2" }), ...acrossTwoRounds],
+    });
+
+    expect(state.knockoutLocked).toBe(true);
+    expect(state.groupStageComplete).toBe(false);
+    expect(state.firstRoundWaiting).toBe(true);
+  });
+
+  it("does not offer the next round while nothing has been drawn", () => {
+    const state = matchesState({ ...base, matches: [...groupStage, ...acrossTwoRounds] });
+
+    expect(state.canAdvanceBracket).toBe(false);
+  });
+
+  it("turns from waiting to redoable once the first round is drawn", () => {
+    const state = matchesState({
+      ...base,
+      matches: [...groupStage, drawn("b1", 1), drawn("b2", 1), waiting("b3", 2)],
+    });
+
+    expect(state.firstRoundWaiting).toBe(false);
+    expect(state.firstRoundRedoable).toBe(true);
+    expect(state.groupStageComplete).toBe(false);
+    expect(state.canAdvanceBracket).toBe(true);
+  });
+
+  it("stops offering a redo once a knockout result is in", () => {
+    const state = matchesState({
+      ...base,
+      matches: [
+        ...groupStage,
+        drawn("b1", 1, { status: "PLAYED" }),
+        drawn("b2", 1),
+        waiting("b3", 2),
+      ],
+    });
+
+    expect(state.firstRoundRedoable).toBe(false);
+    expect(state.firstRoundWaiting).toBe(false);
+  });
+});
+
+describe("a knockout tournament laid out before the teams are known", () => {
+  const base = {
+    format: "KNOCKOUT" as const,
+    groups: [],
+    teams: [team("t1"), team("t2"), team("t3"), team("t4")],
+  };
+
+  it("offers the draw on a bracket that is more than one round long", () => {
+    const state = matchesState({
+      ...base,
+      matches: [waiting("b1", 1), waiting("b2", 1), waiting("b3", 2)],
+    });
+
+    expect(state.firstRoundWaiting).toBe(true);
+    expect(state.knockoutLocked).toBe(false);
+  });
+});

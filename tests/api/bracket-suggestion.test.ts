@@ -206,3 +206,74 @@ describe("suggesting the knockout bracket", () => {
     expect((await validate(activity.id)).status).toBe(401);
   });
 });
+
+describe("a bracket the wizard laid out before the groups were played", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  async function withWaitingBracket() {
+    const { activity, groups } = await tournament(2);
+    await playGroups(activity.id, groups);
+    const day = new Date("2026-09-27T17:00:00.000Z");
+    for (const [i, round] of [1, 1, 2].entries()) {
+      await prisma.match.create({
+        data: {
+          activityId: activity.id,
+          isKnockout: true,
+          bracketRound: round,
+          order: 100 + i,
+          matchDate: new Date(day.getTime() + i * 86_400_000),
+          venue: "ملعب القرية",
+        },
+      });
+    }
+    return activity;
+  }
+
+  it("says the first round is still waiting", async () => {
+    const activity = await withWaitingBracket();
+
+    const body = await (await suggest(activity.id)).json();
+
+    expect(body.bracketExists).toBe(true);
+    expect(body.firstRoundWaiting).toBe(true);
+    expect(body.groupStageComplete).toBe(true);
+  });
+
+  it("fills the waiting semi finals and leaves the final and its kick offs alone", async () => {
+    const activity = await withWaitingBracket();
+    const before = await prisma.match.findMany({
+      where: { activityId: activity.id, bracketRound: { not: null } },
+      orderBy: [{ bracketRound: "asc" }, { order: "asc" }],
+    });
+
+    expect((await validate(activity.id, { redo: false })).status).toBe(200);
+
+    const after = await prisma.match.findMany({
+      where: { activityId: activity.id, bracketRound: { not: null } },
+      orderBy: [{ bracketRound: "asc" }, { order: "asc" }],
+    });
+    expect(after.map((m) => m.id)).toEqual(before.map((m) => m.id));
+    expect(after.map((m) => m.matchDate?.toISOString())).toEqual(
+      before.map((m) => m.matchDate?.toISOString()),
+    );
+    expect(after.filter((m) => m.bracketRound === 1).every((m) => m.homeTeamId !== null)).toBe(
+      true,
+    );
+    expect(after.filter((m) => m.bracketRound === 2)).toMatchObject([
+      { homeTeamId: null, awayTeamId: null },
+    ]);
+  });
+
+  it("stops saying the first round is waiting once it is filled", async () => {
+    const activity = await withWaitingBracket();
+    await validate(activity.id, { redo: false });
+
+    const body = await (await suggest(activity.id)).json();
+
+    expect(body.firstRoundWaiting).toBe(false);
+    expect(body.bracketExists).toBe(true);
+  });
+});

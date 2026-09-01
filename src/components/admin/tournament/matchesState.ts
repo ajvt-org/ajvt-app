@@ -6,6 +6,8 @@ export interface MatchesState {
   finalRound: (Match & { bracketRound: number })[];
   bracketIsFinalDone: boolean;
   canAdvanceBracket: boolean;
+  firstRoundWaiting: boolean;
+  firstRoundRedoable: boolean;
   poolsReady: boolean;
   groupStageDone: boolean;
   knockoutLocked: boolean;
@@ -48,16 +50,28 @@ export function matchesState({
 
   const isTwoGroupFormat = hasGroupStage && groups.length === 2;
 
+  const firstRound = bracketMatches.filter((m) => m.bracketRound === 1);
+  const bracketUntouched =
+    bracketMatches.length > 0 && bracketMatches.every((m) => m.status === "SCHEDULED");
+  const firstRoundWaiting =
+    firstRound.length > 0 &&
+    bracketUntouched &&
+    firstRound.every((m) => m.homeTeam === null && m.awayTeam === null);
+  const firstRoundRedoable = firstRound.length > 0 && bracketUntouched && !firstRoundWaiting;
+
   return {
     bracketMatches,
     maxBracketRound,
     finalRound,
     bracketIsFinalDone,
-    canAdvanceBracket: bracketMatches.length > 0 && !bracketIsFinalDone,
+    canAdvanceBracket: bracketMatches.length > 0 && !bracketIsFinalDone && !firstRoundWaiting,
+    firstRoundWaiting,
+    firstRoundRedoable,
     poolsReady,
     groupStageDone,
     knockoutLocked: hasGroupStage && groups.length > 0 && !groupStageDone,
     isTwoGroupFormat,
-    groupStageComplete: isTwoGroupFormat && groupStageDone && bracketMatches.length === 0,
+    groupStageComplete:
+      isTwoGroupFormat && groupStageDone && (bracketMatches.length === 0 || firstRoundWaiting),
   };
 }

@@ -11,6 +11,7 @@ type Payload = Suggestion & {
   label: string | null;
   groupStageComplete: boolean;
   bracketExists: boolean;
+  firstRoundWaiting: boolean;
 };
 
 const AMBER_BG = "#fffbeb";
@@ -45,7 +46,9 @@ export default function BracketSuggestion({
 
   if (!suggestion) return null;
 
-  const { pairs, problem, label, groupStageComplete, bracketExists } = suggestion;
+  const { pairs, problem, label, groupStageComplete, bracketExists, firstRoundWaiting } =
+    suggestion;
+  const alreadyDrawn = bracketExists && !firstRoundWaiting;
 
   if (!pairs.length) {
     return (
@@ -104,13 +107,13 @@ export default function BracketSuggestion({
         </p>
       ) : (
         <button
-          onClick={() => onValidate(bracketExists)}
+          onClick={() => onValidate(alreadyDrawn)}
           disabled={busy}
           className="btn btn-primary text-sm"
           style={{ width: "auto" }}
         >
           <IconLabel name="check">
-            {bracketExists ? texts.suggestionRedo : texts.suggestionValidate}
+            {alreadyDrawn ? texts.suggestionRedo : texts.suggestionValidate}
           </IconLabel>
         </button>
       )}
