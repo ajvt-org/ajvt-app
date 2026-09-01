@@ -67,7 +67,7 @@ npm run test:e2e  # the whole app, in a browser
 
 `test:api` needs the container from `npm run db:up`. It creates its own database on it, migrates it, and truncates every table between tests, so it never touches your dev data. The name ends in a short hash of the checkout path, so a git worktree gets its own and two checkouts can run the suite at the same time. Point `TEST_DATABASE_URL` somewhere else if you want another target.
 
-`test:e2e` needs the same container. It creates and migrates its own database, seeds the admin and the age groups, then truncates once before the whole run. Playwright starts the app itself on port 3100.
+`test:e2e` needs the same container. It creates and migrates its own database, seeds the admin and the age groups, then truncates once before the whole run. Playwright starts the app itself, on a port derived from the checkout path so two worktrees never fight over one. It steps past anything already listening, and `E2E_PORT` pins it if you need a fixed one.
 
 Run it against a build rather than the dev server:
 
