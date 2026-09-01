@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { activityTabs, type TabbedActivity } from "./activityTabs";
+import { activityTabSections, type TabbedActivity } from "./activityTabs";
+import type { WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 
 function activity(over: Partial<TabbedActivity> = {}): TabbedActivity {
   return {
@@ -12,7 +13,10 @@ function activity(over: Partial<TabbedActivity> = {}): TabbedActivity {
   };
 }
 
-const keys = (a: TabbedActivity, proposals = 0) => activityTabs(a, proposals).map((t) => t.key);
+const flat = (a: TabbedActivity, proposals = 0): WorkspaceTab[] =>
+  activityTabSections(a, proposals).flatMap((section) => section.tabs);
+
+const keys = (a: TabbedActivity, proposals = 0) => flat(a, proposals).map((t) => t.key);
 
 describe("the tabs an activity opens with", () => {
   it("takes registrations on an ordinary activity", () => {
@@ -37,7 +41,7 @@ describe("the tabs an activity opens with", () => {
 
   it("counts only what is still waiting on the badge", () => {
     const rows = [{ status: "PENDING" }, { status: "PENDING" }, { status: "ACTIVE" }];
-    const tabs = activityTabs(activity({ registrations: rows }), 0);
+    const tabs = flat(activity({ registrations: rows }), 0);
 
     expect(tabs.find((t) => t.key === "registrations")?.badge).toBe(2);
   });
