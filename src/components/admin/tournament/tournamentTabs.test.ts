@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isTournamentTab, tournamentTabs } from "./tournamentTabs";
+import { isTournamentTab, tournamentPlayTabs, tournamentRosterTab } from "./tournamentTabs";
 
 const football = { isTournament: true, profile: "FOOTBALL" as const, teamSize: 5 };
 const board = { isTournament: true, profile: "BOARD" as const, teamSize: 1 };
@@ -9,12 +9,12 @@ const keys = (t: { key: string }[]) => t.map((x) => x.key);
 
 describe("which tournament tabs an activity earns", () => {
   it("gives an ordinary activity none at all", () => {
-    expect(tournamentTabs(plain, 0)).toEqual([]);
+    expect(tournamentRosterTab(plain, 0)).toEqual([]);
+    expect(tournamentPlayTabs(plain, 0)).toEqual([]);
   });
 
-  it("gives a football tournament the full run, discipline last", () => {
-    expect(keys(tournamentTabs(football, 0))).toEqual([
-      "teams",
+  it("gives a football tournament the full run of play, discipline last", () => {
+    expect(keys(tournamentPlayTabs(football, 0))).toEqual([
       "days",
       "matches",
       "standings",
@@ -23,12 +23,17 @@ describe("which tournament tabs an activity earns", () => {
     ]);
   });
 
+  it("keeps the roster apart from the play", () => {
+    expect(keys(tournamentRosterTab(football, 0))).toEqual(["teams"]);
+    expect(keys(tournamentPlayTabs(football, 0))).not.toContain("teams");
+  });
+
   it("leaves discipline out of a board game, which has no cards", () => {
-    expect(keys(tournamentTabs(board, 0))).not.toContain("discipline");
+    expect(keys(tournamentPlayTabs(board, 0))).not.toContain("discipline");
   });
 
   it("counts the proposals waiting on the discipline tab", () => {
-    const tab = tournamentTabs(football, 3).find((t) => t.key === "discipline");
+    const tab = tournamentPlayTabs(football, 3).find((t) => t.key === "discipline");
 
     expect(tab?.badge).toBe(3);
   });
@@ -36,14 +41,14 @@ describe("which tournament tabs an activity earns", () => {
 
 describe("naming the squad tab", () => {
   it("says players when a side is one person", () => {
-    const tab = tournamentTabs(board, 0)[0];
+    const tab = tournamentRosterTab(board, 0)[0];
 
     expect(tab.label).toBe("اللاعبون");
     expect(tab.icon).toBe("user");
   });
 
   it("says teams otherwise", () => {
-    const tab = tournamentTabs(football, 0)[0];
+    const tab = tournamentRosterTab(football, 0)[0];
 
     expect(tab.label).toBe("الفرق");
     expect(tab.icon).toBe("users");
@@ -65,8 +70,7 @@ describe("telling a tournament tab from an activity one", () => {
 });
 
 describe("the badge on the teams tab", () => {
-  const teamsTab = (requests: number) =>
-    tournamentTabs(football, 0, requests).find((t) => t.key === "teams");
+  const teamsTab = (requests: number) => tournamentRosterTab(football, requests)[0];
 
   it("carries the join requests still waiting", () => {
     expect(teamsTab(2)?.badge).toBe(2);
@@ -77,6 +81,6 @@ describe("the badge on the teams tab", () => {
   });
 
   it("counts nothing when the caller says nothing", () => {
-    expect(tournamentTabs(football, 0).find((t) => t.key === "teams")?.badge).toBe(0);
+    expect(tournamentRosterTab(football)[0]?.badge).toBe(0);
   });
 });
