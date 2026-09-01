@@ -5,7 +5,7 @@ import type { RowValues } from "@/lib/memberImportValues";
 import IconLabel from "@/components/IconLabel";
 import MemberImportBulkFill from "./MemberImportBulkFill";
 import MemberImportRow from "./MemberImportRow";
-import { canImport, tally, type EditableRow } from "./memberImportState";
+import { canImport, tally, takesPayment, type EditableRow } from "./memberImportState";
 
 const HEAD = "px-1.5 py-1.5 text-right text-[11px] font-bold whitespace-nowrap";
 
@@ -14,15 +14,17 @@ export default function MemberImportReview({
   villages,
   ageGroups,
   paymentMethods,
+  membershipFee,
   notice,
   error,
   loading,
   onEdit,
   onSkip,
   onSelect,
+  onSelectAll,
   onSelectMissing,
   onClear,
-  onFillAgeGroup,
+  onFill,
   onBack,
   onImport,
 }: {
@@ -30,20 +32,23 @@ export default function MemberImportReview({
   villages: string[];
   ageGroups: string[];
   paymentMethods: readonly string[];
+  membershipFee: number;
   notice: string;
   error: string;
   loading: boolean;
   onEdit: (row: number, change: Partial<RowValues>) => void;
   onSkip: (row: number) => void;
   onSelect: (row: number, selected: boolean) => void;
+  onSelectAll: () => void;
   onSelectMissing: () => void;
   onClear: () => void;
-  onFillAgeGroup: (age: string) => void;
+  onFill: (change: Partial<RowValues>) => void;
   onBack: () => void;
   onImport: () => void;
 }) {
   const counted = tally(rows);
   const selected = rows.filter((row) => row.selected).length;
+  const withMembership = rows.filter((row) => !row.skip && !takesPayment(row)).length;
   const ready = canImport(rows);
 
   return (
@@ -73,10 +78,14 @@ export default function MemberImportReview({
 
       <MemberImportBulkFill
         ageGroups={ageGroups}
+        paymentMethods={paymentMethods}
+        membershipFee={membershipFee}
         selected={selected}
+        withMembership={withMembership}
+        onSelectAll={onSelectAll}
         onSelectMissing={onSelectMissing}
         onClear={onClear}
-        onApply={onFillAgeGroup}
+        onApply={onFill}
       />
 
       <div className="overflow-x-auto rounded-xl" style={{ border: "1px solid var(--mint-200)" }}>
