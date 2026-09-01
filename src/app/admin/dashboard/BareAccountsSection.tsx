@@ -9,6 +9,8 @@ import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import { push } from "@/lib/messages";
 import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import { daysWaiting } from "@/lib/waitingRequests";
+import { personDetails } from "@/lib/personDetails";
+import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "./TempPasswordBox";
 import { bareAccounts as texts } from "@/lib/texts";
 import type { BareAccount } from "./types";
@@ -78,6 +80,14 @@ function Row({
   const [resetBusy, setResetBusy] = useState(false);
   const [temp, setTemp] = useState<{ password: string; hours: number } | null>(null);
 
+  const age = ageForVillage(user.village, user.age);
+  const details = personDetails({
+    phone: user.fullName ? user.phone : null,
+    village: user.village,
+    age,
+  });
+  const missingAgeGroup = requiresAgeGroup(user.village) && !age;
+
   async function resetPassword() {
     setResetBusy(true);
     try {
@@ -107,14 +117,19 @@ function Row({
             <p className="text-sm font-bold truncate" style={{ color: "var(--text-main)" }}>
               {identify(user)}
             </p>
+            {details && (
+              <p className="text-xs truncate" style={{ color: "var(--text-muted)" }}>
+                <bdi>{details}</bdi>
+              </p>
+            )}
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {user.fullName && user.phone && (
-                <>
-                  <span dir="ltr">{user.phone}</span> ·{" "}
-                </>
-              )}
               {user.phone ? daysSince(user.createdAt) : texts.addedByHand}
             </p>
+            {missingAgeGroup && (
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {texts.noAgeGroup}
+              </p>
+            )}
           </div>
         </div>
         <div className="shrink-0">{user.phone && <NudgeButton user={user} />}</div>

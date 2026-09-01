@@ -5,6 +5,8 @@ export interface BareAccount {
   id: string;
   phone: string | null;
   fullName: string | null;
+  village: string;
+  age: string | null;
   createdAt: string;
   lastActiveDate: string | null;
   hasPush: boolean;
