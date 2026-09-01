@@ -2,6 +2,7 @@
 
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { memberPicker } from "@/lib/texts";
+import { DETAIL_SEPARATOR, personDetails } from "@/lib/personDetails";
 import type { MemberOption } from "./paymentTypes";
 
 export function identityText(member: MemberOption): string {
@@ -17,7 +18,7 @@ export default function MemberIdentity({
   member: MemberOption;
   size?: number;
 }) {
-  const details = [member.phone, member.village, member.age].filter(Boolean).join(" · ");
+  const details = personDetails(member);
 
   return (
     <span className="flex items-center gap-2 min-w-0">
@@ -28,7 +29,7 @@ export default function MemberIdentity({
         </span>
         <span className="block truncate text-[11px]" style={{ color: "var(--text-muted)" }}>
           <bdi>{member.memberNumber || memberPicker.noNumber}</bdi>
-          {details && " · "}
+          {details && DETAIL_SEPARATOR}
           <bdi>{details}</bdi>
         </span>
       </span>
