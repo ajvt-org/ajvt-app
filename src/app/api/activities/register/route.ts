@@ -5,15 +5,16 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/lib/errors";
 import { activityRegisterSchema } from "./schema";
-import { activities, members } from "@/lib/messages";
+import { activities, members, tournament } from "@/lib/messages";
 import { getAppSettings } from "@/lib/settingsServer";
 import { membershipState } from "@/lib/membershipState";
 import { asMembershipState } from "@/lib/currentMembership";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { joinChosenTeam } from "@/lib/registrationTeamServer";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
-  const { activityId, userId } = parse(activityRegisterSchema, await req.json());
+  const { activityId, userId, chosenTeamId } = parse(activityRegisterSchema, await req.json());
 
   const [membership, activity] = await Promise.all([
     userId === session.userId ? currentMembership(prisma, userId) : null,
@@ -40,6 +41,14 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
 
   const status = activity.isVolunteer || activity.autoApprove ? "ACTIVE" : "PENDING";
 
+  const chosenTeam = chosenTeamId
+    ? await prisma.team.findFirst({
+        where: { id: chosenTeamId, activityId },
+        select: { id: true },
+      })
+    : null;
+  if (chosenTeamId && !chosenTeam) throw new NotFoundError(tournament.teamNotFound);
+
   await prisma.$transaction(
     async (tx) => {
       const existing = await tx.activityRegistration.findUnique({
@@ -55,11 +64,25 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
         });
         if (taken >= activity.capacity) throw new ConflictError(activities.noSeatsLeft);
       }
-      await tx.activityRegistration.upsert({
+      const registration = await tx.activityRegistration.upsert({
         where: { userId_activityId: { userId: session.userId, activityId } },
-        update: { status, rejectionReason: null, source: "SELF", recordedBy: null },
-        create: { userId: session.userId, activityId, status, source: "SELF" },
+        update: {
+          status,
+          rejectionReason: null,
+          source: "SELF",
+          recordedBy: null,
+          chosenTeamId: chosenTeam?.id ?? null,
+          teamNudgeSentAt: null,
+        },
+        create: {
+          userId: session.userId,
+          activityId,
+          status,
+          source: "SELF",
+          chosenTeamId: chosenTeam?.id ?? null,
+        },
       });
+      await joinChosenTeam(tx, registration.id);
     },
     { isolationLevel: "Serializable" },
   );
