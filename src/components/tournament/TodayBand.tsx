@@ -4,6 +4,7 @@ import MatchMeta from "./matchCard/MatchMeta";
 import MatchCardHead from "./matchCard/MatchCardHead";
 import { formatMatchTime } from "@/lib/clubTime";
 import { matchDisplay as texts } from "@/lib/texts";
+import { teamName } from "@/lib/fixtureTeams";
 import type { PublicMatch } from "./publicTypes";
 
 export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
@@ -29,8 +30,8 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
             <MatchMeta round={match.round} venue={match.venue} tone="dark" />
           </MatchCardHead>
           <MatchTeams
-            home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
-            away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+            home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
+            away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
             score={
               match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
             }
