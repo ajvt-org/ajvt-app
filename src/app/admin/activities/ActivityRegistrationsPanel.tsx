@@ -32,8 +32,8 @@ export default function ActivityRegistrationsPanel({
     status: "ACTIVE" | "REJECTED",
     reason?: string,
   ) => Promise<boolean>;
-  onRegister: (activityId: string, memberId: string) => Promise<boolean>;
-  onUnregister: (activityId: string, memberId: string) => void;
+  onRegister: (activityId: string, userId: string) => Promise<boolean>;
+  onUnregister: (activityId: string, userId: string) => void;
 }) {
   const [search, setSearch] = useState("");
 
@@ -93,7 +93,7 @@ export default function ActivityRegistrationsPanel({
               <ConfirmedRegistrantCard
                 key={r.id}
                 registration={r}
-                onUnregister={(memberId) => onUnregister(activityId, memberId)}
+                onUnregister={(userId) => onUnregister(activityId, userId)}
               />
             ))}
           </div>
