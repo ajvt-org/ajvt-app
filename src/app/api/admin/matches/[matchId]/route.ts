@@ -123,8 +123,8 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
     const wasPlayed = match.status === "PLAYED";
-    let finalHomeGroupId = match.homeTeam.groupId;
-    let finalAwayGroupId = match.awayTeam.groupId;
+    let finalHomeGroupId = match.homeTeam?.groupId ?? null;
+    let finalAwayGroupId = match.awayTeam?.groupId ?? null;
 
     const updateData: {
       matchDate?: Date | null;
@@ -147,6 +147,9 @@ export const PATCH = withRoute(
     if (homeTeamId !== undefined || awayTeamId !== undefined) {
       const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
       const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
+      if (newHome === null || newAway === null) {
+        return NextResponse.json({ error: tournament.fixtureNeedsBothTeams }, { status: 400 });
+      }
       if (newHome === newAway) {
         return NextResponse.json({ error: tournament.teamAgainstItself }, { status: 400 });
       }
@@ -162,6 +165,11 @@ export const PATCH = withRoute(
       finalHomeGroupId = validTeams.find((t) => t.id === newHome)!.groupId;
       finalAwayGroupId = validTeams.find((t) => t.id === newAway)!.groupId;
     }
+
+    const homeSideId = updateData.homeTeamId ?? match.homeTeamId;
+    const awaySideId = updateData.awayTeamId ?? match.awayTeamId;
+    const sides =
+      homeSideId !== null && awaySideId !== null ? { home: homeSideId, away: awaySideId } : null;
 
     if (matchDate !== undefined) {
       updateData.matchDate = matchDate ? parseMatchDate(matchDate) : null;
@@ -183,6 +191,32 @@ export const PATCH = withRoute(
       updateData.order = Number(order);
     }
 
+    if (sides === null) {
+      const touchesTheMatch =
+        homeScore !== undefined ||
+        awayScore !== undefined ||
+        homeGoals !== undefined ||
+        awayGoals !== undefined ||
+        homePenalties !== undefined ||
+        awayPenalties !== undefined ||
+        manOfTheMatchId !== undefined ||
+        goalEvents !== undefined ||
+        penaltyKicks !== undefined ||
+        forfeitWinnerTeamId !== undefined;
+      if (touchesTheMatch) {
+        return NextResponse.json({ error: tournament.fixtureHasNoTeams }, { status: 400 });
+      }
+      const scheduled = await prisma.match.update({
+        where: { id: matchId },
+        data: updateData,
+        include: MATCH_INCLUDE,
+      });
+      return NextResponse.json({ match: scheduled });
+    }
+
+    const homeName = match.homeTeam?.name ?? tournament.teamNotSetYet;
+    const awayName = match.awayTeam?.name ?? tournament.teamNotSetYet;
+
     let parsedHomeGoals: GoalInput[] = [];
     let parsedAwayGoals: GoalInput[] = [];
     let eventGoals: GoalEvent[] = [];
@@ -192,11 +226,11 @@ export const PATCH = withRoute(
     let clearedResult = false;
 
     if (eventsMode) {
-      const evGoals = validateGoalEvents(goalEvents, match.homeTeamId, match.awayTeamId);
+      const evGoals = validateGoalEvents(goalEvents, sides.home, sides.away);
       if (evGoals === null) {
         return NextResponse.json({ error: tournament.goalEventsInvalid }, { status: 400 });
       }
-      const evKicks = validateKicks(penaltyKicks, match.homeTeamId, match.awayTeamId);
+      const evKicks = validateKicks(penaltyKicks, sides.home, sides.away);
       if (evKicks === null) {
         return NextResponse.json({ error: tournament.kicksInvalid }, { status: 400 });
       }
@@ -207,7 +241,7 @@ export const PATCH = withRoute(
       const rosterRows = await prisma.teamMember.findMany({
         where: {
           userId: { in: eventAccounts },
-          teamId: { in: [match.homeTeamId, match.awayTeamId] },
+          teamId: { in: [sides.home, sides.away] },
         },
         select: { userId: true, teamId: true },
       });
@@ -216,8 +250,7 @@ export const PATCH = withRoute(
         if (!teamsOf.has(r.userId)) teamsOf.set(r.userId, new Set());
         teamsOf.get(r.userId)!.add(r.teamId);
       }
-      const other = (teamId: string) =>
-        teamId === match.homeTeamId ? match.awayTeamId : match.homeTeamId;
+      const other = (teamId: string) => (teamId === sides.home ? sides.away : sides.home);
       for (const g of evGoals) {
         if (g.userId === null) continue;
         const expected = g.kind === "OWN_GOAL" ? other(g.teamId) : g.teamId;
@@ -239,10 +272,10 @@ export const PATCH = withRoute(
         }
       }
 
-      const played = playedScore(evGoals, match.homeTeamId);
+      const played = playedScore(evGoals, sides.home);
       const winner =
         forfeitWinnerTeamId === undefined ? match.forfeitWinnerTeamId : forfeitWinnerTeamId;
-      const score = winner ? forfeitScore(played, winner, match.homeTeamId) : played;
+      const score = winner ? forfeitScore(played, winner, sides.home) : played;
       updateData.homeScore = score.home;
       updateData.awayScore = score.away;
       updateData.status = "PLAYED";
@@ -252,7 +285,7 @@ export const PATCH = withRoute(
         if (!effectiveKnockout) {
           return NextResponse.json({ error: tournament.extraTimeKnockoutOnly }, { status: 400 });
         }
-        if (!extraTimeAllowed(effectiveKnockout, evGoals, match.homeTeamId)) {
+        if (!extraTimeAllowed(effectiveKnockout, evGoals, sides.home)) {
           return NextResponse.json({ error: tournament.extraTimeTieOnly }, { status: 400 });
         }
       }
@@ -260,13 +293,13 @@ export const PATCH = withRoute(
         if (!effectiveKnockout) {
           return NextResponse.json({ error: tournament.penaltiesKnockoutOnly }, { status: 400 });
         }
-        if (!kicksAllowed(effectiveKnockout, evGoals, match.homeTeamId)) {
+        if (!kicksAllowed(effectiveKnockout, evGoals, sides.home)) {
           return NextResponse.json({ error: tournament.penaltiesTieOnly }, { status: 400 });
         }
         if (!kicksAlternate(evKicks)) {
           return NextResponse.json({ error: tournament.kicksNotAlternating }, { status: 400 });
         }
-        const shootout = shootoutFromKicks(evKicks, match.homeTeamId);
+        const shootout = shootoutFromKicks(evKicks, sides.home);
         if (shootout.home === shootout.away) {
           return NextResponse.json({ error: tournament.penaltiesTied }, { status: 400 });
         }
@@ -312,19 +345,19 @@ export const PATCH = withRoute(
           const squad = await prisma.teamMember.findMany({
             where: {
               userId: { in: [...hg, ...ag].map((g) => g.userId) },
-              teamId: { in: [match.homeTeamId, match.awayTeamId] },
+              teamId: { in: [sides.home, sides.away] },
             },
             select: { userId: true, teamId: true },
           });
           const teamOf = new Map(squad.map((m) => [m.userId, m.teamId]));
           const teamOfScorer = (id: string) => teamOf.get(id);
           for (const g of hg) {
-            if (teamOfScorer(g.userId) !== match.homeTeamId) {
+            if (teamOfScorer(g.userId) !== sides.home) {
               return NextResponse.json({ error: tournament.scorerNotInHome }, { status: 400 });
             }
           }
           for (const g of ag) {
-            if (teamOfScorer(g.userId) !== match.awayTeamId) {
+            if (teamOfScorer(g.userId) !== sides.away) {
               return NextResponse.json({ error: tournament.scorerNotInAway }, { status: 400 });
             }
           }
@@ -371,10 +404,7 @@ export const PATCH = withRoute(
     if (forfeitWinnerTeamId !== undefined) {
       if (forfeitWinnerTeamId === null) {
         updateData.forfeitWinnerTeamId = null;
-      } else if (
-        forfeitWinnerTeamId !== match.homeTeamId &&
-        forfeitWinnerTeamId !== match.awayTeamId
-      ) {
+      } else if (forfeitWinnerTeamId !== sides.home && forfeitWinnerTeamId !== sides.away) {
         return NextResponse.json({ error: tournament.forfeitWinnerNotInMatch }, { status: 400 });
       } else {
         updateData.forfeitWinnerTeamId = forfeitWinnerTeamId;
@@ -384,9 +414,9 @@ export const PATCH = withRoute(
           where: { matchId },
           select: { teamId: true },
         });
-        const scored = scoreFromGoals(stored, match.homeTeamId);
+        const scored = scoreFromGoals(stored, sides.home);
         const score = forfeitWinnerTeamId
-          ? forfeitScore(scored, forfeitWinnerTeamId, match.homeTeamId)
+          ? forfeitScore(scored, forfeitWinnerTeamId, sides.home)
           : scored;
         updateData.homeScore = score.home;
         updateData.awayScore = score.away;
@@ -400,7 +430,7 @@ export const PATCH = withRoute(
         const inRoster = await prisma.teamMember.findFirst({
           where: {
             userId: manOfTheMatchId,
-            teamId: { in: [match.homeTeamId, match.awayTeamId] },
+            teamId: { in: [sides.home, sides.away] },
           },
         });
         if (!inRoster) {
@@ -467,7 +497,7 @@ export const PATCH = withRoute(
             data: parsedHomeGoals.map((g) => ({
               matchId,
               userId: g.userId,
-              teamId: match.homeTeamId,
+              teamId: sides.home,
               count: g.count,
               minute: g.minute,
             })),
@@ -478,7 +508,7 @@ export const PATCH = withRoute(
             data: parsedAwayGoals.map((g) => ({
               matchId,
               userId: g.userId,
-              teamId: match.awayTeamId,
+              teamId: sides.away,
               count: g.count,
               minute: g.minute,
             })),
@@ -490,19 +520,18 @@ export const PATCH = withRoute(
         updateData.status === "PLAYED" &&
         !match.suspensionsServedAt
       ) {
-        await serveMatch(tx, match.activityId, [match.homeTeamId, match.awayTeamId]);
+        await serveMatch(tx, match.activityId, [sides.home, sides.away]);
         updateData.suspensionsServedAt = new Date();
       }
       return tx.match.update({ where: { id: matchId }, data: updateData, include: MATCH_INCLUDE });
     });
 
     if (forfeitWinnerTeamId !== undefined) {
-      const winnerName =
-        forfeitWinnerTeamId === match.homeTeamId ? match.homeTeam.name : match.awayTeam.name;
+      const winnerName = forfeitWinnerTeamId === sides.home ? homeName : awayName;
       await logAction(
         session.username,
         forfeitWinnerTeamId ? "SET_MATCH_FORFEIT" : "CLEAR_MATCH_FORFEIT",
-        `${match.homeTeam.name} × ${match.awayTeam.name}${forfeitWinnerTeamId ? ` — ${winnerName}` : ""}`,
+        `${homeName} × ${awayName}${forfeitWinnerTeamId ? ` — ${winnerName}` : ""}`,
         {
           ...auditContext(session, req),
           targetType: "Match",
@@ -525,7 +554,7 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         "ENTER_MATCH_RESULT",
-        `${match.homeTeam.name} ${updateData.homeScore}-${updateData.awayScore} ${match.awayTeam.name}`,
+        `${homeName} ${updateData.homeScore}-${updateData.awayScore} ${awayName}`,
         {
           ...auditContext(session, req),
           targetType: "Match",
@@ -540,13 +569,13 @@ export const PATCH = withRoute(
       );
       if (!wasPlayed) {
         notifyTeams(
-          match.homeTeamId,
-          match.awayTeamId,
+          sides.home,
+          sides.away,
           notify.matchResult(
-            match.homeTeam.name,
+            homeName,
             updateData.homeScore!,
             updateData.awayScore!,
-            match.awayTeam.name,
+            awayName,
             match.activityId,
           ),
         ).catch((err) => logger.error("match.result.push.error", err));
@@ -571,25 +600,23 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
 
+    const homeName = match.homeTeam?.name ?? tournament.teamNotSetYet;
+    const awayName = match.awayTeam?.name ?? tournament.teamNotSetYet;
+
     await prisma.match.delete({ where: { id: matchId } });
-    await logAction(
-      session.username,
-      "DELETE_MATCH",
-      `${match.homeTeam.name} × ${match.awayTeam.name}`,
-      {
-        ...auditContext(session, req),
-        targetType: "Match",
-        targetId: matchId,
-        before: {
-          homeTeam: match.homeTeam.name,
-          awayTeam: match.awayTeam.name,
-          homeScore: match.homeScore,
-          awayScore: match.awayScore,
-          status: match.status,
-          matchDate: match.matchDate,
-        },
+    await logAction(session.username, "DELETE_MATCH", `${homeName} × ${awayName}`, {
+      ...auditContext(session, req),
+      targetType: "Match",
+      targetId: matchId,
+      before: {
+        homeTeam: homeName,
+        awayTeam: awayName,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        status: match.status,
+        matchDate: match.matchDate,
       },
-    );
+    });
 
     return NextResponse.json({ ok: true });
   },

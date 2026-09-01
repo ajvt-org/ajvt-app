@@ -103,12 +103,12 @@ describe("suggesting the knockout bracket", () => {
     }
   });
 
-  it("refuses a group count that cannot fill a bracket", async () => {
+  it("refuses a group count that leaves a qualifier field the bracket cannot halve", async () => {
     const { activity, groups } = await tournament(3);
     await playGroups(activity.id, groups);
 
     const body = await (await suggest(activity.id)).json();
-    expect(body.problem).toBe("groupCount");
+    expect(body.problem).toBe("qualifierCount");
     expect(body.pairs).toEqual([]);
 
     expect((await validate(activity.id)).status).toBe(400);

@@ -1,7 +1,8 @@
 import { isPowerOfTwo } from "./tournament";
+import { pairQualifierSlots } from "./knockoutSlots";
 import type { StandingsRow } from "./standings";
 
-export const QUALIFY_PER_GROUP = 2;
+export const DEFAULT_QUALIFIERS_PER_GROUP = 2;
 
 export interface QualifierSlot {
   teamId: string;
@@ -16,7 +17,7 @@ export interface SuggestedPair {
   away: QualifierSlot;
 }
 
-export type SuggestionProblem = "notGrouped" | "groupCount" | "groupTooSmall" | "unresolvedTie";
+export type SuggestionProblem = "notGrouped" | "qualifierCount" | "groupTooSmall" | "unresolvedTie";
 
 export interface BracketSuggestion {
   pairs: SuggestedPair[];
@@ -40,35 +41,33 @@ function slot(group: SuggestionGroup, position: number): QualifierSlot {
   };
 }
 
-function blocker(groups: SuggestionGroup[]): SuggestionProblem | null {
+function blocker(groups: SuggestionGroup[], perGroup: number): SuggestionProblem | null {
   if (groups.length < 2) return "notGrouped";
-  if (!isPowerOfTwo(groups.length)) return "groupCount";
-  if (groups.some((g) => g.standings.length < QUALIFY_PER_GROUP)) return "groupTooSmall";
+  if (!isPowerOfTwo(groups.length * perGroup)) return "qualifierCount";
+  if (groups.some((g) => g.standings.length < perGroup)) return "groupTooSmall";
   return null;
 }
 
-function warning(groups: SuggestionGroup[]): SuggestionProblem | null {
-  const shaky = groups.some((g) =>
-    g.standings.slice(0, QUALIFY_PER_GROUP).some((row) => row.unresolved),
-  );
+function warning(groups: SuggestionGroup[], perGroup: number): SuggestionProblem | null {
+  const shaky = groups.some((g) => g.standings.slice(0, perGroup).some((row) => row.unresolved));
   return shaky ? "unresolvedTie" : null;
 }
 
-export function suggestFirstKnockoutRound(groups: SuggestionGroup[]): BracketSuggestion {
-  const problem = blocker(groups);
+export function suggestFirstKnockoutRound(
+  groups: SuggestionGroup[],
+  perGroup: number = DEFAULT_QUALIFIERS_PER_GROUP,
+): BracketSuggestion {
+  const problem = blocker(groups, perGroup);
   if (problem) return { pairs: [], problem };
 
-  const winner = (i: number) => slot(groups[i], 1);
-  const runnerUp = (i: number) => slot(groups[i], 2);
+  const pairs: SuggestedPair[] = pairQualifierSlots(groups.length, groups.length * perGroup).map(
+    (pair) => ({
+      home: slot(groups[pair.home.groupIndex], pair.home.position),
+      away: slot(groups[pair.away.groupIndex], pair.away.position),
+    }),
+  );
 
-  const topHalf: SuggestedPair[] = [];
-  const bottomHalf: SuggestedPair[] = [];
-  for (let i = 0; i < groups.length; i++) {
-    if (i % 2 === 0) topHalf.push({ home: winner(i), away: runnerUp(i + 1) });
-    else bottomHalf.push({ home: winner(i), away: runnerUp(i - 1) });
-  }
-
-  return { pairs: [...topHalf, ...bottomHalf], problem: warning(groups) };
+  return { pairs, problem: warning(groups, perGroup) };
 }
 
 export function meetingRound(pairs: SuggestedPair[], teamA: string, teamB: string): number | null {

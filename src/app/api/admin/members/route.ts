@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
-import { sendMatchReminders } from "@/lib/tournamentNotify";
+import { sendMatchReminders, sendTeamChoiceReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { paidForYear } from "@/lib/paidBreakdown";
@@ -11,6 +11,7 @@ import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 export const GET = withRoute("GET /api/admin/members", async () => {
   await requireAdminRole("MEMBERS");
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
+  sendTeamChoiceReminders().catch((err) => logger.error("team.choice.reminders.error", err));
 
   const memberships = await prisma.membership.findMany({
     select: {

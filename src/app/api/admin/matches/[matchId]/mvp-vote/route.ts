@@ -40,6 +40,9 @@ export const POST = withRoute(
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
+    if (match.homeTeam === null || match.awayTeam === null) {
+      return NextResponse.json({ error: tournament.fixtureHasNoTeams }, { status: 400 });
+    }
     if (match.status !== "PLAYED") {
       return NextResponse.json({ error: tournament.voteNeedsResult }, { status: 400 });
     }
@@ -58,7 +61,7 @@ export const POST = withRoute(
     const rosterEntries = await prisma.teamMember.findMany({
       where: {
         userId: { in: candidates.map((m) => m.id) },
-        teamId: { in: [match.homeTeamId, match.awayTeamId] },
+        teamId: { in: [match.homeTeam.id, match.awayTeam.id] },
       },
       select: { userId: true },
     });
@@ -87,8 +90,8 @@ export const POST = withRoute(
     );
 
     notifyTeams(
-      match.homeTeamId,
-      match.awayTeamId,
+      match.homeTeam.id,
+      match.awayTeam.id,
       notify.mvpVoteOpen(match.homeTeam.name, match.awayTeam.name, match.activityId),
     ).catch((err) => logger.error("mvp.vote.open.push.error", err));
 

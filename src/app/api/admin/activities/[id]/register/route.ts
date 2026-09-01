@@ -9,6 +9,7 @@ import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 import { activities, members, notify } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
+import { joinChosenTeam } from "@/lib/registrationTeamServer";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -99,12 +100,16 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: activities.registrationNotFound }, { status: 404 });
     }
 
-    const updated = await prisma.activityRegistration.update({
-      where: { id: registrationId },
-      data: {
-        status,
-        rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const row = await tx.activityRegistration.update({
+        where: { id: registrationId },
+        data: {
+          status,
+          rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
+        },
+      });
+      if (status === "ACTIVE") await joinChosenTeam(tx, registrationId);
+      return row;
     });
 
     await logAction(

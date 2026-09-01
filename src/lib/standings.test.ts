@@ -250,3 +250,43 @@ describe("separating teams level on points", () => {
     expect(level).toContain("badrayn");
   });
 });
+
+describe("a fixture with no teams yet", () => {
+  const empty = (extra: Partial<StandingsMatchInput> = {}): StandingsMatchInput => ({
+    homeTeam: null,
+    awayTeam: null,
+    homeScore: null,
+    awayScore: null,
+    status: "SCHEDULED",
+    isKnockout: true,
+    ...extra,
+  });
+
+  it("leaves the table untouched", () => {
+    const table = computeStandings(teams, [match("a", "b", 2, 0), empty()]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect(by.a.played).toBe(1);
+    expect(by.b.played).toBe(1);
+    expect(by.c.played).toBe(0);
+  });
+
+  it("counts nothing even when it carries a score", () => {
+    const table = computeStandings(teams, [
+      empty({ homeScore: 3, awayScore: 1, status: "PLAYED", isKnockout: false }),
+    ]);
+
+    expect(table.every((r) => r.played === 0)).toBe(true);
+  });
+
+  it("does not break a tie in the head to head", () => {
+    const table = computeStandings(teams, [
+      match("a", "b", 1, 1),
+      empty({ homeScore: 5, awayScore: 0, status: "PLAYED", isKnockout: false }),
+    ]);
+    const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
+
+    expect(by.a.points).toBe(1);
+    expect(by.b.points).toBe(1);
+  });
+});

@@ -73,7 +73,11 @@ describe("ActivityRegistrations", () => {
     await waitFor(() => expect(onReload).toHaveBeenCalled());
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("/api/activities/register");
-    expect(JSON.parse(init.body)).toEqual({ activityId: "a1", userId: "m1" });
+    expect(JSON.parse(init.body)).toEqual({
+      activityId: "a1",
+      userId: "m1",
+      chosenTeamId: null,
+    });
     expect(screen.queryByText("محمد ولد أحمد")).toBeNull();
   });
 
@@ -168,5 +172,57 @@ describe("a membership a year behind", () => {
 
     expect(screen.queryByText(/جدّد اشتراكك/)).toBeNull();
     expect(screen.getByRole("button", { name: "إلغاء" })).toBeDefined();
+  });
+});
+
+describe("picking a team while registering", () => {
+  const tournament = {
+    isTournament: true,
+    teams: [
+      { id: "t1", name: "الصقور" },
+      { id: "t2", name: "النسور" },
+    ],
+  };
+
+  it("offers the tournament's teams with a way to say not yet", () => {
+    setup({ activity: tournament });
+
+    const picker = screen.getByLabelText(/اختر فريقك/);
+    const options = [...picker.querySelectorAll("option")].map((o) => o.textContent);
+
+    expect(options).toEqual(["بلا فريق بعد", "الصقور", "النسور"]);
+  });
+
+  it("sends the team the member picked", async () => {
+    const fetchMock = mockFetch();
+    setup({ activity: tournament });
+
+    await userEvent.selectOptions(screen.getByLabelText(/اختر فريقك/), "t2");
+    await userEvent.click(screen.getByRole("button", { name: /سجّل/ }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ chosenTeamId: "t2" });
+  });
+
+  it("sends no team when the member says not yet", async () => {
+    const fetchMock = mockFetch();
+    setup({ activity: tournament });
+
+    await userEvent.click(screen.getByRole("button", { name: /سجّل/ }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ chosenTeamId: null });
+  });
+
+  it("asks nothing of an activity that is not a tournament", () => {
+    setup();
+
+    expect(screen.queryByLabelText(/اختر فريقك/)).toBeNull();
+  });
+
+  it("asks nothing when the tournament has no teams yet", () => {
+    setup({ activity: { isTournament: true, teams: [] } });
+
+    expect(screen.queryByLabelText(/اختر فريقك/)).toBeNull();
   });
 });

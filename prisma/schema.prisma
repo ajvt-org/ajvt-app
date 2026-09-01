@@ -158,23 +158,24 @@ model Group {
 }
 
 model Team {
-  id           String             @id @default(cuid())
+  id           String                 @id @default(cuid())
   activityId   String
-  activity     Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activity     Activity               @relation(fields: [activityId], references: [id], onDelete: Cascade)
   groupId      String?
-  group        Group?             @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  group        Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name         String
-  autoNamed    Boolean            @default(false)
+  autoNamed    Boolean                @default(false)
   logo         String?
-  createdAt    DateTime           @default(now())
+  createdAt    DateTime               @default(now())
   members      TeamMember[]
-  homeMatches  Match[]            @relation("HomeTeam")
-  awayMatches  Match[]            @relation("AwayTeam")
-  forfeitWins  Match[]            @relation("ForfeitWinner")
+  homeMatches  Match[]                @relation("HomeTeam")
+  awayMatches  Match[]                @relation("AwayTeam")
+  forfeitWins  Match[]                @relation("ForfeitWinner")
   goals        MatchGoal[]
   bookings     MatchBooking[]
   penaltyKicks MatchPenaltyKick[]
   followers    TeamFollow[]
+  chosenBy     ActivityRegistration[] @relation("ChosenTeam")
 
   @@index([activityId])
   @@index([groupId])
@@ -207,10 +208,10 @@ model Match {
   id                  String             @id @default(cuid())
   activityId          String
   activity            Activity           @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  homeTeamId          String
-  homeTeam            Team               @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
-  awayTeamId          String
-  awayTeam            Team               @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  homeTeamId          String?
+  homeTeam            Team?              @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId          String?
+  awayTeam            Team?              @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
@@ -355,11 +356,15 @@ model ActivityRegistration {
   rejectionReason String?
   source          RegistrationSource?
   recordedBy      String?
+  chosenTeamId    String?
+  chosenTeam      Team?               @relation("ChosenTeam", fields: [chosenTeamId], references: [id], onDelete: SetNull)
+  teamNudgeSentAt DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
   @@unique([userId, activityId])
   @@index([activityId])
+  @@index([chosenTeamId])
 }
 
 model Admin {

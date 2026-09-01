@@ -25,6 +25,12 @@ export const notify = {
     url: `/activities/${activityId}`,
   }),
 
+  teamChoiceReminder: (tournamentTitle: string, activityId: string): PushPayload => ({
+    title: "اختر فريقك",
+    body: `لم تنضم إلى فريق في ${tournamentTitle} بعد`,
+    url: `/activities/${activityId}`,
+  }),
+
   scheduleShifted: (tournamentTitle: string, activityId: string): PushPayload => ({
     title: "تغيّر جدول البطولة",
     body: `تحرّكت مواعيد «${tournamentTitle}» — اطلع على الجدول الجديد`,

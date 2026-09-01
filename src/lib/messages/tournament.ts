@@ -78,8 +78,17 @@ export const tournament = {
   needTwoGroups:
     "يجب أن يكون هناك مجموعتان بالضبط (المجموعة أ والمجموعة ب) لتوليد نصف النهائي التلقائي",
   groupNeedsTwoTeams: "كل مجموعة تحتاج فريقين على الأقل",
+  teamNotSetYet: "فريق لم يُحدد بعد",
+  fixtureHasNoTeams: "لم يُحدد فريقا هذه المباراة بعد",
+  fixtureNeedsBothTeams: "المباراة تحتاج فريقين",
+  setupHasResults: (played: number) =>
+    `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج. امسح نتائج ${played} مباراة أولاً`,
+  setupGroupsIncomplete: "كل فريق يجب أن يكون في مجموعة واحدة",
+  setupGroupsUneven: "المجموعات يجب أن تكون متساوية",
+  setupShapeInvalid: "عدد المجموعات وعدد المتأهلين لا يتفقان",
   bracketNeedsGroups: "هذه البطولة ليست مقسّمة إلى مجموعات",
-  bracketGroupCount: "عدد المجموعات يجب أن يكون 2 أو 4 أو 8 ليكتمل جدول الإقصاء",
+  bracketQualifierCount:
+    "عدد المتأهلين من المجموعات يجب أن يكون 2 أو 4 أو 8 أو 16 ليكتمل جدول الإقصاء",
   bracketTieUnresolved: "هناك تعادل تام في الترتيب لم تحسمه القرعة بعد",
   bracketNotStarted: "لم تبدأ القرعة بعد — أجرِ القرعة أو ولّد نصف النهائي أولاً",
   alreadyFinal: "هذا الدور هو النهائي بالفعل",
