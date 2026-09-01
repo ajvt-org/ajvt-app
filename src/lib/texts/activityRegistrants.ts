@@ -14,6 +14,9 @@ export const activityRegistrants = {
   noneMatch: "لا يوجد مسجل مطابق",
   filterByTeam: "تصفية حسب الفريق",
   allTeams: "كل الفرق",
+  searchToBegin: "اكتب اسماً أو رقم هاتف للبحث عن عضو",
+  candidateDetail: (village: string | null, age: string | null) =>
+    [village, age].filter(Boolean).join(" · "),
   viewProof: "عرض إثبات الدفع",
   rejectReason: "سبب الرفض (اختياري)...",
   confirmReject: "تأكيد الرفض",
