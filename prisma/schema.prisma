@@ -339,17 +339,24 @@ model MatchPenaltyKick {
   @@unique([matchId, order])
 }
 
+enum RegistrationSource {
+  SELF
+  ADMIN
+}
+
 model ActivityRegistration {
-  id              String       @id @default(cuid())
+  id              String              @id @default(cuid())
   userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   activityId      String
-  activity        Activity     @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  status          ReviewStatus @default(PENDING)
+  activity        Activity            @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  status          ReviewStatus        @default(PENDING)
   paymentProof    String?
   rejectionReason String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  source          RegistrationSource?
+  recordedBy      String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   @@unique([userId, activityId])
   @@index([activityId])
