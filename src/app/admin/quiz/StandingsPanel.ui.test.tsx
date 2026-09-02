@@ -44,28 +44,23 @@ beforeEach(() => {
   get.mockResolvedValue(body);
 });
 
-const unfold = async () => {
-  render(<StandingsPanel competitionId="c1" />);
-  await userEvent.click(screen.getByRole("button", { name: /ترتيب هذه المسابقة/ }));
-};
-
 describe("StandingsPanel", () => {
   it("offers a tab for every board the competition names", async () => {
-    await unfold();
+    render(<StandingsPanel competitionId="c1" />);
 
     await waitFor(() => expect(screen.getByRole("button", { name: "ترتيب الجولة" })).toBeDefined());
     expect(screen.getByRole("button", { name: "الترتيب العام" })).toBeDefined();
   });
 
   it("shows the first board's rows with rank and total", async () => {
-    await unfold();
+    render(<StandingsPanel competitionId="c1" />);
 
     await waitFor(() => expect(screen.getByText(/1 · يوسف/)).toBeDefined());
     expect(screen.getByText("31")).toBeDefined();
   });
 
   it("switches boards on the tab", async () => {
-    await unfold();
+    render(<StandingsPanel competitionId="c1" />);
     await waitFor(() => screen.getByRole("button", { name: "الترتيب العام" }));
 
     await userEvent.click(screen.getByRole("button", { name: "الترتيب العام" }));
@@ -79,7 +74,7 @@ describe("StandingsPanel", () => {
         ? Promise.resolve({ rows: [{ rank: 1, userId: "u2", name: "محمد", total: 12 }] })
         : Promise.resolve(body),
     );
-    await unfold();
+    render(<StandingsPanel competitionId="c1" />);
     await waitFor(() => screen.getByRole("combobox", { name: "فترة الترتيب" }));
 
     await userEvent.selectOptions(screen.getByRole("combobox", { name: "فترة الترتيب" }), "1");
@@ -94,7 +89,7 @@ describe("StandingsPanel", () => {
       round: 0,
       boards: [{ id: "b1", title: "ترتيب الجولة", rows: [] }],
     });
-    await unfold();
+    render(<StandingsPanel competitionId="c1" />);
 
     await waitFor(() => expect(screen.getByText("لا ترتيب بعد")).toBeDefined());
   });

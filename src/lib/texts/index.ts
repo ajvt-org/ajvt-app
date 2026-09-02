@@ -58,6 +58,7 @@ export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
 export { quizScores } from "./quizScores";
+export { quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
 export { quizRecap } from "./quizRecap";
 export {
