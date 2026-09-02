@@ -44,3 +44,14 @@ export async function setSupportNameConfidential(
 
   return { confidential, namedEntries };
 }
+
+export async function confidentialNames(): Promise<string[]> {
+  const accounts = await prisma.user.findMany({
+    where: { supportNameConfidential: true, fullName: { not: null } },
+    select: { fullName: true },
+  });
+  return accounts
+    .map((account) => nameOf(account).trim())
+    .filter((name) => name.length > 0)
+    .sort((a, b) => b.length - a.length);
+}
