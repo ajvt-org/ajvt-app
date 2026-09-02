@@ -6,6 +6,10 @@ describe("allowedAreas", () => {
     expect(allowedAreas("SUPER")).toBeNull();
   });
 
+  it("gives the owner everything a full admin has", () => {
+    expect(allowedAreas("OWNER")).toBeNull();
+  });
+
   it("gives a scoped activity admin its activities and its own account", () => {
     expect(allowedAreas("ACTIVITY")).toEqual([
       "/admin/activities",
@@ -73,6 +77,12 @@ describe("canOpen", () => {
     expect(canOpen("SUPER", "/admin/quiz")).toBe(true);
     expect(canOpen("SUPER", "/admin/settings")).toBe(true);
   });
+
+  it("lets the owner into every area a full admin reaches", () => {
+    for (const area of ["/admin/dashboard", "/admin/admins", "/admin/audit-log", "/admin/quiz"]) {
+      expect(canOpen("OWNER", area), area).toBe(true);
+    }
+  });
 });
 
 describe("tabActive", () => {
@@ -120,6 +130,10 @@ describe("landingFor", () => {
 
   it("has nowhere in particular to send a full admin", () => {
     expect(landingFor("SUPER")).toBeNull();
+  });
+
+  it("has nowhere in particular to send the owner either", () => {
+    expect(landingFor("OWNER")).toBeNull();
   });
 
   it("has nowhere to send an unknown role, which leaves it stuck rather than loose", () => {
