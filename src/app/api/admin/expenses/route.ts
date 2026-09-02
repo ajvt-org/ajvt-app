@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseCreateSchema } from "./schema";
+import { ouguiya } from "@/lib/texts/currency";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
   await requireArea(MONEY_AREAS.expenses);
@@ -49,7 +50,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
   await logAction(
     session.username,
     "CREATE_EXPENSE",
-    `${expense.label} — ${expense.amount} أوقية`,
+    `${expense.label} — ${ouguiya.amount(expense.amount)}`,
     {
       ...auditContext(session, req),
       targetType: "Expense",

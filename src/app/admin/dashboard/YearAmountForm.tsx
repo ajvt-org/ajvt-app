@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
+import { ouguiya } from "@/lib/texts/currency";
 import { arabicValidity } from "@/lib/validationMessage";
 import IconLabel from "@/components/IconLabel";
 
@@ -61,7 +62,7 @@ export default function YearAmountForm({
           placeholder={String(MEMBERSHIP_FEE)}
           className="input input-sm flex-1"
           dir="ltr"
-          {...arabicValidity(`${MEMBERSHIP_FEE} أوقية على الأقل`)}
+          {...arabicValidity(`${ouguiya.amount(MEMBERSHIP_FEE)} على الأقل`)}
         />
         <button type="submit" disabled={saving} className="btn btn-primary btn-sm text-xs">
           <IconLabel name="save">{saving ? "جارٍ الحفظ" : "حفظ"}</IconLabel>

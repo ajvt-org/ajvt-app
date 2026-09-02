@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDate } from "@/lib/utils";
+import { ouguiya } from "@/lib/texts/currency";
 import IconLabel from "@/components/IconLabel";
 import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "./constants";
 import type { MembershipYear } from "./membershipTypes";
@@ -32,7 +33,7 @@ export default function MembershipYears({
             <IconLabel name={STATUS_ICON[year.status]}>{STATUS_LABEL[year.status]}</IconLabel>
           </span>
           <span style={{ color: "var(--text-main)" }}>
-            {year.paidAmount ? `${year.paidAmount} أوقية` : "—"}
+            {year.paidAmount ? ouguiya.amount(year.paidAmount) : "—"}
             {year.paymentMethod ? ` · ${year.paymentMethod}` : ""}
           </span>
           <span style={{ color: "var(--text-muted)" }}>
