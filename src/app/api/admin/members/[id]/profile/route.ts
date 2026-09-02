@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
+import { isOwner } from "@/lib/adminRoles";
+import { entriesNaming } from "@/lib/supportPrivacyServer";
 import { withRoute } from "@/lib/route";
 import { members as messages } from "@/lib/messages";
 import { paidForYear } from "@/lib/paidBreakdown";
@@ -10,7 +12,7 @@ import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    await requireAdminRole("MEMBERS", "ACTIVITIES");
+    const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
     const { id } = await params;
 
     const account = await prisma.user.findUnique({
@@ -31,6 +33,7 @@ export const GET = withRoute(
           },
         },
         ...PERSON_WITH_PHONE_SELECT,
+        supportNameConfidential: true,
         registrations: {
           orderBy: { createdAt: "desc" },
           select: {
@@ -70,7 +73,15 @@ export const GET = withRoute(
 
     if (!account) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
-    const { registrations, teamMemberships, payments, donations, memberships, ...person } = account;
+    const {
+      registrations,
+      teamMemberships,
+      payments,
+      donations,
+      memberships,
+      supportNameConfidential,
+      ...person
+    } = account;
     const current = latestMembership(memberships);
     if (!current) return NextResponse.json({ error: messages.notFound }, { status: 404 });
     const { year, ...membership } = current;
@@ -81,6 +92,13 @@ export const GET = withRoute(
       take: 50,
       select: { id: true, action: true, adminUsername: true, createdAt: true, targetLabel: true },
     });
+
+    const supportPrivacy = isOwner(session.role)
+      ? {
+          confidential: supportNameConfidential,
+          namedEntries: await entriesNaming(person.fullName),
+        }
+      : null;
 
     return NextResponse.json({
       member: {
@@ -95,6 +113,7 @@ export const GET = withRoute(
         paidAmount: paidForYear(payments, year)?.fee ?? null,
         supportAmount: paidForYear(payments, year)?.support ?? 0,
       },
+      supportPrivacy,
       history,
     });
   },

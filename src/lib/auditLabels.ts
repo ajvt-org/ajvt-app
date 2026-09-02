@@ -55,6 +55,8 @@ export const ACTION_LABELS = {
   REMOVE_MEMBER_PHOTO: "حذف صورة عضو",
   LOCK_MEMBER_PHOTO: "منع عضو من تغيير صورته",
   UNLOCK_MEMBER_PHOTO: "السماح لعضو بتغيير صورته",
+  HIDE_SUPPORTER_NAME: "كتم اسم فاعل خير",
+  SHOW_SUPPORTER_NAME: "إظهار اسم فاعل خير",
   UPDATE_MEMBER_PAYMENT: "تعديل مبلغ عضو",
   IMPORT_QUIZ_QUESTIONS: "استيراد أسئلة",
   CREATE_QUESTION_BANK: "إنشاء بنك أسئلة",
