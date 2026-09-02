@@ -16,3 +16,16 @@ export const expenseForm = {
   save: "حفظ التعديل",
   add: "إضافة المصروف",
 } as const;
+
+export const expensesPage = {
+  labelRequired: "الوصف مطلوب",
+  amountInvalid: "المبلغ يجب أن يكون رقماً صحيحاً موجباً",
+  confirmDelete: "هل أنت متأكد من حذف هذا المصروف؟",
+  title: "المصاريف والإيرادات",
+  exportAction: "تصدير",
+  ledger: (count: number) => `سجل المصاريف (${count})`,
+  tags: "التصنيفات",
+  addExpense: "إضافة مصروف",
+  searchPlaceholder: "بحث بالوصف أو المبلغ...",
+  filterBy: "تصفية:",
+} as const;
