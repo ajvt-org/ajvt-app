@@ -14,6 +14,14 @@ vi.mock("@/lib/api", () => ({
 const attempts = [
   { attemptId: "a1", userId: "u1", name: "أحمد", score: 30, voided: false, finishedAt: null },
   { attemptId: "a2", userId: "u2", name: "محمد", score: 10, voided: true, finishedAt: null },
+  {
+    attemptId: "a3",
+    userId: "u3",
+    name: "احمد ولد سالم",
+    score: 5,
+    voided: false,
+    finishedAt: null,
+  },
 ];
 
 const detail = {
@@ -243,5 +251,34 @@ describe("ScoresPanel", () => {
     await userEvent.click(screen.getByText("أحمد"));
 
     await waitFor(() => expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull());
+  });
+
+  it("finds a participant whose name differs only by an alef form", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.type(screen.getByLabelText(/ابحث عن مشارك/), "احمد");
+
+    await waitFor(() => expect(screen.queryByText("محمد")).toBeNull());
+    expect(screen.getByText("أحمد")).toBeDefined();
+    expect(screen.getByText("احمد ولد سالم")).toBeDefined();
+  });
+
+  it("says so when the search matches nobody", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.type(screen.getByLabelText(/ابحث عن مشارك/), "خديجة");
+
+    await waitFor(() => expect(screen.getByText("لا يوجد مشارك مطابق")).toBeDefined());
+    expect(screen.queryByText("أحمد")).toBeNull();
+  });
+
+  it("keeps the search out of the way while nobody has played", async () => {
+    get.mockResolvedValue({ attempts: [], opened: true });
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+
+    await waitFor(() => screen.getByText(/لم يشارك أحد/));
+    expect(screen.queryByLabelText(/ابحث عن مشارك/)).toBeNull();
   });
 });
