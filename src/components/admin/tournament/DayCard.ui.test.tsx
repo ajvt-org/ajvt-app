@@ -226,3 +226,46 @@ describe("the time a match is played at", () => {
     expect(screen.getByText(texts.noTime)).toBeDefined();
   });
 });
+
+describe("what a day card does with the width it takes", () => {
+  it("lays the time, the fixture and the result across the row", () => {
+    show(day({ matches: [match({ status: "PLAYED", homeScore: 1, awayScore: 0 })] }));
+
+    const row = fixtureRow();
+
+    expect(row.className).toContain("sm:grid-cols-[auto_1fr_auto]");
+    expect(row.children.length).toBe(3);
+  });
+
+  it("carries the round the match belongs to, next to the ground", () => {
+    show(day({ matches: [match({ round: "الجولة الأولى" })] }));
+
+    const meta = screen.getByText("الجولة الأولى").parentElement!;
+
+    expect(meta.textContent).toContain("ملعب القرية");
+  });
+
+  it("holds every match of the day in the order it was given", () => {
+    show(
+      day({
+        matches: [match(), match({ id: "m2", homeTeam: { id: "t3", name: "الأمل" } })],
+      }),
+    );
+
+    const rows = [...document.querySelectorAll("li")].map((row) => row.textContent);
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toContain("النجم");
+    expect(rows[1]).toContain("الأمل");
+  });
+
+  it("warns on the day when a team is booked twice on it", () => {
+    show(
+      day({
+        matches: [match(), match({ id: "m2", awayTeam: { id: "t1", name: "النجم" } })],
+      }),
+    );
+
+    expect(screen.getByText(texts.doubleBooked("النجم"))).toBeDefined();
+  });
+});
