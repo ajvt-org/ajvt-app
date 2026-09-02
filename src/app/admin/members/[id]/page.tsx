@@ -258,7 +258,9 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           <ul className="space-y-1.5">
             {member.donations.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-bold">{d.amount !== null ? ouguiya.amount(d.amount) : "—"}</span>
+                <span className="font-bold">
+                  {d.amount !== null ? ouguiya.amount(d.amount) : "—"}
+                </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
                 </span>
