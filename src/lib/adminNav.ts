@@ -29,10 +29,14 @@ export function allowedAreas(role: string | null | undefined): string[] | null {
   return ROLE_AREAS[role];
 }
 
+function under(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(prefix + "/");
+}
+
 export function canOpen(role: string | null | undefined, pathname: string): boolean {
   const areas = allowedAreas(role);
   if (areas === ALL_AREAS) return true;
-  return areas.some((area) => pathname.startsWith(area));
+  return areas.some((area) => under(pathname, area));
 }
 
 const TAB_ALIASES: Record<string, string[]> = {
@@ -50,7 +54,7 @@ const TAB_ALIASES: Record<string, string[]> = {
 export function tabActive(tabHref: string, pathname: string | null): boolean {
   if (!pathname) return false;
   const prefixes = [tabHref, ...(TAB_ALIASES[tabHref] ?? [])];
-  return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  return prefixes.some((prefix) => under(pathname, prefix));
 }
 
 export function landingFor(role: string | null | undefined): string | null {
