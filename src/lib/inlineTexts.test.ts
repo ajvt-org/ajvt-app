@@ -139,6 +139,10 @@ const KEPT_CLEAN = [
   "src/app/api/admin/admins",
   "src/app/admin/expenses/page.tsx",
   "src/app/admin/quiz/ScoresPanel.tsx",
+  "src/app/admin/quiz/CompetitionsSection.tsx",
+  "src/app/admin/quiz/CompetitionWorkspace.tsx",
+  "src/app/admin/quiz/competitionTabs.ts",
+  "src/app/admin/quiz/StandingsPanel.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

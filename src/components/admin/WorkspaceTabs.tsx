@@ -42,26 +42,28 @@ export default function WorkspaceTabs({
 
   return (
     <div className="space-y-1.5">
-      <div className="tab-strip py-1.5">
-        {sections.map((section) => {
-          const on = section.key === current.key;
-          return (
-            <button
-              key={section.key}
-              onClick={() => onPick(section.tabs[0].key)}
-              aria-current={on ? "true" : undefined}
-              className="text-xs sm:text-sm font-bold px-3 py-1 rounded-lg relative"
-              style={{
-                background: on ? "var(--mint-100)" : "transparent",
-                color: on ? "var(--mint-700)" : "var(--text-muted)",
-              }}
-            >
-              {section.label}
-              <CountBadge count={workWaiting(section)} />
-            </button>
-          );
-        })}
-      </div>
+      {sections.length > 1 && (
+        <div className="tab-strip py-1.5">
+          {sections.map((section) => {
+            const on = section.key === current.key;
+            return (
+              <button
+                key={section.key}
+                onClick={() => onPick(section.tabs[0].key)}
+                aria-current={on ? "true" : undefined}
+                className="text-xs sm:text-sm font-bold px-3 py-1 rounded-lg relative"
+                style={{
+                  background: on ? "var(--mint-100)" : "transparent",
+                  color: on ? "var(--mint-700)" : "var(--text-muted)",
+                }}
+              >
+                {section.label}
+                <CountBadge count={workWaiting(section)} />
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="tab-strip py-1.5">
         {current.tabs.map((tab) => {
