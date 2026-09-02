@@ -2,6 +2,13 @@ import { prisma } from "./prisma";
 import { generateVerifyToken } from "./verifyToken";
 import { getAppSettings } from "./settingsServer";
 import { receiptNumber, type OfficialReceiptView, type ReceiptState } from "./officialReceipt";
+import {
+  CONFIDENTIAL_SELECT,
+  nameIsConfidential,
+  seesPaymentIdentity,
+  type SupportViewer,
+} from "./supportPrivacy";
+import { money } from "./messages";
 import type { Prisma, Receipt } from "@prisma/client";
 
 export interface ReceiptDraft {
@@ -86,6 +93,28 @@ const VIEW_SELECT = {
   status: true,
 } as const;
 
+const LISTED_SELECT = {
+  ...VIEW_SELECT,
+  userId: true,
+  user: { select: CONFIDENTIAL_SELECT },
+  payment: {
+    select: {
+      purpose: true,
+      amount: true,
+      feeApplied: true,
+      userId: true,
+      user: { select: CONFIDENTIAL_SELECT },
+    },
+  },
+} as const;
+
+type ListedRow = Prisma.ReceiptGetPayload<{ select: typeof LISTED_SELECT }>;
+
+function namesThePayer(row: ListedRow, viewer: SupportViewer): boolean {
+  if (row.payment) return seesPaymentIdentity(viewer, row.payment);
+  return !nameIsConfidential({ userId: row.userId, user: row.user });
+}
+
 type ReceiptViewRow = Prisma.ReceiptGetPayload<{ select: typeof VIEW_SELECT }>;
 
 export async function receiptYears(): Promise<number[]> {
@@ -97,15 +126,22 @@ export async function receiptYears(): Promise<number[]> {
   return [...new Set(rows.map((r) => r.issuedOn.getFullYear()))].sort((a, b) => b - a);
 }
 
-export async function listReceipts(year?: number): Promise<OfficialReceiptView[]> {
+export async function listReceipts(
+  viewer: SupportViewer,
+  year?: number,
+): Promise<OfficialReceiptView[]> {
   const rows = await prisma.receipt.findMany({
     where: year
       ? { issuedOn: { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) } }
       : undefined,
     orderBy: { issuedOn: "desc" },
-    select: VIEW_SELECT,
+    select: LISTED_SELECT,
   });
-  return rows.map(receiptView);
+  return rows.map((row) =>
+    namesThePayer(row, viewer)
+      ? receiptView(row)
+      : { ...receiptView(row), payerName: money.anonymousDonor, token: "" },
+  );
 }
 
 export function receiptView(row: ReceiptViewRow): OfficialReceiptView {
