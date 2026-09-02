@@ -1,11 +1,9 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab as texts, lists } from "@/lib/texts";
 import DayHeading from "./DayHeading";
-import DayMatchTime from "./DayMatchTime";
-import DayMatchResult from "./DayMatchResult";
+import DayMatchRow from "./DayMatchRow";
 import { doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
@@ -77,28 +75,12 @@ export default function DayCard({
       {day.matches.length > 0 && (
         <ul className="mt-2 space-y-1.5">
           {day.matches.map((match) => (
-            <li key={match.id} className="flex items-start gap-2 text-sm">
-              <DayMatchTime
-                matchDate={match.matchDate}
-                busy={busy}
-                onRetime={(time) => onRetime(match.id, time)}
-              />
-              <div className="min-w-0 flex-1">
-                <bdi className="font-bold block" style={{ wordBreak: "break-word" }}>
-                  {fixtureName(match)}
-                </bdi>
-                {(match.venue || match.status === "PLAYED") && (
-                  <span className="flex flex-wrap items-center gap-2 mt-0.5">
-                    {match.venue && (
-                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                        <IconLabel name="pin">{match.venue}</IconLabel>
-                      </span>
-                    )}
-                    <DayMatchResult match={match} />
-                  </span>
-                )}
-              </div>
-            </li>
+            <DayMatchRow
+              key={match.id}
+              match={match}
+              busy={busy}
+              onRetime={(time) => onRetime(match.id, time)}
+            />
           ))}
         </ul>
       )}
