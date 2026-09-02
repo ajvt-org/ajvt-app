@@ -13,9 +13,26 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/Toast", () => ({ useToast: () => vi.fn() }));
 
+vi.mock("@/lib/api", () => ({
+  api: { patch: vi.fn(), del: vi.fn() },
+  errorMessage: (e: unknown) => (e as Error).message,
+}));
+
 vi.mock("./useActivitiesData", () => ({
   useActivitiesData: () => ({ ...data, reload: vi.fn() }),
 }));
+
+function waitingRow(): AttentionRow {
+  return {
+    id: "registration:1",
+    kind: "registration",
+    activityId: "a1",
+    activityTitle: "كأس رابطة شباب التاكلالت",
+    who: "أحمد",
+    since: "2026-08-20T00:00:00.000Z",
+    settle: { target: "registration", registrationId: "r1" },
+  };
+}
 
 function activity(over: Partial<Activity> = {}): Activity {
   return {
@@ -59,6 +76,7 @@ describe("the frame of the activities page", () => {
   });
 
   it("holds the regions in the same order before and after the activities land", () => {
+    data.waiting = [waitingRow()];
     data.loading = true;
     const { unmount } = render(<AdminActivitiesPage />);
     const whileLoading = screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"));
@@ -73,11 +91,24 @@ describe("the frame of the activities page", () => {
   });
 
   it("puts what needs attention above the filters", () => {
-    const labels = ["ما يحتاج انتباهك", "تصفية الأنشطة", "قائمة الأنشطة"];
+    data.waiting = [waitingRow()];
 
     render(<AdminActivitiesPage />);
 
-    expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual(labels);
+    expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual([
+      "ما يحتاج انتباهك",
+      "تصفية الأنشطة",
+      "قائمة الأنشطة",
+    ]);
+  });
+
+  it("gives the work region no room when nothing is waiting", () => {
+    render(<AdminActivitiesPage />);
+
+    expect(screen.getAllByRole("region").map((r) => r.getAttribute("aria-label"))).toEqual([
+      "تصفية الأنشطة",
+      "قائمة الأنشطة",
+    ]);
   });
 
   it("shows the activities once they land", () => {
@@ -86,9 +117,11 @@ describe("the frame of the activities page", () => {
     expect(screen.getByText("كأس رابطة شباب التاكلالت")).toBeTruthy();
   });
 
-  it("says nothing is waiting rather than leaving the work region blank", () => {
+  it("groups what is waiting by kind", () => {
+    data.waiting = [waitingRow()];
+
     render(<AdminActivitiesPage />);
 
-    expect(screen.getByText("لا شيء ينتظرك في الأنشطة")).toBeTruthy();
+    expect(screen.getByText("طلب تسجيل في نشاط (1)")).toBeTruthy();
   });
 });

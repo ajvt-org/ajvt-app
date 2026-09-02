@@ -16,8 +16,9 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       select: {
         id: true,
         createdAt: true,
+        userId: true,
         ...PERSON,
-        team: { select: { name: true, ...ACTIVITY } },
+        team: { select: { id: true, name: true, ...ACTIVITY } },
       },
     }),
     prisma.activityRegistration.findMany({
@@ -38,6 +39,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       activityTitle: row.team.activity.title,
       who: `${nameOf(row.user)} — ${row.team.name}`,
       since: row.createdAt.toISOString(),
+      settle: { target: "teamMember" as const, teamId: row.team.id, userId: row.userId },
     })),
     ...registrations.map((row) => ({
       id: `registration:${row.id}`,
@@ -46,6 +48,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       activityTitle: row.activity.title,
       who: nameOf(row.user),
       since: row.createdAt.toISOString(),
+      settle: { target: "registration" as const, registrationId: row.id },
     })),
     ...suspensions.map((row) => ({
       id: `suspension:${row.id}`,
@@ -54,6 +57,7 @@ export async function activityAttention(scoped: string[] | null): Promise<Attent
       activityTitle: row.activity.title,
       who: nameOf(row.user),
       since: row.createdAt.toISOString(),
+      settle: null,
     })),
   ];
 
