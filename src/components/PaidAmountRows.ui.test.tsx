@@ -30,9 +30,9 @@ describe("PaidAmountRows", () => {
     expect(screen.getByText("رسوم الاشتراك")).toBeDefined();
     expect(screen.getByText("100 أوقية")).toBeDefined();
     expect(screen.getByText("مبلغ الدعم")).toBeDefined();
-    expect(screen.getByText("2000 أوقية")).toBeDefined();
+    expect(screen.getByText("2.000 أوقية")).toBeDefined();
     expect(screen.getByText("إجمالي ما دُفع")).toBeDefined();
-    expect(screen.getByText("2100 أوقية")).toBeDefined();
+    expect(screen.getByText("2.100 أوقية")).toBeDefined();
   });
 
   it("never shows the member a total below what they were charged", () => {
