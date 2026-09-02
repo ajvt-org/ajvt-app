@@ -21,6 +21,7 @@ export const ACTION_LABELS = {
   CHANGE_OWN_PASSWORD: "تغيير كلمة مرور شخصية",
   CREATE_ADMIN: "إنشاء حساب مشرف",
   DELETE_ADMIN: "حذف حساب مشرف",
+  UPDATE_ADMIN_ROLE: "تغيير صلاحية مشرف",
   CREATE_EXPENSE_TAG: "إنشاء تصنيف",
   UPDATE_EXPENSE_TAG: "تعديل تصنيف",
   DELETE_EXPENSE_TAG: "حذف تصنيف",
