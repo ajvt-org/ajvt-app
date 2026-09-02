@@ -1,6 +1,6 @@
 import { ouguiya } from "./texts/currency";
 
-export const THOUSANDS_SEPARATOR = ".";
+export const THOUSANDS_SEPARATOR = "\u00a0";
 
 export function moneyDigits(value: number): string {
   const sign = value < 0 ? "-" : "";
