@@ -4,10 +4,9 @@ import userEvent from "@testing-library/user-event";
 import ReceiptList from "./ReceiptList";
 import { receiptAdmin } from "@/lib/texts/receipt";
 import { ouguiya } from "@/lib/texts/currency";
-import { amountInFigures } from "@/lib/arabicAmount";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
 
-const MONEY = ouguiya.amount(amountInFigures(5000));
+const MONEY = ouguiya.amount(5000);
 
 const RECEIPT: OfficialReceiptView = {
   number: "R-2026-0007",
@@ -44,10 +43,10 @@ describe("the receipts register", () => {
     expect(screen.getByText(RECEIPT.number)).toBeDefined();
   });
 
-  it("writes the amount the way the receipt itself writes it", () => {
+  it("writes the amount the way the rest of the admin writes it", () => {
     setup();
 
-    expect(screen.getByText("5.000 أوقية")).toBeDefined();
+    expect(screen.getByText(MONEY)).toBeDefined();
   });
 
   it("keeps every action on the compact button, so the row cannot outgrow a phone", () => {
