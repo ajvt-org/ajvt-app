@@ -30,44 +30,45 @@ datasource db {
 }
 
 model User {
-  id                    String                   @id @default(cuid())
-  phone                 String?                  @unique
-  password              String?
-  tokenVersion          Int                      @default(0)
+  id                      String                   @id @default(cuid())
+  phone                   String?                  @unique
+  password                String?
+  tokenVersion            Int                      @default(0)
   // Set when an admin issues a temporary password. Non-null means the current
   // password is temporary: the app is locked until it is changed, and the
   // password stops working altogether once this passes.
-  tempPasswordExpiresAt DateTime?
-  createdAt             DateTime                 @default(now())
-  updatedAt             DateTime                 @updatedAt
-  fullName              String?
-  age                   String?
-  village               String                   @default("التاكلالت")
-  photo                 String?
-  photoLocked           Boolean                  @default(false)
-  memberNumber          String?                  @unique
-  verifyToken           String?                  @unique
-  registrations         ActivityRegistration[]
-  teamMemberships       TeamMember[]
-  matchGoals            MatchGoal[]
-  penaltyKicks          MatchPenaltyKick[]
-  matchBookings         MatchBooking[]
-  motmMatches           Match[]                  @relation("ManOfTheMatchUser")
-  mvpCandidacies        MvpCandidate[]
-  donations             Donation[]
-  memberships           Membership[]
-  payments              Payment[]
-  suspensions           Suspension[]
-  receipts              Receipt[]
-  pushSubscriptions     PushSubscription[]
-  notificationPrefs     NotificationPreference[]
-  teamFollows           TeamFollow[]
-  mvpVotes              MvpVote[]
-  quizAttempts          QuizAttempt[]
-  quizParticipations    QuizParticipant[]
-  currentStreak         Int                      @default(0) // consecutive days of app activity ("flame")
-  longestStreak         Int                      @default(0)
-  lastActiveDate        DateTime? // calendar day (UTC) of the last streak-qualifying visit
+  tempPasswordExpiresAt   DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  fullName                String?
+  age                     String?
+  village                 String                   @default("التاكلالت")
+  photo                   String?
+  photoLocked             Boolean                  @default(false)
+  supportNameConfidential Boolean                  @default(false)
+  memberNumber            String?                  @unique
+  verifyToken             String?                  @unique
+  registrations           ActivityRegistration[]
+  teamMemberships         TeamMember[]
+  matchGoals              MatchGoal[]
+  penaltyKicks            MatchPenaltyKick[]
+  matchBookings           MatchBooking[]
+  motmMatches             Match[]                  @relation("ManOfTheMatchUser")
+  mvpCandidacies          MvpCandidate[]
+  donations               Donation[]
+  memberships             Membership[]
+  payments                Payment[]
+  suspensions             Suspension[]
+  receipts                Receipt[]
+  pushSubscriptions       PushSubscription[]
+  notificationPrefs       NotificationPreference[]
+  teamFollows             TeamFollow[]
+  mvpVotes                MvpVote[]
+  quizAttempts            QuizAttempt[]
+  quizParticipations      QuizParticipant[]
+  currentStreak           Int                      @default(0) // consecutive days of app activity ("flame")
+  longestStreak           Int                      @default(0)
+  lastActiveDate          DateTime? // calendar day (UTC) of the last streak-qualifying visit
 }
 
 model Membership {
