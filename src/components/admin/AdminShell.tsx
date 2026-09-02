@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
 import { canOpen, landingFor } from "@/lib/adminNav";
-import { NAV_TABS } from "./shell/navTabs";
+import { subtabsFor, tabsFor } from "./shell/navTabs";
 import { useAdminSession } from "./shell/useAdminSession";
 import { useDeniedNotice } from "./shell/useDeniedNotice";
 import TopBar from "./shell/TopBar";
 import TabStrip from "./shell/TabStrip";
+import SubTabStrip from "./shell/SubTabStrip";
 import DeniedNotice from "./shell/DeniedNotice";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
@@ -38,16 +39,21 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   if (isLoginPage) return <>{children}</>;
 
+  const subtabs = subtabsFor(role, pathname);
+
   return (
     <div className="min-h-screen" style={{ background: "var(--mint-50)", direction: "rtl" }}>
       <div className="sticky top-0 z-30">
         <TopBar onLogout={logout} />
         <TabStrip
-          tabs={NAV_TABS.filter((tab) => canOpen(role, tab.href))}
+          tabs={tabsFor(role)}
           pathname={pathname}
           pending={pending}
           onOpen={(href) => router.push(href)}
         />
+        {subtabs.length > 0 && (
+          <SubTabStrip tabs={subtabs} pathname={pathname} onOpen={(href) => router.push(href)} />
+        )}
       </div>
 
       {denied && <DeniedNotice onDismiss={dismiss} />}
