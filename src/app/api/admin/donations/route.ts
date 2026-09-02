@@ -8,6 +8,9 @@ import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { members } from "@/lib/messages";
+import { donationView } from "@/lib/donationView";
+import { viewerOf } from "@/lib/supportViewer";
+import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
@@ -20,6 +23,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
 
   const donation = await prisma.donation.create({
+    include: { user: { select: DONOR_ACCOUNT_SELECT } },
     data: {
       anonymous: false,
       donorName,
@@ -50,5 +54,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     },
   });
 
-  return NextResponse.json({ donation }, { status: 201 });
+  return NextResponse.json(
+    { donation: donationView(donation, viewerOf(session)) },
+    { status: 201 },
+  );
 });

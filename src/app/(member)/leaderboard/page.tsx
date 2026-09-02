@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { getUserSession } from "@/lib/auth";
+import { currentViewer } from "@/lib/supportViewer";
 import { prisma } from "@/lib/prisma";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import PageHeader from "@/components/PageHeader";
@@ -23,7 +24,7 @@ async function getViewer() {
 }
 
 export default async function LeaderboardPage() {
-  const { leaderboard } = await getLeaderboardData();
+  const { leaderboard } = await getLeaderboardData(await currentViewer());
   const viewer = await getViewer();
   const donateHref = viewer?.donateHref ?? "/donate";
 
