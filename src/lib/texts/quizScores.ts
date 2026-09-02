@@ -18,4 +18,6 @@ export const quizScores = {
   allRounds: "الكل",
   thisRound: "الجولة",
   openAttempt: (name: string) => `محاولة ${name}`,
+  search: "ابحث عن مشارك بالاسم...",
+  noMatch: "لا يوجد مشارك مطابق",
 } as const;

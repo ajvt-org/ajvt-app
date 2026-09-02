@@ -7,6 +7,7 @@ import ScoreRow from "./ScoreRow";
 import { type AttemptDetail } from "./AttemptBreakdown";
 import { hasFullAccess } from "@/lib/adminRoles";
 import { quizScores } from "@/lib/texts";
+import { matchingAttempts } from "./scoreSearch";
 import type { AttemptRow } from "./scoreTypes";
 
 const REOPENED = quizScores.reopened;
@@ -27,6 +28,7 @@ export default function ScoresPanel({
   const [role, setRole] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -113,6 +115,8 @@ export default function ScoresPanel({
       row.voided ? quizScores.allRoundsRestored : quizScores.allRoundsVoided,
     );
 
+  const shown = matchingAttempts(rows, search);
+
   return (
     <div className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
@@ -156,8 +160,25 @@ export default function ScoresPanel({
         </p>
       )}
 
+      {rows.length > 0 && (
+        <input
+          type="search"
+          aria-label={quizScores.search}
+          placeholder={quizScores.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input input-sm"
+        />
+      )}
+
+      {rows.length > 0 && shown.length === 0 && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {quizScores.noMatch}
+        </p>
+      )}
+
       <div className="space-y-1">
-        {rows.map((row) => (
+        {shown.map((row) => (
           <ScoreRow
             key={row.attemptId}
             row={row}
