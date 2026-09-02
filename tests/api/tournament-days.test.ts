@@ -167,6 +167,45 @@ describe("the tournament day spine", () => {
     expect(saved.dayId).toBe(body.days[2].id);
   });
 
+  it("sends what a played match finished, on its day and off it", async () => {
+    const a = await tournament();
+    const { home, away } = await teamPair(a.id);
+    await prisma.match.create({
+      data: {
+        activityId: a.id,
+        homeTeamId: home.id,
+        awayTeamId: away.id,
+        matchDate: new Date("2026-08-24T16:00:00.000Z"),
+        status: "PLAYED",
+        homeScore: 2,
+        awayScore: 2,
+        homePenalties: 4,
+        awayPenalties: 3,
+      },
+    });
+    await prisma.match.create({
+      data: {
+        activityId: a.id,
+        homeTeamId: home.id,
+        awayTeamId: away.id,
+        status: "PLAYED",
+        homeScore: 3,
+        awayScore: 0,
+        forfeitWinnerTeamId: home.id,
+      },
+    });
+
+    const body = await read(a.id);
+    const played = body.days.flatMap((d: { matches: unknown[] }) => d.matches)[0];
+
+    expect(played.homeScore).toBe(2);
+    expect(played.awayScore).toBe(2);
+    expect(played.homePenalties).toBe(4);
+    expect(played.awayPenalties).toBe(3);
+    expect(body.unscheduled[0].homeScore).toBe(3);
+    expect(body.unscheduled[0].forfeitWinnerTeamId).toBe(home.id);
+  });
+
   it("refuses to schedule a match onto a rest day", async () => {
     const a = await tournament();
     await read(a.id);

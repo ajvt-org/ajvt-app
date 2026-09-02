@@ -6,6 +6,11 @@ export interface DayMatch {
   round: string | null;
   venue: string | null;
   status: "SCHEDULED" | "PLAYED";
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
+  forfeitWinnerTeamId: string | null;
   homeTeam: { id: string; name: string } | null;
   awayTeam: { id: string; name: string } | null;
 }
