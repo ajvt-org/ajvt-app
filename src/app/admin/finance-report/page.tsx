@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import { tagTotal, type TagRow } from "@/lib/financeReport";
 import { financeReport as texts } from "@/lib/texts";
 
@@ -37,9 +38,7 @@ function today(): string {
 }
 
 function Amount({ value }: { value: number }) {
-  return (
-    <span style={{ color: value < 0 ? "var(--danger)" : undefined }}>{texts.ouguiya(value)}</span>
-  );
+  return <Money value={value} style={{ color: value < 0 ? "var(--danger)" : undefined }} />;
 }
 
 function TagTable({ title, rows, total }: { title: string; rows: TagRow[]; total: number }) {
@@ -148,9 +147,12 @@ export default function FinanceReportPage() {
             </p>
           </div>
 
-          <div className="card p-4">
-            <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
+          <div className="card p-4 overflow-x-auto">
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
               {texts.monthByMonth}
+            </p>
+            <p className="text-xs mb-2" style={{ color: "var(--text-muted)" }}>
+              {texts.amountsIn}
             </p>
             <table className="w-full text-sm">
               <thead>
@@ -165,10 +167,18 @@ export default function FinanceReportPage() {
                 {report.months.map((row) => (
                   <tr key={row.month}>
                     <td className="py-1">{row.month}</td>
-                    <td className="py-1 text-left">{row.income}</td>
-                    <td className="py-1 text-left">{row.spending}</td>
                     <td className="py-1 text-left">
-                      <Amount value={row.net} />
+                      <Money value={row.income} digitsOnly />
+                    </td>
+                    <td className="py-1 text-left">
+                      <Money value={row.spending} digitsOnly />
+                    </td>
+                    <td className="py-1 text-left">
+                      <Money
+                        value={row.net}
+                        digitsOnly
+                        style={{ color: row.net < 0 ? "var(--danger)" : undefined }}
+                      />
                     </td>
                   </tr>
                 ))}
