@@ -5,6 +5,7 @@ import IconLabel from "@/components/IconLabel";
 import { timeOf } from "@/lib/tournamentDays";
 import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab as texts, lists } from "@/lib/texts";
+import DayMatchResult from "./DayMatchResult";
 import { dayLabel, doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
@@ -113,9 +114,7 @@ export default function DayCard({
                         <IconLabel name="pin">{match.venue}</IconLabel>
                       </span>
                     )}
-                    {match.status === "PLAYED" && (
-                      <span className="badge badge-active text-xs">{texts.finished}</span>
-                    )}
+                    <DayMatchResult match={match} />
                   </span>
                 )}
               </div>

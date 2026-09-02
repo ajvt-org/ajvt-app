@@ -27,6 +27,11 @@ function match(id: string, home: string, away: string, iso: string) {
     round: null,
     venue: "ملعب القرية",
     status: "SCHEDULED" as const,
+    homeScore: null,
+    awayScore: null,
+    homePenalties: null,
+    awayPenalties: null,
+    forfeitWinnerTeamId: null,
     homeTeam: { id: `${home}-id`, name: home },
     awayTeam: { id: `${away}-id`, name: away },
   };

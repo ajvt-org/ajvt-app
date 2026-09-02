@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DayCard from "./DayCard";
-import { daysTab as texts } from "@/lib/texts";
+import { daysTab as texts, matchDisplay } from "@/lib/texts";
 import type { DayMatch, TournamentDayRow } from "./daysTypes";
 
 const noop = vi.fn();
@@ -12,6 +12,11 @@ const match = (over: Partial<DayMatch> = {}): DayMatch => ({
   round: null,
   venue: "ملعب القرية",
   status: "SCHEDULED",
+  homeScore: null,
+  awayScore: null,
+  homePenalties: null,
+  awayPenalties: null,
+  forfeitWinnerTeamId: null,
   homeTeam: { id: "t1", name: "النجم" },
   awayTeam: { id: "t2", name: "الوحدة" },
   ...over,
@@ -41,11 +46,57 @@ describe("a day that holds matches", () => {
     expect(venue.closest("div")?.textContent).toContain("النجم");
   });
 
-  it("keeps the finished badge with the fixture too", () => {
+  it("keeps the result with the fixture too", () => {
+    show(day({ matches: [match({ status: "PLAYED", homeScore: 3, awayScore: 1 })] }));
+
+    const score = screen.getByText("3").closest("span")!;
+    expect(score.closest("div")?.textContent).toContain("النجم");
+  });
+
+  it("says what a played match finished rather than only that it did", () => {
+    show(day({ matches: [match({ status: "PLAYED", homeScore: 3, awayScore: 1 })] }));
+
+    expect(screen.getByText("3")).toBeDefined();
+    expect(screen.getByText("1")).toBeDefined();
+    expect(screen.queryByText(texts.finished)).toBeNull();
+  });
+
+  it("names the shootout that settled a match", () => {
+    show(
+      day({
+        matches: [
+          match({
+            status: "PLAYED",
+            homeScore: 2,
+            awayScore: 2,
+            homePenalties: 4,
+            awayPenalties: 3,
+          }),
+        ],
+      }),
+    );
+
+    expect(screen.getByText(matchDisplay.penalties)).toBeDefined();
+    expect(screen.getByText("4")).toBeDefined();
+  });
+
+  it("marks a walkover and keeps the awarded score", () => {
+    show(
+      day({
+        matches: [
+          match({ status: "PLAYED", homeScore: 3, awayScore: 0, forfeitWinnerTeamId: "t1" }),
+        ],
+      }),
+    );
+
+    expect(screen.getByText(matchDisplay.forfeitBadge)).toBeDefined();
+    expect(screen.getByText("3")).toBeDefined();
+  });
+
+  it("falls back to saying it finished when no score was saved", () => {
     show(day({ matches: [match({ status: "PLAYED" })] }));
 
-    const badge = screen.getByText(texts.finished);
-    expect(badge.closest("div")?.textContent).toContain("النجم");
+    expect(screen.getByText(texts.finished)).toBeDefined();
   });
 
   it("offers neither the rest toggle nor the delete once matches are on it", () => {
