@@ -2,7 +2,8 @@ import type { Prisma, PrismaClient, Receipt } from "@prisma/client";
 import { receiptNumber } from "./officialReceipt";
 import { receiptTitle, type ReceiptPurpose } from "./receipts";
 import { generateVerifyToken } from "./verifyToken";
-import { donorNameOnRecord } from "./donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
+import { ON_THE_RECORD } from "./supportPrivacy";
 import { receipts as receiptMessages } from "./messages";
 import { SETTINGS_ID } from "./settings";
 
@@ -20,13 +21,13 @@ const SELECT = {
   donorName: true,
   userId: true,
   activity: { select: { title: true } },
-  user: { select: { fullName: true } },
+  user: { select: DONOR_ACCOUNT_SELECT },
 } as const;
 
 type PaymentRow = Prisma.PaymentGetPayload<{ select: typeof SELECT }>;
 
 function payerOf(payment: PaymentRow): string {
-  return donorNameOnRecord(payment);
+  return donorNameOnRecord(payment, ON_THE_RECORD);
 }
 
 function reasonOf(payment: PaymentRow): string {

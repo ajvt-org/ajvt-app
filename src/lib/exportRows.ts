@@ -1,5 +1,6 @@
 import { memberStatusLabels } from "./messages";
-import { donorNameOnRecord } from "./donorName";
+import { donorNameOnRecord, type DonorAccount } from "./donorName";
+import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
 import { nameOf } from "./person";
 import type { AgeStanding } from "./ageStandings";
 import type { ActivityReportRow } from "./activityReport";
@@ -45,7 +46,8 @@ export interface ExportableDonation {
   status: string;
   source: string;
   createdAt: Date;
-  user: { fullName: string | null } | null;
+  userId: string | null;
+  user: DonorAccount | null;
   tags: { name: string }[];
 }
 
@@ -102,18 +104,24 @@ export const DONATION_HEADERS = [
   "التاريخ",
 ];
 
-export function donationRows(donations: ExportableDonation[]): (string | number)[][] {
-  return donations.map((d) => [
-    donorNameOnRecord(d),
-    d.donorPhone ?? "",
-    d.amount ?? 0,
-    d.paymentMethod ?? "",
-    STATUS_LABEL[d.status] ?? d.status,
-    SOURCE_LABEL[d.source] ?? d.source,
-    d.user ? nameOf(d.user) : "",
-    d.tags.map((t) => t.name).join(" / "),
-    day(d.createdAt),
-  ]);
+export function donationRows(
+  donations: ExportableDonation[],
+  viewer: SupportViewer,
+): (string | number)[][] {
+  return donations.map((d) => {
+    const named = seesSupporterName(viewer, d);
+    return [
+      donorNameOnRecord(d, viewer),
+      named ? (d.donorPhone ?? "") : "",
+      d.amount ?? 0,
+      d.paymentMethod ?? "",
+      STATUS_LABEL[d.status] ?? d.status,
+      SOURCE_LABEL[d.source] ?? d.source,
+      named && d.user ? nameOf(d.user) : "",
+      d.tags.map((t) => t.name).join(" / "),
+      day(d.createdAt),
+    ];
+  });
 }
 
 export const AGE_HEADERS = ["العصر", "عدد المنتسبين", "العدد الإجمالي", "نسبة الانتساب"];
