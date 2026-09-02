@@ -52,6 +52,20 @@ describe("a receipt with no verify token", () => {
 
     expect(screen.getByText(receiptAdmin.download)).toBeDefined();
   });
+
+  it("offers no void either, since the payer cannot be identified", () => {
+    const { token, ...withheld } = RECEIPT;
+    void token;
+    setup(withheld);
+
+    expect(screen.queryByText(receiptAdmin.voidAction)).toBeNull();
+  });
+
+  it("offers the void when the token is there", () => {
+    setup();
+
+    expect(screen.getByText(receiptAdmin.voidAction)).toBeDefined();
+  });
 });
 
 describe("the receipts register", () => {
