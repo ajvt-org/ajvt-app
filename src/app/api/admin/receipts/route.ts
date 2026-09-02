@@ -5,13 +5,14 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { issueReceipt, listReceipts, receiptView, receiptYears } from "@/lib/officialReceiptServer";
 import { receiptCreateSchema } from "./schema";
+import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute("GET /api/admin/receipts", async (req: NextRequest) => {
-  await requireAdminRole("MEMBERS", "ACTIVITIES");
+  const session = await requireAdminRole("MEMBERS", "ACTIVITIES");
   const asked = Number(new URL(req.url).searchParams.get("year"));
   const years = await receiptYears();
   const year = Number.isInteger(asked) && asked > 0 ? asked : (years[0] ?? null);
-  const receipts = await listReceipts(year ?? undefined);
+  const receipts = await listReceipts(viewerOf(session), year ?? undefined);
   return NextResponse.json({ receipts, years, year });
 });
 
