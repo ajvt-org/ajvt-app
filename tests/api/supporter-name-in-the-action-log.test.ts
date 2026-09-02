@@ -20,6 +20,7 @@ import {
   DELETE as DELETE_DONATION,
 } from "@/app/api/admin/donations/[id]/route";
 import { GET as AUDIT_LOG } from "@/app/api/admin/audit-log/route";
+import { GET as HISTORY } from "@/app/api/admin/history/route";
 
 const GIVER = "الكريم ولد الساتر";
 const PHONE = "44001122";
@@ -173,6 +174,56 @@ describe("the action log and a confidential supporter", () => {
     );
 
     const body = await (await AUDIT_LOG(get("/api/admin/audit-log"))).text();
+
+    expect(body).toContain("عادي ولد عادي");
+  });
+});
+
+describe("one record's history and a confidential supporter", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin("boss", SUPER_ROLE));
+  });
+
+  const historyOf = (id: string) =>
+    HISTORY(get(`/api/admin/history?targetType=Donation&targetId=${id}`));
+
+  it("withholds a name an older entry still carries", async () => {
+    const giver = await createUser(PHONE);
+    await prisma.user.update({ where: { id: giver.id }, data: { fullName: GIVER } });
+    const donation = await giveSupport(giver.id);
+    await prisma.user.update({
+      where: { id: giver.id },
+      data: { supportNameConfidential: true },
+    });
+
+    const body = await (await historyOf(donation.id)).text();
+
+    expect(body).not.toContain(GIVER);
+    expect(await storedLog()).toContain(GIVER);
+  });
+
+  it("gives the same entry back whole to the role that holds the promise", async () => {
+    const giver = await createUser(PHONE);
+    await prisma.user.update({ where: { id: giver.id }, data: { fullName: GIVER } });
+    const donation = await giveSupport(giver.id);
+    await prisma.user.update({
+      where: { id: giver.id },
+      data: { supportNameConfidential: true },
+    });
+
+    await signInAsAdmin(await createAdmin("owner", OWNER_ROLE));
+    const body = await (await historyOf(donation.id)).text();
+
+    expect(body).toContain(GIVER);
+  });
+
+  it("leaves the history of a giver who is not marked readable", async () => {
+    const plain = await createUser("44003344");
+    await prisma.user.update({ where: { id: plain.id }, data: { fullName: "عادي ولد عادي" } });
+    const donation = await giveSupport(plain.id, { donorName: "عادي ولد عادي" });
+
+    const body = await (await historyOf(donation.id)).text();
 
     expect(body).toContain("عادي ولد عادي");
   });
