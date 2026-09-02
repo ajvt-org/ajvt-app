@@ -3,18 +3,11 @@
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import AttemptBreakdown, { type AttemptDetail } from "./AttemptBreakdown";
+import ScoreRow from "./ScoreRow";
+import { type AttemptDetail } from "./AttemptBreakdown";
 import { hasFullAccess } from "@/lib/adminRoles";
 import { quizScores } from "@/lib/texts";
-
-interface AttemptRow {
-  attemptId: string;
-  userId: string;
-  name: string;
-  score: number;
-  voided: boolean;
-  finishedAt: string | null;
-}
+import type { AttemptRow } from "./scoreTypes";
 
 const REOPENED = quizScores.reopened;
 
@@ -69,6 +62,10 @@ export default function ScoresPanel({
 
   async function open(attemptId: string) {
     setError("");
+    if (detail?.attemptId === attemptId) {
+      setDetail(null);
+      return;
+    }
     try {
       const data = await api.get<{ detail: AttemptDetail }>(
         `/api/admin/quiz/attempts/${attemptId}`,
@@ -161,78 +158,20 @@ export default function ScoresPanel({
 
       <div className="space-y-1">
         {rows.map((row) => (
-          <div
+          <ScoreRow
             key={row.attemptId}
-            className="flex items-center gap-2 rounded-lg p-2 text-xs"
-            style={{ background: "var(--surface-2)" }}
-          >
-            <button
-              onClick={() => open(row.attemptId)}
-              className="flex-1 flex items-center justify-between text-start min-w-0"
-            >
-              <span className="truncate" style={{ color: "var(--text-main)" }}>
-                {row.name}
-                {row.voided && (
-                  <span className="font-bold" style={{ color: "#991b1b" }}>
-                    {" "}
-                    {quizScores.voidedMark}
-                  </span>
-                )}
-              </span>
-              <span
-                className="font-bold shrink-0"
-                style={{ color: row.voided ? "#991b1b" : "var(--mint-700)" }}
-              >
-                {row.score}
-              </span>
-            </button>
-            {hasFullAccess(role) && (
-              <>
-                <button
-                  onClick={() => reopen(row.attemptId)}
-                  disabled={busy === row.attemptId}
-                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
-                  style={{ background: "var(--copper-500)", color: "#fff" }}
-                  title={quizScores.reopenTitle}
-                >
-                  <IconLabel name="refresh">{quizScores.reopen}</IconLabel>
-                </button>
-                <button
-                  onClick={() => voidRound(row)}
-                  disabled={busy === row.attemptId}
-                  aria-label={quizScores.roundPoints(
-                    row.voided ? quizScores.restore : quizScores.void,
-                    row.name,
-                  )}
-                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
-                  style={{
-                    background: row.voided ? "var(--mint-600)" : "#991b1b",
-                    color: "#fff",
-                  }}
-                >
-                  <IconLabel name="ban">
-                    {row.voided ? quizScores.restore : quizScores.void}
-                  </IconLabel>
-                </button>
-                <button
-                  onClick={() => voidEverything(row)}
-                  disabled={busy === row.attemptId}
-                  aria-label={quizScores.allRoundsPoints(
-                    row.voided ? quizScores.restore : quizScores.void,
-                    row.name,
-                  )}
-                  className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
-                  style={{ background: "var(--surface-2)", color: "var(--text-main)" }}
-                >
-                  {quizScores.allRounds}
-                </button>
-              </>
-            )}
-          </div>
+            row={row}
+            detail={detail?.attemptId === row.attemptId ? detail : null}
+            busy={busy === row.attemptId}
+            canAct={hasFullAccess(role)}
+            onOpen={() => open(row.attemptId)}
+            onClose={() => setDetail(null)}
+            onReopen={() => reopen(row.attemptId)}
+            onVoidRound={() => voidRound(row)}
+            onVoidAll={() => voidEverything(row)}
+          />
         ))}
       </div>
-
-      {detail && <AttemptBreakdown detail={detail} onClose={() => setDetail(null)} />}
     </div>
   );
 }

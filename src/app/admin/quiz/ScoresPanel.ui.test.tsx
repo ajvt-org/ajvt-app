@@ -102,8 +102,10 @@ describe("ScoresPanel", () => {
   it("offers a SUPER admin the way to reopen what a member missed", async () => {
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByRole("button", { name: /إعادة فتح/ }));
 
-    await userEvent.click(screen.getAllByRole("button", { name: /إعادة فتح/ })[0]);
+    await userEvent.click(screen.getByRole("button", { name: /إعادة فتح/ }));
 
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith("/api/admin/quiz/attempts/a1/reopen", {}),
@@ -115,6 +117,8 @@ describe("ScoresPanel", () => {
     answers("QUIZ");
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
 
     expect(screen.queryByRole("button", { name: /إعادة فتح/ })).toBeNull();
   });
@@ -123,8 +127,10 @@ describe("ScoresPanel", () => {
     post.mockRejectedValue(new Error("لا توجد أسئلة فائتة في هذه المحاولة"));
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByRole("button", { name: /إعادة فتح/ }));
 
-    await userEvent.click(screen.getAllByRole("button", { name: /إعادة فتح/ })[0]);
+    await userEvent.click(screen.getByRole("button", { name: /إعادة فتح/ }));
 
     expect(await screen.findByText(/لا توجد أسئلة فائتة/)).toBeDefined();
   });
@@ -147,6 +153,8 @@ describe("ScoresPanel", () => {
   it("voids the round a member played", async () => {
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByLabelText("إلغاء نقاط أحمد في هذه الجولة"));
 
     await userEvent.click(screen.getByLabelText("إلغاء نقاط أحمد في هذه الجولة"));
 
@@ -156,8 +164,15 @@ describe("ScoresPanel", () => {
   });
 
   it("offers to put back what was already voided", async () => {
+    get.mockImplementation((url: string) => {
+      if (url === "/api/admin/me") return Promise.resolve({ role: "SUPER" });
+      if (url.includes("/attempts?round=")) return Promise.resolve({ attempts, opened: true });
+      return Promise.resolve({ detail: { ...detail, attemptId: "a2", name: "محمد" } });
+    });
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("محمد"));
+    await userEvent.click(screen.getByText("محمد"));
+    await waitFor(() => screen.getByLabelText("إرجاع نقاط محمد في هذه الجولة"));
 
     await userEvent.click(screen.getByLabelText("إرجاع نقاط محمد في هذه الجولة"));
 
@@ -169,6 +184,8 @@ describe("ScoresPanel", () => {
   it("voids every round of the competition for one member", async () => {
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByLabelText("إلغاء نقاط أحمد في كل الجولات"));
 
     await userEvent.click(screen.getByLabelText("إلغاء نقاط أحمد في كل الجولات"));
 
@@ -190,7 +207,41 @@ describe("ScoresPanel", () => {
     answers("QUIZ");
     render(<ScoresPanel competitionId="c1" roundCount={3} />);
     await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
 
     expect(screen.queryByLabelText("إلغاء نقاط أحمد في هذه الجولة")).toBeNull();
+  });
+
+  it("leaves a closed row with nothing but the name and the score", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    expect(screen.queryByRole("button", { name: /إعادة فتح/ })).toBeNull();
+    expect(screen.queryByLabelText("إلغاء نقاط أحمد في هذه الجولة")).toBeNull();
+    expect(screen.queryByLabelText("إلغاء نقاط أحمد في كل الجولات")).toBeNull();
+    expect(screen.getByRole("button", { name: "محاولة أحمد" })).toBeDefined();
+  });
+
+  it("brings the actions out on the row that is open and no other", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+
+    await userEvent.click(screen.getByText("أحمد"));
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /إعادة فتح/ })).toHaveLength(1),
+    );
+  });
+
+  it("closes the row again when its name is tapped a second time", async () => {
+    render(<ScoresPanel competitionId="c1" roundCount={3} />);
+    await waitFor(() => screen.getByText("أحمد"));
+    await userEvent.click(screen.getByText("أحمد"));
+    await waitFor(() => screen.getByText("ما عاصمة موريتانيا؟"));
+
+    await userEvent.click(screen.getByText("أحمد"));
+
+    await waitFor(() => expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull());
   });
 });
