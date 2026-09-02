@@ -8,7 +8,9 @@ import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { members } from "@/lib/messages";
+import { ouguiya } from "@/lib/texts";
 import { donationView } from "@/lib/donationView";
+import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
 import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
 
@@ -39,20 +41,25 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     },
   });
   await mirrorDonation(prisma, donationMirrorOf(donation));
-  await logAction(session.username, "CREATE_DONATION_MANUAL", `${donorName} — ${amount} أوقية`, {
-    ...auditContext(session, req),
-    targetType: "Donation",
-    targetId: donation.id,
-    after: {
-      donorName: donation.donorName,
-      donorPhone: donation.donorPhone,
-      amount: donation.amount,
-      paymentMethod: donation.paymentMethod,
-      status: donation.status,
-      source: donation.source,
-      userId: donation.userId,
+  await logAction(
+    session.username,
+    "CREATE_DONATION_MANUAL",
+    logLabelFor(donation, `${donorName} — ${ouguiya.amount(amount)}`),
+    {
+      ...auditContext(session, req),
+      targetType: "Donation",
+      targetId: donation.id,
+      after: logSnapshotFor(donation, {
+        donorName: donation.donorName,
+        donorPhone: donation.donorPhone,
+        amount: donation.amount,
+        paymentMethod: donation.paymentMethod,
+        status: donation.status,
+        source: donation.source,
+        userId: donation.userId,
+      }),
     },
-  });
+  );
 
   return NextResponse.json(
     { donation: donationView(donation, viewerOf(session)) },
