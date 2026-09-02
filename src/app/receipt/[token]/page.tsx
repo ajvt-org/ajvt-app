@@ -4,13 +4,13 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { prisma } from "@/lib/prisma";
 import { amountInWords } from "@/lib/arabicAmount";
-import { moneyDigits } from "@/lib/money";
+import Money from "@/components/Money";
 import { receiptDate } from "@/lib/officialReceipt";
 import { receiptSheet, receiptVerify } from "@/lib/texts/receipt";
 
 export const dynamic = "force-dynamic";
 
-function Row({ label, value, dir }: { label: string; value: string; dir?: string }) {
+function Row({ label, value, dir }: { label: string; value: React.ReactNode; dir?: string }) {
   return (
     <div
       className="flex items-center justify-between gap-4 py-3"
@@ -70,10 +70,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ token:
             <Row label={receiptVerify.numberLabel} value={receipt.number} dir="ltr" />
             <Row label={receiptVerify.payerLabel} value={receipt.payerName} />
             <Row label={receiptVerify.reasonLabel} value={receipt.reason} />
-            <Row
-              label={receiptVerify.amountLabel}
-              value={`${moneyDigits(receipt.amount)} ${receiptSheet.currency}`}
-            />
+            <Row label={receiptVerify.amountLabel} value={<Money value={receipt.amount} />} />
             <Row label={receiptVerify.wordsLabel} value={amountInWords(receipt.amount)} />
             <Row label={receiptVerify.dateLabel} value={receiptDate(receipt.issuedOn)} />
           </dl>

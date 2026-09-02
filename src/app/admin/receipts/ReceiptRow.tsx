@@ -1,9 +1,9 @@
 "use client";
 
 import { receiptDate, type OfficialReceiptView } from "@/lib/officialReceipt";
-import { ouguiya } from "@/lib/texts/currency";
 import { receiptAdmin } from "@/lib/texts/receipt";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 
 export default function ReceiptRow({
   receipt,
@@ -25,7 +25,7 @@ export default function ReceiptRow({
           {receipt.payerName}
         </p>
         <p className="font-bold text-sm shrink-0" style={{ color: "var(--mint-700)" }}>
-          <bdi>{ouguiya.amount(receipt.amount)}</bdi>
+          <Money value={receipt.amount} />
         </p>
       </div>
 
