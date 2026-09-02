@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import DayCard from "./DayCard";
 import { daysTab as texts, matchDisplay } from "@/lib/texts";
 import type { DayMatch, TournamentDayRow } from "./daysTypes";
@@ -40,10 +40,10 @@ const scorelinesIn = (row: HTMLElement) =>
   [...row.querySelectorAll('[dir="rtl"]')].map((node) => node.textContent);
 
 describe("a day that holds matches", () => {
-  it("keeps the venue with the fixture rather than beside the time input", () => {
+  it("keeps the venue with the fixture rather than beside the time", () => {
     show(day({ matches: [match()] }));
 
-    const time = screen.getByLabelText(texts.matchTime);
+    const time = screen.getByLabelText(texts.changeTime);
     const venue = screen.getByText("ملعب القرية");
 
     expect(time.parentElement).not.toBe(venue.parentElement);
@@ -173,5 +173,56 @@ describe("the heading of a day", () => {
 
     expect(ordinary).not.toBe("");
     expect(ordinary).not.toBe(rest);
+  });
+});
+
+describe("the time a match is played at", () => {
+  const retime = vi.fn();
+
+  beforeEach(() => retime.mockClear());
+
+  const showRetimable = (row: TournamentDayRow) =>
+    render(<DayCard day={row} busy={false} onSetRest={noop} onRemove={noop} onRetime={retime} />);
+
+  it("reads as a time rather than as a field waiting to be filled", () => {
+    showRetimable(day({ matches: [match()] }));
+
+    expect(screen.getByText("16:00")).toBeDefined();
+    expect(screen.queryByLabelText(texts.matchTime)).toBeNull();
+  });
+
+  it("opens a field only when the time is reached for", () => {
+    showRetimable(day({ matches: [match()] }));
+
+    fireEvent.click(screen.getByLabelText(texts.changeTime));
+
+    expect(screen.getByLabelText(texts.matchTime)).toBeDefined();
+  });
+
+  it("saves a time that changed and closes the field", () => {
+    showRetimable(day({ matches: [match()] }));
+    fireEvent.click(screen.getByLabelText(texts.changeTime));
+
+    const field = screen.getByLabelText(texts.matchTime);
+    fireEvent.change(field, { target: { value: "18:45" } });
+    fireEvent.blur(field);
+
+    expect(retime).toHaveBeenCalledWith("m1", "18:45");
+    expect(screen.queryByLabelText(texts.matchTime)).toBeNull();
+  });
+
+  it("leaves the match alone when the time comes back unchanged", () => {
+    showRetimable(day({ matches: [match()] }));
+    fireEvent.click(screen.getByLabelText(texts.changeTime));
+
+    fireEvent.blur(screen.getByLabelText(texts.matchTime));
+
+    expect(retime).not.toHaveBeenCalled();
+  });
+
+  it("says a match has no time rather than showing an empty field", () => {
+    showRetimable(day({ matches: [match({ matchDate: null })] }));
+
+    expect(screen.getByText(texts.noTime)).toBeDefined();
   });
 });
