@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { allowedAreas, canOpen, landingFor, tabActive } from "@/lib/adminNav";
+import { MONEY_AREAS, allowedAreas, canOpen, landingFor, tabActive } from "@/lib/adminNav";
 
 describe("allowedAreas", () => {
   it("gives a full admin everything", () => {
@@ -138,5 +138,59 @@ describe("landingFor", () => {
 
   it("has nowhere to send an unknown role, which leaves it stuck rather than loose", () => {
     expect(landingFor("SOMETHING_NEW")).toBeNull();
+  });
+});
+
+describe("the money paths", () => {
+  const MONEY = Object.values(MONEY_AREAS);
+
+  it("keeps the address every money screen already had", () => {
+    expect(MONEY).toEqual([
+      "/admin/payments",
+      "/admin/receipts",
+      "/admin/expenses",
+      "/admin/treasury",
+      "/admin/finance-report",
+      "/admin/finance-activities",
+    ]);
+  });
+
+  it("still opens the three a members admin has always had", () => {
+    for (const area of [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses]) {
+      expect(canOpen("MEMBERS", area), area).toBe(true);
+      expect(canOpen("ACTIVITIES", area), area).toBe(true);
+    }
+  });
+
+  it("still refuses the two that were never granted", () => {
+    for (const area of [MONEY_AREAS.treasury, MONEY_AREAS.report, MONEY_AREAS.activityReport]) {
+      expect(canOpen("MEMBERS", area), area).toBe(false);
+      expect(canOpen("ACTIVITIES", area), area).toBe(false);
+    }
+  });
+
+  it("opens every money screen for full access", () => {
+    for (const area of MONEY) {
+      expect(canOpen("SUPER", area), area).toBe(true);
+      expect(canOpen("OWNER", area), area).toBe(true);
+    }
+  });
+
+  it("carries a granted area down to what sits under it", () => {
+    expect(canOpen("MEMBERS", "/admin/payments/anything")).toBe(true);
+    expect(canOpen("MEMBERS", "/admin/expenses/anything")).toBe(true);
+  });
+
+  it("does not grant a path that only starts with the same letters", () => {
+    expect(canOpen("MEMBERS", "/admin/paymentsomething")).toBe(false);
+    expect(canOpen("MEMBERS", "/admin/expenses-archive")).toBe(false);
+    expect(canOpen("ACTIVITY", "/admin/activities-old")).toBe(false);
+  });
+
+  it("sends an admin who lands where it may not go somewhere it may", () => {
+    expect(landingFor("MEMBERS")).toBe("/admin/dashboard");
+    expect(canOpen("MEMBERS", landingFor("MEMBERS")!)).toBe(true);
+    expect(landingFor("ACTIVITIES")).toBe("/admin/activities");
+    expect(canOpen("ACTIVITIES", landingFor("ACTIVITIES")!)).toBe(true);
   });
 });

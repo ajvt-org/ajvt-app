@@ -1,6 +1,7 @@
 export const adminTabs = {
   members: "المستخدمون",
   activities: "الأنشطة",
+  money: "المالية",
   payments: "المدفوعات",
   receipts: "الوصولات",
   expenses: "المصاريف",

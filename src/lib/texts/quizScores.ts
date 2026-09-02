@@ -15,5 +15,9 @@ export const quizScores = {
   void: "إلغاء",
   roundPoints: (action: string, name: string) => `${action} نقاط ${name} في هذه الجولة`,
   allRoundsPoints: (action: string, name: string) => `${action} نقاط ${name} في كل الجولات`,
-  allRounds: "كل الجولات",
+  allRounds: "الكل",
+  thisRound: "الجولة",
+  openAttempt: (name: string) => `محاولة ${name}`,
+  search: "ابحث عن مشارك بالاسم...",
+  noMatch: "لا يوجد مشارك مطابق",
 } as const;

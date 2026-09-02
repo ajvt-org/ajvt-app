@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
+import { requireArea } from "@/lib/auth";
+import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseCreateSchema } from "./schema";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
-  await requireUnscopedAdmin();
+  await requireArea(MONEY_AREAS.expenses);
   const expenses = await prisma.expense.findMany({
     orderBy: { date: "desc" },
     include: {
@@ -19,7 +20,7 @@ export const GET = withRoute("GET /api/admin/expenses", async () => {
 });
 
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
-  const session = await requireUnscopedAdmin();
+  const session = await requireArea(MONEY_AREAS.expenses);
   const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
     expenseCreateSchema,
     await req.json(),

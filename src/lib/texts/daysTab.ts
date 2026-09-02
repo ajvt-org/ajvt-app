@@ -26,6 +26,8 @@ export const daysTab = {
   doubleBooked: (names: string) => `يلعب مرتين في نفس اليوم: ${names}`,
   finished: "انتهت",
   matchTime: "وقت المباراة",
+  changeTime: "تغيير وقت المباراة",
+  noTime: "بلا وقت",
   scheduled: "جُدولت المباراة",
   schedule: "جدولة",
 } as const;

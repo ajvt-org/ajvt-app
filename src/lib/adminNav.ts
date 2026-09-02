@@ -2,24 +2,22 @@ import { hasFullAccess } from "./adminRoles";
 
 export const ALL_AREAS = null;
 
+export const MONEY_AREAS = {
+  payments: "/admin/payments",
+  receipts: "/admin/receipts",
+  expenses: "/admin/expenses",
+  treasury: "/admin/treasury",
+  report: "/admin/finance-report",
+  activityReport: "/admin/finance-activities",
+} as const;
+
 const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
+const SHARED_MONEY = [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses];
+
 const ROLE_AREAS: Record<string, string[] | null> = {
-  MEMBERS: [
-    "/admin/dashboard",
-    "/admin/payments",
-    "/admin/receipts",
-    "/admin/expenses",
-    "/admin/deleted",
-    ...OWN_ACCOUNT,
-  ],
-  ACTIVITIES: [
-    "/admin/activities",
-    "/admin/payments",
-    "/admin/receipts",
-    "/admin/expenses",
-    ...OWN_ACCOUNT,
-  ],
+  MEMBERS: ["/admin/dashboard", ...SHARED_MONEY, "/admin/deleted", ...OWN_ACCOUNT],
+  ACTIVITIES: ["/admin/activities", ...SHARED_MONEY, ...OWN_ACCOUNT],
   QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
   ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
 };
@@ -31,10 +29,14 @@ export function allowedAreas(role: string | null | undefined): string[] | null {
   return ROLE_AREAS[role];
 }
 
+function under(pathname: string, prefix: string): boolean {
+  return pathname === prefix || pathname.startsWith(prefix + "/");
+}
+
 export function canOpen(role: string | null | undefined, pathname: string): boolean {
   const areas = allowedAreas(role);
   if (areas === ALL_AREAS) return true;
-  return areas.some((area) => pathname.startsWith(area));
+  return areas.some((area) => under(pathname, area));
 }
 
 const TAB_ALIASES: Record<string, string[]> = {
@@ -52,7 +54,7 @@ const TAB_ALIASES: Record<string, string[]> = {
 export function tabActive(tabHref: string, pathname: string | null): boolean {
   if (!pathname) return false;
   const prefixes = [tabHref, ...(TAB_ALIASES[tabHref] ?? [])];
-  return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  return prefixes.some((prefix) => under(pathname, prefix));
 }
 
 export function landingFor(role: string | null | undefined): string | null {

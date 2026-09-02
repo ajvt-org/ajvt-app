@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import CompetitionList from "./CompetitionList";
-import CompetitionPanel from "./CompetitionPanel";
-import ParticipantsPanel from "./ParticipantsPanel";
-import RoundsPanel from "./RoundsPanel";
-import ScoresPanel from "./ScoresPanel";
-import StandingsPanel from "./StandingsPanel";
+import CompetitionWorkspace from "./CompetitionWorkspace";
 import type { CompetitionRow } from "./competitionTypes";
 
 export default function CompetitionsSection() {
@@ -62,10 +58,11 @@ export default function CompetitionsSection() {
       />
 
       {open && (
-        <CompetitionPanel
+        <CompetitionWorkspace
           key={editing ?? "new"}
           banks={banks}
           competitionId={editing}
+          competition={selected}
           onSaved={(id) => {
             setCreating(false);
             setSelectedId(id);
@@ -76,19 +73,6 @@ export default function CompetitionsSection() {
             setSelectedId(null);
           }}
         />
-      )}
-
-      {editing && selected?.visibility === "PRIVATE" && (
-        <ParticipantsPanel competitionId={editing} locked={selected.startedAt !== null} />
-      )}
-
-      {editing && <RoundsPanel competitionId={editing} />}
-
-      {editing && selected?.startedAt && (
-        <>
-          <StandingsPanel competitionId={editing} />
-          <ScoresPanel competitionId={editing} roundCount={selected.roundCount} />
-        </>
       )}
     </div>
   );

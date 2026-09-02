@@ -94,6 +94,17 @@ describe("the two levels of the workspace row", () => {
     strips.forEach((strip) => expect(strip.className).not.toContain("flex-wrap"));
   });
 
+  it("drops the section row when there is only one section to name", () => {
+    cleanup();
+    const view = render(
+      <WorkspaceTabs sections={[SECTIONS[1]]} active="registrations" onPick={vi.fn()} />,
+    );
+
+    expect(view.container.querySelectorAll(".tab-strip").length).toBe(1);
+    expect(screen.getByText("المسجلون")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /^المشاركون/ })).toBeNull();
+  });
+
   it("falls back to the first section when the open tab is not in any of them", () => {
     show("nothing");
 

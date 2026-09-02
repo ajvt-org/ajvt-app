@@ -3,7 +3,7 @@ import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/re
 import DaysTab from "./DaysTab";
 import { doubleBookedTeams } from "./daysTypes";
 import type { DaysPayload, TournamentDayRow } from "./daysTypes";
-import { publicTournament } from "@/lib/texts";
+import { daysTab, publicTournament } from "@/lib/texts";
 
 const get = vi.fn();
 const post = vi.fn();
@@ -27,6 +27,11 @@ function match(id: string, home: string, away: string, iso: string) {
     round: null,
     venue: "ملعب القرية",
     status: "SCHEDULED" as const,
+    homeScore: null,
+    awayScore: null,
+    homePenalties: null,
+    awayPenalties: null,
+    forfeitWinnerTeamId: null,
     homeTeam: { id: `${home}-id`, name: home },
     awayTeam: { id: `${away}-id`, name: away },
   };
@@ -84,7 +89,7 @@ describe("DaysTab", () => {
   it("inserts a rest day at the clicked position", async () => {
     await show();
 
-    fireEvent.click((await screen.findAllByText("أضف يوم راحة هنا"))[0]);
+    fireEvent.click((await screen.findAllByLabelText(daysTab.addRestHere))[0]);
 
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith("/api/admin/activities/a1/days", {
@@ -170,5 +175,27 @@ describe("doubleBookedTeams", () => {
     };
 
     expect(doubleBookedTeams(day)).toEqual([]);
+  });
+});
+
+describe("adding a rest day between two days", () => {
+  it("offers the seam between days rather than a control that outshouts them", async () => {
+    await show();
+
+    const inserter = screen.getAllByLabelText(daysTab.addRestHere)[0];
+
+    expect(inserter.className).toContain("btn-sm");
+    expect(inserter.textContent).toBe("");
+    expect(inserter.style.border).toBe("");
+    expect(inserter.style.background).toBe("");
+  });
+
+  it("keeps a rule on either side of it so it reads as a seam", async () => {
+    await show();
+
+    const inserter = screen.getAllByLabelText(daysTab.addRestHere)[0];
+    const seam = inserter.parentElement!;
+
+    expect(seam.querySelectorAll(".sep").length).toBe(2);
   });
 });
