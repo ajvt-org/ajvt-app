@@ -35,6 +35,7 @@ export type MemberProfile = {
       createdAt: string;
     }[];
   };
+  supportPrivacy: { confidential: boolean; namedEntries: number } | null;
   history: {
     id: string;
     action: string;
