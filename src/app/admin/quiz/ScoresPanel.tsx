@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import AttemptBreakdown, { type AttemptDetail } from "./AttemptBreakdown";
+import { hasFullAccess } from "@/lib/adminRoles";
+import { quizScores } from "@/lib/texts";
 
 interface AttemptRow {
   attemptId: string;
@@ -14,7 +16,7 @@ interface AttemptRow {
   finishedAt: string | null;
 }
 
-const REOPENED = "أعيد فتح الأسئلة الفائتة";
+const REOPENED = quizScores.reopened;
 
 export default function ScoresPanel({
   competitionId,
@@ -100,7 +102,7 @@ export default function ScoresPanel({
     act(
       row.attemptId,
       () => api.post(`/api/admin/quiz/attempts/${row.attemptId}/void`, { voided: !row.voided }),
-      row.voided ? "أرجعت نقاط الجولة" : "ألغيت نقاط الجولة",
+      row.voided ? quizScores.roundRestored : quizScores.roundVoided,
     );
 
   const voidEverything = (row: AttemptRow) =>
@@ -111,17 +113,17 @@ export default function ScoresPanel({
           userId: row.userId,
           voided: !row.voided,
         }),
-      row.voided ? "أرجعت نقاط كل الجولات" : "ألغيت نقاط كل الجولات",
+      row.voided ? quizScores.allRoundsRestored : quizScores.allRoundsVoided,
     );
 
   return (
     <div className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="chart">نقاط المشاركين</IconLabel>
+        <IconLabel name="chart">{quizScores.title}</IconLabel>
       </p>
 
       <label className="block text-xs font-bold" htmlFor="s-round">
-        الجولة
+        {quizScores.round}
       </label>
       <select
         id="s-round"
@@ -153,7 +155,7 @@ export default function ScoresPanel({
 
       {rows.length === 0 && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {opened ? "لم يشارك أحد في هذه الجولة" : "لم تبدأ هذه الجولة بعد"}
+          {opened ? quizScores.nobodyPlayed : quizScores.notStarted}
         </p>
       )}
 
@@ -173,7 +175,7 @@ export default function ScoresPanel({
                 {row.voided && (
                   <span className="font-bold" style={{ color: "#991b1b" }}>
                     {" "}
-                    · ملغاة
+                    {quizScores.voidedMark}
                   </span>
                 )}
               </span>
@@ -184,37 +186,45 @@ export default function ScoresPanel({
                 {row.score}
               </span>
             </button>
-            {role === "SUPER" && (
+            {hasFullAccess(role) && (
               <>
                 <button
                   onClick={() => reopen(row.attemptId)}
                   disabled={busy === row.attemptId}
                   className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
                   style={{ background: "var(--copper-500)", color: "#fff" }}
-                  title="إعادة فتح الأسئلة الفائتة"
+                  title={quizScores.reopenTitle}
                 >
-                  <IconLabel name="refresh">إعادة فتح</IconLabel>
+                  <IconLabel name="refresh">{quizScores.reopen}</IconLabel>
                 </button>
                 <button
                   onClick={() => voidRound(row)}
                   disabled={busy === row.attemptId}
-                  aria-label={`${row.voided ? "إرجاع" : "إلغاء"} نقاط ${row.name} في هذه الجولة`}
+                  aria-label={quizScores.roundPoints(
+                    row.voided ? quizScores.restore : quizScores.void,
+                    row.name,
+                  )}
                   className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
                   style={{
                     background: row.voided ? "var(--mint-600)" : "#991b1b",
                     color: "#fff",
                   }}
                 >
-                  <IconLabel name="ban">{row.voided ? "إرجاع" : "إلغاء"}</IconLabel>
+                  <IconLabel name="ban">
+                    {row.voided ? quizScores.restore : quizScores.void}
+                  </IconLabel>
                 </button>
                 <button
                   onClick={() => voidEverything(row)}
                   disabled={busy === row.attemptId}
-                  aria-label={`${row.voided ? "إرجاع" : "إلغاء"} نقاط ${row.name} في كل الجولات`}
+                  aria-label={quizScores.allRoundsPoints(
+                    row.voided ? quizScores.restore : quizScores.void,
+                    row.name,
+                  )}
                   className="shrink-0 rounded-lg px-2 py-1 font-bold disabled:opacity-50"
                   style={{ background: "var(--surface-2)", color: "var(--text-main)" }}
                 >
-                  كل الجولات
+                  {quizScores.allRounds}
                 </button>
               </>
             )}

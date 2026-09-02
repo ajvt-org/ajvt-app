@@ -11,11 +11,12 @@ import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
 import { activities } from "@/lib/messages";
 import { ForbiddenError } from "@/lib/errors";
+import { seesEveryActivity } from "@/lib/activityAccess";
 
 export const GET = withRoute("GET /api/admin/activities", async () => {
   const session = await requireAdmin();
   const scoped = await scopedActivityIds(session);
-  if (scoped === null && session.role !== "SUPER" && session.role !== "ACTIVITIES") {
+  if (scoped === null && !seesEveryActivity(session.role)) {
     throw new ForbiddenError();
   }
 
