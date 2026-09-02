@@ -3,6 +3,7 @@
 import IconLabel from "@/components/IconLabel";
 import CountBadge from "@/components/admin/CountBadge";
 import { tabActiveFor, type NavTab } from "./navTabs";
+import { useStripScroll } from "./useStripScroll";
 import type { PendingCounts } from "./useAdminSession";
 
 const BADGE_KEY: Record<string, keyof PendingCounts> = {
@@ -56,8 +57,11 @@ export default function TabStrip({
   pending: PendingCounts;
   onOpen: (href: string) => void;
 }) {
+  const strip = useStripScroll(pathname);
+
   return (
     <div
+      ref={strip}
       className="tab-strip px-3 py-1.5 sm:px-4 sm:py-2"
       style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
     >

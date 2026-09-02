@@ -34,6 +34,7 @@ const KEPT_CLEAN = [
   "src/components/admin/CountBadge.tsx",
   "src/components/admin/shell/TabStrip.tsx",
   "src/components/admin/shell/SubTabStrip.tsx",
+  "src/components/admin/shell/useStripScroll.ts",
   "src/components/admin/shell/AccountRow.tsx",
   "src/components/admin/shell/roleTone.ts",
   "src/app/admin/admins/page.tsx",

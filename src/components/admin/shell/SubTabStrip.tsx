@@ -3,6 +3,7 @@
 import IconLabel from "@/components/IconLabel";
 import { tabActive } from "@/lib/adminNav";
 import type { NavTab } from "./navTabs";
+import { useStripScroll } from "./useStripScroll";
 
 export default function SubTabStrip({
   tabs,
@@ -13,8 +14,11 @@ export default function SubTabStrip({
   pathname: string | null;
   onOpen: (href: string) => void;
 }) {
+  const strip = useStripScroll(pathname);
+
   return (
     <div
+      ref={strip}
       className="tab-strip px-3 py-1.5 sm:px-4 sm:py-2"
       style={{ background: "var(--mint-50)", borderBottom: "1px solid var(--mint-100)" }}
     >
