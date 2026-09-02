@@ -27,8 +27,9 @@ import {
 } from "@/lib/exportRows";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
 import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
-import type { SupportViewer } from "@/lib/supportPrivacy";
+import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
+import type { SupportViewer } from "@/lib/supportPrivacy";
 
 async function buildCsv(
   dataset: Dataset,
@@ -47,6 +48,7 @@ async function buildCsv(
         user: {
           select: {
             ...PERSON_WITH_PHONE_SELECT,
+            ...CONFIDENTIAL_SELECT,
             payments: {
               where: { purpose: "MEMBERSHIP" },
               select: { amount: true, feeApplied: true, year: true },
@@ -62,13 +64,15 @@ async function buildCsv(
       MEMBER_HEADERS,
       memberRows(
         current.map((membership) => {
-          const { year, user, ...rest } = membership;
-          const paid = user.payments.find((p) => p.year === year);
+          const { year, user, userId, ...rest } = membership;
+          const { supportNameConfidential, ...account } = user;
+          const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
+          const paid = account.payments.find((p) => p.year === year);
           const split = paid ? splitPayment(paid.amount, paid.feeApplied ?? 0) : null;
           return {
-            ...withPerson({ ...rest, membershipYear: year, user }),
+            ...withPerson({ ...rest, membershipYear: year, user: account }),
             paidAmount: split ? split.fee : null,
-            supportAmount: split ? split.surplus : 0,
+            supportAmount: named && split ? split.surplus : 0,
           };
         }),
       ),
