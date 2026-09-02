@@ -1,9 +1,10 @@
+import { hasFullAccess } from "./adminRoles";
+
 export const ALL_AREAS = null;
 
 const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
 const ROLE_AREAS: Record<string, string[] | null> = {
-  SUPER: ALL_AREAS,
   MEMBERS: [
     "/admin/dashboard",
     "/admin/payments",
@@ -25,6 +26,7 @@ const ROLE_AREAS: Record<string, string[] | null> = {
 
 export function allowedAreas(role: string | null | undefined): string[] | null {
   if (role === null || role === undefined) return ALL_AREAS;
+  if (hasFullAccess(role)) return ALL_AREAS;
   if (!(role in ROLE_AREAS)) return [];
   return ROLE_AREAS[role];
 }
