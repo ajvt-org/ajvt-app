@@ -5,6 +5,7 @@ import { HttpError, UnauthorizedError, ForbiddenError } from "./errors";
 import { isTokenOf } from "./tokenType";
 import { auth } from "./messages";
 import { hasFullAccess, isOwner } from "./adminRoles";
+import { canOpen } from "./adminNav";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -56,6 +57,12 @@ export async function requireAdminRole(...allowed: string[]) {
   if (!hasFullAccess(session.role) && !allowed.includes(session.role)) {
     throw new ForbiddenError();
   }
+  return session;
+}
+
+export async function requireArea(area: string) {
+  const session = await requireAdmin();
+  if (!canOpen(session.role, area)) throw new ForbiddenError();
   return session;
 }
 

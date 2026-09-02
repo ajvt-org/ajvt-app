@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
+import { requireArea } from "@/lib/auth";
+import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
@@ -9,7 +10,7 @@ import { expenseUpdateSchema } from "../schema";
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireUnscopedAdmin();
+    const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
     const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
       expenseUpdateSchema,
@@ -80,7 +81,7 @@ export const PATCH = withRoute(
 export const DELETE = withRoute(
   "DELETE /api/admin/expenses/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const session = await requireUnscopedAdmin();
+    const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
 
     const existing = await prisma.expense.findUnique({ where: { id } });

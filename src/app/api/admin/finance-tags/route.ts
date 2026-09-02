@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
+import { requireArea } from "@/lib/auth";
+import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { expenses as messages } from "@/lib/messages";
 
 export const GET = withRoute("GET /api/admin/finance-tags", async () => {
-  await requireUnscopedAdmin();
+  await requireArea(MONEY_AREAS.expenses);
   const tags = await prisma.financeTag.findMany({
     orderBy: { createdAt: "asc" },
     include: {
@@ -27,7 +28,7 @@ export const GET = withRoute("GET /api/admin/finance-tags", async () => {
 });
 
 export const POST = withRoute("POST /api/admin/finance-tags", async (req: NextRequest) => {
-  const session = await requireUnscopedAdmin();
+  const session = await requireArea(MONEY_AREAS.expenses);
   const { name } = await req.json();
   const trimmed = typeof name === "string" ? name.trim() : "";
 
