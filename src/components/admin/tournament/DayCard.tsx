@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
-import { timeOf } from "@/lib/tournamentDays";
 import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab as texts, lists } from "@/lib/texts";
 import DayHeading from "./DayHeading";
+import DayMatchTime from "./DayMatchTime";
 import DayMatchResult from "./DayMatchResult";
 import { doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
@@ -22,7 +21,6 @@ export default function DayCard({
   onRemove: () => void;
   onRetime: (matchId: string, time: string) => void;
 }) {
-  const [times, setTimes] = useState<Record<string, string>>({});
   const conflicts = doubleBookedTeams(day);
   const removable = day.isRest || day.matches.length === 0;
 
@@ -80,22 +78,10 @@ export default function DayCard({
         <ul className="mt-2 space-y-1.5">
           {day.matches.map((match) => (
             <li key={match.id} className="flex items-start gap-2 text-sm">
-              <input
-                type="time"
-                value={
-                  times[match.id] ?? (match.matchDate ? timeOf(new Date(match.matchDate)) : "")
-                }
-                onChange={(e) => setTimes((p) => ({ ...p, [match.id]: e.target.value }))}
-                onBlur={(e) => {
-                  const next = e.target.value;
-                  if (next && match.matchDate && next !== timeOf(new Date(match.matchDate))) {
-                    onRetime(match.id, next);
-                  }
-                }}
-                disabled={busy}
-                aria-label={texts.matchTime}
-                className="input input-sm shrink-0"
-                style={{ width: "auto" }}
+              <DayMatchTime
+                matchDate={match.matchDate}
+                busy={busy}
+                onRetime={(time) => onRetime(match.id, time)}
               />
               <div className="min-w-0 flex-1">
                 <bdi className="font-bold block" style={{ wordBreak: "break-word" }}>
