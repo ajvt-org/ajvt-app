@@ -80,3 +80,38 @@ describe("the admin navigation", () => {
     expect(subtabHrefs("SUPER", "/admin/tools")).toEqual([]);
   });
 });
+
+describe("the money paths arrive at the money tab", () => {
+  const MONEY_TAB = NAV_TABS.find((tab) => tab.label === adminTabs.money)!;
+
+  it("lights the money tab on every screen it holds", () => {
+    for (const href of MONEY) {
+      expect(tabActiveFor(MONEY_TAB, href), href).toBe(true);
+    }
+  });
+
+  it("lights it on the screen the dashboard links to", () => {
+    expect(tabActiveFor(MONEY_TAB, MONEY_AREAS.expenses)).toBe(true);
+  });
+
+  it("keeps the list filters on the money screens working", () => {
+    expect(tabActiveFor(MONEY_TAB, MONEY_AREAS.payments)).toBe(true);
+    expect(tabActiveFor(MONEY_TAB, `${MONEY_AREAS.payments}/anything`)).toBe(true);
+  });
+
+  it("leaves the other tabs alone", () => {
+    for (const tab of NAV_TABS.filter((one) => one.label !== adminTabs.money)) {
+      for (const href of MONEY) {
+        expect(tabActiveFor(tab, href), `${tab.label} ${href}`).toBe(false);
+      }
+    }
+  });
+
+  it("offers a members admin the same money screens it reached before", () => {
+    expect(subtabHrefs("MEMBERS", MONEY_AREAS.expenses)).toEqual([
+      MONEY_AREAS.payments,
+      MONEY_AREAS.receipts,
+      MONEY_AREAS.expenses,
+    ]);
+  });
+});
