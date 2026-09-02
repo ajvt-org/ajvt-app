@@ -1,11 +1,35 @@
 import type { PrismaPromise } from "@prisma/client";
 import { prisma } from "./prisma";
+import {
+  CONFIDENTIAL_SELECT,
+  PUBLIC_VIEWER,
+  nameIsConfidential,
+  seesPaymentIdentity,
+} from "./supportPrivacy";
+
+async function membershipCarriesConfidentialSupport(
+  userId: string,
+  year: number,
+): Promise<boolean> {
+  const payment = await prisma.payment.findFirst({
+    where: { userId, year, purpose: "MEMBERSHIP" },
+    select: {
+      purpose: true,
+      amount: true,
+      feeApplied: true,
+      userId: true,
+      user: { select: CONFIDENTIAL_SELECT },
+    },
+  });
+  return payment ? !seesPaymentIdentity(PUBLIC_VIEWER, payment) : false;
+}
 
 export type ProofKind = "photo" | "membership" | "activity" | "donations" | "expense";
 
 export interface OwnedMatch {
   kind: ProofKind;
   ownerId: string | null;
+  confidential: boolean;
 }
 
 export const PUBLIC_FILE_ROUTES = [
@@ -47,7 +71,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
           where: { photo: base },
           select: { id: true },
         });
-        return row ? { kind: "photo", ownerId: row.id } : null;
+        return row ? { kind: "photo", ownerId: row.id, confidential: false } : null;
       },
     },
   },
@@ -64,9 +88,14 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.membership.findFirst({
           where: { paymentProof: base },
-          select: { userId: true },
+          select: { userId: true, year: true },
         });
-        return row ? { kind: "membership", ownerId: row.userId } : null;
+        if (!row) return null;
+        return {
+          kind: "membership",
+          ownerId: row.userId,
+          confidential: await membershipCarriesConfidentialSupport(row.userId, row.year),
+        };
       },
     },
   },
@@ -88,7 +117,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
           where: { paymentProof: base },
           select: { userId: true },
         });
-        return row ? { kind: "activity", ownerId: row.userId } : null;
+        return row ? { kind: "activity", ownerId: row.userId, confidential: false } : null;
       },
     },
   },
@@ -103,9 +132,11 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.donation.findFirst({
           where: { proof: base },
-          select: { userId: true },
+          select: { userId: true, user: { select: CONFIDENTIAL_SELECT } },
         });
-        return row ? { kind: "donations", ownerId: row.userId } : null;
+        return row
+          ? { kind: "donations", ownerId: row.userId, confidential: nameIsConfidential(row) }
+          : null;
       },
     },
   },
@@ -120,9 +151,20 @@ export const UPLOAD_FIELDS: UploadField[] = [
       locate: async (base) => {
         const row = await prisma.payment.findFirst({
           where: { proof: base },
-          select: { purpose: true, userId: true },
+          select: {
+            purpose: true,
+            amount: true,
+            feeApplied: true,
+            userId: true,
+            user: { select: CONFIDENTIAL_SELECT },
+          },
         });
-        return row ? { kind: paymentKind(row.purpose), ownerId: row.userId } : null;
+        if (!row) return null;
+        return {
+          kind: paymentKind(row.purpose),
+          ownerId: row.userId,
+          confidential: !seesPaymentIdentity(PUBLIC_VIEWER, row),
+        };
       },
     },
   },
@@ -139,7 +181,7 @@ export const UPLOAD_FIELDS: UploadField[] = [
           where: { proof: base },
           select: { id: true },
         });
-        return row ? { kind: "expense", ownerId: null } : null;
+        return row ? { kind: "expense", ownerId: null, confidential: false } : null;
       },
     },
   },
