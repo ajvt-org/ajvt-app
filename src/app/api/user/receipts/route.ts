@@ -5,5 +5,6 @@ import { receiptsForAccount } from "@/lib/receiptsServer";
 
 export const GET = withRoute("GET /api/user/receipts", async () => {
   const session = await requireUser();
-  return NextResponse.json({ receipts: await receiptsForAccount(session.userId) });
+  const receipts = await receiptsForAccount(session.userId, { userId: session.userId });
+  return NextResponse.json({ receipts });
 });
