@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { saveAppSettings } from "@/lib/settingsServer";
 import { runningYear } from "@/lib/membershipYear";
 import { mirrorMembershipPayment } from "@/lib/paymentMirror";
@@ -59,6 +60,8 @@ const surplusRows = async (memberId: string) => {
     .filter((row) => row.amount > 0);
 };
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("a surplus belongs to the year it was paid for", () => {
   beforeEach(async () => {
     await resetDb();
@@ -84,7 +87,7 @@ describe("a surplus belongs to the year it was paid for", () => {
     await renew(m.userId, 1000);
 
     const { getLeaderboardData } = await import("@/lib/donationsServer");
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard.find((e) => e.name === "محمد ولد أحمد")?.total).toBe(1300);
   });
 

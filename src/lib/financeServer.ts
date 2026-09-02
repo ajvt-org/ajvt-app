@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { splitPayment } from "@/lib/membershipPayment";
-import { publicDonorName } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, publicDonorName } from "@/lib/donorName";
+import type { SupportViewer } from "@/lib/supportPrivacy";
 import { nameOf } from "@/lib/person";
 
 const UNSPECIFIED_METHOD = "غير محدد";
@@ -40,7 +41,11 @@ interface DetailRow {
 
 const byAmountDesc = (a: NamedEntry, b: NamedEntry) => b.amount - a.amount;
 
-export async function getFinanceSummary(recentDays = 30, activityId?: string) {
+export async function getFinanceSummary(
+  viewer: SupportViewer,
+  recentDays = 30,
+  activityId?: string,
+) {
   const scope = activityId !== undefined ? { activityId } : {};
   const activity = activityId ?? null;
 
@@ -59,7 +64,8 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         createdAt: true,
         anonymous: true,
         donorName: true,
-        user: { select: { fullName: true } },
+        userId: true,
+        user: { select: DONOR_ACCOUNT_SELECT },
       },
     }),
     prisma.payment.groupBy({
@@ -75,7 +81,8 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         amount: true,
         anonymous: true,
         donorName: true,
-        user: { select: { fullName: true } },
+        userId: true,
+        user: { select: DONOR_ACCOUNT_SELECT },
       },
       orderBy: { createdAt: "asc" },
     }),
@@ -153,13 +160,13 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   for (const p of payments) {
     if (p.purpose !== "MEMBERSHIP") {
-      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p), "دعم");
+      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
     addRecord(fee, p.method, p.createdAt, p.user ? nameOf(p.user) : "", "انتساب");
     if (surplus > 0) {
-      addRecord(surplus, p.method, p.createdAt, publicDonorName(p), "دعم");
+      addRecord(surplus, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
     }
   }
 
@@ -174,7 +181,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   const unassigned = unassignedRows.map((p) => ({
     id: p.id,
-    name: publicDonorName(p),
+    name: publicDonorName(p, viewer),
     amount: p.amount,
   }));
 

@@ -5,13 +5,14 @@ import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { ledgerTotals, type LedgerInput } from "@/lib/activityLedger";
 import { activities } from "@/lib/messages";
-import { donorNameOnRecord } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
+import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/finance",
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
-    await requireActivityFinanceAccess(id);
+    const session = await requireActivityFinanceAccess(id);
 
     const activity = await prisma.activity.findUnique({ where: { id }, select: { id: true } });
     if (!activity) throw new NotFoundError(activities.notFound);
@@ -24,7 +25,8 @@ export const GET = withRoute(
           donorName: true,
           amount: true,
           createdAt: true,
-          user: { select: { fullName: true } },
+          userId: true,
+          user: { select: DONOR_ACCOUNT_SELECT },
         },
       }),
       prisma.expense.findMany({
@@ -37,7 +39,7 @@ export const GET = withRoute(
       ...donations.map((d) => ({
         id: d.id,
         kind: "income" as const,
-        label: donorNameOnRecord(d),
+        label: donorNameOnRecord(d, viewerOf(session)),
         amount: d.amount ?? 0,
         date: d.createdAt.toISOString().slice(0, 10),
       })),

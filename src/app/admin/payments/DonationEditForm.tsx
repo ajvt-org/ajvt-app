@@ -4,8 +4,8 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { donationFormError } from "@/lib/donationFields";
-import { publicDonorName } from "@/lib/donorName";
 import { donationEdit } from "@/lib/texts";
+import { money } from "@/lib/messages";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
@@ -50,12 +50,7 @@ export default function DonationEditForm({
 
   const set = (changes: Partial<typeof form>) => setForm((p) => ({ ...p, ...changes }));
 
-  const account = linkedMember ? { fullName: linkedMember.fullName } : null;
-  const shownAs = publicDonorName({
-    anonymous: form.anonymous,
-    donorName: form.donorName,
-    user: account,
-  });
+  const shownAs = form.anonymous ? money.anonymousDonor : form.donorName.trim() || proof.memberName;
 
   async function save() {
     const invalid = donationFormError(
@@ -81,7 +76,7 @@ export default function DonationEditForm({
         proof: form.proof,
         anonymous: form.anonymous,
       });
-      onSaved(proofFromDonation(donation, activities, account));
+      onSaved(proofFromDonation(donation, activities));
     } catch (e) {
       setError(errorMessage(e));
     } finally {

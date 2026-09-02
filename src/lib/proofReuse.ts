@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { nameOf } from "./person";
-import { donorNameOnRecord } from "./donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
+import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
 
 export type ProofReuse = {
   kind: "member" | "donation" | "expense";
@@ -11,6 +12,7 @@ export type ProofReuse = {
 
 export async function findProofReuse(
   filename: string | null | undefined,
+  viewer: SupportViewer,
   ignore?: { kind: ProofReuse["kind"]; id: string },
 ): Promise<ProofReuse[]> {
   if (!filename) return [];
@@ -28,7 +30,7 @@ export async function findProofReuse(
   const [members, donations, expenses] = await Promise.all([
     prisma.membership.findMany({
       where: { paymentProof: { in: names } },
-      select: { userId: true, createdAt: true, user: { select: { fullName: true } } },
+      select: { userId: true, createdAt: true, user: { select: DONOR_ACCOUNT_SELECT } },
     }),
     prisma.donation.findMany({
       where: { proof: { in: names } },
@@ -36,7 +38,8 @@ export async function findProofReuse(
         id: true,
         donorName: true,
         createdAt: true,
-        user: { select: { fullName: true } },
+        userId: true,
+        user: { select: DONOR_ACCOUNT_SELECT },
       },
     }),
     prisma.expense.findMany({
@@ -49,13 +52,13 @@ export async function findProofReuse(
     ...members.map((m) => ({
       kind: "member" as const,
       id: m.userId,
-      label: nameOf(m.user),
+      label: seesSupporterName(viewer, m) ? nameOf(m.user) : "",
       date: m.createdAt,
     })),
     ...donations.map((d) => ({
       kind: "donation" as const,
       id: d.id,
-      label: donorNameOnRecord(d),
+      label: donorNameOnRecord(d, viewer),
       date: d.createdAt,
     })),
     ...expenses.map((e) => ({

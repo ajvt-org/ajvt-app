@@ -28,14 +28,15 @@ export interface Proof {
 export interface DonationResponse {
   donation: {
     id: string;
-    donorName: string | null;
-    donorPhone: string | null;
-    donorPhoto: string | null;
+    memberName: string;
+    donorName?: string | null;
+    donorPhone?: string | null;
+    donorPhoto?: string | null;
     amount: number | null;
     status: string;
     source: "PUBLIC" | "SELF";
     paymentMethod: string | null;
-    proof: string | null;
+    proof?: string | null;
     memberId: string | null;
     userId: string | null;
     anonymous: boolean;

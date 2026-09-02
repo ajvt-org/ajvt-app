@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { findProofReuse } from "@/lib/proofReuse";
 import { resetDb, makeMember } from "./helpers";
 
@@ -20,25 +21,27 @@ async function memberWithProof(fullName: string, paymentProof: string) {
   });
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("spotting a payment screenshot that has been sent before", () => {
   beforeEach(async () => {
     await resetDb();
   });
 
   it("says nothing when there is no proof at all", async () => {
-    expect(await findProofReuse(null)).toEqual([]);
-    expect(await findProofReuse(undefined)).toEqual([]);
+    expect(await findProofReuse(null, ADMIN)).toEqual([]);
+    expect(await findProofReuse(undefined, ADMIN)).toEqual([]);
   });
 
   it("says nothing for a file that was never fingerprinted", async () => {
-    expect(await findProofReuse("unknown.webp")).toEqual([]);
+    expect(await findProofReuse("unknown.webp", ADMIN)).toEqual([]);
   });
 
   it("says nothing when the image is used once", async () => {
     await fingerprint("one.webp", HASH);
     await memberWithProof("محمد", "one.webp");
 
-    expect(await findProofReuse("one.webp")).toEqual([]);
+    expect(await findProofReuse("one.webp", ADMIN)).toEqual([]);
   });
 
   // Two different filenames, byte-identical content: the case the whole thing
@@ -49,7 +52,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const first = await memberWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
-    const reuse = await findProofReuse("two.webp");
+    const reuse = await findProofReuse("two.webp", ADMIN);
 
     expect(reuse).toHaveLength(1);
     expect(reuse[0]).toMatchObject({ kind: "member", id: first.userId, label: "محمد" });
@@ -61,7 +64,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     const mine = await memberWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
-    const reuse = await findProofReuse("one.webp", { kind: "member", id: mine.userId });
+    const reuse = await findProofReuse("one.webp", ADMIN, { kind: "member", id: mine.userId });
 
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });
@@ -80,7 +83,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     });
     await memberWithProof("أحمد", "two.webp");
 
-    const reuse = await findProofReuse("one.webp", { kind: "donation", id: mine.id });
+    const reuse = await findProofReuse("one.webp", ADMIN, { kind: "donation", id: mine.id });
 
     expect(reuse.map((r) => r.label)).toEqual(["أحمد"]);
   });
@@ -91,7 +94,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     await memberWithProof("محمد", "one.webp");
     await memberWithProof("أحمد", "two.webp");
 
-    expect(await findProofReuse("two.webp")).toEqual([]);
+    expect(await findProofReuse("two.webp", ADMIN)).toEqual([]);
   });
 
   // A membership proof reused as a donation proof is the same trick.
@@ -113,7 +116,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
     });
     await memberWithProof("أحمد", "three.webp");
 
-    const reuse = await findProofReuse("three.webp");
+    const reuse = await findProofReuse("three.webp", ADMIN);
 
     expect(reuse.map((r) => r.kind).sort()).toEqual(["donation", "expense"]);
   });
@@ -133,7 +136,7 @@ describe("spotting a payment screenshot that has been sent before", () => {
       data: { createdAt: new Date("2026-06-01T00:00:00Z") },
     });
 
-    const reuse = await findProofReuse("three.webp");
+    const reuse = await findProofReuse("three.webp", ADMIN);
 
     expect(reuse.map((r) => r.label)).toEqual(["محمد", "أحمد"]);
   });

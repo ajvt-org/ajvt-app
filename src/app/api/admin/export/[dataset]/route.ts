@@ -26,8 +26,15 @@ import {
   type Dataset,
 } from "@/lib/exportRows";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
+import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
+import type { SupportViewer } from "@/lib/supportPrivacy";
+import { viewerOf } from "@/lib/supportViewer";
 
-async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
+async function buildCsv(
+  dataset: Dataset,
+  req: NextRequest,
+  viewer: SupportViewer,
+): Promise<string> {
   if (dataset === "members") {
     const memberships = await prisma.membership.findMany({
       select: {
@@ -72,7 +79,7 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
     const payments = await prisma.payment.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        user: { select: { fullName: true } },
+        user: { select: DONOR_ACCOUNT_SELECT },
         tags: { select: { name: true } },
       },
     });
@@ -90,6 +97,7 @@ async function buildCsv(dataset: Dataset, req: NextRequest): Promise<string> {
             source: sourceOf(p.purpose, p.userId),
           }))
           .filter((p) => p.purpose !== "MEMBERSHIP" || p.amount > 0),
+        viewer,
       ),
     );
   }
@@ -114,7 +122,7 @@ export const GET = withRoute(
     const { dataset } = await params;
     if (!isDataset(dataset)) throw new NotFoundError("لا يوجد تصدير بهذا الاسم");
 
-    const csv = await buildCsv(dataset, req);
+    const csv = await buildCsv(dataset, req, viewerOf(session));
     const day = new Date().toISOString().slice(0, 10);
 
     await logAction(session.username, "EXPORT_DATA", dataset, {

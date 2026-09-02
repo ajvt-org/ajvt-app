@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { money } from "@/lib/messages";
 import { splitPayment } from "@/lib/membershipPayment";
-import { attributedDonorName } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, attributedDonorName } from "@/lib/donorName";
+import type { SupportViewer } from "@/lib/supportPrivacy";
 import { rankSupporters } from "@/lib/supportersOrder";
 
 export const SUPPORTERS_PAGE_SIZE = 20;
@@ -29,7 +30,9 @@ interface LeaderboardEntry {
   anonymous: boolean;
 }
 
-export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEntry[] }> {
+export async function getLeaderboardData(
+  viewer: SupportViewer,
+): Promise<{ leaderboard: LeaderboardEntry[] }> {
   const payments = await prisma.payment.findMany({
     where: { status: "ACTIVE" },
     select: {
@@ -42,7 +45,7 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
       donorPhoto: true,
       createdAt: true,
       userId: true,
-      user: { select: { fullName: true, photo: true } },
+      user: { select: { ...DONOR_ACCOUNT_SELECT, photo: true } },
     },
   });
 
@@ -80,7 +83,7 @@ export async function getLeaderboardData(): Promise<{ leaderboard: LeaderboardEn
     const amount =
       p.purpose === "MEMBERSHIP" ? splitPayment(p.amount, p.feeApplied ?? 0).surplus : p.amount;
     if (p.purpose === "MEMBERSHIP" && amount === 0) continue;
-    const named = p.anonymous ? null : attributedDonorName(p);
+    const named = p.anonymous ? null : attributedDonorName(p, viewer);
 
     if (p.userId && named) {
       const photoUrl = p.user?.photo ? `/api/files/member/${p.user.photo}` : null;
