@@ -64,6 +64,12 @@ export const activityRow = {
     open: "التسجيل مفتوح",
     closed: "التسجيل مغلق",
   },
+  regions: {
+    work: "ما يحتاج انتباهك",
+    filters: "تصفية الأنشطة",
+    list: "قائمة الأنشطة",
+  },
+  loadingList: "جارٍ تحميل الأنشطة",
   sections: {
     current: "جارية وقادمة",
     finished: (n: number) => `منتهية (${n})`,

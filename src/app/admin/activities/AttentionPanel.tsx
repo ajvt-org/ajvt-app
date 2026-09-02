@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import NumericRanges from "@/components/NumericRanges";
-import { api } from "@/lib/api";
 import { attentionHref, sortAttention, type AttentionRow } from "@/lib/activityAttention";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { activityAttention as texts } from "@/lib/texts";
@@ -41,31 +40,15 @@ function Row({ row }: { row: AttentionRow }) {
 }
 
 export default function AttentionPanel({
+  rows,
   newestFirst,
   onOrderChange,
 }: {
+  rows: AttentionRow[];
   newestFirst: boolean;
   onOrderChange: (newestFirst: boolean) => void;
 }) {
-  const [rows, setRows] = useState<AttentionRow[] | null>(null);
   const [open, setOpen] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    api
-      .get<{ waiting: AttentionRow[] }>("/api/admin/activities/attention")
-      .then((data) => {
-        if (alive) setRows(data.waiting ?? []);
-      })
-      .catch(() => {
-        if (alive) setRows([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  if (rows === null) return null;
 
   const waiting = sortAttention(rows, newestFirst);
 
