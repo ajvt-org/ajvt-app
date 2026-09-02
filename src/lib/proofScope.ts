@@ -1,3 +1,5 @@
+import { hasFullAccess } from "./adminRoles";
+
 export interface ProofScope {
   membership: boolean;
   activity: boolean;
@@ -5,9 +7,10 @@ export interface ProofScope {
 }
 
 export function proofScope(role: string): ProofScope {
+  const full = hasFullAccess(role);
   return {
-    membership: role === "SUPER" || role === "MEMBERS",
-    activity: role === "SUPER" || role === "ACTIVITIES",
-    donations: role === "SUPER",
+    membership: full || role === "MEMBERS",
+    activity: full || role === "ACTIVITIES",
+    donations: full,
   };
 }

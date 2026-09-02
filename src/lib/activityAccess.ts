@@ -1,13 +1,13 @@
-export const SCOPED_ROLE = "ACTIVITY";
+import { hasFullAccess } from "./adminRoles";
 
-const UNSCOPED_ROLES = ["SUPER", "ACTIVITIES"];
+export const SCOPED_ROLE = "ACTIVITY";
 
 export function isScopedRole(role: string): boolean {
   return role === SCOPED_ROLE;
 }
 
 export function seesEveryActivity(role: string): boolean {
-  return UNSCOPED_ROLES.includes(role);
+  return hasFullAccess(role) || role === "ACTIVITIES";
 }
 
 export function allowsActivity(role: string, attached: boolean): boolean {
