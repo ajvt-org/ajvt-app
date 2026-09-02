@@ -85,7 +85,10 @@ export default function AttentionPanel({
         </p>
       ) : (
         open && (
-          <div className="space-y-1.5">
+          <div
+            className="space-y-1.5 overflow-y-auto pe-1"
+            style={{ maxHeight: "15rem", overscrollBehavior: "contain" }}
+          >
             {waiting.map((row) => (
               <Row key={row.id} row={row} />
             ))}
