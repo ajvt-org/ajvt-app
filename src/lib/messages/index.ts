@@ -4,6 +4,7 @@ export { members, ageGroups, memberStatusLabels } from "./members";
 export { memberImportErrors, memberImportRow, memberImportRun } from "./memberImport";
 export { villages } from "./villages";
 export { accounts } from "./accounts";
+export { admins } from "./admins";
 export { money } from "./money";
 export { activities } from "./activities";
 export { tournament } from "./tournament";

@@ -20,6 +20,8 @@ import { paginate, pageCount } from "@/lib/listUrlState";
 import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
+import { hasFullAccess } from "@/lib/adminRoles";
+import { expensesPage } from "@/lib/texts";
 
 function toggleIn(set: Set<string>, key: string): Set<string> {
   const next = new Set(set);
@@ -94,12 +96,12 @@ function AdminExpensesPageInner() {
     ev.preventDefault();
     setFormError("");
     if (!form.label.trim()) {
-      setFormError("الوصف مطلوب");
+      setFormError(expensesPage.labelRequired);
       return;
     }
     const amount = Number(form.amount);
     if (!Number.isInteger(amount) || amount <= 0) {
-      setFormError("المبلغ يجب أن يكون رقماً صحيحاً موجباً");
+      setFormError(expensesPage.amountInvalid);
       return;
     }
 
@@ -127,7 +129,7 @@ function AdminExpensesPageInner() {
   }
 
   async function deleteExpense(id: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا المصروف؟")) return;
+    if (!confirm(expensesPage.confirmDelete)) return;
     setBusyId(id);
     try {
       await api.del(`/api/admin/expenses/${id}`);
@@ -167,7 +169,7 @@ function AdminExpensesPageInner() {
     <div className="admin-page space-y-5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">المصاريف والإيرادات</IconLabel>
+          <IconLabel name="banknote">{expensesPage.title}</IconLabel>
         </p>
         <button
           onClick={() => exportFinance(summary, expenses)}
@@ -178,7 +180,7 @@ function AdminExpensesPageInner() {
             border: "1px solid var(--mint-100)",
           }}
         >
-          <IconLabel name="download">تصدير</IconLabel>
+          <IconLabel name="download">{expensesPage.exportAction}</IconLabel>
         </button>
       </div>
 
@@ -195,7 +197,7 @@ function AdminExpensesPageInner() {
         onToggle={(method) => setExpandedMethods((prev) => toggleIn(prev, method))}
       />
 
-      {role === "SUPER" && summary && summary.unassigned.length > 0 && (
+      {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
         <UnassignedDonations
           rows={summary.unassigned}
           chosen={reassignValue}
@@ -213,7 +215,7 @@ function AdminExpensesPageInner() {
 
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="banknote">سجل المصاريف ({shownExpenses.length})</IconLabel>
+          <IconLabel name="banknote">{expensesPage.ledger(shownExpenses.length)}</IconLabel>
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -221,14 +223,14 @@ function AdminExpensesPageInner() {
             className="text-xs px-3 py-1.5 rounded-lg font-bold"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            <IconLabel name="tag">التصنيفات</IconLabel>
+            <IconLabel name="tag">{expensesPage.tags}</IconLabel>
           </button>
           <button
             onClick={openCreate}
             className="text-xs px-3 py-1.5 rounded-lg font-bold"
             style={{ background: "var(--mint-600)", color: "white" }}
           >
-            <IconLabel name="plus">إضافة مصروف</IconLabel>
+            <IconLabel name="plus">{expensesPage.addExpense}</IconLabel>
           </button>
         </div>
       </div>
@@ -243,7 +245,7 @@ function AdminExpensesPageInner() {
 
       <input
         type="text"
-        placeholder="بحث بالوصف أو المبلغ..."
+        placeholder={expensesPage.searchPlaceholder}
         value={filters.q}
         onChange={(e) => go({ ...filters, q: e.target.value })}
         className="input text-sm"
@@ -260,7 +262,7 @@ function AdminExpensesPageInner() {
       {tags.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-            تصفية:
+            {expensesPage.filterBy}
           </span>
           <FinanceTagChips
             tags={tags}

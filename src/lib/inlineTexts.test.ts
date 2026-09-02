@@ -128,6 +128,12 @@ const KEPT_CLEAN = [
   "src/lib/paymentReceiptServer.ts",
   "src/lib/receipts.ts",
   "src/lib/receiptsServer.ts",
+  "src/app/admin/tools/toolLinks.ts",
+  "src/app/admin/admins/page.tsx",
+  "src/components/admin/shell/NewAccountForm.tsx",
+  "src/app/api/admin/admins",
+  "src/app/admin/expenses/page.tsx",
+  "src/app/admin/quiz/ScoresPanel.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

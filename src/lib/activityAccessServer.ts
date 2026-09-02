@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { requireAdmin } from "./auth";
 import { ForbiddenError, NotFoundError } from "./errors";
 import { allowsActivity, isScopedRole, seesEveryActivity } from "./activityAccess";
+import { hasFullAccess } from "./adminRoles";
 import { activities as messages } from "./messages";
 
 export interface AdminSession {
@@ -39,7 +40,7 @@ export async function requireActivityAccess(activityId: string): Promise<AdminSe
 
 export async function requireActivityFinanceAccess(activityId: string): Promise<AdminSession> {
   const session = await requireAdmin();
-  if (session.role === "SUPER") return session;
+  if (hasFullAccess(session.role)) return session;
   if (isScopedRole(session.role) && (await isAttached(session.adminId, activityId))) {
     return session;
   }

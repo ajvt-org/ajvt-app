@@ -4,8 +4,10 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
-import { auth, common } from "@/lib/messages";
+import { admins as messages, auth, common } from "@/lib/messages";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
+import { SUPER_ROLE, isAdminRole, isOwner } from "@/lib/adminRoles";
+import { ForbiddenError } from "@/lib/errors";
 
 export const GET = withRoute("GET /api/admin/admins", async () => {
   await requireAdminRole("SUPER");
@@ -37,21 +39,19 @@ export const POST = withRoute("POST /api/admin/admins", async (req: NextRequest)
     return NextResponse.json({ error: common.allFieldsRequired }, { status: 400 });
   }
   if (username.trim().length > 30) {
-    return NextResponse.json(
-      { error: "اسم المستخدم طويل جداً (30 حرفاً كحد أقصى)" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: messages.usernameTooLong }, { status: 400 });
   }
   if (password.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json({ error: auth.passwordTooShort }, { status: 400 });
   }
-  const roleValue = ["SUPER", "MEMBERS", "ACTIVITIES", "QUIZ", "ACTIVITY"].includes(role)
-    ? role
-    : "SUPER";
+  const roleValue = isAdminRole(role) ? role : SUPER_ROLE;
+  if (isOwner(roleValue) && !isOwner(session.role)) {
+    throw new ForbiddenError(messages.ownerRoleReserved);
+  }
 
   const existing = await prisma.admin.findUnique({ where: { username: username.trim() } });
   if (existing) {
-    return NextResponse.json({ error: "اسم المستخدم مستخدم بالفعل" }, { status: 409 });
+    return NextResponse.json({ error: messages.usernameTaken }, { status: 409 });
   }
 
   const hashed = await bcrypt.hash(password, 12);

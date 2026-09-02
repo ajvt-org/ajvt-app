@@ -4,6 +4,7 @@ import { currentMemberships } from "@/lib/currentMembershipServer";
 import { requireUnscopedAdmin } from "@/lib/activityAccessServer";
 import { activityAttentionCount } from "@/lib/activityAttentionServer";
 import { withRoute } from "@/lib/route";
+import { hasFullAccess } from "@/lib/adminRoles";
 
 export const GET = withRoute("GET /api/admin/notifications/summary", async () => {
   const session = await requireUnscopedAdmin();
@@ -13,7 +14,7 @@ export const GET = withRoute("GET /api/admin/notifications/summary", async () =>
       (memberships) => memberships.filter((m) => m.status === "PENDING").length,
     ),
     activityAttentionCount(null),
-    session.role === "SUPER"
+    hasFullAccess(session.role)
       ? prisma.donation.count({ where: { status: "PENDING" } })
       : Promise.resolve(0),
   ]);
