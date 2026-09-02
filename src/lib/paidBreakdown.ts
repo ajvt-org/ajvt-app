@@ -28,6 +28,10 @@ export interface MembershipPaymentRow {
   year: number | null;
 }
 
+export function feeOnly(paid: PaidBreakdown | null): PaidBreakdown | null {
+  return paid === null ? null : { fee: paid.fee, support: 0, total: paid.fee };
+}
+
 export function paidForYear(rows: MembershipPaymentRow[], year: number): PaidBreakdown | null {
   const row = rows.find((r) => r.year === year);
   if (!row) return null;
