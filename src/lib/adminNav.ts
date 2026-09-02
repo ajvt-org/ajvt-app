@@ -2,24 +2,22 @@ import { hasFullAccess } from "./adminRoles";
 
 export const ALL_AREAS = null;
 
+export const MONEY_AREAS = {
+  payments: "/admin/payments",
+  receipts: "/admin/receipts",
+  expenses: "/admin/expenses",
+  treasury: "/admin/treasury",
+  report: "/admin/finance-report",
+  activityReport: "/admin/finance-activities",
+} as const;
+
 const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
+const SHARED_MONEY = [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses];
+
 const ROLE_AREAS: Record<string, string[] | null> = {
-  MEMBERS: [
-    "/admin/dashboard",
-    "/admin/payments",
-    "/admin/receipts",
-    "/admin/expenses",
-    "/admin/deleted",
-    ...OWN_ACCOUNT,
-  ],
-  ACTIVITIES: [
-    "/admin/activities",
-    "/admin/payments",
-    "/admin/receipts",
-    "/admin/expenses",
-    ...OWN_ACCOUNT,
-  ],
+  MEMBERS: ["/admin/dashboard", ...SHARED_MONEY, "/admin/deleted", ...OWN_ACCOUNT],
+  ACTIVITIES: ["/admin/activities", ...SHARED_MONEY, ...OWN_ACCOUNT],
   QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
   ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
 };
