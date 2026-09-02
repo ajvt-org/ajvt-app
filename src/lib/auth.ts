@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 import { HttpError, UnauthorizedError, ForbiddenError } from "./errors";
 import { isTokenOf } from "./tokenType";
 import { auth } from "./messages";
+import { hasFullAccess, isOwner } from "./adminRoles";
 
 if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -52,9 +53,15 @@ export async function requireAdmin() {
 
 export async function requireAdminRole(...allowed: string[]) {
   const session = await requireAdmin();
-  if (session.role !== "SUPER" && !allowed.includes(session.role)) {
+  if (!hasFullAccess(session.role) && !allowed.includes(session.role)) {
     throw new ForbiddenError();
   }
+  return session;
+}
+
+export async function requireOwner() {
+  const session = await requireAdmin();
+  if (!isOwner(session.role)) throw new ForbiddenError();
   return session;
 }
 

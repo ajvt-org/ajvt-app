@@ -4,6 +4,7 @@ import { isScopedRole } from "@/lib/activityAccess";
 import { proofScope } from "@/lib/proofScope";
 import { servePrivateUpload } from "@/lib/serveUpload";
 import { locateUpload, type ProofKind } from "@/lib/uploadFields";
+import { seesEverySupporterName } from "@/lib/supportPrivacy";
 
 function adminAllowed(role: string, kind: ProofKind): boolean {
   if (kind === "photo") return true;
@@ -40,6 +41,9 @@ export async function GET(
   return servePrivateUpload(filename, async (base) => {
     const match = await locateUpload(base);
     if (!match) return false;
+    if (match.confidential && !seesEverySupporterName({ role: admin?.role ?? null })) {
+      return !!userId && match.ownerId === userId;
+    }
     return (
       (!!admin && adminAllowed(admin.role, match.kind)) ||
       (match.kind === "photo" && !!userId) ||

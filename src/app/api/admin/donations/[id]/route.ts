@@ -8,22 +8,28 @@ import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
+import { ouguiya } from "@/lib/texts";
 import { resolveDonationActivity } from "@/lib/donationActivity";
-import { donorNameOnRecord } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
+import { viewerOf } from "@/lib/supportViewer";
+import { donationView } from "@/lib/donationView";
+import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
+import type { SupportViewer } from "@/lib/supportPrivacy";
 
-async function namedAccount(userId: string | null): Promise<string | null> {
+async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
   const account = await prisma.user.findUnique({
     where: { id: userId },
-    select: { fullName: true },
+    select: DONOR_ACCOUNT_SELECT,
   });
-  return account ? donorNameOnRecord({ donorName: null, user: account }) : null;
+  return account ? donorNameOnRecord({ donorName: null, userId, user: account }, viewer) : null;
 }
 
 export const PATCH = withRoute(
   "PATCH /api/admin/donations/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("SUPER");
+    const viewer = viewerOf(session);
     const { id } = await params;
     const {
       status,
@@ -101,7 +107,7 @@ export const PATCH = withRoute(
     const donation = await prisma.donation.update({
       where: { id },
       data,
-      include: { user: { select: { fullName: true } } },
+      include: { user: { select: DONOR_ACCOUNT_SELECT } },
     });
     await mirrorDonation(prisma, donationMirrorOf(donation, tagIds));
 
@@ -115,18 +121,30 @@ export const PATCH = withRoute(
       await logAction(
         session.username,
         status === "ACTIVE" ? "APPROVE_DONATION" : "REJECT_DONATION",
-        donorNameOnRecord({ donorName: existing.donorName, user: donation.user }),
+        logLabelFor(
+          donation,
+          donorNameOnRecord(
+            { donorName: existing.donorName, userId: donation.userId, user: donation.user },
+            viewer,
+          ),
+        ),
         { ...target, before: { status: existing.status }, after: { status: donation.status } },
       );
     }
     if (userId !== undefined) {
-      const wasNamed = await namedAccount(existing.userId);
-      const nowNamed = userId ? donorNameOnRecord(donation) : null;
-      const typed = donorNameOnRecord({ donorName: existing.donorName });
+      const wasNamed = await namedAccount(existing.userId, viewer);
+      const nowNamed = userId ? donorNameOnRecord(donation, viewer) : null;
+      const typed = donorNameOnRecord(
+        { donorName: existing.donorName, userId: donation.userId, user: donation.user },
+        viewer,
+      );
       await logAction(
         session.username,
         userId ? "LINK_DONATION_MEMBER" : "UNLINK_DONATION_MEMBER",
-        nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed),
+        logLabelFor(
+          donation,
+          nowNamed ? `${wasNamed ?? typed} → ${nowNamed}` : (wasNamed ?? typed),
+        ),
         {
           ...target,
           before: { userId: existing.userId },
@@ -143,21 +161,26 @@ export const PATCH = withRoute(
       paymentMethod !== undefined ||
       proof !== undefined
     ) {
-      await logAction(session.username, "UPDATE_DONATION", donorNameOnRecord(donation), {
-        ...target,
-        before: existing,
-        after: {
-          donorName: donation.donorName,
-          donorPhone: donation.donorPhone,
-          donorPhoto: donation.donorPhoto,
-          amount: donation.amount,
-          paymentMethod: donation.paymentMethod,
-          proof: donation.proof,
+      await logAction(
+        session.username,
+        "UPDATE_DONATION",
+        logLabelFor(donation, donorNameOnRecord(donation, viewer)),
+        {
+          ...target,
+          before: logSnapshotFor(donation, existing),
+          after: logSnapshotFor(donation, {
+            donorName: donation.donorName,
+            donorPhone: donation.donorPhone,
+            donorPhoto: donation.donorPhoto,
+            amount: donation.amount,
+            paymentMethod: donation.paymentMethod,
+            proof: donation.proof,
+          }),
         },
-      });
+      );
     }
 
-    return NextResponse.json({ donation });
+    return NextResponse.json({ donation: donationView(donation, viewer) });
   },
 );
 
@@ -165,9 +188,13 @@ export const DELETE = withRoute(
   "DELETE /api/admin/donations/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("SUPER");
+    const viewer = viewerOf(session);
     const { id } = await params;
 
-    const existing = await prisma.donation.findUnique({ where: { id } });
+    const existing = await prisma.donation.findUnique({
+      where: { id },
+      include: { user: { select: DONOR_ACCOUNT_SELECT } },
+    });
     if (!existing) {
       return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
     }
@@ -180,12 +207,18 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_DONATION",
-      `${donorNameOnRecord({ donorName: existing.donorName })} — ${existing.amount ?? 0} أوقية`,
+      logLabelFor(
+        existing,
+        `${donorNameOnRecord(
+          { donorName: existing.donorName, userId: existing.userId, user: existing.user },
+          viewer,
+        )} — ${ouguiya.amount(existing.amount ?? 0)}`,
+      ),
       {
         ...auditContext(session, req),
         targetType: "Donation",
         targetId: id,
-        before: existing,
+        before: logSnapshotFor(existing, existing),
       },
     );
 

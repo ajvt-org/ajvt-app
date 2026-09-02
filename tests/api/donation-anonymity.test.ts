@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import {
   resetDb,
   createUsers,
@@ -21,6 +22,8 @@ async function aGift(over: Record<string, unknown>) {
   await mirrorDonation(prisma, donationMirrorOf(donation));
   return donation;
 }
+
+const ADMIN = { role: SUPER_ROLE };
 
 describe("a giver's choice to stay unnamed", () => {
   beforeEach(async () => {
@@ -45,7 +48,7 @@ describe("a giver's choice to stay unnamed", () => {
   it("hides a named gift from the board once it is marked anonymous", async () => {
     await aGift({ anonymous: true, donorName: "أحمد سالم" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe(money.anonymousDonor);
     expect(leaderboard[0].anonymous).toBe(true);
   });
@@ -66,14 +69,14 @@ describe("a giver's choice to stay unnamed", () => {
       source: "SELF",
     });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe(money.anonymousDonor);
   });
 
   it("names a gift the giver did not ask to hide", async () => {
     await aGift({ anonymous: false, donorName: "أحمد سالم" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe("أحمد سالم");
     expect(leaderboard[0].anonymous).toBe(false);
   });
@@ -104,7 +107,7 @@ describe("a giver's choice to stay unnamed", () => {
     const payment = await prisma.payment.findUniqueOrThrow({ where: { id: donation.id } });
     expect(payment.anonymous).toBe(true);
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe(money.anonymousDonor);
   });
 
@@ -117,7 +120,7 @@ describe("a giver's choice to stay unnamed", () => {
       withId(donation.id),
     );
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     expect(leaderboard[0].name).toBe("أحمد سالم");
   });
 

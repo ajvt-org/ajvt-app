@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { getLeaderboardData, toPublicEntry, SUPPORTERS_PAGE_SIZE } from "@/lib/donationsServer";
 import { GET as BOARD } from "@/app/api/leaderboard/route";
 import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
@@ -44,6 +45,8 @@ async function reachedAt(paymentId: string, when: string) {
   });
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("the supporters board", () => {
   beforeEach(async () => {
     await resetDb();
@@ -54,7 +57,7 @@ describe("the supporters board", () => {
     await gift(500, { memberId: m.id, name: "محمد" });
     await gift(10000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(2);
     expect(leaderboard.find((e) => e.anonymous)?.total).toBe(10000);
@@ -66,7 +69,7 @@ describe("the supporters board", () => {
     await gift(500, { memberId: m.id, name: "محمد" });
     await gift(10000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.filter((e) => e.accountIds.includes(m.userId))).toHaveLength(2);
   });
@@ -76,7 +79,7 @@ describe("the supporters board", () => {
     await gift(4000, { memberId: m.id });
     await gift(6000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(1);
     expect(leaderboard[0].total).toBe(10000);
@@ -87,7 +90,7 @@ describe("the supporters board", () => {
     await gift(3000);
     await gift(7000);
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(2);
     expect(leaderboard.every((e) => e.anonymous)).toBe(true);
@@ -98,7 +101,7 @@ describe("the supporters board", () => {
     const m = await member("محمد");
     await gift(10000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard[0].name).toBe(ANON);
     expect(leaderboard[0].photoUrl).toBeNull();
@@ -110,7 +113,7 @@ describe("the supporters board", () => {
     await gift(9000);
     await gift(200, { name: "زائر" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.total)).toEqual([9000, 500, 200]);
     expect(leaderboard[0].anonymous).toBe(true);
@@ -121,7 +124,7 @@ describe("the supporters board", () => {
     await gift(500, { memberId: m.id, name: "محمد" });
     await gift(9999, { memberId: m.id, name: "محمد", status: "PENDING" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(1);
     expect(leaderboard[0].total).toBe(500);
@@ -131,7 +134,7 @@ describe("the supporters board", () => {
     const m = await member("محمد");
     await gift(10000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     const sent = leaderboard.map(toPublicEntry);
 
     expect(leaderboard[0].accountIds).toEqual([m.userId]);
@@ -151,7 +154,7 @@ describe("the supporters board", () => {
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(1);
     expect(leaderboard[0].total).toBe(900);
@@ -162,7 +165,7 @@ describe("the supporters board", () => {
     const { recordMembershipPayment } = await import("@/lib/membershipPaymentServer");
     await recordMembershipPayment(prisma, m.userId, 100, 100);
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(0);
   });
@@ -171,7 +174,7 @@ describe("the supporters board", () => {
     const m = await member("أبوبكر لمرابط");
     await gift(2000, { memberId: m.id, name: "ابو" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard[0].name).toBe("أبوبكر لمرابط");
   });
@@ -181,7 +184,7 @@ describe("the supporters board", () => {
     await gift(500, { memberId: m.id, name: "ابو" });
     await gift(300, { memberId: m.id, name: "أبوبكر" });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard).toHaveLength(1);
     expect(leaderboard[0].name).toBe("أبوبكر لمرابط");
@@ -192,7 +195,7 @@ describe("the supporters board", () => {
     const m = await member("أبوبكر لمرابط");
     await gift(2000, { memberId: m.id });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard[0].name).toBe(ANON);
   });
@@ -203,7 +206,7 @@ describe("the supporters board", () => {
     });
     await mirrorDonation(prisma, donationMirrorOf(donation));
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard[0].photoUrl).toBe("/api/files/donation/guest.webp");
   });
@@ -238,7 +241,7 @@ describe("the supporters board", () => {
     await reachedAt(early.id, "2026-01-01T00:00:00Z");
     await reachedAt(late.id, "2026-03-01T00:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
   });
@@ -249,7 +252,7 @@ describe("the supporters board", () => {
     await reachedAt(morning.id, "2026-01-01T08:00:00Z");
     await reachedAt(evening.id, "2026-01-01T20:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
   });
@@ -262,7 +265,7 @@ describe("the supporters board", () => {
     await reachedAt(topUp.id, "2026-06-01T00:00:00Z");
     await reachedAt(other.id, "2026-03-01T00:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.name)).toEqual(["سالم", "أحمد"]);
   });
@@ -283,7 +286,7 @@ describe("the supporters board", () => {
     });
     await reachedAt(fee.id, "2026-12-01T00:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم"]);
   });
@@ -292,8 +295,8 @@ describe("the supporters board", () => {
     for (let i = 0; i < 6; i++) await gift(500, { name: `داعم ${i}` });
     await prisma.payment.updateMany({ data: { createdAt: new Date("2026-01-01T00:00:00Z") } });
 
-    const first = await getLeaderboardData();
-    const second = await getLeaderboardData();
+    const first = await getLeaderboardData(ADMIN);
+    const second = await getLeaderboardData(ADMIN);
 
     expect(second.leaderboard.map((e) => e.name)).toEqual(first.leaderboard.map((e) => e.name));
   });
@@ -318,7 +321,7 @@ describe("the supporters board", () => {
     for (let i = 0; i < 4; i++) await gift(500, { name: `داعم ${i}` });
     await prisma.payment.updateMany({ data: { createdAt: new Date("2026-01-01T00:00:00Z") } });
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.position)).toEqual([1, 2, 3, 4]);
   });
@@ -330,7 +333,7 @@ describe("the supporters board", () => {
     await reachedAt(early.id, "2026-01-01T00:00:00Z");
     await reachedAt(late.id, "2026-02-01T00:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.rank)).toEqual([1, 1, 3]);
     expect(leaderboard.map((e) => e.name)).toEqual(["أحمد", "سالم", "خديجة"]);
@@ -342,7 +345,7 @@ describe("the supporters board", () => {
     await reachedAt(early.id, "2026-01-01T00:00:00Z");
     await reachedAt(late.id, "2026-02-01T00:00:00Z");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.position)).toEqual([1, 2]);
   });

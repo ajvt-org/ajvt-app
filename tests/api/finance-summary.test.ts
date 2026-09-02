@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { getFinanceSummary } from "@/lib/financeServer";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { donationMirrorOf, mirrorDonation } from "@/lib/paymentMirror";
@@ -30,6 +31,8 @@ async function gift(amount: number, opts: { name?: string | null; method?: strin
   return donation;
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("the finance summary", () => {
   beforeEach(async () => {
     await resetDb();
@@ -39,7 +42,7 @@ describe("the finance summary", () => {
     const m = await member("محمد");
     await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.totalRevenue).toBe(1000);
     expect(summary.byMethod["بنكيلي"]).toBe(1000);
@@ -51,7 +54,7 @@ describe("the finance summary", () => {
     const m = await member("محمد");
     await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.days).toHaveLength(1);
     expect(summary.days[0].total).toBe(1000);
@@ -67,7 +70,7 @@ describe("the finance summary", () => {
     const m = await member("محمد");
     await recordMembershipPayment(prisma, m.userId, 100, 100);
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.totalRevenue).toBe(100);
     expect(summary.byMethodDetail["بنكيلي"].daem).toEqual([]);
@@ -77,13 +80,13 @@ describe("the finance summary", () => {
     const m = await member("محمد", "PENDING");
     await recordMembershipPayment(prisma, m.userId, 1000, 100);
 
-    expect((await getFinanceSummary()).totalRevenue).toBe(0);
+    expect((await getFinanceSummary(ADMIN)).totalRevenue).toBe(0);
   });
 
   it("keeps an anonymous gift out of the named list but inside the total", async () => {
     await gift(500, { method: "السداد" });
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.totalRevenue).toBe(500);
     expect(summary.byMethodDetail["السداد"].anonymousTotal).toBe(500);
@@ -93,7 +96,7 @@ describe("the finance summary", () => {
   it("lists a gift with no method by its donation id, which is what assigns one", async () => {
     const donation = await gift(500, { name: "زائر" });
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.unassigned).toEqual([{ id: donation.id, name: "زائر", amount: 500 }]);
   });
@@ -103,7 +106,7 @@ describe("the finance summary", () => {
     await recordMembershipPayment(prisma, m.userId, 1000, 100);
     await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
 
-    const summary = await getFinanceSummary(30);
+    const summary = await getFinanceSummary(ADMIN, 30);
 
     expect(summary.totalRevenue).toBe(1000);
     expect(summary.byMethod["بنكيلي"]).toBe(1000);
@@ -117,7 +120,7 @@ describe("the finance summary", () => {
     const donation = await gift(500, { name: "زائر" });
     await prisma.payment.updateMany({ data: { createdAt: new Date("2020-01-01T12:00:00Z") } });
 
-    const summary = await getFinanceSummary(30);
+    const summary = await getFinanceSummary(ADMIN, 30);
 
     expect(summary.unassigned).toEqual([{ id: donation.id, name: "زائر", amount: 500 }]);
   });
@@ -127,7 +130,7 @@ describe("the finance summary", () => {
     await gift(200, { name: "زائر", method: "السداد" });
     await gift(100, { name: "زائر", method: "بنكيلي" });
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.byMethodDetail["السداد"].daem).toEqual([{ name: "زائر", amount: 500 }]);
     expect(summary.byMethodDetail["بنكيلي"].daem).toEqual([{ name: "زائر", amount: 100 }]);
@@ -136,7 +139,7 @@ describe("the finance summary", () => {
   it("names an unnamed giver on the day list the way the board does", async () => {
     await gift(500, { method: "السداد" });
 
-    const summary = await getFinanceSummary();
+    const summary = await getFinanceSummary(ADMIN);
 
     expect(summary.allRecords[0].name).toBe(ANON);
   });

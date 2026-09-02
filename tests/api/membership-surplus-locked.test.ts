@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { getLeaderboardData } from "@/lib/donationsServer";
 import { resetDb, createUsers, makeMember } from "./helpers";
@@ -18,6 +19,8 @@ async function aMemberWhoGaveMore() {
   return { member };
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("the surplus of a membership payment", () => {
   beforeEach(async () => {
     await resetDb();
@@ -26,7 +29,7 @@ describe("the surplus of a membership payment", () => {
   it("counts once on the board, as support and not as the fee", async () => {
     const { member } = await aMemberWhoGaveMore();
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
     const row = leaderboard.find((e) => e.accountIds.includes(member.userId));
 
     expect(row?.total).toBe(1900);

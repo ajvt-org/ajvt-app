@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { splitPayment } from "@/lib/membershipPayment";
-import { publicDonorName } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, publicDonorName } from "@/lib/donorName";
+import {
+  seesEverySupporterName,
+  seesPaymentIdentity,
+  type SupportViewer,
+} from "@/lib/supportPrivacy";
 import { nameOf } from "@/lib/person";
 
 const UNSPECIFIED_METHOD = "غير محدد";
@@ -40,7 +45,12 @@ interface DetailRow {
 
 const byAmountDesc = (a: NamedEntry, b: NamedEntry) => b.amount - a.amount;
 
-export async function getFinanceSummary(recentDays = 30, activityId?: string) {
+export async function getFinanceSummary(
+  viewer: SupportViewer,
+  recentDays = 30,
+  activityId?: string,
+) {
+  const everyName = seesEverySupporterName(viewer);
   const scope = activityId !== undefined ? { activityId } : {};
   const activity = activityId ?? null;
 
@@ -59,7 +69,8 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         createdAt: true,
         anonymous: true,
         donorName: true,
-        user: { select: { fullName: true } },
+        userId: true,
+        user: { select: DONOR_ACCOUNT_SELECT },
       },
     }),
     prisma.payment.groupBy({
@@ -75,7 +86,8 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         amount: true,
         anonymous: true,
         donorName: true,
-        user: { select: { fullName: true } },
+        userId: true,
+        user: { select: DONOR_ACCOUNT_SELECT },
       },
       orderBy: { createdAt: "asc" },
     }),
@@ -88,7 +100,9 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
                     THEN p."amount" - LEAST(p."amount", COALESCE(p."feeApplied", 0))
                     ELSE p."amount" END AS support,
                u."fullName" AS "memberName",
-               CASE WHEN p."anonymous" THEN NULL ELSE COALESCE(
+               COALESCE(u."supportNameConfidential", false) AS confidential,
+               CASE WHEN p."anonymous" OR (COALESCE(u."supportNameConfidential", false) AND NOT ${everyName}::boolean)
+                    THEN NULL ELSE COALESCE(
                  NULLIF(BTRIM(u."fullName"), ''),
                  NULLIF(BTRIM(p."donorName"), '')
                ) END AS "supporterName"
@@ -97,8 +111,12 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
         WHERE p."status" = 'ACTIVE'
           AND (${activity}::text IS NULL OR p."activityId" = ${activity}::text)
       )
-      SELECT method, 'intisab' AS kind, "memberName" AS name, SUM(fee)::int AS amount
-      FROM parts WHERE fee > 0 GROUP BY method, "memberName"
+      SELECT method, 'intisab' AS kind,
+             CASE WHEN confidential AND support > 0 AND NOT ${everyName}::boolean
+                  THEN NULL ELSE "memberName" END AS name,
+             SUM(fee)::int AS amount
+      FROM parts WHERE fee > 0
+      GROUP BY method, confidential, support > 0, "memberName"
       UNION ALL
       SELECT method, 'daem' AS kind, "supporterName" AS name, SUM(support)::int AS amount
       FROM parts WHERE support > 0 AND "supporterName" IS NOT NULL GROUP BY method, "supporterName"
@@ -153,13 +171,14 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   for (const p of payments) {
     if (p.purpose !== "MEMBERSHIP") {
-      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p), "دعم");
+      addRecord(p.amount, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
       continue;
     }
     const { fee, surplus } = splitPayment(p.amount, p.feeApplied ?? 0);
-    addRecord(fee, p.method, p.createdAt, p.user ? nameOf(p.user) : "", "انتساب");
+    const named = p.user && seesPaymentIdentity(viewer, p) ? nameOf(p.user) : "";
+    addRecord(fee, p.method, p.createdAt, named, "انتساب");
     if (surplus > 0) {
-      addRecord(surplus, p.method, p.createdAt, publicDonorName(p), "دعم");
+      addRecord(surplus, p.method, p.createdAt, publicDonorName(p, viewer), "دعم");
     }
   }
 
@@ -174,7 +193,7 @@ export async function getFinanceSummary(recentDays = 30, activityId?: string) {
 
   const unassigned = unassignedRows.map((p) => ({
     id: p.id,
-    name: publicDonorName(p),
+    name: publicDonorName(p, viewer),
     amount: p.amount,
   }));
 

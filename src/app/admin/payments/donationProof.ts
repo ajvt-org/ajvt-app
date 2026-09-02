@@ -1,16 +1,14 @@
-import { donorNameOnRecord } from "@/lib/donorName";
 import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
 
 export function proofFromDonation(
   donation: DonationResponse["donation"],
   activities: ActivityOption[],
-  account?: { fullName: string } | null,
 ): Proof {
   return {
     id: donation.id,
     kind: "DONATION",
-    proof: donation.proof,
-    memberName: donorNameOnRecord({ donorName: donation.donorName, user: account ?? null }),
+    proof: donation.proof ?? null,
+    memberName: donation.memberName,
     activityId: donation.activityId,
     activityTitle: activities.find((a) => a.id === donation.activityId)?.title ?? null,
     amount: donation.amount,
@@ -20,9 +18,9 @@ export function proofFromDonation(
     memberId: donation.memberId,
     userId: donation.userId,
     anonymous: donation.anonymous,
-    donorName: donation.donorName,
-    donorPhone: donation.donorPhone,
-    donorPhoto: donation.donorPhoto,
+    donorName: donation.donorName ?? null,
+    donorPhone: donation.donorPhone ?? null,
+    donorPhoto: donation.donorPhoto ?? null,
     uploadedAt: donation.updatedAt,
     submittedAt: donation.createdAt,
   };

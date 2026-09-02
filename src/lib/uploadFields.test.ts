@@ -110,7 +110,11 @@ describe("locateUpload", () => {
   it("takes the first match, so a member photo wins over a later column", async () => {
     state.row = { id: "u1", userId: "u1", purpose: "DONATION" };
 
-    expect(await locateUpload("shared.webp")).toEqual({ kind: "photo", ownerId: "u1" });
+    expect(await locateUpload("shared.webp")).toEqual({
+      kind: "photo",
+      ownerId: "u1",
+      confidential: false,
+    });
   });
 
   it("asks every serving column and no other", async () => {
@@ -138,13 +142,48 @@ describe("payment proofs", () => {
   ])("reads a %s payment as a %s proof", async (purpose, kind) => {
     state.row = { purpose, userId: "u1" };
 
-    expect(await locate("proof.webp")).toEqual({ kind, ownerId: "u1" });
+    expect(await locate("proof.webp")).toEqual({ kind, ownerId: "u1", confidential: false });
   });
 
   it("keeps a payment with no account admin only", async () => {
     state.row = { purpose: "DONATION", userId: null };
 
-    expect(await locate("proof.webp")).toEqual({ kind: "donations", ownerId: null });
+    expect(await locate("proof.webp")).toEqual({
+      kind: "donations",
+      ownerId: null,
+      confidential: false,
+    });
+  });
+
+  it("reports the proof of a confidential supporter as confidential", async () => {
+    state.row = {
+      purpose: "DONATION",
+      amount: 5000,
+      userId: "u1",
+      user: { supportNameConfidential: true },
+    };
+
+    expect(await locate("proof.webp")).toEqual({
+      kind: "donations",
+      ownerId: "u1",
+      confidential: true,
+    });
+  });
+
+  it("does not report a membership payment at the fee as confidential", async () => {
+    state.row = {
+      purpose: "MEMBERSHIP",
+      amount: 100,
+      feeApplied: 100,
+      userId: "u1",
+      user: { supportNameConfidential: true },
+    };
+
+    expect(await locate("proof.webp")).toEqual({
+      kind: "membership",
+      ownerId: "u1",
+      confidential: false,
+    });
   });
 });
 

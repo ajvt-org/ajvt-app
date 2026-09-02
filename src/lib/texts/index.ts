@@ -19,9 +19,11 @@ export { activityReport } from "./activityReport";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
 export { pendingAgeGroups } from "./ageGroups";
+export { adminAccounts } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
 export { adminTabs } from "./adminNav";
+export { adminTools } from "./adminTools";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { daysTab } from "./daysTab";
@@ -29,7 +31,7 @@ export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationActions, donationEdit } from "./donationEdit";
-export { expenseForm } from "./expenses";
+export { expenseForm, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities } from "./landing";
@@ -55,6 +57,7 @@ export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { quizBoard } from "./quizBoard";
+export { quizScores } from "./quizScores";
 export { settingsForm, settingsPage } from "./settings";
 export { quizRecap } from "./quizRecap";
 export {
@@ -65,6 +68,7 @@ export {
   receiptVerify,
 } from "./receipt";
 export { signUp } from "./signUp";
+export { supportPrivacy } from "./supportPrivacy";
 export { supporters } from "./supporters";
 export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";

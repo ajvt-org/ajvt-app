@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import {
   resetDb,
   post,
@@ -50,6 +51,8 @@ const surplus = async (memberId: string) => {
   return amount > 0 ? { amount, status: payment.status } : null;
 };
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("the fee and the surplus are worked out from one payment", () => {
   beforeEach(async () => {
     await resetDb();
@@ -78,7 +81,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
 
     expect((await surplus(member.userId))?.status).toBe("PENDING");
     const { getLeaderboardData } = await import("@/lib/donationsServer");
-    expect((await getLeaderboardData()).leaderboard).toHaveLength(0);
+    expect((await getLeaderboardData(ADMIN)).leaderboard).toHaveLength(0);
   });
 
   it("publishes the surplus once the membership is approved", async () => {
@@ -104,7 +107,7 @@ describe("the fee and the surplus are worked out from one payment", () => {
 
     expect((await surplus(member.userId))?.status).toBe("REJECTED");
     const { getLeaderboardData } = await import("@/lib/donationsServer");
-    expect((await getLeaderboardData()).leaderboard).toHaveLength(0);
+    expect((await getLeaderboardData(ADMIN)).leaderboard).toHaveLength(0);
   });
 
   it("leaves no surplus when the member paid exactly the fee", async () => {

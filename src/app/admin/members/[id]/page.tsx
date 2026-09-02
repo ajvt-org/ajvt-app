@@ -18,6 +18,7 @@ import MemberDecision from "./MemberDecision";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
+import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
 import { memberPage as texts, ouguiya, registrationStatusLabels } from "@/lib/texts";
@@ -86,7 +87,7 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
     );
   }
 
-  const { member, history } = data;
+  const { member, supportPrivacy, history } = data;
 
   return (
     <div className="admin-page space-y-4">
@@ -165,6 +166,15 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         locked={member.photoLocked}
         onChanged={load}
       />
+
+      {supportPrivacy && (
+        <SupportPrivacyCard
+          memberId={member.id}
+          confidential={supportPrivacy.confidential}
+          namedEntries={supportPrivacy.namedEntries}
+          onChanged={load}
+        />
+      )}
 
       <ProfileSection icon="wallet" title={texts.payment}>
         <dl className="text-sm space-y-1">

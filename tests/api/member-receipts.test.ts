@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import { receiptsForAccount } from "@/lib/receiptsServer";
 import { resetDb, createUsers, makeMember } from "./helpers";
 
@@ -30,6 +31,8 @@ async function aReceipt(over: Record<string, unknown>) {
   });
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("the receipts a person can see", () => {
   beforeEach(async () => {
     await resetDb();
@@ -39,14 +42,14 @@ describe("the receipts a person can see", () => {
     const { user } = await aPerson("محمد ولد أحمد");
     await aReceipt({ userId: user.id });
 
-    expect(await receiptsForAccount(user.id)).toHaveLength(1);
+    expect(await receiptsForAccount(user.id, ADMIN)).toHaveLength(1);
   });
 
   it("finds one carrying both the account and the membership row", async () => {
     const { user } = await aPerson("أحمد سالم");
     await aReceipt({ userId: user.id });
 
-    expect(await receiptsForAccount(user.id)).toHaveLength(1);
+    expect(await receiptsForAccount(user.id, ADMIN)).toHaveLength(1);
   });
 
   it("does not hand over someone else's", async () => {
@@ -54,14 +57,14 @@ describe("the receipts a person can see", () => {
     const theirs = await aPerson("عبد الله ولد سالم");
     await aReceipt({ userId: theirs.user.id });
 
-    expect(await receiptsForAccount(mine.user.id)).toEqual([]);
+    expect(await receiptsForAccount(mine.user.id, ADMIN)).toEqual([]);
   });
 
   it("leaves out a withdrawn receipt", async () => {
     const { user } = await aPerson("محمد الأمين");
     await aReceipt({ userId: user.id, status: "VOID" });
 
-    expect(await receiptsForAccount(user.id)).toEqual([]);
+    expect(await receiptsForAccount(user.id, ADMIN)).toEqual([]);
   });
 
   it("gathers every receipt the account carries", async () => {
@@ -69,6 +72,6 @@ describe("the receipts a person can see", () => {
     await aReceipt({ userId: user.id });
     await aReceipt({ userId: user.id });
 
-    expect(await receiptsForAccount(user.id)).toHaveLength(2);
+    expect(await receiptsForAccount(user.id, ADMIN)).toHaveLength(2);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { OWNER_ROLE, SUPER_ROLE } from "./adminRoles";
 import {
   isDataset,
   memberRows,
@@ -92,24 +93,51 @@ describe("donationRows", () => {
     status: "ACTIVE",
     source: "PUBLIC",
     createdAt: new Date("2026-03-04T09:30:00.000Z"),
-    user: { fullName: "محمد" },
+    userId: "u1",
+    user: { fullName: "محمد", supportNameConfidential: false },
     tags: [{ name: "القافلة الصحية" }, { name: "مصاريف عامة" }],
   };
+  const confidential = {
+    ...donation,
+    donorName: "الكريم",
+    userId: "u2",
+    user: { fullName: "الكريم", supportNameConfidential: true },
+  };
+  const ADMIN = { role: SUPER_ROLE };
+  const OWNER = { role: OWNER_ROLE };
 
   it("lines up with its headers", () => {
-    expect(donationRows([donation])[0]).toHaveLength(DONATION_HEADERS.length);
+    expect(donationRows([donation], ADMIN)[0]).toHaveLength(DONATION_HEADERS.length);
   });
 
   it("joins the tags into one cell", () => {
-    expect(donationRows([donation])[0][7]).toBe("القافلة الصحية / مصاريف عامة");
+    expect(donationRows([donation], ADMIN)[0][7]).toBe("القافلة الصحية / مصاريف عامة");
   });
 
   it("names an anonymous giver rather than leaving it blank", () => {
-    expect(donationRows([{ ...donation, donorName: null, user: null }])[0][0]).toBe("فاعل خير");
+    expect(
+      donationRows([{ ...donation, donorName: null, userId: null, user: null }], ADMIN)[0][0],
+    ).toBe("فاعل خير");
   });
 
   it("exports the account name over the name typed onto a linked gift", () => {
-    expect(donationRows([{ ...donation, donorName: "ابو" }])[0][0]).toBe("محمد");
+    expect(donationRows([{ ...donation, donorName: "ابو" }], ADMIN)[0][0]).toBe("محمد");
+  });
+
+  it("exports neither the name, the phone nor the linked account of a confidential giver", () => {
+    const row = donationRows([confidential], ADMIN)[0];
+
+    expect(row[0]).toBe("فاعل خير");
+    expect(row[1]).toBe("");
+    expect(row[6]).toBe("");
+  });
+
+  it("keeps his amount in the export", () => {
+    expect(donationRows([confidential], ADMIN)[0][2]).toBe(500);
+  });
+
+  it("exports his name for the role that holds the promise", () => {
+    expect(donationRows([confidential], OWNER)[0][0]).toBe("الكريم");
   });
 });
 

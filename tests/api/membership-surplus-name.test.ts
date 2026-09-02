@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { SUPER_ROLE } from "@/lib/adminRoles";
 import {
   resetDb,
   post,
@@ -46,6 +47,8 @@ function changeVisibility(userId: string, anonymous: boolean) {
   );
 }
 
+const ADMIN = { role: SUPER_ROLE };
+
 describe("who the membership surplus is credited to", () => {
   beforeEach(async () => {
     await resetDb();
@@ -77,7 +80,7 @@ describe("who the membership surplus is credited to", () => {
     const member = await joinAndApprove({ surplusAnonymous: true });
     const { getLeaderboardData } = await import("@/lib/donationsServer");
 
-    const { leaderboard } = await getLeaderboardData();
+    const { leaderboard } = await getLeaderboardData(ADMIN);
 
     expect(leaderboard.map((e) => e.name)).not.toContain("محمد ولد أحمد");
     expect(leaderboard.some((e) => e.anonymous && e.total === 400)).toBe(true);

@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { AUDIT_PAGE_SIZE, readAuditFilters, readPage } from "@/lib/auditFilters";
+import { seesEverySupporterName } from "@/lib/supportPrivacy";
+import { viewerOf } from "@/lib/supportViewer";
+import { confidentialNames } from "@/lib/supportPrivacyServer";
+import { scrubNames } from "@/lib/auditLogRedaction";
 import type { Prisma } from "@prisma/client";
 
 function dayRange(from: string, to: string) {
@@ -40,10 +44,12 @@ async function choices() {
 }
 
 export const GET = withRoute("GET /api/admin/audit-log", async (req: NextRequest) => {
-  await requireAdminRole("SUPER");
+  const session = await requireAdminRole("SUPER");
   const params = req.nextUrl.searchParams;
   const where = buildWhere(params);
   const page = readPage(params);
+
+  const withheld = seesEverySupporterName(viewerOf(session)) ? [] : await confidentialNames();
 
   const [logs, total, options] = await Promise.all([
     prisma.auditLog.findMany({
@@ -56,5 +62,11 @@ export const GET = withRoute("GET /api/admin/audit-log", async (req: NextRequest
     choices(),
   ]);
 
-  return NextResponse.json({ logs, total, page, pageSize: AUDIT_PAGE_SIZE, ...options });
+  return NextResponse.json({
+    logs: logs.map((log) => scrubNames(log, withheld)),
+    total,
+    page,
+    pageSize: AUDIT_PAGE_SIZE,
+    ...options,
+  });
 });

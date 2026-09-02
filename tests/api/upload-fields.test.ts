@@ -62,6 +62,7 @@ describe("the upload field registry", () => {
 
     expect(await locateUpload("proof.webp")).toEqual({
       kind: "membership",
+      confidential: false,
       ownerId: member.userId,
     });
   });
