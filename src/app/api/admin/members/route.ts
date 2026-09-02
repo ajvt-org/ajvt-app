@@ -4,12 +4,15 @@ import { requireAdminRole } from "@/lib/auth";
 import { sendMatchReminders, sendTeamChoiceReminders } from "@/lib/tournamentNotify";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { paidForYear } from "@/lib/paidBreakdown";
 import { byReviewOrder, latestByAccount } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, withPerson } from "@/lib/person";
+import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
+import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
+import { viewerOf } from "@/lib/supportViewer";
 
 export const GET = withRoute("GET /api/admin/members", async () => {
-  await requireAdminRole("MEMBERS");
+  const session = await requireAdminRole("MEMBERS");
+  const viewer = viewerOf(session);
   sendMatchReminders().catch((err) => logger.error("match.reminders.error", err));
   sendTeamChoiceReminders().catch((err) => logger.error("team.choice.reminders.error", err));
 
@@ -27,6 +30,7 @@ export const GET = withRoute("GET /api/admin/members", async () => {
       user: {
         select: {
           ...PERSON_WITH_PHONE_SELECT,
+          ...CONFIDENTIAL_SELECT,
           registrations: {
             select: { activityId: true, activity: { select: { id: true, title: true } } },
           },
@@ -44,8 +48,10 @@ export const GET = withRoute("GET /api/admin/members", async () => {
   return NextResponse.json({
     members: current.map((membership) => {
       const { year, user, userId, ...rest } = membership;
-      const { payments, registrations, ...account } = user;
-      const paid = paidForYear(payments, year);
+      const { payments, registrations, supportNameConfidential, ...account } = user;
+      const named = seesSupporterName(viewer, { userId, user: { supportNameConfidential } });
+      const banked = paidForYear(payments, year);
+      const paid = named ? banked : feeOnly(banked);
       return {
         ...withPerson({ ...rest, id: userId, userId, membershipYear: year, user: account }),
         registrations,
