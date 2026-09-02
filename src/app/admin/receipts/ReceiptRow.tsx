@@ -53,7 +53,7 @@ export default function ReceiptRow({
             <IconLabel name="download">{receiptAdmin.download}</IconLabel>
           </button>
         )}
-        {!voided && (
+        {!voided && receipt.token && (
           <button className="btn btn-danger btn-sm text-xs ms-auto" onClick={onVoid}>
             <IconLabel name="ban">{receiptAdmin.voidAction}</IconLabel>
           </button>
