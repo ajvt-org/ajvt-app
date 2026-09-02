@@ -111,6 +111,8 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/PlayersTab.tsx",
   "src/components/MemberCard.tsx",
   "src/components/SupportersTable.tsx",
+  "src/components/PaidAmountRows.tsx",
+  "src/components/SurplusVisibility.tsx",
   "src/app/(member)/leaderboard/page.tsx",
   "src/app/(member)/activities/[id]/MatchesPanel.tsx",
   "src/app/(member)/activities/[id]/tournamentPanels.tsx",

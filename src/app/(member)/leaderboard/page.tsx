@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 import SupportersTable from "@/components/SupportersTable";
 import IconLabel from "@/components/IconLabel";
 import { supporters } from "@/lib/texts";
+import Money from "@/components/Money";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function LeaderboardPage() {
                   </div>
                 </div>
                 <span className="font-black shrink-0" style={{ color: "var(--mint-700)" }}>
-                  {supporters.amount(entry.total)}
+                  <Money value={entry.total} />
                 </span>
               </div>
             ))}

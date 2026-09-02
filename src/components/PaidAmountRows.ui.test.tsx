@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PaidAmountRows from "./PaidAmountRows";
+import { money } from "@/lib/money";
+import { paidAmount as texts } from "@/lib/texts/paidAmount";
 
-const Row = ({ label, value }: { label: string; value: string }) => (
+const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div>
     <span>{label}</span>
     <span>{value}</span>
@@ -17,28 +19,30 @@ describe("PaidAmountRows", () => {
   });
 
   it("shows a single line for a member who paid only the fee", () => {
-    render(<PaidAmountRows paidAmount={100} supportAmount={0} Row={Row} />);
+    const { container } = render(<PaidAmountRows paidAmount={100} supportAmount={0} Row={Row} />);
 
-    expect(screen.getByText("المبلغ المسدد")).toBeDefined();
-    expect(screen.getByText("100 أوقية")).toBeDefined();
-    expect(screen.queryByText("مبلغ الدعم")).toBeNull();
+    expect(screen.getByText(texts.paid)).toBeDefined();
+    expect(container.textContent).toContain(money(100));
+    expect(screen.queryByText(texts.support)).toBeNull();
   });
 
   it("splits the fee from the support and totals them", () => {
-    render(<PaidAmountRows paidAmount={100} supportAmount={2000} Row={Row} />);
+    const { container } = render(
+      <PaidAmountRows paidAmount={100} supportAmount={2000} Row={Row} />,
+    );
 
-    expect(screen.getByText("رسوم الاشتراك")).toBeDefined();
-    expect(screen.getByText("100 أوقية")).toBeDefined();
-    expect(screen.getByText("مبلغ الدعم")).toBeDefined();
-    expect(screen.getByText("2000 أوقية")).toBeDefined();
-    expect(screen.getByText("إجمالي ما دُفع")).toBeDefined();
-    expect(screen.getByText("2100 أوقية")).toBeDefined();
+    expect(screen.getByText(texts.fee)).toBeDefined();
+    expect(container.textContent).toContain(money(100));
+    expect(screen.getByText(texts.support)).toBeDefined();
+    expect(container.textContent).toContain(money(2000));
+    expect(screen.getByText(texts.total)).toBeDefined();
+    expect(container.textContent).toContain(money(2100));
   });
 
   it("never shows the member a total below what they were charged", () => {
-    render(<PaidAmountRows paidAmount={100} supportAmount={-50} Row={Row} />);
+    const { container } = render(<PaidAmountRows paidAmount={100} supportAmount={-50} Row={Row} />);
 
-    expect(screen.getByText("100 أوقية")).toBeDefined();
-    expect(screen.queryByText("مبلغ الدعم")).toBeNull();
+    expect(container.textContent).toContain(money(100));
+    expect(screen.queryByText(texts.support)).toBeNull();
   });
 });
