@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { formatActivityDates } from "@/lib/activityDates";
@@ -15,15 +16,18 @@ import { daysTab } from "@/lib/texts";
 
 function RestInserter({ onInsert, busy }: { onInsert: () => void; busy: boolean }) {
   return (
-    <div className="flex justify-center -my-1">
+    <div className="flex items-center gap-2 -my-1">
+      <span className="sep flex-1" />
       <button
         onClick={onInsert}
         disabled={busy}
-        className="text-xs px-3 py-1 rounded-full font-bold"
-        style={{ background: "var(--cream)", color: "#b45309", border: "1px dashed #fcd34d" }}
+        aria-label={daysTab.addRestHere}
+        title={daysTab.addRestHere}
+        className="btn btn-sm btn-icon btn-ghost"
       >
-        <IconLabel name="plus">{daysTab.addRestHere}</IconLabel>
+        <Icon name="plus" size={16} />
       </button>
+      <span className="sep flex-1" />
     </div>
   );
 }
