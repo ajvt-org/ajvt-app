@@ -49,7 +49,6 @@ export const receiptAdmin = {
   yearLabel: "سنة الإصدار",
   issuedBy: "أصدره",
   statusVoid: "ملغى",
-  statusActive: "ساري",
   yearFilter: "السنة",
   allYears: "كل السنوات",
   officersMissing: "أضف اسم الأمين العام ومسؤول المالية في الإعدادات ليظهرا على الوصل.",
