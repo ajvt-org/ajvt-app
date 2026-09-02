@@ -69,7 +69,7 @@ describe("the receipts list and a confidential supporter", () => {
 
     const [row] = await listed();
 
-    expect(row.token).toBe("");
+    expect("token" in row).toBe(false);
   });
 
   it("names him on the list for the role that holds the promise", async () => {
@@ -80,7 +80,7 @@ describe("the receipts list and a confidential supporter", () => {
     const [row] = await listed();
 
     expect(row.payerName).toBe(GIVER);
-    expect(row.token).not.toBe("");
+    expect(row.token).toBeTruthy();
   });
 
   it("leaves his own receipt correct at its token, which is his proof of payment", async () => {
@@ -126,6 +126,6 @@ describe("the receipts list and a confidential supporter", () => {
     const [row] = await listed();
 
     expect(row.payerName).toBe("عادي ولد عادي");
-    expect(row.token).not.toBe("");
+    expect(row.token).toBeTruthy();
   });
 });

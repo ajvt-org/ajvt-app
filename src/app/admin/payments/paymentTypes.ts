@@ -20,7 +20,7 @@ export interface Proof {
   donorPhone?: string | null;
   donorPhoto?: string | null;
   tags?: FinanceTag[];
-  receipt?: { number: string; status: string; token: string } | null;
+  receipt?: { number: string; status: string; token?: string } | null;
   uploadedAt: string;
   submittedAt: string;
 }
