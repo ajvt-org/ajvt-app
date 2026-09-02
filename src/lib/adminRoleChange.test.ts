@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { touchesOwnerRole, strandsOwnerRole, leavesScope } from "./adminRoleChange";
+import { touchesOwnerRole, strandsOwnerRole, leavesScope, settableRoles } from "./adminRoleChange";
 import { OWNER_ROLE, SUPER_ROLE } from "./adminRoles";
 import { SCOPED_ROLE } from "./activityAccess";
 
@@ -42,5 +42,27 @@ describe("leavesScope", () => {
 
   it("does not hold for an account that was never scoped", () => {
     expect(leavesScope("MEMBERS", SUPER_ROLE)).toBe(false);
+  });
+});
+
+describe("settableRoles", () => {
+  it("offers the owner role to an owner", () => {
+    expect(settableRoles(OWNER_ROLE)).toContain(OWNER_ROLE);
+  });
+
+  it("withholds the owner role from a full access admin", () => {
+    expect(settableRoles(SUPER_ROLE)).not.toContain(OWNER_ROLE);
+  });
+
+  it("withholds the owner role before the viewer role is known", () => {
+    expect(settableRoles(null)).not.toContain(OWNER_ROLE);
+  });
+
+  it("never offers the scoped role, which is set by picking activities", () => {
+    expect(settableRoles(OWNER_ROLE)).not.toContain(SCOPED_ROLE);
+  });
+
+  it("offers every other role", () => {
+    expect(settableRoles(SUPER_ROLE)).toEqual([SUPER_ROLE, "MEMBERS", "ACTIVITIES", "QUIZ"]);
   });
 });

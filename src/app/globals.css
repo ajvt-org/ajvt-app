@@ -350,6 +350,10 @@ button:disabled {
   background: #fee2e2;
   color: #991b1b;
 }
+.badge-owner {
+  background: var(--copper-300);
+  color: var(--copper-700);
+}
 
 /* ---- Separator ---- */
 .sep {

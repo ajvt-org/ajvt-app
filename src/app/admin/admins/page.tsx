@@ -18,7 +18,7 @@ function fetchAccounts(): Promise<AdminAccount[]> {
 
 export default function AdminAccountsPage() {
   const [accounts, setAccounts] = useState<AdminAccount[]>([]);
-  const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ username: string; role: string } | null>(null);
   const [scoping, setScoping] = useState<string | null>(null);
 
   const load = () => fetchAccounts().then(setAccounts);
@@ -26,9 +26,9 @@ export default function AdminAccountsPage() {
   useEffect(() => {
     fetchAccounts().then(setAccounts);
     api
-      .get<{ role: string }>("/api/admin/me")
-      .then((data) => setViewerRole(data.role))
-      .catch(() => setViewerRole(null));
+      .get<{ username: string; role: string }>("/api/admin/me")
+      .then(setViewer)
+      .catch(() => setViewer(null));
   }, []);
 
   async function remove(id: string) {
@@ -39,6 +39,15 @@ export default function AdminAccountsPage() {
     } catch (e) {
       alert(errorMessage(e));
     }
+  }
+
+  async function setRole(id: string, role: string) {
+    try {
+      await api.patch(`/api/admin/admins/${id}`, { role });
+    } catch (e) {
+      throw new Error(errorMessage(e));
+    }
+    await load();
   }
 
   const picked = accounts.find((a) => a.id === scoping);
@@ -60,13 +69,16 @@ export default function AdminAccountsPage() {
           <AccountRow
             key={account.id}
             account={account}
+            viewerRole={viewer?.role ?? null}
+            isSelf={account.username === viewer?.username}
             onScope={() => setScoping(account.id)}
+            onRole={(role) => setRole(account.id, role)}
             onDelete={() => remove(account.id)}
           />
         ))}
       </div>
 
-      <NewAccountForm viewerRole={viewerRole} onCreated={load} />
+      <NewAccountForm viewerRole={viewer?.role ?? null} onCreated={load} />
     </div>
   );
 }
