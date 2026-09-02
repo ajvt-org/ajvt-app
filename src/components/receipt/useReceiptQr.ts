@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { verifyPath } from "@/lib/officialReceipt";
 import { RECEIPT_INK, RECEIPT_PAPER } from "./receiptStyle";
 
-export function useReceiptQr(token: string): string | null {
+export function useReceiptQr(token: string | undefined): string | null {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {

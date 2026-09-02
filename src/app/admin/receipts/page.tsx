@@ -21,7 +21,7 @@ export default function AdminReceiptsPage() {
   const [error, setError] = useState("");
   const [printing, setPrinting] = useState<OfficialReceiptView | null>(null);
 
-  const qrDataUrl = useReceiptQr(printing?.token ?? "");
+  const qrDataUrl = useReceiptQr(printing?.token);
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

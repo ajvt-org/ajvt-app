@@ -29,6 +29,31 @@ function setup(receipt: OfficialReceiptView = RECEIPT) {
   return { ...view, onPrint, onVoid };
 }
 
+describe("a receipt with no verify token", () => {
+  it("offers no download, because there is nothing to build the code from", () => {
+    const { token, ...withheld } = RECEIPT;
+    void token;
+    setup(withheld);
+
+    expect(screen.queryByText(receiptAdmin.download)).toBeNull();
+  });
+
+  it("still shows the row, its number and its amount", () => {
+    const { token, ...withheld } = RECEIPT;
+    void token;
+    setup(withheld);
+
+    expect(screen.getByText(RECEIPT.number)).toBeDefined();
+    expect(screen.getByText(MONEY)).toBeDefined();
+  });
+
+  it("offers the download when the token is there", () => {
+    setup();
+
+    expect(screen.getByText(receiptAdmin.download)).toBeDefined();
+  });
+});
+
 describe("the receipts register", () => {
   it("says so when nothing has been issued", () => {
     render(<ReceiptList receipts={[]} busyId={null} onPrint={vi.fn()} onVoid={vi.fn()} />);

@@ -169,6 +169,21 @@ describe("the other kinds on the same list", () => {
 
     expect(screen.getByText(new RegExp(paymentCard.receiptVoid))).toBeTruthy();
   });
+
+  it("does not link a receipt whose token is withheld", () => {
+    mockFetch([]);
+    show({ receipt: { number: "R-2026-0244", status: "ACTIVE" } });
+
+    expect(screen.queryByRole("link", { name: /R-2026-0244/ })).toBeNull();
+  });
+
+  it("still names the receipt and its state when the token is withheld", () => {
+    mockFetch([]);
+    show({ receipt: { number: "R-2026-0244", status: "ACTIVE" } });
+
+    expect(screen.getByText(/R-2026-0244/)).toBeTruthy();
+    expect(screen.getByText(new RegExp(paymentCard.receiptActive))).toBeTruthy();
+  });
 });
 
 describe("the account shown under a payment", () => {

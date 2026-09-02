@@ -27,17 +27,24 @@ function Origin({ proof }: { proof: Proof }) {
 }
 
 function ReceiptLine({ receipt }: { receipt: NonNullable<Proof["receipt"]> }) {
+  const named = (
+    <IconLabel name="receipt" size={13}>
+      {paymentCard.receipt} <bdi>{receipt.number}</bdi>
+    </IconLabel>
+  );
   return (
     <p className="text-xs mt-0.5">
-      <Link
-        href={`/receipt/${receipt.token}`}
-        className="font-semibold"
-        style={{ color: "var(--mint-700)" }}
-      >
-        <IconLabel name="receipt" size={13}>
-          {paymentCard.receipt} <bdi>{receipt.number}</bdi>
-        </IconLabel>
-      </Link>
+      {receipt.token ? (
+        <Link
+          href={`/receipt/${receipt.token}`}
+          className="font-semibold"
+          style={{ color: "var(--mint-700)" }}
+        >
+          {named}
+        </Link>
+      ) : (
+        <span className="font-semibold">{named}</span>
+      )}
       <span style={{ color: "var(--text-muted)" }}>
         {" · "}
         {RECEIPT_STATUS_LABEL[receipt.status] ?? receipt.status}

@@ -6,6 +6,7 @@ import {
   CONFIDENTIAL_SELECT,
   nameIsConfidential,
   seesPaymentIdentity,
+  withoutFields,
   type SupportViewer,
 } from "./supportPrivacy";
 import { money } from "./messages";
@@ -140,7 +141,7 @@ export async function listReceipts(
   return rows.map((row) =>
     namesThePayer(row, viewer)
       ? receiptView(row)
-      : { ...receiptView(row), payerName: money.anonymousDonor, token: "" },
+      : { ...withoutFields(receiptView(row), ["token"]), payerName: money.anonymousDonor },
   );
 }
 
