@@ -3,7 +3,8 @@ import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { prisma } from "@/lib/prisma";
-import { amountInFigures, amountInWords } from "@/lib/arabicAmount";
+import { amountInWords } from "@/lib/arabicAmount";
+import { moneyDigits } from "@/lib/money";
 import { receiptDate } from "@/lib/officialReceipt";
 import { receiptSheet, receiptVerify } from "@/lib/texts/receipt";
 
@@ -71,7 +72,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ token:
             <Row label={receiptVerify.reasonLabel} value={receipt.reason} />
             <Row
               label={receiptVerify.amountLabel}
-              value={`${amountInFigures(receipt.amount)} ${receiptSheet.currency}`}
+              value={`${moneyDigits(receipt.amount)} ${receiptSheet.currency}`}
             />
             <Row label={receiptVerify.wordsLabel} value={amountInWords(receipt.amount)} />
             <Row label={receiptVerify.dateLabel} value={receiptDate(receipt.issuedOn)} />
