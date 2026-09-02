@@ -4,7 +4,7 @@ import { receiptSheet } from "@/lib/texts/receipt";
 import ReceiptLine from "./ReceiptLine";
 import ReceiptFooter from "./ReceiptFooter";
 import {
-  HALF_WIDTH,
+  RECEIPT_WIDTH,
   RECEIPT_BRONZE,
   RECEIPT_INK,
   RECEIPT_LOGO,
@@ -76,7 +76,7 @@ export default function OfficialReceipt({
     <div
       style={{
         position: "relative",
-        width: HALF_WIDTH,
+        width: RECEIPT_WIDTH,
         background: RECEIPT_PAPER,
         color: RECEIPT_INK,
         direction: "rtl",

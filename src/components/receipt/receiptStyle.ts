@@ -8,9 +8,5 @@ export const RECEIPT_PAPER = "#ffffff";
 export const RECEIPT_LOGO = "/receipt-logo.png";
 export const RECEIPT_SEAL = "/receipt-seal.png";
 
-export const SHEET_WIDTH = 794;
-export const SHEET_HEIGHT = 1123;
+export const RECEIPT_WIDTH = 372;
 export const SHEET_PADDING = 24;
-export const SHEET_DIVIDER = 1.5;
-
-export const HALF_WIDTH = Math.floor((SHEET_WIDTH - 2 * SHEET_PADDING - SHEET_DIVIDER) / 2);
