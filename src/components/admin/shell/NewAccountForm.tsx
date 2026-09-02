@@ -4,15 +4,27 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
-import { ROLE_LABELS } from "@/lib/adminRoles";
+import { ADMIN_ROLES, ROLE_LABELS, SUPER_ROLE, isOwner } from "@/lib/adminRoles";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
+import { adminAccounts } from "@/lib/texts";
 
-const EMPTY = { username: "", password: "", role: "SUPER" };
+const EMPTY = { username: "", password: "", role: SUPER_ROLE };
 
-const OPEN_ROLES = Object.keys(ROLE_LABELS).filter((role) => role !== SCOPED_ROLE);
+function openRoles(viewerRole: string | null): string[] {
+  return ADMIN_ROLES.filter(
+    (role) => role !== SCOPED_ROLE && (!isOwner(role) || isOwner(viewerRole)),
+  );
+}
 
-export default function NewAccountForm({ onCreated }: { onCreated: () => Promise<void> }) {
+export default function NewAccountForm({
+  viewerRole,
+  onCreated,
+}: {
+  viewerRole: string | null;
+  onCreated: () => Promise<void>;
+}) {
   const [form, setForm] = useState(EMPTY);
+  const roles = openRoles(viewerRole);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,11 +46,11 @@ export default function NewAccountForm({ onCreated }: { onCreated: () => Promise
   return (
     <form onSubmit={submit} className="card p-4 space-y-3">
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="plus">إضافة مشرف جديد</IconLabel>
+        <IconLabel name="plus">{adminAccounts.addTitle}</IconLabel>
       </p>
       <input
         type="text"
-        placeholder="اسم المستخدم"
+        placeholder={adminAccounts.username}
         value={form.username}
         onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
         required
@@ -47,7 +59,7 @@ export default function NewAccountForm({ onCreated }: { onCreated: () => Promise
       />
       <input
         type="password"
-        placeholder="كلمة المرور"
+        placeholder={adminAccounts.password}
         value={form.password}
         onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
         required
@@ -58,19 +70,18 @@ export default function NewAccountForm({ onCreated }: { onCreated: () => Promise
         onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
         className="input"
       >
-        {OPEN_ROLES.map((role) => (
+        {roles.map((role) => (
           <option key={role} value={role}>
             {ROLE_LABELS[role]}
           </option>
         ))}
       </select>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        لحصر مشرف في أنشطة بعينها، أنشئ الحساب ثم اضغط «تحديد الأنشطة» في صفّه — تتحول صلاحيته
-        تلقائياً إلى أنشطة محددة فقط.
+        {adminAccounts.scopeHint}
       </p>
       {error && <Notice tone="error">{error}</Notice>}
       <button type="submit" disabled={loading} className="btn btn-primary text-sm">
-        {loading ? "..." : "إضافة"}
+        {loading ? adminAccounts.submitting : adminAccounts.submit}
       </button>
     </form>
   );
