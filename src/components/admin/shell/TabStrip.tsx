@@ -2,8 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import CountBadge from "@/components/admin/CountBadge";
-import { tabActive } from "@/lib/adminNav";
-import type { NavTab } from "./navTabs";
+import { tabActiveFor, type NavTab } from "./navTabs";
 import type { PendingCounts } from "./useAdminSession";
 
 const BADGE_KEY: Record<string, keyof PendingCounts> = {
@@ -11,6 +10,13 @@ const BADGE_KEY: Record<string, keyof PendingCounts> = {
   "/admin/activities": "activityWork",
   "/admin/payments": "donations",
 };
+
+function waitingOn(tab: NavTab, pending: PendingCounts): number {
+  return (tab.tabs ?? [tab]).reduce((total, one) => {
+    const key = BADGE_KEY[one.href];
+    return total + (key ? pending[key] : 0);
+  }, 0);
+}
 
 function Tab({
   tab,
@@ -26,6 +32,7 @@ function Tab({
   return (
     <button
       onClick={onOpen}
+      aria-current={active ? "page" : undefined}
       className="text-xs sm:text-sm font-bold px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg relative"
       style={{
         background: active ? "var(--mint-700)" : "transparent",
@@ -54,18 +61,15 @@ export default function TabStrip({
       className="tab-strip px-3 py-1.5 sm:px-4 sm:py-2"
       style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
     >
-      {tabs.map((tab) => {
-        const key = BADGE_KEY[tab.href];
-        return (
-          <Tab
-            key={tab.href}
-            tab={tab}
-            active={tabActive(tab.href, pathname)}
-            count={key ? pending[key] : 0}
-            onOpen={() => onOpen(tab.href)}
-          />
-        );
-      })}
+      {tabs.map((tab) => (
+        <Tab
+          key={tab.label}
+          tab={tab}
+          active={tabActiveFor(tab, pathname)}
+          count={waitingOn(tab, pending)}
+          onOpen={() => onOpen(tab.href)}
+        />
+      ))}
     </div>
   );
 }
