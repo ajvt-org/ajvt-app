@@ -3,6 +3,7 @@
 import BoardsEditor from "./BoardsEditor";
 import type { BoardConfig, Visibility } from "@/lib/competitionConfig";
 import NumberField from "@/components/NumberField";
+import { quizCompetition as texts } from "@/lib/texts";
 import {
   toLocalInput,
   fromLocalInput,
@@ -30,7 +31,7 @@ export interface Draft {
 
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
-    <div className="flex-1 min-w-0">
+    <div className="min-w-0">
       <label
         htmlFor={id}
         className="block text-xs font-bold mb-1"
@@ -73,7 +74,7 @@ export default function CompetitionFields({
 
   return (
     <>
-      <Field label="اسم المسابقة" id="c-name">
+      <Field label={texts.name} id="c-name">
         <input
           id="c-name"
           type="text"
@@ -84,7 +85,7 @@ export default function CompetitionFields({
         />
       </Field>
 
-      <Field label="نوع المسابقة" id="c-visibility">
+      <Field label={texts.visibility} id="c-visibility">
         <select
           id="c-visibility"
           value={draft.visibility}
@@ -100,7 +101,7 @@ export default function CompetitionFields({
         </select>
       </Field>
 
-      <Field label="بنك الأسئلة" id="c-bank">
+      <Field label={texts.bank} id="c-bank">
         <select
           id="c-bank"
           value={draft.bankId}
@@ -116,46 +117,42 @@ export default function CompetitionFields({
         </select>
       </Field>
 
-      <div className="flex gap-2">
-        <Field label="بداية الجولة الأولى" id="c-start">
-          <input
-            id="c-start"
-            type="datetime-local"
-            value={toLocalInput(draft.startsAt)}
-            disabled={locked}
-            onChange={(e) => onChange("startsAt", fromLocalInput(e.target.value))}
-            className="input input-sm"
-          />
-        </Field>
-        {number("roundCount", "c-rounds", "عدد الجولات")}
-      </div>
+      <Field label={texts.firstRound} id="c-start">
+        <input
+          id="c-start"
+          type="datetime-local"
+          value={toLocalInput(draft.startsAt)}
+          disabled={locked}
+          onChange={(e) => onChange("startsAt", fromLocalInput(e.target.value))}
+          className="input input-sm"
+        />
+      </Field>
 
-      <div className="flex gap-2">
-        <Field label="جولة كل" id="c-period">
-          <select
-            id="c-period"
-            value={custom ? CUSTOM_PERIOD : draft.roundPeriodMinutes}
-            disabled={locked}
-            onChange={(e) => {
-              const picked = Number(e.target.value);
-              const period = picked === CUSTOM_PERIOD ? 30 : picked;
-              onChange("roundPeriodMinutes", period);
-              if (draft.roundWindowMinutes > period) onChange("roundWindowMinutes", period);
-            }}
-            className="input input-sm"
-          >
-            {PERIOD_CHOICES.map((choice) => (
-              <option key={choice.minutes} value={choice.minutes}>
-                {choice.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {number("roundWindowMinutes", "c-window", "مدة الجولة بالدقائق")}
-      </div>
+      {number("roundCount", "c-rounds", texts.roundCount)}
+
+      <Field label={texts.period} id="c-period">
+        <select
+          id="c-period"
+          value={custom ? CUSTOM_PERIOD : draft.roundPeriodMinutes}
+          disabled={locked}
+          onChange={(e) => {
+            const picked = Number(e.target.value);
+            const period = picked === CUSTOM_PERIOD ? 30 : picked;
+            onChange("roundPeriodMinutes", period);
+            if (draft.roundWindowMinutes > period) onChange("roundWindowMinutes", period);
+          }}
+          className="input input-sm"
+        >
+          {PERIOD_CHOICES.map((choice) => (
+            <option key={choice.minutes} value={choice.minutes}>
+              {choice.label}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       {custom && (
-        <Field label="المدة بين الجولات بالدقائق" id="c-period-minutes">
+        <Field label={texts.customPeriod} id="c-period-minutes">
           <NumberField
             id="c-period-minutes"
             min={1}
@@ -169,10 +166,11 @@ export default function CompetitionFields({
         </Field>
       )}
 
-      {number("servedCount", "c-served", "أسئلة الجولة")}
+      {number("roundWindowMinutes", "c-window", texts.window)}
+
+      {number("servedCount", "c-served", texts.served)}
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        تُسحب أسئلة كل جولة من البنك عند انطلاق المسابقة، ويرى كل المشاركين نفس الأسئلة بترتيب
-        مختلف.
+        {texts.servedHint}
       </p>
 
       <label className="flex items-center gap-2 text-xs font-bold">
@@ -183,7 +181,7 @@ export default function CompetitionFields({
           disabled={locked}
           onChange={(e) => onChange("categoryRounds", e.target.checked)}
         />
-        <span style={{ color: "var(--text-main)" }}>كل جولة من تصنيف واحد</span>
+        <span style={{ color: "var(--text-main)" }}>{texts.categoryRounds}</span>
       </label>
 
       <BoardsEditor
@@ -194,19 +192,16 @@ export default function CompetitionFields({
       />
 
       <p className="text-xs font-bold mt-1" style={{ color: "var(--text-main)" }}>
-        احتساب السرعة
+        {texts.speedTitle}
       </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        الإجابة الصحيحة تأخذ كل نقاط السؤال حتى مهلة النقاط الكاملة، ثم تنزل في خط مستقيم إلى أقل
-        نسبة عند انتهاء مدة السؤال.
+        {texts.speedHint}
       </p>
 
-      <div className="flex gap-2">
-        {number("fullSeconds", "c-full", "مهلة النقاط الكاملة بالثواني", 0)}
-        {number("maxSeconds", "c-max", "مدة السؤال بالثواني")}
-      </div>
+      {number("fullSeconds", "c-full", texts.fullSeconds, 0)}
+      {number("maxSeconds", "c-max", texts.maxSeconds)}
 
-      {number("floorPercent", "c-floor", "أقل نسبة بالمئة", 0, 100)}
+      {number("floorPercent", "c-floor", texts.floorPercent, 0, 100)}
     </>
   );
 }

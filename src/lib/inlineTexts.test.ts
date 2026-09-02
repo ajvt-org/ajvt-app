@@ -148,6 +148,7 @@ const KEPT_CLEAN = [
   "src/app/admin/quiz/ScoreActions.tsx",
   "src/app/admin/quiz/scoreTypes.ts",
   "src/app/admin/quiz/scoreSearch.ts",
+  "src/app/admin/quiz/CompetitionFields.tsx",
   "src/app/admin/quiz/CompetitionsSection.tsx",
   "src/app/admin/quiz/CompetitionWorkspace.tsx",
   "src/app/admin/quiz/competitionTabs.ts",
