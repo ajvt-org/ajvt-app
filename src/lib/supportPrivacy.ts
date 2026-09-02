@@ -4,6 +4,7 @@ import { splitPayment } from "./membershipPayment";
 export interface SupportViewer {
   role?: string | null;
   userId?: string | null;
+  onTheRecord?: boolean;
 }
 
 export interface SupportedAccount {
@@ -19,10 +20,12 @@ export interface SupportPayment extends SupportedAccount {
 
 export const PUBLIC_VIEWER: SupportViewer = {};
 
+export const ON_THE_RECORD: SupportViewer = { onTheRecord: true };
+
 export const CONFIDENTIAL_SELECT = { supportNameConfidential: true } as const;
 
 export function seesEverySupporterName(viewer: SupportViewer): boolean {
-  return isOwner(viewer.role);
+  return viewer.onTheRecord === true || isOwner(viewer.role);
 }
 
 export function nameIsConfidential(row: SupportedAccount): boolean {

@@ -1,26 +1,40 @@
 import { money } from "./messages";
 import { nameOf } from "./person";
+import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
+
+export interface DonorAccount {
+  fullName: string | null;
+  supportNameConfidential: boolean;
+}
 
 export interface DonorAttribution {
   donorName: string | null;
-  user?: { fullName: string | null } | null;
+  userId: string | null;
+  user: DonorAccount | null;
 }
 
 export type PublicDonorAttribution = DonorAttribution & { anonymous: boolean };
 
-export function typedDonorName(donor: { donorName: string | null }): string | null {
+export const DONOR_ACCOUNT_SELECT = {
+  fullName: true,
+  supportNameConfidential: true,
+} as const;
+
+export function typedDonorName(donor: DonorAttribution, viewer: SupportViewer): string | null {
+  if (!seesSupporterName(viewer, donor)) return null;
   return donor.donorName?.trim() || null;
 }
 
-export function attributedDonorName(donor: DonorAttribution): string | null {
+export function attributedDonorName(donor: DonorAttribution, viewer: SupportViewer): string | null {
+  if (!seesSupporterName(viewer, donor)) return null;
   const account = donor.user ? nameOf(donor.user).trim() : "";
-  return account || typedDonorName(donor);
+  return account || donor.donorName?.trim() || null;
 }
 
-export function donorNameOnRecord(donor: DonorAttribution): string {
-  return attributedDonorName(donor) ?? money.anonymousDonor;
+export function donorNameOnRecord(donor: DonorAttribution, viewer: SupportViewer): string {
+  return attributedDonorName(donor, viewer) ?? money.anonymousDonor;
 }
 
-export function publicDonorName(donor: PublicDonorAttribution): string {
-  return donor.anonymous ? money.anonymousDonor : donorNameOnRecord(donor);
+export function publicDonorName(donor: PublicDonorAttribution, viewer: SupportViewer): string {
+  return donor.anonymous ? money.anonymousDonor : donorNameOnRecord(donor, viewer);
 }
