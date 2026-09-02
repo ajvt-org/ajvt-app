@@ -1,4 +1,4 @@
-import { isOwner } from "./adminRoles";
+import { ADMIN_ROLES, isOwner } from "./adminRoles";
 import { isScopedRole } from "./activityAccess";
 
 export function touchesOwnerRole(before: string, after: string): boolean {
@@ -11,4 +11,10 @@ export function strandsOwnerRole(before: string, after: string, owners: number):
 
 export function leavesScope(before: string, after: string): boolean {
   return isScopedRole(before) && !isScopedRole(after);
+}
+
+export function settableRoles(viewerRole: string | null | undefined): string[] {
+  return ADMIN_ROLES.filter(
+    (role) => !isScopedRole(role) && (!isOwner(role) || isOwner(viewerRole)),
+  );
 }
