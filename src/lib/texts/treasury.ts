@@ -1,3 +1,5 @@
+import { ouguiya } from "./currency";
+
 export const treasury = {
   title: "خزينة الجمعية",
   balance: "الرصيد الحالي",
@@ -11,6 +13,5 @@ export const treasury = {
   noSpending: "لا توجد مصاريف مسجلة بعد",
   noIncome: "لا توجد مداخيل مسجلة بعد",
   loading: "جاري التحميل...",
-  ouguiya: (amount: number) => `${amount} أوقية`,
-  currency: "أوقية",
+  currency: ouguiya.singular,
 } as const;

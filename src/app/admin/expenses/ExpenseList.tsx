@@ -4,6 +4,7 @@ import { useState } from "react";
 import RecordHistory from "@/components/admin/RecordHistory";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import { formatDate, toThumbUrl } from "@/lib/utils";
@@ -87,7 +88,7 @@ function Row({
             )}
           </div>
           <p className="font-black text-sm shrink-0" style={{ color: "var(--copper-500)" }}>
-            {expense.amount} أوقية
+            <Money value={expense.amount} />
           </p>
         </div>
       </div>

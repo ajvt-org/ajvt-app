@@ -2,6 +2,7 @@
 
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import { formatDayKey } from "@/lib/utils";
 import { groupDayRecords, type DayRecord, type FinanceDay } from "./types";
 
@@ -17,7 +18,7 @@ function MethodBlock({ method, items }: { method: string; items: DayRecord[] }) 
           {method}
         </span>
         <span className="font-bold" style={{ color: "var(--mint-600)" }}>
-          {subtotal} أوقية
+          <Money value={subtotal} />
         </span>
       </div>
       <div className="mr-2 mt-0.5 space-y-0.5">
@@ -27,7 +28,7 @@ function MethodBlock({ method, items }: { method: string; items: DayRecord[] }) 
               {r.name}
             </span>
             <span className="shrink-0" style={{ color: "var(--text-muted)" }}>
-              {r.amount} أوقية
+              <Money value={r.amount} />
             </span>
           </div>
         ))}
@@ -109,7 +110,7 @@ export default function DailyRevenue({
                     </span>
                   </span>
                   <span className="font-black" style={{ color: "var(--mint-600)" }}>
-                    {day.total} أوقية
+                    <Money value={day.total} />
                   </span>
                 </button>
 

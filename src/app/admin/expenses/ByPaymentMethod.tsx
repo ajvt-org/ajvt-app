@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "@/components/Icon";
+import Money from "@/components/Money";
 import type { MethodDetail, NamedEntry } from "./types";
 
 function EntryList({ title, entries }: { title: string; entries: NamedEntry[] }) {
@@ -21,7 +22,7 @@ function EntryList({ title, entries }: { title: string; entries: NamedEntry[] })
                 {i + 1}. {entry.name}
               </span>
               <span className="font-bold shrink-0" style={{ color: "var(--mint-600)" }}>
-                {entry.amount} أوقية
+                <Money value={entry.amount} />
               </span>
             </div>
           ))}
@@ -46,7 +47,7 @@ function Detail({ detail }: { detail: MethodDetail }) {
         >
           <span style={{ color: "var(--text-muted)" }}>فاعل خير</span>
           <span className="font-bold shrink-0" style={{ color: "var(--text-muted)" }}>
-            {detail.anonymousTotal} أوقية
+            <Money value={detail.anonymousTotal} />
           </span>
         </div>
       )}
@@ -94,7 +95,7 @@ export default function ByPaymentMethod({
                     </span>
                   </span>
                   <span className="font-black shrink-0" style={{ color: "var(--mint-600)" }}>
-                    {total} أوقية
+                    <Money value={total} />
                   </span>
                 </button>
                 {open && detail && <Detail detail={detail} />}
