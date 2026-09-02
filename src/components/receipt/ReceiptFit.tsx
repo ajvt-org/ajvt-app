@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HALF_WIDTH } from "./receiptStyle";
+import { RECEIPT_WIDTH } from "./receiptStyle";
 
 export default function ReceiptFit({ children }: { children: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
@@ -13,7 +13,7 @@ export default function ReceiptFit({ children }: { children: React.ReactNode }) 
     const outer = box.current;
     if (!outer) return;
     const fit = () => {
-      const next = Math.min(1, outer.clientWidth / HALF_WIDTH);
+      const next = Math.min(1, outer.clientWidth / RECEIPT_WIDTH);
       setScale(next);
       setHeight((inner.current?.offsetHeight ?? 0) * next);
     };
@@ -27,7 +27,7 @@ export default function ReceiptFit({ children }: { children: React.ReactNode }) 
     <div ref={box} style={{ height: height || undefined, overflow: "hidden" }}>
       <div
         ref={inner}
-        style={{ width: HALF_WIDTH, transformOrigin: "top right", transform: `scale(${scale})` }}
+        style={{ width: RECEIPT_WIDTH, transformOrigin: "top right", transform: `scale(${scale})` }}
       >
         {children}
       </div>

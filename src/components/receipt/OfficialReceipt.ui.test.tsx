@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import OfficialReceipt from "./OfficialReceipt";
 import ReceiptSheet, { ReceiptCard } from "./ReceiptSheet";
 import { receiptSheet } from "@/lib/texts/receipt";
+import { RECEIPT_WIDTH, SHEET_PADDING } from "./receiptStyle";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
 
 const RECEIPT: OfficialReceiptView = {
@@ -108,11 +109,27 @@ describe("the sheet an admin hands over", () => {
   });
 });
 
-describe("the page that goes to the printer", () => {
-  it("carries the same receipt twice, one to keep and one to hand over", () => {
+describe("the page an admin downloads", () => {
+  it("carries the receipt once", () => {
     render(<ReceiptSheet receipt={RECEIPT} />);
 
-    expect(screen.getAllByText("R-2026-0001")).toHaveLength(2);
-    expect(screen.getAllByText("خمسة آلاف أوقية")).toHaveLength(2);
+    expect(screen.getAllByText("R-2026-0001")).toHaveLength(1);
+    expect(screen.getAllByText("خمسة آلاف أوقية")).toHaveLength(1);
+  });
+
+  it("is the receipt and its margin, with no room left over", () => {
+    const { container } = render(<ReceiptSheet receipt={RECEIPT} />);
+    const page = container.firstElementChild as HTMLElement;
+
+    expect(page.style.width).toBe("max-content");
+    expect(page.style.padding).toBe(`${SHEET_PADDING}px`);
+    expect(page.style.height).toBe("");
+  });
+
+  it("keeps the receipt at the width it was drawn for", () => {
+    const { container } = render(<ReceiptSheet receipt={RECEIPT} />);
+    const drawn = container.querySelector('[style*="width"] > div') as HTMLElement;
+
+    expect(drawn.style.width).toBe(`${RECEIPT_WIDTH}px`);
   });
 });

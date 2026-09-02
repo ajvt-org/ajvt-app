@@ -4,14 +4,7 @@ import type { OfficialReceiptView } from "@/lib/officialReceipt";
 import OfficialReceipt from "./OfficialReceipt";
 import { useReceiptQr } from "./useReceiptQr";
 import { amiri } from "./receiptFont";
-import {
-  RECEIPT_DOTS,
-  RECEIPT_PAPER,
-  SHEET_DIVIDER,
-  SHEET_HEIGHT,
-  SHEET_PADDING,
-  SHEET_WIDTH,
-} from "./receiptStyle";
+import { RECEIPT_PAPER, SHEET_PADDING } from "./receiptStyle";
 
 export function ReceiptCard({
   receipt,
@@ -46,19 +39,12 @@ export default function ReceiptSheet({
       ref={innerRef}
       className={amiri.className}
       style={{
-        width: SHEET_WIDTH,
-        height: SHEET_HEIGHT,
+        width: "max-content",
         background: RECEIPT_PAPER,
         padding: SHEET_PADDING,
-        boxSizing: "border-box",
       }}
     >
-      <div style={{ display: "flex", direction: "rtl", alignItems: "stretch" }}>
-        <OfficialReceipt receipt={receipt} qrDataUrl={qrDataUrl} />
-        <div style={{ borderRight: `${SHEET_DIVIDER}px dashed ${RECEIPT_DOTS}` }} />
-        <OfficialReceipt receipt={receipt} qrDataUrl={qrDataUrl} />
-      </div>
-      <div style={{ borderTop: `${SHEET_DIVIDER}px dashed ${RECEIPT_DOTS}`, marginTop: 12 }} />
+      <OfficialReceipt receipt={receipt} qrDataUrl={qrDataUrl} />
     </div>
   );
 }
