@@ -94,8 +94,7 @@ const VIEW_SELECT = {
   status: true,
 } as const;
 
-const LISTED_SELECT = {
-  ...VIEW_SELECT,
+const PAYER_SELECT = {
   userId: true,
   user: { select: CONFIDENTIAL_SELECT },
   payment: {
@@ -109,11 +108,26 @@ const LISTED_SELECT = {
   },
 } as const;
 
-type ListedRow = Prisma.ReceiptGetPayload<{ select: typeof LISTED_SELECT }>;
+const LISTED_SELECT = { ...VIEW_SELECT, ...PAYER_SELECT } as const;
 
-function namesThePayer(row: ListedRow, viewer: SupportViewer): boolean {
+type PayerRow = Prisma.ReceiptGetPayload<{ select: typeof PAYER_SELECT }>;
+
+function namesThePayer(row: PayerRow, viewer: SupportViewer): boolean {
   if (row.payment) return seesPaymentIdentity(viewer, row.payment);
   return !nameIsConfidential({ userId: row.userId, user: row.user });
+}
+
+export async function receiptNamesPayer(
+  number: string,
+  viewer: SupportViewer,
+): Promise<boolean | null> {
+  const row = await prisma.receipt.findUnique({ where: { number }, select: PAYER_SELECT });
+  return row ? namesThePayer(row, viewer) : null;
+}
+
+export function receiptViewFor(row: ReceiptViewRow, named: boolean): OfficialReceiptView {
+  const view = receiptView(row);
+  return named ? view : { ...withoutFields(view, ["token"]), payerName: money.anonymousDonor };
 }
 
 type ReceiptViewRow = Prisma.ReceiptGetPayload<{ select: typeof VIEW_SELECT }>;
@@ -138,11 +152,7 @@ export async function listReceipts(
     orderBy: { issuedOn: "desc" },
     select: LISTED_SELECT,
   });
-  return rows.map((row) =>
-    namesThePayer(row, viewer)
-      ? receiptView(row)
-      : { ...withoutFields(receiptView(row), ["token"]), payerName: money.anonymousDonor },
-  );
+  return rows.map((row) => receiptViewFor(row, namesThePayer(row, viewer)));
 }
 
 export function receiptView(row: ReceiptViewRow): OfficialReceiptView {

@@ -4,17 +4,11 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
-import { ADMIN_ROLES, ROLE_LABELS, SUPER_ROLE, isOwner } from "@/lib/adminRoles";
-import { SCOPED_ROLE } from "@/lib/activityAccess";
+import { ROLE_LABELS, SUPER_ROLE } from "@/lib/adminRoles";
+import { settableRoles } from "@/lib/adminRoleChange";
 import { adminAccounts } from "@/lib/texts";
 
 const EMPTY = { username: "", password: "", role: SUPER_ROLE };
-
-function openRoles(viewerRole: string | null): string[] {
-  return ADMIN_ROLES.filter(
-    (role) => role !== SCOPED_ROLE && (!isOwner(role) || isOwner(viewerRole)),
-  );
-}
 
 export default function NewAccountForm({
   viewerRole,
@@ -24,7 +18,7 @@ export default function NewAccountForm({
   onCreated: () => Promise<void>;
 }) {
   const [form, setForm] = useState(EMPTY);
-  const roles = openRoles(viewerRole);
+  const roles = settableRoles(viewerRole);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 

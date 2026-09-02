@@ -5,6 +5,7 @@ export const receipts = {
   reasonTooLong: "موجب القبض طويل جداً (120 حرفاً كحد أقصى)",
   voidReasonRequired: "سبب الإلغاء مطلوب",
   notFound: "الوصل غير موجود أو ملغى من قبل",
+  payerWithheld: "لا يمكنك إلغاء وصل لا يظهر لك اسم دافعه",
   withdrawnOnRefusal: "أُلغي الدفع بعد قبوله",
   replacedAfterCorrection: (number: string) => `صُحّح المبلغ، والبديل هو الوصل ${number}`,
   correctedPending: "صُحّح المبلغ، وسيصدر وصل بديل",
