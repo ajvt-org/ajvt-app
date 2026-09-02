@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatDate, formatTime } from "@/lib/utils";
 import { ouguiya, paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "@/lib/texts";
-import { typedDonorName } from "@/lib/donorName";
 import { linkedAccount } from "@/lib/linkedAccount";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -74,7 +73,7 @@ export default function ProofCard({
   const isDonation = proof.kind === "DONATION";
   const linkedMember = linkedAccount(members, proof.userId);
   const reuseKind = REUSE_KIND[proof.kind];
-  const stored = typedDonorName({ donorName: proof.donorName ?? null });
+  const stored = proof.donorName?.trim() || null;
   const showsStored = isDonation && stored !== null && stored !== proof.memberName;
 
   return (

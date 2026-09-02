@@ -65,7 +65,7 @@ export default function ManualDonationDialog({
         proof: form.proof || null,
         userId: account?.userId ?? null,
       });
-      onCreated(proofFromDonation(donation, activities, account));
+      onCreated(proofFromDonation(donation, activities));
       onClose();
     } catch (e) {
       setError(errorMessage(e));

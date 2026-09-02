@@ -36,6 +36,7 @@ function mockPost() {
     json: async () => ({
       donation: {
         id: "d1",
+        memberName: "أبوبكر لمرابط",
         donorName: "ابو",
         donorPhone: null,
         donorPhoto: null,
@@ -185,7 +186,7 @@ describe("recording a support payment by hand", () => {
     expect(screen.getByText(money.nameRequired)).toBeTruthy();
   });
 
-  it("hands back a proof named after the account it was linked to", async () => {
+  it("hands back the proof named the way the server named it", async () => {
     mockPost();
     const onCreated = show();
     await fillIn();
