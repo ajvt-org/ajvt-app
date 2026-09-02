@@ -5,8 +5,9 @@ import IconLabel from "@/components/IconLabel";
 import { timeOf } from "@/lib/tournamentDays";
 import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab as texts, lists } from "@/lib/texts";
+import DayHeading from "./DayHeading";
 import DayMatchResult from "./DayMatchResult";
-import { dayLabel, doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
+import { doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
   day,
@@ -30,23 +31,16 @@ export default function DayCard({
       className="card p-3 sm:p-4"
       style={day.isRest ? { background: "var(--cream)", border: "1px dashed var(--mint-300)" } : {}}
     >
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="min-w-0 grow basis-48 flex items-center gap-2">
-          <p className="text-sm font-black min-w-0" style={{ color: "var(--text-main)" }}>
-            {texts.dayNumber(day.position)}
-            <span className="font-semibold text-xs mr-2" style={{ color: "var(--text-muted)" }}>
-              {dayLabel(day.date)}
-            </span>
-          </p>
-          {day.isRest && (
-            <span
-              className="text-xs px-2 py-0.5 rounded-lg font-bold shrink-0"
-              style={{ background: "#fef3c7", color: "#b45309" }}
-            >
-              {texts.restDay}
-            </span>
-          )}
-        </div>
+      <div className="match-day-head flex items-center gap-2 flex-wrap">
+        <DayHeading position={day.position} date={day.date} isRest={day.isRest} />
+        {day.isRest && (
+          <span
+            className="text-xs px-2 py-0.5 rounded-lg font-bold shrink-0"
+            style={{ background: "#fef3c7", color: "#b45309" }}
+          >
+            {texts.restDay}
+          </span>
+        )}
         {removable && (
           <div className="flex items-center gap-2 shrink-0">
             <button
