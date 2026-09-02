@@ -3,7 +3,12 @@ import { proofScope } from "./proofScope";
 import { nameOf } from "./person";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
 import { latestByAccount } from "./currentMembership";
-import { seesPaymentIdentity, seesSupporterName, type SupportViewer } from "./supportPrivacy";
+import {
+  seesPaymentIdentity,
+  seesSupporterName,
+  withoutFields,
+  type SupportViewer,
+} from "./supportPrivacy";
 
 const HIDDEN_ON_A_PROOF = ["memberName", "proof", "donorName", "donorPhone", "donorPhoto"];
 
@@ -101,6 +106,12 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
   });
   const receiptOf = new Map(receipts.map((r) => [r.paymentId, r]));
 
+  const receiptFor = (id: string, named: boolean) => {
+    const receipt = receiptOf.get(id);
+    if (!receipt) return null;
+    return named ? receipt : withoutFields(receipt, ["token"]);
+  };
+
   const current = [...latestByAccount(memberships).values()];
   const support = await membershipSupport(current.map((m) => m.userId));
 
@@ -153,7 +164,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       donorPhone: d.donorPhone,
       donorPhoto: d.donorPhoto,
       tags: d.tags,
-      receipt: receiptOf.get(d.id) ?? null,
+      receipt: receiptFor(d.id, seesSupporterName(viewer, d)),
       uploadedAt: d.updatedAt,
       submittedAt: d.createdAt,
       named: seesSupporterName(viewer, d),

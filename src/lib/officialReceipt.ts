@@ -4,7 +4,7 @@ export type ReceiptState = "ACTIVE" | "VOID";
 
 export interface OfficialReceiptView {
   number: string;
-  token: string;
+  token?: string;
   payerName: string;
   reason: string;
   amount: number;
