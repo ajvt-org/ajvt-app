@@ -34,6 +34,9 @@ describe("canOpen", () => {
     expect(canOpen("MEMBERS", "/admin/payments")).toBe(true);
     expect(canOpen("MEMBERS", "/admin/activities")).toBe(false);
     expect(canOpen("MEMBERS", "/admin/quiz")).toBe(false);
+    expect(canOpen("MEMBERS", "/admin/members")).toBe(true);
+    expect(canOpen("MEMBERS", "/admin/members/abc")).toBe(true);
+    expect(canOpen("MEMBERS", "/admin/membersomething")).toBe(false);
   });
 
   it("opens the trash to the roles that can delete, and no one else", () => {

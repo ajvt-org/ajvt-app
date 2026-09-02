@@ -16,7 +16,13 @@ const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 const SHARED_MONEY = [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses];
 
 const ROLE_AREAS: Record<string, string[] | null> = {
-  MEMBERS: ["/admin/dashboard", ...SHARED_MONEY, "/admin/deleted", ...OWN_ACCOUNT],
+  MEMBERS: [
+    "/admin/dashboard",
+    "/admin/members",
+    ...SHARED_MONEY,
+    "/admin/deleted",
+    ...OWN_ACCOUNT,
+  ],
   ACTIVITIES: ["/admin/activities", ...SHARED_MONEY, ...OWN_ACCOUNT],
   QUIZ: ["/admin/quiz", ...OWN_ACCOUNT],
   ACTIVITY: ["/admin/activities", ...OWN_ACCOUNT],
