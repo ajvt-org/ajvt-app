@@ -5,6 +5,9 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
+import { isOwner } from "@/lib/adminRoles";
+import { ForbiddenError } from "@/lib/errors";
+import { admins as messages } from "@/lib/messages";
 
 export const PUT = withRoute(
   "PUT /api/admin/admins/[id]/activities",
@@ -17,20 +20,26 @@ export const PUT = withRoute(
       throw new ValidationError();
     }
     if (activityIds.length === 0) {
-      throw new ValidationError("اختر نشاطاً واحداً على الأقل");
+      throw new ValidationError(messages.pickOneActivity);
     }
     if (id === session.adminId) {
-      throw new ValidationError("لا يمكنك حصر حسابك الخاص في نشاط");
+      throw new ValidationError(messages.cannotScopeSelf);
     }
 
-    const admin = await prisma.admin.findUnique({ where: { id }, select: { username: true } });
-    if (!admin) throw new NotFoundError("المشرف غير موجود");
+    const admin = await prisma.admin.findUnique({
+      where: { id },
+      select: { username: true, role: true },
+    });
+    if (!admin) throw new NotFoundError(messages.notFound);
+    if (isOwner(admin.role) && !isOwner(session.role)) {
+      throw new ForbiddenError(messages.ownerRoleReserved);
+    }
 
     const found = await prisma.activity.findMany({
       where: { id: { in: activityIds } },
       select: { id: true },
     });
-    if (found.length !== activityIds.length) throw new ValidationError("نشاط غير موجود");
+    if (found.length !== activityIds.length) throw new ValidationError(messages.activityNotFound);
 
     await prisma.$transaction([
       prisma.adminActivity.deleteMany({ where: { adminId: id } }),
