@@ -1,10 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
-import PageLoading from "@/components/PageLoading";
-import Icon from "@/components/Icon";
-import IconLabel from "@/components/IconLabel";
 import { useActivitiesData } from "./useActivitiesData";
 import { useActivityActions } from "./useActivityActions";
 import { useRowControls } from "./useRowControls";
@@ -12,107 +8,54 @@ import { useActivityBulk } from "./useActivityBulk";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import {
   ACTIVITIES_VIEW_KEYS,
-  ACTIVITY_STATES,
-  ACTIVITY_TYPES,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
 } from "./activitiesView";
-import { splitByStage } from "./activitiesList";
-import ActivityRow, { type RowControls } from "./ActivityRow";
+import ActivitiesHeader from "./ActivitiesHeader";
+import ActivitiesFilters from "./ActivitiesFilters";
+import ActivitiesList from "./ActivitiesList";
+import ActivitiesSkeleton, { ListSkeleton, WorkSkeleton } from "./ActivitiesSkeleton";
 import AttentionPanel from "./AttentionPanel";
-import FilterChips from "./FilterChips";
 import BulkBar from "./BulkBar";
-import { activityRow as texts } from "@/lib/texts";
 import NewActivityDialog from "./NewActivityDialog";
-import type { Activity } from "./activityTypes";
-
-function Rows({
-  rows,
-  controls,
-  picked,
-  onPick,
-}: {
-  rows: Activity[];
-  controls: RowControls;
-  picked: Set<string>;
-  onPick: (id: string) => void;
-}) {
-  return (
-    <div className="space-y-2">
-      {rows.map((a) => (
-        <ActivityRow
-          key={a.id}
-          activity={a}
-          controls={controls}
-          picked={picked.has(a.id)}
-          onPick={onPick}
-        />
-      ))}
-    </div>
-  );
-}
+import { activityRow as texts } from "@/lib/texts";
 
 function AdminActivitiesPageInner() {
-  const { activities, loading, reload } = useActivitiesData();
+  const { activities, waiting, loading, reload } = useActivitiesData();
   const actions = useActivityActions(reload);
   const controls = useRowControls(reload);
   const bulk = useActivityBulk(reload);
   const [showCreate, setShowCreate] = useState(false);
-  const [showFinished, setShowFinished] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
     writeFilters: writeActivitiesView,
   });
 
-  if (loading) return <PageLoading />;
-
   const visible = activities.filter((a) => matchesActivitiesView(a, filters));
-  const { current, finished } = splitByStage(visible);
 
   return (
     <div className="admin-page space-y-3">
-      <AttentionPanel
-        newestFirst={filters.waiting === "newest"}
-        onOrderChange={(newestFirst) => go({ ...filters, waiting: newestFirst ? "newest" : "" })}
-      />
+      <ActivitiesHeader onAdd={() => setShowCreate(true)} />
 
-      <div className="flex gap-2 flex-wrap">
-        <input
-          type="text"
-          placeholder={texts.searchPlaceholder}
-          value={filters.q}
-          onChange={(e) => go({ ...filters, q: e.target.value })}
-          className="input input-sm flex-1"
-          style={{ background: "white", minWidth: "10rem" }}
-        />
-        <Link
-          href="/admin/activities/order"
-          className="btn btn-sm text-xs font-bold"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          <IconLabel name="list">{texts.arrangeLink}</IconLabel>
-        </Link>
-        <button onClick={() => setShowCreate(true)} className="btn btn-primary btn-sm text-xs">
-          <IconLabel name="plus">{texts.add}</IconLabel>
-        </button>
-      </div>
+      <section aria-label={texts.regions.work}>
+        {loading ? (
+          <WorkSkeleton />
+        ) : (
+          <AttentionPanel
+            rows={waiting}
+            newestFirst={filters.waiting === "newest"}
+            onOrderChange={(newestFirst) =>
+              go({ ...filters, waiting: newestFirst ? "newest" : "" })
+            }
+          />
+        )}
+      </section>
 
-      <div className="space-y-1.5">
-        <FilterChips
-          options={ACTIVITY_TYPES}
-          value={filters.type}
-          onPick={(type) => go({ ...filters, type })}
-          label={texts.filters.anyType}
-        />
-        <FilterChips
-          options={ACTIVITY_STATES}
-          value={filters.state}
-          onPick={(state) => go({ ...filters, state })}
-          label={texts.filters.anyState}
-        />
-      </div>
+      <section aria-label={texts.regions.filters}>
+        <ActivitiesFilters filters={filters} onChange={go} />
+      </section>
 
       <BulkBar
         count={bulk.picked.size}
@@ -122,52 +65,20 @@ function AdminActivitiesPageInner() {
         onClear={bulk.clear}
       />
 
-      {visible.length === 0 ? (
-        <div className="card p-6 text-center space-y-3">
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {activities.length === 0 ? texts.emptyList : texts.emptySearch}
-          </p>
-          {activities.length === 0 && (
-            <button onClick={() => setShowCreate(true)} className="btn btn-sm btn-primary mx-auto">
-              <IconLabel name="plus">{texts.addFirst}</IconLabel>
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {current.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-bold" style={{ color: "var(--mint-700)" }}>
-                {texts.sections.current}
-              </p>
-              <Rows rows={current} controls={controls} picked={bulk.picked} onPick={bulk.toggle} />
-            </div>
-          )}
-
-          {finished.length > 0 && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowFinished((shown) => !shown)}
-                aria-expanded={showFinished}
-                className="text-xs font-bold flex items-center gap-1"
-                style={{ color: "var(--mint-700)" }}
-              >
-                <Icon name={showFinished ? "chevronUp" : "chevronDown"} size={13} />
-                {texts.sections.finished(finished.length)}
-              </button>
-              {showFinished && (
-                <Rows
-                  rows={finished}
-                  controls={controls}
-                  picked={bulk.picked}
-                  onPick={bulk.toggle}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      <section aria-label={texts.regions.list}>
+        {loading ? (
+          <ListSkeleton />
+        ) : (
+          <ActivitiesList
+            rows={visible}
+            total={activities.length}
+            controls={controls}
+            picked={bulk.picked}
+            onPick={bulk.toggle}
+            onAdd={() => setShowCreate(true)}
+          />
+        )}
+      </section>
 
       {showCreate && (
         <NewActivityDialog onCreate={actions.createActivity} onClose={() => setShowCreate(false)} />
@@ -178,7 +89,7 @@ function AdminActivitiesPageInner() {
 
 export default function AdminActivitiesPage() {
   return (
-    <Suspense fallback={<PageLoading />}>
+    <Suspense fallback={<ActivitiesSkeleton />}>
       <AdminActivitiesPageInner />
     </Suspense>
   );
