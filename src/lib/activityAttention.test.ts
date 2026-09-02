@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { attentionHref, sortAttention, type AttentionRow } from "@/lib/activityAttention";
+import {
+  attentionHref,
+  groupAttention,
+  sortAttention,
+  type AttentionRow,
+} from "@/lib/activityAttention";
 
 function row(over: Partial<AttentionRow> = {}): AttentionRow {
   return {
@@ -9,6 +14,7 @@ function row(over: Partial<AttentionRow> = {}): AttentionRow {
     activityTitle: "كأس الرابطة",
     who: "محمد",
     since: "2026-08-20T10:00:00.000Z",
+    settle: null,
     ...over,
   };
 }
@@ -58,5 +64,46 @@ describe("the order waiting items are read in", () => {
 
   it("has nothing to sort when nothing is waiting", () => {
     expect(sortAttention([])).toEqual([]);
+  });
+});
+
+describe("how waiting items are grouped", () => {
+  it("keeps each kind together with the rest of its kind", () => {
+    const rows = [
+      row({ id: "j", kind: "join" }),
+      row({ id: "r", kind: "registration" }),
+      row({ id: "j2", kind: "join" }),
+    ];
+
+    expect(groupAttention(rows).map((g) => [g.kind, g.rows.length])).toEqual([
+      ["join", 2],
+      ["registration", 1],
+    ]);
+  });
+
+  it("leaves out a kind that has nothing waiting", () => {
+    expect(groupAttention([row({ kind: "suspension" })]).map((g) => g.kind)).toEqual([
+      "suspension",
+    ]);
+  });
+
+  it("holds the same order of kinds whatever arrives first", () => {
+    const kinds = (rows: AttentionRow[]) => groupAttention(rows).map((g) => g.kind);
+    const join = row({ id: "j", kind: "join" });
+    const suspension = row({ id: "s", kind: "suspension" });
+
+    expect(kinds([suspension, join])).toEqual(kinds([join, suspension]));
+  });
+
+  it("orders inside a group by how long it has waited", () => {
+    const old = row({ id: "old", since: "2026-01-01T00:00:00.000Z" });
+    const recent = row({ id: "new", since: "2026-08-28T00:00:00.000Z" });
+
+    expect(groupAttention([recent, old])[0].rows.map((r) => r.id)).toEqual(["old", "new"]);
+    expect(groupAttention([old, recent], true)[0].rows.map((r) => r.id)).toEqual(["new", "old"]);
+  });
+
+  it("has no groups when nothing is waiting", () => {
+    expect(groupAttention([])).toEqual([]);
   });
 });

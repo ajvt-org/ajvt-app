@@ -39,19 +39,22 @@ function AdminActivitiesPageInner() {
     <div className="admin-page space-y-3">
       <ActivitiesHeader onAdd={() => setShowCreate(true)} />
 
-      <section aria-label={texts.regions.work}>
-        {loading ? (
-          <WorkSkeleton />
-        ) : (
-          <AttentionPanel
-            rows={waiting}
-            newestFirst={filters.waiting === "newest"}
-            onOrderChange={(newestFirst) =>
-              go({ ...filters, waiting: newestFirst ? "newest" : "" })
-            }
-          />
-        )}
-      </section>
+      {(loading || waiting.length > 0) && (
+        <section aria-label={texts.regions.work}>
+          {loading ? (
+            <WorkSkeleton />
+          ) : (
+            <AttentionPanel
+              rows={waiting}
+              newestFirst={filters.waiting === "newest"}
+              onOrderChange={(newestFirst) =>
+                go({ ...filters, waiting: newestFirst ? "newest" : "" })
+              }
+              reload={reload}
+            />
+          )}
+        </section>
+      )}
 
       <section aria-label={texts.regions.filters}>
         <ActivitiesFilters filters={filters} onChange={go} />

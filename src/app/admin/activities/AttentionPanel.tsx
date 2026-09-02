@@ -1,99 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import NumericRanges from "@/components/NumericRanges";
-import { attentionHref, sortAttention, type AttentionRow } from "@/lib/activityAttention";
-import { daysWaiting } from "@/lib/waitingRequests";
+import { groupAttention, type AttentionRow } from "@/lib/activityAttention";
 import { activityAttention as texts } from "@/lib/texts";
-
-function Waited({ since }: { since: string }) {
-  const days = daysWaiting(new Date(since), new Date());
-  return (
-    <span className="text-[11px] shrink-0" style={{ color: "var(--text-muted)" }}>
-      <NumericRanges>{days < 1 ? texts.today : texts.waiting(days)}</NumericRanges>
-    </span>
-  );
-}
-
-function Row({ row }: { row: AttentionRow }) {
-  return (
-    <Link
-      href={attentionHref(row)}
-      className="flex items-center gap-2 rounded-xl px-3 py-2"
-      style={{ background: "var(--mint-50)" }}
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block text-xs font-bold" style={{ color: "var(--text-main)" }}>
-          {texts.kinds[row.kind]} — {row.who}
-        </span>
-        <span className="block text-[11px] truncate" style={{ color: "var(--text-muted)" }}>
-          {row.activityTitle}
-        </span>
-      </span>
-      <Waited since={row.since} />
-      <Icon name="chevronLeft" size={14} className="shrink-0" />
-    </Link>
-  );
-}
+import AttentionOrder from "./AttentionOrder";
+import AttentionRowCard from "./AttentionRowCard";
+import { useAttentionActions } from "./useAttentionActions";
 
 export default function AttentionPanel({
   rows,
   newestFirst,
   onOrderChange,
+  reload,
 }: {
   rows: AttentionRow[];
   newestFirst: boolean;
   onOrderChange: (newestFirst: boolean) => void;
+  reload: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(true);
+  const { busy, settle } = useAttentionActions(reload);
 
-  const waiting = sortAttention(rows, newestFirst);
+  if (rows.length === 0) return null;
+
+  const groups = groupAttention(rows, newestFirst);
 
   return (
     <div className="card p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setOpen((shown) => !shown)}
-          aria-expanded={open}
-          className="text-sm font-bold min-w-0 flex-1 text-start"
-          style={{ color: "var(--text-main)" }}
-        >
-          <IconLabel name="clock">
-            {texts.title}
-            {waiting.length > 0 ? ` (${waiting.length})` : ""}
-          </IconLabel>
-        </button>
-        {waiting.length > 1 && (
-          <button
-            type="button"
-            onClick={() => onOrderChange(!newestFirst)}
-            className="text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0"
-            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-          >
-            {newestFirst ? texts.newestFirst : texts.oldestFirst}
-          </button>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen((shown) => !shown)}
+        aria-expanded={open}
+        className="text-sm font-bold w-full text-start"
+        style={{ color: "var(--text-main)" }}
+      >
+        <IconLabel name="clock">{`${texts.title} (${rows.length})`}</IconLabel>
+      </button>
 
-      {waiting.length === 0 ? (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {texts.empty}
-        </p>
-      ) : (
-        open && (
-          <div
-            className="space-y-1.5 overflow-y-auto pe-1"
-            style={{ maxHeight: "15rem", overscrollBehavior: "contain" }}
-          >
-            {waiting.map((row) => (
-              <Row key={row.id} row={row} />
-            ))}
-          </div>
-        )
+      {rows.length > 1 && <AttentionOrder newestFirst={newestFirst} onChange={onOrderChange} />}
+
+      {open && (
+        <div
+          className="space-y-2 overflow-y-auto pe-1"
+          style={{ maxHeight: "15rem", overscrollBehavior: "contain" }}
+        >
+          {groups.map((group) => (
+            <div key={group.kind} className="space-y-1.5">
+              <p className="text-[11px] font-bold" style={{ color: "var(--mint-700)" }}>
+                {texts.group(texts.kinds[group.kind], group.rows.length)}
+              </p>
+              {group.rows.map((row) => (
+                <AttentionRowCard key={row.id} row={row} busy={busy !== ""} onSettle={settle} />
+              ))}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
