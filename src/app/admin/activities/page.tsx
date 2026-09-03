@@ -36,7 +36,7 @@ function AdminActivitiesPageInner() {
   const visible = activities.filter((a) => matchesActivitiesView(a, filters));
 
   return (
-    <div className="admin-page space-y-3">
+    <div className="admin-page space-y-3" style={{ paddingBottom: "4.5rem" }}>
       <ActivitiesHeader onAdd={() => setShowCreate(true)} />
 
       {(loading || waiting.length > 0) && (
@@ -57,16 +57,8 @@ function AdminActivitiesPageInner() {
       )}
 
       <section aria-label={texts.regions.filters}>
-        <ActivitiesFilters filters={filters} onChange={go} />
+        <ActivitiesFilters activities={activities} filters={filters} onChange={go} />
       </section>
-
-      <BulkBar
-        count={bulk.picked.size}
-        busy={bulk.busy}
-        onClose={bulk.closeRegistration}
-        onDelete={bulk.remove}
-        onClear={bulk.clear}
-      />
 
       <section aria-label={texts.regions.list}>
         {loading ? (
@@ -82,6 +74,14 @@ function AdminActivitiesPageInner() {
           />
         )}
       </section>
+
+      <BulkBar
+        count={bulk.picked.size}
+        busy={bulk.busy}
+        onClose={bulk.closeRegistration}
+        onDelete={bulk.remove}
+        onClear={bulk.clear}
+      />
 
       {showCreate && (
         <NewActivityDialog onCreate={actions.createActivity} onClose={() => setShowCreate(false)} />

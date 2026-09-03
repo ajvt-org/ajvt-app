@@ -31,6 +31,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/page.tsx",
   "src/app/admin/activities/ActivitiesHeader.tsx",
   "src/app/admin/activities/ActivitiesFilters.tsx",
+  "src/app/admin/activities/FilterAxisRow.tsx",
   "src/app/admin/activities/ActivitiesList.tsx",
   "src/app/admin/activities/ActivitiesSkeleton.tsx",
   "src/app/admin/activities/AttentionPanel.tsx",
