@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import IconLabel from "@/components/IconLabel";
+import { adminShell } from "@/lib/texts";
 
 export default function TopBar({ onLogout }: { onLogout: () => void }) {
   return (
@@ -13,8 +14,14 @@ export default function TopBar({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <Image src="/version-final.png" alt="شعار" width={30} height={30} className="shrink-0" />
-        <p className="text-xs sm:text-sm font-black text-white leading-none">لوحة تحكم المشرف</p>
+        <Image
+          src="/version-final.png"
+          alt={adminShell.logoAlt}
+          width={30}
+          height={30}
+          className="shrink-0"
+        />
+        <p className="text-xs sm:text-sm font-black text-white leading-none">{adminShell.title}</p>
       </div>
       <div className="flex items-center gap-2">
         <button
@@ -26,7 +33,7 @@ export default function TopBar({ onLogout }: { onLogout: () => void }) {
             border: "1px solid rgba(239,68,68,0.3)",
           }}
         >
-          <IconLabel name="logout">خروج</IconLabel>
+          <IconLabel name="logout">{adminShell.logout}</IconLabel>
         </button>
       </div>
     </div>

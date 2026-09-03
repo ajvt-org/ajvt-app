@@ -45,6 +45,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/[id]/activityTabs.ts",
   "src/components/admin/WorkspaceTabs.tsx",
   "src/components/admin/CountBadge.tsx",
+  "src/components/admin/shell/TopBar.tsx",
   "src/components/admin/shell/TabStrip.tsx",
   "src/components/admin/shell/SubTabStrip.tsx",
   "src/components/admin/shell/useStripScroll.ts",

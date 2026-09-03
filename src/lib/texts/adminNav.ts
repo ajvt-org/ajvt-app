@@ -13,3 +13,9 @@ export const adminTabs = {
   settings: "الإعدادات",
   tools: "أدوات المشرف",
 } as const;
+
+export const adminShell = {
+  logoAlt: "شعار",
+  title: "لوحة تحكم المشرف",
+  logout: "خروج",
+} as const;
