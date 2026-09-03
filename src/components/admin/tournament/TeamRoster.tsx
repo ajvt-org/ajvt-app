@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import InlineRename from "./InlineRename";
-import RosterChip from "./RosterChip";
+import RosterRow from "./RosterRow";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
 
@@ -34,7 +34,7 @@ export default function TeamRoster({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="space-y-2">
       {team.members.map((entry) =>
         renamingMemberId === entry.member.id ? (
           <InlineRename
@@ -49,7 +49,7 @@ export default function TeamRoster({
             onCancel={() => setRenamingMemberId(null)}
           />
         ) : (
-          <RosterChip
+          <RosterRow
             key={entry.member.id}
             entry={entry}
             suspended={suspendedIds.includes(entry.member.id)}

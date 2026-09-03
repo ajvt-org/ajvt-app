@@ -120,7 +120,7 @@ const KEPT_CLEAN = [
   "src/components/admin/tournament/TeamIdentityEditor.tsx",
   "src/components/admin/tournament/TeamRoster.tsx",
   "src/components/admin/tournament/AddPlayerRow.tsx",
-  "src/components/admin/tournament/RosterChip.tsx",
+  "src/components/admin/tournament/RosterRow.tsx",
   "src/components/admin/tournament/InlineRename.tsx",
   "src/components/ProofUpload.tsx",
   "src/components/admin/tournament/PlayersTab.tsx",
