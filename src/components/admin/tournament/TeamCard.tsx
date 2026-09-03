@@ -1,12 +1,10 @@
 "use client";
 
-import IconLabel from "@/components/IconLabel";
 import AddPlayerRow from "./AddPlayerRow";
 import TeamIdentityEditor from "./TeamIdentityEditor";
 import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import type { RosterMember, Team } from "./types";
-import { teamsTab } from "@/lib/texts";
 
 export default function TeamCard({
   team,
@@ -37,8 +35,6 @@ export default function TeamCard({
   onApproveMember: (memberId: string) => void;
   onRemoveMember: (memberId: string) => void;
 }) {
-  const captain = team.members.find((m) => m.member.id === team.captainUserId)?.member ?? null;
-
   return (
     <details className="card p-4">
       <TeamSummary
@@ -56,13 +52,6 @@ export default function TeamCard({
           onRenameTeam={onRenameTeam}
           onSetLogo={onSetLogo}
         />
-        {captain && (
-          <div className="flex flex-wrap gap-1.5">
-            <span className="badge" style={{ background: "var(--mint-600)", color: "white" }}>
-              <IconLabel name="star">{teamsTab.captainBadge(captain.fullName)}</IconLabel>
-            </span>
-          </div>
-        )}
         <TeamRoster
           team={team}
           suspendedIds={suspendedIds}
