@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseUpdateSchema } from "../schema";
+import { money } from "@/lib/money";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
@@ -57,7 +58,7 @@ export const PATCH = withRoute(
     await logAction(
       session.username,
       "UPDATE_EXPENSE",
-      `${expense.label} — ${expense.amount} أوقية`,
+      `${expense.label} — ${money(expense.amount)}`,
       {
         ...auditContext(session, req),
         targetType: "Expense",
@@ -93,7 +94,7 @@ export const DELETE = withRoute(
     await logAction(
       session.username,
       "DELETE_EXPENSE",
-      `${existing.label} — ${existing.amount} أوقية`,
+      `${existing.label} — ${money(existing.amount)}`,
       {
         ...auditContext(session, req),
         targetType: "Expense",

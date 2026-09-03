@@ -8,11 +8,11 @@ import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { members } from "@/lib/messages";
-import { ouguiya } from "@/lib/texts";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import { viewerOf } from "@/lib/supportViewer";
 import { DONOR_ACCOUNT_SELECT } from "@/lib/donorName";
+import { money } from "@/lib/money";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
@@ -44,7 +44,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
   await logAction(
     session.username,
     "CREATE_DONATION_MANUAL",
-    logLabelFor(donation, `${donorName} — ${ouguiya.amount(amount)}`),
+    logLabelFor(donation, `${donorName} — ${money(amount)}`),
     {
       ...auditContext(session, req),
       targetType: "Donation",
