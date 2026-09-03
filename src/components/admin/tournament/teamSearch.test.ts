@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { matchingPeople, matchingTeams, teamMatches } from "./teamSearch";
+import { matchingMembers, matchingPeople, matchingTeams, teamMatches } from "./teamSearch";
 
 const NAJM = { name: "فريق النجم", players: ["أحمد ولد محمد", "عبد الله ولد بابا"] };
 const AMAL = { name: "فريق الأمل", players: ["يعقوب ولد سيدي"] };
@@ -56,5 +56,25 @@ describe("matchingPeople", () => {
 
   it("folds the same letters as the team search", () => {
     expect(matchingPeople(people, "احمد")).toEqual([people[0]]);
+  });
+});
+
+describe("matchingMembers", () => {
+  const members = [
+    { member: { fullName: "أحمد ولد محمد" } },
+    { member: { fullName: "عبد الله ولد بابا" } },
+    { member: { fullName: "يعقوب ولد سيدي" } },
+  ];
+
+  it("keeps the whole roster when nothing is typed", () => {
+    expect(matchingMembers(members, "")).toEqual(members);
+  });
+
+  it("keeps only the players carrying the name", () => {
+    expect(matchingMembers(members, "بابا")).toEqual([members[1]]);
+  });
+
+  it("keeps the whole roster when the query matched the team rather than a player", () => {
+    expect(matchingMembers(members, "النجم")).toEqual(members);
   });
 });

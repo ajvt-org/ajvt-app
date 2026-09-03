@@ -37,6 +37,15 @@ const TEAMS = [
   team("t2", "فريق الأمل", [{ id: "p2", name: "بابا ولد سيدي" }]),
 ];
 
+const SQUAD = [
+  team("t1", "فريق النجم", [
+    { id: "p1", name: "أحمد ولد محمد" },
+    { id: "p2", name: "عبد الله ولد بابا" },
+    { id: "p3", name: "يعقوب ولد سيدي" },
+  ]),
+  team("t2", "فريق الأمل", [{ id: "p4", name: "خالد ولد سالم" }]),
+];
+
 const onChange = vi.fn();
 
 function person(id: string, fullName: string): RosterMember {
@@ -174,5 +183,80 @@ describe("TeamsTab", () => {
     const options = [...document.querySelectorAll("option")].map((o) => o.textContent);
     expect(options).toContain("زينب بنت أحمد");
     expect(options).toContain("خديجة بنت سالم");
+  });
+
+  it("opens the card holding a match and shows only the players that match", () => {
+    show(SQUAD);
+
+    type("بابا");
+    const cards = [...document.querySelectorAll("details")] as HTMLDetailsElement[];
+    expect(cards).toHaveLength(1);
+    expect(cards[0].open).toBe(true);
+    expect(screen.getByText("عبد الله ولد بابا")).toBeDefined();
+    expect(screen.queryByText("أحمد ولد محمد")).toBeNull();
+    expect(screen.queryByText("يعقوب ولد سيدي")).toBeNull();
+  });
+
+  it("says on the card that it is showing a subset", () => {
+    show(SQUAD);
+
+    type("بابا");
+    expect(screen.getByText("يظهر 1 من 3، البحث يخفي البقية")).toBeDefined();
+  });
+
+  it("keeps the count badge on the real roster, whatever is typed", () => {
+    show(SQUAD);
+    expect(screen.getByText("3 لاعبين")).toBeDefined();
+
+    type("بابا");
+    expect(screen.getByText("3 لاعبين")).toBeDefined();
+  });
+
+  it("leaves a team matched by its own name showing its whole roster, folded", () => {
+    show(SQUAD);
+
+    type("النجم");
+    const cards = [...document.querySelectorAll("details")] as HTMLDetailsElement[];
+    expect(cards).toHaveLength(1);
+    expect(cards[0].open).toBe(false);
+    expect(screen.queryByText(/يظهر/)).toBeNull();
+  });
+
+  it("lets the admin fold a card the search opened", () => {
+    show(SQUAD);
+
+    type("بابا");
+    expect((document.querySelector("details") as HTMLDetailsElement).open).toBe(true);
+
+    fireEvent.click(screen.getByText("فريق النجم"));
+    expect((document.querySelector("details") as HTMLDetailsElement).open).toBe(false);
+  });
+
+  it("puts every card and every player back when the query is cleared", () => {
+    show(SQUAD);
+
+    type("بابا");
+    type("");
+
+    const cards = [...document.querySelectorAll("details")] as HTMLDetailsElement[];
+    expect(cards).toHaveLength(2);
+    expect(cards.map((c) => c.open)).toEqual([false, false]);
+
+    fireEvent.click(screen.getByText("فريق النجم"));
+    for (const name of ["أحمد ولد محمد", "عبد الله ولد بابا", "يعقوب ولد سيدي"]) {
+      expect(screen.getByText(name)).toBeDefined();
+    }
+    expect(screen.queryByText(/يظهر/)).toBeNull();
+  });
+
+  it("keeps a team the admin opened by hand open after a search is cleared", () => {
+    show(SQUAD);
+
+    fireEvent.click(screen.getByText("فريق الأمل"));
+    type("بابا");
+    type("");
+
+    const cards = [...document.querySelectorAll("details")] as HTMLDetailsElement[];
+    expect(cards.map((c) => c.open)).toEqual([false, true]);
   });
 });

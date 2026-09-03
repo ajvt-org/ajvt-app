@@ -1,11 +1,12 @@
 "use client";
 
 import RosterRow from "./RosterRow";
-import type { Team } from "./types";
+import type { Team, TeamMemberEntry } from "./types";
 import { teamsTab } from "@/lib/texts";
 
 export default function TeamRoster({
   team,
+  members,
   suspendedIds,
   busy,
   onSetCaptain,
@@ -13,13 +14,14 @@ export default function TeamRoster({
   onRemoveMember,
 }: {
   team: Team;
+  members: TeamMemberEntry[];
   suspendedIds: string[];
   busy: boolean;
   onSetCaptain: (memberId: string | null) => void;
   onApproveMember: (memberId: string) => void;
   onRemoveMember: (memberId: string) => void;
 }) {
-  if (team.members.length === 0) {
+  if (members.length === 0) {
     return (
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {teamsTab.noPlayers}
@@ -29,7 +31,7 @@ export default function TeamRoster({
 
   return (
     <div className="space-y-2">
-      {team.members.map((entry) => (
+      {members.map((entry) => (
         <RosterRow
           key={entry.member.id}
           entry={entry}

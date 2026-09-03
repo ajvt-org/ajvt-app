@@ -10,7 +10,8 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
-import { matchingPeople, matchingTeams } from "./teamSearch";
+import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";
+import { useOpenTeam } from "./useOpenTeam";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
@@ -30,7 +31,6 @@ export default function TeamsTab({
   onChange: () => void;
 }) {
   const [query, setQuery] = useState("");
-  const [openTeam, setOpenTeam] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
@@ -59,6 +59,14 @@ export default function TeamsTab({
   const shownTeams = matchingTeams(rows, query).map((row) => row.team);
   const shownUnassigned = matchingPeople(unassigned, query);
   const searching = query.trim().length > 0;
+
+  const rosters = new Map(
+    shownTeams.map((team) => [team.id, matchingMembers(team.members, query)]),
+  );
+  const holdingAMatch = shownTeams
+    .filter((team) => (rosters.get(team.id) ?? team.members).length < team.members.length)
+    .map((team) => team.id);
+  const { isOpen, toggle } = useOpenTeam(holdingAMatch);
 
   async function run(action: () => Promise<unknown>) {
     setError("");
@@ -157,11 +165,12 @@ export default function TeamsTab({
           team={team}
           shownName={shownName(team)}
           teamSize={teamSize}
-          open={openTeam === team.id}
+          members={rosters.get(team.id) ?? team.members}
+          open={isOpen(team.id)}
           candidates={unassigned}
           suspendedIds={suspendedIds}
           busy={loadingAction}
-          onToggle={() => setOpenTeam((current) => (current === team.id ? null : team.id))}
+          onToggle={() => toggle(team.id)}
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}

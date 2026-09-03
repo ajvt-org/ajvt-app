@@ -11,6 +11,7 @@ export const teamsTab = {
   searchPlaceholder: "ابحث عن فريق أو لاعب",
   searchLabel: "البحث في الفرق واللاعبين",
   noMatch: "لا فريق ولا لاعب بهذا الاسم",
+  rosterSubset: (shown: number, total: number) => `يظهر ${shown} من ${total}، البحث يخفي البقية`,
   save: "حفظ",
   cancel: "إلغاء",
   deleteTeam: "حذف الفريق",
