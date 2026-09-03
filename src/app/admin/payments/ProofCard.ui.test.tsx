@@ -120,9 +120,18 @@ describe("the other kinds on the same list", () => {
     expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
   });
 
-  it("shows the name typed by hand when it differs from the one on show", () => {
+  it("drops the name typed by hand once the gift is linked to an account", () => {
     mockFetch([]);
     show({ memberName: "أبوبكر لمرابط", donorName: "ابو", userId: "u1" });
+
+    expect(screen.getByText("أبوبكر لمرابط")).toBeTruthy();
+    expect(screen.queryByText(/الاسم المكتوب/)).toBeNull();
+    expect(screen.queryByText("ابو")).toBeNull();
+  });
+
+  it("shows the name typed by hand while the gift is linked to nobody", () => {
+    mockFetch([]);
+    show({ memberName: "متبرع مجهول", donorName: "ابو", userId: null });
 
     expect(screen.getByText(paymentCard.storedName("ابو"))).toBeTruthy();
   });

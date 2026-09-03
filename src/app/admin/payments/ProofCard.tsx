@@ -6,6 +6,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "@/lib/texts";
 import Money from "@/components/Money";
 import { linkedAccount } from "@/lib/linkedAccount";
+import { donorNamesShown } from "@/lib/donorNamesShown";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import RecordHistory from "@/components/admin/RecordHistory";
@@ -81,8 +82,7 @@ export default function ProofCard({
   const isDonation = proof.kind === "DONATION";
   const linkedMember = linkedAccount(members, proof.userId);
   const reuseKind = REUSE_KIND[proof.kind];
-  const stored = proof.donorName?.trim() || null;
-  const showsStored = isDonation && stored !== null && stored !== proof.memberName;
+  const names = donorNamesShown(proof);
 
   return (
     <div className="card p-3">
@@ -92,7 +92,7 @@ export default function ProofCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="font-bold text-sm min-w-0" style={{ color: "var(--text-main)" }}>
-              {proof.memberName}
+              {names.name}
             </p>
             {isDonation && proof.amount != null && (
               <p className="font-bold text-sm shrink-0" style={{ color: "var(--mint-700)" }}>
@@ -121,9 +121,9 @@ export default function ProofCard({
             )}
           </div>
 
-          {showsStored && (
+          {isDonation && names.typed && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              <bdi>{paymentCard.storedName(stored)}</bdi>
+              <bdi>{paymentCard.storedName(names.typed)}</bdi>
             </p>
           )}
 
