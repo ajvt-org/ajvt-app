@@ -28,6 +28,7 @@ export default function TeamsTab({
   suspendedIds: string[];
   onChange: () => void;
 }) {
+  const [openTeam, setOpenTeam] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
@@ -125,9 +126,11 @@ export default function TeamsTab({
           team={team}
           shownName={shownName(team)}
           teamSize={teamSize}
+          open={openTeam === team.id}
           candidates={unassigned}
           suspendedIds={suspendedIds}
           busy={loadingAction}
+          onToggle={() => setOpenTeam((current) => (current === team.id ? null : team.id))}
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
