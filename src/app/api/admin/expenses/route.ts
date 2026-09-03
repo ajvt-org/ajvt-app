@@ -10,22 +10,23 @@ import { expenseCreateSchema } from "./schema";
 import { money } from "@/lib/money";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
+import { cleanProofNames, leadProof } from "@/lib/expenseProofs";
+import { EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
   await requireArea(MONEY_AREAS.expenses);
   const expenses = await prisma.expense.findMany({
     orderBy: { date: "desc" },
-    include: EXPENSE_DESTINATION_SELECT,
+    include: { ...EXPENSE_DESTINATION_SELECT, ...EXPENSE_PROOF_SELECT },
   });
   return NextResponse.json({ expenses });
 });
 
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
   const session = await requireArea(MONEY_AREAS.expenses);
-  const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
-    expenseCreateSchema(await offeredMethodNames()),
-    await req.json(),
-  );
+  const { label, amount, method, note, date, proof, proofs, tagIds, activityId, competitionId } =
+    parse(expenseCreateSchema(await offeredMethodNames()), await req.json());
+  const files = cleanProofNames(proofs ?? [proof]);
   const destination = await resolveMoneyDestination({ activityId, competitionId });
 
   const n = Number(amount);
@@ -37,14 +38,15 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       amount: n,
       method: method?.trim() || null,
       note: note?.trim() || null,
-      proof: proof || null,
+      proof: leadProof(files),
+      proofs: files.length ? { create: files.map((filename) => ({ filename })) } : undefined,
       date: parsedDate,
       createdBy: session.username,
       tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
       activityId: destination.activityId,
       competitionId: destination.competitionId,
     },
-    include: EXPENSE_DESTINATION_SELECT,
+    include: { ...EXPENSE_DESTINATION_SELECT, ...EXPENSE_PROOF_SELECT },
   });
   await logAction(
     session.username,

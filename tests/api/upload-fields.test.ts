@@ -38,6 +38,7 @@ describe("the upload field registry", () => {
       "donation.proof",
       "payment.proof",
       "expense.proof",
+      "expenseProof.filename",
       "activity.photo",
       "team.logo",
       "donation.donorPhoto",
@@ -54,6 +55,7 @@ describe("the upload field registry", () => {
       "donation.proof",
       "payment.proof",
       "expense.proof",
+      "expenseProof.filename",
     ]);
   });
 

@@ -3,8 +3,8 @@
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import PhotoUpload from "@/components/PhotoUpload";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
+import ExpenseProofsField from "./ExpenseProofsField";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { expenseForm as texts } from "@/lib/texts";
@@ -43,6 +43,7 @@ export default function ExpenseFormDialog({
   tags,
   destinations,
   editing,
+  expenseId,
   error,
   saving,
   onChange,
@@ -53,6 +54,7 @@ export default function ExpenseFormDialog({
   tags: FinanceTagRow[];
   destinations: DestinationOption[];
   editing: boolean;
+  expenseId: string | null;
   error: string;
   saving: boolean;
   onChange: (patch: Partial<ExpenseForm>) => void;
@@ -87,19 +89,11 @@ export default function ExpenseFormDialog({
         </div>
 
         <form onSubmit={onSubmit} className="p-5 space-y-3">
-          <div>
-            <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              {texts.proofHeading}
-            </p>
-            <PhotoUpload
-              photo={form.proof || null}
-              imageUrlPrefix="/api/files"
-              variant="cover"
-              label={texts.proofLabel}
-              placeholderIcon="receipt"
-              onUpload={(filename) => onChange({ proof: filename })}
-            />
-          </div>
+          <ExpenseProofsField
+            proofs={form.proofs}
+            expenseId={expenseId}
+            onChange={(proofs) => onChange({ proofs })}
+          />
 
           <Field id="expense-label" label={texts.label} required>
             <input

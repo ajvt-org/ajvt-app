@@ -27,6 +27,8 @@ const date = z.unknown().superRefine((v, ctx) => {
 
 const tagIds = z.array(z.string(INVALID)).optional();
 
+const proofs = z.array(z.string(INVALID), INVALID).optional();
+
 const activityId = z.string(INVALID).nullish();
 
 const competitionId = z.string(INVALID).nullish();
@@ -53,6 +55,7 @@ export function expenseCreateSchema(accepted: readonly string[]) {
     method: method(accepted),
     note: z.string(INVALID).nullish(),
     proof: z.string(INVALID).nullish(),
+    proofs,
     date: date.optional(),
     tagIds,
   });
@@ -68,6 +71,7 @@ export function expenseUpdateSchema(accepted: readonly string[]) {
       method: method(accepted),
       note: z.string(INVALID).nullish(),
       proof: z.string(INVALID).nullish(),
+      proofs,
       date: date.optional(),
       tagIds,
     })
@@ -80,6 +84,7 @@ export function expenseUpdateSchema(accepted: readonly string[]) {
           v.note,
           v.date,
           v.proof,
+          v.proofs,
           v.tagIds,
           v.activityId,
           v.competitionId,

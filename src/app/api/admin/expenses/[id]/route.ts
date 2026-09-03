@@ -12,6 +12,8 @@ import { money } from "@/lib/money";
 import { expenses as expenseMessages } from "@/lib/messages";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
+import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
+import { EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
@@ -24,10 +26,8 @@ export const PATCH = withRoute(
     }
 
     const accepted = acceptedNames(await offeredMethodNames(), existing.method);
-    const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
-      expenseUpdateSchema(accepted),
-      await req.json(),
-    );
+    const { label, amount, method, note, date, proof, proofs, tagIds, activityId, competitionId } =
+      parse(expenseUpdateSchema(accepted), await req.json());
 
     const data: {
       label?: string;
@@ -50,7 +50,17 @@ export const PATCH = withRoute(
     }
 
     if (date !== undefined) data.date = new Date(date as string);
-    if (proof !== undefined) data.proof = proof;
+
+    const held = (
+      await prisma.expenseProof.findMany({
+        where: { expenseId: id },
+        orderBy: { createdAt: "asc" },
+        select: { filename: true },
+      })
+    ).map((row) => row.filename);
+    const wanted = proofs === undefined ? held : cleanProofNames(proofs);
+    if (proofs !== undefined) data.proof = leadProof(wanted);
+    else if (proof !== undefined) data.proof = proof;
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
     if (activityId !== undefined || competitionId !== undefined) {
       const destination = await resolveMoneyDestination({ activityId, competitionId });
@@ -58,10 +68,22 @@ export const PATCH = withRoute(
       data.competitionId = destination.competitionId;
     }
 
-    const expense = await prisma.expense.update({
-      where: { id },
-      data,
-      include: EXPENSE_DESTINATION_SELECT,
+    const expense = await prisma.$transaction(async (tx) => {
+      const removed = proofsToRemove(held, wanted);
+      const added = proofsToAdd(held, wanted);
+      if (removed.length) {
+        await tx.expenseProof.deleteMany({ where: { expenseId: id, filename: { in: removed } } });
+      }
+      if (added.length) {
+        await tx.expenseProof.createMany({
+          data: added.map((filename) => ({ expenseId: id, filename })),
+        });
+      }
+      return tx.expense.update({
+        where: { id },
+        data,
+        include: { ...EXPENSE_DESTINATION_SELECT, ...EXPENSE_PROOF_SELECT },
+      });
     });
     await logAction(
       session.username,

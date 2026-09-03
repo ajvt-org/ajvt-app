@@ -24,7 +24,8 @@ type Status = "idle" | "preparing" | "uploading" | "error" | "done";
 interface ProofUploadProps {
   existingProof: string | null;
   onUploaded: (filename: string) => void;
-
+  label?: string;
+  required?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
 }
 
@@ -82,6 +83,8 @@ function uploadWithProgress(
 export default function ProofUpload({
   existingProof,
   onUploaded,
+  label = proofUpload.label,
+  required = true,
   onUploadingChange,
 }: ProofUploadProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -147,7 +150,7 @@ export default function ProofUpload({
   return (
     <div>
       <p className="text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-        {proofUpload.label} <span style={{ color: "var(--copper-500)" }}>*</span>
+        {label} {required && <span style={{ color: "var(--copper-500)" }}>*</span>}
       </p>
 
       {showingImage ? (

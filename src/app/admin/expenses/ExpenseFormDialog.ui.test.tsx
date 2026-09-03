@@ -18,6 +18,7 @@ function show(over: Partial<ExpenseForm> = {}) {
       tags={[]}
       destinations={[]}
       editing={Boolean(over.method)}
+      expenseId={null}
       error=""
       saving={false}
       onChange={vi.fn()}
