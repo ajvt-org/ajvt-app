@@ -40,6 +40,15 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       note: note?.trim() || null,
       proof: leadProof(files),
       proofs: files.length ? { create: files.map((filename) => ({ filename })) } : undefined,
+      allocations: {
+        create: [
+          {
+            amount: n,
+            activityId: destination.activityId,
+            competitionId: destination.competitionId,
+          },
+        ],
+      },
       date: parsedDate,
       createdBy: session.username,
       tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,

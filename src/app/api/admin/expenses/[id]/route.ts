@@ -79,11 +79,23 @@ export const PATCH = withRoute(
           data: added.map((filename) => ({ expenseId: id, filename })),
         });
       }
-      return tx.expense.update({
+      const saved = await tx.expense.update({
         where: { id },
         data,
         include: { ...EXPENSE_DESTINATION_SELECT, ...EXPENSE_PROOF_SELECT },
       });
+
+      await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
+      await tx.expenseAllocation.create({
+        data: {
+          expenseId: id,
+          amount: saved.amount,
+          activityId: saved.activityId,
+          competitionId: saved.activityId ? null : saved.competitionId,
+        },
+      });
+
+      return saved;
     });
     await logAction(
       session.username,
