@@ -449,28 +449,39 @@ model Donation {
   @@index([competitionId])
 }
 
-// Manually-entered outgoing spending (association expenses) — no in-app
-// source generates these; an admin logs and edits every row by hand.
 model Expense {
-  id            String       @id @default(cuid())
+  id            String         @id @default(cuid())
   label         String
   amount        Int
   method        String?
   note          String?
-  proof         String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
-  date          DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
-  createdBy     String // admin username, plain string like AuditLog.adminUsername — not a relation
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  proof         String?
+  date          DateTime       @default(now())
+  createdBy     String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   tags          FinanceTag[]
+  proofs        ExpenseProof[]
   activityId    String?
-  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  activity      Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
   competitionId String?
-  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  competition   Competition?   @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([date])
   @@index([activityId])
   @@index([competitionId])
+}
+
+model ExpenseProof {
+  id        String   @id @default(cuid())
+  expenseId String
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  filename  String
+  createdAt DateTime @default(now())
+
+  @@unique([expenseId, filename])
+  @@index([expenseId])
+  @@index([filename])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so
