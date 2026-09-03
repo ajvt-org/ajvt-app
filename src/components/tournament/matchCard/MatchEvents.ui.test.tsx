@@ -69,10 +69,10 @@ describe("MatchEvents", () => {
     );
 
     const [home, , away] = sections(container)[0].children;
-    expect(home.children[0].querySelector("svg,img")).not.toBeNull();
+    expect(home.children[0].querySelector(".rounded-full")).not.toBeNull();
     expect(home.children[2].textContent).toBe("7'");
     expect(away.children[0].textContent).toBe("9'");
-    expect(away.children[1].querySelector("svg,img")).not.toBeNull();
+    expect(away.children[1].querySelector(".rounded-full")).not.toBeNull();
   });
 
   it("breaks a hat-trick's minutes into rows of two", () => {
