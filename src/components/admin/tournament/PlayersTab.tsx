@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import ArrowLabel from "@/components/ArrowLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
@@ -82,7 +84,16 @@ export default function PlayersTab({
                   fullName={entry?.member.fullName ?? team.name}
                 />
                 <span className="text-sm font-bold min-w-0 flex-1">
-                  {entry?.member.fullName ?? team.name}
+                  {entry ? (
+                    <Link
+                      href={`/admin/members/${entry.member.id}`}
+                      aria-label={playersTab.openCardOf(entry.member.fullName)}
+                    >
+                      <ArrowLabel>{entry.member.fullName}</ArrowLabel>
+                    </Link>
+                  ) : (
+                    team.name
+                  )}
                   {entry?.status === "PENDING" && (
                     <span className="badge badge-pending text-xs mr-2">
                       {playersTab.joinRequest}

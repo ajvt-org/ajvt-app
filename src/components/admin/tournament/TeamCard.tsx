@@ -18,7 +18,6 @@ export default function TeamCard({
   onRenameTeam,
   onDeleteTeam,
   onSetLogo,
-  onRenameMember,
   onSetCaptain,
   onAddMember,
   onApproveMember,
@@ -33,7 +32,6 @@ export default function TeamCard({
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
-  onRenameMember: (memberId: string, name: string) => void;
   onSetCaptain: (memberId: string | null) => void;
   onAddMember: (userId: string) => void;
   onApproveMember: (memberId: string) => void;
@@ -69,7 +67,6 @@ export default function TeamCard({
           team={team}
           suspendedIds={suspendedIds}
           busy={busy}
-          onRenameMember={onRenameMember}
           onSetCaptain={onSetCaptain}
           onApproveMember={onApproveMember}
           onRemoveMember={onRemoveMember}

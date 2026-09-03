@@ -8,6 +8,7 @@ export const playersTab = {
   accepted: "قُبل اللاعب",
   acceptJoin: "قبول الانضمام",
   removeOf: (name: string) => `إزالة ${name}`,
+  openCardOf: (name: string) => `فتح بطاقة ${name}`,
   addPlayer: "إضافة لاعب",
   allAdded: "كل المسجلين في النشاط مضافون بالفعل.",
   searchPlaceholder: "بحث بالاسم أو الهاتف...",
