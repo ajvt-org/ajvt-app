@@ -7,20 +7,23 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
+import { expenses as expenseMessages } from "@/lib/messages";
+import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
+import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
-    const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
+    const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
       expenseUpdateSchema,
       await req.json(),
     );
 
     const existing = await prisma.expense.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "المصروف غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
     }
 
     const data: {
@@ -32,6 +35,7 @@ export const PATCH = withRoute(
       proof?: string | null;
       tags?: { set: { id: string }[] };
       activityId?: string | null;
+      competitionId?: string | null;
     } = {};
 
     if (label !== undefined) data.label = label;
@@ -45,15 +49,16 @@ export const PATCH = withRoute(
     if (date !== undefined) data.date = new Date(date as string);
     if (proof !== undefined) data.proof = proof;
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
-    if (activityId !== undefined) data.activityId = activityId || null;
+    if (activityId !== undefined || competitionId !== undefined) {
+      const destination = await resolveMoneyDestination({ activityId, competitionId });
+      data.activityId = destination.activityId;
+      data.competitionId = destination.competitionId;
+    }
 
     const expense = await prisma.expense.update({
       where: { id },
       data,
-      include: {
-        tags: { select: { id: true, name: true } },
-        activity: { select: { id: true, title: true } },
-      },
+      include: EXPENSE_DESTINATION_SELECT,
     });
     await logAction(
       session.username,
@@ -87,7 +92,7 @@ export const DELETE = withRoute(
 
     const existing = await prisma.expense.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "المصروف غير موجود" }, { status: 404 });
+      return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
     }
 
     await prisma.expense.delete({ where: { id } });

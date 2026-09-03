@@ -29,10 +29,13 @@ const tagIds = z.array(z.string(INVALID)).optional();
 
 const activityId = z.string(INVALID).nullish();
 
+const competitionId = z.string(INVALID).nullish();
+
 const method = z.string(INVALID).nullish();
 
 export const expenseCreateSchema = z.object({
   activityId,
+  competitionId,
   label,
   amount,
   method,
@@ -45,6 +48,7 @@ export const expenseCreateSchema = z.object({
 export const expenseUpdateSchema = z
   .object({
     activityId,
+    competitionId,
     label: label.optional(),
     amount: amount.optional(),
     method,
@@ -55,8 +59,16 @@ export const expenseUpdateSchema = z
   })
   .refine(
     (v) =>
-      [v.label, v.amount, v.method, v.note, v.date, v.proof, v.tagIds, v.activityId].some(
-        (field) => field !== undefined,
-      ),
+      [
+        v.label,
+        v.amount,
+        v.method,
+        v.note,
+        v.date,
+        v.proof,
+        v.tagIds,
+        v.activityId,
+        v.competitionId,
+      ].some((field) => field !== undefined),
     INVALID,
   );

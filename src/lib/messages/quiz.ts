@@ -4,6 +4,7 @@ export const quiz = {
   questionAnswersLocked:
     "السؤال مستعمل في مسابقة، لا يمكن تغيير إجاباته ولا نقاطه لأن المشاركين يراجعون ما لعبوه. يمكنك تصحيح صياغته فقط",
   questionNotFound: "السؤال غير موجود",
+  competitionNotFound: "المسابقة غير موجودة",
   textRequired: "نص السؤال مطلوب",
   categoryRequired: "التصنيف مطلوب",
   twoAnswersMinimum: "يجب إضافة إجابتين على الأقل",
