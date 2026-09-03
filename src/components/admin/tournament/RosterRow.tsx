@@ -6,6 +6,8 @@ import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
 import { discipline, teamsTab } from "@/lib/texts";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 const ACTIVE = "var(--mint-50)";
 const PENDING = "#fef3c7";
@@ -36,6 +38,7 @@ export default function RosterRow({
 }) {
   const { member, status } = entry;
   const pending = status === "PENDING";
+  const from = useAdminOrigin();
 
   return (
     <div
@@ -43,7 +46,7 @@ export default function RosterRow({
       style={{ background: pending ? PENDING : captain ? CAPTAIN : ACTIVE }}
     >
       <Link
-        href={`/admin/members/${member.id}`}
+        href={memberCardHref(member.id, from)}
         aria-label={teamsTab.openCardOf(member.fullName)}
         className="flex items-start gap-2 min-w-0 grow basis-40 text-start"
       >

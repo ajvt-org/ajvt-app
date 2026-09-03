@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
+import { adminBackLink } from "@/lib/adminBackLink";
 import { auditActionLabel } from "@/lib/auditLabels";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -31,9 +32,9 @@ function day(value: string | Date | null | undefined): string {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-export default function AdminMemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function AdminMemberProfilePageInner({ id }: { id: string }) {
   const router = useRouter();
+  const back = adminBackLink(useSearchParams().get("from"));
   const [data, setData] = useState<MemberProfile | null>(null);
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -77,12 +78,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           {texts.notFound}
         </p>
-        <Link
-          href="/admin/dashboard"
-          className="text-sm font-bold"
-          style={{ color: "var(--mint-600)" }}
-        >
-          <ArrowLabel direction="back">{texts.backToMembers}</ArrowLabel>
+        <Link href={back.href} className="text-sm font-bold" style={{ color: "var(--mint-600)" }}>
+          <ArrowLabel direction="back">{back.label}</ArrowLabel>
         </Link>
       </div>
     );
@@ -92,12 +89,8 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
 
   return (
     <div className="admin-page space-y-4">
-      <Link
-        href="/admin/dashboard"
-        className="text-sm font-bold"
-        style={{ color: "var(--mint-600)" }}
-      >
-        <ArrowLabel direction="back">{texts.backToMembers}</ArrowLabel>
+      <Link href={back.href} className="text-sm font-bold" style={{ color: "var(--mint-600)" }}>
+        <ArrowLabel direction="back">{back.label}</ArrowLabel>
       </Link>
 
       <div className="card p-4 flex items-center gap-3">
@@ -300,5 +293,14 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
         fullName={member.fullName}
       />
     </div>
+  );
+}
+
+export default function AdminMemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  return (
+    <Suspense fallback={null}>
+      <AdminMemberProfilePageInner id={id} />
+    </Suspense>
   );
 }
