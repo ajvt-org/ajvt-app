@@ -238,6 +238,7 @@ export default function TeamsTab({
             photo={team.logo}
             imageUrlPrefix="/api/files/team"
             variant="avatar"
+            bare
             label={teamsTab.teamLogo}
             placeholderIcon="shield"
             onUpload={(filename) => setTeamLogo(team.id, filename)}
@@ -375,6 +376,7 @@ export default function TeamsTab({
           photo={newTeamLogo || null}
           imageUrlPrefix="/api/files/team"
           variant="avatar"
+          bare
           label={teamsTab.teamLogo}
           placeholderIcon="shield"
           onUpload={(filename) => setNewTeamLogo(filename)}
