@@ -22,7 +22,7 @@ describe("teams tab texts", () => {
       teamsTab.acceptOf("أحمد"),
       teamsTab.rejectOf("أحمد"),
       teamsTab.removeOf("أحمد"),
-      teamsTab.renameOf("أحمد"),
+      teamsTab.openCardOf("أحمد"),
     ]) {
       expect(line).toContain("أحمد");
     }
