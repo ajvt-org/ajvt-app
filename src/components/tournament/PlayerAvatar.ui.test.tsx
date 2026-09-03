@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import PlayerAvatar from "./PlayerAvatar";
-import { INITIALS_JOINER } from "@/lib/arabicName";
 
 function show(props: { photo?: string | null; fullName: string; bg?: "mint" | "copper" }) {
   cleanup();
@@ -9,20 +8,21 @@ function show(props: { photo?: string | null; fullName: string; bg?: "mint" | "c
 }
 
 describe("PlayerAvatar", () => {
-  it("writes the initials of a player who has no photo", () => {
+  it("draws the glyph for a player who has no photo", () => {
     const { container } = show({ fullName: "عبد الله ولد إبراهيم" });
 
-    expect(container.textContent).toBe("ع" + INITIALS_JOINER + "إ");
-    expect(container.querySelector("svg")).toBeNull();
+    expect(container.querySelector("svg")).not.toBeNull();
+    expect(container.textContent).toBe("");
   });
 
-  it("gives a one word name its one letter", () => {
+  it("draws the same glyph for a one word name", () => {
     const { container } = show({ fullName: "إبراهيم" });
 
-    expect(container.textContent).toBe("إ");
+    expect(container.querySelector("svg")).not.toBeNull();
+    expect(container.textContent).toBe("");
   });
 
-  it("falls back to the glyph when there is no name to read", () => {
+  it("draws the same glyph when there is no name to read", () => {
     const { container } = show({ fullName: "" });
 
     expect(container.querySelector("svg")).not.toBeNull();
