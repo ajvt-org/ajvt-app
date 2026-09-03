@@ -14,7 +14,8 @@ import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
 import MembershipPanel from "./MembershipPanel";
-import { memberDrawer as texts, ouguiya } from "@/lib/texts";
+import { memberDrawer as texts } from "@/lib/texts";
+import Money from "@/components/Money";
 
 function Header({ onClose }: { onClose: () => void }) {
   return (
@@ -73,17 +74,17 @@ function Identity({ member }: { member: Member }) {
   );
 }
 
-type Row = [string, string, string | undefined];
+type Row = [string, React.ReactNode, string | undefined];
 
 function paidRows(member: Member): Row[] {
   const fee = member.paidAmount ?? 0;
   if (member.supportAmount <= 0) {
-    return [[texts.paid, member.paidAmount ? ouguiya.amount(fee) : "—", undefined]];
+    return [[texts.paid, member.paidAmount ? <Money value={fee} /> : "—", undefined]];
   }
   return [
-    [texts.fee, ouguiya.amount(fee), undefined],
-    [texts.support, ouguiya.amount(member.supportAmount), undefined],
-    [texts.totalPaid, ouguiya.amount(fee + member.supportAmount), undefined],
+    [texts.fee, <Money key="fee" value={fee} />, undefined],
+    [texts.support, <Money key="support" value={member.supportAmount} />, undefined],
+    [texts.totalPaid, <Money key="total" value={fee + member.supportAmount} />, undefined],
   ];
 }
 

@@ -21,7 +21,8 @@ import MemberPhotoCard from "./MemberPhotoCard";
 import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
-import { memberPage as texts, ouguiya, registrationStatusLabels } from "@/lib/texts";
+import { memberPage as texts, registrationStatusLabels } from "@/lib/texts";
+import Money from "@/components/Money";
 
 const MEMBER_STATUS: Record<string, string> = memberStatusLabels;
 
@@ -258,7 +259,9 @@ export default function AdminMemberProfilePage({ params }: { params: Promise<{ i
           <ul className="space-y-1.5">
             {member.donations.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-bold">{ouguiya.amount(d.amount ?? "")}</span>
+                <span className="font-bold">
+                  {d.amount === null ? "—" : <Money value={d.amount} />}
+                </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {d.paymentMethod || d.source} · <span dir="ltr">{day(d.createdAt)}</span>
                 </span>

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { validatePaidAmount } from "@/lib/donations";
 import { bulkChange, bulkSurplus } from "@/lib/memberImportBulk";
-import { memberImportDialog, ouguiya } from "@/lib/texts";
+import { memberImportDialog } from "@/lib/texts";
+import { money } from "@/lib/money";
 import type { RowValues } from "@/lib/memberImportValues";
 import IconLabel from "@/components/IconLabel";
 
@@ -139,7 +140,7 @@ export default function MemberImportBulkFill({
 
       {surplus > 0 && selected > 1 && (
         <p className="text-[11px] font-semibold" style={{ color: "#92400e" }}>
-          <IconLabel name="warning">{texts.surplus(selected, ouguiya.amount(surplus))}</IconLabel>
+          <IconLabel name="warning">{texts.surplus(selected, money(surplus))}</IconLabel>
         </p>
       )}
 
