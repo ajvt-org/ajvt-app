@@ -3,13 +3,14 @@ import { MONEY_AREAS } from "@/lib/adminNav";
 import { adminTabs } from "@/lib/texts";
 import { NAV_TABS, subtabsFor, tabActiveFor, tabsFor } from "./navTabs";
 
-const MONEY = [
+const SHARED = [
   MONEY_AREAS.payments,
   MONEY_AREAS.receipts,
+  MONEY_AREAS.supporters,
   MONEY_AREAS.expenses,
-  MONEY_AREAS.treasury,
-  MONEY_AREAS.report,
 ];
+
+const MONEY = [...SHARED, MONEY_AREAS.treasury, MONEY_AREAS.report];
 
 function labels(role: string | null): string[] {
   return tabsFor(role).map((tab) => tab.label);
@@ -36,19 +37,18 @@ describe("the admin navigation", () => {
 
   it("shows a members admin the money tab without the treasury or the report", () => {
     expect(labels("MEMBERS")).toContain(adminTabs.money);
-    expect(subtabHrefs("MEMBERS", MONEY_AREAS.payments)).toEqual([
-      MONEY_AREAS.payments,
-      MONEY_AREAS.receipts,
-      MONEY_AREAS.expenses,
-    ]);
+    expect(subtabHrefs("MEMBERS", MONEY_AREAS.payments)).toEqual(SHARED);
   });
 
-  it("shows an activities admin the same three", () => {
-    expect(subtabHrefs("ACTIVITIES", MONEY_AREAS.receipts)).toEqual([
-      MONEY_AREAS.payments,
-      MONEY_AREAS.receipts,
-      MONEY_AREAS.expenses,
-    ]);
+  it("shows an activities admin the same money screens", () => {
+    expect(subtabHrefs("ACTIVITIES", MONEY_AREAS.receipts)).toEqual(SHARED);
+  });
+
+  it("puts the supporters board beside the payments and the receipts", () => {
+    const money = NAV_TABS.find((tab) => tab.label === adminTabs.money);
+    const hrefs = money?.tabs?.map((tab) => tab.href) ?? [];
+
+    expect(hrefs.indexOf(MONEY_AREAS.supporters)).toBe(hrefs.indexOf(MONEY_AREAS.receipts) + 1);
   });
 
   it("hides the money tab from a role granted none of it", () => {
@@ -107,11 +107,7 @@ describe("the money paths arrive at the money tab", () => {
     }
   });
 
-  it("offers a members admin the same money screens it reached before", () => {
-    expect(subtabHrefs("MEMBERS", MONEY_AREAS.expenses)).toEqual([
-      MONEY_AREAS.payments,
-      MONEY_AREAS.receipts,
-      MONEY_AREAS.expenses,
-    ]);
+  it("offers a members admin every money screen it is granted", () => {
+    expect(subtabHrefs("MEMBERS", MONEY_AREAS.expenses)).toEqual(SHARED);
   });
 });

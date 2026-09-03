@@ -19,6 +19,12 @@ export const supporters = {
   loadFailed: "تعذّر تحميل المزيد، حاول مرة أخرى",
 } as const;
 
+export const adminSupporters = {
+  count: "عدد الداعمين",
+  given: "مجموع الدعم",
+  empty: "لا يوجد داعمون بعد",
+} as const;
+
 export const surplusCard = {
   title: "دعمك فوق رسوم الاشتراك",
   hint: (amount: number) =>

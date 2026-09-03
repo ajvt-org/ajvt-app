@@ -128,6 +128,8 @@ const KEPT_CLEAN = [
   "src/components/tournament/matchCard/MatchEvents.tsx",
   "src/components/PaymentReceipts.tsx",
   "src/components/admin/shell/navTabs.ts",
+  "src/components/admin/StatTile.tsx",
+  "src/app/admin/supporters",
   "src/lib/matchEvents.ts",
   "src/lib/memberImportColumns.ts",
   "src/lib/memberImportCheck.ts",

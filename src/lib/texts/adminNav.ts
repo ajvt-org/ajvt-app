@@ -4,6 +4,7 @@ export const adminTabs = {
   money: "المالية",
   payments: "المدفوعات",
   receipts: "الوصولات",
+  supporters: "الداعمين",
   expenses: "المصاريف",
   treasury: "الخزينة",
   financeReport: "التقرير المالي",
