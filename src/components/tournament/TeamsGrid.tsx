@@ -8,6 +8,7 @@ type Team = {
   id: string;
   name: string;
   logo: string | null;
+  captainUserId: string | null;
   members: { member: SquadPlayer }[];
 };
 
@@ -30,7 +31,10 @@ export default function TeamsGrid({ teams }: { teams: Team[] }) {
             </span>
             <Icon name="chevronDown" size={14} className="disclosure-chevron" />
           </summary>
-          <SquadList players={team.members.map((entry) => entry.member)} />
+          <SquadList
+            players={team.members.map((entry) => entry.member)}
+            captainId={team.captainUserId}
+          />
         </details>
       ))}
     </div>

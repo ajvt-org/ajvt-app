@@ -34,6 +34,7 @@ async function loadActivity(id: string) {
           name: true,
           logo: true,
           groupId: true,
+          captainUserId: true,
           members: {
             select: {
               userId: true,
