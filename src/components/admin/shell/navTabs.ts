@@ -12,6 +12,7 @@ export interface NavTab {
 const MONEY_TABS: NavTab[] = [
   { href: MONEY_AREAS.payments, label: adminTabs.payments, icon: "receipt" },
   { href: MONEY_AREAS.receipts, label: adminTabs.receipts, icon: "receipt" },
+  { href: MONEY_AREAS.supporters, label: adminTabs.supporters, icon: "heart" },
   { href: MONEY_AREAS.expenses, label: adminTabs.expenses, icon: "banknote" },
   { href: MONEY_AREAS.treasury, label: adminTabs.treasury, icon: "wallet" },
   { href: MONEY_AREAS.report, label: adminTabs.financeReport, icon: "file" },

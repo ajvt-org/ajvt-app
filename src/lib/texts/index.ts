@@ -73,7 +73,7 @@ export {
 } from "./receipt";
 export { signUp } from "./signUp";
 export { supportPrivacy } from "./supportPrivacy";
-export { supporters, surplusCard } from "./supporters";
+export { adminSupporters, supporters, surplusCard } from "./supporters";
 export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
