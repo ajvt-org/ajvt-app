@@ -1,12 +1,14 @@
 import Icon from "@/components/Icon";
+import IconLabel from "@/components/IconLabel";
 import TeamLogo from "./TeamLogo";
-import PlayerAvatar from "./PlayerAvatar";
+import SquadList, { type SquadPlayer } from "./SquadList";
+import { publicTournament as texts } from "@/lib/texts";
 
 type Team = {
   id: string;
   name: string;
   logo: string | null;
-  members: { member: { id: string; fullName: string; photo: string | null } }[];
+  members: { member: SquadPlayer }[];
 };
 
 export default function TeamsGrid({ teams }: { teams: Team[] }) {
@@ -20,29 +22,15 @@ export default function TeamsGrid({ teams }: { teams: Team[] }) {
           >
             <TeamLogo logo={team.logo} name={team.name} size={20} />
             <span className="min-w-0 flex-1 truncate">{team.name}</span>
-            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>
-              {team.members.length}
+            <span
+              className="shrink-0 text-xs"
+              style={{ color: "var(--text-muted)", fontWeight: 400 }}
+            >
+              <IconLabel name="users">{texts.playerCount(team.members.length)}</IconLabel>
             </span>
             <Icon name="chevronDown" size={14} className="disclosure-chevron" />
           </summary>
-          {team.members.length === 0 ? (
-            <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-              لا يوجد لاعبون بعد
-            </p>
-          ) : (
-            <ul className="mt-2 space-y-1.5">
-              {team.members.map(({ member }) => (
-                <li
-                  key={member.id}
-                  className="flex items-center gap-2 text-xs"
-                  style={{ color: "var(--text-muted)" }}
-                >
-                  <PlayerAvatar photo={member.photo} fullName={member.fullName} size={22} />
-                  {member.fullName}
-                </li>
-              ))}
-            </ul>
-          )}
+          <SquadList players={team.members.map((entry) => entry.member)} />
         </details>
       ))}
     </div>
