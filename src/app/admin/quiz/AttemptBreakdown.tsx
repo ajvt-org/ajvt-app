@@ -28,7 +28,7 @@ export default function AttemptBreakdown({
           {detail.name} · الجولة {detail.round + 1}
           {detail.category ? ` · ${detail.category}` : ""}
         </p>
-        <button onClick={onClose} className="btn btn-sm text-xs">
+        <button onClick={onClose} className="btn btn-sm">
           <IconLabel name="close">إغلاق</IconLabel>
         </button>
       </div>

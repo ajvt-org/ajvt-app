@@ -47,7 +47,7 @@ export default function MemberProofForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="btn btn-sm text-xs font-bold"
+        className="btn btn-sm font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
         <IconLabel name="camera">{proof ? texts.replace : texts.add}</IconLabel>
@@ -67,7 +67,7 @@ export default function MemberProofForm({
         <button
           onClick={save}
           disabled={!picked || uploading || saving}
-          className="btn btn-primary btn-sm text-xs flex-1"
+          className="btn btn-primary btn-sm flex-1"
         >
           {uploading ? (
             texts.uploading
@@ -79,7 +79,7 @@ export default function MemberProofForm({
         </button>
         <button
           onClick={close}
-          className="btn btn-sm text-xs"
+          className="btn btn-sm"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
           <IconLabel name="close">{texts.cancel}</IconLabel>

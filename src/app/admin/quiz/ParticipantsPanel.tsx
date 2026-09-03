@@ -109,7 +109,7 @@ export default function ParticipantsPanel({
       )}
 
       {!locked && (
-        <button onClick={save} disabled={busy} className="btn btn-primary btn-sm text-xs">
+        <button onClick={save} disabled={busy} className="btn btn-primary btn-sm">
           <IconLabel name="save">حفظ المشاركين</IconLabel>
         </button>
       )}

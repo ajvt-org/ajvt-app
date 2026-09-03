@@ -29,7 +29,7 @@ export default function QuizTabs({
           role="tab"
           aria-selected={active === tab.key}
           onClick={() => onSelect(tab.key)}
-          className="btn btn-sm text-xs font-bold"
+          className="btn btn-sm font-bold"
           style={
             active === tab.key
               ? { background: "var(--mint-600)", color: "white" }

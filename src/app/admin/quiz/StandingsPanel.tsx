@@ -87,7 +87,7 @@ export default function StandingsPanel({ competitionId }: { competitionId: strin
           <button
             key={board.id}
             onClick={() => pickTab(board.id)}
-            className="btn btn-sm text-xs"
+            className="btn btn-sm"
             style={
               openBoard?.id === board.id
                 ? { background: "var(--mint-600)", color: "white" }

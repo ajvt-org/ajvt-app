@@ -52,7 +52,7 @@ export default function BulkBar({
           <button
             onClick={onClose}
             disabled={busy}
-            className="btn btn-sm text-xs font-bold flex-1"
+            className="btn btn-sm font-bold flex-1"
             style={{ background: "white", color: "var(--mint-700)" }}
           >
             <IconLabel name="ban">{texts.bulkClose}</IconLabel>
@@ -60,7 +60,7 @@ export default function BulkBar({
           <button
             onClick={() => setConfirming(true)}
             disabled={busy}
-            className="btn btn-sm text-xs font-bold flex-1"
+            className="btn btn-sm font-bold flex-1"
             style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
           >
             <IconLabel name="trash">{texts.bulkDelete}</IconLabel>

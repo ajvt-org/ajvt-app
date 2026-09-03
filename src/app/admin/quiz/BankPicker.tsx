@@ -60,7 +60,7 @@ export default function BankPicker({
             setRenaming(null);
             setName("");
           }}
-          className="btn btn-primary btn-sm text-xs"
+          className="btn btn-primary btn-sm"
         >
           <IconLabel name="plus">بنك جديد</IconLabel>
         </button>
@@ -74,10 +74,10 @@ export default function BankPicker({
             onChange={(e) => setName(e.target.value)}
             className="input input-sm"
           />
-          <button onClick={submitNew} disabled={busy} className="btn btn-primary btn-sm text-xs">
+          <button onClick={submitNew} disabled={busy} className="btn btn-primary btn-sm">
             حفظ
           </button>
-          <button onClick={() => setAdding(false)} className="btn btn-sm text-xs">
+          <button onClick={() => setAdding(false)} className="btn btn-sm">
             إلغاء
           </button>
         </div>
@@ -104,11 +104,11 @@ export default function BankPicker({
                 <button
                   onClick={() => submitRename(bank.id)}
                   disabled={busy}
-                  className="btn btn-primary btn-sm text-xs"
+                  className="btn btn-primary btn-sm"
                 >
                   حفظ
                 </button>
-                <button onClick={() => setRenaming(null)} className="btn btn-sm text-xs">
+                <button onClick={() => setRenaming(null)} className="btn btn-sm">
                   إلغاء
                 </button>
               </div>
