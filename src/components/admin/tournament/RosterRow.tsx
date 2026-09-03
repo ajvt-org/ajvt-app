@@ -1,6 +1,7 @@
 "use client";
 
-import Icon from "@/components/Icon";
+import Link from "next/link";
+import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
@@ -14,14 +15,13 @@ const MINT_ACTION = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const MINT_ON = { background: "var(--mint-600)", color: "white" };
 const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
 
-const ACTION = "text-xs font-bold px-3 py-1.5 rounded-lg shrink-0";
+const ACTION = "btn btn-sm text-xs shrink-0";
 
 export default function RosterRow({
   entry,
   suspended,
   captain,
   busy,
-  onRename,
   onToggleCaptain,
   onApprove,
   onRemove,
@@ -30,7 +30,6 @@ export default function RosterRow({
   suspended: boolean;
   captain: boolean;
   busy: boolean;
-  onRename: () => void;
   onToggleCaptain: () => void;
   onApprove: () => void;
   onRemove: () => void;
@@ -40,43 +39,47 @@ export default function RosterRow({
 
   return (
     <div
-      className="rounded-xl p-2 space-y-2 w-full"
+      className="rounded-xl p-2 w-full flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3"
       style={{ background: pending ? PENDING : captain ? CAPTAIN : ACTIVE }}
     >
-      <button
-        onClick={onRename}
-        aria-label={teamsTab.renameOf(member.fullName)}
-        className="flex items-start gap-2 w-full text-start"
+      <Link
+        href={`/admin/members/${member.id}`}
+        aria-label={teamsTab.openCardOf(member.fullName)}
+        className="flex items-start gap-2 min-w-0 grow basis-40 text-start"
       >
-        <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
-        <span className="min-w-0 flex-1 space-y-1">
+        <span className="h-6 flex items-center shrink-0">
+          <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
+        </span>
+        <span className="min-w-0 flex-1 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
-            className="block text-sm font-bold"
+            className="text-sm font-bold leading-6 optical-name"
             style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
           >
-            {member.fullName} <Icon name="pencil" size={12} className="icon-inline" />
+            {member.fullName}
           </span>
-          {(captain || pending || suspended) && (
-            <span className="flex flex-wrap items-center gap-1.5">
-              {captain && (
-                <span className="badge" style={MINT_ON}>
-                  <IconLabel name="star">{teamsTab.captain}</IconLabel>
-                </span>
-              )}
-              {pending && (
-                <span className="badge badge-pending">
-                  <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
-                </span>
-              )}
-              {suspended && (
-                <span className="badge" style={DESTRUCTIVE}>
-                  <IconLabel name="ban">{discipline.suspendedBadge}</IconLabel>
-                </span>
-              )}
+          <span
+            className="text-xs font-bold whitespace-nowrap"
+            style={{ color: "var(--mint-700)" }}
+          >
+            <ArrowLabel>{teamsTab.openCard}</ArrowLabel>
+          </span>
+          {captain && (
+            <span className="badge" style={MINT_ON}>
+              <IconLabel name="star">{teamsTab.captain}</IconLabel>
+            </span>
+          )}
+          {pending && (
+            <span className="badge badge-pending">
+              <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
+            </span>
+          )}
+          {suspended && (
+            <span className="badge" style={DESTRUCTIVE}>
+              <IconLabel name="ban">{discipline.suspendedBadge}</IconLabel>
             </span>
           )}
         </span>
-      </button>
+      </Link>
       <div className="flex flex-wrap items-center gap-2">
         {pending && (
           <button
@@ -109,7 +112,7 @@ export default function RosterRow({
           aria-label={
             pending ? teamsTab.rejectOf(member.fullName) : teamsTab.removeOf(member.fullName)
           }
-          className={`${ACTION} ms-auto`}
+          className={ACTION}
           style={DESTRUCTIVE}
         >
           <IconLabel name="close">{pending ? teamsTab.reject : teamsTab.remove}</IconLabel>

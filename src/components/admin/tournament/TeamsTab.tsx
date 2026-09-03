@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
 import { api, errorMessage } from "@/lib/api";
-import Icon from "@/components/Icon";
+import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
-import InlineRename from "./InlineRename";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
 
@@ -31,7 +31,6 @@ export default function TeamsTab({
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
   const unassigned = roster.filter((m) => !m.team);
 
@@ -66,10 +65,6 @@ export default function TeamsTab({
 
   function setCaptain(teamId: string, captainUserId: string | null) {
     run(() => api.patch(`/api/admin/teams/${teamId}`, { captainUserId }));
-  }
-
-  function renameMember(memberId: string, fullName: string) {
-    run(() => api.patch(`/api/admin/members/${memberId}`, { fullName }));
   }
 
   async function setTeamLogo(teamId: string, logo: string) {
@@ -134,7 +129,6 @@ export default function TeamsTab({
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
-          onRenameMember={renameMember}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
           onAddMember={(userId) => addMember(team.id, userId)}
           onApproveMember={(memberId) => approveMember(team.id, memberId)}
@@ -172,31 +166,17 @@ export default function TeamsTab({
             <IconLabel name="user">{teamsTab.unassigned(unassigned.length)}</IconLabel>
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {unassigned.map((m) =>
-              editingMemberId === m.id ? (
-                <InlineRename
-                  key={m.id}
-                  value={m.fullName}
-                  maxLength={30}
-                  busy={loadingAction}
-                  onSave={(next) => {
-                    renameMember(m.id, next);
-                    setEditingMemberId(null);
-                  }}
-                  onCancel={() => setEditingMemberId(null)}
-                />
-              ) : (
-                <button
-                  key={m.id}
-                  onClick={() => setEditingMemberId(m.id)}
-                  aria-label={teamsTab.renameOf(m.fullName)}
-                  className="badge badge-pending flex items-center gap-1.5"
-                >
-                  <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
-                  {m.fullName} <Icon name="pencil" size={12} className="icon-inline" />
-                </button>
-              ),
-            )}
+            {unassigned.map((m) => (
+              <Link
+                key={m.id}
+                href={`/admin/members/${m.id}`}
+                aria-label={teamsTab.openCardOf(m.fullName)}
+                className="badge badge-pending flex items-center gap-1.5"
+              >
+                <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
+                <ArrowLabel>{m.fullName}</ArrowLabel>
+              </Link>
+            ))}
           </div>
         </div>
       )}

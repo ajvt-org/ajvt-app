@@ -1,6 +1,5 @@
 import { toThumbUrl } from "@/lib/utils";
 import Icon from "@/components/Icon";
-import { INITIALS_JOINER, nameInitials } from "@/lib/arabicName";
 
 interface PlayerAvatarProps {
   photo?: string | null;
@@ -30,7 +29,6 @@ export default function PlayerAvatar({
   const colors = BG_COLORS[bg];
   const src = photoUrl ?? (photo ? `/api/files/member/${photo}` : null);
   if (!src) {
-    const initials = nameInitials(fullName);
     return (
       <span
         aria-hidden="true"
@@ -40,12 +38,9 @@ export default function PlayerAvatar({
           height: size,
           background: colors.placeholder,
           color: colors.ink,
-          fontSize: size * (initials.includes(INITIALS_JOINER) ? 0.4 : 0.5),
-          fontWeight: 700,
-          lineHeight: 1,
         }}
       >
-        {initials || <Icon name="user" size={Math.round(size * 0.6)} />}
+        <Icon name="user" size={Math.round(size * 0.6)} />
       </span>
     );
   }

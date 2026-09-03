@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
@@ -27,7 +28,6 @@ const handlers = {
   onRenameTeam: vi.fn(),
   onDeleteTeam: vi.fn(),
   onSetLogo: vi.fn(),
-  onRenameMember: vi.fn(),
   onSetCaptain: vi.fn(),
   onAddMember: vi.fn(),
   onApproveMember: vi.fn(),
@@ -100,6 +100,58 @@ describe("TeamCard", () => {
     expect(screen.queryByLabelText("رفض أحمد ولد محمد")).toBeNull();
     fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
     expect(handlers.onRemoveMember).toHaveBeenCalledWith("p1");
+  });
+
+  it("carries one logo, the uploader, and names the team beside it", () => {
+    show([entry("p1", "أحمد ولد محمد")], 1);
+
+    expect(screen.getByLabelText("تغيير شعار الفريق")).toBeDefined();
+    expect(screen.queryByText("شعار الفريق")).toBeNull();
+    expect(screen.queryByText("انقر على الصورة لتغييرها")).toBeNull();
+    expect(screen.queryByText("اختياري، انقر لإضافة صورة")).toBeNull();
+    expect(screen.getAllByText("فريق النجم").length).toBe(1);
+  });
+
+  it("hands the small logo to the stylesheet to drop once the card opens", () => {
+    const { container } = render(
+      <TeamCard
+        team={team([entry("p1", "أحمد ولد محمد")])}
+        shownName="فريق النجم"
+        teamSize={1}
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    expect(container.querySelectorAll(".summary-logo").length).toBe(1);
+    const css = readFileSync("src/app/globals.css", "utf8");
+    expect(css).toContain("details[open] > .disclosure-summary .summary-logo");
+  });
+
+  it("sits the summary glyphs on the line the name sets", () => {
+    const { container } = render(
+      <TeamCard
+        team={team([entry("p1", "أحمد ولد محمد")])}
+        shownName="فريق النجم"
+        teamSize={1}
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    const head = container.querySelector(".disclosure-summary > div") as HTMLElement;
+    expect(head.innerHTML).not.toContain("mt-2");
+    for (const glyph of head.querySelectorAll(":scope > span")) {
+      expect(glyph.className).toContain("h-6");
+      expect(glyph.className).toContain("items-center");
+    }
+    const name = screen.getByText("فريق النجم");
+    expect(name.className).toContain("leading-6");
+    expect(name.className).toContain("optical-name");
   });
 
   it("renames the team from the card", () => {
