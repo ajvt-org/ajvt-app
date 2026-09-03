@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
@@ -45,44 +44,38 @@ export default function RosterRow({
       className="rounded-xl p-2 w-full flex flex-wrap items-center gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-3"
       style={{ background: pending ? PENDING : captain ? CAPTAIN : ACTIVE }}
     >
-      <Link
-        href={memberCardHref(member.id, from)}
-        aria-label={teamsTab.openCardOf(member.fullName)}
-        className="flex items-start gap-2 min-w-0 grow basis-40 text-start"
-      >
-        <span className="h-6 flex items-center shrink-0">
-          <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
-        </span>
-        <span className="min-w-0 flex-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <div className="min-w-0 grow basis-40 flex flex-wrap items-center gap-x-2 gap-y-1">
+        <Link
+          href={memberCardHref(member.id, from)}
+          aria-label={teamsTab.openCardOf(member.fullName)}
+          className="flex items-start gap-2 min-w-0 text-start"
+        >
+          <span className="h-6 flex items-center shrink-0">
+            <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
+          </span>
           <span
             className="text-sm font-bold leading-6 optical-name"
-            style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+            style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
           >
             {member.fullName}
           </span>
-          <span
-            className="text-xs font-bold whitespace-nowrap"
-            style={{ color: "var(--mint-700)" }}
-          >
-            <ArrowLabel>{teamsTab.openCard}</ArrowLabel>
+        </Link>
+        {captain && (
+          <span className="badge" style={MINT_ON}>
+            <IconLabel name="star">{teamsTab.captain}</IconLabel>
           </span>
-          {captain && (
-            <span className="badge" style={MINT_ON}>
-              <IconLabel name="star">{teamsTab.captain}</IconLabel>
-            </span>
-          )}
-          {pending && (
-            <span className="badge badge-pending">
-              <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
-            </span>
-          )}
-          {suspended && (
-            <span className="badge" style={DESTRUCTIVE}>
-              <IconLabel name="ban">{discipline.suspendedBadge}</IconLabel>
-            </span>
-          )}
-        </span>
-      </Link>
+        )}
+        {pending && (
+          <span className="badge badge-pending">
+            <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
+          </span>
+        )}
+        {suspended && (
+          <span className="badge" style={DESTRUCTIVE}>
+            <IconLabel name="ban">{discipline.suspendedBadge}</IconLabel>
+          </span>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         {pending && (
           <button

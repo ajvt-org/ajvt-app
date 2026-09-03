@@ -95,8 +95,24 @@ describe("RosterRow", () => {
     const link = screen.getByLabelText(`فتح بطاقة ${LONG_NAME}`);
     expect(link.tagName).toBe("A");
     expect(link.getAttribute("href")).toBe("/admin/members/p1");
-    expect(screen.getByText("البطاقة")).toBeDefined();
     expect(screen.queryByLabelText(`تعديل اسم ${LONG_NAME}`)).toBeNull();
+  });
+
+  it("makes the name itself the link and says nothing beside it", () => {
+    show(entry(LONG_NAME));
+
+    const link = screen.getByLabelText(`فتح بطاقة ${LONG_NAME}`);
+    expect(link.textContent).toBe(LONG_NAME);
+    expect(screen.queryByText("البطاقة")).toBeNull();
+  });
+
+  it("leaves the badges outside the link, they are not part of the target", () => {
+    show(entry(LONG_NAME, "PENDING"), { captain: true, suspended: true });
+
+    const link = screen.getByLabelText(`فتح بطاقة ${LONG_NAME}`);
+    for (const badge of ["القائد", "بانتظار الموافقة", "موقوف"]) {
+      expect(link.contains(screen.getByText(badge))).toBe(false);
+    }
   });
 
   it("says a player is waiting or suspended in words", () => {

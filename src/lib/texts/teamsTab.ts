@@ -31,7 +31,6 @@ export const teamsTab = {
   rejectOf: (name: string) => `${REJECT} ${name}`,
   remove: REMOVE,
   removeOf: (name: string) => `${REMOVE} ${name}`,
-  openCard: "البطاقة",
   openCardOf: (name: string) => `فتح بطاقة ${name}`,
   pickPlayer: "اختر لاعباً...",
   add: "إضافة",

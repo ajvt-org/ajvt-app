@@ -6,7 +6,6 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import ArrowLabel from "@/components/ArrowLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
@@ -91,8 +90,9 @@ export default function PlayersTab({
                     <Link
                       href={memberCardHref(entry.member.id, from)}
                       aria-label={playersTab.openCardOf(entry.member.fullName)}
+                      style={{ color: "var(--mint-700)" }}
                     >
-                      <ArrowLabel>{entry.member.fullName}</ArrowLabel>
+                      {entry.member.fullName}
                     </Link>
                   ) : (
                     team.name
