@@ -37,9 +37,15 @@ function activity(over: Partial<Activity> = {}): Activity {
   };
 }
 
-function show(over: Partial<Activity> = {}) {
+function show(over: Partial<Activity> = {}, selecting = false) {
   render(
-    <ActivityRow activity={activity(over)} controls={controls} picked={false} onPick={onPick} />,
+    <ActivityRow
+      activity={activity(over)}
+      controls={controls}
+      selecting={selecting}
+      picked={false}
+      onPick={onPick}
+    />,
   );
 }
 
@@ -230,5 +236,47 @@ describe("the controls in the row menu", () => {
     await userEvent.click(screen.getByRole("button", { name: /نسخ النشاط/ }));
 
     expect(controls.duplicate).toHaveBeenCalledWith("a1");
+  });
+});
+
+describe("what the row is for", () => {
+  it("opens the activity from one place", () => {
+    show();
+
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe("/admin/activities/a1");
+  });
+
+  it("carries no selection control for a mode the reader is not in", () => {
+    show();
+
+    expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+
+  it("brings the checkbox in once selection starts", () => {
+    show({}, true);
+
+    expect(screen.getByRole("checkbox", { name: /تحديد/ })).toBeTruthy();
+  });
+
+  it("names the standing the row is tinted by", () => {
+    show({ startsAt: "2020-01-01", endsAt: "2020-01-02" });
+
+    expect(screen.getByText("انتهى")).toBeTruthy();
+  });
+
+  it("tells work waiting apart from what the activity is", () => {
+    show({ pendingJoinRequests: 2, isTournament: true });
+
+    const waiting = screen.getByText("2 طلب انضمام");
+    const category = screen.getByText("بطولة");
+    expect(waiting.getAttribute("style")).not.toBe(category.getAttribute("style"));
+  });
+
+  it("keeps a count out of the chips", () => {
+    show({ capacity: 24 });
+
+    expect(screen.getByText("0 من 24").className).not.toContain("rounded-lg");
   });
 });

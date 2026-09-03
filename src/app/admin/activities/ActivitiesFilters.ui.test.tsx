@@ -6,6 +6,7 @@ import type { ActivitiesView } from "./activitiesView";
 import type { Activity } from "./activityTypes";
 
 const onChange = vi.fn();
+const onSelectingChange = vi.fn();
 
 function activity(over: Partial<Activity> = {}): Activity {
   return {
@@ -35,8 +36,16 @@ function view(over: Partial<ActivitiesView> = {}): ActivitiesView {
   return { q: "", type: "", state: "", stage: "all", waiting: "", ...over };
 }
 
-function show(activities: Activity[], filters = view()) {
-  render(<ActivitiesFilters activities={activities} filters={filters} onChange={onChange} />);
+function show(activities: Activity[], filters = view(), selecting = false) {
+  render(
+    <ActivitiesFilters
+      activities={activities}
+      filters={filters}
+      selecting={selecting}
+      onChange={onChange}
+      onSelectingChange={onSelectingChange}
+    />,
+  );
 }
 
 beforeEach(() => {
@@ -99,5 +108,25 @@ describe("the one bar the activities are filtered from", () => {
     await userEvent.type(screen.getByPlaceholderText("بحث باسم النشاط..."), "د");
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ q: "د" }));
+  });
+});
+
+describe("starting a selection", () => {
+  it("offers the mode from the filter bar", async () => {
+    show([activity()]);
+
+    await userEvent.click(screen.getByRole("button", { name: /تحديد/ }));
+
+    expect(onSelectingChange).toHaveBeenCalledWith(true);
+  });
+
+  it("offers the way back out once it is on", async () => {
+    show([activity()], view(), true);
+
+    expect(screen.getByRole("button", { name: /تحديد/ }).getAttribute("aria-pressed")).toBe("true");
+
+    await userEvent.click(screen.getByRole("button", { name: /تحديد/ }));
+
+    expect(onSelectingChange).toHaveBeenCalledWith(false);
   });
 });

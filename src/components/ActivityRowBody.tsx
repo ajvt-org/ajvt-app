@@ -44,9 +44,12 @@ export default function ActivityRowBody({
           {title}
         </span>
         {(when || meta) && (
-          <span className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
+          <span
+            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs"
+            style={{ color: "var(--text-muted)" }}
+          >
             {when && (
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 shrink-0">
                 <Icon name="calendar" size={12} />
                 <NumericRanges>{when}</NumericRanges>
               </span>
