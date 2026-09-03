@@ -16,7 +16,8 @@ const MINT_ACTION = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const MINT_ON = { background: "var(--mint-600)", color: "white" };
 const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
 
-const ACTION = "btn btn-sm text-xs shrink-0";
+const ACTION = "btn btn-sm shrink-0";
+const ACTION_SIZE = { fontSize: "0.75rem" };
 
 export default function RosterRow({
   entry,
@@ -54,7 +55,7 @@ export default function RosterRow({
             <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
           </span>
           <span
-            className="text-sm font-bold leading-6 optical-name"
+            className="text-base font-bold leading-6 optical-name"
             style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
           >
             {member.fullName}
@@ -83,7 +84,7 @@ export default function RosterRow({
             disabled={busy}
             aria-label={teamsTab.acceptOf(member.fullName)}
             className={ACTION}
-            style={MINT_ON}
+            style={{ ...ACTION_SIZE, ...MINT_ON }}
           >
             <IconLabel name="check">{teamsTab.accept}</IconLabel>
           </button>
@@ -96,7 +97,7 @@ export default function RosterRow({
           }
           aria-pressed={captain}
           className={ACTION}
-          style={captain ? MINT_ON : MINT_ACTION}
+          style={{ ...ACTION_SIZE, ...(captain ? MINT_ON : MINT_ACTION) }}
         >
           <IconLabel name="star">
             {captain ? teamsTab.clearCaptainAction : teamsTab.makeCaptainAction}
@@ -109,7 +110,7 @@ export default function RosterRow({
             pending ? teamsTab.rejectOf(member.fullName) : teamsTab.removeOf(member.fullName)
           }
           className={ACTION}
-          style={DESTRUCTIVE}
+          style={{ ...ACTION_SIZE, ...DESTRUCTIVE }}
         >
           <IconLabel name="close">{pending ? teamsTab.reject : teamsTab.remove}</IconLabel>
         </button>
