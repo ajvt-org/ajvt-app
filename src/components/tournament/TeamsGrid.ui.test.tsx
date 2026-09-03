@@ -14,9 +14,21 @@ function team(name: string, size: number, captainUserId: string | null = null) {
   };
 }
 
-function show(teams: ReturnType<typeof team>[]) {
+function show(teams: ReturnType<typeof team>[], viewerId: string | null = null) {
   cleanup();
-  return render(<TeamsGrid teams={teams} />);
+  return render(<TeamsGrid teams={teams} viewerId={viewerId} />);
+}
+
+function order(container: HTMLElement): string[] {
+  return [...container.querySelectorAll("summary")].map((head) =>
+    (head.querySelector("span.flex-1")?.textContent ?? "").trim(),
+  );
+}
+
+function markedCard(container: HTMLElement): string[] {
+  return [...container.querySelectorAll("details")]
+    .filter((card) => (card.getAttribute("style") ?? "").includes("var(--mint-600)"))
+    .map((card) => (card.querySelector("span.flex-1")?.textContent ?? "").trim());
 }
 
 describe("TeamsGrid", () => {
@@ -66,5 +78,44 @@ describe("TeamsGrid", () => {
     const cards = [...container.querySelectorAll("details")];
     expect(cards[0].querySelector(".badge")).not.toBeNull();
     expect(cards[1].querySelector(".badge")).toBeNull();
+  });
+
+  it("lifts the viewer's own team above the rest", () => {
+    const { container } = show(
+      [team("فريق النجم", 3), team("فريق الوحدة", 3), team("فريق الأمل", 3)],
+      "فريق الوحدة-1",
+    );
+
+    expect(order(container)[0]).toBe("فريق الوحدة");
+  });
+
+  it("marks the viewer's own team and no other", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 3)], "فريق الوحدة-1");
+
+    expect(markedCard(container)).toEqual(["فريق الوحدة"]);
+  });
+
+  it("leaves the list as it was for a viewer who is in no team", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 3)], "nobody");
+
+    expect(order(container)).toEqual(["فريق النجم", "فريق الوحدة"]);
+    expect(markedCard(container)).toEqual([]);
+  });
+
+  it("leaves the list as it was for a viewer who is signed out", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 3)]);
+
+    expect(order(container)).toEqual(["فريق النجم", "فريق الوحدة"]);
+    expect(markedCard(container)).toEqual([]);
+  });
+
+  it("marks the viewer's row inside the team it lifted", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 3)], "فريق الوحدة-1");
+
+    const first = container.querySelector("details") as HTMLElement;
+    const rows = [...first.querySelectorAll("li")].filter((row) =>
+      (row.getAttribute("style") ?? "").includes("var(--mint-100)"),
+    );
+    expect(rows).toHaveLength(1);
   });
 });
