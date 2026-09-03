@@ -141,7 +141,7 @@ export async function tournamentPanels(
       key: "teams",
       label: participantsLabel,
       icon: "users",
-      content: <TeamsGrid teams={activity.teams} />,
+      content: <TeamsGrid teams={activity.teams} viewerId={userId} />,
     },
   ];
 
