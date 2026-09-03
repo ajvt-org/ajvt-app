@@ -11,6 +11,8 @@ import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 export default function TeamsTab({
   activityId,
@@ -33,6 +35,7 @@ export default function TeamsTab({
   const [error, setError] = useState("");
 
   const unassigned = roster.filter((m) => !m.team);
+  const from = useAdminOrigin();
 
   function shownName(team: Team): string {
     return displayTeamName(
@@ -169,7 +172,7 @@ export default function TeamsTab({
             {unassigned.map((m) => (
               <Link
                 key={m.id}
-                href={`/admin/members/${m.id}`}
+                href={memberCardHref(m.id, from)}
                 aria-label={teamsTab.openCardOf(m.fullName)}
                 className="badge badge-pending flex items-center gap-1.5"
               >

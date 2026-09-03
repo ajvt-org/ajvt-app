@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import { memberStatusLabels } from "@/lib/messages";
+import { samePerson as texts } from "@/lib/texts";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 type SamePerson = {
   id: string;
@@ -18,6 +21,7 @@ const STATUS: Record<string, string> = memberStatusLabels;
 
 export default function SamePersonWarning({ memberId }: { memberId: string }) {
   const [answer, setAnswer] = useState<{ memberId: string; rows: SamePerson[] } | null>(null);
+  const from = useAdminOrigin();
 
   useEffect(() => {
     let cancelled = false;
@@ -41,16 +45,15 @@ export default function SamePersonWarning({ memberId }: { memberId: string }) {
       style={{ background: "#fffbeb", border: "1px solid #fcd34d" }}
     >
       <p className="text-xs font-bold" style={{ color: "#92400e" }}>
-        <Icon name="warning" size={13} className="icon-inline" /> عضوية أخرى تحمل نفس الاسم على حساب
-        آخر
+        <Icon name="warning" size={13} className="icon-inline" /> {texts.heading}
       </p>
       <p className="text-xs" style={{ color: "#92400e" }}>
-        تشابه الأسماء وارد، فتحقق قبل أن تقرر.
+        {texts.hint}
       </p>
       {others.map((other) => (
         <Link
           key={other.id}
-          href={`/admin/members/${other.id}`}
+          href={memberCardHref(other.id, from)}
           className="flex items-center justify-between gap-3 text-xs"
         >
           <span className="font-bold truncate" style={{ color: "var(--text-main)" }}>

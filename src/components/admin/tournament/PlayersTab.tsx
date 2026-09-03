@@ -10,6 +10,8 @@ import ArrowLabel from "@/components/ArrowLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 export default function PlayersTab({
   activityId,
@@ -26,6 +28,7 @@ export default function PlayersTab({
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
+  const from = useAdminOrigin();
 
   const candidates = roster.filter((m) => !m.team);
   const filtered = candidates.filter((m) => {
@@ -86,7 +89,7 @@ export default function PlayersTab({
                 <span className="text-sm font-bold min-w-0 flex-1">
                   {entry ? (
                     <Link
-                      href={`/admin/members/${entry.member.id}`}
+                      href={memberCardHref(entry.member.id, from)}
                       aria-label={playersTab.openCardOf(entry.member.fullName)}
                     >
                       <ArrowLabel>{entry.member.fullName}</ArrowLabel>
