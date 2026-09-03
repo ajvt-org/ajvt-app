@@ -10,12 +10,13 @@ function entry(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"
   };
 }
 
-function team(members: TeamMemberEntry[]): Team {
+function team(members: TeamMemberEntry[], captainUserId: string | null = null): Team {
   return {
     id: "team-1",
     name: "فريق النجم",
     autoNamed: false,
     logo: null,
+    captainUserId,
     groupId: null,
     group: null,
     members,
@@ -27,16 +28,21 @@ const handlers = {
   onDeleteTeam: vi.fn(),
   onSetLogo: vi.fn(),
   onRenameMember: vi.fn(),
+  onSetCaptain: vi.fn(),
   onAddMember: vi.fn(),
   onApproveMember: vi.fn(),
   onRemoveMember: vi.fn(),
 };
 
-function show(members: TeamMemberEntry[], teamSize: number | null) {
+function show(
+  members: TeamMemberEntry[],
+  teamSize: number | null,
+  captainUserId: string | null = null,
+) {
   cleanup();
   render(
     <TeamCard
-      team={team(members)}
+      team={team(members, captainUserId)}
       shownName="فريق النجم"
       teamSize={teamSize}
       candidates={[]}
@@ -106,6 +112,30 @@ describe("TeamCard", () => {
     fireEvent.click(screen.getByText("حفظ"));
 
     expect(handlers.onRenameTeam).toHaveBeenCalledWith("فريق الوحدة");
+  });
+
+  it("names the captain on the card", () => {
+    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], 2, "p2");
+
+    expect(screen.getByText("القائد بابا ولد سيدي")).toBeDefined();
+  });
+
+  it("says nothing about a captain when the team has none", () => {
+    show([entry("p1", "أحمد ولد محمد")], 1);
+
+    expect(screen.queryByText(/القائد/)).toBeNull();
+    expect(screen.getByLabelText("اجعل أحمد ولد محمد قائد الفريق")).toBeDefined();
+  });
+
+  it("names a player captain and stands them down again", () => {
+    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], 2);
+
+    fireEvent.click(screen.getByLabelText("اجعل بابا ولد سيدي قائد الفريق"));
+    expect(handlers.onSetCaptain).toHaveBeenCalledWith("p2");
+
+    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], 2, "p2");
+    fireEvent.click(screen.getByLabelText("إلغاء قيادة بابا ولد سيدي للفريق"));
+    expect(handlers.onSetCaptain).toHaveBeenCalledWith(null);
   });
 
   it("says when the roster is still empty", () => {

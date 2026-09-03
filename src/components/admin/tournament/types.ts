@@ -25,6 +25,7 @@ export interface Team {
   name: string;
   autoNamed: boolean;
   logo: string | null;
+  captainUserId: string | null;
   groupId: string | null;
   group: Group | null;
   members: TeamMemberEntry[];
