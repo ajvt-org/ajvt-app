@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { moneyDigits } from "@/lib/money";
+import { EXACT_TEXT } from "@tests/ui/exactText";
 import OfficialReceipt from "./OfficialReceipt";
 import ReceiptSheet, { ReceiptCard } from "./ReceiptSheet";
 import { receiptSheet } from "@/lib/texts/receipt";
@@ -46,7 +48,7 @@ describe("the sheet an admin hands over", () => {
   it("writes the amount twice, in figures and in words", () => {
     render(<OfficialReceipt receipt={RECEIPT} qrDataUrl={null} />);
 
-    expect(screen.getByText("5 000")).toBeDefined();
+    expect(screen.getByText(moneyDigits(5000), EXACT_TEXT)).toBeDefined();
     expect(screen.getByText("خمسة آلاف أوقية")).toBeDefined();
   });
 
