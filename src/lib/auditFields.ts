@@ -10,6 +10,7 @@ const FIELD_LABELS: Record<string, string> = {
   memberNumber: "رقم العضوية",
   rejectionReason: "سبب الرفض",
   paymentMethod: "طريقة الدفع",
+  donorName: "اسم المتبرع",
   paidAmount: "المبلغ المسدد",
   paymentProof: "إثبات الدفع",
   referenceCode: "الرمز المرجعي",

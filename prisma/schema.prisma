@@ -418,10 +418,9 @@ model Village {
 model Donation {
   id             String       @id @default(cuid())
   // Whether the giver asked to stay unnamed. Read on its own: donorName is
-  // kept so an admin can still see who gave, and so unlinking an account
-  // restores the name that was typed in.
+  // kept so an admin can still see who gave.
   anonymous      Boolean      @default(false)
-  donorName      String? // the name typed in by hand, kept as the fallback when no account is linked
+  donorName      String? // the name on the gift — typed by hand, or taken from the account the moment one is linked
   donorPhone     String? // recorded for manually-entered donors with no app account, or as a general contact note
   donorPhoto     String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
   amount         Int?

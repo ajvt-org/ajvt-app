@@ -129,6 +129,10 @@ body {
 .input::placeholder {
   color: #a0b8ae;
 }
+.input[readonly] {
+  background: var(--mint-50);
+  color: var(--text-muted);
+}
 .input[dir="ltr"] {
   text-align: right;
 }

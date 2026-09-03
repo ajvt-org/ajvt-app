@@ -9,7 +9,7 @@ import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
 import { resolveDonationActivity } from "@/lib/donationActivity";
-import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
+import { DONOR_ACCOUNT_SELECT, donorNameOnRecord, nameAdoptedOnLink } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
@@ -85,10 +85,15 @@ export const PATCH = withRoute(
 
     if (userId !== undefined) {
       const giver = userId
-        ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+        ? await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, fullName: true },
+          })
         : null;
       if (userId && !giver) return NextResponse.json({ error: members.notFound }, { status: 404 });
       data.userId = giver?.id ?? null;
+      const adopted = nameAdoptedOnLink(giver);
+      if (adopted) data.donorName = adopted;
     }
 
     if (anonymous !== undefined) data.anonymous = anonymous;
@@ -147,8 +152,14 @@ export const PATCH = withRoute(
         ),
         {
           ...target,
-          before: { userId: existing.userId },
-          after: { userId: donation.userId },
+          before: logSnapshotFor(donation, {
+            userId: existing.userId,
+            donorName: existing.donorName,
+          }),
+          after: logSnapshotFor(donation, {
+            userId: donation.userId,
+            donorName: donation.donorName,
+          }),
         },
       );
     }

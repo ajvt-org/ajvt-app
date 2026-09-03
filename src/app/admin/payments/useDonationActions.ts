@@ -2,17 +2,13 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { money } from "@/lib/messages";
 import { donationActions } from "@/lib/texts";
-import { linkedAccount } from "@/lib/linkedAccount";
-import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
+import type { DonationResponse, Proof } from "./paymentTypes";
 
 export function useDonationActions({
-  members,
   patch,
   remove,
 }: {
-  members: MemberOption[];
   patch: (id: string, changes: Partial<Proof>) => void;
   remove: (id: string) => void;
 }) {
@@ -51,11 +47,11 @@ export function useDonationActions({
         const { donation } = await api.patch<DonationResponse>(`/api/admin/donations/${id}`, {
           userId,
         });
-        const account = linkedAccount(members, userId);
         patch(id, {
           memberId: donation.memberId,
           userId: donation.userId,
-          memberName: account?.fullName || donation.donorName || money.anonymousDonor,
+          memberName: donation.memberName,
+          donorName: donation.donorName ?? null,
         });
       }),
   };
