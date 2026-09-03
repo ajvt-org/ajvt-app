@@ -3,7 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { validatePaidAmount } from "@/lib/donations";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { memberImportDialog, ouguiya } from "@/lib/texts";
+import { memberImportDialog } from "@/lib/texts";
+import { money } from "@/lib/money";
 import { members } from "@/lib/messages";
 import MemberImportDialog, { type ImportPreview } from "./MemberImportDialog";
 
@@ -294,12 +295,12 @@ describe("MemberImportDialog, a flagged row", () => {
     await userEvent.click(screen.getByText(memberImportDialog.bulk.selectAll));
     await userEvent.type(screen.getByLabelText(memberImportDialog.bulk.amount), "300");
 
-    expect(screen.getByText(memberImportDialog.bulk.surplus(2, ouguiya.amount(200)))).toBeDefined();
+    expect(screen.getByText(memberImportDialog.bulk.surplus(2, money(200)))).toBeDefined();
 
     await userEvent.click(screen.getAllByLabelText(memberImportDialog.selectRow)[0]);
 
     expect(screen.getByText(memberImportDialog.bulk.selected(1))).toBeDefined();
-    expect(screen.queryByText(memberImportDialog.bulk.surplus(1, ouguiya.amount(200)))).toBeNull();
+    expect(screen.queryByText(memberImportDialog.bulk.surplus(1, money(200)))).toBeNull();
   });
 
   it("says on the row that the matched person already holds a membership", async () => {
