@@ -7,6 +7,10 @@ const REMOVE = "إزالة";
 export const teamsTab = {
   confirmDelete: "هل تريد حذف هذا الفريق؟",
   teamCount: (count: number) => `عدد الفرق: ${count}`,
+  teamCountShown: (shown: number, total: number) => `عدد الفرق: ${shown} من ${total}`,
+  searchPlaceholder: "ابحث عن فريق أو لاعب",
+  searchLabel: "البحث في الفرق واللاعبين",
+  noMatch: "لا فريق ولا لاعب بهذا الاسم",
   save: "حفظ",
   cancel: "إلغاء",
   deleteTeam: "حذف الفريق",

@@ -39,6 +39,18 @@ const TEAMS = [
 
 const onChange = vi.fn();
 
+function person(id: string, fullName: string): RosterMember {
+  return { id, fullName, phone: "36000003", age: "البدريين", photo: null, team: null };
+}
+
+function search() {
+  return screen.getByLabelText("البحث في الفرق واللاعبين");
+}
+
+function type(value: string) {
+  fireEvent.change(search(), { target: { value } });
+}
+
 function show(teams: Team[] = TEAMS, roster: RosterMember[] = []) {
   cleanup();
   render(
@@ -96,5 +108,71 @@ describe("TeamsTab", () => {
 
     await waitFor(() => expect(onChange).toHaveBeenCalled());
     expect(cards().map((c) => c.open)).toEqual([true, false]);
+  });
+
+  it("finds a team by its own name and by a player it holds", () => {
+    show();
+
+    type("الأمل");
+    expect(screen.getByText("فريق الأمل")).toBeDefined();
+    expect(screen.queryByText("فريق النجم")).toBeNull();
+
+    type("أحمد");
+    expect(screen.getByText("فريق النجم")).toBeDefined();
+    expect(screen.queryByText("فريق الأمل")).toBeNull();
+  });
+
+  it("still matches once the hamza and the ta marbuta are folded", () => {
+    show();
+
+    type("احمد");
+    expect(screen.getByText("فريق النجم")).toBeDefined();
+  });
+
+  it("says how many of how many are showing, and goes quiet again when cleared", () => {
+    show();
+
+    expect(screen.getByText("عدد الفرق: 2")).toBeDefined();
+
+    type("الأمل");
+    expect(screen.getByText("عدد الفرق: 1 من 2")).toBeDefined();
+
+    type("");
+    expect(screen.getByText("عدد الفرق: 2")).toBeDefined();
+    expect(screen.getByText("فريق النجم")).toBeDefined();
+    expect(screen.getByText("فريق الأمل")).toBeDefined();
+  });
+
+  it("gives an empty result a line of its own rather than a blank tab", () => {
+    show();
+
+    type("زينب");
+    expect(screen.getByText("لا فريق ولا لاعب بهذا الاسم")).toBeDefined();
+    expect(document.querySelectorAll("details")).toHaveLength(0);
+  });
+
+  it("puts the unassigned through the same query", () => {
+    show(TEAMS, [person("u1", "زينب بنت أحمد"), person("u2", "خديجة بنت سالم")]);
+
+    expect(screen.getByText("زينب بنت أحمد")).toBeDefined();
+    expect(screen.getByText("خديجة بنت سالم")).toBeDefined();
+
+    type("خديجة");
+    expect(screen.queryByText("زينب بنت أحمد")).toBeNull();
+    expect(screen.getByText("خديجة بنت سالم")).toBeDefined();
+    expect(screen.queryByText("لا فريق ولا لاعب بهذا الاسم")).toBeNull();
+  });
+
+  it("still offers every unassigned player to add, whatever is typed", () => {
+    show(TEAMS, [person("u1", "زينب بنت أحمد"), person("u2", "خديجة بنت سالم")]);
+
+    type("أحمد");
+    expect(screen.queryByText("خديجة بنت سالم")).toBeNull();
+
+    fireEvent.click(screen.getByText("فريق النجم"));
+    fireEvent.click(screen.getByText("إضافة لاعب"));
+    const options = [...document.querySelectorAll("option")].map((o) => o.textContent);
+    expect(options).toContain("زينب بنت أحمد");
+    expect(options).toContain("خديجة بنت سالم");
   });
 });

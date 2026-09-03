@@ -10,6 +10,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
+import { matchingPeople, matchingTeams } from "./teamSearch";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
@@ -28,6 +29,7 @@ export default function TeamsTab({
   suspendedIds: string[];
   onChange: () => void;
 }) {
+  const [query, setQuery] = useState("");
   const [openTeam, setOpenTeam] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
@@ -48,6 +50,15 @@ export default function TeamsTab({
       teamSize,
     );
   }
+
+  const rows = teams.map((team) => ({
+    team,
+    name: shownName(team),
+    players: team.members.map((m) => m.member.fullName),
+  }));
+  const shownTeams = matchingTeams(rows, query).map((row) => row.team);
+  const shownUnassigned = matchingPeople(unassigned, query);
+  const searching = query.trim().length > 0;
 
   async function run(action: () => Promise<unknown>) {
     setError("");
@@ -116,11 +127,31 @@ export default function TeamsTab({
         </div>
       )}
 
+      <div className="card p-2.5">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={teamsTab.searchPlaceholder}
+          aria-label={teamsTab.searchLabel}
+          className="input input-sm w-full"
+          style={{ background: "white" }}
+        />
+      </div>
+
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        {teamsTab.teamCount(teams.length)}
+        {searching
+          ? teamsTab.teamCountShown(shownTeams.length, teams.length)
+          : teamsTab.teamCount(teams.length)}
       </p>
 
-      {teams.map((team) => (
+      {searching && shownTeams.length === 0 && shownUnassigned.length === 0 && (
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {teamsTab.noMatch}
+        </p>
+      )}
+
+      {shownTeams.map((team) => (
         <TeamCard
           key={team.id}
           team={team}
@@ -165,13 +196,13 @@ export default function TeamsTab({
         </button>
       </form>
 
-      {unassigned.length > 0 && (
+      {shownUnassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="user">{teamsTab.unassigned(unassigned.length)}</IconLabel>
+            <IconLabel name="user">{teamsTab.unassigned(shownUnassigned.length)}</IconLabel>
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {unassigned.map((m) => (
+            {shownUnassigned.map((m) => (
               <Link
                 key={m.id}
                 href={memberCardHref(m.id, from)}
