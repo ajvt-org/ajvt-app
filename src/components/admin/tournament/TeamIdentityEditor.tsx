@@ -22,35 +22,38 @@ export default function TeamIdentityEditor({
   const [renaming, setRenaming] = useState(false);
 
   return (
-    <div className="space-y-2">
+    <div className="flex items-center gap-3">
       <PhotoUpload
         photo={logo}
         imageUrlPrefix="/api/files/team"
         variant="avatar"
-        label={teamsTab.teamLogo}
+        bare
+        label={teamsTab.changeTeamLogo}
         placeholderIcon="shield"
         onUpload={onSetLogo}
       />
-      {renaming ? (
-        <InlineRename
-          value={name}
-          maxLength={40}
-          busy={busy}
-          onSave={(next) => {
-            onRenameTeam(next);
-            setRenaming(false);
-          }}
-          onCancel={() => setRenaming(false)}
-        />
-      ) : (
-        <button
-          onClick={() => setRenaming(true)}
-          className="text-xs px-3 py-1.5 rounded-lg font-bold"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          <IconLabel name="pencil">{teamsTab.renameTeam}</IconLabel>
-        </button>
-      )}
+      <div className="min-w-0 flex-1 space-y-1.5">
+        {renaming ? (
+          <InlineRename
+            value={name}
+            maxLength={40}
+            busy={busy}
+            onSave={(next) => {
+              onRenameTeam(next);
+              setRenaming(false);
+            }}
+            onCancel={() => setRenaming(false)}
+          />
+        ) : (
+          <button
+            onClick={() => setRenaming(true)}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+          >
+            <IconLabel name="pencil">{teamsTab.renameTeam}</IconLabel>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
