@@ -4,6 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 import { validatePaidAmount } from "@/lib/donations";
@@ -27,7 +28,10 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { paidAmount, paymentMethod, paymentProof } = parse(renewSchema, await req.json());
+    const { paidAmount, paymentMethod, paymentProof } = parse(
+      renewSchema(await offeredMethodNames()),
+      await req.json(),
+    );
     const { membershipFee, membershipYear } = await getAppSettings();
 
     const paidAmountError = validatePaidAmount(paidAmount, membershipFee);

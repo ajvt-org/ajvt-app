@@ -5,6 +5,7 @@ import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { expenseCreateSchema } from "./schema";
 import { money } from "@/lib/money";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
@@ -22,7 +23,7 @@ export const GET = withRoute("GET /api/admin/expenses", async () => {
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
   const session = await requireArea(MONEY_AREAS.expenses);
   const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
-    expenseCreateSchema,
+    expenseCreateSchema(await offeredMethodNames()),
     await req.json(),
   );
   const destination = await resolveMoneyDestination({ activityId, competitionId });

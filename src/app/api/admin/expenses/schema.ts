@@ -31,44 +31,59 @@ const activityId = z.string(INVALID).nullish();
 
 const competitionId = z.string(INVALID).nullish();
 
-const method = z.string(INVALID).nullish();
+function method(accepted: readonly string[]) {
+  return z
+    .string(INVALID)
+    .nullish()
+    .superRefine((v, ctx) => {
+      const chosen = v?.trim();
+      if (!chosen) return;
+      if (!accepted.includes(chosen)) {
+        ctx.addIssue({ code: "custom", message: money.paymentMethodInvalid });
+      }
+    });
+}
 
-export const expenseCreateSchema = z.object({
-  activityId,
-  competitionId,
-  label,
-  amount,
-  method,
-  note: z.string(INVALID).nullish(),
-  proof: z.string(INVALID).nullish(),
-  date: date.optional(),
-  tagIds,
-});
-
-export const expenseUpdateSchema = z
-  .object({
+export function expenseCreateSchema(accepted: readonly string[]) {
+  return z.object({
     activityId,
     competitionId,
-    label: label.optional(),
-    amount: amount.optional(),
-    method,
+    label,
+    amount,
+    method: method(accepted),
     note: z.string(INVALID).nullish(),
     proof: z.string(INVALID).nullish(),
     date: date.optional(),
     tagIds,
-  })
-  .refine(
-    (v) =>
-      [
-        v.label,
-        v.amount,
-        v.method,
-        v.note,
-        v.date,
-        v.proof,
-        v.tagIds,
-        v.activityId,
-        v.competitionId,
-      ].some((field) => field !== undefined),
-    INVALID,
-  );
+  });
+}
+
+export function expenseUpdateSchema(accepted: readonly string[]) {
+  return z
+    .object({
+      activityId,
+      competitionId,
+      label: label.optional(),
+      amount: amount.optional(),
+      method: method(accepted),
+      note: z.string(INVALID).nullish(),
+      proof: z.string(INVALID).nullish(),
+      date: date.optional(),
+      tagIds,
+    })
+    .refine(
+      (v) =>
+        [
+          v.label,
+          v.amount,
+          v.method,
+          v.note,
+          v.date,
+          v.proof,
+          v.tagIds,
+          v.activityId,
+          v.competitionId,
+        ].some((field) => field !== undefined),
+      INVALID,
+    );
+}

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { PAYMENT_METHODS } from "./donations";
 import { validatePhone } from "./utils";
 import { common, money } from "./messages";
 
@@ -38,9 +37,11 @@ export const optionalText = z
 
 export const accountId = z.string(INVALID).nullish();
 
-export const paymentMethod = z
-  .string(money.paymentMethodInvalid)
-  .refine((v) => PAYMENT_METHODS.includes(v), money.paymentMethodInvalid);
+export function paymentMethodIn(accepted: readonly string[]) {
+  return z
+    .string(money.paymentMethodInvalid)
+    .refine((v) => accepted.includes(v), money.paymentMethodInvalid);
+}
 
 export interface DonationFormValues {
   donorName?: string;

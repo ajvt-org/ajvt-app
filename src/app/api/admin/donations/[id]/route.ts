@@ -5,6 +5,8 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
+import { acceptedNames } from "@/lib/paymentMethods";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
@@ -31,6 +33,12 @@ export const PATCH = withRoute(
     const session = await requireAdminRole("SUPER");
     const viewer = viewerOf(session);
     const { id } = await params;
+    const existing = await prisma.donation.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
+    }
+
+    const accepted = acceptedNames(await offeredMethodNames(), existing.paymentMethod);
     const {
       status,
       userId,
@@ -44,12 +52,7 @@ export const PATCH = withRoute(
       tagIds,
       activityId,
       competitionId,
-    } = parse(donationUpdateSchema, await req.json());
-
-    const existing = await prisma.donation.findUnique({ where: { id } });
-    if (!existing) {
-      return NextResponse.json({ error: money.donationNotFound }, { status: 404 });
-    }
+    } = parse(donationUpdateSchema(accepted), await req.json());
     if (
       existing.source === "MEMBERSHIP" &&
       [
