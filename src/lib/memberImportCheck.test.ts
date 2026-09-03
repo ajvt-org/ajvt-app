@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { PAYMENT_METHODS } from "./donations";
 import { members, memberImportRow, villages } from "./messages";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "./villages";
 import { emptyCells, type ImportRow } from "./memberImportRow";
@@ -10,6 +9,8 @@ import {
   type ExistingPerson,
   type ImportContext,
 } from "./memberImportCheck";
+
+const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
 
 const AGE = "البدريين";
 

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import MemberEditForm from "./MemberEditForm";
+import { answering } from "@tests/ui/paymentMethods";
 
 const member = {
   id: "m1",
@@ -16,7 +17,9 @@ const member = {
 };
 
 function mockFetch(body: unknown = { ageGroups: [{ name: "البدريين" }, { name: "الفائزين" }] }) {
-  const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => body });
+  const fetchMock = vi.fn(
+    answering(async () => ({ ok: true, status: 200, json: async () => body })),
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -64,12 +67,12 @@ describe("MemberEditForm", () => {
     expect(patchCall?.[0]).toBe("/api/admin/members/m1");
     const putCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PUT");
     expect(putCall?.[0]).toBe("/api/admin/members/m1/payment");
-    expect(JSON.parse(putCall![1].body)).toMatchObject({ paymentMethod: "السداد" });
-    expect(JSON.parse(patchCall![1].body)).toMatchObject({
+    expect(JSON.parse(String(putCall![1]?.body))).toMatchObject({ paymentMethod: "السداد" });
+    expect(JSON.parse(String(patchCall![1]?.body))).toMatchObject({
       age: "الفائزين",
       fullName: "محمد ولد أحمد",
     });
-    expect(JSON.parse(patchCall![1].body)).not.toHaveProperty("paidAmount");
+    expect(JSON.parse(String(patchCall![1]?.body))).not.toHaveProperty("paidAmount");
   });
 
   it("refuses to save an empty name", async () => {
@@ -116,7 +119,7 @@ describe("MemberEditForm", () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
-    expect(JSON.parse(patchCall![1].body)).toMatchObject({ village: "أفجار", age: null });
+    expect(JSON.parse(String(patchCall![1]?.body))).toMatchObject({ village: "أفجار", age: null });
   });
 
   it("lets an admin correct a member who picked the other option", async () => {
@@ -129,7 +132,7 @@ describe("MemberEditForm", () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const patchCall = fetchMock.mock.calls.find((c) => c[1]?.method === "PATCH");
-    expect(JSON.parse(patchCall![1].body)).toMatchObject({ village: "أفجار" });
+    expect(JSON.parse(String(patchCall![1]?.body))).toMatchObject({ village: "أفجار" });
   });
 
   it("refuses to save a member of the home village with no age group", async () => {

@@ -2,7 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import Money from "@/components/Money";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import type { UnassignedDonation } from "./types";
 
 export default function UnassignedDonations({
@@ -18,6 +18,7 @@ export default function UnassignedDonations({
   onChoose: (id: string, method: string) => void;
   onSave: (id: string) => void;
 }) {
+  const { methods } = usePaymentMethods();
   return (
     <div className="card p-4">
       <p className="text-xs font-bold mb-2" style={{ color: "var(--text-muted)" }}>
@@ -42,9 +43,9 @@ export default function UnassignedDonations({
               aria-label={`طريقة الدفع لـ ${row.name}`}
             >
               <option value="">اختر طريقة الدفع...</option>
-              {PAYMENT_METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
+              {methods.map((m) => (
+                <option key={m.name} value={m.name}>
+                  {m.name}
                 </option>
               ))}
             </select>

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
-import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
+import { PAYABLE_METHODS } from "@/lib/paymentCodes";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
@@ -249,7 +249,7 @@ function DonatePageInner() {
               role="radiogroup"
               aria-labelledby="donate-method-label"
             >
-              {PAYMENT_METHODS.map((method) => (
+              {PAYABLE_METHODS.map((method) => (
                 <button
                   key={method}
                   type="button"

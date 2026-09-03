@@ -5,6 +5,7 @@ import DonationEditForm from "./DonationEditForm";
 import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
+import { answering, sentBody } from "@tests/ui/paymentMethods";
 
 const ACCOUNT: MemberOption = {
   id: "m1",
@@ -38,29 +39,31 @@ function proofOf(over: Partial<Proof> = {}): Proof {
 }
 
 function mockPatch(donation: Record<string, unknown> = {}) {
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    json: async () => ({
-      donation: {
-        id: "d1",
-        donorName: "أبوبكر",
-        donorPhone: null,
-        donorPhoto: null,
-        amount: 2000,
-        status: "ACTIVE",
-        source: "PUBLIC",
-        paymentMethod: null,
-        proof: null,
-        userId: "u1",
-        anonymous: false,
-        activityId: null,
-        createdAt: "2026-08-20T09:00:00.000Z",
-        updatedAt: "2026-08-20T09:00:00.000Z",
-        ...donation,
-      },
-    }),
-  });
+  const fetchMock = vi.fn(
+    answering(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        donation: {
+          id: "d1",
+          donorName: "أبوبكر",
+          donorPhone: null,
+          donorPhoto: null,
+          amount: 2000,
+          status: "ACTIVE",
+          source: "PUBLIC",
+          paymentMethod: null,
+          proof: null,
+          userId: "u1",
+          anonymous: false,
+          activityId: null,
+          createdAt: "2026-08-20T09:00:00.000Z",
+          updatedAt: "2026-08-20T09:00:00.000Z",
+          ...donation,
+        },
+      }),
+    })),
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -82,7 +85,7 @@ function show(over: Partial<Proof> = {}, linkedMember: MemberOption | undefined 
 }
 
 function bodyOf(fetchMock: ReturnType<typeof mockPatch>) {
-  return JSON.parse(fetchMock.mock.calls[0][1].body);
+  return sentBody(fetchMock.mock.calls);
 }
 
 afterEach(() => {

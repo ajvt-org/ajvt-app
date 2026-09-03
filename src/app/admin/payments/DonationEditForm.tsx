@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { donationFormError } from "@/lib/donationFields";
 import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
@@ -45,6 +45,7 @@ export default function DonationEditForm({
   onSaved: (changes: Partial<Proof>) => void;
 }) {
   const [form, setForm] = useState(initial(proof));
+  const { methods } = usePaymentMethods(form.paymentMethod);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const linked = !!proof.userId;
@@ -178,9 +179,9 @@ export default function DonationEditForm({
         style={FIELD}
       >
         <option value="">{donationEdit.methodUnset}</option>
-        {PAYMENT_METHODS.map((m) => (
-          <option key={m} value={m}>
-            {m}
+        {methods.map((m) => (
+          <option key={m.name} value={m.name}>
+            {m.name}
           </option>
         ))}
       </select>
