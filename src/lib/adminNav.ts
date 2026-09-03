@@ -5,6 +5,7 @@ export const ALL_AREAS = null;
 export const MONEY_AREAS = {
   payments: "/admin/payments",
   receipts: "/admin/receipts",
+  supporters: "/admin/supporters",
   expenses: "/admin/expenses",
   treasury: "/admin/treasury",
   report: "/admin/finance-report",
@@ -13,7 +14,12 @@ export const MONEY_AREAS = {
 
 const OWN_ACCOUNT = ["/admin/tools", "/admin/password"];
 
-const SHARED_MONEY = [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses];
+const SHARED_MONEY = [
+  MONEY_AREAS.payments,
+  MONEY_AREAS.receipts,
+  MONEY_AREAS.supporters,
+  MONEY_AREAS.expenses,
+];
 
 const ROLE_AREAS: Record<string, string[] | null> = {
   MEMBERS: [
