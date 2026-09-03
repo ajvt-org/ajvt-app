@@ -18,6 +18,7 @@ const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
 const CAPTAIN_EDGE = "var(--copper-500)";
 
 const ACTION = "btn btn-sm shrink-0";
+const ICON_ACTION = "btn btn-sm btn-icon shrink-0";
 const ACTION_SIZE = { fontSize: "0.75rem" };
 
 export default function RosterRow({
@@ -40,6 +41,13 @@ export default function RosterRow({
   const { member, status } = entry;
   const pending = status === "PENDING";
   const from = useAdminOrigin();
+
+  function confirmThenRemove() {
+    const question = pending
+      ? teamsTab.confirmReject(member.fullName)
+      : teamsTab.confirmRemove(member.fullName);
+    if (confirm(question)) onRemove();
+  }
 
   return (
     <div
@@ -108,15 +116,15 @@ export default function RosterRow({
           </IconLabel>
         </button>
         <button
-          onClick={onRemove}
+          onClick={confirmThenRemove}
           disabled={busy}
           aria-label={
             pending ? teamsTab.rejectOf(member.fullName) : teamsTab.removeOf(member.fullName)
           }
-          className={ACTION}
-          style={{ ...ACTION_SIZE, ...DESTRUCTIVE }}
+          className={ICON_ACTION}
+          style={DESTRUCTIVE}
         >
-          <IconLabel name="close">{pending ? teamsTab.reject : teamsTab.remove}</IconLabel>
+          <Icon name="close" size={18} />
         </button>
       </div>
     </div>

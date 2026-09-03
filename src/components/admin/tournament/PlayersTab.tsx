@@ -122,10 +122,10 @@ export default function PlayersTab({
                   onClick={() => removePlayer(team)}
                   disabled={busy}
                   aria-label={playersTab.removeOf(entry?.member.fullName ?? team.name)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  className="btn btn-sm btn-icon shrink-0"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  <Icon name="trash" size={14} />
+                  <Icon name="trash" size={18} />
                 </button>
               </div>
             );
