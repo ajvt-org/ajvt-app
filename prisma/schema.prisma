@@ -440,31 +440,37 @@ model Donation {
   tags           FinanceTag[]
   activityId     String?
   activity       Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId  String?
+  competition    Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 // Manually-entered outgoing spending (association expenses) — no in-app
 // source generates these; an admin logs and edits every row by hand.
 model Expense {
-  id         String       @id @default(cuid())
-  label      String
-  amount     Int
-  method     String?
-  note       String?
-  proof      String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
-  date       DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
-  createdBy  String // admin username, plain string like AuditLog.adminUsername — not a relation
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  tags       FinanceTag[]
-  activityId String?
-  activity   Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  id            String       @id @default(cuid())
+  label         String
+  amount        Int
+  method        String?
+  note          String?
+  proof         String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
+  date          DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
+  createdBy     String // admin username, plain string like AuditLog.adminUsername — not a relation
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId String?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([date])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so
@@ -657,6 +663,9 @@ model Competition {
   rounds             QuizRound[]
   boards             QuizBoard[]
   participants       QuizParticipant[]
+  payments           Payment[]
+  expenses           Expense[]
+  donations          Donation[]
   startedAt          DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -763,34 +772,37 @@ enum PaymentPurpose {
 }
 
 model Payment {
-  id         String         @id @default(cuid())
-  purpose    PaymentPurpose
-  amount     Int
-  feeApplied Int?
-  year       Int?
-  method     String?
-  proof      String?
-  status     ReviewStatus   @default(PENDING)
-  anonymous  Boolean        @default(false)
-  donorName  String?
-  donorPhoto String? // donor with no linked Member — shown on the honour board
-  donorPhone String? // contact note for a manually entered donor with no account
-  userId     String?
-  user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags       FinanceTag[]
-  activityId String?
-  activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  recordedBy String?
-  reviewedBy String?
-  reviewedAt DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  purpose       PaymentPurpose
+  amount        Int
+  feeApplied    Int?
+  year          Int?
+  method        String?
+  proof         String?
+  status        ReviewStatus   @default(PENDING)
+  anonymous     Boolean        @default(false)
+  donorName     String?
+  donorPhoto    String? // donor with no linked Member — shown on the honour board
+  donorPhone    String? // contact note for a manually entered donor with no account
+  userId        String?
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId String?
+  competition   Competition?   @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  recordedBy    String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   receipt Receipt?
 
   @@index([userId, year, purpose])
   @@index([status])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 enum ReceiptStatus {

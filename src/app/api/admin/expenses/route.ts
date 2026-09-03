@@ -7,25 +7,25 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseCreateSchema } from "./schema";
 import { money } from "@/lib/money";
+import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
+import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
   await requireArea(MONEY_AREAS.expenses);
   const expenses = await prisma.expense.findMany({
     orderBy: { date: "desc" },
-    include: {
-      tags: { select: { id: true, name: true } },
-      activity: { select: { id: true, title: true } },
-    },
+    include: EXPENSE_DESTINATION_SELECT,
   });
   return NextResponse.json({ expenses });
 });
 
 export const POST = withRoute("POST /api/admin/expenses", async (req: NextRequest) => {
   const session = await requireArea(MONEY_AREAS.expenses);
-  const { label, amount, method, note, date, proof, tagIds, activityId } = parse(
+  const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
     expenseCreateSchema,
     await req.json(),
   );
+  const destination = await resolveMoneyDestination({ activityId, competitionId });
 
   const n = Number(amount);
   const parsedDate = date === undefined || date === null ? new Date() : new Date(date as string);
@@ -40,12 +40,10 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
       date: parsedDate,
       createdBy: session.username,
       tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
-      activityId: activityId || null,
+      activityId: destination.activityId,
+      competitionId: destination.competitionId,
     },
-    include: {
-      tags: { select: { id: true, name: true } },
-      activity: { select: { id: true, title: true } },
-    },
+    include: EXPENSE_DESTINATION_SELECT,
   });
   await logAction(
     session.username,

@@ -8,7 +8,7 @@ import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
-import { resolveDonationActivity } from "@/lib/donationActivity";
+import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord, nameAdoptedOnLink } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
 import { donationView } from "@/lib/donationView";
@@ -43,6 +43,7 @@ export const PATCH = withRoute(
       proof,
       tagIds,
       activityId,
+      competitionId,
     } = parse(donationUpdateSchema, await req.json());
 
     const existing = await prisma.donation.findUnique({ where: { id } });
@@ -63,6 +64,7 @@ export const PATCH = withRoute(
         paymentMethod,
         tagIds,
         activityId,
+        competitionId,
       ].some((v) => v !== undefined)
     ) {
       return NextResponse.json({ error: money.membershipDonationReadOnly }, { status: 400 });
@@ -79,6 +81,7 @@ export const PATCH = withRoute(
       proof?: string | null;
       tags?: { set: { id: string }[] };
       activityId?: string | null;
+      competitionId?: string | null;
       userId?: string | null;
     } = {};
     if (status !== undefined) data.status = status;
@@ -107,7 +110,11 @@ export const PATCH = withRoute(
     if (tagIds !== undefined) {
       data.tags = { set: tagIds.map((tagId) => ({ id: tagId })) };
     }
-    if (activityId !== undefined) data.activityId = await resolveDonationActivity(activityId);
+    if (activityId !== undefined || competitionId !== undefined) {
+      const destination = await resolveMoneyDestination({ activityId, competitionId });
+      data.activityId = destination.activityId;
+      data.competitionId = destination.competitionId;
+    }
 
     const donation = await prisma.donation.update({
       where: { id },
