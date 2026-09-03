@@ -6,7 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { expenseCreateSchema } from "./schema";
-import { money } from "@/lib/money";
+import { ouguiya } from "@/lib/texts/currency";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 
@@ -48,7 +48,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
   await logAction(
     session.username,
     "CREATE_EXPENSE",
-    `${expense.label} — ${money(expense.amount)}`,
+    `${expense.label} — ${ouguiya.amount(expense.amount)}`,
     {
       ...auditContext(session, req),
       targetType: "Expense",

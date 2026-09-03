@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import PaidAmountRows from "./PaidAmountRows";
-import { money } from "@/lib/money";
+import { ouguiya } from "@/lib/texts/currency";
 import { paidAmount as texts } from "@/lib/texts/paidAmount";
 
-const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
+const Row = ({ label, value }: { label: string; value: string }) => (
   <div>
     <span>{label}</span>
     <span>{value}</span>
@@ -22,7 +22,7 @@ describe("PaidAmountRows", () => {
     const { container } = render(<PaidAmountRows paidAmount={100} supportAmount={0} Row={Row} />);
 
     expect(screen.getByText(texts.paid)).toBeDefined();
-    expect(container.textContent).toContain(money(100));
+    expect(container.textContent).toContain(ouguiya.amount(100));
     expect(screen.queryByText(texts.support)).toBeNull();
   });
 
@@ -32,17 +32,17 @@ describe("PaidAmountRows", () => {
     );
 
     expect(screen.getByText(texts.fee)).toBeDefined();
-    expect(container.textContent).toContain(money(100));
+    expect(container.textContent).toContain(ouguiya.amount(100));
     expect(screen.getByText(texts.support)).toBeDefined();
-    expect(container.textContent).toContain(money(2000));
+    expect(container.textContent).toContain(ouguiya.amount(2000));
     expect(screen.getByText(texts.total)).toBeDefined();
-    expect(container.textContent).toContain(money(2100));
+    expect(container.textContent).toContain(ouguiya.amount(2100));
   });
 
   it("never shows the member a total below what they were charged", () => {
     const { container } = render(<PaidAmountRows paidAmount={100} supportAmount={-50} Row={Row} />);
 
-    expect(container.textContent).toContain(money(100));
+    expect(container.textContent).toContain(ouguiya.amount(100));
     expect(screen.queryByText(texts.support)).toBeNull();
   });
 });

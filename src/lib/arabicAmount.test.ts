@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { amountInWords } from "@/lib/arabicAmount";
 import { numberToArabicWords } from "@/lib/arabicNumberWords";
+import { ouguiya } from "@/lib/texts/currency";
 
 const TABLE: [number, string][] = [
   [1, "أوقية واحدة"],
@@ -109,5 +110,24 @@ describe("amounts outside what a receipt can carry", () => {
 
   it("never leaves a bare numeral, whatever the amount", () => {
     for (let n = 0; n <= 2000; n++) expect(amountInWords(n), String(n)).toMatch(/أوقي/);
+  });
+});
+
+describe("ouguiya.amount", () => {
+  it("formats a number below 1000 without a separator", () => {
+    expect(ouguiya.amount(500)).toBe("500 أوقية");
+  });
+
+  it("separates thousands with a dot", () => {
+    expect(ouguiya.amount(5000)).toBe("5.000 أوقية");
+    expect(ouguiya.amount(1000000)).toBe("1.000.000 أوقية");
+  });
+
+  it("places the currency word after the digits", () => {
+    expect(ouguiya.amount(100)).toMatch(/أوقية$/);
+  });
+
+  it("keeps the sign on a negative amount", () => {
+    expect(ouguiya.amount(-1500)).toBe("-1.500 أوقية");
   });
 });
