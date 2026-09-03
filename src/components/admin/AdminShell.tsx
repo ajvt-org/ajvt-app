@@ -42,7 +42,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const subtabs = subtabsFor(role, pathname);
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--mint-50)", direction: "rtl" }}>
+    <div
+      className="relative min-h-screen overflow-x-clip"
+      style={{ background: "var(--mint-50)", direction: "rtl" }}
+    >
       <div className="sticky top-0 z-30">
         <TopBar onLogout={logout} />
         <TabStrip
