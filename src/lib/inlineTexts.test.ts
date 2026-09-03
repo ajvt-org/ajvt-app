@@ -104,6 +104,8 @@ const KEPT_CLEAN = [
   "src/components/tournament/BracketConnectors.tsx",
   "src/lib/bracketLayout.ts",
   "src/components/tournament/MatchFixture.tsx",
+  "src/components/tournament/TeamsGrid.tsx",
+  "src/components/tournament/SquadList.tsx",
   "src/components/tournament/TodayBand.tsx",
   "src/components/tournament/publicTypes.ts",
   "src/lib/fixtureTeams.ts",

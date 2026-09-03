@@ -1,6 +1,6 @@
 import { lists } from "./lists";
 
-import { countedNoun, type NounForms } from "../arabicPlural";
+import { countedNoun, PLAYERS, type NounForms } from "../arabicPlural";
 
 const UNKNOWN_MINUTE_GOALS: NounForms = {
   one: "هدف دون دقيقة مسجلة",
@@ -50,6 +50,8 @@ export const publicTournament = {
   noMatchesYet: "لم تُحدَّد المباريات بعد",
   noTeamsYet: "لم تُحدَّد الفرق بعد",
   noPlayersYet: "لم يُحدَّد اللاعبون بعد",
+  noPlayers: "لا يوجد لاعبون بعد",
+  playerCount: (count: number) => countedNoun(count, PLAYERS),
   teamDecidedLater: "يُحدد لاحقاً",
   bracketRound: (round: number) => `الدور ${round}`,
   bracketWaitingHint: "تُحدَّد فرق الدور الإقصائي من ترتيب المجموعات بعد انتهاء دور المجموعات",
