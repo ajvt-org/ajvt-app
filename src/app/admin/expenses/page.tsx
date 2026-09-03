@@ -85,7 +85,7 @@ function AdminExpensesPageInner() {
       method: expense.method || "",
       note: expense.note || "",
       date: expense.date.slice(0, 10),
-      proof: expense.proof || "",
+      proofs: expense.proofs.map((row) => row.filename),
       tagIds: expense.tags.map((t) => t.id),
       destinationId: expense.activity?.id || expense.competition?.id || "",
     });
@@ -114,7 +114,7 @@ function AdminExpensesPageInner() {
         method: form.method || null,
         note: form.note.trim() || null,
         date: form.date || undefined,
-        proof: form.proof || null,
+        proofs: form.proofs,
         tagIds: form.tagIds,
         ...destinationOf(destinations, form.destinationId),
       };
@@ -300,6 +300,7 @@ function AdminExpensesPageInner() {
           tags={tags}
           destinations={destinations}
           editing={!!editingId}
+          expenseId={editingId}
           error={formError}
           saving={saving}
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}

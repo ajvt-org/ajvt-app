@@ -11,7 +11,10 @@ import { formatDate, toThumbUrl } from "@/lib/utils";
 import type { Expense } from "./types";
 
 function Thumb({ expense }: { expense: Expense }) {
-  if (!expense.proof) {
+  const proofs = expense.proofs.map((row) => row.filename);
+  const first = proofs[0];
+
+  if (!first) {
     return (
       <div
         className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
@@ -24,14 +27,14 @@ function Thumb({ expense }: { expense: Expense }) {
 
   return (
     <a
-      href={`/api/files/${expense.proof}`}
+      href={`/api/files/${first}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="shrink-0"
+      className="shrink-0 relative"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={toThumbUrl(`/api/files/${expense.proof}`)}
+        src={toThumbUrl(`/api/files/${first}`)}
         alt={expense.label}
         width={48}
         height={48}
@@ -40,6 +43,14 @@ function Thumb({ expense }: { expense: Expense }) {
         className="w-12 h-12 rounded-lg object-cover"
         style={{ border: "1px solid var(--mint-100)" }}
       />
+      {proofs.length > 1 && (
+        <span
+          className="absolute -top-1 -left-1 text-xs font-black rounded-full px-1.5"
+          style={{ background: "var(--mint-700)", color: "white" }}
+        >
+          {proofs.length}
+        </span>
+      )}
     </a>
   );
 }

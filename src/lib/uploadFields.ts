@@ -186,6 +186,23 @@ export const UPLOAD_FIELDS: UploadField[] = [
     },
   },
   {
+    id: "expenseProof.filename",
+    names: async () =>
+      (await prisma.expenseProof.findMany({ select: { filename: true } })).map((r) => r.filename),
+    rename: (from, to) =>
+      prisma.expenseProof.updateMany({ where: { filename: from }, data: { filename: to } }),
+    serve: {
+      via: "authenticated",
+      locate: async (base) => {
+        const row = await prisma.expenseProof.findFirst({
+          where: { filename: base },
+          select: { id: true },
+        });
+        return row ? { kind: "expense", ownerId: null, confidential: false } : null;
+      },
+    },
+  },
+  {
     id: "activity.photo",
     names: async () =>
       (await prisma.activity.findMany({ select: { photo: true } })).map((r) => r.photo),

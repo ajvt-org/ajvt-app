@@ -5,6 +5,7 @@ export interface Expense {
   method: string | null;
   note: string | null;
   proof: string | null;
+  proofs: { filename: string }[];
   date: string;
   createdBy: string;
   tags: { id: string; name: string }[];
@@ -62,7 +63,7 @@ export interface ExpenseForm {
   method: string;
   note: string;
   date: string;
-  proof: string;
+  proofs: string[];
   tagIds: string[];
   destinationId: string;
 }
@@ -73,7 +74,7 @@ export const emptyExpenseForm: ExpenseForm = {
   method: "",
   note: "",
   date: "",
-  proof: "",
+  proofs: [],
   tagIds: [],
   destinationId: "",
 };

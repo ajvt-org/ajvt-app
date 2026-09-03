@@ -39,3 +39,12 @@ export const financeTotals = {
   expenses: `المصاريف (${ouguiya.singular})`,
   net: `الصافي (${ouguiya.singular})`,
 } as const;
+
+export const expenseProofs = {
+  heading: "الفواتير والإيصالات (اختياري)",
+  addAnother: "إضافة صورة أخرى",
+  addFirst: "صورة الفاتورة",
+  remove: (at: number) => `حذف الصورة ${at}`,
+  open: (at: number) => `فتح الصورة ${at}`,
+  none: "لا توجد صور بعد",
+} as const;
