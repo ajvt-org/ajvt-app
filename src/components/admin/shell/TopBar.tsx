@@ -7,7 +7,7 @@ import { adminShell } from "@/lib/texts";
 export default function TopBar({ onLogout }: { onLogout: () => void }) {
   return (
     <div
-      className="px-3 py-2 sm:px-4 sm:py-3 flex items-center justify-between"
+      className="px-3 py-1.5 sm:px-4 sm:py-2 flex items-center justify-between"
       style={{
         background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))",
         boxShadow: "0 2px 12px rgba(26,63,51,0.2)",
@@ -17,8 +17,8 @@ export default function TopBar({ onLogout }: { onLogout: () => void }) {
         <Image
           src="/version-final.png"
           alt={adminShell.logoAlt}
-          width={30}
-          height={30}
+          width={24}
+          height={24}
           className="shrink-0"
         />
         <p className="text-xs sm:text-sm font-black text-white leading-none">{adminShell.title}</p>
