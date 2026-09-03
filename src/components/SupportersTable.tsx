@@ -14,10 +14,12 @@ export default function SupportersTable({
   initial,
   total,
   minePositions,
+  source,
 }: {
   initial: PublicLeaderboardEntry[];
   total: number;
   minePositions: number[];
+  source: string;
 }) {
   const [rows, setRows] = useState(initial);
   const [loading, setLoading] = useState(false);
@@ -28,7 +30,7 @@ export default function SupportersTable({
     setLoading(true);
     setFailed(false);
     try {
-      const res = await fetch(`/api/leaderboard?offset=${rows.length}`);
+      const res = await fetch(`${source}?offset=${rows.length}`);
       if (!res.ok) throw new Error();
       const data = (await res.json()) as { rows: PublicLeaderboardEntry[] };
       setRows((prev) => [...prev, ...data.rows]);

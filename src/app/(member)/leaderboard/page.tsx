@@ -94,6 +94,7 @@ export default async function LeaderboardPage() {
             initial={leaderboard.slice(0, SUPPORTERS_PAGE_SIZE).map(toPublicEntry)}
             total={leaderboard.length}
             minePositions={mine.map((e) => e.position)}
+            source="/api/leaderboard"
           />
         )}
       </div>
