@@ -18,6 +18,8 @@ export const proofSchema = z.object({
   userId: nullableText.optional(),
   anonymous: z.boolean().optional(),
   activityId: nullableText.optional(),
+  competitionId: nullableText.optional(),
+  competitionName: nullableText.optional(),
   donorName: nullableText.optional(),
   donorPhone: nullableText.optional(),
   donorPhoto: nullableText.optional(),

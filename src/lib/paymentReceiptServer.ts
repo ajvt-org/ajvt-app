@@ -21,6 +21,7 @@ const SELECT = {
   donorName: true,
   userId: true,
   activity: { select: { title: true } },
+  competition: { select: { name: true } },
   user: { select: DONOR_ACCOUNT_SELECT },
 } as const;
 
@@ -35,6 +36,7 @@ function reasonOf(payment: PaymentRow): string {
     purpose: payment.purpose as ReceiptPurpose,
     year: payment.year,
     activityTitle: payment.activity?.title ?? null,
+    competitionName: payment.competition?.name ?? null,
   });
 }
 

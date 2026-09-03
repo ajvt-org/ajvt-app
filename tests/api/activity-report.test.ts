@@ -121,7 +121,7 @@ describe("the activity report over a chosen period", () => {
     expect(body.rows).toHaveLength(0);
   });
 
-  it("keeps what is attached to no activity rather than dropping it", async () => {
+  it("keeps what is attached to no destination rather than dropping it", async () => {
     const summer = await activity("بطولة الصيف");
     await income(900, "2026-03-01T10:00:00Z", { activityId: summer.id });
     await spending(250, "2026-03-05T10:00:00Z");
@@ -130,7 +130,7 @@ describe("the activity report over a chosen period", () => {
     const body = await (await read(...SPAN)).json();
     const general = body.rows.at(-1);
 
-    expect(general).toMatchObject({ activityId: null, income: 1500, spending: 250 });
+    expect(general).toMatchObject({ key: "general", kind: "general", income: 1500, spending: 250 });
   });
 
   it("splits an activity's spending by tag", async () => {

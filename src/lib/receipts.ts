@@ -6,6 +6,7 @@ export interface ReceiptSubject {
   purpose: ReceiptPurpose;
   year: number | null;
   activityTitle: string | null;
+  competitionName: string | null;
 }
 
 export const PURPOSE_LABEL: Record<ReceiptPurpose, string> = {
@@ -17,6 +18,9 @@ export const PURPOSE_LABEL: Record<ReceiptPurpose, string> = {
 export function receiptTitle(subject: ReceiptSubject): string {
   if (subject.purpose === "MEMBERSHIP") {
     return subject.year ? `${PURPOSE_LABEL.MEMBERSHIP} ${subject.year}` : PURPOSE_LABEL.MEMBERSHIP;
+  }
+  if (subject.competitionName) {
+    return `${receiptPurpose.competition} — ${subject.competitionName}`;
   }
   if (subject.purpose === "ACTIVITY" && subject.activityTitle) {
     return `${PURPOSE_LABEL.ACTIVITY} — ${subject.activityTitle}`;

@@ -16,6 +16,8 @@ export interface Proof {
   userId?: string | null;
   anonymous?: boolean;
   activityId?: string | null;
+  competitionId?: string | null;
+  competitionName?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
   donorPhoto?: string | null;
@@ -41,6 +43,7 @@ export interface DonationResponse {
     userId: string | null;
     anonymous: boolean;
     activityId: string | null;
+    competitionId: string | null;
     createdAt: string;
     updatedAt: string;
   };
