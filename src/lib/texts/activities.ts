@@ -96,6 +96,7 @@ export const activityRow = {
   duplicate: "نسخ النشاط",
   duplicated: "أُنشئت نسخة كمسودة",
   pickRow: (title: string) => `تحديد ${title}`,
+  selectMode: "تحديد",
   picked: (n: number) => `${n} محدَّد`,
   bulkClose: "إغلاق التسجيل",
   bulkDelete: "حذف",

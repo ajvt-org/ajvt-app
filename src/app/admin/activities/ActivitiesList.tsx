@@ -25,6 +25,7 @@ export default function ActivitiesList({
   rows,
   total,
   controls,
+  selecting,
   picked,
   onPick,
   onAdd,
@@ -32,6 +33,7 @@ export default function ActivitiesList({
   rows: Activity[];
   total: number;
   controls: RowControls;
+  selecting: boolean;
   picked: Set<string>;
   onPick: (id: string) => void;
   onAdd: () => void;
@@ -45,6 +47,7 @@ export default function ActivitiesList({
           key={activity.id}
           activity={activity}
           controls={controls}
+          selecting={selecting}
           picked={picked.has(activity.id)}
           onPick={onPick}
         />

@@ -27,6 +27,7 @@ function AdminActivitiesPageInner() {
   const controls = useRowControls(reload);
   const bulk = useActivityBulk(reload);
   const [showCreate, setShowCreate] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const { filters, go } = useAdminListUrlState("/admin/activities", {
     keys: ACTIVITIES_VIEW_KEYS,
     readFilters: readActivitiesView,
@@ -57,7 +58,16 @@ function AdminActivitiesPageInner() {
       )}
 
       <section aria-label={texts.regions.filters}>
-        <ActivitiesFilters activities={activities} filters={filters} onChange={go} />
+        <ActivitiesFilters
+          activities={activities}
+          filters={filters}
+          selecting={selecting}
+          onChange={go}
+          onSelectingChange={(on) => {
+            setSelecting(on);
+            if (!on) bulk.clear();
+          }}
+        />
       </section>
 
       <section aria-label={texts.regions.list}>
@@ -68,6 +78,7 @@ function AdminActivitiesPageInner() {
             rows={visible}
             total={activities.length}
             controls={controls}
+            selecting={selecting}
             picked={bulk.picked}
             onPick={bulk.toggle}
             onAdd={() => setShowCreate(true)}
