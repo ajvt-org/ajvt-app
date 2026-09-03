@@ -1,13 +1,10 @@
 export const teamsTab = {
   confirmDelete: "هل تريد حذف هذا الفريق؟",
-  ungrouped: (count: number) => `فرق بدون مجموعة (${count})`,
-  pickGroup: "اختر مجموعة...",
   teamCount: (count: number) => `عدد الفرق: ${count}`,
   save: "حفظ",
   cancel: "إلغاء",
   deleteTeam: "حذف الفريق",
   teamLogo: "شعار الفريق",
-  noGroup: "بدون مجموعة",
   noPlayers: "لا يوجد لاعبون بعد",
   awaitingApproval: "بانتظار الموافقة",
   accept: "قبول",
