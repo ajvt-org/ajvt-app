@@ -14,7 +14,7 @@ export interface RowMenuItem {
   onPick?: () => void;
 }
 
-const HIDDEN = { insetInlineStart: 0, top: "2.25rem", visibility: "hidden" } as const;
+const MEASURING = { position: "fixed", left: 0, top: 0, visibility: "hidden" } as const;
 
 export default function ActivityRowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
   const [open, setOpen] = useState(false);
@@ -70,8 +70,8 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
           ref={panel}
           className="absolute z-20 rounded-xl overflow-hidden"
           style={{
-            ...(spot ? { left: `${spot.left}px`, top: `${spot.top}px` } : HIDDEN),
-            minWidth: "11rem",
+            ...(spot ? { left: `${spot.left}px`, top: `${spot.top}px` } : MEASURING),
+            width: "11rem",
             maxWidth: "calc(100vw - 1rem)",
             background: "white",
             border: "1px solid var(--mint-100)",
