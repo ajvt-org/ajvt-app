@@ -1,3 +1,5 @@
+import { ouguiya } from "./currency";
+
 export const donate = {
   title: "دعم الرابطة",
   proofRequired: "يرجى إرفاق صورة إثبات الدفع",
@@ -17,7 +19,7 @@ export const donate = {
   continueWithout: "المتابعة والتبرع بدون حساب",
   memberHint: "تبرعك منفصل عن رسوم العضوية، ويمكنك دعم الرابطة في أي وقت.",
   guestHint: "تتابع الآن كمتبرع بدون حساب — هذا التبرع منفصل عن رسوم المشاركة في الأنشطة.",
-  amountLabel: "المبلغ (MRU)",
+  amountLabel: `المبلغ (${ouguiya.singular})`,
   amountPlaceholder: "بالأوقية",
   methodLabel: "طريقة الدفع",
   proofLabel: "صورة إثبات الدفع",

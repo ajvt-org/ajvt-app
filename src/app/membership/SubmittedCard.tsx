@@ -4,6 +4,7 @@ import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import type { PaymentValues } from "./constants";
+import Money from "@/components/Money";
 
 export default function SubmittedCard({
   form,
@@ -83,9 +84,7 @@ export default function SubmittedCard({
             </div>
             <div className="flex justify-between">
               <span style={{ color: "var(--text-muted)" }}>المبلغ</span>
-              <span className="font-bold" dir="ltr">
-                {form.paidAmount} أوقية
-              </span>
+              <Money value={Number(form.paidAmount)} className="font-bold" />
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
+import { surplusCard as texts } from "@/lib/texts";
 
 export default function SurplusVisibility({
   memberId,
@@ -44,10 +45,10 @@ export default function SurplusVisibility({
     <div className="card p-4 fade-up space-y-3">
       <div>
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          دعمك فوق رسوم الاشتراك
+          {texts.title}
         </p>
         <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-          {supportAmount} أوقية تظهر في لوحة شرف المتبرعين. يمكنك تغيير طريقة ظهورها متى شئت.
+          {texts.hint(supportAmount)}
         </p>
       </div>
 
@@ -60,7 +61,7 @@ export default function SurplusVisibility({
       )}
       {saved && !error && (
         <p className="text-xs" style={{ color: "var(--mint-700)" }}>
-          تم الحفظ
+          {texts.saved}
         </p>
       )}
     </div>

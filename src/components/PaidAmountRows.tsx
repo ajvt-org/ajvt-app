@@ -1,4 +1,6 @@
 import { paidBreakdown } from "@/lib/paidBreakdown";
+import Money from "@/components/Money";
+import { paidAmount as texts } from "@/lib/texts/paidAmount";
 
 export default function PaidAmountRows({
   paidAmount,
@@ -7,20 +9,20 @@ export default function PaidAmountRows({
 }: {
   paidAmount: number | null;
   supportAmount: number;
-  Row: (props: { label: string; value: string }) => React.ReactNode;
+  Row: (props: { label: string; value: React.ReactNode }) => React.ReactNode;
 }) {
   const breakdown = paidBreakdown(paidAmount, supportAmount);
   if (!breakdown) return null;
 
   if (breakdown.support === 0) {
-    return <Row label="المبلغ المسدد" value={`${breakdown.fee} أوقية`} />;
+    return <Row label={texts.paid} value={<Money value={breakdown.fee} />} />;
   }
 
   return (
     <>
-      <Row label="رسوم الاشتراك" value={`${breakdown.fee} أوقية`} />
-      <Row label="مبلغ الدعم" value={`${breakdown.support} أوقية`} />
-      <Row label="إجمالي ما دُفع" value={`${breakdown.total} أوقية`} />
+      <Row label={texts.fee} value={<Money value={breakdown.fee} />} />
+      <Row label={texts.support} value={<Money value={breakdown.support} />} />
+      <Row label={texts.total} value={<Money value={breakdown.total} />} />
     </>
   );
 }

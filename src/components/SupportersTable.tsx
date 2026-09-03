@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { PublicLeaderboardEntry } from "@/lib/donationsServer";
 import { supporters } from "@/lib/texts";
+import Money from "@/components/Money";
 
 const MEDALS = ["#d4af37", "#9aa3ab", "#c07a3e"];
 
@@ -88,10 +89,10 @@ export default function SupportersTable({
                   </span>
                 </td>
                 <td
-                  className="px-3 py-2.5 text-center font-black"
+                  className="px-3 py-2.5 text-center font-black whitespace-nowrap"
                   style={{ color: "var(--mint-700)" }}
                 >
-                  {supporters.amount(entry.total)}
+                  <Money value={entry.total} />
                 </td>
               </tr>
             ))}
