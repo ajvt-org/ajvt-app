@@ -10,5 +10,5 @@ export function captainFirst<T extends SquadEntry>(players: T[], captainId: stri
 }
 
 export function isCaptain(playerId: string, captainId: string | null): boolean {
-  return captainId !== null && playerId === captainId;
+  return !!captainId && playerId === captainId;
 }

@@ -31,4 +31,9 @@ describe("isCaptain", () => {
     expect(isCaptain("a", null)).toBe(false);
     expect(isCaptain("", null)).toBe(false);
   });
+
+  it("marks nobody on a player who has no account behind them", () => {
+    expect(isCaptain("", "")).toBe(false);
+    expect(captainFirst([{ id: "" }, { id: "a" }], "")).toEqual([{ id: "" }, { id: "a" }]);
+  });
 });
