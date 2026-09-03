@@ -71,7 +71,7 @@ function show(over: Partial<Proof> = {}, linkedMember: MemberOption | undefined 
   render(
     <DonationEditForm
       proof={proofOf(over)}
-      activities={[]}
+      destinations={[]}
       linkedMember={linkedMember}
       onCancel={vi.fn()}
       onRelink={onRelink}

@@ -13,6 +13,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/bracketServer.ts",
   "src/lib/competitionServer.ts",
   "src/lib/deletedRecordsServer.ts",
+  "src/lib/destinationsServer.ts",
   "src/lib/donationsServer.ts",
   "src/lib/financeReportServer.ts",
   "src/lib/financeServer.ts",

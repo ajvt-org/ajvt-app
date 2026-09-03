@@ -51,7 +51,7 @@ function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
     <ProofCard
       proof={proofOf(over)}
       members={members}
-      activities={[]}
+      destinations={[]}
       financeTags={[]}
       busy={false}
       onReview={vi.fn()}
@@ -141,6 +141,28 @@ describe("the other kinds on the same list", () => {
     show({ memberName: "أحمد", donorName: "أحمد" });
 
     expect(screen.queryByText(/الاسم المكتوب/)).toBeNull();
+  });
+
+  it("names the quiz a gift was aimed at", () => {
+    mockFetch([]);
+    show({ competitionId: "c1", competitionName: "مسابقة رمضان" });
+
+    expect(screen.getByText("مسابقة رمضان")).toBeTruthy();
+    expect(screen.queryByText(paymentCard.generalSupport)).toBeNull();
+  });
+
+  it("names the activity ahead of anything else when one is set", () => {
+    mockFetch([]);
+    show({ activityTitle: "الدوري", competitionId: null, competitionName: null });
+
+    expect(screen.getByText("الدوري")).toBeTruthy();
+  });
+
+  it("falls back to general support when the gift is aimed nowhere", () => {
+    mockFetch([]);
+    show({ activityTitle: null, competitionName: null });
+
+    expect(screen.getByText(paymentCard.generalSupport)).toBeTruthy();
   });
 
   it("says when a gift is hidden from the public board", () => {

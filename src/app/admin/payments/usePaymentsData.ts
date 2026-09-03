@@ -4,17 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
-import { readActivities, readFinanceTags, readMembers, readProofs } from "./paymentsResponse";
-import type { ActivityOption, MemberOption, Proof } from "./paymentTypes";
+import { readDestinations, readFinanceTags, readMembers, readProofs } from "./paymentsResponse";
+import type { DestinationOption } from "@/lib/moneyDestination";
+import type { MemberOption, Proof } from "./paymentTypes";
 
 interface Loaded {
   proofs: Proof[];
   members: MemberOption[];
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   tags: FinanceTag[];
 }
 
-const EMPTY: Loaded = { proofs: [], members: [], activities: [], tags: [] };
+const EMPTY: Loaded = { proofs: [], members: [], destinations: [], tags: [] };
 
 function readJson(url: string): Promise<unknown> {
   return fetch(url)
@@ -38,14 +39,14 @@ export function usePaymentsData() {
       }),
       readJson("/api/admin/members"),
       readJson("/api/admin/finance-tags"),
-      readJson("/api/admin/activities"),
+      readJson("/api/admin/finance/destinations"),
     ])
-      .then(([proofsData, membersData, tagsData, activitiesData]) =>
+      .then(([proofsData, membersData, tagsData, destinationsData]) =>
         setData({
           proofs: readProofs(proofsData),
           members: readMembers(membersData),
           tags: readFinanceTags(tagsData),
-          activities: readActivities(activitiesData),
+          destinations: readDestinations(destinationsData),
         }),
       )
       .catch(() => {})

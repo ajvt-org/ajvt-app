@@ -19,12 +19,14 @@ import LinkMemberPanel from "./LinkMemberPanel";
 import MemberIdentity from "./MemberIdentity";
 import ProofThumb from "./ProofThumb";
 import { HISTORY_TARGET, REUSE_KIND } from "./proofKinds";
-import { STATUS_CLASS, type ActivityOption, type MemberOption, type Proof } from "./paymentTypes";
+import type { DestinationOption } from "@/lib/moneyDestination";
+import { STATUS_CLASS, type MemberOption, type Proof } from "./paymentTypes";
 
 function Origin({ proof }: { proof: Proof }) {
   if (proof.kind === "MEMBERSHIP")
     return <IconLabel name="card">{paymentCard.membership}</IconLabel>;
   if (proof.activityTitle) return <IconLabel name="trophy">{proof.activityTitle}</IconLabel>;
+  if (proof.competitionName) return <IconLabel name="quiz">{proof.competitionName}</IconLabel>;
   return <IconLabel name="heart">{paymentCard.generalSupport}</IconLabel>;
 }
 
@@ -58,7 +60,7 @@ function ReceiptLine({ receipt }: { receipt: NonNullable<Proof["receipt"]> }) {
 export default function ProofCard({
   proof,
   members,
-  activities,
+  destinations,
   financeTags,
   busy,
   onReview,
@@ -68,7 +70,7 @@ export default function ProofCard({
 }: {
   proof: Proof;
   members: MemberOption[];
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   financeTags: FinanceTag[];
   busy: boolean;
   onReview: (status: "ACTIVE" | "REJECTED") => void;
@@ -175,7 +177,7 @@ export default function ProofCard({
               {editing && (
                 <DonationEditForm
                   proof={proof}
-                  activities={activities}
+                  destinations={destinations}
                   linkedMember={linkedMember}
                   onCancel={() => setEditing(false)}
                   onRelink={() => setLinking(true)}

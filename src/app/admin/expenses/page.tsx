@@ -21,6 +21,7 @@ import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from 
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
 import { hasFullAccess } from "@/lib/adminRoles";
+import { destinationOf } from "@/lib/moneyDestination";
 import { expensesPage } from "@/lib/texts";
 
 function toggleIn(set: Set<string>, key: string): Set<string> {
@@ -35,7 +36,7 @@ function matchesExpense(expense: Expense, query: string) {
 }
 
 function AdminExpensesPageInner() {
-  const { role, summary, expenses, tags, activities, loading, reload } = useExpensesData();
+  const { role, summary, expenses, tags, destinations, loading, reload } = useExpensesData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/expenses", {
     keys: EXPENSES_FILTER_KEYS,
     readFilters: readExpensesFilters,
@@ -86,7 +87,7 @@ function AdminExpensesPageInner() {
       date: expense.date.slice(0, 10),
       proof: expense.proof || "",
       tagIds: expense.tags.map((t) => t.id),
-      activityId: expense.activity?.id || "",
+      destinationId: expense.activity?.id || expense.competition?.id || "",
     });
     setFormError("");
     setShowForm(true);
@@ -115,7 +116,7 @@ function AdminExpensesPageInner() {
         date: form.date || undefined,
         proof: form.proof || null,
         tagIds: form.tagIds,
-        activityId: form.activityId || null,
+        ...destinationOf(destinations, form.destinationId),
       };
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
@@ -149,7 +150,12 @@ function AdminExpensesPageInner() {
     if (filters.tagIds.length > 0 && !e.tags.some((t) => filters.tagIds.includes(t.id)))
       return false;
     if (query && !matchesExpense(e, query)) return false;
-    if (filters.activityId && e.activity?.id !== filters.activityId) return false;
+    if (
+      filters.destinationId &&
+      e.activity?.id !== filters.destinationId &&
+      e.competition?.id !== filters.destinationId
+    )
+      return false;
     const day = e.date.slice(0, 10);
     if (filters.dateFrom && day < filters.dateFrom) return false;
     if (filters.dateTo && day > filters.dateTo) return false;
@@ -158,7 +164,7 @@ function AdminExpensesPageInner() {
   const isFiltered =
     filters.tagIds.length > 0 ||
     query.length > 0 ||
-    !!filters.activityId ||
+    !!filters.destinationId ||
     !!filters.dateFrom ||
     !!filters.dateTo;
   const totalPages = pageCount(shownExpenses.length, PAGE_SIZE);
@@ -253,10 +259,10 @@ function AdminExpensesPageInner() {
 
       <ExpenseFiltersBar
         filters={filters}
-        activities={activities}
+        destinations={destinations}
         isFiltered={isFiltered}
         onChange={go}
-        onReset={() => go({ q: "", tagIds: [], activityId: "", dateFrom: "", dateTo: "" })}
+        onReset={() => go({ q: "", tagIds: [], destinationId: "", dateFrom: "", dateTo: "" })}
       />
 
       {tags.length > 0 && (
@@ -292,7 +298,7 @@ function AdminExpensesPageInner() {
         <ExpenseFormDialog
           form={form}
           tags={tags}
-          activities={activities}
+          destinations={destinations}
           editing={!!editingId}
           error={formError}
           saving={saving}

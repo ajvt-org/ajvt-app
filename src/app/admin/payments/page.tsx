@@ -26,7 +26,7 @@ function match(proof: Proof, filters: PaymentsFilters) {
 }
 
 function AdminPaymentsPageInner() {
-  const { proofs, members, activities, tags, loading, setProofs } = usePaymentsData();
+  const { proofs, members, destinations, tags, loading, setProofs } = usePaymentsData();
   const { filters, page, go, goToPage } = useAdminListUrlState("/admin/payments", {
     keys: PAYMENTS_FILTER_KEYS,
     readFilters: readPaymentsFilters,
@@ -78,7 +78,7 @@ function AdminPaymentsPageInner() {
       <PaymentsList
         proofs={shown}
         members={members}
-        activities={activities}
+        destinations={destinations}
         financeTags={tags}
         busyId={actions.busyId}
         onReview={(proof, status) => actions.review(proof.id, status)}
@@ -96,7 +96,7 @@ function AdminPaymentsPageInner() {
 
       {adding && (
         <ManualDonationDialog
-          activities={activities}
+          destinations={destinations}
           members={members}
           onClose={() => setAdding(false)}
           onCreated={(proof) => setProofs((prev) => [proof, ...prev])}

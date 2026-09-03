@@ -1,8 +1,9 @@
-import type { ActivityOption, DonationResponse, Proof } from "./paymentTypes";
+import { destinationTitle, type DestinationOption } from "@/lib/moneyDestination";
+import type { DonationResponse, Proof } from "./paymentTypes";
 
 export function proofFromDonation(
   donation: DonationResponse["donation"],
-  activities: ActivityOption[],
+  destinations: DestinationOption[],
 ): Proof {
   return {
     id: donation.id,
@@ -10,7 +11,11 @@ export function proofFromDonation(
     proof: donation.proof ?? null,
     memberName: donation.memberName,
     activityId: donation.activityId,
-    activityTitle: activities.find((a) => a.id === donation.activityId)?.title ?? null,
+    activityTitle: donation.activityId ? destinationTitle(destinations, donation.activityId) : null,
+    competitionId: donation.competitionId,
+    competitionName: donation.competitionId
+      ? destinationTitle(destinations, donation.competitionId)
+      : null,
     amount: donation.amount,
     status: donation.status,
     source: donation.source,

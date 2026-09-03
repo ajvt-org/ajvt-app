@@ -1,41 +1,38 @@
 "use client";
 
-import type { ActivityOption } from "./types";
+import DestinationSelect from "@/components/admin/DestinationSelect";
+import { destinationPicker, expensesPage } from "@/lib/texts";
+import type { DestinationOption } from "@/lib/moneyDestination";
 import type { ExpensesFilters } from "./expensesFilters";
 
 export default function ExpenseFiltersBar({
   filters,
-  activities,
+  destinations,
   isFiltered,
   onChange,
   onReset,
 }: {
   filters: ExpensesFilters;
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   isFiltered: boolean;
   onChange: (next: ExpensesFilters) => void;
   onReset: () => void;
 }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <select
-        value={filters.activityId}
-        onChange={(e) => onChange({ ...filters, activityId: e.target.value })}
+      <DestinationSelect
+        destinations={destinations}
+        value={filters.destinationId}
+        onChange={(destinationId) => onChange({ ...filters, destinationId })}
+        emptyLabel={destinationPicker.anyDestination}
         className="input text-sm flex-1 min-w-[140px]"
-      >
-        <option value="">كل الأنشطة</option>
-        {activities.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.title}
-          </option>
-        ))}
-      </select>
+      />
       <label
         className="text-xs shrink-0"
         style={{ color: "var(--text-muted)" }}
         htmlFor="expense-date-from"
       >
-        من
+        {expensesPage.from}
       </label>
       <input
         id="expense-date-from"
@@ -49,7 +46,7 @@ export default function ExpenseFiltersBar({
         style={{ color: "var(--text-muted)" }}
         htmlFor="expense-date-to"
       >
-        إلى
+        {expensesPage.to}
       </label>
       <input
         id="expense-date-to"
@@ -65,7 +62,7 @@ export default function ExpenseFiltersBar({
           className="text-xs font-bold shrink-0"
           style={{ color: "var(--mint-700)" }}
         >
-          إعادة تصفير الكل
+          {expensesPage.resetFilters}
         </button>
       )}
     </div>
