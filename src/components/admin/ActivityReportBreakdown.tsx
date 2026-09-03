@@ -28,7 +28,7 @@ export default function ActivityReportBreakdown({ row }: { row: ActivityReportRo
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         {row.title}
       </p>
-      {row.activityId === null && (
+      {row.kind === "general" && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {texts.generalNote}
         </p>

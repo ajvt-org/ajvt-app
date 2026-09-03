@@ -1,21 +1,25 @@
 import { byTag, sumOf, type ReportEntry, type TagRow } from "./financeReport";
+import { destinationKind, type DestinationKind, type MoneyDestination } from "./moneyDestination";
 
 export interface ReportActivity {
   id: string;
   title: string;
 }
 
-export interface ReportPayment extends ReportEntry {
-  activityId: string | null;
+export interface ReportCompetition {
+  id: string;
+  name: string;
+}
+
+export interface ReportPayment extends ReportEntry, MoneyDestination {
   receiptNumber: string | null;
 }
 
-export interface ReportExpense extends ReportEntry {
-  activityId: string | null;
-}
+export type ReportExpense = ReportEntry & MoneyDestination;
 
 export interface ActivityReportRow {
-  activityId: string | null;
+  key: string;
+  kind: DestinationKind;
   title: string;
   income: number;
   spending: number;
@@ -31,6 +35,8 @@ export interface ActivityReportTotals {
   balance: number;
 }
 
+const GENERAL_KEY = "general";
+
 function movement(row: ActivityReportRow): number {
   return row.income + row.spending;
 }
@@ -44,7 +50,8 @@ function receiptsOf(payments: ReportPayment[]): string[] {
 }
 
 function rowFor(
-  activityId: string | null,
+  key: string,
+  kind: DestinationKind,
   title: string,
   payments: ReportPayment[],
   expenses: ReportExpense[],
@@ -52,7 +59,8 @@ function rowFor(
   const income = sumOf(payments);
   const spending = sumOf(expenses);
   return {
-    activityId,
+    key,
+    kind,
     title,
     income,
     spending,
@@ -63,29 +71,49 @@ function rowFor(
   };
 }
 
+const aimedAt = <T extends MoneyDestination>(rows: T[], kind: DestinationKind, id: string) =>
+  rows.filter(
+    (row) =>
+      destinationKind(row) === kind &&
+      (kind === "activity" ? row.activityId : row.competitionId) === id,
+  );
+
 export function activityReportRows(
   activities: ReportActivity[],
+  competitions: ReportCompetition[],
   payments: ReportPayment[],
   expenses: ReportExpense[],
   generalTitle: string,
 ): ActivityReportRow[] {
-  const attached = activities
-    .map((activity) =>
+  const attached = [
+    ...activities.map((activity) =>
       rowFor(
         activity.id,
+        "activity",
         activity.title,
-        payments.filter((p) => p.activityId === activity.id),
-        expenses.filter((e) => e.activityId === activity.id),
+        aimedAt(payments, "activity", activity.id),
+        aimedAt(expenses, "activity", activity.id),
       ),
-    )
+    ),
+    ...competitions.map((competition) =>
+      rowFor(
+        competition.id,
+        "competition",
+        competition.name,
+        aimedAt(payments, "competition", competition.id),
+        aimedAt(expenses, "competition", competition.id),
+      ),
+    ),
+  ]
     .filter((row) => movement(row) > 0)
     .sort((a, b) => movement(b) - movement(a) || a.title.localeCompare(b.title));
 
   const general = rowFor(
-    null,
+    GENERAL_KEY,
+    "general",
     generalTitle,
-    payments.filter((p) => p.activityId === null),
-    expenses.filter((e) => e.activityId === null),
+    payments.filter((p) => destinationKind(p) === "general"),
+    expenses.filter((e) => destinationKind(e) === "general"),
   );
 
   return movement(general) > 0 ? [...attached, general] : attached;

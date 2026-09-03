@@ -6,7 +6,8 @@ import type { ActivityReportRow } from "@/lib/activityReport";
 afterEach(cleanup);
 
 const row = (over: Partial<ActivityReportRow> = {}): ActivityReportRow => ({
-  activityId: "a1",
+  key: "a1",
+  kind: "activity",
   title: "بطولة الصيف",
   income: 900,
   spending: 400,
@@ -38,7 +39,9 @@ describe("ActivityReportBreakdown", () => {
   });
 
   it("explains what the row with no activity holds", () => {
-    render(<ActivityReportBreakdown row={row({ activityId: null, title: "بلا نشاط" })} />);
+    render(
+      <ActivityReportBreakdown row={row({ key: "general", kind: "general", title: "بلا نشاط" })} />,
+    );
 
     expect(screen.getByText(/رسوم الانتساب/)).toBeDefined();
   });

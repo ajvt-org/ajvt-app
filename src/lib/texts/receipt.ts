@@ -22,6 +22,7 @@ export const receiptSheet = {
 export const receiptPurpose = {
   membership: "اشتراك عضوية",
   activity: "دعم نشاط",
+  competition: "دعم مسابقة",
   donation: "تبرع",
   fileName: (number: string, extension: string) => `وصل-${number}.${extension}`,
 } as const;

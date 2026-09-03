@@ -152,7 +152,8 @@ describe("ageRows", () => {
 
 describe("activityRows", () => {
   const row = {
-    activityId: "a1",
+    key: "a1",
+    kind: "activity" as const,
     title: "بطولة الصيف",
     income: 900,
     spending: 400,
