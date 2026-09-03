@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
-
-const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي"];
-
-const PAYMENT_CODES: Record<string, string> = {
-  بنكيلي: "027217",
-  السداد: "08493",
-  مصرفي: "037940",
-};
+import { PAYMENT_CODES, PAYABLE_METHODS } from "@/lib/paymentCodes";
 
 export default function PaymentInfoBanner({ note }: { note?: string }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -43,7 +36,7 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
         <IconLabel name="card">معلومات الدفع</IconLabel>
       </p>
       <div className="space-y-2">
-        {PAYMENT_METHODS.map((method) => (
+        {PAYABLE_METHODS.map((method) => (
           <div
             key={method}
             className="flex items-center justify-between rounded-xl px-3 py-2"

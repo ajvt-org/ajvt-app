@@ -6,7 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { expenseForm as texts } from "@/lib/texts";
 import DestinationSelect from "@/components/admin/DestinationSelect";
 import { destinationPicker } from "@/lib/texts";
@@ -59,6 +59,7 @@ export default function ExpenseFormDialog({
   onSubmit: (ev: React.SubmitEvent<HTMLFormElement>) => void;
   onClose: () => void;
 }) {
+  const { methods } = usePaymentMethods(form.method);
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -133,9 +134,9 @@ export default function ExpenseFormDialog({
               className="input"
             >
               <option value="">{texts.noMethod}</option>
-              {PAYMENT_METHODS.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {methods.map((method) => (
+                <option key={method.name} value={method.name}>
+                  {method.name}
                 </option>
               ))}
             </select>

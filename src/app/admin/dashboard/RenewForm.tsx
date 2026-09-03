@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 
@@ -18,6 +18,7 @@ export default function RenewForm({
   onRenewed: () => void;
 }) {
   const [form, setForm] = useState(EMPTY);
+  const { methods } = usePaymentMethods();
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -65,9 +66,9 @@ export default function RenewForm({
         <option value="" disabled>
           طريقة الدفع
         </option>
-        {PAYMENT_METHODS.map((method) => (
-          <option key={method} value={method}>
-            {method}
+        {methods.map((method) => (
+          <option key={method.name} value={method.name}>
+            {method.name}
           </option>
         ))}
       </select>

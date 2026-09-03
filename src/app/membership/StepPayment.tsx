@@ -5,11 +5,11 @@ import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import ProofUpload from "@/components/ProofUpload";
-import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { stepPayment } from "@/lib/texts/stepPayment";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import { PAYMENT_CODES, type PaymentValues } from "./constants";
+import { PAYABLE_METHODS, PAYMENT_CODES, type PaymentValues } from "./constants";
 
 export default function StepPayment({
   form,
@@ -65,7 +65,7 @@ export default function StepPayment({
           role="radiogroup"
           aria-labelledby="member-method-label"
         >
-          {PAYMENT_METHODS.map((method) => (
+          {PAYABLE_METHODS.map((method) => (
             <button
               key={method}
               type="button"

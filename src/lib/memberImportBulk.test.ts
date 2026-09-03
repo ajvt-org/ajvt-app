@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { PAYMENT_METHODS } from "./donations";
 import { bulkChange, bulkSurplus } from "./memberImportBulk";
+
+const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
 
 const AGE = "الأولى";
 const METHOD = PAYMENT_METHODS[0];

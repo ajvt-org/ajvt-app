@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import { methodChoiceNames } from "@/lib/paymentMethodChoices";
 import { HOME_VILLAGE, villageChoices } from "@/lib/villages";
 import { memberImportDialog } from "@/lib/texts";
 import type { CheckContext, CheckedRow } from "@/lib/memberImportCheck";
@@ -77,12 +78,13 @@ export default function MemberImportDialog({ ageGroups, onImported, onClose }: P
   const [rows, setRows] = useState<EditableRow[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { methods } = usePaymentMethods();
 
   const context: CheckContext = {
     villageNames: preview?.villages ?? villageChoices([]),
     ageGroupNames: preview?.ageGroups ?? ageGroups.map((group) => group.name),
     membershipFee: preview?.membershipFee ?? 0,
-    paymentMethods: preview?.paymentMethods ?? PAYMENT_METHODS,
+    paymentMethods: preview?.paymentMethods ?? methodChoiceNames(methods),
   };
 
   async function pick(file: File) {

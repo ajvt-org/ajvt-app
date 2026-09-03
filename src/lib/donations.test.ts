@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  validatePaidAmount,
-  MEMBERSHIP_FEE,
-  PAYMENT_METHODS,
-  ONLINE_PAYMENT_METHODS,
-} from "./donations";
+import { validatePaidAmount, MEMBERSHIP_FEE } from "./donations";
 
 describe("validatePaidAmount", () => {
   it("accepts the membership fee and anything above it", () => {
@@ -36,18 +31,5 @@ describe("validatePaidAmount", () => {
 
   it("names the minimum in the message, so the member knows what to enter", () => {
     expect(validatePaidAmount(0)).toContain(String(MEMBERSHIP_FEE));
-  });
-});
-
-describe("payment methods", () => {
-  it("keeps cash out of the self-service list", () => {
-    expect(ONLINE_PAYMENT_METHODS).not.toContain("نقداً");
-    expect(PAYMENT_METHODS).toContain("نقداً");
-  });
-
-  it("offers every online method to admins too", () => {
-    for (const method of ONLINE_PAYMENT_METHODS) {
-      expect(PAYMENT_METHODS).toContain(method);
-    }
   });
 });

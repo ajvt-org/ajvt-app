@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  INITIAL_PAYMENT_METHODS,
   acceptedNames,
   acceptsMethod,
   inOrder,
@@ -81,5 +82,22 @@ describe("what validation accepts", () => {
   it("ignores a blank held value", () => {
     expect(acceptedNames(offered, "  ")).toEqual(offered);
     expect(acceptedNames(offered, null)).toEqual(offered);
+  });
+});
+
+describe("the list the table is seeded with", () => {
+  it("keeps cash out of what a member may pick", () => {
+    const cash = INITIAL_PAYMENT_METHODS.find((m) => m.name === "نقداً");
+    expect(cash?.memberFacing).toBe(false);
+  });
+
+  it("offers every other seeded method to a member", () => {
+    const rest = INITIAL_PAYMENT_METHODS.filter((m) => m.name !== "نقداً");
+    expect(rest.every((m) => m.memberFacing)).toBe(true);
+  });
+
+  it("gives every seeded method its own position", () => {
+    const positions = INITIAL_PAYMENT_METHODS.map((m) => m.position);
+    expect(new Set(positions).size).toBe(positions.length);
   });
 });

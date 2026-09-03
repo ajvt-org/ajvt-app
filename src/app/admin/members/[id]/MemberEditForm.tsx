@@ -6,7 +6,9 @@ import IconLabel from "@/components/IconLabel";
 import PickList from "@/components/admin/PickList";
 import { useAdminVillages } from "@/components/admin/useAdminVillages";
 import { api, errorMessage } from "@/lib/api";
-import { MEMBERSHIP_FEE, PAYMENT_METHODS, validatePaidAmount } from "@/lib/donations";
+import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import { methodChoiceNames } from "@/lib/paymentMethodChoices";
 import { uploadFile } from "@/lib/upload";
 import { memberEdit, memberForm, villageField } from "@/lib/texts";
 import { members as memberMessages } from "@/lib/messages";
@@ -36,6 +38,7 @@ export default function MemberEditForm({
   const [age, setAge] = useState(member.age ?? "");
   const [village, setVillage] = useState(member.village);
   const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
+  const { methods } = usePaymentMethods(member.paymentMethod);
   const [paidAmount, setPaidAmount] = useState(
     member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
   );
@@ -104,10 +107,6 @@ export default function MemberEditForm({
 
   const villageOptions = villages.includes(village) ? villages : [village, ...villages];
   const groups = ageGroups.includes(age) || !age ? ageGroups : [age, ...ageGroups];
-  const methods =
-    !paymentMethod || PAYMENT_METHODS.includes(paymentMethod)
-      ? PAYMENT_METHODS
-      : [paymentMethod, ...PAYMENT_METHODS];
 
   return (
     <div className="card p-4 space-y-3">
@@ -172,7 +171,7 @@ export default function MemberEditForm({
         id="edit-method"
         label={memberEdit.paymentMethodLabel}
         value={paymentMethod}
-        options={methods}
+        options={methodChoiceNames(methods)}
         onChange={setPaymentMethod}
       />
 
