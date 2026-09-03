@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
-import type { ActivityOption, Expense, FinanceSummary } from "./types";
+import type { DestinationOption } from "@/lib/moneyDestination";
+import type { Expense, FinanceSummary } from "./types";
 
 export function useExpensesData() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export function useExpensesData() {
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [tags, setTags] = useState<FinanceTagRow[]>([]);
-  const [activities, setActivities] = useState<ActivityOption[]>([]);
+  const [destinations, setDestinations] = useState<DestinationOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   function load() {
@@ -26,12 +27,12 @@ export function useExpensesData() {
       }),
       fetch("/api/admin/expenses").then((r) => (r.ok ? r.json() : null)),
       fetch("/api/admin/finance-tags").then((r) => (r.ok ? r.json() : null)),
-      fetch("/api/admin/activities").then((r) => (r.ok ? r.json() : null)),
-    ]).then(([summaryData, expensesData, tagsData, activitiesData]) => {
+      fetch("/api/admin/finance/destinations").then((r) => (r.ok ? r.json() : null)),
+    ]).then(([summaryData, expensesData, tagsData, destinationsData]) => {
       if (summaryData) setSummary(summaryData);
       if (expensesData?.expenses) setExpenses(expensesData.expenses);
       if (tagsData?.tags) setTags(tagsData.tags);
-      if (activitiesData?.activities) setActivities(activitiesData.activities);
+      if (destinationsData?.destinations) setDestinations(destinationsData.destinations);
     });
   }
 
@@ -46,5 +47,5 @@ export function useExpensesData() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { role, summary, expenses, tags, activities, loading, reload: load };
+  return { role, summary, expenses, tags, destinations, loading, reload: load };
 }

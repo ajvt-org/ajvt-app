@@ -60,11 +60,6 @@ export interface MemberOption {
   photo: string | null;
 }
 
-export interface ActivityOption {
-  id: string;
-  title: string;
-}
-
 export const STATUS_CLASS: Record<string, string> = {
   PENDING: "badge-pending",
   ACTIVE: "badge-active",

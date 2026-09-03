@@ -43,7 +43,11 @@ export const memberRowSchema = z.object({
   user: z.object({ phone: nullableText }).nullable(),
 });
 
-export const activitySchema = z.object({ id: z.string(), title: z.string() });
+export const destinationSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  kind: z.enum(["activity", "competition"]),
+});
 
 export const financeTagSchema = z.object({ id: z.string(), name: z.string() });
 
@@ -67,8 +71,8 @@ export function readProofs(body: unknown) {
   return readRows("payments.proofs.shape", proofSchema, body, "proofs");
 }
 
-export function readActivities(body: unknown) {
-  return readRows("payments.activities.shape", activitySchema, body, "activities");
+export function readDestinations(body: unknown) {
+  return readRows("payments.destinations.shape", destinationSchema, body, "destinations");
 }
 
 export function readFinanceTags(body: unknown) {

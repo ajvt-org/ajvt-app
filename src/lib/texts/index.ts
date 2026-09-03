@@ -16,6 +16,7 @@ export {
 } from "./activityDetail";
 export { activityPage } from "./activityPage";
 export { activityReport } from "./activityReport";
+export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
 export { pendingAgeGroups } from "./ageGroups";

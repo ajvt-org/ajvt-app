@@ -8,7 +8,10 @@ import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { expenseForm as texts } from "@/lib/texts";
-import type { ActivityOption, ExpenseForm } from "./types";
+import DestinationSelect from "@/components/admin/DestinationSelect";
+import { destinationPicker } from "@/lib/texts";
+import type { DestinationOption } from "@/lib/moneyDestination";
+import type { ExpenseForm } from "./types";
 
 function Field({
   id,
@@ -38,7 +41,7 @@ function Field({
 export default function ExpenseFormDialog({
   form,
   tags,
-  activities,
+  destinations,
   editing,
   error,
   saving,
@@ -48,7 +51,7 @@ export default function ExpenseFormDialog({
 }: {
   form: ExpenseForm;
   tags: FinanceTagRow[];
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   editing: boolean;
   error: string;
   saving: boolean;
@@ -160,20 +163,15 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-activity" label={texts.activity}>
-            <select
+          <Field id="expense-activity" label={texts.destination}>
+            <DestinationSelect
               id="expense-activity"
-              value={form.activityId}
-              onChange={(e) => onChange({ activityId: e.target.value })}
+              destinations={destinations}
+              value={form.destinationId}
+              onChange={(destinationId) => onChange({ destinationId })}
+              emptyLabel={destinationPicker.noDestination}
               className="input"
-            >
-              <option value="">{texts.noActivity}</option>
-              {activities.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.title}
-                </option>
-              ))}
-            </select>
+            />
           </Field>
 
           <div>

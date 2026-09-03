@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import ManualDonationDialog from "./ManualDonationDialog";
 import { manualDonation, memberPicker } from "@/lib/texts";
 import { members, money } from "@/lib/messages";
+import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption } from "./paymentTypes";
 
 const ACCOUNT: MemberOption = {
@@ -57,11 +58,16 @@ function mockPost() {
   return fetchMock;
 }
 
-function show(members: MemberOption[] = [ACCOUNT]) {
+const DESTINATIONS: DestinationOption[] = [
+  { id: "a1", title: "بطولة الصيف", kind: "activity" },
+  { id: "c1", title: "مسابقة رمضان", kind: "competition" },
+];
+
+function show(members: MemberOption[] = [ACCOUNT], destinations: DestinationOption[] = []) {
   const onCreated = vi.fn();
   render(
     <ManualDonationDialog
-      activities={[]}
+      destinations={destinations}
       members={members}
       onClose={vi.fn()}
       onCreated={onCreated}
@@ -201,6 +207,38 @@ describe("recording a support payment by hand", () => {
     await userEvent.click(screen.getByText(manualDonation.clearAccount));
 
     expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+  });
+
+  it("sends a quiz as a competition, not as an activity", async () => {
+    const fetchMock = mockPost();
+    show([ACCOUNT], DESTINATIONS);
+    await fillIn();
+
+    await userEvent.selectOptions(screen.getByLabelText(/وجهة الدعم/), "c1");
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock)).toMatchObject({ activityId: null, competitionId: "c1" });
+  });
+
+  it("sends an activity as an activity, with no quiz beside it", async () => {
+    const fetchMock = mockPost();
+    show([ACCOUNT], DESTINATIONS);
+    await fillIn();
+
+    await userEvent.selectOptions(screen.getByLabelText(/وجهة الدعم/), "a1");
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock)).toMatchObject({ activityId: "a1", competitionId: null });
+  });
+
+  it("sends no destination at all when none is picked", async () => {
+    const fetchMock = mockPost();
+    show([ACCOUNT], DESTINATIONS);
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock)).toMatchObject({ activityId: null, competitionId: null });
   });
 
   it("shows what the server refused rather than failing silently", async () => {
