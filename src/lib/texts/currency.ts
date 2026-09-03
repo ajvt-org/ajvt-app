@@ -3,5 +3,4 @@ export const ouguiya = {
   dual: "أوقيتان",
   plural: "أوقيات",
   one: "أوقية واحدة",
-  amount: (value: number | string) => `${value} أوقية`,
 } as const;

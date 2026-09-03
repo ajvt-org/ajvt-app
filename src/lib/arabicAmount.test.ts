@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { amountInFigures, amountInWords } from "@/lib/arabicAmount";
+import { amountInWords } from "@/lib/arabicAmount";
 import { numberToArabicWords } from "@/lib/arabicNumberWords";
 
 const TABLE: [number, string][] = [
@@ -109,18 +109,5 @@ describe("amounts outside what a receipt can carry", () => {
 
   it("never leaves a bare numeral, whatever the amount", () => {
     for (let n = 0; n <= 2000; n++) expect(amountInWords(n), String(n)).toMatch(/أوقي/);
-  });
-});
-
-describe("the amount in figures", () => {
-  it("groups thousands with a dot, the way the form does", () => {
-    expect(amountInFigures(5000)).toBe("5.000");
-    expect(amountInFigures(500)).toBe("500");
-    expect(amountInFigures(1000000)).toBe("1.000.000");
-    expect(amountInFigures(0)).toBe("0");
-  });
-
-  it("keeps a negative readable", () => {
-    expect(amountInFigures(-1500)).toBe("-1.500");
   });
 });

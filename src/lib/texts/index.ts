@@ -26,6 +26,8 @@ export { adminTabs } from "./adminNav";
 export { adminTools } from "./adminTools";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
+export { paidAmount } from "./paidAmount";
+export { stepPayment } from "./stepPayment";
 export { daysTab } from "./daysTab";
 export { lists } from "./lists";
 export { discipline } from "./discipline";
@@ -71,7 +73,7 @@ export {
 } from "./receipt";
 export { signUp } from "./signUp";
 export { supportPrivacy } from "./supportPrivacy";
-export { supporters } from "./supporters";
+export { supporters, surplusCard } from "./supporters";
 export { teamsTab } from "./teamsTab";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";

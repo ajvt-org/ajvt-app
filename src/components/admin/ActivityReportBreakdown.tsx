@@ -1,3 +1,4 @@
+import Money from "@/components/Money";
 import { activityReport as texts } from "@/lib/texts";
 import type { ActivityReportRow } from "@/lib/activityReport";
 import type { TagRow } from "@/lib/financeReport";
@@ -13,7 +14,7 @@ function TagList({ title, rows }: { title: string; rows: TagRow[] }) {
         {rows.map((row) => (
           <li key={row.tag} className="flex items-center justify-between gap-4">
             <span>{row.tag}</span>
-            <span dir="ltr">{texts.ouguiya(row.amount)}</span>
+            <Money value={row.amount} />
           </li>
         ))}
       </ul>

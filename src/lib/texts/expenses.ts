@@ -1,10 +1,12 @@
+import { ouguiya } from "./currency";
+
 export const expenseForm = {
   editTitle: "تعديل مصروف",
   addTitle: "إضافة مصروف",
   proofHeading: "صورة الفاتورة / الإيصال (اختياري)",
   proofLabel: "صورة الفاتورة",
   label: "الوصف",
-  amount: "المبلغ (MRU)",
+  amount: `المبلغ (${ouguiya.singular})`,
   method: "طريقة الدفع (اختياري)",
   noMethod: "أخرى",
   date: "التاريخ",
@@ -28,4 +30,10 @@ export const expensesPage = {
   addExpense: "إضافة مصروف",
   searchPlaceholder: "بحث بالوصف أو المبلغ...",
   filterBy: "تصفية:",
+} as const;
+
+export const financeTotals = {
+  revenue: `الإيرادات (${ouguiya.singular})`,
+  expenses: `المصاريف (${ouguiya.singular})`,
+  net: `الصافي (${ouguiya.singular})`,
 } as const;

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatDate, formatTime } from "@/lib/utils";
-import { ouguiya, paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "@/lib/texts";
+import { paymentCard, PROOF_STATUS_LABEL, RECEIPT_STATUS_LABEL } from "@/lib/texts";
+import Money from "@/components/Money";
 import { linkedAccount } from "@/lib/linkedAccount";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -95,7 +96,7 @@ export default function ProofCard({
             </p>
             {isDonation && proof.amount != null && (
               <p className="font-bold text-sm shrink-0" style={{ color: "var(--mint-700)" }}>
-                <bdi>{ouguiya.amount(proof.amount)}</bdi>
+                <Money value={proof.amount} />
               </p>
             )}
           </div>

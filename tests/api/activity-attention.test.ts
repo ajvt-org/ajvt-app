@@ -53,7 +53,12 @@ async function proposedSuspension(activityId: string, name: string) {
 
 async function waiting() {
   const body = await (await ATTENTION(get("/api/admin/activities/attention"))).json();
-  return body.waiting as { kind: string; who: string; activityTitle: string }[];
+  return body.waiting as {
+    kind: string;
+    who: string;
+    activityTitle: string;
+    settle: Record<string, string> | null;
+  }[];
 }
 
 describe("what is waiting across the activities", () => {
@@ -85,6 +90,34 @@ describe("what is waiting across the activities", () => {
     const byWho = Object.fromEntries(rows.map((r) => [r.who.split(" — ")[0], r.activityTitle]));
     expect(byWho["محمد"]).toBe("كأس الرابطة");
     expect(byWho["أحمد"]).toBe("بطولة الناشئين");
+  });
+
+  it("carries what a join request needs to be settled from the list", async () => {
+    const activity = await anActivity();
+    const request = await joinRequest(activity.id, "محمد");
+
+    expect((await waiting())[0].settle).toEqual({
+      target: "teamMember",
+      teamId: request.teamId,
+      userId: request.userId,
+    });
+  });
+
+  it("carries what a pending registration needs to be settled from the list", async () => {
+    const activity = await anActivity();
+    const request = await registrationRequest(activity.id, "أحمد");
+
+    expect((await waiting())[0].settle).toEqual({
+      target: "registration",
+      registrationId: request.id,
+    });
+  });
+
+  it("leaves a proposed suspension to its own screen", async () => {
+    const activity = await anActivity();
+    await proposedSuspension(activity.id, "سالم");
+
+    expect((await waiting())[0].settle).toBeNull();
   });
 
   it("says which team a join request is for", async () => {

@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import ProofUpload from "@/components/ProofUpload";
 import { MEMBERSHIP_FEE, ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
+import { stepPayment } from "@/lib/texts/stepPayment";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
 import { PAYMENT_CODES, type PaymentValues } from "./constants";
@@ -116,7 +117,7 @@ export default function StepPayment({
             />
           </div>
           <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-            الاشتراك 100 أوقية على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه
+            {stepPayment.payAtLeast(MEMBERSHIP_FEE)}
           </p>
         </div>
       )}
@@ -142,8 +143,7 @@ export default function StepPayment({
             dir="ltr"
           />
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            الحد الأدنى {membershipFee} أوقية لرسوم الاشتراك — أي مبلغ زائد يُسجَّل كتبرّع بعد قبول
-            الطلب، وتختار أنت كيف يظهر
+            {stepPayment.feeMinimum(membershipFee)}
           </p>
         </div>
 

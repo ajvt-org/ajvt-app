@@ -8,13 +8,13 @@ import { parse } from "@/lib/validation";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
 import { members, money } from "@/lib/messages";
-import { ouguiya } from "@/lib/texts";
 import { resolveDonationActivity } from "@/lib/donationActivity";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
 import type { SupportViewer } from "@/lib/supportPrivacy";
+import { money as amountText } from "@/lib/money";
 
 async function namedAccount(userId: string | null, viewer: SupportViewer): Promise<string | null> {
   if (!userId) return null;
@@ -212,7 +212,7 @@ export const DELETE = withRoute(
         `${donorNameOnRecord(
           { donorName: existing.donorName, userId: existing.userId, user: existing.user },
           viewer,
-        )} — ${ouguiya.amount(existing.amount ?? 0)}`,
+        )} — ${amountText(existing.amount ?? 0)}`,
       ),
       {
         ...auditContext(session, req),

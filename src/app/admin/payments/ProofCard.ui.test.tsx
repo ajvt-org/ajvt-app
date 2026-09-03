@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import ProofCard from "./ProofCard";
-import { ouguiya, paymentCard } from "@/lib/texts";
+import { paymentCard } from "@/lib/texts";
+import { money } from "@/lib/money";
 import type { MemberOption, Proof } from "./paymentTypes";
 
 const ACCOUNT: MemberOption = {
@@ -46,7 +47,7 @@ function proofOf(over: Partial<Proof> = {}): Proof {
 }
 
 function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
-  render(
+  return render(
     <ProofCard
       proof={proofOf(over)}
       members={members}
@@ -113,9 +114,9 @@ describe("the other kinds on the same list", () => {
 
   it("shows the amount on its own, not buried in the status", () => {
     mockFetch([]);
-    show({ amount: 2000 });
+    const { container } = show({ amount: 2000 });
 
-    expect(screen.getByText(ouguiya.amount(2000))).toBeTruthy();
+    expect(container.textContent).toContain(money(2000));
     expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
   });
 

@@ -4,14 +4,21 @@ import userEvent from "@testing-library/user-event";
 import AttentionPanel from "./AttentionPanel";
 import type { AttentionRow } from "@/lib/activityAttention";
 
-const get = vi.fn();
+const patch = vi.fn();
+const del = vi.fn();
+const reload = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { get: (...a: unknown[]) => get(...a) },
+  api: {
+    patch: (...a: unknown[]) => patch(...a),
+    del: (...a: unknown[]) => del(...a),
+  },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-function row(over: Partial<AttentionRow> = {}): AttentionRow {
+vi.mock("@/components/Toast", () => ({ useToast: () => vi.fn() }));
+
+function join(over: Partial<AttentionRow> = {}): AttentionRow {
   return {
     id: "join:1",
     kind: "join",
@@ -19,92 +26,155 @@ function row(over: Partial<AttentionRow> = {}): AttentionRow {
     activityTitle: "كأس رابطة شباب التاكلالت",
     who: "محمد — الشناقطة",
     since: "2026-08-20T00:00:00.000Z",
+    settle: { target: "teamMember", teamId: "t1", userId: "u1" },
     ...over,
   };
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  get.mockResolvedValue({ waiting: [row()] });
-});
+function registration(over: Partial<AttentionRow> = {}): AttentionRow {
+  return join({
+    id: "registration:1",
+    kind: "registration",
+    who: "أحمد",
+    settle: { target: "registration", registrationId: "r1" },
+    ...over,
+  });
+}
 
-function show(newestFirst = false, onOrderChange = vi.fn()) {
-  render(<AttentionPanel newestFirst={newestFirst} onOrderChange={onOrderChange} />);
+function suspension(over: Partial<AttentionRow> = {}): AttentionRow {
+  return join({ id: "suspension:1", kind: "suspension", who: "سالم", settle: null, ...over });
+}
+
+function show(rows: AttentionRow[], newestFirst = false, onOrderChange = vi.fn()) {
+  render(
+    <AttentionPanel
+      rows={rows}
+      newestFirst={newestFirst}
+      onOrderChange={onOrderChange}
+      reload={reload}
+    />,
+  );
   return onOrderChange;
 }
 
+beforeEach(() => {
+  vi.clearAllMocks();
+  patch.mockResolvedValue({});
+  del.mockResolvedValue({});
+  reload.mockResolvedValue(undefined);
+});
+
 describe("the panel of what needs the admin", () => {
-  it("says what is waiting and which activity it belongs to", async () => {
-    show();
+  it("is absent when nothing is waiting", () => {
+    const { container } = render(
+      <AttentionPanel rows={[]} newestFirst={false} onOrderChange={vi.fn()} reload={reload} />,
+    );
 
-    expect(await screen.findByText(/طلب انضمام إلى فريق — محمد — الشناقطة/)).toBeTruthy();
-    expect(screen.getByText("كأس رابطة شباب التاكلالت")).toBeTruthy();
+    expect(container.textContent).toBe("");
   });
 
-  it("links to the tab that clears it", async () => {
-    show();
+  it("counts each kind of waiting work on its own", () => {
+    show([join(), join({ id: "join:2" }), registration()]);
 
-    const link = await screen.findByRole("link");
-    expect(link.getAttribute("href")).toBe("/admin/activities/a1?tab=teams");
+    expect(screen.getByText("طلب انضمام إلى فريق (2)")).toBeTruthy();
+    expect(screen.getByText("طلب تسجيل في نشاط (1)")).toBeTruthy();
   });
 
-  it("counts what is waiting in the heading", async () => {
-    get.mockResolvedValue({ waiting: [row(), row({ id: "join:2" })] });
-    show();
+  it("counts everything waiting in the heading", () => {
+    show([join(), registration(), suspension()]);
 
-    expect(await screen.findByText(/يحتاج انتباهك \(2\)/)).toBeTruthy();
+    expect(screen.getByText(/يحتاج انتباهك \(3\)/)).toBeTruthy();
   });
 
-  it("says plainly when nothing is waiting", async () => {
-    get.mockResolvedValue({ waiting: [] });
-    show();
+  it("accepts a join request without leaving the page", async () => {
+    show([join()]);
 
-    expect(await screen.findByText("لا شيء ينتظرك في الأنشطة")).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "قبول محمد — الشناقطة" }));
+
+    expect(patch).toHaveBeenCalledWith("/api/admin/teams/t1/members/u1", {});
+    await waitFor(() => expect(reload).toHaveBeenCalled());
   });
 
-  it("offers the other order once there is more than one", async () => {
-    get.mockResolvedValue({ waiting: [row(), row({ id: "join:2" })] });
-    const onOrderChange = show();
+  it("refuses a join request by removing it from the team", async () => {
+    show([join()]);
 
-    await userEvent.click(await screen.findByRole("button", { name: "الأقدم أولاً" }));
+    await userEvent.click(screen.getByRole("button", { name: "رفض محمد — الشناقطة" }));
+
+    expect(del).toHaveBeenCalledWith("/api/admin/teams/t1/members/u1");
+  });
+
+  it("accepts a pending registration on the activity it belongs to", async () => {
+    show([registration()]);
+
+    await userEvent.click(screen.getByRole("button", { name: "قبول أحمد" }));
+
+    expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1/register", {
+      registrationId: "r1",
+      status: "ACTIVE",
+    });
+  });
+
+  it("refuses a pending registration", async () => {
+    show([registration()]);
+
+    await userEvent.click(screen.getByRole("button", { name: "رفض أحمد" }));
+
+    expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1/register", {
+      registrationId: "r1",
+      status: "REJECTED",
+    });
+  });
+
+  it("keeps the link for a decision that needs the other screen", () => {
+    show([suspension()]);
+
+    expect(screen.getByRole("link").getAttribute("href")).toBe(
+      "/admin/activities/a1?tab=discipline",
+    );
+    expect(screen.queryByRole("button", { name: /قبول/ })).toBeNull();
+  });
+
+  it("offers both orders rather than a label that flips", async () => {
+    const onOrderChange = show([join(), registration()]);
+
+    expect(screen.getByRole("button", { name: "الأقدم أولاً" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "الأحدث أولاً" }));
 
     expect(onOrderChange).toHaveBeenCalledWith(true);
   });
 
-  it("offers no order control for a single item", async () => {
-    show();
-
-    await screen.findByText(/يحتاج انتباهك/);
-    expect(screen.queryByRole("button", { name: /أولاً/ })).toBeNull();
-  });
-
-  it("reads newest first when asked to", async () => {
-    get.mockResolvedValue({
-      waiting: [
-        row({ id: "old", who: "القديم", since: "2026-01-01T00:00:00.000Z" }),
-        row({ id: "new", who: "الجديد", since: "2026-08-28T00:00:00.000Z" }),
+  it("reads newest first when asked to", () => {
+    show(
+      [
+        registration({ id: "old", who: "القديم", since: "2026-01-01T00:00:00.000Z" }),
+        registration({ id: "new", who: "الجديد", since: "2026-08-28T00:00:00.000Z" }),
       ],
-    });
-    show(true);
+      true,
+    );
 
-    const rows = await screen.findAllByRole("link");
-    expect(rows[0].textContent).toContain("الجديد");
+    expect(screen.getAllByText(/القديم|الجديد/)[0].textContent).toBe("الجديد");
   });
 
   it("folds away when the heading is clicked", async () => {
-    show();
-    await screen.findByText("كأس رابطة شباب التاكلالت");
+    show([join()]);
 
     await userEvent.click(screen.getByRole("button", { name: /يحتاج انتباهك/ }));
 
     expect(screen.queryByText("كأس رابطة شباب التاكلالت")).toBeNull();
   });
 
-  it("shows nothing at all while the answer is still coming", async () => {
-    get.mockReturnValue(new Promise(() => {}));
-    const { container } = render(<AttentionPanel newestFirst={false} onOrderChange={vi.fn()} />);
+  it("takes one decision at a time", async () => {
+    let settle: (v: unknown) => void = () => {};
+    patch.mockReturnValue(new Promise((resolve) => (settle = resolve)));
+    show([join(), join({ id: "join:2", who: "عثمان — الفتح" })]);
 
-    await waitFor(() => expect(get).toHaveBeenCalled());
-    expect(container.textContent).toBe("");
+    await userEvent.click(screen.getByRole("button", { name: "قبول محمد — الشناقطة" }));
+    await userEvent.click(screen.getByRole("button", { name: "قبول عثمان — الفتح" }));
+
+    expect(patch).toHaveBeenCalledTimes(1);
+    settle({});
   });
 });

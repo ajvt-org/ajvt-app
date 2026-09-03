@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import type { UnassignedDonation } from "./types";
 
@@ -30,7 +31,7 @@ export default function UnassignedDonations({
                 {row.name}
               </p>
               <p className="text-xs" style={{ color: "var(--mint-600)" }}>
-                {row.amount} أوقية
+                <Money value={row.amount} />
               </p>
             </div>
             <select

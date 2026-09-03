@@ -1,13 +1,16 @@
+import { ouguiya } from "./currency";
+import { money } from "../money";
+
 export const financeReport = {
   from: "من",
   to: "إلى",
   run: "اعرض التقرير",
   print: "اطبع",
   span: (from: string, to: string) => `من ${from} إلى ${to}`,
-  ouguiya: (amount: number) => `${amount} أوقية`,
-  moneyDetail: (income: number, spending: number) => `دخل ${income} أوقية، صرف ${spending} أوقية`,
-  splitDetail: (fees: number, support: number) => `انتساب ${fees} أوقية، دعم ${support} أوقية`,
+  moneyDetail: (income: number, spending: number) => `دخل ${money(income)}، صرف ${money(spending)}`,
+  splitDetail: (fees: number, support: number) => `انتساب ${money(fees)}، دعم ${money(support)}`,
   monthByMonth: "شهراً بشهر",
+  amountsIn: `المبالغ بال${ouguiya.singular}`,
   month: "الشهر",
   income: "دخل",
   spending: "صرف",

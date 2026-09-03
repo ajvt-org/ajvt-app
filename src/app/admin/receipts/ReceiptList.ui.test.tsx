@@ -3,10 +3,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ReceiptList from "./ReceiptList";
 import { receiptAdmin } from "@/lib/texts/receipt";
-import { ouguiya } from "@/lib/texts/currency";
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
+import { money } from "@/lib/money";
 
-const MONEY = ouguiya.amount(5000);
+const MONEY = money(5000);
 
 const RECEIPT: OfficialReceiptView = {
   number: "R-2026-0007",
@@ -41,10 +41,10 @@ describe("a receipt with no verify token", () => {
   it("still shows the row, its number and its amount", () => {
     const { token, ...withheld } = RECEIPT;
     void token;
-    setup(withheld);
+    const { container } = setup(withheld);
 
     expect(screen.getByText(RECEIPT.number)).toBeDefined();
-    expect(screen.getByText(MONEY)).toBeDefined();
+    expect(container.textContent).toContain(MONEY);
   });
 
   it("offers the download when the token is there", () => {
@@ -83,9 +83,9 @@ describe("the receipts register", () => {
   });
 
   it("writes the amount the way the rest of the admin writes it", () => {
-    setup();
+    const { container } = setup();
 
-    expect(screen.getByText(MONEY)).toBeDefined();
+    expect(container.textContent).toContain(MONEY);
   });
 
   it("keeps every action on the compact button, so the row cannot outgrow a phone", () => {

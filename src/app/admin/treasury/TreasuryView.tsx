@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import type { MethodTotal, Treasury } from "@/lib/treasury";
 import { treasury as texts } from "@/lib/texts";
 
@@ -24,17 +25,16 @@ function MoneyList({ rows }: { rows: MoneyRow[] }) {
           <span className="optical-name py-1.5" style={{ color: "var(--text-muted)" }}>
             {row.label}
           </span>
-          <span
-            dir="ltr"
+          <Money
+            value={row.value}
+            digitsOnly
             className="font-bold optical-numeral py-1.5"
             style={{
               color: row.value < 0 ? "var(--danger)" : "var(--text-main)",
               textAlign: "right",
               fontVariantNumeric: "tabular-nums",
             }}
-          >
-            {row.value}
-          </span>
+          />
           <span
             className="font-bold optical-name py-1.5"
             style={{ color: "var(--text-main)", textAlign: "right" }}
@@ -85,7 +85,7 @@ export default function TreasuryView({ treasury }: { treasury: Treasury }) {
           {texts.balance}
         </p>
         <p className="font-black text-white mt-1" style={{ fontSize: 30 }}>
-          <span dir="rtl">{texts.ouguiya(treasury.balance)}</span>
+          <Money value={treasury.balance} />
         </p>
         <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.75)" }}>
           {texts.balanceHint}

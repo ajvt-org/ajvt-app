@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import AdminHome from "./AdminHome";
+import { money } from "@/lib/money";
 import { publicTournament } from "@/lib/texts";
 
 const get = vi.fn();
@@ -68,10 +69,10 @@ afterEach(() => {
 
 describe("the admin home", () => {
   it("answers the three questions", async () => {
-    render(<AdminHome />);
+    const { container } = render(<AdminHome />);
 
     expect(await screen.findByText("8 / 10")).toBeTruthy();
-    expect(screen.getByText("3000 أوقية")).toBeTruthy();
+    expect(container.textContent).toContain(money(3000));
   });
 
   it("lists today's matches with a way into the tournament", async () => {

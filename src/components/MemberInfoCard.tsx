@@ -50,7 +50,7 @@ export default function MemberInfoCard({
   );
 }
 
-function InfoRow({ label, value, dir }: { label: string; value: string; dir?: string }) {
+function InfoRow({ label, value, dir }: { label: string; value: React.ReactNode; dir?: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-sm" style={{ color: "var(--text-muted)" }}>

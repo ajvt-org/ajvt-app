@@ -3,6 +3,7 @@ export const activityAttention = {
   empty: "لا شيء ينتظرك في الأنشطة",
   oldestFirst: "الأقدم أولاً",
   newestFirst: "الأحدث أولاً",
+  order: "ترتيب ما ينتظر",
   show: "عرض",
   hide: "إخفاء",
   kinds: {
@@ -10,7 +11,15 @@ export const activityAttention = {
     registration: "طلب تسجيل في نشاط",
     suspension: "عقوبة مقترحة",
   },
+  group: (label: string, n: number) => `${label} (${n})`,
   today: "اليوم",
   waiting: (days: number) => `منذ ${days} يوم`,
   open: "فتح",
+  accept: "قبول",
+  refuse: "رفض",
+  acceptRow: (who: string) => `قبول ${who}`,
+  refuseRow: (who: string) => `رفض ${who}`,
+  openRow: (who: string) => `فتح ${who}`,
+  accepted: "تم القبول",
+  refused: "تم الرفض",
 } as const;
