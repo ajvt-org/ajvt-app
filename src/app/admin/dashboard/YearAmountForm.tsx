@@ -64,7 +64,7 @@ export default function YearAmountForm({
           dir="ltr"
           {...arabicValidity(memberEdit.feeAtLeast(MEMBERSHIP_FEE))}
         />
-        <button type="submit" disabled={saving} className="btn btn-primary btn-sm text-xs">
+        <button type="submit" disabled={saving} className="btn btn-primary btn-sm">
           <IconLabel name="save">{saving ? "جارٍ الحفظ" : "حفظ"}</IconLabel>
         </button>
       </div>

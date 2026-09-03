@@ -18,7 +18,7 @@ export default function GroupsStep({ groups, swapping, onPick, onReshuffle }: Gr
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold">{texts.drawTitle}</p>
-        <button type="button" onClick={onReshuffle} className="btn btn-ghost btn-sm text-xs">
+        <button type="button" onClick={onReshuffle} className="btn btn-ghost btn-sm">
           <IconLabel name="shuffle">{texts.reshuffle}</IconLabel>
         </button>
       </div>

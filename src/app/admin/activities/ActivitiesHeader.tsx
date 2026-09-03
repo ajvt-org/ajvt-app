@@ -9,13 +9,13 @@ export default function ActivitiesHeader({ onAdd }: { onAdd: () => void }) {
     <div className="flex items-center gap-2">
       <Link
         href="/admin/activities/order"
-        className="btn btn-sm text-xs font-bold"
+        className="btn btn-sm font-bold"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
         <IconLabel name="list">{texts.arrangeLink}</IconLabel>
       </Link>
       <span className="flex-1" />
-      <button onClick={onAdd} className="btn btn-primary btn-sm text-xs">
+      <button onClick={onAdd} className="btn btn-primary btn-sm">
         <IconLabel name="plus">{texts.add}</IconLabel>
       </button>
     </div>

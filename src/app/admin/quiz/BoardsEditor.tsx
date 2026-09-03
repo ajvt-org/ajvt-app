@@ -135,7 +135,7 @@ export default function BoardsEditor({
               { title: "", blockTitle: "", blockRounds: 1, counting: 1, wholeRun: false },
             ])
           }
-          className="btn btn-sm text-xs"
+          className="btn btn-sm"
         >
           إضافة ترتيب
         </button>

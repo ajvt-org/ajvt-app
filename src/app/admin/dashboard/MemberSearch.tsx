@@ -46,7 +46,7 @@ function MoreMenu({
         onClick={() => setOpen((v) => !v)}
         aria-label={memberSearch.more}
         aria-expanded={open}
-        className="btn btn-sm text-xs"
+        className="btn btn-sm"
         style={OUTLINE}
       >
         <Icon name="dots" size={16} />
@@ -117,7 +117,7 @@ export default function MemberSearch({
         className="input input-sm flex-1"
         style={{ background: "white", minWidth: "10rem" }}
       />
-      <button onClick={onOpenFilters} className="btn btn-sm text-xs relative" style={OUTLINE}>
+      <button onClick={onOpenFilters} className="btn btn-sm relative" style={OUTLINE}>
         <IconLabel name="filter">{memberSearch.filter}</IconLabel>
         {filterCount > 0 && (
           <span
@@ -142,7 +142,7 @@ export default function MemberSearch({
         onManageVillages={onManageVillages}
         onImport={onImport}
       />
-      <button onClick={onManualAdd} className="btn btn-primary btn-sm text-xs">
+      <button onClick={onManualAdd} className="btn btn-primary btn-sm">
         <IconLabel name="plus">{memberSearch.add}</IconLabel>
       </button>
     </div>

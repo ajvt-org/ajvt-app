@@ -155,14 +155,14 @@ export default function CompetitionPanel({
       )}
 
       {locked && (
-        <button onClick={save} disabled={busy} className="btn btn-primary btn-sm text-xs">
+        <button onClick={save} disabled={busy} className="btn btn-primary btn-sm">
           <IconLabel name="save">حفظ ما يمكن تعديله</IconLabel>
         </button>
       )}
 
       {!locked && (
         <div className="flex gap-2 flex-wrap">
-          <button onClick={save} disabled={busy} className="btn btn-primary btn-sm text-xs">
+          <button onClick={save} disabled={busy} className="btn btn-primary btn-sm">
             <IconLabel name="save">حفظ الإعدادات</IconLabel>
           </button>
           {competitionId && (
@@ -170,7 +170,7 @@ export default function CompetitionPanel({
               <button
                 onClick={() => setConfirming("start")}
                 disabled={busy}
-                className="btn btn-sm text-xs"
+                className="btn btn-sm"
                 style={{ background: "var(--mint-700)", color: "white" }}
               >
                 إطلاق المسابقة
@@ -178,7 +178,7 @@ export default function CompetitionPanel({
               <button
                 onClick={() => setConfirming("reset")}
                 disabled={busy}
-                className="btn btn-sm text-xs"
+                className="btn btn-sm"
                 style={{ background: "#fee2e2", color: "#991b1b" }}
               >
                 تصفير النقاط
@@ -193,7 +193,7 @@ export default function CompetitionPanel({
           <button
             onClick={copy}
             disabled={busy}
-            className="btn btn-sm text-xs"
+            className="btn btn-sm"
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
             <IconLabel name="copy">نسخ لمسابقة جديدة</IconLabel>
@@ -201,7 +201,7 @@ export default function CompetitionPanel({
           <button
             onClick={() => setConfirming("delete")}
             disabled={busy}
-            className="btn btn-sm text-xs"
+            className="btn btn-sm"
             style={{ background: "#fee2e2", color: "#991b1b" }}
           >
             حذف المسابقة
