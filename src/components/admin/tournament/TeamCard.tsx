@@ -10,9 +10,11 @@ export default function TeamCard({
   team,
   shownName,
   teamSize,
+  open,
   candidates,
   suspendedIds,
   busy,
+  onToggle,
   onRenameTeam,
   onDeleteTeam,
   onSetLogo,
@@ -24,9 +26,11 @@ export default function TeamCard({
   team: Team;
   shownName: string;
   teamSize: number | null;
+  open: boolean;
   candidates: RosterMember[];
   suspendedIds: string[];
   busy: boolean;
+  onToggle: () => void;
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
@@ -36,12 +40,13 @@ export default function TeamCard({
   onRemoveMember: (memberId: string) => void;
 }) {
   return (
-    <details className="card p-4">
+    <details className="card p-4" open={open}>
       <TeamSummary
         team={team}
         shownName={shownName}
         teamSize={teamSize}
         busy={busy}
+        onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}
       />
       <div className="space-y-3 pt-3">
