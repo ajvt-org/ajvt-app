@@ -1,11 +1,33 @@
+import { randomInt } from "node:crypto";
 import { test, expect, type Page } from "@playwright/test";
-import { freshName, openAdmin } from "./helpers";
+import { Client } from "pg";
+import { localDatabase } from "../localDatabase.mjs";
+import { openAdmin } from "./helpers";
 
 const PHONE = { width: 360, height: 740 };
 
 const SUBTABS = 1;
 
 const OVERFLOWS_A_PAGE = 25;
+
+// The board these tests fill is the one every other spec reads, so the giving
+// carries a marker and is taken back off the board when the file is done.
+const MARKER = `داعم اختبار ${randomInt(100_000)}`;
+
+function donor(label: string): string {
+  return `${MARKER} ${label}`;
+}
+
+test.afterAll(async () => {
+  const client = new Client({
+    connectionString: process.env.E2E_DATABASE_URL ?? localDatabase("ajvt_e2e"),
+  });
+  await client.connect();
+  for (const table of ["Payment", "Donation"]) {
+    await client.query(`DELETE FROM "${table}" WHERE "donorName" LIKE $1`, [`${MARKER}%`]);
+  }
+  await client.end();
+});
 
 async function linesWithin(page: Page, strip: number): Promise<number> {
   const centres = await page
@@ -46,9 +68,9 @@ test("the supporters board fits a phone", async ({ browser }) => {
   const { context, page } = await openAdmin(browser);
   await page.setViewportSize(PHONE);
 
-  const top = freshName("داعم أول");
+  const top = donor("الأول");
   await give(page, top, 750000);
-  await give(page, freshName("داعم ثان"), 4500);
+  await give(page, donor("الثاني"), 4500);
 
   await page.goto("/admin/supporters");
   await expect(page.getByText(top)).toBeVisible();
@@ -64,7 +86,7 @@ test("the board loads its next page from the admin route", async ({ browser }) =
   await page.setViewportSize(PHONE);
 
   for (let i = 0; i < OVERFLOWS_A_PAGE; i++) {
-    await give(page, freshName(`داعم ${i}`), 100000 - i * 100);
+    await give(page, donor(String(i)), 100000 - i * 100);
   }
 
   await page.goto("/admin/supporters");

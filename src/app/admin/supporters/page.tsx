@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import Money from "@/components/Money";
+import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
 import StatTile from "@/components/admin/StatTile";
 import SupportersTable from "@/components/SupportersTable";
@@ -32,9 +33,7 @@ export default function AdminSupportersPage() {
   if (error) {
     return (
       <div className="admin-page">
-        <p className="card p-4 text-sm text-center" style={{ color: "#dc2626" }}>
-          <Icon name="warning" size={14} className="icon-inline" /> {error}
-        </p>
+        <Notice tone="error">{error}</Notice>
       </div>
     );
   }
