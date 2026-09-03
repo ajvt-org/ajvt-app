@@ -1,5 +1,10 @@
 import { countedNoun, PLAYERS } from "../arabicPlural";
 
+const ACCEPT = "قبول";
+const REJECT = "رفض";
+const REMOVE = "إزالة";
+const CAPTAIN = "القائد";
+
 export const teamsTab = {
   confirmDelete: "هل تريد حذف هذا الفريق؟",
   teamCount: (count: number) => `عدد الفرق: ${count}`,
@@ -11,14 +16,20 @@ export const teamsTab = {
   rosterOf: (count: number, size: number) => `${count} / ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
-  captainBadge: (name: string) => `القائد ${name}`,
+  captain: CAPTAIN,
+  captainBadge: (name: string) => `${CAPTAIN} ${name}`,
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,
   clearCaptain: (name: string) => `إلغاء قيادة ${name} للفريق`,
+  makeCaptainAction: "تعيين قائداً",
+  clearCaptainAction: "إلغاء القيادة",
   noPlayers: "لا يوجد لاعبون بعد",
   awaitingApproval: "بانتظار الموافقة",
-  acceptOf: (name: string) => `قبول ${name}`,
-  rejectOf: (name: string) => `رفض ${name}`,
-  removeOf: (name: string) => `إزالة ${name}`,
+  accept: ACCEPT,
+  acceptOf: (name: string) => `${ACCEPT} ${name}`,
+  reject: REJECT,
+  rejectOf: (name: string) => `${REJECT} ${name}`,
+  remove: REMOVE,
+  removeOf: (name: string) => `${REMOVE} ${name}`,
   renameOf: (name: string) => `تعديل اسم ${name}`,
   pickPlayer: "اختر لاعباً...",
   add: "إضافة",
