@@ -43,7 +43,7 @@ export default function AttentionPanel({
       {open && (
         <div
           className="space-y-2 overflow-y-auto pe-1"
-          style={{ maxHeight: "15rem", overscrollBehavior: "contain" }}
+          style={{ maxHeight: "10rem", overscrollBehavior: "contain" }}
         >
           {groups.map((group) => (
             <div key={group.kind} className="space-y-1.5">

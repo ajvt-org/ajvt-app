@@ -1,18 +1,21 @@
 "use client";
 
-import FilterChips from "./FilterChips";
-import { ACTIVITY_STATES, ACTIVITY_TYPES, type ActivitiesView } from "./activitiesView";
+import FilterAxisRow from "./FilterAxisRow";
+import { countForOption, FILTER_AXES, type ActivitiesView } from "./activitiesView";
 import { activityRow as texts } from "@/lib/texts";
+import type { Activity } from "./activityTypes";
 
 export default function ActivitiesFilters({
+  activities,
   filters,
   onChange,
 }: {
+  activities: Activity[];
   filters: ActivitiesView;
   onChange: (next: ActivitiesView) => void;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="card p-2.5 space-y-2">
       <input
         type="text"
         placeholder={texts.searchPlaceholder}
@@ -21,18 +24,15 @@ export default function ActivitiesFilters({
         className="input input-sm w-full"
         style={{ background: "white" }}
       />
-      <FilterChips
-        options={ACTIVITY_TYPES}
-        value={filters.type}
-        onPick={(type) => onChange({ ...filters, type })}
-        label={texts.filters.anyType}
-      />
-      <FilterChips
-        options={ACTIVITY_STATES}
-        value={filters.state}
-        onPick={(state) => onChange({ ...filters, state })}
-        label={texts.filters.anyState}
-      />
+      {FILTER_AXES.map((axis) => (
+        <FilterAxisRow
+          key={axis.key}
+          axis={axis}
+          value={filters[axis.key]}
+          countOf={(value) => countForOption(activities, filters, axis.key, value)}
+          onPick={(value) => onChange({ ...filters, [axis.key]: value })}
+        />
+      ))}
     </div>
   );
 }
