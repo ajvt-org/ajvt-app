@@ -485,6 +485,18 @@ model FinanceTag {
   payments  Payment[]
 }
 
+model PaymentMethod {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  memberFacing Boolean  @default(false)
+  active       Boolean  @default(true)
+  position     Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([active, position])
+}
+
 // One row per (day, anonymous visitor) — the visitor cookie is set by
 // /api/track-visit and never tied to a User/Member/Admin. pageViews counts
 // repeat navigations within the same day for that visitor; the row count
