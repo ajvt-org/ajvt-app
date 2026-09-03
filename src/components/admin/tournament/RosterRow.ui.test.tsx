@@ -55,7 +55,24 @@ describe("RosterRow", () => {
     expect(
       screen.getByLabelText(`إلغاء قيادة ${LONG_NAME} للفريق`).getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("القائد")).toBeDefined();
+  });
+
+  it("marks a captain with a colour on the row and no word", () => {
+    const captainRow = show(entry(LONG_NAME), { captain: true }).firstElementChild as HTMLElement;
+    expect(captainRow.style.border).toContain("copper");
+    expect(screen.queryByText("القائد")).toBeNull();
+
+    const plainRow = show(entry(LONG_NAME)).firstElementChild as HTMLElement;
+    expect(plainRow.style.border).toContain("transparent");
+  });
+
+  it("keeps a pending captain reading as pending", () => {
+    const row = show(entry(LONG_NAME, "PENDING"), { captain: true })
+      .firstElementChild as HTMLElement;
+
+    expect(row.style.background).toBe("rgb(254, 243, 199)");
+    expect(row.style.border).toContain("copper");
+    expect(screen.getByText("بانتظار الموافقة")).toBeDefined();
   });
 
   it("keeps the destructive action beside the others and tells it apart by tone", () => {
@@ -110,7 +127,7 @@ describe("RosterRow", () => {
     show(entry(LONG_NAME, "PENDING"), { captain: true, suspended: true });
 
     const link = screen.getByLabelText(`فتح بطاقة ${LONG_NAME}`);
-    for (const badge of ["القائد", "بانتظار الموافقة", "موقوف"]) {
+    for (const badge of ["بانتظار الموافقة", "موقوف"]) {
       expect(link.contains(screen.getByText(badge))).toBe(false);
     }
   });

@@ -166,10 +166,16 @@ describe("TeamCard", () => {
     expect(handlers.onRenameTeam).toHaveBeenCalledWith("فريق الوحدة");
   });
 
-  it("names the captain on the card", () => {
+  it("marks the captain once, on their own row", () => {
     show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], 2, "p2");
 
-    expect(screen.getByText("القائد بابا ولد سيدي")).toBeDefined();
+    expect(screen.queryByText("القائد بابا ولد سيدي")).toBeNull();
+    expect(screen.queryByText("القائد")).toBeNull();
+    const marked = [...document.body.querySelectorAll<HTMLElement>("div")].filter((d) =>
+      d.style.border.includes("copper"),
+    );
+    expect(marked.length).toBe(1);
+    expect(marked[0].textContent).toContain("بابا ولد سيدي");
   });
 
   it("says nothing about a captain when the team has none", () => {
