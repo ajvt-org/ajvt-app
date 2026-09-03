@@ -44,16 +44,7 @@ function rosterMember(id: string, name: string, inTeam: boolean): RosterMember {
 function show(teams: Team[], roster: RosterMember[]) {
   cleanup();
   const onChange = vi.fn();
-  render(
-    <PlayersTab
-      activityId="a1"
-      teams={teams}
-      groups={[]}
-      format="KNOCKOUT"
-      roster={roster}
-      onChange={onChange}
-    />,
-  );
+  render(<PlayersTab activityId="a1" teams={teams} roster={roster} onChange={onChange} />);
   return onChange;
 }
 
@@ -82,7 +73,6 @@ describe("PlayersTab", () => {
     await waitFor(() => {
       expect(post).toHaveBeenNthCalledWith(1, "/api/admin/activities/a1/teams", {
         name: "",
-        groupId: null,
         logo: null,
       });
       expect(post).toHaveBeenNthCalledWith(2, "/api/admin/teams/team-new/members", {

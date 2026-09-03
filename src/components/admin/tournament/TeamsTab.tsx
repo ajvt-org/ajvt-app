@@ -4,9 +4,8 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { useState } from "react";
-import type { Group, RosterMember, Team, TournamentFormat } from "./types";
+import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
-import GroupsPanel from "./GroupsPanel";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -16,8 +15,6 @@ import { teamsTab } from "@/lib/texts";
 export default function TeamsTab({
   activityId,
   teams,
-  groups,
-  format,
   teamSize,
   roster,
   suspendedIds,
@@ -25,15 +22,12 @@ export default function TeamsTab({
 }: {
   activityId: string;
   teams: Team[];
-  groups: Group[];
-  format: TournamentFormat;
   teamSize: number | null;
   roster: RosterMember[];
   suspendedIds: string[];
   onChange: () => void;
 }) {
   const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamGroup, setNewTeamGroup] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
 
@@ -86,18 +80,6 @@ export default function TeamsTab({
     }
   }
 
-  async function setTeamGroup(teamId: string, groupId: string) {
-    setLoadingAction(true);
-    try {
-      await api.patch(`/api/admin/teams/${teamId}`, { groupId: groupId || null });
-      onChange();
-    } catch (e) {
-      alert(errorMessage(e));
-    } finally {
-      setLoadingAction(false);
-    }
-  }
-
   async function setTeamLogo(teamId: string, logo: string) {
     await api.patch(`/api/admin/teams/${teamId}`, { logo: logo || null });
     onChange();
@@ -110,11 +92,9 @@ export default function TeamsTab({
     try {
       await api.post(`/api/admin/activities/${activityId}/teams`, {
         name: newTeamName,
-        groupId: newTeamGroup || null,
         logo: newTeamLogo || null,
       });
       setNewTeamName("");
-      setNewTeamGroup("");
       setNewTeamLogo("");
       onChange();
     } catch (e) {
@@ -186,50 +166,6 @@ export default function TeamsTab({
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
           <IconLabel name="warning">{error}</IconLabel>
-        </div>
-      )}
-
-      {format !== "KNOCKOUT" && (
-        <GroupsPanel
-          activityId={activityId}
-          groups={groups}
-          teams={teams}
-          onChange={onChange}
-          onError={setError}
-        />
-      )}
-
-      {groups.length > 0 && teams.some((t) => !t.groupId) && (
-        <div className="card p-4">
-          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="flag">
-              {teamsTab.ungrouped(teams.filter((t) => !t.groupId).length)}
-            </IconLabel>
-          </p>
-          <div className="space-y-1.5">
-            {teams
-              .filter((t) => !t.groupId)
-              .map((t) => (
-                <div key={t.id} className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold" style={{ color: "var(--text-main)" }}>
-                    {t.name}
-                  </span>
-                  <select
-                    value=""
-                    onChange={(e) => setTeamGroup(t.id, e.target.value)}
-                    className="input text-xs"
-                    style={{ width: "auto" }}
-                  >
-                    <option value="">{teamsTab.pickGroup}</option>
-                    {groups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-          </div>
         </div>
       )}
 
@@ -306,21 +242,6 @@ export default function TeamsTab({
             placeholderIcon="shield"
             onUpload={(filename) => setTeamLogo(team.id, filename)}
           />
-
-          {groups.length > 0 && (
-            <select
-              value={team.groupId || ""}
-              onChange={(e) => setTeamGroup(team.id, e.target.value)}
-              className="input text-sm mb-2"
-            >
-              <option value="">{teamsTab.noGroup}</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          )}
 
           <div className="space-y-1.5 mb-2">
             {team.members.length === 0 ? (
@@ -467,20 +388,6 @@ export default function TeamsTab({
           required
           className="input"
         />
-        {groups.length > 0 && (
-          <select
-            value={newTeamGroup}
-            onChange={(e) => setNewTeamGroup(e.target.value)}
-            className="input"
-          >
-            <option value="">{teamsTab.noGroup}</option>
-            {groups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        )}
         <button type="submit" disabled={loadingAction} className="btn btn-primary text-sm">
           {loadingAction ? "..." : <IconLabel name="plus">{teamsTab.team}</IconLabel>}
         </button>

@@ -77,8 +77,6 @@ export default function TournamentPanel({
           <PlayersTab
             activityId={activityId}
             teams={teams}
-            groups={groups}
-            format={info?.format ?? null}
             roster={roster}
             onChange={reloadSquads}
           />
@@ -86,8 +84,6 @@ export default function TournamentPanel({
           <TeamsTab
             activityId={activityId}
             teams={teams}
-            groups={groups}
-            format={info?.format ?? null}
             teamSize={info?.teamSize ?? null}
             roster={roster}
             suspendedIds={suspendedIds}
