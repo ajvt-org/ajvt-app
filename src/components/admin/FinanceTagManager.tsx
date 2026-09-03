@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import Money from "@/components/Money";
 import { counted } from "@/lib/arabicCount";
 import { EXPENSE } from "@/lib/messages";
 
@@ -135,7 +136,7 @@ export default function FinanceTagManager({
                 <>
                   <span className="font-bold text-sm flex-1 min-w-0 truncate">{tag.name}</span>
                   <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-                    {tag.count} · {tag.total} أوقية
+                    {tag.count} · <Money value={tag.total} />
                   </span>
                   <button
                     type="button"
