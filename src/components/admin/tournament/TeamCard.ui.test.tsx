@@ -27,7 +27,6 @@ const handlers = {
   onRenameTeam: vi.fn(),
   onDeleteTeam: vi.fn(),
   onSetLogo: vi.fn(),
-  onRenameMember: vi.fn(),
   onSetCaptain: vi.fn(),
   onAddMember: vi.fn(),
   onApproveMember: vi.fn(),
