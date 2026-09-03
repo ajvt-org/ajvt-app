@@ -29,26 +29,38 @@ export default function TeamsGrid({
 }) {
   return (
     <div className="space-y-2">
-      {viewerTeamFirst(teams, viewerId).map((team) => (
-        <details key={team.id} className="card p-3" style={cardStyle(holdsViewer(team, viewerId))}>
-          <summary
-            className={`disclosure-summary cursor-pointer ${HEAD}`}
-            style={{ color: "var(--text-main)" }}
-          >
-            <TeamCardHead
-              logo={team.logo}
-              name={team.name}
-              note={texts.playerCount(team.members.length)}
+      {viewerTeamFirst(teams, viewerId).map((team) => {
+        const mine = holdsViewer(team, viewerId);
+        if (team.members.length === 0) {
+          return (
+            <div key={team.id} className="card p-3" style={cardStyle(mine)}>
+              <p className={HEAD} style={{ color: "var(--text-main)" }}>
+                <TeamCardHead logo={team.logo} name={team.name} note={texts.noPlayers} />
+              </p>
+            </div>
+          );
+        }
+        return (
+          <details key={team.id} className="card p-3" style={cardStyle(mine)}>
+            <summary
+              className={`disclosure-summary cursor-pointer ${HEAD}`}
+              style={{ color: "var(--text-main)" }}
+            >
+              <TeamCardHead
+                logo={team.logo}
+                name={team.name}
+                note={texts.playerCount(team.members.length)}
+              />
+              <Icon name="chevronDown" size={14} className="disclosure-chevron" />
+            </summary>
+            <SquadList
+              players={team.members.map((entry) => entry.member)}
+              captainId={team.captainUserId}
+              viewerId={viewerId}
             />
-            <Icon name="chevronDown" size={14} className="disclosure-chevron" />
-          </summary>
-          <SquadList
-            players={team.members.map((entry) => entry.member)}
-            captainId={team.captainUserId}
-            viewerId={viewerId}
-          />
-        </details>
-      ))}
+          </details>
+        );
+      })}
     </div>
   );
 }

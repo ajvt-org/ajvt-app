@@ -20,13 +20,13 @@ function show(teams: ReturnType<typeof team>[], viewerId: string | null = null) 
 }
 
 function order(container: HTMLElement): string[] {
-  return [...container.querySelectorAll("summary")].map((head) =>
-    (head.querySelector("span.flex-1")?.textContent ?? "").trim(),
+  return [...container.querySelectorAll("span.flex-1")].map((name) =>
+    (name.textContent ?? "").trim(),
   );
 }
 
 function markedCard(container: HTMLElement): string[] {
-  return [...container.querySelectorAll("details")]
+  return [...container.querySelectorAll(".card")]
     .filter((card) => (card.getAttribute("style") ?? "").includes("var(--mint-600)"))
     .map((card) => (card.querySelector("span.flex-1")?.textContent ?? "").trim());
 }
@@ -52,10 +52,35 @@ describe("TeamsGrid", () => {
     expect(cards[0].querySelector("summary")).not.toBeNull();
   });
 
-  it("leaves an empty squad with its own sentence", () => {
-    show([team("فريق الشباب", 0)]);
+  it("says an empty team is empty without opening it", () => {
+    const { container } = show([team("فريق الشباب", 0)]);
 
     expect(screen.getByText("لا يوجد لاعبون بعد")).toBeDefined();
+    expect(container.querySelector("details")).toBeNull();
+    expect(container.querySelector(".disclosure-chevron")).toBeNull();
+  });
+
+  it("keeps the empty team in the list beside the others", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الشباب", 0)]);
+
+    expect(order(container)).toEqual(["فريق النجم", "فريق الشباب"]);
+    expect(container.querySelectorAll(".card")).toHaveLength(2);
+  });
+
+  it("leaves the teams that have players opening as they did", () => {
+    const { container } = show([team("فريق الشباب", 0), team("فريق النجم", 3)]);
+
+    const card = container.querySelector("details");
+    expect(card?.querySelector("summary")).not.toBeNull();
+    expect(card?.querySelector(".disclosure-chevron")).not.toBeNull();
+  });
+
+  it("does not dress the empty team's heading as something to tap", () => {
+    const { container } = show([team("فريق الشباب", 0)]);
+
+    const head = container.querySelector(".card > *") as HTMLElement;
+    expect(head.tagName).toBe("P");
+    expect(head.className).not.toContain("cursor-pointer");
   });
 
   it("keeps a long team name whole and lets it fold onto another line", () => {
