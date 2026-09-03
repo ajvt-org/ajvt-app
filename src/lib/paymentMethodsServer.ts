@@ -4,8 +4,10 @@ import {
   memberMethods,
   methodNames,
   offeredMethods,
+  payableMethods,
   type PaymentMethodOption,
 } from "./paymentMethods";
+import { PAYABLE_METHODS } from "./paymentCodes";
 
 const SELECT = {
   id: true,
@@ -32,4 +34,8 @@ export async function memberMethodNames(): Promise<string[]> {
 
 export async function orderedMethodNames(): Promise<string[]> {
   return methodNames(inOrder(await allPaymentMethods()));
+}
+
+export async function payableMethodNames(): Promise<string[]> {
+  return methodNames(payableMethods(await allPaymentMethods(), PAYABLE_METHODS));
 }

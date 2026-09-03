@@ -9,7 +9,8 @@ import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { stepPayment } from "@/lib/texts/stepPayment";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import { PAYABLE_METHODS, PAYMENT_CODES, type PaymentValues } from "./constants";
+import { PAYMENT_CODES, type PaymentValues } from "./constants";
+import { usePayableMethods } from "@/lib/usePayableMethods";
 
 export default function StepPayment({
   form,
@@ -48,6 +49,7 @@ export default function StepPayment({
   editing: boolean;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
+  const payable = usePayableMethods();
   const amount = String(form.paidAmount || membershipFee);
 
   return (
@@ -65,7 +67,7 @@ export default function StepPayment({
           role="radiogroup"
           aria-labelledby="member-method-label"
         >
-          {PAYABLE_METHODS.map((method) => (
+          {payable.map((method) => (
             <button
               key={method}
               type="button"

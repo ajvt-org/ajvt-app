@@ -52,3 +52,10 @@ export function acceptsMethod(
 ): boolean {
   return acceptedNames(offered, held).includes(value);
 }
+
+export function payableMethods(
+  methods: PaymentMethodOption[],
+  payable: readonly string[],
+): PaymentMethodOption[] {
+  return memberMethods(methods).filter((method) => payable.includes(method.name));
+}
