@@ -12,9 +12,3 @@ export function amountInWords(amount: number): string {
   const noun = category === "few" ? OUGUIYA.plural : OUGUIYA.singular;
   return `${numberToArabicWords(amount, "f")} ${noun}`;
 }
-
-export function amountInFigures(amount: number): string {
-  const sign = amount < 0 ? "-" : "";
-  const digits = String(Math.trunc(Math.abs(amount)));
-  return sign + digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}

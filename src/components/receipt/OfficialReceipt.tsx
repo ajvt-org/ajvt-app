@@ -1,4 +1,5 @@
-import { amountInFigures, amountInWords } from "@/lib/arabicAmount";
+import { amountInWords } from "@/lib/arabicAmount";
+import { moneyDigits } from "@/lib/money";
 import { receiptDate, type OfficialReceiptView } from "@/lib/officialReceipt";
 import { receiptSheet } from "@/lib/texts/receipt";
 import ReceiptLine from "./ReceiptLine";
@@ -93,7 +94,7 @@ export default function OfficialReceipt({
       <ReceiptLine label={receiptSheet.inWords} value={amountInWords(receipt.amount)} />
       <ReceiptLine
         label={receiptSheet.inFigures}
-        value={amountInFigures(receipt.amount)}
+        value={moneyDigits(receipt.amount)}
         trailing={receiptSheet.currency}
       />
       <ReceiptLine label={receiptSheet.date} value={receiptDate(receipt.issuedOn)} />
