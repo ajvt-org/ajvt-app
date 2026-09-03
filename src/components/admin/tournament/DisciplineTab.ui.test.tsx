@@ -21,6 +21,7 @@ const TEAM: Team = {
   name: "الصقور",
   autoNamed: false,
   logo: null,
+  captainUserId: null,
   groupId: null,
   group: null,
   members: [

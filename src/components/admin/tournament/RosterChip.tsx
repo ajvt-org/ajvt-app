@@ -7,25 +7,30 @@ import { teamsTab } from "@/lib/texts";
 
 const ACTIVE = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const PENDING = { background: "#fef3c7", color: "#92400e" };
+const CAPTAIN = { background: "var(--mint-200)", color: "var(--mint-700)" };
 
 export default function RosterChip({
   entry,
   suspended,
+  captain,
   busy,
   onRename,
+  onToggleCaptain,
   onApprove,
   onRemove,
 }: {
   entry: TeamMemberEntry;
   suspended: boolean;
+  captain: boolean;
   busy: boolean;
   onRename: () => void;
+  onToggleCaptain: () => void;
   onApprove: () => void;
   onRemove: () => void;
 }) {
   const { member, status } = entry;
   const pending = status === "PENDING";
-  const tone = pending ? PENDING : ACTIVE;
+  const tone = pending ? PENDING : captain ? CAPTAIN : ACTIVE;
 
   return (
     <div
@@ -50,6 +55,22 @@ export default function RosterChip({
             <Icon name="clock" size={14} />
           </span>
         )}
+      </button>
+      <button
+        onClick={onToggleCaptain}
+        disabled={busy}
+        aria-label={
+          captain ? teamsTab.clearCaptain(member.fullName) : teamsTab.makeCaptain(member.fullName)
+        }
+        aria-pressed={captain}
+        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+        style={
+          captain
+            ? { background: "var(--mint-600)", color: "white" }
+            : { color: "var(--text-muted)" }
+        }
+      >
+        <Icon name="star" size={14} />
       </button>
       {pending && (
         <button

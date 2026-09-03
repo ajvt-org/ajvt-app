@@ -64,6 +64,10 @@ export default function TeamsTab({
     run(() => api.patch(`/api/admin/teams/${teamId}`, { name }));
   }
 
+  function setCaptain(teamId: string, captainUserId: string | null) {
+    run(() => api.patch(`/api/admin/teams/${teamId}`, { captainUserId }));
+  }
+
   function renameMember(memberId: string, fullName: string) {
     run(() => api.patch(`/api/admin/members/${memberId}`, { fullName }));
   }
@@ -131,6 +135,7 @@ export default function TeamsTab({
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
           onRenameMember={renameMember}
+          onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
           onAddMember={(userId) => addMember(team.id, userId)}
           onApproveMember={(memberId) => approveMember(team.id, memberId)}
           onRemoveMember={(memberId) => removeMember(team.id, memberId)}

@@ -29,6 +29,7 @@ export default function TeamCard({
   onDeleteTeam,
   onSetLogo,
   onRenameMember,
+  onSetCaptain,
   onAddMember,
   onApproveMember,
   onRemoveMember,
@@ -43,6 +44,7 @@ export default function TeamCard({
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
   onRenameMember: (memberId: string, name: string) => void;
+  onSetCaptain: (memberId: string | null) => void;
   onAddMember: (userId: string) => void;
   onApproveMember: (memberId: string) => void;
   onRemoveMember: (memberId: string) => void;
@@ -55,6 +57,7 @@ export default function TeamCard({
   const count = team.members.length;
   const awaiting = team.members.filter((m) => m.status === "PENDING").length;
   const tone = rosterTone(count, teamSize);
+  const captain = team.members.find((m) => m.member.id === team.captainUserId)?.member ?? null;
 
   return (
     <div className="card p-4 space-y-3">
@@ -98,6 +101,11 @@ export default function TeamCard({
                   : teamsTab.rosterOf(count, teamSize)}
               </IconLabel>
             </span>
+            {captain && (
+              <span className="badge" style={{ background: "var(--mint-600)", color: "white" }}>
+                <IconLabel name="star">{teamsTab.captainBadge(captain.fullName)}</IconLabel>
+              </span>
+            )}
             {awaiting > 0 && (
               <span className="badge badge-pending">
                 <IconLabel name="clock">{teamsTab.awaitingCount(awaiting)}</IconLabel>
@@ -140,8 +148,12 @@ export default function TeamCard({
                 key={entry.member.id}
                 entry={entry}
                 suspended={suspendedIds.includes(entry.member.id)}
+                captain={entry.member.id === team.captainUserId}
                 busy={busy}
                 onRename={() => setRenamingMemberId(entry.member.id)}
+                onToggleCaptain={() =>
+                  onSetCaptain(entry.member.id === team.captainUserId ? null : entry.member.id)
+                }
                 onApprove={() => onApproveMember(entry.member.id)}
                 onRemove={() => onRemoveMember(entry.member.id)}
               />

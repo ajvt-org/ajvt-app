@@ -40,6 +40,7 @@ function team(id: string, name: string, members: [string, string][]): Team {
     name,
     autoNamed: false,
     logo: null,
+    captainUserId: null,
     groupId: null,
     group: null,
     members: members.map(([mid, fullName]) => ({
