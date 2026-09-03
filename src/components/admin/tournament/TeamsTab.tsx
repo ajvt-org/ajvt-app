@@ -7,7 +7,6 @@ import { useState } from "react";
 import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
 import { api, errorMessage } from "@/lib/api";
-import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
@@ -177,7 +176,7 @@ export default function TeamsTab({
                 className="badge badge-pending flex items-center gap-1.5"
               >
                 <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
-                <ArrowLabel>{m.fullName}</ArrowLabel>
+                {m.fullName}
               </Link>
             ))}
           </div>
