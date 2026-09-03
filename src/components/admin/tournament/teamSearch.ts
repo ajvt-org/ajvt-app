@@ -16,9 +16,15 @@ export function matchingTeams<T extends TeamNames>(teams: T[], query: string): T
   return tokens.length ? teams.filter((team) => teamMatches(team, tokens)) : teams;
 }
 
-export function matchingPeople<T extends { fullName: string }>(people: T[], query: string): T[] {
+export function matchingPeople<T extends { fullName: string; phone?: string | null }>(
+  people: T[],
+  query: string,
+): T[] {
   const tokens = searchTokens(query);
-  return tokens.length ? people.filter((p) => matchesSearch(p.fullName, tokens)) : people;
+  if (!tokens.length) return people;
+  return people.filter(
+    (p) => matchesSearch(p.fullName, tokens) || matchesSearch(p.phone ?? "", tokens),
+  );
 }
 
 export function matchingMembers<T extends { member: { fullName: string } }>(

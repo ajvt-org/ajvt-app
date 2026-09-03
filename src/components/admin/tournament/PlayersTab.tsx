@@ -9,6 +9,7 @@ import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
+import { matchingPeople } from "./teamSearch";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
@@ -30,10 +31,7 @@ export default function PlayersTab({
   const from = useAdminOrigin();
 
   const candidates = roster.filter((m) => !m.team);
-  const filtered = candidates.filter((m) => {
-    const q = search.trim();
-    return !q || m.fullName.includes(q) || (m.phone || "").includes(q);
-  });
+  const filtered = matchingPeople(candidates, search);
 
   async function run(action: () => Promise<unknown>, done?: string) {
     setBusy(true);

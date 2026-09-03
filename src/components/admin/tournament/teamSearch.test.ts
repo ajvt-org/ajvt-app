@@ -48,7 +48,10 @@ describe("teamMatches", () => {
 });
 
 describe("matchingPeople", () => {
-  const people = [{ fullName: "أحمد ولد محمد" }, { fullName: "يعقوب ولد سيدي" }];
+  const people = [
+    { fullName: "أحمد ولد محمد", phone: "36000001" },
+    { fullName: "يعقوب ولد سيدي", phone: "22334455" },
+  ];
 
   it("keeps everyone when nothing is typed", () => {
     expect(matchingPeople(people, "")).toEqual(people);
@@ -56,6 +59,15 @@ describe("matchingPeople", () => {
 
   it("folds the same letters as the team search", () => {
     expect(matchingPeople(people, "احمد")).toEqual([people[0]]);
+    expect(matchingPeople(people, "أحمد")).toEqual([people[0]]);
+  });
+
+  it("finds a person by their phone", () => {
+    expect(matchingPeople(people, "22334455")).toEqual([people[1]]);
+  });
+
+  it("works on people carrying no phone at all", () => {
+    expect(matchingPeople([{ fullName: "خديجة بنت سالم" }], "خديجه")).toHaveLength(1);
   });
 });
 

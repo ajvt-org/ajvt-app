@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import PlayersTab from "./PlayersTab";
 import type { RosterMember, Team } from "./types";
+import { playersTab as texts } from "@/lib/texts";
 
 const post = vi.fn();
 const patch = vi.fn();
@@ -101,5 +102,27 @@ describe("PlayersTab", () => {
 
     expect(del).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
+  });
+
+  it("finds a candidate whose name is written with a different hamza", () => {
+    show([], [rosterMember("u1", "أحمد ولد محمد", false)]);
+
+    fireEvent.change(screen.getByPlaceholderText(texts.searchPlaceholder), {
+      target: { value: "احمد" },
+    });
+
+    const options = [...document.querySelectorAll("option")].map((o) => o.textContent);
+    expect(options).toContain("أحمد ولد محمد");
+  });
+
+  it("still finds a candidate by phone", () => {
+    show([], [rosterMember("u1", "أحمد ولد محمد", false)]);
+
+    fireEvent.change(screen.getByPlaceholderText(texts.searchPlaceholder), {
+      target: { value: "36000002" },
+    });
+
+    const options = [...document.querySelectorAll("option")].map((o) => o.textContent);
+    expect(options).toContain("أحمد ولد محمد");
   });
 });
