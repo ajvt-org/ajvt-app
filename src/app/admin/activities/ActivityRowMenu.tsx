@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { placeRowMenu, type MenuSpot } from "./rowMenuPosition";
+import { useRowMenu } from "./useRowMenu";
 
 export interface RowMenuItem {
   key: string;
@@ -17,13 +18,13 @@ export interface RowMenuItem {
 const MEASURING = { position: "fixed", left: 0, top: 0, visibility: "hidden" } as const;
 
 export default function ActivityRowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
-  const [open, setOpen] = useState(false);
   const [spot, setSpot] = useState<MenuSpot | null>(null);
   const box = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const { open, toggle, close } = useRowMenu(box, trigger);
 
-  useLayoutEffect(() => {
-    if (!open) return;
+  const place = useCallback(() => {
     const anchor = box.current;
     const menu = panel.current;
     if (!anchor || !menu) return;
@@ -36,26 +37,38 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
       getComputedStyle(anchor).direction === "rtl",
     );
     setSpot({ left: at.left - rect.left, top: at.top - rect.top });
-  }, [open]);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open, place]);
 
   useEffect(() => {
     if (!open) return;
-    function away(event: MouseEvent) {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false);
+    let frame = 0;
+    function again() {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(place);
     }
-    document.addEventListener("mousedown", away);
-    return () => document.removeEventListener("mousedown", away);
-  }, [open]);
+    window.addEventListener("scroll", again, true);
+    window.addEventListener("resize", again);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", again, true);
+      window.removeEventListener("resize", again);
+    };
+  }, [open, place]);
 
   if (items.length === 0) return null;
 
   return (
     <div ref={box} className="relative">
       <button
+        ref={trigger}
         type="button"
         onClick={() => {
           setSpot(null);
-          setOpen((shown) => !shown);
+          toggle();
         }}
         aria-label={label}
         aria-expanded={open}
@@ -93,7 +106,7 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
                 key={item.key}
                 type="button"
                 onClick={() => {
-                  setOpen(false);
+                  close();
                   item.onPick?.();
                 }}
                 className="block w-full text-xs font-bold px-3 py-2.5 text-start"
