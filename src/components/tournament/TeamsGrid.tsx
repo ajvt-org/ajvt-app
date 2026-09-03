@@ -22,7 +22,9 @@ export default function TeamsGrid({ teams }: { teams: Team[] }) {
             style={{ color: "var(--text-main)" }}
           >
             <TeamLogo logo={team.logo} name={team.name} size={20} />
-            <span className="min-w-0 flex-1 truncate">{team.name}</span>
+            <span className="min-w-0 flex-1" style={{ wordBreak: "break-word" }}>
+              {team.name}
+            </span>
             <span
               className="shrink-0 text-xs"
               style={{ color: "var(--text-muted)", fontWeight: 400 }}

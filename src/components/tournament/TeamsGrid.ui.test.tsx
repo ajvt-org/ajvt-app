@@ -46,6 +46,17 @@ describe("TeamsGrid", () => {
     expect(screen.getByText("لا يوجد لاعبون بعد")).toBeDefined();
   });
 
+  it("keeps a long team name whole and lets it fold onto another line", () => {
+    const long =
+      "\u0641\u0631\u064a\u0642 \u0634\u0628\u0627\u0628 \u0642\u0631\u064a\u0629 \u0627\u0644\u062a\u0627\u0643\u0644\u0627\u0644\u062a \u0644\u0643\u0631\u0629 \u0627\u0644\u0642\u062f\u0645";
+    const { container } = show([team(long, 3)]);
+
+    const name = screen.getByText(long);
+    expect(name.className).not.toContain("truncate");
+    expect(name.getAttribute("style")).toContain("break-word");
+    expect(container.querySelector("summary")?.className).toContain("items-center");
+  });
+
   it("hands each squad its own captain", () => {
     const { container } = show([
       team("فريق النجم", 3, "فريق النجم-2"),
