@@ -52,6 +52,7 @@ export const publicTournament = {
   noPlayersYet: "لم يُحدَّد اللاعبون بعد",
   noPlayers: "لا يوجد لاعبون بعد",
   playerCount: (count: number) => countedNoun(count, PLAYERS),
+  captain: "القائد",
   teamDecidedLater: "يُحدد لاحقاً",
   bracketRound: (round: number) => `الدور ${round}`,
   bracketWaitingHint: "تُحدَّد فرق الدور الإقصائي من ترتيب المجموعات بعد انتهاء دور المجموعات",
