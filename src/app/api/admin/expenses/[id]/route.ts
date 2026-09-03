@@ -5,6 +5,8 @@ import { MONEY_AREAS } from "@/lib/adminNav";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
+import { acceptedNames } from "@/lib/paymentMethods";
 import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
 import { expenses as expenseMessages } from "@/lib/messages";
@@ -16,15 +18,16 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireArea(MONEY_AREAS.expenses);
     const { id } = await params;
-    const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
-      expenseUpdateSchema,
-      await req.json(),
-    );
-
     const existing = await prisma.expense.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: expenseMessages.notFound }, { status: 404 });
     }
+
+    const accepted = acceptedNames(await offeredMethodNames(), existing.method);
+    const { label, amount, method, note, date, proof, tagIds, activityId, competitionId } = parse(
+      expenseUpdateSchema(accepted),
+      await req.json(),
+    );
 
     const data: {
       label?: string;

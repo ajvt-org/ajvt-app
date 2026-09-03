@@ -432,7 +432,7 @@ model Donation {
   proof          String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
   status         ReviewStatus @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
   source         String       @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
-  paymentMethod  String? // بنكيلي | السداد | مصرفي | نقداً — set manually by admin (proof screenshots aren't parsed automatically)
+  paymentMethod  String?
   userId         String?
   user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   membershipYear Int?

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { INITIAL_PAYMENT_METHODS } from "@/lib/paymentMethods";
 import { runningYear } from "@/lib/membershipYear";
 import type { ReviewStatus } from "@prisma/client";
 import { signToken } from "@/lib/auth";
@@ -17,6 +18,7 @@ export async function resetDb() {
   const list = tables.map((t) => `"${t.tablename}"`).join(", ");
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
   await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
+  await prisma.paymentMethod.createMany({ data: [...INITIAL_PAYMENT_METHODS] });
   forgetShared();
   forgetRateLimits();
   clearCookies();
