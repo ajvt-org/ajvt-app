@@ -35,7 +35,9 @@ export default function TeamSummary({
   return (
     <summary className="disclosure-summary cursor-pointer space-y-1.5">
       <div className="flex items-start gap-2">
-        <TeamLogo logo={team.logo} name={shownName} size={32} />
+        <span className="summary-logo inline-flex">
+          <TeamLogo logo={team.logo} name={shownName} size={32} />
+        </span>
         <p
           className="min-w-0 flex-1 font-black text-base"
           style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}

@@ -902,6 +902,10 @@ details[open] > .disclosure-summary .disclosure-chevron {
   transform: rotate(180deg);
 }
 
+details[open] > .disclosure-summary .summary-logo {
+  display: none;
+}
+
 /* One result in a team's recent run. */
 .form-pip {
   display: inline-flex;
