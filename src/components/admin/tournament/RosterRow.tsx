@@ -1,6 +1,7 @@
 "use client";
 
-import Icon from "@/components/Icon";
+import Link from "next/link";
+import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { TeamMemberEntry } from "./types";
@@ -21,7 +22,6 @@ export default function RosterRow({
   suspended,
   captain,
   busy,
-  onRename,
   onToggleCaptain,
   onApprove,
   onRemove,
@@ -30,7 +30,6 @@ export default function RosterRow({
   suspended: boolean;
   captain: boolean;
   busy: boolean;
-  onRename: () => void;
   onToggleCaptain: () => void;
   onApprove: () => void;
   onRemove: () => void;
@@ -43,18 +42,21 @@ export default function RosterRow({
       className="rounded-xl p-2 space-y-2 w-full"
       style={{ background: pending ? PENDING : captain ? CAPTAIN : ACTIVE }}
     >
-      <button
-        onClick={onRename}
-        aria-label={teamsTab.renameOf(member.fullName)}
+      <Link
+        href={`/admin/members/${member.id}`}
+        aria-label={teamsTab.openCardOf(member.fullName)}
         className="flex items-start gap-2 w-full text-start"
       >
         <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
         <span className="min-w-0 flex-1 space-y-1">
-          <span
-            className="block text-sm font-bold"
-            style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
-          >
-            {member.fullName} <Icon name="pencil" size={12} className="icon-inline" />
+          <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
+            <span style={{ overflowWrap: "anywhere" }}>{member.fullName}</span>{" "}
+            <span
+              className="text-xs font-bold whitespace-nowrap"
+              style={{ color: "var(--mint-700)" }}
+            >
+              <ArrowLabel>{teamsTab.openCard}</ArrowLabel>
+            </span>
           </span>
           {(captain || pending || suspended) && (
             <span className="flex flex-wrap items-center gap-1.5">
@@ -76,7 +78,7 @@ export default function RosterRow({
             </span>
           )}
         </span>
-      </button>
+      </Link>
       <div className="flex flex-wrap items-center gap-2">
         {pending && (
           <button
