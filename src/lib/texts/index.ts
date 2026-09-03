@@ -23,7 +23,7 @@ export { pendingAgeGroups } from "./ageGroups";
 export { adminAccounts } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
-export { adminTabs } from "./adminNav";
+export { adminShell, adminTabs } from "./adminNav";
 export { adminTools } from "./adminTools";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";

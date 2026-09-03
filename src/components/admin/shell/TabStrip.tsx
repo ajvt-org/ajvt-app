@@ -62,7 +62,7 @@ export default function TabStrip({
   return (
     <div
       ref={strip}
-      className="tab-strip px-3 py-1.5 sm:px-4 sm:py-2"
+      className="tab-strip px-3 py-1.5 sm:px-4"
       style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
     >
       {tabs.map((tab) => (
