@@ -15,6 +15,7 @@ export const tournament = {
   minuteInvalid: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130",
   teamNotInMatch: "الفريق لا ينتمي إلى هذه المباراة",
   playerNotInTeam: "اللاعب لا ينتمي إلى هذا الفريق",
+  captainNotInTeam: "القائد يجب أن يكون أحد لاعبي الفريق",
   joinNeedsMembership: "يجب أن تكون العضوية مقبولة أولاً",
   joinNeedsRegistration: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً",
   teamChoiceLocked: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره",
