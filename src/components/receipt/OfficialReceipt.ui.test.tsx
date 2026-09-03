@@ -46,7 +46,7 @@ describe("the sheet an admin hands over", () => {
   it("writes the amount twice, in figures and in words", () => {
     render(<OfficialReceipt receipt={RECEIPT} qrDataUrl={null} />);
 
-    expect(screen.getByText("5.000")).toBeDefined();
+    expect(screen.getByText("5 000")).toBeDefined();
     expect(screen.getByText("خمسة آلاف أوقية")).toBeDefined();
   });
 
