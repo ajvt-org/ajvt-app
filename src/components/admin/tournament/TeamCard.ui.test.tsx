@@ -47,6 +47,7 @@ function show(
       team={team(members, captainUserId)}
       shownName="فريق النجم"
       teamSize={teamSize}
+      members={members}
       open={open}
       candidates={[]}
       suspendedIds={[]}
@@ -123,6 +124,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
         suspendedIds={[]}
@@ -142,6 +144,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
         suspendedIds={[]}
@@ -249,6 +252,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق الحسن احمدو يحي البناني للشباب"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
         suspendedIds={[]}

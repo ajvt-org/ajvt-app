@@ -4,12 +4,14 @@ import AddPlayerRow from "./AddPlayerRow";
 import TeamIdentityEditor from "./TeamIdentityEditor";
 import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
-import type { RosterMember, Team } from "./types";
+import { teamsTab } from "@/lib/texts";
+import type { RosterMember, Team, TeamMemberEntry } from "./types";
 
 export default function TeamCard({
   team,
   shownName,
   teamSize,
+  members,
   open,
   candidates,
   suspendedIds,
@@ -26,6 +28,7 @@ export default function TeamCard({
   team: Team;
   shownName: string;
   teamSize: number | null;
+  members: TeamMemberEntry[];
   open: boolean;
   candidates: RosterMember[];
   suspendedIds: string[];
@@ -57,8 +60,14 @@ export default function TeamCard({
           onRenameTeam={onRenameTeam}
           onSetLogo={onSetLogo}
         />
+        {members.length < team.members.length && (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {teamsTab.rosterSubset(members.length, team.members.length)}
+          </p>
+        )}
         <TeamRoster
           team={team}
+          members={members}
           suspendedIds={suspendedIds}
           busy={busy}
           onSetCaptain={onSetCaptain}
