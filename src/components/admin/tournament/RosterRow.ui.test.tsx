@@ -58,12 +58,22 @@ describe("RosterRow", () => {
     expect(screen.getByText("القائد")).toBeDefined();
   });
 
-  it("separates the destructive action from the other two", () => {
+  it("keeps the destructive action beside the others and tells it apart by tone", () => {
     const container = show(entry(LONG_NAME, "PENDING"));
 
     const actions = [...container.querySelectorAll("button")];
     expect(actions.map((b) => b.textContent)).toEqual(["قبول", "تعيين قائداً", "رفض"]);
-    expect(actions[2].className).toContain("ms-auto");
+    for (const action of actions) expect(action.className).not.toContain("ms-auto");
+    expect(actions[2].style.background).not.toBe(actions[0].style.background);
+    expect(actions[2].style.background).not.toBe(actions[1].style.background);
+  });
+
+  it("keeps the actions on a comfortable target", () => {
+    const container = show(entry(LONG_NAME, "PENDING"));
+
+    for (const action of container.querySelectorAll("button")) {
+      expect(action.className).toContain("btn-sm");
+    }
   });
 
   it("keeps accept, reject and captain working", () => {
