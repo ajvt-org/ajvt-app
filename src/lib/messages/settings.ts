@@ -1,8 +1,8 @@
-import { ouguiya } from "../texts/currency";
+import { money } from "../money";
 
 export const settings = {
   officerNameTooLong: "الاسم طويل جداً",
   whatsappInvalid: "رقم الواتساب غير صالح",
   groupLinkInvalid: "الرابط غير صالح",
-  feeAudit: (amount: number) => ouguiya.amount(amount),
+  feeAudit: (amount: number) => money(amount),
 } as const;

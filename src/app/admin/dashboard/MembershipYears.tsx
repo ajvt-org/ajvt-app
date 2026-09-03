@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import { STATUS_BADGE, STATUS_ICON, STATUS_LABEL } from "./constants";
 import type { MembershipYear } from "./membershipTypes";
+import Money from "@/components/Money";
 
 export default function MembershipYears({
   years,
@@ -32,7 +33,7 @@ export default function MembershipYears({
             <IconLabel name={STATUS_ICON[year.status]}>{STATUS_LABEL[year.status]}</IconLabel>
           </span>
           <span style={{ color: "var(--text-main)" }}>
-            {year.paidAmount ? `${year.paidAmount} أوقية` : "—"}
+            {year.paidAmount ? <Money value={year.paidAmount} /> : "—"}
             {year.paymentMethod ? ` · ${year.paymentMethod}` : ""}
           </span>
           <span style={{ color: "var(--text-muted)" }}>
