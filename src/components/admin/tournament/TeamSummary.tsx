@@ -35,28 +35,32 @@ export default function TeamSummary({
   return (
     <summary className="disclosure-summary cursor-pointer space-y-1.5">
       <div className="flex items-start gap-2">
-        <span className="summary-logo inline-flex">
+        <span className="summary-logo h-6 flex items-center shrink-0">
           <TeamLogo logo={team.logo} name={shownName} size={32} />
         </span>
         <p
-          className="min-w-0 flex-1 font-black text-base"
+          className="min-w-0 flex-1 font-black text-base leading-6 optical-name"
           style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
         >
           {shownName}
         </p>
-        <Icon name="chevronDown" size={16} className="disclosure-chevron mt-2 shrink-0" />
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            onDeleteTeam();
-          }}
-          disabled={busy}
-          aria-label={teamsTab.deleteTeam}
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: "#fee2e2", color: "#991b1b" }}
-        >
-          <Icon name="trash" size={16} />
-        </button>
+        <span className="h-6 flex items-center shrink-0">
+          <Icon name="chevronDown" size={16} className="disclosure-chevron" />
+        </span>
+        <span className="h-6 flex items-center shrink-0">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onDeleteTeam();
+            }}
+            disabled={busy}
+            aria-label={teamsTab.deleteTeam}
+            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: "#fee2e2", color: "#991b1b" }}
+          >
+            <Icon name="trash" size={16} />
+          </button>
+        </span>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="badge" style={tone}>
