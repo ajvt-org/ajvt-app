@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import ProfileSection from "@/components/admin/ProfileSection";
+import Money from "@/components/Money";
+import { moneyDigits } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { withRunningBalance, type LedgerInput, type LedgerTotals } from "@/lib/activityLedger";
 import { activityFinance as texts } from "@/lib/texts";
@@ -17,9 +19,7 @@ function Total({ label, value, color }: { label: string; value: number; color: s
       <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
         {label}
       </p>
-      <p className="text-base font-black" style={{ color }}>
-        {value}
-      </p>
+      <Money value={value} digitsOnly className="text-base font-black" style={{ color }} />
     </div>
   );
 }
@@ -69,11 +69,9 @@ export default function ActivityFinance({ activityId }: { activityId: string }) 
                   dir="ltr"
                 >
                   {entry.kind === "income" ? "+" : "-"}
-                  {entry.amount}
+                  {moneyDigits(entry.amount)}
                 </p>
-                <p style={{ color: "var(--text-muted)" }} dir="ltr">
-                  {entry.balance}
-                </p>
+                <Money value={entry.balance} digitsOnly style={{ color: "var(--text-muted)" }} />
               </div>
             </div>
           ))}

@@ -1,3 +1,5 @@
+import { ouguiya } from "./currency";
+
 export const convertTournament = {
   heading: "وضع البطولة",
   hint: "حوّل النشاط إلى بطولة ليحصل على فرق ومباريات وترتيب.",
@@ -38,9 +40,9 @@ export const resetTournament = {
 
 export const activityFinance = {
   heading: (count: number) => `المالية (${count})`,
-  income: "الإيرادات",
-  expenses: "المصاريف",
-  balance: "الرصيد",
+  income: `الإيرادات (${ouguiya.singular})`,
+  expenses: `المصاريف (${ouguiya.singular})`,
+  balance: `الرصيد (${ouguiya.singular})`,
   empty: "لا توجد حركات مالية على هذا النشاط",
 } as const;
 

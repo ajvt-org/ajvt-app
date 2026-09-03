@@ -27,6 +27,7 @@ export { adminTools } from "./adminTools";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
+export { stepPayment } from "./stepPayment";
 export { daysTab } from "./daysTab";
 export { lists } from "./lists";
 export { discipline } from "./discipline";
