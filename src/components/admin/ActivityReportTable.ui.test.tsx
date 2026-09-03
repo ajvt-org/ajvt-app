@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import ActivityReportTable from "./ActivityReportTable";
+import { moneyDigits } from "@/lib/money";
 import type { ActivityReportRow } from "@/lib/activityReport";
 
 afterEach(cleanup);
@@ -64,6 +65,6 @@ describe("ActivityReportTable", () => {
       <ActivityReportTable rows={[row()]} totals={{ income: 900, spending: 400, balance: 500 }} />,
     );
 
-    expect(container.querySelector("tfoot")?.textContent).toContain("500 أوقية");
+    expect(container.querySelector("tfoot")?.textContent).toContain(moneyDigits(500));
   });
 });

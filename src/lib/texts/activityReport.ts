@@ -1,3 +1,6 @@
+import { ouguiya } from "./currency";
+import { money } from "../money";
+
 export const activityReport = {
   navLabel: "تقرير الأنشطة",
   from: "من",
@@ -6,7 +9,6 @@ export const activityReport = {
   print: "اطبع",
   exportCsv: "تصدير",
   span: (from: string, to: string) => `من ${from} إلى ${to}`,
-  ouguiya: (amount: number) => `${amount} أوقية`,
   general: "بلا نشاط",
   generalNote: "ما لم يُربط بنشاط، رسوم الانتساب والدعم العام والمصاريف العامة.",
   empty: "لا حركة مالية في هذه الفترة",
@@ -15,6 +17,7 @@ export const activityReport = {
   spending: "صرف",
   balance: "الرصيد",
   total: "المجموع",
+  amountsIn: `المبالغ بال${ouguiya.singular}`,
   surplus: "فائض",
   deficit: "عجز",
   even: "متعادل",
@@ -23,5 +26,5 @@ export const activityReport = {
   receipts: "الوصولات",
   noReceipts: "لا وصولات مرقّمة في هذه الفترة",
   reconciles: (income: number, spending: number) =>
-    `يطابق التقرير المالي لنفس الفترة، دخل ${income} أوقية وصرف ${spending} أوقية`,
+    `يطابق التقرير المالي لنفس الفترة، دخل ${money(income)} وصرف ${money(spending)}`,
 } as const;

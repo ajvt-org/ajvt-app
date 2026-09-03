@@ -7,6 +7,7 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import { loginPathWithNext } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
+import Money from "@/components/Money";
 import PageLoading from "@/components/PageLoading";
 import Scoreline from "@/components/tournament/Scoreline";
 import WaitingRequests from "./WaitingRequests";
@@ -51,7 +52,7 @@ function Answer({
   href: string;
   icon: IconName;
   question: string;
-  headline: string;
+  headline: React.ReactNode;
   detail: string;
   tone?: string;
 }) {
@@ -164,7 +165,7 @@ export default function AdminHome() {
         href="/admin/expenses"
         icon="banknote"
         question={texts.moneyQuestion}
-        headline={texts.ouguiya(money.net)}
+        headline={<Money value={money.net} />}
         detail={texts.moneyDetail(money.revenue, money.spending)}
         tone={money.net < 0 ? "var(--danger)" : undefined}
       />
