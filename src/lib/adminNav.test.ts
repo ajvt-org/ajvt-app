@@ -148,14 +148,21 @@ describe("the money paths", () => {
   const MONEY = Object.values(MONEY_AREAS);
 
   it("keeps the address every money screen already had", () => {
-    expect(MONEY).toEqual([
-      "/admin/payments",
-      "/admin/receipts",
-      "/admin/expenses",
-      "/admin/treasury",
-      "/admin/finance-report",
-      "/admin/finance-activities",
-    ]);
+    expect(MONEY).toEqual(
+      expect.arrayContaining([
+        "/admin/payments",
+        "/admin/receipts",
+        "/admin/expenses",
+        "/admin/treasury",
+        "/admin/finance-report",
+        "/admin/finance-activities",
+      ]),
+    );
+  });
+
+  it("gives the supporters board an address of its own and adds no other", () => {
+    expect(MONEY_AREAS.supporters).toBe("/admin/supporters");
+    expect(MONEY).toHaveLength(7);
   });
 
   it("still opens the three a members admin has always had", () => {
@@ -163,6 +170,13 @@ describe("the money paths", () => {
       expect(canOpen("MEMBERS", area), area).toBe(true);
       expect(canOpen("ACTIVITIES", area), area).toBe(true);
     }
+  });
+
+  it("opens the supporters board to the roles that already hold the payments", () => {
+    expect(canOpen("MEMBERS", MONEY_AREAS.supporters)).toBe(true);
+    expect(canOpen("ACTIVITIES", MONEY_AREAS.supporters)).toBe(true);
+    expect(canOpen("QUIZ", MONEY_AREAS.supporters)).toBe(false);
+    expect(canOpen("ACTIVITY", MONEY_AREAS.supporters)).toBe(false);
   });
 
   it("still refuses the two that were never granted", () => {
