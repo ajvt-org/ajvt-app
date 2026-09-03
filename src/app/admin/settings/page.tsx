@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { defaultSettings, type AppSettingsValues } from "@/lib/settings";
 import PageLoading from "@/components/PageLoading";
 import DataExport from "./DataExport";
+import PaymentMethodManager from "@/components/admin/PaymentMethodManager";
 import SettingsFieldInput from "./SettingsFieldInput";
 import { SETTINGS_FIELDS } from "./settingsFields";
 import { settingsPage } from "@/lib/texts";
@@ -52,6 +53,8 @@ export default function AdminSettingsPage() {
       </h1>
 
       <DataExport />
+
+      <PaymentMethodManager />
 
       <form onSubmit={save} className="card p-5 space-y-4">
         {SETTINGS_FIELDS.map((field) => (

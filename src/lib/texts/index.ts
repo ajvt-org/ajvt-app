@@ -65,6 +65,7 @@ export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
 export { quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
+export { paymentMethodManager } from "./paymentMethods";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,

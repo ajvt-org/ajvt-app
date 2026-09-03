@@ -146,3 +146,10 @@ export const SUSPENSION: CountedNoun = {
   few: "إيقافات",
   many: "إيقافاً",
 };
+
+export const RECORD: CountedNoun = {
+  one: "سجل",
+  two: "سجلان",
+  few: "سجلات",
+  many: "سجلاً",
+};
