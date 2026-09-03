@@ -98,6 +98,51 @@ describe("recording a support payment by hand", () => {
     expect(bodyOf(fetchMock).userId).toBe("u1");
   });
 
+  it("takes the name from the account instead of asking for one", async () => {
+    const fetchMock = mockPost();
+    show();
+    await userEvent.type(screen.getByLabelText(/المبلغ/), "2000");
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
+    await userEvent.click(screen.getByText("أبوبكر لمرابط"));
+
+    const field = screen.getByLabelText(/اسم المتبرع/) as HTMLInputElement;
+    expect(field.value).toBe("أبوبكر لمرابط");
+    expect(field.readOnly).toBe(true);
+
+    await userEvent.click(screen.getByText(manualDonation.submit));
+    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر لمرابط");
+  });
+
+  it("lets the account name win over a name already typed", async () => {
+    const fetchMock = mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
+    await userEvent.click(screen.getByText("أبوبكر لمرابط"));
+    await userEvent.click(screen.getByText(manualDonation.submit));
+
+    expect(bodyOf(fetchMock).donorName).toBe("أبوبكر لمرابط");
+  });
+
+  it("gives the typed name back when the account is cleared", async () => {
+    mockPost();
+    show();
+    await fillIn();
+
+    await userEvent.click(screen.getByText(manualDonation.account, { selector: "span" }));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "ابو");
+    await userEvent.click(screen.getByText("أبوبكر لمرابط"));
+    await userEvent.click(screen.getByText(manualDonation.clearAccount));
+
+    const field = screen.getByLabelText(/اسم المتبرع/) as HTMLInputElement;
+    expect(field.value).toBe("ابو");
+    expect(field.readOnly).toBe(false);
+  });
+
   it("confirms the person who was picked, not the first of the list", async () => {
     const fetchMock = mockPost();
     show([ACCOUNT, SECOND]);

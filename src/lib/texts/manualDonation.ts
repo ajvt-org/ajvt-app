@@ -4,6 +4,7 @@ export const manualDonation = {
   donorPhoto: "صورة المتبرع (اختياري)",
   proof: "إثبات الدفع (اختياري — يمكن إضافته لاحقاً)",
   donorName: "اسم المتبرع",
+  donorNameFromAccount: "الاسم مأخوذ من حساب العضو المرتبط",
   phone: "رقم الهاتف (اختياري)",
   amount: "المبلغ (MRU)",
   paymentMethod: "طريقة الدفع",

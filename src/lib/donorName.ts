@@ -20,9 +20,10 @@ export const DONOR_ACCOUNT_SELECT = {
   supportNameConfidential: true,
 } as const;
 
-export function typedDonorName(donor: DonorAttribution, viewer: SupportViewer): string | null {
-  if (!seesSupporterName(viewer, donor)) return null;
-  return donor.donorName?.trim() || null;
+export function nameAdoptedOnLink(
+  account: { fullName: string | null } | null | undefined,
+): string | null {
+  return account?.fullName?.trim() || null;
 }
 
 export function attributedDonorName(donor: DonorAttribution, viewer: SupportViewer): string | null {

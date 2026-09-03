@@ -35,7 +35,6 @@ function AdminPaymentsPageInner() {
   const [adding, setAdding] = useState(false);
 
   const actions = useDonationActions({
-    members,
     patch: (id, changes) =>
       setProofs((prev) =>
         prev.map((p) => (p.id === id && p.kind === "DONATION" ? { ...p, ...changes } : p)),

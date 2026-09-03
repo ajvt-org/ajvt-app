@@ -126,12 +126,11 @@ export default function DonationEditForm({
       />
 
       <label className="block text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
-        {linked ? donationEdit.storedName : donationEdit.donorName}
-        {linked && <span className="font-normal"> — {donationEdit.storedNameHint}</span>}
+        {donationEdit.donorName}
       </label>
       <input
         type="text"
-        aria-label={linked ? donationEdit.storedName : donationEdit.donorName}
+        aria-label={donationEdit.donorName}
         placeholder={donationEdit.donorName}
         value={form.donorName}
         onChange={(e) => set({ donorName: e.target.value })}
