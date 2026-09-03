@@ -130,6 +130,30 @@ describe("TeamCard", () => {
     expect(css).toContain("details[open] > .disclosure-summary .summary-logo");
   });
 
+  it("sits the summary glyphs on the line the name sets", () => {
+    const { container } = render(
+      <TeamCard
+        team={team([entry("p1", "أحمد ولد محمد")])}
+        shownName="فريق النجم"
+        teamSize={1}
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    const head = container.querySelector(".disclosure-summary > div") as HTMLElement;
+    expect(head.innerHTML).not.toContain("mt-2");
+    for (const glyph of head.querySelectorAll(":scope > span")) {
+      expect(glyph.className).toContain("h-6");
+      expect(glyph.className).toContain("items-center");
+    }
+    const name = screen.getByText("فريق النجم");
+    expect(name.className).toContain("leading-6");
+    expect(name.className).toContain("optical-name");
+  });
+
   it("renames the team from the card", () => {
     show([entry("p1", "أحمد ولد محمد")], 1);
 
