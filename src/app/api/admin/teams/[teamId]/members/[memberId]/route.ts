@@ -5,6 +5,7 @@ import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { members } from "@/lib/messages";
+import { releaseCaptain } from "@/lib/teamCaptainServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]/members/[memberId]",
@@ -71,7 +72,10 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: members.requestNotFound }, { status: 404 });
     }
 
-    await prisma.teamMember.delete({ where: { id: existing.id } });
+    await prisma.$transaction(async (tx) => {
+      await releaseCaptain(tx, teamId, memberId);
+      await tx.teamMember.delete({ where: { id: existing.id } });
+    });
     await logAction(
       session.username,
       "REMOVE_TEAM_MEMBER",

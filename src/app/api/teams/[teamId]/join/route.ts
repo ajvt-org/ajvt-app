@@ -6,6 +6,7 @@ import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
 import { members, tournament } from "@/lib/messages";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { releaseCaptain } from "@/lib/teamCaptainServer";
 
 export const POST = withRoute(
   "POST /api/teams/[teamId]/join",
@@ -48,6 +49,7 @@ export const POST = withRoute(
 
     await prisma.$transaction(async (tx) => {
       if (existingMembership) {
+        await releaseCaptain(tx, existingMembership.teamId, session.userId);
         await tx.teamMember.delete({ where: { id: existingMembership.id } });
       }
       await tx.teamMember.create({
@@ -78,7 +80,10 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: tournament.teamChoiceLocked }, { status: 403 });
     }
 
-    await prisma.teamMember.deleteMany({ where: { teamId, userId: session.userId } });
+    await prisma.$transaction(async (tx) => {
+      await releaseCaptain(tx, teamId, session.userId);
+      await tx.teamMember.deleteMany({ where: { teamId, userId: session.userId } });
+    });
 
     return NextResponse.json({ ok: true });
   },

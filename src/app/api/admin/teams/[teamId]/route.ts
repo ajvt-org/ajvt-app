@@ -4,20 +4,26 @@ import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { tournament } from "@/lib/messages";
+import { captainIsOnTheRoster } from "@/lib/teamCaptainServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/teams/[teamId]",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const { teamId } = await params;
     const session = await requireTeamAccess(teamId);
-    const { name, groupId, logo } = await req.json();
+    const { name, groupId, logo, captainUserId } = await req.json();
 
     const existing = await prisma.team.findUnique({ where: { id: teamId } });
     if (!existing) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
-    const data: { name?: string; groupId?: string | null; logo?: string | null } = {};
+    const data: {
+      name?: string;
+      groupId?: string | null;
+      logo?: string | null;
+      captainUserId?: string | null;
+    } = {};
 
     if (name !== undefined) {
       if (!name.trim())
@@ -58,6 +64,13 @@ export const PATCH = withRoute(
     if (logo !== undefined) {
       data.logo = logo || null;
     }
+    if (captainUserId !== undefined) {
+      const nextCaptain = captainUserId || null;
+      if (nextCaptain && !(await captainIsOnTheRoster(prisma, teamId, nextCaptain))) {
+        return NextResponse.json({ error: tournament.captainNotInTeam }, { status: 400 });
+      }
+      data.captainUserId = nextCaptain;
+    }
 
     const team = await prisma.team.update({ where: { id: teamId }, data });
     await logAction(session.username, "UPDATE_TEAM", team.name, {
@@ -65,7 +78,12 @@ export const PATCH = withRoute(
       targetType: "Team",
       targetId: team.id,
       before: existing,
-      after: { name: team.name, groupId: team.groupId, logo: team.logo },
+      after: {
+        name: team.name,
+        groupId: team.groupId,
+        logo: team.logo,
+        captainUserId: team.captainUserId,
+      },
     });
 
     return NextResponse.json({ team });
