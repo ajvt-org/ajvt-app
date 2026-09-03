@@ -1,6 +1,5 @@
 import Icon from "@/components/Icon";
-import IconLabel from "@/components/IconLabel";
-import TeamLogo from "./TeamLogo";
+import TeamCardHead from "./TeamCardHead";
 import SquadList, { type SquadPlayer } from "./SquadList";
 import { holdsViewer, viewerTeamFirst } from "@/lib/squad";
 import { publicTournament as texts } from "@/lib/texts";
@@ -13,6 +12,14 @@ type Team = {
   members: { member: SquadPlayer }[];
 };
 
+const HEAD = "font-bold text-sm flex items-center gap-1.5";
+
+function cardStyle(mine: boolean) {
+  return mine
+    ? { background: "var(--mint-50)", borderInlineStart: "3px solid var(--mint-600)" }
+    : undefined;
+}
+
 export default function TeamsGrid({
   teams,
   viewerId = null,
@@ -22,42 +29,26 @@ export default function TeamsGrid({
 }) {
   return (
     <div className="space-y-2">
-      {viewerTeamFirst(teams, viewerId).map((team) => {
-        const mine = holdsViewer(team, viewerId);
-        return (
-          <details
-            key={team.id}
-            className="card p-3"
-            style={
-              mine
-                ? { background: "var(--mint-50)", borderInlineStart: "3px solid var(--mint-600)" }
-                : undefined
-            }
+      {viewerTeamFirst(teams, viewerId).map((team) => (
+        <details key={team.id} className="card p-3" style={cardStyle(holdsViewer(team, viewerId))}>
+          <summary
+            className={`disclosure-summary cursor-pointer ${HEAD}`}
+            style={{ color: "var(--text-main)" }}
           >
-            <summary
-              className="disclosure-summary font-bold text-sm cursor-pointer flex items-center gap-1.5"
-              style={{ color: "var(--text-main)" }}
-            >
-              <TeamLogo logo={team.logo} name={team.name} size={20} />
-              <span className="min-w-0 flex-1" style={{ wordBreak: "break-word" }}>
-                {team.name}
-              </span>
-              <span
-                className="shrink-0 text-xs"
-                style={{ color: "var(--text-muted)", fontWeight: 400 }}
-              >
-                <IconLabel name="users">{texts.playerCount(team.members.length)}</IconLabel>
-              </span>
-              <Icon name="chevronDown" size={14} className="disclosure-chevron" />
-            </summary>
-            <SquadList
-              players={team.members.map((entry) => entry.member)}
-              captainId={team.captainUserId}
-              viewerId={viewerId}
+            <TeamCardHead
+              logo={team.logo}
+              name={team.name}
+              note={texts.playerCount(team.members.length)}
             />
-          </details>
-        );
-      })}
+            <Icon name="chevronDown" size={14} className="disclosure-chevron" />
+          </summary>
+          <SquadList
+            players={team.members.map((entry) => entry.member)}
+            captainId={team.captainUserId}
+            viewerId={viewerId}
+          />
+        </details>
+      ))}
     </div>
   );
 }

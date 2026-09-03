@@ -106,6 +106,7 @@ const KEPT_CLEAN = [
   "src/components/tournament/MatchFixture.tsx",
   "src/components/tournament/PlayerAvatar.tsx",
   "src/components/tournament/TeamsGrid.tsx",
+  "src/components/tournament/TeamCardHead.tsx",
   "src/components/tournament/SquadList.tsx",
   "src/lib/squad.ts",
   "src/components/tournament/TodayBand.tsx",
