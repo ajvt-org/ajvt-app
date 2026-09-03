@@ -105,7 +105,7 @@ describe("TeamCard", () => {
   it("renames the team from the card", () => {
     show([entry("p1", "أحمد ولد محمد")], 1);
 
-    fireEvent.click(screen.getByLabelText("تعديل اسم الفريق"));
+    fireEvent.click(screen.getByText("تعديل اسم الفريق"));
     fireEvent.change(screen.getByDisplayValue("فريق النجم"), {
       target: { value: "فريق الوحدة" },
     });
@@ -143,5 +143,54 @@ describe("TeamCard", () => {
 
     expect(screen.getByText("لا يوجد لاعبون بعد")).toBeDefined();
     expect(screen.getByText("0 / 4")).toBeDefined();
+  });
+
+  it("starts closed and opens on the summary", () => {
+    show([entry("p1", "أحمد ولد محمد")], 1);
+
+    const card = document.querySelector("details") as HTMLDetailsElement;
+    expect(card.open).toBe(false);
+
+    fireEvent.click(screen.getByText("فريق النجم"));
+    expect(card.open).toBe(true);
+  });
+
+  it("keeps the name, the count and the delete button in the closed summary", () => {
+    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي", "PENDING")], 4);
+
+    const summary = document.querySelector("summary") as HTMLElement;
+    expect(summary.textContent).toContain("فريق النجم");
+    expect(summary.textContent).toContain("2 / 4");
+    expect(summary.textContent).toContain("1 بانتظار الموافقة");
+    expect(summary.querySelector('[aria-label="حذف الفريق"]')).not.toBeNull();
+  });
+
+  it("deletes the team without opening the card", () => {
+    show([entry("p1", "أحمد ولد محمد")], 1);
+
+    const card = document.querySelector("details") as HTMLDetailsElement;
+    fireEvent.click(screen.getByLabelText("حذف الفريق"));
+
+    expect(handlers.onDeleteTeam).toHaveBeenCalled();
+    expect(card.open).toBe(false);
+  });
+
+  it("lets a long team name wrap instead of clipping it", () => {
+    cleanup();
+    render(
+      <TeamCard
+        team={team([entry("p1", "أحمد ولد محمد")])}
+        shownName="فريق الحسن احمدو يحي البناني للشباب"
+        teamSize={1}
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    const name = screen.getByText("فريق الحسن احمدو يحي البناني للشباب");
+    expect(name.className).not.toContain("truncate");
+    expect(name.style.overflowWrap).toBe("anywhere");
   });
 });
