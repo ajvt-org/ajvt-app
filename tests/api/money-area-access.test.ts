@@ -5,6 +5,7 @@ import { MONEY_AREAS } from "@/lib/adminNav";
 import { GET as PAYMENT_PROOFS } from "@/app/api/admin/payment-proofs/route";
 import { GET as PROOF_REUSE } from "@/app/api/admin/proof-reuse/route";
 import { GET as RECEIPTS } from "@/app/api/admin/receipts/route";
+import { GET as SUPPORTERS } from "@/app/api/admin/supporters/route";
 import { GET as EXPENSES } from "@/app/api/admin/expenses/route";
 import { GET as FINANCE_TAGS } from "@/app/api/admin/finance-tags/route";
 import { GET as FINANCE_SUMMARY } from "@/app/api/admin/finance/summary/route";
@@ -34,6 +35,11 @@ const ROUTES: MoneyRoute[] = [
     area: MONEY_AREAS.payments,
   },
   { url: "/api/admin/receipts", handler: RECEIPTS as Handler, area: MONEY_AREAS.receipts },
+  {
+    url: "/api/admin/supporters",
+    handler: SUPPORTERS as Handler,
+    area: MONEY_AREAS.supporters,
+  },
   { url: "/api/admin/expenses", handler: EXPENSES as Handler, area: MONEY_AREAS.expenses },
   { url: "/api/admin/finance-tags", handler: FINANCE_TAGS as Handler, area: MONEY_AREAS.expenses },
   {
@@ -58,11 +64,18 @@ const ROUTES: MoneyRoute[] = [
   },
 ];
 
+const SHARED = [
+  MONEY_AREAS.payments,
+  MONEY_AREAS.receipts,
+  MONEY_AREAS.supporters,
+  MONEY_AREAS.expenses,
+];
+
 const GRANTED: Record<string, string[]> = {
   SUPER: Object.values(MONEY_AREAS),
   OWNER: Object.values(MONEY_AREAS),
-  MEMBERS: [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses],
-  ACTIVITIES: [MONEY_AREAS.payments, MONEY_AREAS.receipts, MONEY_AREAS.expenses],
+  MEMBERS: SHARED,
+  ACTIVITIES: SHARED,
   QUIZ: [],
   ACTIVITY: [],
 };

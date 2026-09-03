@@ -51,7 +51,7 @@ function show(over: Partial<Proof> = {}, members: MemberOption[] = []) {
     <ProofCard
       proof={proofOf(over)}
       members={members}
-      activities={[]}
+      destinations={[]}
       financeTags={[]}
       busy={false}
       onReview={vi.fn()}
@@ -120,9 +120,18 @@ describe("the other kinds on the same list", () => {
     expect(screen.getByText(paymentCard.statusPending).textContent).toBe(paymentCard.statusPending);
   });
 
-  it("shows the name typed by hand when it differs from the one on show", () => {
+  it("drops the name typed by hand once the gift is linked to an account", () => {
     mockFetch([]);
     show({ memberName: "أبوبكر لمرابط", donorName: "ابو", userId: "u1" });
+
+    expect(screen.getByText("أبوبكر لمرابط")).toBeTruthy();
+    expect(screen.queryByText(/الاسم المكتوب/)).toBeNull();
+    expect(screen.queryByText("ابو")).toBeNull();
+  });
+
+  it("shows the name typed by hand while the gift is linked to nobody", () => {
+    mockFetch([]);
+    show({ memberName: "متبرع مجهول", donorName: "ابو", userId: null });
 
     expect(screen.getByText(paymentCard.storedName("ابو"))).toBeTruthy();
   });
@@ -132,6 +141,28 @@ describe("the other kinds on the same list", () => {
     show({ memberName: "أحمد", donorName: "أحمد" });
 
     expect(screen.queryByText(/الاسم المكتوب/)).toBeNull();
+  });
+
+  it("names the quiz a gift was aimed at", () => {
+    mockFetch([]);
+    show({ competitionId: "c1", competitionName: "مسابقة رمضان" });
+
+    expect(screen.getByText("مسابقة رمضان")).toBeTruthy();
+    expect(screen.queryByText(paymentCard.generalSupport)).toBeNull();
+  });
+
+  it("names the activity ahead of anything else when one is set", () => {
+    mockFetch([]);
+    show({ activityTitle: "الدوري", competitionId: null, competitionName: null });
+
+    expect(screen.getByText("الدوري")).toBeTruthy();
+  });
+
+  it("falls back to general support when the gift is aimed nowhere", () => {
+    mockFetch([]);
+    show({ activityTitle: null, competitionName: null });
+
+    expect(screen.getByText(paymentCard.generalSupport)).toBeTruthy();
   });
 
   it("says when a gift is hidden from the public board", () => {

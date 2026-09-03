@@ -71,7 +71,7 @@ function show(over: Partial<Proof> = {}, linkedMember: MemberOption | undefined 
   render(
     <DonationEditForm
       proof={proofOf(over)}
-      activities={[]}
+      destinations={[]}
       linkedMember={linkedMember}
       onCancel={vi.fn()}
       onRelink={onRelink}
@@ -95,7 +95,7 @@ describe("editing a support payment", () => {
     const fetchMock = mockPatch();
     show({ userId: "u1" });
 
-    const field = screen.getByLabelText(donationEdit.storedName);
+    const field = screen.getByLabelText(donationEdit.donorName);
     await userEvent.clear(field);
     await userEvent.type(field, "أبوبكر");
     await userEvent.click(screen.getByText(donationEdit.save));
@@ -108,13 +108,6 @@ describe("editing a support payment", () => {
 
     expect(screen.getByText(donationEdit.shownAs)).toBeTruthy();
     expect(screen.getAllByText("أبوبكر لمرابط").length).toBeGreaterThan(0);
-  });
-
-  it("calls the typed name a fallback when an account is linked", () => {
-    show({ userId: "u1" });
-
-    expect(screen.getByLabelText(donationEdit.storedName)).toBeTruthy();
-    expect(screen.getByText(new RegExp(donationEdit.storedNameHint))).toBeTruthy();
   });
 
   it("asks for a name only when nothing is linked", async () => {

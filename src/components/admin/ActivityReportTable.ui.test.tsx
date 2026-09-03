@@ -7,7 +7,8 @@ import type { ActivityReportRow } from "@/lib/activityReport";
 afterEach(cleanup);
 
 const row = (over: Partial<ActivityReportRow> = {}): ActivityReportRow => ({
-  activityId: "a1",
+  key: "a1",
+  kind: "activity",
   title: "بطولة الصيف",
   income: 900,
   spending: 400,
@@ -28,7 +29,7 @@ describe("ActivityReportTable", () => {
   it("gives every activity a row", () => {
     const { container } = render(
       <ActivityReportTable
-        rows={[row(), row({ activityId: "a2", title: "القافلة الصحية" })]}
+        rows={[row(), row({ key: "a2", title: "القافلة الصحية" })]}
         totals={{ income: 1800, spending: 800, balance: 1000 }}
       />,
     );
@@ -39,7 +40,7 @@ describe("ActivityReportTable", () => {
   it("keys the row with no activity without colliding", () => {
     const { container } = render(
       <ActivityReportTable
-        rows={[row(), row({ activityId: null, title: "بلا نشاط" })]}
+        rows={[row(), row({ key: "general", kind: "general", title: "بلا نشاط" })]}
         totals={{ income: 1800, spending: 800, balance: 1000 }}
       />,
     );
@@ -51,7 +52,7 @@ describe("ActivityReportTable", () => {
   it("names a surplus and a deficit", () => {
     render(
       <ActivityReportTable
-        rows={[row(), row({ activityId: "a2", title: "القافلة", balance: -200 })]}
+        rows={[row(), row({ key: "a2", title: "القافلة", balance: -200 })]}
         totals={{ income: 900, spending: 600, balance: 300 }}
       />,
     );

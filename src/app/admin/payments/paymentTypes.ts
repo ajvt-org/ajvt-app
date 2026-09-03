@@ -16,6 +16,8 @@ export interface Proof {
   userId?: string | null;
   anonymous?: boolean;
   activityId?: string | null;
+  competitionId?: string | null;
+  competitionName?: string | null;
   donorName?: string | null;
   donorPhone?: string | null;
   donorPhoto?: string | null;
@@ -41,6 +43,7 @@ export interface DonationResponse {
     userId: string | null;
     anonymous: boolean;
     activityId: string | null;
+    competitionId: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -55,11 +58,6 @@ export interface MemberOption {
   village: string;
   age: string | null;
   photo: string | null;
-}
-
-export interface ActivityOption {
-  id: string;
-  title: string;
 }
 
 export const STATUS_CLASS: Record<string, string> = {

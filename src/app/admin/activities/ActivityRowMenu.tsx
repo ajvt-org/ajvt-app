@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Icon, { type IconName } from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { placeRowMenu, type MenuSpot } from "./rowMenuPosition";
 
 export interface RowMenuItem {
   key: string;
@@ -13,9 +14,29 @@ export interface RowMenuItem {
   onPick?: () => void;
 }
 
+const MEASURING = { position: "fixed", left: 0, top: 0, visibility: "hidden" } as const;
+
 export default function ActivityRowMenu({ label, items }: { label: string; items: RowMenuItem[] }) {
   const [open, setOpen] = useState(false);
+  const [spot, setSpot] = useState<MenuSpot | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const anchor = box.current;
+    const menu = panel.current;
+    if (!anchor || !menu) return;
+    const rect = anchor.getBoundingClientRect();
+    const page = document.documentElement;
+    const at = placeRowMenu(
+      rect,
+      { width: menu.offsetWidth, height: menu.offsetHeight },
+      { width: page.clientWidth, height: page.clientHeight },
+      getComputedStyle(anchor).direction === "rtl",
+    );
+    setSpot({ left: at.left - rect.left, top: at.top - rect.top });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -32,7 +53,10 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
     <div ref={box} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((shown) => !shown)}
+        onClick={() => {
+          setSpot(null);
+          setOpen((shown) => !shown);
+        }}
         aria-label={label}
         aria-expanded={open}
         className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -43,11 +67,12 @@ export default function ActivityRowMenu({ label, items }: { label: string; items
 
       {open && (
         <div
+          ref={panel}
           className="absolute z-20 rounded-xl overflow-hidden"
           style={{
-            insetInlineStart: 0,
-            top: "2.25rem",
-            minWidth: "11rem",
+            ...(spot ? { left: `${spot.left}px`, top: `${spot.top}px` } : MEASURING),
+            width: "11rem",
+            maxWidth: "calc(100vw - 1rem)",
             background: "white",
             border: "1px solid var(--mint-100)",
             boxShadow: "0 8px 24px rgba(26,63,51,0.14)",

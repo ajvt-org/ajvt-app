@@ -81,6 +81,13 @@ function Row({
                 </IconLabel>
               </p>
             )}
+            {expense.competition && (
+              <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
+                <IconLabel name="quiz" size={11}>
+                  {expense.competition.name}
+                </IconLabel>
+              </p>
+            )}
             {expense.tags.length > 0 && (
               <div className="mt-1.5">
                 <FinanceTagChips tags={expense.tags} />

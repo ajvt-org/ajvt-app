@@ -63,6 +63,7 @@ model User {
   pushSubscriptions       PushSubscription[]
   notificationPrefs       NotificationPreference[]
   teamFollows             TeamFollow[]
+  captainOf               Team[]                   @relation("TeamCaptain")
   mvpVotes                MvpVote[]
   quizAttempts            QuizAttempt[]
   quizParticipations      QuizParticipant[]
@@ -159,27 +160,30 @@ model Group {
 }
 
 model Team {
-  id           String                 @id @default(cuid())
-  activityId   String
-  activity     Activity               @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  groupId      String?
-  group        Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  name         String
-  autoNamed    Boolean                @default(false)
-  logo         String?
-  createdAt    DateTime               @default(now())
-  members      TeamMember[]
-  homeMatches  Match[]                @relation("HomeTeam")
-  awayMatches  Match[]                @relation("AwayTeam")
-  forfeitWins  Match[]                @relation("ForfeitWinner")
-  goals        MatchGoal[]
-  bookings     MatchBooking[]
-  penaltyKicks MatchPenaltyKick[]
-  followers    TeamFollow[]
-  chosenBy     ActivityRegistration[] @relation("ChosenTeam")
+  id            String                 @id @default(cuid())
+  activityId    String
+  activity      Activity               @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  groupId       String?
+  group         Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  name          String
+  autoNamed     Boolean                @default(false)
+  logo          String?
+  captainUserId String?
+  captain       User?                  @relation("TeamCaptain", fields: [captainUserId], references: [id], onDelete: SetNull)
+  createdAt     DateTime               @default(now())
+  members       TeamMember[]
+  homeMatches   Match[]                @relation("HomeTeam")
+  awayMatches   Match[]                @relation("AwayTeam")
+  forfeitWins   Match[]                @relation("ForfeitWinner")
+  goals         MatchGoal[]
+  bookings      MatchBooking[]
+  penaltyKicks  MatchPenaltyKick[]
+  followers     TeamFollow[]
+  chosenBy      ActivityRegistration[] @relation("ChosenTeam")
 
   @@index([activityId])
   @@index([groupId])
+  @@index([captainUserId])
 }
 
 model TeamFollow {
@@ -418,10 +422,9 @@ model Village {
 model Donation {
   id             String       @id @default(cuid())
   // Whether the giver asked to stay unnamed. Read on its own: donorName is
-  // kept so an admin can still see who gave, and so unlinking an account
-  // restores the name that was typed in.
+  // kept so an admin can still see who gave.
   anonymous      Boolean      @default(false)
-  donorName      String? // the name typed in by hand, kept as the fallback when no account is linked
+  donorName      String? // the name on the gift — typed by hand, or taken from the account the moment one is linked
   donorPhone     String? // recorded for manually-entered donors with no app account, or as a general contact note
   donorPhoto     String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
   amount         Int?
@@ -437,31 +440,37 @@ model Donation {
   tags           FinanceTag[]
   activityId     String?
   activity       Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId  String?
+  competition    Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 // Manually-entered outgoing spending (association expenses) — no in-app
 // source generates these; an admin logs and edits every row by hand.
 model Expense {
-  id         String       @id @default(cuid())
-  label      String
-  amount     Int
-  method     String?
-  note       String?
-  proof      String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
-  date       DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
-  createdBy  String // admin username, plain string like AuditLog.adminUsername — not a relation
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  tags       FinanceTag[]
-  activityId String?
-  activity   Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  id            String       @id @default(cuid())
+  label         String
+  amount        Int
+  method        String?
+  note          String?
+  proof         String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
+  date          DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
+  createdBy     String // admin username, plain string like AuditLog.adminUsername — not a relation
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId String?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([date])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so
@@ -654,6 +663,9 @@ model Competition {
   rounds             QuizRound[]
   boards             QuizBoard[]
   participants       QuizParticipant[]
+  payments           Payment[]
+  expenses           Expense[]
+  donations          Donation[]
   startedAt          DateTime?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -760,34 +772,37 @@ enum PaymentPurpose {
 }
 
 model Payment {
-  id         String         @id @default(cuid())
-  purpose    PaymentPurpose
-  amount     Int
-  feeApplied Int?
-  year       Int?
-  method     String?
-  proof      String?
-  status     ReviewStatus   @default(PENDING)
-  anonymous  Boolean        @default(false)
-  donorName  String?
-  donorPhoto String? // donor with no linked Member — shown on the honour board
-  donorPhone String? // contact note for a manually entered donor with no account
-  userId     String?
-  user       User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tags       FinanceTag[]
-  activityId String?
-  activity   Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  recordedBy String?
-  reviewedBy String?
-  reviewedAt DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  purpose       PaymentPurpose
+  amount        Int
+  feeApplied    Int?
+  year          Int?
+  method        String?
+  proof         String?
+  status        ReviewStatus   @default(PENDING)
+  anonymous     Boolean        @default(false)
+  donorName     String?
+  donorPhoto    String? // donor with no linked Member — shown on the honour board
+  donorPhone    String? // contact note for a manually entered donor with no account
+  userId        String?
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags          FinanceTag[]
+  activityId    String?
+  activity      Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId String?
+  competition   Competition?   @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  recordedBy    String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   receipt Receipt?
 
   @@index([userId, year, purpose])
   @@index([status])
   @@index([activityId])
+  @@index([competitionId])
 }
 
 enum ReceiptStatus {

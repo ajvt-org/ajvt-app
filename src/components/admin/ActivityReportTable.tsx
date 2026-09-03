@@ -39,27 +39,30 @@ export default function ActivityReportTable({
       <table className="w-full text-sm">
         <thead>
           <tr style={{ color: "var(--text-muted)" }}>
-            <th className="text-right font-normal py-1">{texts.activity}</th>
-            <th className="text-left font-normal py-1">{texts.income}</th>
-            <th className="text-left font-normal py-1">{texts.spending}</th>
-            <th className="text-left font-normal py-1">{texts.balance}</th>
-            <th className="text-left font-normal py-1">{texts.total}</th>
+            <th className="text-right font-normal py-1 px-1">{texts.activity}</th>
+            <th className="text-left font-normal py-1 px-1 whitespace-nowrap">{texts.income}</th>
+            <th className="text-left font-normal py-1 px-1 whitespace-nowrap">{texts.spending}</th>
+            <th className="text-left font-normal py-1 px-1 whitespace-nowrap">{texts.balance}</th>
+            <th className="text-left font-normal py-1 px-1 whitespace-nowrap">{texts.total}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.activityId ?? "general"}>
-              <td className="py-1">{row.title}</td>
-              <td className="py-1 text-left">
+            <tr key={row.key}>
+              <td className="py-1 px-1">{row.title}</td>
+              <td className="py-1 px-1 text-left whitespace-nowrap">
                 <Money value={row.income} digitsOnly />
               </td>
-              <td className="py-1 text-left">
+              <td className="py-1 px-1 text-left whitespace-nowrap">
                 <Money value={row.spending} digitsOnly />
               </td>
-              <td className="py-1 text-left">
+              <td className="py-1 px-1 text-left whitespace-nowrap">
                 <Amount value={row.balance} />
               </td>
-              <td className="py-1 text-left" style={{ color: "var(--text-muted)" }}>
+              <td
+                className="py-1 px-1 text-left whitespace-nowrap"
+                style={{ color: "var(--text-muted)" }}
+              >
                 {stateOf(row.balance)}
               </td>
             </tr>
@@ -67,14 +70,14 @@ export default function ActivityReportTable({
         </tbody>
         <tfoot>
           <tr className="font-bold">
-            <td className="py-1">{texts.total}</td>
-            <td className="py-1 text-left">
+            <td className="py-1 px-1">{texts.total}</td>
+            <td className="py-1 px-1 text-left whitespace-nowrap">
               <Money value={totals.income} digitsOnly />
             </td>
-            <td className="py-1 text-left">
+            <td className="py-1 px-1 text-left whitespace-nowrap">
               <Money value={totals.spending} digitsOnly />
             </td>
-            <td className="py-1 text-left">
+            <td className="py-1 px-1 text-left whitespace-nowrap">
               <Amount value={totals.balance} />
             </td>
             <td />

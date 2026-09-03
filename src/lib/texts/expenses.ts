@@ -11,8 +11,7 @@ export const expenseForm = {
   noMethod: "أخرى",
   date: "التاريخ",
   note: "ملاحظة (اختياري)",
-  activity: "النشاط (اختياري)",
-  noActivity: "بدون نشاط",
+  destination: "الوجهة (اختياري)",
   tags: "التصنيفات",
   noTags: "لا توجد تصنيفات بعد، أضفها من زر التصنيفات",
   save: "حفظ التعديل",
@@ -30,6 +29,9 @@ export const expensesPage = {
   addExpense: "إضافة مصروف",
   searchPlaceholder: "بحث بالوصف أو المبلغ...",
   filterBy: "تصفية:",
+  from: "من",
+  to: "إلى",
+  resetFilters: "إعادة تصفير الكل",
 } as const;
 
 export const financeTotals = {

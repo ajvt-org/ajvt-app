@@ -94,7 +94,7 @@ export default function ActivityReportPage() {
           <ActivityReportTable rows={report.rows} totals={report.totals} />
 
           {report.rows.map((row) => (
-            <ActivityReportBreakdown key={row.activityId ?? "general"} row={row} />
+            <ActivityReportBreakdown key={row.key} row={row} />
           ))}
         </>
       )}

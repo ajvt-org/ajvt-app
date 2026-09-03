@@ -131,7 +131,7 @@ export function ageRows(standings: AgeStanding[]): (string | number)[][] {
 }
 
 export const ACTIVITY_HEADERS = [
-  "النشاط",
+  "الوجهة",
   "دخل",
   "صرف",
   "الرصيد",

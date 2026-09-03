@@ -79,6 +79,7 @@ export interface DonationMirror {
   donorPhone: string | null;
   userId: string | null;
   activityId: string | null;
+  competitionId: string | null;
   tagIds?: string[];
 }
 
@@ -94,6 +95,7 @@ export interface MirroredDonation {
   donorPhone: string | null;
   userId: string | null;
   activityId: string | null;
+  competitionId: string | null;
 }
 
 export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]): DonationMirror {
@@ -109,6 +111,7 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
     donorPhone: donation.donorPhone,
     userId: donation.userId,
     activityId: donation.activityId,
+    competitionId: donation.competitionId,
     ...(tagIds ? { tagIds } : {}),
   };
 }
@@ -125,7 +128,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
   }
 
   const data = {
-    purpose: d.activityId ? ("ACTIVITY" as const) : ("DONATION" as const),
+    purpose: d.activityId || d.competitionId ? ("ACTIVITY" as const) : ("DONATION" as const),
     amount: d.amount,
     method: d.method,
     proof: d.proof,
@@ -136,6 +139,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     donorPhone: d.donorPhone,
     userId: d.userId,
     activityId: d.activityId,
+    competitionId: d.competitionId,
   };
 
   if (existing) {

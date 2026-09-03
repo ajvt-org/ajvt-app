@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { readActivities, readFinanceTags, readMembers, readProofs } from "./paymentsResponse";
+import { readDestinations, readFinanceTags, readMembers, readProofs } from "./paymentsResponse";
 
 const MEMBERSHIP_PROOF = {
   id: "u1",
@@ -143,9 +143,17 @@ describe("the payments the screen loads", () => {
 });
 
 describe("the rest of what the screen loads", () => {
-  it("reads the activities and the tags", () => {
-    expect(readActivities({ activities: [{ id: "a1", title: "نشاط" }] })).toEqual([
-      { id: "a1", title: "نشاط" },
+  it("reads both kinds of destination and the tags", () => {
+    expect(
+      readDestinations({
+        destinations: [
+          { id: "a1", title: "نشاط", kind: "activity" },
+          { id: "c1", title: "مسابقة", kind: "competition" },
+        ],
+      }),
+    ).toEqual([
+      { id: "a1", title: "نشاط", kind: "activity" },
+      { id: "c1", title: "مسابقة", kind: "competition" },
     ]);
     expect(readFinanceTags({ tags: [{ id: "t1", name: "تصنيف" }] })).toEqual([
       { id: "t1", name: "تصنيف" },
@@ -153,7 +161,7 @@ describe("the rest of what the screen loads", () => {
   });
 
   it("takes nothing from responses that never arrived", () => {
-    expect(readActivities(null)).toEqual([]);
+    expect(readDestinations(null)).toEqual([]);
     expect(readFinanceTags(null)).toEqual([]);
   });
 });

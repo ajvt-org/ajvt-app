@@ -69,6 +69,14 @@ export const CORRECT_ANSWERS: NounForms = {
   other: "إجابة صحيحة",
 };
 
+export const PLAYERS: NounForms = {
+  one: "لاعب واحد",
+  two: "لاعبان",
+  few: "لاعبين",
+  many: "لاعباً",
+  other: "لاعب",
+};
+
 export const DAYS: NounForms = {
   one: "يوم واحد",
   two: "يومين",

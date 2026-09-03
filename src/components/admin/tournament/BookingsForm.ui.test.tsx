@@ -46,6 +46,7 @@ const TEAMS: Team[] = [
     name: "الصقور",
     autoNamed: false,
     logo: null,
+    captainUserId: null,
     groupId: null,
     group: null,
     members: [
@@ -60,6 +61,7 @@ const TEAMS: Team[] = [
     name: "النسور",
     autoNamed: false,
     logo: null,
+    captainUserId: null,
     groupId: null,
     group: null,
     members: [],

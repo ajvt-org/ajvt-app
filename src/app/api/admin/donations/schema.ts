@@ -21,5 +21,6 @@ export const donationCreateSchema = z.object({
   donorPhoto: optionalText,
   paymentMethod: paymentMethod.nullish(),
   activityId: z.string(INVALID).nullish(),
+  competitionId: z.string(INVALID).nullish(),
   userId: accountId,
 });

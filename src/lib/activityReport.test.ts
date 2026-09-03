@@ -1,61 +1,79 @@
 import { describe, it, expect } from "vitest";
 import { activityReportRows, activityReportTotals } from "./activityReport";
+import type { MoneyDestination } from "./moneyDestination";
 
 const GENERAL = "بلا نشاط";
 
+const at = (destination: MoneyDestination) => ({
+  activityId: destination.activityId ?? null,
+  competitionId: destination.competitionId ?? null,
+});
+
 const pay = (
-  activityId: string | null,
+  destination: MoneyDestination,
   amount: number,
   extra: { tags?: string[]; receiptNumber?: string | null } = {},
 ) => ({
   at: new Date("2026-03-01"),
   amount,
-  activityId,
+  ...at(destination),
   tags: extra.tags ?? [],
   receiptNumber: extra.receiptNumber ?? null,
 });
 
-const spend = (activityId: string | null, amount: number, tags: string[] = []) => ({
+const spend = (destination: MoneyDestination, amount: number, tags: string[] = []) => ({
   at: new Date("2026-03-02"),
   amount,
-  activityId,
+  ...at(destination),
   tags,
 });
+
+const activity = (activityId: string) => ({ activityId });
+const quiz = (competitionId: string) => ({ competitionId });
+const nowhere = {};
 
 const ACTIVITIES = [
   { id: "a1", title: "بطولة الصيف" },
   { id: "a2", title: "القافلة الصحية" },
 ];
 
+const COMPETITIONS = [
+  { id: "c1", name: "مسابقة رمضان" },
+  { id: "c2", name: "مسابقة السيرة" },
+];
+
+const rowsOf = (payments: ReturnType<typeof pay>[], expenses: ReturnType<typeof spend>[] = []) =>
+  activityReportRows(ACTIVITIES, COMPETITIONS, payments, expenses, GENERAL);
+
 describe("activityReportRows", () => {
   it("gives nothing back when the period holds no movement", () => {
-    expect(activityReportRows(ACTIVITIES, [], [], GENERAL)).toHaveLength(0);
+    expect(rowsOf([], [])).toHaveLength(0);
   });
 
   it("leaves out an activity with no money either way in the period", () => {
-    const rows = activityReportRows(ACTIVITIES, [pay("a1", 500)], [], GENERAL);
-
-    expect(rows.map((r) => r.activityId)).toEqual(["a1"]);
+    expect(rowsOf([pay(activity("a1"), 500)]).map((r) => r.key)).toEqual(["a1"]);
   });
 
   it("balances what came in against what went out", () => {
-    const rows = activityReportRows(ACTIVITIES, [pay("a1", 500)], [spend("a1", 300)], GENERAL);
+    const rows = rowsOf([pay(activity("a1"), 500)], [spend(activity("a1"), 300)]);
 
     expect(rows[0]).toMatchObject({ income: 500, spending: 300, balance: 200 });
   });
 
   it("reports a deficit as a negative balance", () => {
-    const rows = activityReportRows(ACTIVITIES, [pay("a1", 100)], [spend("a1", 400)], GENERAL);
+    const rows = rowsOf([pay(activity("a1"), 100)], [spend(activity("a1"), 400)]);
 
     expect(rows[0].balance).toBe(-300);
   });
 
   it("splits the spending by tag", () => {
-    const rows = activityReportRows(
-      ACTIVITIES,
+    const rows = rowsOf(
       [],
-      [spend("a1", 300, ["نقل"]), spend("a1", 200, ["نقل"]), spend("a1", 100, ["طعام"])],
-      GENERAL,
+      [
+        spend(activity("a1"), 300, ["نقل"]),
+        spend(activity("a1"), 200, ["نقل"]),
+        spend(activity("a1"), 100, ["طعام"]),
+      ],
     );
 
     expect(rows[0].spendingByTag).toEqual([
@@ -64,59 +82,85 @@ describe("activityReportRows", () => {
     ]);
   });
 
-  it("keeps what is attached to no activity in a row of its own, last", () => {
-    const rows = activityReportRows(
-      ACTIVITIES,
-      [pay("a1", 500), pay(null, 900)],
-      [spend(null, 100)],
-      GENERAL,
-    );
+  it("keeps what is attached to nothing in a row of its own, last", () => {
+    const rows = rowsOf([pay(activity("a1"), 500), pay(nowhere, 900)], [spend(nowhere, 100)]);
 
     expect(rows.map((r) => r.title)).toEqual(["بطولة الصيف", GENERAL]);
-    expect(rows.at(-1)).toMatchObject({ activityId: null, income: 900, spending: 100 });
+    expect(rows.at(-1)).toMatchObject({ kind: "general", income: 900, spending: 100 });
   });
 
   it("drops the general row when everything is attached", () => {
-    const rows = activityReportRows(ACTIVITIES, [pay("a1", 500)], [], GENERAL);
-
-    expect(rows.every((r) => r.activityId !== null)).toBe(true);
+    expect(rowsOf([pay(activity("a1"), 500)]).every((r) => r.kind !== "general")).toBe(true);
   });
 
-  it("orders the activities by how much money moved through them", () => {
-    const rows = activityReportRows(
-      ACTIVITIES,
-      [pay("a1", 100), pay("a2", 900)],
-      [spend("a1", 50)],
-      GENERAL,
+  it("orders by how much money moved, whichever kind it moved through", () => {
+    const rows = rowsOf(
+      [pay(activity("a1"), 100), pay(quiz("c1"), 900), pay(activity("a2"), 400)],
+      [spend(activity("a1"), 50)],
     );
 
-    expect(rows.map((r) => r.activityId)).toEqual(["a2", "a1"]);
+    expect(rows.map((r) => r.key)).toEqual(["c1", "a2", "a1"]);
   });
 
   it("quotes each receipt once even when a number repeats", () => {
-    const rows = activityReportRows(
-      ACTIVITIES,
-      [
-        pay("a1", 100, { receiptNumber: "0002" }),
-        pay("a1", 200, { receiptNumber: "0001" }),
-        pay("a1", 300, { receiptNumber: "0001" }),
-        pay("a1", 400),
-      ],
-      [],
-      GENERAL,
-    );
+    const rows = rowsOf([
+      pay(activity("a1"), 100, { receiptNumber: "0002" }),
+      pay(activity("a1"), 200, { receiptNumber: "0001" }),
+      pay(activity("a1"), 300, { receiptNumber: "0001" }),
+      pay(activity("a1"), 400),
+    ]);
 
     expect(rows[0].receiptNumbers).toEqual(["0001", "0002"]);
   });
 });
 
+describe("a competition in the activity report", () => {
+  it("gets a row of its own, named after the quiz", () => {
+    const rows = rowsOf([pay(quiz("c1"), 900)], [spend(quiz("c1"), 400)]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      key: "c1",
+      kind: "competition",
+      title: "مسابقة رمضان",
+      income: 900,
+      spending: 400,
+      balance: 500,
+    });
+  });
+
+  it("does not fall into the general row, which is what made the report wrong", () => {
+    const rows = rowsOf([pay(quiz("c1"), 900)]);
+
+    expect(rows.some((r) => r.kind === "general")).toBe(false);
+  });
+
+  it("keeps each quiz apart from the others and from the activities", () => {
+    const rows = rowsOf([
+      pay(quiz("c1"), 900),
+      pay(quiz("c2"), 300),
+      pay(activity("a1"), 500),
+      pay(nowhere, 100),
+    ]);
+
+    expect(rows.map((r) => [r.key, r.income])).toEqual([
+      ["c1", 900],
+      ["a1", 500],
+      ["c2", 300],
+      ["general", 100],
+    ]);
+  });
+
+  it("leaves out a quiz no money moved through", () => {
+    expect(rowsOf([pay(quiz("c1"), 900)]).map((r) => r.key)).toEqual(["c1"]);
+  });
+});
+
 describe("activityReportTotals", () => {
-  it("adds every row up, the general one included", () => {
-    const rows = activityReportRows(
-      ACTIVITIES,
-      [pay("a1", 500), pay("a2", 300), pay(null, 200)],
-      [spend("a1", 100), spend(null, 50)],
-      GENERAL,
+  it("adds every row up, the quiz and the general one included", () => {
+    const rows = rowsOf(
+      [pay(activity("a1"), 500), pay(quiz("c1"), 300), pay(nowhere, 200)],
+      [spend(activity("a1"), 100), spend(quiz("c1"), 50)],
     );
 
     expect(activityReportTotals(rows)).toEqual({ income: 1000, spending: 150, balance: 850 });

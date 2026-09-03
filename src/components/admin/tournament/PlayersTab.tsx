@@ -6,22 +6,17 @@ import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
-import GroupsPanel from "./GroupsPanel";
-import type { Group, RosterMember, Team, TournamentFormat } from "./types";
+import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
 
 export default function PlayersTab({
   activityId,
   teams,
-  groups,
-  format,
   roster,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
-  groups: Group[];
-  format: TournamentFormat;
   roster: RosterMember[];
   onChange: () => void;
 }) {
@@ -35,7 +30,6 @@ export default function PlayersTab({
     const q = search.trim();
     return !q || m.fullName.includes(q) || (m.phone || "").includes(q);
   });
-  const hasGroups = format !== "KNOCKOUT";
 
   async function run(action: () => Promise<unknown>, done?: string) {
     setBusy(true);
@@ -55,7 +49,7 @@ export default function PlayersTab({
     await run(async () => {
       const { team } = await api.post<{ team: { id: string } }>(
         `/api/admin/activities/${activityId}/teams`,
-        { name: "", groupId: null, logo: null },
+        { name: "", logo: null },
       );
       await api.post(`/api/admin/teams/${team.id}/members`, { userId: selected });
       setSelected("");
@@ -70,16 +64,6 @@ export default function PlayersTab({
 
   return (
     <div className="space-y-4">
-      {hasGroups && (
-        <GroupsPanel
-          activityId={activityId}
-          groups={groups}
-          teams={teams}
-          onChange={onChange}
-          onError={(message) => showToast(message, "error")}
-        />
-      )}
-
       <div className="card p-4 space-y-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="user">{playersTab.heading(teams.length)}</IconLabel>
@@ -119,31 +103,6 @@ export default function PlayersTab({
                   >
                     {playersTab.acceptJoin}
                   </button>
-                )}
-                {hasGroups && (
-                  <select
-                    value={team.groupId ?? ""}
-                    onChange={(e) =>
-                      run(
-                        () =>
-                          api.patch(`/api/admin/teams/${team.id}`, {
-                            groupId: e.target.value || null,
-                          }),
-                        playersTab.moved,
-                      )
-                    }
-                    disabled={busy}
-                    aria-label={playersTab.groupOf(entry?.member.fullName ?? team.name)}
-                    className="input input-sm"
-                    style={{ width: "auto" }}
-                  >
-                    <option value="">{playersTab.noGroup}</option>
-                    {groups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
                 )}
                 <button
                   onClick={() => removePlayer(team)}

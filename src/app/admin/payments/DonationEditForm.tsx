@@ -9,11 +9,12 @@ import { money } from "@/lib/messages";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
-import ActivitySelect from "./ActivitySelect";
+import DestinationSelect from "@/components/admin/DestinationSelect";
 import MemberIdentity from "./MemberIdentity";
 import { proofFromDonation } from "./donationProof";
 import { DANGER_BOX, FIELD, PRIMARY, QUIET } from "./donationTones";
-import type { ActivityOption, DonationResponse, MemberOption, Proof } from "./paymentTypes";
+import { destinationOf, destinationValue, type DestinationOption } from "@/lib/moneyDestination";
+import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
 function initial(proof: Proof) {
   return {
@@ -22,7 +23,7 @@ function initial(proof: Proof) {
     donorPhoto: proof.donorPhoto || null,
     amount: proof.amount != null ? String(proof.amount) : "",
     paymentMethod: proof.paymentMethod || "",
-    activityId: proof.activityId || "",
+    destinationId: destinationValue(proof),
     proof: proof.proof || null,
     anonymous: proof.anonymous ?? false,
   };
@@ -30,14 +31,14 @@ function initial(proof: Proof) {
 
 export default function DonationEditForm({
   proof,
-  activities,
+  destinations,
   linkedMember,
   onCancel,
   onRelink,
   onSaved,
 }: {
   proof: Proof;
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   linkedMember?: MemberOption;
   onCancel: () => void;
   onRelink: () => void;
@@ -72,11 +73,11 @@ export default function DonationEditForm({
         donorPhone: form.donorPhone.trim() || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
-        activityId: form.activityId || null,
+        ...destinationOf(destinations, form.destinationId),
         proof: form.proof,
         anonymous: form.anonymous,
       });
-      onSaved(proofFromDonation(donation, activities));
+      onSaved(proofFromDonation(donation, destinations));
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -126,12 +127,11 @@ export default function DonationEditForm({
       />
 
       <label className="block text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
-        {linked ? donationEdit.storedName : donationEdit.donorName}
-        {linked && <span className="font-normal"> — {donationEdit.storedNameHint}</span>}
+        {donationEdit.donorName}
       </label>
       <input
         type="text"
-        aria-label={linked ? donationEdit.storedName : donationEdit.donorName}
+        aria-label={donationEdit.donorName}
         placeholder={donationEdit.donorName}
         value={form.donorName}
         onChange={(e) => set({ donorName: e.target.value })}
@@ -185,10 +185,10 @@ export default function DonationEditForm({
         ))}
       </select>
 
-      <ActivitySelect
-        activities={activities}
-        value={form.activityId}
-        onChange={(activityId) => set({ activityId })}
+      <DestinationSelect
+        destinations={destinations}
+        value={form.destinationId}
+        onChange={(destinationId) => set({ destinationId })}
         style={FIELD}
       />
 

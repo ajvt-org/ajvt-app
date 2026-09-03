@@ -6,7 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { donationCreateSchema } from "./schema";
-import { resolveDonationActivity } from "@/lib/donationActivity";
+import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { members } from "@/lib/messages";
 import { donationView } from "@/lib/donationView";
 import { logLabelFor, logSnapshotFor } from "@/lib/auditSupport";
@@ -16,8 +16,18 @@ import { money } from "@/lib/money";
 
 export const POST = withRoute("POST /api/admin/donations", async (req: NextRequest) => {
   const session = await requireAdminRole("SUPER");
-  const { donorName, donorPhone, amount, proof, donorPhoto, paymentMethod, activityId, userId } =
-    parse(donationCreateSchema, await req.json());
+  const {
+    donorName,
+    donorPhone,
+    amount,
+    proof,
+    donorPhoto,
+    paymentMethod,
+    activityId,
+    competitionId,
+    userId,
+  } = parse(donationCreateSchema, await req.json());
+  const destination = await resolveMoneyDestination({ activityId, competitionId });
 
   const giver = userId
     ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
@@ -34,7 +44,8 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       proof: proof ?? null,
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
-      activityId: await resolveDonationActivity(activityId),
+      activityId: destination.activityId,
+      competitionId: destination.competitionId,
       userId: giver?.id ?? null,
       source: giver ? "SELF" : "PUBLIC",
       status: "ACTIVE",

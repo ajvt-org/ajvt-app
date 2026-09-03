@@ -1,8 +1,3 @@
-export interface ActivityOption {
-  id: string;
-  title: string;
-}
-
 export interface Expense {
   id: string;
   label: string;
@@ -13,7 +8,8 @@ export interface Expense {
   date: string;
   createdBy: string;
   tags: { id: string; name: string }[];
-  activity: ActivityOption | null;
+  activity: { id: string; title: string } | null;
+  competition: { id: string; name: string } | null;
 }
 
 export interface NamedEntry {
@@ -68,7 +64,7 @@ export interface ExpenseForm {
   date: string;
   proof: string;
   tagIds: string[];
-  activityId: string;
+  destinationId: string;
 }
 
 export const emptyExpenseForm: ExpenseForm = {
@@ -79,7 +75,7 @@ export const emptyExpenseForm: ExpenseForm = {
   date: "",
   proof: "",
   tagIds: [],
-  activityId: "",
+  destinationId: "",
 };
 
 export const PAGE_SIZE = 30;

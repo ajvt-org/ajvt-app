@@ -5,18 +5,20 @@ import { api, errorMessage } from "@/lib/api";
 import { PAYMENT_METHODS } from "@/lib/donations";
 import { donationFormError } from "@/lib/donationFields";
 import { linkedAccount } from "@/lib/linkedAccount";
+import { nameAdoptedOnLink } from "@/lib/donorName";
 import { manualDonation } from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PhotoUpload from "@/components/PhotoUpload";
 import Sheet from "@/components/Sheet";
-import ActivitySelect from "./ActivitySelect";
+import DestinationSelect from "@/components/admin/DestinationSelect";
 import LinkMemberPanel from "./LinkMemberPanel";
 import MemberIdentity from "./MemberIdentity";
 import { proofFromDonation } from "./donationProof";
 import { DANGER_BOX, QUIET } from "./donationTones";
-import type { ActivityOption, DonationResponse, MemberOption, Proof } from "./paymentTypes";
+import { destinationOf, type DestinationOption } from "@/lib/moneyDestination";
+import type { DonationResponse, MemberOption, Proof } from "./paymentTypes";
 
 const EMPTY = {
   donorName: "",
@@ -24,17 +26,17 @@ const EMPTY = {
   amount: "",
   donorPhoto: "",
   paymentMethod: "",
-  activityId: "",
+  destinationId: "",
   proof: "",
 };
 
 export default function ManualDonationDialog({
-  activities,
+  destinations,
   members,
   onClose,
   onCreated,
 }: {
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   members: MemberOption[];
   onClose: () => void;
   onCreated: (proof: Proof) => void;
@@ -47,25 +49,28 @@ export default function ManualDonationDialog({
 
   const set = (changes: Partial<typeof EMPTY>) => setForm((p) => ({ ...p, ...changes }));
 
+  const adopted = nameAdoptedOnLink(account);
+  const donorName = adopted ?? form.donorName;
+
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
-    const invalid = donationFormError(form, true);
+    const invalid = donationFormError({ ...form, donorName }, true);
     setError(invalid);
     if (invalid) return;
 
     setSaving(true);
     try {
       const { donation } = await api.post<DonationResponse>("/api/admin/donations", {
-        donorName: form.donorName.trim(),
+        donorName: donorName.trim(),
         donorPhone: form.donorPhone.trim() || null,
         donorPhoto: form.donorPhoto || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
-        activityId: form.activityId || null,
+        ...destinationOf(destinations, form.destinationId),
         proof: form.proof || null,
         userId: account?.userId ?? null,
       });
-      onCreated(proofFromDonation(donation, activities));
+      onCreated(proofFromDonation(donation, destinations));
       onClose();
     } catch (e) {
       setError(errorMessage(e));
@@ -113,12 +118,18 @@ export default function ManualDonationDialog({
           <input
             id="manual-donor-name"
             type="text"
-            value={form.donorName}
+            value={donorName}
             onChange={(e) => set({ donorName: e.target.value })}
+            readOnly={adopted !== null}
             maxLength={50}
             required
             className="input"
           />
+          {adopted !== null && (
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              {manualDonation.donorNameFromAccount}
+            </p>
+          )}
         </div>
 
         <div>
@@ -232,11 +243,11 @@ export default function ManualDonationDialog({
           >
             {manualDonation.destination}
           </label>
-          <ActivitySelect
+          <DestinationSelect
             id="manual-activity"
-            activities={activities}
-            value={form.activityId}
-            onChange={(activityId) => set({ activityId })}
+            destinations={destinations}
+            value={form.destinationId}
+            onChange={(destinationId) => set({ destinationId })}
             className="input"
           />
         </div>

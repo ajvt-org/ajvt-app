@@ -3,12 +3,13 @@
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
 import ProofCard from "./ProofCard";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
-import type { ActivityOption, MemberOption, Proof } from "./paymentTypes";
+import type { DestinationOption } from "@/lib/moneyDestination";
+import type { MemberOption, Proof } from "./paymentTypes";
 
 export default function PaymentsList({
   proofs,
   members,
-  activities,
+  destinations,
   financeTags,
   busyId,
   onReview,
@@ -19,7 +20,7 @@ export default function PaymentsList({
 }: {
   proofs: Proof[];
   members: MemberOption[];
-  activities: ActivityOption[];
+  destinations: DestinationOption[];
   financeTags: FinanceTag[];
   busyId: string | null;
   onReview: (proof: Proof, status: "ACTIVE" | "REJECTED") => void;
@@ -36,7 +37,7 @@ export default function PaymentsList({
         <ProofCard
           proof={proof}
           members={members}
-          activities={activities}
+          destinations={destinations}
           financeTags={financeTags}
           busy={busyId === proof.id}
           onReview={(status) => onReview(proof, status)}

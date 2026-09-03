@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from "./expensesFilters";
 
-const NONE = { q: "", tagIds: [] as string[], activityId: "", dateFrom: "", dateTo: "" };
+const NONE = { q: "", tagIds: [] as string[], destinationId: "", dateFrom: "", dateTo: "" };
 
 describe("carrying the expenses filters in the address", () => {
   it("reads an empty query as no filter at all", () => {
@@ -16,7 +16,7 @@ describe("carrying the expenses filters in the address", () => {
     const chosen = {
       q: "essence",
       tagIds: ["tag-a", "tag-b"],
-      activityId: "act-1",
+      destinationId: "act-1",
       dateFrom: "2026-08-01",
       dateTo: "2026-08-31",
     };
@@ -34,6 +34,6 @@ describe("carrying the expenses filters in the address", () => {
   });
 
   it("lists exactly the keys it owns in the address", () => {
-    expect(EXPENSES_FILTER_KEYS).toEqual(["q", "tags", "activity", "from", "to"]);
+    expect(EXPENSES_FILTER_KEYS).toEqual(["q", "tags", "destination", "from", "to"]);
   });
 });

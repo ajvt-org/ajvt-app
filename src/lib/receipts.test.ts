@@ -5,6 +5,7 @@ const subject = (over: Partial<ReceiptSubject> = {}): ReceiptSubject => ({
   purpose: "DONATION",
   year: null,
   activityTitle: null,
+  competitionName: null,
   ...over,
 });
 
@@ -25,6 +26,18 @@ describe("what a receipt says it is for", () => {
 
   it("falls back to the plain label when the activity is gone", () => {
     expect(receiptTitle(subject({ purpose: "ACTIVITY", activityTitle: null }))).toBe("دعم نشاط");
+  });
+
+  it("names the quiz a gift supported", () => {
+    expect(receiptTitle(subject({ purpose: "ACTIVITY", competitionName: "مسابقة رمضان" }))).toBe(
+      "دعم مسابقة — مسابقة رمضان",
+    );
+  });
+
+  it("keeps a quiz apart from an activity rather than calling it one", () => {
+    expect(
+      receiptTitle(subject({ purpose: "ACTIVITY", competitionName: "مسابقة رمضان" })),
+    ).not.toContain("دعم نشاط");
   });
 
   it("names a plain gift", () => {

@@ -7,4 +7,5 @@ export const common = {
   tooManyAttempts: "محاولات كثيرة جداً، حاول بعد قليل",
   invalidDate: "تاريخ غير صالح",
   crossOrigin: "طلب صادر من موقع غير موثوق",
+  oneDestinationOnly: "لا يمكن توجيه المبلغ إلى نشاط ومسابقة في آن واحد",
 } as const;

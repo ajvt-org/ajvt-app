@@ -17,5 +17,6 @@ export const donationUpdateSchema = z
     proof: optionalText,
     tagIds: z.array(z.string(INVALID), INVALID).optional(),
     activityId: z.string(INVALID).nullish(),
+    competitionId: z.string(INVALID).nullish(),
   })
   .refine((v) => Object.values(v).some((field) => field !== undefined), INVALID);

@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   attributedDonorName,
   donorNameOnRecord,
+  nameAdoptedOnLink,
   publicDonorName,
-  typedDonorName,
 } from "./donorName";
 import { OWNER_ROLE, SUPER_ROLE } from "./adminRoles";
 import { PUBLIC_VIEWER } from "./supportPrivacy";
@@ -35,8 +35,7 @@ describe("donor name resolution", () => {
     expect(donorNameOnRecord(open(), ADMIN)).toBe(ACCOUNT);
   });
 
-  it("keeps the typed name available, so unlinking restores it", () => {
-    expect(typedDonorName(open(), ADMIN)).toBe(TYPO);
+  it("reads the typed name once no account carries one", () => {
     expect(donorNameOnRecord(open({ user: null }), ADMIN)).toBe(TYPO);
   });
 
@@ -75,14 +74,27 @@ describe("donor name resolution", () => {
   });
 });
 
+describe("the name a link adopts", () => {
+  it("is the name on the account being linked", () => {
+    expect(nameAdoptedOnLink({ fullName: ACCOUNT })).toBe(ACCOUNT);
+    expect(nameAdoptedOnLink({ fullName: ` ${ACCOUNT} ` })).toBe(ACCOUNT);
+  });
+
+  it("is nothing when the account carries no name", () => {
+    expect(nameAdoptedOnLink({ fullName: null })).toBeNull();
+    expect(nameAdoptedOnLink({ fullName: "   " })).toBeNull();
+  });
+
+  it("is nothing when there is no account", () => {
+    expect(nameAdoptedOnLink(null)).toBeNull();
+    expect(nameAdoptedOnLink(undefined)).toBeNull();
+  });
+});
+
 describe("a donor whose name is confidential", () => {
   it("gives an ordinary admin nothing to attribute", () => {
     expect(attributedDonorName(closed(), ADMIN)).toBeNull();
     expect(donorNameOnRecord(closed(), ADMIN)).toBe(ANON);
-  });
-
-  it("withholds the name an admin typed on the row as well as the account name", () => {
-    expect(typedDonorName(closed(), ADMIN)).toBeNull();
   });
 
   it("withholds the name from the public", () => {
@@ -91,7 +103,6 @@ describe("a donor whose name is confidential", () => {
 
   it("gives the name to the role that holds the promise", () => {
     expect(donorNameOnRecord(closed(), OWNER)).toBe(CONFIDENTIAL);
-    expect(typedDonorName(closed(), OWNER)).toBe(CONFIDENTIAL);
   });
 
   it("gives him his own name", () => {
