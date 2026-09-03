@@ -47,12 +47,12 @@ export default function RosterRow({
         aria-label={teamsTab.openCardOf(member.fullName)}
         className="flex items-start gap-2 min-w-0 grow basis-40 text-start"
       >
-        <span className="flex h-5 items-center shrink-0">
+        <span className="h-6 flex items-center shrink-0">
           <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
         </span>
         <span className="min-w-0 flex-1 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span
-            className="text-sm font-bold leading-5"
+            className="text-sm font-bold leading-6 optical-name"
             style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
           >
             {member.fullName}
