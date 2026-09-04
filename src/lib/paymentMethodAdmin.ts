@@ -111,3 +111,11 @@ export function swappedAccountPositions(
   const other = ordered[move === "up" ? at - 1 : at + 1];
   return other ? [ordered[at], other] : null;
 }
+
+export function openAccountRows(accounts: AdminAccountRow[]): AdminAccountRow[] {
+  return accounts.filter((account) => account.active && account.closedAt === null);
+}
+
+export function reachesNobody(method: AdminMethodRow): boolean {
+  return method.memberFacing && method.active && openAccountRows(method.accounts).length === 0;
+}

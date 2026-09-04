@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { paymentAccounts as messages } from "@/lib/messages";
-import { readCode, readName, swappedAccountPositions } from "@/lib/paymentMethodAdmin";
+import { readName, swappedAccountPositions } from "@/lib/paymentMethodAdmin";
 import { accountsOf } from "@/lib/paymentAccountsServer";
 
 const MAX = 30;
@@ -49,22 +49,11 @@ export const PATCH = withRoute(
       });
     }
 
-    const data: { code?: string; label?: string | null; active?: boolean } = {};
-
     if (body.code !== undefined) {
-      const code = readCode(body.code);
-      if (!code) return NextResponse.json({ error: messages.codeRequired }, { status: 400 });
-      if (code.length > MAX) {
-        return NextResponse.json({ error: messages.codeTooLong }, { status: 400 });
-      }
-      const clash = await prisma.paymentAccount.findUnique({
-        where: { methodId_code: { methodId: id, code } },
-      });
-      if (clash && clash.id !== accountId) {
-        return NextResponse.json({ error: messages.exists }, { status: 409 });
-      }
-      data.code = code;
+      return NextResponse.json({ error: messages.codeIsFixed }, { status: 400 });
     }
+
+    const data: { label?: string | null; active?: boolean } = {};
 
     if (body.label !== undefined) {
       const label = readName(body.label);

@@ -12,4 +12,7 @@ export const paymentAccounts = {
   labelTooLong: "الوصف طويل جداً (30 حرفاً كحد أقصى)",
   exists: "هذا الرقم مسجل في هذه الطريقة",
   notFound: "الرقم غير موجود",
+  alreadyClosed: "هذا الرقم مغلق بالفعل",
+  sameCode: "الرقم الجديد هو نفسه الرقم الحالي",
+  codeIsFixed: "الرقم لا يُعدَّل، استبدله برقم جديد",
 } as const;

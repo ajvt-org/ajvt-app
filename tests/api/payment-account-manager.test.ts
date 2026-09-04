@@ -180,10 +180,23 @@ describe("changing a number an admin already added", () => {
     expect(res.status).toBe(404);
   });
 
+  it("refuses to type over the number itself", async () => {
+    const { method, account } = await anAccount();
+    const res = await PATCH(
+      patch(`/api/admin/payment-methods/${method.id}/accounts/${account.id}`, { code: NEW_CODE }),
+      onAccount(method.id, account.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(
+      (await prisma.paymentAccount.findUniqueOrThrow({ where: { id: account.id } })).code,
+    ).toBe(account.code);
+  });
+
   it("writes what it was and what it became to the audit log", async () => {
     const { method, account } = await anAccount();
     await PATCH(
-      patch(`/api/admin/payment-methods/${method.id}/accounts/${account.id}`, { code: NEW_CODE }),
+      patch(`/api/admin/payment-methods/${method.id}/accounts/${account.id}`, { active: false }),
       onAccount(method.id, account.id),
     );
 
@@ -193,8 +206,8 @@ describe("changing a number an admin already added", () => {
     });
     expect(entry.targetType).toBe("PaymentAccount");
     expect(entry.targetId).toBe(account.id);
-    expect(JSON.stringify(entry.before)).toContain(account.code);
-    expect(JSON.stringify(entry.after)).toContain(NEW_CODE);
+    expect(JSON.stringify(entry.before)).toContain("true");
+    expect(JSON.stringify(entry.after)).toContain("false");
   });
 
   it("writes an entry when a number is added", async () => {

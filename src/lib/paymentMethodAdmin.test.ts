@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   adminAccountRows,
+  openAccountRows,
+  reachesNobody,
   nextAccountPosition,
   readCode,
   swappedAccountPositions,
@@ -11,6 +13,7 @@ import {
   usageByName,
 } from "./paymentMethodAdmin";
 import { payableMethods, methodNames, type MethodWithAccounts } from "./paymentMethods";
+import type { AdminMethodRow } from "./paymentMethodAdmin";
 
 function method(over: Partial<MethodWithAccounts> & { name: string }): MethodWithAccounts {
   return { id: over.name, memberFacing: true, active: true, position: 0, accounts: [], ...over };
@@ -197,5 +200,48 @@ describe("reading a number an admin typed", () => {
   it("reads nothing from anything that is not text", () => {
     expect(readCode(null)).toBe("");
     expect(readCode(12)).toBe("");
+  });
+});
+
+describe("a method that reaches nobody", () => {
+  function method(over: Partial<AdminMethodRow> = {}): AdminMethodRow {
+    return {
+      id: "m1",
+      name: "بنكيلي",
+      memberFacing: true,
+      active: true,
+      position: 1,
+      used: 0,
+      accounts: [],
+      ...over,
+    };
+  }
+
+  const open = { ...account(), used: 0 };
+
+  it("is one offered to members with nowhere to receive money", () => {
+    expect(reachesNobody(method())).toBe(true);
+  });
+
+  it("is not one that still has an open number", () => {
+    expect(reachesNobody(method({ accounts: [open] }))).toBe(false);
+  });
+
+  it("is not one whose numbers are all closed, it is one of those too", () => {
+    const closed = { ...open, closedAt: new Date(), active: false };
+    expect(reachesNobody(method({ accounts: [closed] }))).toBe(true);
+  });
+
+  it("is not the method paid in person, which was never offered", () => {
+    expect(reachesNobody(method({ memberFacing: false }))).toBe(false);
+  });
+
+  it("is not one an admin already stopped", () => {
+    expect(reachesNobody(method({ active: false }))).toBe(false);
+  });
+
+  it("counts only the numbers still open", () => {
+    const closed = { ...open, id: "a2", code: "222222", closedAt: new Date(), active: false };
+    expect(openAccountRows([open, closed]).map((row) => row.id)).toEqual([open.id]);
   });
 });
