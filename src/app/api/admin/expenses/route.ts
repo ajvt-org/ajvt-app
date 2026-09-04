@@ -13,6 +13,7 @@ import { legacyDestination, resolveShares } from "@/lib/expenseSharesServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 
 export const GET = withRoute("GET /api/admin/expenses", async () => {
   await requireArea(MONEY_AREAS.expenses);
@@ -22,6 +23,7 @@ export const GET = withRoute("GET /api/admin/expenses", async () => {
       ...EXPENSE_DESTINATION_SELECT,
       ...EXPENSE_PROOF_SELECT,
       ...EXPENSE_ALLOCATION_SELECT,
+      account: { select: { id: true, code: true, label: true } },
     },
   });
   return NextResponse.json({ expenses });
@@ -33,6 +35,7 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
     label,
     amount,
     method,
+    accountId,
     note,
     date,
     proof,
@@ -50,11 +53,15 @@ export const POST = withRoute("POST /api/admin/expenses", async (req: NextReques
   const destination = legacyDestination(shares);
   const parsedDate = date === undefined || date === null ? new Date() : new Date(date as string);
 
+  const wrongAccount = await accountIdError(method, accountId, null);
+  if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });
+
   const expense = await prisma.expense.create({
     data: {
       label,
       amount: n,
       method: method?.trim() || null,
+      accountId: accountId || null,
       note: note?.trim() || null,
       proof: leadProof(files),
       proofs: files.length ? { create: files.map((filename) => ({ filename })) } : undefined,

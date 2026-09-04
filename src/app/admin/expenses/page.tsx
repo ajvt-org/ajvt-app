@@ -48,6 +48,7 @@ function AdminExpensesPageInner() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [heldAccount, setHeldAccount] = useState<Expense["account"]>(null);
   const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
   const [formError, setFormError] = useState("");
@@ -72,6 +73,7 @@ function AdminExpensesPageInner() {
 
   function openCreate() {
     setEditingId(null);
+    setHeldAccount(null);
     setForm({ ...emptyExpenseForm, date: todayInputValue() });
     setFormError("");
     setShowForm(true);
@@ -79,10 +81,12 @@ function AdminExpensesPageInner() {
 
   function openEdit(expense: Expense) {
     setEditingId(expense.id);
+    setHeldAccount(expense.account);
     setForm({
       label: expense.label,
       amount: String(expense.amount),
       method: expense.method || "",
+      accountId: expense.accountId || "",
       note: expense.note || "",
       date: expense.date.slice(0, 10),
       proofs: expense.proofs.map((row) => row.filename),
@@ -323,6 +327,7 @@ function AdminExpensesPageInner() {
           destinations={destinations}
           editing={!!editingId}
           expenseId={editingId}
+          held={heldAccount}
           error={formError}
           saving={saving}
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}

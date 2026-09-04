@@ -14,6 +14,7 @@ import { legacyDestination, sharesForUpdate } from "@/lib/expenseSharesServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
 import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
@@ -30,6 +31,7 @@ export const PATCH = withRoute(
       label,
       amount,
       method,
+      accountId,
       note,
       date,
       proof,
@@ -44,6 +46,7 @@ export const PATCH = withRoute(
       label?: string;
       amount?: number;
       method?: string | null;
+      accountId?: string | null;
       note?: string | null;
       date?: Date;
       proof?: string | null;
@@ -55,6 +58,13 @@ export const PATCH = withRoute(
     if (label !== undefined) data.label = label;
     if (amount !== undefined) data.amount = Number(amount);
     if (method !== undefined) data.method = method?.trim() || null;
+
+    if (accountId !== undefined) {
+      const named = method !== undefined ? method : existing.method;
+      const wrong = await accountIdError(named, accountId, existing.accountId);
+      if (wrong) return NextResponse.json({ error: wrong }, { status: 400 });
+      data.accountId = accountId || null;
+    }
 
     if (note !== undefined) {
       data.note = note?.trim() || null;

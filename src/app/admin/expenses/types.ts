@@ -3,6 +3,8 @@ export interface Expense {
   label: string;
   amount: number;
   method: string | null;
+  accountId: string | null;
+  account: { id: string; code: string; label: string | null } | null;
   note: string | null;
   proof: string | null;
   proofs: { filename: string }[];
@@ -72,6 +74,7 @@ export interface ExpenseForm {
   label: string;
   amount: string;
   method: string;
+  accountId: string;
   note: string;
   date: string;
   proofs: string[];
@@ -83,6 +86,7 @@ export const emptyExpenseForm: ExpenseForm = {
   label: "",
   amount: "",
   method: "",
+  accountId: "",
   note: "",
   date: "",
   proofs: [],
