@@ -68,6 +68,7 @@ export { settingsForm, settingsPage } from "./settings";
 export {
   paymentAccountManager,
   paymentAccountPicker,
+  paymentsPage,
   renewForm,
   paymentInfoBanner,
   paymentMethodChoice,
