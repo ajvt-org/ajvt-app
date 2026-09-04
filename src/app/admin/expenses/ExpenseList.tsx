@@ -85,20 +85,21 @@ function Row({
                 {expense.note}
               </p>
             )}
-            {expense.activity && (
-              <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
-                <IconLabel name="trophy" size={11}>
-                  {expense.activity.title}
-                </IconLabel>
-              </p>
-            )}
-            {expense.competition && (
-              <p className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
-                <IconLabel name="quiz" size={11}>
-                  {expense.competition.name}
-                </IconLabel>
-              </p>
-            )}
+            {expense.allocations
+              .filter((share) => share.activity || share.competition)
+              .map((share) => (
+                <p key={share.id} className="text-xs mt-0.5" style={{ color: "var(--mint-600)" }}>
+                  <IconLabel name={share.activity ? "trophy" : "quiz"} size={11}>
+                    {share.activity ? share.activity.title : share.competition!.name}
+                    {expense.allocations.length > 1 && (
+                      <>
+                        {" "}
+                        <Money value={share.amount} />
+                      </>
+                    )}
+                  </IconLabel>
+                </p>
+              ))}
             {expense.tags.length > 0 && (
               <div className="mt-1.5">
                 <FinanceTagChips tags={expense.tags} />

@@ -5,11 +5,10 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import ExpenseProofsField from "./ExpenseProofsField";
+import ExpenseDestinationsField from "./ExpenseDestinationsField";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { expenseForm as texts } from "@/lib/texts";
-import DestinationSelect from "@/components/admin/DestinationSelect";
-import { destinationPicker } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { ExpenseForm } from "./types";
 
@@ -158,16 +157,12 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-activity" label={texts.destination}>
-            <DestinationSelect
-              id="expense-activity"
-              destinations={destinations}
-              value={form.destinationId}
-              onChange={(destinationId) => onChange({ destinationId })}
-              emptyLabel={destinationPicker.noDestination}
-              className="input"
-            />
-          </Field>
+          <ExpenseDestinationsField
+            shares={form.allocations}
+            destinations={destinations}
+            total={Number(form.amount) || 0}
+            onChange={(allocations) => onChange({ allocations })}
+          />
 
           <div>
             <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
