@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
-import { donationEdit } from "@/lib/texts";
+import { donationEdit, paymentAccountPicker } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
@@ -189,5 +189,90 @@ describe("a method that is no longer offered", () => {
     const select = await screen.findByLabelText(donationEdit.methodUnset);
     expect(within(select).getByText(RETIRED)).toBeDefined();
     expect((select as HTMLSelectElement).value).toBe(RETIRED);
+  });
+});
+
+describe("the number a payment landed in", () => {
+  it("is offered for a method that receives into one", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    const picker = await screen.findByLabelText(paymentAccountPicker.label);
+    expect(within(picker).getByText("111111")).toBeDefined();
+  });
+
+  it("is not offered at all for a method that receives into none", async () => {
+    mockPatch();
+    show({ paymentMethod: "نقداً" });
+
+    await screen.findByLabelText(donationEdit.methodUnset);
+    expect(screen.queryByLabelText(paymentAccountPicker.label)).toBeNull();
+  });
+
+  it("may be left unknown, which is a value rather than a gap", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    const picker = (await screen.findByLabelText(paymentAccountPicker.label)) as HTMLSelectElement;
+    expect(within(picker).getByText(paymentAccountPicker.unknown)).toBeDefined();
+    expect(picker.value).toBe("");
+  });
+
+  it("offers each number when a method receives into several", async () => {
+    mockPatch();
+    show({ paymentMethod: "السداد" });
+
+    const picker = await screen.findByLabelText(paymentAccountPicker.label);
+    expect(within(picker).getByText("222222")).toBeDefined();
+    expect(within(picker).getByText("444444")).toBeDefined();
+  });
+
+  it("keeps the number a record already points at, even a closed one", async () => {
+    mockPatch();
+    render(
+      <DonationEditForm
+        proof={{
+          ...proofOf({ paymentMethod: "بنكيلي" }),
+          accountId: "old",
+          account: { id: "old", code: "999999", label: null },
+        }}
+        destinations={[]}
+        linkedMember={ACCOUNT}
+        onCancel={vi.fn()}
+        onRelink={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    const picker = (await screen.findByLabelText(paymentAccountPicker.label)) as HTMLSelectElement;
+    expect(within(picker).getByText("999999")).toBeDefined();
+    expect(picker.value).toBe("old");
+  });
+
+  it("clears the number when the method changes under it", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    const picker = (await screen.findByLabelText(paymentAccountPicker.label)) as HTMLSelectElement;
+    fireEvent.change(picker, { target: { value: "a1" } });
+    expect(picker.value).toBe("a1");
+
+    fireEvent.change(screen.getByLabelText(donationEdit.methodUnset), {
+      target: { value: "مصرفي" },
+    });
+
+    expect((screen.getByLabelText(paymentAccountPicker.label) as HTMLSelectElement).value).toBe("");
+  });
+
+  it("sends the number it was left with", async () => {
+    const fetchMock = mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    fireEvent.change(await screen.findByLabelText(paymentAccountPicker.label), {
+      target: { value: "a1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: donationEdit.save }));
+
+    await waitFor(() => expect(bodyOf(fetchMock).accountId).toBe("a1"));
   });
 });

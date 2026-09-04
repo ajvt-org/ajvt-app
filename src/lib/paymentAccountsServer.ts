@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import type { AccountUsage } from "./paymentMethodAdmin";
+import { money } from "./messages";
 
 const SELECT = {
   id: true,
@@ -25,4 +26,22 @@ export async function accountUsage(): Promise<AccountUsage[]> {
     accountId: row.accountId,
     count: row._count._all,
   }));
+}
+
+export async function accountIdError(
+  methodName: string | null | undefined,
+  accountId: string | null | undefined,
+  held: string | null,
+): Promise<string | null> {
+  if (!accountId) return null;
+  const name = methodName?.trim();
+  const found = name
+    ? await prisma.paymentAccount.findFirst({
+        where: { id: accountId, method: { name } },
+        select: { id: true, active: true, closedAt: true },
+      })
+    : null;
+  if (!found) return money.paymentAccountInvalid;
+  const open = found.active && found.closedAt === null;
+  return open || accountId === held ? null : money.paymentAccountInvalid;
 }

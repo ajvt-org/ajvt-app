@@ -4,7 +4,11 @@ function account(id: string, code: string) {
 
 export const OFFERED_METHODS = [
   { name: "بنكيلي", memberFacing: true, accounts: [account("a1", "111111")] },
-  { name: "السداد", memberFacing: true, accounts: [account("a2", "222222")] },
+  {
+    name: "السداد",
+    memberFacing: true,
+    accounts: [account("a2", "222222"), account("a4", "444444")],
+  },
   { name: "مصرفي", memberFacing: true, accounts: [account("a3", "333333")] },
   { name: "نقداً", memberFacing: false, accounts: [] },
 ];
