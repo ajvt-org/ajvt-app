@@ -5,6 +5,7 @@ import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { ledgerTotals, type LedgerInput } from "@/lib/activityLedger";
 import { allocationsFor } from "@/lib/expenseAllocationRows";
+import { spentOnActivity } from "@/lib/expenseSpendingServer";
 import { activities } from "@/lib/messages";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
@@ -31,12 +32,7 @@ export const GET = withRoute(
         },
       }),
       prisma.expense.findMany({
-        where: {
-          OR: [
-            { allocations: { some: { activityId: id } } },
-            { allocations: { none: {} }, activityId: id },
-          ],
-        },
+        where: spentOnActivity(id),
         select: {
           id: true,
           label: true,
