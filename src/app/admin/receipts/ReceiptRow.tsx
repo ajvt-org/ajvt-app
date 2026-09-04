@@ -49,12 +49,12 @@ export default function ReceiptRow({
 
       <div className="flex items-center gap-2 flex-wrap mt-2">
         {receipt.token && (
-          <button className="btn btn-ghost btn-sm text-xs" disabled={busy} onClick={onPrint}>
+          <button className="btn btn-ghost btn-sm" disabled={busy} onClick={onPrint}>
             <IconLabel name="download">{receiptAdmin.download}</IconLabel>
           </button>
         )}
         {!voided && receipt.token && (
-          <button className="btn btn-danger btn-sm text-xs ms-auto" onClick={onVoid}>
+          <button className="btn btn-danger btn-sm ms-auto" onClick={onVoid}>
             <IconLabel name="ban">{receiptAdmin.voidAction}</IconLabel>
           </button>
         )}

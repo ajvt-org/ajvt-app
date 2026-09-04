@@ -16,7 +16,6 @@ describe("teams tab texts", () => {
 
   it("weaves the name into the lines about one player", () => {
     for (const line of [
-      teamsTab.captainBadge("أحمد"),
       teamsTab.makeCaptain("أحمد"),
       teamsTab.clearCaptain("أحمد"),
       teamsTab.acceptOf("أحمد"),

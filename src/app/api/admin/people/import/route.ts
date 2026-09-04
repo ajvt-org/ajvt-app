@@ -5,7 +5,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { logAction, auditContext } from "@/lib/audit";
 import { logger } from "@/lib/logger";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { villageNames } from "@/lib/villagesServer";
 import { claimImportBatch } from "@/lib/importBatchServer";
@@ -46,6 +46,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
 
   const { membershipFee, membershipYear } = await getAppSettings();
   const names = await villageNames();
+  const paymentMethods = await offeredMethodNames();
   const { people, ageGroupNames } = await importContext(membershipYear);
 
   const valued = run.rows.map((row) => ({ row: row.row, values: row.values }));
@@ -56,7 +57,7 @@ export const POST = withRoute("POST /api/admin/people/import", async (req: NextR
       villageNames: names,
       ageGroupNames,
       membershipFee,
-      paymentMethods: PAYMENT_METHODS,
+      paymentMethods,
     },
   );
 

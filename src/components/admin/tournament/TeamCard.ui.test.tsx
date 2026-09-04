@@ -25,6 +25,7 @@ function team(members: TeamMemberEntry[], captainUserId: string | null = null): 
 }
 
 const handlers = {
+  onToggle: vi.fn(),
   onRenameTeam: vi.fn(),
   onDeleteTeam: vi.fn(),
   onSetLogo: vi.fn(),
@@ -38,6 +39,7 @@ function show(
   members: TeamMemberEntry[],
   teamSize: number | null,
   captainUserId: string | null = null,
+  open = true,
 ) {
   cleanup();
   render(
@@ -45,6 +47,8 @@ function show(
       team={team(members, captainUserId)}
       shownName="فريق النجم"
       teamSize={teamSize}
+      members={members}
+      open={open}
       candidates={[]}
       suspendedIds={[]}
       busy={false}
@@ -90,6 +94,7 @@ describe("TeamCard", () => {
     fireEvent.click(screen.getByLabelText("قبول أحمد ولد محمد"));
     expect(handlers.onApproveMember).toHaveBeenCalledWith("p1");
 
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     fireEvent.click(screen.getByLabelText("رفض أحمد ولد محمد"));
     expect(handlers.onRemoveMember).toHaveBeenCalledWith("p1");
   });
@@ -98,6 +103,7 @@ describe("TeamCard", () => {
     show([entry("p1", "أحمد ولد محمد")], 1);
 
     expect(screen.queryByLabelText("رفض أحمد ولد محمد")).toBeNull();
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
     expect(handlers.onRemoveMember).toHaveBeenCalledWith("p1");
   });
@@ -118,6 +124,8 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
+        open
         candidates={[]}
         suspendedIds={[]}
         busy={false}
@@ -136,6 +144,8 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
+        open
         candidates={[]}
         suspendedIds={[]}
         busy={false}
@@ -166,10 +176,16 @@ describe("TeamCard", () => {
     expect(handlers.onRenameTeam).toHaveBeenCalledWith("فريق الوحدة");
   });
 
-  it("names the captain on the card", () => {
+  it("marks the captain once, on their own row", () => {
     show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], 2, "p2");
 
-    expect(screen.getByText("القائد بابا ولد سيدي")).toBeDefined();
+    expect(screen.queryByText("القائد بابا ولد سيدي")).toBeNull();
+    expect(screen.queryByText("القائد")).toBeNull();
+    const marked = [...document.body.querySelectorAll<HTMLElement>("div")].filter((d) =>
+      d.style.border.includes("copper"),
+    );
+    expect(marked.length).toBe(1);
+    expect(marked[0].textContent).toContain("بابا ولد سيدي");
   });
 
   it("says nothing about a captain when the team has none", () => {
@@ -197,14 +213,15 @@ describe("TeamCard", () => {
     expect(screen.getByText("0 / 4")).toBeDefined();
   });
 
-  it("starts closed and opens on the summary", () => {
-    show([entry("p1", "أحمد ولد محمد")], 1);
-
-    const card = document.querySelector("details") as HTMLDetailsElement;
-    expect(card.open).toBe(false);
+  it("shows open or closed as it is told, and asks to be toggled", () => {
+    show([entry("p1", "أحمد ولد محمد")], 1, null, false);
+    expect((document.querySelector("details") as HTMLDetailsElement).open).toBe(false);
 
     fireEvent.click(screen.getByText("فريق النجم"));
-    expect(card.open).toBe(true);
+    expect(handlers.onToggle).toHaveBeenCalled();
+
+    show([entry("p1", "أحمد ولد محمد")], 1, null, true);
+    expect((document.querySelector("details") as HTMLDetailsElement).open).toBe(true);
   });
 
   it("keeps the name, the count and the delete button in the closed summary", () => {
@@ -218,12 +235,13 @@ describe("TeamCard", () => {
   });
 
   it("deletes the team without opening the card", () => {
-    show([entry("p1", "أحمد ولد محمد")], 1);
+    show([entry("p1", "أحمد ولد محمد")], 1, null, false);
 
     const card = document.querySelector("details") as HTMLDetailsElement;
     fireEvent.click(screen.getByLabelText("حذف الفريق"));
 
     expect(handlers.onDeleteTeam).toHaveBeenCalled();
+    expect(handlers.onToggle).not.toHaveBeenCalled();
     expect(card.open).toBe(false);
   });
 
@@ -234,6 +252,8 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق الحسن احمدو يحي البناني للشباب"
         teamSize={1}
+        members={[entry("p1", "أحمد ولد محمد")]}
+        open
         candidates={[]}
         suspendedIds={[]}
         busy={false}

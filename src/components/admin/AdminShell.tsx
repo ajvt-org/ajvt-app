@@ -11,6 +11,7 @@ import TopBar from "./shell/TopBar";
 import TabStrip from "./shell/TabStrip";
 import SubTabStrip from "./shell/SubTabStrip";
 import DeniedNotice from "./shell/DeniedNotice";
+import { AdminOriginProvider } from "./adminOrigin";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -61,7 +62,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       {denied && <DeniedNotice onDismiss={dismiss} />}
 
-      {children}
+      <AdminOriginProvider>{children}</AdminOriginProvider>
     </div>
   );
 }

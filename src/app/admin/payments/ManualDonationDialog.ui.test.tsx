@@ -6,6 +6,7 @@ import { manualDonation, memberPicker } from "@/lib/texts";
 import { members, money } from "@/lib/messages";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { MemberOption } from "./paymentTypes";
+import { answering, sentBody } from "@tests/ui/paymentMethods";
 
 const ACCOUNT: MemberOption = {
   id: "m1",
@@ -31,29 +32,31 @@ const NO_ACCOUNT_IDS = [ACCOUNT, SECOND].map(
 );
 
 function mockPost() {
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: true,
-    status: 201,
-    json: async () => ({
-      donation: {
-        id: "d1",
-        memberName: "أبوبكر لمرابط",
-        donorName: "ابو",
-        donorPhone: null,
-        donorPhoto: null,
-        amount: 2000,
-        status: "ACTIVE",
-        source: "SELF",
-        paymentMethod: "بنكيلي",
-        proof: null,
-        userId: "u1",
-        anonymous: false,
-        activityId: null,
-        createdAt: "2026-08-20T09:00:00.000Z",
-        updatedAt: "2026-08-20T09:00:00.000Z",
-      },
-    }),
-  });
+  const fetchMock = vi.fn(
+    answering(async () => ({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        donation: {
+          id: "d1",
+          memberName: "أبوبكر لمرابط",
+          donorName: "ابو",
+          donorPhone: null,
+          donorPhoto: null,
+          amount: 2000,
+          status: "ACTIVE",
+          source: "SELF",
+          paymentMethod: "بنكيلي",
+          proof: null,
+          userId: "u1",
+          anonymous: false,
+          activityId: null,
+          createdAt: "2026-08-20T09:00:00.000Z",
+          updatedAt: "2026-08-20T09:00:00.000Z",
+        },
+      }),
+    })),
+  );
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -82,7 +85,7 @@ async function fillIn() {
 }
 
 function bodyOf(fetchMock: ReturnType<typeof mockPost>) {
-  return JSON.parse(fetchMock.mock.calls[0][1].body);
+  return sentBody(fetchMock.mock.calls);
 }
 
 afterEach(() => {

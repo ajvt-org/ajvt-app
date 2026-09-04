@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { common, money } from "@/lib/messages";
+import { common, money, expenses as expenseMessages } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 const LABEL_REQUIRED = "وصف المصروف مطلوب";
@@ -27,48 +27,89 @@ const date = z.unknown().superRefine((v, ctx) => {
 
 const tagIds = z.array(z.string(INVALID)).optional();
 
+const proofs = z.array(z.string(INVALID), INVALID).optional();
+
+const shareAmount = z.unknown().superRefine((v, ctx) => {
+  const n = Number(v);
+  if (!Number.isInteger(n) || n <= 0) {
+    ctx.addIssue({ code: "custom", message: expenseMessages.shareAmountInvalid });
+  }
+});
+
+const allocations = z
+  .array(
+    z.object({
+      activityId: z.string(INVALID).nullish(),
+      competitionId: z.string(INVALID).nullish(),
+      amount: shareAmount,
+    }),
+    INVALID,
+  )
+  .optional();
+
 const activityId = z.string(INVALID).nullish();
 
 const competitionId = z.string(INVALID).nullish();
 
-const method = z.string(INVALID).nullish();
+function method(accepted: readonly string[]) {
+  return z
+    .string(INVALID)
+    .nullish()
+    .superRefine((v, ctx) => {
+      const chosen = v?.trim();
+      if (!chosen) return;
+      if (!accepted.includes(chosen)) {
+        ctx.addIssue({ code: "custom", message: money.paymentMethodInvalid });
+      }
+    });
+}
 
-export const expenseCreateSchema = z.object({
-  activityId,
-  competitionId,
-  label,
-  amount,
-  method,
-  note: z.string(INVALID).nullish(),
-  proof: z.string(INVALID).nullish(),
-  date: date.optional(),
-  tagIds,
-});
-
-export const expenseUpdateSchema = z
-  .object({
+export function expenseCreateSchema(accepted: readonly string[]) {
+  return z.object({
     activityId,
     competitionId,
-    label: label.optional(),
-    amount: amount.optional(),
-    method,
+    label,
+    amount,
+    method: method(accepted),
     note: z.string(INVALID).nullish(),
     proof: z.string(INVALID).nullish(),
+    proofs,
+    allocations,
     date: date.optional(),
     tagIds,
-  })
-  .refine(
-    (v) =>
-      [
-        v.label,
-        v.amount,
-        v.method,
-        v.note,
-        v.date,
-        v.proof,
-        v.tagIds,
-        v.activityId,
-        v.competitionId,
-      ].some((field) => field !== undefined),
-    INVALID,
-  );
+  });
+}
+
+export function expenseUpdateSchema(accepted: readonly string[]) {
+  return z
+    .object({
+      activityId,
+      competitionId,
+      label: label.optional(),
+      amount: amount.optional(),
+      method: method(accepted),
+      note: z.string(INVALID).nullish(),
+      proof: z.string(INVALID).nullish(),
+      proofs,
+      allocations,
+      date: date.optional(),
+      tagIds,
+    })
+    .refine(
+      (v) =>
+        [
+          v.label,
+          v.amount,
+          v.method,
+          v.note,
+          v.date,
+          v.proof,
+          v.proofs,
+          v.allocations,
+          v.tagIds,
+          v.activityId,
+          v.competitionId,
+        ].some((field) => field !== undefined),
+      INVALID,
+    );
+}

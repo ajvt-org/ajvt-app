@@ -34,7 +34,7 @@ export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationActions, donationEdit } from "./donationEdit";
-export { expenseForm, expensesPage } from "./expenses";
+export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities } from "./landing";
@@ -56,6 +56,7 @@ export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { mvpVote } from "./mvpVote";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
+export { waitingRequests, samePerson } from "./waitingRequests";
 export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
@@ -64,6 +65,7 @@ export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
 export { quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
+export { paymentMethodManager } from "./paymentMethods";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,

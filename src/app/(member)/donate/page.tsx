@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
-import { ONLINE_PAYMENT_METHODS as PAYMENT_METHODS } from "@/lib/donations";
+import { usePayableMethods } from "@/lib/usePayableMethods";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
 import { errorMessage } from "@/lib/api";
@@ -30,6 +30,7 @@ export default function DonatePage() {
 }
 
 function DonatePageInner() {
+  const payable = usePayableMethods();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
@@ -249,7 +250,7 @@ function DonatePageInner() {
               role="radiogroup"
               aria-labelledby="donate-method-label"
             >
-              {PAYMENT_METHODS.map((method) => (
+              {payable.map((method) => (
                 <button
                   key={method}
                   type="button"

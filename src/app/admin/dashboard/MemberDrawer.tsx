@@ -8,6 +8,8 @@ import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import { formatDate, formatTime } from "@/lib/utils";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { villageField } from "@/lib/texts";
 import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
 import MemberAccountCard from "./MemberAccountCard";
@@ -37,6 +39,7 @@ function Header({ onClose }: { onClose: () => void }) {
 }
 
 function Identity({ member }: { member: Member }) {
+  const from = useAdminOrigin();
   return (
     <div className="card p-4 flex items-center gap-4">
       <div className="relative shrink-0">
@@ -64,7 +67,7 @@ function Identity({ member }: { member: Member }) {
         </p>
       </div>
       <Link
-        href={`/admin/members/${member.id}`}
+        href={memberCardHref(member.id, from)}
         className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
@@ -220,6 +223,7 @@ export default function MemberDrawer({
   onApprove,
   onReject,
 }: MemberDrawerProps) {
+  const from = useAdminOrigin();
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -285,7 +289,7 @@ export default function MemberDrawer({
           />
 
           <Link
-            href={`/admin/members/${member.id}`}
+            href={memberCardHref(member.id, from)}
             className="text-xs font-bold block"
             style={{ color: "var(--mint-600)" }}
           >

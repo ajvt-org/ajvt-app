@@ -7,6 +7,9 @@ import IconLabel from "@/components/IconLabel";
 import { push } from "@/lib/messages";
 import { countedNoun, DAYS } from "@/lib/arabicPlural";
 import type { WaitingRow } from "@/lib/waitingRequests";
+import { waitingRequests as texts } from "@/lib/texts";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 interface Waiting {
   days: number;
@@ -54,7 +57,7 @@ function Row({
           <span className="text-sm font-bold truncate block">{row.name}</span>
         )}
         <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-          منذ {countedNoun(row.days, DAYS)}
+          {texts.since(countedNoun(row.days, DAYS))}
         </span>
       </div>
       {done ? (
@@ -71,7 +74,7 @@ function Row({
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          <IconLabel name="bell">تذكير</IconLabel>
+          <IconLabel name="bell">{texts.chase}</IconLabel>
         </button>
       )}
     </div>
@@ -79,6 +82,7 @@ function Row({
 }
 
 export default function WaitingRequests() {
+  const from = useAdminOrigin();
   const [data, setData] = useState<Waiting | null>(null);
 
   useEffect(() => {
@@ -101,7 +105,7 @@ export default function WaitingRequests() {
   return (
     <div className="card p-4">
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        <IconLabel name="hourglass">ينتظر أكثر من {countedNoun(data.days, DAYS)}</IconLabel>
+        <IconLabel name="hourglass">{texts.waitingOver(countedNoun(data.days, DAYS))}</IconLabel>
       </p>
       <div className="mt-2 divide-y" style={{ borderColor: "var(--mint-100)" }}>
         {data.pending.map((row) => (
@@ -109,7 +113,7 @@ export default function WaitingRequests() {
             key={row.id}
             row={row}
             kind="pending"
-            href={`/admin/members/${row.id}`}
+            href={memberCardHref(row.id, from)}
             onChased={() => {}}
           />
         ))}

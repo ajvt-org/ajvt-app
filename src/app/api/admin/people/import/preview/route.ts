@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { requireAdminRole } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { villageNames } from "@/lib/villagesServer";
 import { fileHashOf, lastImportOfFile } from "@/lib/importBatchServer";
@@ -22,6 +22,7 @@ export const POST = withRoute("POST /api/admin/people/import/preview", async (re
 
   const { membershipFee, membershipYear } = await getAppSettings();
   const names = await villageNames();
+  const paymentMethods = await offeredMethodNames();
   const { people, ageGroupNames } = await importContext(membershipYear);
 
   const rows = checkRows(parsed.rows, {
@@ -29,7 +30,7 @@ export const POST = withRoute("POST /api/admin/people/import/preview", async (re
     villageNames: names,
     ageGroupNames,
     membershipFee,
-    paymentMethods: PAYMENT_METHODS,
+    paymentMethods,
   });
 
   const fileHash = fileHashOf(content);
@@ -44,7 +45,7 @@ export const POST = withRoute("POST /api/admin/people/import/preview", async (re
     villages: villageChoices(names),
     ageGroups: ageGroupNames,
     membershipFee,
-    paymentMethods: PAYMENT_METHODS,
+    paymentMethods,
     previousImport: previous && { createdAt: previous.createdAt, createdBy: previous.createdBy },
   });
 });

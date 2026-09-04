@@ -22,7 +22,7 @@ export default function CompetitionList({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="trophy">المسابقات</IconLabel>
         </p>
-        <button onClick={onCreate} className="btn btn-primary btn-sm text-xs">
+        <button onClick={onCreate} className="btn btn-primary btn-sm">
           <IconLabel name="plus">مسابقة جديدة</IconLabel>
         </button>
       </div>

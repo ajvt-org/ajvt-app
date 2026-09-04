@@ -3,6 +3,7 @@
 import { downloadCsv } from "@/lib/csv";
 import { TEMPLATE_FILE_NAME, templateCsv } from "@/lib/memberImportTemplate";
 import { memberImportDialog } from "@/lib/texts";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import IconLabel from "@/components/IconLabel";
 import Icon from "@/components/Icon";
 
@@ -17,6 +18,9 @@ export default function MemberImportUpload({
   loading: boolean;
   onPick: (file: File) => void;
 }) {
+  const { methods } = usePaymentMethods();
+  const exampleMethod = methods.at(-1)?.name ?? "";
+
   return (
     <div className="space-y-3">
       <label
@@ -43,7 +47,7 @@ export default function MemberImportUpload({
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
-          onClick={() => downloadCsv(TEMPLATE_FILE_NAME, templateCsv(ageGroup))}
+          onClick={() => downloadCsv(TEMPLATE_FILE_NAME, templateCsv(ageGroup, exampleMethod))}
           className="text-xs font-bold px-2.5 py-1.5 rounded-lg"
           style={{ background: "var(--mint-600)", color: "white" }}
         >

@@ -7,6 +7,7 @@ import {
   type SupportViewer,
 } from "@/lib/supportPrivacy";
 import { nameOf } from "@/lib/person";
+import { activitySpending, totalSpending } from "@/lib/expenseSpendingServer";
 
 const UNSPECIFIED_METHOD = "غير محدد";
 
@@ -58,7 +59,7 @@ export async function getFinanceSummary(
   cutoff.setDate(cutoff.getDate() - recentDays);
   const windowStart = new Date(`${cutoff.toISOString().slice(0, 10)}T00:00:00.000Z`);
 
-  const [payments, methodTotals, expenseTotal, unassignedRows, detailRows] = await Promise.all([
+  const [payments, methodTotals, totalExpenses, unassignedRows, detailRows] = await Promise.all([
     prisma.payment.findMany({
       where: { status: "ACTIVE", ...scope, createdAt: { gte: windowStart } },
       select: {
@@ -78,7 +79,7 @@ export async function getFinanceSummary(
       where: { status: "ACTIVE", ...scope },
       _sum: { amount: true },
     }),
-    prisma.expense.aggregate({ where: scope, _sum: { amount: true } }),
+    activityId === undefined ? totalSpending() : activitySpending(activityId),
     prisma.payment.findMany({
       where: { status: "ACTIVE", ...scope, method: null, purpose: { not: "MEMBERSHIP" } },
       select: {
@@ -196,8 +197,6 @@ export async function getFinanceSummary(
     name: publicDonorName(p, viewer),
     amount: p.amount,
   }));
-
-  const totalExpenses = expenseTotal._sum.amount ?? 0;
 
   return {
     byMethod,

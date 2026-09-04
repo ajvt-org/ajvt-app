@@ -124,6 +124,7 @@ model Activity {
   matches             Match[]
   groups              Group[]
   expenses            Expense[]
+  expenseAllocations  ExpenseAllocation[]
   donations           Donation[]
   admins              AdminActivity[]
   payments            Payment[]
@@ -431,7 +432,7 @@ model Donation {
   proof          String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
   status         ReviewStatus @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
   source         String       @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
-  paymentMethod  String? // بنكيلي | السداد | مصرفي | نقداً — set manually by admin (proof screenshots aren't parsed automatically)
+  paymentMethod  String?
   userId         String?
   user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   membershipYear Int?
@@ -449,28 +450,56 @@ model Donation {
   @@index([competitionId])
 }
 
-// Manually-entered outgoing spending (association expenses) — no in-app
-// source generates these; an admin logs and edits every row by hand.
 model Expense {
-  id            String       @id @default(cuid())
+  id            String              @id @default(cuid())
   label         String
   amount        Int
   method        String?
   note          String?
-  proof         String? // optional receipt/invoice image — served via the admin-only /api/files/[filename] route
-  date          DateTime     @default(now()) // when the money was spent (admin-editable, distinct from createdAt)
-  createdBy     String // admin username, plain string like AuditLog.adminUsername — not a relation
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  proof         String?
+  date          DateTime            @default(now())
+  createdBy     String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
   tags          FinanceTag[]
+  proofs        ExpenseProof[]
+  allocations   ExpenseAllocation[]
   activityId    String?
-  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  activity      Activity?           @relation(fields: [activityId], references: [id], onDelete: SetNull)
   competitionId String?
-  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  competition   Competition?        @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([date])
   @@index([activityId])
   @@index([competitionId])
+}
+
+model ExpenseAllocation {
+  id            String       @id @default(cuid())
+  expenseId     String
+  expense       Expense      @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  amount        Int
+  activityId    String?
+  activity      Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  competitionId String?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@index([expenseId])
+  @@index([activityId])
+  @@index([competitionId])
+}
+
+model ExpenseProof {
+  id        String   @id @default(cuid())
+  expenseId String
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  filename  String
+  createdAt DateTime @default(now())
+
+  @@unique([expenseId, filename])
+  @@index([expenseId])
+  @@index([filename])
 }
 
 // What the money was for, as a list an admin keeps rather than free text, so
@@ -483,6 +512,18 @@ model FinanceTag {
   expenses  Expense[]
   donations Donation[]
   payments  Payment[]
+}
+
+model PaymentMethod {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  memberFacing Boolean  @default(false)
+  active       Boolean  @default(true)
+  position     Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([active, position])
 }
 
 // One row per (day, anonymous visitor) — the visitor cookie is set by
@@ -646,29 +687,30 @@ enum QuizVisibility {
 }
 
 model Competition {
-  id                 String            @id @default(cuid())
+  id                 String              @id @default(cuid())
   name               String
-  visibility         QuizVisibility    @default(PUBLIC)
+  visibility         QuizVisibility      @default(PUBLIC)
   startsAt           DateTime
-  roundCount         Int               @default(30)
-  roundPeriodMinutes Int               @default(1440)
-  roundWindowMinutes Int               @default(840)
-  servedCount        Int               @default(10)
-  categoryRounds     Boolean           @default(false)
-  bankId             String            @default("general")
-  bank               QuestionBank      @relation(fields: [bankId], references: [id])
-  fullSeconds        Int               @default(10)
-  maxSeconds         Int               @default(30)
-  floorPercent       Int               @default(50)
+  roundCount         Int                 @default(30)
+  roundPeriodMinutes Int                 @default(1440)
+  roundWindowMinutes Int                 @default(840)
+  servedCount        Int                 @default(10)
+  categoryRounds     Boolean             @default(false)
+  bankId             String              @default("general")
+  bank               QuestionBank        @relation(fields: [bankId], references: [id])
+  fullSeconds        Int                 @default(10)
+  maxSeconds         Int                 @default(30)
+  floorPercent       Int                 @default(50)
   rounds             QuizRound[]
   boards             QuizBoard[]
   participants       QuizParticipant[]
   payments           Payment[]
   expenses           Expense[]
+  expenseAllocations ExpenseAllocation[]
   donations          Donation[]
   startedAt          DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 // One ranking a member can look at. blockRounds is how many rounds it covers,

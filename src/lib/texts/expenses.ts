@@ -39,3 +39,25 @@ export const financeTotals = {
   expenses: `المصاريف (${ouguiya.singular})`,
   net: `الصافي (${ouguiya.singular})`,
 } as const;
+
+export const expenseProofs = {
+  heading: "الفواتير والإيصالات (اختياري)",
+  addAnother: "إضافة صورة أخرى",
+  addFirst: "صورة الفاتورة",
+  remove: (at: number) => `حذف الصورة ${at}`,
+  open: (at: number) => `فتح الصورة ${at}`,
+  none: "لا توجد صور بعد",
+} as const;
+
+export const expenseDestinations = {
+  heading: "الوجهة (اختياري)",
+  headingMany: "الوجهات والمبالغ",
+  add: "أضف وجهة أخرى",
+  remove: (at: number) => `حذف الوجهة ${at}`,
+  destinationLabel: (at: number) => `الوجهة ${at}`,
+  amountLabel: (at: number) => `مبلغ الوجهة ${at}`,
+  total: "مجموع الوجهات",
+  matches: "يساوي مبلغ المصروف",
+  short: (by: number) => `ينقص ${by}`,
+  over: (by: number) => `يزيد ${by}`,
+} as const;

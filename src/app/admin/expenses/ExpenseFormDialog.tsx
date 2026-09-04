@@ -3,13 +3,12 @@
 import DialogClose from "@/components/DialogClose";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import PhotoUpload from "@/components/PhotoUpload";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
+import ExpenseProofsField from "./ExpenseProofsField";
+import ExpenseDestinationsField from "./ExpenseDestinationsField";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
-import { PAYMENT_METHODS } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import { expenseForm as texts } from "@/lib/texts";
-import DestinationSelect from "@/components/admin/DestinationSelect";
-import { destinationPicker } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { ExpenseForm } from "./types";
 
@@ -43,6 +42,7 @@ export default function ExpenseFormDialog({
   tags,
   destinations,
   editing,
+  expenseId,
   error,
   saving,
   onChange,
@@ -53,12 +53,14 @@ export default function ExpenseFormDialog({
   tags: FinanceTagRow[];
   destinations: DestinationOption[];
   editing: boolean;
+  expenseId: string | null;
   error: string;
   saving: boolean;
   onChange: (patch: Partial<ExpenseForm>) => void;
   onSubmit: (ev: React.SubmitEvent<HTMLFormElement>) => void;
   onClose: () => void;
 }) {
+  const { methods } = usePaymentMethods(form.method);
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -86,19 +88,11 @@ export default function ExpenseFormDialog({
         </div>
 
         <form onSubmit={onSubmit} className="p-5 space-y-3">
-          <div>
-            <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-              {texts.proofHeading}
-            </p>
-            <PhotoUpload
-              photo={form.proof || null}
-              imageUrlPrefix="/api/files"
-              variant="cover"
-              label={texts.proofLabel}
-              placeholderIcon="receipt"
-              onUpload={(filename) => onChange({ proof: filename })}
-            />
-          </div>
+          <ExpenseProofsField
+            proofs={form.proofs}
+            expenseId={expenseId}
+            onChange={(proofs) => onChange({ proofs })}
+          />
 
           <Field id="expense-label" label={texts.label} required>
             <input
@@ -133,9 +127,9 @@ export default function ExpenseFormDialog({
               className="input"
             >
               <option value="">{texts.noMethod}</option>
-              {PAYMENT_METHODS.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {methods.map((method) => (
+                <option key={method.name} value={method.name}>
+                  {method.name}
                 </option>
               ))}
             </select>
@@ -163,16 +157,12 @@ export default function ExpenseFormDialog({
             />
           </Field>
 
-          <Field id="expense-activity" label={texts.destination}>
-            <DestinationSelect
-              id="expense-activity"
-              destinations={destinations}
-              value={form.destinationId}
-              onChange={(destinationId) => onChange({ destinationId })}
-              emptyLabel={destinationPicker.noDestination}
-              className="input"
-            />
-          </Field>
+          <ExpenseDestinationsField
+            shares={form.allocations}
+            destinations={destinations}
+            total={Number(form.amount) || 0}
+            onChange={(allocations) => onChange({ allocations })}
+          />
 
           <div>
             <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>

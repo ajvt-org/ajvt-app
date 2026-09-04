@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManualAddDialog from "./ManualAddDialog";
 import { HOME_VILLAGE } from "@/lib/villages";
+import { answering } from "@tests/ui/paymentMethods";
 
 const ageGroups = [
   { id: "1", name: "أشبال" },
@@ -23,7 +24,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ManualAddDialog>> 
 }
 
 function mockFetch(body: unknown, ok = true) {
-  const fetchMock = vi.fn().mockResolvedValue({ ok, json: async () => body });
+  const fetchMock = vi.fn(answering(async () => ({ ok, json: async () => body })));
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -71,7 +72,7 @@ describe("ManualAddDialog", () => {
     await waitFor(() => expect(props.onCreated).toHaveBeenCalled());
     const call = fetchMock.mock.calls.find((c) => c[0] === "/api/admin/people");
     expect(call).toBeDefined();
-    const body = JSON.parse(call![1].body);
+    const body = JSON.parse(String(call![1]?.body));
     expect(body).toMatchObject({
       fullName: "محمد",
       age: "شباب",

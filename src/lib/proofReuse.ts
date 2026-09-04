@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { nameOf } from "./person";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "./donorName";
 import { seesSupporterName, type SupportViewer } from "./supportPrivacy";
+import { uniqueExpenses } from "./proofReuseRows";
 
 export type ProofReuse = {
   kind: "member" | "donation" | "expense";
@@ -27,7 +28,7 @@ export async function findProofReuse(
   if (sameImage.length === 0) return [];
 
   const names = sameImage.map((row) => row.filename);
-  const [members, donations, expenses] = await Promise.all([
+  const [members, donations, expenseProofs, legacyExpenses] = await Promise.all([
     prisma.membership.findMany({
       where: { paymentProof: { in: names } },
       select: { userId: true, createdAt: true, user: { select: DONOR_ACCOUNT_SELECT } },
@@ -41,6 +42,10 @@ export async function findProofReuse(
         userId: true,
         user: { select: DONOR_ACCOUNT_SELECT },
       },
+    }),
+    prisma.expenseProof.findMany({
+      where: { filename: { in: names } },
+      select: { expense: { select: { id: true, label: true, date: true } } },
     }),
     prisma.expense.findMany({
       where: { proof: { in: names } },
@@ -61,7 +66,7 @@ export async function findProofReuse(
       label: donorNameOnRecord(d, viewer),
       date: d.createdAt,
     })),
-    ...expenses.map((e) => ({
+    ...uniqueExpenses([...expenseProofs.map((row) => row.expense), ...legacyExpenses]).map((e) => ({
       kind: "expense" as const,
       id: e.id,
       label: e.label,

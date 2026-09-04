@@ -4,6 +4,8 @@ import { requireActivityFinanceAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { NotFoundError } from "@/lib/errors";
 import { ledgerTotals, type LedgerInput } from "@/lib/activityLedger";
+import { allocationsFor } from "@/lib/expenseAllocationRows";
+import { spentOnActivity } from "@/lib/expenseSpendingServer";
 import { activities } from "@/lib/messages";
 import { DONOR_ACCOUNT_SELECT, donorNameOnRecord } from "@/lib/donorName";
 import { viewerOf } from "@/lib/supportViewer";
@@ -30,8 +32,18 @@ export const GET = withRoute(
         },
       }),
       prisma.expense.findMany({
-        where: { activityId: id },
-        select: { id: true, label: true, amount: true, date: true },
+        where: spentOnActivity(id),
+        select: {
+          id: true,
+          label: true,
+          amount: true,
+          date: true,
+          activityId: true,
+          competitionId: true,
+          allocations: {
+            select: { id: true, amount: true, activityId: true, competitionId: true },
+          },
+        },
       }),
     ]);
 
@@ -43,13 +55,15 @@ export const GET = withRoute(
         amount: d.amount ?? 0,
         date: d.createdAt.toISOString().slice(0, 10),
       })),
-      ...expenses.map((e) => ({
-        id: e.id,
-        kind: "expense" as const,
-        label: e.label,
-        amount: e.amount,
-        date: e.date.toISOString().slice(0, 10),
-      })),
+      ...expenses.flatMap((expense) =>
+        allocationsFor(expense, id).map((share) => ({
+          id: share.id,
+          kind: "expense" as const,
+          label: expense.label,
+          amount: share.amount,
+          date: expense.date.toISOString().slice(0, 10),
+        })),
+      ),
     ];
 
     return NextResponse.json({ rows, totals: ledgerTotals(rows) });

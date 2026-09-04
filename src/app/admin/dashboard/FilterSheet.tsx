@@ -181,7 +181,7 @@ export default function FilterSheet({
             {active > 0 && (
               <button
                 onClick={() => onChange({ ...NO_FILTERS, status: filters.status, q: filters.q })}
-                className="btn btn-sm text-xs"
+                className="btn btn-sm"
                 style={{
                   background: "white",
                   color: "var(--mint-700)",
@@ -191,7 +191,7 @@ export default function FilterSheet({
                 <IconLabel name="close">{texts.clear}</IconLabel>
               </button>
             )}
-            <button onClick={onClose} className="btn btn-primary btn-sm text-xs">
+            <button onClick={onClose} className="btn btn-primary btn-sm">
               {texts.done}
             </button>
           </div>

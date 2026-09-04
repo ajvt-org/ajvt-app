@@ -56,6 +56,22 @@ describe("safeNextPath", () => {
     expect(safeNextPath("//evil.example", "/fallback")).toBe("/fallback");
     expect(safeNextPath("//evil.example/path", "/fallback")).toBe("/fallback");
   });
+
+  it("refuses a backslash after the slash, which resolves to another origin", () => {
+    expect(safeNextPath("/\\evil.example", "/fallback")).toBe("/fallback");
+    expect(safeNextPath("/\\evil.example/path", "/fallback")).toBe("/fallback");
+  });
+
+  it("refuses a target that becomes another origin once the browser strips tabs and newlines", () => {
+    expect(safeNextPath("/\t/evil.example", "/fallback")).toBe("/fallback");
+    expect(safeNextPath("/\n/evil.example", "/fallback")).toBe("/fallback");
+    expect(safeNextPath("/\r\\evil.example", "/fallback")).toBe("/fallback");
+  });
+
+  it("strips the same characters out of a target it keeps", () => {
+    expect(safeNextPath("/adm\tin/dashboard", "/fallback")).toBe("/admin/dashboard");
+    expect(safeNextPath("  /admin/dashboard  ", "/fallback")).toBe("/admin/dashboard");
+  });
 });
 
 describe("toThumbUrl", () => {

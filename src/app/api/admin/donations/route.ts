@@ -5,6 +5,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
+import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { donationCreateSchema } from "./schema";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { members } from "@/lib/messages";
@@ -26,7 +27,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     activityId,
     competitionId,
     userId,
-  } = parse(donationCreateSchema, await req.json());
+  } = parse(donationCreateSchema(await offeredMethodNames()), await req.json());
   const destination = await resolveMoneyDestination({ activityId, competitionId });
 
   const giver = userId

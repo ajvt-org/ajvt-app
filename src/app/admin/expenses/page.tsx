@@ -85,9 +85,19 @@ function AdminExpensesPageInner() {
       method: expense.method || "",
       note: expense.note || "",
       date: expense.date.slice(0, 10),
-      proof: expense.proof || "",
+      proofs: expense.proofs.map((row) => row.filename),
       tagIds: expense.tags.map((t) => t.id),
-      destinationId: expense.activity?.id || expense.competition?.id || "",
+      allocations: expense.allocations.length
+        ? expense.allocations.map((share) => ({
+            destinationId: share.activity?.id || share.competition?.id || "",
+            amount: expense.allocations.length > 1 ? String(share.amount) : "",
+          }))
+        : [
+            {
+              destinationId: expense.activity?.id || expense.competition?.id || "",
+              amount: "",
+            },
+          ],
     });
     setFormError("");
     setShowForm(true);
@@ -114,9 +124,16 @@ function AdminExpensesPageInner() {
         method: form.method || null,
         note: form.note.trim() || null,
         date: form.date || undefined,
-        proof: form.proof || null,
+        proofs: form.proofs,
         tagIds: form.tagIds,
-        ...destinationOf(destinations, form.destinationId),
+        ...(form.allocations.length > 1
+          ? {
+              allocations: form.allocations.map((share) => ({
+                ...destinationOf(destinations, share.destinationId),
+                amount: Number(share.amount),
+              })),
+            }
+          : destinationOf(destinations, form.allocations[0]?.destinationId ?? "")),
       };
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
@@ -152,6 +169,11 @@ function AdminExpensesPageInner() {
     if (query && !matchesExpense(e, query)) return false;
     if (
       filters.destinationId &&
+      !e.allocations.some(
+        (share) =>
+          share.activity?.id === filters.destinationId ||
+          share.competition?.id === filters.destinationId,
+      ) &&
       e.activity?.id !== filters.destinationId &&
       e.competition?.id !== filters.destinationId
     )
@@ -300,6 +322,7 @@ function AdminExpensesPageInner() {
           tags={tags}
           destinations={destinations}
           editing={!!editingId}
+          expenseId={editingId}
           error={formError}
           saving={saving}
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}

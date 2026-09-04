@@ -1,20 +1,22 @@
 "use client";
 
-import IconLabel from "@/components/IconLabel";
 import AddPlayerRow from "./AddPlayerRow";
 import TeamIdentityEditor from "./TeamIdentityEditor";
 import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
-import type { RosterMember, Team } from "./types";
 import { teamsTab } from "@/lib/texts";
+import type { RosterMember, Team, TeamMemberEntry } from "./types";
 
 export default function TeamCard({
   team,
   shownName,
   teamSize,
+  members,
+  open,
   candidates,
   suspendedIds,
   busy,
+  onToggle,
   onRenameTeam,
   onDeleteTeam,
   onSetLogo,
@@ -26,9 +28,12 @@ export default function TeamCard({
   team: Team;
   shownName: string;
   teamSize: number | null;
+  members: TeamMemberEntry[];
+  open: boolean;
   candidates: RosterMember[];
   suspendedIds: string[];
   busy: boolean;
+  onToggle: () => void;
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
@@ -37,15 +42,14 @@ export default function TeamCard({
   onApproveMember: (memberId: string) => void;
   onRemoveMember: (memberId: string) => void;
 }) {
-  const captain = team.members.find((m) => m.member.id === team.captainUserId)?.member ?? null;
-
   return (
-    <details className="card p-4">
+    <details className="card p-4" open={open}>
       <TeamSummary
         team={team}
         shownName={shownName}
         teamSize={teamSize}
         busy={busy}
+        onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}
       />
       <div className="space-y-3 pt-3">
@@ -56,15 +60,14 @@ export default function TeamCard({
           onRenameTeam={onRenameTeam}
           onSetLogo={onSetLogo}
         />
-        {captain && (
-          <div className="flex flex-wrap gap-1.5">
-            <span className="badge" style={{ background: "var(--mint-600)", color: "white" }}>
-              <IconLabel name="star">{teamsTab.captainBadge(captain.fullName)}</IconLabel>
-            </span>
-          </div>
+        {members.length < team.members.length && (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {teamsTab.rosterSubset(members.length, team.members.length)}
+          </p>
         )}
         <TeamRoster
           team={team}
+          members={members}
           suspendedIds={suspendedIds}
           busy={busy}
           onSetCaptain={onSetCaptain}

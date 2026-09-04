@@ -7,7 +7,7 @@ import { getUploadDir } from "@/lib/uploadDir";
 import { processImage, MAX_UPLOAD_SIZE, ALLOWED_UPLOAD_TYPES } from "@/lib/imageProcessing";
 import { isRateLimited, recordFailedAttempt, getClientIp } from "@/lib/rateLimit";
 import { getUserSession } from "@/lib/auth";
-import { ONLINE_PAYMENT_METHODS } from "@/lib/donations";
+import { payableMethodNames } from "@/lib/paymentMethodsServer";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { ValidationError } from "@/lib/errors";
@@ -89,7 +89,8 @@ export const POST = withRoute("POST /api/donations", async (req: NextRequest) =>
   }
   const amount = n;
 
-  if (typeof paymentMethodRaw !== "string" || !ONLINE_PAYMENT_METHODS.includes(paymentMethodRaw)) {
+  const offered = await payableMethodNames();
+  if (typeof paymentMethodRaw !== "string" || !offered.includes(paymentMethodRaw)) {
     return NextResponse.json({ error: members.pickPaymentMethod }, { status: 400 });
   }
   const paymentMethod = paymentMethodRaw;

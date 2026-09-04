@@ -1,6 +1,8 @@
 "use client";
 
-import { MEMBERSHIP_FEE, PAYMENT_METHODS } from "@/lib/donations";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
+import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import { methodChoiceNames } from "@/lib/paymentMethodChoices";
 import { manualAdd } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 import PickList from "@/components/admin/PickList";
@@ -32,6 +34,8 @@ export default function ManualAddPaymentForm({
   onSkip: () => void;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
+  const { methods } = usePaymentMethods(form.paymentMethod);
+
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <p
@@ -47,7 +51,7 @@ export default function ManualAddPaymentForm({
         id="paymentMethod"
         label={manualAdd.paymentMethodLabel}
         value={form.paymentMethod}
-        options={[...PAYMENT_METHODS]}
+        options={methodChoiceNames(methods)}
         onChange={(paymentMethod) => setForm((p) => ({ ...p, paymentMethod }))}
         placeholder={manualAdd.pick}
         required

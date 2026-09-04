@@ -5,11 +5,18 @@ export interface Expense {
   method: string | null;
   note: string | null;
   proof: string | null;
+  proofs: { filename: string }[];
   date: string;
   createdBy: string;
   tags: { id: string; name: string }[];
   activity: { id: string; title: string } | null;
   competition: { id: string; name: string } | null;
+  allocations: {
+    id: string;
+    amount: number;
+    activity: { id: string; title: string } | null;
+    competition: { id: string; name: string } | null;
+  }[];
 }
 
 export interface NamedEntry {
@@ -56,15 +63,20 @@ export interface FinanceSummary {
   net: number;
 }
 
+export interface ExpenseShare {
+  destinationId: string;
+  amount: string;
+}
+
 export interface ExpenseForm {
   label: string;
   amount: string;
   method: string;
   note: string;
   date: string;
-  proof: string;
+  proofs: string[];
   tagIds: string[];
-  destinationId: string;
+  allocations: ExpenseShare[];
 }
 
 export const emptyExpenseForm: ExpenseForm = {
@@ -73,9 +85,9 @@ export const emptyExpenseForm: ExpenseForm = {
   method: "",
   note: "",
   date: "",
-  proof: "",
+  proofs: [],
   tagIds: [],
-  destinationId: "",
+  allocations: [{ destinationId: "", amount: "" }],
 };
 
 export const PAGE_SIZE = 30;

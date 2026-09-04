@@ -7,6 +7,7 @@ import { memberImportDialog } from "@/lib/texts";
 import { money } from "@/lib/money";
 import { members } from "@/lib/messages";
 import MemberImportDialog, { type ImportPreview } from "./MemberImportDialog";
+import { answering, isMethodsCall, methodsResponse } from "@tests/ui/paymentMethods";
 
 const AGE = "البدريين";
 const OTHER_AGE = "الإتحاد";
@@ -54,6 +55,7 @@ const outcome = {
 function mockPreview(body: ImportPreview) {
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
     void init;
+    if (isMethodsCall(url)) return methodsResponse();
     return { ok: true, json: async () => (url.endsWith("/preview") ? body : outcome) };
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -61,7 +63,9 @@ function mockPreview(body: ImportPreview) {
 }
 
 function sentImport(fetchMock: ReturnType<typeof mockPreview>) {
-  const call = fetchMock.mock.calls.find(([url]) => !url.endsWith("/preview"));
+  const call = fetchMock.mock.calls.find(
+    ([url]) => !url.endsWith("/preview") && !isMethodsCall(url),
+  );
   if (!call) return null;
   return JSON.parse(String(call[1]?.body));
 }
@@ -100,7 +104,7 @@ describe("MemberImportDialog, the upload step", () => {
   });
 
   it("refuses a file that is not a csv without asking the server", async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn(answering(async () => ({ ok: true, json: async () => ({}) })));
     vi.stubGlobal("fetch", fetchMock);
     setup();
 
@@ -108,7 +112,7 @@ describe("MemberImportDialog, the upload step", () => {
     await userEvent.upload(input, new File(["x"], "members.xlsx"), { applyAccept: false });
 
     expect(await screen.findByText(memberImportDialog.fileNotCsv)).toBeDefined();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.filter(([url]) => !isMethodsCall(url))).toEqual([]);
   });
 
   it("shows the rows once the file is read", async () => {

@@ -128,6 +128,7 @@ describe("locateUpload", () => {
       "donation",
       "payment",
       "expense",
+      "expenseProof",
     ]);
   });
 });

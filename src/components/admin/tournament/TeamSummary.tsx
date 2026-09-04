@@ -20,12 +20,14 @@ export default function TeamSummary({
   shownName,
   teamSize,
   busy,
+  onToggle,
   onDeleteTeam,
 }: {
   team: Team;
   shownName: string;
   teamSize: number | null;
   busy: boolean;
+  onToggle: () => void;
   onDeleteTeam: () => void;
 }) {
   const count = team.members.length;
@@ -33,7 +35,13 @@ export default function TeamSummary({
   const tone = rosterTone(count, teamSize);
 
   return (
-    <summary className="disclosure-summary cursor-pointer space-y-1.5">
+    <summary
+      className="disclosure-summary cursor-pointer space-y-1.5"
+      onClick={(e) => {
+        e.preventDefault();
+        onToggle();
+      }}
+    >
       <div className="flex items-start gap-2">
         <span className="summary-logo h-6 flex items-center shrink-0">
           <TeamLogo logo={team.logo} name={shownName} size={32} />
@@ -51,6 +59,7 @@ export default function TeamSummary({
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               onDeleteTeam();
             }}
             disabled={busy}

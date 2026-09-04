@@ -7,10 +7,13 @@ import { useState } from "react";
 import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
 import { api, errorMessage } from "@/lib/api";
-import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
+import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";
+import { useOpenTeam } from "./useOpenTeam";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 export default function TeamsTab({
   activityId,
@@ -27,12 +30,14 @@ export default function TeamsTab({
   suspendedIds: string[];
   onChange: () => void;
 }) {
+  const [query, setQuery] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamLogo, setNewTeamLogo] = useState("");
   const [loadingAction, setLoadingAction] = useState(false);
   const [error, setError] = useState("");
 
   const unassigned = roster.filter((m) => !m.team);
+  const from = useAdminOrigin();
 
   function shownName(team: Team): string {
     return displayTeamName(
@@ -45,6 +50,23 @@ export default function TeamsTab({
       teamSize,
     );
   }
+
+  const rows = teams.map((team) => ({
+    team,
+    name: shownName(team),
+    players: team.members.map((m) => m.member.fullName),
+  }));
+  const shownTeams = matchingTeams(rows, query).map((row) => row.team);
+  const shownUnassigned = matchingPeople(unassigned, query);
+  const searching = query.trim().length > 0;
+
+  const rosters = new Map(
+    shownTeams.map((team) => [team.id, matchingMembers(team.members, query)]),
+  );
+  const holdingAMatch = shownTeams
+    .filter((team) => (rosters.get(team.id) ?? team.members).length < team.members.length)
+    .map((team) => team.id);
+  const { isOpen, toggle } = useOpenTeam(holdingAMatch);
 
   async function run(action: () => Promise<unknown>) {
     setError("");
@@ -113,19 +135,42 @@ export default function TeamsTab({
         </div>
       )}
 
+      <div className="card p-2.5">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={teamsTab.searchPlaceholder}
+          aria-label={teamsTab.searchLabel}
+          className="input input-sm w-full"
+          style={{ background: "white" }}
+        />
+      </div>
+
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        {teamsTab.teamCount(teams.length)}
+        {searching
+          ? teamsTab.teamCountShown(shownTeams.length, teams.length)
+          : teamsTab.teamCount(teams.length)}
       </p>
 
-      {teams.map((team) => (
+      {searching && shownTeams.length === 0 && shownUnassigned.length === 0 && (
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {teamsTab.noMatch}
+        </p>
+      )}
+
+      {shownTeams.map((team) => (
         <TeamCard
           key={team.id}
           team={team}
           shownName={shownName(team)}
           teamSize={teamSize}
+          members={rosters.get(team.id) ?? team.members}
+          open={isOpen(team.id)}
           candidates={unassigned}
           suspendedIds={suspendedIds}
           busy={loadingAction}
+          onToggle={() => toggle(team.id)}
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
@@ -160,21 +205,21 @@ export default function TeamsTab({
         </button>
       </form>
 
-      {unassigned.length > 0 && (
+      {shownUnassigned.length > 0 && (
         <div className="card p-4">
           <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="user">{teamsTab.unassigned(unassigned.length)}</IconLabel>
+            <IconLabel name="user">{teamsTab.unassigned(shownUnassigned.length)}</IconLabel>
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {unassigned.map((m) => (
+            {shownUnassigned.map((m) => (
               <Link
                 key={m.id}
-                href={`/admin/members/${m.id}`}
+                href={memberCardHref(m.id, from)}
                 aria-label={teamsTab.openCardOf(m.fullName)}
                 className="badge badge-pending flex items-center gap-1.5"
               >
                 <PlayerAvatar photo={m.photo} fullName={m.fullName} size={16} />
-                <ArrowLabel>{m.fullName}</ArrowLabel>
+                {m.fullName}
               </Link>
             ))}
           </div>

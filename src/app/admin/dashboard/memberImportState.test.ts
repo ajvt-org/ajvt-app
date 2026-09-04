@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { PAYMENT_METHODS } from "@/lib/donations";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import type { CheckContext, CheckedRow, RowMatch } from "@/lib/memberImportCheck";
 import type { RowValues } from "@/lib/memberImportValues";
@@ -14,6 +13,8 @@ import {
   toggleSkip,
   type EditableRow,
 } from "./memberImportState";
+
+const PAYMENT_METHODS = ["بنكيلي", "السداد", "مصرفي", "نقداً"];
 
 const AGE = "الأولى";
 const METHOD = PAYMENT_METHODS[0];

@@ -6,10 +6,12 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import ArrowLabel from "@/components/ArrowLabel";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
+import { matchingPeople } from "./teamSearch";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 
 export default function PlayersTab({
   activityId,
@@ -26,12 +28,10 @@ export default function PlayersTab({
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
+  const from = useAdminOrigin();
 
   const candidates = roster.filter((m) => !m.team);
-  const filtered = candidates.filter((m) => {
-    const q = search.trim();
-    return !q || m.fullName.includes(q) || (m.phone || "").includes(q);
-  });
+  const filtered = matchingPeople(candidates, search);
 
   async function run(action: () => Promise<unknown>, done?: string) {
     setBusy(true);
@@ -86,10 +86,11 @@ export default function PlayersTab({
                 <span className="text-sm font-bold min-w-0 flex-1">
                   {entry ? (
                     <Link
-                      href={`/admin/members/${entry.member.id}`}
+                      href={memberCardHref(entry.member.id, from)}
                       aria-label={playersTab.openCardOf(entry.member.fullName)}
+                      style={{ color: "var(--mint-700)" }}
                     >
-                      <ArrowLabel>{entry.member.fullName}</ArrowLabel>
+                      {entry.member.fullName}
                     </Link>
                   ) : (
                     team.name
@@ -119,10 +120,10 @@ export default function PlayersTab({
                   onClick={() => removePlayer(team)}
                   disabled={busy}
                   aria-label={playersTab.removeOf(entry?.member.fullName ?? team.name)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  className="btn btn-sm btn-icon shrink-0"
                   style={{ background: "#fee2e2", color: "#991b1b" }}
                 >
-                  <Icon name="trash" size={14} />
+                  <Icon name="trash" size={18} />
                 </button>
               </div>
             );
