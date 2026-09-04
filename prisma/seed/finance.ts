@@ -93,12 +93,14 @@ export async function seedExpenses(health: SeededActivity, tags: { id: string }[
   for (let i = 0; i < EXPENSES.length; i++) {
     const [label, amount] = EXPENSES[i];
     const activityId = i % 3 === 1 ? health.id : null;
+    const proof = i % 3 === 0 ? placeholder(`seed-expense-${next()}.webp`) : null;
     await prisma.expense.create({
       data: {
         label,
         amount,
         note: i % 2 === 0 ? "فاتورة متوفرة لدى أمين الصندوق" : null,
-        proof: i % 3 === 0 ? placeholder(`seed-expense-${next()}.webp`) : null,
+        proof,
+        proofs: proof ? { create: [{ filename: proof }] } : undefined,
         date: daysAgo(45 - i * 6),
         createdBy: "admin",
         activityId,

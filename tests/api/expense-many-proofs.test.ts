@@ -147,4 +147,24 @@ describe("the reuse warning across several justificatifs", () => {
 
     expect(reuse.filter((row) => row.id === first.id)).toHaveLength(1);
   });
+
+  it("keeps the rows in step when only the old proof field is sent", async () => {
+    const expense = await anExpense([ONE, TWO]);
+
+    await PATCH(...patching(expense.id, { proof: THREE }));
+
+    expect(await proofsOf(expense.id)).toEqual([THREE]);
+    const row = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
+    expect(row.proof).toBe(THREE);
+  });
+
+  it("clears the rows when the old proof field is emptied", async () => {
+    const expense = await anExpense([ONE, TWO]);
+
+    await PATCH(...patching(expense.id, { proof: null }));
+
+    expect(await proofsOf(expense.id)).toEqual([]);
+    const row = await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } });
+    expect(row.proof).toBeNull();
+  });
 });
