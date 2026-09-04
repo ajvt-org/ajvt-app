@@ -59,6 +59,18 @@ export const paymentsPage = {
   accountFilter: "تصفية حسب الرقم",
 } as const;
 
+export const byAccount = {
+  title: "حسب الرقم المستلم",
+  from: "من تاريخ",
+  to: "إلى تاريخ",
+  received: "داخل",
+  paid: "خارج",
+  noAccount: "بدون رقم",
+  closed: "مغلق",
+  empty: "لا توجد بيانات بعد",
+  failed: "تعذر تحميل الأرقام، أعد تحميل الصفحة",
+} as const;
+
 export const paymentAccountPicker = {
   label: "الرقم المستلم",
   unknown: "غير معروف",
