@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { POST as CREATE_EXPENSE } from "@/app/api/admin/expenses/route";
 import { PATCH as UPDATE_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { GET as ACTIVITY_FINANCE } from "@/app/api/admin/activities/[id]/finance/route";
+import { GET as FINANCE_SUMMARY } from "@/app/api/admin/finance/summary/route";
 import { prisma } from "@/lib/prisma";
 import { activityFinanceReport } from "@/lib/activityReportServer";
 import { resetDb, get, post, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
@@ -34,6 +35,14 @@ async function splitAcross(amount: number, shares: { activityId: string; amount:
 async function spendingByKey() {
   const report = await activityFinanceReport(FROM, TO);
   return Object.fromEntries(report.rows.map((row) => [row.key, row.spending]));
+}
+
+async function summaryFor(activityId?: string) {
+  const url = activityId
+    ? `/api/admin/finance/summary?activityId=${activityId}`
+    : "/api/admin/finance/summary";
+  const res = await FINANCE_SUMMARY(get(url));
+  return (await res.json()) as { totalExpenses: number };
 }
 
 async function ledgerFor(id: string) {
@@ -159,5 +168,26 @@ describe("the finance readers when one expense covers several destinations", () 
     const ledger = await ledgerFor("a1");
     expect(ledger.rows.filter((row) => row.kind === "expense")).toHaveLength(2);
     expect(ledger.totals.expenses).toBe(300);
+  });
+  it("gives the activity scoped summary only that activity's share of a split", async () => {
+    await activity("a1", "أ");
+    await activity("a2", "ب");
+
+    await splitAcross(500, [
+      { activityId: "a1", amount: 200 },
+      { activityId: "a2", amount: 300 },
+    ]);
+
+    expect((await summaryFor("a1")).totalExpenses).toBe(200);
+    expect((await summaryFor()).totalExpenses).toBe(500);
+  });
+
+  it("still scopes the summary for an expense that has no allocation", async () => {
+    await activity("a1", "أ");
+    await prisma.expense.create({
+      data: { label: "قديم", amount: 400, createdBy: "admin", activityId: "a1" },
+    });
+
+    expect((await summaryFor("a1")).totalExpenses).toBe(400);
   });
 });
