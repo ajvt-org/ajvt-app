@@ -2,19 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { PAYABLE_METHODS } from "./paymentCodes";
 
-export function usePayableMethods(): string[] {
-  const [methods, setMethods] = useState<string[]>(PAYABLE_METHODS);
+export interface PayableAccount {
+  id: string;
+  code: string;
+  label: string | null;
+}
+
+export interface PayableMethod {
+  name: string;
+  accounts: PayableAccount[];
+}
+
+interface OfferedMethod extends PayableMethod {
+  memberFacing: boolean;
+}
+
+export function usePayableMethods(): PayableMethod[] {
+  const [methods, setMethods] = useState<PayableMethod[]>([]);
 
   useEffect(() => {
     api
-      .get<{ methods: { name: string; memberFacing: boolean }[] }>("/api/payment-methods")
+      .get<{ methods: OfferedMethod[] }>("/api/payment-methods")
       .then((data) =>
         setMethods(
-          PAYABLE_METHODS.filter((name) =>
-            (data.methods ?? []).some((method) => method.name === name && method.memberFacing),
-          ),
+          (data.methods ?? [])
+            .filter((method) => method.memberFacing && method.accounts.length > 0)
+            .map(({ name, accounts }) => ({ name, accounts })),
         ),
       )
       .catch(() => {});

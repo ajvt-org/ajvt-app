@@ -8,7 +8,6 @@ import {
   type MethodWithAccounts,
   type PaymentMethodOption,
 } from "./paymentMethods";
-import { PAYABLE_METHODS } from "./paymentCodes";
 
 const SELECT = {
   id: true,
@@ -59,5 +58,5 @@ export async function orderedMethodNames(): Promise<string[]> {
 }
 
 export async function payableMethodNames(): Promise<string[]> {
-  return methodNames(payableMethods(await allPaymentMethods(), PAYABLE_METHODS));
+  return methodNames(payableMethods(await methodsWithAccounts()));
 }

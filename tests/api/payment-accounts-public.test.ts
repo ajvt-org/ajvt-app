@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GET } from "@/app/api/payment-methods/route";
 import { prisma } from "@/lib/prisma";
+import { payableMethodNames } from "@/lib/paymentMethodsServer";
 import { resetDb, get } from "./helpers";
 
 const WITH_A_CODE = "بنكيلي";
@@ -62,5 +63,44 @@ describe("the accounts the payment methods route serves", () => {
     const codes = named(await offered(), WITH_A_CODE)?.accounts.map((a) => a.code) ?? [];
     expect(codes).toHaveLength(2);
     expect(codes[1]).toBe("888888");
+  });
+});
+
+describe("what a member may pay with", () => {
+  const NEW_METHOD = "خدمة جديدة";
+
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  async function aMethodWithNoAccount() {
+    return prisma.paymentMethod.create({
+      data: { name: NEW_METHOD, memberFacing: true, active: true, position: 9 },
+    });
+  }
+
+  it("leaves out a method an admin created but gave no code", async () => {
+    await aMethodWithNoAccount();
+    expect(await payableMethodNames()).not.toContain(NEW_METHOD);
+  });
+
+  it("takes the same method once a code is typed into it", async () => {
+    const method = await aMethodWithNoAccount();
+    await prisma.paymentAccount.create({
+      data: { methodId: method.id, code: "999999", position: 1 },
+    });
+    expect(await payableMethodNames()).toContain(NEW_METHOD);
+  });
+
+  it("leaves out the method paid in person, which has no account to receive into", async () => {
+    expect(await payableMethodNames()).not.toContain(CASH);
+  });
+
+  it("drops a method whose only account is closed at the bank", async () => {
+    const before = await payableMethodNames();
+    await prisma.paymentAccount.updateMany({ data: { closedAt: new Date() } });
+    const after = await payableMethodNames();
+    expect(before.length).toBeGreaterThan(0);
+    expect(after).toEqual([]);
   });
 });
