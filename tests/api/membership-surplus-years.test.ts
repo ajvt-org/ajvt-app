@@ -32,6 +32,7 @@ async function lastYearSurplus(memberId: string, amount: number) {
     feeApplied: 100,
     method: "بنكيلي",
     accountId: null,
+    bankReference: null,
     proof: null,
     status: "ACTIVE",
     anonymous: false,
