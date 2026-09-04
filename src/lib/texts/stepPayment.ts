@@ -3,6 +3,7 @@ import { ouguiya } from "./currency";
 
 export const stepPayment = {
   methodLabel: "طريقة الدفع",
+  accountLabel: "الرقم الذي دفعت إليه",
   payingWith: (method: string) => `الدفع عبر ${method}`,
   receivingNumber: "رقم المستلم",
   amount: "المبلغ",

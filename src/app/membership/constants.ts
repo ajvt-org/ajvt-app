@@ -1,5 +1,6 @@
 export interface PaymentValues {
   paymentMethod: string;
+  accountId: string;
   paidAmount: string;
   referenceCode: string;
 }

@@ -35,7 +35,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   if (declared && !accountIsOpenOn(chosen, declared)) {
     throw new ValidationError(money.paymentAccountInvalid);
   }
-  const accountId = declared ?? null;
+  const accountId = declared || null;
 
   const person = await prisma.user.findUniqueOrThrow({
     where: { id: session.userId },

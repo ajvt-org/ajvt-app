@@ -51,7 +51,12 @@ function MembershipPageInner() {
   const [fullName, setFullName] = useState("");
   const [wantsName, setWantsName] = useState<boolean | null>(null);
 
-  const [form, setForm] = useState({ paymentMethod: "", paidAmount: "", referenceCode: "" });
+  const [form, setForm] = useState({
+    paymentMethod: "",
+    accountId: "",
+    paidAmount: "",
+    referenceCode: "",
+  });
 
   const surplus = surplusOf(form.paidAmount, membershipFee);
 
@@ -91,6 +96,7 @@ function MembershipPageInner() {
         }
         setForm({
           paymentMethod: member.paymentMethod || "",
+          accountId: member.accountId || "",
           paidAmount:
             member.paidAmount != null
               ? String(member.paidAmount + (member.supportAmount ?? 0))
@@ -155,13 +161,13 @@ function MembershipPageInner() {
     e.preventDefault();
     setError("");
 
-    if (!form.paymentMethod) return setError("يرجى اختيار طريقة الدفع");
+    if (!form.paymentMethod) return setError(members.pickPaymentMethod);
     const paidAmountError = validatePaidAmount(form.paidAmount, membershipFee);
     if (paidAmountError) return setError(paidAmountError);
     const nameChoiceError =
       surplus > 0 ? validateDonorChoice(wantsName === null ? null : !wantsName, fullName) : null;
     if (nameChoiceError) return setError(nameChoiceError);
-    if (proofUploading) return setError("يرجى الانتظار حتى انتهاء رفع الصورة");
+    if (proofUploading) return setError(members.waitForUpload);
     if (!proofFilename) return setError(members.attachProof);
 
     setLoading(true);
@@ -169,6 +175,7 @@ function MembershipPageInner() {
       const data = await api.post<{ referenceCode?: string }>("/api/members", {
         ...(editId ? { id: editId } : {}),
         ...form,
+        accountId: form.accountId || null,
         paidAmount: Number(form.paidAmount),
         surplusAnonymous: surplus > 0 && wantsName === false,
         paymentProof: proofFilename,
