@@ -19,3 +19,16 @@ export const paymentMethodManager = {
   toggleMemberFacing: (name: string) => `إتاحة ${name} للأعضاء`,
   hint: "طريقة الدفع لا تُحذف، تُوقف فقط، حتى تبقى السجلات القديمة سليمة.",
 } as const;
+
+export const paymentMethodChoice = {
+  failed: "تعذر تحميل طرق الدفع، أعد تحميل الصفحة",
+  none: "لا توجد طريقة دفع متاحة حالياً",
+} as const;
+
+export const paymentInfoBanner = {
+  title: "معلومات الدفع",
+  copy: "نسخ",
+  copied: "تم",
+  failed: "تعذر تحميل أرقام الدفع، أعد تحميل الصفحة",
+  none: "لا توجد طريقة دفع متاحة حالياً",
+} as const;

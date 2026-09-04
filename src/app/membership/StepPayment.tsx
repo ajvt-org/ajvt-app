@@ -11,6 +11,7 @@ import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
 import { type PaymentValues } from "./constants";
 import { usePayableMethods } from "@/lib/usePayableMethods";
+import PaymentMethodChoice from "@/components/PaymentMethodChoice";
 
 export default function StepPayment({
   form,
@@ -49,9 +50,9 @@ export default function StepPayment({
   editing: boolean;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
-  const { methods: payable } = usePayableMethods();
+  const offer = usePayableMethods();
   const amount = String(form.paidAmount || membershipFee);
-  const chosen = payable.find((method) => method.name === form.paymentMethod);
+  const chosen = offer.methods.find((method) => method.name === form.paymentMethod);
   const receivingCode = chosen?.accounts[0]?.code ?? "";
 
   return (
@@ -64,29 +65,12 @@ export default function StepPayment({
         >
           طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
         </p>
-        <div
-          className="grid grid-cols-3 gap-2"
-          role="radiogroup"
-          aria-labelledby="member-method-label"
-        >
-          {payable.map(({ name }) => (
-            <button
-              key={name}
-              type="button"
-              role="radio"
-              aria-checked={form.paymentMethod === name}
-              onClick={() => setForm((p) => ({ ...p, paymentMethod: name }))}
-              className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-              style={{
-                background: form.paymentMethod === name ? "var(--mint-600)" : "white",
-                color: form.paymentMethod === name ? "white" : "var(--mint-700)",
-                borderColor: form.paymentMethod === name ? "var(--mint-600)" : "var(--mint-200)",
-              }}
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+        <PaymentMethodChoice
+          offer={offer}
+          value={form.paymentMethod}
+          onPick={(name) => setForm((p) => ({ ...p, paymentMethod: name }))}
+          labelledBy="member-method-label"
+        />
       </div>
 
       {form.paymentMethod && (
