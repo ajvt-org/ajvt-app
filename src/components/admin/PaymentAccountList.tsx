@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { paymentAccountManager as texts } from "@/lib/texts";
-import type { AdminAccountRow } from "@/lib/paymentMethodAdmin";
+import { openAccountRows, type AdminAccountRow } from "@/lib/paymentMethodAdmin";
 import PaymentAccountRow from "./PaymentAccountRow";
 
 export default function PaymentAccountList({
@@ -18,6 +18,7 @@ export default function PaymentAccountList({
   onRun: (action: () => Promise<unknown>) => Promise<void>;
 }) {
   const [code, setCode] = useState("");
+  const open = openAccountRows(accounts);
 
   async function add(ev: React.SubmitEvent<HTMLFormElement>) {
     ev.preventDefault();
@@ -39,14 +40,14 @@ export default function PaymentAccountList({
         </p>
       ) : (
         <ul>
-          {accounts.map((account, index) => (
+          {accounts.map((account) => (
             <PaymentAccountRow
               key={account.id}
               account={account}
               methodId={methodId}
               busy={busy}
-              first={index === 0}
-              last={index === accounts.length - 1}
+              first={open[0]?.id === account.id}
+              last={open[open.length - 1]?.id === account.id}
               onRun={onRun}
             />
           ))}

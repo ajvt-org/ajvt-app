@@ -6,6 +6,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { paymentAccountManager as texts } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
+import { formatDate } from "@/lib/utils";
 import { RECORD } from "@/lib/messages/counts";
 import type { AdminAccountRow } from "@/lib/paymentMethodAdmin";
 
@@ -25,8 +26,10 @@ export default function PaymentAccountRow({
   onRun: (action: () => Promise<unknown>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
-  const [code, setCode] = useState(account.code);
+  const [replacing, setReplacing] = useState(false);
+  const [code, setCode] = useState("");
   const [label, setLabel] = useState(account.label ?? "");
+  const closed = account.closedAt !== null;
 
   const url = `/api/admin/payment-methods/${methodId}/accounts/${account.id}`;
 
@@ -38,14 +41,6 @@ export default function PaymentAccountRow({
     return (
       <li className="py-1.5 space-y-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
         <input
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          maxLength={30}
-          className="input w-full"
-          dir="ltr"
-          aria-label={texts.newLabel}
-        />
-        <input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           maxLength={30}
@@ -56,9 +51,9 @@ export default function PaymentAccountRow({
         <div className="flex items-center justify-end gap-1">
           <button
             type="button"
-            disabled={busy || !code.trim()}
+            disabled={busy}
             onClick={async () => {
-              await patch({ code: code.trim(), label: label.trim() });
+              await patch({ label: label.trim() });
               setEditing(false);
             }}
             className="btn btn-sm btn-ghost"
@@ -68,9 +63,51 @@ export default function PaymentAccountRow({
           <button
             type="button"
             onClick={() => {
-              setCode(account.code);
               setLabel(account.label ?? "");
               setEditing(false);
+            }}
+            className="btn btn-sm btn-ghost"
+          >
+            {texts.cancel}
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  if (replacing) {
+    return (
+      <li className="py-1.5 space-y-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {texts.replaceWarning}
+        </p>
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          maxLength={30}
+          placeholder={texts.replaceLabel}
+          className="input w-full"
+          dir="ltr"
+          aria-label={texts.replaceLabel}
+        />
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            disabled={busy || !code.trim()}
+            onClick={async () => {
+              await onRun(() => api.post(`${url}/replace`, { code: code.trim() }));
+              setCode("");
+              setReplacing(false);
+            }}
+            className="btn btn-sm btn-ghost"
+          >
+            <IconLabel name="check">{texts.replace}</IconLabel>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCode("");
+              setReplacing(false);
             }}
             className="btn btn-sm btn-ghost"
           >
@@ -87,7 +124,7 @@ export default function PaymentAccountRow({
         <span
           className="font-mono text-sm shrink-0"
           dir="ltr"
-          style={{ color: account.active ? "var(--text-main)" : "var(--text-muted)" }}
+          style={{ color: account.active && !closed ? "var(--text-main)" : "var(--text-muted)" }}
         >
           {account.code}
         </span>
@@ -102,50 +139,65 @@ export default function PaymentAccountRow({
             {counted(account.used, RECORD)}
           </span>
         )}
-        {!account.active && <span className="badge shrink-0">{texts.stopped}</span>}
+        {closed ? (
+          <span className="badge shrink-0">
+            {texts.closedOn(formatDate(account.closedAt ?? new Date()))}
+          </span>
+        ) : (
+          !account.active && <span className="badge shrink-0">{texts.stopped}</span>
+        )}
       </div>
 
-      <div className="flex items-center justify-end gap-1">
-        <button
-          type="button"
-          disabled={busy || first}
-          onClick={() => patch({ move: "up" })}
-          className="btn-icon"
-          aria-label={texts.moveUp}
-        >
-          <Icon name="arrowUp" size={13} />
-        </button>
-        <button
-          type="button"
-          disabled={busy || last}
-          onClick={() => patch({ move: "down" })}
-          className="btn-icon"
-          aria-label={texts.moveDown}
-        >
-          <Icon name="arrowDown" size={13} />
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setCode(account.code);
-            setLabel(account.label ?? "");
-            setEditing(true);
-          }}
-          className="btn-icon"
-          aria-label={texts.edit(account.code)}
-        >
-          <Icon name="pencil" size={13} />
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => patch({ active: !account.active })}
-          className="btn btn-sm btn-ghost shrink-0"
-          aria-label={texts.toggle(account.code)}
-        >
-          {account.active ? texts.stop : texts.resume}
-        </button>
-      </div>
+      {!closed && (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            type="button"
+            disabled={busy || first}
+            onClick={() => patch({ move: "up" })}
+            className="btn-icon"
+            aria-label={texts.moveUp}
+          >
+            <Icon name="arrowUp" size={13} />
+          </button>
+          <button
+            type="button"
+            disabled={busy || last}
+            onClick={() => patch({ move: "down" })}
+            className="btn-icon"
+            aria-label={texts.moveDown}
+          >
+            <Icon name="arrowDown" size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLabel(account.label ?? "");
+              setEditing(true);
+            }}
+            className="btn-icon"
+            aria-label={texts.edit(account.code)}
+          >
+            <Icon name="pencil" size={13} />
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => setReplacing(true)}
+            className="btn btn-sm btn-ghost shrink-0"
+          >
+            {texts.replace}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => patch({ active: !account.active })}
+            className="btn btn-sm btn-ghost shrink-0"
+            aria-label={texts.toggle(account.code)}
+          >
+            {account.active ? texts.stop : texts.resume}
+          </button>
+        </div>
+      )}
     </li>
   );
 }

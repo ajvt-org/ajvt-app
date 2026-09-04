@@ -4,10 +4,10 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import { paymentMethodManager as texts } from "@/lib/texts";
+import { paymentAccountManager as accountTexts, paymentMethodManager as texts } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
 import { RECORD } from "@/lib/messages/counts";
-import type { AdminMethodRow } from "@/lib/paymentMethodAdmin";
+import { reachesNobody, type AdminMethodRow } from "@/lib/paymentMethodAdmin";
 import PaymentAccountList from "./PaymentAccountList";
 
 export default function PaymentMethodRow({
@@ -89,6 +89,9 @@ export default function PaymentMethodRow({
           {method.memberFacing ? texts.memberFacing : texts.adminOnly}
         </span>
         {!method.active && <span className="badge shrink-0">{texts.stopped}</span>}
+        {reachesNobody(method) && (
+          <span className="badge shrink-0">{accountTexts.reachesNobody}</span>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-1">
