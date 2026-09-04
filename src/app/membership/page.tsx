@@ -11,6 +11,7 @@ import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { surplusOf } from "@/lib/membershipSurplus";
 import { validateDonorChoice } from "@/lib/donorChoice";
 import { api, errorMessage } from "@/lib/api";
+import { members } from "@/lib/messages";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
 import { goAfterAuthChange } from "@/lib/authNav";
@@ -161,7 +162,7 @@ function MembershipPageInner() {
       surplus > 0 ? validateDonorChoice(wantsName === null ? null : !wantsName, fullName) : null;
     if (nameChoiceError) return setError(nameChoiceError);
     if (proofUploading) return setError("يرجى الانتظار حتى انتهاء رفع الصورة");
-    if (!proofFilename) return setError("يرجى إرفاق صورة الكابتير");
+    if (!proofFilename) return setError(members.attachProof);
 
     setLoading(true);
     try {
