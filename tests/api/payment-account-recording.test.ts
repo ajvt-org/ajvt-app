@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/donations/[id]/route";
 import { POST as CREATE_DONATION } from "@/app/api/admin/donations/route";
 import { POST as CREATE_MEMBERSHIP } from "@/app/api/admin/people/[id]/membership/route";
+import { POST as CREATE_EXPENSE } from "@/app/api/admin/expenses/route";
+import { PATCH as EDIT_EXPENSE } from "@/app/api/admin/expenses/[id]/route";
 import { prisma } from "@/lib/prisma";
 import { resetDb, patch, post, withId, createAdmin, createUser, signInAsAdmin } from "./helpers";
 
@@ -217,5 +219,68 @@ describe("recording which number money entered by hand landed in", () => {
 
     expect(res.status).toBe(400);
     expect(await prisma.membership.count()).toBe(0);
+  });
+});
+
+describe("recording which number an expense was paid from", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("keeps the number on a new expense", async () => {
+    const account = await accountOn(METHOD);
+    const res = await CREATE_EXPENSE(
+      post("/api/admin/expenses", {
+        label: "إيجار الملعب",
+        amount: 1200,
+        method: METHOD,
+        accountId: account.id,
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    expect((await prisma.expense.findFirstOrThrow()).accountId).toBe(account.id);
+  });
+
+  it("takes one paid in person, with no number at all", async () => {
+    const res = await CREATE_EXPENSE(
+      post("/api/admin/expenses", { label: "كرات", amount: 500, method: "نقداً" }),
+    );
+
+    expect(res.status).toBe(201);
+    expect((await prisma.expense.findFirstOrThrow()).accountId).toBeNull();
+  });
+
+  it("refuses one whose number belongs to another method", async () => {
+    const elsewhere = await accountOn(OTHER);
+    const res = await CREATE_EXPENSE(
+      post("/api/admin/expenses", {
+        label: "كرات",
+        amount: 500,
+        method: METHOD,
+        accountId: elsewhere.id,
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.expense.count()).toBe(0);
+  });
+
+  it("records the number on an expense already saved", async () => {
+    const account = await accountOn(METHOD);
+    const expense = await prisma.expense.create({
+      data: { label: "كرات", amount: 500, method: METHOD, createdBy: "admin" },
+    });
+
+    const res = await EDIT_EXPENSE(
+      patch(`/api/admin/expenses/${expense.id}`, { accountId: account.id }),
+      withId(expense.id),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await prisma.expense.findUniqueOrThrow({ where: { id: expense.id } })).accountId).toBe(
+      account.id,
+    );
   });
 });
