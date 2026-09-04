@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { common, money } from "@/lib/messages";
+import { common, money, expenses as expenseMessages } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 const LABEL_REQUIRED = "وصف المصروف مطلوب";
@@ -29,6 +29,24 @@ const tagIds = z.array(z.string(INVALID)).optional();
 
 const proofs = z.array(z.string(INVALID), INVALID).optional();
 
+const shareAmount = z.unknown().superRefine((v, ctx) => {
+  const n = Number(v);
+  if (!Number.isInteger(n) || n <= 0) {
+    ctx.addIssue({ code: "custom", message: expenseMessages.shareAmountInvalid });
+  }
+});
+
+const allocations = z
+  .array(
+    z.object({
+      activityId: z.string(INVALID).nullish(),
+      competitionId: z.string(INVALID).nullish(),
+      amount: shareAmount,
+    }),
+    INVALID,
+  )
+  .optional();
+
 const activityId = z.string(INVALID).nullish();
 
 const competitionId = z.string(INVALID).nullish();
@@ -56,6 +74,7 @@ export function expenseCreateSchema(accepted: readonly string[]) {
     note: z.string(INVALID).nullish(),
     proof: z.string(INVALID).nullish(),
     proofs,
+    allocations,
     date: date.optional(),
     tagIds,
   });
@@ -72,6 +91,7 @@ export function expenseUpdateSchema(accepted: readonly string[]) {
       note: z.string(INVALID).nullish(),
       proof: z.string(INVALID).nullish(),
       proofs,
+      allocations,
       date: date.optional(),
       tagIds,
     })
@@ -85,6 +105,7 @@ export function expenseUpdateSchema(accepted: readonly string[]) {
           v.date,
           v.proof,
           v.proofs,
+          v.allocations,
           v.tagIds,
           v.activityId,
           v.competitionId,

@@ -10,10 +10,10 @@ import { acceptedNames } from "@/lib/paymentMethods";
 import { expenseUpdateSchema } from "../schema";
 import { money } from "@/lib/money";
 import { expenses as expenseMessages } from "@/lib/messages";
-import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
+import { legacyDestination, sharesForUpdate } from "@/lib/expenseSharesServer";
 import { EXPENSE_DESTINATION_SELECT } from "@/lib/moneyDestination";
 import { cleanProofNames, leadProof, proofsToAdd, proofsToRemove } from "@/lib/expenseProofs";
-import { EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
+import { EXPENSE_ALLOCATION_SELECT, EXPENSE_PROOF_SELECT } from "@/lib/expenseProofsServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/expenses/[id]",
@@ -26,8 +26,19 @@ export const PATCH = withRoute(
     }
 
     const accepted = acceptedNames(await offeredMethodNames(), existing.method);
-    const { label, amount, method, note, date, proof, proofs, tagIds, activityId, competitionId } =
-      parse(expenseUpdateSchema(accepted), await req.json());
+    const {
+      label,
+      amount,
+      method,
+      note,
+      date,
+      proof,
+      proofs,
+      tagIds,
+      activityId,
+      competitionId,
+      allocations,
+    } = parse(expenseUpdateSchema(accepted), await req.json());
 
     const data: {
       label?: string;
@@ -62,8 +73,18 @@ export const PATCH = withRoute(
     if (proofs !== undefined) data.proof = leadProof(wanted);
     else if (proof !== undefined) data.proof = proof;
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
-    if (activityId !== undefined || competitionId !== undefined) {
-      const destination = await resolveMoneyDestination({ activityId, competitionId });
+
+    const shares = await sharesForUpdate({
+      id,
+      total: data.amount ?? existing.amount,
+      allocations,
+      destinationGiven: activityId !== undefined || competitionId !== undefined,
+      destination: { activityId, competitionId },
+      amountGiven: amount !== undefined,
+      existing,
+    });
+    if (shares) {
+      const destination = legacyDestination(shares);
       data.activityId = destination.activityId;
       data.competitionId = destination.competitionId;
     }
@@ -82,18 +103,24 @@ export const PATCH = withRoute(
       const saved = await tx.expense.update({
         where: { id },
         data,
-        include: { ...EXPENSE_DESTINATION_SELECT, ...EXPENSE_PROOF_SELECT },
-      });
-
-      await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
-      await tx.expenseAllocation.create({
-        data: {
-          expenseId: id,
-          amount: saved.amount,
-          activityId: saved.activityId,
-          competitionId: saved.activityId ? null : saved.competitionId,
+        include: {
+          ...EXPENSE_DESTINATION_SELECT,
+          ...EXPENSE_PROOF_SELECT,
+          ...EXPENSE_ALLOCATION_SELECT,
         },
       });
+
+      if (shares) {
+        await tx.expenseAllocation.deleteMany({ where: { expenseId: id } });
+        await tx.expenseAllocation.createMany({
+          data: shares.map((share) => ({
+            expenseId: id,
+            amount: share.amount,
+            activityId: share.activityId,
+            competitionId: share.competitionId,
+          })),
+        });
+      }
 
       return saved;
     });
