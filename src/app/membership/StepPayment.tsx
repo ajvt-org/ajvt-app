@@ -9,7 +9,7 @@ import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { stepPayment } from "@/lib/texts/stepPayment";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
-import { PAYMENT_CODES, type PaymentValues } from "./constants";
+import { type PaymentValues } from "./constants";
 import { usePayableMethods } from "@/lib/usePayableMethods";
 
 export default function StepPayment({
@@ -49,8 +49,10 @@ export default function StepPayment({
   editing: boolean;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
-  const payable = usePayableMethods();
+  const { methods: payable } = usePayableMethods();
   const amount = String(form.paidAmount || membershipFee);
+  const chosen = payable.find((method) => method.name === form.paymentMethod);
+  const receivingCode = chosen?.accounts[0]?.code ?? "";
 
   return (
     <>
@@ -101,9 +103,9 @@ export default function StepPayment({
           <div className="space-y-2">
             <CopyRow
               label="رقم المستلم"
-              value={PAYMENT_CODES[form.paymentMethod]}
-              copied={copied === PAYMENT_CODES[form.paymentMethod]}
-              onCopy={() => onCopy(PAYMENT_CODES[form.paymentMethod])}
+              value={receivingCode}
+              copied={copied === receivingCode}
+              onCopy={() => onCopy(receivingCode)}
             />
             <CopyRow
               label="المبلغ"
