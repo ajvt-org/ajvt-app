@@ -59,6 +59,22 @@ describe("an account under a payment method", () => {
     expect(await prisma.paymentMethod.findUnique({ where: { id: method.id } })).not.toBeNull();
   });
 
+  it("refuses to delete an account a payment points at", async () => {
+    const account = await prisma.paymentAccount.findFirstOrThrow();
+    await prisma.payment.create({
+      data: { purpose: "DONATION", amount: 1000, accountId: account.id },
+    });
+    await expect(prisma.paymentAccount.delete({ where: { id: account.id } })).rejects.toThrow();
+  });
+
+  it("refuses to delete an account an expense points at", async () => {
+    const account = await prisma.paymentAccount.findFirstOrThrow();
+    await prisma.expense.create({
+      data: { label: "إيجار الملعب", amount: 12000, createdBy: "admin", accountId: account.id },
+    });
+    await expect(prisma.paymentAccount.delete({ where: { id: account.id } })).rejects.toThrow();
+  });
+
   it("lets a method with no account be deleted", async () => {
     const cash = await prisma.paymentMethod.findUniqueOrThrow({ where: { name: CASH } });
     await prisma.paymentMethod.delete({ where: { id: cash.id } });
