@@ -44,6 +44,13 @@ export const paymentAccountManager = {
   moveDown: "تحريك الرقم لأسفل",
 } as const;
 
+export const renewForm = {
+  amountPlaceholder: "المبلغ المسدد",
+  methodUnset: "طريقة الدفع",
+  proofLabel: "إثبات الدفع (اختياري)",
+  renew: (year: number) => `تجديد عضوية ${year}`,
+} as const;
+
 export const paymentAccountPicker = {
   label: "الرقم المستلم",
   unknown: "غير معروف",

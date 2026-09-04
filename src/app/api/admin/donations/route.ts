@@ -6,6 +6,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { offeredMethodNames } from "@/lib/paymentMethodsServer";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 import { donationCreateSchema } from "./schema";
 import { resolveMoneyDestination } from "@/lib/moneyDestinationServer";
 import { members } from "@/lib/messages";
@@ -24,11 +25,15 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
     proof,
     donorPhoto,
     paymentMethod,
+    accountId,
     activityId,
     competitionId,
     userId,
   } = parse(donationCreateSchema(await offeredMethodNames()), await req.json());
   const destination = await resolveMoneyDestination({ activityId, competitionId });
+
+  const wrongAccount = await accountIdError(paymentMethod, accountId, null);
+  if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });
 
   const giver = userId
     ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
@@ -45,6 +50,7 @@ export const POST = withRoute("POST /api/admin/donations", async (req: NextReque
       proof: proof ?? null,
       donorPhoto: donorPhoto ?? null,
       paymentMethod: paymentMethod || null,
+      accountId: accountId || null,
       activityId: destination.activityId,
       competitionId: destination.competitionId,
       userId: giver?.id ?? null,

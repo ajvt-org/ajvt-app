@@ -21,6 +21,7 @@ export function donationCreateSchema(accepted: readonly string[]) {
     proof: optionalText,
     donorPhoto: optionalText,
     paymentMethod: paymentMethodIn(accepted).nullish(),
+    accountId: z.string(INVALID).nullish(),
     activityId: z.string(INVALID).nullish(),
     competitionId: z.string(INVALID).nullish(),
     userId: accountId,

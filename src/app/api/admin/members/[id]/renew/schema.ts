@@ -12,6 +12,7 @@ export function renewSchema(accepted: readonly string[]) {
       }
     }),
     paymentMethod: z.string(INVALID).refine((v) => accepted.includes(v), members.pickPaymentMethod),
+    accountId: z.string(INVALID).nullish(),
     paymentProof: z.string(INVALID).nullish(),
   });
 }
