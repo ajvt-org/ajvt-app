@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
-import { usePayableMethods } from "@/lib/usePayableMethods";
+import { paymentInfoBanner as texts } from "@/lib/texts";
+import type { PayableMethods } from "@/lib/usePayableMethods";
 
 const ROW = "flex items-center justify-between rounded-xl px-3 py-2";
 const ROW_BACKGROUND = { background: "rgba(255,255,255,0.1)" };
@@ -84,16 +85,22 @@ function MethodRow({
             minWidth: "52px",
           }}
         >
-          {copied ? <IconLabel name="check">تم</IconLabel> : "نسخ"}
+          {copied ? <IconLabel name="check">{texts.copied}</IconLabel> : texts.copy}
         </button>
       </div>
     </div>
   );
 }
 
-export default function PaymentInfoBanner({ note }: { note?: string }) {
+export default function PaymentInfoBanner({
+  offer,
+  note,
+}: {
+  offer: PayableMethods;
+  note?: string;
+}) {
   const [copied, setCopied] = useState<string | null>(null);
-  const { methods, loading, failed } = usePayableMethods();
+  const { methods, loading, failed } = offer;
 
   async function copyCode(code: string) {
     await toClipboard(code);
@@ -110,14 +117,12 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
       }}
     >
       <p className="text-sm font-bold mb-3 text-white">
-        <IconLabel name="card">معلومات الدفع</IconLabel>
+        <IconLabel name="card">{texts.title}</IconLabel>
       </p>
       <div className="space-y-2">
         {loading && <Waiting />}
-        {!loading && failed && <Notice>تعذر تحميل أرقام الدفع، أعد تحميل الصفحة</Notice>}
-        {!loading && !failed && methods.length === 0 && (
-          <Notice>لا توجد طريقة دفع متاحة حالياً</Notice>
-        )}
+        {!loading && failed && <Notice>{texts.failed}</Notice>}
+        {!loading && !failed && methods.length === 0 && <Notice>{texts.none}</Notice>}
         {methods.map((method) => (
           <MethodRow
             key={method.name}
