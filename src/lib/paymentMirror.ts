@@ -9,6 +9,7 @@ export interface MembershipMirror {
   amount: number | null;
   feeApplied: number;
   method: string | null;
+  accountId: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   anonymous: boolean;
@@ -31,6 +32,7 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
     amount: m.amount,
     feeApplied: m.feeApplied,
     method: m.method,
+    accountId: m.accountId,
     proof: m.proof,
     status: m.status,
   };
@@ -72,6 +74,7 @@ export interface DonationMirror {
   amount: number | null;
   anonymous: boolean;
   method: string | null;
+  accountId: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
@@ -88,6 +91,7 @@ export interface MirroredDonation {
   amount: number | null;
   anonymous: boolean;
   paymentMethod: string | null;
+  accountId: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
@@ -104,6 +108,7 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
     amount: donation.amount,
     anonymous: donation.anonymous,
     method: donation.paymentMethod,
+    accountId: donation.accountId,
     proof: donation.proof,
     status: donation.status,
     donorName: donation.donorName,
@@ -131,6 +136,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     purpose: d.activityId || d.competitionId ? ("ACTIVITY" as const) : ("DONATION" as const),
     amount: d.amount,
     method: d.method,
+    accountId: d.accountId,
     proof: d.proof,
     status: d.status,
     anonymous: d.anonymous,
