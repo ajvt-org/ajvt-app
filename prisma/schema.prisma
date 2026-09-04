@@ -711,6 +711,8 @@ model Competition {
   startedAt          DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  @@index([bankId])
 }
 
 // One ranking a member can look at. blockRounds is how many rounds it covers,
