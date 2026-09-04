@@ -8,6 +8,7 @@ import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";
 import FinanceTotals from "./FinanceTotals";
 import ByPaymentMethod from "./ByPaymentMethod";
+import ByAccount from "@/components/admin/ByAccount";
 import UnassignedDonations from "./UnassignedDonations";
 import DailyRevenue from "./DailyRevenue";
 import ExpenseList from "./ExpenseList";
@@ -228,6 +229,8 @@ function AdminExpensesPageInner() {
         expanded={expandedMethods}
         onToggle={(method) => setExpandedMethods((prev) => toggleIn(prev, method))}
       />
+
+      <ByAccount />
 
       {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
         <UnassignedDonations
