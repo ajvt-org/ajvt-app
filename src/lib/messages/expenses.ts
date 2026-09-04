@@ -4,4 +4,7 @@ export const expenses = {
   tagExists: "هذا التصنيف موجود بالفعل",
   tagNotFound: "التصنيف غير موجود",
   notFound: "المصروف غير موجود",
+  sharesDoNotMatch: "مجموع المبالغ حسب الوجهة يجب أن يساوي مبلغ المصروف",
+  shareAmountInvalid: "المبلغ لكل وجهة يجب أن يكون عدداً صحيحاً أكبر من صفر",
+  destinationRepeated: "لا يمكن تكرار نفس الوجهة",
 } as const;
