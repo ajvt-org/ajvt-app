@@ -92,6 +92,7 @@ export async function seedDonations(
 export async function seedExpenses(health: SeededActivity, tags: { id: string }[]) {
   for (let i = 0; i < EXPENSES.length; i++) {
     const [label, amount] = EXPENSES[i];
+    const activityId = i % 3 === 1 ? health.id : null;
     await prisma.expense.create({
       data: {
         label,
@@ -100,8 +101,9 @@ export async function seedExpenses(health: SeededActivity, tags: { id: string }[
         proof: i % 3 === 0 ? placeholder(`seed-expense-${next()}.webp`) : null,
         date: daysAgo(45 - i * 6),
         createdBy: "admin",
-        activityId: i % 3 === 1 ? health.id : null,
+        activityId,
         tags: { connect: [{ id: pick(tags, i).id }] },
+        allocations: { create: [{ amount, activityId }] },
       },
     });
   }

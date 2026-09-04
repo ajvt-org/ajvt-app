@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { allocationsOf } from "./expenseAllocationRows";
 import { activityReport as texts } from "./texts/activityReport";
 import {
   activityReportRows,
@@ -32,11 +33,15 @@ export async function activityFinanceReport(from: Date, to: Date): Promise<Activ
     prisma.expense.findMany({
       where: { date: { gte: from, lte: to } },
       select: {
+        id: true,
         amount: true,
         date: true,
         activityId: true,
         competitionId: true,
         tags: { select: { name: true } },
+        allocations: {
+          select: { id: true, amount: true, activityId: true, competitionId: true },
+        },
       },
     }),
   ]);
@@ -52,13 +57,15 @@ export async function activityFinanceReport(from: Date, to: Date): Promise<Activ
       tags: p.tags.map((t) => t.name),
       receiptNumber: p.receipt?.status === "ACTIVE" ? p.receipt.number : null,
     })),
-    expenses.map((e) => ({
-      at: e.date,
-      amount: e.amount,
-      activityId: e.activityId,
-      competitionId: e.competitionId,
-      tags: e.tags.map((t) => t.name),
-    })),
+    expenses.flatMap((expense) =>
+      allocationsOf(expense).map((share) => ({
+        at: expense.date,
+        amount: share.amount,
+        activityId: share.activityId,
+        competitionId: share.competitionId,
+        tags: expense.tags.map((t) => t.name),
+      })),
+    ),
     texts.general,
   );
 
