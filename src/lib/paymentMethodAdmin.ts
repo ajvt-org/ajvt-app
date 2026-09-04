@@ -8,6 +8,7 @@ export interface MethodUsage {
 
 export interface AdminMethodRow extends PaymentMethodOption {
   used: number;
+  accounts: AdminAccountRow[];
 }
 
 export function usageByName(usage: MethodUsage[]): Map<string, number> {
@@ -25,7 +26,11 @@ export function adminMethodRows(
   usage: MethodUsage[],
 ): AdminMethodRow[] {
   const totals = usageByName(usage);
-  return inOrder(methods).map((method) => ({ ...method, used: totals.get(method.name) ?? 0 }));
+  return inOrder(methods).map((method) => ({
+    ...method,
+    used: totals.get(method.name) ?? 0,
+    accounts: [],
+  }));
 }
 
 export function nextPosition(methods: PaymentMethodOption[]): number {

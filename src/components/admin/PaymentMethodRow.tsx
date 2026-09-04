@@ -8,6 +8,7 @@ import { paymentMethodManager as texts } from "@/lib/texts";
 import { counted } from "@/lib/arabicCount";
 import { RECORD } from "@/lib/messages/counts";
 import type { AdminMethodRow } from "@/lib/paymentMethodAdmin";
+import PaymentAccountList from "./PaymentAccountList";
 
 export default function PaymentMethodRow({
   method,
@@ -70,11 +71,8 @@ export default function PaymentMethodRow({
   }
 
   return (
-    <li
-      className="py-2 space-y-1.5 md:space-y-0 md:flex md:items-center md:gap-3"
-      style={{ borderTop: "1px solid var(--mint-100)" }}
-    >
-      <div className="flex items-center gap-2 md:flex-1 md:min-w-0">
+    <li className="py-2 space-y-1.5" style={{ borderTop: "1px solid var(--mint-100)" }}>
+      <div className="flex items-center gap-2">
         <span
           className="font-bold text-sm min-w-0 truncate"
           style={{ color: method.active ? "var(--text-main)" : "var(--text-muted)" }}
@@ -93,7 +91,7 @@ export default function PaymentMethodRow({
         {!method.active && <span className="badge shrink-0">{texts.stopped}</span>}
       </div>
 
-      <div className="flex items-center justify-end gap-1 md:shrink-0">
+      <div className="flex items-center justify-end gap-1">
         <button
           type="button"
           disabled={busy || first}
@@ -142,6 +140,13 @@ export default function PaymentMethodRow({
           {method.active ? texts.stop : texts.resume}
         </button>
       </div>
+
+      <PaymentAccountList
+        methodId={method.id}
+        accounts={method.accounts}
+        busy={busy}
+        onRun={onRun}
+      />
     </li>
   );
 }

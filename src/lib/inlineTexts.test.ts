@@ -35,6 +35,8 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/ActivityChips.tsx",
   "src/components/ActivityRowBody.tsx",
   "src/components/PaymentInfoBanner.tsx",
+  "src/components/admin/PaymentAccountList.tsx",
+  "src/components/admin/PaymentAccountRow.tsx",
   "src/app/membership/StepPayment.tsx",
   "src/app/membership/AccountChoice.tsx",
   "src/components/PaymentMethodChoice.tsx",

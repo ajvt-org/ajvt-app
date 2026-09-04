@@ -20,6 +20,24 @@ export const paymentMethodManager = {
   hint: "طريقة الدفع لا تُحذف، تُوقف فقط، حتى تبقى السجلات القديمة سليمة.",
 } as const;
 
+export const paymentAccountManager = {
+  newPlaceholder: "رقم جديد",
+  newLabel: "رقم جديد لهذه الطريقة",
+  add: "إضافة",
+  descriptionPlaceholder: "وصف",
+  descriptionLabel: "وصف الرقم",
+  none: "بدون رقم",
+  stopped: "موقوف",
+  stop: "إيقاف",
+  resume: "إعادة تفعيل",
+  save: "حفظ",
+  cancel: "إلغاء",
+  edit: (code: string) => `تعديل ${code}`,
+  toggle: (code: string) => `إيقاف أو تفعيل ${code}`,
+  moveUp: "تحريك الرقم لأعلى",
+  moveDown: "تحريك الرقم لأسفل",
+} as const;
+
 export const paymentMethodChoice = {
   failed: "تعذر تحميل طرق الدفع، أعد تحميل الصفحة",
   none: "لا توجد طريقة دفع متاحة حالياً",
