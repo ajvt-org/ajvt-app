@@ -1,5 +1,3 @@
-export { PAYMENT_CODES, PAYABLE_METHODS } from "@/lib/paymentCodes";
-
 export interface PaymentValues {
   paymentMethod: string;
   paidAmount: string;

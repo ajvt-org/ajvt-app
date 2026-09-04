@@ -30,7 +30,7 @@ export default function DonatePage() {
 }
 
 function DonatePageInner() {
-  const payable = usePayableMethods();
+  const { methods: payable } = usePayableMethods();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
