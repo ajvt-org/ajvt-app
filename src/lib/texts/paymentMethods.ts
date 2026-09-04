@@ -51,6 +51,14 @@ export const renewForm = {
   renew: (year: number) => `تجديد عضوية ${year}`,
 } as const;
 
+export const paymentsPage = {
+  title: (count: number) => `كل إثباتات الدفع (${count})`,
+  addDonation: "تسجيل تبرع يدوياً",
+  search: "بحث بالاسم أو النشاط...",
+  allAccounts: "كل الأرقام",
+  accountFilter: "تصفية حسب الرقم",
+} as const;
+
 export const paymentAccountPicker = {
   label: "الرقم المستلم",
   unknown: "غير معروف",

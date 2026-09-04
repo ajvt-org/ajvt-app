@@ -38,6 +38,7 @@ const KEPT_CLEAN = [
   "src/components/admin/PaymentAccountList.tsx",
   "src/components/admin/PaymentAccountPicker.tsx",
   "src/app/admin/dashboard/RenewForm.tsx",
+  "src/app/admin/payments/page.tsx",
   "src/components/admin/PaymentAccountRow.tsx",
   "src/app/membership/StepPayment.tsx",
   "src/app/membership/AccountChoice.tsx",
