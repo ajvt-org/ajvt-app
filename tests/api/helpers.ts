@@ -2,13 +2,25 @@ import { NextRequest } from "next/server";
 import * as bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { INITIAL_PAYMENT_METHODS } from "@/lib/paymentMethods";
+import { INITIAL_PAYMENT_ACCOUNTS, INITIAL_PAYMENT_METHODS } from "@/lib/paymentMethods";
 import { runningYear } from "@/lib/membershipYear";
 import type { ReviewStatus } from "@prisma/client";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
 import { setCookie, clearCookies } from "./cookieJar";
+
+async function seedPaymentMethods() {
+  await prisma.paymentMethod.createMany({ data: [...INITIAL_PAYMENT_METHODS] });
+  const methods = await prisma.paymentMethod.findMany();
+  const idOf = new Map(methods.map((method) => [method.name, method.id]));
+  await prisma.paymentAccount.createMany({
+    data: INITIAL_PAYMENT_ACCOUNTS.flatMap((account) => {
+      const methodId = idOf.get(account.method);
+      return methodId ? [{ methodId, code: account.code, position: account.position }] : [];
+    }),
+  });
+}
 
 export async function resetDb() {
   const tables = await prisma.$queryRaw<{ tablename: string }[]>`
@@ -18,7 +30,7 @@ export async function resetDb() {
   const list = tables.map((t) => `"${t.tablename}"`).join(", ");
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
   await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
-  await prisma.paymentMethod.createMany({ data: [...INITIAL_PAYMENT_METHODS] });
+  await seedPaymentMethods();
   forgetShared();
   forgetRateLimits();
   clearCookies();
