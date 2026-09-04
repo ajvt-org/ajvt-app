@@ -7,6 +7,7 @@ export interface MembershipYearEdit {
   status?: ReviewStatus;
   rejectionReason?: string | null;
   paymentMethod?: string | null;
+  accountId?: string | null;
   paymentProof?: string | null;
   referenceCode?: string | null;
 }

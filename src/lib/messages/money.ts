@@ -10,6 +10,7 @@ export const money = {
   nameRequired: "الاسم مطلوب",
   nameTooLong: "الاسم طويل جداً (50 حرفاً كحد أقصى)",
   paymentMethodInvalid: "طريقة دفع غير صالحة",
+  paymentAccountInvalid: "رقم المستلم غير صالح",
   donationNotFound: "التبرع غير موجود",
   membershipDonationReadOnly: "هذه المساهمة جزء من انتساب العضو — عدّلها من صفحة العضو",
 } as const;
