@@ -5,6 +5,9 @@ Setup, the scripts, the test suites and the environment variables are in the
 before opening a pull request — `dev` and `master` are protected, work lands on
 `dev`, and a release is a pull request from `dev` into `master`.
 
+Coding agents, and anyone who wants the traps and the house rules on one page,
+start at [AGENTS.md](AGENTS.md).
+
 Three things that catch people out:
 
 - This is Next.js 16. Its APIs, conventions and file layout differ from what

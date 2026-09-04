@@ -65,7 +65,8 @@ next-env.d.ts
 # agent tooling, machine-specific
 .claude/
 
-# written by `next dev` whenever an AI agent's env is detected, and by nothing
-# else — ignored so a regenerated copy never lands in a diff
-/AGENTS.md
+# written by `next dev` whenever an AI agent's env is detected. AGENTS.md is
+# tracked and already carries the managed block, so the generator finds it
+# current and leaves the tree clean. CLAUDE.md is only scaffolded when AGENTS.md
+# is missing, so it stays ignored
 /CLAUDE.md
