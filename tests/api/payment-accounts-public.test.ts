@@ -9,7 +9,6 @@ const CASH = "نقداً";
 
 type Offered = {
   name: string;
-  memberFacing: boolean;
   accounts: { id: string; code: string; label: string | null }[];
 };
 
@@ -33,26 +32,33 @@ describe("the accounts the payment methods route serves", () => {
     expect(method?.accounts[0].code).toBeTruthy();
   });
 
-  it("gives a method with no account an empty list", async () => {
-    expect(named(await offered(), CASH)?.accounts).toEqual([]);
+  it("never lists a method reserved for the admin", async () => {
+    expect(named(await offered(), CASH)).toBeUndefined();
   });
 
-  it("leaves out an account closed at the bank", async () => {
+  it("leaves out a method with no account to receive into", async () => {
+    await prisma.paymentAccount.deleteMany();
+    expect(await offered()).toEqual([]);
+  });
+
+  it("leaves out a method whose account is closed at the bank", async () => {
     await prisma.paymentAccount.updateMany({ data: { closedAt: new Date() } });
-    expect(named(await offered(), WITH_A_CODE)?.accounts).toEqual([]);
+    expect(named(await offered(), WITH_A_CODE)).toBeUndefined();
   });
 
-  it("leaves out an account the admin switched off", async () => {
+  it("leaves out a method whose account the admin switched off", async () => {
     await prisma.paymentAccount.updateMany({ data: { active: false } });
-    expect(named(await offered(), WITH_A_CODE)?.accounts).toEqual([]);
+    expect(named(await offered(), WITH_A_CODE)).toBeUndefined();
   });
 
   it("shows a new code without a deploy", async () => {
-    const method = await prisma.paymentMethod.findUniqueOrThrow({ where: { name: CASH } });
+    const method = await prisma.paymentMethod.create({
+      data: { name: "خدمة جديدة", memberFacing: true, active: true, position: 9 },
+    });
     await prisma.paymentAccount.create({
       data: { methodId: method.id, code: "999999", position: 1 },
     });
-    expect(named(await offered(), CASH)?.accounts.map((a) => a.code)).toEqual(["999999"]);
+    expect(named(await offered(), "خدمة جديدة")?.accounts.map((a) => a.code)).toEqual(["999999"]);
   });
 
   it("orders several open accounts by position", async () => {

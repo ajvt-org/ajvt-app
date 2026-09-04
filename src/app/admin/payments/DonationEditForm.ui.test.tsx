@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
 import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
+
+const RETIRED = "طريقة قديمة";
 
 const ACCOUNT: MemberOption = {
   id: "m1",
@@ -176,5 +178,16 @@ describe("editing a support payment", () => {
     show({ userId: "u1" });
 
     expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
+  });
+});
+
+describe("a method that is no longer offered", () => {
+  it("stays on the record an admin is editing", async () => {
+    mockPatch();
+    show({ paymentMethod: RETIRED });
+
+    const select = await screen.findByLabelText(donationEdit.methodUnset);
+    expect(within(select).getByText(RETIRED)).toBeDefined();
+    expect((select as HTMLSelectElement).value).toBe(RETIRED);
   });
 });
