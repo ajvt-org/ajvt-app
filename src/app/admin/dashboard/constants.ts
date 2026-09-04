@@ -28,6 +28,7 @@ export const emptyPersonForm = {
 
 export const emptyPaymentForm = {
   paymentMethod: "",
+  accountId: "",
   paidAmount: "",
   status: "ACTIVE" as "PENDING" | "ACTIVE",
 };

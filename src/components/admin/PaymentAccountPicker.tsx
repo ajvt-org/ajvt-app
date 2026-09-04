@@ -8,6 +8,7 @@ export default function PaymentAccountPicker({
   value,
   held,
   label,
+  id,
   onPick,
   style,
 }: {
@@ -15,6 +16,7 @@ export default function PaymentAccountPicker({
   value: string;
   held?: PaymentAccountChoice | null;
   label?: string;
+  id?: string;
   onPick: (accountId: string) => void;
   style?: React.CSSProperties;
 }) {
@@ -23,6 +25,7 @@ export default function PaymentAccountPicker({
 
   return (
     <select
+      id={id}
       aria-label={label ?? texts.label}
       value={value}
       onChange={(e) => onPick(e.target.value)}

@@ -37,6 +37,7 @@ const KEPT_CLEAN = [
   "src/components/PaymentInfoBanner.tsx",
   "src/components/admin/PaymentAccountList.tsx",
   "src/components/admin/PaymentAccountPicker.tsx",
+  "src/app/admin/dashboard/RenewForm.tsx",
   "src/components/admin/PaymentAccountRow.tsx",
   "src/app/membership/StepPayment.tsx",
   "src/app/membership/AccountChoice.tsx",

@@ -27,6 +27,7 @@ export async function saveMembershipYear(
 
 export interface MembershipYearPayment {
   paymentMethod: string | null;
+  accountId?: string | null;
   paymentProof: string | null;
   recordedBy?: string | null;
 }
@@ -46,6 +47,7 @@ export async function recordMembershipYear(
       year,
       status: "ACTIVE",
       paymentMethod: payment.paymentMethod,
+      accountId: payment.accountId ?? null,
       paymentProof: payment.paymentProof,
       recordedBy: payment.recordedBy ?? null,
       reviewedBy: payment.recordedBy ?? null,

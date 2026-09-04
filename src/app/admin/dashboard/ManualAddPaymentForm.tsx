@@ -2,7 +2,9 @@
 
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
-import { methodChoiceNames } from "@/lib/paymentMethodChoices";
+import { accountsOfMethod, methodChoiceNames } from "@/lib/paymentMethodChoices";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
+import { paymentAccountPicker } from "@/lib/texts";
 import { manualAdd } from "@/lib/texts";
 import IconLabel from "@/components/IconLabel";
 import PickList from "@/components/admin/PickList";
@@ -35,6 +37,7 @@ export default function ManualAddPaymentForm({
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
   const { methods } = usePaymentMethods(form.paymentMethod);
+  const accounts = accountsOfMethod(methods, form.paymentMethod);
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
@@ -52,10 +55,28 @@ export default function ManualAddPaymentForm({
         label={manualAdd.paymentMethodLabel}
         value={form.paymentMethod}
         options={methodChoiceNames(methods)}
-        onChange={(paymentMethod) => setForm((p) => ({ ...p, paymentMethod }))}
+        onChange={(paymentMethod) => setForm((p) => ({ ...p, paymentMethod, accountId: "" }))}
         placeholder={manualAdd.pick}
         required
       />
+
+      {accounts.length > 0 && (
+        <div>
+          <label
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+            htmlFor="manual-account"
+          >
+            {paymentAccountPicker.label}
+          </label>
+          <PaymentAccountPicker
+            id="manual-account"
+            accounts={accounts}
+            value={form.accountId}
+            onPick={(accountId) => setForm((p) => ({ ...p, accountId }))}
+          />
+        </div>
+      )}
 
       <div>
         <label

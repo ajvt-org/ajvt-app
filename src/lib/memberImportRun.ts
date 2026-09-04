@@ -35,6 +35,7 @@ async function payFor(db: Db, userId: string, values: RowValues, settings: RunSe
   await addMembership(db, {
     userId,
     paymentMethod: values.paymentMethod.trim(),
+    accountId: null,
     paymentProof: null,
     paidAmount: values.paidAmount ? Number(values.paidAmount) : settings.membershipFee,
     surplusAnonymous: false,

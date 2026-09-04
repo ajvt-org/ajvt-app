@@ -7,6 +7,7 @@ export const adminMembershipCreateSchema = z.object({
   paymentMethod: z
     .string(members.pickPaymentMethod)
     .refine((v) => v.trim().length > 0, members.pickPaymentMethod),
+  accountId: z.string(INVALID).nullish(),
   paymentProof: z.string(INVALID).nullish(),
   paidAmount: z.unknown().optional(),
   surplusAnonymous: z.boolean(INVALID).optional(),

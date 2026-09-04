@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/admin/donations/[id]/route";
+import { POST as CREATE_DONATION } from "@/app/api/admin/donations/route";
+import { POST as CREATE_MEMBERSHIP } from "@/app/api/admin/people/[id]/membership/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, withId, createAdmin, signInAsAdmin } from "./helpers";
+import { resetDb, patch, post, withId, createAdmin, createUser, signInAsAdmin } from "./helpers";
 
 const METHOD = "بنكيلي";
 const OTHER = "السداد";
@@ -129,5 +131,91 @@ describe("recording which number a donation landed in", () => {
     expect(
       (await prisma.donation.findUniqueOrThrow({ where: { id: donation.id } })).accountId,
     ).toBe(elsewhere.id);
+  });
+});
+
+describe("recording which number money entered by hand landed in", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("keeps the number on a donation an admin entered", async () => {
+    const account = await accountOn(METHOD);
+    const res = await CREATE_DONATION(
+      post("/api/admin/donations", {
+        donorName: "أبوبكر",
+        amount: 4000,
+        paymentMethod: METHOD,
+        accountId: account.id,
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    const donation = await prisma.donation.findFirstOrThrow();
+    expect(donation.accountId).toBe(account.id);
+  });
+
+  it("takes one entered with no number at all", async () => {
+    const res = await CREATE_DONATION(
+      post("/api/admin/donations", { donorName: "أبوبكر", amount: 4000, paymentMethod: METHOD }),
+    );
+
+    expect(res.status).toBe(201);
+    expect((await prisma.donation.findFirstOrThrow()).accountId).toBeNull();
+  });
+
+  it("refuses one whose number belongs to another method", async () => {
+    const elsewhere = await accountOn(OTHER);
+    const res = await CREATE_DONATION(
+      post("/api/admin/donations", {
+        donorName: "أبوبكر",
+        amount: 4000,
+        paymentMethod: METHOD,
+        accountId: elsewhere.id,
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.donation.count()).toBe(0);
+  });
+
+  it("keeps the number on a membership an admin entered", async () => {
+    const person = await createUser("22990011");
+    const account = await accountOn(METHOD);
+
+    const res = await CREATE_MEMBERSHIP(
+      post(`/api/admin/people/${person.id}/membership`, {
+        paymentMethod: METHOD,
+        accountId: account.id,
+        paidAmount: 100,
+        status: "ACTIVE",
+      }),
+      withId(person.id),
+    );
+
+    expect(res.status).toBe(201);
+    const membership = await prisma.membership.findFirstOrThrow({ where: { userId: person.id } });
+    expect(membership.accountId).toBe(account.id);
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: person.id } });
+    expect(payment.accountId).toBe(account.id);
+  });
+
+  it("refuses a membership whose number belongs to another method", async () => {
+    const person = await createUser("22990022");
+    const elsewhere = await accountOn(OTHER);
+
+    const res = await CREATE_MEMBERSHIP(
+      post(`/api/admin/people/${person.id}/membership`, {
+        paymentMethod: METHOD,
+        accountId: elsewhere.id,
+        paidAmount: 100,
+        status: "ACTIVE",
+      }),
+      withId(person.id),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await prisma.membership.count()).toBe(0);
   });
 });
