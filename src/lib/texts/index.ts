@@ -34,7 +34,7 @@ export { lists } from "./lists";
 export { discipline } from "./discipline";
 export { donate } from "./donate";
 export { donationActions, donationEdit } from "./donationEdit";
-export { expenseForm, expenseProofs, expensesPage } from "./expenses";
+export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities } from "./landing";
