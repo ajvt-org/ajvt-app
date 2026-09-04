@@ -11,6 +11,7 @@ export function memberSubmissionSchema(fee: number, offered: readonly string[]) 
       .string(members.pickPaymentMethod)
       .min(1, members.pickPaymentMethod)
       .refine((value) => offered.includes(value), money.paymentMethodInvalid),
+    accountId: z.string(INVALID).nullish(),
     paymentProof: z.string(members.attachProof).min(1, members.attachProof),
     referenceCode: z.string(INVALID).refine(isValidReferenceCode, INVALID).nullish(),
     paidAmount: z.unknown().superRefine((v, ctx) => {

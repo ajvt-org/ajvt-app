@@ -84,6 +84,13 @@ export function acceptsMethod(
   return acceptedNames(offered, held).includes(value);
 }
 
+export function accountIsOpenOn(
+  method: MethodWithAccounts | undefined,
+  accountId: string,
+): boolean {
+  return openAccounts(method?.accounts ?? []).some((account) => account.id === accountId);
+}
+
 export function payableMethods(methods: MethodWithAccounts[]): MethodWithAccounts[] {
   return memberMethods(methods).filter((method) => openAccounts(method.accounts).length > 0);
 }

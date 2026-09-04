@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  accountIsOpenOn,
   openAccounts,
   type PaymentAccountOption,
   INITIAL_PAYMENT_ACCOUNTS,
@@ -170,5 +171,33 @@ describe("the accounts a method still receives money into", () => {
     const given = [anAccount({ id: "b", position: 2 }), anAccount({ id: "a", position: 1 })];
     openAccounts(given);
     expect(given.map((account) => account.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("an account a member says they paid into", () => {
+  const open = anAccount({ id: "open" });
+  const method = {
+    id: "m1",
+    name: "بنكيلي",
+    memberFacing: true,
+    active: true,
+    position: 1,
+    accounts: [open, anAccount({ id: "closed", code: "2", closedAt: new Date() })],
+  };
+
+  it("belongs to the method it was picked under", () => {
+    expect(accountIsOpenOn(method, "open")).toBe(true);
+  });
+
+  it("is not one that belongs to another method", () => {
+    expect(accountIsOpenOn(method, "elsewhere")).toBe(false);
+  });
+
+  it("is not one that is closed", () => {
+    expect(accountIsOpenOn(method, "closed")).toBe(false);
+  });
+
+  it("is nothing at all when the method is not there", () => {
+    expect(accountIsOpenOn(undefined, "open")).toBe(false);
   });
 });
