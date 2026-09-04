@@ -8,7 +8,9 @@ import { useAdminVillages } from "@/components/admin/useAdminVillages";
 import { api, errorMessage } from "@/lib/api";
 import { MEMBERSHIP_FEE, validatePaidAmount } from "@/lib/donations";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
-import { methodChoiceNames } from "@/lib/paymentMethodChoices";
+import { accountsOfMethod, methodChoiceNames } from "@/lib/paymentMethodChoices";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
+import { paymentAccountPicker } from "@/lib/texts";
 import { uploadFile } from "@/lib/upload";
 import { memberEdit, memberForm, villageField } from "@/lib/texts";
 import { members as memberMessages } from "@/lib/messages";
@@ -20,6 +22,8 @@ type Member = {
   age: string | null;
   village: string;
   paymentMethod: string | null;
+  accountId: string | null;
+  account: { id: string; code: string; label: string | null } | null;
   paidAmount: number | null;
   supportAmount: number;
   photo: string | null;
@@ -38,6 +42,7 @@ export default function MemberEditForm({
   const [age, setAge] = useState(member.age ?? "");
   const [village, setVillage] = useState(member.village);
   const [paymentMethod, setPaymentMethod] = useState(member.paymentMethod ?? "");
+  const [accountId, setAccountId] = useState(member.accountId ?? "");
   const { methods } = usePaymentMethods(member.paymentMethod);
   const [paidAmount, setPaidAmount] = useState(
     member.paidAmount === null ? "" : String(member.paidAmount + member.supportAmount),
@@ -96,6 +101,7 @@ export default function MemberEditForm({
       await api.put(`/api/admin/members/${member.id}/payment`, {
         amountTransferred: paidAmount.trim() ? Number(paidAmount) : null,
         ...(paymentMethod ? { paymentMethod } : {}),
+        accountId: accountId || null,
       });
       onSaved();
     } catch (err) {
@@ -172,7 +178,18 @@ export default function MemberEditForm({
         label={memberEdit.paymentMethodLabel}
         value={paymentMethod}
         options={methodChoiceNames(methods)}
-        onChange={setPaymentMethod}
+        onChange={(picked) => {
+          setPaymentMethod(picked);
+          setAccountId("");
+        }}
+      />
+
+      <PaymentAccountPicker
+        accounts={accountsOfMethod(methods, paymentMethod)}
+        value={accountId}
+        held={member.account}
+        label={paymentAccountPicker.label}
+        onPick={setAccountId}
       />
 
       <div>

@@ -12,6 +12,8 @@ export type MemberProfile = {
     paidAmount: number | null;
     supportAmount: number;
     paymentMethod: string | null;
+    accountId: string | null;
+    account: { id: string; code: string; label: string | null } | null;
     paymentProof: string | null;
     createdAt: string;
     user: { id: string; phone: string | null; createdAt: string } | null;

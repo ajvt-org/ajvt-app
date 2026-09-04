@@ -10,5 +10,6 @@ export const memberPaymentSchema = z.object({
     .refine((v) => v.trim().length > 0, INVALID)
     .transform((v) => v.trim())
     .optional(),
+  accountId: z.string(INVALID).nullish(),
   paymentProof: z.string(INVALID).nullish(),
 });
