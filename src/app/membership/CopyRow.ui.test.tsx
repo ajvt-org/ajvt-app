@@ -21,8 +21,8 @@ describe("CopyRow", () => {
   });
 
   it("reads the value left to right, since it is a number to transcribe", () => {
-    render(<CopyRow label="رقم المستلم" value="027217" copied={false} onCopy={vi.fn()} />);
+    render(<CopyRow label="رقم المستلم" value="111111" copied={false} onCopy={vi.fn()} />);
 
-    expect(screen.getByText("027217").getAttribute("dir")).toBe("ltr");
+    expect(screen.getByText("111111").getAttribute("dir")).toBe("ltr");
   });
 });
