@@ -12,6 +12,7 @@ import { members } from "@/lib/messages";
 import { recordMembershipPayment } from "@/lib/membershipPaymentServer";
 import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
+import { payableMethodNames } from "@/lib/paymentMethodsServer";
 
 const CODE_ATTEMPTS = 5;
 
@@ -19,7 +20,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   const session = await requireUser();
   const { membershipFee, membershipYear } = await getAppSettings();
   const { id, paymentMethod, paymentProof, paidAmount, referenceCode, surplusAnonymous } = parse(
-    memberSubmissionSchema(membershipFee),
+    memberSubmissionSchema(membershipFee, await payableMethodNames()),
     await req.json(),
   );
 
