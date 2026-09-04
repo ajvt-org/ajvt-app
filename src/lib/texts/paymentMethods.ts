@@ -34,6 +34,12 @@ export const paymentAccountManager = {
   cancel: "إلغاء",
   edit: (code: string) => `تعديل ${code}`,
   toggle: (code: string) => `إيقاف أو تفعيل ${code}`,
+  replace: "استبدال",
+  replaceLabel: "الرقم الجديد",
+  replaceWarning: "الرقم القديم يُغلق ويبقى في القائمة. الدفعات السابقة تبقى مسجّلة عليه.",
+  closed: "مغلق",
+  closedOn: (date: string) => `مغلق في ${date}`,
+  reachesNobody: "لا يظهر للأعضاء",
   moveUp: "تحريك الرقم لأعلى",
   moveDown: "تحريك الرقم لأسفل",
 } as const;
