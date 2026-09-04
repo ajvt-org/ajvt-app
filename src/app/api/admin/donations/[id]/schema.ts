@@ -15,6 +15,7 @@ export function donationUpdateSchema(accepted: readonly string[]) {
       donorPhoto: optionalText,
       amount: amount.optional(),
       paymentMethod: paymentMethodIn(accepted).nullish(),
+      accountId: z.string(INVALID).nullish(),
       proof: optionalText,
       tagIds: z.array(z.string(INVALID), INVALID).optional(),
       activityId: z.string(INVALID).nullish(),

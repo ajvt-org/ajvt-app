@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
+import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { donationFormError } from "@/lib/donationFields";
 import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
@@ -23,6 +25,7 @@ function initial(proof: Proof) {
     donorPhoto: proof.donorPhoto || null,
     amount: proof.amount != null ? String(proof.amount) : "",
     paymentMethod: proof.paymentMethod || "",
+    accountId: proof.accountId || "",
     destinationId: destinationValue(proof),
     proof: proof.proof || null,
     anonymous: proof.anonymous ?? false,
@@ -51,6 +54,7 @@ export default function DonationEditForm({
   const linked = !!proof.userId;
 
   const set = (changes: Partial<typeof form>) => setForm((p) => ({ ...p, ...changes }));
+  const accounts = accountsOfMethod(methods, form.paymentMethod);
 
   const shownAs = form.anonymous ? money.anonymousDonor : form.donorName.trim() || proof.memberName;
 
@@ -74,6 +78,7 @@ export default function DonationEditForm({
         donorPhone: form.donorPhone.trim() || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
+        accountId: form.accountId || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof,
         anonymous: form.anonymous,
@@ -174,7 +179,7 @@ export default function DonationEditForm({
       <select
         aria-label={donationEdit.methodUnset}
         value={form.paymentMethod}
-        onChange={(e) => set({ paymentMethod: e.target.value })}
+        onChange={(e) => set({ paymentMethod: e.target.value, accountId: "" })}
         className="input text-xs"
         style={FIELD}
       >
@@ -185,6 +190,14 @@ export default function DonationEditForm({
           </option>
         ))}
       </select>
+
+      <PaymentAccountPicker
+        accounts={accounts}
+        value={form.accountId}
+        held={proof.account ?? null}
+        onPick={(accountId) => set({ accountId })}
+        style={FIELD}
+      />
 
       <DestinationSelect
         destinations={destinations}

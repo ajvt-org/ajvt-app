@@ -44,6 +44,12 @@ export const paymentAccountManager = {
   moveDown: "تحريك الرقم لأسفل",
 } as const;
 
+export const paymentAccountPicker = {
+  label: "الرقم المستلم",
+  unknown: "غير معروف",
+  expenseLabel: "الرقم المدفوع منه",
+} as const;
+
 export const paymentMethodChoice = {
   failed: "تعذر تحميل طرق الدفع، أعد تحميل الصفحة",
   none: "لا توجد طريقة دفع متاحة حالياً",

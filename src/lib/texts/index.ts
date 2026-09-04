@@ -67,6 +67,7 @@ export { quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
 export {
   paymentAccountManager,
+  paymentAccountPicker,
   paymentInfoBanner,
   paymentMethodChoice,
   paymentMethodManager,
