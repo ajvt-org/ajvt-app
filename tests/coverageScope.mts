@@ -22,6 +22,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/moneyDestinationServer.ts",
   "src/lib/member.ts",
   "src/lib/officialReceiptServer.ts",
+  "src/lib/accountLedgerServer.ts",
   "src/lib/paymentAccountsServer.ts",
   "src/lib/paymentMethodsServer.ts",
   "src/lib/expenseSharesServer.ts",
