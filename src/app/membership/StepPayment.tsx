@@ -67,21 +67,21 @@ export default function StepPayment({
           role="radiogroup"
           aria-labelledby="member-method-label"
         >
-          {payable.map((method) => (
+          {payable.map(({ name }) => (
             <button
-              key={method}
+              key={name}
               type="button"
               role="radio"
-              aria-checked={form.paymentMethod === method}
-              onClick={() => setForm((p) => ({ ...p, paymentMethod: method }))}
+              aria-checked={form.paymentMethod === name}
+              onClick={() => setForm((p) => ({ ...p, paymentMethod: name }))}
               className="py-3 rounded-xl text-sm font-bold transition-all border-2"
               style={{
-                background: form.paymentMethod === method ? "var(--mint-600)" : "white",
-                color: form.paymentMethod === method ? "white" : "var(--mint-700)",
-                borderColor: form.paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                background: form.paymentMethod === name ? "var(--mint-600)" : "white",
+                color: form.paymentMethod === name ? "white" : "var(--mint-700)",
+                borderColor: form.paymentMethod === name ? "var(--mint-600)" : "var(--mint-200)",
               }}
             >
-              {method}
+              {name}
             </button>
           ))}
         </div>

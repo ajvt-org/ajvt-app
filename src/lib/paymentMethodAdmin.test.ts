@@ -6,10 +6,10 @@ import {
   swappedPositions,
   usageByName,
 } from "./paymentMethodAdmin";
-import { payableMethods, methodNames, type PaymentMethodOption } from "./paymentMethods";
+import { payableMethods, methodNames, type MethodWithAccounts } from "./paymentMethods";
 
-function method(over: Partial<PaymentMethodOption> & { name: string }): PaymentMethodOption {
-  return { id: over.name, memberFacing: true, active: true, position: 0, ...over };
+function method(over: Partial<MethodWithAccounts> & { name: string }): MethodWithAccounts {
+  return { id: over.name, memberFacing: true, active: true, position: 0, accounts: [], ...over };
 }
 
 const FIRST = method({ name: "first", position: 1 });
@@ -83,23 +83,36 @@ describe("moving a method", () => {
 });
 
 describe("what a member may be offered", () => {
-  const CODED = ["first", "second"];
+  const open = { id: "a1", code: "1", label: null, position: 1, active: true, closedAt: null };
+  const receiving = (name: string, position: number) =>
+    method({ name, position, accounts: [open] });
 
-  it("is a method that is offered, member facing, and has a published number", () => {
-    expect(methodNames(payableMethods([FIRST, SECOND, THIRD], CODED))).toEqual(["first", "second"]);
+  it("is a method that is offered, member facing, and receiving money somewhere", () => {
+    const methods = [receiving("first", 1), receiving("second", 2), THIRD];
+    expect(methodNames(payableMethods(methods))).toEqual(["first", "second"]);
   });
 
-  it("leaves out a method with no published number", () => {
-    expect(methodNames(payableMethods([THIRD], CODED))).toEqual([]);
+  it("leaves out a method with nowhere to receive money", () => {
+    expect(methodNames(payableMethods([THIRD]))).toEqual([]);
+  });
+
+  it("leaves out a method whose only account is closed at the bank", () => {
+    const closed = method({ name: "first", accounts: [{ ...open, closedAt: new Date() }] });
+    expect(methodNames(payableMethods([closed]))).toEqual([]);
+  });
+
+  it("leaves out a method whose only account an admin switched off", () => {
+    const off = method({ name: "first", accounts: [{ ...open, active: false }] });
+    expect(methodNames(payableMethods([off]))).toEqual([]);
   });
 
   it("leaves out a method an admin marked admin only", () => {
-    const adminOnly = method({ name: "first", position: 1, memberFacing: false });
-    expect(methodNames(payableMethods([adminOnly], CODED))).toEqual([]);
+    const adminOnly = method({ name: "first", position: 1, memberFacing: false, accounts: [open] });
+    expect(methodNames(payableMethods([adminOnly]))).toEqual([]);
   });
 
   it("leaves out a method an admin deactivated", () => {
-    const stopped = method({ name: "first", position: 1, active: false });
-    expect(methodNames(payableMethods([stopped], CODED))).toEqual([]);
+    const stopped = method({ name: "first", position: 1, active: false, accounts: [open] });
+    expect(methodNames(payableMethods([stopped]))).toEqual([]);
   });
 });

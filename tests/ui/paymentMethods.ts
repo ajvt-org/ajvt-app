@@ -1,8 +1,12 @@
+function account(id: string, code: string) {
+  return { id, code, label: null };
+}
+
 export const OFFERED_METHODS = [
-  { name: "بنكيلي", memberFacing: true },
-  { name: "السداد", memberFacing: true },
-  { name: "مصرفي", memberFacing: true },
-  { name: "نقداً", memberFacing: false },
+  { name: "بنكيلي", memberFacing: true, accounts: [account("a1", "111111")] },
+  { name: "السداد", memberFacing: true, accounts: [account("a2", "222222")] },
+  { name: "مصرفي", memberFacing: true, accounts: [account("a3", "333333")] },
+  { name: "نقداً", memberFacing: false, accounts: [] },
 ];
 
 const METHODS_URL = "/api/payment-methods";

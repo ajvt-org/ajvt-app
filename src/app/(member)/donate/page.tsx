@@ -250,21 +250,21 @@ function DonatePageInner() {
               role="radiogroup"
               aria-labelledby="donate-method-label"
             >
-              {payable.map((method) => (
+              {payable.map(({ name }) => (
                 <button
-                  key={method}
+                  key={name}
                   type="button"
                   role="radio"
-                  aria-checked={paymentMethod === method}
-                  onClick={() => setPaymentMethod(method)}
+                  aria-checked={paymentMethod === name}
+                  onClick={() => setPaymentMethod(name)}
                   className="py-3 rounded-xl text-sm font-bold transition-all border-2"
                   style={{
-                    background: paymentMethod === method ? "var(--mint-600)" : "white",
-                    color: paymentMethod === method ? "white" : "var(--mint-700)",
-                    borderColor: paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
+                    background: paymentMethod === name ? "var(--mint-600)" : "white",
+                    color: paymentMethod === name ? "white" : "var(--mint-700)",
+                    borderColor: paymentMethod === name ? "var(--mint-600)" : "var(--mint-200)",
                   }}
                 >
-                  {method}
+                  {name}
                 </button>
               ))}
             </div>

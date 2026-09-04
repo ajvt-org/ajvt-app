@@ -84,9 +84,6 @@ export function acceptsMethod(
   return acceptedNames(offered, held).includes(value);
 }
 
-export function payableMethods(
-  methods: PaymentMethodOption[],
-  payable: readonly string[],
-): PaymentMethodOption[] {
-  return memberMethods(methods).filter((method) => payable.includes(method.name));
+export function payableMethods(methods: MethodWithAccounts[]): MethodWithAccounts[] {
+  return memberMethods(methods).filter((method) => openAccounts(method.accounts).length > 0);
 }
