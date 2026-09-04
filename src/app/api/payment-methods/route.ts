@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { allPaymentMethods } from "@/lib/paymentMethodsServer";
-import { offeredMethods } from "@/lib/paymentMethods";
+import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
+import { offeredMethods, openAccounts } from "@/lib/paymentMethods";
 import { withRoute } from "@/lib/route";
 
 export const GET = withRoute("GET /api/payment-methods", async () => {
-  const methods = offeredMethods(await allPaymentMethods()).map(({ name, memberFacing }) => ({
-    name,
-    memberFacing,
+  const methods = offeredMethods(await methodsWithAccounts()).map((method) => ({
+    name: method.name,
+    memberFacing: method.memberFacing,
+    accounts: openAccounts(method.accounts).map(({ id, code, label }) => ({ id, code, label })),
   }));
   return NextResponse.json({ methods });
 });

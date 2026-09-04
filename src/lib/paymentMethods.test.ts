@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  openAccounts,
+  type PaymentAccountOption,
   INITIAL_PAYMENT_ACCOUNTS,
   INITIAL_PAYMENT_METHODS,
   acceptedNames,
@@ -124,5 +126,49 @@ describe("the accounts the table is seeded with", () => {
 
   it("gives every account a code", () => {
     expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => a.code.trim().length > 0)).toBe(true);
+  });
+});
+
+function anAccount(over: Partial<PaymentAccountOption> = {}): PaymentAccountOption {
+  return {
+    id: "a1",
+    code: "1",
+    label: null,
+    position: 1,
+    active: true,
+    closedAt: null,
+    ...over,
+  };
+}
+
+describe("the accounts a method still receives money into", () => {
+  it("keeps an open one", () => {
+    expect(openAccounts([anAccount()])).toHaveLength(1);
+  });
+
+  it("drops one the admin switched off", () => {
+    expect(openAccounts([anAccount({ active: false })])).toEqual([]);
+  });
+
+  it("drops one closed at the bank", () => {
+    expect(openAccounts([anAccount({ closedAt: new Date() })])).toEqual([]);
+  });
+
+  it("gives none back for a method that has none", () => {
+    expect(openAccounts([])).toEqual([]);
+  });
+
+  it("orders them by position", () => {
+    const kept = openAccounts([
+      anAccount({ id: "b", code: "2", position: 2 }),
+      anAccount({ id: "a", code: "1", position: 1 }),
+    ]);
+    expect(kept.map((account) => account.id)).toEqual(["a", "b"]);
+  });
+
+  it("leaves the list it was given alone", () => {
+    const given = [anAccount({ id: "b", position: 2 }), anAccount({ id: "a", position: 1 })];
+    openAccounts(given);
+    expect(given.map((account) => account.id)).toEqual(["b", "a"]);
   });
 });
