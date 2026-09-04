@@ -12,6 +12,7 @@ import ErrorNotice from "@/components/form/ErrorNotice";
 import { type PaymentValues } from "./constants";
 import { usePayableMethods } from "@/lib/usePayableMethods";
 import PaymentMethodChoice from "@/components/PaymentMethodChoice";
+import AccountChoice from "./AccountChoice";
 
 export default function StepPayment({
   form,
@@ -53,7 +54,10 @@ export default function StepPayment({
   const offer = usePayableMethods();
   const amount = String(form.paidAmount || membershipFee);
   const chosen = offer.methods.find((method) => method.name === form.paymentMethod);
-  const receivingCode = chosen?.accounts[0]?.code ?? "";
+  const accounts = chosen?.accounts ?? [];
+  const picked =
+    accounts.length === 1 ? accounts[0] : accounts.find((a) => a.id === form.accountId);
+  const receivingCode = picked?.code ?? "";
 
   return (
     <>
@@ -68,10 +72,18 @@ export default function StepPayment({
         <PaymentMethodChoice
           offer={offer}
           value={form.paymentMethod}
-          onPick={(name) => setForm((p) => ({ ...p, paymentMethod: name }))}
+          onPick={(name) => setForm((p) => ({ ...p, paymentMethod: name, accountId: "" }))}
           labelledBy="member-method-label"
         />
       </div>
+
+      {accounts.length > 1 && (
+        <AccountChoice
+          accounts={accounts}
+          value={form.accountId}
+          onPick={(id) => setForm((p) => ({ ...p, accountId: id }))}
+        />
+      )}
 
       {form.paymentMethod && (
         <div
@@ -85,12 +97,14 @@ export default function StepPayment({
             <IconLabel name="card">{texts.payingWith(form.paymentMethod)}</IconLabel>
           </p>
           <div className="space-y-2">
-            <CopyRow
-              label={texts.receivingNumber}
-              value={receivingCode}
-              copied={copied === receivingCode}
-              onCopy={() => onCopy(receivingCode)}
-            />
+            {receivingCode && (
+              <CopyRow
+                label={texts.receivingNumber}
+                value={receivingCode}
+                copied={copied === receivingCode}
+                onCopy={() => onCopy(receivingCode)}
+              />
+            )}
             <CopyRow
               label={texts.amount}
               value={amount}
