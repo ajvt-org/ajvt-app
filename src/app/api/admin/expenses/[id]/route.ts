@@ -69,9 +69,9 @@ export const PATCH = withRoute(
         select: { filename: true },
       })
     ).map((row) => row.filename);
-    const wanted = proofs === undefined ? held : cleanProofNames(proofs);
-    if (proofs !== undefined) data.proof = leadProof(wanted);
-    else if (proof !== undefined) data.proof = proof;
+    const given = proofs !== undefined ? proofs : proof !== undefined ? [proof] : undefined;
+    const wanted = given === undefined ? held : cleanProofNames(given);
+    if (given !== undefined) data.proof = leadProof(wanted);
     if (tagIds !== undefined) data.tags = { set: tagIds.map((id) => ({ id })) };
 
     const shares = await sharesForUpdate({
