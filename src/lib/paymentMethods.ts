@@ -11,6 +11,18 @@ export const INITIAL_PAYMENT_METHODS: readonly SeededPaymentMethod[] = [
   { name: "نقداً", memberFacing: false, position: 4 },
 ] as const;
 
+export interface SeededPaymentAccount {
+  method: string;
+  code: string;
+  position: number;
+}
+
+export const INITIAL_PAYMENT_ACCOUNTS: readonly SeededPaymentAccount[] = [
+  { method: "بنكيلي", code: "027217", position: 1 },
+  { method: "السداد", code: "08493", position: 1 },
+  { method: "مصرفي", code: "037940", position: 1 },
+] as const;
+
 export interface PaymentMethodOption {
   id: string;
   name: string;

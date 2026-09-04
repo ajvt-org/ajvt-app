@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  INITIAL_PAYMENT_ACCOUNTS,
   INITIAL_PAYMENT_METHODS,
   acceptedNames,
   acceptsMethod,
@@ -99,5 +100,29 @@ describe("the list the table is seeded with", () => {
   it("gives every seeded method its own position", () => {
     const positions = INITIAL_PAYMENT_METHODS.map((m) => m.position);
     expect(new Set(positions).size).toBe(positions.length);
+  });
+});
+
+describe("the accounts the table is seeded with", () => {
+  it("puts every account under a seeded method", () => {
+    const names = INITIAL_PAYMENT_METHODS.map((m) => m.name);
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => names.includes(a.method))).toBe(true);
+  });
+
+  it("leaves cash without one", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.some((a) => a.method === "نقداً")).toBe(false);
+  });
+
+  it("gives a method at most one seeded account", () => {
+    const methods = INITIAL_PAYMENT_ACCOUNTS.map((a) => a.method);
+    expect(new Set(methods).size).toBe(methods.length);
+  });
+
+  it("opens each one first in its method", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => a.position === 1)).toBe(true);
+  });
+
+  it("gives every account a code", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => a.code.trim().length > 0)).toBe(true);
   });
 });
