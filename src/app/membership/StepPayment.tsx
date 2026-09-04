@@ -6,7 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import DonorNameChoice from "@/components/DonorNameChoice";
 import ProofUpload from "@/components/ProofUpload";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
-import { stepPayment } from "@/lib/texts/stepPayment";
+import { stepPayment as texts } from "@/lib/texts";
 import CopyRow from "./CopyRow";
 import ErrorNotice from "@/components/form/ErrorNotice";
 import { type PaymentValues } from "./constants";
@@ -63,7 +63,7 @@ export default function StepPayment({
           className="block text-sm font-bold mb-2"
           style={{ color: "var(--text-main)" }}
         >
-          طريقة الدفع <span style={{ color: "var(--copper-500)" }}>*</span>
+          {texts.methodLabel} <span style={{ color: "var(--copper-500)" }}>*</span>
         </p>
         <PaymentMethodChoice
           offer={offer}
@@ -82,30 +82,30 @@ export default function StepPayment({
           }}
         >
           <p className="text-sm font-bold mb-3 text-white">
-            <IconLabel name="card">الدفع عبر {form.paymentMethod}</IconLabel>
+            <IconLabel name="card">{texts.payingWith(form.paymentMethod)}</IconLabel>
           </p>
           <div className="space-y-2">
             <CopyRow
-              label="رقم المستلم"
+              label={texts.receivingNumber}
               value={receivingCode}
               copied={copied === receivingCode}
               onCopy={() => onCopy(receivingCode)}
             />
             <CopyRow
-              label="المبلغ"
+              label={texts.amount}
               value={amount}
               copied={copied === amount}
               onCopy={() => onCopy(amount)}
             />
             <CopyRow
-              label="رمز الطلب (اكتبه في سبب التحويل)"
+              label={texts.orderCode}
               value={form.referenceCode}
               copied={copied === form.referenceCode}
               onCopy={() => onCopy(form.referenceCode)}
             />
           </div>
           <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
-            {stepPayment.payAtLeast(MEMBERSHIP_FEE)}
+            {texts.payAtLeast(MEMBERSHIP_FEE)}
           </p>
         </div>
       )}
@@ -117,7 +117,7 @@ export default function StepPayment({
             className="block text-sm font-bold mb-1.5"
             style={{ color: "var(--text-main)" }}
           >
-            المبلغ المدفوع (أوقية) <span style={{ color: "var(--copper-500)" }}>*</span>
+            {texts.paidLabel} <span style={{ color: "var(--copper-500)" }}>*</span>
           </label>
           <input
             id="member-paid"
@@ -131,7 +131,7 @@ export default function StepPayment({
             dir="ltr"
           />
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            {stepPayment.feeMinimum(membershipFee)}
+            {texts.feeMinimum(membershipFee)}
           </p>
         </div>
 
@@ -174,12 +174,12 @@ export default function StepPayment({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                جاري إرسال الطلب...
+                {texts.sending}
               </span>
             ) : editing ? (
-              <ArrowLabel>حفظ التعديلات</ArrowLabel>
+              <ArrowLabel>{texts.saveEdits}</ArrowLabel>
             ) : (
-              <ArrowLabel>إرسال طلب الانضمام</ArrowLabel>
+              <ArrowLabel>{texts.send}</ArrowLabel>
             )}
           </button>
         </div>
