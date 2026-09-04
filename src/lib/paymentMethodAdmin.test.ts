@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  adminAccountRows,
+  nextAccountPosition,
+  readCode,
+  swappedAccountPositions,
   adminMethodRows,
   nextPosition,
   readName,
@@ -114,5 +118,84 @@ describe("what a member may be offered", () => {
   it("leaves out a method an admin deactivated", () => {
     const stopped = method({ name: "first", position: 1, active: false, accounts: [open] });
     expect(methodNames(payableMethods([stopped]))).toEqual([]);
+  });
+});
+
+function account(over: Partial<{ id: string; code: string; position: number }> = {}) {
+  return {
+    id: over.id ?? "a1",
+    code: over.code ?? "111111",
+    label: null,
+    position: over.position ?? 1,
+    active: true,
+    closedAt: null,
+  };
+}
+
+describe("the numbers listed under a method", () => {
+  it("counts what points at each one", () => {
+    const rows = adminAccountRows(
+      [account({ id: "a1" }), account({ id: "a2", code: "222222", position: 2 })],
+      [
+        { accountId: "a1", count: 2 },
+        { accountId: "a1", count: 3 },
+        { accountId: "a2", count: 1 },
+      ],
+    );
+    expect(rows.map((row) => row.used)).toEqual([5, 1]);
+  });
+
+  it("ignores records that point at no number", () => {
+    const rows = adminAccountRows([account()], [{ accountId: null, count: 9 }]);
+    expect(rows[0].used).toBe(0);
+  });
+
+  it("lists them in the order an admin set", () => {
+    const rows = adminAccountRows(
+      [account({ id: "b", code: "222222", position: 2 }), account({ id: "a", position: 1 })],
+      [],
+    );
+    expect(rows.map((row) => row.id)).toEqual(["a", "b"]);
+  });
+
+  it("puts a new one after the last", () => {
+    expect(nextAccountPosition([account({ position: 1 }), account({ position: 4 })])).toBe(5);
+  });
+
+  it("puts the first one first", () => {
+    expect(nextAccountPosition([])).toBe(1);
+  });
+});
+
+describe("moving a number within its method", () => {
+  const first = account({ id: "a", position: 1 });
+  const second = account({ id: "b", code: "222222", position: 2 });
+
+  it("swaps it with the one above", () => {
+    const pair = swappedAccountPositions([first, second], "b", "up");
+    expect(pair?.map((a) => a.id)).toEqual(["b", "a"]);
+  });
+
+  it("refuses to move the first one up", () => {
+    expect(swappedAccountPositions([first, second], "a", "up")).toBeNull();
+  });
+
+  it("refuses to move the last one down", () => {
+    expect(swappedAccountPositions([first, second], "b", "down")).toBeNull();
+  });
+
+  it("refuses one that is not there", () => {
+    expect(swappedAccountPositions([first], "missing", "up")).toBeNull();
+  });
+});
+
+describe("reading a number an admin typed", () => {
+  it("drops the spaces they may have grouped it with", () => {
+    expect(readCode(" 027 217 ")).toBe("027217");
+  });
+
+  it("reads nothing from anything that is not text", () => {
+    expect(readCode(null)).toBe("");
+    expect(readCode(12)).toBe("");
   });
 });
