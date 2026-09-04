@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import MemberEditForm from "./MemberEditForm";
 import { answering } from "@tests/ui/paymentMethods";
+import { memberEdit, paymentAccountPicker } from "@/lib/texts";
 
 const member = {
   id: "m1",
@@ -11,6 +12,8 @@ const member = {
   age: "البدريين" as string | null,
   village: HOME_VILLAGE,
   paymentMethod: "بنكيلي",
+  accountId: null as string | null,
+  account: null as { id: string; code: string; label: string | null } | null,
   paidAmount: 100,
   supportAmount: 0,
   photo: null,
@@ -155,5 +158,32 @@ describe("MemberEditForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "حفظ" }));
 
     expect(fetchMock.mock.calls.some((c) => c[1]?.method === "PATCH")).toBe(false);
+  });
+});
+
+describe("the number a membership payment landed in", () => {
+  it("is offered for the method the record holds", async () => {
+    mockFetch();
+    setup();
+
+    const picker = await screen.findByLabelText(paymentAccountPicker.label);
+    expect(within(picker).getByText("111111")).toBeDefined();
+  });
+
+  it("is not offered for a method that receives into none", async () => {
+    mockFetch();
+    setup({ paymentMethod: "نقداً" });
+
+    await screen.findByLabelText(memberEdit.paymentMethodLabel);
+    expect(screen.queryByLabelText(paymentAccountPicker.label)).toBeNull();
+  });
+
+  it("keeps a closed number the record already points at", async () => {
+    mockFetch();
+    setup({ accountId: "old", account: { id: "old", code: "999999", label: null } });
+
+    const picker = (await screen.findByLabelText(paymentAccountPicker.label)) as HTMLSelectElement;
+    expect(picker.value).toBe("old");
+    expect(within(picker).getByText("999999")).toBeDefined();
   });
 });

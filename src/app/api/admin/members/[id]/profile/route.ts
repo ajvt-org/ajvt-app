@@ -28,6 +28,8 @@ export const GET = withRoute(
             status: true,
             rejectionReason: true,
             paymentMethod: true,
+            accountId: true,
+            account: { select: { id: true, code: true, label: true } },
             paymentProof: true,
             referenceCode: true,
             createdAt: true,

@@ -12,6 +12,7 @@ import { currentMembership } from "@/lib/currentMembershipServer";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { memberPaymentSchema } from "./schema";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 import { nameOf } from "@/lib/person";
 
 export const PUT = withRoute(
@@ -19,7 +20,7 @@ export const PUT = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { amountTransferred, paymentMethod, paymentProof } = parse(
+    const { amountTransferred, paymentMethod, accountId, paymentProof } = parse(
       memberPaymentSchema,
       await req.json(),
     );
@@ -38,12 +39,17 @@ export const PUT = withRoute(
       if (amountError) throw new ValidationError(amountError);
     }
 
+    const named = paymentMethod !== undefined ? paymentMethod : current.paymentMethod;
+    const wrongAccount = await accountIdError(named, accountId, current.accountId);
+    if (wrongAccount) throw new ValidationError(wrongAccount);
+
     const before = await totalPaidFor(prisma, id);
 
     await prisma.$transaction(async (tx) => {
-      if (paymentMethod !== undefined || paymentProof !== undefined) {
+      if (paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined) {
         await saveMembershipYear(tx, id, current.year, {
           ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+          ...(accountId !== undefined ? { accountId: accountId || null } : {}),
           ...(paymentProof !== undefined ? { paymentProof } : {}),
         });
       }
