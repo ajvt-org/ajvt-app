@@ -20,16 +20,6 @@ export interface PayableMethods {
   failed: boolean;
 }
 
-interface OfferedMethod extends PayableMethod {
-  memberFacing: boolean;
-}
-
-function payableOf(offered: OfferedMethod[]): PayableMethod[] {
-  return offered
-    .filter((method) => method.memberFacing && method.accounts.length > 0)
-    .map(({ name, accounts }) => ({ name, accounts }));
-}
-
 export function usePayableMethods(): PayableMethods {
   const [state, setState] = useState<PayableMethods>({
     methods: [],
@@ -40,10 +30,9 @@ export function usePayableMethods(): PayableMethods {
   useEffect(() => {
     let alive = true;
     api
-      .get<{ methods: OfferedMethod[] }>("/api/payment-methods")
+      .get<{ methods: PayableMethod[] }>("/api/payment-methods")
       .then((data) => {
-        if (alive)
-          setState({ methods: payableOf(data.methods ?? []), loading: false, failed: false });
+        if (alive) setState({ methods: data.methods ?? [], loading: false, failed: false });
       })
       .catch(() => {
         if (alive) setState({ methods: [], loading: false, failed: true });

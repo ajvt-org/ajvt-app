@@ -9,10 +9,10 @@ export const OFFERED_METHODS = [
   { name: "نقداً", memberFacing: false, accounts: [] },
 ];
 
-const METHODS_URL = "/api/payment-methods";
+const METHOD_URLS = ["/api/payment-methods", "/api/admin/payment-methods/offered"];
 
 export function isMethodsCall(url: unknown): boolean {
-  return typeof url === "string" && url.startsWith(METHODS_URL);
+  return typeof url === "string" && METHOD_URLS.some((known) => url.startsWith(known));
 }
 
 export function methodsResponse() {

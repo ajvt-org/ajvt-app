@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/expenses/route";
 import { PATCH } from "@/app/api/admin/expenses/[id]/route";
-import { GET as methodsRoute } from "@/app/api/payment-methods/route";
+import { GET as adminMethodsRoute } from "@/app/api/admin/payment-methods/offered/route";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, get, createAdmin, signInAsAdmin, withId } from "./helpers";
 
@@ -74,10 +74,10 @@ describe("a payment method an admin has deactivated", () => {
     expect(saved.method).toBe(OFFERED);
   });
 
-  it("drops out of what the selectors are offered", async () => {
+  it("drops out of what the admin selectors are offered", async () => {
     await deactivate(RETIRED);
 
-    const res = await methodsRoute(get("/api/payment-methods"));
+    const res = await adminMethodsRoute(get("/api/admin/payment-methods/offered"));
     const { methods } = await res.json();
 
     expect(methods.map((m: { name: string }) => m.name)).not.toContain(RETIRED);
@@ -85,13 +85,14 @@ describe("a payment method an admin has deactivated", () => {
   });
 });
 
-describe("what the payment method route offers", () => {
+describe("what the admin method list offers", () => {
   beforeEach(async () => {
     await resetDb();
+    await signInAsAdmin(await createAdmin());
   });
 
   it("marks which methods a member may pick", async () => {
-    const res = await methodsRoute(get("/api/payment-methods"));
+    const res = await adminMethodsRoute(get("/api/admin/payment-methods/offered"));
     const { methods } = await res.json();
 
     const cash = methods.find((m: { name: string }) => m.name === RETIRED);
@@ -103,7 +104,7 @@ describe("what the payment method route offers", () => {
   it("keeps the order an admin set rather than an alphabetical one", async () => {
     await prisma.paymentMethod.update({ where: { name: RETIRED }, data: { position: 0 } });
 
-    const res = await methodsRoute(get("/api/payment-methods"));
+    const res = await adminMethodsRoute(get("/api/admin/payment-methods/offered"));
     const { methods } = await res.json();
 
     expect(methods[0].name).toBe(RETIRED);
