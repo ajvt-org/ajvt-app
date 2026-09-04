@@ -31,6 +31,7 @@ export const ACTION_LABELS = {
   CREATE_PAYMENT_ACCOUNT: "إضافة رقم دفع",
   UPDATE_PAYMENT_ACCOUNT: "تعديل رقم دفع",
   REORDER_PAYMENT_ACCOUNT: "ترتيب أرقام الدفع",
+  CLOSE_PAYMENT_ACCOUNT: "إغلاق رقم دفع",
   CREATE_ACTIVITY: "إنشاء نشاط",
   UPDATE_ACTIVITY: "تعديل نشاط",
   PUBLISH_ACTIVITY: "نشر نشاط",
