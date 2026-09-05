@@ -1,47 +1,78 @@
 import { describe, it, expect } from "vitest";
-import { entrantNames, namedEntrant } from "./entrantName";
+import { entrantIdentities, namedEntrant } from "./entrantName";
 
-const entrant = (id: string, name: string, autoNamed: boolean, members: string[]) => ({
-  id,
-  name,
-  autoNamed,
-  members: members.map((fullName) => ({ member: { fullName } })),
-});
+const entrant = (
+  id: string,
+  name: string,
+  autoNamed: boolean,
+  members: { fullName: string; photo?: string | null }[],
+) => ({ id, name, autoNamed, members: members.map((member) => ({ member })) });
 
-describe("entrantNames", () => {
+describe("entrantIdentities", () => {
   it("names a singles entrant after the player rather than the placeholder", () => {
-    const names = entrantNames([entrant("t1", "فريق 1", true, ["أحمد ولد محمد"])], 1);
+    const identities = entrantIdentities(
+      [entrant("t1", "فريق 1", true, [{ fullName: "أحمد ولد محمد" }])],
+      1,
+    );
 
-    expect(names.get("t1")).toBe("أحمد ولد محمد");
+    expect(identities.get("t1")?.name).toBe("أحمد ولد محمد");
+  });
+
+  it("gives a singles entrant the player photo", () => {
+    const identities = entrantIdentities(
+      [entrant("t1", "فريق 1", true, [{ fullName: "أحمد", photo: "a.webp" }])],
+      1,
+    );
+
+    expect(identities.get("t1")?.photo).toBe("a.webp");
+  });
+
+  it("leaves a team entrant without a player photo", () => {
+    const identities = entrantIdentities(
+      [entrant("t1", "نجوم القرية", false, [{ fullName: "أحمد", photo: "a.webp" }])],
+      null,
+    );
+
+    expect(identities.get("t1")).toEqual({ name: "نجوم القرية", photo: null });
   });
 
   it("joins the pair on a doubles entrant", () => {
-    const names = entrantNames([entrant("t1", "فريق 1", true, ["أحمد", "سالم"])], 2);
+    const identities = entrantIdentities(
+      [entrant("t1", "فريق 1", true, [{ fullName: "أحمد" }, { fullName: "سالم" }])],
+      2,
+    );
 
-    expect(names.get("t1")).toBe("أحمد و سالم");
+    expect(identities.get("t1")?.name).toBe("أحمد و سالم");
   });
 
   it("keeps a name the admin typed", () => {
-    const names = entrantNames([entrant("t1", "نجوم القرية", false, ["أحمد"])], 1);
+    const identities = entrantIdentities(
+      [entrant("t1", "نجوم القرية", false, [{ fullName: "أحمد" }])],
+      1,
+    );
 
-    expect(names.get("t1")).toBe("نجوم القرية");
+    expect(identities.get("t1")?.name).toBe("نجوم القرية");
   });
 
   it("leaves a tournament with no team size alone", () => {
-    const names = entrantNames([entrant("t1", "فريق 1", true, ["أحمد"])], null);
+    const identities = entrantIdentities(
+      [entrant("t1", "فريق 1", true, [{ fullName: "أحمد" }])],
+      null,
+    );
 
-    expect(names.get("t1")).toBe("فريق 1");
+    expect(identities.get("t1")?.name).toBe("فريق 1");
   });
 });
 
 describe("namedEntrant", () => {
-  it("renames a side of a match", () => {
-    const names = new Map([["t1", "أحمد ولد محمد"]]);
+  it("renames a side of a match and carries the player photo", () => {
+    const identities = new Map([["t1", { name: "أحمد ولد محمد", photo: "a.webp" }]]);
 
-    expect(namedEntrant({ id: "t1", name: "فريق 1", logo: null }, names)).toEqual({
+    expect(namedEntrant({ id: "t1", name: "فريق 1", logo: null }, identities)).toEqual({
       id: "t1",
       name: "أحمد ولد محمد",
       logo: null,
+      photo: "a.webp",
     });
   });
 

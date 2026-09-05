@@ -3,6 +3,7 @@ import TeamCardHead from "./TeamCardHead";
 import SquadList, { type SquadPlayer } from "./SquadList";
 import { holdsViewer, viewerTeamFirst } from "@/lib/squad";
 import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 type Team = {
   id: string;
@@ -23,10 +24,24 @@ function cardStyle(mine: boolean) {
 export default function TeamsGrid({
   teams,
   viewerId = null,
+  entrant = "team",
 }: {
   teams: Team[];
   viewerId?: string | null;
+  entrant?: EntrantKind;
 }) {
+  if (entrant === "player") {
+    return (
+      <SquadList
+        players={viewerTeamFirst(teams, viewerId).flatMap((team) =>
+          team.members.map((member) => member.member),
+        )}
+        captainId={null}
+        viewerId={viewerId}
+      />
+    );
+  }
+
   return (
     <div className="space-y-2">
       {viewerTeamFirst(teams, viewerId).map((team) => {

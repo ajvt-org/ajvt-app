@@ -10,6 +10,7 @@ import { formatActivityDates } from "@/lib/activityDates";
 import { activityPage as texts, publicTournament as tournamentTexts } from "@/lib/texts";
 import ActivityHero from "./ActivityHero";
 import ActivityStatus from "./ActivityStatus";
+import { entrantKind } from "@/lib/entrant";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 
@@ -34,7 +35,6 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
 
   const when = formatActivityDates(activity);
   const registrantCount = activity._count.registrations;
-  const singles = activity.teamSize === 1;
   const tournament = activity.isTournament
     ? await tournamentPanels(activity, userId, myVoteByVoteId)
     : null;
@@ -115,7 +115,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
         {tournament &&
           (activity.teams.length === 0 ? (
             <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-              {singles ? tournamentTexts.noPlayersYet : tournamentTexts.noTeamsYet}
+              {tournamentTexts.entrant[entrantKind(activity.teamSize)].noneYet}
             </p>
           ) : (
             <div className="space-y-5 pt-1">
