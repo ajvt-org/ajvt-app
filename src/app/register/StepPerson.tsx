@@ -90,10 +90,7 @@ export default function StepPerson({
       )}
 
       <div className="card p-4">
-        <PhotoUpload photo={photo} onUpload={onPhoto} label={signUp.photoLabel} />
-        <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-          {signUp.photoNote}
-        </p>
+        <PhotoUpload photo={photo} onUpload={onPhoto} label={signUp.photoLabel} showHint={false} />
       </div>
 
       <ErrorNotice error={error} />

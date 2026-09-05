@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
-import { signUp } from "@/lib/texts";
+import { photoUpload, signUp } from "@/lib/texts";
 import RegisterPage from "./page";
 
 const push = vi.fn();
@@ -138,5 +138,14 @@ describe("signing up", () => {
     await userEvent.click(screen.getByRole("button", { name: signUp.submit }));
 
     expect(fetchMock.mock.calls.some((c) => c[0] === "/api/auth/register")).toBe(false);
+  });
+
+  it("carries one label for the photo and nothing under it", async () => {
+    mockFetch();
+    render(<RegisterPage />);
+    await reachPersonStep();
+
+    expect(screen.getByText(signUp.photoLabel)).toBeTruthy();
+    expect(screen.queryByText(photoUpload.addHint)).toBeNull();
   });
 });

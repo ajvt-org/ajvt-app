@@ -15,6 +15,7 @@ interface PhotoUploadProps {
   placeholderIcon?: IconName;
   variant?: "avatar" | "cover" | "hero";
   bare?: boolean;
+  showHint?: boolean;
 }
 
 const FRAMES = {
@@ -33,6 +34,7 @@ export default function PhotoUpload({
   placeholderIcon = "user",
   variant = "avatar",
   bare = false,
+  showHint = true,
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -127,9 +129,11 @@ export default function PhotoUpload({
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             {label}
           </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {hint}
-          </p>
+          {showHint && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              {hint}
+            </p>
+          )}
         </div>
       )}
       {note}
