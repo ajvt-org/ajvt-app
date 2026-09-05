@@ -8,6 +8,7 @@ import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import ErrorNotice from "@/components/form/ErrorNotice";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
 import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";
@@ -126,14 +127,7 @@ export default function TeamsTab({
 
   return (
     <div className="space-y-4">
-      {error && (
-        <div
-          className="p-3 rounded-xl text-sm font-semibold"
-          style={{ background: "#fee2e2", color: "#991b1b" }}
-        >
-          <IconLabel name="warning">{error}</IconLabel>
-        </div>
-      )}
+      <ErrorNotice error={error} />
 
       <div className="card p-2.5">
         <input

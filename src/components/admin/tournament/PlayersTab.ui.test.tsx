@@ -115,6 +115,31 @@ describe("PlayersTab", () => {
     expect(options).toContain("أحمد ولد محمد");
   });
 
+  it("reports a failed request in place rather than as a toast", async () => {
+    del.mockRejectedValue(new Error("تعذر حذف اللاعب"));
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    show([player("p1", "أحمد ولد محمد")], []);
+
+    fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+
+    await waitFor(() => expect(screen.getByText("تعذر حذف اللاعب")).toBeDefined());
+    vi.unstubAllGlobals();
+  });
+
+  it("clears the failure when the next attempt starts", async () => {
+    del.mockRejectedValueOnce(new Error("تعذر حذف اللاعب")).mockResolvedValueOnce({});
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    show([player("p1", "أحمد ولد محمد")], []);
+
+    fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+    await waitFor(() => expect(screen.getByText("تعذر حذف اللاعب")).toBeDefined());
+
+    fireEvent.click(screen.getByLabelText("إزالة أحمد ولد محمد"));
+
+    await waitFor(() => expect(screen.queryByText("تعذر حذف اللاعب")).toBeNull());
+    vi.unstubAllGlobals();
+  });
+
   it("still finds a candidate by phone", () => {
     show([], [rosterMember("u1", "أحمد ولد محمد", false)]);
 

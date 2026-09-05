@@ -6,6 +6,7 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import ErrorNotice from "@/components/form/ErrorNotice";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import type { RosterMember, Team } from "./types";
 import { playersTab } from "@/lib/texts";
@@ -26,6 +27,7 @@ export default function PlayersTab({
 }) {
   const showToast = useToast();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
   const from = useAdminOrigin();
@@ -34,13 +36,14 @@ export default function PlayersTab({
   const filtered = matchingPeople(candidates, search);
 
   async function run(action: () => Promise<unknown>, done?: string) {
+    setError("");
     setBusy(true);
     try {
       await action();
       onChange();
       if (done) showToast(done);
     } catch (e) {
-      showToast(errorMessage(e), "error");
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -66,6 +69,8 @@ export default function PlayersTab({
 
   return (
     <div className="space-y-4">
+      <ErrorNotice error={error} />
+
       <div className="card p-4 space-y-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="user">{playersTab.heading(teams.length)}</IconLabel>

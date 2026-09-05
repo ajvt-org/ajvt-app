@@ -119,6 +119,15 @@ describe("TeamsTab", () => {
     expect(cards().map((c) => c.open)).toEqual([true, false]);
   });
 
+  it("reports a failed request in place", async () => {
+    del.mockRejectedValue(new Error("تعذر حذف الفريق"));
+    show();
+
+    fireEvent.click(screen.getAllByLabelText(/إزالة/)[0]);
+
+    await waitFor(() => expect(screen.getByText("تعذر حذف الفريق")).toBeDefined());
+  });
+
   it("finds a team by its own name and by a player it holds", () => {
     show();
 
