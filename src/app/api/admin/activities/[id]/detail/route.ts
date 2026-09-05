@@ -4,6 +4,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
 import { activities as messages } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
+import { PLAYED_MATCH } from "@/lib/activityMatches";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/detail",
@@ -11,7 +12,7 @@ export const GET = withRoute(
     const { id } = await params;
     await requireActivityAccess(id);
 
-    const [activity, rosters] = await Promise.all([
+    const [activity, rosters, playedMatches] = await Promise.all([
       prisma.activity.findUnique({
         where: { id },
         include: {
@@ -47,6 +48,7 @@ export const GET = withRoute(
         where: { status: "ACTIVE", team: { activityId: id } },
         select: { userId: true, team: { select: { id: true, name: true } } },
       }),
+      prisma.match.count({ where: { activityId: id, ...PLAYED_MATCH } }),
     ]);
 
     if (!activity) return NextResponse.json({ error: messages.notFound }, { status: 404 });
@@ -63,6 +65,7 @@ export const GET = withRoute(
     return NextResponse.json({
       activity: {
         ...activity,
+        _count: { ...activity._count, playedMatches },
         registrations: activity.registrations.map(({ user, ...r }) => ({
           ...r,
           team: teamOf.get(r.userId) ?? null,

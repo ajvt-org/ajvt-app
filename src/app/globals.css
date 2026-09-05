@@ -129,9 +129,13 @@ body {
 .input::placeholder {
   color: #a0b8ae;
 }
-.input[readonly] {
+.input[readonly],
+.input:disabled {
   background: var(--mint-50);
   color: var(--text-muted);
+}
+.input:disabled {
+  cursor: not-allowed;
 }
 .input[dir="ltr"] {
   text-align: right;

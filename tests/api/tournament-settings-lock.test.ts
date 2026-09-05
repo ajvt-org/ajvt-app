@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { PATCH as UPDATE_ACTIVITY } from "@/app/api/admin/activities/[id]/route";
+import { GET as ACTIVITY_DETAIL } from "@/app/api/admin/activities/[id]/detail/route";
 import { prisma } from "@/lib/prisma";
-import { resetDb, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
+import { resetDb, get, patch, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 async function aTournament() {
   const activity = await prisma.activity.create({
@@ -111,5 +112,26 @@ describe("the squad range locks when the tournament begins", () => {
 
     expect((await save(activity.id, { format: "GROUPS_THEN_KNOCKOUT" })).status).toBe(409);
     expect((await save(activity.id, { profile: "BOARD" })).status).toBe(409);
+  });
+});
+
+describe("what the settings dialog is told about the fixtures", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("counts the fixtures and the played matches apart", async () => {
+    const { activity, home, away } = await aTournament();
+    const first = await aFixture(activity.id, home.id, away.id);
+    await aFixture(activity.id, home.id, away.id);
+    await prisma.match.update({ where: { id: first.id }, data: { status: "PLAYED" } });
+
+    const body = await (
+      await ACTIVITY_DETAIL(get(`/api/admin/activities/${activity.id}/detail`), withId(activity.id))
+    ).json();
+
+    expect(body.activity._count.matches).toBe(2);
+    expect(body.activity._count.playedMatches).toBe(1);
   });
 });
