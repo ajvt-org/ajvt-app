@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import BackButton from "@/components/BackButton";
+import Logo from "@/components/Logo";
 import Icon from "@/components/Icon";
 import AttemptQuestion, { type AttemptView } from "./AttemptQuestion";
 import type { ScoreCurve } from "@/lib/competitionConfig";
@@ -17,7 +17,7 @@ import NextRoundCountdown from "./NextRoundCountdown";
 import { countedNoun, POINTS, ROUNDS } from "@/lib/arabicPlural";
 import { blockLabel } from "@/lib/quizRanking";
 import { useNow } from "@/hooks/useNow";
-import { quizBoard as texts } from "@/lib/texts";
+import { association, quizBoard as texts } from "@/lib/texts";
 
 interface AttemptState {
   attemptId: string;
@@ -252,10 +252,10 @@ export default function CompetitionView({
         />
         <div className="relative flex items-center gap-3">
           <BackButton onBack={onBack} />
-          <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
+          <Logo size={38} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              رابطة شباب قرية التاكلالت
+              {association.name}
             </p>
             <h1 className="text-lg font-black text-white truncate">
               {standings.name ?? "المسابقات الثقافية"}

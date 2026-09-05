@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
+import Logo from "@/components/Logo";
+import { association } from "@/lib/texts";
 
 export default function NotFound() {
   const pathname = usePathname();
@@ -16,10 +17,10 @@ export default function NotFound() {
         className="px-5 py-4 flex items-center gap-3"
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
-        <Image src="/version-final.png" alt="شعار" width={40} height={40} />
+        <Logo size={40} />
         <div>
           <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
+            {association.name}
           </p>
           <h1 className="text-base font-black text-white">الصفحة غير موجودة</h1>
         </div>

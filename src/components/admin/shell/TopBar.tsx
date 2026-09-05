@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import IconLabel from "@/components/IconLabel";
+import Logo from "@/components/Logo";
 import { adminShell } from "@/lib/texts";
 
 export default function TopBar({ onLogout }: { onLogout: () => void }) {
@@ -14,13 +14,7 @@ export default function TopBar({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <Image
-          src="/version-final.png"
-          alt={adminShell.logoAlt}
-          width={24}
-          height={24}
-          className="shrink-0"
-        />
+        <Logo size={24} className="shrink-0" />
         <p className="text-xs sm:text-sm font-black text-white leading-none">{adminShell.title}</p>
       </div>
       <div className="flex items-center gap-2">

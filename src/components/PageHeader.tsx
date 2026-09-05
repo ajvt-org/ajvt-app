@@ -1,5 +1,6 @@
-import Image from "next/image";
 import BackButton from "./BackButton";
+import Logo from "./Logo";
+import { association } from "@/lib/texts";
 
 export default function PageHeader({
   title,
@@ -18,10 +19,10 @@ export default function PageHeader({
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
       {onBack || backHref ? <BackButton href={backHref} onBack={onBack} /> : null}
-      <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
+      <Logo size={38} className="shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-          رابطة شباب قرية التاكلالت
+          {association.name}
         </p>
         <h1 key={title} className="page-header-title text-base font-black text-white truncate">
           {title}

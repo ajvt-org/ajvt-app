@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import BackButton from "@/components/BackButton";
+import Logo from "@/components/Logo";
 import ProgressBar from "@/components/form/ProgressBar";
 import { useFormLists } from "@/components/form/useFormLists";
 import { api, errorMessage } from "@/lib/api";
@@ -11,7 +11,7 @@ import { goAfterAuthChange } from "@/lib/authNav";
 import { isArabicName } from "@/lib/arabicName";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 import { auth, members, villages as villageMessages } from "@/lib/messages";
-import { signUp } from "@/lib/texts";
+import { association, signUp } from "@/lib/texts";
 import { validatePhone } from "@/lib/utils";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import StepCredentials from "./StepCredentials";
@@ -77,10 +77,10 @@ export default function RegisterPage() {
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <BackButton href="/" />
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
+        <Logo size={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
+            {association.name}
           </p>
           <h1 className="text-base font-black text-white">{signUp.title}</h1>
         </div>
