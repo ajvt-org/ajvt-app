@@ -201,6 +201,7 @@ const KEPT_CLEAN = [
   "src/components/Logo.tsx",
   "src/components/PageHeader.tsx",
   "src/app/register/page.tsx",
+  "src/components/LandingHero.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
