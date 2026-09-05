@@ -29,7 +29,7 @@ describe("attaching a backfill plan", () => {
   });
 
   it("attaches every table in the plan", async () => {
-    const account = await anAccount("111111");
+    const account = await anAccount("444444");
     const payment = await aPayment();
     const expense = await anExpense();
 
@@ -47,7 +47,7 @@ describe("attaching a backfill plan", () => {
   });
 
   it("attaches nothing at all when a later table fails", async () => {
-    const account = await anAccount("111111");
+    const account = await anAccount("444444");
     const payment = await aPayment();
     const expense = await anExpense();
 
@@ -67,8 +67,8 @@ describe("attaching a backfill plan", () => {
   });
 
   it("leaves a row that already carries a number alone", async () => {
-    const account = await anAccount("111111");
-    const other = await anAccount("222222");
+    const account = await anAccount("444444");
+    const other = await anAccount("555555");
     const payment = await aPayment(other.id);
 
     await attachPlanned(prisma, [{ table: "Payment", accountId: account.id, ids: [payment.id] }]);
