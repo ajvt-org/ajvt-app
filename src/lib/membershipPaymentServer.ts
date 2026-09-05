@@ -32,6 +32,7 @@ export async function recordMembershipPayment(
     feeApplied: fee,
     method: membership.paymentMethod,
     accountId: membership.accountId,
+    bankReference: membership.bankReference,
     proof: membership.paymentProof,
     status: membership.status,
     anonymous,

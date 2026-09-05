@@ -81,6 +81,7 @@ model Membership {
   rejectionReason String?
   paymentMethod   String?
   accountId       String?
+  bankReference   String?
   account         PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   paymentProof    String?
   referenceCode   String?         @unique
@@ -94,6 +95,7 @@ model Membership {
   @@index([year])
   @@index([status])
   @@index([accountId])
+  @@index([bankReference])
 }
 
 model Activity {
@@ -437,6 +439,7 @@ model Donation {
   source         String          @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
   paymentMethod  String?
   accountId      String?
+  bankReference  String?
   account        PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   userId         String?
   user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -454,6 +457,7 @@ model Donation {
   @@index([activityId])
   @@index([competitionId])
   @@index([accountId])
+  @@index([bankReference])
 }
 
 model Expense {
@@ -855,6 +859,7 @@ model Payment {
   year          Int?
   method        String?
   accountId     String?
+  bankReference String?
   account       PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   proof         String?
   status        ReviewStatus    @default(PENDING)
@@ -882,6 +887,7 @@ model Payment {
   @@index([activityId])
   @@index([competitionId])
   @@index([accountId])
+  @@index([bankReference])
 }
 
 enum ReceiptStatus {

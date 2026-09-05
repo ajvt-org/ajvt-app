@@ -10,6 +10,7 @@ export interface MembershipMirror {
   feeApplied: number;
   method: string | null;
   accountId: string | null;
+  bankReference: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   anonymous: boolean;
@@ -33,6 +34,7 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
     feeApplied: m.feeApplied,
     method: m.method,
     accountId: m.accountId,
+    bankReference: m.bankReference,
     proof: m.proof,
     status: m.status,
   };
@@ -75,6 +77,7 @@ export interface DonationMirror {
   anonymous: boolean;
   method: string | null;
   accountId: string | null;
+  bankReference: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
@@ -92,6 +95,7 @@ export interface MirroredDonation {
   anonymous: boolean;
   paymentMethod: string | null;
   accountId: string | null;
+  bankReference: string | null;
   proof: string | null;
   status: "PENDING" | "ACTIVE" | "REJECTED";
   donorName: string | null;
@@ -109,6 +113,7 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
     anonymous: donation.anonymous,
     method: donation.paymentMethod,
     accountId: donation.accountId,
+    bankReference: donation.bankReference,
     proof: donation.proof,
     status: donation.status,
     donorName: donation.donorName,
@@ -137,6 +142,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
     amount: d.amount,
     method: d.method,
     accountId: d.accountId,
+    bankReference: d.bankReference,
     proof: d.proof,
     status: d.status,
     anonymous: d.anonymous,
