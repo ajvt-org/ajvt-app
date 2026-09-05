@@ -112,7 +112,9 @@ export function swappedAccountPositions(
   return other ? [ordered[at], other] : null;
 }
 
-export function openAccountRows(accounts: AdminAccountRow[]): AdminAccountRow[] {
+export function openAccountRows<T extends { active: boolean; closedAt: Date | null }>(
+  accounts: T[],
+): T[] {
   return accounts.filter((account) => account.active && account.closedAt === null);
 }
 

@@ -170,6 +170,40 @@ describe("changing a number an admin already added", () => {
     expect((await listed(method.id)).map((a) => a.id)).toEqual([added.id, account.id]);
   });
 
+  it("moves past a closed number in one go, since the list does not show it", async () => {
+    const { method, account } = await anAccount();
+    const closed = await prisma.paymentAccount.create({
+      data: { methodId: method.id, code: NEW_CODE, position: 2, closedAt: new Date() },
+    });
+    const third = await prisma.paymentAccount.create({
+      data: { methodId: method.id, code: "777777", position: 3 },
+    });
+
+    await PATCH(
+      patch(`/api/admin/payment-methods/${method.id}/accounts/${third.id}`, { move: "up" }),
+      onAccount(method.id, third.id),
+    );
+
+    const open = (await listed(method.id))
+      .filter((row) => row.id !== closed.id)
+      .map((row) => row.id);
+    expect(open).toEqual([third.id, account.id]);
+  });
+
+  it("leaves a stopped number where it is when asked to move it", async () => {
+    const { method, account } = await anAccount();
+    const stopped = await prisma.paymentAccount.create({
+      data: { methodId: method.id, code: NEW_CODE, position: 2, active: false },
+    });
+
+    await PATCH(
+      patch(`/api/admin/payment-methods/${method.id}/accounts/${stopped.id}`, { move: "up" }),
+      onAccount(method.id, stopped.id),
+    );
+
+    expect((await listed(method.id)).map((row) => row.id)).toEqual([account.id, stopped.id]);
+  });
+
   it("refuses a number that belongs to another method", async () => {
     const { account } = await anAccount();
     const cash = await methodNamed(CASH);

@@ -48,6 +48,7 @@ export default function PaymentAccountList({
               busy={busy}
               first={open[0]?.id === account.id}
               last={open[open.length - 1]?.id === account.id}
+              movable={open.some((one) => one.id === account.id)}
               onRun={onRun}
             />
           ))}
