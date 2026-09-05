@@ -16,6 +16,7 @@ export default function PaymentAccountRow({
   busy,
   first,
   last,
+  movable,
   onRun,
 }: {
   account: AdminAccountRow;
@@ -23,6 +24,7 @@ export default function PaymentAccountRow({
   busy: boolean;
   first: boolean;
   last: boolean;
+  movable: boolean;
   onRun: (action: () => Promise<unknown>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -152,7 +154,7 @@ export default function PaymentAccountRow({
         <div className="flex items-center justify-end gap-1">
           <button
             type="button"
-            disabled={busy || first}
+            disabled={busy || first || !movable}
             onClick={() => patch({ move: "up" })}
             className="btn-icon"
             aria-label={texts.moveUp}
@@ -161,7 +163,7 @@ export default function PaymentAccountRow({
           </button>
           <button
             type="button"
-            disabled={busy || last}
+            disabled={busy || last || !movable}
             onClick={() => patch({ move: "down" })}
             className="btn-icon"
             aria-label={texts.moveDown}
