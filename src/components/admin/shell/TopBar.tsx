@@ -14,7 +14,7 @@ export default function TopBar({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <Logo size={24} className="shrink-0" />
+        <Logo mark="symbol" size={24} className="shrink-0" />
         <p className="text-xs sm:text-sm font-black text-white leading-none">{adminShell.title}</p>
       </div>
       <div className="flex items-center gap-2">

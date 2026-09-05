@@ -63,7 +63,7 @@ function AdminLoginForm() {
               padding: "8px",
             }}
           >
-            <Logo size={80} priority />
+            <Logo mark="symbol" size={80} priority />
           </div>
           <h1 className="text-xl font-black text-white mb-1">لوحة تحكم المشرف</h1>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>

@@ -19,7 +19,7 @@ export default function PageHeader({
       style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
     >
       {onBack || backHref ? <BackButton href={backHref} onBack={onBack} /> : null}
-      <Logo size={38} className="shrink-0" />
+      <Logo mark="symbol" size={38} className="shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
           {association.name}

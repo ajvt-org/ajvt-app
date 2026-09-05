@@ -76,7 +76,7 @@ export default function MemberCard({
         style={{ background: "linear-gradient(135deg, #265c49, #1a3f33)" }}
       >
         <div className="flex items-center gap-3 mb-4">
-          <Logo size={36} captured />
+          <Logo mark="symbol" size={36} captured />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               {memberCard.association}
