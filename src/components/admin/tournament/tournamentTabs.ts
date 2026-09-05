@@ -1,6 +1,6 @@
 import type { WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import { activityWorkspace as texts, discipline as disciplineTexts } from "@/lib/texts";
-import { isSinglesSquad, squadOf } from "@/lib/teamSize";
+import { isSinglesSquad, squadOf } from "@/lib/squadSize";
 
 export interface TournamentShape {
   isTournament: boolean;

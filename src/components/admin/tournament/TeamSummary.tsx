@@ -5,7 +5,7 @@ import IconLabel from "@/components/IconLabel";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
-import { rosterFault, type SquadSize } from "@/lib/teamSize";
+import { rosterFault, type SquadSize } from "@/lib/squadSize";
 import type { SquadBreach } from "@/lib/squadRules";
 
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };

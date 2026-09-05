@@ -5,7 +5,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
-import { displayTeamName, squadLabel } from "@/lib/teamSize";
+import { displayTeamName, squadLabel } from "@/lib/squadSize";
 import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";

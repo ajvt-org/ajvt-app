@@ -6,7 +6,7 @@ import { requireAdmin, requireAdminRole } from "@/lib/auth";
 import { scopedActivityIds } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { normalizeTeamSize } from "@/lib/teamSize";
+import { normalizePlayerCount } from "@/lib/squadSize";
 import { parse } from "@/lib/validation";
 import { activityCreateSchema } from "./schema";
 import { activities } from "@/lib/messages";
@@ -107,10 +107,10 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       isTournament: !!isTournament,
       format: isTournament ? (format ?? "KNOCKOUT") : null,
       profile: profile ?? "FOOTBALL",
-      minTeamSize: isTournament ? normalizeTeamSize(minTeamSize) : null,
-      maxTeamSize: isTournament ? normalizeTeamSize(maxTeamSize) : null,
+      minTeamSize: isTournament ? normalizePlayerCount(minTeamSize) : null,
+      maxTeamSize: isTournament ? normalizePlayerCount(maxTeamSize) : null,
       organisedByHomeVillage: !!isTournament && !!organisedByHomeVillage,
-      outsidePlayerLimit: isTournament ? normalizeTeamSize(outsidePlayerLimit) : null,
+      outsidePlayerLimit: isTournament ? normalizePlayerCount(outsidePlayerLimit) : null,
       isVolunteer: !!isVolunteer,
       whatsappLink: isVolunteer ? whatsappLink!.trim() : null,
       published: false,

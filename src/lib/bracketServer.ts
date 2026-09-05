@@ -4,7 +4,7 @@ import { bracketRoundLabel, getMatchWinnerTeamId, shuffleArray } from "./tournam
 import { drawFirstRound, type BracketSlot } from "./bracketDraw";
 import { computeStandings } from "./standings";
 import { suggestFirstKnockoutRound } from "./bracketSuggestion";
-import { incompleteTeams, displayTeamName, squadOf, OPEN_SQUAD } from "./teamSize";
+import { incompleteTeams, displayTeamName, squadOf, OPEN_SQUAD } from "./squadSize";
 import { tournament as messages } from "./messages";
 import { nameOf } from "./person";
 

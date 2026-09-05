@@ -66,7 +66,7 @@ export function placeholderTeamName(index: number): string {
   return `فريق ${index}`;
 }
 
-export function normalizeTeamSize(value: unknown): number | null {
+export function normalizePlayerCount(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
   if (!Number.isInteger(n) || n < 1 || n > 40) return null;

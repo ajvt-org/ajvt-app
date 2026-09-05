@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { placeholderTeamName, squadIsSet, squadOf } from "@/lib/teamSize";
+import { placeholderTeamName, squadIsSet, squadOf } from "@/lib/squadSize";
 import { nameOf } from "@/lib/person";
 import { activities, tournament } from "@/lib/messages";
 

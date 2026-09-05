@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { nameOf } from "./person";
-import { isSinglesSquad, squadOf } from "./teamSize";
+import { isSinglesSquad, squadOf } from "./squadSize";
 
 type Tx = Prisma.TransactionClient;
 
