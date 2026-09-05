@@ -38,7 +38,7 @@ function activity(over: Partial<ActivityDetail["activity"]> = {}): ActivityDetai
     whatsappLink: null,
     registrations: [],
     teams: [],
-    _count: { matches: 0, groups: 0 },
+    _count: { matches: 0, playedMatches: 0, groups: 0 },
     ...over,
   };
 }

@@ -8,7 +8,7 @@ export const convertTournament = {
   convert: "تحويل إلى بطولة",
   dialogTitle: "تحويل إلى بطولة",
   settingsTitle: "إعدادات البطولة",
-  lockHint: "النظام والنوع وحجم الفريق تُقفل جميعاً بعد إنشاء أول مباراة.",
+  lockHint: "النظام والنوع يُقفلان بعد إنشاء أول مباراة، وحجم الفريق بعد انطلاق البطولة.",
   saveSettings: "حفظ الإعدادات",
   settingsSaved: "حُفظت إعدادات البطولة",
   converted: "أصبح النشاط بطولة",

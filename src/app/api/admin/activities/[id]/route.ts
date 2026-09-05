@@ -4,6 +4,7 @@ import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { normalizeTeamSize } from "@/lib/teamSize";
+import { PLAYED_MATCH } from "@/lib/activityMatches";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
@@ -75,6 +76,9 @@ export const PATCH = withRoute(
       return NextResponse.json({ error: activities.notFound }, { status: 404 });
     }
 
+    const fixtureCount = () => prisma.match.count({ where: { activityId: id } });
+    const playedCount = () => prisma.match.count({ where: { activityId: id, ...PLAYED_MATCH } });
+
     const data: {
       title?: string;
       description?: string;
@@ -113,19 +117,23 @@ export const PATCH = withRoute(
     if (isTournament !== undefined) data.isTournament = !!isTournament;
     if (showScorersAndCards !== undefined) data.showScorersAndCards = !!showScorersAndCards;
     if (format !== undefined) {
-      const played = await prisma.match.count({ where: { activityId: id } });
-      if (played > 0 && format !== existing.format) {
+      if (format !== existing.format && (await fixtureCount()) > 0) {
         return NextResponse.json({ error: tournament.formatLocked }, { status: 409 });
       }
       data.format = format ?? null;
     }
     if (minTeamSize !== undefined || maxTeamSize !== undefined) {
-      const played = await prisma.match.count({ where: { activityId: id } });
-      if (played > 0) {
+      const nextMinTeamSize =
+        minTeamSize !== undefined ? normalizeTeamSize(minTeamSize) : existing.minTeamSize;
+      const nextMaxTeamSize =
+        maxTeamSize !== undefined ? normalizeTeamSize(maxTeamSize) : existing.maxTeamSize;
+      const moved =
+        nextMinTeamSize !== existing.minTeamSize || nextMaxTeamSize !== existing.maxTeamSize;
+      if (moved && (await playedCount()) > 0) {
         return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
       }
-      if (minTeamSize !== undefined) data.minTeamSize = normalizeTeamSize(minTeamSize);
-      if (maxTeamSize !== undefined) data.maxTeamSize = normalizeTeamSize(maxTeamSize);
+      if (minTeamSize !== undefined) data.minTeamSize = nextMinTeamSize;
+      if (maxTeamSize !== undefined) data.maxTeamSize = nextMaxTeamSize;
     }
     if (organisedByHomeVillage !== undefined) {
       data.organisedByHomeVillage = !!organisedByHomeVillage;
@@ -134,8 +142,7 @@ export const PATCH = withRoute(
       data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);
     }
     if (profile !== undefined) {
-      const played = await prisma.match.count({ where: { activityId: id } });
-      if (played > 0 && profile !== existing.profile) {
+      if (profile !== existing.profile && (await fixtureCount()) > 0) {
         return NextResponse.json({ error: tournament.profileLocked }, { status: 409 });
       }
       data.profile = profile;
