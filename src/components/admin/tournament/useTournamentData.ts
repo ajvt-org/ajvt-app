@@ -21,7 +21,7 @@ export interface TournamentInfo {
   photo: string | null;
   isTournament: boolean;
   format: TournamentFormat;
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   minTeamSize: number | null;
   maxTeamSize: number | null;
   organisedByHomeVillage: boolean;

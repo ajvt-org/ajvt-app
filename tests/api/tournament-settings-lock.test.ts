@@ -11,7 +11,7 @@ async function aTournament() {
       description: "بطولة كرة القدم السنوية",
       isTournament: true,
       format: "KNOCKOUT",
-      profile: "FOOTBALL",
+      matchShape: "FOOTBALL",
       minTeamSize: 5,
       maxTeamSize: 7,
     },
@@ -93,7 +93,7 @@ describe("the squad range locks when the tournament begins", () => {
 
     const res = await save(activity.id, {
       format: "KNOCKOUT",
-      profile: "FOOTBALL",
+      matchShape: "FOOTBALL",
       minTeamSize: 5,
       maxTeamSize: 7,
       organisedByHomeVillage: true,
@@ -106,12 +106,12 @@ describe("the squad range locks when the tournament begins", () => {
     expect(row.outsidePlayerLimit).toBe(3);
   });
 
-  it("keeps the format and the profile locked as soon as a fixture exists", async () => {
+  it("keeps the format and the match shape locked as soon as a fixture exists", async () => {
     const { activity, home, away } = await aTournament();
     await aFixture(activity.id, home.id, away.id);
 
     expect((await save(activity.id, { format: "GROUPS_THEN_KNOCKOUT" })).status).toBe(409);
-    expect((await save(activity.id, { profile: "BOARD" })).status).toBe(409);
+    expect((await save(activity.id, { matchShape: "SERIES" })).status).toBe(409);
   });
 });
 

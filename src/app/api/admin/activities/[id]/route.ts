@@ -8,7 +8,7 @@ import { PLAYED_MATCH } from "@/lib/activityMatches";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, tournament } from "@/lib/messages";
-import type { SportProfile, TournamentFormat } from "@prisma/client";
+import type { MatchShape, TournamentFormat } from "@prisma/client";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]",
@@ -23,7 +23,7 @@ export const GET = withRoute(
         photo: true,
         isTournament: true,
         format: true,
-        profile: true,
+        matchShape: true,
         minTeamSize: true,
         maxTeamSize: true,
         organisedByHomeVillage: true,
@@ -53,7 +53,7 @@ export const PATCH = withRoute(
       isTournament,
       showScorersAndCards,
       format,
-      profile,
+      matchShape,
       minTeamSize,
       maxTeamSize,
       organisedByHomeVillage,
@@ -90,7 +90,7 @@ export const PATCH = withRoute(
       isTournament?: boolean;
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
-      profile?: SportProfile;
+      matchShape?: MatchShape;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
       organisedByHomeVillage?: boolean;
@@ -141,11 +141,11 @@ export const PATCH = withRoute(
     if (outsidePlayerLimit !== undefined) {
       data.outsidePlayerLimit = normalizePlayerCount(outsidePlayerLimit);
     }
-    if (profile !== undefined) {
-      if (profile !== existing.profile && (await fixtureCount()) > 0) {
-        return NextResponse.json({ error: tournament.profileLocked }, { status: 409 });
+    if (matchShape !== undefined) {
+      if (matchShape !== existing.matchShape && (await fixtureCount()) > 0) {
+        return NextResponse.json({ error: tournament.matchShapeLocked }, { status: 409 });
       }
-      data.profile = profile;
+      data.matchShape = matchShape;
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;

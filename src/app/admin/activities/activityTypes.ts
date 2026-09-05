@@ -53,7 +53,7 @@ export interface NewActivityDraft {
   photo: string;
   isTournament: boolean;
   format: string;
-  profile: string;
+  matchShape: string;
   minTeamSize: string;
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
@@ -72,7 +72,7 @@ export function emptyNewActivity(): NewActivityDraft {
     photo: "",
     isTournament: false,
     format: "KNOCKOUT",
-    profile: "FOOTBALL",
+    matchShape: "FOOTBALL",
     minTeamSize: "",
     maxTeamSize: "",
     organisedByHomeVillage: false,

@@ -5,7 +5,7 @@ function activity(over: Partial<TabbedActivity> = {}): TabbedActivity {
   return {
     isVolunteer: false,
     isTournament: false,
-    profile: "FOOTBALL",
+    matchShape: "FOOTBALL",
     minTeamSize: null,
     maxTeamSize: null,
     registrations: [],
@@ -16,9 +16,14 @@ function activity(over: Partial<TabbedActivity> = {}): TabbedActivity {
 const SHAPES: Record<string, TabbedActivity> = {
   plain: activity(),
   campaign: activity({ isVolunteer: true }),
-  football: activity({ isTournament: true, profile: "FOOTBALL", minTeamSize: 11, maxTeamSize: 11 }),
-  board: activity({ isTournament: true, profile: "BOARD", minTeamSize: 2, maxTeamSize: 2 }),
-  singles: activity({ isTournament: true, profile: "BOARD", minTeamSize: 1, maxTeamSize: 1 }),
+  football: activity({
+    isTournament: true,
+    matchShape: "FOOTBALL",
+    minTeamSize: 11,
+    maxTeamSize: 11,
+  }),
+  board: activity({ isTournament: true, matchShape: "SERIES", minTeamSize: 2, maxTeamSize: 2 }),
+  singles: activity({ isTournament: true, matchShape: "SERIES", minTeamSize: 1, maxTeamSize: 1 }),
 };
 
 function placeOf(a: TabbedActivity): Record<string, string> {

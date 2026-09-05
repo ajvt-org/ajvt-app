@@ -50,14 +50,14 @@ function match(): Match {
   };
 }
 
-function show(profile: "FOOTBALL" | "BOARD", showResultForm = false) {
+function show(matchShape: "FOOTBALL" | "SERIES", showResultForm = false) {
   cleanup();
   render(
     <MatchCard
       match={match()}
       teams={[]}
       allMatches={[match()]}
-      profile={profile}
+      matchShape={matchShape}
       suspendedIds={[]}
       mvpVoteMinutes={120}
       onDelete={noop}
@@ -87,7 +87,7 @@ describe("a team name carrying Latin letters", () => {
         }}
         teams={[]}
         allMatches={[]}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -130,7 +130,7 @@ describe("a fixture whose teams are not known yet", () => {
         }}
         teams={[]}
         allMatches={[match()]}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -169,7 +169,7 @@ describe("a fixture whose teams are not known yet", () => {
   });
 });
 
-describe("MatchCard by sport profile", () => {
+describe("MatchCard by sport matchShape", () => {
   it("shows the whole football apparatus for a football match", () => {
     show("FOOTBALL");
 
@@ -186,8 +186,8 @@ describe("MatchCard by sport profile", () => {
     expect(screen.getByText(/سالم/)).toBeDefined();
   });
 
-  it("keeps a board match down to the result", () => {
-    show("BOARD");
+  it("keeps a series match down to the result", () => {
+    show("SERIES");
 
     expect(screen.queryByLabelText(/رجل المباراة/)).toBeNull();
     expect(screen.queryByText(/أفضل لاعب/)).toBeNull();
@@ -203,8 +203,8 @@ describe("MatchCard by sport profile", () => {
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 
-  it("keeps card entry out of a board result form", () => {
-    show("BOARD", true);
+  it("keeps card entry out of a series result form", () => {
+    show("SERIES", true);
 
     expect(screen.queryByText(texts.addCard)).toBeNull();
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();

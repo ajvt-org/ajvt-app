@@ -29,7 +29,7 @@ function activity(over: Partial<ActivityDetail["activity"]> = {}): ActivityDetai
     showScorersAndCards: true,
     isTournament: true,
     format: "KNOCKOUT",
-    profile: "FOOTBALL",
+    matchShape: "FOOTBALL",
     minTeamSize: null,
     maxTeamSize: null,
     organisedByHomeVillage: false,

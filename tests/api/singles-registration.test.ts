@@ -28,7 +28,7 @@ async function aChessTournament(over: Record<string, unknown> = {}) {
       description: "بطولة فردية",
       isOpen: true,
       isTournament: true,
-      profile: "BOARD",
+      matchShape: "SERIES",
       minTeamSize: 1,
       maxTeamSize: 1,
       autoApprove: true,
@@ -155,7 +155,7 @@ describe("registering for a singles tournament", () => {
     const activity = await aChessTournament({
       minTeamSize: null,
       maxTeamSize: null,
-      profile: "FOOTBALL",
+      matchShape: "FOOTBALL",
     });
     const { member } = await anApprovedMember("22000207", "أحمدو ولد محمد");
 

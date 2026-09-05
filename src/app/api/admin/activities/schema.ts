@@ -56,7 +56,7 @@ export const activityCreateSchema = z
     capacity: capacity.optional(),
     isTournament: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
-    profile: z.enum(["FOOTBALL", "BOARD"], INVALID).nullish(),
+    matchShape: z.enum(["FOOTBALL", "SERIES"], INVALID).nullish(),
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
     organisedByHomeVillage: z.boolean().optional(),

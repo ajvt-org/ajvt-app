@@ -25,7 +25,7 @@ async function loadActivity(id: string) {
       startsAt: true,
       endsAt: true,
       withTime: true,
-      profile: true,
+      matchShape: true,
       minTeamSize: true,
       maxTeamSize: true,
       isTournament: true,

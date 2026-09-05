@@ -38,7 +38,7 @@ export const activityUpdateSchema = z
     isTournament: z.unknown().optional(),
     showScorersAndCards: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
-    profile: z.enum(["FOOTBALL", "BOARD"], INVALID).optional(),
+    matchShape: z.enum(["FOOTBALL", "SERIES"], INVALID).optional(),
     yellowsForBan: z.number().int().min(1).max(10).optional(),
     mvpVoteMinutes: z.number().int().min(MVP_VOTE_MINUTES_MIN).max(MVP_VOTE_MINUTES_MAX).optional(),
     redBanMatches: z.number().int().min(1).max(10).optional(),

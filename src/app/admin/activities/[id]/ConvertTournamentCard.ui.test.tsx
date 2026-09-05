@@ -30,7 +30,7 @@ function activity(
     showScorersAndCards: true,
     isTournament,
     format: isTournament ? ("KNOCKOUT" as const) : null,
-    profile: "FOOTBALL" as const,
+    matchShape: "FOOTBALL" as const,
     minTeamSize: null,
     maxTeamSize: null,
     organisedByHomeVillage: false,
@@ -73,7 +73,7 @@ describe("ConvertTournamentCard", () => {
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
         isTournament: true,
         format: "KNOCKOUT",
-        profile: "BOARD",
+        matchShape: "SERIES",
         minTeamSize: "2",
         maxTeamSize: "2",
         organisedByHomeVillage: false,
@@ -93,7 +93,7 @@ describe("ConvertTournamentCard", () => {
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
         isTournament: true,
         format: "KNOCKOUT",
-        profile: "BOARD",
+        matchShape: "SERIES",
         minTeamSize: "1",
         maxTeamSize: "1",
         organisedByHomeVillage: false,
