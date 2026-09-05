@@ -59,6 +59,8 @@ export const activityCreateSchema = z
     profile: z.enum(["FOOTBALL", "BOARD"], INVALID).nullish(),
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
+    organisedByTaguilalett: z.boolean().optional(),
+    outsidePlayerLimit: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     whatsappLink: z.string(INVALID).nullish(),
     startsAt: activityDate.optional(),

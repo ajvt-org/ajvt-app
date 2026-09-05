@@ -45,18 +45,66 @@ export function presetOf(profile: string, maxTeamSize: string): string {
   return "football";
 }
 
+function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex-1 min-w-0">
+      <label
+        className="block text-sm font-bold mb-1.5"
+        style={{ color: "var(--text-main)" }}
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type="number"
+        min={1}
+        max={40}
+        inputMode="numeric"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="input"
+      />
+    </div>
+  );
+}
+
 export default function TournamentSetupFields({
   format,
   profile,
+  minTeamSize,
   maxTeamSize,
+  organisedByTaguilalett,
+  outsidePlayerLimit,
   onFormat,
   onPreset,
+  onMinTeamSize,
+  onMaxTeamSize,
+  onOrganisedByTaguilalett,
+  onOutsidePlayerLimit,
 }: {
   format: string;
   profile: string;
+  minTeamSize: string;
   maxTeamSize: string;
+  organisedByTaguilalett: boolean;
+  outsidePlayerLimit: string;
   onFormat: (format: string) => void;
   onPreset: (preset: TournamentPreset) => void;
+  onMinTeamSize: (value: string) => void;
+  onMaxTeamSize: (value: string) => void;
+  onOrganisedByTaguilalett: (value: boolean) => void;
+  onOutsidePlayerLimit: (value: string) => void;
 }) {
   const selected = presetOf(profile, maxTeamSize);
 
@@ -112,6 +160,45 @@ export default function TournamentSetupFields({
           <option value="GROUPS_THEN_KNOCKOUT">{texts.formats.GROUPS_THEN_KNOCKOUT}</option>
         </select>
       </div>
+
+      <div>
+        <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
+          {texts.squadHeading}
+        </p>
+        <div className="flex gap-2">
+          <NumberField
+            id="tournament-min-team-size"
+            label={texts.minTeamSize}
+            value={minTeamSize}
+            onChange={onMinTeamSize}
+          />
+          <NumberField
+            id="tournament-max-team-size"
+            label={texts.maxTeamSize}
+            value={maxTeamSize}
+            onChange={onMaxTeamSize}
+          />
+        </div>
+      </div>
+
+      <label className="flex items-center gap-2 text-sm font-bold">
+        <input
+          id="tournament-organised-by-taguilalett"
+          type="checkbox"
+          checked={organisedByTaguilalett}
+          onChange={(e) => onOrganisedByTaguilalett(e.target.checked)}
+        />
+        <span style={{ color: "var(--text-main)" }}>{texts.organisedByTaguilalett}</span>
+      </label>
+
+      {organisedByTaguilalett && (
+        <NumberField
+          id="tournament-outside-player-limit"
+          label={texts.outsidePlayerLimit}
+          value={outsidePlayerLimit}
+          onChange={onOutsidePlayerLimit}
+        />
+      )}
     </div>
   );
 }
