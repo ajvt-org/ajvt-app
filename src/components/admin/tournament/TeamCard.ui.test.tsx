@@ -3,11 +3,20 @@ import { readFileSync } from "node:fs";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
+import type { SquadBreach } from "@/lib/squadRules";
+import { teamsTab } from "@/lib/texts";
 
 function entry(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"): TeamMemberEntry {
   return {
     status,
-    member: { id, fullName: name, phone: "36000001", age: "البدريين", photo: null },
+    member: {
+      id,
+      fullName: name,
+      phone: "36000001",
+      age: "البدريين",
+      village: "التاكلالت",
+      photo: null,
+    },
   };
 }
 
@@ -48,8 +57,8 @@ function show(
     <TeamCard
       team={team(members, captainUserId)}
       shownName="فريق النجم"
-      squad={squad}
-      askVillage={false}
+      settings={{ squad, organisedByTaguilalett: false, outsidePlayerLimit: null }}
+      breaches={[]}
       members={members}
       open={open}
       candidates={[]}
@@ -129,8 +138,12 @@ describe("TeamCard", () => {
       <TeamCard
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
-        squad={{ min: 1, max: 1 }}
-        askVillage={false}
+        settings={{
+          squad: { min: 1, max: 1 },
+          organisedByTaguilalett: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
@@ -150,8 +163,12 @@ describe("TeamCard", () => {
       <TeamCard
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
-        squad={{ min: 1, max: 1 }}
-        askVillage={false}
+        settings={{
+          squad: { min: 1, max: 1 },
+          organisedByTaguilalett: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
@@ -262,8 +279,12 @@ describe("TeamCard", () => {
       <TeamCard
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق الحسن احمدو يحي البناني للشباب"
-        squad={{ min: 1, max: 1 }}
-        askVillage={false}
+        settings={{
+          squad: { min: 1, max: 1 },
+          organisedByTaguilalett: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
@@ -276,5 +297,66 @@ describe("TeamCard", () => {
     const name = screen.getByText("فريق الحسن احمدو يحي البناني للشباب");
     expect(name.className).not.toContain("truncate");
     expect(name.style.overflowWrap).toBe("anywhere");
+  });
+});
+
+describe("a squad the admin should look at", () => {
+  function withBreaches(breaches: SquadBreach[], members: TeamMemberEntry[]) {
+    cleanup();
+    render(
+      <TeamCard
+        team={team(members)}
+        shownName="فريق النجم"
+        settings={{
+          squad: { min: 16, max: 22 },
+          organisedByTaguilalett: true,
+          outsidePlayerLimit: 4,
+        }}
+        breaches={breaches}
+        members={members}
+        open
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+  }
+
+  it("says a squad is short of the minimum", () => {
+    withBreaches([{ kind: "tooFew", count: 15, min: 16 }], [entry("p1", "أحمد")]);
+
+    expect(screen.getByText(teamsTab.squadShort)).toBeDefined();
+  });
+
+  it("says a squad is past the maximum", () => {
+    withBreaches([{ kind: "tooMany", count: 23, max: 22 }], [entry("p1", "أحمد")]);
+
+    expect(screen.getByText(teamsTab.squadOver)).toBeDefined();
+  });
+
+  it("says how many players come from outside and what the limit is", () => {
+    withBreaches(
+      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p2"] }],
+      [entry("p1", "أحمد"), entry("p2", "سالم")],
+    );
+
+    expect(screen.getByText(teamsTab.outsideOverLimit(5, 4))).toBeDefined();
+  });
+
+  it("marks the roster row that pushed the squad over", () => {
+    withBreaches(
+      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p2"] }],
+      [entry("p1", "أحمد"), entry("p2", "سالم")],
+    );
+
+    expect(screen.getAllByText(teamsTab.outsidePlayerOverLimit)).toHaveLength(1);
+  });
+
+  it("leaves a squad with nothing wrong unflagged", () => {
+    withBreaches([], [entry("p1", "أحمد")]);
+
+    expect(screen.queryByText(teamsTab.squadShort)).toBeNull();
+    expect(screen.queryByText(teamsTab.outsidePlayerOverLimit)).toBeNull();
   });
 });

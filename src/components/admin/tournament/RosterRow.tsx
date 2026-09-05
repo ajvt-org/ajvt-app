@@ -25,6 +25,7 @@ const ACTION_SIZE = { fontSize: "0.75rem" };
 export default function RosterRow({
   entry,
   suspended,
+  overLimit,
   captain,
   busy,
   onToggleCaptain,
@@ -33,6 +34,7 @@ export default function RosterRow({
 }: {
   entry: TeamMemberEntry;
   suspended: boolean;
+  overLimit: boolean;
   captain: boolean;
   busy: boolean;
   onToggleCaptain: () => void;
@@ -92,6 +94,11 @@ export default function RosterRow({
         {suspended && (
           <span className="badge" style={DESTRUCTIVE}>
             <IconLabel name="ban">{discipline.suspendedBadge}</IconLabel>
+          </span>
+        )}
+        {overLimit && (
+          <span className="badge badge-pending">
+            <IconLabel name="warning">{teamsTab.outsidePlayerOverLimit}</IconLabel>
           </span>
         )}
       </div>

@@ -5,7 +5,8 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
-import { displayTeamName, type SquadSize } from "@/lib/teamSize";
+import { displayTeamName } from "@/lib/teamSize";
+import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ErrorNotice from "@/components/form/ErrorNotice";
@@ -19,16 +20,14 @@ import { useAdminOrigin } from "@/components/admin/adminOrigin";
 export default function TeamsTab({
   activityId,
   teams,
-  squad,
-  askVillage,
+  settings,
   roster,
   suspendedIds,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
-  squad: SquadSize;
-  askVillage: boolean;
+  settings: SquadSettings;
   roster: RosterMember[];
   suspendedIds: string[];
   onChange: () => void;
@@ -50,7 +49,7 @@ export default function TeamsTab({
         autoNamed: team.autoNamed,
         memberNames: team.members.map((m) => m.member.fullName),
       },
-      squad,
+      settings.squad,
     );
   }
 
@@ -164,8 +163,15 @@ export default function TeamsTab({
           key={team.id}
           team={team}
           shownName={shownName(team)}
-          squad={squad}
-          askVillage={askVillage}
+          settings={settings}
+          breaches={squadBreaches(
+            (rosters.get(team.id) ?? team.members).map((m) => ({
+              id: m.member.id,
+              village: m.member.village,
+            })),
+            team,
+            settings,
+          )}
           members={rosters.get(team.id) ?? team.members}
           open={isOpen(team.id)}
           candidates={unassigned}
