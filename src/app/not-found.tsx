@@ -4,8 +4,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
-import Logo from "@/components/Logo";
-import { association } from "@/lib/texts";
+import PageHeader from "@/components/PageHeader";
+import { pageTitles } from "@/lib/texts";
 
 export default function NotFound() {
   const pathname = usePathname();
@@ -13,18 +13,7 @@ export default function NotFound() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <Logo mark="symbol" size={40} />
-        <div>
-          <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {association.name}
-          </p>
-          <h1 className="text-base font-black text-white">الصفحة غير موجودة</h1>
-        </div>
-      </div>
+      <PageHeader title={pageTitles.notFound} />
 
       <div className="flex-1 px-5 py-10 flex flex-col items-center justify-center text-center space-y-4">
         <p style={{ color: "var(--mint-500)" }}>

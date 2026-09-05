@@ -15,6 +15,7 @@ export {
   resetTournament,
 } from "./activityDetail";
 export { activityPage } from "./activityPage";
+export { pageTitles } from "./pageTitles";
 export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
