@@ -1,3 +1,13 @@
+export const MONEY_TABLES = ["Payment", "Membership", "Donation", "Expense"] as const;
+
+export type MoneyTable = (typeof MONEY_TABLES)[number];
+
+export interface AttachPlan {
+  table: MoneyTable;
+  accountId: string;
+  ids: string[];
+}
+
 export interface AttachableRow {
   id: string;
   method: string | null;
