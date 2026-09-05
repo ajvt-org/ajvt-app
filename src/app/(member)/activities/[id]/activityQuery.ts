@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { accountNamed, accountPerson } from "@/lib/person";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
+import { squadOf } from "@/lib/teamSize";
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -25,7 +26,8 @@ async function loadActivity(id: string) {
       endsAt: true,
       withTime: true,
       profile: true,
-      teamSize: true,
+      minTeamSize: true,
+      maxTeamSize: true,
       isTournament: true,
       showScorersAndCards: true,
       groups: { select: { id: true, name: true }, orderBy: { createdAt: "asc" as const } },
@@ -124,7 +126,7 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
     ...team,
     members: team.members.map((tm) => ({ member: accountPerson(tm) })),
   }));
-  const identities = entrantIdentities(teams, activity.teamSize);
+  const identities = entrantIdentities(teams, squadOf(activity));
 
   return {
     ...activity,

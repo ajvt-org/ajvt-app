@@ -18,7 +18,7 @@ export const teamsTab = {
   teamLogo: "شعار الفريق",
   changeTeamLogo: "تغيير شعار الفريق",
   renameTeam: "تعديل اسم الفريق",
-  rosterOf: (count: number, size: number) => `${count} / ${size}`,
+  rosterOf: (count: number, size: string) => `${count} / ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,

@@ -1,5 +1,7 @@
+import { isSinglesSquad, type SquadSize } from "./teamSize";
+
 export type EntrantKind = "team" | "player";
 
-export function entrantKind(teamSize: number | null | undefined): EntrantKind {
-  return teamSize === 1 ? "player" : "team";
+export function entrantKind(squad: SquadSize): EntrantKind {
+  return isSinglesSquad(squad) ? "player" : "team";
 }

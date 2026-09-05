@@ -54,7 +54,8 @@ export interface NewActivityDraft {
   isTournament: boolean;
   format: string;
   profile: string;
-  teamSize: string;
+  minTeamSize: string;
+  maxTeamSize: string;
   isVolunteer: boolean;
   whatsappLink: string;
 }
@@ -70,7 +71,8 @@ export function emptyNewActivity(): NewActivityDraft {
     isTournament: false,
     format: "KNOCKOUT",
     profile: "FOOTBALL",
-    teamSize: "",
+    minTeamSize: "",
+    maxTeamSize: "",
     isVolunteer: false,
     whatsappLink: "",
   };

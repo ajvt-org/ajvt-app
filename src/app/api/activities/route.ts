@@ -25,7 +25,8 @@ export const GET = withRoute("GET /api/activities", async () => {
       isTournament: true,
       isVolunteer: true,
       whatsappLink: true,
-      teamSize: true,
+      minTeamSize: true,
+      maxTeamSize: true,
       _count: {
         select: {
           registrations: { where: { status: { not: "REJECTED" } } },

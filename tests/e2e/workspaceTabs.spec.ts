@@ -45,7 +45,8 @@ test("the workspace tabs hold to one line each on a phone", async ({ browser }) 
         isTournament: true,
         format: "KNOCKOUT",
         profile: "FOOTBALL",
-        teamSize: 5,
+        minTeamSize: 5,
+        maxTeamSize: 5,
       }),
     });
     const body = await res.json();

@@ -21,7 +21,8 @@ async function doublesActivity(teamSize: number | null = 2) {
       description: "بطولة أزواج",
       isTournament: true,
       format: "KNOCKOUT",
-      teamSize,
+      minTeamSize: teamSize,
+      maxTeamSize: teamSize,
     }),
   );
   return (await res.json()).activity;
@@ -64,7 +65,8 @@ describe("fixed-size teams", () => {
   it("stores the declared team size", async () => {
     const activity = await doublesActivity(2);
 
-    expect(activity.teamSize).toBe(2);
+    expect(activity.minTeamSize).toBe(2);
+    expect(activity.maxTeamSize).toBe(2);
   });
 
   it("refuses a third member in a pair", async () => {

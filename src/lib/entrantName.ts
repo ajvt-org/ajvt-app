@@ -1,4 +1,4 @@
-import { displayTeamName } from "./teamSize";
+import { displayTeamName, isSinglesSquad, type SquadSize } from "./teamSize";
 
 export interface EntrantTeam {
   id: string;
@@ -14,7 +14,7 @@ export interface EntrantIdentity {
 
 export function entrantIdentities(
   teams: EntrantTeam[],
-  teamSize: number | null,
+  squad: SquadSize,
 ): Map<string, EntrantIdentity> {
   return new Map(
     teams.map((team) => [
@@ -27,9 +27,9 @@ export function entrantIdentities(
             autoNamed: team.autoNamed,
             memberNames: team.members.map((m) => m.member.fullName),
           },
-          teamSize,
+          squad,
         ),
-        photo: teamSize === 1 ? (team.members[0]?.member.photo ?? null) : null,
+        photo: isSinglesSquad(squad) ? (team.members[0]?.member.photo ?? null) : null,
       },
     ]),
   );

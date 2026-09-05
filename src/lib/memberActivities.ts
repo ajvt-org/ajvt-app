@@ -1,4 +1,5 @@
 import { sortUpcoming, type Fixture } from "./memberFixtures";
+import { squadIsSet, squadOf } from "./teamSize";
 
 export interface ActivityTeam {
   id: string;
@@ -12,7 +13,8 @@ export interface MemberActivity {
   title: string;
   isTournament: boolean;
   isVolunteer: boolean;
-  teamSize: number | null;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
   dates: string | null;
   registrationStatus: string | null;
   team: ActivityTeam | null;
@@ -48,7 +50,7 @@ export function activityDetail(entry: MemberActivity): ActivityDetail {
   const fixture = nextUpcoming(entry.fixtures);
   if (fixture) return { kind: "NEXT_MATCH", fixture };
 
-  if (entry.team && entry.teamSize !== null && entry.team.teammates.length > 0) {
+  if (entry.team && squadIsSet(squadOf(entry)) && entry.team.teammates.length > 0) {
     return { kind: "PARTNERS", names: entry.team.teammates };
   }
   if (entry.team && entry.isTournament) {

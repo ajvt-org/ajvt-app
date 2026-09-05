@@ -174,7 +174,8 @@ describe("duplicating an activity", () => {
       capacity: 24,
       isTournament: true,
       format: "KNOCKOUT",
-      teamSize: 5,
+      minTeamSize: 5,
+      maxTeamSize: 5,
       published: true,
       showScorersAndCards: false,
     });
@@ -186,7 +187,8 @@ describe("duplicating an activity", () => {
     expect(body.activity.title).toBe("دوري القرية (نسخة)");
     expect(body.activity.capacity).toBe(24);
     expect(body.activity.isTournament).toBe(true);
-    expect(body.activity.teamSize).toBe(5);
+    expect(body.activity.minTeamSize).toBe(5);
+    expect(body.activity.maxTeamSize).toBe(5);
     expect(body.activity.published).toBe(false);
     expect(body.activity.showScorersAndCards).toBe(false);
   });

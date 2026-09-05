@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { nameOf } from "./person";
+import { isSinglesSquad, squadOf } from "./teamSize";
 
 type Tx = Prisma.TransactionClient;
 
@@ -9,17 +10,20 @@ const REGISTRATION_SEAT = {
   activityId: true,
   chosenTeamId: true,
   user: { select: { fullName: true } },
-  activity: { select: { isTournament: true, teamSize: true } },
+  activity: { select: { isTournament: true, minTeamSize: true, maxTeamSize: true } },
 } satisfies Prisma.ActivityRegistrationSelect;
 
-export function isSingles(activity: { isTournament: boolean; teamSize: number | null }): boolean {
-  return activity.isTournament && activity.teamSize === 1;
+interface ActivityShape {
+  isTournament: boolean;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
 }
 
-export function joinableTeams<T>(
-  activity: { isTournament: boolean; teamSize: number | null },
-  teams: T[],
-): T[] {
+export function isSingles(activity: ActivityShape): boolean {
+  return activity.isTournament && isSinglesSquad(squadOf(activity));
+}
+
+export function joinableTeams<T>(activity: ActivityShape, teams: T[]): T[] {
   return activity.isTournament && !isSingles(activity) ? teams : [];
 }
 
@@ -74,7 +78,7 @@ export async function unseatRegistrant(
 ): Promise<boolean> {
   const activity = await tx.activity.findUnique({
     where: { id: activityId },
-    select: { isTournament: true, teamSize: true },
+    select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
   });
   if (!activity || !isSingles(activity)) return false;
 

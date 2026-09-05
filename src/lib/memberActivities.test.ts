@@ -28,7 +28,8 @@ function entry(over: Partial<MemberActivity> = {}): MemberActivity {
     title: "البطولة",
     isTournament: true,
     isVolunteer: false,
-    teamSize: null,
+    minTeamSize: null,
+    maxTeamSize: null,
     dates: null,
     registrationStatus: "ACTIVE",
     team: null,
@@ -52,7 +53,7 @@ describe("activityDetail", () => {
 
   it("names the partner in a fixed size team", () => {
     const d = activityDetail(
-      entry({ teamSize: 2, team: { ...team, teammates: ["محمد ولد أحمد"] } }),
+      entry({ minTeamSize: 2, maxTeamSize: 2, team: { ...team, teammates: ["محمد ولد أحمد"] } }),
     );
     expect(d).toEqual({ kind: "PARTNERS", names: ["محمد ولد أحمد"] });
   });
