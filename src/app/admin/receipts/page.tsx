@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import PageLoading from "@/components/PageLoading";
 import IconLabel from "@/components/IconLabel";
-import ReceiptSheet from "@/components/receipt/ReceiptSheet";
-import { useReceiptQr } from "@/components/receipt/useReceiptQr";
-import { savePdf } from "@/components/pdf/renderPdf";
+import { saveReceiptPdf } from "@/components/pdf/receiptPdf";
 import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
 import { receiptAdmin } from "@/lib/texts/receipt";
 import ReceiptForm from "./ReceiptForm";
@@ -21,15 +19,12 @@ export default function AdminReceiptsPage() {
   const [error, setError] = useState("");
   const [printing, setPrinting] = useState<OfficialReceiptView | null>(null);
 
-  const qrDataUrl = useReceiptQr(printing?.token);
-  const sheetRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (!printing || !qrDataUrl || !sheetRef.current) return;
-    savePdf(sheetRef.current, receiptFileName(printing.number, "pdf"))
+    if (!printing) return;
+    saveReceiptPdf(printing, receiptFileName(printing.number, "pdf"))
       .catch((err) => setError(errorMessage(err)))
       .finally(() => setPrinting(null));
-  }, [printing, qrDataUrl]);
+  }, [printing]);
 
   async function issue() {
     setSaving(true);
@@ -105,12 +100,6 @@ export default function AdminReceiptsPage() {
         onPrint={setPrinting}
         onVoid={cancel}
       />
-
-      {printing && (
-        <div style={{ position: "fixed", left: -10000, top: 0 }} aria-hidden="true">
-          <ReceiptSheet receipt={printing} qrDataUrl={qrDataUrl} innerRef={sheetRef} />
-        </div>
-      )}
     </div>
   );
 }

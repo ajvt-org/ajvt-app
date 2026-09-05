@@ -3,9 +3,9 @@ import { render, screen } from "@testing-library/react";
 import { moneyDigits } from "@/lib/money";
 import { EXACT_TEXT } from "@tests/ui/exactText";
 import OfficialReceipt from "./OfficialReceipt";
-import ReceiptSheet, { ReceiptCard } from "./ReceiptSheet";
+import ReceiptCard from "./ReceiptCard";
 import { receiptSheet } from "@/lib/texts/receipt";
-import { RECEIPT_WIDTH, SHEET_PADDING } from "./receiptStyle";
+
 import type { OfficialReceiptView } from "@/lib/officialReceipt";
 
 const RECEIPT: OfficialReceiptView = {
@@ -108,30 +108,5 @@ describe("the sheet an admin hands over", () => {
     render(<OfficialReceipt receipt={{ ...RECEIPT, status: "VOID" }} qrDataUrl={null} />);
 
     expect(screen.getByText(receiptSheet.voided)).toBeDefined();
-  });
-});
-
-describe("the page an admin downloads", () => {
-  it("carries the receipt once", () => {
-    render(<ReceiptSheet receipt={RECEIPT} />);
-
-    expect(screen.getAllByText("R-2026-0001")).toHaveLength(1);
-    expect(screen.getAllByText("خمسة آلاف أوقية")).toHaveLength(1);
-  });
-
-  it("is the receipt and its margin, with no room left over", () => {
-    const { container } = render(<ReceiptSheet receipt={RECEIPT} />);
-    const page = container.firstElementChild as HTMLElement;
-
-    expect(page.style.width).toBe("max-content");
-    expect(page.style.padding).toBe(`${SHEET_PADDING}px`);
-    expect(page.style.height).toBe("");
-  });
-
-  it("keeps the receipt at the width it was drawn for", () => {
-    const { container } = render(<ReceiptSheet receipt={RECEIPT} />);
-    const drawn = container.querySelector('[style*="width"] > div') as HTMLElement;
-
-    expect(drawn.style.width).toBe(`${RECEIPT_WIDTH}px`);
   });
 });
