@@ -11,7 +11,7 @@ import {
 } from "@/lib/tournament";
 import { groupStandings } from "@/lib/standings";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
-import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/teamSize";
+import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/squadSize";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { tournamentWorkspace as texts } from "@/lib/texts";

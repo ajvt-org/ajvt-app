@@ -23,7 +23,7 @@ import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/
 import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { entrantKind } from "@/lib/entrant";
-import { squadOf } from "@/lib/teamSize";
+import { squadOf } from "@/lib/squadSize";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 

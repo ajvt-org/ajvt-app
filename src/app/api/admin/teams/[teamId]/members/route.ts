@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
-import { squadOf, teamIsFull } from "@/lib/teamSize";
+import { squadOf, teamIsFull } from "@/lib/squadSize";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";

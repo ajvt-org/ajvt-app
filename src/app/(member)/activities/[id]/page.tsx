@@ -11,7 +11,7 @@ import { activityPage as texts, publicTournament as tournamentTexts } from "@/li
 import ActivityHero from "./ActivityHero";
 import ActivityStatus from "./ActivityStatus";
 import { entrantKind } from "@/lib/entrant";
-import { squadOf } from "@/lib/teamSize";
+import { squadOf } from "@/lib/squadSize";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 import { safeNextPath } from "@/lib/utils";

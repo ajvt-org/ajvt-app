@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { normalizeTeamSize } from "@/lib/teamSize";
+import { normalizePlayerCount } from "@/lib/squadSize";
 import { PLAYED_MATCH } from "@/lib/activityMatches";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
@@ -124,9 +124,9 @@ export const PATCH = withRoute(
     }
     if (minTeamSize !== undefined || maxTeamSize !== undefined) {
       const nextMinTeamSize =
-        minTeamSize !== undefined ? normalizeTeamSize(minTeamSize) : existing.minTeamSize;
+        minTeamSize !== undefined ? normalizePlayerCount(minTeamSize) : existing.minTeamSize;
       const nextMaxTeamSize =
-        maxTeamSize !== undefined ? normalizeTeamSize(maxTeamSize) : existing.maxTeamSize;
+        maxTeamSize !== undefined ? normalizePlayerCount(maxTeamSize) : existing.maxTeamSize;
       const moved =
         nextMinTeamSize !== existing.minTeamSize || nextMaxTeamSize !== existing.maxTeamSize;
       if (moved && (await playedCount()) > 0) {
@@ -139,7 +139,7 @@ export const PATCH = withRoute(
       data.organisedByHomeVillage = !!organisedByHomeVillage;
     }
     if (outsidePlayerLimit !== undefined) {
-      data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);
+      data.outsidePlayerLimit = normalizePlayerCount(outsidePlayerLimit);
     }
     if (profile !== undefined) {
       if (profile !== existing.profile && (await fixtureCount()) > 0) {

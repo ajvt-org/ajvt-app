@@ -1,5 +1,5 @@
 import { sortUpcoming, type Fixture } from "./memberFixtures";
-import { squadIsSet, squadOf } from "./teamSize";
+import { squadIsSet, squadOf } from "./squadSize";
 
 export interface ActivityTeam {
   id: string;

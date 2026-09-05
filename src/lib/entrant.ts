@@ -1,4 +1,4 @@
-import { isSinglesSquad, type SquadSize } from "./teamSize";
+import { isSinglesSquad, type SquadSize } from "./squadSize";
 
 export type EntrantKind = "team" | "player";
 

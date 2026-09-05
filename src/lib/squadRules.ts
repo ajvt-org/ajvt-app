@@ -1,5 +1,5 @@
 import { HOME_VILLAGE } from "./villages";
-import { rosterFault, type SquadSize } from "./teamSize";
+import { rosterFault, type SquadSize } from "./squadSize";
 
 export interface SquadPlayer {
   id: string;
