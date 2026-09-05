@@ -128,6 +128,22 @@ describe("RosterRow", () => {
     expect(plainRow.style.border).toContain("transparent");
   });
 
+  it("adds no mark beside the name, the button and the edge already say it", () => {
+    const plain = show(entry(LONG_NAME)).querySelectorAll("svg").length;
+    const captain = show(entry(LONG_NAME), { captain: true }).querySelectorAll("svg").length;
+
+    expect(captain).toBe(plain);
+  });
+
+  it("leaves the captain readable when the mark beside the name is gone", () => {
+    const container = show(entry(LONG_NAME), { captain: true });
+
+    expect((container.firstElementChild as HTMLElement).style.border).toContain("copper");
+    const toggle = screen.getByLabelText(`إلغاء قيادة ${LONG_NAME} للفريق`);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(toggle.style.background).toContain("copper");
+  });
+
   it("keeps a pending captain reading as pending", () => {
     const row = show(entry(LONG_NAME, "PENDING"), { captain: true })
       .firstElementChild as HTMLElement;
