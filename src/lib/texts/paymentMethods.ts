@@ -71,6 +71,11 @@ export const byAccount = {
   failed: "تعذر تحميل الأرقام، أعد تحميل الصفحة",
 } as const;
 
+export const bankReference = {
+  label: "رقم العملية",
+  repeated: "نفس رقم العملية مسجل من قبل",
+} as const;
+
 export const paymentAccountPicker = {
   label: "الرقم المستلم",
   unknown: "غير معروف",

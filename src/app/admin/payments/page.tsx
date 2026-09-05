@@ -27,7 +27,11 @@ function match(proof: Proof, filters: PaymentsFilters) {
   if (!matchesAccount(proof, filters.account)) return false;
   const query = filters.q.trim();
   if (!query) return true;
-  return proof.memberName.includes(query) || (proof.activityTitle || "").includes(query);
+  return (
+    proof.memberName.includes(query) ||
+    (proof.activityTitle || "").includes(query) ||
+    (proof.bankReference || "").includes(query)
+  );
 }
 
 function AdminPaymentsPageInner() {

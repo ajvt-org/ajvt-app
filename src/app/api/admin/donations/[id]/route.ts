@@ -7,6 +7,7 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { accountIdError } from "@/lib/paymentAccountsServer";
+import { readBankReference } from "@/lib/bankReference";
 import { acceptedNames } from "@/lib/paymentMethods";
 import { donationUpdateSchema } from "./schema";
 import type { ReviewStatus } from "@prisma/client";
@@ -50,6 +51,7 @@ export const PATCH = withRoute(
       amount,
       paymentMethod,
       accountId,
+      bankReference,
       proof,
       tagIds,
       activityId,
@@ -68,6 +70,7 @@ export const PATCH = withRoute(
         proof,
         paymentMethod,
         accountId,
+        bankReference,
         tagIds,
         activityId,
         competitionId,
@@ -85,6 +88,7 @@ export const PATCH = withRoute(
       amount?: number;
       paymentMethod?: string | null;
       accountId?: string | null;
+      bankReference?: string | null;
       proof?: string | null;
       tags?: { set: { id: string }[] };
       activityId?: string | null;
@@ -113,6 +117,10 @@ export const PATCH = withRoute(
     if (proof !== undefined) data.proof = proof;
     if (amount !== undefined) data.amount = amount;
     if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
+
+    if (bankReference !== undefined) {
+      data.bankReference = readBankReference(bankReference) || null;
+    }
 
     if (accountId !== undefined) {
       const named = paymentMethod !== undefined ? paymentMethod : existing.paymentMethod;

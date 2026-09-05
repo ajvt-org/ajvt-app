@@ -66,6 +66,7 @@ export { quizScores } from "./quizScores";
 export { quizStandings, quizWorkspace } from "./quizWorkspace";
 export { settingsForm, settingsPage } from "./settings";
 export {
+  bankReference,
   byAccount,
   paymentAccountManager,
   paymentAccountPicker,
