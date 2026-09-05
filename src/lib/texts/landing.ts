@@ -6,3 +6,9 @@ export const landingActivities = {
   closedChip: "التسجيل مغلق",
   signUpHint: "أنشئ حساباً وأكمل استمارة الانضمام للتسجيل في الأنشطة",
 } as const;
+
+export const landingHero = {
+  register: "إنشاء حساب جديد",
+  signIn: "تسجيل الدخول",
+  adminSignIn: "دخول المشرف",
+} as const;

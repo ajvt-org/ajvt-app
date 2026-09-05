@@ -38,7 +38,7 @@ export { donationActions, donationEdit } from "./donationEdit";
 export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
-export { landingActivities } from "./landing";
+export { landingActivities, landingHero } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
 export { memberCard } from "./memberCard";

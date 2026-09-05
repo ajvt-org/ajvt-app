@@ -4,9 +4,8 @@ import nextTs from "eslint-config-next/typescript";
 
 // An icon inherits currentColor, an emoji keeps its own colours and disappears on a
 // tinted background, so the interface draws its icons from Icon.tsx. The files listed
-// below are the exceptions: the yellow and red cards and the national flag, whose
-// colour is the whole message, and push notification bodies, which are plain text and
-// cannot carry an SVG.
+// below are the exceptions: the yellow and red cards, whose colour is the whole
+// message, and push notification bodies, which are plain text and cannot carry an SVG.
 const EMOJI = "[\\uD83C-\\uDBFF\\u231A-\\u23FA\\u2600-\\u27BF\\u2B00-\\u2BFF\\uFE0F]";
 const NO_EMOJI = [
   { selector: `JSXText[value=/${EMOJI}/]`, message: "Use Icon or IconLabel, not an emoji." },
@@ -33,7 +32,6 @@ const eslintConfig = defineConfig([
       "src/app/api/admin/activities/\\[id\\]/register/route.ts",
       "src/app/api/admin/matches/\\[matchId\\]/mvp-vote/route.ts",
       "src/app/api/admin/validate/route.ts",
-      "src/components/LandingHero.tsx",
     ],
     rules: { "no-restricted-syntax": "off" },
   },
