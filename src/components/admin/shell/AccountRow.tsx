@@ -9,7 +9,8 @@ import Icon from "@/components/Icon";
 import Notice from "@/components/Notice";
 import { adminAccounts, lists } from "@/lib/texts";
 import { roleTone } from "./roleTone";
-import type { AdminAccount } from "./accountTypes";
+import { isFullAccount } from "./accountTypes";
+import type { AdminAccount, AdminAccountRow } from "./accountTypes";
 
 const QUIET = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const DANGER = { background: "#fee2e2", color: "#991b1b" };
@@ -105,6 +106,21 @@ function Details({ account }: { account: AdminAccount }) {
   );
 }
 
+function Username({ name, isSelf }: { name: string; isSelf: boolean }) {
+  return (
+    <div className="min-w-0 flex items-baseline gap-1.5 flex-1">
+      <p className="font-bold text-sm break-words" style={{ color: "var(--text-main)" }}>
+        {name}
+      </p>
+      {isSelf && (
+        <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
+          ({adminAccounts.you})
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function AccountRow({
   account,
   viewerRole,
@@ -113,7 +129,7 @@ export default function AccountRow({
   onRole,
   onDelete,
 }: {
-  account: AdminAccount;
+  account: AdminAccountRow;
   viewerRole: string | null;
   isSelf: boolean;
   onScope: () => void;
@@ -133,19 +149,18 @@ export default function AccountRow({
     }
   }
 
+  if (!isFullAccount(account)) {
+    return (
+      <div className="card p-3">
+        <Username name={account.username} isSelf={isSelf} />
+      </div>
+    );
+  }
+
   return (
     <div className="card p-3 space-y-2">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex items-baseline gap-1.5 flex-1">
-          <p className="font-bold text-sm break-words" style={{ color: "var(--text-main)" }}>
-            {account.username}
-          </p>
-          {isSelf && (
-            <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
-              ({adminAccounts.you})
-            </span>
-          )}
-        </div>
+        <Username name={account.username} isSelf={isSelf} />
         {!editing && (
           <span className="flex items-center gap-1.5 shrink-0">
             <RoleBadge role={account.role} />

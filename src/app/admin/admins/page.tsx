@@ -6,18 +6,19 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import AccountRow from "@/components/admin/shell/AccountRow";
 import ActivityPicker from "@/components/admin/shell/ActivityPicker";
 import NewAccountForm from "@/components/admin/shell/NewAccountForm";
-import type { AdminAccount } from "@/components/admin/shell/accountTypes";
+import { isFullAccount } from "@/components/admin/shell/accountTypes";
+import type { AdminAccountRow } from "@/components/admin/shell/accountTypes";
 import { adminAccounts } from "@/lib/texts";
 
-function fetchAccounts(): Promise<AdminAccount[]> {
+function fetchAccounts(): Promise<AdminAccountRow[]> {
   return api
-    .get<{ admins: AdminAccount[] }>("/api/admin/admins")
+    .get<{ admins: AdminAccountRow[] }>("/api/admin/admins")
     .then((data) => data.admins || [])
     .catch(() => []);
 }
 
 export default function AdminAccountsPage() {
-  const [accounts, setAccounts] = useState<AdminAccount[]>([]);
+  const [accounts, setAccounts] = useState<AdminAccountRow[]>([]);
   const [viewer, setViewer] = useState<{ username: string; role: string } | null>(null);
   const [scoping, setScoping] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export default function AdminAccountsPage() {
 
   const picked = accounts.find((a) => a.id === scoping);
 
-  if (picked) {
+  if (picked && isFullAccount(picked)) {
     return (
       <div className="admin-page space-y-4">
         <ActivityPicker account={picked} onBack={() => setScoping(null)} onSaved={load} />
