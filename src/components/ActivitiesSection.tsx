@@ -145,6 +145,7 @@ function ActivityCard({ activity, member }: { activity: Activity; member: Eligib
               startsAt={activity.startsAt}
               endsAt={activity.endsAt}
               unplayedMatches={activity.unplayedMatches}
+              awaitingStage={activity.awaitingStage}
             />
             {!activity.isOpen && (
               <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>

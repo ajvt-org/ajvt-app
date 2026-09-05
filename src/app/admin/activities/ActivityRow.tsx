@@ -100,6 +100,7 @@ export default function ActivityRow({
                   startsAt={a.startsAt}
                   endsAt={a.endsAt}
                   unplayedMatches={a.unplayedMatches}
+                  awaitingStage={a.awaitingStage}
                 />
                 <span className="shrink-0">{seats(a)}</span>
               </>

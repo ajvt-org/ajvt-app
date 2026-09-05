@@ -137,6 +137,7 @@ export const activityStandingTexts = {
     days === 2 ? "يبدأ بعد يومين" : days <= 10 ? `يبدأ بعد ${days} أيام` : `يبدأ بعد ${days} يوماً`,
   running: "جارٍ الآن",
   awaiting: (count: number) => `بقيت ${countedNoun(count, MATCHES)}`,
+  groupStage: "دور المجموعات",
   finished: "انتهى",
   notScheduled: "غير مبرمج بعد",
 } as const;

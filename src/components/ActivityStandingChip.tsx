@@ -1,19 +1,28 @@
 import Icon from "@/components/Icon";
 import { activityStanding } from "@/lib/activityStanding";
+import { bracketRoundLabel } from "@/lib/tournament";
+import type { TournamentStage } from "@/lib/tournamentStage";
 import { activityStandingTexts as texts } from "@/lib/texts";
+
+function awaitingLabel(stage: TournamentStage | null, unplayed: number): string {
+  if (!stage) return texts.awaiting(unplayed);
+  return stage.kind === "group" ? texts.groupStage : bracketRoundLabel(stage.roundSize);
+}
 
 export default function ActivityStandingChip({
   startsAt,
   endsAt,
   unplayedMatches,
+  awaitingStage,
   showUnscheduled,
 }: {
   startsAt: string | Date | null;
   endsAt?: string | Date | null;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
   showUnscheduled?: boolean;
 }) {
-  const standing = activityStanding({ startsAt, endsAt, unplayedMatches });
+  const standing = activityStanding({ startsAt, endsAt, unplayedMatches, awaitingStage });
   if (!standing) {
     if (!showUnscheduled) return null;
     return (
@@ -69,7 +78,7 @@ export default function ActivityStandingChip({
         style={{ background: "#fef3c7", color: "#b45309", fontSize: "10px" }}
       >
         <Icon name="hourglass" size={10} />
-        {texts.awaiting(standing.unplayed)}
+        {awaitingLabel(standing.stage, standing.unplayed)}
       </span>
     );
   }
