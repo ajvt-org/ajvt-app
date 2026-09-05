@@ -11,6 +11,7 @@ function show(over: Partial<Parameters<typeof MatchCardActions>[0]> = {}) {
     <MatchCardActions
       played={false}
       decided
+      resultAllowed
       football
       showMvp={false}
       showDetails={false}
@@ -74,5 +75,13 @@ describe("MatchCardActions", () => {
     show({ played: true });
 
     expect(screen.getByText(/تعديل النتيجة/)).toBeDefined();
+  });
+
+  it("greys the result button on a fixture that has not kicked off", () => {
+    show({ resultAllowed: false });
+
+    const button = screen.getByText(texts.enterResult) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(screen.queryByText(/لم يحن موعد/)).toBeNull();
   });
 });

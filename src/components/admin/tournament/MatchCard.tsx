@@ -10,6 +10,7 @@ import { getHeadToHead } from "@/lib/tournament";
 import { matchEventRows, matchTimeline, memberTeamName } from "@/lib/matchEvents";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import { bothTeamsKnown, teamName } from "@/lib/fixtureTeams";
+import { resultEntryAllowed } from "@/lib/matchKickoff";
 import type { Match, Team } from "./types";
 import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
@@ -57,6 +58,8 @@ export default function MatchCard({
   onChange: () => void;
 }) {
   const decided = bothTeamsKnown(match);
+  const played = match.status === "PLAYED";
+  const resultAllowed = resultEntryAllowed(played, match.matchDate, new Date());
   const football = profile === "FOOTBALL";
   const priorMeetings = decided
     ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
@@ -89,9 +92,7 @@ export default function MatchCard({
         <MatchTeams
           home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
           away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
-          score={
-            match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
-          }
+          score={played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
         />
         {priorMeetings.length > 0 && (
@@ -127,8 +128,9 @@ export default function MatchCard({
       )}
 
       <MatchCardActions
-        played={match.status === "PLAYED"}
+        played={played}
         decided={decided}
+        resultAllowed={resultAllowed}
         football={football}
         showMvp={showMvp}
         showDetails={showDetails}
@@ -140,7 +142,7 @@ export default function MatchCard({
         onMoveDown={onMoveDown}
       />
 
-      {decided && showResultForm && (
+      {decided && resultAllowed && showResultForm && (
         <>
           <ResultForm
             match={match}
