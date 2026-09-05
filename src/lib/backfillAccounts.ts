@@ -11,6 +11,7 @@ export interface AttachPlan {
 export interface AttachableRow {
   id: string;
   method: string | null;
+  amount: number;
 }
 
 export interface AccountRow {
@@ -35,28 +36,40 @@ export function soleAccountByMethod(methods: MethodRow[]): Map<string, AccountRo
   return sole;
 }
 
+export interface AttachableSplit {
+  byAccount: Map<string, AttachableRow[]>;
+  skipped: Map<string, number>;
+  unmatched: Map<string, number>;
+}
+
+export function totalOf(rows: AttachableRow[]): number {
+  return rows.reduce((sum, row) => sum + row.amount, 0);
+}
+
 export function attachableRows(
   rows: AttachableRow[],
   sole: Map<string, AccountRow>,
-): { byAccount: Map<string, string[]>; skipped: Map<string, number> } {
-  const byAccount = new Map<string, string[]>();
+): AttachableSplit {
+  const byAccount = new Map<string, AttachableRow[]>();
   const skipped = new Map<string, number>();
+  const unmatched = new Map<string, number>();
 
-  const skip = (reason: string) => skipped.set(reason, (skipped.get(reason) ?? 0) + 1);
+  const count = (into: Map<string, number>, key: string) => into.set(key, (into.get(key) ?? 0) + 1);
 
   for (const row of rows) {
     const name = row.method?.trim();
     if (!name) {
-      skip(NO_METHOD);
+      count(skipped, NO_METHOD);
       continue;
     }
     const account = sole.get(name);
     if (!account) {
-      skip(METHOD_HAS_NO_ACCOUNT);
+      count(skipped, METHOD_HAS_NO_ACCOUNT);
+      count(unmatched, name);
       continue;
     }
-    byAccount.set(account.id, [...(byAccount.get(account.id) ?? []), row.id]);
+    byAccount.set(account.id, [...(byAccount.get(account.id) ?? []), row]);
   }
 
-  return { byAccount, skipped };
+  return { byAccount, skipped, unmatched };
 }
