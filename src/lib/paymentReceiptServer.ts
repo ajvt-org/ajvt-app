@@ -86,29 +86,42 @@ export async function ensureReceiptsFor(
   return issued;
 }
 
-export async function withdrawReceiptsFor(
-  db: Db,
-  where: Prisma.PaymentWhereInput,
-): Promise<number> {
-  const stale = await db.receipt.findMany({
-    where: {
-      status: "ACTIVE",
-      payment: { is: { ...where, status: { not: "ACTIVE" } } },
-    },
-    select: { id: true },
-  });
-  if (stale.length === 0) return 0;
-
+async function voidReceipts(db: Db, ids: string[], reason: string): Promise<number> {
+  if (ids.length === 0) return 0;
   const { count } = await db.receipt.updateMany({
-    where: { id: { in: stale.map((r) => r.id) } },
+    where: { id: { in: ids } },
     data: {
       status: "VOID",
-      voidReason: receiptMessages.withdrawnOnRefusal,
+      voidReason: reason,
       voidedBy: ISSUED_BY,
       voidedAt: new Date(),
     },
   });
   return count;
+}
+
+async function standingReceiptIds(db: Db, payment: Prisma.PaymentWhereInput): Promise<string[]> {
+  const standing = await db.receipt.findMany({
+    where: { status: "ACTIVE", payment: { is: payment } },
+    select: { id: true },
+  });
+  return standing.map((r) => r.id);
+}
+
+export async function withdrawReceiptsFor(
+  db: Db,
+  where: Prisma.PaymentWhereInput,
+): Promise<number> {
+  const stale = await standingReceiptIds(db, { ...where, status: { not: "ACTIVE" } });
+  return voidReceipts(db, stale, receiptMessages.withdrawnOnRefusal);
+}
+
+export async function withdrawReceiptsBeforeDelete(
+  db: Db,
+  where: Prisma.PaymentWhereInput,
+): Promise<number> {
+  const standing = await standingReceiptIds(db, where);
+  return voidReceipts(db, standing, receiptMessages.withdrawnOnDelete);
 }
 
 const STANDING_SELECT = {

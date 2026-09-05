@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("./paymentReceiptServer", () => ({
   ensureReceiptsFor: vi.fn(async () => []),
   syncReceiptsFor: vi.fn(async () => []),
+  withdrawReceiptsBeforeDelete: vi.fn(async () => 0),
 }));
 
 import {
@@ -15,7 +16,11 @@ import {
   stampRecordedBy,
   type MirroredDonation,
 } from "./paymentMirror";
-import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
+import {
+  ensureReceiptsFor,
+  syncReceiptsFor,
+  withdrawReceiptsBeforeDelete,
+} from "./paymentReceiptServer";
 
 type Call = { op: string; args: Record<string, unknown> };
 
@@ -165,6 +170,7 @@ describe("writing the mirrored payment", () => {
 
       expect(only(calls, "delete")).toHaveLength(1);
       expect(only(calls, "create")).toHaveLength(0);
+      expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "d1" });
     }
   });
 
@@ -191,6 +197,7 @@ describe("writing the mirrored payment", () => {
     await removeMirroredDonation(db, "d1");
 
     expect(only(calls, "deleteMany")[0].args.where).toMatchObject({ id: "d1" });
+    expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "d1" });
   });
 });
 
@@ -236,6 +243,7 @@ describe("the payment a membership is mirrored into", () => {
       const { db, calls } = fakeDb({ id: "p1" });
       await mirrorMembershipPayment(db, { ...MEMBERSHIP, amount });
       expect(only(calls, "delete")).toHaveLength(1);
+      expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "p1" });
     }
   });
 
