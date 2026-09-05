@@ -1,1 +1,1 @@
-export const LOGO_SRC = "/version-final.png";
+export const LOGO_SRC = "/logo-mark.svg";

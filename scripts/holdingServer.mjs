@@ -5,7 +5,7 @@ import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PAGE = readFileSync(join(__dirname, "../public/deploying.html"));
-const LOGO = readFileSync(join(__dirname, "../public/version-final.png"));
+const LOGO = readFileSync(join(__dirname, "../public/logo-mark.svg"));
 
 export function startHoldingServer(port) {
   const server = createServer((req, res) => {
@@ -14,8 +14,8 @@ export function startHoldingServer(port) {
       res.end(JSON.stringify({ ok: false }));
       return;
     }
-    if (req.url === "/version-final.png") {
-      res.writeHead(200, { "content-type": "image/png" });
+    if (req.url === "/logo-mark.svg") {
+      res.writeHead(200, { "content-type": "image/svg+xml" });
       res.end(LOGO);
       return;
     }
