@@ -132,20 +132,15 @@ export default function DetailsTab({
             {texts.registrationOpen}
           </label>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input
-                type="checkbox"
-                checked={form.autoApprove}
-                onChange={(e) => setForm((p) => ({ ...p, autoApprove: e.target.checked }))}
-                className="w-4 h-4"
-              />
-              {texts.autoApprove}
-            </label>
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              {texts.autoApproveHint}
-            </p>
-          </div>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              checked={form.autoApprove}
+              onChange={(e) => setForm((p) => ({ ...p, autoApprove: e.target.checked }))}
+              className="w-4 h-4"
+            />
+            {texts.autoApprove}
+          </label>
 
           {activity.isTournament && (
             <div>

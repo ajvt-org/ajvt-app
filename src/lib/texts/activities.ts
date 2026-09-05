@@ -18,10 +18,8 @@ export const activityForm = {
   dialogTitle: "إضافة نشاط",
   registrationOpen: "التسجيل مفتوح",
   autoApprove: "قبول التسجيل تلقائياً",
-  autoApproveHint: "المنتسب يلتحق بالنشاط مباشرة دون انتظار موافقة المشرف.",
   showScorersAndCards: "عرض الهدافين والبطاقات الحمراء",
-  showScorersAndCardsHint:
-    "بطاقة المباراة تعرض الهدافين والبطاقات الحمراء. عند الإطفاء تبقى النتيجة ورجل المباراة والمجريات.",
+  showScorersAndCardsHint: "عند الإطفاء تبقى النتيجة ورجل المباراة والمجريات.",
   detailsHeading: "تفاصيل النشاط",
   title: "العنوان",
   description: "الوصف",
@@ -120,8 +118,6 @@ export const activityRow = {
     undatedClosed: "بلا تاريخ — التسجيل مغلق",
     finished: "منتهية",
   },
-  orderHint:
-    "الأسهم ترتّب النشاط داخل مجموعته على صفحات الأعضاء. الجاري ثم القادم ثم المنتهي، وهذا الترتيب لا يتغيّر.",
   tournamentChip: "بطولة",
   volunteerChip: "حملة تطوعية",
   closedChip: "التسجيل مغلق",

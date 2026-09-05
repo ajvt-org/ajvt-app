@@ -9,6 +9,7 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/FilterSheet.tsx",
   "src/app/admin/dashboard/MemberDrawer.tsx",
   "src/app/admin/members/[id]/AccountPhoneForm.tsx",
+  "src/app/admin/members/[id]/SupportPrivacyCard.tsx",
   "src/app/admin/payments/DonationActions.tsx",
   "src/app/admin/payments/DonationEditForm.tsx",
   "src/app/admin/payments/LinkMemberPanel.tsx",
