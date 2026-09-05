@@ -10,6 +10,7 @@ import {
   computeTeamAdvancedStats,
 } from "@/lib/tournament";
 import { groupStandings } from "@/lib/standings";
+import { entrantNames, namedEntrant } from "@/lib/entrantName";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { tournamentWorkspace as texts } from "@/lib/texts";
@@ -32,8 +33,25 @@ export default function TournamentPanel({
   tab: TournamentTabKey;
   data: ReturnType<typeof useTournamentData>;
 }) {
-  const { teams, matches, groups, roster, info } = data;
+  const { groups, roster, info } = data;
   const singles = info?.teamSize === 1;
+  const names = useMemo(
+    () => entrantNames(data.teams, info?.teamSize ?? null),
+    [data.teams, info?.teamSize],
+  );
+  const teams = useMemo(
+    () => data.teams.map((team) => ({ ...team, name: names.get(team.id) ?? team.name })),
+    [data.teams, names],
+  );
+  const matches = useMemo(
+    () =>
+      data.matches.map((match) => ({
+        ...match,
+        homeTeam: namedEntrant(match.homeTeam, names),
+        awayTeam: namedEntrant(match.awayTeam, names),
+      })),
+    [data.matches, names],
+  );
   const football = (info?.profile ?? "FOOTBALL") === "FOOTBALL";
   const suspendedIds = data.suspensions.filter((s) => s.running).map((s) => s.member.id);
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { accountNamed, accountPerson } from "@/lib/person";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
+import { entrantNames, namedEntrant } from "@/lib/entrantName";
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -32,6 +33,7 @@ async function loadActivity(id: string) {
         select: {
           id: true,
           name: true,
+          autoNamed: true,
           logo: true,
           groupId: true,
           captainUserId: true,
@@ -118,14 +120,19 @@ async function loadActivity(id: string) {
 }
 
 function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) {
+  const teams = activity.teams.map((team) => ({
+    ...team,
+    members: team.members.map((tm) => ({ member: accountPerson(tm) })),
+  }));
+  const names = entrantNames(teams, activity.teamSize);
+
   return {
     ...activity,
-    teams: activity.teams.map((team) => ({
-      ...team,
-      members: team.members.map((tm) => ({ member: accountPerson(tm) })),
-    })),
+    teams: teams.map((team) => ({ ...team, name: names.get(team.id) ?? team.name })),
     matches: activity.matches.map((match) => ({
       ...match,
+      homeTeam: namedEntrant(match.homeTeam, names),
+      awayTeam: namedEntrant(match.awayTeam, names),
       manOfTheMatch: match.manOfTheMatchUser
         ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
         : null,
