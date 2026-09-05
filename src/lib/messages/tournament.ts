@@ -62,6 +62,7 @@ export const tournament = {
   memberNotInTournament: "اللاعب ليس ضمن هذه البطولة",
   memberSuspended: "اللاعب موقوف — لا يمكن تسجيله في هذه المباراة",
   resultNotNumber: "النتيجة يجب أن تكون رقماً صحيحاً غير سالب",
+  seriesResultNotReady: "لا يمكن تسجيل نتيجة مباراة تُحتسب بجولاتها، فإدخال الجولات لم يصل بعد",
   resultBeforeKickoff: "لم يحن موعد هذه المباراة بعد — لا يمكن تسجيل نتيجة قبل أن تُلعب",
   scorersInvalid: "بيانات الهدافين غير صالحة",
   homeGoalsMismatch: "مجموع أهداف لاعبي الفريق المضيف لا يطابق النتيجة",

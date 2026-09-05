@@ -239,6 +239,12 @@ export const PATCH = withRoute(
     const enteringResult = !eventsMode && (homeScore !== undefined || awayScore !== undefined);
     let clearedResult = false;
 
+    const resultArriving =
+      eventsMode || (enteringResult && parseScorePair(homeScore, awayScore) !== null);
+    if (resultArriving && !isFootball(match.activity.matchShape)) {
+      return NextResponse.json({ error: tournament.seriesResultNotReady }, { status: 400 });
+    }
+
     if (eventsMode) {
       const evGoals = validateGoalEvents(goalEvents, sides.home, sides.away);
       if (evGoals === null) {

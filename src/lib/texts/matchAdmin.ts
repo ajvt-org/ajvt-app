@@ -94,6 +94,7 @@ export const matchAdmin = {
   forfeitAwarded: "النتيجة المحتسبة",
   forfeitKeptGoals: "أهداف المنسحب تبقى مسجلة هنا وحدها، ليمكن التراجع عن القرار.",
   saveResult: "حفظ النتيجة",
+  seriesResultNotReady: "مباراة السلسلة تُحتسب بجولاتها، وإدخال الجولات لم يصل بعد",
   goalless: "بدون أهداف بعد — النتيجة تُحسب من الأهداف المسجلة",
   cardsHeading: "البطاقات",
   yellowCard: "صفراء",
