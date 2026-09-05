@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { ConflictError, ValidationError } from "./errors";
-import { tournament as messages } from "./messages";
+import { entrantWording, tournament as messages } from "./messages";
+import { entrantOfActivity } from "./entrantServer";
+import type { EntrantWording } from "./messages";
 import { bracketRoundLabel } from "./tournament";
 import { groupRoundRobin, groupRoundSizes } from "./tournamentFixtures";
 import { knockoutRoundSizes } from "./knockoutSlots";
@@ -33,7 +35,7 @@ async function assertNothingPlayed(activityId: string) {
   if (played > 0) throw new ConflictError(messages.setupHasResults(played));
 }
 
-function checkShape(input: SetupInput, teamCount: number) {
+function checkShape(input: SetupInput, teamCount: number, words: EntrantWording) {
   if (input.format === "KNOCKOUT") {
     const refusal = knockoutRefusal(teamCount);
     if (refusal) throw new ValidationError(messages.needPowerOfTwo(teamCount));
@@ -41,7 +43,7 @@ function checkShape(input: SetupInput, teamCount: number) {
   }
   const placed = input.groups.flatMap((g) => g.teamIds);
   if (placed.length !== teamCount || new Set(placed).size !== teamCount) {
-    throw new ValidationError(messages.setupGroupsIncomplete);
+    throw new ValidationError(words.everyEntrantInOneGroup);
   }
   if (!isValidGroupShape(teamCount, input.groups.length, input.qualifierCount)) {
     throw new ValidationError(messages.setupShapeInvalid);
@@ -58,10 +60,11 @@ export async function setUpTournament(activityId: string, input: SetupInput): Pr
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
-  if (teams.length < 2) throw new ValidationError(messages.needTwoTeams);
+  const words = entrantWording(await entrantOfActivity(prisma, activityId));
+  if (teams.length < 2) throw new ValidationError(words.setupNeedsTwoEntrants);
 
   await assertNothingPlayed(activityId);
-  checkShape(input, teams.length);
+  checkShape(input, teams.length, words);
 
   const grouped = input.format === "GROUPS_THEN_KNOCKOUT";
   const entries = input.groups.map((g, index) => ({ index, teamIds: g.teamIds }));

@@ -59,9 +59,9 @@ const WAITING: Match = {
   mvpVote: null,
 };
 
-function show(match: Match = WAITING) {
+function show(match: Match = WAITING, entrant: "team" | "player" = "team") {
   cleanup();
-  render(<MatchDetailsForm match={match} teams={TEAMS} onChange={vi.fn()} />);
+  render(<MatchDetailsForm match={match} teams={TEAMS} entrant={entrant} onChange={vi.fn()} />);
 }
 
 beforeEach(() => {
@@ -125,7 +125,7 @@ const GROUP_FIXTURE: Match = {
 
 function showWith(match: Match, teams: Team[]) {
   cleanup();
-  render(<MatchDetailsForm match={match} teams={teams} onChange={vi.fn()} />);
+  render(<MatchDetailsForm match={match} teams={teams} entrant="team" onChange={vi.fn()} />);
 }
 
 describe("the knockout toggle on a group fixture", () => {

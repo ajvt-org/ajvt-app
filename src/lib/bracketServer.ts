@@ -5,8 +5,11 @@ import { drawFirstRound, type BracketSlot } from "./bracketDraw";
 import { computeStandings } from "./standings";
 import { suggestFirstKnockoutRound } from "./bracketSuggestion";
 import { incompleteTeams, displayTeamName, squadOf, OPEN_SQUAD } from "./squadSize";
-import { tournament as messages } from "./messages";
+import { entrantWording, tournament as messages } from "./messages";
+import type { EntrantWording } from "./messages";
+import { entrantOfActivity } from "./entrantServer";
 import { nameOf } from "./person";
+import { entrantKind } from "./entrant";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -125,6 +128,7 @@ export async function drawBracket(activityId: string, redo = false) {
   });
 
   const squad = activity ? squadOf(activity) : OPEN_SQUAD;
+  const words = entrantWording(entrantKind(squad));
   const short = incompleteTeams(
     teams.map((t) => ({
       id: t.id,
@@ -136,7 +140,7 @@ export async function drawBracket(activityId: string, redo = false) {
   );
   if (short.length > 0) {
     const names = short.map((t) => displayTeamName(t, squad)).join("، ");
-    throw new ValidationError(messages.teamsIncomplete(squad.min, squad.max, names));
+    throw new ValidationError(words.entrantsIncomplete(squad.min, squad.max, names));
   }
   if (teams.length < 2) {
     throw new ValidationError(messages.needTwoEntrants);
@@ -156,19 +160,22 @@ export async function drawBracket(activityId: string, redo = false) {
   const waiting = await clearRedoableBracket(activityId, redo);
 
   const slots = drawFirstRound(shuffleArray(teams));
-  if (!slots) throw new ValidationError(messages.drawGroupsImpossible);
+  if (!slots) throw new ValidationError(words.drawGroupsImpossible);
 
   const label = bracketRoundLabel(slots.length);
   const created = await fillFirstRound(activityId, waiting, slots.map(drawnSlot), label);
   return { created, label };
 }
 
-const SUGGESTION_ERROR: Record<string, string> = {
-  notGrouped: messages.bracketNeedsGroups,
-  qualifierCount: messages.bracketQualifierCount,
-  groupTooSmall: messages.groupNeedsTwoTeams,
-  unresolvedTie: messages.bracketTieUnresolved,
-};
+function suggestionError(problem: string, words: EntrantWording): string {
+  const reasons: Record<string, string> = {
+    notGrouped: messages.bracketNeedsGroups,
+    qualifierCount: messages.bracketQualifierCount,
+    groupTooSmall: words.groupNeedsTwoEntrants,
+    unresolvedTie: messages.bracketTieUnresolved,
+  };
+  return reasons[problem];
+}
 
 async function groupTables(activityId: string) {
   const [groups, teams, matches] = await Promise.all([
@@ -232,7 +239,10 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
   if (!groupStageComplete) throw new ConflictError(messages.groupStageIncomplete);
 
   const { pairs, problem } = suggestFirstKnockoutRound(groups);
-  if (!pairs.length) throw new ValidationError(SUGGESTION_ERROR[problem ?? "notGrouped"]);
+  if (!pairs.length) {
+    const words = entrantWording(await entrantOfActivity(prisma, activityId));
+    throw new ValidationError(suggestionError(problem ?? "notGrouped", words));
+  }
 
   const waiting = await clearRedoableBracket(activityId, redo);
 

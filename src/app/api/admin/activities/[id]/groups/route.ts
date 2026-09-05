@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { activities, tournament } from "@/lib/messages";
+import { entrantWording, activities, tournament } from "@/lib/messages";
+import { entrantOfActivity } from "@/lib/entrantServer";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/groups",
@@ -45,7 +46,10 @@ export const POST = withRoute(
     if (capacity !== undefined && capacity !== null && capacity !== "") {
       capacityValue = Number(capacity);
       if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-        return NextResponse.json({ error: tournament.targetTeamsRange }, { status: 400 });
+        return NextResponse.json(
+          { error: entrantWording(await entrantOfActivity(prisma, id)).targetEntrantsRange },
+          { status: 400 },
+        );
       }
     }
 
