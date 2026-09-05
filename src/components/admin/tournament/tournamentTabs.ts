@@ -1,6 +1,7 @@
 import type { WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import { activityWorkspace as texts, discipline as disciplineTexts } from "@/lib/texts";
 import { isSinglesSquad, squadOf } from "@/lib/squadSize";
+import { isFootball } from "@/lib/matchShape";
 
 export interface TournamentShape {
   isTournament: boolean;
@@ -49,9 +50,9 @@ export function tournamentPlayTabs(
     { key: "days", label: texts.tabs.days, icon: "calendar" },
     { key: "matches", label: texts.tabs.matches, icon: "swords" },
     { key: "standings", label: texts.tabs.standings, icon: "medal" },
-    { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
   ];
-  if (shape.matchShape === "FOOTBALL") {
+  if (isFootball(shape.matchShape)) {
+    tabs.push({ key: "scorers", label: texts.tabs.scorers, icon: "chart" });
     tabs.push({
       key: "discipline",
       label: disciplineTexts.tab,
