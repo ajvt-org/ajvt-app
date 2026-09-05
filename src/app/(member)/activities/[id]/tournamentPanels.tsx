@@ -23,6 +23,7 @@ import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/
 import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { firstRoundIsWaiting } from "@/lib/bracketState";
+import { entrantKind } from "@/lib/entrant";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -61,8 +62,9 @@ export async function tournamentPanels(
   const board = activity.profile === "BOARD";
   const suspended =
     !board && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
-  const singles = activity.teamSize === 1;
-  const participantsLabel = singles ? texts.players : texts.teams;
+  const entrant = entrantKind(activity.teamSize);
+  const words = texts.entrant[entrant];
+  const participantsLabel = words.plural;
   const hasStats = board
     ? teamAdvancedStats.length > 0
     : topScorers.length > 0 ||
@@ -76,7 +78,7 @@ export async function tournamentPanels(
     <div className="card p-3 space-y-2">
       {firstRoundIsWaiting(bracketMatches) && (
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="clock">{texts.bracketWaitingHint}</IconLabel>
+          <IconLabel name="clock">{words.bracketWaitingHint}</IconLabel>
         </p>
       )}
       <BracketTree
@@ -84,6 +86,7 @@ export async function tournamentPanels(
           ...m,
           status: m.status as "SCHEDULED" | "PLAYED",
         }))}
+        entrant={entrant}
       />
     </div>
   );
@@ -108,6 +111,7 @@ export async function tournamentPanels(
                   }
                   rows={group.standings}
                   showFollow={!!userId}
+                  entrant={entrant}
                 />
               ))}
               {bracketMatches.length > 0 && (
@@ -141,7 +145,7 @@ export async function tournamentPanels(
       key: "teams",
       label: participantsLabel,
       icon: "users",
-      content: <TeamsGrid teams={activity.teams} viewerId={userId} />,
+      content: <TeamsGrid teams={activity.teams} viewerId={userId} entrant={entrant} />,
     },
   ];
 

@@ -1,5 +1,6 @@
 import BracketSide, { type BracketSideTeam } from "@/components/tournament/BracketSide";
 import { CARD_HEIGHT } from "@/lib/bracketLayout";
+import type { EntrantKind } from "@/lib/entrant";
 
 export interface BracketMatch {
   id: string;
@@ -15,7 +16,15 @@ export interface BracketMatch {
   status: "SCHEDULED" | "PLAYED";
 }
 
-export default function BracketMatchCard({ match, top }: { match: BracketMatch; top: number }) {
+export default function BracketMatchCard({
+  match,
+  top,
+  entrant = "team",
+}: {
+  match: BracketMatch;
+  top: number;
+  entrant?: EntrantKind;
+}) {
   const homeWinner = match.status === "PLAYED" && isWinner(match, "home");
   const awayWinner = match.status === "PLAYED" && isWinner(match, "away");
 
@@ -33,6 +42,7 @@ export default function BracketMatchCard({ match, top }: { match: BracketMatch; 
         winner={homeWinner}
         height={CARD_HEIGHT / 2}
         background={homeWinner ? "#d1fae5" : "white"}
+        entrant={entrant}
       />
       <BracketSide
         team={match.awayTeam}
@@ -43,6 +53,7 @@ export default function BracketMatchCard({ match, top }: { match: BracketMatch; 
         height={CARD_HEIGHT / 2}
         background={awayWinner ? "#d1fae5" : "var(--mint-50)"}
         borderTop="1px solid var(--mint-100)"
+        entrant={entrant}
       />
     </div>
   );

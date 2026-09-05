@@ -143,4 +143,14 @@ describe("TeamsGrid", () => {
     );
     expect(rows).toHaveLength(1);
   });
+
+  it("lists singles entrants as players rather than one player squads", () => {
+    cleanup();
+    const { container } = render(
+      <TeamsGrid teams={[team("أحمد", 1), team("سالم", 1)]} entrant="player" />,
+    );
+
+    expect(container.querySelectorAll("details")).toHaveLength(0);
+    expect(container.querySelectorAll("li")).toHaveLength(2);
+  });
 });

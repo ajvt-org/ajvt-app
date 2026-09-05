@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import StandingsTable from "./StandingsTable";
-import { matchDisplay } from "@/lib/texts";
+import { matchDisplay, publicTournament } from "@/lib/texts";
 
 const rows = [
   {
@@ -131,5 +131,18 @@ describe("a tie no rule can settle", () => {
     );
 
     expect(screen.getByText(rows[0].name)).toBeDefined();
+  });
+
+  it("heads the entrant column with the team word by default", () => {
+    render(<StandingsTable title={null} rows={rows} showFollow={false} />);
+
+    expect(screen.getByText(publicTournament.entrant.team.column)).toBeDefined();
+  });
+
+  it("heads it with the player word on a singles tournament", () => {
+    render(<StandingsTable title={null} rows={rows} showFollow={false} entrant="player" />);
+
+    expect(screen.getByText(publicTournament.entrant.player.column)).toBeDefined();
+    expect(screen.queryByText(publicTournament.entrant.team.column)).toBeNull();
   });
 });

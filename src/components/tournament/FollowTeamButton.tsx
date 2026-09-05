@@ -3,8 +3,17 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
+import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
-export default function FollowTeamButton({ teamId }: { teamId: string }) {
+export default function FollowTeamButton({
+  teamId,
+  entrant = "team",
+}: {
+  teamId: string;
+  entrant?: EntrantKind;
+}) {
+  const words = texts.entrant[entrant];
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -31,7 +40,7 @@ export default function FollowTeamButton({ teamId }: { teamId: string }) {
       });
       if (res.ok) {
         setFollowing((v) => !v);
-        showToast(following ? "تم إلغاء المتابعة" : "تتابع الفريق الآن");
+        showToast(following ? words.unfollowed : words.followed);
       }
     } finally {
       setBusy(false);
@@ -53,7 +62,7 @@ export default function FollowTeamButton({ teamId }: { teamId: string }) {
       }}
     >
       <IconLabel name="star" size="1.1em" filled={following}>
-        {following ? "متابَع" : "تابع"}
+        {following ? words.following : words.follow}
       </IconLabel>
     </button>
   );
