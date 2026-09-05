@@ -252,7 +252,7 @@ export default function CompetitionView({
         />
         <div className="relative flex items-center gap-3">
           <BackButton onBack={onBack} />
-          <Logo size={38} className="shrink-0" />
+          <Logo mark="symbol" size={38} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               {association.name}

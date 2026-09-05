@@ -1,15 +1,25 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import sharp from "sharp";
-import { COPIED_ICONS, RASTER_ICONS, drawIcon, readSource } from "../../scripts/buildIcons.mjs";
+import { APP_MARKS, RASTER_ICONS, drawIcon, inkBounds } from "../../scripts/buildIcons.mjs";
+
+const CANVAS = 400;
+const EDGE = 2;
 
 async function pixels(input: Buffer): Promise<Buffer> {
   return sharp(input).raw().toBuffer();
 }
 
 describe("the app icons", () => {
-  it.each(COPIED_ICONS)("keeps %s the same drawing as the source", (path) => {
-    expect(readFileSync(path).equals(readSource())).toBe(true);
+  it.each(APP_MARKS)("leaves no clear space baked into %s", async (path) => {
+    const { top, left, bottom, right } = await inkBounds(path, CANVAS);
+
+    expect({
+      top: top <= EDGE,
+      left: left <= EDGE,
+      bottom: bottom >= CANVAS - 1 - EDGE,
+      right: right >= CANVAS - 1 - EDGE,
+    }).toEqual({ top: true, left: true, bottom: true, right: true });
   });
 
   it.each(RASTER_ICONS)("draws $path from the one source at $size", async (icon) => {

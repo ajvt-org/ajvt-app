@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { NextRequest } from "next/server";
 import { SignJWT } from "jose";
 import { proxy, config } from "@/proxy";
-import { LOGO_SRC } from "@/lib/logo";
+import { LOGO_PATHS } from "@/lib/logo";
 
 // Where every route sends every kind of caller, as a table. The proxy has no
 // database, so all it can tell apart is which cookie you carry: whether the
@@ -187,7 +187,7 @@ describe("the proxy matcher", () => {
     "/offline.html",
     "/favicon.ico",
     "/icon-192.png",
-    LOGO_SRC,
+    ...LOGO_PATHS,
     "/uploads/photo.webp",
   ])("leaves %s alone", (path) => {
     expect(pattern.test(path)).toBe(false);

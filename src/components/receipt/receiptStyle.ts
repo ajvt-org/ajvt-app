@@ -5,8 +5,8 @@ export const RECEIPT_RULE = "#b68235";
 export const RECEIPT_DOTS = "#c8c1b4";
 export const RECEIPT_PAPER = "#ffffff";
 
-export const RECEIPT_LOGO = "/receipt-logo.png";
-export const RECEIPT_SEAL = "/receipt-seal.png";
+export const RECEIPT_LOGO = "/receipt-logo.svg";
+export const RECEIPT_SEAL = "/receipt-seal.svg";
 
 export const RECEIPT_WIDTH = 372;
 export const SHEET_PADDING = 24;

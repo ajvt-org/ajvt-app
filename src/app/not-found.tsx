@@ -17,7 +17,7 @@ export default function NotFound() {
         className="px-5 py-4 flex items-center gap-3"
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
-        <Logo size={40} />
+        <Logo mark="symbol" size={40} />
         <div>
           <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
             {association.name}

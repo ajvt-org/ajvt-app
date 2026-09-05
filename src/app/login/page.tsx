@@ -53,7 +53,7 @@ function LoginForm() {
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="flex justify-center fade-up mb-4">
-          <Logo size={100} priority />
+          <Logo mark="symbol" size={100} priority />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 fade-up delay-1">

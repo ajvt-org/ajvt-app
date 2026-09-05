@@ -77,7 +77,7 @@ export default function RegisterPage() {
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <BackButton href="/" />
-        <Logo size={38} />
+        <Logo mark="symbol" size={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
             {association.name}

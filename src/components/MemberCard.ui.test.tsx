@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { HOME_VILLAGE } from "@/lib/villages";
 import MemberCard from "./MemberCard";
-import { LOGO_SRC } from "@/lib/logo";
+import { LOGO_MARKS } from "@/lib/logo";
 import { association } from "@/lib/texts";
 
 const toDataURL = vi.fn().mockResolvedValue("data:image/png;base64,QR");
@@ -33,7 +33,7 @@ describe("MemberCard", () => {
     const logo = screen.getByAltText(association.logoAlt);
 
     expect(logo.tagName).toBe("IMG");
-    expect(logo.getAttribute("src")).toBe(LOGO_SRC);
+    expect(logo.getAttribute("src")).toBe(LOGO_MARKS.symbol);
     expect(logo.getAttribute("srcset")).toBeNull();
   });
 

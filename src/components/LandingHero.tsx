@@ -10,18 +10,8 @@ export default function LandingHero() {
           "linear-gradient(180deg, var(--mint-700) 0%, var(--mint-500) 55%, var(--mint-50) 100%)",
       }}
     >
-      {}
       <div className="fade-up mb-6">
-        <div
-          className="w-40 h-40 rounded-full flex items-center justify-center mx-auto"
-          style={{
-            background: "rgba(255,255,255,0.2)",
-            border: "3px solid rgba(255,255,255,0.45)",
-            padding: "10px",
-          }}
-        >
-          <Logo size={112} priority />
-        </div>
+        <Logo mark="roundel" size={160} className="mx-auto" priority />
       </div>
 
       <div className="fade-up delay-1 mb-2">
