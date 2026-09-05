@@ -28,6 +28,7 @@ const KEPT_CLEAN = [
   "src/app/admin/activities/[id]/page.tsx",
   "src/app/admin/activities/ActivityDatesEditor.tsx",
   "src/app/admin/activities/NewActivityDialog.tsx",
+  "src/app/admin/activities/TournamentSetupFields.tsx",
   "src/app/admin/activities/page.tsx",
   "src/app/admin/activities/ActivitiesHeader.tsx",
   "src/app/admin/activities/ActivitiesFilters.tsx",

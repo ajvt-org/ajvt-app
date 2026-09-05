@@ -31,6 +31,8 @@ export default function ConvertTournamentCard({
   const currentPreset = TOURNAMENT_PRESETS.find(
     (p) => p.value === presetOf(activity.profile, asField(activity.maxTeamSize)),
   );
+  const formatLocked = activity._count.matches > 0;
+  const squadLocked = activity._count.playedMatches > 0;
 
   function openDialog() {
     setSetup({
@@ -132,6 +134,8 @@ export default function ConvertTournamentCard({
                 maxTeamSize={setup.maxTeamSize}
                 organisedByHomeVillage={setup.organisedByHomeVillage}
                 outsidePlayerLimit={setup.outsidePlayerLimit}
+                formatLocked={formatLocked}
+                squadLocked={squadLocked}
                 onMinTeamSize={(minTeamSize) => setSetup((p) => p && { ...p, minTeamSize })}
                 onMaxTeamSize={(maxTeamSize) => setSetup((p) => p && { ...p, maxTeamSize })}
                 onOrganisedByHomeVillage={(organisedByHomeVillage) =>

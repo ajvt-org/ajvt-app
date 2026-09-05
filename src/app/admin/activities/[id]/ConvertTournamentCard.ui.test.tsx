@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import ConvertTournamentCard from "./ConvertTournamentCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
+import { tournamentSetup } from "@/lib/texts";
 
 const patch = vi.fn();
 
@@ -10,7 +11,10 @@ vi.mock("@/lib/api", () => ({
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
-function activity(isTournament: boolean): ActivityDetail["activity"] {
+function activity(
+  isTournament: boolean,
+  counts: { matches: number; playedMatches: number } = { matches: 0, playedMatches: 0 },
+): ActivityDetail["activity"] {
   return {
     id: "a1",
     title: "أمسية",
@@ -35,14 +39,18 @@ function activity(isTournament: boolean): ActivityDetail["activity"] {
     whatsappLink: null,
     registrations: [],
     teams: [],
-    _count: { matches: 0, groups: 0 },
+    _count: { ...counts, groups: 0 },
   };
 }
 
-function show(isTournament = false) {
+function disabled(label: string): boolean {
+  return (screen.getByLabelText(label) as HTMLInputElement | HTMLSelectElement).disabled;
+}
+
+function show(isTournament = false, counts = { matches: 0, playedMatches: 0 }) {
   cleanup();
   const onChanged = vi.fn();
-  render(<ConvertTournamentCard activity={activity(isTournament)} onChanged={onChanged} />);
+  render(<ConvertTournamentCard activity={activity(isTournament, counts)} onChanged={onChanged} />);
   return onChanged;
 }
 
@@ -92,6 +100,40 @@ describe("ConvertTournamentCard", () => {
         outsidePlayerLimit: "",
       }),
     );
+  });
+
+  it("leaves the squad range open while the fixtures are drawn and nothing is played", () => {
+    show(true, { matches: 4, playedMatches: 0 });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect(disabled(tournamentSetup.minTeamSize)).toBe(false);
+    expect(disabled(tournamentSetup.maxTeamSize)).toBe(false);
+  });
+
+  it("closes the squad range once a match has been played", () => {
+    show(true, { matches: 4, playedMatches: 1 });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect(disabled(tournamentSetup.minTeamSize)).toBe(true);
+    expect(disabled(tournamentSetup.maxTeamSize)).toBe(true);
+  });
+
+  it("keeps the home village toggle open on a tournament that has begun", () => {
+    show(true, { matches: 4, playedMatches: 1 });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect(disabled(tournamentSetup.organisedByHomeVillage)).toBe(false);
+  });
+
+  it("closes the format as soon as a fixture exists", () => {
+    show(true, { matches: 4, playedMatches: 0 });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect(disabled(tournamentSetup.formatHeading)).toBe(true);
   });
 
   it("converts back with one click, since nothing needs answering", async () => {

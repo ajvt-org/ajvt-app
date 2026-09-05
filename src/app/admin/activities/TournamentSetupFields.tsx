@@ -50,11 +50,13 @@ function NumberField({
   label,
   value,
   onChange,
+  disabled,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex-1 min-w-0">
@@ -73,6 +75,7 @@ function NumberField({
         inputMode="numeric"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         className="input"
       />
     </div>
@@ -86,6 +89,8 @@ export default function TournamentSetupFields({
   maxTeamSize,
   organisedByHomeVillage,
   outsidePlayerLimit,
+  formatLocked = false,
+  squadLocked = false,
   onFormat,
   onPreset,
   onMinTeamSize,
@@ -99,6 +104,8 @@ export default function TournamentSetupFields({
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
   outsidePlayerLimit: string;
+  formatLocked?: boolean;
+  squadLocked?: boolean;
   onFormat: (format: string) => void;
   onPreset: (preset: TournamentPreset) => void;
   onMinTeamSize: (value: string) => void;
@@ -107,6 +114,7 @@ export default function TournamentSetupFields({
   onOutsidePlayerLimit: (value: string) => void;
 }) {
   const selected = presetOf(profile, maxTeamSize);
+  const presetLocked = formatLocked || squadLocked;
 
   return (
     <div className="space-y-3">
@@ -118,13 +126,14 @@ export default function TournamentSetupFields({
           {TOURNAMENT_PRESETS.map((preset) => (
             <label
               key={preset.value}
-              className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer"
+              className={`flex items-center gap-2.5 p-2.5 rounded-xl ${presetLocked ? "" : "cursor-pointer"}`}
               style={{
                 background: selected === preset.value ? "var(--mint-100)" : "white",
                 border:
                   selected === preset.value
                     ? "1.5px solid var(--mint-500)"
                     : "1.5px solid var(--mint-100)",
+                opacity: presetLocked && selected !== preset.value ? 0.55 : 1,
               }}
             >
               <input
@@ -132,6 +141,7 @@ export default function TournamentSetupFields({
                 name="tournament-preset"
                 checked={selected === preset.value}
                 onChange={() => onPreset(preset)}
+                disabled={presetLocked}
                 className="w-4 h-4"
               />
               <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
@@ -154,6 +164,7 @@ export default function TournamentSetupFields({
           id="tournament-format"
           value={format}
           onChange={(e) => onFormat(e.target.value)}
+          disabled={formatLocked}
           className="input"
         >
           <option value="KNOCKOUT">{texts.formats.KNOCKOUT}</option>
@@ -171,12 +182,14 @@ export default function TournamentSetupFields({
             label={texts.minTeamSize}
             value={minTeamSize}
             onChange={onMinTeamSize}
+            disabled={squadLocked}
           />
           <NumberField
             id="tournament-max-team-size"
             label={texts.maxTeamSize}
             value={maxTeamSize}
             onChange={onMaxTeamSize}
+            disabled={squadLocked}
           />
         </div>
       </div>

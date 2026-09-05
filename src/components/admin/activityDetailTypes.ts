@@ -39,7 +39,7 @@ export type ActivityDetail = {
       };
     }[];
     teams: { id: string; name: string; _count: { members: number } }[];
-    _count: { matches: number; groups: number };
+    _count: { matches: number; playedMatches: number; groups: number };
   };
   history: { id: string; action: string; adminUsername: string; createdAt: string }[];
 };
