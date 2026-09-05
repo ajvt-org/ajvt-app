@@ -54,7 +54,7 @@ export default function TournamentPanel({
       })),
     [data.matches, identities],
   );
-  const football = (info?.profile ?? "FOOTBALL") === "FOOTBALL";
+  const football = (info?.matchShape ?? "FOOTBALL") === "FOOTBALL";
   const suspendedIds = data.suspensions.filter((s) => s.running).map((s) => s.member.id);
 
   const standingsByGroup = useMemo(
@@ -121,7 +121,7 @@ export default function TournamentPanel({
           teams={teams}
           groups={groups}
           format={info?.format ?? null}
-          profile={info?.profile ?? "FOOTBALL"}
+          matchShape={info?.matchShape ?? "FOOTBALL"}
           matches={matches}
           suspendedIds={suspendedIds}
           mvpVoteMinutes={data.mvpVoteMinutes}
@@ -151,7 +151,7 @@ export default function TournamentPanel({
       )}
       {tab === "scorers" && (
         <ScorersTab
-          profile={info?.profile ?? "FOOTBALL"}
+          matchShape={info?.matchShape ?? "FOOTBALL"}
           topScorers={topScorers}
           discipline={discipline}
           cleanSheets={cleanSheets}

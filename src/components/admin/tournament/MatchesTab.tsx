@@ -18,7 +18,7 @@ export default function MatchesTab({
   teams,
   groups,
   format,
-  profile,
+  matchShape,
   matches,
   suspendedIds,
   mvpVoteMinutes,
@@ -28,7 +28,7 @@ export default function MatchesTab({
   teams: Team[];
   groups: Group[];
   format: TournamentFormat;
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   matches: Match[];
   suspendedIds: string[];
   mvpVoteMinutes: number;
@@ -97,7 +97,7 @@ export default function MatchesTab({
 
   return (
     <div className="space-y-4">
-      {profile === "FOOTBALL" && (
+      {matchShape === "FOOTBALL" && (
         <MvpVoteMinutesCard activityId={activityId} minutes={mvpVoteMinutes} onChange={onChange} />
       )}
       {error && (
@@ -148,7 +148,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
-                profile={profile}
+                matchShape={matchShape}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
@@ -185,7 +185,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
-                profile={profile}
+                matchShape={matchShape}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}

@@ -4,7 +4,7 @@ import { isSinglesSquad, squadOf } from "@/lib/squadSize";
 
 export interface TournamentShape {
   isTournament: boolean;
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   minTeamSize: number | null;
   maxTeamSize: number | null;
 }
@@ -51,7 +51,7 @@ export function tournamentPlayTabs(
     { key: "standings", label: texts.tabs.standings, icon: "medal" },
     { key: "scorers", label: texts.tabs.scorers, icon: "chart" },
   ];
-  if (shape.profile === "FOOTBALL") {
+  if (shape.matchShape === "FOOTBALL") {
     tabs.push({
       key: "discipline",
       label: disciplineTexts.tab,

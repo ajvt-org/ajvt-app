@@ -59,13 +59,13 @@ export async function tournamentPanels(
     .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
-  const board = activity.profile === "BOARD";
+  const series = activity.matchShape === "SERIES";
   const suspended =
-    !board && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
+    !series && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
   const entrant = entrantKind(squadOf(activity));
   const words = texts.entrant[entrant];
   const participantsLabel = words.plural;
-  const hasStats = board
+  const hasStats = series
     ? teamAdvancedStats.length > 0
     : topScorers.length > 0 ||
       discipline.length > 0 ||
@@ -127,7 +127,7 @@ export async function tournamentPanels(
           played={played}
           scheduled={scheduled}
           allMatches={matches}
-          football={!board}
+          football={!series}
           showScorersAndCards={activity.showScorersAndCards}
           tournamentTitle={activity.title}
           loggedIn={!!userId}
@@ -146,7 +146,7 @@ export async function tournamentPanels(
 
   if (hasStats) {
     const statPanels: TournamentPanel[] = [];
-    if (!board && topScorers.length > 0) {
+    if (!series && topScorers.length > 0) {
       statPanels.push({
         key: "scorers",
         label: texts.scorers,
@@ -168,7 +168,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!board && discipline.length > 0) {
+    if (!series && discipline.length > 0) {
       statPanels.push({
         key: "discipline",
         label: texts.discipline,
@@ -192,7 +192,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!board && cleanSheets.length > 0) {
+    if (!series && cleanSheets.length > 0) {
       statPanels.push({
         key: "defence",
         label: texts.defence,
@@ -213,7 +213,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!board && motmLeaders.length > 0) {
+    if (!series && motmLeaders.length > 0) {
       statPanels.push({
         key: "motm",
         label: texts.motm,
@@ -250,7 +250,7 @@ export async function tournamentPanels(
       icon: "chart",
       content: (
         <>
-          {!board && (
+          {!series && (
             <TournamentSummary
               matchesPlayed={stats.matchesPlayed}
               totalGoals={stats.totalGoals}

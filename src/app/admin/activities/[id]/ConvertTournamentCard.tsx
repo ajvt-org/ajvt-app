@@ -20,7 +20,7 @@ export default function ConvertTournamentCard({
   const [busy, setBusy] = useState(false);
   const [setup, setSetup] = useState<{
     format: string;
-    profile: string;
+    matchShape: string;
     minTeamSize: string;
     maxTeamSize: string;
     organisedByHomeVillage: boolean;
@@ -29,7 +29,7 @@ export default function ConvertTournamentCard({
 
   const asField = (value: number | null) => (value === null ? "" : String(value));
   const currentPreset = TOURNAMENT_PRESETS.find(
-    (p) => p.value === presetOf(activity.profile, asField(activity.maxTeamSize)),
+    (p) => p.value === presetOf(activity.matchShape, asField(activity.maxTeamSize)),
   );
   const formatLocked = activity._count.matches > 0;
   const squadLocked = activity._count.playedMatches > 0;
@@ -37,7 +37,7 @@ export default function ConvertTournamentCard({
   function openDialog() {
     setSetup({
       format: activity.format ?? "KNOCKOUT",
-      profile: activity.profile,
+      matchShape: activity.matchShape,
       minTeamSize: asField(activity.minTeamSize),
       maxTeamSize: asField(activity.maxTeamSize),
       organisedByHomeVillage: activity.organisedByHomeVillage,
@@ -52,7 +52,7 @@ export default function ConvertTournamentCard({
       await api.patch(`/api/admin/activities/${activity.id}`, {
         isTournament: true,
         format: setup.format,
-        profile: setup.profile,
+        matchShape: setup.matchShape,
         minTeamSize: setup.minTeamSize,
         maxTeamSize: setup.maxTeamSize,
         organisedByHomeVillage: setup.organisedByHomeVillage,
@@ -129,7 +129,7 @@ export default function ConvertTournamentCard({
             <div className="p-4 space-y-4">
               <TournamentSetupFields
                 format={setup.format}
-                profile={setup.profile}
+                matchShape={setup.matchShape}
                 minTeamSize={setup.minTeamSize}
                 maxTeamSize={setup.maxTeamSize}
                 organisedByHomeVillage={setup.organisedByHomeVillage}
@@ -150,7 +150,7 @@ export default function ConvertTournamentCard({
                     (p) =>
                       p && {
                         ...p,
-                        profile: preset.profile,
+                        matchShape: preset.matchShape,
                         minTeamSize: preset.minTeamSize,
                         maxTeamSize: preset.maxTeamSize,
                       },

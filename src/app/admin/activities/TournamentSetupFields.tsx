@@ -8,7 +8,7 @@ export interface TournamentPreset {
   value: string;
   label: string;
   icon: IconName;
-  profile: string;
+  matchShape: string;
   minTeamSize: string;
   maxTeamSize: string;
 }
@@ -18,7 +18,7 @@ export const TOURNAMENT_PRESETS: TournamentPreset[] = [
     value: "football",
     label: texts.presets.football,
     icon: "ball",
-    profile: "FOOTBALL",
+    matchShape: "FOOTBALL",
     minTeamSize: "",
     maxTeamSize: "",
   },
@@ -26,7 +26,7 @@ export const TOURNAMENT_PRESETS: TournamentPreset[] = [
     value: "board",
     label: texts.presets.board,
     icon: "user",
-    profile: "BOARD",
+    matchShape: "SERIES",
     minTeamSize: "1",
     maxTeamSize: "1",
   },
@@ -34,14 +34,14 @@ export const TOURNAMENT_PRESETS: TournamentPreset[] = [
     value: "cards",
     label: texts.presets.cards,
     icon: "users",
-    profile: "BOARD",
+    matchShape: "SERIES",
     minTeamSize: "2",
     maxTeamSize: "2",
   },
 ];
 
-export function presetOf(profile: string, maxTeamSize: string): string {
-  if (profile === "BOARD") return maxTeamSize === "2" ? "cards" : "board";
+export function presetOf(matchShape: string, maxTeamSize: string): string {
+  if (matchShape === "SERIES") return maxTeamSize === "2" ? "cards" : "board";
   return "football";
 }
 
@@ -84,7 +84,7 @@ function NumberField({
 
 export default function TournamentSetupFields({
   format,
-  profile,
+  matchShape,
   minTeamSize,
   maxTeamSize,
   organisedByHomeVillage,
@@ -99,7 +99,7 @@ export default function TournamentSetupFields({
   onOutsidePlayerLimit,
 }: {
   format: string;
-  profile: string;
+  matchShape: string;
   minTeamSize: string;
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
@@ -113,7 +113,7 @@ export default function TournamentSetupFields({
   onOrganisedByHomeVillage: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
 }) {
-  const selected = presetOf(profile, maxTeamSize);
+  const selected = presetOf(matchShape, maxTeamSize);
   const presetLocked = formatLocked || squadLocked;
 
   return (

@@ -15,7 +15,7 @@ function show(over: Record<string, unknown> = {}) {
   render(
     <TournamentSetupFields
       format="KNOCKOUT"
-      profile="FOOTBALL"
+      matchShape="FOOTBALL"
       minTeamSize="16"
       maxTeamSize="22"
       organisedByHomeVillage={false}
@@ -47,7 +47,7 @@ describe("the squad size on a tournament", () => {
     const { container } = render(
       <TournamentSetupFields
         format="KNOCKOUT"
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         minTeamSize="16"
         maxTeamSize="22"
         organisedByHomeVillage

@@ -23,21 +23,21 @@ function Empty({ children }: { children: string }) {
 }
 
 export default function ScorersTab({
-  profile,
+  matchShape,
   topScorers,
   discipline,
   cleanSheets,
   motmLeaders,
   teamAdvancedStats,
 }: {
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   topScorers: TopScorerRow[];
   discipline: DisciplineRow[];
   cleanSheets: CleanSheetRow[];
   motmLeaders: MotmRow[];
   teamAdvancedStats: TeamAdvancedRow[];
 }) {
-  const football = profile === "FOOTBALL";
+  const football = matchShape === "FOOTBALL";
   const teamsWithStats = teamAdvancedStats.filter((t) => t.biggestWin || t.form.length > 0);
 
   const teamsPanel =

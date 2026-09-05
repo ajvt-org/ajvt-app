@@ -44,7 +44,7 @@ test("the workspace tabs hold to one line each on a phone", async ({ browser }) 
         description: "بطولة القرية",
         isTournament: true,
         format: "KNOCKOUT",
-        profile: "FOOTBALL",
+        matchShape: "FOOTBALL",
         minTeamSize: 5,
         maxTeamSize: 5,
       }),

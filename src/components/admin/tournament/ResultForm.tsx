@@ -23,18 +23,18 @@ import { discipline as disciplineTexts, lists, matchAdmin as texts } from "@/lib
 export default function ResultForm({
   match,
   teams,
-  profile,
+  matchShape,
   suspendedIds,
   onSaved,
 }: {
   match: DecidedMatch;
   teams: Team[];
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   suspendedIds: string[];
   onSaved: () => void;
 }) {
   const uid = useId();
-  const football = profile === "FOOTBALL";
+  const football = matchShape === "FOOTBALL";
   const banned = new Set(suspendedIds);
   const sides = [match.homeTeam, match.awayTeam];
 

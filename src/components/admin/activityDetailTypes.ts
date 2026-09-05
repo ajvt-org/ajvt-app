@@ -14,7 +14,7 @@ export type ActivityDetail = {
     isTournament: boolean;
     showScorersAndCards: boolean;
     format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
-    profile: "FOOTBALL" | "BOARD";
+    matchShape: "FOOTBALL" | "SERIES";
     minTeamSize: number | null;
     maxTeamSize: number | null;
     organisedByHomeVillage: boolean;

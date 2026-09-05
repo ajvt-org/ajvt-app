@@ -39,7 +39,7 @@ describe("NewActivityForm", () => {
       isVolunteer: false,
       minTeamSize: "1",
       maxTeamSize: "1",
-      profile: "BOARD",
+      matchShape: "SERIES",
       format: "GROUPS_THEN_KNOCKOUT",
     });
   });

@@ -24,7 +24,7 @@ export default function MatchCard({
   match,
   teams,
   allMatches,
-  profile,
+  matchShape,
   suspendedIds,
   mvpVoteMinutes,
   onDelete,
@@ -42,7 +42,7 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   suspendedIds: string[];
   mvpVoteMinutes: number;
   onDelete: () => void;
@@ -60,7 +60,7 @@ export default function MatchCard({
   const decided = bothTeamsKnown(match);
   const played = match.status === "PLAYED";
   const resultAllowed = resultEntryAllowed(played, match.matchDate, new Date());
-  const football = profile === "FOOTBALL";
+  const football = matchShape === "FOOTBALL";
   const priorMeetings = decided
     ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
     : [];
@@ -147,7 +147,7 @@ export default function MatchCard({
           <ResultForm
             match={match}
             teams={teams}
-            profile={profile}
+            matchShape={matchShape}
             suspendedIds={suspendedIds}
             onSaved={onSaved}
           />

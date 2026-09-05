@@ -31,7 +31,7 @@ export const POST = withRoute(
         isTournament: source.isTournament,
         showScorersAndCards: source.showScorersAndCards,
         format: source.format,
-        profile: source.profile,
+        matchShape: source.matchShape,
         minTeamSize: source.minTeamSize,
         maxTeamSize: source.maxTeamSize,
         organisedByHomeVillage: source.organisedByHomeVillage,
