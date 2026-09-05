@@ -114,6 +114,38 @@ describe("the account a member says they paid into", () => {
     expect(screen.queryByText(stepPayment.accountLabel)).toBeNull();
   });
 
+  it("reports the only number without asking the member to pick it", async () => {
+    globalThis.fetch = offering([
+      { name: NEW_METHOD, memberFacing: true, accounts: [TWO_ACCOUNTS[0]] },
+    ]);
+    const setForm = vi.fn();
+    renderStep(formOf({ paymentMethod: NEW_METHOD }), setForm);
+
+    await waitFor(() => expect(setForm).toHaveBeenCalled());
+    const update = setForm.mock.calls[0][0] as (p: PaymentValues) => PaymentValues;
+    expect(update(formOf({ paymentMethod: NEW_METHOD })).accountId).toBe("a1");
+  });
+
+  it("leaves a number the member already holds alone", async () => {
+    globalThis.fetch = offering([{ name: NEW_METHOD, memberFacing: true, accounts: TWO_ACCOUNTS }]);
+    const setForm = vi.fn();
+    renderStep(formOf({ paymentMethod: NEW_METHOD, accountId: "a2" }), setForm);
+
+    await waitFor(() => expect(screen.getByText(stepPayment.receivingNumber)).toBeDefined());
+    expect(setForm).not.toHaveBeenCalled();
+  });
+
+  it("keeps a number that is no longer offered rather than dropping it", async () => {
+    globalThis.fetch = offering([
+      { name: NEW_METHOD, memberFacing: true, accounts: [TWO_ACCOUNTS[0]] },
+    ]);
+    const setForm = vi.fn();
+    renderStep(formOf({ paymentMethod: NEW_METHOD, accountId: "gone" }), setForm);
+
+    await waitFor(() => expect(screen.getByText(NEW_METHOD)).toBeDefined());
+    expect(setForm).not.toHaveBeenCalled();
+  });
+
   it("asks which number when the method receives into several", async () => {
     globalThis.fetch = offering([{ name: NEW_METHOD, memberFacing: true, accounts: TWO_ACCOUNTS }]);
     renderStep(formOf({ paymentMethod: NEW_METHOD }));
