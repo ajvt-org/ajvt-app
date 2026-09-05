@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
-import { donationEdit, paymentAccountPicker } from "@/lib/texts";
+import { bankReference, donationEdit, paymentAccountPicker } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
@@ -274,5 +274,59 @@ describe("the number a payment landed in", () => {
     fireEvent.click(screen.getByRole("button", { name: donationEdit.save }));
 
     await waitFor(() => expect(bodyOf(fetchMock).accountId).toBe("a1"));
+  });
+});
+
+describe("the bank's own transaction number", () => {
+  it("is offered on the record an admin is reviewing", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    expect(await screen.findByLabelText(bankReference.label)).toBeDefined();
+  });
+
+  it("opens on the one already recorded", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي", bankReference: "TR10000000001" });
+
+    const field = (await screen.findByLabelText(bankReference.label)) as HTMLInputElement;
+    expect(field.value).toBe("TR10000000001");
+  });
+
+  it("says nothing when the number is the only one recorded", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي", bankReference: "TR10000000001" });
+
+    await screen.findByLabelText(bankReference.label);
+    expect(screen.queryByText(bankReference.repeated)).toBeNull();
+  });
+
+  it("says so when the same number is already on another record", async () => {
+    mockPatch();
+    show({ paymentMethod: "بنكيلي", bankReference: "TR10000000001", repeatedReference: true });
+
+    expect(await screen.findByText(bankReference.repeated)).toBeDefined();
+  });
+
+  it("still saves while it is saying so, since a repeat may be a correction", async () => {
+    const fetchMock = mockPatch();
+    show({ paymentMethod: "بنكيلي", bankReference: "TR10000000001", repeatedReference: true });
+
+    await screen.findByText(bankReference.repeated);
+    fireEvent.click(screen.getByRole("button", { name: donationEdit.save }));
+
+    await waitFor(() => expect(bodyOf(fetchMock).bankReference).toBe("TR10000000001"));
+  });
+
+  it("sends the number an admin typed", async () => {
+    const fetchMock = mockPatch();
+    show({ paymentMethod: "بنكيلي" });
+
+    fireEvent.change(await screen.findByLabelText(bankReference.label), {
+      target: { value: "REF100000001" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: donationEdit.save }));
+
+    await waitFor(() => expect(bodyOf(fetchMock).bankReference).toBe("REF100000001"));
   });
 });

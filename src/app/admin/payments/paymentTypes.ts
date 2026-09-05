@@ -14,6 +14,8 @@ export interface Proof {
   paymentMethod?: string | null;
   accountId?: string | null;
   account?: { id: string; code: string; label: string | null } | null;
+  bankReference?: string | null;
+  repeatedReference?: boolean;
   memberId?: string | null;
   userId?: string | null;
   anonymous?: boolean;
@@ -41,6 +43,7 @@ export interface DonationResponse {
     source: "PUBLIC" | "SELF";
     paymentMethod: string | null;
     accountId: string | null;
+    bankReference: string | null;
     proof?: string | null;
     memberId: string | null;
     userId: string | null;

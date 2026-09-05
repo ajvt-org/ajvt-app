@@ -5,6 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
 import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
 import { accountsOfMethod } from "@/lib/paymentMethodChoices";
+import { bankReference as bankReferenceTexts } from "@/lib/texts";
 import { donationFormError } from "@/lib/donationFields";
 import { donationEdit } from "@/lib/texts";
 import { money } from "@/lib/messages";
@@ -26,6 +27,7 @@ function initial(proof: Proof) {
     amount: proof.amount != null ? String(proof.amount) : "",
     paymentMethod: proof.paymentMethod || "",
     accountId: proof.accountId || "",
+    bankReference: proof.bankReference || "",
     destinationId: destinationValue(proof),
     proof: proof.proof || null,
     anonymous: proof.anonymous ?? false,
@@ -79,6 +81,7 @@ export default function DonationEditForm({
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
         accountId: form.accountId || null,
+        bankReference: form.bankReference.trim() || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof,
         anonymous: form.anonymous,
@@ -198,6 +201,23 @@ export default function DonationEditForm({
         onPick={(accountId) => set({ accountId })}
         style={FIELD}
       />
+
+      <input
+        aria-label={bankReferenceTexts.label}
+        placeholder={bankReferenceTexts.label}
+        value={form.bankReference}
+        onChange={(e) => set({ bankReference: e.target.value })}
+        maxLength={40}
+        dir="ltr"
+        className="input text-xs"
+        style={FIELD}
+      />
+
+      {proof.repeatedReference && (
+        <p className="text-xs font-semibold" style={{ color: "var(--copper-500)" }}>
+          {bankReferenceTexts.repeated}
+        </p>
+      )}
 
       <DestinationSelect
         destinations={destinations}
