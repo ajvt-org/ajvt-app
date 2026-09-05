@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { association } from "@/lib/texts";
 
 export default function LandingHero() {
   return (
@@ -10,23 +11,10 @@ export default function LandingHero() {
           "linear-gradient(180deg, var(--mint-700) 0%, var(--mint-500) 55%, var(--mint-50) 100%)",
       }}
     >
-      <div className="fade-up mb-6">
-        <Logo mark="roundel" size={160} className="mx-auto" priority />
-      </div>
+      <h1 className="sr-only">{association.name}</h1>
 
-      <div className="fade-up delay-1 mb-2">
-        <h1
-          className="text-2xl font-black leading-snug"
-          style={{ color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.2)" }}
-        >
-          رابطة شباب قرية
-        </h1>
-        <h1
-          className="text-3xl font-black"
-          style={{ color: "#fff", textShadow: "0 1px 8px rgba(0,0,0,0.2)" }}
-        >
-          التاكلالت
-        </h1>
+      <div className="fade-up mb-4">
+        <Logo mark="roundel" size={200} className="mx-auto" priority />
       </div>
 
       <p className="fade-up delay-2 text-sm mb-10" style={{ color: "rgba(255,255,255,0.75)" }}>
