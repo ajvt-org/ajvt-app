@@ -8,7 +8,10 @@ import ActivityRowBody from "@/components/ActivityRowBody";
 import { activityAccent } from "@/lib/activityAccent";
 import ActivityStandingChip from "./ActivityStandingChip";
 import { memberActivities as texts } from "@/lib/texts";
+import { withFrom } from "@/lib/backLink";
 import type { Activity, EligibleMember } from "./activityTypes";
+
+const HOME = "/home";
 
 interface ActivitiesSectionProps {
   eligibleMember: EligibleMember | null;
@@ -46,7 +49,7 @@ function QuizCard({ quizAccess }: { quizAccess: boolean }) {
         </div>
         {quizAccess ? (
           <a
-            href="/quiz"
+            href={withFrom("/quiz", HOME)}
             className="text-xs px-3 py-2 rounded-lg font-bold shrink-0"
             style={{ background: "var(--mint-600)", color: "white" }}
           >
@@ -123,7 +126,7 @@ function ActivityCard({ activity, member }: { activity: Activity; member: Eligib
 
   return (
     <Link
-      href={`/activities/${activity.id}`}
+      href={withFrom(`/activities/${activity.id}`, HOME)}
       className={`card activity-row ${activityAccent(activity)} p-3.5 flex items-center gap-3`}
     >
       <ActivityRowBody

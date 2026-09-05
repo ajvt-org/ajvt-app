@@ -5,6 +5,7 @@ import Icon, { type IconName } from "@/components/Icon";
 import { formatMatchDateTime } from "@/lib/clubTime";
 import { UNDATED_LABEL } from "@/lib/matchDays";
 import type { ActivityDetail, ActivityRow } from "@/lib/memberActivities";
+import { withFrom } from "@/lib/backLink";
 
 function opponent(detail: Extract<ActivityDetail, { kind: "NEXT_MATCH" }>): string {
   const { fixture } = detail;
@@ -52,12 +53,15 @@ function when(row: ActivityRow): string | null {
     : UNDATED_LABEL;
 }
 
-export default function ActivityRowCard({ row }: { row: ActivityRow }) {
+export default function ActivityRowCard({ row, from }: { row: ActivityRow; from: string }) {
   const detail = line(row.detail);
   const stamp = when(row);
 
   return (
-    <Link href={`/activities/${row.activityId}`} className="card p-3.5 space-y-1.5 block">
+    <Link
+      href={withFrom(`/activities/${row.activityId}`, from)}
+      className="card p-3.5 space-y-1.5 block"
+    >
       <div className="flex items-center justify-between gap-2">
         <p className="font-bold truncate" style={{ color: "var(--text-main)" }}>
           {row.title}

@@ -57,6 +57,7 @@ export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
 export { mvpVote } from "./mvpVote";
+export { navigation } from "./navigation";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";
 export { waitingRequests, samePerson } from "./waitingRequests";
 export { memberPage } from "./memberPage";

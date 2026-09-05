@@ -68,6 +68,7 @@ const FUTURE = new Date(Date.now() + 5 * 3_600_000).toISOString();
 const setup = (over: Partial<StandingsState> = {}) =>
   render(
     <CompetitionView
+      membershipHref="/membership"
       standings={{ ...standings, ...over }}
       onBack={vi.fn()}
       onReloadStandings={vi.fn()}
@@ -190,6 +191,7 @@ describe("CompetitionView", () => {
     });
     render(
       <CompetitionView
+        membershipHref="/membership"
         standings={standings}
         onBack={onBack}
         onReloadStandings={onReloadStandings}
@@ -307,7 +309,14 @@ describe("CompetitionView", () => {
 
   it("goes back to the list of quizzes rather than out of the section", async () => {
     const onBack = vi.fn();
-    render(<CompetitionView standings={standings} onBack={onBack} onReloadStandings={vi.fn()} />);
+    render(
+      <CompetitionView
+        membershipHref="/membership"
+        standings={standings}
+        onBack={onBack}
+        onReloadStandings={vi.fn()}
+      />,
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
 

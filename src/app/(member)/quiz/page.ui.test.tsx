@@ -92,4 +92,28 @@ describe("QuizPage", () => {
 
     expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
   });
+
+  it("sends a visitor back to the screen that opened the quiz", async () => {
+    search = "from=%2Factivities";
+    render(<QuizPage />);
+    await screen.findByText("مسابقة الصيف");
+
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/activities");
+  });
+
+  it("sends a visitor who arrived cold to the landing page rather than a list they never opened", async () => {
+    render(<QuizPage />);
+    await screen.findByText("مسابقة الصيف");
+
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/");
+  });
+
+  it("carries the screen that opened the quiz into the competition", async () => {
+    search = "from=%2Fhome";
+    render(<QuizPage />);
+
+    await userEvent.click(await screen.findByText("مسابقة الصيف"));
+
+    expect(push).toHaveBeenCalledWith("/quiz?competition=c1&from=%2Fhome");
+  });
 });

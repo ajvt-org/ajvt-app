@@ -25,7 +25,7 @@ function team(members: TeamMemberEntry[], captainUserId: string | null = null): 
     id: "team-1",
     name: "فريق النجم",
     autoNamed: false,
-    fromTaguilalett: true,
+    fromHomeVillage: true,
     logo: null,
     captainUserId,
     groupId: null,
@@ -43,7 +43,7 @@ const handlers = {
   onAddMember: vi.fn(),
   onApproveMember: vi.fn(),
   onRemoveMember: vi.fn(),
-  onSetFromTaguilalett: vi.fn(),
+  onSetFromHomeVillage: vi.fn(),
 };
 
 function show(
@@ -57,7 +57,7 @@ function show(
     <TeamCard
       team={team(members, captainUserId)}
       shownName="فريق النجم"
-      settings={{ squad, organisedByTaguilalett: false, outsidePlayerLimit: null }}
+      settings={{ squad, organisedByHomeVillage: false, outsidePlayerLimit: null }}
       breaches={[]}
       members={members}
       open={open}
@@ -140,7 +140,7 @@ describe("TeamCard", () => {
         shownName="فريق النجم"
         settings={{
           squad: { min: 1, max: 1 },
-          organisedByTaguilalett: false,
+          organisedByHomeVillage: false,
           outsidePlayerLimit: null,
         }}
         breaches={[]}
@@ -165,7 +165,7 @@ describe("TeamCard", () => {
         shownName="فريق النجم"
         settings={{
           squad: { min: 1, max: 1 },
-          organisedByTaguilalett: false,
+          organisedByHomeVillage: false,
           outsidePlayerLimit: null,
         }}
         breaches={[]}
@@ -281,7 +281,7 @@ describe("TeamCard", () => {
         shownName="فريق الحسن احمدو يحي البناني للشباب"
         settings={{
           squad: { min: 1, max: 1 },
-          organisedByTaguilalett: false,
+          organisedByHomeVillage: false,
           outsidePlayerLimit: null,
         }}
         breaches={[]}
@@ -309,7 +309,7 @@ describe("a squad the admin should look at", () => {
         shownName="فريق النجم"
         settings={{
           squad: { min: 16, max: 22 },
-          organisedByTaguilalett: true,
+          organisedByHomeVillage: true,
           outsidePlayerLimit: 4,
         }}
         breaches={breaches}

@@ -56,7 +56,7 @@ export interface NewActivityDraft {
   profile: string;
   minTeamSize: string;
   maxTeamSize: string;
-  organisedByTaguilalett: boolean;
+  organisedByHomeVillage: boolean;
   outsidePlayerLimit: string;
   isVolunteer: boolean;
   whatsappLink: string;
@@ -75,7 +75,7 @@ export function emptyNewActivity(): NewActivityDraft {
     profile: "FOOTBALL",
     minTeamSize: "",
     maxTeamSize: "",
-    organisedByTaguilalett: false,
+    organisedByHomeVillage: false,
     outsidePlayerLimit: "",
     isVolunteer: false,
     whatsappLink: "",

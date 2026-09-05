@@ -31,7 +31,7 @@ export interface Team {
   id: string;
   name: string;
   autoNamed: boolean;
-  fromTaguilalett: boolean;
+  fromHomeVillage: boolean;
   logo: string | null;
   captainUserId: string | null;
   groupId: string | null;

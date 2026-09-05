@@ -101,12 +101,14 @@ export default function CompetitionView({
   standings,
   canPlay = true,
   visitor = false,
+  membershipHref,
   onBack,
   onReloadStandings,
 }: {
   standings: StandingsState;
   canPlay?: boolean;
   visitor?: boolean;
+  membershipHref: string;
   onBack: () => void;
   onReloadStandings: () => void;
 }) {
@@ -362,7 +364,7 @@ export default function CompetitionView({
                 </button>
               ) : visitor ? (
                 <Link
-                  href="/membership"
+                  href={membershipHref}
                   className="btn mt-1 text-sm font-extrabold text-white"
                   style={CALL_STYLE}
                 >

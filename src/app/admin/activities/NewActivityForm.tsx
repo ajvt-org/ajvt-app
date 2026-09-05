@@ -151,12 +151,12 @@ export default function NewActivityForm({
           profile={draft.profile}
           minTeamSize={draft.minTeamSize}
           maxTeamSize={draft.maxTeamSize}
-          organisedByTaguilalett={draft.organisedByTaguilalett}
+          organisedByHomeVillage={draft.organisedByHomeVillage}
           outsidePlayerLimit={draft.outsidePlayerLimit}
           onMinTeamSize={(minTeamSize) => setDraft((p) => ({ ...p, minTeamSize }))}
           onMaxTeamSize={(maxTeamSize) => setDraft((p) => ({ ...p, maxTeamSize }))}
-          onOrganisedByTaguilalett={(organisedByTaguilalett) =>
-            setDraft((p) => ({ ...p, organisedByTaguilalett }))
+          onOrganisedByHomeVillage={(organisedByHomeVillage) =>
+            setDraft((p) => ({ ...p, organisedByHomeVillage }))
           }
           onOutsidePlayerLimit={(outsidePlayerLimit) =>
             setDraft((p) => ({ ...p, outsidePlayerLimit }))
