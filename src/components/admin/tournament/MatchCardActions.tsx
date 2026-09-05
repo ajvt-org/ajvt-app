@@ -10,6 +10,7 @@ const SQUARE = "w-8 h-8 rounded-lg flex items-center justify-center disabled:opa
 export default function MatchCardActions({
   played,
   decided,
+  resultAllowed,
   football,
   showMvp,
   showDetails,
@@ -22,6 +23,7 @@ export default function MatchCardActions({
 }: {
   played: boolean;
   decided: boolean;
+  resultAllowed: boolean;
   football: boolean;
   showMvp: boolean;
   showDetails: boolean;
@@ -68,7 +70,8 @@ export default function MatchCardActions({
         {decided && (
           <button
             onClick={onToggleResultForm}
-            className={CHIP}
+            disabled={!resultAllowed}
+            className={`${CHIP} disabled:opacity-40`}
             style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
             {played ? texts.editResult : texts.enterResult}

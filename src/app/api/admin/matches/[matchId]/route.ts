@@ -6,6 +6,7 @@ import { notifyTeams } from "@/lib/tournamentNotify";
 import { serveMatch, suspendedUserIds } from "@/lib/suspensionServer";
 import { isValidLeaguePairing } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
+import { kickoffPassed } from "@/lib/matchKickoff";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import {
@@ -437,6 +438,13 @@ export const PATCH = withRoute(
           return NextResponse.json({ error: tournament.motmNotInMatch }, { status: 400 });
         }
         updateData.manOfTheMatchUserId = manOfTheMatchId;
+      }
+    }
+
+    if (updateData.status === "PLAYED" && !wasPlayed) {
+      const kickoff = updateData.matchDate !== undefined ? updateData.matchDate : match.matchDate;
+      if (!kickoffPassed(kickoff, new Date())) {
+        return NextResponse.json({ error: tournament.resultBeforeKickoff }, { status: 400 });
       }
     }
 
