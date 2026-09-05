@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function LandingHero() {
   return (
@@ -20,13 +20,7 @@ export default function LandingHero() {
             padding: "10px",
           }}
         >
-          <Image
-            src="/version-final.png"
-            alt="شعار رابطة شباب قرية التاكلالت"
-            width={112}
-            height={112}
-            priority
-          />
+          <Logo size={112} priority />
         </div>
       </div>
 

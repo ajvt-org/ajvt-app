@@ -2,7 +2,6 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { loginPathWithNext, safeNextPath } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
@@ -14,6 +13,8 @@ import { api, errorMessage } from "@/lib/api";
 import { members } from "@/lib/messages";
 import IconLabel from "@/components/IconLabel";
 import BackButton from "@/components/BackButton";
+import Logo from "@/components/Logo";
+import { association } from "@/lib/texts";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
@@ -230,10 +231,10 @@ function MembershipPageInner() {
         style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
       >
         <BackButton href={cameFrom || "/home"} />
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
+        <Logo size={38} />
         <div>
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
+            {association.name}
           </p>
           <h1 className="text-base font-black text-white">{editId ? "تعديل الدفع" : "الانتساب"}</h1>
         </div>

@@ -1,14 +1,14 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import BackButton from "@/components/BackButton";
+import Logo from "@/components/Logo";
 import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import NextRoundCountdown from "./NextRoundCountdown";
 import type { CompetitionState, RunningCompetition } from "./types";
 import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
-import { quizBoard as texts } from "@/lib/texts";
+import { association, quizBoard as texts } from "@/lib/texts";
 
 const STATE_LABEL: Record<CompetitionState, string> = {
   before: "لم تنطلق بعد",
@@ -187,10 +187,10 @@ export default function QuizPicker({
         />
         <div className="relative flex items-center gap-3">
           <BackButton href={backHref} />
-          <Image src="/version-final.png" alt="شعار" width={38} height={38} className="shrink-0" />
+          <Logo size={38} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-              رابطة شباب قرية التاكلالت
+              {association.name}
             </p>
             <h1 className="text-lg font-black text-white truncate">المسابقات الثقافية</h1>
           </div>

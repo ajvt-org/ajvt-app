@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { LOGO_SRC } from "@/lib/logo";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ToastProvider } from "@/components/Toast";
 import InstallPrompt from "@/components/InstallPrompt";
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "رابطة شباب التاكلالت",
     description: "منصة إدارة عضوية جمعية AJVT - التسجيل وبطاقات الأعضاء الرقمية",
-    images: ["/version-final.png"],
+    images: [LOGO_SRC],
   },
 };
 
