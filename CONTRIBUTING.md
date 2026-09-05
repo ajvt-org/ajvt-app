@@ -25,6 +25,15 @@ Three things that catch people out:
   ahead of the clock before, and when they have, today's date sorts too early —
   the script takes the later of the clock and one second past the last folder.
 
+A failed request on an admin screen is reported in place, not as a toast. Hold
+the message in state, clear it when the next attempt starts, and render it with
+`ErrorNotice` at the top of the panel that failed. Toasts stay for the short
+confirmation that something worked. An admin who has scrolled away misses a
+toast, and the panel that just failed is the thing being looked at. Most of the
+admin screens already do this and the rest move over as they are touched, so
+follow it in any file you are already changing rather than sweeping the whole
+tree.
+
 Before pushing:
 
 ```bash
