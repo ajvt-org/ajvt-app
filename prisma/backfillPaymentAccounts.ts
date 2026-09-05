@@ -2,16 +2,16 @@ import "dotenv/config";
 import { writeFileSync } from "node:fs";
 import { prisma } from "../src/lib/prisma";
 import {
+  MONEY_TABLES,
   attachableRows,
   soleAccountByMethod,
+  type AttachPlan,
   type AttachableRow,
+  type MoneyTable,
 } from "../src/lib/backfillAccounts";
+import { attachPlanned } from "../src/lib/backfillAccountsServer";
 
-const TABLES = ["Payment", "Membership", "Donation", "Expense"] as const;
-
-type Table = (typeof TABLES)[number];
-
-async function rowsOf(table: Table): Promise<AttachableRow[]> {
+async function rowsOf(table: MoneyTable): Promise<AttachableRow[]> {
   const where = { accountId: null };
   if (table === "Payment") {
     const rows = await prisma.payment.findMany({ where, select: { id: true, method: true } });
@@ -35,14 +35,6 @@ async function rowsOf(table: Table): Promise<AttachableRow[]> {
   return rows.map((row) => ({ id: row.id, method: row.paymentMethod }));
 }
 
-async function attach(table: Table, accountId: string, ids: string[]) {
-  const where = { id: { in: ids }, accountId: null };
-  if (table === "Payment") return prisma.payment.updateMany({ where, data: { accountId } });
-  if (table === "Expense") return prisma.expense.updateMany({ where, data: { accountId } });
-  if (table === "Membership") return prisma.membership.updateMany({ where, data: { accountId } });
-  return prisma.donation.updateMany({ where, data: { accountId } });
-}
-
 async function mirrorDisagreements(): Promise<number> {
   const rows = await prisma.$queryRaw<{ count: bigint }[]>`
     SELECT COUNT(*)::bigint AS count
@@ -56,7 +48,7 @@ async function mirrorDisagreements(): Promise<number> {
 
 async function main() {
   const write = process.argv.includes("--write");
-  const touched: { table: Table; accountId: string; ids: string[] }[] = [];
+  const touched: AttachPlan[] = [];
 
   const methods = await prisma.paymentMethod.findMany({
     select: { name: true, accounts: { select: { id: true, code: true, closedAt: true } } },
@@ -74,17 +66,14 @@ async function main() {
   }
   console.log("");
 
-  for (const table of TABLES) {
+  for (const table of MONEY_TABLES) {
     const rows = await rowsOf(table);
     const { byAccount, skipped } = attachableRows(rows, sole);
 
     for (const [accountId, ids] of byAccount) {
       const code = [...sole.values()].find((a) => a.id === accountId)?.code ?? accountId;
       console.log(`  ${table} ${ids.length} rows to ${code}`);
-      if (write) {
-        await attach(table, accountId, ids);
-        touched.push({ table, accountId, ids });
-      }
+      touched.push({ table, accountId, ids });
     }
 
     for (const [reason, count] of skipped) {
@@ -96,7 +85,11 @@ async function main() {
   if (write && touched.length) {
     const path = `backfill-accounts-${new Date().toISOString().replace(/\D/g, "").slice(0, 14)}.json`;
     writeFileSync(path, JSON.stringify(touched, null, 2));
-    console.log(`  Wrote ${path}, which lists every row this run attached.`);
+    console.log(`  Wrote ${path}, which lists every row this run is about to attach.`);
+
+    await attachPlanned(prisma, touched);
+
+    console.log("  Attached them all in one go.");
     console.log("");
   }
 
