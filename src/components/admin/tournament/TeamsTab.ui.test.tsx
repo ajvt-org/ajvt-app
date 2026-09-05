@@ -54,6 +54,17 @@ const SQUAD = [
   team("t2", "فريق الأمل", [{ id: "p4", name: "خالد ولد سالم" }]),
 ];
 
+const PAIRS = [
+  team("t1", "فريق النجم", [
+    { id: "p1", name: "أحمد ولد محمد" },
+    { id: "p2", name: "سالم ولد أحمد" },
+  ]),
+  team("t2", "فريق الأمل", [
+    { id: "p3", name: "خالد ولد سالم" },
+    { id: "p4", name: "بابا ولد سيدي" },
+  ]),
+];
+
 const onChange = vi.fn();
 
 function person(id: string, fullName: string): RosterMember {
@@ -286,5 +297,48 @@ describe("TeamsTab", () => {
 
     const cards = [...document.querySelectorAll("details")] as HTMLDetailsElement[];
     expect(cards.map((c) => c.open)).toEqual([false, true]);
+  });
+});
+
+function tapWithTops(name: string, before: number, after: number) {
+  const summary = screen.getByText(name).closest("summary") as HTMLElement;
+  const tops = [before, after];
+  summary.getBoundingClientRect = () => ({ top: tops.shift() ?? after }) as DOMRect;
+  fireEvent.click(summary);
+}
+
+describe("the team the reader tapped stays where it is", () => {
+  const scrollBy = vi.fn();
+
+  beforeEach(() => {
+    scrollBy.mockReset();
+    window.scrollBy = scrollBy;
+  });
+
+  it("pulls the page back by what the card above it gave up", () => {
+    show(SQUAD);
+    fireEvent.click(screen.getByText("فريق النجم"));
+
+    tapWithTops("فريق الأمل", 400, 100);
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: -300, behavior: "instant" });
+  });
+
+  it("does the same when a search has several teams open at once", () => {
+    show(PAIRS);
+    type("سالم");
+    expect(cards().map((c) => c.open)).toEqual([true, true]);
+
+    tapWithTops("فريق الأمل", 400, 260);
+
+    expect(scrollBy).toHaveBeenCalledWith({ top: -140, behavior: "instant" });
+  });
+
+  it("leaves the page alone when nothing above the summary moved", () => {
+    show(SQUAD);
+
+    tapWithTops("فريق النجم", 120, 120);
+
+    expect(scrollBy).not.toHaveBeenCalled();
   });
 });

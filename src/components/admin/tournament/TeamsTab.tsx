@@ -177,7 +177,7 @@ export default function TeamsTab({
           candidates={unassigned}
           suspendedIds={suspendedIds}
           busy={loadingAction}
-          onToggle={() => toggle(team.id)}
+          onToggle={(summary) => toggle(team.id, summary)}
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
