@@ -7,6 +7,7 @@ import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
 import { tournament as messages } from "@/lib/messages";
+import { knockoutToggleAllowed } from "@/lib/tournament";
 
 export default function MatchDetailsForm({
   match,
@@ -28,6 +29,15 @@ export default function MatchDetailsForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const groupOf = (id: string) => teams.find((t) => t.id === id)?.groupId ?? null;
+  const knockoutOffered = knockoutToggleAllowed(
+    match.isKnockout,
+    match.bracketRound,
+    groupOf(homeTeamId),
+    groupOf(awayTeamId),
+  );
+  const effectiveKnockout = knockoutOffered && isKnockout;
+
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -45,7 +55,7 @@ export default function MatchDetailsForm({
         matchDate: matchDate || null,
         round: round || null,
         venue: venue || null,
-        isKnockout,
+        isKnockout: effectiveKnockout,
         homeTeamId,
         awayTeamId,
       });
@@ -60,7 +70,7 @@ export default function MatchDetailsForm({
   const homeTeamForEdit = teams.find((t) => t.id === homeTeamId);
   const awayTeamOptionsForEdit = teams.filter((t) => {
     if (t.id === homeTeamId) return false;
-    if (isKnockout) return true;
+    if (effectiveKnockout) return true;
     if (!homeTeamForEdit || homeTeamForEdit.groupId === null || t.groupId === null) return true;
     return t.groupId === homeTeamForEdit.groupId;
   });
@@ -124,20 +134,22 @@ export default function MatchDetailsForm({
         maxLength={60}
         className="input text-sm"
       />
-      <label
-        className="flex items-center gap-2 text-xs font-semibold"
-        style={{ color: "var(--text-main)" }}
-      >
-        <input
-          type="checkbox"
-          checked={isKnockout}
-          onChange={(e) => {
-            setIsKnockout(e.target.checked);
-            setAwayTeamId("");
-          }}
-        />
-        <IconLabel name="trophy">{texts.knockoutMatch}</IconLabel>
-      </label>
+      {knockoutOffered && (
+        <label
+          className="flex items-center gap-2 text-xs font-semibold"
+          style={{ color: "var(--text-main)" }}
+        >
+          <input
+            type="checkbox"
+            checked={isKnockout}
+            onChange={(e) => {
+              setIsKnockout(e.target.checked);
+              setAwayTeamId("");
+            }}
+          />
+          <IconLabel name="trophy">{texts.knockoutMatch}</IconLabel>
+        </label>
+      )}
       {error && (
         <p className="text-xs" style={{ color: "#dc2626" }}>
           {error}

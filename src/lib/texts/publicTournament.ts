@@ -48,7 +48,6 @@ export const publicTournament = {
       plural: "الفرق",
       column: "الفريق",
       noneYet: "لم تُحدَّد الفرق بعد",
-      bracketWaitingHint: "تُحدَّد فرق الدور الإقصائي من ترتيب المجموعات بعد انتهاء دور المجموعات",
       followed: "تتابع الفريق الآن",
       unfollowed: "توقفت عن متابعة الفريق",
       follow: "تابع",
@@ -58,8 +57,6 @@ export const publicTournament = {
       plural: "اللاعبون",
       column: "اللاعب",
       noneYet: "لم يُحدَّد اللاعبون بعد",
-      bracketWaitingHint:
-        "يُحدَّد لاعبو الدور الإقصائي من ترتيب المجموعات بعد انتهاء دور المجموعات",
       followed: "تتابع اللاعب الآن",
       unfollowed: "توقفت عن متابعة اللاعب",
       follow: "تابع",

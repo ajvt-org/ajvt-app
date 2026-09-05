@@ -9,8 +9,8 @@ import PhotoUpload from "@/components/PhotoUpload";
 import ActivityDatesEditor from "../ActivityDatesEditor";
 import ConvertTournamentCard from "./ConvertTournamentCard";
 import ConvertCampaignCard from "./ConvertCampaignCard";
-import DeleteActivityCard from "./DeleteActivityCard";
-import ResetTournamentCard from "./ResetTournamentCard";
+import DeleteActivityButton from "./DeleteActivityButton";
+import ResetTournamentButton from "./ResetTournamentButton";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityForm as texts } from "@/lib/texts";
 
@@ -132,20 +132,15 @@ export default function DetailsTab({
             {texts.registrationOpen}
           </label>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold">
-              <input
-                type="checkbox"
-                checked={form.autoApprove}
-                onChange={(e) => setForm((p) => ({ ...p, autoApprove: e.target.checked }))}
-                className="w-4 h-4"
-              />
-              {texts.autoApprove}
-            </label>
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-              {texts.autoApproveHint}
-            </p>
-          </div>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              checked={form.autoApprove}
+              onChange={(e) => setForm((p) => ({ ...p, autoApprove: e.target.checked }))}
+              className="w-4 h-4"
+            />
+            {texts.autoApprove}
+          </label>
 
           {activity.isTournament && (
             <div>
@@ -199,9 +194,12 @@ export default function DetailsTab({
       {!activity.isVolunteer && <ConvertTournamentCard activity={activity} onChanged={onSaved} />}
       {!activity.isTournament && <ConvertCampaignCard activity={activity} onChanged={onSaved} />}
 
-      {activity.isTournament && <ResetTournamentCard activityId={activity.id} onReset={onSaved} />}
-
-      <DeleteActivityCard activityId={activity.id} />
+      <div className="flex flex-wrap gap-2">
+        {activity.isTournament && (
+          <ResetTournamentButton activityId={activity.id} onReset={onSaved} />
+        )}
+        <DeleteActivityButton activityId={activity.id} />
+      </div>
     </div>
   );
 }

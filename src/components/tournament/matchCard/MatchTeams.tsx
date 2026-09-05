@@ -7,10 +7,10 @@ export type MatchSide = { name: string; logo?: string | null };
 export type MatchTeamsSize = "sm" | "md" | "lg" | "xl";
 
 const SIZES: Record<MatchTeamsSize, { logo: number; score: string }> = {
-  sm: { logo: 24, score: "text-sm" },
-  md: { logo: 30, score: "text-base" },
-  lg: { logo: 38, score: "text-lg" },
-  xl: { logo: 40, score: "text-2xl" },
+  sm: { logo: 28, score: "text-sm" },
+  md: { logo: 34, score: "text-base" },
+  lg: { logo: 42, score: "text-lg" },
+  xl: { logo: 44, score: "text-2xl" },
 };
 
 function Name({ name, color, center }: { name: string; color: string; center?: boolean }) {

@@ -10,13 +10,19 @@ interface TeamLogoProps {
   entrant?: EntrantKind;
 }
 
-export default function TeamLogo({ logo, photo, size = 24, entrant = "team" }: TeamLogoProps) {
+export default function TeamLogo({ logo, photo, size = 28, entrant = "team" }: TeamLogoProps) {
   const src = logo ? `/api/files/team/${logo}` : photo ? `/api/files/member/${photo}` : null;
+  const disc = {
+    width: size,
+    height: size,
+    border: "1.5px solid var(--mint-200)",
+    boxShadow: "0 1px 3px rgba(26, 63, 51, 0.3)",
+  };
   if (!src) {
     return (
       <span
         className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
-        style={{ width: size, height: size, background: "var(--mint-100)", fontSize: size * 0.55 }}
+        style={{ ...disc, background: "var(--mint-100)" }}
       >
         <Icon name={entrant === "player" ? "user" : "shield"} size={Math.round(size * 0.6)} />
       </span>
@@ -31,8 +37,8 @@ export default function TeamLogo({ logo, photo, size = 24, entrant = "team" }: T
       height={size}
       loading="lazy"
       decoding="async"
-      className="rounded-full object-cover shrink-0"
-      style={{ width: size, height: size, border: "2px solid var(--mint-200)" }}
+      className="rounded-full object-cover shrink-0 align-middle"
+      style={disc}
     />
   );
 }
