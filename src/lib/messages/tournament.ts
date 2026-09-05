@@ -75,6 +75,7 @@ export const tournament = {
   extraTimeKnockoutOnly: "الوقت الإضافي متاح فقط لمباريات خروج المغلوب",
   extraTimeTieOnly: "الوقت الإضافي متاح فقط عند تعادل الوقت الأصلي",
   motmNotInMatch: "رجل المباراة يجب أن يكون ضمن أحد الفريقين",
+  motmFootballOnly: "رجل المباراة لا يكون إلا في بطولة مبارياتها مباريات كرة قدم",
   groupFixtureNotKnockout:
     "مباراة دور المجموعات لا تتحول إلى مباراة خروج المغلوب — مباريات الإقصاء تُنشئها القرعة أو توليد الأدوار",
   leaguePairing:

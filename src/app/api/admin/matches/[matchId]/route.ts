@@ -32,6 +32,7 @@ import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
 import { notify, tournament } from "@/lib/messages";
+import { isFootball } from "@/lib/matchShape";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -118,6 +119,7 @@ export const PATCH = withRoute(
       include: {
         homeTeam: { select: { id: true, name: true, groupId: true } },
         awayTeam: { select: { id: true, name: true, groupId: true } },
+        activity: { select: { matchShape: true } },
       },
     });
     if (!match) {
@@ -438,6 +440,8 @@ export const PATCH = withRoute(
     if (manOfTheMatchId !== undefined) {
       if (manOfTheMatchId === null) {
         updateData.manOfTheMatchUserId = null;
+      } else if (!isFootball(match.activity.matchShape)) {
+        return NextResponse.json({ error: tournament.motmFootballOnly }, { status: 400 });
       } else {
         const inRoster = await prisma.teamMember.findFirst({
           where: {
