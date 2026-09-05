@@ -8,12 +8,12 @@ export interface SquadPlayer {
 
 export interface SquadSettings {
   squad: SquadSize;
-  organisedByTaguilalett: boolean;
+  organisedByHomeVillage: boolean;
   outsidePlayerLimit: number | null;
 }
 
 export interface SquadTeam {
-  fromTaguilalett: boolean;
+  fromHomeVillage: boolean;
 }
 
 export type SquadBreach =
@@ -27,7 +27,7 @@ export function isOutsidePlayer(village: string): boolean {
 
 export function outsideLimitApplies(team: SquadTeam, settings: SquadSettings): boolean {
   return (
-    settings.organisedByTaguilalett && team.fromTaguilalett && settings.outsidePlayerLimit !== null
+    settings.organisedByHomeVillage && team.fromHomeVillage && settings.outsidePlayerLimit !== null
   );
 }
 

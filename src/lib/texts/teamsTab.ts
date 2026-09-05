@@ -18,7 +18,7 @@ export const teamsTab = {
   teamLogo: "شعار الفريق",
   changeTeamLogo: "تغيير شعار الفريق",
   renameTeam: "تعديل اسم الفريق",
-  fromTaguilalett: "فريق من التاكلالت",
+  fromHomeVillage: "فريق من التاكلالت",
   squadShort: "أقل من الحد الأدنى",
   squadOver: "أكثر من الحد الأقصى",
   outsideOverLimit: (count: number, limit: number) => `${count} من خارج التاكلالت والحد ${limit}`,

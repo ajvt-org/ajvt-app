@@ -22,7 +22,7 @@ function player(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE
     id: `team-${id}`,
     name: `لاعب ${id}`,
     autoNamed: true,
-    fromTaguilalett: true,
+    fromHomeVillage: true,
     logo: null,
     captainUserId: null,
     groupId: null,

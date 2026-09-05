@@ -21,7 +21,7 @@ function team(id: string, name: string, members: { id: string; name: string }[])
     id,
     name,
     autoNamed: false,
-    fromTaguilalett: true,
+    fromHomeVillage: true,
     logo: null,
     captainUserId: null,
     groupId: null,
@@ -83,7 +83,7 @@ function show(teams: Team[] = TEAMS, roster: RosterMember[] = []) {
       teams={teams}
       settings={{
         squad: { min: null, max: null },
-        organisedByTaguilalett: false,
+        organisedByHomeVillage: false,
         outsidePlayerLimit: null,
       }}
       roster={roster}

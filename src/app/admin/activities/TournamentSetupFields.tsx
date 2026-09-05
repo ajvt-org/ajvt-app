@@ -84,26 +84,26 @@ export default function TournamentSetupFields({
   profile,
   minTeamSize,
   maxTeamSize,
-  organisedByTaguilalett,
+  organisedByHomeVillage,
   outsidePlayerLimit,
   onFormat,
   onPreset,
   onMinTeamSize,
   onMaxTeamSize,
-  onOrganisedByTaguilalett,
+  onOrganisedByHomeVillage,
   onOutsidePlayerLimit,
 }: {
   format: string;
   profile: string;
   minTeamSize: string;
   maxTeamSize: string;
-  organisedByTaguilalett: boolean;
+  organisedByHomeVillage: boolean;
   outsidePlayerLimit: string;
   onFormat: (format: string) => void;
   onPreset: (preset: TournamentPreset) => void;
   onMinTeamSize: (value: string) => void;
   onMaxTeamSize: (value: string) => void;
-  onOrganisedByTaguilalett: (value: boolean) => void;
+  onOrganisedByHomeVillage: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
 }) {
   const selected = presetOf(profile, maxTeamSize);
@@ -183,15 +183,15 @@ export default function TournamentSetupFields({
 
       <label className="flex items-center gap-2 text-sm font-bold">
         <input
-          id="tournament-organised-by-taguilalett"
+          id="tournament-organised-by-home-village"
           type="checkbox"
-          checked={organisedByTaguilalett}
-          onChange={(e) => onOrganisedByTaguilalett(e.target.checked)}
+          checked={organisedByHomeVillage}
+          onChange={(e) => onOrganisedByHomeVillage(e.target.checked)}
         />
-        <span style={{ color: "var(--text-main)" }}>{texts.organisedByTaguilalett}</span>
+        <span style={{ color: "var(--text-main)" }}>{texts.organisedByHomeVillage}</span>
       </label>
 
-      {organisedByTaguilalett && (
+      {organisedByHomeVillage && (
         <NumberField
           id="tournament-outside-player-limit"
           label={texts.outsidePlayerLimit}
