@@ -41,6 +41,16 @@ describe("the method list an admin form reads", () => {
     const names = await namesFrom(await adminRoute(get("/api/admin/payment-methods/offered")));
     expect(names).not.toContain(ADMIN_ONLY);
   });
+
+  it.each(["MEMBERS", "ACTIVITIES"])(
+    "is readable by the %s admin, who records money",
+    async (role) => {
+      await signInAsAdmin(await createAdmin("aide", role));
+      const res = await adminRoute(get("/api/admin/payment-methods/offered"));
+      expect(res.status).toBe(200);
+      expect(await namesFrom(res)).toContain(ADMIN_ONLY);
+    },
+  );
 });
 
 describe("the method list anybody may read", () => {
