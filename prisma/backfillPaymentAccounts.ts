@@ -5,6 +5,7 @@ import {
   MONEY_TABLES,
   attachableRows,
   soleAccountByMethod,
+  totalOf,
   type AttachPlan,
   type AttachableRow,
   type MoneyTable,
@@ -14,25 +15,31 @@ import { attachPlanned } from "../src/lib/backfillAccountsServer";
 async function rowsOf(table: MoneyTable): Promise<AttachableRow[]> {
   const where = { accountId: null };
   if (table === "Payment") {
-    const rows = await prisma.payment.findMany({ where, select: { id: true, method: true } });
-    return rows.map((row) => ({ id: row.id, method: row.method }));
+    const rows = await prisma.payment.findMany({
+      where,
+      select: { id: true, method: true, amount: true },
+    });
+    return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
   }
   if (table === "Expense") {
-    const rows = await prisma.expense.findMany({ where, select: { id: true, method: true } });
-    return rows.map((row) => ({ id: row.id, method: row.method }));
+    const rows = await prisma.expense.findMany({
+      where,
+      select: { id: true, method: true, amount: true },
+    });
+    return rows.map((row) => ({ id: row.id, method: row.method, amount: row.amount }));
   }
   if (table === "Membership") {
     const rows = await prisma.membership.findMany({
       where,
       select: { id: true, paymentMethod: true },
     });
-    return rows.map((row) => ({ id: row.id, method: row.paymentMethod }));
+    return rows.map((row) => ({ id: row.id, method: row.paymentMethod, amount: 0 }));
   }
   const rows = await prisma.donation.findMany({
     where,
-    select: { id: true, paymentMethod: true },
+    select: { id: true, paymentMethod: true, amount: true },
   });
-  return rows.map((row) => ({ id: row.id, method: row.paymentMethod }));
+  return rows.map((row) => ({ id: row.id, method: row.paymentMethod, amount: row.amount ?? 0 }));
 }
 
 async function mirrorDisagreements(): Promise<number> {
@@ -68,16 +75,23 @@ async function main() {
 
   for (const table of MONEY_TABLES) {
     const rows = await rowsOf(table);
-    const { byAccount, skipped } = attachableRows(rows, sole);
+    const { byAccount, skipped, unmatched } = attachableRows(rows, sole);
 
-    for (const [accountId, ids] of byAccount) {
+    for (const [accountId, attaching] of byAccount) {
       const code = [...sole.values()].find((a) => a.id === accountId)?.code ?? accountId;
-      console.log(`  ${table} ${ids.length} rows to ${code}`);
+      const ids = attaching.map((row) => row.id);
+      const worth =
+        table === "Membership" ? "counted on the payment" : `${totalOf(attaching)} in total`;
+      console.log(`  ${table} ${ids.length} rows to ${code}, ${worth}`);
       touched.push({ table, accountId, ids });
     }
 
     for (const [reason, count] of skipped) {
       console.log(`  ${table} ${count} rows left alone, ${reason}`);
+    }
+
+    for (const [name, count] of unmatched) {
+      console.log(`  ${table} ${count} of those name ${name}`);
     }
     console.log("");
   }
