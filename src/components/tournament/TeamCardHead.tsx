@@ -12,7 +12,7 @@ export default function TeamCardHead({
 }) {
   return (
     <>
-      <TeamLogo logo={logo} name={name} size={20} />
+      <TeamLogo logo={logo} name={name} size={24} />
       <span className="min-w-0 flex-1" style={{ wordBreak: "break-word" }}>
         {name}
       </span>

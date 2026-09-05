@@ -80,7 +80,7 @@ export default function StandingsTable({
                     logo={row.logo}
                     photo={row.photo}
                     name={row.name}
-                    size={18}
+                    size={22}
                     entrant={entrant}
                   />
                   <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
