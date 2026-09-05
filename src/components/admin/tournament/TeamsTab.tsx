@@ -5,10 +5,11 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
-import { displayTeamName } from "@/lib/teamSize";
+import { displayTeamName, squadLabel } from "@/lib/teamSize";
 import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
+import NumericRanges from "@/components/NumericRanges";
 import ErrorNotice from "@/components/form/ErrorNotice";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
@@ -39,6 +40,7 @@ export default function TeamsTab({
   const [error, setError] = useState("");
 
   const unassigned = roster.filter((m) => !m.team);
+  const squadText = squadLabel(settings.squad);
   const from = useAdminOrigin();
 
   function shownName(team: Team): string {
@@ -146,11 +148,18 @@ export default function TeamsTab({
         />
       </div>
 
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        {searching
-          ? teamsTab.teamCountShown(shownTeams.length, teams.length)
-          : teamsTab.teamCount(teams.length)}
-      </p>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+          {searching
+            ? teamsTab.teamCountShown(shownTeams.length, teams.length)
+            : teamsTab.teamCount(teams.length)}
+        </p>
+        {squadText !== null && (
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+            <NumericRanges>{teamsTab.squadSize(squadText)}</NumericRanges>
+          </p>
+        )}
+      </div>
 
       {searching && shownTeams.length === 0 && shownUnassigned.length === 0 && (
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>

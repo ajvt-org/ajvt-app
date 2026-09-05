@@ -23,7 +23,7 @@ export const teamsTab = {
   squadOver: "أكثر من الحد الأقصى",
   outsideOverLimit: (count: number, limit: number) => `${count} من خارج التاكلالت والحد ${limit}`,
   outsidePlayerOverLimit: "فوق حد اللاعبين من خارج التاكلالت",
-  rosterOf: (count: number, size: string) => `${count} / ${size}`,
+  squadSize: (size: string) => `حجم الفريق ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,

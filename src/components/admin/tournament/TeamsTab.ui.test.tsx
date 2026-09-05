@@ -342,3 +342,58 @@ describe("the team the reader tapped stays where it is", () => {
     expect(scrollBy).not.toHaveBeenCalled();
   });
 });
+
+describe("the squad the tournament asks for", () => {
+  function showSquad(squad: { min: number | null; max: number | null }, teams = SQUAD) {
+    cleanup();
+    render(
+      <TeamsTab
+        activityId="a1"
+        teams={teams}
+        settings={{ squad, organisedByHomeVillage: false, outsidePlayerLimit: null }}
+        roster={[]}
+        suspendedIds={[]}
+        onChange={onChange}
+      />,
+    );
+  }
+
+  function isolated() {
+    return [...document.querySelectorAll('span[dir="rtl"]')].map((el) => el.textContent);
+  }
+
+  it("says it once above the list rather than on every card", () => {
+    showSquad({ min: 16, max: 22 });
+
+    expect(screen.getByText(/حجم الفريق/)).toBeDefined();
+    expect(document.body.textContent?.match(/16-22/g)).toHaveLength(1);
+  });
+
+  it("gives the range its own direction so the smaller number reads first", () => {
+    showSquad({ min: 16, max: 22 });
+
+    expect(isolated()).toEqual(["16-22"]);
+    expect([...document.querySelectorAll("bdi")].map((el) => el.textContent)).toEqual(["16", "22"]);
+  });
+
+  it("leaves each card badge counting the players and nothing else", () => {
+    showSquad({ min: 16, max: 22 });
+
+    const summaries = [...document.querySelectorAll("summary")].map((s) => s.textContent);
+    expect(summaries.some((text) => text?.includes("16-22"))).toBe(false);
+    expect(summaries[0]).toContain("3 لاعبين");
+  });
+
+  it("states a fixed squad as the one number it is", () => {
+    showSquad({ min: 11, max: 11 });
+
+    expect(screen.getByText("حجم الفريق 11")).toBeDefined();
+    expect(isolated()).toEqual([]);
+  });
+
+  it("stays quiet when the tournament sets no size", () => {
+    showSquad({ min: null, max: null });
+
+    expect(screen.queryByText(/حجم الفريق/)).toBeNull();
+  });
+});
