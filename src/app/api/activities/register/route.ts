@@ -10,7 +10,7 @@ import { getAppSettings } from "@/lib/settingsServer";
 import { membershipState } from "@/lib/membershipState";
 import { asMembershipState } from "@/lib/currentMembership";
 import { currentMembership } from "@/lib/currentMembershipServer";
-import { joinChosenTeam } from "@/lib/registrationTeamServer";
+import { seatRegistrant, unseatRegistrant } from "@/lib/registrationTeamServer";
 
 export const POST = withRoute("POST /api/activities/register", async (req: NextRequest) => {
   const session = await requireUser();
@@ -82,7 +82,7 @@ export const POST = withRoute("POST /api/activities/register", async (req: NextR
           chosenTeamId: chosenTeam?.id ?? null,
         },
       });
-      await joinChosenTeam(tx, registration.id);
+      await seatRegistrant(tx, registration.id);
     },
     { isolationLevel: "Serializable" },
   );
@@ -96,7 +96,10 @@ export const DELETE = withRoute("DELETE /api/activities/register", async (req: N
 
   if (userId !== session.userId) throw new NotFoundError(members.notFound);
 
-  await prisma.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.activityRegistration.deleteMany({ where: { userId: session.userId, activityId } });
+    await unseatRegistrant(tx, activityId, session.userId);
+  });
 
   return NextResponse.json({ ok: true });
 });

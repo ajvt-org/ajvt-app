@@ -9,7 +9,7 @@ import { parse } from "@/lib/validation";
 import { adminRegisterSchema, registrationReviewSchema } from "./schema";
 import { activities, members, notify } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
-import { joinChosenTeam } from "@/lib/registrationTeamServer";
+import { seatRegistrant, unseatRegistrant } from "@/lib/registrationTeamServer";
 
 export const POST = withRoute(
   "POST /api/admin/activities/[id]/register",
@@ -45,21 +45,25 @@ export const POST = withRoute(
       }
     }
 
-    const registration = await prisma.activityRegistration.upsert({
-      where: { userId_activityId: { userId: account.id, activityId: id } },
-      update: {
-        status: "ACTIVE",
-        rejectionReason: null,
-        source: "ADMIN",
-        recordedBy: session.username,
-      },
-      create: {
-        userId: account.id,
-        activityId: id,
-        status: "ACTIVE",
-        source: "ADMIN",
-        recordedBy: session.username,
-      },
+    const registration = await prisma.$transaction(async (tx) => {
+      const row = await tx.activityRegistration.upsert({
+        where: { userId_activityId: { userId: account.id, activityId: id } },
+        update: {
+          status: "ACTIVE",
+          rejectionReason: null,
+          source: "ADMIN",
+          recordedBy: session.username,
+        },
+        create: {
+          userId: account.id,
+          activityId: id,
+          status: "ACTIVE",
+          source: "ADMIN",
+          recordedBy: session.username,
+        },
+      });
+      await seatRegistrant(tx, row.id);
+      return row;
     });
 
     await logAction(
@@ -108,7 +112,8 @@ export const PATCH = withRoute(
           rejectionReason: status === "REJECTED" ? reason?.trim() || null : null,
         },
       });
-      if (status === "ACTIVE") await joinChosenTeam(tx, registrationId);
+      if (status === "ACTIVE") await seatRegistrant(tx, registrationId);
+      else await unseatRegistrant(tx, registration.activityId, registration.userId);
       return row;
     });
 
