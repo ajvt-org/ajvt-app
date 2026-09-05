@@ -66,7 +66,7 @@ function show(teams: Team[] = TEAMS, roster: RosterMember[] = []) {
     <TeamsTab
       activityId="a1"
       teams={teams}
-      teamSize={null}
+      squad={{ min: null, max: null }}
       roster={roster}
       suspendedIds={[]}
       onChange={onChange}

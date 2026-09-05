@@ -149,10 +149,15 @@ export default function NewActivityForm({
         <TournamentSetupFields
           format={draft.format}
           profile={draft.profile}
-          teamSize={draft.teamSize}
+          maxTeamSize={draft.maxTeamSize}
           onFormat={(format) => setDraft((p) => ({ ...p, format }))}
           onPreset={(preset) =>
-            setDraft((p) => ({ ...p, profile: preset.profile, teamSize: preset.teamSize }))
+            setDraft((p) => ({
+              ...p,
+              profile: preset.profile,
+              minTeamSize: preset.minTeamSize,
+              maxTeamSize: preset.maxTeamSize,
+            }))
           }
         />
       )}

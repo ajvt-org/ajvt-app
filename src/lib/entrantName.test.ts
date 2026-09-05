@@ -12,7 +12,7 @@ describe("entrantIdentities", () => {
   it("names a singles entrant after the player rather than the placeholder", () => {
     const identities = entrantIdentities(
       [entrant("t1", "فريق 1", true, [{ fullName: "أحمد ولد محمد" }])],
-      1,
+      { min: 1, max: 1 },
     );
 
     expect(identities.get("t1")?.name).toBe("أحمد ولد محمد");
@@ -21,7 +21,7 @@ describe("entrantIdentities", () => {
   it("gives a singles entrant the player photo", () => {
     const identities = entrantIdentities(
       [entrant("t1", "فريق 1", true, [{ fullName: "أحمد", photo: "a.webp" }])],
-      1,
+      { min: 1, max: 1 },
     );
 
     expect(identities.get("t1")?.photo).toBe("a.webp");
@@ -30,7 +30,7 @@ describe("entrantIdentities", () => {
   it("leaves a team entrant without a player photo", () => {
     const identities = entrantIdentities(
       [entrant("t1", "نجوم القرية", false, [{ fullName: "أحمد", photo: "a.webp" }])],
-      null,
+      { min: null, max: null },
     );
 
     expect(identities.get("t1")).toEqual({ name: "نجوم القرية", photo: null });
@@ -39,7 +39,7 @@ describe("entrantIdentities", () => {
   it("joins the pair on a doubles entrant", () => {
     const identities = entrantIdentities(
       [entrant("t1", "فريق 1", true, [{ fullName: "أحمد" }, { fullName: "سالم" }])],
-      2,
+      { min: 2, max: 2 },
     );
 
     expect(identities.get("t1")?.name).toBe("أحمد و سالم");
@@ -48,17 +48,17 @@ describe("entrantIdentities", () => {
   it("keeps a name the admin typed", () => {
     const identities = entrantIdentities(
       [entrant("t1", "نجوم القرية", false, [{ fullName: "أحمد" }])],
-      1,
+      { min: 1, max: 1 },
     );
 
     expect(identities.get("t1")?.name).toBe("نجوم القرية");
   });
 
   it("leaves a tournament with no team size alone", () => {
-    const identities = entrantIdentities(
-      [entrant("t1", "فريق 1", true, [{ fullName: "أحمد" }])],
-      null,
-    );
+    const identities = entrantIdentities([entrant("t1", "فريق 1", true, [{ fullName: "أحمد" }])], {
+      min: null,
+      max: null,
+    });
 
     expect(identities.get("t1")?.name).toBe("فريق 1");
   });

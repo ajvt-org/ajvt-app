@@ -3,7 +3,7 @@ import { teamsTab } from "./teamsTab";
 
 describe("teams tab texts", () => {
   it("counts the roster against the size the tournament asks for", () => {
-    expect(teamsTab.rosterOf(3, 5)).toBe("3 / 5");
+    expect(teamsTab.rosterOf(3, "5")).toBe("3 / 5");
     expect(teamsTab.teamCount(4)).toContain("4");
   });
 

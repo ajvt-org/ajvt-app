@@ -6,11 +6,12 @@ import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
 import type { RosterMember, Team, TeamMemberEntry } from "./types";
+import type { SquadSize } from "@/lib/teamSize";
 
 export default function TeamCard({
   team,
   shownName,
-  teamSize,
+  squad,
   members,
   open,
   candidates,
@@ -27,7 +28,7 @@ export default function TeamCard({
 }: {
   team: Team;
   shownName: string;
-  teamSize: number | null;
+  squad: SquadSize;
   members: TeamMemberEntry[];
   open: boolean;
   candidates: RosterMember[];
@@ -47,7 +48,7 @@ export default function TeamCard({
       <TeamSummary
         team={team}
         shownName={shownName}
-        teamSize={teamSize}
+        squad={squad}
         busy={busy}
         onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}

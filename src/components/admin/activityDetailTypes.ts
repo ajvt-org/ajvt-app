@@ -15,7 +15,8 @@ export type ActivityDetail = {
     showScorersAndCards: boolean;
     format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
     profile: "FOOTBALL" | "BOARD";
-    teamSize: number | null;
+    minTeamSize: number | null;
+    maxTeamSize: number | null;
     isVolunteer: boolean;
     whatsappLink: string | null;
     registrations: {

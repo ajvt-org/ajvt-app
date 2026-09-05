@@ -9,7 +9,8 @@ export interface TournamentPreset {
   label: string;
   icon: IconName;
   profile: string;
-  teamSize: string;
+  minTeamSize: string;
+  maxTeamSize: string;
 }
 
 export const TOURNAMENT_PRESETS: TournamentPreset[] = [
@@ -18,31 +19,46 @@ export const TOURNAMENT_PRESETS: TournamentPreset[] = [
     label: texts.presets.football,
     icon: "ball",
     profile: "FOOTBALL",
-    teamSize: "",
+    minTeamSize: "",
+    maxTeamSize: "",
   },
-  { value: "board", label: texts.presets.board, icon: "user", profile: "BOARD", teamSize: "1" },
-  { value: "cards", label: texts.presets.cards, icon: "users", profile: "BOARD", teamSize: "2" },
+  {
+    value: "board",
+    label: texts.presets.board,
+    icon: "user",
+    profile: "BOARD",
+    minTeamSize: "1",
+    maxTeamSize: "1",
+  },
+  {
+    value: "cards",
+    label: texts.presets.cards,
+    icon: "users",
+    profile: "BOARD",
+    minTeamSize: "2",
+    maxTeamSize: "2",
+  },
 ];
 
-export function presetOf(profile: string, teamSize: string): string {
-  if (profile === "BOARD") return teamSize === "2" ? "cards" : "board";
+export function presetOf(profile: string, maxTeamSize: string): string {
+  if (profile === "BOARD") return maxTeamSize === "2" ? "cards" : "board";
   return "football";
 }
 
 export default function TournamentSetupFields({
   format,
   profile,
-  teamSize,
+  maxTeamSize,
   onFormat,
   onPreset,
 }: {
   format: string;
   profile: string;
-  teamSize: string;
+  maxTeamSize: string;
   onFormat: (format: string) => void;
   onPreset: (preset: TournamentPreset) => void;
 }) {
-  const selected = presetOf(profile, teamSize);
+  const selected = presetOf(profile, maxTeamSize);
 
   return (
     <div className="space-y-3">

@@ -28,7 +28,8 @@ describe("reading one activity's core facts", () => {
         description: "فردية",
         isTournament: true,
         format: "KNOCKOUT",
-        teamSize: 1,
+        minTeamSize: 1,
+        maxTeamSize: 1,
       },
     });
 
@@ -38,7 +39,8 @@ describe("reading one activity's core facts", () => {
       title: "بطولة الدامة",
       isTournament: true,
       format: "KNOCKOUT",
-      teamSize: 1,
+      minTeamSize: 1,
+      maxTeamSize: 1,
     });
   });
 
@@ -51,12 +53,13 @@ describe("reading one activity's core facts", () => {
           isTournament: true,
           format: "KNOCKOUT",
           profile: "BOARD",
-          teamSize: 2,
+          minTeamSize: 2,
+          maxTeamSize: 2,
         }),
       )
     ).json();
 
-    expect(created.activity).toMatchObject({ profile: "BOARD", teamSize: 2 });
+    expect(created.activity).toMatchObject({ profile: "BOARD", minTeamSize: 2, maxTeamSize: 2 });
 
     const home = await prisma.team.create({
       data: { activityId: created.activity.id, name: "أ" },

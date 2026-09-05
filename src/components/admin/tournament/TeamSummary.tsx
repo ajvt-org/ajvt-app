@@ -5,34 +5,37 @@ import IconLabel from "@/components/IconLabel";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
+import { rosterFault, squadLabel, type SquadSize } from "@/lib/teamSize";
 
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
 const SHORT = { background: "#fef3c7", color: "#92400e" };
 const OVER = { background: "#fee2e2", color: "#991b1b" };
 
-function rosterTone(count: number, teamSize: number | null) {
-  if (teamSize === null || count === teamSize) return COMPLETE;
-  return count < teamSize ? SHORT : OVER;
+function rosterTone(count: number, squad: SquadSize) {
+  const fault = rosterFault(count, squad);
+  if (fault === null) return COMPLETE;
+  return fault === "short" ? SHORT : OVER;
 }
 
 export default function TeamSummary({
   team,
   shownName,
-  teamSize,
+  squad,
   busy,
   onToggle,
   onDeleteTeam,
 }: {
   team: Team;
   shownName: string;
-  teamSize: number | null;
+  squad: SquadSize;
   busy: boolean;
   onToggle: () => void;
   onDeleteTeam: () => void;
 }) {
   const count = team.members.length;
   const awaiting = team.members.filter((m) => m.status === "PENDING").length;
-  const tone = rosterTone(count, teamSize);
+  const tone = rosterTone(count, squad);
+  const label = squadLabel(squad);
 
   return (
     <summary
@@ -74,7 +77,7 @@ export default function TeamSummary({
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="badge" style={tone}>
           <IconLabel name="users">
-            {teamSize === null ? teamsTab.rosterCount(count) : teamsTab.rosterOf(count, teamSize)}
+            {label === null ? teamsTab.rosterCount(count) : teamsTab.rosterOf(count, label)}
           </IconLabel>
         </span>
         {awaiting > 0 && (

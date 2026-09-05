@@ -23,7 +23,8 @@ export const GET = withRoute(
         isTournament: true,
         format: true,
         profile: true,
-        teamSize: true,
+        minTeamSize: true,
+        maxTeamSize: true,
         startsAt: true,
         endsAt: true,
       },
@@ -50,7 +51,8 @@ export const PATCH = withRoute(
       showScorersAndCards,
       format,
       profile,
-      teamSize,
+      minTeamSize,
+      maxTeamSize,
       yellowsForBan,
       redBanMatches,
       mvpVoteMinutes,
@@ -81,7 +83,8 @@ export const PATCH = withRoute(
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
       profile?: SportProfile;
-      teamSize?: number | null;
+      minTeamSize?: number | null;
+      maxTeamSize?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
       mvpVoteMinutes?: number;
@@ -110,12 +113,13 @@ export const PATCH = withRoute(
       }
       data.format = format ?? null;
     }
-    if (teamSize !== undefined) {
+    if (minTeamSize !== undefined || maxTeamSize !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });
       if (played > 0) {
         return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
       }
-      data.teamSize = normalizeTeamSize(teamSize);
+      if (minTeamSize !== undefined) data.minTeamSize = normalizeTeamSize(minTeamSize);
+      if (maxTeamSize !== undefined) data.maxTeamSize = normalizeTeamSize(maxTeamSize);
     }
     if (profile !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });

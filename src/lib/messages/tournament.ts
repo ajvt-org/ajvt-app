@@ -1,5 +1,10 @@
 import { resetTournament } from "../texts/activityDetail";
 
+function squadRange(min: number | null, max: number | null): string {
+  if (min !== null && max !== null && min !== max) return `${min} إلى ${max}`;
+  return String(min ?? max ?? 0);
+}
+
 export const tournament = {
   teamNotFound: "الفريق غير موجود",
   teamNameRequired: "اسم الفريق مطلوب",
@@ -78,8 +83,8 @@ export const tournament = {
   scorerWrongTeam: "أحد الهدافين ليس ضمن الفريق الصحيح",
   ownGoalScorerWrongTeam: "مسجل الهدف العكسي يجب أن يكون من الفريق الآخر",
   kickerWrongTeam: "أحد منفذي ركلات الترجيح ليس ضمن فريقه",
-  teamsIncomplete: (size: number, names: string) =>
-    `فرق غير مكتملة (${size} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
+  teamsIncomplete: (min: number | null, max: number | null, names: string) =>
+    `فرق غير مكتملة (${squadRange(min, max)} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
   needPowerOfTwo: (count: number) =>
     `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${count}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح`,
   bracketSlotsMismatch: (slots: number, pairs: number) =>

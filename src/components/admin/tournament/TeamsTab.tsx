@@ -5,7 +5,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
-import { displayTeamName } from "@/lib/teamSize";
+import { displayTeamName, type SquadSize } from "@/lib/teamSize";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ErrorNotice from "@/components/form/ErrorNotice";
@@ -19,14 +19,14 @@ import { useAdminOrigin } from "@/components/admin/adminOrigin";
 export default function TeamsTab({
   activityId,
   teams,
-  teamSize,
+  squad,
   roster,
   suspendedIds,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
-  teamSize: number | null;
+  squad: SquadSize;
   roster: RosterMember[];
   suspendedIds: string[];
   onChange: () => void;
@@ -48,7 +48,7 @@ export default function TeamsTab({
         autoNamed: team.autoNamed,
         memberNames: team.members.map((m) => m.member.fullName),
       },
-      teamSize,
+      squad,
     );
   }
 
@@ -158,7 +158,7 @@ export default function TeamsTab({
           key={team.id}
           team={team}
           shownName={shownName(team)}
-          teamSize={teamSize}
+          squad={squad}
           members={rosters.get(team.id) ?? team.members}
           open={isOpen(team.id)}
           candidates={unassigned}
