@@ -5,7 +5,7 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import IconLabel from "@/components/IconLabel";
 import DialogHeader from "@/components/DialogHeader";
-import TournamentSetupFields, { TOURNAMENT_PRESETS, presetOf } from "../TournamentSetupFields";
+import TournamentSetupFields, { matchShapeChoice } from "../TournamentSetupFields";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { convertTournament as texts, tournamentSetup } from "@/lib/texts";
 
@@ -28,11 +28,9 @@ export default function ConvertTournamentCard({
   } | null>(null);
 
   const asField = (value: number | null) => (value === null ? "" : String(value));
-  const currentPreset = TOURNAMENT_PRESETS.find(
-    (p) => p.value === presetOf(activity.matchShape, asField(activity.maxTeamSize)),
-  );
-  const formatLocked = activity._count.matches > 0;
-  const squadLocked = activity._count.playedMatches > 0;
+  const currentShape = matchShapeChoice(activity.matchShape);
+  const fixturesExist = activity._count.matches > 0;
+  const matchesPlayed = activity._count.playedMatches > 0;
 
   function openDialog() {
     setSetup({
@@ -89,7 +87,7 @@ export default function ConvertTournamentCard({
         </p>
         <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
           {activity.isTournament
-            ? `${currentPreset?.label ?? ""} · ${tournamentSetup.formats[activity.format ?? "KNOCKOUT"]}`
+            ? `${currentShape?.label ?? ""} · ${tournamentSetup.formats[activity.format ?? "KNOCKOUT"]}`
             : texts.hint}
         </p>
       </div>
@@ -134,8 +132,8 @@ export default function ConvertTournamentCard({
                 maxTeamSize={setup.maxTeamSize}
                 organisedByHomeVillage={setup.organisedByHomeVillage}
                 outsidePlayerLimit={setup.outsidePlayerLimit}
-                formatLocked={formatLocked}
-                squadLocked={squadLocked}
+                fixturesExist={fixturesExist}
+                matchesPlayed={matchesPlayed}
                 onMinTeamSize={(minTeamSize) => setSetup((p) => p && { ...p, minTeamSize })}
                 onMaxTeamSize={(maxTeamSize) => setSetup((p) => p && { ...p, maxTeamSize })}
                 onOrganisedByHomeVillage={(organisedByHomeVillage) =>
@@ -145,17 +143,7 @@ export default function ConvertTournamentCard({
                   setSetup((p) => p && { ...p, outsidePlayerLimit })
                 }
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
-                onPreset={(preset) =>
-                  setSetup(
-                    (p) =>
-                      p && {
-                        ...p,
-                        matchShape: preset.matchShape,
-                        minTeamSize: preset.minTeamSize,
-                        maxTeamSize: preset.maxTeamSize,
-                      },
-                  )
-                }
+                onMatchShape={(matchShape) => setSetup((p) => p && { ...p, matchShape })}
               />
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {texts.lockHint}

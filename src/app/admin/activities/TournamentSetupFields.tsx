@@ -4,45 +4,32 @@ import IconLabel from "@/components/IconLabel";
 import { tournamentSetup as texts } from "@/lib/texts";
 import type { IconName } from "@/components/Icon";
 
-export interface TournamentPreset {
-  value: string;
+export type MatchShapeValue = "FOOTBALL" | "SERIES";
+
+export interface MatchShapeChoice {
+  value: MatchShapeValue;
   label: string;
+  hint: string;
   icon: IconName;
-  matchShape: string;
-  minTeamSize: string;
-  maxTeamSize: string;
 }
 
-export const TOURNAMENT_PRESETS: TournamentPreset[] = [
+export const MATCH_SHAPES: MatchShapeChoice[] = [
   {
-    value: "football",
-    label: texts.presets.football,
+    value: "FOOTBALL",
+    label: texts.shapes.FOOTBALL,
+    hint: texts.shapeHints.FOOTBALL,
     icon: "ball",
-    matchShape: "FOOTBALL",
-    minTeamSize: "",
-    maxTeamSize: "",
   },
   {
-    value: "board",
-    label: texts.presets.board,
-    icon: "user",
-    matchShape: "SERIES",
-    minTeamSize: "1",
-    maxTeamSize: "1",
-  },
-  {
-    value: "cards",
-    label: texts.presets.cards,
-    icon: "users",
-    matchShape: "SERIES",
-    minTeamSize: "2",
-    maxTeamSize: "2",
+    value: "SERIES",
+    label: texts.shapes.SERIES,
+    hint: texts.shapeHints.SERIES,
+    icon: "dice",
   },
 ];
 
-export function presetOf(matchShape: string, maxTeamSize: string): string {
-  if (matchShape === "SERIES") return maxTeamSize === "2" ? "cards" : "board";
-  return "football";
+export function matchShapeChoice(value: string): MatchShapeChoice | undefined {
+  return MATCH_SHAPES.find((shape) => shape.value === value);
 }
 
 function NumberField({
@@ -89,10 +76,10 @@ export default function TournamentSetupFields({
   maxTeamSize,
   organisedByHomeVillage,
   outsidePlayerLimit,
-  formatLocked = false,
-  squadLocked = false,
+  fixturesExist = false,
+  matchesPlayed = false,
   onFormat,
-  onPreset,
+  onMatchShape,
   onMinTeamSize,
   onMaxTeamSize,
   onOrganisedByHomeVillage,
@@ -104,48 +91,50 @@ export default function TournamentSetupFields({
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
   outsidePlayerLimit: string;
-  formatLocked?: boolean;
-  squadLocked?: boolean;
+  fixturesExist?: boolean;
+  matchesPlayed?: boolean;
   onFormat: (format: string) => void;
-  onPreset: (preset: TournamentPreset) => void;
+  onMatchShape: (matchShape: MatchShapeValue) => void;
   onMinTeamSize: (value: string) => void;
   onMaxTeamSize: (value: string) => void;
   onOrganisedByHomeVillage: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
 }) {
-  const selected = presetOf(matchShape, maxTeamSize);
-  const presetLocked = formatLocked || squadLocked;
-
   return (
     <div className="space-y-3">
       <div>
         <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          {texts.presetHeading}
+          {texts.shapeHeading}
         </p>
         <div className="space-y-1.5">
-          {TOURNAMENT_PRESETS.map((preset) => (
+          {MATCH_SHAPES.map((shape) => (
             <label
-              key={preset.value}
-              className={`flex items-center gap-2.5 p-2.5 rounded-xl ${presetLocked ? "" : "cursor-pointer"}`}
+              key={shape.value}
+              className={`flex items-start gap-2.5 p-2.5 rounded-xl ${fixturesExist ? "" : "cursor-pointer"}`}
               style={{
-                background: selected === preset.value ? "var(--mint-100)" : "white",
+                background: matchShape === shape.value ? "var(--mint-100)" : "white",
                 border:
-                  selected === preset.value
+                  matchShape === shape.value
                     ? "1.5px solid var(--mint-500)"
                     : "1.5px solid var(--mint-100)",
-                opacity: presetLocked && selected !== preset.value ? 0.55 : 1,
+                opacity: fixturesExist && matchShape !== shape.value ? 0.55 : 1,
               }}
             >
               <input
                 type="radio"
-                name="tournament-preset"
-                checked={selected === preset.value}
-                onChange={() => onPreset(preset)}
-                disabled={presetLocked}
-                className="w-4 h-4"
+                name="tournament-match-shape"
+                checked={matchShape === shape.value}
+                onChange={() => onMatchShape(shape.value)}
+                disabled={fixturesExist}
+                className="w-4 h-4 mt-0.5"
               />
-              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                <IconLabel name={preset.icon}>{preset.label}</IconLabel>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                  <IconLabel name={shape.icon}>{shape.label}</IconLabel>
+                </span>
+                <span className="block text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                  {shape.hint}
+                </span>
               </span>
             </label>
           ))}
@@ -164,7 +153,7 @@ export default function TournamentSetupFields({
           id="tournament-format"
           value={format}
           onChange={(e) => onFormat(e.target.value)}
-          disabled={formatLocked}
+          disabled={fixturesExist}
           className="input"
         >
           <option value="KNOCKOUT">{texts.formats.KNOCKOUT}</option>
@@ -182,14 +171,14 @@ export default function TournamentSetupFields({
             label={texts.minTeamSize}
             value={minTeamSize}
             onChange={onMinTeamSize}
-            disabled={squadLocked}
+            disabled={matchesPlayed}
           />
           <NumberField
             id="tournament-max-team-size"
             label={texts.maxTeamSize}
             value={maxTeamSize}
             onChange={onMaxTeamSize}
-            disabled={squadLocked}
+            disabled={matchesPlayed}
           />
         </div>
       </div>

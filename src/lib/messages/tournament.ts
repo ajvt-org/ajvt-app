@@ -46,6 +46,7 @@ export const tournament = {
   groupsNotInKnockout: "هذه بطولة خروج المغلوب — لا يمكن إنشاء مجموعات فيها",
   teamSizeLocked: "لا يمكن تغيير حجم الفريق بعد انطلاق البطولة",
   matchShapeLocked: "لا يمكن تغيير نوع البطولة بعد إنشاء المباريات",
+  matchShapeRetired: "نوع المباراة القديم لم يعد مستعملاً، اختر مباراة كرة قدم أو سلسلة جولات",
   dayNotFound: "اليوم غير موجود",
   dayPositionInvalid: "موضع اليوم خارج جدول الأيام",
   dayHasMatches: "لهذا اليوم مباريات — انقلها أو احذفها أولاً",

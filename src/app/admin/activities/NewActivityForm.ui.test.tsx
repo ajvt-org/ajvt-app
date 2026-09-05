@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import NewActivityForm from "./NewActivityForm";
+import { tournamentSetup } from "@/lib/texts";
 
 function show() {
   cleanup();
@@ -27,7 +28,13 @@ describe("NewActivityForm", () => {
     const onCreate = show();
 
     fireEvent.click(screen.getByText("بطولة"));
-    fireEvent.click(screen.getByText("بطولة فردية"));
+    fireEvent.click(screen.getByText(tournamentSetup.shapes.SERIES));
+    fireEvent.change(screen.getByLabelText(tournamentSetup.minTeamSize), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText(tournamentSetup.maxTeamSize), {
+      target: { value: "1" },
+    });
     fireEvent.change(screen.getByLabelText("نظام البطولة"), {
       target: { value: "GROUPS_THEN_KNOCKOUT" },
     });

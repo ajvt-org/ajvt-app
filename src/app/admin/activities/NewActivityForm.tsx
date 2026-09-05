@@ -162,14 +162,7 @@ export default function NewActivityForm({
             setDraft((p) => ({ ...p, outsidePlayerLimit }))
           }
           onFormat={(format) => setDraft((p) => ({ ...p, format }))}
-          onPreset={(preset) =>
-            setDraft((p) => ({
-              ...p,
-              matchShape: preset.matchShape,
-              minTeamSize: preset.minTeamSize,
-              maxTeamSize: preset.maxTeamSize,
-            }))
-          }
+          onMatchShape={(matchShape) => setDraft((p) => ({ ...p, matchShape }))}
         />
       )}
       {draft.isVolunteer && (

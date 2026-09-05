@@ -139,11 +139,14 @@ export const activityStandingTexts = {
 } as const;
 
 export const tournamentSetup = {
-  presetHeading: "نوع البطولة",
-  presets: {
-    football: "بطولة فرق",
-    board: "بطولة فردية",
-    cards: "بطولة أزواج",
+  shapeHeading: "نوع المباراة",
+  shapes: {
+    FOOTBALL: "مباراة كرة قدم",
+    SERIES: "سلسلة جولات",
+  },
+  shapeHints: {
+    FOOTBALL: "مباراة واحدة متواصلة، بأهداف وبطاقات ورجل مباراة",
+    SERIES: "مباراة من عدة جولات، كالشطرنج والضامة والورق والبلاي ستيشن",
   },
   formatHeading: "نظام البطولة",
   formats: {

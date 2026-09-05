@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { activities, common } from "@/lib/messages";
+import { activities, common, tournament } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
 const BOTH_REQUIRED = "العنوان والوصف مطلوبان";
@@ -39,6 +39,32 @@ export function endsAfterStart(value: { startsAt?: Date | null; endsAt?: Date | 
 
 export { ORDER_INVALID as DATE_ORDER_INVALID };
 
+const MATCH_SHAPES = ["FOOTBALL", "SERIES"] as const;
+const RETIRED_MATCH_SHAPES = ["BOARD"];
+
+export type MatchShapeInput = (typeof MATCH_SHAPES)[number];
+
+function refuseMatchShape(value: unknown, ctx: z.RefinementCtx) {
+  const retired = typeof value === "string" && RETIRED_MATCH_SHAPES.includes(value);
+  ctx.addIssue({ code: "custom", message: retired ? tournament.matchShapeRetired : INVALID });
+}
+
+export const matchShapeOnCreate = z
+  .unknown()
+  .superRefine((v, ctx) => {
+    if (v === null || v === undefined) return;
+    if (!MATCH_SHAPES.includes(v as MatchShapeInput)) refuseMatchShape(v, ctx);
+  })
+  .transform((v) => (v === null || v === undefined ? null : (v as MatchShapeInput)));
+
+export const matchShapeOnUpdate = z
+  .unknown()
+  .superRefine((v, ctx) => {
+    if (v === undefined) return;
+    if (!MATCH_SHAPES.includes(v as MatchShapeInput)) refuseMatchShape(v, ctx);
+  })
+  .transform((v) => v as MatchShapeInput | undefined);
+
 export const activityCreateSchema = z
   .object({
     title: z
@@ -56,7 +82,7 @@ export const activityCreateSchema = z
     capacity: capacity.optional(),
     isTournament: z.unknown().optional(),
     format: z.enum(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"], INVALID).nullish(),
-    matchShape: z.enum(["FOOTBALL", "SERIES"], INVALID).nullish(),
+    matchShape: matchShapeOnCreate.optional(),
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
     organisedByHomeVillage: z.boolean().optional(),
