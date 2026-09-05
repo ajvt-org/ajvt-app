@@ -42,7 +42,7 @@ describe("filtering the payments list by the number that received the money", ()
   });
 
   it("finds a membership paid into that number", async () => {
-    const account = await anAccount("111111");
+    const account = await anAccount("444444");
     await aMembership(account.id);
 
     const memberships = (await proofs()).filter((row) => row.kind === "MEMBERSHIP");
@@ -52,8 +52,8 @@ describe("filtering the payments list by the number that received the money", ()
   });
 
   it("leaves it out of the numbers it was not paid into", async () => {
-    const account = await anAccount("111111");
-    const other = await anAccount("222222");
+    const account = await anAccount("444444");
+    const other = await anAccount("555555");
     await aMembership(account.id);
 
     const memberships = (await proofs()).filter((row) => row.kind === "MEMBERSHIP");
@@ -62,7 +62,7 @@ describe("filtering the payments list by the number that received the money", ()
   });
 
   it("stops counting an attributed membership as having no number", async () => {
-    const account = await anAccount("111111");
+    const account = await anAccount("444444");
     await aMembership(account.id);
 
     const memberships = (await proofs()).filter((row) => row.kind === "MEMBERSHIP");
