@@ -46,9 +46,6 @@ export default function SupportPrivacyCard({
 
   return (
     <ProfileSection icon="ban" title={texts.title}>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
       <label className="flex items-center gap-2 text-sm font-bold">
         <input
           type="checkbox"
@@ -58,6 +55,9 @@ export default function SupportPrivacyCard({
         />
         <IconLabel name="ban">{texts.checkbox}</IconLabel>
       </label>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {texts.hint}
+      </p>
       {shown !== null && (
         <Notice tone="success">
           {shown > 0 ? texts.existingEntries(shown) : texts.noExistingEntries}
