@@ -29,6 +29,13 @@ describe("Icon", () => {
     expect(svg.getAttribute("fill")).toBe("currentColor");
   });
 
+  it("fills the captain mark, which is a letterform rather than an outline", () => {
+    const svg = svgOf(render(<Icon name="captain" />).container);
+
+    expect(svg.getAttribute("fill")).toBe("currentColor");
+    expect(svg.getAttribute("stroke")).toBe("none");
+  });
+
   it("is hidden from assistive technology, since every use carries its own label", () => {
     const svg = svgOf(render(<Icon name="trophy" />).container);
 

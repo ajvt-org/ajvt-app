@@ -66,6 +66,7 @@ const PATHS = {
     "M12 21.5a5.75 5.75 0 1 0 0-11.5 5.75 5.75 0 0 0 0 11.5zM6.6 2.5h3.3l2.4 5.6-2.7 1.1zM17.4 2.5h-3.3l-2.4 5.6 2.7 1.1z",
   pin: "M12 21.5s7-5.6 7-11.5a7 7 0 1 0-14 0c0 5.9 7 11.5 7 11.5zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
   star: "M12 3.5l2.7 5.6 6.1.9-4.4 4.3 1 6.2-5.4-2.9-5.4 2.9 1-6.2L3.2 10l6.1-.9L12 3.5z",
+  captain: "M18.81 19.05A9.8 9.8 0 1 1 18.81 4.95L15.89 7.97A5.6 5.6 0 1 0 15.89 16.03z",
   hourglass: "M6 2h12M6 22h12M8 2v4l4 4 4-4V2M8 22v-4l4-4 4 4v4",
   question: "M9.2 9a3 3 0 1 1 4 2.8c-.8.3-1.2 1-1.2 1.9v.8M12 17.5v.01",
   sparkle:
@@ -84,7 +85,7 @@ const PATHS = {
 
 export type IconName = keyof typeof PATHS;
 
-const SOLID = new Set<IconName>(["whatsapp", "medal"]);
+const SOLID = new Set<IconName>(["whatsapp", "medal", "captain"]);
 
 export default function Icon({
   name,
