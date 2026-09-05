@@ -6,8 +6,15 @@ import { formatMatchTime } from "@/lib/clubTime";
 import { matchDisplay as texts } from "@/lib/texts";
 import { teamName } from "@/lib/fixtureTeams";
 import type { PublicMatch } from "./publicTypes";
+import type { EntrantKind } from "@/lib/entrant";
 
-export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
+export default function TodayBand({
+  matches,
+  entrant = "team",
+}: {
+  matches: PublicMatch[];
+  entrant?: EntrantKind;
+}) {
   return (
     <div className="space-y-2">
       <h2
@@ -30,14 +37,23 @@ export default function TodayBand({ matches }: { matches: PublicMatch[] }) {
             <MatchMeta round={match.round} venue={match.venue} tone="dark" />
           </MatchCardHead>
           <MatchTeams
-            home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
-            away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
+            home={{
+              name: teamName(match.homeTeam),
+              logo: match.homeTeam?.logo,
+              photo: match.homeTeam?.photo,
+            }}
+            away={{
+              name: teamName(match.awayTeam),
+              logo: match.awayTeam?.logo,
+              photo: match.awayTeam?.photo,
+            }}
             score={
               match.status === "PLAYED" ? { home: match.homeScore, away: match.awayScore } : null
             }
             tone="dark"
             size="lg"
             layout="stacked"
+            entrant={entrant}
           />
         </div>
       ))}

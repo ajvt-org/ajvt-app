@@ -134,6 +134,7 @@ export async function tournamentPanels(
           loggedIn={!!userId}
           myVoteByVoteId={myVoteByVoteId}
           teams={activity.teams}
+          entrant={entrant}
         />
       ),
     },

@@ -12,6 +12,7 @@ import {
 import { groupStandings } from "@/lib/standings";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
 import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/squadSize";
+import { entrantKind } from "@/lib/entrant";
 import { isFootball } from "@/lib/matchShape";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
@@ -123,6 +124,7 @@ export default function TournamentPanel({
           groups={groups}
           format={info?.format ?? null}
           matchShape={info?.matchShape ?? "FOOTBALL"}
+          entrant={entrantKind(squad)}
           matches={matches}
           suspendedIds={suspendedIds}
           mvpVoteMinutes={data.mvpVoteMinutes}

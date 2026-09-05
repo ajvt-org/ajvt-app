@@ -19,12 +19,14 @@ import ResultForm from "./ResultForm";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts, lists } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 export default function MatchCard({
   match,
   teams,
   allMatches,
   matchShape,
+  entrant = "team",
   suspendedIds,
   mvpVoteMinutes,
   onDelete,
@@ -43,6 +45,7 @@ export default function MatchCard({
   teams: Team[];
   allMatches: Match[];
   matchShape: "FOOTBALL" | "SERIES";
+  entrant?: EntrantKind;
   suspendedIds: string[];
   mvpVoteMinutes: number;
   onDelete: () => void;
@@ -90,10 +93,19 @@ export default function MatchCard({
 
       <div className="mt-2">
         <MatchTeams
-          home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
-          away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
+          home={{
+            name: teamName(match.homeTeam),
+            logo: match.homeTeam?.logo,
+            photo: match.homeTeam?.photo,
+          }}
+          away={{
+            name: teamName(match.awayTeam),
+            logo: match.awayTeam?.logo,
+            photo: match.awayTeam?.photo,
+          }}
           score={played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
+          entrant={entrant}
         />
         {priorMeetings.length > 0 && (
           <p

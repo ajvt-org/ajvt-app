@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
+import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
 import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
@@ -19,6 +20,7 @@ export default function MatchesTab({
   groups,
   format,
   matchShape,
+  entrant,
   matches,
   suspendedIds,
   mvpVoteMinutes,
@@ -29,6 +31,7 @@ export default function MatchesTab({
   groups: Group[];
   format: TournamentFormat;
   matchShape: "FOOTBALL" | "SERIES";
+  entrant: EntrantKind;
   matches: Match[];
   suspendedIds: string[];
   mvpVoteMinutes: number;
@@ -149,6 +152,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 matchShape={matchShape}
+                entrant={entrant}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}
@@ -186,6 +190,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 matchShape={matchShape}
+                entrant={entrant}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
                 onDelete={() => deleteMatch(m.id)}

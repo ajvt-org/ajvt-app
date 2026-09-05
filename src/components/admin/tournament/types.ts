@@ -84,8 +84,8 @@ export interface MvpVote {
 
 export interface Match {
   id: string;
-  homeTeam: { id: string; name: string; logo: string | null } | null;
-  awayTeam: { id: string; name: string; logo: string | null } | null;
+  homeTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  awayTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;
