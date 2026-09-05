@@ -24,6 +24,7 @@ export interface Team {
   id: string;
   name: string;
   autoNamed: boolean;
+  fromTaguilalett: boolean;
   logo: string | null;
   captainUserId: string | null;
   groupId: string | null;

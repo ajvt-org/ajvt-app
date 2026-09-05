@@ -16,6 +16,7 @@ function team(members: TeamMemberEntry[], captainUserId: string | null = null): 
     id: "team-1",
     name: "فريق النجم",
     autoNamed: false,
+    fromTaguilalett: true,
     logo: null,
     captainUserId,
     groupId: null,
@@ -33,6 +34,7 @@ const handlers = {
   onAddMember: vi.fn(),
   onApproveMember: vi.fn(),
   onRemoveMember: vi.fn(),
+  onSetFromTaguilalett: vi.fn(),
 };
 
 function show(
@@ -47,6 +49,7 @@ function show(
       team={team(members, captainUserId)}
       shownName="فريق النجم"
       squad={squad}
+      askVillage={false}
       members={members}
       open={open}
       candidates={[]}
@@ -127,6 +130,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         squad={{ min: 1, max: 1 }}
+        askVillage={false}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
@@ -147,6 +151,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         squad={{ min: 1, max: 1 }}
+        askVillage={false}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}
@@ -258,6 +263,7 @@ describe("TeamCard", () => {
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق الحسن احمدو يحي البناني للشباب"
         squad={{ min: 1, max: 1 }}
+        askVillage={false}
         members={[entry("p1", "أحمد ولد محمد")]}
         open
         candidates={[]}

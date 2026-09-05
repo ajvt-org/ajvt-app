@@ -105,6 +105,7 @@ export default function TournamentPanel({
             activityId={activityId}
             teams={teams}
             squad={squad}
+            askVillage={info?.organisedByTaguilalett ?? false}
             roster={roster}
             suspendedIds={suspendedIds}
             onChange={reloadSquads}

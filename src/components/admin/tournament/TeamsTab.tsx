@@ -20,6 +20,7 @@ export default function TeamsTab({
   activityId,
   teams,
   squad,
+  askVillage,
   roster,
   suspendedIds,
   onChange,
@@ -27,6 +28,7 @@ export default function TeamsTab({
   activityId: string;
   teams: Team[];
   squad: SquadSize;
+  askVillage: boolean;
   roster: RosterMember[];
   suspendedIds: string[];
   onChange: () => void;
@@ -80,6 +82,10 @@ export default function TeamsTab({
     } finally {
       setLoadingAction(false);
     }
+  }
+
+  function setFromTaguilalett(teamId: string, fromTaguilalett: boolean) {
+    run(() => api.patch(`/api/admin/teams/${teamId}`, { fromTaguilalett }));
   }
 
   function renameTeam(teamId: string, name: string) {
@@ -159,6 +165,7 @@ export default function TeamsTab({
           team={team}
           shownName={shownName(team)}
           squad={squad}
+          askVillage={askVillage}
           members={rosters.get(team.id) ?? team.members}
           open={isOpen(team.id)}
           candidates={unassigned}
@@ -168,6 +175,7 @@ export default function TeamsTab({
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
+          onSetFromTaguilalett={(value) => setFromTaguilalett(team.id, value)}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
           onAddMember={(userId) => addMember(team.id, userId)}
           onApproveMember={(memberId) => approveMember(team.id, memberId)}

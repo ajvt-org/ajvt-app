@@ -11,7 +11,7 @@ export const PATCH = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
     const { teamId } = await params;
     const session = await requireTeamAccess(teamId);
-    const { name, groupId, logo, captainUserId } = await req.json();
+    const { name, groupId, logo, captainUserId, fromTaguilalett } = await req.json();
 
     const existing = await prisma.team.findUnique({ where: { id: teamId } });
     if (!existing) {
@@ -23,6 +23,7 @@ export const PATCH = withRoute(
       groupId?: string | null;
       logo?: string | null;
       captainUserId?: string | null;
+      fromTaguilalett?: boolean;
     } = {};
 
     if (name !== undefined) {
@@ -71,6 +72,9 @@ export const PATCH = withRoute(
       }
       data.captainUserId = nextCaptain;
     }
+    if (fromTaguilalett !== undefined) {
+      data.fromTaguilalett = !!fromTaguilalett;
+    }
 
     const team = await prisma.team.update({ where: { id: teamId }, data });
     await logAction(session.username, "UPDATE_TEAM", team.name, {
@@ -83,6 +87,7 @@ export const PATCH = withRoute(
         groupId: team.groupId,
         logo: team.logo,
         captainUserId: team.captainUserId,
+        fromTaguilalett: team.fromTaguilalett,
       },
     });
 

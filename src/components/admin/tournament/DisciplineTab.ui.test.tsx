@@ -20,6 +20,7 @@ const TEAM: Team = {
   id: "t1",
   name: "الصقور",
   autoNamed: false,
+  fromTaguilalett: true,
   logo: null,
   captainUserId: null,
   groupId: null,
