@@ -34,9 +34,11 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   } = parse(memberSubmissionSchema(membershipFee, methodNames(payable)), await req.json());
 
   const chosen = payable.find((method) => method.name === paymentMethod);
-  if (declared && !accountIsOpenOn(chosen, declared)) {
-    throw new ValidationError(money.paymentAccountInvalid);
-  }
+  const requireUsableAccount = (held: string | null) => {
+    if (declared && declared !== held && !accountIsOpenOn(chosen, declared)) {
+      throw new ValidationError(money.paymentAccountInvalid);
+    }
+  };
   const accountId = declared || null;
   const bankReference = readBankReference(typed) || null;
 
@@ -59,6 +61,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     if (current.status === "ACTIVE") {
       throw new ConflictError(members.alreadyAccepted);
     }
+    requireUsableAccount(current.accountId);
 
     await prisma.$transaction(async (tx) => {
       await saveMembershipYear(tx, session.userId, current.year, {
@@ -84,6 +87,8 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   if (person.memberships.length) {
     throw new ConflictError(members.alreadyHasRequest);
   }
+
+  requireUsableAccount(null);
 
   let code: string | null = referenceCode || null;
 

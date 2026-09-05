@@ -115,6 +115,48 @@ describe("the account a member says they paid into", () => {
     expect((await submitWith(PAYABLE, "not-an-account")).status).toBe(400);
     expect(await prisma.membership.count()).toBe(0);
   });
+
+  it("is kept when the member edits a request and the number has since closed", async () => {
+    const account = await openAccountOn(PAYABLE);
+    await prisma.paymentAccount.create({
+      data: { methodId: account.methodId, code: "888888", position: 2 },
+    });
+    const created = await submitWith(PAYABLE, account.id);
+    const { id } = await created.json();
+    await prisma.paymentAccount.update({
+      where: { id: account.id },
+      data: { closedAt: new Date(), active: false },
+    });
+
+    const res = await REGISTER(
+      post("/api/members", {
+        ...submission,
+        id,
+        paymentMethod: PAYABLE,
+        accountId: account.id,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await prisma.membership.findFirstOrThrow({ where: { userId: id } })).accountId).toBe(
+      account.id,
+    );
+  });
+
+  it("is still refused when a member edits onto a number they never held", async () => {
+    const account = await openAccountOn(PAYABLE);
+    const closed = await prisma.paymentAccount.create({
+      data: { methodId: account.methodId, code: "888888", position: 2, closedAt: new Date() },
+    });
+    const created = await submitWith(PAYABLE, account.id);
+    const { id } = await created.json();
+
+    const res = await REGISTER(
+      post("/api/members", { ...submission, id, paymentMethod: PAYABLE, accountId: closed.id }),
+    );
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("the transaction number a member copies off their receipt", () => {
