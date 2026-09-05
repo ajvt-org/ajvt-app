@@ -46,7 +46,7 @@ export default function BracketSide({
             logo={team.logo}
             photo={team.photo}
             name={team.name}
-            size={16}
+            size={20}
             entrant={entrant}
           />
         ) : (

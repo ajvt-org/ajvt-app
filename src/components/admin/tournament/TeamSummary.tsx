@@ -56,7 +56,7 @@ export default function TeamSummary({
     >
       <div className="flex items-start gap-2">
         <span className="summary-logo h-6 flex items-center shrink-0">
-          <TeamLogo logo={team.logo} name={shownName} size={32} />
+          <TeamLogo logo={team.logo} name={shownName} size={36} />
         </span>
         <p
           className="min-w-0 flex-1 font-black text-base leading-6 optical-name"
