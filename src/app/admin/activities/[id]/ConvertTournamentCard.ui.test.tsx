@@ -66,7 +66,13 @@ describe("ConvertTournamentCard", () => {
     fireEvent.click(screen.getByText("تحويل إلى بطولة"));
     expect(patch).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText("بطولة أزواج"));
+    fireEvent.click(screen.getByText(tournamentSetup.shapes.SERIES));
+    fireEvent.change(screen.getByLabelText(tournamentSetup.minTeamSize), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText(tournamentSetup.maxTeamSize), {
+      target: { value: "2" },
+    });
     fireEvent.click(screen.getAllByRole("button", { name: "تحويل إلى بطولة" })[1]);
 
     await waitFor(() =>
@@ -86,7 +92,13 @@ describe("ConvertTournamentCard", () => {
     show(true);
 
     fireEvent.click(screen.getByText("تعديل الإعدادات"));
-    fireEvent.click(screen.getByText("بطولة فردية"));
+    fireEvent.click(screen.getByText(tournamentSetup.shapes.SERIES));
+    fireEvent.change(screen.getByLabelText(tournamentSetup.minTeamSize), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText(tournamentSetup.maxTeamSize), {
+      target: { value: "1" },
+    });
     fireEvent.click(screen.getByText("حفظ الإعدادات"));
 
     await waitFor(() =>

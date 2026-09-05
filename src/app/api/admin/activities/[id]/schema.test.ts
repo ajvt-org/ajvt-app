@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parse } from "@/lib/validation";
 import { rejectionOf } from "@tests/schema";
 import { activityUpdateSchema } from "./schema";
+import { tournament } from "@/lib/messages";
 
 describe("activityUpdateSchema", () => {
   it("accepts an empty patch, since every field is optional", () => {
@@ -48,5 +49,22 @@ describe("activityUpdateSchema", () => {
     expect(parse(activityUpdateSchema, { showScorersAndCards: false }).showScorersAndCards).toBe(
       false,
     );
+  });
+});
+
+describe("the match shape on an activity patch", () => {
+  it("takes either shape", () => {
+    expect(parse(activityUpdateSchema, { matchShape: "FOOTBALL" }).matchShape).toBe("FOOTBALL");
+    expect(parse(activityUpdateSchema, { matchShape: "SERIES" }).matchShape).toBe("SERIES");
+  });
+
+  it("says why the retired value is refused rather than failing to parse", () => {
+    expect(rejectionOf(activityUpdateSchema, { matchShape: "BOARD" })).toBe(
+      tournament.matchShapeRetired,
+    );
+  });
+
+  it("refuses a shape with no value at all", () => {
+    expect(rejectionOf(activityUpdateSchema, { matchShape: null })).toBeTruthy();
   });
 });
