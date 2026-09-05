@@ -104,12 +104,12 @@ describe("a bracket whose first round is waiting", () => {
     expect(screen.queryByText(texts.nextRound)).toBeNull();
   });
 
-  it("says the drawn fixtures are waiting for the group tables, not that the knockout is still to come", () => {
+  it("leaves a drawn bracket to speak for itself while the group tables are open", () => {
     show([match({ id: "l1" }), ...waitingBracket], "GROUPS_THEN_KNOCKOUT");
 
-    expect(screen.getByText(new RegExp(texts.bracketWaitingHint))).toBeDefined();
     expect(screen.queryByText(new RegExp(texts.knockoutLockedHint))).toBeNull();
     expect(screen.queryByText(texts.suggestionValidate)).toBeNull();
+    expect(screen.queryByText(texts.draw)).toBeNull();
   });
 
   it("swaps the draw for a redo once the first round is filled", () => {
@@ -133,7 +133,6 @@ describe("a bracket that has not been drawn at all", () => {
     show([match({ id: "l1" })], "GROUPS_THEN_KNOCKOUT");
 
     expect(screen.getByText(new RegExp(texts.knockoutLockedHint))).toBeDefined();
-    expect(screen.queryByText(new RegExp(texts.bracketWaitingHint))).toBeNull();
   });
 
   it("offers the draw instead of the hint once the group stage is over", () => {
