@@ -230,4 +230,50 @@ describe("changing a number an admin already added", () => {
     const rows = await listed(method.id);
     expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
   });
+
+  it("counts a donation once, not once more for its mirror", async () => {
+    const { method, account } = await anAccount();
+    const donation = await prisma.donation.create({
+      data: { amount: 100, status: "ACTIVE", source: "PUBLIC", accountId: account.id },
+    });
+    await prisma.payment.create({
+      data: { id: donation.id, purpose: "DONATION", amount: 100, accountId: account.id },
+    });
+
+    const rows = await listed(method.id);
+
+    expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
+  });
+
+  it("counts a membership once, not once more for its mirror", async () => {
+    const { method, account } = await anAccount();
+    const user = await prisma.user.create({ data: { fullName: "عضو" } });
+    await prisma.membership.create({
+      data: { userId: user.id, year: 2026, status: "ACTIVE", accountId: account.id },
+    });
+    await prisma.payment.create({
+      data: {
+        purpose: "MEMBERSHIP",
+        amount: 2000,
+        year: 2026,
+        userId: user.id,
+        accountId: account.id,
+      },
+    });
+
+    const rows = await listed(method.id);
+
+    expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
+  });
+
+  it("still counts what an expense took out of a number", async () => {
+    const { method, account } = await anAccount();
+    await prisma.expense.create({
+      data: { label: "كرات", amount: 100, accountId: account.id, createdBy: "admin" },
+    });
+
+    const rows = await listed(method.id);
+
+    expect(rows.find((row) => row.id === account.id)?.used).toBe(1);
+  });
 });

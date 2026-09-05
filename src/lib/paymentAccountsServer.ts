@@ -16,13 +16,11 @@ export async function accountsOf(methodId: string) {
 }
 
 export async function accountUsage(): Promise<AccountUsage[]> {
-  const [expenses, payments, donations, memberships] = await Promise.all([
+  const [expenses, payments] = await Promise.all([
     prisma.expense.groupBy({ by: ["accountId"], _count: { _all: true } }),
     prisma.payment.groupBy({ by: ["accountId"], _count: { _all: true } }),
-    prisma.donation.groupBy({ by: ["accountId"], _count: { _all: true } }),
-    prisma.membership.groupBy({ by: ["accountId"], _count: { _all: true } }),
   ]);
-  return [...expenses, ...payments, ...donations, ...memberships].map((row) => ({
+  return [...expenses, ...payments].map((row) => ({
     accountId: row.accountId,
     count: row._count._all,
   }));
