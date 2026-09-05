@@ -4,7 +4,7 @@ import { requireAdminRole } from "@/lib/auth";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { paymentAccounts as messages } from "@/lib/messages";
-import { readName, swappedAccountPositions } from "@/lib/paymentMethodAdmin";
+import { openAccountRows, readName, swappedAccountPositions } from "@/lib/paymentMethodAdmin";
 import { accountsOf } from "@/lib/paymentAccountsServer";
 
 const MAX = 30;
@@ -24,7 +24,11 @@ export const PATCH = withRoute(
     if (!existing) return NextResponse.json({ error: messages.notFound }, { status: 404 });
 
     if (body.move === "up" || body.move === "down") {
-      const pair = swappedAccountPositions(await accountsOf(id), accountId, body.move);
+      const pair = swappedAccountPositions(
+        openAccountRows(await accountsOf(id)),
+        accountId,
+        body.move,
+      );
       if (!pair) return NextResponse.json({ account: existing });
       const [mine, other] = pair;
       await prisma.$transaction([
