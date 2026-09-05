@@ -64,28 +64,21 @@ export default function RosterRow({
       }}
     >
       <div className="min-w-0 grow basis-40 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <div className="min-w-0 flex items-start gap-2">
-          <Link
-            href={memberCardHref(member.id, from)}
-            aria-label={teamsTab.openCardOf(member.fullName)}
-            className="flex items-start gap-2 min-w-0 text-start"
+        <Link
+          href={memberCardHref(member.id, from)}
+          aria-label={teamsTab.openCardOf(member.fullName)}
+          className="flex items-start gap-2 min-w-0 text-start"
+        >
+          <span className="h-6 flex items-center shrink-0">
+            <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
+          </span>
+          <span
+            className="text-base font-bold leading-6 optical-name"
+            style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
           >
-            <span className="h-6 flex items-center shrink-0">
-              <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
-            </span>
-            <span
-              className="text-base font-bold leading-6 optical-name"
-              style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
-            >
-              {member.fullName}
-            </span>
-          </Link>
-          {captain && (
-            <span className="h-6 flex items-center shrink-0" aria-hidden>
-              <Icon name="captain" size={16} className="icon-optical" color="var(--copper-700)" />
-            </span>
-          )}
-        </div>
+            {member.fullName}
+          </span>
+        </Link>
         {pending && (
           <span className="badge badge-pending">
             <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
