@@ -43,13 +43,25 @@ describe("RosterRow", () => {
     expect(name.style.overflowWrap).toBe("anywhere");
   });
 
-  it("labels the toggle on screen and leaves the destructive one to its icon", () => {
+  it("names both actions without printing a word on either", () => {
     show(entry(LONG_NAME));
 
-    expect(screen.getByText("تعيين قائداً")).toBeDefined();
+    const toggle = screen.getByRole("button", { name: `اجعل ${LONG_NAME} قائد الفريق` });
+    expect(toggle.textContent).toBe("");
+    expect(toggle.getAttribute("title")).toBe(`اجعل ${LONG_NAME} قائد الفريق`);
     expect(screen.queryByText("إزالة")).toBeNull();
-    expect(screen.getByLabelText(`اجعل ${LONG_NAME} قائد الفريق`)).toBeDefined();
     expect(screen.getByLabelText(`إزالة ${LONG_NAME}`)).toBeDefined();
+  });
+
+  it("tells the two captain states apart by hue and by weight, not by a shade", () => {
+    const off = show(entry(LONG_NAME)).querySelector("button") as HTMLElement;
+    const offBackground = off.style.background;
+    const offColor = off.style.color;
+    const on = show(entry(LONG_NAME), { captain: true }).querySelector("button") as HTMLElement;
+
+    expect(offBackground).toContain("mint");
+    expect(on.style.background).toContain("copper");
+    expect(on.style.color).not.toBe(offColor);
   });
 
   it("gives the two actions different shapes, not just different tints", () => {
@@ -85,10 +97,9 @@ describe("RosterRow", () => {
   it("says what the captain button will do next", () => {
     show(entry(LONG_NAME), { captain: true });
 
-    expect(screen.getByText("إلغاء القيادة")).toBeDefined();
-    expect(
-      screen.getByLabelText(`إلغاء قيادة ${LONG_NAME} للفريق`).getAttribute("aria-pressed"),
-    ).toBe("true");
+    const toggle = screen.getByRole("button", { name: `إلغاء قيادة ${LONG_NAME} للفريق` });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(toggle.getAttribute("title")).toBe(`إلغاء قيادة ${LONG_NAME} للفريق`);
   });
 
   it("marks a captain with a colour on the row and no word", () => {
@@ -113,7 +124,7 @@ describe("RosterRow", () => {
     const container = show(entry(LONG_NAME, "PENDING"));
 
     const actions = [...container.querySelectorAll("button")];
-    expect(actions.map((b) => b.textContent)).toEqual(["قبول", "تعيين قائداً", ""]);
+    expect(actions.map((b) => b.textContent)).toEqual(["قبول", "", ""]);
     for (const action of actions) expect(action.className).not.toContain("ms-auto");
     expect(actions[2].style.background).not.toBe(actions[0].style.background);
     expect(actions[2].style.background).not.toBe(actions[1].style.background);

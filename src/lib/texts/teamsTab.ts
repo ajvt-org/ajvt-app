@@ -23,8 +23,6 @@ export const teamsTab = {
   awaitingCount: (count: number) => `${count} بانتظار الموافقة`,
   makeCaptain: (name: string) => `اجعل ${name} قائد الفريق`,
   clearCaptain: (name: string) => `إلغاء قيادة ${name} للفريق`,
-  makeCaptainAction: "تعيين قائداً",
-  clearCaptainAction: "إلغاء القيادة",
   noPlayers: "لا يوجد لاعبون بعد",
   awaitingApproval: "بانتظار الموافقة",
   accept: ACCEPT,
