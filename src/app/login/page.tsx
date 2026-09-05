@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
 import { backFromNext } from "@/lib/authPaths";
+import { withFrom } from "@/lib/backLink";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import PageHeader from "@/components/PageHeader";
@@ -23,6 +24,8 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const here = query ? `/login?${query}` : "/login";
   const [form, setForm] = useState({ phone: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -132,7 +135,11 @@ function LoginForm() {
 
         <p className="text-center text-sm fade-up delay-2" style={{ color: "var(--text-muted)" }}>
           ليس لديك حساب؟{" "}
-          <Link href="/register" className="font-bold" style={{ color: "var(--mint-600)" }}>
+          <Link
+            href={withFrom("/register", here)}
+            className="font-bold"
+            style={{ color: "var(--mint-600)" }}
+          >
             إنشاء حساب
           </Link>
         </p>

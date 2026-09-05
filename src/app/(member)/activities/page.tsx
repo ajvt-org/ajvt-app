@@ -31,6 +31,7 @@ export default async function ActivitiesPage() {
       <PageHeader title={texts.pageTitle} />
       <LandingActivities
         heading={false}
+        from="/activities"
         activities={sortActivities(
           rows.map((a) => ({ ...a, ...matchStanding(a.matches, a.isTournament) })),
         ).map((a) => ({
