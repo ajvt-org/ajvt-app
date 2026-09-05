@@ -74,17 +74,16 @@ describe("TeamCard", () => {
     for (const fn of Object.values(handlers)) fn.mockReset();
   });
 
-  it("counts the roster against the required size", () => {
-    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], { min: 4, max: 4 });
+  it("counts the roster on its own, whether or not the tournament sets a size", () => {
+    const players = [entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")];
 
-    expect(screen.getByText("2 / 4")).toBeDefined();
-  });
-
-  it("counts the roster on its own when the tournament sets no size", () => {
-    show([entry("p1", "أحمد ولد محمد"), entry("p2", "بابا ولد سيدي")], { min: null, max: null });
-
-    expect(screen.queryByText(/\//)).toBeNull();
+    show(players, { min: 4, max: 4 });
     expect(screen.getByText("لاعبان")).toBeDefined();
+    expect(screen.queryByText(/\//)).toBeNull();
+
+    show(players, { min: null, max: null });
+    expect(screen.getByText("لاعبان")).toBeDefined();
+    expect(screen.queryByText(/\//)).toBeNull();
   });
 
   it("names every player on the roster", () => {
@@ -235,7 +234,7 @@ describe("TeamCard", () => {
     show([], { min: 4, max: 4 });
 
     expect(screen.getByText("لا يوجد لاعبون بعد")).toBeDefined();
-    expect(screen.getByText("0 / 4")).toBeDefined();
+    expect(screen.getByText("0 لاعب")).toBeDefined();
   });
 
   it("shows open or closed as it is told, and asks to be toggled", () => {
@@ -257,7 +256,7 @@ describe("TeamCard", () => {
 
     const summary = document.querySelector("summary") as HTMLElement;
     expect(summary.textContent).toContain("فريق النجم");
-    expect(summary.textContent).toContain("2 / 4");
+    expect(summary.textContent).toContain("لاعبان");
     expect(summary.textContent).toContain("1 بانتظار الموافقة");
     expect(summary.querySelector('[aria-label="حذف الفريق"]')).not.toBeNull();
   });

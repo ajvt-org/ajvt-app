@@ -5,7 +5,7 @@ import IconLabel from "@/components/IconLabel";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
-import { rosterFault, squadLabel, type SquadSize } from "@/lib/teamSize";
+import { rosterFault, type SquadSize } from "@/lib/teamSize";
 import type { SquadBreach } from "@/lib/squadRules";
 
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
@@ -44,7 +44,6 @@ export default function TeamSummary({
   const count = team.members.length;
   const awaiting = team.members.filter((m) => m.status === "PENDING").length;
   const tone = rosterTone(count, squad);
-  const label = squadLabel(squad);
 
   return (
     <summary
@@ -85,9 +84,7 @@ export default function TeamSummary({
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="badge" style={tone}>
-          <IconLabel name="users">
-            {label === null ? teamsTab.rosterCount(count) : teamsTab.rosterOf(count, label)}
-          </IconLabel>
+          <IconLabel name="users">{teamsTab.rosterCount(count)}</IconLabel>
         </span>
         {awaiting > 0 && (
           <span className="badge badge-pending">

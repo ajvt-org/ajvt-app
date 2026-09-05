@@ -2,12 +2,16 @@ import { describe, it, expect } from "vitest";
 import { teamsTab } from "./teamsTab";
 
 describe("teams tab texts", () => {
-  it("counts the roster against the size the tournament asks for", () => {
-    expect(teamsTab.rosterOf(3, "5")).toBe("3 / 5");
+  it("counts the teams", () => {
     expect(teamsTab.teamCount(4)).toContain("4");
   });
 
-  it("counts the players on their own when no size is set", () => {
+  it("states the squad the tournament asks for as one range", () => {
+    expect(teamsTab.squadSize("16-22")).toBe("حجم الفريق 16-22");
+    expect(teamsTab.squadSize("11")).toBe("حجم الفريق 11");
+  });
+
+  it("counts the players of a team", () => {
     expect(teamsTab.rosterCount(1)).toBe("لاعب واحد");
     expect(teamsTab.rosterCount(2)).toBe("لاعبان");
     expect(teamsTab.rosterCount(5)).toBe("5 لاعبين");
