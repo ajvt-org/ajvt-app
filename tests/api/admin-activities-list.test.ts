@@ -64,4 +64,29 @@ describe("the activities the admin list is built from", () => {
 
     expect(row.unplayedMatches).toBe(1);
   });
+
+  it("names the round a half played bracket is waiting on", async () => {
+    const activity = await prisma.activity.create({
+      data: { title: "بطولة", description: "وصف", isTournament: true },
+    });
+    const home = await prisma.team.create({ data: { activityId: activity.id, name: "أ" } });
+    const away = await prisma.team.create({ data: { activityId: activity.id, name: "ب" } });
+    const fixture = (bracketRound: number, status: "SCHEDULED" | "PLAYED") => ({
+      activityId: activity.id,
+      homeTeamId: home.id,
+      awayTeamId: away.id,
+      isKnockout: true,
+      bracketRound,
+      status,
+    });
+    await prisma.match.create({ data: fixture(1, "PLAYED") });
+    await prisma.match.create({ data: fixture(1, "PLAYED") });
+    await prisma.match.create({ data: fixture(2, "PLAYED") });
+    await prisma.match.create({ data: fixture(2, "SCHEDULED") });
+
+    const body = await (await LIST(get("/api/admin/activities"))).json();
+    const row = body.activities.find((a: { id: string }) => a.id === activity.id);
+
+    expect(row.awaitingStage).toEqual({ kind: "knockout", roundSize: 2 });
+  });
 });

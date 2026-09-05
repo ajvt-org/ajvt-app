@@ -43,7 +43,21 @@ describe("activityStanding", () => {
   it("keeps a tournament out of finished while a match is still to play", () => {
     expect(
       activityStanding({ startsAt: day(-6), endsAt: day(-1), unplayedMatches: 2 }, NOW),
-    ).toEqual({ state: "awaiting", unplayed: 2 });
+    ).toEqual({ state: "awaiting", unplayed: 2, stage: null });
+  });
+
+  it("carries the stage the tournament is waiting on", () => {
+    expect(
+      activityStanding(
+        {
+          startsAt: day(-6),
+          endsAt: day(-1),
+          unplayedMatches: 2,
+          awaitingStage: { kind: "knockout", roundSize: 2 },
+        },
+        NOW,
+      ),
+    ).toEqual({ state: "awaiting", unplayed: 2, stage: { kind: "knockout", roundSize: 2 } });
   });
 
   it("finishes it once nothing is left to play", () => {
