@@ -25,6 +25,7 @@ export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
 export { adminShell, adminTabs } from "./adminNav";
 export { adminTools } from "./adminTools";
+export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
