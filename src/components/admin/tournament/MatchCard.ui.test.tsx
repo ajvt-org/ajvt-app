@@ -169,7 +169,7 @@ describe("a fixture whose teams are not known yet", () => {
   });
 });
 
-describe("MatchCard by sport matchShape", () => {
+describe("MatchCard by match shape", () => {
   it("shows the whole football apparatus for a football match", () => {
     show("FOOTBALL");
 
@@ -203,10 +203,11 @@ describe("MatchCard by sport matchShape", () => {
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 
-  it("keeps card entry out of a series result form", () => {
+  it("offers no result entry at all on a series match, and says why", () => {
     show("SERIES", true);
 
     expect(screen.queryByText(texts.addCard)).toBeNull();
-    expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
+    expect(screen.queryByText(/حفظ النتيجة/)).toBeNull();
+    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });

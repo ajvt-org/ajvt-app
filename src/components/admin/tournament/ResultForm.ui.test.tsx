@@ -158,7 +158,7 @@ describe("ResultForm as goal events", () => {
     expect(body.homeScore).toBeUndefined();
   });
 
-  it("keeps the plain score form for a series match", () => {
+  it("asks a series match for nothing, and says the entry is still coming", () => {
     render(
       <ResultForm
         match={MATCH}
@@ -170,7 +170,9 @@ describe("ResultForm as goal events", () => {
     );
 
     expect(screen.queryByText("الأهداف")).toBeNull();
-    expect(screen.getAllByRole("spinbutton").length).toBe(2);
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });
 
