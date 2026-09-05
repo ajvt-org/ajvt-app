@@ -18,9 +18,9 @@ export interface SeededPaymentAccount {
 }
 
 export const INITIAL_PAYMENT_ACCOUNTS: readonly SeededPaymentAccount[] = [
-  { method: "بنكيلي", code: "027217", position: 1 },
-  { method: "السداد", code: "08493", position: 1 },
-  { method: "مصرفي", code: "037940", position: 1 },
+  { method: "بنكيلي", code: "111111", position: 1 },
+  { method: "السداد", code: "22222", position: 1 },
+  { method: "مصرفي", code: "333333", position: 1 },
 ] as const;
 
 export interface PaymentMethodOption {

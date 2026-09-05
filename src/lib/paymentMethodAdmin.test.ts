@@ -194,7 +194,7 @@ describe("moving a number within its method", () => {
 
 describe("reading a number an admin typed", () => {
   it("drops the spaces they may have grouped it with", () => {
-    expect(readCode(" 027 217 ")).toBe("027217");
+    expect(readCode(" 111 111 ")).toBe("111111");
   });
 
   it("reads nothing from anything that is not text", () => {
