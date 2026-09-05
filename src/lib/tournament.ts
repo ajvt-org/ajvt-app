@@ -234,8 +234,9 @@ export interface BracketMatchInput {
 }
 
 export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
-  if (m.homeTeamId === null || m.awayTeamId === null) return null;
-  if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) return null;
+  if (m.status !== "PLAYED") return null;
+  if (m.homeTeamId === null || m.awayTeamId === null) return m.homeTeamId ?? m.awayTeamId;
+  if (m.homeScore === null || m.awayScore === null) return null;
   if (m.homeScore > m.awayScore) return m.homeTeamId;
   if (m.awayScore > m.homeScore) return m.awayTeamId;
   if (m.homePenalties !== null && m.awayPenalties !== null && m.homePenalties !== m.awayPenalties) {
