@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HOME_VILLAGE, OTHER_VILLAGE } from "@/lib/villages";
 import { photoUpload, signUp } from "@/lib/texts";
+import { DRAFT_KEY } from "./draft";
 import RegisterPage from "./page";
 
 const push = vi.fn();
@@ -147,5 +148,68 @@ describe("signing up", () => {
 
     expect(screen.getByText(signUp.photoLabel)).toBeTruthy();
     expect(screen.queryByText(photoUpload.addHint)).toBeNull();
+  });
+
+  it("brings back what was typed when the reader comes back to the form", async () => {
+    mockFetch();
+    const { unmount } = render(<RegisterPage />);
+    await userEvent.type(screen.getByLabelText(/رقم الهاتف/), "22119911");
+    await waitFor(() => expect(sessionStorage.getItem(DRAFT_KEY)).not.toBeNull());
+    unmount();
+
+    render(<RegisterPage />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/رقم الهاتف/)).toHaveProperty("value", "22119911"),
+    );
+  });
+
+  it("never keeps the password, so it has to be typed again", async () => {
+    mockFetch();
+    const { unmount } = render(<RegisterPage />);
+    await userEvent.type(screen.getByLabelText(/رقم الهاتف/), "22119911");
+    await userEvent.type(screen.getByLabelText(/^كلمة المرور/), "secret12");
+    await userEvent.type(screen.getByLabelText(/تأكيد كلمة المرور/), "secret12");
+    await waitFor(() => expect(sessionStorage.getItem(DRAFT_KEY)).toContain("22119911"));
+
+    expect(sessionStorage.getItem(DRAFT_KEY)).not.toContain("secret12");
+
+    unmount();
+    render(<RegisterPage />);
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/رقم الهاتف/)).toHaveProperty("value", "22119911"),
+    );
+    expect(screen.getByLabelText(/^كلمة المرور/)).toHaveProperty("value", "");
+  });
+
+  it("brings back the person step answers too", async () => {
+    mockFetch();
+    const { unmount } = render(<RegisterPage />);
+    await reachPersonStep();
+    await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
+    await userEvent.type(screen.getByLabelText(/الاسم الكامل/), "محمد");
+    await waitFor(() => expect(sessionStorage.getItem(DRAFT_KEY)).toContain("محمد"));
+    unmount();
+
+    render(<RegisterPage />);
+    await reachPersonStep();
+
+    await waitFor(() =>
+      expect(screen.getByLabelText(/الاسم الكامل/)).toHaveProperty("value", "محمد"),
+    );
+  });
+
+  it("drops the draft once the account exists", async () => {
+    mockFetch();
+    render(<RegisterPage />);
+    await reachPersonStep();
+    await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
+    await userEvent.type(screen.getByLabelText(/الاسم الكامل/), "محمد");
+    await userEvent.selectOptions(screen.getByLabelText(/العصر/), "البدريين");
+    await userEvent.click(screen.getByRole("button", { name: signUp.submit }));
+
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(sessionStorage.getItem(DRAFT_KEY)).toBeNull();
   });
 });
