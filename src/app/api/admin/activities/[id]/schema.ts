@@ -44,6 +44,8 @@ export const activityUpdateSchema = z
     redBanMatches: z.number().int().min(1).max(10).optional(),
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
+    organisedByTaguilalett: z.boolean().optional(),
+    outsidePlayerLimit: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     published: z.unknown().optional(),
     settlePending: z.enum(["accept", "reject"], INVALID).optional(),

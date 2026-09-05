@@ -23,6 +23,8 @@ export default function ConvertTournamentCard({
     profile: string;
     minTeamSize: string;
     maxTeamSize: string;
+    organisedByTaguilalett: boolean;
+    outsidePlayerLimit: string;
   } | null>(null);
 
   const asField = (value: number | null) => (value === null ? "" : String(value));
@@ -36,6 +38,8 @@ export default function ConvertTournamentCard({
       profile: activity.profile,
       minTeamSize: asField(activity.minTeamSize),
       maxTeamSize: asField(activity.maxTeamSize),
+      organisedByTaguilalett: activity.organisedByTaguilalett,
+      outsidePlayerLimit: asField(activity.outsidePlayerLimit),
     });
   }
 
@@ -49,6 +53,8 @@ export default function ConvertTournamentCard({
         profile: setup.profile,
         minTeamSize: setup.minTeamSize,
         maxTeamSize: setup.maxTeamSize,
+        organisedByTaguilalett: setup.organisedByTaguilalett,
+        outsidePlayerLimit: setup.outsidePlayerLimit,
       });
       setSetup(null);
       await onChanged();
@@ -122,7 +128,18 @@ export default function ConvertTournamentCard({
               <TournamentSetupFields
                 format={setup.format}
                 profile={setup.profile}
+                minTeamSize={setup.minTeamSize}
                 maxTeamSize={setup.maxTeamSize}
+                organisedByTaguilalett={setup.organisedByTaguilalett}
+                outsidePlayerLimit={setup.outsidePlayerLimit}
+                onMinTeamSize={(minTeamSize) => setSetup((p) => p && { ...p, minTeamSize })}
+                onMaxTeamSize={(maxTeamSize) => setSetup((p) => p && { ...p, maxTeamSize })}
+                onOrganisedByTaguilalett={(organisedByTaguilalett) =>
+                  setSetup((p) => p && { ...p, organisedByTaguilalett })
+                }
+                onOutsidePlayerLimit={(outsidePlayerLimit) =>
+                  setSetup((p) => p && { ...p, outsidePlayerLimit })
+                }
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
                 onPreset={(preset) =>
                   setSetup(

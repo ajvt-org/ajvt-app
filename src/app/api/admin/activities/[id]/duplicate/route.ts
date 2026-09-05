@@ -34,6 +34,8 @@ export const POST = withRoute(
         profile: source.profile,
         minTeamSize: source.minTeamSize,
         maxTeamSize: source.maxTeamSize,
+        organisedByTaguilalett: source.organisedByTaguilalett,
+        outsidePlayerLimit: source.outsidePlayerLimit,
         yellowsForBan: source.yellowsForBan,
         redBanMatches: source.redBanMatches,
         isVolunteer: source.isVolunteer,

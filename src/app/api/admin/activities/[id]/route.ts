@@ -25,6 +25,8 @@ export const GET = withRoute(
         profile: true,
         minTeamSize: true,
         maxTeamSize: true,
+        organisedByTaguilalett: true,
+        outsidePlayerLimit: true,
         startsAt: true,
         endsAt: true,
       },
@@ -53,6 +55,8 @@ export const PATCH = withRoute(
       profile,
       minTeamSize,
       maxTeamSize,
+      organisedByTaguilalett,
+      outsidePlayerLimit,
       yellowsForBan,
       redBanMatches,
       mvpVoteMinutes,
@@ -85,6 +89,8 @@ export const PATCH = withRoute(
       profile?: SportProfile;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
+      organisedByTaguilalett?: boolean;
+      outsidePlayerLimit?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
       mvpVoteMinutes?: number;
@@ -120,6 +126,12 @@ export const PATCH = withRoute(
       }
       if (minTeamSize !== undefined) data.minTeamSize = normalizeTeamSize(minTeamSize);
       if (maxTeamSize !== undefined) data.maxTeamSize = normalizeTeamSize(maxTeamSize);
+    }
+    if (organisedByTaguilalett !== undefined) {
+      data.organisedByTaguilalett = !!organisedByTaguilalett;
+    }
+    if (outsidePlayerLimit !== undefined) {
+      data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);
     }
     if (profile !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });

@@ -48,6 +48,8 @@ function activity(over: Partial<ActivityDetail["activity"]> = {}): ActivityDetai
     profile: "FOOTBALL",
     minTeamSize: null,
     maxTeamSize: null,
+    organisedByTaguilalett: false,
+    outsidePlayerLimit: null,
     isVolunteer: false,
     whatsappLink: null,
     registrations: [],
