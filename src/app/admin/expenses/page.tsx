@@ -15,6 +15,7 @@ import ExpenseList from "./ExpenseList";
 import ExpenseFiltersBar from "./ExpenseFiltersBar";
 import ExpenseFormDialog from "./ExpenseFormDialog";
 import { exportFinance } from "./exportFinance";
+import { expenseBodyOf } from "./expenseBody";
 import { useExpensesData } from "./useExpensesData";
 import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
@@ -22,7 +23,6 @@ import { EXPENSES_FILTER_KEYS, readExpensesFilters, writeExpensesFilters } from 
 import { emptyExpenseForm, todayInputValue, PAGE_SIZE } from "./types";
 import type { Expense, ExpenseForm } from "./types";
 import { hasFullAccess } from "@/lib/adminRoles";
-import { destinationOf } from "@/lib/moneyDestination";
 import { expensesPage } from "@/lib/texts";
 
 function toggleIn(set: Set<string>, key: string): Set<string> {
@@ -123,23 +123,7 @@ function AdminExpensesPageInner() {
 
     setSaving(true);
     try {
-      const body = {
-        label: form.label.trim(),
-        amount,
-        method: form.method || null,
-        note: form.note.trim() || null,
-        date: form.date || undefined,
-        proofs: form.proofs,
-        tagIds: form.tagIds,
-        ...(form.allocations.length > 1
-          ? {
-              allocations: form.allocations.map((share) => ({
-                ...destinationOf(destinations, share.destinationId),
-                amount: Number(share.amount),
-              })),
-            }
-          : destinationOf(destinations, form.allocations[0]?.destinationId ?? "")),
-      };
+      const body = expenseBodyOf(form, destinations);
       if (editingId) await api.patch(`/api/admin/expenses/${editingId}`, body);
       else await api.post("/api/admin/expenses", body);
       setShowForm(false);
