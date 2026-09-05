@@ -70,6 +70,83 @@ describe("the knockout draw", () => {
     }
   });
 
+  it("fills an odd field with byes so the first round is a full bracket", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج", "د", "ه"]);
+
+    const res = await draw(activity.id);
+
+    expect(res.status).toBe(200);
+    const matches = await prisma.match.findMany({
+      where: { activityId: activity.id, bracketRound: 1 },
+    });
+    expect(matches).toHaveLength(4);
+    expect(matches.filter((m) => m.awayTeamId === null)).toHaveLength(3);
+    expect(
+      new Set(matches.flatMap((m) => [m.homeTeamId, m.awayTeamId].filter(Boolean))),
+    ).toHaveProperty("size", 5);
+  });
+
+  it("carries a bye straight into the next round", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج"]);
+    await draw(activity.id);
+    const contest = await prisma.match.findFirstOrThrow({
+      where: { activityId: activity.id, awayTeamId: { not: null } },
+    });
+    await prisma.match.update({
+      where: { id: contest.id },
+      data: { status: "PLAYED", homeScore: 2, awayScore: 1 },
+    });
+
+    const res = await NEXT_ROUND(
+      post(`/api/admin/activities/${activity.id}/bracket/next-round`, {}),
+      withId(activity.id),
+    );
+
+    expect(res.status).toBe(200);
+    const final = await prisma.match.findFirstOrThrow({
+      where: { activityId: activity.id, bracketRound: 2 },
+    });
+    const bye = await prisma.match.findFirstOrThrow({
+      where: { activityId: activity.id, bracketRound: 1, awayTeamId: null },
+    });
+    expect([final.homeTeamId, final.awayTeamId]).toContain(contest.homeTeamId);
+    expect([final.homeTeamId, final.awayTeamId]).toContain(bye.homeTeamId);
+  });
+
+  it("lets a bracket that has only byes be redrawn", async () => {
+    const { activity } = await knockoutActivity(["أ", "ب", "ج"]);
+    await draw(activity.id);
+
+    expect((await draw(activity.id, { redo: true })).status).toBe(200);
+  });
+
+  it("says why the groups make a draw impossible rather than pairing them anyway", async () => {
+    const { activity, teams } = await knockoutActivity(["أ1", "أ2", "أ3", "أ4"], ["المجموعة أ"]);
+    await prisma.match.create({
+      data: {
+        activityId: activity.id,
+        homeTeamId: teams[0].id,
+        awayTeamId: teams[1].id,
+        status: "PLAYED",
+        homeScore: 1,
+        awayScore: 0,
+      },
+    });
+
+    const res = await draw(activity.id);
+
+    expect(res.status).toBe(400);
+    expect(await prisma.match.count({ where: { activityId: activity.id, isKnockout: true } })).toBe(
+      0,
+    );
+  });
+
+  it("refuses a field of one", async () => {
+    const { activity } = await knockoutActivity(["أ"]);
+
+    expect((await draw(activity.id)).status).toBe(400);
+  });
+
   it("refuses a second draw unless it is a redo", async () => {
     const { activity } = await knockoutActivity(["أ", "ب", "ج", "د"]);
     await draw(activity.id);

@@ -19,6 +19,20 @@ const SEMI = {
   status: "PLAYED" as const,
 };
 
+const BYE = {
+  id: "m3",
+  bracketRound: 1,
+  order: 2,
+  round: "نصف النهائي",
+  homeTeam: { id: "t3", name: "الأبطال", logo: null },
+  awayTeam: null,
+  homeScore: null,
+  awayScore: null,
+  homePenalties: null,
+  awayPenalties: null,
+  status: "PLAYED" as const,
+};
+
 const FINAL = {
   id: "m2",
   bracketRound: 2,
@@ -34,6 +48,27 @@ const FINAL = {
 };
 
 describe("BracketTree", () => {
+  it("calls an empty side of a played slot a bye rather than undecided", () => {
+    render(<BracketTree matches={[BYE]} />);
+
+    expect(screen.getByText(texts.bye)).toBeTruthy();
+    expect(screen.queryByText(texts.teamDecidedLater)).toBeNull();
+  });
+
+  it("carries no score on a bye", () => {
+    const { container } = render(<BracketTree matches={[BYE]} />);
+
+    expect(container.textContent).not.toContain("0");
+  });
+
+  it("draws a round that mixes a contest with a bye", () => {
+    const { container } = render(<BracketTree matches={[SEMI, BYE, FINAL]} />);
+
+    expect(screen.getByText("الأبطال")).toBeTruthy();
+    expect(screen.getByText("الصقور")).toBeTruthy();
+    expect(container.querySelectorAll(".absolute.inset-x-0")).toHaveLength(3);
+  });
+
   it("names both teams of a match that has been drawn", () => {
     render(<BracketTree matches={[SEMI]} />);
 

@@ -20,6 +20,7 @@ interface BracketSideProps {
   background: string;
   borderTop?: string;
   entrant?: EntrantKind;
+  bye?: boolean;
 }
 
 export default function BracketSide({
@@ -32,6 +33,7 @@ export default function BracketSide({
   background,
   borderTop,
   entrant = "team",
+  bye = false,
 }: BracketSideProps) {
   return (
     <div
@@ -61,7 +63,7 @@ export default function BracketSide({
           title={team?.name}
           style={{ color: team ? "var(--text-main)" : "var(--text-muted)" }}
         >
-          {team ? team.name : texts.teamDecidedLater}
+          {team ? team.name : bye ? texts.bye : texts.teamDecidedLater}
         </bdi>
       </span>
       {played && (
