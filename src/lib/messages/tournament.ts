@@ -44,7 +44,7 @@ export const tournament = {
   voteNothingToChange: "لا شيء لتغييره في التصويت",
   formatLocked: "لا يمكن تغيير نظام البطولة بعد إنشاء المباريات",
   groupsNotInKnockout: "هذه بطولة خروج المغلوب — لا يمكن إنشاء مجموعات فيها",
-  teamSizeLocked: "لا يمكن تغيير حجم الفريق بعد إنشاء المباريات",
+  teamSizeLocked: "لا يمكن تغيير حجم الفريق بعد انطلاق البطولة",
   profileLocked: "لا يمكن تغيير نوع البطولة بعد إنشاء المباريات",
   dayNotFound: "اليوم غير موجود",
   dayPositionInvalid: "موضع اليوم خارج جدول الأيام",

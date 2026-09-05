@@ -6,6 +6,8 @@ const STILL_TO_PLAY = {
   forfeitWinnerTeamId: null,
 } satisfies Prisma.MatchWhereInput;
 
+export const PLAYED_MATCH = { NOT: STILL_TO_PLAY } satisfies Prisma.MatchWhereInput;
+
 export const STANDING_MATCH_SELECT = {
   bracketRound: true,
   status: true,
