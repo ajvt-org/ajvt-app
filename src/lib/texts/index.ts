@@ -62,6 +62,7 @@ export { waitingRequests, samePerson } from "./waitingRequests";
 export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
+export { proofReuse } from "./proofReuse";
 export { quizBoard } from "./quizBoard";
 export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
