@@ -4,7 +4,7 @@ import { requireMatchAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { notifyTeams } from "@/lib/tournamentNotify";
 import { serveMatch, suspendedUserIds } from "@/lib/suspensionServer";
-import { isValidLeaguePairing } from "@/lib/tournament";
+import { isValidLeaguePairing, knockoutToggleAllowed } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
 import { kickoffPassed } from "@/lib/matchKickoff";
 import { withRoute } from "@/lib/route";
@@ -185,6 +185,17 @@ export const PATCH = withRoute(
       updateData.isKnockout = !!isKnockout;
     }
     const finalIsKnockout = isKnockout !== undefined ? !!isKnockout : match.isKnockout;
+    if (
+      finalIsKnockout &&
+      !knockoutToggleAllowed(
+        match.isKnockout,
+        match.bracketRound,
+        finalHomeGroupId,
+        finalAwayGroupId,
+      )
+    ) {
+      return NextResponse.json({ error: tournament.groupFixtureNotKnockout }, { status: 400 });
+    }
     if (!isValidLeaguePairing(finalIsKnockout, finalHomeGroupId, finalAwayGroupId)) {
       return NextResponse.json({ error: tournament.leaguePairing }, { status: 400 });
     }
