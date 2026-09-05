@@ -1,4 +1,5 @@
 import { matchDateKey } from "./clubTime";
+import type { TournamentStage } from "./tournamentStage";
 
 const DAY_MS = 86_400_000;
 
@@ -11,7 +12,7 @@ export type ActivityStanding =
   | { state: "upcoming"; daysUntil: number }
   | { state: "today" }
   | { state: "running" }
-  | { state: "awaiting"; unplayed: number }
+  | { state: "awaiting"; unplayed: number; stage: TournamentStage | null }
   | { state: "finished" }
   | null;
 
@@ -19,6 +20,7 @@ export interface StandingInput {
   startsAt: string | Date | null;
   endsAt?: string | Date | null;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
 }
 
 export function activityStanding(a: StandingInput, now = new Date()): ActivityStanding {
@@ -29,7 +31,7 @@ export function activityStanding(a: StandingInput, now = new Date()): ActivitySt
   if (today < start) return { state: "upcoming", daysUntil: start - today };
   if (today > end) {
     return a.unplayedMatches
-      ? { state: "awaiting", unplayed: a.unplayedMatches }
+      ? { state: "awaiting", unplayed: a.unplayedMatches, stage: a.awaitingStage ?? null }
       : { state: "finished" };
   }
   if (today === start) return { state: "today" };

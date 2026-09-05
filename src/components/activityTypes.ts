@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/Icon";
+import type { TournamentStage } from "@/lib/tournamentStage";
 import { membershipState } from "@/lib/membershipState";
 
 export interface Team {
@@ -21,6 +22,7 @@ export interface Activity {
   whatsappLink: string | null;
   registrantCount: number;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
   teams: Team[];
 }
 

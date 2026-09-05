@@ -1,3 +1,4 @@
+import type { TournamentStage } from "@/lib/tournamentStage";
 export interface Registration {
   id: string;
   status: "PENDING" | "ACTIVE" | "REJECTED";
@@ -18,6 +19,7 @@ export interface Activity {
   startsAt: string | null;
   endsAt: string | null;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
   withTime: boolean;
   photo: string | null;
   capacity: number | null;
