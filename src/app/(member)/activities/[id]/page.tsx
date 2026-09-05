@@ -132,7 +132,10 @@ export default async function ActivityPage({
           ) : (
             <div className="space-y-5 pt-1">
               {tournament.todayMatches.length > 0 && (
-                <TodayBand matches={tournament.todayMatches} />
+                <TodayBand
+                  matches={tournament.todayMatches}
+                  entrant={entrantKind(squadOf(activity))}
+                />
               )}
               <TournamentTabs panels={tournament.panels} />
             </div>

@@ -1,4 +1,4 @@
-export type MatchTeam = { id: string; name: string; logo: string | null };
+export type MatchTeam = { id: string; name: string; logo: string | null; photo?: string | null };
 
 export type MatchPlayer = { id: string; fullName: string; photo: string | null };
 

@@ -5,6 +5,7 @@ import TournamentSection from "@/components/tournament/TournamentSection";
 import type { DecidedMatch, PublicMatch } from "@/components/tournament/publicTypes";
 import { memberTeamName } from "@/lib/matchEvents";
 import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 export default function MatchesPanel({
   played,
@@ -16,6 +17,7 @@ export default function MatchesPanel({
   loggedIn,
   myVoteByVoteId,
   teams,
+  entrant,
 }: {
   played: DecidedMatch[];
   scheduled: PublicMatch[];
@@ -26,6 +28,7 @@ export default function MatchesPanel({
   loggedIn: boolean;
   myVoteByVoteId: Map<string, string>;
   teams: { name: string; members: { member: { id: string } }[] }[];
+  entrant: EntrantKind;
 }) {
   if (played.length === 0 && scheduled.length === 0) {
     return (
@@ -51,6 +54,7 @@ export default function MatchesPanel({
                 showScorersAndCards={showScorersAndCards}
                 tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}
+                entrant={entrant}
                 manOfTheMatchTeam={memberTeamName(match.manOfTheMatch?.id, teams)}
                 myVoteCandidateId={
                   match.mvpVote ? (myVoteByVoteId.get(match.mvpVote.id) ?? null) : null
@@ -64,7 +68,9 @@ export default function MatchesPanel({
         <TournamentSection icon="calendar" title={texts.upcoming}>
           <MatchDayList
             matches={scheduled}
-            renderMatch={(match, day) => <MatchFixture key={match.id} match={match} day={day} />}
+            renderMatch={(match, day) => (
+              <MatchFixture key={match.id} match={match} day={day} entrant={entrant} />
+            )}
           />
         </TournamentSection>
       )}

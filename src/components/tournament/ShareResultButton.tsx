@@ -6,6 +6,7 @@ import MatchEvents from "@/components/tournament/matchCard/MatchEvents";
 import IconLabel from "@/components/IconLabel";
 import { goalRows, bookingRows, type MatchEventRow } from "@/lib/matchEvents";
 import { matchDisplay } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 interface GoalEntry {
   memberId: string | null;
@@ -38,6 +39,9 @@ interface ShareResultButtonProps {
   awayTeamName: string;
   homeTeamLogo?: string | null;
   awayTeamLogo?: string | null;
+  homeTeamPhoto?: string | null;
+  awayTeamPhoto?: string | null;
+  entrant?: EntrantKind;
   homeScore: number;
   awayScore: number;
   round: string | null;
@@ -61,6 +65,9 @@ export default function ShareResultButton({
   awayTeamName,
   homeTeamLogo = null,
   awayTeamLogo = null,
+  homeTeamPhoto = null,
+  awayTeamPhoto = null,
+  entrant = "team",
   homeScore,
   awayScore,
   round,
@@ -123,12 +130,13 @@ export default function ShareResultButton({
           {round ? ` — ${round}` : ""}
         </p>
         <MatchTeams
-          home={{ name: homeTeamName, logo: homeTeamLogo }}
-          away={{ name: awayTeamName, logo: awayTeamLogo }}
+          home={{ name: homeTeamName, logo: homeTeamLogo, photo: homeTeamPhoto }}
+          away={{ name: awayTeamName, logo: awayTeamLogo, photo: awayTeamPhoto }}
           score={{ home: homeScore, away: awayScore }}
           tone="dark"
           size="xl"
           layout="stacked"
+          entrant={entrant}
         />
 
         {events.length > 0 && (
