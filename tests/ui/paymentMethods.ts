@@ -1,14 +1,22 @@
+function account(id: string, code: string) {
+  return { id, code, label: null };
+}
+
 export const OFFERED_METHODS = [
-  { name: "بنكيلي", memberFacing: true },
-  { name: "السداد", memberFacing: true },
-  { name: "مصرفي", memberFacing: true },
-  { name: "نقداً", memberFacing: false },
+  { name: "بنكيلي", memberFacing: true, accounts: [account("a1", "111111")] },
+  {
+    name: "السداد",
+    memberFacing: true,
+    accounts: [account("a2", "222222"), account("a4", "444444")],
+  },
+  { name: "مصرفي", memberFacing: true, accounts: [account("a3", "333333")] },
+  { name: "نقداً", memberFacing: false, accounts: [] },
 ];
 
-const METHODS_URL = "/api/payment-methods";
+const METHOD_URLS = ["/api/payment-methods", "/api/admin/payment-methods/offered"];
 
 export function isMethodsCall(url: unknown): boolean {
-  return typeof url === "string" && url.startsWith(METHODS_URL);
+  return typeof url === "string" && METHOD_URLS.some((known) => url.startsWith(known));
 }
 
 export function methodsResponse() {

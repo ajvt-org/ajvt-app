@@ -73,24 +73,29 @@ model User {
 }
 
 model Membership {
-  id              String       @id @default(cuid())
+  id              String          @id @default(cuid())
   userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   year            Int
-  status          ReviewStatus @default(PENDING)
+  status          ReviewStatus    @default(PENDING)
   rejectionReason String?
   paymentMethod   String?
+  accountId       String?
+  bankReference   String?
+  account         PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   paymentProof    String?
-  referenceCode   String?      @unique
+  referenceCode   String?         @unique
   recordedBy      String?
   reviewedBy      String?
   reviewedAt      DateTime?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@unique([userId, year])
   @@index([year])
   @@index([status])
+  @@index([accountId])
+  @@index([bankReference])
 }
 
 model Activity {
@@ -421,33 +426,38 @@ model Village {
 }
 
 model Donation {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   // Whether the giver asked to stay unnamed. Read on its own: donorName is
   // kept so an admin can still see who gave.
-  anonymous      Boolean      @default(false)
+  anonymous      Boolean         @default(false)
   donorName      String? // the name on the gift — typed by hand, or taken from the account the moment one is linked
   donorPhone     String? // recorded for manually-entered donors with no app account, or as a general contact note
   donorPhoto     String? // photo for a donor with no linked Member (manually-entered) — shown on the public leaderboard
   amount         Int?
   proof          String? // null for MEMBERSHIP-source donations from members with no tracked payment proof
-  status         ReviewStatus @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
-  source         String       @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
+  status         ReviewStatus    @default(PENDING) // MEMBERSHIP-source rows are always created ACTIVE
+  source         String          @default("PUBLIC") // PUBLIC (anonymous, no account) | SELF (logged-in member) | MEMBERSHIP (auto membership surplus)
   paymentMethod  String?
+  accountId      String?
+  bankReference  String?
+  account        PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   userId         String?
-  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   membershipYear Int?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   tags           FinanceTag[]
   activityId     String?
-  activity       Activity?    @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  activity       Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
   competitionId  String?
-  competition    Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  competition    Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([activityId])
   @@index([competitionId])
+  @@index([accountId])
+  @@index([bankReference])
 }
 
 model Expense {
@@ -455,6 +465,8 @@ model Expense {
   label         String
   amount        Int
   method        String?
+  accountId     String?
+  account       PaymentAccount?     @relation(fields: [accountId], references: [id], onDelete: Restrict)
   note          String?
   proof         String?
   date          DateTime            @default(now())
@@ -472,6 +484,7 @@ model Expense {
   @@index([date])
   @@index([activityId])
   @@index([competitionId])
+  @@index([accountId])
 }
 
 model ExpenseAllocation {
@@ -515,15 +528,38 @@ model FinanceTag {
 }
 
 model PaymentMethod {
-  id           String   @id @default(cuid())
-  name         String   @unique
-  memberFacing Boolean  @default(false)
-  active       Boolean  @default(true)
+  id           String           @id @default(cuid())
+  name         String           @unique
+  memberFacing Boolean          @default(false)
+  active       Boolean          @default(true)
   position     Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  accounts     PaymentAccount[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([active, position])
+}
+
+model PaymentAccount {
+  id        String        @id @default(cuid())
+  methodId  String
+  method    PaymentMethod @relation(fields: [methodId], references: [id], onDelete: Restrict)
+  code      String
+  label     String?
+  position  Int
+  active    Boolean       @default(true)
+  openedAt  DateTime      @default(now())
+  closedAt  DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  payments    Payment[]
+  memberships Membership[]
+  donations   Donation[]
+  expenses    Expense[]
+
+  @@unique([methodId, code])
+  @@index([methodId, active])
 }
 
 // One row per (day, anonymous visitor) — the visitor cookie is set by
@@ -711,6 +747,8 @@ model Competition {
   startedAt          DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  @@index([bankId])
 }
 
 // One ranking a member can look at. blockRounds is how many rounds it covers,
@@ -814,30 +852,33 @@ enum PaymentPurpose {
 }
 
 model Payment {
-  id            String         @id @default(cuid())
+  id            String          @id @default(cuid())
   purpose       PaymentPurpose
   amount        Int
   feeApplied    Int?
   year          Int?
   method        String?
+  accountId     String?
+  bankReference String?
+  account       PaymentAccount? @relation(fields: [accountId], references: [id], onDelete: Restrict)
   proof         String?
-  status        ReviewStatus   @default(PENDING)
-  anonymous     Boolean        @default(false)
+  status        ReviewStatus    @default(PENDING)
+  anonymous     Boolean         @default(false)
   donorName     String?
   donorPhoto    String? // donor with no linked Member — shown on the honour board
   donorPhone    String? // contact note for a manually entered donor with no account
   userId        String?
-  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags          FinanceTag[]
   activityId    String?
-  activity      Activity?      @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  activity      Activity?       @relation(fields: [activityId], references: [id], onDelete: SetNull)
   competitionId String?
-  competition   Competition?   @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  competition   Competition?    @relation(fields: [competitionId], references: [id], onDelete: SetNull)
   recordedBy    String?
   reviewedBy    String?
   reviewedAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   receipt Receipt?
 
@@ -845,6 +886,8 @@ model Payment {
   @@index([status])
   @@index([activityId])
   @@index([competitionId])
+  @@index([accountId])
+  @@index([bankReference])
 }
 
 enum ReceiptStatus {

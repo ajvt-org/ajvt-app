@@ -20,6 +20,8 @@ export function proofFromDonation(
     status: donation.status,
     source: donation.source,
     paymentMethod: donation.paymentMethod,
+    accountId: donation.accountId,
+    bankReference: donation.bankReference,
     memberId: donation.memberId,
     userId: donation.userId,
     anonymous: donation.anonymous,

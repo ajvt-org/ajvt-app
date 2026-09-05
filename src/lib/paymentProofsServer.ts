@@ -18,9 +18,24 @@ function hideIdentity(row: object): Record<string, unknown> {
   return kept;
 }
 
+async function repeatedReferences(): Promise<Set<string>> {
+  const rows = await prisma.payment.groupBy({
+    by: ["bankReference"],
+    where: { bankReference: { not: null } },
+    _count: { _all: true },
+    having: { bankReference: { _count: { gt: 1 } } },
+  });
+  return new Set(rows.map((row) => row.bankReference).filter((one): one is string => one !== null));
+}
+
+function isRepeated(seenTwice: Set<string>, reference: string | null): boolean {
+  return reference !== null && seenTwice.has(reference);
+}
+
 const MEMBERSHIP_SELECT = {
   userId: true,
   year: true,
+  bankReference: true,
   paymentProof: true,
   status: true,
   createdAt: true,
@@ -50,6 +65,9 @@ const DONATION_SELECT = {
   status: true,
   source: true,
   paymentMethod: true,
+  accountId: true,
+  account: { select: { id: true, code: true, label: true } },
+  bankReference: true,
   userId: true,
   activityId: true,
   activity: { select: { title: true } },
@@ -116,6 +134,7 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
 
   const current = [...latestByAccount(memberships).values()];
   const support = await membershipSupport(current.map((m) => m.userId));
+  const seenTwice = await repeatedReferences();
 
   const proofs = [
     ...current.map((m) => ({
@@ -124,6 +143,8 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       userId: m.userId,
       proof: m.paymentProof as string,
       memberName: nameOf(m.user),
+      bankReference: m.bankReference,
+      repeatedReference: isRepeated(seenTwice, m.bankReference),
       activityTitle: null as string | null,
       amount: null as number | null,
       status: m.status,
@@ -162,6 +183,10 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       status: d.status,
       source: d.source,
       paymentMethod: d.paymentMethod,
+      accountId: d.accountId,
+      account: d.account,
+      bankReference: d.bankReference,
+      repeatedReference: isRepeated(seenTwice, d.bankReference),
       userId: d.userId,
       anonymous: d.anonymous,
       donorName: d.donorName,

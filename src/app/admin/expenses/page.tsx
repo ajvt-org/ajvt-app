@@ -8,6 +8,7 @@ import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import FinanceTagManager from "@/components/admin/FinanceTagManager";
 import FinanceTotals from "./FinanceTotals";
 import ByPaymentMethod from "./ByPaymentMethod";
+import ByAccount from "@/components/admin/ByAccount";
 import UnassignedDonations from "./UnassignedDonations";
 import DailyRevenue from "./DailyRevenue";
 import ExpenseList from "./ExpenseList";
@@ -48,6 +49,7 @@ function AdminExpensesPageInner() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [heldAccount, setHeldAccount] = useState<Expense["account"]>(null);
   const [showTagManager, setShowTagManager] = useState(false);
   const [form, setForm] = useState<ExpenseForm>(emptyExpenseForm);
   const [formError, setFormError] = useState("");
@@ -72,6 +74,7 @@ function AdminExpensesPageInner() {
 
   function openCreate() {
     setEditingId(null);
+    setHeldAccount(null);
     setForm({ ...emptyExpenseForm, date: todayInputValue() });
     setFormError("");
     setShowForm(true);
@@ -79,10 +82,12 @@ function AdminExpensesPageInner() {
 
   function openEdit(expense: Expense) {
     setEditingId(expense.id);
+    setHeldAccount(expense.account);
     setForm({
       label: expense.label,
       amount: String(expense.amount),
       method: expense.method || "",
+      accountId: expense.accountId || "",
       note: expense.note || "",
       date: expense.date.slice(0, 10),
       proofs: expense.proofs.map((row) => row.filename),
@@ -225,6 +230,8 @@ function AdminExpensesPageInner() {
         onToggle={(method) => setExpandedMethods((prev) => toggleIn(prev, method))}
       />
 
+      <ByAccount />
+
       {hasFullAccess(role) && summary && summary.unassigned.length > 0 && (
         <UnassignedDonations
           rows={summary.unassigned}
@@ -323,6 +330,7 @@ function AdminExpensesPageInner() {
           destinations={destinations}
           editing={!!editingId}
           expenseId={editingId}
+          held={heldAccount}
           error={formError}
           saving={saving}
           onChange={(patch) => setForm((p) => ({ ...p, ...patch }))}

@@ -9,7 +9,7 @@ export function usePaymentMethods(held?: string | null) {
 
   const refresh = useCallback(() => {
     return api
-      .get<{ methods: PaymentMethodChoice[] }>("/api/payment-methods")
+      .get<{ methods: PaymentMethodChoice[] }>("/api/admin/payment-methods/offered")
       .then((data) => setMethods(data.methods ?? []))
       .catch(() => {});
   }, []);

@@ -96,8 +96,11 @@ async function seed(): Promise<Fixture> {
     data: { roundId: round.id, userId: giver.id, score: 5 },
   });
 
+  const method = await prisma.paymentMethod.findFirstOrThrow();
+
   return {
     activityId: activity.id,
+    methodId: method.id,
     userId: giver.id,
     competitionId: competition.id,
     attemptId: attempt.id,

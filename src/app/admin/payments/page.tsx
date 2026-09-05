@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
+import { paymentAccountPicker, paymentsPage as texts } from "@/lib/texts";
 import KindTabs from "./KindTabs";
 import ManualDonationDialog from "./ManualDonationDialog";
 import PaymentsList from "./PaymentsList";
@@ -12,7 +13,10 @@ import { useAdminListUrlState } from "@/hooks/useAdminListUrlState";
 import { paginate, pageCount } from "@/lib/listUrlState";
 import {
   PAYMENTS_FILTER_KEYS,
+  accountOptionsOf,
+  matchesAccount,
   readPaymentsFilters,
+  NO_ACCOUNT,
   writePaymentsFilters,
   type PaymentsFilters,
 } from "./paymentsFilters";
@@ -20,9 +24,14 @@ import { PAGE_SIZE, type Proof } from "./paymentTypes";
 
 function match(proof: Proof, filters: PaymentsFilters) {
   if (filters.kind !== "ALL" && proof.kind !== filters.kind) return false;
+  if (!matchesAccount(proof, filters.account)) return false;
   const query = filters.q.trim();
   if (!query) return true;
-  return proof.memberName.includes(query) || (proof.activityTitle || "").includes(query);
+  return (
+    proof.memberName.includes(query) ||
+    (proof.activityTitle || "").includes(query) ||
+    (proof.bankReference || "").includes(query)
+  );
 }
 
 function AdminPaymentsPageInner() {
@@ -45,6 +54,7 @@ function AdminPaymentsPageInner() {
 
   if (loading) return <PageLoading />;
 
+  const accountOptions = accountOptionsOf(proofs);
   const filtered = proofs.filter((p) => match(p, filters));
   const totalPages = pageCount(filtered.length, PAGE_SIZE);
   const current = Math.min(page, totalPages);
@@ -54,14 +64,14 @@ function AdminPaymentsPageInner() {
     <div className="admin-page space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="receipt">كل إثباتات الدفع ({proofs.length})</IconLabel>
+          <IconLabel name="receipt">{texts.title(proofs.length)}</IconLabel>
         </p>
         <button
           onClick={() => setAdding(true)}
           className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          <IconLabel name="plus">تسجيل تبرع يدوياً</IconLabel>
+          <IconLabel name="plus">{texts.addDonation}</IconLabel>
         </button>
       </div>
 
@@ -69,11 +79,28 @@ function AdminPaymentsPageInner() {
 
       <input
         type="text"
-        placeholder="بحث بالاسم أو النشاط..."
+        placeholder={texts.search}
         value={filters.q}
         onChange={(e) => go({ ...filters, q: e.target.value })}
         className="input text-sm"
       />
+
+      {accountOptions.length > 0 && (
+        <select
+          aria-label={texts.accountFilter}
+          value={filters.account}
+          onChange={(e) => go({ ...filters, account: e.target.value })}
+          className="input text-sm"
+        >
+          <option value="">{texts.allAccounts}</option>
+          {accountOptions.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.code}
+            </option>
+          ))}
+          <option value={NO_ACCOUNT}>{paymentAccountPicker.unknown}</option>
+        </select>
+      )}
 
       <PaymentsList
         proofs={shown}

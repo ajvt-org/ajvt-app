@@ -12,16 +12,20 @@ import { addMembership } from "@/lib/membershipCreate";
 import { accounts, members } from "@/lib/messages";
 import { nameOf } from "@/lib/person";
 import { adminMembershipCreateSchema } from "./schema";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 
 export const POST = withRoute(
   "POST /api/admin/people/[id]/membership",
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { paymentMethod, paymentProof, paidAmount, surplusAnonymous, status } = parse(
+    const { paymentMethod, accountId, paymentProof, paidAmount, surplusAnonymous, status } = parse(
       adminMembershipCreateSchema,
       await req.json(),
     );
+
+    const wrongAccount = await accountIdError(paymentMethod, accountId, null);
+    if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });
 
     const person = await prisma.user.findUnique({
       where: { id },
@@ -50,6 +54,7 @@ export const POST = withRoute(
       addMembership(tx, {
         userId: person.id,
         paymentMethod: paymentMethod.trim(),
+        accountId: accountId || null,
         paymentProof: paymentProof || null,
         paidAmount: paidAmountValue,
         surplusAnonymous: surplusAnonymous ?? false,

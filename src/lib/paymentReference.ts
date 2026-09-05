@@ -9,8 +9,6 @@ const SHAPES: { provider: PaymentReference["provider"]; pattern: RegExp }[] = [
   { provider: "bankily", pattern: /(?<!\d)\d{19}(?!\d)/ },
 ];
 
-export const MERCHANT_CODES = ["027217", "08493", "037940"] as const;
-
 export function extractPaymentReference(text: string): PaymentReference | null {
   const flat = text.replace(/[  \s]+/g, " ");
   for (const { provider, pattern } of SHAPES) {
@@ -20,8 +18,8 @@ export function extractPaymentReference(text: string): PaymentReference | null {
   return null;
 }
 
-export function mentionsKnownMerchant(text: string): boolean {
-  return MERCHANT_CODES.some((code) => text.includes(code));
+export function mentionsKnownMerchant(text: string, codes: readonly string[]): boolean {
+  return codes.some((code) => code.length > 0 && text.includes(code));
 }
 
 export function bankilyStamp(reference: string): string | null {

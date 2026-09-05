@@ -2,23 +2,45 @@
 
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import { PAYABLE_METHODS } from "./paymentCodes";
 
-export function usePayableMethods(): string[] {
-  const [methods, setMethods] = useState<string[]>(PAYABLE_METHODS);
+export interface PayableAccount {
+  id: string;
+  code: string;
+  label: string | null;
+}
+
+export interface PayableMethod {
+  name: string;
+  accounts: PayableAccount[];
+}
+
+export interface PayableMethods {
+  methods: PayableMethod[];
+  loading: boolean;
+  failed: boolean;
+}
+
+export function usePayableMethods(): PayableMethods {
+  const [state, setState] = useState<PayableMethods>({
+    methods: [],
+    loading: true,
+    failed: false,
+  });
 
   useEffect(() => {
+    let alive = true;
     api
-      .get<{ methods: { name: string; memberFacing: boolean }[] }>("/api/payment-methods")
-      .then((data) =>
-        setMethods(
-          PAYABLE_METHODS.filter((name) =>
-            (data.methods ?? []).some((method) => method.name === name && method.memberFacing),
-          ),
-        ),
-      )
-      .catch(() => {});
+      .get<{ methods: PayableMethod[] }>("/api/payment-methods")
+      .then((data) => {
+        if (alive) setState({ methods: data.methods ?? [], loading: false, failed: false });
+      })
+      .catch(() => {
+        if (alive) setState({ methods: [], loading: false, failed: true });
+      });
+    return () => {
+      alive = false;
+    };
   }, []);
 
-  return methods;
+  return state;
 }

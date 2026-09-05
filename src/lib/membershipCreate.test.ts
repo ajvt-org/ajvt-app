@@ -18,6 +18,7 @@ function input(over: Partial<NewMembership> = {}): NewMembership {
   return {
     userId: "u1",
     paymentMethod: "بنكيلي",
+    accountId: null,
     paymentProof: null,
     paidAmount: 100,
     surplusAnonymous: false,
@@ -38,6 +39,7 @@ describe("addMembership", () => {
     expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, {
       status: "PENDING",
       paymentMethod: "بنكيلي",
+      accountId: null,
       paymentProof: null,
     });
     expect(recordMembershipPayment).toHaveBeenCalledWith(db, "u1", 100, 100, false);
@@ -52,6 +54,7 @@ describe("addMembership", () => {
     expect(saveMembershipYear).toHaveBeenCalledWith(waiting, "u1", 2026, {
       status: "PENDING",
       paymentMethod: "بنكيلي",
+      accountId: null,
       paymentProof: null,
     });
   });
@@ -74,6 +77,7 @@ describe("addMembership", () => {
 
     expect(recordMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, 100, {
       paymentMethod: "بنكيلي",
+      accountId: null,
       paymentProof: null,
       recordedBy: "admin",
     });

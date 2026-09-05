@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
+  accountIsOpenOn,
+  openAccounts,
+  type PaymentAccountOption,
+  INITIAL_PAYMENT_ACCOUNTS,
   INITIAL_PAYMENT_METHODS,
   acceptedNames,
   acceptsMethod,
@@ -99,5 +103,101 @@ describe("the list the table is seeded with", () => {
   it("gives every seeded method its own position", () => {
     const positions = INITIAL_PAYMENT_METHODS.map((m) => m.position);
     expect(new Set(positions).size).toBe(positions.length);
+  });
+});
+
+describe("the accounts the table is seeded with", () => {
+  it("puts every account under a seeded method", () => {
+    const names = INITIAL_PAYMENT_METHODS.map((m) => m.name);
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => names.includes(a.method))).toBe(true);
+  });
+
+  it("leaves cash without one", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.some((a) => a.method === "نقداً")).toBe(false);
+  });
+
+  it("gives a method at most one seeded account", () => {
+    const methods = INITIAL_PAYMENT_ACCOUNTS.map((a) => a.method);
+    expect(new Set(methods).size).toBe(methods.length);
+  });
+
+  it("opens each one first in its method", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => a.position === 1)).toBe(true);
+  });
+
+  it("gives every account a code", () => {
+    expect(INITIAL_PAYMENT_ACCOUNTS.every((a) => a.code.trim().length > 0)).toBe(true);
+  });
+});
+
+function anAccount(over: Partial<PaymentAccountOption> = {}): PaymentAccountOption {
+  return {
+    id: "a1",
+    code: "1",
+    label: null,
+    position: 1,
+    active: true,
+    closedAt: null,
+    ...over,
+  };
+}
+
+describe("the accounts a method still receives money into", () => {
+  it("keeps an open one", () => {
+    expect(openAccounts([anAccount()])).toHaveLength(1);
+  });
+
+  it("drops one the admin switched off", () => {
+    expect(openAccounts([anAccount({ active: false })])).toEqual([]);
+  });
+
+  it("drops one closed at the bank", () => {
+    expect(openAccounts([anAccount({ closedAt: new Date() })])).toEqual([]);
+  });
+
+  it("gives none back for a method that has none", () => {
+    expect(openAccounts([])).toEqual([]);
+  });
+
+  it("orders them by position", () => {
+    const kept = openAccounts([
+      anAccount({ id: "b", code: "2", position: 2 }),
+      anAccount({ id: "a", code: "1", position: 1 }),
+    ]);
+    expect(kept.map((account) => account.id)).toEqual(["a", "b"]);
+  });
+
+  it("leaves the list it was given alone", () => {
+    const given = [anAccount({ id: "b", position: 2 }), anAccount({ id: "a", position: 1 })];
+    openAccounts(given);
+    expect(given.map((account) => account.id)).toEqual(["b", "a"]);
+  });
+});
+
+describe("an account a member says they paid into", () => {
+  const open = anAccount({ id: "open" });
+  const method = {
+    id: "m1",
+    name: "بنكيلي",
+    memberFacing: true,
+    active: true,
+    position: 1,
+    accounts: [open, anAccount({ id: "closed", code: "2", closedAt: new Date() })],
+  };
+
+  it("belongs to the method it was picked under", () => {
+    expect(accountIsOpenOn(method, "open")).toBe(true);
+  });
+
+  it("is not one that belongs to another method", () => {
+    expect(accountIsOpenOn(method, "elsewhere")).toBe(false);
+  });
+
+  it("is not one that is closed", () => {
+    expect(accountIsOpenOn(method, "closed")).toBe(false);
+  });
+
+  it("is nothing at all when the method is not there", () => {
+    expect(accountIsOpenOn(undefined, "open")).toBe(false);
   });
 });

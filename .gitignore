@@ -69,3 +69,4 @@ next-env.d.ts
 # else — ignored so a regenerated copy never lands in a diff
 /AGENTS.md
 /CLAUDE.md
+backfill-accounts-*.json

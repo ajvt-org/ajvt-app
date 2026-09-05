@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import PaymentInfoBanner from "@/components/PaymentInfoBanner";
+import PaymentMethodChoice from "@/components/PaymentMethodChoice";
 import { usePayableMethods } from "@/lib/usePayableMethods";
 import PageHeader from "@/components/PageHeader";
 import { arabicValidity } from "@/lib/validationMessage";
@@ -30,7 +31,7 @@ export default function DonatePage() {
 }
 
 function DonatePageInner() {
-  const payable = usePayableMethods();
+  const offer = usePayableMethods();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
@@ -211,7 +212,7 @@ function DonatePageInner() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 fade-up delay-1">
-          <PaymentInfoBanner />
+          <PaymentInfoBanner offer={offer} />
 
           <div>
             <label
@@ -245,29 +246,12 @@ function DonatePageInner() {
             >
               {texts.methodLabel} <span style={{ color: "var(--copper-500)" }}>*</span>
             </p>
-            <div
-              className="grid grid-cols-3 gap-2"
-              role="radiogroup"
-              aria-labelledby="donate-method-label"
-            >
-              {payable.map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  role="radio"
-                  aria-checked={paymentMethod === method}
-                  onClick={() => setPaymentMethod(method)}
-                  className="py-3 rounded-xl text-sm font-bold transition-all border-2"
-                  style={{
-                    background: paymentMethod === method ? "var(--mint-600)" : "white",
-                    color: paymentMethod === method ? "white" : "var(--mint-700)",
-                    borderColor: paymentMethod === method ? "var(--mint-600)" : "var(--mint-200)",
-                  }}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
+            <PaymentMethodChoice
+              offer={offer}
+              value={paymentMethod}
+              onPick={setPaymentMethod}
+              labelledBy="donate-method-label"
+            />
           </div>
 
           <DonorNameChoice

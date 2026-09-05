@@ -2,26 +2,110 @@
 
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
-import { PAYMENT_CODES, PAYABLE_METHODS } from "@/lib/paymentCodes";
+import { paymentInfoBanner as texts } from "@/lib/texts";
+import type { PayableMethods } from "@/lib/usePayableMethods";
 
-export default function PaymentInfoBanner({ note }: { note?: string }) {
+const ROW = "flex items-center justify-between rounded-xl px-3 py-2";
+const ROW_BACKGROUND = { background: "rgba(255,255,255,0.1)" };
+
+async function toClipboard(code: string) {
+  try {
+    await navigator.clipboard.writeText(code);
+    return;
+  } catch {
+    const el = document.createElement("textarea");
+    el.value = code;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+  }
+}
+
+function Bar({ width }: { width: string }) {
+  return (
+    <span
+      className="rounded-lg"
+      style={{ height: 16, width, background: "rgba(255,255,255,0.25)" }}
+    />
+  );
+}
+
+function Waiting() {
+  return (
+    <>
+      {[0, 1, 2].map((row) => (
+        <div key={row} className={`${ROW} pulse`} style={ROW_BACKGROUND} aria-hidden="true">
+          <Bar width="5rem" />
+          <Bar width="6rem" />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function Notice({ children }: { children: string }) {
+  return (
+    <p className="text-sm py-2" style={{ color: "rgba(255,255,255,0.85)" }}>
+      {children}
+    </p>
+  );
+}
+
+function MethodRow({
+  name,
+  code,
+  copied,
+  onCopy,
+}: {
+  name: string;
+  code: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <div className={ROW} style={ROW_BACKGROUND}>
+      <span className="text-sm font-semibold text-white">{name}</span>
+      <div className="flex items-center gap-2">
+        <span
+          className="font-mono font-bold text-sm"
+          style={{ color: "var(--mint-200)" }}
+          dir="ltr"
+        >
+          {code}
+        </span>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
+          style={{
+            background: copied ? "rgba(52,211,153,0.3)" : "rgba(255,255,255,0.15)",
+            color: copied ? "#6ee7b7" : "white",
+            border: "1px solid rgba(255,255,255,0.2)",
+            minWidth: "52px",
+          }}
+        >
+          {copied ? <IconLabel name="check">{texts.copied}</IconLabel> : texts.copy}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentInfoBanner({
+  offer,
+  note,
+}: {
+  offer: PayableMethods;
+  note?: string;
+}) {
   const [copied, setCopied] = useState<string | null>(null);
+  const { methods, loading, failed } = offer;
 
   async function copyCode(code: string) {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(code);
-      setTimeout(() => setCopied(null), 2000);
-    } catch {
-      const el = document.createElement("textarea");
-      el.value = code;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand("copy");
-      document.body.removeChild(el);
-      setCopied(code);
-      setTimeout(() => setCopied(null), 2000);
-    }
+    await toClipboard(code);
+    setCopied(code);
+    setTimeout(() => setCopied(null), 2000);
   }
 
   return (
@@ -33,42 +117,20 @@ export default function PaymentInfoBanner({ note }: { note?: string }) {
       }}
     >
       <p className="text-sm font-bold mb-3 text-white">
-        <IconLabel name="card">معلومات الدفع</IconLabel>
+        <IconLabel name="card">{texts.title}</IconLabel>
       </p>
       <div className="space-y-2">
-        {PAYABLE_METHODS.map((method) => (
-          <div
-            key={method}
-            className="flex items-center justify-between rounded-xl px-3 py-2"
-            style={{ background: "rgba(255,255,255,0.1)" }}
-          >
-            <span className="text-sm font-semibold text-white">{method}</span>
-            <div className="flex items-center gap-2">
-              <span
-                className="font-mono font-bold text-sm"
-                style={{ color: "var(--mint-200)" }}
-                dir="ltr"
-              >
-                {PAYMENT_CODES[method]}
-              </span>
-              <button
-                type="button"
-                onClick={() => copyCode(PAYMENT_CODES[method])}
-                className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                style={{
-                  background:
-                    copied === PAYMENT_CODES[method]
-                      ? "rgba(52,211,153,0.3)"
-                      : "rgba(255,255,255,0.15)",
-                  color: copied === PAYMENT_CODES[method] ? "#6ee7b7" : "white",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  minWidth: "52px",
-                }}
-              >
-                {copied === PAYMENT_CODES[method] ? <IconLabel name="check">تم</IconLabel> : "نسخ"}
-              </button>
-            </div>
-          </div>
+        {loading && <Waiting />}
+        {!loading && failed && <Notice>{texts.failed}</Notice>}
+        {!loading && !failed && methods.length === 0 && <Notice>{texts.none}</Notice>}
+        {methods.map((method) => (
+          <MethodRow
+            key={method.name}
+            name={method.name}
+            code={method.accounts[0].code}
+            copied={copied === method.accounts[0].code}
+            onCopy={() => copyCode(method.accounts[0].code)}
+          />
         ))}
       </div>
       {note && (

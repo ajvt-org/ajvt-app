@@ -12,6 +12,7 @@ import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
+import { accountIdError } from "@/lib/paymentAccountsServer";
 import { stampRecordedBy } from "@/lib/paymentMirror";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { nameOf } from "@/lib/person";
@@ -28,7 +29,7 @@ export const POST = withRoute(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdminRole("MEMBERS");
     const { id } = await params;
-    const { paidAmount, paymentMethod, paymentProof } = parse(
+    const { paidAmount, paymentMethod, accountId, paymentProof } = parse(
       renewSchema(await offeredMethodNames()),
       await req.json(),
     );
@@ -56,6 +57,9 @@ export const POST = withRoute(
     );
     if (refusal) throw new ConflictError(REFUSALS[refusal]);
 
+    const wrongAccount = await accountIdError(paymentMethod, accountId, null);
+    if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });
+
     const before = await totalPaidFor(prisma, id);
 
     const renewed = await prisma.$transaction(async (tx) => {
@@ -65,6 +69,7 @@ export const POST = withRoute(
           year: membershipYear,
           status: "ACTIVE",
           paymentMethod,
+          accountId: accountId || null,
           paymentProof: paymentProof || null,
           recordedBy: session.username,
           reviewedBy: session.username,

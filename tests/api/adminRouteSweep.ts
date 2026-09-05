@@ -13,6 +13,7 @@ export interface SweptRoute {
 
 export interface Fixture {
   activityId: string;
+  methodId: string;
   userId: string;
   competitionId: string;
   attemptId: string;
@@ -25,6 +26,7 @@ function pathOf(file: string): string {
 
 function idFor(path: string, fixture: Fixture): string | null {
   if (path.startsWith("activities/")) return fixture.activityId;
+  if (path.startsWith("payment-methods/")) return fixture.methodId;
   if (path.startsWith("members/")) return fixture.userId;
   if (path.startsWith("quiz/competitions/")) return fixture.competitionId;
   if (path.startsWith("quiz/attempts/")) return fixture.attemptId;

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
+import { accountsOfMethod } from "@/lib/paymentMethodChoices";
 import { donationFormError } from "@/lib/donationFields";
 import { linkedAccount } from "@/lib/linkedAccount";
 import { nameAdoptedOnLink } from "@/lib/donorName";
-import { manualDonation } from "@/lib/texts";
+import { manualDonation, paymentAccountPicker } from "@/lib/texts";
 import DialogHeader from "@/components/DialogHeader";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
@@ -26,6 +28,7 @@ const EMPTY = {
   amount: "",
   donorPhoto: "",
   paymentMethod: "",
+  accountId: "",
   destinationId: "",
   proof: "",
 };
@@ -49,6 +52,7 @@ export default function ManualDonationDialog({
   const [saving, setSaving] = useState(false);
 
   const set = (changes: Partial<typeof EMPTY>) => setForm((p) => ({ ...p, ...changes }));
+  const accounts = accountsOfMethod(methods, form.paymentMethod);
 
   const adopted = nameAdoptedOnLink(account);
   const donorName = adopted ?? form.donorName;
@@ -67,6 +71,7 @@ export default function ManualDonationDialog({
         donorPhoto: form.donorPhoto || null,
         amount: Number(form.amount),
         paymentMethod: form.paymentMethod || null,
+        accountId: form.accountId || null,
         ...destinationOf(destinations, form.destinationId),
         proof: form.proof || null,
         userId: account?.userId ?? null,
@@ -224,7 +229,7 @@ export default function ManualDonationDialog({
           <select
             id="manual-payment-method"
             value={form.paymentMethod}
-            onChange={(e) => set({ paymentMethod: e.target.value })}
+            onChange={(e) => set({ paymentMethod: e.target.value, accountId: "" })}
             className="input"
           >
             <option value="">{manualDonation.methodUnset}</option>
@@ -235,6 +240,24 @@ export default function ManualDonationDialog({
             ))}
           </select>
         </div>
+
+        {accounts.length > 0 && (
+          <div>
+            <label
+              className="block text-sm font-bold mb-1.5"
+              style={{ color: "var(--text-main)" }}
+              htmlFor="manual-payment-account"
+            >
+              {paymentAccountPicker.label}
+            </label>
+            <PaymentAccountPicker
+              id="manual-payment-account"
+              accounts={accounts}
+              value={form.accountId}
+              onPick={(accountId) => set({ accountId })}
+            />
+          </div>
+        )}
 
         <div>
           <label

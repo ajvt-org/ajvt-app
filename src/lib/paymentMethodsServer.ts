@@ -5,9 +5,9 @@ import {
   methodNames,
   offeredMethods,
   payableMethods,
+  type MethodWithAccounts,
   type PaymentMethodOption,
 } from "./paymentMethods";
-import { PAYABLE_METHODS } from "./paymentCodes";
 
 const SELECT = {
   id: true,
@@ -16,6 +16,27 @@ const SELECT = {
   active: true,
   position: true,
 } as const;
+
+const WITH_ACCOUNTS = {
+  ...SELECT,
+  accounts: {
+    select: {
+      id: true,
+      code: true,
+      label: true,
+      position: true,
+      active: true,
+      closedAt: true,
+    },
+  },
+} as const;
+
+export async function methodsWithAccounts(): Promise<MethodWithAccounts[]> {
+  return prisma.paymentMethod.findMany({
+    orderBy: [{ position: "asc" }, { name: "asc" }],
+    select: WITH_ACCOUNTS,
+  });
+}
 
 export async function allPaymentMethods(): Promise<PaymentMethodOption[]> {
   return prisma.paymentMethod.findMany({
@@ -37,5 +58,5 @@ export async function orderedMethodNames(): Promise<string[]> {
 }
 
 export async function payableMethodNames(): Promise<string[]> {
-  return methodNames(payableMethods(await allPaymentMethods(), PAYABLE_METHODS));
+  return methodNames(payableMethods(await methodsWithAccounts()));
 }

@@ -8,6 +8,9 @@ import ExpenseProofsField from "./ExpenseProofsField";
 import ExpenseDestinationsField from "./ExpenseDestinationsField";
 import type { FinanceTagRow } from "@/components/admin/FinanceTagManager";
 import { usePaymentMethods } from "@/components/admin/usePaymentMethods";
+import PaymentAccountPicker from "@/components/admin/PaymentAccountPicker";
+import { accountsOfMethod } from "@/lib/paymentMethodChoices";
+import { paymentAccountPicker } from "@/lib/texts";
 import { expenseForm as texts } from "@/lib/texts";
 import type { DestinationOption } from "@/lib/moneyDestination";
 import type { ExpenseForm } from "./types";
@@ -43,6 +46,7 @@ export default function ExpenseFormDialog({
   destinations,
   editing,
   expenseId,
+  held,
   error,
   saving,
   onChange,
@@ -54,6 +58,7 @@ export default function ExpenseFormDialog({
   destinations: DestinationOption[];
   editing: boolean;
   expenseId: string | null;
+  held?: { id: string; code: string; label: string | null } | null;
   error: string;
   saving: boolean;
   onChange: (patch: Partial<ExpenseForm>) => void;
@@ -61,6 +66,7 @@ export default function ExpenseFormDialog({
   onClose: () => void;
 }) {
   const { methods } = usePaymentMethods(form.method);
+  const accounts = accountsOfMethod(methods, form.method);
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -123,7 +129,7 @@ export default function ExpenseFormDialog({
             <select
               id="expense-method"
               value={form.method}
-              onChange={(e) => onChange({ method: e.target.value })}
+              onChange={(e) => onChange({ method: e.target.value, accountId: "" })}
               className="input"
             >
               <option value="">{texts.noMethod}</option>
@@ -134,6 +140,19 @@ export default function ExpenseFormDialog({
               ))}
             </select>
           </Field>
+
+          {accounts.length > 0 && (
+            <Field id="expense-account" label={paymentAccountPicker.expenseLabel}>
+              <PaymentAccountPicker
+                id="expense-account"
+                accounts={accounts}
+                value={form.accountId}
+                held={held}
+                label={paymentAccountPicker.expenseLabel}
+                onPick={(accountId) => onChange({ accountId })}
+              />
+            </Field>
+          )}
 
           <Field id="expense-date" label={texts.date}>
             <input

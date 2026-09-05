@@ -19,3 +19,78 @@ export const paymentMethodManager = {
   toggleMemberFacing: (name: string) => `إتاحة ${name} للأعضاء`,
   hint: "طريقة الدفع لا تُحذف، تُوقف فقط، حتى تبقى السجلات القديمة سليمة.",
 } as const;
+
+export const paymentAccountManager = {
+  newPlaceholder: "رقم جديد",
+  newLabel: "رقم جديد لهذه الطريقة",
+  add: "إضافة",
+  descriptionPlaceholder: "وصف",
+  descriptionLabel: "وصف الرقم",
+  none: "بدون رقم",
+  stopped: "موقوف",
+  stop: "إيقاف",
+  resume: "إعادة تفعيل",
+  save: "حفظ",
+  cancel: "إلغاء",
+  edit: (code: string) => `تعديل ${code}`,
+  toggle: (code: string) => `إيقاف أو تفعيل ${code}`,
+  replace: "استبدال",
+  replaceLabel: "الرقم الجديد",
+  replaceWarning: "الرقم القديم يُغلق ويبقى في القائمة. الدفعات السابقة تبقى مسجّلة عليه.",
+  closed: "مغلق",
+  closedOn: (date: string) => `مغلق في ${date}`,
+  reachesNobody: "لا يظهر للأعضاء",
+  moveUp: "تحريك الرقم لأعلى",
+  moveDown: "تحريك الرقم لأسفل",
+} as const;
+
+export const renewForm = {
+  amountPlaceholder: "المبلغ المسدد",
+  methodUnset: "طريقة الدفع",
+  proofLabel: "إثبات الدفع (اختياري)",
+  renew: (year: number) => `تجديد عضوية ${year}`,
+} as const;
+
+export const paymentsPage = {
+  title: (count: number) => `كل إثباتات الدفع (${count})`,
+  addDonation: "تسجيل تبرع يدوياً",
+  search: "بحث بالاسم أو النشاط...",
+  allAccounts: "كل الأرقام",
+  accountFilter: "تصفية حسب الرقم",
+} as const;
+
+export const byAccount = {
+  title: "حسب الرقم المستلم",
+  from: "من تاريخ",
+  to: "إلى تاريخ",
+  received: "داخل",
+  paid: "خارج",
+  noAccount: "بدون رقم",
+  closed: "مغلق",
+  empty: "لا توجد بيانات بعد",
+  failed: "تعذر تحميل الأرقام، أعد تحميل الصفحة",
+} as const;
+
+export const bankReference = {
+  label: "رقم العملية",
+  repeated: "نفس رقم العملية مسجل من قبل",
+} as const;
+
+export const paymentAccountPicker = {
+  label: "الرقم المستلم",
+  unknown: "غير معروف",
+  expenseLabel: "الرقم المدفوع منه",
+} as const;
+
+export const paymentMethodChoice = {
+  failed: "تعذر تحميل طرق الدفع، أعد تحميل الصفحة",
+  none: "لا توجد طريقة دفع متاحة حالياً",
+} as const;
+
+export const paymentInfoBanner = {
+  title: "معلومات الدفع",
+  copy: "نسخ",
+  copied: "تم",
+  failed: "تعذر تحميل أرقام الدفع، أعد تحميل الصفحة",
+  none: "لا توجد طريقة دفع متاحة حالياً",
+} as const;

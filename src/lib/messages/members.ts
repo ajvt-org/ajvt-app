@@ -14,6 +14,8 @@ export const members = {
   pickAgeGroup: "يرجى اختيار العصر",
   profileIncomplete: "أكمل بيانات حسابك قبل إرسال طلب الانتساب",
   pickPaymentMethod: "يرجى اختيار طريقة الدفع",
+  attachProof: "يرجى إرفاق صورة الكابتير",
+  waitForUpload: "يرجى الانتظار حتى انتهاء رفع الصورة",
   statusInvalid: "حالة غير صالحة",
   rejectionReasonRequired: "سبب رفض الدفع مطلوب",
   rejectionReasonInvalid: "سبب رفض الدفع غير صالح",
