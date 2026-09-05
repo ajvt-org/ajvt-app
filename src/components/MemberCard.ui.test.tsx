@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { HOME_VILLAGE } from "@/lib/villages";
 import MemberCard from "./MemberCard";
+import { LOGO_SRC } from "@/lib/logo";
+import { association } from "@/lib/texts";
 
 const toDataURL = vi.fn().mockResolvedValue("data:image/png;base64,QR");
 
@@ -23,6 +25,16 @@ function renderCard(over: Partial<typeof BASE> = {}) {
 describe("MemberCard", () => {
   beforeEach(() => {
     toDataURL.mockClear();
+  });
+
+  it("draws the logo as a plain image, which is what html2canvas can rasterise", () => {
+    renderCard();
+
+    const logo = screen.getByAltText(association.logoAlt);
+
+    expect(logo.tagName).toBe("IMG");
+    expect(logo.getAttribute("src")).toBe(LOGO_SRC);
+    expect(logo.getAttribute("srcset")).toBeNull();
   });
 
   it("names the village of a member of the home village next to their age group", () => {
