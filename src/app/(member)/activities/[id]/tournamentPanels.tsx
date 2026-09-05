@@ -24,6 +24,7 @@ import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/squadSize";
+import { isFootball } from "@/lib/matchShape";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -59,19 +60,19 @@ export async function tournamentPanels(
     .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
-  const series = activity.matchShape === "SERIES";
+  const football = isFootball(activity.matchShape);
   const suspended =
-    !series && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
+    football && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
   const entrant = entrantKind(squadOf(activity));
   const words = texts.entrant[entrant];
   const participantsLabel = words.plural;
-  const hasStats = series
-    ? teamAdvancedStats.length > 0
-    : topScorers.length > 0 ||
+  const hasStats =
+    football &&
+    (topScorers.length > 0 ||
       discipline.length > 0 ||
       cleanSheets.length > 0 ||
       motmLeaders.length > 0 ||
-      teamAdvancedStats.length > 0;
+      teamAdvancedStats.length > 0);
 
   const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
   const bracket = (
@@ -127,7 +128,7 @@ export async function tournamentPanels(
           played={played}
           scheduled={scheduled}
           allMatches={matches}
-          football={!series}
+          football={football}
           showScorersAndCards={activity.showScorersAndCards}
           tournamentTitle={activity.title}
           loggedIn={!!userId}
@@ -146,7 +147,7 @@ export async function tournamentPanels(
 
   if (hasStats) {
     const statPanels: TournamentPanel[] = [];
-    if (!series && topScorers.length > 0) {
+    if (topScorers.length > 0) {
       statPanels.push({
         key: "scorers",
         label: texts.scorers,
@@ -168,7 +169,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!series && discipline.length > 0) {
+    if (discipline.length > 0) {
       statPanels.push({
         key: "discipline",
         label: texts.discipline,
@@ -192,7 +193,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!series && cleanSheets.length > 0) {
+    if (cleanSheets.length > 0) {
       statPanels.push({
         key: "defence",
         label: texts.defence,
@@ -213,7 +214,7 @@ export async function tournamentPanels(
         ),
       });
     }
-    if (!series && motmLeaders.length > 0) {
+    if (motmLeaders.length > 0) {
       statPanels.push({
         key: "motm",
         label: texts.motm,
@@ -250,14 +251,12 @@ export async function tournamentPanels(
       icon: "chart",
       content: (
         <>
-          {!series && (
-            <TournamentSummary
-              matchesPlayed={stats.matchesPlayed}
-              totalGoals={stats.totalGoals}
-              avgGoalsPerMatch={stats.avgGoalsPerMatch}
-              bestAttack={stats.bestAttack}
-            />
-          )}
+          <TournamentSummary
+            matchesPlayed={stats.matchesPlayed}
+            totalGoals={stats.totalGoals}
+            avgGoalsPerMatch={stats.avgGoalsPerMatch}
+            bestAttack={stats.bestAttack}
+          />
           <TournamentTabs panels={statPanels} variant="sub" />
         </>
       ),

@@ -43,8 +43,8 @@ describe("which tournament tabs an activity earns", () => {
     expect(keys(tournamentPlayTabs(football, 0))).not.toContain("teams");
   });
 
-  it("leaves discipline out of a series tournament, which has no cards", () => {
-    expect(keys(tournamentPlayTabs(series, 0))).not.toContain("discipline");
+  it("leaves the stats and discipline out of a series tournament, which has neither", () => {
+    expect(keys(tournamentPlayTabs(series, 0))).toEqual(["days", "matches", "standings"]);
   });
 
   it("counts the proposals waiting on the discipline tab", () => {
