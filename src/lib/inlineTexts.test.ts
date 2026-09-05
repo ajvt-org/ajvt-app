@@ -60,6 +60,7 @@ const KEPT_CLEAN = [
   "src/components/admin/CountBadge.tsx",
   "src/app/admin/WaitingRequests.tsx",
   "src/components/admin/SamePersonWarning.tsx",
+  "src/components/admin/ProofReuseWarning.tsx",
   "src/components/admin/adminOrigin.tsx",
   "src/lib/adminBackLink.ts",
   "src/components/admin/shell/TopBar.tsx",

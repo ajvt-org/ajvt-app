@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import ProofCard from "./ProofCard";
-import { paymentCard } from "@/lib/texts";
+import { paymentCard, proofReuse } from "@/lib/texts";
 import { money } from "@/lib/money";
 import type { MemberOption, Proof } from "./paymentTypes";
 
@@ -72,8 +72,19 @@ describe("a donation being reviewed", () => {
     mockFetch();
     show();
 
-    expect(await screen.findByText(/نفس الكابتير مستعمل من قبل/)).toBeTruthy();
+    expect(await screen.findByText(new RegExp(proofReuse.title))).toBeTruthy();
     expect(screen.getByText("أحمد")).toBeTruthy();
+  });
+
+  it("keeps the earlier uses folded away until they are asked for", async () => {
+    mockFetch();
+    show();
+
+    const summary = await screen.findByText(new RegExp(proofReuse.title));
+    const block = summary.closest("details");
+    expect(block).not.toBeNull();
+    expect(block!.open).toBe(false);
+    expect(block!.contains(screen.getByText("أحمد"))).toBe(true);
   });
 
   it("asks about the donation itself, so it is left out of its own answer", async () => {
@@ -261,5 +272,39 @@ describe("the account shown under a payment", () => {
     show({ userId: undefined }, [NO_ACCOUNT_ID, ACCOUNT]);
 
     expect(screen.queryByText(/AJVT-2026-0061/)).toBeNull();
+  });
+});
+
+describe("the payer on a card linked to an account", () => {
+  it("prints the name once", () => {
+    mockFetch([]);
+    show({ memberName: "أبوبكر لمرابط", userId: "u1" }, [ACCOUNT]);
+
+    expect(screen.getAllByText("أبوبكر لمرابط")).toHaveLength(1);
+  });
+
+  it("keeps on the identity line what the name alone does not say", () => {
+    mockFetch([]);
+    show({ memberName: "أبوبكر لمرابط", userId: "u1" }, [ACCOUNT]);
+
+    expect(screen.getByText(/AJVT-2026-0061/)).toBeTruthy();
+    expect(screen.getByText(/التاكلالت/)).toBeTruthy();
+  });
+});
+
+describe("the order a list of payments reads in", () => {
+  it("puts the origin and the date above the quieter lines", () => {
+    mockFetch([]);
+    const { container } = show({
+      userId: "u1",
+      receipt: { number: "R-2026-0243", status: "ACTIVE" },
+    });
+    const text = container.textContent!;
+
+    expect(text.indexOf(paymentCard.statusPending)).toBeLessThan(
+      text.indexOf(paymentCard.generalSupport),
+    );
+    expect(text.indexOf(paymentCard.generalSupport)).toBeLessThan(text.indexOf("2026/08/20"));
+    expect(text.indexOf("2026/08/20")).toBeLessThan(text.indexOf("R-2026-0243"));
   });
 });
