@@ -22,7 +22,6 @@ import TournamentTabs, { type TournamentPanel } from "@/components/tournament/To
 import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/texts";
 import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
-import { firstRoundIsWaiting } from "@/lib/bracketState";
 import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/teamSize";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
@@ -76,12 +75,7 @@ export async function tournamentPanels(
 
   const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
   const bracket = (
-    <div className="card p-3 space-y-2">
-      {firstRoundIsWaiting(bracketMatches) && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="clock">{words.bracketWaitingHint}</IconLabel>
-        </p>
-      )}
+    <div className="card p-3">
       <BracketTree
         matches={bracketMatches.map((m) => ({
           ...m,

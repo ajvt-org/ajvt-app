@@ -76,8 +76,7 @@ export default function BracketPanel({
       ) : (
         <>
           <BracketTree matches={bracketMatches} />
-          {firstRoundWaiting &&
-            (knockoutLocked ? lockedNote(texts.bracketWaitingHint) : fillFirstRound)}
+          {firstRoundWaiting && !knockoutLocked && fillFirstRound}
           {firstRoundRedoable && (
             <button
               onClick={() =>
