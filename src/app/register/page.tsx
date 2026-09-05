@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "@/components/form/ProgressBar";
 import PageHeader from "@/components/PageHeader";
@@ -15,25 +15,48 @@ import { validatePhone } from "@/lib/utils";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import StepCredentials from "./StepCredentials";
 import StepPerson from "./StepPerson";
+import { DRAFT_KEY, readDraft, type SignUpDraft } from "./draft";
+
+const EMPTY: SignUpDraft = {
+  phone: "",
+  fullName: "",
+  village: HOME_VILLAGE,
+  age: "",
+  photo: null,
+};
 
 export default function RegisterPage() {
   const router = useRouter();
   const { ages, villages, addAge } = useFormLists();
 
   const [step, setStep] = useState(0);
-  const [phone, setPhone] = useState("");
+  const [form, setForm] = useState<SignUpDraft>(EMPTY);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [village, setVillage] = useState(HOME_VILLAGE);
-  const [age, setAge] = useState("");
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [restored, setRestored] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const draft = readDraft(sessionStorage.getItem(DRAFT_KEY));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm((p) => ({ ...p, ...draft }));
+    setRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    const timeout = setTimeout(() => sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form)), 300);
+    return () => clearTimeout(timeout);
+  }, [form, restored]);
+
+  function set<K extends keyof SignUpDraft>(field: K, value: SignUpDraft[K]) {
+    setForm((p) => ({ ...p, [field]: value }));
+  }
+
   function goToPerson() {
     setError("");
-    const phoneError = validatePhone(phone);
+    const phoneError = validatePhone(form.phone);
     if (phoneError) return setError(phoneError);
     if (password.length < MIN_PASSWORD_LENGTH) return setError(auth.passwordTooShort);
     if (password !== confirmPassword) return setError(signUp.passwordMismatch);
@@ -41,27 +64,27 @@ export default function RegisterPage() {
   }
 
   function pickVillage(next: string) {
-    setVillage(next);
-    if (!requiresAgeGroup(next)) setAge("");
+    setForm((p) => ({ ...p, village: next, age: requiresAgeGroup(next) ? p.age : "" }));
   }
 
   async function create() {
     setError("");
-    if (!fullName.trim()) return setError(members.fullNameRequired);
-    if (!isArabicName(fullName)) return setError(members.fullNameArabicOnly);
-    if (!village) return setError(villageMessages.pickVillage);
-    if (requiresAgeGroup(village) && !age) return setError(members.pickAgeGroup);
+    if (!form.fullName.trim()) return setError(members.fullNameRequired);
+    if (!isArabicName(form.fullName)) return setError(members.fullNameArabicOnly);
+    if (!form.village) return setError(villageMessages.pickVillage);
+    if (requiresAgeGroup(form.village) && !form.age) return setError(members.pickAgeGroup);
 
     setLoading(true);
     try {
       await api.post("/api/auth/register", {
-        phone,
+        phone: form.phone,
         password,
-        fullName: fullName.trim(),
-        village,
-        age: ageForVillage(village, age),
-        photo,
+        fullName: form.fullName.trim(),
+        village: form.village,
+        age: ageForVillage(form.village, form.age),
+        photo: form.photo,
       });
+      sessionStorage.removeItem(DRAFT_KEY);
       goAfterAuthChange(router, "/home");
     } catch (err) {
       setError(errorMessage(err));
@@ -78,10 +101,10 @@ export default function RegisterPage() {
 
         {step === 0 ? (
           <StepCredentials
-            phone={phone}
+            phone={form.phone}
             password={password}
             confirmPassword={confirmPassword}
-            onPhone={setPhone}
+            onPhone={(value) => set("phone", value)}
             onPassword={setPassword}
             onConfirmPassword={setConfirmPassword}
             error={error}
@@ -89,17 +112,17 @@ export default function RegisterPage() {
           />
         ) : (
           <StepPerson
-            fullName={fullName}
-            village={village}
-            age={age}
-            photo={photo}
+            fullName={form.fullName}
+            village={form.village}
+            age={form.age}
+            photo={form.photo}
             villages={villages}
             ages={ages}
-            onFullName={setFullName}
+            onFullName={(value) => set("fullName", value)}
             onVillage={pickVillage}
-            onAge={setAge}
+            onAge={(value) => set("age", value)}
             onAddAge={addAge}
-            onPhoto={setPhoto}
+            onPhoto={(value) => set("photo", value)}
             error={error}
             loading={loading}
             onBack={() => {
