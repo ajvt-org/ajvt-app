@@ -28,7 +28,14 @@ const TEAM: Team = {
   members: [
     {
       status: "ACTIVE",
-      member: { id: "p1", fullName: "سالم", phone: "36000001", age: "البدريين", photo: null },
+      member: {
+        id: "p1",
+        fullName: "سالم",
+        phone: "36000001",
+        age: "البدريين",
+        village: "التاكلالت",
+        photo: null,
+      },
     },
   ],
 };

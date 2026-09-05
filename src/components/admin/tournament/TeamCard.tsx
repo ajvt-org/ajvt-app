@@ -6,13 +6,13 @@ import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
 import type { RosterMember, Team, TeamMemberEntry } from "./types";
-import type { SquadSize } from "@/lib/teamSize";
+import { playerOverOutsideLimit, type SquadBreach, type SquadSettings } from "@/lib/squadRules";
 
 export default function TeamCard({
   team,
   shownName,
-  squad,
-  askVillage,
+  settings,
+  breaches,
   members,
   open,
   candidates,
@@ -30,8 +30,8 @@ export default function TeamCard({
 }: {
   team: Team;
   shownName: string;
-  squad: SquadSize;
-  askVillage: boolean;
+  settings: SquadSettings;
+  breaches: SquadBreach[];
   members: TeamMemberEntry[];
   open: boolean;
   candidates: RosterMember[];
@@ -52,7 +52,8 @@ export default function TeamCard({
       <TeamSummary
         team={team}
         shownName={shownName}
-        squad={squad}
+        squad={settings.squad}
+        breaches={breaches}
         busy={busy}
         onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}
@@ -62,7 +63,7 @@ export default function TeamCard({
           name={team.name}
           logo={team.logo}
           busy={busy}
-          askVillage={askVillage}
+          askVillage={settings.organisedByTaguilalett}
           fromTaguilalett={team.fromTaguilalett}
           onRenameTeam={onRenameTeam}
           onSetFromTaguilalett={onSetFromTaguilalett}
@@ -76,6 +77,7 @@ export default function TeamCard({
         <TeamRoster
           team={team}
           members={members}
+          overLimit={(memberId) => playerOverOutsideLimit(breaches, memberId)}
           suspendedIds={suspendedIds}
           busy={busy}
           onSetCaptain={onSetCaptain}

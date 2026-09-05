@@ -46,7 +46,14 @@ function team(id: string, name: string, members: [string, string][]): Team {
     group: null,
     members: members.map(([mid, fullName]) => ({
       status: "ACTIVE",
-      member: { id: mid, fullName, phone: "36000001", age: "البدريين", photo: null },
+      member: {
+        id: mid,
+        fullName,
+        phone: "36000001",
+        age: "البدريين",
+        village: "التاكلالت",
+        photo: null,
+      },
     })),
   };
 }

@@ -6,6 +6,7 @@ import TeamLogo from "@/components/tournament/TeamLogo";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
 import { rosterFault, squadLabel, type SquadSize } from "@/lib/teamSize";
+import type { SquadBreach } from "@/lib/squadRules";
 
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
 const SHORT = { background: "#fef3c7", color: "#92400e" };
@@ -17,10 +18,17 @@ function rosterTone(count: number, squad: SquadSize) {
   return fault === "short" ? SHORT : OVER;
 }
 
+function breachLabel(breach: SquadBreach): string {
+  if (breach.kind === "tooFew") return teamsTab.squadShort;
+  if (breach.kind === "tooMany") return teamsTab.squadOver;
+  return teamsTab.outsideOverLimit(breach.count, breach.limit);
+}
+
 export default function TeamSummary({
   team,
   shownName,
   squad,
+  breaches,
   busy,
   onToggle,
   onDeleteTeam,
@@ -28,6 +36,7 @@ export default function TeamSummary({
   team: Team;
   shownName: string;
   squad: SquadSize;
+  breaches: SquadBreach[];
   busy: boolean;
   onToggle: () => void;
   onDeleteTeam: () => void;
@@ -85,6 +94,11 @@ export default function TeamSummary({
             <IconLabel name="clock">{teamsTab.awaitingCount(awaiting)}</IconLabel>
           </span>
         )}
+        {breaches.map((breach) => (
+          <span key={breach.kind} className="badge" style={breach.kind === "tooFew" ? SHORT : OVER}>
+            <IconLabel name="warning">{breachLabel(breach)}</IconLabel>
+          </span>
+        ))}
       </div>
     </summary>
   );

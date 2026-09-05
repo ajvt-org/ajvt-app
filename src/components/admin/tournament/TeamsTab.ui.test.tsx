@@ -28,7 +28,14 @@ function team(id: string, name: string, members: { id: string; name: string }[])
     group: null,
     members: members.map((m) => ({
       status: "ACTIVE" as const,
-      member: { id: m.id, fullName: m.name, phone: "36000001", age: "البدريين", photo: null },
+      member: {
+        id: m.id,
+        fullName: m.name,
+        phone: "36000001",
+        age: "البدريين",
+        village: "التاكلالت",
+        photo: null,
+      },
     })),
   };
 }
@@ -50,7 +57,14 @@ const SQUAD = [
 const onChange = vi.fn();
 
 function person(id: string, fullName: string): RosterMember {
-  return { id, fullName, phone: "36000003", age: "البدريين", photo: null, team: null };
+  return {
+    id,
+    fullName,
+    phone: "36000003",
+    age: "البدريين",
+    photo: null,
+    team: null,
+  };
 }
 
 function search() {
@@ -67,8 +81,11 @@ function show(teams: Team[] = TEAMS, roster: RosterMember[] = []) {
     <TeamsTab
       activityId="a1"
       teams={teams}
-      squad={{ min: null, max: null }}
-      askVillage={false}
+      settings={{
+        squad: { min: null, max: null },
+        organisedByTaguilalett: false,
+        outsidePlayerLimit: null,
+      }}
       roster={roster}
       suspendedIds={[]}
       onChange={onChange}
