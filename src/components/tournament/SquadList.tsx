@@ -49,11 +49,12 @@ export default function SquadList({
             </span>
             {leads && (
               <span
-                className="badge shrink-0"
+                role="img"
+                aria-label={texts.captain}
+                className="badge badge-mark shrink-0"
                 style={{ background: "var(--mint-600)", color: "white" }}
               >
-                <Icon name="star" size={12} filled />
-                {texts.captain}
+                <Icon name="captain" size={12} />
               </span>
             )}
           </li>

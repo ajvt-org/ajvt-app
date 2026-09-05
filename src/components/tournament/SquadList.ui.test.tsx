@@ -67,7 +67,7 @@ describe("SquadList", () => {
     const { container } = show(squad(4), "p2");
 
     expect(names(container)[0]).toBe("لاعب 2");
-    expect(screen.getByText("القائد")).toBeDefined();
+    expect(screen.getByRole("img", { name: "القائد" })).toBeDefined();
   });
 
   it("gives the captain the whole row so the badge fits beside the name", () => {
@@ -78,17 +78,26 @@ describe("SquadList", () => {
     expect(rows[1].className).not.toContain("col-span-full");
   });
 
+  it("marks the captain with no word, and gives the mark the word as its name", () => {
+    show(squad(4), "p2");
+
+    const mark = screen.getByRole("img", { name: "القائد" });
+    expect(mark.textContent).toBe("");
+    expect(mark.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(screen.queryByText("القائد")).toBeNull();
+  });
+
   it("marks one captain and no one else", () => {
     show(squad(4), "p2");
 
-    expect(screen.getAllByText("القائد")).toHaveLength(1);
+    expect(screen.getAllByRole("img", { name: "القائد" })).toHaveLength(1);
   });
 
   it("leaves a squad with no captain exactly as it was", () => {
     const { container } = show(squad(4));
 
     expect(names(container)).toEqual(["لاعب 0", "لاعب 1", "لاعب 2", "لاعب 3"]);
-    expect(screen.queryByText("القائد")).toBeNull();
+    expect(screen.queryByRole("img", { name: "القائد" })).toBeNull();
     expect(container.querySelector(".badge")).toBeNull();
   });
 
@@ -96,7 +105,7 @@ describe("SquadList", () => {
     const { container } = show(squad(4), "gone");
 
     expect(names(container)).toEqual(["لاعب 0", "لاعب 1", "لاعب 2", "لاعب 3"]);
-    expect(screen.queryByText("القائد")).toBeNull();
+    expect(screen.queryByRole("img", { name: "القائد" })).toBeNull();
   });
 
   it("marks the row the viewer is reading their own name on", () => {
@@ -127,14 +136,14 @@ describe("SquadList", () => {
     const { container } = show(squad(4), "p1");
 
     expect(marked(container)).toEqual([]);
-    expect(screen.getByText("القائد")).toBeDefined();
+    expect(screen.getByRole("img", { name: "القائد" })).toBeDefined();
   });
 
   it("gives the captain who is also the viewer both marks and one badge", () => {
     const { container } = show(squad(4), "p2", "p2");
 
     expect(marked(container)).toEqual(["لاعب 2"]);
-    expect(screen.getAllByText("القائد")).toHaveLength(1);
+    expect(screen.getAllByRole("img", { name: "القائد" })).toHaveLength(1);
   });
 
   it("keeps every row on the same grid line whether it is marked or not", () => {
