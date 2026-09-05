@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import BackButton from "@/components/BackButton";
-import Logo from "@/components/Logo";
 import ProgressBar from "@/components/form/ProgressBar";
+import PageHeader from "@/components/PageHeader";
 import { useFormLists } from "@/components/form/useFormLists";
 import { api, errorMessage } from "@/lib/api";
 import { goAfterAuthChange } from "@/lib/authNav";
 import { isArabicName } from "@/lib/arabicName";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 import { auth, members, villages as villageMessages } from "@/lib/messages";
-import { association, signUp } from "@/lib/texts";
+import { signUp } from "@/lib/texts";
 import { validatePhone } from "@/lib/utils";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import StepCredentials from "./StepCredentials";
@@ -72,19 +71,7 @@ export default function RegisterPage() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <BackButton href="/" />
-        <Logo mark="symbol" size={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            {association.name}
-          </p>
-          <h1 className="text-base font-black text-white">{signUp.title}</h1>
-        </div>
-      </div>
+      <PageHeader title={signUp.title} backHref="/" />
 
       <div className="px-5 py-6 pb-10">
         <ProgressBar stepIndex={step} total={2} />
