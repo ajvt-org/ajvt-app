@@ -10,6 +10,7 @@ import {
   getHeadToHead,
   computeCleanSheets,
   computeTeamAdvancedStats,
+  knockoutToggleAllowed,
 } from "./tournament";
 import type { StandingsMatchInput } from "./standings";
 
@@ -382,5 +383,28 @@ describe("a fixture with no teams yet", () => {
 
     expect(by.a.form).toEqual(["W"]);
     expect(by.a.biggestWin).toEqual({ opponent: "باء", gf: 3, ga: 0, gd: 3 });
+  });
+});
+
+describe("knockoutToggleAllowed", () => {
+  it("holds the toggle back on a group fixture", () => {
+    expect(knockoutToggleAllowed(false, null, "g1", "g1")).toBe(false);
+  });
+
+  it("offers it on a fixture between teams that are in no group", () => {
+    expect(knockoutToggleAllowed(false, null, null, null)).toBe(true);
+  });
+
+  it("offers it when only one side sits in a group", () => {
+    expect(knockoutToggleAllowed(false, null, "g1", null)).toBe(true);
+  });
+
+  it("leaves a bracket match alone", () => {
+    expect(knockoutToggleAllowed(true, 2, "g1", "g1")).toBe(true);
+    expect(knockoutToggleAllowed(false, 2, "g1", "g1")).toBe(true);
+  });
+
+  it("lets a knockout match be put back into its group", () => {
+    expect(knockoutToggleAllowed(true, null, "g1", "g1")).toBe(true);
   });
 });

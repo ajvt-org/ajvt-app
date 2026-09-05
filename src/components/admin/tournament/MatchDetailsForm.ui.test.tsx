@@ -111,3 +111,48 @@ describe("setting the teams on a fixture that has none", () => {
     expect(selects.map((s) => s.value)).toEqual(["t1", "t2"]);
   });
 });
+
+const GROUPED: Team[] = TEAMS.map((t) => ({ ...t, groupId: "g1" }));
+
+const GROUP_FIXTURE: Match = {
+  ...WAITING,
+  homeTeam: { id: "t1", name: "الصقور", logo: null },
+  awayTeam: { id: "t2", name: "النسور", logo: null },
+  round: "الجولة 1",
+  isKnockout: false,
+  bracketRound: null,
+};
+
+function showWith(match: Match, teams: Team[]) {
+  cleanup();
+  render(<MatchDetailsForm match={match} teams={teams} onChange={vi.fn()} />);
+}
+
+describe("the knockout toggle on a group fixture", () => {
+  it("is not offered when both sides sit in a group", () => {
+    showWith(GROUP_FIXTURE, GROUPED);
+
+    expect(screen.queryByText(texts.knockoutMatch)).toBeNull();
+  });
+
+  it("stays on a fixture whose sides belong to no group", () => {
+    showWith(GROUP_FIXTURE, TEAMS);
+
+    expect(screen.getByText(texts.knockoutMatch)).toBeDefined();
+  });
+
+  it("stays on a match the bracket made", () => {
+    showWith({ ...GROUP_FIXTURE, isKnockout: true, bracketRound: 1 }, GROUPED);
+
+    expect(screen.getByText(texts.knockoutMatch)).toBeDefined();
+  });
+
+  it("sends the group fixture on as a group fixture", async () => {
+    showWith(GROUP_FIXTURE, GROUPED);
+
+    fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
+
+    await waitFor(() => expect(patch).toHaveBeenCalled());
+    expect(patch.mock.calls[0][1]).toMatchObject({ isKnockout: false });
+  });
+});

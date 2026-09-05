@@ -267,6 +267,16 @@ export function isValidLeaguePairing(
   return homeGroupId === awayGroupId;
 }
 
+export function knockoutToggleAllowed(
+  isKnockout: boolean,
+  bracketRound: number | null,
+  homeGroupId: string | null,
+  awayGroupId: string | null,
+): boolean {
+  if (isKnockout || bracketRound !== null) return true;
+  return homeGroupId === null || awayGroupId === null;
+}
+
 export function shuffleArray<T>(arr: T[]): T[] {
   const copy = [...arr];
   for (let i = copy.length - 1; i > 0; i--) {
