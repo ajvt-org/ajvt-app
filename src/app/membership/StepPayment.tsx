@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import ArrowLabel from "@/components/ArrowLabel";
 import IconLabel from "@/components/IconLabel";
@@ -14,6 +15,7 @@ import { usePayableMethods } from "@/lib/usePayableMethods";
 import PaymentMethodChoice from "@/components/PaymentMethodChoice";
 import AccountChoice from "./AccountChoice";
 import { looksLikeReference } from "@/lib/bankReference";
+import { accountToPreselect } from "@/lib/paymentMethodChoices";
 
 export default function StepPayment({
   form,
@@ -56,9 +58,13 @@ export default function StepPayment({
   const amount = String(form.paidAmount || membershipFee);
   const chosen = offer.methods.find((method) => method.name === form.paymentMethod);
   const accounts = chosen?.accounts ?? [];
-  const picked =
-    accounts.length === 1 ? accounts[0] : accounts.find((a) => a.id === form.accountId);
+  const preselected = accountToPreselect(accounts, form.accountId);
+  const picked = accounts.find((a) => a.id === preselected);
   const receivingCode = picked?.code ?? "";
+
+  useEffect(() => {
+    if (!form.accountId && preselected) setForm((p) => ({ ...p, accountId: preselected }));
+  }, [form.accountId, preselected, setForm]);
   const referenceLooksOdd = !looksLikeReference(form.bankReference);
 
   return (
