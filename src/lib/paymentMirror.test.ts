@@ -7,6 +7,7 @@ vi.mock("./paymentReceiptServer", () => ({
 
 import {
   donationMirrorOf,
+  isPaidAmount,
   mirrorDonation,
   mirrorMembershipPayment,
   mirrorMembershipStatus,
@@ -30,6 +31,10 @@ function fakeDb(existing: { id: string } | null = null) {
     payment: {
       findFirst: vi.fn(async (args: Record<string, unknown>) => {
         calls.push({ op: "findFirst", args });
+        return existing;
+      }),
+      findUnique: vi.fn(async (args: Record<string, unknown>) => {
+        calls.push({ op: "findUnique", args });
         return existing;
       }),
       create: vi.fn(record("create")),
@@ -63,6 +68,16 @@ const only = (calls: Call[], op: string) => calls.filter((c) => c.op === op);
 
 beforeEach(() => {
   vi.clearAllMocks();
+});
+
+describe("what counts as an amount paid", () => {
+  it("takes a positive amount and nothing else", () => {
+    expect(isPaidAmount(5000)).toBe(true);
+    expect(isPaidAmount(1)).toBe(true);
+    expect(isPaidAmount(0)).toBe(false);
+    expect(isPaidAmount(-1)).toBe(false);
+    expect(isPaidAmount(null)).toBe(false);
+  });
 });
 
 describe("the payment a donation is mirrored into", () => {
@@ -142,13 +157,15 @@ describe("writing the mirrored payment", () => {
     expect(syncReceiptsFor).toHaveBeenCalled();
   });
 
-  it("takes the payment away when the gift loses its amount", async () => {
-    const { db, calls } = fakeDb({ id: "d1" });
+  it("takes the payment away when the gift loses its amount or is worth nothing", async () => {
+    for (const amount of [null, 0, -1]) {
+      const { db, calls } = fakeDb({ id: "d1" });
 
-    await mirrorDonation(db, donationMirrorOf({ ...GIFT, amount: null }));
+      await mirrorDonation(db, donationMirrorOf({ ...GIFT, amount }));
 
-    expect(only(calls, "delete")).toHaveLength(1);
-    expect(only(calls, "create")).toHaveLength(0);
+      expect(only(calls, "delete")).toHaveLength(1);
+      expect(only(calls, "create")).toHaveLength(0);
+    }
   });
 
   it("has nothing to take away when a gift with no amount was never mirrored", async () => {
@@ -156,7 +173,16 @@ describe("writing the mirrored payment", () => {
 
     await mirrorDonation(db, donationMirrorOf({ ...GIFT, amount: null }));
 
-    expect(calls.filter((c) => c.op !== "findFirst")).toHaveLength(0);
+    expect(calls.filter((c) => c.op !== "findUnique")).toHaveLength(0);
+  });
+
+  it("looks the mirrored payment up by its primary key", async () => {
+    const { db, calls } = fakeDb();
+
+    await mirrorDonation(db, donationMirrorOf(GIFT));
+
+    expect(only(calls, "findUnique")[0].args).toMatchObject({ where: { id: "d1" } });
+    expect(only(calls, "findFirst")).toHaveLength(0);
   });
 
   it("removes the mirrored payment when the gift is deleted", async () => {
@@ -206,7 +232,7 @@ describe("the payment a membership is mirrored into", () => {
   });
 
   it("takes it away when the amount is gone or is nothing", async () => {
-    for (const amount of [null, 0]) {
+    for (const amount of [null, 0, -1]) {
       const { db, calls } = fakeDb({ id: "p1" });
       await mirrorMembershipPayment(db, { ...MEMBERSHIP, amount });
       expect(only(calls, "delete")).toHaveLength(1);
