@@ -157,6 +157,6 @@ export const tournamentSetup = {
   squadHeading: "عدد لاعبي الفريق",
   minTeamSize: "الحد الأدنى",
   maxTeamSize: "الحد الأقصى",
-  organisedByTaguilalett: "بطولة من تنظيم التاكلالت",
+  organisedByHomeVillage: "بطولة من تنظيم التاكلالت",
   outsidePlayerLimit: "الحد الأقصى للاعبين من خارج التاكلالت",
 } as const;

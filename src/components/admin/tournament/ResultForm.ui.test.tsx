@@ -39,7 +39,7 @@ function team(id: string, name: string, members: [string, string][]): Team {
     id,
     name,
     autoNamed: false,
-    fromTaguilalett: true,
+    fromHomeVillage: true,
     logo: null,
     captainUserId: null,
     groupId: null,

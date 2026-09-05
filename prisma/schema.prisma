@@ -115,7 +115,7 @@ model Activity {
   profile                SportProfile           @default(FOOTBALL)
   minTeamSize            Int?
   maxTeamSize            Int?
-  organisedByTaguilalett Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
+  organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
   outsidePlayerLimit     Int? // players from outside the village a village team may field, counted from the village on each account
   yellowsForBan          Int                    @default(2) // yellows across the tournament that propose a suspension
   redBanMatches          Int                    @default(1) // matches a proposed red-card ban carries
@@ -176,7 +176,7 @@ model Team {
   group           Group?                 @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name            String
   autoNamed       Boolean                @default(false)
-  fromTaguilalett Boolean                @default(true)
+  fromHomeVillage Boolean                @default(true)
   logo            String?
   captainUserId   String?
   captain         User?                  @relation("TeamCaptain", fields: [captainUserId], references: [id], onDelete: SetNull)

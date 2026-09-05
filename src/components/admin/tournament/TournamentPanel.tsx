@@ -106,7 +106,7 @@ export default function TournamentPanel({
             teams={teams}
             settings={{
               squad,
-              organisedByTaguilalett: info?.organisedByTaguilalett ?? false,
+              organisedByHomeVillage: info?.organisedByHomeVillage ?? false,
               outsidePlayerLimit: info?.outsidePlayerLimit ?? null,
             }}
             roster={roster}

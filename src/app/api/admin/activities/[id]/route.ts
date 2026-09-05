@@ -25,7 +25,7 @@ export const GET = withRoute(
         profile: true,
         minTeamSize: true,
         maxTeamSize: true,
-        organisedByTaguilalett: true,
+        organisedByHomeVillage: true,
         outsidePlayerLimit: true,
         startsAt: true,
         endsAt: true,
@@ -55,7 +55,7 @@ export const PATCH = withRoute(
       profile,
       minTeamSize,
       maxTeamSize,
-      organisedByTaguilalett,
+      organisedByHomeVillage,
       outsidePlayerLimit,
       yellowsForBan,
       redBanMatches,
@@ -89,7 +89,7 @@ export const PATCH = withRoute(
       profile?: SportProfile;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
-      organisedByTaguilalett?: boolean;
+      organisedByHomeVillage?: boolean;
       outsidePlayerLimit?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
@@ -127,8 +127,8 @@ export const PATCH = withRoute(
       if (minTeamSize !== undefined) data.minTeamSize = normalizeTeamSize(minTeamSize);
       if (maxTeamSize !== undefined) data.maxTeamSize = normalizeTeamSize(maxTeamSize);
     }
-    if (organisedByTaguilalett !== undefined) {
-      data.organisedByTaguilalett = !!organisedByTaguilalett;
+    if (organisedByHomeVillage !== undefined) {
+      data.organisedByHomeVillage = !!organisedByHomeVillage;
     }
     if (outsidePlayerLimit !== undefined) {
       data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);

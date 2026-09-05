@@ -17,7 +17,7 @@ export type ActivityDetail = {
     profile: "FOOTBALL" | "BOARD";
     minTeamSize: number | null;
     maxTeamSize: number | null;
-    organisedByTaguilalett: boolean;
+    organisedByHomeVillage: boolean;
     outsidePlayerLimit: number | null;
     isVolunteer: boolean;
     whatsappLink: string | null;

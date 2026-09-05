@@ -7,18 +7,18 @@ const away = (id: string) => ({ id, village: "أفجار" });
 
 const VILLAGE_CUP: SquadSettings = {
   squad: { min: 16, max: 22 },
-  organisedByTaguilalett: true,
+  organisedByHomeVillage: true,
   outsidePlayerLimit: 4,
 };
 
 const OPEN_CUP: SquadSettings = {
   squad: { min: null, max: null },
-  organisedByTaguilalett: false,
+  organisedByHomeVillage: false,
   outsidePlayerLimit: null,
 };
 
-const VILLAGE_TEAM = { fromTaguilalett: true };
-const GUEST_TEAM = { fromTaguilalett: false };
+const VILLAGE_TEAM = { fromHomeVillage: true };
+const GUEST_TEAM = { fromHomeVillage: false };
 
 function squad(homeCount: number, awayCount = 0) {
   return [
@@ -76,7 +76,7 @@ describe("players from outside the village", () => {
   });
 
   it("leaves every team alone when the tournament is not run by the village", () => {
-    const settings = { ...VILLAGE_CUP, organisedByTaguilalett: false };
+    const settings = { ...VILLAGE_CUP, organisedByHomeVillage: false };
 
     expect(squadBreaches(squad(10, 8), VILLAGE_TEAM, settings)).toEqual([]);
   });

@@ -83,8 +83,8 @@ export default function TeamsTab({
     }
   }
 
-  function setFromTaguilalett(teamId: string, fromTaguilalett: boolean) {
-    run(() => api.patch(`/api/admin/teams/${teamId}`, { fromTaguilalett }));
+  function setFromHomeVillage(teamId: string, fromHomeVillage: boolean) {
+    run(() => api.patch(`/api/admin/teams/${teamId}`, { fromHomeVillage }));
   }
 
   function renameTeam(teamId: string, name: string) {
@@ -181,7 +181,7 @@ export default function TeamsTab({
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
-          onSetFromTaguilalett={(value) => setFromTaguilalett(team.id, value)}
+          onSetFromHomeVillage={(value) => setFromHomeVillage(team.id, value)}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
           onAddMember={(userId) => addMember(team.id, userId)}
           onApproveMember={(memberId) => approveMember(team.id, memberId)}

@@ -9,7 +9,7 @@ function show(over: Record<string, unknown> = {}) {
     onPreset: vi.fn(),
     onMinTeamSize: vi.fn(),
     onMaxTeamSize: vi.fn(),
-    onOrganisedByTaguilalett: vi.fn(),
+    onOrganisedByHomeVillage: vi.fn(),
     onOutsidePlayerLimit: vi.fn(),
   };
   render(
@@ -18,7 +18,7 @@ function show(over: Record<string, unknown> = {}) {
       profile="FOOTBALL"
       minTeamSize="16"
       maxTeamSize="22"
-      organisedByTaguilalett={false}
+      organisedByHomeVillage={false}
       outsidePlayerLimit=""
       {...handlers}
       {...over}
@@ -50,13 +50,13 @@ describe("the squad size on a tournament", () => {
         profile="FOOTBALL"
         minTeamSize="16"
         maxTeamSize="22"
-        organisedByTaguilalett
+        organisedByHomeVillage
         outsidePlayerLimit="4"
         onFormat={vi.fn()}
         onPreset={vi.fn()}
         onMinTeamSize={vi.fn()}
         onMaxTeamSize={vi.fn()}
-        onOrganisedByTaguilalett={vi.fn()}
+        onOrganisedByHomeVillage={vi.fn()}
         onOutsidePlayerLimit={vi.fn()}
       />,
     );
@@ -73,7 +73,7 @@ describe("a tournament run by the village", () => {
   });
 
   it("asks for the outside limit once the toggle is on", () => {
-    show({ organisedByTaguilalett: true, outsidePlayerLimit: "4" });
+    show({ organisedByHomeVillage: true, outsidePlayerLimit: "4" });
 
     expect((screen.getByLabelText(texts.outsidePlayerLimit) as HTMLInputElement).value).toBe("4");
   });
@@ -81,8 +81,8 @@ describe("a tournament run by the village", () => {
   it("sends the toggle up", () => {
     const handlers = show();
 
-    fireEvent.click(screen.getByLabelText(texts.organisedByTaguilalett));
+    fireEvent.click(screen.getByLabelText(texts.organisedByHomeVillage));
 
-    expect(handlers.onOrganisedByTaguilalett).toHaveBeenCalledWith(true);
+    expect(handlers.onOrganisedByHomeVillage).toHaveBeenCalledWith(true);
   });
 });

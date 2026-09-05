@@ -29,7 +29,7 @@ function activity(isTournament: boolean): ActivityDetail["activity"] {
     profile: "FOOTBALL" as const,
     minTeamSize: null,
     maxTeamSize: null,
-    organisedByTaguilalett: false,
+    organisedByHomeVillage: false,
     outsidePlayerLimit: null,
     isVolunteer: false,
     whatsappLink: null,
@@ -68,7 +68,7 @@ describe("ConvertTournamentCard", () => {
         profile: "BOARD",
         minTeamSize: "2",
         maxTeamSize: "2",
-        organisedByTaguilalett: false,
+        organisedByHomeVillage: false,
         outsidePlayerLimit: "",
       }),
     );
@@ -88,7 +88,7 @@ describe("ConvertTournamentCard", () => {
         profile: "BOARD",
         minTeamSize: "1",
         maxTeamSize: "1",
-        organisedByTaguilalett: false,
+        organisedByHomeVillage: false,
         outsidePlayerLimit: "",
       }),
     );
