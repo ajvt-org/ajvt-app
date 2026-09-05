@@ -76,10 +76,6 @@ export default function RegisterPage() {
       <div className="px-5 py-6 pb-10">
         <ProgressBar stepIndex={step} total={2} />
 
-        <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-          {signUp.lead}
-        </p>
-
         {step === 0 ? (
           <StepCredentials
             phone={phone}

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PhotoUpload from "./PhotoUpload";
+import { photoUpload } from "@/lib/texts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -68,5 +69,21 @@ describe("a picture the admin has blocked", () => {
 
     rerender(<PhotoUpload photo={null} locked variant="avatar" onUpload={vi.fn()} />);
     expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("the text beside an avatar", () => {
+  it("carries the label and the hint by default", () => {
+    render(<PhotoUpload photo={null} onUpload={vi.fn()} label="الصورة" />);
+
+    expect(screen.getByText("الصورة")).toBeTruthy();
+    expect(screen.getByText(photoUpload.addHint)).toBeTruthy();
+  });
+
+  it("keeps the label and drops the hint when the call site asks", () => {
+    render(<PhotoUpload photo={null} onUpload={vi.fn()} label="الصورة" showHint={false} />);
+
+    expect(screen.getByText("الصورة")).toBeTruthy();
+    expect(screen.queryByText(photoUpload.addHint)).toBeNull();
   });
 });
