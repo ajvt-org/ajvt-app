@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ProgressBar from "@/components/form/ProgressBar";
 import PageHeader from "@/components/PageHeader";
 import { useFormLists } from "@/components/form/useFormLists";
@@ -11,7 +11,7 @@ import { isArabicName } from "@/lib/arabicName";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 import { auth, members, villages as villageMessages } from "@/lib/messages";
 import { signUp } from "@/lib/texts";
-import { validatePhone } from "@/lib/utils";
+import { safeNextPath, validatePhone } from "@/lib/utils";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import StepCredentials from "./StepCredentials";
 import StepPerson from "./StepPerson";
@@ -26,7 +26,16 @@ const EMPTY: SignUpDraft = {
 };
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const router = useRouter();
+  const backHref = safeNextPath(useSearchParams().get("from"), "/");
   const { ages, villages, addAge } = useFormLists();
 
   const [step, setStep] = useState(0);
@@ -94,7 +103,7 @@ export default function RegisterPage() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={signUp.title} backHref="/" />
+      <PageHeader title={signUp.title} backHref={backHref} />
 
       <div className="px-5 py-6 pb-10">
         <ProgressBar stepIndex={step} total={2} />

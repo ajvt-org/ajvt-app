@@ -5,6 +5,7 @@ import ActivityRowBody from "@/components/ActivityRowBody";
 import ActivityStandingChip from "@/components/ActivityStandingChip";
 import { activityAccent } from "@/lib/activityAccent";
 import { landingActivities as texts } from "@/lib/texts";
+import { withFrom } from "@/lib/backLink";
 import type { TournamentStage } from "@/lib/tournamentStage";
 
 export type LandingActivity = {
@@ -22,9 +23,11 @@ export type LandingActivity = {
 
 export default function LandingActivities({
   activities,
+  from,
   heading = true,
 }: {
   activities: LandingActivity[];
+  from: string;
   heading?: boolean;
 }) {
   return (
@@ -41,7 +44,7 @@ export default function LandingActivities({
 
       <div className="max-w-md mx-auto space-y-3">
         <Link
-          href="/quiz"
+          href={withFrom("/quiz", from)}
           className="card p-3.5 flex items-center gap-3"
           style={{
             background: "linear-gradient(160deg, var(--mint-100), #fff 65%)",
@@ -73,7 +76,7 @@ export default function LandingActivities({
         {activities.map((activity) => (
           <Link
             key={activity.id}
-            href={`/activities/${activity.id}`}
+            href={withFrom(`/activities/${activity.id}`, from)}
             className={`card activity-row ${activityAccent(activity)} p-3.5 flex items-center gap-3`}
           >
             <ActivityRowBody

@@ -12,6 +12,7 @@ import PaymentReceipts from "@/components/PaymentReceipts";
 import PageHeader from "@/components/PageHeader";
 import PageLoading from "@/components/PageLoading";
 import SurplusVisibility from "@/components/SurplusVisibility";
+import { withFrom } from "@/lib/backLink";
 import { useMember } from "@/lib/useMember";
 import { useNameBehindHeader } from "@/lib/useNameBehindHeader";
 
@@ -55,7 +56,10 @@ export default function ProfilePage() {
               <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
                 أكمل استمارة الانضمام للانضمام إلى رابطة شباب قرية التاكلالت
               </p>
-              <button onClick={() => router.push("/membership")} className="btn btn-primary">
+              <button
+                onClick={() => router.push(withFrom("/membership", "/profile"))}
+                className="btn btn-primary"
+              >
                 <ArrowLabel>تعبئة استمارة الانضمام</ArrowLabel>
               </button>
             </div>

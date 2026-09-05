@@ -7,7 +7,11 @@ import { DRAFT_KEY } from "./draft";
 import RegisterPage from "./page";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: push }) }));
+let search = "";
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace: push }),
+  useSearchParams: () => new URLSearchParams(search),
+}));
 
 function mockFetch() {
   const fetchMock = vi.fn().mockImplementation((url: string) => {
@@ -35,6 +39,7 @@ async function reachPersonStep() {
 
 beforeEach(() => {
   push.mockClear();
+  search = "";
 });
 
 afterEach(() => {
@@ -211,5 +216,20 @@ describe("signing up", () => {
 
     await waitFor(() => expect(push).toHaveBeenCalled());
     expect(sessionStorage.getItem(DRAFT_KEY)).toBeNull();
+  });
+
+  it("goes back to the screen that opened the form", () => {
+    mockFetch();
+    search = "from=%2Flogin";
+    render(<RegisterPage />);
+
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/login");
+  });
+
+  it("goes back to the landing page when nothing named an origin", () => {
+    mockFetch();
+    render(<RegisterPage />);
+
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/");
   });
 });

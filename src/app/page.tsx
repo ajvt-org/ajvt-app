@@ -59,7 +59,7 @@ export default async function LandingPage() {
           section === "hero" ? (
             <LandingHero key={section} />
           ) : (
-            <LandingActivities key={section} activities={activities} />
+            <LandingActivities key={section} activities={activities} from="/" />
           ),
         )}
       </div>

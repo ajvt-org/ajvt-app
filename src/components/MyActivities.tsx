@@ -49,7 +49,9 @@ export default function MyActivities() {
       {rows.length === 0 ? (
         <ActivitiesEmpty />
       ) : (
-        rows.slice(0, SHOWN).map((row) => <ActivityRowCard key={row.activityId} row={row} />)
+        rows
+          .slice(0, SHOWN)
+          .map((row) => <ActivityRowCard key={row.activityId} row={row} from="/home" />)
       )}
 
       {hasMatch && (

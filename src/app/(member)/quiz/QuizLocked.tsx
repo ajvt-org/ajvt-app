@@ -35,9 +35,9 @@ export default function QuizLocked({
   );
 }
 
-export function CreateAccountAction() {
+export function CreateAccountAction({ href }: { href: string }) {
   return (
-    <Link href="/membership" className="btn btn-primary">
+    <Link href={href} className="btn btn-primary">
       <IconLabel name="pencil">أنشئ حسابك</IconLabel>
     </Link>
   );

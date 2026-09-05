@@ -26,13 +26,14 @@ const fixture = {
 
 describe("an activity row", () => {
   it("names my team and the opponent for a scheduled match", () => {
-    render(<ActivityRowCard row={row({ kind: "NEXT_MATCH", fixture })} />);
+    render(<ActivityRowCard from="/home" row={row({ kind: "NEXT_MATCH", fixture })} />);
     expect(screen.getByText(/النسور ضد الصقور/)).toBeDefined();
   });
 
   it("reads the opponent off the other side when I am away", () => {
     render(
       <ActivityRowCard
+        from="/home"
         row={row({ kind: "NEXT_MATCH", fixture: { ...fixture, myTeamId: "t2" } })}
       />,
     );
@@ -40,13 +41,18 @@ describe("an activity row", () => {
   });
 
   it("names the partner rather than a team for a pair", () => {
-    render(<ActivityRowCard row={row({ kind: "PARTNERS", names: ["محمد ولد أحمد"] })} />);
+    render(
+      <ActivityRowCard from="/home" row={row({ kind: "PARTNERS", names: ["محمد ولد أحمد"] })} />,
+    );
     expect(screen.getByText(/شريكك محمد ولد أحمد/)).toBeDefined();
   });
 
   it("says nothing about a team for an activity that has none", () => {
     render(
-      <ActivityRowCard row={row({ kind: "DATES", text: "12 - 15 سبتمبر" }, "القافلة الصحية")} />,
+      <ActivityRowCard
+        from="/home"
+        row={row({ kind: "DATES", text: "12 - 15 سبتمبر" }, "القافلة الصحية")}
+      />,
     );
     expect(screen.getByText("القافلة الصحية")).toBeDefined();
     expect(screen.getByText(/12 - 15 سبتمبر/)).toBeDefined();
@@ -54,17 +60,17 @@ describe("an activity row", () => {
   });
 
   it("says a chess entrant is waiting for a team, without a squad word", () => {
-    render(<ActivityRowCard row={row({ kind: "AWAITING_TEAM" }, "بطولة الشطرنج")} />);
+    render(<ActivityRowCard from="/home" row={row({ kind: "AWAITING_TEAM" }, "بطولة الشطرنج")} />);
     expect(screen.getByText(/في انتظار انضمامك إلى فريق/)).toBeDefined();
   });
 
   it("leads with a decision still pending", () => {
-    render(<ActivityRowCard row={row({ kind: "PENDING_REVIEW" })} />);
+    render(<ActivityRowCard from="/home" row={row({ kind: "PENDING_REVIEW" })} />);
     expect(screen.getByText(/قيد المراجعة/)).toBeDefined();
   });
 
-  it("links to the activity", () => {
-    render(<ActivityRowCard row={row({ kind: "REGISTERED" })} />);
-    expect(screen.getByRole("link").getAttribute("href")).toBe("/activities/a1");
+  it("links to the activity and names the screen it was opened from", () => {
+    render(<ActivityRowCard from="/home" row={row({ kind: "REGISTERED" })} />);
+    expect(screen.getByRole("link").getAttribute("href")).toBe("/activities/a1?from=%2Fhome");
   });
 });

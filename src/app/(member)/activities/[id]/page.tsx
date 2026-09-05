@@ -14,11 +14,19 @@ import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/teamSize";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
+import { safeNextPath } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function ActivityPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ActivityPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
+  const { from } = await searchParams;
   const activity = await loadActivityPage(id);
   if (!activity) notFound();
 
@@ -42,7 +50,10 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="app-shell">
-      <PageHeader title={activity.title} backHref={userId ? "/home" : "/activities"} />
+      <PageHeader
+        title={activity.title}
+        backHref={safeNextPath(from, userId ? "/home" : "/activities")}
+      />
 
       <ActivityHero
         title={activity.title}

@@ -47,4 +47,11 @@ describe("signing in", () => {
     expect(push).not.toHaveBeenCalled();
     expect(refresh).not.toHaveBeenCalled();
   });
+
+  it("names itself on the way to the sign up form, so the form can come back to it", () => {
+    render(<LoginPage />);
+
+    const signUpLink = screen.getByRole("link", { name: "إنشاء حساب" });
+    expect(signUpLink.getAttribute("href")).toBe("/register?from=%2Flogin");
+  });
 });

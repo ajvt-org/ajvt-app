@@ -15,6 +15,7 @@ import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { donate as texts } from "@/lib/texts";
+import { withFrom } from "@/lib/backLink";
 
 export default function DonatePage() {
   return (
@@ -179,7 +180,10 @@ function DonatePageInner() {
           </div>
 
           <div className="space-y-2.5 fade-up delay-2">
-            <button onClick={() => router.push("/membership")} className="btn btn-primary">
+            <button
+              onClick={() => router.push(withFrom("/membership", "/donate"))}
+              className="btn btn-primary"
+            >
               <IconLabel name="user">{texts.createAccount}</IconLabel>
             </button>
             <button

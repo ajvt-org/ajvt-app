@@ -11,8 +11,18 @@ import QuizPicker from "./QuizPicker";
 import TutorialQuiz from "./TutorialQuiz";
 import type { RunningCompetition } from "./types";
 import { quizBoard as texts } from "@/lib/texts";
+import { safeNextPath } from "@/lib/utils";
+import { withFrom } from "@/lib/backLink";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+
+function quizPath(from: string | null, competition: string | null): string {
+  const params = new URLSearchParams();
+  if (competition) params.set("competition", competition);
+  if (from) params.set("from", from);
+  const query = params.toString();
+  return query ? `/quiz?${query}` : "/quiz";
+}
 
 export default function QuizPage() {
   return (
@@ -24,7 +34,9 @@ export default function QuizPage() {
 
 function QuizScreen() {
   const router = useRouter();
-  const chosen = useSearchParams().get("competition");
+  const params = useSearchParams();
+  const chosen = params.get("competition");
+  const from = params.get("from");
 
   const [mine, setMine] = useState<RunningCompetition[]>([]);
   const [confirmAnswers, setConfirmAnswers] = useState(true);
@@ -80,7 +92,9 @@ function QuizScreen() {
   }
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 
-  const backHref = visitor ? "/activities" : "/home";
+  const backHref = safeNextPath(from, visitor ? "/" : "/home");
+  const here = quizPath(from, chosen);
+  const membershipHref = withFrom("/membership", here);
 
   if (loading) {
     return (
@@ -102,7 +116,7 @@ function QuizScreen() {
         message={visitor ? texts.visitorNoCompetitions : texts.ineligible}
         action={
           visitor ? (
-            <CreateAccountAction />
+            <CreateAccountAction href={membershipHref} />
           ) : (
             <button onClick={() => router.push("/home")} className="btn btn-primary">
               {texts.backHome}
@@ -123,7 +137,8 @@ function QuizScreen() {
         standings={standings}
         canPlay={canPlay}
         visitor={visitor}
-        onBack={() => router.push("/quiz")}
+        membershipHref={membershipHref}
+        onBack={() => router.push(quizPath(from, null))}
         onReloadStandings={loadStandings}
       />
     );
@@ -133,7 +148,7 @@ function QuizScreen() {
     <QuizPicker
       competitions={mine}
       backHref={backHref}
-      onPick={(id) => router.push(`/quiz?competition=${id}`)}
+      onPick={(id) => router.push(quizPath(from, id))}
       onTutorial={() => setTutorial(true)}
       hint={canPlay ? undefined : visitor ? texts.visitorHint : texts.ineligibleHint}
       onStarted={loadMine}
