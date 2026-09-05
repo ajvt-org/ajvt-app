@@ -1,4 +1,6 @@
 import { endsAt as quizEndsAt } from "@/lib/quizRound";
+import { matchStanding, type StandingMatch } from "@/lib/activityMatches";
+import type { TournamentStage } from "@/lib/tournamentStage";
 
 export const MAX_ENROLLMENTS = 10;
 
@@ -10,6 +12,7 @@ export type EnrollmentItem = {
   endsAt: Date | null;
   isVolunteer: boolean;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
   kind: "activity" | "competition";
 };
 
@@ -21,7 +24,8 @@ export type ActivityRegistration = {
     startsAt: Date | null;
     endsAt: Date | null;
     isVolunteer: boolean;
-    _count: { matches: number };
+    isTournament: boolean;
+    matches: StandingMatch[];
   };
 };
 
@@ -55,7 +59,7 @@ export function mapEnrollments(
       startsAt: r.activity.startsAt,
       endsAt: r.activity.endsAt,
       isVolunteer: r.activity.isVolunteer,
-      unplayedMatches: r.activity._count.matches,
+      ...matchStanding(r.activity.matches, r.activity.isTournament),
       kind: "activity" as const,
     })),
     ...quizParticipations.map((p) => ({

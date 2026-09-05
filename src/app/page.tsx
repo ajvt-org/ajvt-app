@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { STILL_TO_PLAY } from "@/lib/activityMatches";
+import { STANDING_MATCH_SELECT, matchStanding } from "@/lib/activityMatches";
 import { getUserSession } from "@/lib/auth";
 import { formatActivityDates } from "@/lib/activityDates";
 import { sortActivities } from "@/lib/activityOrder";
@@ -28,7 +28,8 @@ export default async function LandingPage() {
             photo: true,
             isVolunteer: true,
             isOpen: true,
-            _count: { select: { matches: { where: STILL_TO_PLAY } } },
+            isTournament: true,
+            matches: { select: STANDING_MATCH_SELECT },
           },
         })
       : Promise.resolve([]),
@@ -37,7 +38,7 @@ export default async function LandingPage() {
   if (session) redirect("/home");
 
   const activities = sortActivities(
-    rows.map((a) => ({ ...a, unplayedMatches: a._count.matches })),
+    rows.map((a) => ({ ...a, ...matchStanding(a.matches, a.isTournament) })),
   ).map((a) => ({
     id: a.id,
     title: a.title,
@@ -48,6 +49,7 @@ export default async function LandingPage() {
     isVolunteer: a.isVolunteer,
     isOpen: a.isOpen,
     unplayedMatches: a.unplayedMatches,
+    awaitingStage: a.awaitingStage,
   }));
 
   return (

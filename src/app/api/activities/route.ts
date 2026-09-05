@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { withRoute } from "@/lib/route";
 import { formatActivityDates } from "@/lib/activityDates";
 import { sortActivities } from "@/lib/activityOrder";
-import { STILL_TO_PLAY } from "@/lib/activityMatches";
+import { STANDING_MATCH_SELECT, matchStanding } from "@/lib/activityMatches";
+import { joinableTeams } from "@/lib/registrationTeamServer";
 
 export const GET = withRoute("GET /api/activities", async () => {
   const activities = await prisma.activity.findMany({
@@ -24,17 +25,18 @@ export const GET = withRoute("GET /api/activities", async () => {
       isTournament: true,
       isVolunteer: true,
       whatsappLink: true,
+      teamSize: true,
       _count: {
         select: {
           registrations: { where: { status: { not: "REJECTED" } } },
-          matches: { where: STILL_TO_PLAY },
         },
       },
+      matches: { select: STANDING_MATCH_SELECT },
       teams: { select: { id: true, name: true }, orderBy: { createdAt: "asc" } },
     },
   });
 
-  const rows = activities.map((a) => ({ ...a, unplayedMatches: a._count.matches }));
+  const rows = activities.map((a) => ({ ...a, ...matchStanding(a.matches, a.isTournament) }));
 
   return NextResponse.json({
     activities: sortActivities(rows).map((a) => ({
@@ -52,7 +54,8 @@ export const GET = withRoute("GET /api/activities", async () => {
       whatsappLink: a.whatsappLink,
       registrantCount: a._count.registrations,
       unplayedMatches: a.unplayedMatches,
-      teams: a.isTournament ? a.teams : [],
+      awaitingStage: a.awaitingStage,
+      teams: joinableTeams(a, a.teams),
     })),
   });
 });

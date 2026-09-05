@@ -1,10 +1,13 @@
 import TeamLogo from "./TeamLogo";
 import FollowTeamButton from "./FollowTeamButton";
+import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 type Row = {
   teamId: string;
   name: string;
   logo: string | null;
+  photo?: string | null;
   points: number;
   played: number;
   won: number;
@@ -15,28 +18,36 @@ type Row = {
   gd: number;
 };
 
+const columnTexts = texts.standingsColumns;
+
 const COLUMNS: { label: string; detail: boolean; start?: boolean }[] = [
-  { label: "#", detail: false },
-  { label: "الفريق", detail: false, start: true },
-  { label: "نقاط", detail: false },
-  { label: "لعب", detail: false },
-  { label: "فاز", detail: true },
-  { label: "تعادل", detail: true },
-  { label: "خسر", detail: true },
-  { label: "له", detail: true },
-  { label: "عليه", detail: true },
-  { label: "الفرق", detail: false },
+  { label: columnTexts.rank, detail: false },
+  { label: "", detail: false, start: true },
+  { label: columnTexts.points, detail: false },
+  { label: columnTexts.played, detail: false },
+  { label: columnTexts.won, detail: true },
+  { label: columnTexts.drawn, detail: true },
+  { label: columnTexts.lost, detail: true },
+  { label: columnTexts.goalsFor, detail: true },
+  { label: columnTexts.goalsAgainst, detail: true },
+  { label: columnTexts.goalDifference, detail: false },
 ];
 
 export default function StandingsTable({
   title,
   rows,
   showFollow,
+  entrant = "team",
 }: {
   title: string | null;
   rows: Row[];
   showFollow: boolean;
+  entrant?: EntrantKind;
 }) {
+  const columns = COLUMNS.map((column) =>
+    column.start ? { ...column, label: texts.entrant[entrant].column } : column,
+  );
+
   return (
     <div className="card table-fit overflow-x-auto">
       {title && (
@@ -47,7 +58,7 @@ export default function StandingsTable({
       <table className="w-full text-sm">
         <thead>
           <tr style={{ background: "var(--mint-100)" }}>
-            {COLUMNS.map((column) => (
+            {columns.map((column) => (
               <th
                 key={column.label}
                 className={`px-2 py-2 font-bold${column.start ? " text-start" : " text-center"}${column.detail ? " col-detail" : ""}`}
@@ -65,7 +76,13 @@ export default function StandingsTable({
               <td className="px-2 py-2 text-center">{i + 1}</td>
               <td className="px-2 py-2 font-bold text-xs" style={{ color: "var(--text-main)" }}>
                 <span className="flex items-center gap-1.5 justify-start">
-                  <TeamLogo logo={row.logo} name={row.name} size={18} />
+                  <TeamLogo
+                    logo={row.logo}
+                    photo={row.photo}
+                    name={row.name}
+                    size={18}
+                    entrant={entrant}
+                  />
                   <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
                 </span>
               </td>
@@ -83,7 +100,7 @@ export default function StandingsTable({
               </td>
               {showFollow && (
                 <td className="px-2 py-2 text-center">
-                  <FollowTeamButton teamId={row.teamId} />
+                  <FollowTeamButton teamId={row.teamId} entrant={entrant} />
                 </td>
               )}
             </tr>

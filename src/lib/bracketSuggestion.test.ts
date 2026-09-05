@@ -11,6 +11,7 @@ function row(teamId: string, unresolved = false): StandingsRow {
     teamId,
     name: teamId,
     logo: null,
+    photo: null,
     played: 3,
     won: 0,
     drawn: 0,

@@ -6,6 +6,7 @@ export interface StandingsTeamInput {
   name: string;
   groupId?: string | null;
   logo?: string | null;
+  photo?: string | null;
 }
 
 export interface StandingsBookingInput {
@@ -27,6 +28,7 @@ export interface StandingsRow {
   teamId: string;
   name: string;
   logo: string | null;
+  photo: string | null;
   played: number;
   won: number;
   drawn: number;
@@ -44,6 +46,7 @@ function blank(team: StandingsTeamInput): StandingsRow {
     teamId: team.id,
     name: team.name,
     logo: team.logo ?? null,
+    photo: team.photo ?? null,
     played: 0,
     won: 0,
     drawn: 0,

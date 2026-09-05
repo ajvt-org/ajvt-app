@@ -5,6 +5,7 @@ import ActivityRowBody from "@/components/ActivityRowBody";
 import ActivityStandingChip from "@/components/ActivityStandingChip";
 import { activityAccent } from "@/lib/activityAccent";
 import { landingActivities as texts } from "@/lib/texts";
+import type { TournamentStage } from "@/lib/tournamentStage";
 
 export type LandingActivity = {
   id: string;
@@ -16,6 +17,7 @@ export type LandingActivity = {
   isVolunteer: boolean;
   isOpen: boolean;
   unplayedMatches?: number;
+  awaitingStage?: TournamentStage | null;
 };
 
 export default function LandingActivities({
@@ -85,6 +87,7 @@ export default function LandingActivities({
                     startsAt={activity.startsAt}
                     endsAt={activity.endsAt}
                     unplayedMatches={activity.unplayedMatches}
+                    awaitingStage={activity.awaitingStage}
                   />
                   {!activity.isOpen && (
                     <span className="badge badge-rejected shrink-0" style={{ fontSize: "10px" }}>

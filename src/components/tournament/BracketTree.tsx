@@ -2,10 +2,17 @@ import BracketConnectors from "@/components/tournament/BracketConnectors";
 import BracketMatchCard, { type BracketMatch } from "@/components/tournament/BracketMatchCard";
 import { COLUMN_GAP, COLUMN_WIDTH, bracketHeight, bracketTops } from "@/lib/bracketLayout";
 import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 export type { BracketMatch };
 
-export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
+export default function BracketTree({
+  matches,
+  entrant = "team",
+}: {
+  matches: BracketMatch[];
+  entrant?: EntrantKind;
+}) {
   if (matches.length === 0) return null;
 
   const roundNumbers = Array.from(new Set(matches.map((m) => m.bracketRound))).sort(
@@ -39,7 +46,12 @@ export default function BracketTree({ matches }: { matches: BracketMatch[] }) {
                 height={height}
               />
               {round.matches.map((m, position) => (
-                <BracketMatchCard key={m.id} match={m} top={tops[index][position]} />
+                <BracketMatchCard
+                  key={m.id}
+                  match={m}
+                  top={tops[index][position]}
+                  entrant={entrant}
+                />
               ))}
             </div>
           </div>

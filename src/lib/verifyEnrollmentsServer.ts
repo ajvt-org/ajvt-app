@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { STILL_TO_PLAY } from "@/lib/activityMatches";
+import { STANDING_MATCH_SELECT } from "@/lib/activityMatches";
 import { MAX_ENROLLMENTS, mapEnrollments, type EnrollmentItem } from "@/lib/verifyEnrollments";
 import { latestMembership } from "@/lib/currentMembership";
 
@@ -34,7 +34,8 @@ export async function loadVerifiedMember(token: string): Promise<VerifiedMember 
               startsAt: true,
               endsAt: true,
               isVolunteer: true,
-              _count: { select: { matches: { where: STILL_TO_PLAY } } },
+              isTournament: true,
+              matches: { select: STANDING_MATCH_SELECT },
             },
           },
         },

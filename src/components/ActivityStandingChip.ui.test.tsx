@@ -74,4 +74,44 @@ describe("ActivityStandingChip", () => {
 
     expect(screen.getByText("بقيت 3 مباريات")).toBeDefined();
   });
+
+  it("names the knockout round a tournament is waiting on", () => {
+    render(
+      <ActivityStandingChip
+        startsAt={day(-6)}
+        endsAt={day(-1)}
+        unplayedMatches={1}
+        awaitingStage={{ kind: "knockout", roundSize: 2 }}
+      />,
+    );
+
+    expect(screen.getByText("نصف النهائي")).toBeDefined();
+    expect(screen.queryByText("بقيت مباراة واحدة")).toBeNull();
+  });
+
+  it("names the final", () => {
+    render(
+      <ActivityStandingChip
+        startsAt={day(-6)}
+        endsAt={day(-1)}
+        unplayedMatches={1}
+        awaitingStage={{ kind: "knockout", roundSize: 1 }}
+      />,
+    );
+
+    expect(screen.getByText("النهائي")).toBeDefined();
+  });
+
+  it("says the group stage when group matches are outstanding", () => {
+    render(
+      <ActivityStandingChip
+        startsAt={day(-6)}
+        endsAt={day(-1)}
+        unplayedMatches={4}
+        awaitingStage={{ kind: "group" }}
+      />,
+    );
+
+    expect(screen.getByText("دور المجموعات")).toBeDefined();
+  });
 });

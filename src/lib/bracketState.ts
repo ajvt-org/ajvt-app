@@ -1,3 +1,5 @@
+import { isBye } from "./bracketDraw";
+
 export interface BracketFixture {
   bracketRound: number;
   homeTeam: unknown;
@@ -6,7 +8,9 @@ export interface BracketFixture {
 }
 
 export function bracketUntouched(bracketMatches: BracketFixture[]): boolean {
-  return bracketMatches.length > 0 && bracketMatches.every((m) => m.status === "SCHEDULED");
+  return (
+    bracketMatches.length > 0 && bracketMatches.every((m) => m.status === "SCHEDULED" || isBye(m))
+  );
 }
 
 export function firstRoundIsWaiting(bracketMatches: BracketFixture[]): boolean {

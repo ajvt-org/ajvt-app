@@ -1,11 +1,13 @@
 import Icon from "@/components/Icon";
 import TeamLogo from "@/components/tournament/TeamLogo";
 import { publicTournament as texts } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 export interface BracketSideTeam {
   id: string;
   name: string;
   logo?: string | null;
+  photo?: string | null;
 }
 
 interface BracketSideProps {
@@ -17,6 +19,8 @@ interface BracketSideProps {
   height: number;
   background: string;
   borderTop?: string;
+  entrant?: EntrantKind;
+  bye?: boolean;
 }
 
 export default function BracketSide({
@@ -28,6 +32,8 @@ export default function BracketSide({
   height,
   background,
   borderTop,
+  entrant = "team",
+  bye = false,
 }: BracketSideProps) {
   return (
     <div
@@ -36,7 +42,13 @@ export default function BracketSide({
     >
       <span className="flex items-center gap-1 min-w-0">
         {team ? (
-          <TeamLogo logo={team.logo} name={team.name} size={16} />
+          <TeamLogo
+            logo={team.logo}
+            photo={team.photo}
+            name={team.name}
+            size={16}
+            entrant={entrant}
+          />
         ) : (
           <span
             className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
@@ -51,7 +63,7 @@ export default function BracketSide({
           title={team?.name}
           style={{ color: team ? "var(--text-main)" : "var(--text-muted)" }}
         >
-          {team ? team.name : texts.teamDecidedLater}
+          {team ? team.name : bye ? texts.bye : texts.teamDecidedLater}
         </bdi>
       </span>
       {played && (

@@ -18,7 +18,12 @@ const makeActivity = (
     startsAt,
     endsAt: extra.endsAt ?? null,
     isVolunteer: extra.isVolunteer ?? false,
-    _count: { matches: extra.unplayedMatches ?? 0 },
+    isTournament: false,
+    matches: Array.from({ length: extra.unplayedMatches ?? 0 }, () => ({
+      bracketRound: null,
+      status: "SCHEDULED",
+      forfeitWinnerTeamId: null,
+    })),
   },
 });
 
