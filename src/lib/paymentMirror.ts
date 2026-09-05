@@ -1,5 +1,9 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
+import {
+  ensureReceiptsFor,
+  syncReceiptsFor,
+  withdrawReceiptsBeforeDelete,
+} from "./paymentReceiptServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -29,7 +33,10 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
   });
 
   if (!isPaidAmount(m.amount)) {
-    if (existing) await db.payment.delete({ where: { id: existing.id } });
+    if (existing) {
+      await withdrawReceiptsBeforeDelete(db, { id: existing.id });
+      await db.payment.delete({ where: { id: existing.id } });
+    }
     return;
   }
 
@@ -137,7 +144,10 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
   });
 
   if (!isPaidAmount(d.amount)) {
-    if (existing) await db.payment.delete({ where: { id: existing.id } });
+    if (existing) {
+      await withdrawReceiptsBeforeDelete(db, { id: existing.id });
+      await db.payment.delete({ where: { id: existing.id } });
+    }
     return;
   }
 
@@ -177,6 +187,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
 }
 
 export async function removeMirroredDonation(db: Db, donationId: string) {
+  await withdrawReceiptsBeforeDelete(db, { id: donationId });
   await db.payment.deleteMany({ where: { id: donationId } });
 }
 
