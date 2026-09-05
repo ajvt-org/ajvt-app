@@ -38,7 +38,7 @@ export default function TeamSummary({
   squad: SquadSize;
   breaches: SquadBreach[];
   busy: boolean;
-  onToggle: () => void;
+  onToggle: (summary: HTMLElement) => void;
   onDeleteTeam: () => void;
 }) {
   const count = team.members.length;
@@ -51,7 +51,7 @@ export default function TeamSummary({
       className="disclosure-summary cursor-pointer space-y-1.5"
       onClick={(e) => {
         e.preventDefault();
-        onToggle();
+        onToggle(e.currentTarget);
       }}
     >
       <div className="flex items-start gap-2">

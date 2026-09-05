@@ -37,7 +37,7 @@ export default function TeamCard({
   candidates: RosterMember[];
   suspendedIds: string[];
   busy: boolean;
-  onToggle: () => void;
+  onToggle: (summary: HTMLElement) => void;
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
