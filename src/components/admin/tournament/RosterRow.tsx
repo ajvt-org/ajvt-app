@@ -14,6 +14,7 @@ const PENDING = "#fef3c7";
 
 const MINT_ACTION = { background: "var(--mint-100)", color: "var(--mint-700)" };
 const MINT_ON = { background: "var(--mint-600)", color: "white" };
+const COPPER_ON = { background: "var(--copper-600)", color: "white" };
 const DESTRUCTIVE = { background: "#fee2e2", color: "#991b1b" };
 const CAPTAIN_EDGE = "var(--copper-500)";
 
@@ -41,6 +42,9 @@ export default function RosterRow({
   const { member, status } = entry;
   const pending = status === "PENDING";
   const from = useAdminOrigin();
+  const captainAction = captain
+    ? teamsTab.clearCaptain(member.fullName)
+    : teamsTab.makeCaptain(member.fullName);
 
   function confirmThenRemove() {
     const question = pending
@@ -58,26 +62,28 @@ export default function RosterRow({
       }}
     >
       <div className="min-w-0 grow basis-40 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <Link
-          href={memberCardHref(member.id, from)}
-          aria-label={teamsTab.openCardOf(member.fullName)}
-          className="flex items-start gap-2 min-w-0 text-start"
-        >
-          <span className="h-6 flex items-center shrink-0">
-            <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
-          </span>
-          <span
-            className="text-base font-bold leading-6 optical-name"
-            style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
+        <div className="min-w-0 flex items-start gap-2">
+          <Link
+            href={memberCardHref(member.id, from)}
+            aria-label={teamsTab.openCardOf(member.fullName)}
+            className="flex items-start gap-2 min-w-0 text-start"
           >
-            {member.fullName}
-          </span>
-        </Link>
-        {captain && (
-          <span className="h-6 flex items-center shrink-0" aria-hidden>
-            <Icon name="star" size={16} className="icon-optical" color="var(--copper-700)" />
-          </span>
-        )}
+            <span className="h-6 flex items-center shrink-0">
+              <PlayerAvatar photo={member.photo} fullName={member.fullName} size={32} />
+            </span>
+            <span
+              className="text-base font-bold leading-6 optical-name"
+              style={{ color: "var(--mint-700)", overflowWrap: "anywhere" }}
+            >
+              {member.fullName}
+            </span>
+          </Link>
+          {captain && (
+            <span className="h-6 flex items-center shrink-0" aria-hidden>
+              <Icon name="captain" size={16} className="icon-optical" color="var(--copper-700)" />
+            </span>
+          )}
+        </div>
         {pending && (
           <span className="badge badge-pending">
             <IconLabel name="clock">{teamsTab.awaitingApproval}</IconLabel>
@@ -104,16 +110,13 @@ export default function RosterRow({
         <button
           onClick={onToggleCaptain}
           disabled={busy}
-          aria-label={
-            captain ? teamsTab.clearCaptain(member.fullName) : teamsTab.makeCaptain(member.fullName)
-          }
+          aria-label={captainAction}
+          title={captainAction}
           aria-pressed={captain}
           className={ACTION}
-          style={{ ...ACTION_SIZE, ...(captain ? MINT_ON : MINT_ACTION) }}
+          style={{ ...ACTION_SIZE, ...(captain ? COPPER_ON : MINT_ACTION) }}
         >
-          <IconLabel name="star">
-            {captain ? teamsTab.clearCaptainAction : teamsTab.makeCaptainAction}
-          </IconLabel>
+          <Icon name="captain" size={18} />
         </button>
         <button
           onClick={confirmThenRemove}
