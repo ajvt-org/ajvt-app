@@ -6,11 +6,11 @@ import * as bcrypt from "bcryptjs";
 import { withRoute } from "@/lib/route";
 import { admins as messages, auth, common } from "@/lib/messages";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
-import { SUPER_ROLE, isAdminRole, isOwner } from "@/lib/adminRoles";
+import { SUPER_ROLE, isAdminRole, isOwner, outranks } from "@/lib/adminRoles";
 import { ForbiddenError } from "@/lib/errors";
 
 export const GET = withRoute("GET /api/admin/admins", async () => {
-  await requireAdminRole("SUPER");
+  const session = await requireAdminRole("SUPER");
   const admins = await prisma.admin.findMany({
     select: {
       id: true,
@@ -24,10 +24,11 @@ export const GET = withRoute("GET /api/admin/admins", async () => {
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json({
-    admins: admins.map(({ activities, ...admin }) => ({
-      ...admin,
-      activities: activities.map((link) => link.activity),
-    })),
+    admins: admins.map(({ activities, ...admin }) =>
+      outranks(admin.role, session.role)
+        ? { id: admin.id, username: admin.username }
+        : { ...admin, activities: activities.map((link) => link.activity) },
+    ),
   });
 });
 

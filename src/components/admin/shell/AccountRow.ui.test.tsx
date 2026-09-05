@@ -5,7 +5,7 @@ import { roleTone } from "./roleTone";
 import { OWNER_ROLE, ROLE_LABELS, SUPER_ROLE, adminRoleLabel } from "@/lib/adminRoles";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
 import { adminAccounts } from "@/lib/texts";
-import type { AdminAccount } from "./accountTypes";
+import type { AdminAccount, AdminAccountRow } from "./accountTypes";
 
 const ACCOUNT: AdminAccount = {
   id: "a1",
@@ -17,11 +17,11 @@ const ACCOUNT: AdminAccount = {
   createdAt: "2026-08-01T09:30:00.000Z",
 };
 
-function setup(account: Partial<AdminAccount> = {}, props: Record<string, unknown> = {}) {
+function renderRow(account: AdminAccountRow, props: Record<string, unknown> = {}) {
   const onRole = vi.fn().mockResolvedValue(undefined);
   const { container } = render(
     <AccountRow
-      account={{ ...ACCOUNT, ...account }}
+      account={account}
       viewerRole={SUPER_ROLE}
       isSelf={false}
       onScope={() => {}}
@@ -31,6 +31,10 @@ function setup(account: Partial<AdminAccount> = {}, props: Record<string, unknow
     />,
   );
   return { onRole, badge: () => container.querySelector("span.badge") };
+}
+
+function setup(account: Partial<AdminAccount> = {}, props: Record<string, unknown> = {}) {
+  return renderRow({ ...ACCOUNT, ...account }, props);
 }
 
 describe("the role badge", () => {
@@ -218,5 +222,36 @@ describe("the two actions", () => {
     const remove = screen.getByText(adminAccounts.remove).closest("button");
     const select = screen.getByRole("combobox");
     expect(remove?.parentElement?.contains(select)).toBe(false);
+  });
+});
+
+describe("a row the viewer is only given a username for", () => {
+  const SUMMARY = { id: "a2", username: "chief" };
+
+  it("prints the username", () => {
+    renderRow(SUMMARY);
+
+    expect(screen.getByText("chief")).toBeTruthy();
+  });
+
+  it("carries no role badge", () => {
+    const { badge } = renderRow(SUMMARY);
+
+    expect(badge()).toBeNull();
+  });
+
+  it("offers neither the details nor the two actions", () => {
+    renderRow(SUMMARY);
+
+    expect(screen.queryByText(adminAccounts.moreDetails)).toBeNull();
+    expect(screen.queryByText(adminAccounts.scope)).toBeNull();
+    expect(screen.queryByText(adminAccounts.remove)).toBeNull();
+  });
+
+  it("says nothing about when the account last signed in", () => {
+    renderRow(SUMMARY);
+
+    expect(screen.queryByText(adminAccounts.neverSignedIn)).toBeNull();
+    expect(screen.queryByText(new RegExp(adminAccounts.lastLogin))).toBeNull();
   });
 });
