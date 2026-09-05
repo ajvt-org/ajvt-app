@@ -6,6 +6,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { ToastProvider } from "@/components/Toast";
 import InstallPrompt from "@/components/InstallPrompt";
 import VisitTracker from "@/components/VisitTracker";
+import HistoryTrail from "@/components/HistoryTrail";
 import PullToRefresh from "@/components/PullToRefresh";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col">
         <ServiceWorkerRegister />
         <VisitTracker />
+        <HistoryTrail />
         <PullToRefresh />
         <ToastProvider>
           {children}
