@@ -16,8 +16,6 @@ export const convertTournament = {
 } as const;
 
 export const deleteActivity = {
-  heading: "حذف النشاط",
-  hint: "يحذف النشاط ويلغي تسجيل جميع الأعضاء فيه.",
   action: "حذف النشاط نهائياً",
   confirmTitle: "حذف النشاط",
   confirmMessage: "هل أنت متأكد من حذف هذا النشاط؟ سيتم إلغاء تسجيل جميع الأعضاء فيه.",
@@ -25,8 +23,6 @@ export const deleteActivity = {
 } as const;
 
 export const resetTournament = {
-  heading: "تصفير البطولة",
-  hint: "يعيد البطولة إلى فرقها وحدها، ليمكن إعدادها من جديد بالمعالج.",
   action: "تصفير البطولة",
   confirmTitle: "تصفير البطولة",
   confirmLabel: "احذف وابدأ من جديد",

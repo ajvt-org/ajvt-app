@@ -8,7 +8,7 @@ import IconLabel from "@/components/IconLabel";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { deleteActivity as texts } from "@/lib/texts";
 
-export default function DeleteActivityCard({ activityId }: { activityId: string }) {
+export default function DeleteActivityButton({ activityId }: { activityId: string }) {
   const router = useRouter();
   const showToast = useToast();
   const [confirming, setConfirming] = useState(false);
@@ -27,19 +27,8 @@ export default function DeleteActivityCard({ activityId }: { activityId: string 
   }
 
   return (
-    <div className="card p-4 space-y-2" style={{ border: "1.5px solid #fecaca" }}>
-      <p className="text-sm font-black" style={{ color: "#991b1b" }}>
-        <IconLabel name="warning">{texts.heading}</IconLabel>
-      </p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
-      <button
-        onClick={() => setConfirming(true)}
-        disabled={busy}
-        className="btn text-sm font-bold"
-        style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-      >
+    <>
+      <button onClick={() => setConfirming(true)} disabled={busy} className="btn btn-danger btn-sm">
         {busy ? "..." : <IconLabel name="trash">{texts.action}</IconLabel>}
       </button>
       {confirming && (
@@ -53,6 +42,6 @@ export default function DeleteActivityCard({ activityId }: { activityId: string 
           onClose={() => setConfirming(false)}
         />
       )}
-    </div>
+    </>
   );
 }

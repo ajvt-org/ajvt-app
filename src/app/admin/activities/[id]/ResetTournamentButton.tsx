@@ -22,7 +22,7 @@ export function deletionLines(counts: TournamentResetCounts): string[] {
     .map(([count, noun]) => counted(count, noun));
 }
 
-export default function ResetTournamentCard({
+export default function ResetTournamentButton({
   activityId,
   onReset,
 }: {
@@ -65,19 +65,8 @@ export default function ResetTournamentCard({
   const lines = counts ? deletionLines(counts) : [];
 
   return (
-    <div className="card p-4 space-y-2" style={{ border: "1.5px solid #fecaca" }}>
-      <p className="text-sm font-black" style={{ color: "#991b1b" }}>
-        <IconLabel name="warning">{texts.heading}</IconLabel>
-      </p>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
-      <button
-        onClick={askFirst}
-        disabled={busy}
-        className="btn text-sm font-bold"
-        style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-      >
+    <>
+      <button onClick={askFirst} disabled={busy} className="btn btn-danger btn-sm">
         {busy && !counts ? "..." : <IconLabel name="refresh">{texts.action}</IconLabel>}
       </button>
       {counts && (
@@ -114,6 +103,6 @@ export default function ResetTournamentCard({
           onClose={() => setCounts(null)}
         />
       )}
-    </div>
+    </>
   );
 }

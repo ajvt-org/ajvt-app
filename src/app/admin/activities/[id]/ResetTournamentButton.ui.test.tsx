@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import ResetTournamentCard, { deletionLines } from "./ResetTournamentCard";
+import ResetTournamentButton, { deletionLines } from "./ResetTournamentButton";
 import { counted } from "@/lib/arabicCount";
 import { DAY, GROUP, MATCH, RESULT, SUSPENSION } from "@/lib/messages";
 import { resetTournament as texts } from "@/lib/texts";
@@ -23,7 +23,7 @@ const FULL = { matches: 24, results: 12, groups: 2, days: 6, suspensions: 1 };
 const EMPTY = { matches: 0, results: 0, groups: 0, days: 0, suspensions: 0 };
 
 const onReset = vi.fn();
-const show = () => render(<ResetTournamentCard activityId="a1" onReset={onReset} />);
+const show = () => render(<ResetTournamentButton activityId="a1" onReset={onReset} />);
 
 async function openConfirm(counts = FULL) {
   get.mockResolvedValue(counts);
