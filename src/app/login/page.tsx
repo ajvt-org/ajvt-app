@@ -3,13 +3,13 @@
 import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
 import { backFromNext } from "@/lib/authPaths";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
 import PageHeader from "@/components/PageHeader";
+import Logo from "@/components/Logo";
 import { goAfterAuthChange } from "@/lib/authNav";
 
 export default function LoginPage() {
@@ -53,7 +53,7 @@ function LoginForm() {
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="flex justify-center fade-up mb-4">
-          <Image src="/version-final.png" alt="شعار" width={100} height={100} />
+          <Logo mark="symbol" size={100} priority />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 fade-up delay-1">

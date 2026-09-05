@@ -15,6 +15,7 @@ export {
   resetTournament,
 } from "./activityDetail";
 export { activityPage } from "./activityPage";
+export { pageTitles } from "./pageTitles";
 export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
@@ -25,6 +26,7 @@ export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
 export { adminShell, adminTabs } from "./adminNav";
 export { adminTools } from "./adminTools";
+export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
@@ -37,7 +39,7 @@ export { donationActions, donationEdit } from "./donationEdit";
 export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from "./expenses";
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
-export { landingActivities } from "./landing";
+export { landingActivities, landingHero } from "./landing";
 export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
 export { memberCard } from "./memberCard";

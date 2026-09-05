@@ -3,11 +3,12 @@
 import { Suspense, useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { safeNextPath } from "@/lib/utils";
 import { arabicValidity } from "@/lib/validationMessage";
 import ArrowLabel from "@/components/ArrowLabel";
+import Logo from "@/components/Logo";
+import { association } from "@/lib/texts";
 
 export default function AdminLoginPage() {
   return (
@@ -62,11 +63,11 @@ function AdminLoginForm() {
               padding: "8px",
             }}
           >
-            <Image src="/version-final.png" alt="شعار" width={80} height={80} />
+            <Logo mark="symbol" size={80} priority />
           </div>
           <h1 className="text-xl font-black text-white mb-1">لوحة تحكم المشرف</h1>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-            رابطة شباب قرية التاكلالت
+            {association.name}
           </p>
         </div>
 

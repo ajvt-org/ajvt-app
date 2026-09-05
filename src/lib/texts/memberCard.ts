@@ -1,6 +1,5 @@
 export const memberCard = {
   title: "بطاقة العضوية",
-  logoAlt: "شعار",
   association: "رابطة شباب قرية",
   village: "التاكلالت",
   memberSince: (date: string) => `عضو منذ ${date}`,

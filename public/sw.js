@@ -1,7 +1,7 @@
 const OFFLINE_CACHE = "ajvt-offline-v3";
 const OFFLINE_URL = "/offline.html";
 const DEPLOYING_URL = "/deploying.html";
-const OFFLINE_ASSETS = [OFFLINE_URL, DEPLOYING_URL, "/version-final.png"];
+const OFFLINE_ASSETS = [OFFLINE_URL, DEPLOYING_URL, "/logo-mark.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));
@@ -54,8 +54,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || "إشعار جديد";
   const options = {
     body: data.body || "",
-    icon: "/icon.png",
-    badge: "/icon.png",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
     data: { url: data.url || "/" },
   };
 

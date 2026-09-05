@@ -30,7 +30,8 @@
     "db:receipts": "tsx prisma/backfillReceipts.ts",
     "db:repair-receipts": "tsx prisma/repairReceipts.ts",
     "db:legacy-images": "tsx prisma/backfillLegacyImages.ts",
-    "db:new-migration": "node scripts/new-migration.mjs"
+    "db:new-migration": "node scripts/new-migration.mjs",
+    "icons": "node scripts/buildIcons.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

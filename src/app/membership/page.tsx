@@ -2,7 +2,6 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { loginPathWithNext, safeNextPath } from "@/lib/utils";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
@@ -13,7 +12,8 @@ import { validateDonorChoice } from "@/lib/donorChoice";
 import { api, errorMessage } from "@/lib/api";
 import { members } from "@/lib/messages";
 import IconLabel from "@/components/IconLabel";
-import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/PageHeader";
+import { pageTitles } from "@/lib/texts";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
@@ -225,19 +225,10 @@ function MembershipPageInner() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <BackButton href={cameFrom || "/home"} />
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">{editId ? "تعديل الدفع" : "الانتساب"}</h1>
-        </div>
-      </div>
+      <PageHeader
+        title={editId ? pageTitles.membershipEdit : pageTitles.membership}
+        backHref={cameFrom || "/home"}
+      />
 
       <div className="px-5 py-6 pb-10">
         <div

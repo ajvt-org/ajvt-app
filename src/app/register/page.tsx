@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import BackButton from "@/components/BackButton";
 import ProgressBar from "@/components/form/ProgressBar";
+import PageHeader from "@/components/PageHeader";
 import { useFormLists } from "@/components/form/useFormLists";
 import { api, errorMessage } from "@/lib/api";
 import { goAfterAuthChange } from "@/lib/authNav";
@@ -72,19 +71,7 @@ export default function RegisterPage() {
 
   return (
     <div className="app-shell">
-      <div
-        className="px-5 py-4 flex items-center gap-3 sticky top-0 z-20"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
-        <BackButton href="/" />
-        <Image src="/version-final.png" alt="شعار" width={38} height={38} />
-        <div>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
-            رابطة شباب قرية التاكلالت
-          </p>
-          <h1 className="text-base font-black text-white">{signUp.title}</h1>
-        </div>
-      </div>
+      <PageHeader title={signUp.title} backHref="/" />
 
       <div className="px-5 py-6 pb-10">
         <ProgressBar stepIndex={step} total={2} />

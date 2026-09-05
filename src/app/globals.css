@@ -359,6 +359,13 @@ button:disabled {
   color: var(--copper-700);
 }
 
+.badge-mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  justify-content: center;
+}
+
 /* ---- Separator ---- */
 .sep {
   height: 1px;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { formatDate } from "@/lib/utils";
 import IconLabel from "@/components/IconLabel";
+import Logo from "@/components/Logo";
 import { savePdf, savePng, sharePng } from "@/components/pdf/renderPdf";
 import { memberCard } from "@/lib/texts";
 
@@ -75,8 +76,7 @@ export default function MemberCard({
         style={{ background: "linear-gradient(135deg, #265c49, #1a3f33)" }}
       >
         <div className="flex items-center gap-3 mb-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/version-final.png" alt={memberCard.logoAlt} width={36} height={36} />
+          <Logo mark="symbol" size={36} captured />
           <div>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>
               {memberCard.association}

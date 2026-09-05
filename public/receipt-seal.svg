@@ -1,3 +1,18 @@
+<!--
+  THE OFFICIAL SEAL — الختم الرسمي
+
+  Reproduced from the stamp already in use (ajvt-app/public/receipt-seal.svg).
+  It is the ONLY mark drawn in seal navy rather than the brand palette, and that
+  is deliberate: a sealed document must never be mistakable for a designed one.
+
+  Do not restyle it, recolour it, or run it through the lockup engine. A stamp
+  that changes appearance stops functioning as a stamp. If the Secretariat
+  General ever adopts a new seal, replace this file wholesale and record the
+  date it changed.
+
+  The centre reads الأمانة العامة. Other organs get their own file rather than a
+  variant of this one.
+-->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="ختم رابطة شباب قرية التاكلالت">
   <g fill="none" stroke="#2c4372">
     <circle cx="200" cy="200" r="192" stroke-width="7"/>
