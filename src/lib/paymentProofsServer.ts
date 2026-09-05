@@ -35,6 +35,8 @@ function isRepeated(seenTwice: Set<string>, reference: string | null): boolean {
 const MEMBERSHIP_SELECT = {
   userId: true,
   year: true,
+  accountId: true,
+  account: { select: { id: true, code: true, label: true } },
   bankReference: true,
   paymentProof: true,
   status: true,
@@ -143,6 +145,8 @@ export async function listPaymentProofs(viewer: SupportViewer, role: string) {
       userId: m.userId,
       proof: m.paymentProof as string,
       memberName: nameOf(m.user),
+      accountId: m.accountId,
+      account: m.account,
       bankReference: m.bankReference,
       repeatedReference: isRepeated(seenTwice, m.bankReference),
       activityTitle: null as string | null,
