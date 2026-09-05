@@ -22,12 +22,23 @@ function player(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE
     id: `team-${id}`,
     name: `لاعب ${id}`,
     autoNamed: true,
+    fromTaguilalett: true,
     logo: null,
     captainUserId: null,
     groupId: null,
     group: null,
     members: [
-      { status, member: { id, fullName: name, phone: "36000001", age: "البدريين", photo: null } },
+      {
+        status,
+        member: {
+          id,
+          fullName: name,
+          phone: "36000001",
+          age: "البدريين",
+          village: "التاكلالت",
+          photo: null,
+        },
+      },
     ],
   };
 }

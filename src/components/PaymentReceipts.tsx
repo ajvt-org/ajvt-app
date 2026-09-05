@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import { ReceiptCard } from "@/components/receipt/ReceiptSheet";
+import ReceiptCard from "@/components/receipt/ReceiptCard";
 import ReceiptFit from "@/components/receipt/ReceiptFit";
-import { savePdf, sharePng } from "@/components/pdf/renderPdf";
+import { sharePng } from "@/components/pdf/renderPdf";
+import { saveReceiptPdf } from "@/components/pdf/receiptPdf";
 import { receiptFileName, type OfficialReceiptView } from "@/lib/officialReceipt";
 import { memberReceipts } from "@/lib/texts/receipt";
 
@@ -32,13 +33,15 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
   }, [source]);
 
   useEffect(() => {
-    if (!pending || !captureRef.current) return;
-    const node = captureRef.current;
+    if (!pending) return;
     const { receipt, action } = pending;
+    const node = captureRef.current;
     const run =
       action === "pdf"
-        ? savePdf(node, receiptFileName(receipt.number, "pdf"))
-        : sharePng(node, receiptFileName(receipt.number, "png"), memberReceipts.title);
+        ? saveReceiptPdf(receipt, receiptFileName(receipt.number, "pdf"))
+        : node
+          ? sharePng(node, receiptFileName(receipt.number, "png"), memberReceipts.title)
+          : Promise.resolve();
     run
       .catch((err: unknown) => {
         if (err instanceof Error && err.name !== "AbortError") console.error("Receipt error:", err);
@@ -82,7 +85,7 @@ export default function PaymentReceipts({ source = "/api/user/receipts" }: { sou
         ))}
       </div>
 
-      {pending && (
+      {pending?.action === "share" && (
         <div style={{ position: "fixed", left: -10000, top: 0 }} aria-hidden="true">
           <ReceiptCard receipt={pending.receipt} innerRef={captureRef} />
         </div>

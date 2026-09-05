@@ -6,11 +6,13 @@ import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
 import type { RosterMember, Team, TeamMemberEntry } from "./types";
+import { playerOverOutsideLimit, type SquadBreach, type SquadSettings } from "@/lib/squadRules";
 
 export default function TeamCard({
   team,
   shownName,
-  teamSize,
+  settings,
+  breaches,
   members,
   open,
   candidates,
@@ -20,6 +22,7 @@ export default function TeamCard({
   onRenameTeam,
   onDeleteTeam,
   onSetLogo,
+  onSetFromTaguilalett,
   onSetCaptain,
   onAddMember,
   onApproveMember,
@@ -27,7 +30,8 @@ export default function TeamCard({
 }: {
   team: Team;
   shownName: string;
-  teamSize: number | null;
+  settings: SquadSettings;
+  breaches: SquadBreach[];
   members: TeamMemberEntry[];
   open: boolean;
   candidates: RosterMember[];
@@ -37,6 +41,7 @@ export default function TeamCard({
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
+  onSetFromTaguilalett: (value: boolean) => void;
   onSetCaptain: (memberId: string | null) => void;
   onAddMember: (userId: string) => void;
   onApproveMember: (memberId: string) => void;
@@ -47,7 +52,8 @@ export default function TeamCard({
       <TeamSummary
         team={team}
         shownName={shownName}
-        teamSize={teamSize}
+        squad={settings.squad}
+        breaches={breaches}
         busy={busy}
         onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}
@@ -57,7 +63,10 @@ export default function TeamCard({
           name={team.name}
           logo={team.logo}
           busy={busy}
+          askVillage={settings.organisedByTaguilalett}
+          fromTaguilalett={team.fromTaguilalett}
           onRenameTeam={onRenameTeam}
+          onSetFromTaguilalett={onSetFromTaguilalett}
           onSetLogo={onSetLogo}
         />
         {members.length < team.members.length && (
@@ -68,6 +77,7 @@ export default function TeamCard({
         <TeamRoster
           team={team}
           members={members}
+          overLimit={(memberId) => playerOverOutsideLimit(breaches, memberId)}
           suspendedIds={suspendedIds}
           busy={busy}
           onSetCaptain={onSetCaptain}

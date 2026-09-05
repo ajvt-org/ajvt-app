@@ -1,9 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { isTournamentTab, tournamentPlayTabs, tournamentRosterTab } from "./tournamentTabs";
 
-const football = { isTournament: true, profile: "FOOTBALL" as const, teamSize: 5 };
-const board = { isTournament: true, profile: "BOARD" as const, teamSize: 1 };
-const plain = { isTournament: false, profile: "FOOTBALL" as const, teamSize: null };
+const football = {
+  isTournament: true,
+  profile: "FOOTBALL" as const,
+  minTeamSize: 5,
+  maxTeamSize: 5,
+};
+const board = { isTournament: true, profile: "BOARD" as const, minTeamSize: 1, maxTeamSize: 1 };
+const plain = {
+  isTournament: false,
+  profile: "FOOTBALL" as const,
+  minTeamSize: null,
+  maxTeamSize: null,
+};
 
 const keys = (t: { key: string }[]) => t.map((x) => x.key);
 

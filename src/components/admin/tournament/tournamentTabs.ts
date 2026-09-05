@@ -1,10 +1,12 @@
 import type { WorkspaceTab } from "@/components/admin/WorkspaceTabs";
 import { activityWorkspace as texts, discipline as disciplineTexts } from "@/lib/texts";
+import { isSinglesSquad, squadOf } from "@/lib/teamSize";
 
 export interface TournamentShape {
   isTournament: boolean;
   profile: "FOOTBALL" | "BOARD";
-  teamSize: number | null;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
 }
 
 export const TOURNAMENT_TAB_KEYS = [
@@ -27,7 +29,7 @@ export function tournamentRosterTab(
   pendingJoinRequests = 0,
 ): WorkspaceTab[] {
   if (!shape.isTournament) return [];
-  const singles = shape.teamSize === 1;
+  const singles = isSinglesSquad(squadOf(shape));
   return [
     {
       key: "teams",

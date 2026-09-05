@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { SCOPED_ROLE } from "@/lib/activityAccess";
+import { OWNER_ROLE, SUPER_ROLE } from "@/lib/adminRoles";
 import { resetDb, put, createAdmin, signInAsAdmin, withId } from "./helpers";
 
 import { GET as LIST } from "@/app/api/admin/admins/route";
@@ -94,5 +95,44 @@ describe("the admins list", () => {
     await signInAsAdmin(await createAdmin("acts", "ACTIVITIES"));
 
     expect((await LIST()).status).toBe(403);
+  });
+
+  it("sends nothing but the username of an account ranked above the viewer", async () => {
+    const owner = await createAdmin("chief", OWNER_ROLE);
+    await prisma.admin.update({
+      where: { id: owner.id },
+      data: { lastLoginAt: new Date(), lastLoginIp: "10.0.0.9" },
+    });
+    await signInAsAdmin(await createAdmin("boss", SUPER_ROLE));
+
+    const { admins } = await (await LIST()).json();
+    const row = admins.find((a: { username: string }) => a.username === "chief");
+
+    expect(Object.keys(row).sort()).toEqual(["id", "username"]);
+    expect(JSON.stringify(admins)).not.toContain("10.0.0.9");
+  });
+
+  it("sends an account of the same rank in full", async () => {
+    const peer = await createAdmin("peer", SUPER_ROLE);
+    await prisma.admin.update({
+      where: { id: peer.id },
+      data: { lastLoginAt: new Date(), lastLoginIp: "10.0.0.9" },
+    });
+    await signInAsAdmin(await createAdmin("boss", SUPER_ROLE));
+
+    const { admins } = await (await LIST()).json();
+    const row = admins.find((a: { username: string }) => a.username === "peer");
+
+    expect(row.role).toBe(SUPER_ROLE);
+    expect(row.lastLoginIp).toBe("10.0.0.9");
+  });
+
+  it("sends every row in full to the owner", async () => {
+    await createAdmin("peer", SUPER_ROLE);
+    await signInAsAdmin(await createAdmin("chief", OWNER_ROLE));
+
+    const { admins } = await (await LIST()).json();
+
+    expect(admins.every((a: { role?: string }) => typeof a.role === "string")).toBe(true);
   });
 });

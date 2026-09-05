@@ -8,7 +8,14 @@ const LONG_NAME = "الحسن احمدو يحي البناني";
 function entry(name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"): TeamMemberEntry {
   return {
     status,
-    member: { id: "p1", fullName: name, phone: "36000001", age: "البدريين", photo: null },
+    member: {
+      id: "p1",
+      fullName: name,
+      phone: "36000001",
+      age: "البدريين",
+      village: "التاكلالت",
+      photo: null,
+    },
   };
 }
 
@@ -22,10 +29,20 @@ function answer(yes: boolean) {
   vi.stubGlobal("confirm", vi.fn().mockReturnValue(yes));
 }
 
-function show(member: TeamMemberEntry, { captain = false, suspended = false } = {}): HTMLElement {
+function show(
+  member: TeamMemberEntry,
+  { captain = false, suspended = false, overLimit = false } = {},
+): HTMLElement {
   cleanup();
   const { container } = render(
-    <RosterRow entry={member} suspended={suspended} captain={captain} busy={false} {...handlers} />,
+    <RosterRow
+      entry={member}
+      suspended={suspended}
+      overLimit={overLimit}
+      captain={captain}
+      busy={false}
+      {...handlers}
+    />,
   );
   return container;
 }

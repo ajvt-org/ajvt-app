@@ -27,7 +27,10 @@ function activity(isTournament: boolean): ActivityDetail["activity"] {
     isTournament,
     format: isTournament ? ("KNOCKOUT" as const) : null,
     profile: "FOOTBALL" as const,
-    teamSize: null,
+    minTeamSize: null,
+    maxTeamSize: null,
+    organisedByTaguilalett: false,
+    outsidePlayerLimit: null,
     isVolunteer: false,
     whatsappLink: null,
     registrations: [],
@@ -63,7 +66,10 @@ describe("ConvertTournamentCard", () => {
         isTournament: true,
         format: "KNOCKOUT",
         profile: "BOARD",
-        teamSize: "2",
+        minTeamSize: "2",
+        maxTeamSize: "2",
+        organisedByTaguilalett: false,
+        outsidePlayerLimit: "",
       }),
     );
   });
@@ -80,7 +86,10 @@ describe("ConvertTournamentCard", () => {
         isTournament: true,
         format: "KNOCKOUT",
         profile: "BOARD",
-        teamSize: "1",
+        minTeamSize: "1",
+        maxTeamSize: "1",
+        organisedByTaguilalett: false,
+        outsidePlayerLimit: "",
       }),
     );
   });

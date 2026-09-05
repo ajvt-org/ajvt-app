@@ -16,7 +16,14 @@ const NAME = "الحسن احمدو";
 
 const entry: TeamMemberEntry = {
   status: "ACTIVE",
-  member: { id: "p1", fullName: NAME, phone: "36000001", age: "البدريين", photo: null },
+  member: {
+    id: "p1",
+    fullName: NAME,
+    phone: "36000001",
+    age: "البدريين",
+    village: "التاكلالت",
+    photo: null,
+  },
 };
 
 const handlers = {
@@ -26,7 +33,16 @@ const handlers = {
 };
 
 function row() {
-  return <RosterRow entry={entry} suspended={false} captain={false} busy={false} {...handlers} />;
+  return (
+    <RosterRow
+      entry={entry}
+      suspended={false}
+      overLimit={false}
+      captain={false}
+      busy={false}
+      {...handlers}
+    />
+  );
 }
 
 describe("the origin an admin screen hands to a member card link", () => {

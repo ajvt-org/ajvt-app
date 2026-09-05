@@ -149,10 +149,26 @@ export default function NewActivityForm({
         <TournamentSetupFields
           format={draft.format}
           profile={draft.profile}
-          teamSize={draft.teamSize}
+          minTeamSize={draft.minTeamSize}
+          maxTeamSize={draft.maxTeamSize}
+          organisedByTaguilalett={draft.organisedByTaguilalett}
+          outsidePlayerLimit={draft.outsidePlayerLimit}
+          onMinTeamSize={(minTeamSize) => setDraft((p) => ({ ...p, minTeamSize }))}
+          onMaxTeamSize={(maxTeamSize) => setDraft((p) => ({ ...p, maxTeamSize }))}
+          onOrganisedByTaguilalett={(organisedByTaguilalett) =>
+            setDraft((p) => ({ ...p, organisedByTaguilalett }))
+          }
+          onOutsidePlayerLimit={(outsidePlayerLimit) =>
+            setDraft((p) => ({ ...p, outsidePlayerLimit }))
+          }
           onFormat={(format) => setDraft((p) => ({ ...p, format }))}
           onPreset={(preset) =>
-            setDraft((p) => ({ ...p, profile: preset.profile, teamSize: preset.teamSize }))
+            setDraft((p) => ({
+              ...p,
+              profile: preset.profile,
+              minTeamSize: preset.minTeamSize,
+              maxTeamSize: preset.maxTeamSize,
+            }))
           }
         />
       )}

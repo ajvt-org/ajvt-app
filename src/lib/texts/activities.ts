@@ -154,4 +154,9 @@ export const tournamentSetup = {
     KNOCKOUT: "خروج المغلوب مباشرة",
     GROUPS_THEN_KNOCKOUT: "مجموعات ثم خروج المغلوب",
   },
+  squadHeading: "عدد لاعبي الفريق",
+  minTeamSize: "الحد الأدنى",
+  maxTeamSize: "الحد الأقصى",
+  organisedByTaguilalett: "بطولة من تنظيم التاكلالت",
+  outsidePlayerLimit: "الحد الأقصى للاعبين من خارج التاكلالت",
 } as const;

@@ -7,6 +7,7 @@ import { teamsTab } from "@/lib/texts";
 export default function TeamRoster({
   team,
   members,
+  overLimit,
   suspendedIds,
   busy,
   onSetCaptain,
@@ -15,6 +16,7 @@ export default function TeamRoster({
 }: {
   team: Team;
   members: TeamMemberEntry[];
+  overLimit: (memberId: string) => boolean;
   suspendedIds: string[];
   busy: boolean;
   onSetCaptain: (memberId: string | null) => void;
@@ -36,6 +38,7 @@ export default function TeamRoster({
           key={entry.member.id}
           entry={entry}
           suspended={suspendedIds.includes(entry.member.id)}
+          overLimit={overLimit(entry.member.id)}
           captain={entry.member.id === team.captainUserId}
           busy={busy}
           onToggleCaptain={() =>

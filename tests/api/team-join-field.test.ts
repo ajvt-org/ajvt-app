@@ -22,7 +22,8 @@ async function tournament() {
       description: "بطولة فرق",
       isTournament: true,
       format: "KNOCKOUT",
-      teamSize: null,
+      minTeamSize: null,
+      maxTeamSize: null,
     }),
   );
   return (await res.json()).activity;

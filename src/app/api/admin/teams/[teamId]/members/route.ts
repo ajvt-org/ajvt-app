@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { withRoute } from "@/lib/route";
-import { teamIsFull } from "@/lib/teamSize";
+import { squadOf, teamIsFull } from "@/lib/teamSize";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
@@ -19,15 +19,18 @@ export const POST = withRoute(
 
     const team = await prisma.team.findUnique({
       where: { id: teamId },
-      include: { activity: { select: { teamSize: true } }, _count: { select: { members: true } } },
+      include: {
+        activity: { select: { minTeamSize: true, maxTeamSize: true } },
+        _count: { select: { members: true } },
+      },
     });
     if (!team) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
-    const teamSize = team.activity.teamSize;
-    if (teamIsFull(team._count.members, teamSize)) {
-      return NextResponse.json({ error: tournament.teamFull(teamSize) }, { status: 409 });
+    const squad = squadOf(team.activity);
+    if (teamIsFull(team._count.members, squad)) {
+      return NextResponse.json({ error: tournament.teamFull(squad.max) }, { status: 409 });
     }
 
     const membership = await currentMembership(prisma, userId);

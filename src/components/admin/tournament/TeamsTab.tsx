@@ -6,6 +6,7 @@ import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import { useState } from "react";
 import type { RosterMember, Team } from "./types";
 import { displayTeamName } from "@/lib/teamSize";
+import { squadBreaches, type SquadSettings } from "@/lib/squadRules";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import ErrorNotice from "@/components/form/ErrorNotice";
@@ -19,14 +20,14 @@ import { useAdminOrigin } from "@/components/admin/adminOrigin";
 export default function TeamsTab({
   activityId,
   teams,
-  teamSize,
+  settings,
   roster,
   suspendedIds,
   onChange,
 }: {
   activityId: string;
   teams: Team[];
-  teamSize: number | null;
+  settings: SquadSettings;
   roster: RosterMember[];
   suspendedIds: string[];
   onChange: () => void;
@@ -48,7 +49,7 @@ export default function TeamsTab({
         autoNamed: team.autoNamed,
         memberNames: team.members.map((m) => m.member.fullName),
       },
-      teamSize,
+      settings.squad,
     );
   }
 
@@ -80,6 +81,10 @@ export default function TeamsTab({
     } finally {
       setLoadingAction(false);
     }
+  }
+
+  function setFromTaguilalett(teamId: string, fromTaguilalett: boolean) {
+    run(() => api.patch(`/api/admin/teams/${teamId}`, { fromTaguilalett }));
   }
 
   function renameTeam(teamId: string, name: string) {
@@ -158,7 +163,15 @@ export default function TeamsTab({
           key={team.id}
           team={team}
           shownName={shownName(team)}
-          teamSize={teamSize}
+          settings={settings}
+          breaches={squadBreaches(
+            (rosters.get(team.id) ?? team.members).map((m) => ({
+              id: m.member.id,
+              village: m.member.village,
+            })),
+            team,
+            settings,
+          )}
           members={rosters.get(team.id) ?? team.members}
           open={isOpen(team.id)}
           candidates={unassigned}
@@ -168,6 +181,7 @@ export default function TeamsTab({
           onRenameTeam={(name) => renameTeam(team.id, name)}
           onDeleteTeam={() => deleteTeam(team.id)}
           onSetLogo={(filename) => setTeamLogo(team.id, filename)}
+          onSetFromTaguilalett={(value) => setFromTaguilalett(team.id, value)}
           onSetCaptain={(memberId) => setCaptain(team.id, memberId)}
           onAddMember={(userId) => addMember(team.id, userId)}
           onApproveMember={(memberId) => approveMember(team.id, memberId)}

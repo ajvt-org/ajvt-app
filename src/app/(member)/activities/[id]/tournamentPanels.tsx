@@ -24,6 +24,7 @@ import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { firstRoundIsWaiting } from "@/lib/bracketState";
 import { entrantKind } from "@/lib/entrant";
+import { squadOf } from "@/lib/teamSize";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -62,7 +63,7 @@ export async function tournamentPanels(
   const board = activity.profile === "BOARD";
   const suspended =
     !board && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
-  const entrant = entrantKind(activity.teamSize);
+  const entrant = entrantKind(squadOf(activity));
   const words = texts.entrant[entrant];
   const participantsLabel = words.plural;
   const hasStats = board

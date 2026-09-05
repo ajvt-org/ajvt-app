@@ -11,6 +11,7 @@ import { activityPage as texts, publicTournament as tournamentTexts } from "@/li
 import ActivityHero from "./ActivityHero";
 import ActivityStatus from "./ActivityStatus";
 import { entrantKind } from "@/lib/entrant";
+import { squadOf } from "@/lib/teamSize";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 
@@ -115,7 +116,7 @@ export default async function ActivityPage({ params }: { params: Promise<{ id: s
         {tournament &&
           (activity.teams.length === 0 ? (
             <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-              {tournamentTexts.entrant[entrantKind(activity.teamSize)].noneYet}
+              {tournamentTexts.entrant[entrantKind(squadOf(activity))].noneYet}
             </p>
           ) : (
             <div className="space-y-5 pt-1">

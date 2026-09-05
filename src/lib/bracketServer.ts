@@ -4,7 +4,7 @@ import { bracketRoundLabel, getMatchWinnerTeamId, shuffleArray } from "./tournam
 import { drawFirstRound, type BracketSlot } from "./bracketDraw";
 import { computeStandings } from "./standings";
 import { suggestFirstKnockoutRound } from "./bracketSuggestion";
-import { incompleteTeams, displayTeamName } from "./teamSize";
+import { incompleteTeams, displayTeamName, squadOf, OPEN_SQUAD } from "./teamSize";
 import { tournament as messages } from "./messages";
 import { nameOf } from "./person";
 
@@ -111,7 +111,7 @@ async function fillFirstRound(
 export async function drawBracket(activityId: string, redo = false) {
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
-    select: { teamSize: true },
+    select: { minTeamSize: true, maxTeamSize: true },
   });
   const teams = await prisma.team.findMany({
     where: { activityId },
@@ -124,6 +124,7 @@ export async function drawBracket(activityId: string, redo = false) {
     },
   });
 
+  const squad = activity ? squadOf(activity) : OPEN_SQUAD;
   const short = incompleteTeams(
     teams.map((t) => ({
       id: t.id,
@@ -131,11 +132,11 @@ export async function drawBracket(activityId: string, redo = false) {
       autoNamed: t.autoNamed,
       memberNames: t.members.map((m) => nameOf(m.user)),
     })),
-    activity?.teamSize ?? null,
+    squad,
   );
   if (short.length > 0) {
-    const names = short.map((t) => displayTeamName(t, activity?.teamSize ?? null)).join("، ");
-    throw new ValidationError(messages.teamsIncomplete(activity?.teamSize ?? 0, names));
+    const names = short.map((t) => displayTeamName(t, squad)).join("، ");
+    throw new ValidationError(messages.teamsIncomplete(squad.min, squad.max, names));
   }
   if (teams.length < 2) {
     throw new ValidationError(messages.needTwoEntrants);

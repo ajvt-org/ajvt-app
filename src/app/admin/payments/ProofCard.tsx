@@ -123,21 +123,25 @@ export default function ProofCard({
             )}
           </div>
 
+          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            <Origin proof={proof} />
+          </p>
+
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {paymentCard.uploadedAt(formatDate(proof.uploadedAt), formatTime(proof.uploadedAt))}
+          </p>
+
+          {linkedMember && (
+            <div className="mt-1.5">
+              <MemberIdentity member={linkedMember} size={26} showName={false} />
+            </div>
+          )}
+
           {isDonation && names.typed && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               <bdi>{paymentCard.storedName(names.typed)}</bdi>
             </p>
           )}
-
-          {linkedMember && (
-            <div className="mt-1.5">
-              <MemberIdentity member={linkedMember} size={26} />
-            </div>
-          )}
-
-          <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-            <Origin proof={proof} />
-          </p>
 
           {isDonation && proof.donorPhone && (
             <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }} dir="ltr">
@@ -146,10 +150,6 @@ export default function ProofCard({
           )}
 
           {proof.receipt && <ReceiptLine receipt={proof.receipt} />}
-
-          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-            {paymentCard.uploadedAt(formatDate(proof.uploadedAt), formatTime(proof.uploadedAt))}
-          </p>
 
           {reuseKind && <ProofReuseWarning filename={proof.proof} kind={reuseKind} id={proof.id} />}
 

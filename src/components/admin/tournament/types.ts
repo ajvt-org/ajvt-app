@@ -17,13 +17,21 @@ export interface Group {
 
 export interface TeamMemberEntry {
   status: "PENDING" | "ACTIVE";
-  member: { id: string; fullName: string; phone: string; age: string; photo: string | null };
+  member: {
+    id: string;
+    fullName: string;
+    phone: string;
+    age: string;
+    village: string;
+    photo: string | null;
+  };
 }
 
 export interface Team {
   id: string;
   name: string;
   autoNamed: boolean;
+  fromTaguilalett: boolean;
   logo: string | null;
   captainUserId: string | null;
   groupId: string | null;

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { placeholderTeamName } from "@/lib/teamSize";
+import { placeholderTeamName, squadIsSet, squadOf } from "@/lib/teamSize";
 import { nameOf } from "@/lib/person";
 import { activities, tournament } from "@/lib/messages";
 
@@ -28,6 +28,7 @@ export const GET = withRoute(
                 phone: true,
                 fullName: true,
                 age: true,
+                village: true,
                 photo: true,
               },
             },
@@ -46,6 +47,7 @@ export const GET = withRoute(
             fullName: nameOf(user),
             phone: user.phone ?? "",
             age: user.age ?? "",
+            village: user.village,
             photo: user.photo,
           },
         })),
@@ -67,12 +69,12 @@ export const POST = withRoute(
 
     const activity = await prisma.activity.findUnique({
       where: { id },
-      select: { isTournament: true, teamSize: true },
+      select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
     });
     if (!activity?.isTournament) {
       return NextResponse.json({ error: activities.notATournament }, { status: 400 });
     }
-    if (!name?.trim() && activity.teamSize === null) {
+    if (!name?.trim() && !squadIsSet(squadOf(activity))) {
       return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
     }
 

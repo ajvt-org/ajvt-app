@@ -23,7 +23,10 @@ export const GET = withRoute(
         isTournament: true,
         format: true,
         profile: true,
-        teamSize: true,
+        minTeamSize: true,
+        maxTeamSize: true,
+        organisedByTaguilalett: true,
+        outsidePlayerLimit: true,
         startsAt: true,
         endsAt: true,
       },
@@ -50,7 +53,10 @@ export const PATCH = withRoute(
       showScorersAndCards,
       format,
       profile,
-      teamSize,
+      minTeamSize,
+      maxTeamSize,
+      organisedByTaguilalett,
+      outsidePlayerLimit,
       yellowsForBan,
       redBanMatches,
       mvpVoteMinutes,
@@ -81,7 +87,10 @@ export const PATCH = withRoute(
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
       profile?: SportProfile;
-      teamSize?: number | null;
+      minTeamSize?: number | null;
+      maxTeamSize?: number | null;
+      organisedByTaguilalett?: boolean;
+      outsidePlayerLimit?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
       mvpVoteMinutes?: number;
@@ -110,12 +119,19 @@ export const PATCH = withRoute(
       }
       data.format = format ?? null;
     }
-    if (teamSize !== undefined) {
+    if (minTeamSize !== undefined || maxTeamSize !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });
       if (played > 0) {
         return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
       }
-      data.teamSize = normalizeTeamSize(teamSize);
+      if (minTeamSize !== undefined) data.minTeamSize = normalizeTeamSize(minTeamSize);
+      if (maxTeamSize !== undefined) data.maxTeamSize = normalizeTeamSize(maxTeamSize);
+    }
+    if (organisedByTaguilalett !== undefined) {
+      data.organisedByTaguilalett = !!organisedByTaguilalett;
+    }
+    if (outsidePlayerLimit !== undefined) {
+      data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);
     }
     if (profile !== undefined) {
       const played = await prisma.match.count({ where: { activityId: id } });

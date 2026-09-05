@@ -22,7 +22,10 @@ export interface TournamentInfo {
   isTournament: boolean;
   format: TournamentFormat;
   profile: "FOOTBALL" | "BOARD";
-  teamSize: number | null;
+  minTeamSize: number | null;
+  maxTeamSize: number | null;
+  organisedByTaguilalett: boolean;
+  outsidePlayerLimit: number | null;
   startsAt: string | null;
   endsAt: string | null;
 }

@@ -45,6 +45,7 @@ const TEAMS: Team[] = [
     id: "t1",
     name: "الصقور",
     autoNamed: false,
+    fromTaguilalett: true,
     logo: null,
     captainUserId: null,
     groupId: null,
@@ -52,7 +53,14 @@ const TEAMS: Team[] = [
     members: [
       {
         status: "ACTIVE",
-        member: { id: "p1", fullName: "سالم", phone: "36000001", age: "البدريين", photo: null },
+        member: {
+          id: "p1",
+          fullName: "سالم",
+          phone: "36000001",
+          age: "البدريين",
+          village: "التاكلالت",
+          photo: null,
+        },
       },
     ],
   },
@@ -60,6 +68,7 @@ const TEAMS: Team[] = [
     id: "t2",
     name: "النسور",
     autoNamed: false,
+    fromTaguilalett: true,
     logo: null,
     captainUserId: null,
     groupId: null,

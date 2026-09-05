@@ -11,6 +11,7 @@ import {
 } from "@/lib/tournament";
 import { groupStandings } from "@/lib/standings";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
+import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/teamSize";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { tournamentWorkspace as texts } from "@/lib/texts";
@@ -34,10 +35,11 @@ export default function TournamentPanel({
   data: ReturnType<typeof useTournamentData>;
 }) {
   const { groups, roster, info } = data;
-  const singles = info?.teamSize === 1;
+  const squad = info ? squadOf(info) : OPEN_SQUAD;
+  const singles = isSinglesSquad(squad);
   const identities = useMemo(
-    () => entrantIdentities(data.teams, info?.teamSize ?? null),
-    [data.teams, info?.teamSize],
+    () => entrantIdentities(data.teams, { min: squad.min, max: squad.max }),
+    [data.teams, squad.min, squad.max],
   );
   const teams = useMemo(
     () => data.teams.map((team) => ({ ...team, ...identities.get(team.id) })),
@@ -102,7 +104,11 @@ export default function TournamentPanel({
           <TeamsTab
             activityId={activityId}
             teams={teams}
-            teamSize={info?.teamSize ?? null}
+            settings={{
+              squad,
+              organisedByTaguilalett: info?.organisedByTaguilalett ?? false,
+              outsidePlayerLimit: info?.outsidePlayerLimit ?? null,
+            }}
             roster={roster}
             suspendedIds={suspendedIds}
             onChange={reloadSquads}

@@ -37,7 +37,8 @@ describe("NewActivityForm", () => {
     expect(onCreate.mock.calls[0][0]).toMatchObject({
       isTournament: true,
       isVolunteer: false,
-      teamSize: "1",
+      minTeamSize: "1",
+      maxTeamSize: "1",
       profile: "BOARD",
       format: "GROUPS_THEN_KNOCKOUT",
     });

@@ -18,20 +18,28 @@ export default function ConvertTournamentCard({
 }) {
   const showToast = useToast();
   const [busy, setBusy] = useState(false);
-  const [setup, setSetup] = useState<{ format: string; profile: string; teamSize: string } | null>(
-    null,
-  );
+  const [setup, setSetup] = useState<{
+    format: string;
+    profile: string;
+    minTeamSize: string;
+    maxTeamSize: string;
+    organisedByTaguilalett: boolean;
+    outsidePlayerLimit: string;
+  } | null>(null);
 
-  const teamSizeValue = activity.teamSize === null ? "" : String(activity.teamSize);
+  const asField = (value: number | null) => (value === null ? "" : String(value));
   const currentPreset = TOURNAMENT_PRESETS.find(
-    (p) => p.value === presetOf(activity.profile, teamSizeValue),
+    (p) => p.value === presetOf(activity.profile, asField(activity.maxTeamSize)),
   );
 
   function openDialog() {
     setSetup({
       format: activity.format ?? "KNOCKOUT",
       profile: activity.profile,
-      teamSize: teamSizeValue,
+      minTeamSize: asField(activity.minTeamSize),
+      maxTeamSize: asField(activity.maxTeamSize),
+      organisedByTaguilalett: activity.organisedByTaguilalett,
+      outsidePlayerLimit: asField(activity.outsidePlayerLimit),
     });
   }
 
@@ -43,7 +51,10 @@ export default function ConvertTournamentCard({
         isTournament: true,
         format: setup.format,
         profile: setup.profile,
-        teamSize: setup.teamSize,
+        minTeamSize: setup.minTeamSize,
+        maxTeamSize: setup.maxTeamSize,
+        organisedByTaguilalett: setup.organisedByTaguilalett,
+        outsidePlayerLimit: setup.outsidePlayerLimit,
       });
       setSetup(null);
       await onChanged();
@@ -117,10 +128,29 @@ export default function ConvertTournamentCard({
               <TournamentSetupFields
                 format={setup.format}
                 profile={setup.profile}
-                teamSize={setup.teamSize}
+                minTeamSize={setup.minTeamSize}
+                maxTeamSize={setup.maxTeamSize}
+                organisedByTaguilalett={setup.organisedByTaguilalett}
+                outsidePlayerLimit={setup.outsidePlayerLimit}
+                onMinTeamSize={(minTeamSize) => setSetup((p) => p && { ...p, minTeamSize })}
+                onMaxTeamSize={(maxTeamSize) => setSetup((p) => p && { ...p, maxTeamSize })}
+                onOrganisedByTaguilalett={(organisedByTaguilalett) =>
+                  setSetup((p) => p && { ...p, organisedByTaguilalett })
+                }
+                onOutsidePlayerLimit={(outsidePlayerLimit) =>
+                  setSetup((p) => p && { ...p, outsidePlayerLimit })
+                }
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
                 onPreset={(preset) =>
-                  setSetup((p) => p && { ...p, profile: preset.profile, teamSize: preset.teamSize })
+                  setSetup(
+                    (p) =>
+                      p && {
+                        ...p,
+                        profile: preset.profile,
+                        minTeamSize: preset.minTeamSize,
+                        maxTeamSize: preset.maxTeamSize,
+                      },
+                  )
                 }
               />
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
