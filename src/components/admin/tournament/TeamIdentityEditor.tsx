@@ -10,14 +10,20 @@ export default function TeamIdentityEditor({
   name,
   logo,
   busy,
+  askVillage,
+  fromTaguilalett,
   onRenameTeam,
   onSetLogo,
+  onSetFromTaguilalett,
 }: {
   name: string;
   logo: string | null;
   busy: boolean;
+  askVillage: boolean;
+  fromTaguilalett: boolean;
   onRenameTeam: (name: string) => void;
   onSetLogo: (filename: string) => Promise<void>;
+  onSetFromTaguilalett: (value: boolean) => void;
 }) {
   const [renaming, setRenaming] = useState(false);
 
@@ -52,6 +58,17 @@ export default function TeamIdentityEditor({
           >
             <IconLabel name="pencil">{teamsTab.renameTeam}</IconLabel>
           </button>
+        )}
+        {askVillage && (
+          <label className="flex items-center gap-2 text-xs font-bold">
+            <input
+              type="checkbox"
+              checked={fromTaguilalett}
+              disabled={busy}
+              onChange={(e) => onSetFromTaguilalett(e.target.checked)}
+            />
+            <span style={{ color: "var(--text-main)" }}>{teamsTab.fromTaguilalett}</span>
+          </label>
         )}
       </div>
     </div>

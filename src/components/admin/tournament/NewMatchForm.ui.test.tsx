@@ -15,6 +15,7 @@ const team = (id: string, groupId: string | null = null): Team => ({
   id,
   name: id,
   autoNamed: false,
+  fromTaguilalett: true,
   logo: null,
   captainUserId: null,
   groupId,

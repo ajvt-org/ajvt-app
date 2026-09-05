@@ -21,6 +21,7 @@ function team(id: string, name: string, members: { id: string; name: string }[])
     id,
     name,
     autoNamed: false,
+    fromTaguilalett: true,
     logo: null,
     captainUserId: null,
     groupId: null,
@@ -67,6 +68,7 @@ function show(teams: Team[] = TEAMS, roster: RosterMember[] = []) {
       activityId="a1"
       teams={teams}
       squad={{ min: null, max: null }}
+      askVillage={false}
       roster={roster}
       suspendedIds={[]}
       onChange={onChange}

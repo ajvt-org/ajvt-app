@@ -12,6 +12,7 @@ export default function TeamCard({
   team,
   shownName,
   squad,
+  askVillage,
   members,
   open,
   candidates,
@@ -21,6 +22,7 @@ export default function TeamCard({
   onRenameTeam,
   onDeleteTeam,
   onSetLogo,
+  onSetFromTaguilalett,
   onSetCaptain,
   onAddMember,
   onApproveMember,
@@ -29,6 +31,7 @@ export default function TeamCard({
   team: Team;
   shownName: string;
   squad: SquadSize;
+  askVillage: boolean;
   members: TeamMemberEntry[];
   open: boolean;
   candidates: RosterMember[];
@@ -38,6 +41,7 @@ export default function TeamCard({
   onRenameTeam: (name: string) => void;
   onDeleteTeam: () => void;
   onSetLogo: (filename: string) => Promise<void>;
+  onSetFromTaguilalett: (value: boolean) => void;
   onSetCaptain: (memberId: string | null) => void;
   onAddMember: (userId: string) => void;
   onApproveMember: (memberId: string) => void;
@@ -58,7 +62,10 @@ export default function TeamCard({
           name={team.name}
           logo={team.logo}
           busy={busy}
+          askVillage={askVillage}
+          fromTaguilalett={team.fromTaguilalett}
           onRenameTeam={onRenameTeam}
+          onSetFromTaguilalett={onSetFromTaguilalett}
           onSetLogo={onSetLogo}
         />
         {members.length < team.members.length && (
