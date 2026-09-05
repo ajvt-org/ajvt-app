@@ -16,6 +16,7 @@ const MEMBERSHIP_SELECT = {
   rejectionReason: true,
   paymentMethod: true,
   accountId: true,
+  bankReference: true,
   paymentProof: true,
   referenceCode: true,
   createdAt: true,

@@ -54,6 +54,7 @@ function MembershipPageInner() {
   const [form, setForm] = useState({
     paymentMethod: "",
     accountId: "",
+    bankReference: "",
     paidAmount: "",
     referenceCode: "",
   });
@@ -97,6 +98,7 @@ function MembershipPageInner() {
         setForm({
           paymentMethod: member.paymentMethod || "",
           accountId: member.accountId || "",
+          bankReference: member.bankReference || "",
           paidAmount:
             member.paidAmount != null
               ? String(member.paidAmount + (member.supportAmount ?? 0))
@@ -176,6 +178,7 @@ function MembershipPageInner() {
         ...(editId ? { id: editId } : {}),
         ...form,
         accountId: form.accountId || null,
+        bankReference: form.bankReference.trim() || null,
         paidAmount: Number(form.paidAmount),
         surplusAnonymous: surplus > 0 && wantsName === false,
         paymentProof: proofFilename,

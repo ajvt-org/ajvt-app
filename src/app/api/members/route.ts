@@ -13,6 +13,7 @@ import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
 import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
+import { readBankReference } from "@/lib/bankReference";
 import { members, money } from "@/lib/messages";
 
 const CODE_ATTEMPTS = 5;
@@ -25,6 +26,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     id,
     paymentMethod,
     accountId: declared,
+    bankReference: typed,
     paymentProof,
     paidAmount,
     referenceCode,
@@ -36,6 +38,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
     throw new ValidationError(money.paymentAccountInvalid);
   }
   const accountId = declared || null;
+  const bankReference = readBankReference(typed) || null;
 
   const person = await prisma.user.findUniqueOrThrow({
     where: { id: session.userId },
@@ -61,6 +64,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
       await saveMembershipYear(tx, session.userId, current.year, {
         paymentMethod,
         accountId,
+        bankReference,
         paymentProof,
         ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
         status: "PENDING",
@@ -89,6 +93,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         await saveMembershipYear(tx, session.userId, membershipYear, {
           paymentMethod,
           accountId,
+          bankReference,
           paymentProof,
           referenceCode: code,
           status: "PENDING",
