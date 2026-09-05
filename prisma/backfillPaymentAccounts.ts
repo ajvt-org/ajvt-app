@@ -68,9 +68,9 @@ async function main() {
   for (const [name, account] of sole) {
     console.log(`  ${name} attaches to ${account.code}`);
   }
-  const several = methods.filter((m) => m.accounts.filter((a) => !a.closedAt).length > 1);
+  const several = methods.filter((m) => m.accounts.length > 1);
   for (const method of several) {
-    console.log(`  ${method.name} has more than one open number and is left alone`);
+    console.log(`  ${method.name} has more than one number and is left alone`);
   }
   console.log("");
 

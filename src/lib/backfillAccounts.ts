@@ -15,13 +15,12 @@ export interface MethodRow {
 }
 
 export const NO_METHOD = "they name no method";
-export const METHOD_HAS_NO_ACCOUNT = "their method has no open number";
+export const METHOD_HAS_NO_ACCOUNT = "their method does not have exactly one number";
 
 export function soleAccountByMethod(methods: MethodRow[]): Map<string, AccountRow> {
   const sole = new Map<string, AccountRow>();
   for (const method of methods) {
-    const open = method.accounts.filter((account) => account.closedAt === null);
-    if (open.length === 1) sole.set(method.name, open[0]);
+    if (method.accounts.length === 1) sole.set(method.name, method.accounts[0]);
   }
   return sole;
 }

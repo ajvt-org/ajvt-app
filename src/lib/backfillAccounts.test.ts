@@ -24,25 +24,25 @@ describe("which number a method's old rows belong to", () => {
     expect(soleAccountByMethod([{ name: CASH, accounts: [] }]).has(CASH)).toBe(false);
   });
 
-  it("is nothing for a method with more than one open number, since nobody can say which", () => {
+  it("is nothing for a method with more than one number, since nobody can say which", () => {
     const sole = soleAccountByMethod([
       { name: ONLINE, accounts: [account(), account({ id: "a2", code: "222222" })] },
     ]);
     expect(sole.has(ONLINE)).toBe(false);
   });
 
-  it("ignores a closed number when counting", () => {
+  it("is nothing for a method whose second number has closed, since the old rows may be its", () => {
     const sole = soleAccountByMethod([
       { name: ONLINE, accounts: [account(), account({ id: "a2", closedAt: new Date() })] },
     ]);
-    expect(sole.get(ONLINE)?.id).toBe("a1");
+    expect(sole.has(ONLINE)).toBe(false);
   });
 
-  it("is nothing for a method whose only number has closed", () => {
+  it("is the one number a method has even after it closed", () => {
     const sole = soleAccountByMethod([
       { name: ONLINE, accounts: [account({ closedAt: new Date() })] },
     ]);
-    expect(sole.has(ONLINE)).toBe(false);
+    expect(sole.get(ONLINE)?.id).toBe("a1");
   });
 });
 
