@@ -116,3 +116,58 @@ describe("the account a member says they paid into", () => {
     expect(await prisma.membership.count()).toBe(0);
   });
 });
+
+describe("the transaction number a member copies off their receipt", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAs(await createUser());
+  });
+
+  async function submitWithReference(bankReference: unknown) {
+    return REGISTER(post("/api/members", { ...submission, paymentMethod: PAYABLE, bankReference }));
+  }
+
+  it("is kept on the membership and reaches the unified table", async () => {
+    expect((await submitWithReference("TR10000000001")).status).toBe(201);
+
+    const membership = await prisma.membership.findFirstOrThrow();
+    expect(membership.bankReference).toBe("TR10000000001");
+    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
+    expect(payment.bankReference).toBe("TR10000000001");
+  });
+
+  it("drops the spaces a member grouped it with", async () => {
+    await submitWithReference("TR 100 000 000 01");
+    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBe("TR10000000001");
+  });
+
+  it("may be left out entirely", async () => {
+    expect((await submitWithReference(null)).status).toBe(201);
+    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBeNull();
+  });
+
+  it("is taken even when it does not look like one, since the screen only warns", async () => {
+    expect((await submitWithReference("AJV-EG8A6")).status).toBe(201);
+    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBe("AJV-EG8A6");
+  });
+
+  it("refuses one longer than a reference could be", async () => {
+    expect((await submitWithReference("1".repeat(60))).status).toBe(400);
+    expect(await prisma.membership.count()).toBe(0);
+  });
+
+  it("sits beside the order code without replacing it", async () => {
+    await REGISTER(
+      post("/api/members", {
+        ...submission,
+        paymentMethod: PAYABLE,
+        referenceCode: "AJ-EG8A6",
+        bankReference: "TR10000000001",
+      }),
+    );
+
+    const membership = await prisma.membership.findFirstOrThrow();
+    expect(membership.referenceCode).toBe("AJ-EG8A6");
+    expect(membership.bankReference).toBe("TR10000000001");
+  });
+});

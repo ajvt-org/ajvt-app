@@ -15,7 +15,14 @@ function offering(methods: { name: string; memberFacing: boolean; accounts: unkn
 }
 
 function formOf(over: Partial<PaymentValues> = {}): PaymentValues {
-  return { paymentMethod: "", accountId: "", paidAmount: "", referenceCode: "", ...over };
+  return {
+    paymentMethod: "",
+    accountId: "",
+    bankReference: "",
+    paidAmount: "",
+    referenceCode: "",
+    ...over,
+  };
 }
 
 function renderStep(form: PaymentValues = formOf(), setForm = vi.fn()) {
@@ -141,5 +148,71 @@ describe("the account a member says they paid into", () => {
 
     const update = setForm.mock.calls[0][0] as (p: PaymentValues) => PaymentValues;
     expect(update(formOf()).accountId).toBe("a2");
+  });
+});
+
+describe("the transaction number a member copies off their receipt", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("is offered, and says it is optional", async () => {
+    globalThis.fetch = offering([]);
+    renderStep();
+
+    expect(screen.getByLabelText(stepPayment.bankReference)).toBeDefined();
+    expect(screen.getByText(stepPayment.bankReferenceHint)).toBeDefined();
+  });
+
+  it("says nothing while the box is empty", async () => {
+    globalThis.fetch = offering([]);
+    renderStep(formOf({ bankReference: "" }));
+
+    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
+  });
+
+  it("accepts a number that looks like one, whatever the provider", async () => {
+    globalThis.fetch = offering([]);
+    renderStep(formOf({ bankReference: "TR10000000001" }));
+
+    expect(screen.queryByText(stepPayment.bankReferenceOdd)).toBeNull();
+  });
+
+  it("says so when the typed value is not a transaction number", async () => {
+    globalThis.fetch = offering([]);
+    renderStep(formOf({ bankReference: "AJV-EG8A6" }));
+
+    expect(screen.getByText(stepPayment.bankReferenceOdd)).toBeDefined();
+  });
+
+  it("still lets the request be sent, since it is only a note", async () => {
+    globalThis.fetch = offering([]);
+    const onSubmit = vi.fn();
+    render(
+      <StepPayment
+        form={formOf({ bankReference: "AJV-EG8A6" })}
+        setForm={vi.fn()}
+        fullName="محمد ولد أحمد"
+        membershipFee={2000}
+        copied={null}
+        onCopy={vi.fn()}
+        surplus={0}
+        wantsName={null}
+        setWantsName={vi.fn()}
+        proofFilename={null}
+        setProofFilename={vi.fn()}
+        setProofUploading={vi.fn()}
+        error=""
+        loading={false}
+        proofUploading={false}
+        editing={false}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    expect(
+      (screen.getByRole("button", { name: new RegExp(stepPayment.send) }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false);
   });
 });

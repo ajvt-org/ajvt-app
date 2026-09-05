@@ -13,6 +13,7 @@ import { type PaymentValues } from "./constants";
 import { usePayableMethods } from "@/lib/usePayableMethods";
 import PaymentMethodChoice from "@/components/PaymentMethodChoice";
 import AccountChoice from "./AccountChoice";
+import { looksLikeReference } from "@/lib/bankReference";
 
 export default function StepPayment({
   form,
@@ -58,6 +59,7 @@ export default function StepPayment({
   const picked =
     accounts.length === 1 ? accounts[0] : accounts.find((a) => a.id === form.accountId);
   const receivingCode = picked?.code ?? "";
+  const referenceLooksOdd = !looksLikeReference(form.bankReference);
 
   return (
     <>
@@ -146,6 +148,30 @@ export default function StepPayment({
           />
           <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
             {texts.feeMinimum(membershipFee)}
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="member-bank-reference"
+            className="block text-sm font-bold mb-1.5"
+            style={{ color: "var(--text-main)" }}
+          >
+            {texts.bankReference}
+          </label>
+          <input
+            id="member-bank-reference"
+            value={form.bankReference}
+            onChange={(e) => setForm((p) => ({ ...p, bankReference: e.target.value }))}
+            maxLength={40}
+            className="input"
+            dir="ltr"
+          />
+          <p
+            className="text-xs mt-1"
+            style={{ color: referenceLooksOdd ? "var(--copper-500)" : "var(--text-muted)" }}
+          >
+            {referenceLooksOdd ? texts.bankReferenceOdd : texts.bankReferenceHint}
           </p>
         </div>
 

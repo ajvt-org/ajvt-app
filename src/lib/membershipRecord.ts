@@ -8,6 +8,7 @@ export interface MembershipYearEdit {
   rejectionReason?: string | null;
   paymentMethod?: string | null;
   accountId?: string | null;
+  bankReference?: string | null;
   paymentProof?: string | null;
   referenceCode?: string | null;
 }

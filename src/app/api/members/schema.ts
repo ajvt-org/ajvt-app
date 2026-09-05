@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { validatePaidAmount } from "@/lib/donations";
 import { isValidReferenceCode } from "@/lib/referenceCode";
+import { MAX_BANK_REFERENCE } from "@/lib/bankReference";
 import { common, members, money } from "@/lib/messages";
 
 const INVALID = common.invalidBody;
@@ -12,6 +13,7 @@ export function memberSubmissionSchema(fee: number, offered: readonly string[]) 
       .min(1, members.pickPaymentMethod)
       .refine((value) => offered.includes(value), money.paymentMethodInvalid),
     accountId: z.string(INVALID).nullish(),
+    bankReference: z.string(INVALID).max(MAX_BANK_REFERENCE, INVALID).nullish(),
     paymentProof: z.string(members.attachProof).min(1, members.attachProof),
     referenceCode: z.string(INVALID).refine(isValidReferenceCode, INVALID).nullish(),
     paidAmount: z.unknown().superRefine((v, ctx) => {
