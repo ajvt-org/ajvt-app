@@ -52,6 +52,14 @@ describe("the shortcuts on the review queue", () => {
     expect(document.querySelectorAll("kbd")).toHaveLength(0);
   });
 
+  it("keeps the cap out of the name the button answers to", () => {
+    withPointer(true);
+    show("PENDING");
+
+    expect(screen.getByRole("button", { name: texts.accept })).toBeTruthy();
+    expect(screen.getByRole("button", { name: texts.reject })).toBeTruthy();
+  });
+
   it("carries no legend above the buttons", () => {
     withPointer(true);
     show("PENDING");

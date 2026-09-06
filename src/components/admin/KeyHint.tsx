@@ -1,6 +1,7 @@
 export default function KeyHint({ children }: { children: string }) {
   return (
     <kbd
+      aria-hidden="true"
       dir="ltr"
       className="ms-1.5 px-1 rounded text-[10px] font-black align-middle"
       style={{
