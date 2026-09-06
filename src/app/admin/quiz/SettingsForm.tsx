@@ -96,6 +96,9 @@ export default function SettingsForm({
         {texts.confirmAnswersKeeps}
       </p>
 
+      <p className="text-xs font-bold pt-1" style={{ color: "var(--text-muted)" }}>
+        <IconLabel name="list">{texts.defaultsTitle}</IconLabel>
+      </p>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
         {texts.defaultsLead}
       </p>
