@@ -12,6 +12,9 @@ export const activityRegistrants = {
   noTeam: "بلا فريق",
   searchRegistrants: "ابحث في المسجلين بالاسم أو الهاتف أو الفريق...",
   searchPlayers: "ابحث في المسجلين بالاسم أو الهاتف...",
+  // The two searches on this tab do opposite things, so each says which it is.
+  addSearchLabel: "البحث عن عضو لتسجيله",
+  searchLabel: "البحث في المسجلين",
   noneMatch: "لا يوجد مسجل مطابق",
   filterByTeam: "تصفية حسب الفريق",
   allTeams: "كل الفرق",

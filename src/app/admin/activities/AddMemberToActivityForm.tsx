@@ -44,17 +44,21 @@ export default function AddMemberToActivityForm({
     if (await onRegister(activityId, userId)) setSearch("");
   }
 
+  // A card of its own, so the search inside it reads as part of adding a member
+  // rather than as another way to filter the list below.
   return (
-    <div className="space-y-1.5">
+    <div className="card p-3 space-y-1.5">
       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
         <IconLabel name="plus">{texts.add}</IconLabel>
       </p>
       <input
         type="text"
         placeholder={texts.search}
+        aria-label={texts.addSearchLabel}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="input text-sm"
+        className="input input-sm w-full"
+        style={{ background: "var(--mint-50)" }}
       />
       {tokens.length === 0 ? (
         <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>

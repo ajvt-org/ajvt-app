@@ -200,6 +200,48 @@ describe("the manual add on the registrants tab", () => {
   });
 });
 
+describe("the two searches on the tab", () => {
+  it("names each of them, since they do opposite things", () => {
+    show([candidate()], [registration()]);
+
+    expect(screen.getByLabelText(texts.addSearchLabel)).toBeTruthy();
+    expect(screen.getByLabelText(texts.searchLabel)).toBeTruthy();
+  });
+
+  it("keeps them in cards of their own with the add panel open", async () => {
+    show([candidate()], [registration()]);
+
+    await userEvent.type(screen.getByLabelText(texts.addSearchLabel), "احمد");
+
+    const add = screen.getByLabelText(texts.addSearchLabel).closest(".card");
+    const filter = screen.getByLabelText(texts.searchLabel).closest(".card");
+
+    expect(add).toBeTruthy();
+    expect(filter).toBeTruthy();
+    expect(add).not.toBe(filter);
+    expect(within(add as HTMLElement).getByText(texts.add)).toBeTruthy();
+    expect(within(filter as HTMLElement).queryByText(texts.add)).toBeNull();
+  });
+
+  it("still filters the list from the one that filters", async () => {
+    show(
+      [],
+      [
+        registration({ id: "r1", member: { ...registration().member, fullName: "محمد" } }),
+        registration({
+          id: "r2",
+          member: { id: "u8", fullName: "سالم", phone: null, age: "البدريين", photo: null },
+        }),
+      ],
+    );
+
+    await userEvent.type(screen.getByLabelText(texts.searchLabel), "محمد");
+
+    expect(screen.getByText("محمد")).toBeTruthy();
+    expect(screen.queryByText("سالم")).toBeNull();
+  });
+});
+
 describe("the list of registrants", () => {
   it("says which team a registrant is in", () => {
     show([], [registration({ team: { id: "t1", name: "الشناقطة" } })]);
