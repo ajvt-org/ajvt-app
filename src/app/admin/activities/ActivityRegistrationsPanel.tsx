@@ -70,13 +70,19 @@ export default function ActivityRegistrationsPanel({
         onRegister={onRegister}
       />
 
-      <input
-        type="text"
-        placeholder={singles ? texts.searchPlayers : texts.searchRegistrants}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="input text-sm"
-      />
+      {/* The same treatment the teams tab search has, and a card of its own so
+          it does not read as a second copy of the add search above it. */}
+      <div className="card p-2.5">
+        <input
+          type="text"
+          placeholder={singles ? texts.searchPlayers : texts.searchRegistrants}
+          aria-label={texts.searchLabel}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input input-sm w-full"
+          style={{ background: "white" }}
+        />
+      </div>
 
       <FilterChips
         options={sortOptions()}
