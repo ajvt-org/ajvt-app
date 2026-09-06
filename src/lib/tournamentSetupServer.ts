@@ -38,7 +38,7 @@ async function assertNothingPlayed(activityId: string) {
 function checkShape(input: SetupInput, teamCount: number, words: EntrantWording) {
   if (input.format === "KNOCKOUT") {
     const refusal = knockoutRefusal(teamCount);
-    if (refusal) throw new ValidationError(messages.needPowerOfTwo(teamCount));
+    if (refusal) throw new ValidationError(words.setupNeedsFullBracket(teamCount));
     return;
   }
   const placed = input.groups.flatMap((g) => g.teamIds);
