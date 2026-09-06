@@ -16,6 +16,7 @@ import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
+import SeriesScoreline from "./SeriesScoreline";
 import type { SeriesConfig } from "./seriesConfig";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
@@ -106,10 +107,19 @@ export default function MatchCard({
             logo: match.secondTeam?.logo,
             photo: match.secondTeam?.photo,
           }}
-          score={played ? { home: match.homeScore, away: match.awayScore } : null}
+          score={football && played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
           entrant={entrant}
         />
+        {series && match.series && (
+          <div className="mt-1.5">
+            <SeriesScoreline
+              parts={match.parts}
+              standing={match.series}
+              partWord={series.partWord}
+            />
+          </div>
+        )}
         {priorMeetings.length > 0 && (
           <p
             className="text-xs mt-1 flex items-center gap-1.5 flex-wrap"

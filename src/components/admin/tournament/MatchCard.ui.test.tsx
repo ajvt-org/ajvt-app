@@ -46,6 +46,8 @@ function match(): Match {
         member: { id: "p2", fullName: "سالم", photo: null },
       },
     ],
+    parts: [],
+    series: null,
     mvpVote: null,
   };
 }

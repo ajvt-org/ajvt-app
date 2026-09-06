@@ -37,6 +37,8 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
+  parts: [],
+  series: null,
   mvpVote: null,
 };
 
