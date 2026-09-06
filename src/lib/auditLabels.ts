@@ -94,6 +94,7 @@ export const ACTION_LABELS = {
   REASSIGN_AGE_GROUP: "نقل أعضاء إلى عصر آخر",
   CREATE_QUIZ_QUESTION: "إضافة سؤال ",
   UPDATE_QUIZ_QUESTION: "تعديل سؤال ",
+  MOVE_QUIZ_QUESTION: "نقل ترتيب سؤال ",
   DELETE_QUIZ_QUESTION: "حذف سؤال ",
   SEND_QUIZ_QUESTION: "إرسال سؤال ",
   UPDATE_QUIZ_SETTINGS: "تعديل إعدادات الأسئلة",

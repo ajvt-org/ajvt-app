@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminRole } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
-import { getQuizSettings, updateQuizSettings } from "@/lib/quiz";
+import { getQuizSettings, tutorialCurve, updateQuizSettings } from "@/lib/quiz";
 import { withRoute } from "@/lib/route";
 import { pointsInRange } from "@/lib/quizDifficulty";
+import { validateCurve } from "@/lib/competitionConfig";
 import { quiz } from "@/lib/messages";
+
+function pickGiven(given: Record<string, unknown>): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(given).filter(([, value]) => value !== undefined),
+  ) as Record<string, number>;
+}
 
 export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
   await requireAdminRole("QUIZ");
@@ -14,14 +21,24 @@ export const GET = withRoute("GET /api/admin/quiz/settings", async () => {
 
 export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: NextRequest) => {
   const session = await requireAdminRole("QUIZ");
-  const { defaultAnswerCount, defaultCorrectCount, defaultPoints, confirmAnswers } =
-    await req.json();
+  const {
+    defaultAnswerCount,
+    defaultCorrectCount,
+    defaultPoints,
+    confirmAnswers,
+    tutorialFullSeconds,
+    tutorialMaxSeconds,
+    tutorialFloorPercent,
+  } = await req.json();
 
   const data: {
     defaultAnswerCount?: number;
     defaultCorrectCount?: number;
     defaultPoints?: number;
     confirmAnswers?: boolean;
+    tutorialFullSeconds?: number;
+    tutorialMaxSeconds?: number;
+    tutorialFloorPercent?: number;
   } = {};
 
   if (confirmAnswers !== undefined) {
@@ -56,6 +73,15 @@ export const PATCH = withRoute("PATCH /api/admin/quiz/settings", async (req: Nex
       { error: "عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات" },
       { status: 400 },
     );
+  }
+
+  const given = { tutorialFullSeconds, tutorialMaxSeconds, tutorialFloorPercent };
+  if (Object.values(given).some((value) => value !== undefined)) {
+    const current = await getQuizSettings();
+    const wanted = { ...current, ...pickGiven(given) };
+    const curveProblem = validateCurve(tutorialCurve(wanted));
+    if (curveProblem) return NextResponse.json({ error: curveProblem }, { status: 400 });
+    Object.assign(data, pickGiven(given));
   }
 
   const settings = await updateQuizSettings(data);

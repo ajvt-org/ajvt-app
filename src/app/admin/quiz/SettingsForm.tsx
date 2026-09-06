@@ -1,13 +1,63 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import { quizSettingsForm as texts } from "@/lib/texts";
 import type { SettingsForm as FormValues } from "./types";
 
-const FIELDS: { key: keyof FormValues; label: string; min: number; max?: number }[] = [
-  { key: "defaultAnswerCount", label: "عدد الإجابات الافتراضي", min: 2 },
-  { key: "defaultCorrectCount", label: "عدد الإجابات الصحيحة الافتراضي", min: 1 },
-  { key: "defaultPoints", label: "النقاط الافتراضية للسؤال", min: 1, max: 20 },
+interface Field {
+  key: keyof FormValues;
+  label: string;
+  min: number;
+  max?: number;
+}
+
+const DEFAULT_FIELDS: Field[] = [
+  { key: "defaultAnswerCount", label: texts.defaultAnswerCount, min: 2 },
+  { key: "defaultCorrectCount", label: texts.defaultCorrectCount, min: 1 },
+  { key: "defaultPoints", label: texts.defaultPoints, min: 1, max: 20 },
 ];
+
+const TUTORIAL_FIELDS: Field[] = [
+  { key: "tutorialFullSeconds", label: texts.tutorialFullSeconds, min: 0 },
+  { key: "tutorialMaxSeconds", label: texts.tutorialMaxSeconds, min: 1 },
+  { key: "tutorialFloorPercent", label: texts.tutorialFloorPercent, min: 0, max: 100 },
+];
+
+function NumberFields({
+  fields,
+  values,
+  onChange,
+}: {
+  fields: Field[];
+  values: FormValues;
+  onChange: (key: keyof FormValues, value: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {fields.map((field) => (
+        <div key={field.key}>
+          <label
+            className="block text-xs font-bold mb-1"
+            style={{ color: "var(--text-main)" }}
+            htmlFor={`quiz-${field.key}`}
+          >
+            {field.label}
+          </label>
+          <input
+            id={`quiz-${field.key}`}
+            type="number"
+            dir="ltr"
+            min={field.min}
+            max={field.max}
+            className="input text-sm"
+            value={values[field.key]}
+            onChange={(e) => onChange(field.key, e.target.value)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function SettingsForm({
   values,
@@ -29,7 +79,7 @@ export default function SettingsForm({
   return (
     <form onSubmit={onSubmit} className="card p-4 space-y-3">
       <p className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>
-        <IconLabel name="target">إعدادات الأسئلة</IconLabel>
+        <IconLabel name="target">{texts.title}</IconLabel>
       </p>
 
       <label className="flex items-center gap-2 text-xs font-bold">
@@ -40,40 +90,26 @@ export default function SettingsForm({
           disabled={saving}
           onChange={onToggleConfirm}
         />
-        <span style={{ color: "var(--text-main)" }}>زر تأكيد الإجابة</span>
+        <span style={{ color: "var(--text-main)" }}>{texts.confirmAnswers}</span>
       </label>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        عند إيقافه يرسل اختيار الإجابة مباشرة دون تأكيد في كل المسابقات، ويسري التغيير من الجولة
-        القادمة. الأسئلة متعددة الإجابات تحتفظ بالزر دائماً.
+        {texts.confirmAnswersKeeps}
       </p>
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        ما يظهر جاهزاً عند إضافة سؤال جديد. كل ما يخص سير المسابقة يضبط داخل المسابقة نفسها.
+        {texts.defaultsLead}
       </p>
 
-      <div className="grid grid-cols-2 gap-3">
-        {FIELDS.map((field) => (
-          <div key={field.key}>
-            <label
-              className="block text-xs font-bold mb-1"
-              style={{ color: "var(--text-main)" }}
-              htmlFor={`quiz-${field.key}`}
-            >
-              {field.label}
-            </label>
-            <input
-              id={`quiz-${field.key}`}
-              type="number"
-              dir="ltr"
-              min={field.min}
-              max={field.max}
-              className="input text-sm"
-              value={values[field.key]}
-              onChange={(e) => onChange(field.key, e.target.value)}
-            />
-          </div>
-        ))}
-      </div>
+      <NumberFields fields={DEFAULT_FIELDS} values={values} onChange={onChange} />
+
+      <p className="text-xs font-bold pt-1" style={{ color: "var(--text-muted)" }}>
+        <IconLabel name="clock">{texts.tutorialTitle}</IconLabel>
+      </p>
+      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+        {texts.tutorialBankLead}
+      </p>
+
+      <NumberFields fields={TUTORIAL_FIELDS} values={values} onChange={onChange} />
 
       {error && (
         <div
@@ -90,7 +126,7 @@ export default function SettingsForm({
         className="text-xs px-3 py-2 rounded-lg font-bold"
         style={{ background: "var(--mint-600)", color: "white" }}
       >
-        {saving ? "..." : <IconLabel name="save">حفظ الإعدادات</IconLabel>}
+        {saving ? "..." : <IconLabel name="save">{texts.save}</IconLabel>}
       </button>
     </form>
   );

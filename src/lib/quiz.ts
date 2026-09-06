@@ -4,6 +4,7 @@ import { MEMBERSHIP_FEE } from "./donations";
 import { nameOf } from "./person";
 import { latestByAccount } from "./currentMembership";
 import { currentMembership } from "./currentMembershipServer";
+import type { ScoreCurve } from "./competitionConfig";
 
 const SETTINGS_ID = "singleton";
 
@@ -46,11 +47,26 @@ export async function getQuizSettings() {
     .catch(() => prisma.quizSettings.findUniqueOrThrow({ where: { id: SETTINGS_ID } }));
 }
 
+export function tutorialCurve(settings: {
+  tutorialFullSeconds: number;
+  tutorialMaxSeconds: number;
+  tutorialFloorPercent: number;
+}): ScoreCurve {
+  return {
+    fullSeconds: settings.tutorialFullSeconds,
+    maxSeconds: settings.tutorialMaxSeconds,
+    floorPercent: settings.tutorialFloorPercent,
+  };
+}
+
 export async function updateQuizSettings(data: {
   defaultAnswerCount?: number;
   defaultCorrectCount?: number;
   defaultPoints?: number;
   confirmAnswers?: boolean;
+  tutorialFullSeconds?: number;
+  tutorialMaxSeconds?: number;
+  tutorialFloorPercent?: number;
 }) {
   return prisma.quizSettings.upsert({
     where: { id: SETTINGS_ID },

@@ -40,6 +40,7 @@ export default function QuestionsSection({ state }: { state: QuizQuestionsState 
         onEdit={state.openEdit}
         onToggle={state.toggleActive}
         onDelete={state.deleteQuestion}
+        onMove={state.moveQuestion}
       />
 
       {state.showImport && (
