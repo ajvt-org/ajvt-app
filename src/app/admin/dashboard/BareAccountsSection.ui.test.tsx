@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import BareAccountsSection from "./BareAccountsSection";
 import type { BareAccount } from "./types";
+import { bareAccounts, manualAdd } from "@/lib/texts";
 
 const post = vi.fn();
 const del = vi.fn();
@@ -80,7 +81,25 @@ describe("BareAccountsSection", () => {
   it("says there is nothing when every account has a request", () => {
     renderSection([]);
 
-    expect(screen.getByText("لا يوجد أحد بلا اشتراك")).toBeDefined();
+    expect(screen.getByText(bareAccounts.empty)).toBeDefined();
+  });
+
+  it("names the list the way the tab that opens it does", () => {
+    expect(bareAccounts.empty).toContain("طلب");
+    expect(manualAdd.personSaved).toContain("بدون طلب");
+  });
+
+  it("leaves the rows to say what each of them is", () => {
+    renderSection([account({ phone: null })]);
+
+    expect(screen.getByText(bareAccounts.addedByHand)).toBeDefined();
+    expect(document.body.textContent).not.toContain("سجّلوا في التطبيق");
+  });
+
+  it("does not explain the two ways into an empty list", () => {
+    renderSection([]);
+
+    expect(document.body.textContent).not.toContain("أضافهم مشرف");
   });
 
   it("nudges over push and reports the send", async () => {
