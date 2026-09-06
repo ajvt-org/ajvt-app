@@ -13,6 +13,7 @@ const CHESS: SeriesRules = {
   matchEnding: "PLAY_ALL",
   partsToWin: null,
   partDecision: "OUTCOME",
+  extendsWhenLevel: false,
 };
 
 const MARYASS: SeriesRules = {
@@ -20,6 +21,7 @@ const MARYASS: SeriesRules = {
   matchEnding: "FIRST_TO",
   partsToWin: 2,
   partDecision: "POINTS",
+  extendsWhenLevel: false,
 };
 
 function won(order: number, side: "SIDE_A" | "SIDE_B"): PlayedPart {
@@ -212,5 +214,48 @@ describe("nextPartOrder", () => {
 
   it("follows the highest order recorded", () => {
     expect(nextPartOrder([won(1, "SIDE_A"), abandoned(3)])).toBe(4);
+  });
+});
+
+describe("a level knockout match", () => {
+  const KNOCKOUT = { ...CHESS, extendsWhenLevel: true };
+
+  it("stands as a result in a group stage", () => {
+    const standing = deriveSeries(CHESS, [drawn(1), drawn(2)]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.level).toBe(true);
+    expect(standing.extending).toBe(false);
+  });
+
+  it("is extended by another pair rather than left level", () => {
+    const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2)]);
+
+    expect(standing.over).toBe(false);
+    expect(standing.extending).toBe(true);
+    expect(standing.partsAllowed).toBe(4);
+    expect(standing.partsLeft).toBe(2);
+  });
+
+  it("is extended again while it stays level", () => {
+    const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2), drawn(3), drawn(4)]);
+
+    expect(standing.partsAllowed).toBe(6);
+    expect(standing.over).toBe(false);
+  });
+
+  it("stops as soon as the extension breaks the tie", () => {
+    const standing = deriveSeries(KNOCKOUT, [drawn(1), drawn(2), won(3, "SIDE_A"), drawn(4)]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.winner).toBe("SIDE_A");
+    expect(standing.extending).toBe(true);
+  });
+
+  it("is not extended when one side is already ahead", () => {
+    const standing = deriveSeries(KNOCKOUT, [won(1, "SIDE_A"), drawn(2)]);
+
+    expect(standing.over).toBe(true);
+    expect(standing.extending).toBe(false);
   });
 });

@@ -49,25 +49,30 @@ export async function loadSeriesMatch(matchId: string, client: Client = prisma) 
   return match;
 }
 
-export function rulesOf(activity: {
-  partsPerMatch: number | null;
-  matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
-  partsToWin: number | null;
-  partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
-}): SeriesRules {
+export function rulesOf(
+  activity: {
+    partsPerMatch: number | null;
+    matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
+    partsToWin: number | null;
+    partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
+  },
+  isKnockout = false,
+): SeriesRules {
   return {
     partsPerMatch: activity.partsPerMatch ?? 0,
     matchEnding: activity.matchEnding ?? "PLAY_ALL",
     partsToWin: activity.partsToWin,
     partDecision: activity.partDecision ?? "OUTCOME",
+    extendsWhenLevel: isKnockout,
   };
 }
 
 export function standingOf(
   activity: Parameters<typeof rulesOf>[0],
   parts: PlayedPart[],
+  isKnockout = false,
 ): SeriesStanding {
-  return deriveSeries(rulesOf(activity), parts);
+  return deriveSeries(rulesOf(activity, isKnockout), parts);
 }
 
 export interface PartInput {
@@ -117,7 +122,7 @@ export function readPart(
 
 export async function addPart(matchId: string, input: PartInput) {
   const match = await loadSeriesMatch(matchId);
-  const standing = standingOf(match.activity, match.parts);
+  const standing = standingOf(match.activity, match.parts, match.isKnockout);
   if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
 
   const result = readPart(input, match.activity.partDecision!, match.activity.partTarget);

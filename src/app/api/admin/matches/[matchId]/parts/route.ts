@@ -17,7 +17,7 @@ export const GET = withRoute(
     const match = await loadSeriesMatch(matchId);
     return NextResponse.json({
       parts: match.parts,
-      standing: standingOf(match.activity, match.parts),
+      standing: standingOf(match.activity, match.parts, match.isKnockout),
     });
   },
 );
@@ -40,7 +40,11 @@ export const POST = withRoute(
 
     const match = await loadSeriesMatch(matchId);
     return NextResponse.json(
-      { part, parts: match.parts, standing: standingOf(match.activity, match.parts) },
+      {
+        part,
+        parts: match.parts,
+        standing: standingOf(match.activity, match.parts, match.isKnockout),
+      },
       { status: 201 },
     );
   },
