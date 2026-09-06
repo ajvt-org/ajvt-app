@@ -134,6 +134,38 @@ describe("the setup wizard", () => {
     expect(after.indexOf(first)).toBe(before.indexOf(second));
   });
 
+  it("says nothing above the draw until a swap is half done", () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));
+    fireEvent.change(screen.getByLabelText(texts.groupCountLabel), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(texts.qualifierCountLabel), { target: { value: "8" } });
+    next();
+
+    expect(screen.queryByText(texts.swapWith)).toBeNull();
+  });
+
+  it("carries the swap on the chip rather than in a sentence above it", () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));
+    fireEvent.change(screen.getByLabelText(texts.groupCountLabel), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(texts.qualifierCountLabel), { target: { value: "8" } });
+    next();
+
+    const [first] = firstOfEachOfTwoGroups();
+    const chip = screen.getByRole("button", { name: first });
+
+    expect(chip.querySelector("svg")).toBeTruthy();
+    expect(chip.style.border).toContain("var(--mint-200)");
+  });
+
+  it("names each format once, with nothing under it", () => {
+    open(12);
+
+    const knockout = screen.getByRole("button", { name: /إقصاء مباشر/ });
+
+    expect(knockout.textContent).toBe(texts.knockout);
+  });
+
   it("shows the qualifier slots rather than teams in the bracket", () => {
     open(8);
     fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));

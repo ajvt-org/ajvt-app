@@ -37,14 +37,12 @@ export default function ShapeStep({
         <div className="space-y-2">
           <FormatChoice
             label={texts.knockout}
-            hint={texts.knockoutHint}
             chosen={format === "KNOCKOUT"}
             disabled={!offered.includes("KNOCKOUT")}
             onChoose={() => onFormat("KNOCKOUT")}
           />
           <FormatChoice
             label={texts.groupsThenKnockout}
-            hint={texts.groupsThenKnockoutHint}
             chosen={format === "GROUPS_THEN_KNOCKOUT"}
             disabled={!offered.includes("GROUPS_THEN_KNOCKOUT")}
             onChoose={() => onFormat("GROUPS_THEN_KNOCKOUT")}
@@ -109,13 +107,11 @@ export default function ShapeStep({
 
 function FormatChoice({
   label,
-  hint,
   chosen,
   disabled,
   onChoose,
 }: {
   label: string;
-  hint: string;
   chosen: boolean;
   disabled: boolean;
   onChoose: () => void;
@@ -133,9 +129,6 @@ function FormatChoice({
       }}
     >
       <span className="block text-sm font-bold">{label}</span>
-      <span className="block text-xs" style={{ color: "var(--text-muted)" }}>
-        {hint}
-      </span>
     </button>
   );
 }
