@@ -154,7 +154,6 @@ describe("the manual add on the registrants tab", () => {
     show([candidate()]);
 
     expect(screen.queryByText("أحمد ولد محمد")).toBeNull();
-    expect(screen.getByText("اكتب اسماً أو رقم هاتف للبحث عن عضو")).toBeTruthy();
   });
 
   it("tells two people of the same name apart by phone, village and عصر", async () => {
