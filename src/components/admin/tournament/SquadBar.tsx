@@ -1,7 +1,9 @@
 import { teamsTab as texts } from "@/lib/texts";
 import type { SquadSize } from "@/lib/squadSize";
-import { insideTrack, squadBarGeometry, type OutsideShare } from "@/lib/squadBar";
+import { squadBarGeometry, type OutsideShare } from "@/lib/squadBar";
 
+const BAR_WIDTH = 320;
+const NUMERAL_GUTTER = 10;
 const SHORT = "#d97706";
 const WITHIN = "var(--mint-600)";
 const OVER = "#b91c1c";
@@ -31,7 +33,7 @@ function AxisMark({ at, value, dashed }: { at: number; value: number; dashed?: b
     <span
       className="absolute top-0 tabular-nums"
       style={{
-        insetInlineStart: `${insideTrack(at)}%`,
+        insetInlineStart: `${at}%`,
         transform: "translateX(50%)",
         backgroundImage: dashed ? HATCH_DARK : undefined,
         borderRadius: dashed ? 4 : undefined,
@@ -63,7 +65,8 @@ export default function SquadBar({
           ? `${texts.squadOfRange(count, bar.min, bar.max)} ${texts.outsideOfLimit(outside.count, outside.limit)}`
           : texts.squadOfRange(count, bar.min, bar.max)
       }
-      className="block w-full"
+      className="block"
+      style={{ width: `min(100%, ${BAR_WIDTH}px)`, paddingInline: NUMERAL_GUTTER }}
     >
       <span className="relative block">
         <span
