@@ -54,10 +54,26 @@ describe("the scorers and cards toggle", () => {
     patch.mockResolvedValue({});
   });
 
-  it("offers the toggle on a tournament", () => {
+  it("offers the toggle on a football tournament", () => {
     show();
 
     expect(screen.getByLabelText(texts.showScorersAndCards)).toBeDefined();
+  });
+
+  it("leaves it out of a series tournament, where it controls nothing", () => {
+    show({ matchShape: "SERIES" });
+
+    expect(screen.queryByLabelText(texts.showScorersAndCards)).toBeNull();
+    expect(screen.queryByText(texts.showScorersAndCardsHint)).toBeNull();
+  });
+
+  it("keeps the stored setting when the form is saved from a series tournament", async () => {
+    show({ matchShape: "SERIES", showScorersAndCards: true });
+
+    fireEvent.click(screen.getByText(texts.save));
+
+    await waitFor(() => expect(patch).toHaveBeenCalled());
+    expect(patch.mock.calls[0][1]).toMatchObject({ showScorersAndCards: true });
   });
 
   it("leaves it out of a plain activity, which has no scorers to hide", () => {
