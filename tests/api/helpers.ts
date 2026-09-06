@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_FEE } from "@/lib/donations";
 import { INITIAL_PAYMENT_ACCOUNTS, INITIAL_PAYMENT_METHODS } from "@/lib/paymentMethods";
 import { runningYear } from "@/lib/membershipYear";
+import {
+  DEFAULT_BANK_ID,
+  DEFAULT_BANK_NAME,
+  TUTORIAL_BANK_ID,
+  TUTORIAL_BANK_NAME,
+} from "@/lib/questionBankServer";
 import type { ReviewStatus } from "@prisma/client";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
@@ -29,7 +35,12 @@ export async function resetDb() {
   `;
   const list = tables.map((t) => `"${t.tablename}"`).join(", ");
   if (list) await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
-  await prisma.questionBank.create({ data: { id: "general", name: "البنك العام" } });
+  await prisma.questionBank.createMany({
+    data: [
+      { id: DEFAULT_BANK_ID, name: DEFAULT_BANK_NAME },
+      { id: TUTORIAL_BANK_ID, name: TUTORIAL_BANK_NAME },
+    ],
+  });
   await seedPaymentMethods();
   forgetShared();
   forgetRateLimits();

@@ -22,13 +22,14 @@ export const GET = withRoute("GET /api/admin/quiz/questions", async (req: NextRe
   const [questions, sentCounts, answeredCounts, correctCounts] = await Promise.all([
     prisma.quizQuestion.findMany({
       where: { bankId: bank.id },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,
         text: true,
         category: true,
         points: true,
         correctCount: true,
+        order: true,
         active: true,
         createdAt: true,
         answers: {

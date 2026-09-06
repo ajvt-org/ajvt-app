@@ -656,6 +656,7 @@ model QuizQuestion {
   category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
   points       Int                 @default(10)
   correctCount Int                 @default(1) // number of answers that must be selected to earn credit
+  order        Int                 @default(0) // position inside the bank, ascending, newest first among equals
   bankId       String              @default("general")
   bank         QuestionBank        @relation(fields: [bankId], references: [id])
   active       Boolean             @default(true) // soft-disable without losing send history
@@ -684,12 +685,15 @@ model QuizAnswer {
 // Singleton row (id fixed to "singleton", same idiom as Counter) holding what a
 // new question starts from. Everything about how a quiz runs lives on the quiz.
 model QuizSettings {
-  id                  String   @id
-  defaultAnswerCount  Int      @default(4)
-  defaultCorrectCount Int      @default(1)
-  defaultPoints       Int      @default(10)
-  confirmAnswers      Boolean  @default(true)
-  updatedAt           DateTime @updatedAt
+  id                   String   @id
+  defaultAnswerCount   Int      @default(4)
+  defaultCorrectCount  Int      @default(1)
+  defaultPoints        Int      @default(10)
+  confirmAnswers       Boolean  @default(true)
+  tutorialFullSeconds  Int      @default(3)
+  tutorialMaxSeconds   Int      @default(10)
+  tutorialFloorPercent Int      @default(50)
+  updatedAt            DateTime @updatedAt
 }
 
 // Singleton row (id fixed to "singleton", same idiom as QuizSettings) holding

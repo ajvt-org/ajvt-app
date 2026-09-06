@@ -11,6 +11,7 @@ export interface QuestionRow {
   category: string;
   points: number;
   correctCount: number;
+  order: number;
   active: boolean;
   createdAt: string;
   answers: AnswerRow[];
@@ -24,6 +25,9 @@ export interface QuizSettings {
   defaultCorrectCount: number;
   defaultPoints: number;
   confirmAnswers: boolean;
+  tutorialFullSeconds: number;
+  tutorialMaxSeconds: number;
+  tutorialFloorPercent: number;
   questionsPerDay: number;
   answerWindowSeconds: number;
   minScorePercent: number;
@@ -44,7 +48,13 @@ export interface AnswerFormRow {
   isCorrect: boolean;
 }
 
-export type SettingsKey = "defaultAnswerCount" | "defaultCorrectCount" | "defaultPoints";
+export type SettingsKey =
+  | "defaultAnswerCount"
+  | "defaultCorrectCount"
+  | "defaultPoints"
+  | "tutorialFullSeconds"
+  | "tutorialMaxSeconds"
+  | "tutorialFloorPercent";
 
 export type SettingsForm = Record<SettingsKey, string>;
 
@@ -52,4 +62,7 @@ export const emptySettingsForm: SettingsForm = {
   defaultAnswerCount: "4",
   defaultCorrectCount: "1",
   defaultPoints: "10",
+  tutorialFullSeconds: "3",
+  tutorialMaxSeconds: "10",
+  tutorialFloorPercent: "50",
 };
