@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { insideTrack, percentOf, squadBarGeometry, squadScale } from "./squadBar";
+import { percentOf, squadBarGeometry, squadScale } from "./squadBar";
 
 const RANGE = { min: 16, max: 22 };
 
@@ -107,20 +107,19 @@ describe("the outside share", () => {
 });
 
 describe("the count label", () => {
-  it("is held away from both ends of the track", () => {
-    expect(insideTrack(0)).toBe(6);
-    expect(insideTrack(100)).toBe(94);
-    expect(insideTrack(50)).toBe(50);
-  });
-
   it("lands where the fill ends", () => {
     expect(squadBarGeometry(11, RANGE, null)!.countAt).toBe(50);
   });
 
-  it("stacks onto the maximum numeral when the squad is full", () => {
-    const bar = squadBarGeometry(22, RANGE, null)!;
+  it("sits at the end of the track when the squad is full, not short of it", () => {
+    expect(squadBarGeometry(22, RANGE, null)!.countAt).toBe(100);
+  });
 
-    expect(bar.countAt).toBe(94);
-    expect(insideTrack(bar.axis.at(-1)!.at)).toBe(94);
+  it("stays at the end of the track once the squad is over the maximum", () => {
+    expect(squadBarGeometry(27, RANGE, null)!.countAt).toBe(100);
+  });
+
+  it("sits at the start of an empty squad rather than being pushed in", () => {
+    expect(squadBarGeometry(0, RANGE, null)!.countAt).toBe(0);
   });
 });
