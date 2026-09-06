@@ -8,7 +8,8 @@ import { offeredMethodNames } from "@/lib/paymentMethodsServer";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
 import { validatePaidAmount } from "@/lib/donations";
-import { renewalRefusal, type RenewalRefusal } from "@/lib/renewal";
+import { renewalRefusal } from "@/lib/renewal";
+import { renewalRefusalMessage } from "@/lib/renewalMessages";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
@@ -16,13 +17,6 @@ import { accountIdError } from "@/lib/paymentAccountsServer";
 import { stampRecordedBy } from "@/lib/paymentMirror";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { nameOf } from "@/lib/person";
-
-const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
-  notActive: messages.renewNotActive,
-  notIssued: messages.renewNotIssued,
-  alreadyRenewed: messages.renewAlreadyDone,
-  yearBehind: messages.renewYearBehind,
-};
 
 export const POST = withRoute(
   "POST /api/admin/members/[id]/renew",
@@ -55,7 +49,7 @@ export const POST = withRoute(
       },
       membershipYear,
     );
-    if (refusal) throw new ConflictError(REFUSALS[refusal]);
+    if (refusal) throw new ConflictError(renewalRefusalMessage(refusal));
 
     const wrongAccount = await accountIdError(paymentMethod, accountId, null);
     if (wrongAccount) return NextResponse.json({ error: wrongAccount }, { status: 400 });

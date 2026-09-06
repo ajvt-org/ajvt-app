@@ -82,6 +82,7 @@ export const ACTION_LABELS = {
   VOID_QUIZ_SCORE: "إلغاء نقاط مشارك",
   RESTORE_QUIZ_SCORE: "إرجاع نقاط مشارك",
   RENEW_MEMBER: "تجديد عضوية",
+  RENEW_OWN_MEMBERSHIP: "تجديد عضوية شخصية",
   CREATE_AGE_GROUP: "إضافة عصر",
   UPDATE_AGE_GROUP: "تعديل اسم عصر",
   DELETE_AGE_GROUP: "حذف عصر",
