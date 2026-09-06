@@ -6,12 +6,31 @@ import { photoUpload, signUp } from "@/lib/texts";
 import { DRAFT_KEY } from "./draft";
 import RegisterPage from "./page";
 
-const push = vi.fn();
 let search = "";
+let show: (() => void) | null = null;
+
+const push = vi.fn((href: string) => {
+  const query = String(href).indexOf("?");
+  search = query === -1 ? "" : String(href).slice(query + 1);
+  show?.();
+});
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace: push }),
   useSearchParams: () => new URLSearchParams(search),
 }));
+
+function renderPage() {
+  const view = render(<RegisterPage />);
+  show = () => view.rerender(<RegisterPage />);
+  return view;
+}
+
+function reopenPage() {
+  search = "";
+  show = null;
+  return renderPage();
+}
 
 function mockFetch() {
   const fetchMock = vi.fn().mockImplementation((url: string) => {
@@ -40,6 +59,7 @@ async function reachPersonStep() {
 beforeEach(() => {
   push.mockClear();
   search = "";
+  show = null;
 });
 
 afterEach(() => {
@@ -49,7 +69,7 @@ afterEach(() => {
 describe("signing up", () => {
   it("asks for the number and the password first", () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
 
     expect(screen.queryByLabelText(/رقم الهاتف/)).not.toBeNull();
     expect(screen.queryByLabelText(/الاسم الكامل/)).toBeNull();
@@ -57,7 +77,7 @@ describe("signing up", () => {
 
   it("refuses to move on when the passwords differ", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
 
     await userEvent.type(screen.getByLabelText(/رقم الهاتف/), "22119911");
     await userEvent.type(screen.getByLabelText(/^كلمة المرور/), "secret12");
@@ -70,7 +90,7 @@ describe("signing up", () => {
 
   it("asks who you are once the credentials are in", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
 
     await reachPersonStep();
 
@@ -80,7 +100,7 @@ describe("signing up", () => {
 
   it("asks a member of the home village for an age group", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
 
     await reachPersonStep();
 
@@ -89,7 +109,7 @@ describe("signing up", () => {
 
   it("drops the age group question for a neighbouring village", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "أفجار" })).toBeDefined());
 
@@ -100,7 +120,7 @@ describe("signing up", () => {
 
   it("sends the whole person to the register endpoint", async () => {
     const fetchMock = mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
 
@@ -120,7 +140,7 @@ describe("signing up", () => {
 
   it("sends no age group for a village that has none", async () => {
     const fetchMock = mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "أفجار" })).toBeDefined());
 
@@ -135,7 +155,7 @@ describe("signing up", () => {
 
   it("refuses a name that is not written in arabic", async () => {
     const fetchMock = mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
 
@@ -148,7 +168,7 @@ describe("signing up", () => {
 
   it("carries one label for the photo and nothing under it", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
 
     expect(screen.getByText(signUp.photoLabel)).toBeTruthy();
@@ -157,12 +177,12 @@ describe("signing up", () => {
 
   it("brings back what was typed when the reader comes back to the form", async () => {
     mockFetch();
-    const { unmount } = render(<RegisterPage />);
+    const { unmount } = renderPage();
     await userEvent.type(screen.getByLabelText(/رقم الهاتف/), "22119911");
     await waitFor(() => expect(sessionStorage.getItem(DRAFT_KEY)).not.toBeNull());
     unmount();
 
-    render(<RegisterPage />);
+    reopenPage();
 
     await waitFor(() =>
       expect(screen.getByLabelText(/رقم الهاتف/)).toHaveProperty("value", "22119911"),
@@ -171,7 +191,7 @@ describe("signing up", () => {
 
   it("never keeps the password, so it has to be typed again", async () => {
     mockFetch();
-    const { unmount } = render(<RegisterPage />);
+    const { unmount } = renderPage();
     await userEvent.type(screen.getByLabelText(/رقم الهاتف/), "22119911");
     await userEvent.type(screen.getByLabelText(/^كلمة المرور/), "secret12");
     await userEvent.type(screen.getByLabelText(/تأكيد كلمة المرور/), "secret12");
@@ -180,7 +200,7 @@ describe("signing up", () => {
     expect(sessionStorage.getItem(DRAFT_KEY)).not.toContain("secret12");
 
     unmount();
-    render(<RegisterPage />);
+    reopenPage();
 
     await waitFor(() =>
       expect(screen.getByLabelText(/رقم الهاتف/)).toHaveProperty("value", "22119911"),
@@ -190,14 +210,14 @@ describe("signing up", () => {
 
   it("brings back the person step answers too", async () => {
     mockFetch();
-    const { unmount } = render(<RegisterPage />);
+    const { unmount } = renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
     await userEvent.type(screen.getByLabelText(/الاسم الكامل/), "محمد");
     await waitFor(() => expect(sessionStorage.getItem(DRAFT_KEY)).toContain("محمد"));
     unmount();
 
-    render(<RegisterPage />);
+    reopenPage();
     await reachPersonStep();
 
     await waitFor(() =>
@@ -207,7 +227,7 @@ describe("signing up", () => {
 
   it("drops the draft once the account exists", async () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
     await reachPersonStep();
     await waitFor(() => expect(screen.getByRole("option", { name: "البدريين" })).toBeDefined());
     await userEvent.type(screen.getByLabelText(/الاسم الكامل/), "محمد");
@@ -221,14 +241,48 @@ describe("signing up", () => {
   it("goes back to the screen that opened the form", () => {
     mockFetch();
     search = "from=%2Flogin";
-    render(<RegisterPage />);
+    renderPage();
 
     expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/login");
   });
 
+  it("gives the person step its own address, so the device button can undo it", async () => {
+    mockFetch();
+    renderPage();
+    await reachPersonStep();
+
+    expect(push).toHaveBeenCalledWith("/register?step=person");
+    expect(screen.queryByLabelText(/الاسم الكامل/)).not.toBeNull();
+  });
+
+  it("sends the person step's arrow to the step before it", async () => {
+    mockFetch();
+    renderPage();
+    await reachPersonStep();
+
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/register");
+  });
+
+  it("carries the origin through to the person step", async () => {
+    mockFetch();
+    search = "from=%2Flogin";
+    renderPage();
+    await reachPersonStep();
+
+    expect(push).toHaveBeenCalledWith("/register?step=person&from=%2Flogin");
+  });
+
+  it("leaves one back affordance on the person step", async () => {
+    mockFetch();
+    renderPage();
+    await reachPersonStep();
+
+    expect(screen.queryByRole("button", { name: signUp.back })).toBeNull();
+  });
+
   it("goes back to the landing page when nothing named an origin", () => {
     mockFetch();
-    render(<RegisterPage />);
+    renderPage();
 
     expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/");
   });
