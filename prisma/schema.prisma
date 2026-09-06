@@ -113,6 +113,13 @@ model Activity {
   isTournament           Boolean                @default(false)
   format                 TournamentFormat?
   matchShape             MatchShape             @default(FOOTBALL)
+  partsPerMatch          Int?
+  matchEnding            MatchEnding?
+  partsToWin             Int?
+  partDecision           PartDecision?
+  partTarget             Int?
+  partWord               String?
+  partsWord              String?
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -257,6 +264,7 @@ model Match {
   goals               MatchGoal[]
   bookings            MatchBooking[]
   penaltyKicks        MatchPenaltyKick[]
+  parts               MatchPart[]
   mvpVote             MatchMvpVote?
 
   @@index([activityId])
@@ -331,6 +339,21 @@ enum GoalPeriod {
 // teamId is the team the goal counts FOR. A null member is an unknown scorer;
 // an OWN_GOAL's member belongs to the other team. Scores derive from these
 // rows when a result is saved with events.
+model MatchPart {
+  id          String       @id @default(cuid())
+  matchId     String
+  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  order       Int
+  abandoned   Boolean      @default(false)
+  outcome     PartOutcome?
+  sideAPoints Int?
+  sideBPoints Int?
+  createdAt   DateTime     @default(now())
+
+  @@unique([matchId, order])
+  @@index([matchId])
+}
+
 model MatchGoal {
   id        String     @id @default(cuid())
   matchId   String
@@ -951,6 +974,23 @@ enum TournamentFormat {
 enum MatchShape {
   FOOTBALL
   SERIES
+}
+
+enum MatchEnding {
+  PLAY_ALL
+  FIRST_TO
+}
+
+enum PartDecision {
+  OUTCOME
+  POINTS
+  SCORE
+}
+
+enum PartOutcome {
+  SIDE_A
+  SIDE_B
+  DRAW
 }
 
 enum SuspensionReason {
