@@ -31,7 +31,9 @@ import {
 import { parse } from "@/lib/validation";
 import { matchUpdateSchema } from "./schema";
 import type { MatchStatus } from "@prisma/client";
-import { notify, tournament } from "@/lib/messages";
+import { entrantWording, notify, tournament } from "@/lib/messages";
+import { isFootball } from "@/lib/matchShape";
+import { entrantOf, entrantOfMatch } from "@/lib/entrantServer";
 
 const MATCH_INCLUDE = {
   homeTeam: { select: { id: true, name: true, logo: true } },
@@ -118,11 +120,14 @@ export const PATCH = withRoute(
       include: {
         homeTeam: { select: { id: true, name: true, groupId: true } },
         awayTeam: { select: { id: true, name: true, groupId: true } },
+        activity: { select: { matchShape: true, minTeamSize: true, maxTeamSize: true } },
       },
     });
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
+    const entrant = entrantOf(match.activity);
+    const words = entrantWording(entrant);
     const wasPlayed = match.status === "PLAYED";
     let finalHomeGroupId = match.homeTeam?.groupId ?? null;
     let finalAwayGroupId = match.awayTeam?.groupId ?? null;
@@ -149,17 +154,17 @@ export const PATCH = withRoute(
       const newHome = homeTeamId !== undefined ? homeTeamId : match.homeTeamId;
       const newAway = awayTeamId !== undefined ? awayTeamId : match.awayTeamId;
       if (newHome === null || newAway === null) {
-        return NextResponse.json({ error: tournament.fixtureNeedsBothTeams }, { status: 400 });
+        return NextResponse.json({ error: words.fixtureNeedsBothEntrants }, { status: 400 });
       }
       if (newHome === newAway) {
-        return NextResponse.json({ error: tournament.teamAgainstItself }, { status: 400 });
+        return NextResponse.json({ error: words.entrantAgainstItself }, { status: 400 });
       }
       const validTeams = await prisma.team.findMany({
         where: { id: { in: [newHome, newAway] }, activityId: match.activityId },
         select: { id: true, groupId: true },
       });
       if (validTeams.length !== 2) {
-        return NextResponse.json({ error: tournament.teamsNotInTournament }, { status: 400 });
+        return NextResponse.json({ error: words.entrantsNotInTournament }, { status: 400 });
       }
       updateData.homeTeamId = newHome;
       updateData.awayTeamId = newAway;
@@ -216,7 +221,7 @@ export const PATCH = withRoute(
         penaltyKicks !== undefined ||
         forfeitWinnerTeamId !== undefined;
       if (touchesTheMatch) {
-        return NextResponse.json({ error: tournament.fixtureHasNoTeams }, { status: 400 });
+        return NextResponse.json({ error: words.fixtureHasNoEntrants }, { status: 400 });
       }
       const scheduled = await prisma.match.update({
         where: { id: matchId },
@@ -226,8 +231,8 @@ export const PATCH = withRoute(
       return NextResponse.json({ match: scheduled });
     }
 
-    const homeName = match.homeTeam?.name ?? tournament.teamNotSetYet;
-    const awayName = match.awayTeam?.name ?? tournament.teamNotSetYet;
+    const homeName = match.homeTeam?.name ?? words.entrantNotSetYet;
+    const awayName = match.awayTeam?.name ?? words.entrantNotSetYet;
 
     let parsedHomeGoals: GoalInput[] = [];
     let parsedAwayGoals: GoalInput[] = [];
@@ -236,6 +241,12 @@ export const PATCH = withRoute(
     const eventsMode = goalEvents !== undefined;
     const enteringResult = !eventsMode && (homeScore !== undefined || awayScore !== undefined);
     let clearedResult = false;
+
+    const resultArriving =
+      eventsMode || (enteringResult && parseScorePair(homeScore, awayScore) !== null);
+    if (resultArriving && !isFootball(match.activity.matchShape)) {
+      return NextResponse.json({ error: tournament.seriesResultNotReady }, { status: 400 });
+    }
 
     if (eventsMode) {
       const evGoals = validateGoalEvents(goalEvents, sides.home, sides.away);
@@ -417,7 +428,7 @@ export const PATCH = withRoute(
       if (forfeitWinnerTeamId === null) {
         updateData.forfeitWinnerTeamId = null;
       } else if (forfeitWinnerTeamId !== sides.home && forfeitWinnerTeamId !== sides.away) {
-        return NextResponse.json({ error: tournament.forfeitWinnerNotInMatch }, { status: 400 });
+        return NextResponse.json({ error: words.forfeitWinnerNotInMatch }, { status: 400 });
       } else {
         updateData.forfeitWinnerTeamId = forfeitWinnerTeamId;
       }
@@ -438,6 +449,8 @@ export const PATCH = withRoute(
     if (manOfTheMatchId !== undefined) {
       if (manOfTheMatchId === null) {
         updateData.manOfTheMatchUserId = null;
+      } else if (!isFootball(match.activity.matchShape)) {
+        return NextResponse.json({ error: tournament.motmFootballOnly }, { status: 400 });
       } else {
         const inRoster = await prisma.teamMember.findFirst({
           where: {
@@ -596,6 +609,7 @@ export const PATCH = withRoute(
             updateData.awayScore!,
             awayName,
             match.activityId,
+            entrant,
           ),
         ).catch((err) => logger.error("match.result.push.error", err));
       }
@@ -619,8 +633,9 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
 
-    const homeName = match.homeTeam?.name ?? tournament.teamNotSetYet;
-    const awayName = match.awayTeam?.name ?? tournament.teamNotSetYet;
+    const words = entrantWording(await entrantOfMatch(prisma, matchId));
+    const homeName = match.homeTeam?.name ?? words.entrantNotSetYet;
+    const awayName = match.awayTeam?.name ?? words.entrantNotSetYet;
 
     await prisma.match.delete({ where: { id: matchId } });
     await logAction(session.username, "DELETE_MATCH", `${homeName} × ${awayName}`, {

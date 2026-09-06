@@ -6,18 +6,22 @@ import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts } from "@/lib/texts";
-import { tournament as messages } from "@/lib/messages";
+import { entrantWording } from "@/lib/messages";
+import type { EntrantKind } from "@/lib/entrant";
 import { knockoutToggleAllowed } from "@/lib/tournament";
 
 export default function MatchDetailsForm({
   match,
   teams,
+  entrant,
   onChange,
 }: {
   match: Match;
   teams: Team[];
+  entrant: EntrantKind;
   onChange: () => void;
 }) {
+  const words = entrantWording(entrant);
   const [matchDate, setMatchDate] = useState(
     match.matchDate ? matchDateToLocalInput(match.matchDate) : "",
   );
@@ -46,7 +50,7 @@ export default function MatchDetailsForm({
       return;
     }
     if (homeTeamId === awayTeamId) {
-      setError(messages.teamAgainstItself);
+      setError(words.entrantAgainstItself);
       return;
     }
     setLoading(true);

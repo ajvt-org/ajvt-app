@@ -72,7 +72,7 @@ describe("ResultForm with a suspended player", () => {
       <ResultForm
         match={MATCH}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={["p1"]}
         onSaved={vi.fn()}
       />,
@@ -88,7 +88,7 @@ describe("ResultForm with a suspended player", () => {
       <ResultForm
         match={MATCH}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -110,7 +110,7 @@ describe("ResultForm as goal events", () => {
       <ResultForm
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -158,19 +158,21 @@ describe("ResultForm as goal events", () => {
     expect(body.homeScore).toBeUndefined();
   });
 
-  it("keeps the plain score form for a board match", () => {
+  it("asks a series match for nothing, and says the entry is still coming", () => {
     render(
       <ResultForm
         match={MATCH}
         teams={TEAMS}
-        profile="BOARD"
+        matchShape="SERIES"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
     );
 
     expect(screen.queryByText("الأهداف")).toBeNull();
-    expect(screen.getAllByRole("spinbutton").length).toBe(2);
+    expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });
 
@@ -181,7 +183,7 @@ describe("the goal form", () => {
       <ResultForm
         match={MATCH}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -199,7 +201,7 @@ describe("the goal form", () => {
       <ResultForm
         match={MATCH}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -224,7 +226,7 @@ describe("the extra time section", () => {
       <ResultForm
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -307,7 +309,7 @@ describe("the shootout", () => {
       <ResultForm
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,

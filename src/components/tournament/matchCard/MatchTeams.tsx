@@ -1,8 +1,9 @@
 import TeamLogo from "../TeamLogo";
 import Scoreline from "../Scoreline";
 import { matchTone, type MatchTone } from "./tone";
+import type { EntrantKind } from "@/lib/entrant";
 
-export type MatchSide = { name: string; logo?: string | null };
+export type MatchSide = { name: string; logo?: string | null; photo?: string | null };
 
 export type MatchTeamsSize = "sm" | "md" | "lg" | "xl";
 
@@ -30,17 +31,28 @@ function Side({
   logoSize,
   stacked,
   away,
+  entrant,
 }: {
   side: MatchSide;
   color: string;
   logoSize: number;
   stacked: boolean;
   away: boolean;
+  entrant: EntrantKind;
 }) {
+  const logo = (
+    <TeamLogo
+      logo={side.logo}
+      photo={side.photo}
+      name={side.name}
+      size={logoSize}
+      entrant={entrant}
+    />
+  );
   if (stacked) {
     return (
       <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
-        <TeamLogo logo={side.logo} name={side.name} size={logoSize} />
+        {logo}
         <Name name={side.name} color={color} center />
       </div>
     );
@@ -50,11 +62,11 @@ function Side({
       {away ? (
         <>
           <Name name={side.name} color={color} />
-          <TeamLogo logo={side.logo} name={side.name} size={logoSize} />
+          {logo}
         </>
       ) : (
         <>
-          <TeamLogo logo={side.logo} name={side.name} size={logoSize} />
+          {logo}
           <Name name={side.name} color={color} />
         </>
       )}
@@ -70,6 +82,7 @@ export default function MatchTeams({
   size = "md",
   layout = "inline",
   separator = "×",
+  entrant = "team",
 }: {
   home: MatchSide;
   away: MatchSide;
@@ -78,6 +91,7 @@ export default function MatchTeams({
   size?: MatchTeamsSize;
   layout?: "inline" | "stacked";
   separator?: string;
+  entrant?: EntrantKind;
 }) {
   const colors = matchTone[tone];
   const dims = SIZES[size];
@@ -86,7 +100,14 @@ export default function MatchTeams({
 
   return (
     <div className="flex items-center gap-2" dir="rtl">
-      <Side side={home} color={colors.name} logoSize={dims.logo} stacked={stacked} away={false} />
+      <Side
+        side={home}
+        color={colors.name}
+        logoSize={dims.logo}
+        stacked={stacked}
+        away={false}
+        entrant={entrant}
+      />
       {score ? (
         <Scoreline
           home={score.home}
@@ -99,7 +120,14 @@ export default function MatchTeams({
           {separator}
         </span>
       )}
-      <Side side={away} color={colors.name} logoSize={dims.logo} stacked={stacked} away />
+      <Side
+        side={away}
+        color={colors.name}
+        logoSize={dims.logo}
+        stacked={stacked}
+        away
+        entrant={entrant}
+      />
     </div>
   );
 }

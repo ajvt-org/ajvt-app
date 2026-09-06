@@ -30,7 +30,7 @@ function activity(
     showScorersAndCards: true,
     isTournament,
     format: isTournament ? ("KNOCKOUT" as const) : null,
-    profile: "FOOTBALL" as const,
+    matchShape: "FOOTBALL" as const,
     minTeamSize: null,
     maxTeamSize: null,
     organisedByHomeVillage: false,
@@ -66,14 +66,20 @@ describe("ConvertTournamentCard", () => {
     fireEvent.click(screen.getByText("تحويل إلى بطولة"));
     expect(patch).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByText("بطولة أزواج"));
+    fireEvent.click(screen.getByText(tournamentSetup.shapes.SERIES));
+    fireEvent.change(screen.getByLabelText(tournamentSetup.minTeamSize), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText(tournamentSetup.maxTeamSize), {
+      target: { value: "2" },
+    });
     fireEvent.click(screen.getAllByRole("button", { name: "تحويل إلى بطولة" })[1]);
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
         isTournament: true,
         format: "KNOCKOUT",
-        profile: "BOARD",
+        matchShape: "SERIES",
         minTeamSize: "2",
         maxTeamSize: "2",
         organisedByHomeVillage: false,
@@ -86,14 +92,20 @@ describe("ConvertTournamentCard", () => {
     show(true);
 
     fireEvent.click(screen.getByText("تعديل الإعدادات"));
-    fireEvent.click(screen.getByText("بطولة فردية"));
+    fireEvent.click(screen.getByText(tournamentSetup.shapes.SERIES));
+    fireEvent.change(screen.getByLabelText(tournamentSetup.minTeamSize), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText(tournamentSetup.maxTeamSize), {
+      target: { value: "1" },
+    });
     fireEvent.click(screen.getByText("حفظ الإعدادات"));
 
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", {
         isTournament: true,
         format: "KNOCKOUT",
-        profile: "BOARD",
+        matchShape: "SERIES",
         minTeamSize: "1",
         maxTeamSize: "1",
         organisedByHomeVillage: false,

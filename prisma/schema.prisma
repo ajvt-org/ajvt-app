@@ -112,7 +112,7 @@ model Activity {
   autoApprove            Boolean                @default(false)
   isTournament           Boolean                @default(false)
   format                 TournamentFormat?
-  profile                SportProfile           @default(FOOTBALL)
+  matchShape             MatchShape             @default(FOOTBALL)
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -931,12 +931,14 @@ enum TournamentFormat {
   GROUPS_THEN_KNOCKOUT
 }
 
-// What kind of sport the tournament records. FOOTBALL carries the full
-// apparatus (scorers, minutes, cards, man of the match); BOARD is result-only
-// (chess, checkers, PlayStation, card games) and those sections never render.
-enum SportProfile {
+// What a match in the tournament is made of. FOOTBALL is one continuous game
+// and carries the full apparatus (scorers, minutes, cards, man of the match);
+// SERIES is a match made of parts (a chess game, a card set, a tennis set) and
+// covers chess, dhamet, maryass, tennis, volleyball and PlayStation, separated
+// from each other by configuration rather than by another value here.
+enum MatchShape {
   FOOTBALL
-  BOARD
+  SERIES
 }
 
 enum SuspensionReason {

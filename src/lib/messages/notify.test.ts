@@ -9,6 +9,9 @@ describe("every push payload", () => {
     notify.matchScheduled("الهلال", "النصر", "act1"),
     notify.matchReminder("الهلال", "النصر", "act1"),
     notify.matchResult("الهلال", 2, 1, "النصر", "act1"),
+    notify.matchScheduled("محمد", "سيدي", "act1", "player"),
+    notify.matchReminder("محمد", "سيدي", "act1", "player"),
+    notify.matchResult("محمد", 2, 1, "سيدي", "act1", "player"),
     notify.mvpVoteOpen("الهلال", "النصر", "act1"),
     notify.membershipDecision(true),
     notify.membershipDecision(false),
@@ -47,6 +50,31 @@ describe("a match payload", () => {
 
   it("carries the score between the names", () => {
     expect(notify.matchResult("الهلال", 2, 1, "النصر", "act1").body).toBe("«الهلال» 2 – 1 «النصر»");
+  });
+});
+
+describe("a match payload in a tournament played one against one", () => {
+  it("speaks to the player rather than about their team", () => {
+    const titles = [
+      notify.matchScheduled("محمد", "سيدي", "act1", "player").title,
+      notify.matchReminder("محمد", "سيدي", "act1", "player").title,
+      notify.matchResult("محمد", 2, 1, "سيدي", "act1", "player").title,
+    ];
+
+    for (const title of titles) {
+      expect(title).not.toMatch(/فريق/);
+    }
+    expect(titles).toEqual(["مباراة جديدة لك", "مباراتك غداً", "انتهت مباراتك"]);
+  });
+
+  it("still says فريقك where a side is a team", () => {
+    for (const title of [
+      notify.matchScheduled("الهلال", "النصر", "act1").title,
+      notify.matchReminder("الهلال", "النصر", "act1").title,
+      notify.matchResult("الهلال", 2, 1, "النصر", "act1").title,
+    ]) {
+      expect(title).toMatch(/فريقك/);
+    }
   });
 });
 

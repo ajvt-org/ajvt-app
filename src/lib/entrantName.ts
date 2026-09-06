@@ -1,4 +1,4 @@
-import { displayTeamName, isSinglesSquad, type SquadSize } from "./teamSize";
+import { displayTeamName, isSinglesSquad, type SquadSize } from "./squadSize";
 
 export interface EntrantTeam {
   id: string;

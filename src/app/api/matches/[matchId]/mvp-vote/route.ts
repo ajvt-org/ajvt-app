@@ -7,6 +7,7 @@ import { mvpVoteCastSchema } from "./schema";
 import { isUniqueViolation } from "@/lib/prismaError";
 import { tournament } from "@/lib/messages";
 import { isVoteClosed } from "@/lib/mvpVote";
+import { isFootball } from "@/lib/matchShape";
 
 export const POST = withRoute(
   "POST /api/matches/[matchId]/mvp-vote",
@@ -17,10 +18,19 @@ export const POST = withRoute(
 
     const vote = await prisma.matchMvpVote.findUnique({
       where: { matchId },
-      select: { id: true, status: true, closesAt: true, candidates: { select: { id: true } } },
+      select: {
+        id: true,
+        status: true,
+        closesAt: true,
+        candidates: { select: { id: true } },
+        match: { select: { activity: { select: { matchShape: true } } } },
+      },
     });
     if (!vote) {
       return NextResponse.json({ error: tournament.noVoteForMatch }, { status: 404 });
+    }
+    if (!isFootball(vote.match.activity.matchShape)) {
+      return NextResponse.json({ error: tournament.motmFootballOnly }, { status: 400 });
     }
     if (isVoteClosed(vote)) {
       return NextResponse.json({ error: tournament.voteOver }, { status: 409 });

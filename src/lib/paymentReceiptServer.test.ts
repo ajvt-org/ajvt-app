@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { ensureReceiptsFor, receiptDriftFor, reconcileReceiptsFor } from "./paymentReceiptServer";
+import {
+  ensureReceiptsFor,
+  receiptDriftFor,
+  reconcileReceiptsFor,
+  withdrawReceiptsBeforeDelete,
+} from "./paymentReceiptServer";
 import { money, receipts as receiptMessages } from "./messages";
 
 const MEMBERSHIP = {
@@ -27,6 +32,7 @@ function fakeDb(payments: unknown[], settings: unknown = null, standing: unknown
       create: vi.fn().mockImplementation(async ({ data }: { data: unknown }) => data),
       findMany: vi.fn().mockResolvedValue(standing),
       update: vi.fn().mockImplementation(async ({ data }: { data: unknown }) => data),
+      updateMany: vi.fn().mockImplementation(async () => ({ count: standing.length })),
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
@@ -311,5 +317,42 @@ describe("reconciling a receipt with its payment", () => {
     await reconcileReceiptsFor(db, {});
 
     expect(db.receipt.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("retiring a receipt whose payment is about to go", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("voids every receipt still standing against that payment, with the reason", async () => {
+    const db = fakeDb([], null, [STANDING]);
+
+    const count = await withdrawReceiptsBeforeDelete(db, { id: "p1" });
+
+    expect(count).toBe(1);
+    expect(db.receipt.findMany.mock.calls[0][0].where).toMatchObject({
+      status: "ACTIVE",
+      payment: { is: { id: "p1" } },
+    });
+    expect(db.receipt.updateMany.mock.calls[0][0]).toMatchObject({
+      where: { id: { in: ["r1"] } },
+      data: { status: "VOID", voidReason: receiptMessages.withdrawnOnDelete },
+    });
+  });
+
+  it("takes the payment as it is rather than waiting for it to be refused", async () => {
+    const db = fakeDb([], null, [STANDING]);
+
+    await withdrawReceiptsBeforeDelete(db, { id: "p1" });
+
+    expect(db.receipt.findMany.mock.calls[0][0].where.payment.is.status).toBeUndefined();
+  });
+
+  it("writes nothing when the payment has no receipt standing", async () => {
+    const db = fakeDb([], null, []);
+
+    expect(await withdrawReceiptsBeforeDelete(db, { id: "p1" })).toBe(0);
+    expect(db.receipt.updateMany).not.toHaveBeenCalled();
   });
 });

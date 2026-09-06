@@ -4,6 +4,8 @@ import { isQuietHour } from "./quietHours";
 import { logger } from "./logger";
 import { notify } from "@/lib/messages";
 import type { CategoryKey } from "./notificationCategories";
+import { entrantOf } from "./entrantServer";
+import { isSinglesSquad, squadOf } from "./squadSize";
 
 export async function notifyTeams(
   homeTeamId: string,
@@ -84,6 +86,7 @@ export async function sendMatchReminders() {
       homeTeam: { select: { id: true, name: true } },
       awayTeam: { select: { id: true, name: true } },
       activityId: true,
+      activity: { select: { minTeamSize: true, maxTeamSize: true } },
     },
   });
 
@@ -94,7 +97,7 @@ export async function sendMatchReminders() {
     await notifyTeams(
       m.homeTeam.id,
       m.awayTeam.id,
-      notify.matchReminder(m.homeTeam.name, m.awayTeam.name, m.activityId),
+      notify.matchReminder(m.homeTeam.name, m.awayTeam.name, m.activityId, entrantOf(m.activity)),
       "MATCH_REMINDER",
     ).catch((err) => logger.error("match.reminder.push.error", err));
   }
@@ -125,12 +128,21 @@ export async function sendTeamChoiceReminders() {
       id: true,
       userId: true,
       activityId: true,
-      activity: { select: { id: true, title: true, startsAt: true } },
+      activity: {
+        select: {
+          id: true,
+          title: true,
+          startsAt: true,
+          minTeamSize: true,
+          maxTeamSize: true,
+        },
+      },
     },
   });
 
   for (const registration of waiting) {
     if (registration.activity.startsAt && registration.activity.startsAt <= now) continue;
+    if (isSinglesSquad(squadOf(registration.activity))) continue;
     const onATeam = await prisma.teamMember.count({
       where: { userId: registration.userId, team: { activityId: registration.activityId } },
     });

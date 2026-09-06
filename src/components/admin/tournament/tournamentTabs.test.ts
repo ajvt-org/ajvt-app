@@ -3,14 +3,19 @@ import { isTournamentTab, tournamentPlayTabs, tournamentRosterTab } from "./tour
 
 const football = {
   isTournament: true,
-  profile: "FOOTBALL" as const,
+  matchShape: "FOOTBALL" as const,
   minTeamSize: 5,
   maxTeamSize: 5,
 };
-const board = { isTournament: true, profile: "BOARD" as const, minTeamSize: 1, maxTeamSize: 1 };
+const series = {
+  isTournament: true,
+  matchShape: "SERIES" as const,
+  minTeamSize: 1,
+  maxTeamSize: 1,
+};
 const plain = {
   isTournament: false,
-  profile: "FOOTBALL" as const,
+  matchShape: "FOOTBALL" as const,
   minTeamSize: null,
   maxTeamSize: null,
 };
@@ -38,8 +43,8 @@ describe("which tournament tabs an activity earns", () => {
     expect(keys(tournamentPlayTabs(football, 0))).not.toContain("teams");
   });
 
-  it("leaves discipline out of a board game, which has no cards", () => {
-    expect(keys(tournamentPlayTabs(board, 0))).not.toContain("discipline");
+  it("leaves the stats and discipline out of a series tournament, which has neither", () => {
+    expect(keys(tournamentPlayTabs(series, 0))).toEqual(["days", "matches", "standings"]);
   });
 
   it("counts the proposals waiting on the discipline tab", () => {
@@ -51,7 +56,7 @@ describe("which tournament tabs an activity earns", () => {
 
 describe("naming the squad tab", () => {
   it("says players when a side is one person", () => {
-    const tab = tournamentRosterTab(board, 0)[0];
+    const tab = tournamentRosterTab(series, 0)[0];
 
     expect(tab.label).toBe("اللاعبون");
     expect(tab.icon).toBe("user");

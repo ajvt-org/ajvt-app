@@ -7,6 +7,7 @@ export const receipts = {
   notFound: "الوصل غير موجود أو ملغى من قبل",
   payerWithheld: "لا يمكنك إلغاء وصل لا يظهر لك اسم دافعه",
   withdrawnOnRefusal: "أُلغي الدفع بعد قبوله",
+  withdrawnOnDelete: "حُذف الدفع الذي صدر عنه الوصل",
   replacedAfterCorrection: (number: string) => `صُحّح المبلغ، والبديل هو الوصل ${number}`,
   correctedPending: "صُحّح المبلغ، وسيصدر وصل بديل",
 } as const;

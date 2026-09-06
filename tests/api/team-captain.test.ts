@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, patch, del, createAdmin, signInAs, signInAsAdmin, makeMember } from "./helpers";
-import { tournament as messages } from "@/lib/messages";
+import { entrantWording } from "@/lib/messages";
 
 import { PATCH as SET_TEAM } from "@/app/api/admin/teams/[teamId]/route";
 import { DELETE as REMOVE_MEMBER } from "@/app/api/admin/teams/[teamId]/members/[memberId]/route";
@@ -70,7 +70,7 @@ describe("the team captain", () => {
     const res = await setCaptain(team.id, players[2].userId);
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toBe(messages.captainNotInTeam);
+    expect((await res.json()).error).toBe(entrantWording("team").captainNotInEntrant);
     expect(await captainOf(team.id)).toBeNull();
   });
 

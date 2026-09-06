@@ -60,7 +60,7 @@ function show(football: boolean) {
   );
 }
 
-describe("MatchResult by sport profile", () => {
+describe("MatchResult by match shape", () => {
   it("tells the football story in full", () => {
     show(true);
 

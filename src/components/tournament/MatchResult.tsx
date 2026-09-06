@@ -13,6 +13,7 @@ import { forfeitLoserTeamId } from "@/lib/forfeit";
 import { isVoteClosed } from "@/lib/mvpVote";
 import { formatMatchTime } from "@/lib/clubTime";
 import type { DecidedMatch, PublicMatch } from "./publicTypes";
+import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay } from "@/lib/texts";
 
 export default function MatchResult({
@@ -25,6 +26,7 @@ export default function MatchResult({
   loggedIn,
   myVoteCandidateId,
   manOfTheMatchTeam = null,
+  entrant = "team",
 }: {
   match: DecidedMatch;
   day: { round: string | null; venue: string | null };
@@ -35,6 +37,7 @@ export default function MatchResult({
   loggedIn: boolean;
   myVoteCandidateId: string | null;
   manOfTheMatchTeam?: string | null;
+  entrant?: EntrantKind;
 }) {
   const round = day.round ? null : match.round;
   const venue = day.venue ? null : match.venue;
@@ -66,10 +69,11 @@ export default function MatchResult({
       </MatchCardHead>
 
       <MatchTeams
-        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo }}
-        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo }}
+        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo, photo: match.homeTeam.photo }}
+        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo, photo: match.awayTeam.photo }}
         score={{ home: match.homeScore, away: match.awayScore }}
         layout="stacked"
+        entrant={entrant}
       />
 
       {match.forfeitWinnerTeamId && (
@@ -132,6 +136,9 @@ export default function MatchResult({
           awayTeamName={match.awayTeam.name}
           homeTeamLogo={match.homeTeam.logo}
           awayTeamLogo={match.awayTeam.logo}
+          homeTeamPhoto={match.homeTeam.photo}
+          awayTeamPhoto={match.awayTeam.photo}
+          entrant={entrant}
           homeScore={match.homeScore ?? 0}
           awayScore={match.awayScore ?? 0}
           round={match.round}

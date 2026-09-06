@@ -19,22 +19,23 @@ import {
   playedScore,
 } from "@/lib/matchScores";
 import { discipline as disciplineTexts, lists, matchAdmin as texts } from "@/lib/texts";
+import { isFootball } from "@/lib/matchShape";
 
 export default function ResultForm({
   match,
   teams,
-  profile,
+  matchShape,
   suspendedIds,
   onSaved,
 }: {
   match: DecidedMatch;
   teams: Team[];
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
   suspendedIds: string[];
   onSaved: () => void;
 }) {
   const uid = useId();
-  const football = profile === "FOOTBALL";
+  const football = isFootball(matchShape);
   const banned = new Set(suspendedIds);
   const sides = [match.homeTeam, match.awayTeam];
 
@@ -81,8 +82,6 @@ export default function ResultForm({
   const [forfeitWinnerTeamId, setForfeitWinnerTeamId] = useState<string | null>(
     match.forfeitWinnerTeamId,
   );
-  const [homeScore, setHomeScore] = useState(match.homeScore?.toString() ?? "");
-  const [awayScore, setAwayScore] = useState(match.awayScore?.toString() ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -116,25 +115,18 @@ export default function ResultForm({
     setError("");
     setLoading(true);
     try {
-      if (football) {
-        await api.patch(`/api/admin/matches/${match.id}`, {
-          goalEvents: goals.map((g) => ({
-            teamId: g.teamId,
-            userId: g.userId,
-            kind: g.kind,
-            period: g.period,
-            minute: g.minute || null,
-          })),
-          penaltyKicks: kicks,
-          manOfTheMatchId: manOfTheMatchId || null,
-          forfeitWinnerTeamId,
-        });
-      } else {
-        await api.patch(`/api/admin/matches/${match.id}`, {
-          homeScore: Number(homeScore),
-          awayScore: Number(awayScore),
-        });
-      }
+      await api.patch(`/api/admin/matches/${match.id}`, {
+        goalEvents: goals.map((g) => ({
+          teamId: g.teamId,
+          userId: g.userId,
+          kind: g.kind,
+          period: g.period,
+          minute: g.minute || null,
+        })),
+        penaltyKicks: kicks,
+        manOfTheMatchId: manOfTheMatchId || null,
+        forfeitWinnerTeamId,
+      });
       onSaved();
     } catch (e) {
       setError(errorMessage(e));
@@ -145,47 +137,12 @@ export default function ResultForm({
 
   if (!football) {
     return (
-      <form
-        onSubmit={save}
-        className="mt-3 pt-3 space-y-3"
-        style={{ borderTop: "1px solid var(--mint-100)" }}
+      <p
+        className="mt-3 pt-3 text-xs"
+        style={{ borderTop: "1px solid var(--mint-100)", color: "var(--text-muted)" }}
       >
-        <div className="grid grid-cols-2 gap-2">
-          {(
-            [
-              [match.homeTeam.name, homeScore, setHomeScore],
-              [match.awayTeam.name, awayScore, setAwayScore],
-            ] as const
-          ).map(([name, value, set], i) => (
-            <div key={i}>
-              <label
-                htmlFor={`${uid}-side-${i}`}
-                className="text-xs font-semibold"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {name}
-              </label>
-              <input
-                id={`${uid}-side-${i}`}
-                type="number"
-                min={0}
-                value={value}
-                onChange={(e) => set(e.target.value)}
-                required
-                className="input"
-              />
-            </div>
-          ))}
-        </div>
-        {error && (
-          <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>
-            {error}
-          </p>
-        )}
-        <button type="submit" disabled={loading} className="btn btn-primary text-sm">
-          {loading ? "..." : texts.saveResult}
-        </button>
-      </form>
+        {texts.seriesResultNotReady}
+      </p>
     );
   }
 

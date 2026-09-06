@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { accountNamed, accountPerson } from "@/lib/person";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
-import { squadOf } from "@/lib/teamSize";
+import { squadOf } from "@/lib/squadSize";
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -25,7 +25,7 @@ async function loadActivity(id: string) {
       startsAt: true,
       endsAt: true,
       withTime: true,
-      profile: true,
+      matchShape: true,
       minTeamSize: true,
       maxTeamSize: true,
       isTournament: true,

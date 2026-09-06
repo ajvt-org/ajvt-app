@@ -6,7 +6,7 @@ function activity(over: Partial<TabbedActivity> = {}): TabbedActivity {
   return {
     isVolunteer: false,
     isTournament: false,
-    profile: "FOOTBALL",
+    matchShape: "FOOTBALL",
     minTeamSize: null,
     maxTeamSize: null,
     registrations: [],

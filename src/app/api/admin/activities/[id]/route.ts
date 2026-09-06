@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireActivityAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { normalizeTeamSize } from "@/lib/teamSize";
+import { normalizePlayerCount } from "@/lib/squadSize";
 import { PLAYED_MATCH } from "@/lib/activityMatches";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
-import { activities, tournament } from "@/lib/messages";
-import type { SportProfile, TournamentFormat } from "@prisma/client";
+import { activities, entrantWording, tournament } from "@/lib/messages";
+import { entrantOf } from "@/lib/entrantServer";
+import type { MatchShape, TournamentFormat } from "@prisma/client";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]",
@@ -23,7 +24,7 @@ export const GET = withRoute(
         photo: true,
         isTournament: true,
         format: true,
-        profile: true,
+        matchShape: true,
         minTeamSize: true,
         maxTeamSize: true,
         organisedByHomeVillage: true,
@@ -53,7 +54,7 @@ export const PATCH = withRoute(
       isTournament,
       showScorersAndCards,
       format,
-      profile,
+      matchShape,
       minTeamSize,
       maxTeamSize,
       organisedByHomeVillage,
@@ -90,7 +91,7 @@ export const PATCH = withRoute(
       isTournament?: boolean;
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
-      profile?: SportProfile;
+      matchShape?: MatchShape;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
       organisedByHomeVillage?: boolean;
@@ -124,13 +125,16 @@ export const PATCH = withRoute(
     }
     if (minTeamSize !== undefined || maxTeamSize !== undefined) {
       const nextMinTeamSize =
-        minTeamSize !== undefined ? normalizeTeamSize(minTeamSize) : existing.minTeamSize;
+        minTeamSize !== undefined ? normalizePlayerCount(minTeamSize) : existing.minTeamSize;
       const nextMaxTeamSize =
-        maxTeamSize !== undefined ? normalizeTeamSize(maxTeamSize) : existing.maxTeamSize;
+        maxTeamSize !== undefined ? normalizePlayerCount(maxTeamSize) : existing.maxTeamSize;
       const moved =
         nextMinTeamSize !== existing.minTeamSize || nextMaxTeamSize !== existing.maxTeamSize;
       if (moved && (await playedCount()) > 0) {
-        return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
+        return NextResponse.json(
+          { error: entrantWording(entrantOf(existing)).squadSizeLocked },
+          { status: 409 },
+        );
       }
       if (minTeamSize !== undefined) data.minTeamSize = nextMinTeamSize;
       if (maxTeamSize !== undefined) data.maxTeamSize = nextMaxTeamSize;
@@ -139,13 +143,13 @@ export const PATCH = withRoute(
       data.organisedByHomeVillage = !!organisedByHomeVillage;
     }
     if (outsidePlayerLimit !== undefined) {
-      data.outsidePlayerLimit = normalizeTeamSize(outsidePlayerLimit);
+      data.outsidePlayerLimit = normalizePlayerCount(outsidePlayerLimit);
     }
-    if (profile !== undefined) {
-      if (profile !== existing.profile && (await fixtureCount()) > 0) {
-        return NextResponse.json({ error: tournament.profileLocked }, { status: 409 });
+    if (matchShape !== undefined) {
+      if (matchShape !== existing.matchShape && (await fixtureCount()) > 0) {
+        return NextResponse.json({ error: tournament.matchShapeLocked }, { status: 409 });
       }
-      data.profile = profile;
+      data.matchShape = matchShape;
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;

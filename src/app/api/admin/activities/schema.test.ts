@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parse } from "@/lib/validation";
 import { rejectionOf } from "@tests/schema";
 import { activityCreateSchema } from "./schema";
+import { tournament } from "@/lib/messages";
 
 const valid = { title: "دوري الحي", description: "بطولة صيفية" };
 
@@ -88,5 +89,29 @@ describe("activityCreateSchema", () => {
     expect(rejectionOf(activityCreateSchema, { ...valid, capacity: 2.5 })).toBe(
       "السعة يجب أن تكون رقماً صحيحاً موجباً",
     );
+  });
+});
+
+describe("the match shape on a new activity", () => {
+  it("takes football", () => {
+    expect(parse(activityCreateSchema, { ...valid, matchShape: "FOOTBALL" }).matchShape).toBe(
+      "FOOTBALL",
+    );
+  });
+
+  it("takes a series", () => {
+    expect(parse(activityCreateSchema, { ...valid, matchShape: "SERIES" }).matchShape).toBe(
+      "SERIES",
+    );
+  });
+
+  it("says why the retired value is refused rather than failing to parse", () => {
+    expect(rejectionOf(activityCreateSchema, { ...valid, matchShape: "BOARD" })).toBe(
+      tournament.matchShapeRetired,
+    );
+  });
+
+  it("refuses a shape it has never had", () => {
+    expect(rejectionOf(activityCreateSchema, { ...valid, matchShape: "TENNIS" })).toBeTruthy();
   });
 });

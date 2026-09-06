@@ -7,8 +7,10 @@ import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
 import { parse } from "@/lib/validation";
 import { mvpVoteCreateSchema, mvpVoteStatusSchema } from "./schema";
-import { notify, tournament } from "@/lib/messages";
+import { entrantWording, notify, tournament } from "@/lib/messages";
 import { closesAtFrom } from "@/lib/mvpVote";
+import { isFootball } from "@/lib/matchShape";
+import { entrantOf } from "@/lib/entrantServer";
 
 const VOTE_INCLUDE = {
   candidates: {
@@ -34,14 +36,27 @@ export const POST = withRoute(
         homeTeam: { select: { id: true, name: true } },
         awayTeam: { select: { id: true, name: true } },
         mvpVote: { select: { id: true } },
-        activity: { select: { mvpVoteMinutes: true } },
+        activity: {
+          select: {
+            mvpVoteMinutes: true,
+            matchShape: true,
+            minTeamSize: true,
+            maxTeamSize: true,
+          },
+        },
       },
     });
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
+    if (!isFootball(match.activity.matchShape)) {
+      return NextResponse.json({ error: tournament.motmFootballOnly }, { status: 400 });
+    }
     if (match.homeTeam === null || match.awayTeam === null) {
-      return NextResponse.json({ error: tournament.fixtureHasNoTeams }, { status: 400 });
+      return NextResponse.json(
+        { error: entrantWording(entrantOf(match.activity)).fixtureHasNoEntrants },
+        { status: 400 },
+      );
     }
     if (match.status !== "PLAYED") {
       return NextResponse.json({ error: tournament.voteNeedsResult }, { status: 400 });

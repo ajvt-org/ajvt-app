@@ -8,7 +8,8 @@ import { isValidLeaguePairing } from "@/lib/tournament";
 import { parseMatchDate } from "@/lib/clubTime";
 import { withRoute } from "@/lib/route";
 import { logger } from "@/lib/logger";
-import { notify, tournament } from "@/lib/messages";
+import { entrantWording, notify, tournament } from "@/lib/messages";
+import { entrantOfActivity } from "@/lib/entrantServer";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/matches",
@@ -26,12 +27,14 @@ export const POST = withRoute(
     const { id } = await params;
     const session = await requireActivityAccess(id);
     const { homeTeamId, awayTeamId, matchDate, round, venue, isKnockout } = await req.json();
+    const entrant = await entrantOfActivity(prisma, id);
+    const words = entrantWording(entrant);
 
     if (!homeTeamId || !awayTeamId) {
-      return NextResponse.json({ error: tournament.bothTeamsRequired }, { status: 400 });
+      return NextResponse.json({ error: words.bothEntrantsRequired }, { status: 400 });
     }
     if (homeTeamId === awayTeamId) {
-      return NextResponse.json({ error: tournament.teamAgainstItself }, { status: 400 });
+      return NextResponse.json({ error: words.entrantAgainstItself }, { status: 400 });
     }
 
     const teams = await prisma.team.findMany({
@@ -39,7 +42,7 @@ export const POST = withRoute(
       select: { id: true, name: true, groupId: true },
     });
     if (teams.length !== 2) {
-      return NextResponse.json({ error: tournament.teamsNotInTournament }, { status: 400 });
+      return NextResponse.json({ error: words.entrantsNotInTournament }, { status: 400 });
     }
     const homeGroupId = teams.find((t) => t.id === homeTeamId)!.groupId;
     const awayGroupId = teams.find((t) => t.id === awayTeamId)!.groupId;
@@ -88,9 +91,11 @@ export const POST = withRoute(
       },
     });
 
-    notifyTeams(homeTeamId, awayTeamId, notify.matchScheduled(home.name, away.name, id)).catch(
-      (err) => logger.error("match.created.push.error", err),
-    );
+    notifyTeams(
+      homeTeamId,
+      awayTeamId,
+      notify.matchScheduled(home.name, away.name, id, entrant),
+    ).catch((err) => logger.error("match.created.push.error", err));
 
     return NextResponse.json({ match }, { status: 201 });
   },

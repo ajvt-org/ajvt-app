@@ -148,7 +148,7 @@ export default function NewActivityForm({
       {draft.isTournament && (
         <TournamentSetupFields
           format={draft.format}
-          profile={draft.profile}
+          matchShape={draft.matchShape}
           minTeamSize={draft.minTeamSize}
           maxTeamSize={draft.maxTeamSize}
           organisedByHomeVillage={draft.organisedByHomeVillage}
@@ -162,14 +162,7 @@ export default function NewActivityForm({
             setDraft((p) => ({ ...p, outsidePlayerLimit }))
           }
           onFormat={(format) => setDraft((p) => ({ ...p, format }))}
-          onPreset={(preset) =>
-            setDraft((p) => ({
-              ...p,
-              profile: preset.profile,
-              minTeamSize: preset.minTeamSize,
-              maxTeamSize: preset.maxTeamSize,
-            }))
-          }
+          onMatchShape={(matchShape) => setDraft((p) => ({ ...p, matchShape }))}
         />
       )}
       {draft.isVolunteer && (

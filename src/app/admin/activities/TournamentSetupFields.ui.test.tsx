@@ -6,7 +6,7 @@ import { tournamentSetup as texts } from "@/lib/texts";
 function show(over: Record<string, unknown> = {}) {
   const handlers = {
     onFormat: vi.fn(),
-    onPreset: vi.fn(),
+    onMatchShape: vi.fn(),
     onMinTeamSize: vi.fn(),
     onMaxTeamSize: vi.fn(),
     onOrganisedByHomeVillage: vi.fn(),
@@ -15,7 +15,7 @@ function show(over: Record<string, unknown> = {}) {
   render(
     <TournamentSetupFields
       format="KNOCKOUT"
-      profile="FOOTBALL"
+      matchShape="FOOTBALL"
       minTeamSize="16"
       maxTeamSize="22"
       organisedByHomeVillage={false}
@@ -47,13 +47,13 @@ describe("the squad size on a tournament", () => {
     const { container } = render(
       <TournamentSetupFields
         format="KNOCKOUT"
-        profile="FOOTBALL"
+        matchShape="FOOTBALL"
         minTeamSize="16"
         maxTeamSize="22"
         organisedByHomeVillage
         outsidePlayerLimit="4"
         onFormat={vi.fn()}
-        onPreset={vi.fn()}
+        onMatchShape={vi.fn()}
         onMinTeamSize={vi.fn()}
         onMaxTeamSize={vi.fn()}
         onOrganisedByHomeVillage={vi.fn()}
@@ -62,6 +62,51 @@ describe("the squad size on a tournament", () => {
     );
 
     expect(container.querySelectorAll("p.text-xs")).toHaveLength(0);
+  });
+});
+
+describe("the shape of a match in the tournament", () => {
+  it("offers football and a series, and nothing about the squad size", () => {
+    show();
+
+    expect(screen.getByLabelText(new RegExp(texts.shapes.FOOTBALL))).toBeTruthy();
+    expect(screen.getByLabelText(new RegExp(texts.shapes.SERIES))).toBeTruthy();
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+  });
+
+  it("marks the shape the tournament already has", () => {
+    show({ matchShape: "SERIES" });
+
+    expect(
+      (screen.getByLabelText(new RegExp(texts.shapes.SERIES)) as HTMLInputElement).checked,
+    ).toBe(true);
+  });
+
+  it("sends the shape up on its own, leaving the squad size alone", () => {
+    const handlers = show();
+
+    fireEvent.click(screen.getByLabelText(new RegExp(texts.shapes.SERIES)));
+
+    expect(handlers.onMatchShape).toHaveBeenCalledWith("SERIES");
+    expect(handlers.onMinTeamSize).not.toHaveBeenCalled();
+    expect(handlers.onMaxTeamSize).not.toHaveBeenCalled();
+  });
+
+  it("locks the shape once the tournament has fixtures", () => {
+    show({ fixturesExist: true });
+
+    for (const radio of screen.getAllByRole("radio")) {
+      expect((radio as HTMLInputElement).disabled).toBe(true);
+    }
+  });
+
+  it("leaves the shape open while the squad size is locked by a played match", () => {
+    show({ matchesPlayed: true });
+
+    for (const radio of screen.getAllByRole("radio")) {
+      expect((radio as HTMLInputElement).disabled).toBe(false);
+    }
+    expect((screen.getByLabelText(texts.minTeamSize) as HTMLInputElement).disabled).toBe(true);
   });
 });
 

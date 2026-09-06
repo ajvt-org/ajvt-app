@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
-import { members, tournament } from "@/lib/messages";
+import { entrantWording, members, tournament } from "@/lib/messages";
+import { entrantOfActivity, entrantOfTeam } from "@/lib/entrantServer";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { releaseCaptain } from "@/lib/teamCaptainServer";
 
@@ -44,7 +45,8 @@ export const POST = withRoute(
       return NextResponse.json({ ok: true });
     }
     if (existingMembership?.status === "ACTIVE") {
-      return NextResponse.json({ error: tournament.teamChoiceLocked }, { status: 403 });
+      const words = entrantWording(await entrantOfActivity(prisma, team.activityId));
+      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -77,7 +79,8 @@ export const DELETE = withRoute(
       select: { status: true },
     });
     if (existing?.status === "ACTIVE") {
-      return NextResponse.json({ error: tournament.teamChoiceLocked }, { status: 403 });
+      const words = entrantWording(await entrantOfTeam(prisma, teamId));
+      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
     }
 
     await prisma.$transaction(async (tx) => {

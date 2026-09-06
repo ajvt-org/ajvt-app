@@ -23,15 +23,40 @@ const PAGES = [
 
 const ERROR_BOUNDARY = "حدث خطأ غير متوقع";
 
+const GATEWAY = [502, 503, 504];
+
+type Served = { status: number; url: string } | { error: string };
+
+async function servedDocument(page: Page, path: string): Promise<Served> {
+  try {
+    const response = await page.goto(path, { waitUntil: "networkidle" });
+    if (!response) return { error: "no document response" };
+    return { status: response.status(), url: response.url() };
+  } catch (e) {
+    return { error: String(e).split("\n")[0].slice(0, 120) };
+  }
+}
+
 async function sweep(page: Page, label: string) {
-  const failures: string[] = [];
+  const pageFaults: string[] = [];
+  const runFaults: string[] = [];
   page.on("response", (r) => {
-    if (r.status() >= 500) failures.push(`${r.status()} ${r.url()}`);
+    if (r.status() >= 500 && r.request().resourceType() !== "document") {
+      pageFaults.push(`${r.status()} ${r.url()}`);
+    }
   });
-  page.on("pageerror", (e) => failures.push(`js: ${String(e).slice(0, 120)}`));
+  page.on("pageerror", (e) => pageFaults.push(`js: ${String(e).slice(0, 120)}`));
 
   for (const path of PAGES) {
-    await page.goto(path, { waitUntil: "networkidle" });
+    const served = await servedDocument(page, path);
+    if ("error" in served) {
+      runFaults.push(`${path} was not served (${served.error})`);
+      continue;
+    }
+    if (GATEWAY.includes(served.status)) {
+      runFaults.push(`${path} was not served (${served.status} from ${served.url})`);
+      continue;
+    }
 
     const state = await page.evaluate(
       (marker) => ({
@@ -42,12 +67,13 @@ async function sweep(page: Page, label: string) {
       ERROR_BOUNDARY,
     );
 
-    if (state.broke) failures.push(`${path} fell into the error boundary`);
-    else if (!state.shell) failures.push(`${path} did not render`);
-    if (state.overflows) failures.push(`${path} scrolls sideways`);
+    if (state.broke) pageFaults.push(`${path} fell into the error boundary`);
+    else if (!state.shell) pageFaults.push(`${path} answered ${served.status} and drew no shell`);
+    if (state.overflows) pageFaults.push(`${path} scrolls sideways`);
   }
 
-  expect(failures, `${label}: ${failures.join(" | ")}`).toEqual([]);
+  expect(runFaults, `${label}: the server went away, ${runFaults.join(" | ")}`).toEqual([]);
+  expect(pageFaults, `${label}: ${pageFaults.join(" | ")}`).toEqual([]);
 }
 
 async function createAccountOnly(page: Page, phone: string, fullName: string) {

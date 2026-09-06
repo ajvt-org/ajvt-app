@@ -8,7 +8,7 @@ import {
   squadLabel,
   isSinglesSquad,
   OPEN_SQUAD,
-} from "@/lib/teamSize";
+} from "@/lib/squadSize";
 
 const pair = (id: string, name: string, memberNames: string[], autoNamed = true) => ({
   id,

@@ -19,12 +19,14 @@ import ResultForm from "./ResultForm";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts, lists } from "@/lib/texts";
+import type { EntrantKind } from "@/lib/entrant";
 
 export default function MatchCard({
   match,
   teams,
   allMatches,
-  profile,
+  matchShape,
+  entrant = "team",
   suspendedIds,
   mvpVoteMinutes,
   onDelete,
@@ -42,7 +44,8 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
-  profile: "FOOTBALL" | "BOARD";
+  matchShape: "FOOTBALL" | "SERIES";
+  entrant?: EntrantKind;
   suspendedIds: string[];
   mvpVoteMinutes: number;
   onDelete: () => void;
@@ -60,7 +63,7 @@ export default function MatchCard({
   const decided = bothTeamsKnown(match);
   const played = match.status === "PLAYED";
   const resultAllowed = resultEntryAllowed(played, match.matchDate, new Date());
-  const football = profile === "FOOTBALL";
+  const football = matchShape === "FOOTBALL";
   const priorMeetings = decided
     ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
     : [];
@@ -90,10 +93,19 @@ export default function MatchCard({
 
       <div className="mt-2">
         <MatchTeams
-          home={{ name: teamName(match.homeTeam), logo: match.homeTeam?.logo }}
-          away={{ name: teamName(match.awayTeam), logo: match.awayTeam?.logo }}
+          home={{
+            name: teamName(match.homeTeam),
+            logo: match.homeTeam?.logo,
+            photo: match.homeTeam?.photo,
+          }}
+          away={{
+            name: teamName(match.awayTeam),
+            logo: match.awayTeam?.logo,
+            photo: match.awayTeam?.photo,
+          }}
           score={played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
+          entrant={entrant}
         />
         {priorMeetings.length > 0 && (
           <p
@@ -147,7 +159,7 @@ export default function MatchCard({
           <ResultForm
             match={match}
             teams={teams}
-            profile={profile}
+            matchShape={matchShape}
             suspendedIds={suspendedIds}
             onSaved={onSaved}
           />
@@ -169,7 +181,9 @@ export default function MatchCard({
           onChange={onChange}
         />
       )}
-      {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
+      {showDetails && (
+        <MatchDetailsForm match={match} teams={teams} entrant={entrant} onChange={onChange} />
+      )}
     </div>
   );
 }

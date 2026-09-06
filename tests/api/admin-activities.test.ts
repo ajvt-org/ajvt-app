@@ -44,7 +44,7 @@ describe("reading one activity's core facts", () => {
     });
   });
 
-  it("carries the sport profile from creation and locks it with the first match", async () => {
+  it("carries the match shape from creation and locks it with the first match", async () => {
     const created = await (
       await POST(
         post("/api/admin/activities", {
@@ -52,14 +52,18 @@ describe("reading one activity's core facts", () => {
           description: "أزواج",
           isTournament: true,
           format: "KNOCKOUT",
-          profile: "BOARD",
+          matchShape: "SERIES",
           minTeamSize: 2,
           maxTeamSize: 2,
         }),
       )
     ).json();
 
-    expect(created.activity).toMatchObject({ profile: "BOARD", minTeamSize: 2, maxTeamSize: 2 });
+    expect(created.activity).toMatchObject({
+      matchShape: "SERIES",
+      minTeamSize: 2,
+      maxTeamSize: 2,
+    });
 
     const home = await prisma.team.create({
       data: { activityId: created.activity.id, name: "أ" },
@@ -72,7 +76,7 @@ describe("reading one activity's core facts", () => {
     });
 
     const res = await PATCH(
-      post(`/api/admin/activities/${created.activity.id}`, { profile: "FOOTBALL" }),
+      post(`/api/admin/activities/${created.activity.id}`, { matchShape: "FOOTBALL" }),
       withId(created.activity.id),
     );
 

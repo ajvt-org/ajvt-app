@@ -1,3 +1,5 @@
+import type { EntrantKind } from "../entrant";
+
 export interface PushPayload {
   title: string;
   body: string;
@@ -6,6 +8,19 @@ export interface PushPayload {
 
 const pairing = (home: string, away: string) => `«${home}» × «${away}»`;
 
+const MATCH_TITLES = {
+  team: {
+    scheduled: "مباراة جديدة لفريقك",
+    reminder: "مباراة فريقك غداً",
+    result: "انتهت مباراة فريقك",
+  },
+  player: {
+    scheduled: "مباراة جديدة لك",
+    reminder: "مباراتك غداً",
+    result: "انتهت مباراتك",
+  },
+} as const;
+
 export const notify = {
   quizDayOpen: (): PushPayload => ({
     title: "جولة جديدة في المسابقة",
@@ -13,14 +28,24 @@ export const notify = {
     url: "/quiz",
   }),
 
-  matchScheduled: (home: string, away: string, activityId: string): PushPayload => ({
-    title: "مباراة جديدة لفريقك",
+  matchScheduled: (
+    home: string,
+    away: string,
+    activityId: string,
+    entrant: EntrantKind = "team",
+  ): PushPayload => ({
+    title: MATCH_TITLES[entrant].scheduled,
     body: pairing(home, away),
     url: `/activities/${activityId}`,
   }),
 
-  matchReminder: (home: string, away: string, activityId: string): PushPayload => ({
-    title: "مباراة فريقك غداً",
+  matchReminder: (
+    home: string,
+    away: string,
+    activityId: string,
+    entrant: EntrantKind = "team",
+  ): PushPayload => ({
+    title: MATCH_TITLES[entrant].reminder,
     body: pairing(home, away),
     url: `/activities/${activityId}`,
   }),
@@ -43,8 +68,9 @@ export const notify = {
     awayScore: number,
     away: string,
     activityId: string,
+    entrant: EntrantKind = "team",
   ): PushPayload => ({
-    title: "انتهت مباراة فريقك",
+    title: MATCH_TITLES[entrant].result,
     body: `«${home}» ${homeScore} – ${awayScore} «${away}»`,
     url: `/activities/${activityId}`,
   }),

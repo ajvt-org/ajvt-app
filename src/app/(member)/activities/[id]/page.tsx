@@ -11,7 +11,7 @@ import { activityPage as texts, publicTournament as tournamentTexts } from "@/li
 import ActivityHero from "./ActivityHero";
 import ActivityStatus from "./ActivityStatus";
 import { entrantKind } from "@/lib/entrant";
-import { squadOf } from "@/lib/teamSize";
+import { squadOf } from "@/lib/squadSize";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 import { safeNextPath } from "@/lib/utils";
@@ -132,7 +132,10 @@ export default async function ActivityPage({
           ) : (
             <div className="space-y-5 pt-1">
               {tournament.todayMatches.length > 0 && (
-                <TodayBand matches={tournament.todayMatches} />
+                <TodayBand
+                  matches={tournament.todayMatches}
+                  entrant={entrantKind(squadOf(activity))}
+                />
               )}
               <TournamentTabs panels={tournament.panels} />
             </div>

@@ -11,7 +11,9 @@ import {
 } from "@/lib/tournament";
 import { groupStandings } from "@/lib/standings";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
-import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/teamSize";
+import { OPEN_SQUAD, isSinglesSquad, squadOf } from "@/lib/squadSize";
+import { entrantKind } from "@/lib/entrant";
+import { isFootball } from "@/lib/matchShape";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { tournamentWorkspace as texts } from "@/lib/texts";
@@ -54,7 +56,7 @@ export default function TournamentPanel({
       })),
     [data.matches, identities],
   );
-  const football = (info?.profile ?? "FOOTBALL") === "FOOTBALL";
+  const football = isFootball(info?.matchShape ?? "FOOTBALL");
   const suspendedIds = data.suspensions.filter((s) => s.running).map((s) => s.member.id);
 
   const standingsByGroup = useMemo(
@@ -121,7 +123,8 @@ export default function TournamentPanel({
           teams={teams}
           groups={groups}
           format={info?.format ?? null}
-          profile={info?.profile ?? "FOOTBALL"}
+          matchShape={info?.matchShape ?? "FOOTBALL"}
+          entrant={entrantKind(squad)}
           matches={matches}
           suspendedIds={suspendedIds}
           mvpVoteMinutes={data.mvpVoteMinutes}
@@ -149,9 +152,8 @@ export default function TournamentPanel({
           onChange={data.reloadDiscipline}
         />
       )}
-      {tab === "scorers" && (
+      {tab === "scorers" && football && (
         <ScorersTab
-          profile={info?.profile ?? "FOOTBALL"}
           topScorers={topScorers}
           discipline={discipline}
           cleanSheets={cleanSheets}

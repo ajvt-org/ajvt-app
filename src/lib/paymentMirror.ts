@@ -1,7 +1,15 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { ensureReceiptsFor, syncReceiptsFor } from "./paymentReceiptServer";
+import {
+  ensureReceiptsFor,
+  syncReceiptsFor,
+  withdrawReceiptsBeforeDelete,
+} from "./paymentReceiptServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
+
+export function isPaidAmount(amount: number | null): amount is number {
+  return amount !== null && amount > 0;
+}
 
 export interface MembershipMirror {
   userId: string;
@@ -24,8 +32,11 @@ export async function mirrorMembershipPayment(db: Db, m: MembershipMirror) {
     select: { id: true },
   });
 
-  if (m.amount === null || m.amount <= 0) {
-    if (existing) await db.payment.delete({ where: { id: existing.id } });
+  if (!isPaidAmount(m.amount)) {
+    if (existing) {
+      await withdrawReceiptsBeforeDelete(db, { id: existing.id });
+      await db.payment.delete({ where: { id: existing.id } });
+    }
     return;
   }
 
@@ -127,13 +138,16 @@ export function donationMirrorOf(donation: MirroredDonation, tagIds?: string[]):
 }
 
 export async function mirrorDonation(db: Db, d: DonationMirror) {
-  const existing = await db.payment.findFirst({
+  const existing = await db.payment.findUnique({
     where: { id: d.donationId },
     select: { id: true },
   });
 
-  if (d.amount === null) {
-    if (existing) await db.payment.delete({ where: { id: existing.id } });
+  if (!isPaidAmount(d.amount)) {
+    if (existing) {
+      await withdrawReceiptsBeforeDelete(db, { id: existing.id });
+      await db.payment.delete({ where: { id: existing.id } });
+    }
     return;
   }
 
@@ -173,6 +187,7 @@ export async function mirrorDonation(db: Db, d: DonationMirror) {
 }
 
 export async function removeMirroredDonation(db: Db, donationId: string) {
+  await withdrawReceiptsBeforeDelete(db, { id: donationId });
   await db.payment.deleteMany({ where: { id: donationId } });
 }
 

@@ -65,7 +65,7 @@ describe("MatchCardActions", () => {
     expect(screen.getByLabelText(/تقديم/)).toBeDefined();
   });
 
-  it("keeps the best player button out of a board match", () => {
+  it("keeps the best player button out of a series match", () => {
     show({ football: false });
 
     expect(screen.queryByText(/أفضل لاعب/)).toBeNull();
