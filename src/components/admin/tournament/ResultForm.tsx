@@ -26,6 +26,7 @@ import type { SeriesConfig } from "./seriesConfig";
 
 export default function ResultForm({
   match,
+  activityId,
   teams,
   matchShape,
   series,
@@ -33,6 +34,7 @@ export default function ResultForm({
   onSaved,
 }: {
   match: DecidedMatch;
+  activityId: string;
   teams: Team[];
   matchShape: "FOOTBALL" | "SERIES";
   series: SeriesConfig | null;
@@ -154,6 +156,7 @@ export default function ResultForm({
     return (
       <SeriesResultForm
         matchId={match.id}
+        activityId={activityId}
         config={series}
         sides={[match.firstTeam.name, match.secondTeam.name]}
         onSaved={onSaved}

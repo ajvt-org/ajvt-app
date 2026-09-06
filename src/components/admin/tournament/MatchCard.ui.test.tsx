@@ -47,6 +47,7 @@ function match(): Match {
       },
     ],
     parts: [],
+    adjustments: [],
     series: null,
     mvpVote: null,
   };
@@ -60,6 +61,7 @@ function show(matchShape: "FOOTBALL" | "SERIES", showResultForm = false) {
       teams={[]}
       allMatches={[match()]}
       matchShape={matchShape}
+      activityId="a1"
       series={null}
       suspendedIds={[]}
       mvpVoteMinutes={120}
@@ -91,6 +93,7 @@ describe("a team name carrying Latin letters", () => {
         teams={[]}
         allMatches={[]}
         matchShape="FOOTBALL"
+        activityId="a1"
         series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}
@@ -135,6 +138,7 @@ describe("a fixture whose teams are not known yet", () => {
         teams={[]}
         allMatches={[match()]}
         matchShape="FOOTBALL"
+        activityId="a1"
         series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}

@@ -8,20 +8,24 @@ import PartEditor, { EMPTY_DRAFT, bodyOf, draftOf, type PartDraft } from "./Part
 import PartLine, { PartsEmpty } from "./PartRow";
 import SeriesStanding from "./SeriesStanding";
 import type { SeriesConfig } from "./seriesConfig";
-import type { SeriesState } from "./seriesTypes";
+import MatchAdjustments from "./MatchAdjustments";
+import type { AdjustmentRuleRow, SeriesState } from "./seriesTypes";
 
 export default function SeriesResultForm({
   matchId,
+  activityId,
   config,
   sides,
   onSaved,
 }: {
   matchId: string;
+  activityId: string;
   config: SeriesConfig;
   sides: string[];
   onSaved: () => void;
 }) {
   const [state, setState] = useState<SeriesState | null>(null);
+  const [rules, setRules] = useState<AdjustmentRuleRow[]>([]);
   const [draft, setDraft] = useState<PartDraft>(EMPTY_DRAFT);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,11 +35,18 @@ export default function SeriesResultForm({
 
   const load = useCallback(async () => {
     try {
-      setState(await api.get<SeriesState>(base));
+      const [next, declared] = await Promise.all([
+        api.get<SeriesState>(base),
+        api.get<{ rules: AdjustmentRuleRow[] }>(
+          `/api/admin/activities/${activityId}/adjustment-rules`,
+        ),
+      ]);
+      setState(next);
+      setRules(declared.rules);
     } catch {
       setError(texts.loadFailed);
     }
-  }, [base]);
+  }, [base, activityId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -111,6 +122,23 @@ export default function SeriesResultForm({
           ))}
         </div>
       )}
+
+      <MatchAdjustments
+        rules={rules}
+        recorded={state.adjustments}
+        sides={sides}
+        partWord={config.partWord}
+        busy={busy}
+        open={open}
+        onRecord={(ruleId, side) =>
+          run(() =>
+            api.post<SeriesState>(`/api/admin/matches/${matchId}/adjustments`, { ruleId, side }),
+          )
+        }
+        onUndo={(id) =>
+          run(() => api.del<SeriesState>(`/api/admin/matches/${matchId}/adjustments/${id}`))
+        }
+      />
 
       {open && (
         <PartEditor

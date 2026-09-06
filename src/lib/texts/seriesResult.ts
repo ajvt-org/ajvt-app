@@ -24,6 +24,16 @@ export const seriesResult = {
   extending: "تعادلت، وتُمدَّد بجولتين",
   wonThe: (name: string) => `فازت ${name}`,
   colourOf: (name: string, colour: string) => `${name} ${colour}`,
+  moves: "الحركات",
+  moveOf: (name: string, side: string) => `${name} من ${side}`,
+  moveEffect: (name: string, gained: string, lost: string) =>
+    `${name} تضيف ${gained} وتخصم ${lost}`,
+  movesSeparator: "، ",
+  recordMove: "تسجيل حركة",
+  pickMove: "اختر الحركة...",
+  pickSide: "اختر الطرف...",
+  undoMove: "تراجع",
+  noMoves: "لا حركات معرّفة في هذه البطولة",
   loadFailed: "تعذّر تحميل جولات المباراة",
   notConfigured: "أكمل إعداد جولات البطولة من تبويب التفاصيل قبل تسجيل نتيجة",
 } as const;

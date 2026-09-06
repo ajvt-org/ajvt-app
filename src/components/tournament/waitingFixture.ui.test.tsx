@@ -26,6 +26,7 @@ const WAITING: PublicMatch = {
   penaltyKicks: [],
   bookings: [],
   parts: [],
+  adjustments: [],
   series: null,
   mvpVote: null,
 };

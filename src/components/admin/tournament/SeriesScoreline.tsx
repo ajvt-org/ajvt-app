@@ -3,7 +3,7 @@
 import HalfPoints from "@/components/HalfPoints";
 import Icon from "@/components/Icon";
 import { seriesResult as texts } from "@/lib/texts";
-import type { PartRow, SeriesStandingRow } from "./seriesTypes";
+import type { PartRow, RecordedAdjustmentRow, SeriesStandingRow } from "./seriesTypes";
 
 export function partMark(part: PartRow): { text: string; dim: boolean } {
   if (part.abandoned) return { text: "—", dim: true };
@@ -18,10 +18,14 @@ export default function SeriesScoreline({
   parts,
   standing,
   partWord,
+  adjustments = [],
+  sides = [],
 }: {
   parts: PartRow[];
   standing: SeriesStandingRow;
   partWord: string;
+  adjustments?: RecordedAdjustmentRow[];
+  sides?: string[];
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -53,6 +57,14 @@ export default function SeriesScoreline({
               </span>
             );
           })}
+        </span>
+      )}
+      {adjustments.length > 0 && (
+        <span className="text-xs" style={{ color: "var(--copper-600)" }}>
+          <Icon name="swords" size={12} className="icon-inline" />{" "}
+          {adjustments
+            .map((row) => texts.moveOf(row.rule.name, row.side === "SIDE_A" ? sides[0] : sides[1]))
+            .join(texts.movesSeparator)}
         </span>
       )}
       {standing.over && standing.level && (

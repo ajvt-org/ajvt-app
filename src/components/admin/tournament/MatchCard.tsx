@@ -27,6 +27,7 @@ export default function MatchCard({
   match,
   teams,
   allMatches,
+  activityId,
   matchShape,
   series,
   entrant = "team",
@@ -47,6 +48,7 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
+  activityId: string;
   matchShape: "FOOTBALL" | "SERIES";
   series: SeriesConfig | null;
   entrant?: EntrantKind;
@@ -117,6 +119,8 @@ export default function MatchCard({
               parts={match.parts}
               standing={match.series}
               partWord={series.partWord}
+              adjustments={match.adjustments}
+              sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
             />
           </div>
         )}
@@ -172,6 +176,7 @@ export default function MatchCard({
           <ResultForm
             match={match}
             teams={teams}
+            activityId={activityId}
             matchShape={matchShape}
             series={series}
             suspendedIds={suspendedIds}

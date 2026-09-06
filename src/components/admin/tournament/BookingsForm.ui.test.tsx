@@ -38,6 +38,7 @@ const MATCH: DecidedMatch = {
   penaltyKicks: [],
   bookings: [],
   parts: [],
+  adjustments: [],
   series: null,
   mvpVote: null,
 };
