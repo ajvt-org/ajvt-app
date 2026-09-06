@@ -6,11 +6,11 @@ interface TeamLogoProps {
   logo: string | null | undefined;
   photo?: string | null;
   name: string;
-  size?: number;
+  size: number;
   entrant?: EntrantKind;
 }
 
-export default function TeamLogo({ logo, photo, size = 28, entrant = "team" }: TeamLogoProps) {
+export default function TeamLogo({ logo, photo, size, entrant = "team" }: TeamLogoProps) {
   const src = logo ? `/api/files/team/${logo}` : photo ? `/api/files/member/${photo}` : null;
   const disc = {
     width: size,

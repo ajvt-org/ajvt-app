@@ -1,7 +1,10 @@
 import Icon from "@/components/Icon";
 import TeamLogo from "@/components/tournament/TeamLogo";
+import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
+
+const CREST = MATCH_TEAMS_SIZES.xs.logo;
 
 export interface BracketSideTeam {
   id: string;
@@ -46,15 +49,15 @@ export default function BracketSide({
             logo={team.logo}
             photo={team.photo}
             name={team.name}
-            size={20}
+            size={CREST}
             entrant={entrant}
           />
         ) : (
           <span
             className="rounded-full inline-flex items-center justify-center shrink-0 align-middle"
-            style={{ width: 16, height: 16, background: "var(--mint-100)" }}
+            style={{ width: CREST, height: CREST, background: "var(--mint-100)" }}
           >
-            <Icon name="question" size={10} />
+            <Icon name="question" size={Math.round(CREST * 0.6)} />
           </span>
         )}
         {winner && <Icon name="trophy" size={12} color="var(--copper-600)" />}
