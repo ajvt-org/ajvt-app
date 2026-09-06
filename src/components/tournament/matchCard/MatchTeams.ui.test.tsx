@@ -99,14 +99,14 @@ describe("MatchTeams", () => {
 });
 
 describe("the crest scale", () => {
-  const steps: MatchTeamsSize[] = ["sm", "md", "lg", "xl"];
+  const steps: MatchTeamsSize[] = ["xs", "sm", "md", "lg", "xl"];
 
   it("rises at every step and spans more than the old sixteen pixels", () => {
     const sizes = steps.map((step) => MATCH_TEAMS_SIZES[step].logo);
 
     expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
     expect(new Set(sizes).size).toBe(steps.length);
-    expect(sizes[3] - sizes[0]).toBeGreaterThan(16);
+    expect(sizes[sizes.length - 1] - sizes[0]).toBeGreaterThan(16);
   });
 
   it("draws the crest at the size the step names", () => {

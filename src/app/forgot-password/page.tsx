@@ -7,12 +7,11 @@ import { api } from "@/lib/api";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
 import ArrowLabel from "@/components/ArrowLabel";
 import Icon from "@/components/Icon";
+import { forgotPassword as texts } from "@/lib/texts";
 
 function buildWhatsappUrl(support: string, phone: string): string {
   const trimmed = phone.trim();
-  const message = trimmed
-    ? `السلام عليكم، نسيت كلمة مرور حسابي في تطبيق رابطة شباب قرية التاكلالت. رقم هاتفي المسجل في التطبيق: ${trimmed}`
-    : "السلام عليكم، نسيت كلمة مرور حسابي في تطبيق رابطة شباب قرية التاكلالت وأحتاج مساعدة لاستعادتها.";
+  const message = trimmed ? texts.askWithPhone(trimmed) : texts.ask;
   return `https://wa.me/${support}?text=${encodeURIComponent(message)}`;
 }
 
@@ -29,17 +28,15 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="app-shell">
-      <PageHeader title="استعادة كلمة المرور" backHref="/login" />
+      <PageHeader title={texts.title} backHref="/login" />
 
       <div className="flex-1 px-5 py-10 space-y-5">
         <div className="card p-5 fade-up">
           <p className="text-sm" style={{ color: "var(--text-main)" }}>
-            لا يمكن استعادة كلمة المرور تلقائياً حالياً. تواصل معنا عبر واتساب وسيقوم أحد المشرفين
-            بإعادة تعيينها لك خلال وقت قصير.
+            {texts.explanation}
           </p>
           <p className="text-xs mt-2" style={{ color: "var(--text-muted)" }}>
-            ستصلك كلمة مرور مؤقتة صالحة لمدة محدودة، وسيُطلب منك اختيار كلمة مرور خاصة بك عند أول
-            دخول.
+            {texts.temporaryNote}
           </p>
         </div>
 
@@ -49,7 +46,7 @@ export default function ForgotPasswordPage() {
             className="block text-sm font-bold mb-1.5"
             style={{ color: "var(--text-main)" }}
           >
-            رقم هاتفك المسجل (اختياري — يسهّل التعرف على حسابك)
+            {texts.phoneLabel}
           </label>
           <input
             id="forgot-phone"
@@ -73,12 +70,12 @@ export default function ForgotPasswordPage() {
           className="btn btn-whatsapp fade-up delay-1"
         >
           <Icon name="whatsapp" />
-          تواصل معنا عبر واتساب
+          {texts.whatsapp}
         </a>
 
         <div className="text-center fade-up delay-2 pt-2">
           <Link href="/login" className="text-xs font-bold" style={{ color: "var(--mint-600)" }}>
-            <ArrowLabel direction="back">تذكرت كلمة المرور؟ تسجيل الدخول</ArrowLabel>
+            <ArrowLabel>{texts.rememberedIt}</ArrowLabel>
           </Link>
         </div>
       </div>

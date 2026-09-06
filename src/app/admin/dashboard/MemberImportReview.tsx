@@ -25,7 +25,6 @@ export default function MemberImportReview({
   onSelectMissing,
   onClear,
   onFill,
-  onBack,
   onImport,
 }: {
   rows: EditableRow[];
@@ -43,7 +42,6 @@ export default function MemberImportReview({
   onSelectMissing: () => void;
   onClear: () => void;
   onFill: (change: Partial<RowValues>) => void;
-  onBack: () => void;
   onImport: () => void;
 }) {
   const counted = tally(rows);
@@ -137,15 +135,6 @@ export default function MemberImportReview({
           className="btn btn-primary text-sm flex-1"
         >
           {loading ? "..." : memberImportDialog.importAll}
-        </button>
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={loading}
-          className="btn text-sm"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          {memberImportDialog.back}
         </button>
       </div>
 

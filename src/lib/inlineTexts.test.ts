@@ -6,6 +6,11 @@ const ARABIC = /[؀-ۿ]/;
 
 const KEPT_CLEAN = [
   "src/app/(member)/donate/page.tsx",
+  "src/app/forgot-password/page.tsx",
+  "src/app/not-found.tsx",
+  "src/app/(member)/activities/[id]/not-found.tsx",
+  "src/app/change-password/page.tsx",
+  "src/app/change-password/ChangePasswordForm.tsx",
   "src/app/(member)/quiz/QuizPicker.tsx",
   "src/app/admin/quiz/QuestionList.tsx",
   "src/app/admin/quiz/SettingsForm.tsx",
@@ -183,6 +188,9 @@ const KEPT_CLEAN = [
   "src/components/admin/ConfirmDeleteDialog.tsx",
   "src/app/admin/dashboard/MemberDecision.tsx",
   "src/components/admin/shell/ActivityPicker.tsx",
+  "src/components/admin/AdminToolHeader.tsx",
+  "src/components/admin/AdminBackLink.tsx",
+  "src/components/BackAffordance.tsx",
   "src/components/admin/shell/NewAccountForm.tsx",
   "src/app/admin/dashboard/MemberImportBulkFill.tsx",
   "src/app/admin/dashboard/memberImportState.ts",

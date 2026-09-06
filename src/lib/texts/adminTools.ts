@@ -1,4 +1,5 @@
 export const adminTools = {
+  backToTools: "الأدوات",
   password: "تغيير كلمة المرور",
   admins: "إدارة حسابات المشرفين",
   auditLog: "سجل الإجراءات",

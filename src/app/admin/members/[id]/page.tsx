@@ -1,14 +1,13 @@
 "use client";
 
 import { Suspense, use, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
 import { adminBackLink } from "@/lib/adminBackLink";
 import { auditActionLabel } from "@/lib/auditLabels";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import ArrowLabel from "@/components/ArrowLabel";
+import AdminBackLink from "@/components/admin/AdminBackLink";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
 import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
@@ -78,9 +77,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           {texts.notFound}
         </p>
-        <Link href={back.href} className="text-sm font-bold" style={{ color: "var(--mint-600)" }}>
-          <ArrowLabel direction="back">{back.label}</ArrowLabel>
-        </Link>
+        <AdminBackLink href={back.href}>{back.label}</AdminBackLink>
       </div>
     );
   }
@@ -89,9 +86,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
 
   return (
     <div className="admin-page space-y-4">
-      <Link href={back.href} className="text-sm font-bold" style={{ color: "var(--mint-600)" }}>
-        <ArrowLabel direction="back">{back.label}</ArrowLabel>
-      </Link>
+      <AdminBackLink href={back.href}>{back.label}</AdminBackLink>
 
       <div className="card p-4 flex items-center gap-3">
         {member.photo ? (

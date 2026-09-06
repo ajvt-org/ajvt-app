@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useInactivityLogout } from "@/lib/useInactivityLogout";
+import { appTrail } from "@/lib/historyTrail";
 import { canOpen, landingFor } from "@/lib/adminNav";
 import { subtabsFor, tabsFor } from "./shell/navTabs";
 import { useAdminSession } from "./shell/useAdminSession";
@@ -30,6 +31,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, pathname, isLoginPage]);
 
+  function openTab(href: string) {
+    appTrail.noteReplacement(href);
+    router.replace(href);
+  }
+
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
@@ -51,12 +57,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           tabs={tabsFor(role)}
           pathname={pathname}
           pending={pending}
-          onOpen={(href) => router.push(href)}
+          onOpen={openTab}
           onLogout={logout}
         />
-        {subtabs.length > 0 && (
-          <SubTabStrip tabs={subtabs} pathname={pathname} onOpen={(href) => router.push(href)} />
-        )}
+        {subtabs.length > 0 && <SubTabStrip tabs={subtabs} pathname={pathname} onOpen={openTab} />}
       </div>
 
       {denied && <DeniedNotice onDismiss={dismiss} />}

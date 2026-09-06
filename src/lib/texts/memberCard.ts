@@ -7,6 +7,5 @@ export const memberCard = {
   pdf: "PDF",
   share: "مشاركة",
   busy: "...",
-  qrHint: "امسح رمز QR للتحقق من صلاحية العضوية",
   fileName: (memberNumber: string, extension: string) => `بطاقة-عضوية-${memberNumber}.${extension}`,
 } as const;

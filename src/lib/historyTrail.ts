@@ -1,35 +1,44 @@
-function sameOrigin(referrer: string, origin: string): boolean {
-  if (!referrer) return false;
-  try {
-    return new URL(referrer).origin === origin;
-  } catch {
-    return false;
-  }
-}
-
 export interface HistoryTrail {
+  notePop(): void;
   noteLocation(url: string): void;
-  canUnwind(): boolean;
+  noteReplacement(url: string): void;
+  previousIs(url: string): boolean;
 }
 
-export function createTrail(openedFromApp: () => boolean): HistoryTrail {
+export function createTrail(): HistoryTrail {
   const seen: string[] = [];
   let index = 0;
-  let rooted: boolean | null = null;
+  let popped = false;
+
+  function land(url: string) {
+    seen.length = 0;
+    seen.push(url);
+    index = 0;
+  }
 
   return {
+    notePop() {
+      popped = true;
+    },
+
     noteLocation(url: string) {
+      const wentBack = popped;
+      popped = false;
       if (seen.length === 0) {
         seen.push(url);
         return;
       }
       if (seen[index] === url) return;
-      if (index > 0 && seen[index - 1] === url) {
-        index -= 1;
-        return;
-      }
-      if (seen[index + 1] === url) {
-        index += 1;
+      if (wentBack) {
+        if (index > 0 && seen[index - 1] === url) {
+          index -= 1;
+          return;
+        }
+        if (seen[index + 1] === url) {
+          index += 1;
+          return;
+        }
+        land(url);
         return;
       }
       seen.length = index + 1;
@@ -37,13 +46,19 @@ export function createTrail(openedFromApp: () => boolean): HistoryTrail {
       index += 1;
     },
 
-    canUnwind() {
-      if (rooted === null) rooted = openedFromApp();
-      return index > 0 || rooted;
+    noteReplacement(url: string) {
+      if (seen.length === 0) {
+        seen.push(url);
+        return;
+      }
+      seen.length = index + 1;
+      seen[index] = url;
+    },
+
+    previousIs(url: string) {
+      return index > 0 && seen[index - 1] === url;
     },
   };
 }
 
-export const appTrail = createTrail(() =>
-  typeof document === "undefined" ? false : sameOrigin(document.referrer, window.location.origin),
-);
+export const appTrail = createTrail();

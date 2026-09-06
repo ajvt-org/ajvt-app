@@ -1,4 +1,7 @@
-function withoutFrom(path: string): string {
+import { needsSession } from "./authPaths";
+import { safeNextPath } from "./utils";
+
+export function withoutFrom(path: string): string {
   const query = path.indexOf("?");
   if (query === -1) return path;
   const params = new URLSearchParams(path.slice(query + 1));
@@ -11,4 +14,13 @@ export function withFrom(target: string, origin: string): string {
   if (!origin) return target;
   const from = `from=${encodeURIComponent(withoutFrom(origin))}`;
   return target.includes("?") ? `${target}&${from}` : `${target}?${from}`;
+}
+
+export function parentFrom(
+  from: string | null | undefined,
+  fallback: string,
+  signedIn: boolean,
+): string {
+  const named = safeNextPath(from, fallback);
+  return !signedIn && needsSession(named) ? fallback : named;
 }

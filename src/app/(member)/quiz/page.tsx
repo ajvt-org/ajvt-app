@@ -13,8 +13,7 @@ import type { RunningCompetition } from "./types";
 import type { TutorialView } from "@/lib/quizTutorialServer";
 import type { ScoreCurve } from "@/lib/competitionConfig";
 import { quizBoard as texts } from "@/lib/texts";
-import { safeNextPath } from "@/lib/utils";
-import { withFrom } from "@/lib/backLink";
+import { parentFrom, withFrom } from "@/lib/backLink";
 
 const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -107,7 +106,7 @@ function QuizScreen() {
   }
   useInactivityLogout(IDLE_TIMEOUT_MS, logout, !loading);
 
-  const backHref = safeNextPath(from, visitor ? "/" : "/home");
+  const backHref = parentFrom(from, visitor ? "/" : "/home", !visitor);
   const here = quizPath(from, chosen);
   const membershipHref = withFrom("/membership", here);
 
