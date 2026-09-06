@@ -7,12 +7,16 @@ import type { DayMatch } from "./daysTypes";
 export default function DayMatchRow({
   match,
   busy,
+  dayVenue = null,
   onRetime,
 }: {
   match: DayMatch;
   busy: boolean;
+  dayVenue?: string | null;
   onRetime: (time: string) => void;
 }) {
+  const venue = match.venue?.trim() === dayVenue ? null : match.venue;
+
   return (
     <li className="flex items-start gap-2 text-sm sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-3">
       <DayMatchTime matchDate={match.matchDate} busy={busy} onRetime={onRetime} />
@@ -20,13 +24,13 @@ export default function DayMatchRow({
         <bdi className="font-bold block" style={{ wordBreak: "break-word" }}>
           {fixtureName(match)}
         </bdi>
-        {(match.round || match.venue) && (
+        {(match.round || venue) && (
           <span
             className="flex flex-wrap items-center gap-2 text-xs mt-0.5"
             style={{ color: "var(--text-muted)" }}
           >
             {match.round && <span>{match.round}</span>}
-            {match.venue && <IconLabel name="pin">{match.venue}</IconLabel>}
+            {venue && <IconLabel name="pin">{venue}</IconLabel>}
           </span>
         )}
       </div>

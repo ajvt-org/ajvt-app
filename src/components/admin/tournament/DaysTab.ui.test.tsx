@@ -86,10 +86,10 @@ describe("DaysTab", () => {
     expect(screen.getByText(/النجم × الوحدة/)).toBeDefined();
   });
 
-  it("inserts a rest day at the clicked position", async () => {
+  it("inserts a rest day after the day whose control was used", async () => {
     await show();
 
-    fireEvent.click((await screen.findAllByLabelText(daysTab.addRestHere))[0]);
+    fireEvent.click((await screen.findAllByText(daysTab.addRestAfter))[0]);
 
     await waitFor(() =>
       expect(post).toHaveBeenCalledWith("/api/admin/activities/a1/days", {
@@ -178,24 +178,17 @@ describe("doubleBookedTeams", () => {
   });
 });
 
-describe("adding a rest day between two days", () => {
-  it("offers the seam between days rather than a control that outshouts them", async () => {
+describe("adding a rest day after a day", () => {
+  it("names what it inserts rather than leaving it to a label nobody reads", async () => {
     await show();
 
-    const inserter = screen.getAllByLabelText(daysTab.addRestHere)[0];
-
-    expect(inserter.className).toContain("btn-sm");
-    expect(inserter.textContent).toBe("");
-    expect(inserter.style.border).toBe("");
-    expect(inserter.style.background).toBe("");
+    expect((await screen.findAllByText(daysTab.addRestAfter))[0]).toBeDefined();
   });
 
-  it("keeps a rule on either side of it so it reads as a seam", async () => {
+  it("puts one on every day but the last, since the end of the list has its own button", async () => {
     await show();
 
-    const inserter = screen.getAllByLabelText(daysTab.addRestHere)[0];
-    const seam = inserter.parentElement!;
-
-    expect(seam.querySelectorAll(".sep").length).toBe(2);
+    expect(await screen.findAllByText(daysTab.addRestAfter)).toHaveLength(2);
+    expect(screen.getByText(daysTab.addRestDay)).toBeDefined();
   });
 });

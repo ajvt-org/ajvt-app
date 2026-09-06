@@ -40,6 +40,12 @@ export function dayLabel(date: string | null): string {
   }).format(new Date(date));
 }
 
+export function sharedVenue(day: TournamentDayRow): string | null {
+  const venues = day.matches.map((match) => match.venue?.trim() || null);
+  if (venues.length === 0 || venues.some((venue) => venue === null)) return null;
+  return venues.every((venue) => venue === venues[0]) ? venues[0] : null;
+}
+
 export function doubleBookedTeams(day: TournamentDayRow): string[] {
   const seen = new Map<string, string>();
   const twice = new Set<string>();

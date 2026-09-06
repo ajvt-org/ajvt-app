@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
-import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import PageLoading from "@/components/PageLoading";
 import { formatActivityDates } from "@/lib/activityDates";
@@ -13,24 +12,6 @@ import { timeOf } from "@/lib/tournamentDays";
 import { dayLabel, type DaysPayload } from "./daysTypes";
 import { fixtureName } from "@/lib/fixtureTeams";
 import { daysTab } from "@/lib/texts";
-
-function RestInserter({ onInsert, busy }: { onInsert: () => void; busy: boolean }) {
-  return (
-    <div className="flex items-center gap-2 -my-1">
-      <span className="sep flex-1" />
-      <button
-        onClick={onInsert}
-        disabled={busy}
-        aria-label={daysTab.addRestHere}
-        title={daysTab.addRestHere}
-        className="btn btn-sm btn-icon btn-ghost"
-      >
-        <Icon name="plus" size={16} />
-      </button>
-      <span className="sep flex-1" />
-    </div>
-  );
-}
 
 export default function DaysTab({
   activityId,
@@ -118,43 +99,37 @@ export default function DaysTab({
       </div>
 
       {data.days.map((day, index) => (
-        <div key={day.id} className="space-y-2">
-          {index > 0 && (
-            <RestInserter
-              busy={busy}
-              onInsert={() =>
-                run(
-                  () =>
-                    api.post(base, {
-                      position: day.position,
-                      isRest: true,
-                      notify: notifyFollowers,
-                    }),
-                  daysTab.restAdded,
-                )
-              }
-            />
-          )}
-          <DayCard
-            day={day}
-            busy={busy}
-            onSetRest={(isRest) =>
-              run(() => api.patch(`${base}/${day.id}`, { isRest }), daysTab.dayChanged)
-            }
-            onRemove={() =>
-              run(
-                () => api.del(`${base}/${day.id}`, { notify: notifyFollowers }),
-                daysTab.dayRemoved,
-              )
-            }
-            onRetime={(matchId, time) =>
-              run(
-                () => api.post(`${base}/assign`, { matchId, dayId: day.id, time }),
-                daysTab.timeChanged,
-              )
-            }
-          />
-        </div>
+        <DayCard
+          key={day.id}
+          day={day}
+          busy={busy}
+          onSetRest={(isRest) =>
+            run(() => api.patch(`${base}/${day.id}`, { isRest }), daysTab.dayChanged)
+          }
+          onRemove={() =>
+            run(() => api.del(`${base}/${day.id}`, { notify: notifyFollowers }), daysTab.dayRemoved)
+          }
+          onInsertRestAfter={
+            index === data.days.length - 1
+              ? undefined
+              : () =>
+                  run(
+                    () =>
+                      api.post(base, {
+                        position: day.position + 1,
+                        isRest: true,
+                        notify: notifyFollowers,
+                      }),
+                    daysTab.restAdded,
+                  )
+          }
+          onRetime={(matchId, time) =>
+            run(
+              () => api.post(`${base}/assign`, { matchId, dayId: day.id, time }),
+              daysTab.timeChanged,
+            )
+          }
+        />
       ))}
 
       <div className="flex gap-2 flex-wrap">

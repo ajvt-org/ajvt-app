@@ -1,5 +1,5 @@
 export const daysTab = {
-  addRestHere: "أضف يوم راحة هنا",
+  addRestAfter: "يوم راحة بعده",
   loadFailed: "فشل تحميل الأيام",
   needStartDate: "حدد تاريخ بداية البطولة أولاً",
   countedFromStart: "الأيام تُحسب من تاريخ البداية، ويُحسب تاريخ النهاية تلقائياً من عدد الأيام.",
