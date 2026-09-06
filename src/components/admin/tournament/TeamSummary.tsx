@@ -13,6 +13,8 @@ const SHORT = { background: "#fef3c7", color: "#92400e" };
 const OVER = { background: "#fee2e2", color: "#991b1b" };
 
 const CREST = MATCH_TEAMS_SIZES.md.logo;
+const NAME_LINE = 24;
+const ONTO_FIRST_LINE = (CREST - NAME_LINE) / 2;
 
 function rosterTone(count: number, squad: SquadSize) {
   const fault = rosterFault(count, squad);
@@ -59,14 +61,24 @@ export default function TeamSummary({
         </span>
         <p
           className="min-w-0 flex-1 font-black text-base leading-6 optical-name"
-          style={{ color: "var(--text-main)", overflowWrap: "anywhere" }}
+          style={{
+            color: "var(--text-main)",
+            overflowWrap: "anywhere",
+            marginBlockStart: ONTO_FIRST_LINE,
+          }}
         >
           {shownName}
         </p>
-        <span className="h-6 flex items-center shrink-0">
+        <span
+          className="h-6 flex items-center shrink-0"
+          style={{ marginBlockStart: ONTO_FIRST_LINE }}
+        >
           <Icon name="chevronDown" size={16} className="disclosure-chevron" />
         </span>
-        <span className="h-6 flex items-center shrink-0">
+        <span
+          className="h-6 flex items-center shrink-0"
+          style={{ marginBlockStart: ONTO_FIRST_LINE }}
+        >
           <button
             onClick={(e) => {
               e.preventDefault();
