@@ -61,18 +61,18 @@ function Identity({ member }: { member: Member }) {
           </div>
         )}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 space-y-1.5">
         <p className="font-black text-lg truncate" style={{ color: "var(--text-main)" }}>
           {member.fullName}
         </p>
+        <Link
+          href={memberCardHref(member.id, from)}
+          className="inline-flex text-xs font-bold px-3 py-2 rounded-lg"
+          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+        >
+          <ArrowLabel>{texts.fullProfile}</ArrowLabel>
+        </Link>
       </div>
-      <Link
-        href={memberCardHref(member.id, from)}
-        className="text-xs font-bold px-3 py-1.5 rounded-lg shrink-0"
-        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-      >
-        <IconLabel name="pencil">{texts.edit}</IconLabel>
-      </Link>
     </div>
   );
 }
@@ -223,7 +223,6 @@ export default function MemberDrawer({
   onApprove,
   onReject,
 }: MemberDrawerProps) {
-  const from = useAdminOrigin();
   return (
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
@@ -287,14 +286,6 @@ export default function MemberDrawer({
             onPhone={onAccountPhone}
             onAttach={onAttachAccount}
           />
-
-          <Link
-            href={memberCardHref(member.id, from)}
-            className="text-xs font-bold block"
-            style={{ color: "var(--mint-600)" }}
-          >
-            <ArrowLabel>{texts.fullProfile}</ArrowLabel>
-          </Link>
 
           <Proof member={member} onZoom={onZoomProof} onProofSaved={onProofSaved} />
 
