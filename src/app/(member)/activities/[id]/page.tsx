@@ -15,7 +15,7 @@ import { squadOf } from "@/lib/squadSize";
 import { joinableTeams } from "@/lib/registrationTeamServer";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
-import { safeNextPath } from "@/lib/utils";
+import { parentFrom } from "@/lib/backLink";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +53,7 @@ export default async function ActivityPage({
     <div className="app-shell">
       <PageHeader
         title={activity.title}
-        backHref={safeNextPath(from, userId ? "/home" : "/activities")}
+        backHref={parentFrom(from, userId ? "/home" : "/activities", !!userId)}
       />
 
       <ActivityHero

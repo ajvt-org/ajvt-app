@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { safeNextPath } from "./utils";
-import { withFrom } from "./backLink";
+import { parentFrom, withFrom } from "./backLink";
 
 describe("withFrom", () => {
   it("names the origin on the target", () => {
@@ -31,5 +31,32 @@ describe("withFrom", () => {
     const from = new URLSearchParams(href.slice(href.indexOf("?") + 1)).get("from");
 
     expect(safeNextPath(from, "/home")).toBe(origin);
+  });
+});
+
+describe("parentFrom", () => {
+  it("takes the parent the arriving link names", () => {
+    expect(parentFrom("/home", "/activities", true)).toBe("/home");
+  });
+
+  it("falls back when the link names nothing", () => {
+    expect(parentFrom(null, "/activities", true)).toBe("/activities");
+    expect(parentFrom("", "/activities", false)).toBe("/activities");
+  });
+
+  it("does not let a reader without a session inherit one that needs a session", () => {
+    expect(parentFrom("/home", "/activities", false)).toBe("/activities");
+    expect(parentFrom("/profile", "/activities", false)).toBe("/activities");
+    expect(parentFrom("/membership", "/activities", false)).toBe("/activities");
+  });
+
+  it("keeps a parent a reader without a session can actually reach", () => {
+    expect(parentFrom("/activities", "/", false)).toBe("/activities");
+    expect(parentFrom("/leaderboard", "/", false)).toBe("/leaderboard");
+  });
+
+  it("still refuses a path that points off this site", () => {
+    expect(parentFrom("//evil.example", "/activities", true)).toBe("/activities");
+    expect(parentFrom("https://evil.example", "/activities", true)).toBe("/activities");
   });
 });
