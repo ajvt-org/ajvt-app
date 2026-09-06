@@ -2,6 +2,7 @@ import { matchAdmin as texts } from "@/lib/texts";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import MatchCard from "./MatchCard";
+import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
 import type { Match } from "./types";
 import { publicTournament } from "@/lib/texts";
 
@@ -217,5 +218,35 @@ describe("MatchCard by match shape", () => {
 
     expect(screen.queryByText(texts.addCard)).toBeNull();
     expect(screen.queryByText(/حفظ النتيجة/)).toBeNull();
+  });
+});
+
+describe("the crests on the admin card", () => {
+  it("asks for the size a match that owns its card gets", () => {
+    cleanup();
+    const { container } = render(
+      <MatchCard
+        match={{ ...match(), firstTeam: { id: "t1", name: "الصقور", logo: "a.webp" } }}
+        teams={[]}
+        allMatches={[]}
+        matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
+        suspendedIds={[]}
+        mvpVoteMinutes={120}
+        onDelete={noop}
+        showResultForm={false}
+        onToggleResultForm={noop}
+        showMvp={false}
+        onToggleMvp={noop}
+        showDetails={false}
+        onToggleDetails={noop}
+        onSaved={noop}
+        onChange={noop}
+      />,
+    );
+
+    const crest = container.querySelector('img[src*="/api/files/team/"]');
+    expect(crest?.getAttribute("width")).toBe(String(MATCH_TEAMS_SIZES.lg.logo));
   });
 });
