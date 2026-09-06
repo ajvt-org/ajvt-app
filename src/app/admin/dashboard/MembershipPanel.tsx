@@ -10,6 +10,7 @@ import YearAmountForm from "./YearAmountForm";
 import type { MembershipHistory } from "./membershipTypes";
 
 const REFUSAL_NOTE: Record<NonNullable<RenewalRefusal>, string> = {
+  underReview: "الاشتراك الحالي قيد المراجعة",
   notActive: "التجديد متاح للأعضاء المقبولين فقط",
   notIssued: "لا يوجد رقم عضوية لتجديده",
   alreadyRenewed: "مسدّد لهذه السنة",

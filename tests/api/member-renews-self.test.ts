@@ -111,6 +111,30 @@ describe("a member renewing their own membership", () => {
     expect(entry.adminRole).toBeNull();
   });
 
+  it("refuses a second renewal while the first is still waiting", async () => {
+    const user = await signedInMember();
+
+    expect((await renew()).status).toBe(201);
+    const again = await renew();
+
+    expect(again.status).toBe(409);
+    expect((await again.json()).error).toBe(members.renewUnderReview);
+    expect(await prisma.membership.count({ where: { userId: user.id, year: YEAR } })).toBe(1);
+  });
+
+  it("banks one payment for the year no matter how often the member tries", async () => {
+    const user = await signedInMember();
+
+    await renew();
+    await renew({ paidAmount: FEE + 900 });
+
+    const payments = await prisma.payment.findMany({
+      where: { userId: user.id, purpose: "MEMBERSHIP", year: YEAR },
+    });
+    expect(payments).toHaveLength(1);
+    expect(payments[0].amount).toBe(FEE);
+  });
+
   it("refuses a membership that was never accepted", async () => {
     await signedInMember({ status: "REJECTED" });
 
@@ -121,7 +145,7 @@ describe("a member renewing their own membership", () => {
   });
 
   it("refuses a member with no number yet", async () => {
-    await signedInMember({ memberNumber: null });
+    await signedInMember({ memberNumber: null, status: "ACTIVE" });
 
     const res = await renew();
 
