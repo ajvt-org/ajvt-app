@@ -23,7 +23,9 @@ export const teamsTab = {
     min === null
       ? `${teamsTab.rosterCount(count)}، الحد الأقصى ${max}`
       : `${teamsTab.rosterCount(count)}، الحد الأدنى ${min} والحد الأقصى ${max}`,
-  outsideOfLimit: (count: number, limit: number) => `${count} من خارج التاكلالت والحد ${limit}`,
+  outsideCount: (count: number) => `${count} من خارج التاكلالت`,
+  outsideOfLimit: (count: number, limit: number) =>
+    `${teamsTab.outsideCount(count)} والحد ${limit}`,
   outsidePlayerOverLimit: "فوق حد اللاعبين من خارج التاكلالت",
   squadSize: (size: string) => `حجم الفريق ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),

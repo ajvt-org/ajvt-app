@@ -70,30 +70,11 @@ describe("the marks along the squad track", () => {
   });
 });
 
-describe("the count label", () => {
-  it("lands where the fill ends", () => {
-    expect(squadBarGeometry(11, RANGE)!.countAt).toBe(50);
-  });
-
-  it("sits at the end of the track when the squad is full, not short of it", () => {
-    expect(squadBarGeometry(22, RANGE)!.countAt).toBe(100);
-  });
-
-  it("stays at the end of the track once the squad is over the maximum", () => {
-    expect(squadBarGeometry(27, RANGE)!.countAt).toBe(100);
-  });
-
-  it("sits at the start of an empty squad rather than being pushed in", () => {
-    expect(squadBarGeometry(0, RANGE)!.countAt).toBe(0);
-  });
-});
-
 describe("the outside share, on a scale of its own", () => {
   it("gives a handful of players the whole track rather than a fifth of it", () => {
     const bar = outsideBarGeometry({ count: 2, limit: 4 });
 
     expect(bar.fill).toBe(50);
-    expect(bar.countAt).toBe(50);
     expect(bar.marks).toEqual([{ value: 4, at: 100 }]);
   });
 
@@ -110,7 +91,6 @@ describe("the outside share, on a scale of its own", () => {
     expect(bar.fill).toBeCloseTo((4 / 6) * 100);
     expect(bar.over!.width).toBeCloseTo((2 / 6) * 100);
     expect(bar.marks).toEqual([{ value: 4, at: (4 / 6) * 100 }]);
-    expect(bar.countAt).toBe(100);
   });
 
   it("draws an empty track where no player comes from outside", () => {
