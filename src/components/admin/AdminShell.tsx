@@ -8,7 +8,6 @@ import { subtabsFor, tabsFor } from "./shell/navTabs";
 import { useAdminSession } from "./shell/useAdminSession";
 import { useDeniedNotice } from "./shell/useDeniedNotice";
 import TopBar from "./shell/TopBar";
-import TabStrip from "./shell/TabStrip";
 import SubTabStrip from "./shell/SubTabStrip";
 import DeniedNotice from "./shell/DeniedNotice";
 import { AdminOriginProvider } from "./adminOrigin";
@@ -48,12 +47,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       style={{ background: "var(--mint-50)", direction: "rtl" }}
     >
       <div className="sticky top-0 z-30">
-        <TopBar onLogout={logout} />
-        <TabStrip
+        <TopBar
           tabs={tabsFor(role)}
           pathname={pathname}
           pending={pending}
           onOpen={(href) => router.push(href)}
+          onLogout={logout}
         />
         {subtabs.length > 0 && (
           <SubTabStrip tabs={subtabs} pathname={pathname} onOpen={(href) => router.push(href)} />
