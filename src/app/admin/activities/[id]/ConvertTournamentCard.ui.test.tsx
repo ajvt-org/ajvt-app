@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import ConvertTournamentCard from "./ConvertTournamentCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
-import { tournamentSetup } from "@/lib/texts";
+import { convertTournament, tournamentSetup } from "@/lib/texts";
 
 const patch = vi.fn();
 
@@ -146,6 +146,13 @@ describe("ConvertTournamentCard", () => {
     fireEvent.click(screen.getByText("تعديل الإعدادات"));
 
     expect(disabled(tournamentSetup.formatHeading)).toBe(true);
+  });
+
+  it("says what the mode gives without repeating the button that turns it on", () => {
+    show(false);
+
+    expect(screen.getByText(convertTournament.hint)).toBeTruthy();
+    expect(convertTournament.hint).not.toContain(convertTournament.convert);
   });
 
   it("converts back with one click, since nothing needs answering", async () => {
