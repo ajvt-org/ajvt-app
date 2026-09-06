@@ -1,7 +1,6 @@
 import HalfPoints from "@/components/HalfPoints";
 import TeamLogo from "./TeamLogo";
 import { MATCH_TEAMS_SIZES } from "./matchCard/MatchTeams";
-import FollowTeamButton from "./FollowTeamButton";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
 
@@ -40,13 +39,11 @@ function columnsFor(series: boolean): { label: string; detail: boolean; start?: 
 export default function StandingsTable({
   title,
   rows,
-  showFollow,
   series = false,
   entrant = "team",
 }: {
   title: string | null;
   rows: Row[];
-  showFollow: boolean;
   series?: boolean;
   entrant?: EntrantKind;
 }) {
@@ -74,7 +71,6 @@ export default function StandingsTable({
                 {column.label}
               </th>
             ))}
-            {showFollow && <th className="px-2 py-2" />}
           </tr>
         </thead>
         <tbody>
@@ -105,11 +101,6 @@ export default function StandingsTable({
               <td className="px-2 py-2 text-center" dir="ltr">
                 {count(row.difference)}
               </td>
-              {showFollow && (
-                <td className="px-2 py-2 text-center">
-                  <FollowTeamButton teamId={row.teamId} entrant={entrant} />
-                </td>
-              )}
             </tr>
           ))}
         </tbody>

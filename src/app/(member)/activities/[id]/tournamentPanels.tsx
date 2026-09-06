@@ -113,7 +113,6 @@ export async function tournamentPanels(
                   }
                   rows={group.standings}
                   series={!football}
-                  showFollow={!!userId}
                   entrant={entrant}
                 />
               ))}
