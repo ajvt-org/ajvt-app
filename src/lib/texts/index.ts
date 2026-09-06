@@ -28,7 +28,7 @@ export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
 export { adminShell, adminTabs } from "./adminNav";
-export { adminTools } from "./adminTools";
+export { adminTools, auditLogPage, deletedRecords } from "./adminTools";
 export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, deleteMember } from "./deleteRecords";

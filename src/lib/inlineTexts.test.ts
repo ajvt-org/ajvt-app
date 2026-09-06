@@ -206,7 +206,7 @@ const KEPT_CLEAN = [
   "src/lib/paymentReceiptServer.ts",
   "src/lib/receipts.ts",
   "src/lib/receiptsServer.ts",
-  "src/app/admin/tools/toolLinks.ts",
+  "src/lib/toolLinks.ts",
   "src/app/admin/admins/page.tsx",
   "src/components/admin/shell/NewAccountForm.tsx",
   "src/app/api/admin/admins",
@@ -228,6 +228,10 @@ const KEPT_CLEAN = [
   "src/components/LandingHero.tsx",
   "src/components/BackButton.tsx",
   "src/app/admin/tools/page.tsx",
+  "src/app/admin/password/page.tsx",
+  "src/app/admin/broadcast/page.tsx",
+  "src/app/admin/audit-log/page.tsx",
+  "src/app/admin/deleted/page.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

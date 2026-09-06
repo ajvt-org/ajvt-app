@@ -7,7 +7,7 @@ import PageLoading from "@/components/PageLoading";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { adminTabs } from "@/lib/texts";
-import { toolsFor } from "./toolLinks";
+import { toolsFor } from "@/lib/toolLinks";
 
 export default function AdminToolsPage() {
   const [role, setRole] = useState<string | null>(null);

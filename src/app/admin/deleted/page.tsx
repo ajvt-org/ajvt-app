@@ -7,6 +7,7 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import IconLabel from "@/components/IconLabel";
 import { auditTargetLabel } from "@/lib/auditFields";
 import { countedNoun, DAYS } from "@/lib/arabicPlural";
+import { deletedRecords } from "@/lib/texts";
 
 interface DeletedRow {
   id: string;
@@ -36,8 +37,11 @@ function Row({ row, onRestored }: { row: DeletedRow; onRestored: () => Promise<v
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold truncate">{row.label}</p>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {auditTargetLabel(row.kind)} · حذفه {row.deletedBy} · يُمحى نهائياً خلال{" "}
-          {countedNoun(row.daysLeft, DAYS)}
+          {deletedRecords.note(
+            auditTargetLabel(row.kind),
+            row.deletedBy,
+            countedNoun(row.daysLeft, DAYS),
+          )}
         </p>
       </div>
       <button
@@ -46,7 +50,7 @@ function Row({ row, onRestored }: { row: DeletedRow; onRestored: () => Promise<v
         className="text-xs px-3 py-1.5 rounded-lg font-bold shrink-0"
         style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
       >
-        {busy ? "..." : <IconLabel name="refresh">استرجاع</IconLabel>}
+        {busy ? "..." : <IconLabel name="refresh">{deletedRecords.restore}</IconLabel>}
       </button>
     </div>
   );
@@ -72,13 +76,13 @@ export default function DeletedRecordsPage() {
 
   return (
     <div className="admin-page space-y-3">
-      <AdminToolHeader icon="trash" title="سلة المحذوفات" />
+      <AdminToolHeader href="/admin/deleted" />
 
       {loading ? (
         <PageLoading />
       ) : records.length === 0 ? (
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          السلة فارغة
+          {deletedRecords.empty}
         </p>
       ) : (
         <div className="space-y-2">
