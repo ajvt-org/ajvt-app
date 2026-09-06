@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import MatchDetailsForm from "./MatchDetailsForm";
 import { matchAdmin as texts } from "@/lib/texts";
+import { entrantWording } from "@/lib/messages";
 import type { Match, Team } from "./types";
 
 const patch = vi.fn();
@@ -84,13 +85,56 @@ describe("setting the teams on a fixture that has none", () => {
     expect(screen.getByText(texts.awayTeamPlaceholder)).toBeDefined();
   });
 
-  it("asks for both sides before saving", async () => {
+  it("saves the date, the venue and the round while both sides are still unknown", async () => {
     show();
 
     fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
 
-    expect(await screen.findByText(texts.pickBothTeams)).toBeDefined();
+    await waitFor(() => expect(patch).toHaveBeenCalled());
+    const sent = patch.mock.calls[0][1] as Record<string, unknown>;
+    expect(sent).toMatchObject({ round: "نصف النهائي", venue: "ملعب القرية" });
+    expect(sent.matchDate).toBeTruthy();
+    expect("firstTeamId" in sent).toBe(false);
+    expect("secondTeamId" in sent).toBe(false);
+  });
+
+  it("refuses a fixture with one side chosen and says both or neither", async () => {
+    show();
+
+    const [home] = screen.getAllByRole("combobox");
+    fireEvent.change(home, { target: { value: "t1" } });
+    fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
+
+    expect(await screen.findByText(entrantWording("team").bothEntrantsOrNeither)).toBeDefined();
     expect(patch).not.toHaveBeenCalled();
+  });
+
+  it("names the players rather than the teams in a singles tournament", async () => {
+    show(WAITING, "player");
+
+    const [home] = screen.getAllByRole("combobox");
+    fireEvent.change(home, { target: { value: "t1" } });
+    fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
+
+    expect(await screen.findByText(entrantWording("player").bothEntrantsOrNeither)).toBeDefined();
+  });
+
+  it("leaves the sides alone when both selects are emptied on a fixture that had them", async () => {
+    show({
+      ...WAITING,
+      firstTeam: { id: "t1", name: "الصقور", logo: null },
+      secondTeam: { id: "t2", name: "النسور", logo: null },
+    });
+
+    const [home, away] = screen.getAllByRole("combobox");
+    fireEvent.change(home, { target: { value: "" } });
+    fireEvent.change(away, { target: { value: "" } });
+    fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
+
+    await waitFor(() => expect(patch).toHaveBeenCalled());
+    const sent = patch.mock.calls[0][1] as Record<string, unknown>;
+    expect("firstTeamId" in sent).toBe(false);
+    expect("secondTeamId" in sent).toBe(false);
   });
 
   it("sends both teams once they are picked", async () => {
