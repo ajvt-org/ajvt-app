@@ -10,6 +10,14 @@ import type { MemberOption } from "./activityTypes";
 
 const LIMIT = 6;
 
+function Note({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
+      {children}
+    </p>
+  );
+}
+
 function candidateText(candidate: MemberOption): string {
   return [candidate.fullName, candidate.phone, candidate.village, candidate.age]
     .filter(Boolean)
@@ -44,8 +52,6 @@ export default function AddMemberToActivityForm({
     if (await onRegister(activityId, userId)) setSearch("");
   }
 
-  // A card of its own, so the search inside it reads as part of adding a member
-  // rather than as another way to filter the list below.
   return (
     <div className="card p-3 space-y-1.5">
       <p className="text-xs font-bold" style={{ color: "var(--text-main)" }}>
@@ -61,13 +67,11 @@ export default function AddMemberToActivityForm({
         style={{ background: "var(--mint-50)" }}
       />
       {tokens.length === 0 ? (
-        <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
-          {everyoneRegistered ? texts.allRegistered : texts.searchToBegin}
-        </p>
+        everyoneRegistered ? (
+          <Note>{texts.allRegistered}</Note>
+        ) : null
       ) : results.length === 0 ? (
-        <p className="text-xs text-center py-2" style={{ color: "var(--text-muted)" }}>
-          {texts.noMatch}
-        </p>
+        <Note>{texts.noMatch}</Note>
       ) : (
         <div className="space-y-1">
           {results.map((candidate) => {
