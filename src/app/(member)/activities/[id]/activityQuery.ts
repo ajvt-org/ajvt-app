@@ -84,6 +84,7 @@ async function loadActivity(id: string) {
           forfeitWinnerTeamId: true,
           manOfTheMatchUserId: true,
           manOfTheMatchUser: { select: { fullName: true, photo: true } },
+          adjustments: { orderBy: { order: "asc" }, include: { rule: true } },
           parts: {
             orderBy: { order: "asc" },
             select: {
@@ -167,7 +168,7 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
         secondTeam: namedEntrant(sides.second, identities),
         series: isFootball(activity.matchShape)
           ? null
-          : standingOf(activity, match.parts, match.isKnockout),
+          : standingOf(activity, match.parts, match.isKnockout, match.adjustments),
         manOfTheMatch: match.manOfTheMatchUser
           ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
           : null,

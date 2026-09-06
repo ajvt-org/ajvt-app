@@ -42,6 +42,7 @@ function match(): DecidedMatch {
       },
     ],
     parts: [],
+    adjustments: [],
     series: null,
     mvpVote: null,
   };

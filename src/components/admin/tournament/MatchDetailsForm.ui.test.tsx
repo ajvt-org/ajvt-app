@@ -57,6 +57,7 @@ const WAITING: Match = {
   bookings: [],
   penaltyKicks: [],
   parts: [],
+  adjustments: [],
   series: null,
   mvpVote: null,
 };

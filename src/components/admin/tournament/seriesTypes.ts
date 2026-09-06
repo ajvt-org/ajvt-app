@@ -22,7 +22,22 @@ export interface SeriesStandingRow {
   winner: "SIDE_A" | "SIDE_B" | null;
 }
 
+export interface AdjustmentRuleRow {
+  id: string;
+  name: string;
+  partsToSelf: number;
+  partsFromOther: number;
+}
+
+export interface RecordedAdjustmentRow {
+  id: string;
+  order: number;
+  side: "SIDE_A" | "SIDE_B";
+  rule: AdjustmentRuleRow;
+}
+
 export interface SeriesState {
   parts: PartRow[];
+  adjustments: RecordedAdjustmentRow[];
   standing: SeriesStandingRow;
 }

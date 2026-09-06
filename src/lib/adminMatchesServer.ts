@@ -70,6 +70,7 @@ export const MATCH_INCLUDE = {
       sideAColour: true,
     },
   },
+  adjustments: { orderBy: { order: "asc" }, include: { rule: true } },
   mvpVote: {
     select: {
       id: true,
@@ -97,7 +98,7 @@ export function flatMatch(match: LoadedMatch, activity: SeriesActivity) {
     secondTeam: sides.second,
     series: isFootball(activity.matchShape)
       ? null
-      : standingOf(activity, match.parts, match.isKnockout),
+      : standingOf(activity, match.parts, match.isKnockout, match.adjustments),
     manOfTheMatch: match.manOfTheMatchUser
       ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
       : null,

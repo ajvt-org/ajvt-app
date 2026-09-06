@@ -155,6 +155,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                activityId={activityId}
                 matchShape={matchShape}
                 series={series}
                 entrant={entrant}
@@ -194,6 +195,7 @@ export default function MatchesTab({
                 match={m}
                 teams={teams}
                 allMatches={matches}
+                activityId={activityId}
                 matchShape={matchShape}
                 series={series}
                 entrant={entrant}

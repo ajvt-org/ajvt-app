@@ -1,4 +1,4 @@
-import type { PartRow, SeriesStandingRow } from "./seriesTypes";
+import type { PartRow, RecordedAdjustmentRow, SeriesStandingRow } from "./seriesTypes";
 
 export type TournamentFormat = "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
 
@@ -105,6 +105,7 @@ export interface Match {
   bookings: MatchBooking[];
   penaltyKicks: PenaltyKick[];
   parts: PartRow[];
+  adjustments: RecordedAdjustmentRow[];
   series: SeriesStandingRow | null;
   mvpVote: MvpVote | null;
 }

@@ -47,6 +47,7 @@ const MATCH: DecidedMatch = {
       sideAColour: "SECOND",
     },
   ],
+  adjustments: [],
   series: {
     sideAHalves: 3,
     sideBHalves: 1,
