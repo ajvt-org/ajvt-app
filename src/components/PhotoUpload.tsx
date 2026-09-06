@@ -15,7 +15,6 @@ interface PhotoUploadProps {
   placeholderIcon?: IconName;
   variant?: "avatar" | "cover" | "hero";
   bare?: boolean;
-  showHint?: boolean;
 }
 
 const FRAMES = {
@@ -34,7 +33,6 @@ export default function PhotoUpload({
   placeholderIcon = "user",
   variant = "avatar",
   bare = false,
-  showHint = true,
 }: PhotoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -65,14 +63,13 @@ export default function PhotoUpload({
   }
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
-  const hint =
-    locked && lockedNote ? lockedNote : photo || previewUrl ? texts.changeHint : texts.addHint;
+  const action = locked && lockedNote ? lockedNote : photo || previewUrl ? texts.change : texts.add;
   const noteBelow = locked && lockedNote && (variant !== "avatar" || bare);
   const Frame = FRAMES[variant];
   const frame: FrameProps = {
     displayUrl,
     label,
-    hint,
+    action,
     uploading,
     locked,
     placeholderIcon,
@@ -129,9 +126,9 @@ export default function PhotoUpload({
           <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
             {label}
           </p>
-          {showHint && (
+          {locked && lockedNote && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {hint}
+              {lockedNote}
             </p>
           )}
         </div>

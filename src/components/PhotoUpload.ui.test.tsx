@@ -73,17 +73,28 @@ describe("a picture the admin has blocked", () => {
 });
 
 describe("the text beside an avatar", () => {
-  it("carries the label and the hint by default", () => {
+  it("carries the label and nothing under it", () => {
     render(<PhotoUpload photo={null} onUpload={vi.fn()} label="الصورة" />);
 
     expect(screen.getByText("الصورة")).toBeTruthy();
-    expect(screen.getByText(photoUpload.addHint)).toBeTruthy();
+    expect(screen.queryByText(photoUpload.add)).toBeNull();
   });
 
-  it("keeps the label and drops the hint when the call site asks", () => {
-    render(<PhotoUpload photo={null} onUpload={vi.fn()} label="الصورة" showHint={false} />);
+  it("names the hero frame by what pressing it does, so it needs no sentence", () => {
+    const { rerender } = render(<PhotoUpload photo={null} variant="hero" onUpload={vi.fn()} />);
 
-    expect(screen.getByText("الصورة")).toBeTruthy();
-    expect(screen.queryByText(photoUpload.addHint)).toBeNull();
+    expect(screen.getByRole("button", { name: photoUpload.add })).toBeTruthy();
+
+    rerender(<PhotoUpload photo="a.webp" variant="hero" onUpload={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: photoUpload.change })).toBeTruthy();
+  });
+
+  it("says the action on the cover strip rather than under the frame", () => {
+    render(<PhotoUpload photo="a.webp" variant="cover" onUpload={vi.fn()} label="غلاف" />);
+
+    const strip = screen.getByText(photoUpload.change);
+
+    expect(strip.closest("button")).toBeTruthy();
   });
 });
