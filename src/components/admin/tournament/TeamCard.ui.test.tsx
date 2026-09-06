@@ -5,8 +5,14 @@ import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
 import type { SquadBreach } from "@/lib/squadRules";
 import { teamsTab } from "@/lib/texts";
+import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
 
-function entry(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"): TeamMemberEntry {
+function entry(
+  id: string,
+  name: string,
+  status: "ACTIVE" | "PENDING" = "ACTIVE",
+  village = "التاكلالت",
+): TeamMemberEntry {
   return {
     status,
     member: {
@@ -14,10 +20,16 @@ function entry(id: string, name: string, status: "ACTIVE" | "PENDING" = "ACTIVE"
       fullName: name,
       phone: "36000001",
       age: "البدريين",
-      village: "التاكلالت",
+      village,
       photo: null,
     },
   };
+}
+
+function squad(count: number, outside = 0): TeamMemberEntry[] {
+  return Array.from({ length: count }, (_, i) =>
+    entry(`p${i}`, `لاعب ${i}`, "ACTIVE", i < outside ? "نواكشوط" : "التاكلالت"),
+  );
 }
 
 function team(members: TeamMemberEntry[], captainUserId: string | null = null): Team {
@@ -179,7 +191,10 @@ describe("TeamCard", () => {
 
     const head = container.querySelector(".disclosure-summary > div") as HTMLElement;
     expect(head.innerHTML).not.toContain("mt-2");
-    for (const glyph of head.querySelectorAll(":scope > span")) {
+    const crest = head.querySelector(".summary-logo") as HTMLElement;
+    expect(crest.style.width).toBe(crest.style.height);
+    expect(crest.style.width).toBe(`${MATCH_TEAMS_SIZES.md.logo}px`);
+    for (const glyph of head.querySelectorAll(":scope > span:not(.summary-logo)")) {
       expect(glyph.className).toContain("h-6");
       expect(glyph.className).toContain("items-center");
     }
@@ -322,25 +337,35 @@ describe("a squad the admin should look at", () => {
     );
   }
 
-  it("says a squad is short of the minimum", () => {
-    withBreaches([{ kind: "tooFew", count: 15, min: 16 }], [entry("p1", "أحمد")]);
+  it("says how short a squad is rather than only that it is short", () => {
+    withBreaches([{ kind: "tooFew", count: 6, min: 16 }], squad(6));
 
-    expect(screen.getByText(teamsTab.squadShort)).toBeDefined();
+    expect(
+      screen.getByLabelText(`${teamsTab.squadOfRange(6, 16, 22)} ${teamsTab.outsideOfLimit(0, 4)}`),
+    ).toBeDefined();
   });
 
-  it("says a squad is past the maximum", () => {
-    withBreaches([{ kind: "tooMany", count: 23, max: 22 }], [entry("p1", "أحمد")]);
+  it("says how far past the maximum a squad has gone", () => {
+    withBreaches([{ kind: "tooMany", count: 23, max: 22 }], squad(23));
 
-    expect(screen.getByText(teamsTab.squadOver)).toBeDefined();
+    expect(
+      screen.getByLabelText(
+        `${teamsTab.squadOfRange(23, 16, 22)} ${teamsTab.outsideOfLimit(0, 4)}`,
+      ),
+    ).toBeDefined();
   });
 
-  it("says how many players come from outside and what the limit is", () => {
+  it("carries the outside share on the same bar", () => {
     withBreaches(
-      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p2"] }],
-      [entry("p1", "أحمد"), entry("p2", "سالم")],
+      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p1"] }],
+      squad(16, 5),
     );
 
-    expect(screen.getByText(teamsTab.outsideOverLimit(5, 4))).toBeDefined();
+    expect(
+      screen.getByLabelText(
+        `${teamsTab.squadOfRange(16, 16, 22)} ${teamsTab.outsideOfLimit(5, 4)}`,
+      ),
+    ).toBeDefined();
   });
 
   it("marks the roster row that pushed the squad over", () => {
@@ -353,9 +378,39 @@ describe("a squad the admin should look at", () => {
   });
 
   it("leaves a squad with nothing wrong unflagged", () => {
-    withBreaches([], [entry("p1", "أحمد")]);
+    withBreaches([], squad(16));
 
-    expect(screen.queryByText(teamsTab.squadShort)).toBeNull();
     expect(screen.queryByText(teamsTab.outsidePlayerOverLimit)).toBeNull();
+  });
+
+  it("keeps the awaiting count, which is a different fact", () => {
+    withBreaches([], [...squad(15), entry("pz", "سالم", "PENDING")]);
+
+    expect(screen.getByText(teamsTab.awaitingCount(1))).toBeDefined();
+  });
+
+  it("falls back to a plain count where the squad has no maximum", () => {
+    cleanup();
+    render(
+      <TeamCard
+        team={team(squad(6))}
+        shownName="فريق النجم"
+        settings={{
+          squad: { min: 16, max: null },
+          organisedByHomeVillage: false,
+          outsidePlayerLimit: null,
+        }}
+        breaches={[]}
+        members={squad(6)}
+        open
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    expect(screen.getByText(teamsTab.rosterCount(6))).toBeDefined();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });

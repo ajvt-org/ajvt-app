@@ -3,14 +3,16 @@
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import TeamLogo from "@/components/tournament/TeamLogo";
+import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
+import SquadBar, { type OutsideShare } from "./SquadBar";
 import type { Team } from "./types";
 import { teamsTab } from "@/lib/texts";
-import { rosterFault, type SquadSize } from "@/lib/squadSize";
-import type { SquadBreach } from "@/lib/squadRules";
-
+import { fixedSquad, rosterFault, type SquadSize } from "@/lib/squadSize";
 const COMPLETE = { background: "#d1fae5", color: "#065f46" };
 const SHORT = { background: "#fef3c7", color: "#92400e" };
 const OVER = { background: "#fee2e2", color: "#991b1b" };
+
+const CREST = MATCH_TEAMS_SIZES.md.logo;
 
 function rosterTone(count: number, squad: SquadSize) {
   const fault = rosterFault(count, squad);
@@ -18,17 +20,11 @@ function rosterTone(count: number, squad: SquadSize) {
   return fault === "short" ? SHORT : OVER;
 }
 
-function breachLabel(breach: SquadBreach): string {
-  if (breach.kind === "tooFew") return teamsTab.squadShort;
-  if (breach.kind === "tooMany") return teamsTab.squadOver;
-  return teamsTab.outsideOverLimit(breach.count, breach.limit);
-}
-
 export default function TeamSummary({
   team,
   shownName,
   squad,
-  breaches,
+  outside,
   busy,
   onToggle,
   onDeleteTeam,
@@ -36,7 +32,7 @@ export default function TeamSummary({
   team: Team;
   shownName: string;
   squad: SquadSize;
-  breaches: SquadBreach[];
+  outside: OutsideShare | null;
   busy: boolean;
   onToggle: (summary: HTMLElement) => void;
   onDeleteTeam: () => void;
@@ -44,6 +40,7 @@ export default function TeamSummary({
   const count = team.members.length;
   const awaiting = team.members.filter((m) => m.status === "PENDING").length;
   const tone = rosterTone(count, squad);
+  const barred = squad.max !== null && fixedSquad(squad) === null;
 
   return (
     <summary
@@ -54,8 +51,11 @@ export default function TeamSummary({
       }}
     >
       <div className="flex items-start gap-2">
-        <span className="summary-logo h-6 flex items-center shrink-0">
-          <TeamLogo logo={team.logo} name={shownName} size={36} />
+        <span
+          className="summary-logo flex items-center shrink-0"
+          style={{ width: CREST, height: CREST }}
+        >
+          <TeamLogo logo={team.logo} name={shownName} size={CREST} />
         </span>
         <p
           className="min-w-0 flex-1 font-black text-base leading-6 optical-name"
@@ -82,21 +82,22 @@ export default function TeamSummary({
           </button>
         </span>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="badge" style={tone}>
-          <IconLabel name="users">{teamsTab.rosterCount(count)}</IconLabel>
-        </span>
-        {awaiting > 0 && (
+      {barred ? (
+        <SquadBar count={count} squad={squad} outside={outside} />
+      ) : (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="badge" style={tone}>
+            <IconLabel name="users">{teamsTab.rosterCount(count)}</IconLabel>
+          </span>
+        </div>
+      )}
+      {awaiting > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
           <span className="badge badge-pending">
             <IconLabel name="clock">{teamsTab.awaitingCount(awaiting)}</IconLabel>
           </span>
-        )}
-        {breaches.map((breach) => (
-          <span key={breach.kind} className="badge" style={breach.kind === "tooFew" ? SHORT : OVER}>
-            <IconLabel name="warning">{breachLabel(breach)}</IconLabel>
-          </span>
-        ))}
-      </div>
+        </div>
+      )}
     </summary>
   );
 }

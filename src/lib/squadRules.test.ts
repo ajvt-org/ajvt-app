@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { HOME_VILLAGE } from "@/lib/villages";
-import { playerOverOutsideLimit, squadBreaches, type SquadSettings } from "@/lib/squadRules";
+import {
+  outsideShare,
+  playerOverOutsideLimit,
+  squadBreaches,
+  type SquadSettings,
+} from "@/lib/squadRules";
 
 const home = (id: string) => ({ id, village: HOME_VILLAGE });
 const away = (id: string) => ({ id, village: "أفجار" });
@@ -91,5 +96,24 @@ describe("players from outside the village", () => {
     const breaches = squadBreaches(squad(3, 6), VILLAGE_TEAM, VILLAGE_CUP);
 
     expect(breaches.map((b) => b.kind)).toEqual(["tooFew", "tooManyOutside"]);
+  });
+});
+
+describe("the share of a squad from outside the village", () => {
+  it("counts them against the limit whether or not the limit is broken", () => {
+    expect(outsideShare(squad(12, 3), VILLAGE_TEAM, VILLAGE_CUP)).toEqual({ count: 3, limit: 4 });
+    expect(outsideShare(squad(12, 6), VILLAGE_TEAM, VILLAGE_CUP)).toEqual({ count: 6, limit: 4 });
+  });
+
+  it("counts nobody rather than nothing when the squad is all from the village", () => {
+    expect(outsideShare(squad(12), VILLAGE_TEAM, VILLAGE_CUP)).toEqual({ count: 0, limit: 4 });
+  });
+
+  it("says nothing where the limit does not apply", () => {
+    expect(outsideShare(squad(10, 8), GUEST_TEAM, VILLAGE_CUP)).toBeNull();
+    expect(outsideShare(squad(10, 8), VILLAGE_TEAM, OPEN_CUP)).toBeNull();
+    expect(
+      outsideShare(squad(10, 8), VILLAGE_TEAM, { ...VILLAGE_CUP, outsidePlayerLimit: null }),
+    ).toBeNull();
   });
 });
