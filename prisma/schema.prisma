@@ -123,6 +123,7 @@ model Activity {
   hasColours             Boolean                @default(false)
   firstColourWord        String?
   secondColourWord       String?
+  adjustmentRules        AdjustmentRule[]
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -269,6 +270,7 @@ model Match {
   bookings            MatchBooking[]
   penaltyKicks        MatchPenaltyKick[]
   parts               MatchPart[]
+  adjustments         MatchAdjustment[]
   mvpVote             MatchMvpVote?
 
   @@index([activityId])
@@ -357,6 +359,34 @@ model MatchPart {
 
   @@unique([matchId, order])
   @@index([matchId])
+}
+
+model AdjustmentRule {
+  id             String            @id @default(cuid())
+  activityId     String
+  activity       Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name           String
+  partsToSelf    Int
+  partsFromOther Int
+  createdAt      DateTime          @default(now())
+  recorded       MatchAdjustment[]
+
+  @@unique([activityId, name])
+  @@index([activityId])
+}
+
+model MatchAdjustment {
+  id        String         @id @default(cuid())
+  matchId   String
+  match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  ruleId    String
+  rule      AdjustmentRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  side      MatchSide
+  order     Int
+  createdAt DateTime       @default(now())
+
+  @@index([matchId])
+  @@index([ruleId])
 }
 
 model MatchGoal {
@@ -1001,6 +1031,11 @@ enum PartOutcome {
 enum PartColour {
   FIRST
   SECOND
+}
+
+enum MatchSide {
+  SIDE_A
+  SIDE_B
 }
 
 enum SuspensionReason {

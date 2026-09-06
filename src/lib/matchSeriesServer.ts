@@ -1,10 +1,17 @@
-import type { PrismaClient } from "@prisma/client";
+import type { MatchSide, PrismaClient } from "@prisma/client";
 import { prisma } from "./prisma";
 import { NotFoundError, ValidationError, ConflictError } from "./errors";
 import { tournament as messages } from "./messages";
 import { isSeriesConfigured } from "./seriesSetup";
 import { isFootball } from "./matchShape";
 import { colourOfPart } from "./seriesColours";
+import {
+  asAdjustments,
+  ruleProblem,
+  type RecordedInstance,
+  type RuleShape,
+} from "./adjustmentRules";
+import { isUniqueViolation } from "./prismaError";
 import {
   deriveSeries,
   nextPartOrder,
@@ -15,6 +22,7 @@ import {
 
 export const MATCH_WITH_SERIES = {
   parts: { orderBy: { order: "asc" } },
+  adjustments: { orderBy: { order: "asc" }, include: { rule: true } },
   activity: {
     select: {
       matchShape: true,
@@ -71,8 +79,9 @@ export function standingOf(
   activity: Parameters<typeof rulesOf>[0],
   parts: PlayedPart[],
   isKnockout = false,
+  recorded: RecordedInstance[] = [],
 ): SeriesStanding {
-  return deriveSeries(rulesOf(activity, isKnockout), parts);
+  return deriveSeries(rulesOf(activity, isKnockout), parts, asAdjustments(recorded));
 }
 
 export interface PartInput {
@@ -122,7 +131,7 @@ export function readPart(
 
 export async function addPart(matchId: string, input: PartInput) {
   const match = await loadSeriesMatch(matchId);
-  const standing = standingOf(match.activity, match.parts, match.isKnockout);
+  const standing = standingOf(match.activity, match.parts, match.isKnockout, match.adjustments);
   if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
 
   const result = readPart(input, match.activity.partDecision!, match.activity.partTarget);
@@ -151,4 +160,88 @@ export async function removePart(matchId: string, partId: string) {
 
   await prisma.matchPart.delete({ where: { id: partId } });
   return part;
+}
+
+export async function recordAdjustment(matchId: string, ruleId: string, side: MatchSide) {
+  const match = await loadSeriesMatch(matchId);
+  const standing = standingOf(match.activity, match.parts, match.isKnockout, match.adjustments);
+  if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
+
+  const rule = await prisma.adjustmentRule.findFirst({
+    where: { id: ruleId, activityId: match.activityId },
+  });
+  if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
+
+  const order = nextPartOrder(match.parts);
+
+  return prisma.$transaction(async (tx) => {
+    await tx.matchPart.create({
+      data: {
+        matchId,
+        order,
+        abandoned: true,
+        sideAColour:
+          match.activity.hasColours && match.sideAOpensAs
+            ? colourOfPart(match.sideAOpensAs, order)
+            : null,
+      },
+    });
+    return tx.matchAdjustment.create({ data: { matchId, ruleId, side, order } });
+  });
+}
+
+export async function undoAdjustment(matchId: string, adjustmentId: string) {
+  const match = await loadSeriesMatch(matchId);
+  const recorded = match.adjustments.find((row) => row.id === adjustmentId);
+  if (!recorded) throw new NotFoundError(messages.adjustmentNotFound);
+
+  const stillThere = match.adjustments.filter(
+    (row) => row.id !== adjustmentId && row.order === recorded.order,
+  );
+
+  return prisma.$transaction(async (tx) => {
+    await tx.matchAdjustment.delete({ where: { id: adjustmentId } });
+    if (stillThere.length === 0) {
+      const part = match.parts.find((row) => row.order === recorded.order);
+      if (part) await tx.matchPart.delete({ where: { id: part.id } });
+    }
+    return recorded;
+  });
+}
+
+export async function listAdjustmentRules(activityId: string) {
+  return prisma.adjustmentRule.findMany({ where: { activityId }, orderBy: { createdAt: "asc" } });
+}
+
+export async function declareAdjustmentRule(activityId: string, input: RuleShape) {
+  const problem = ruleProblem(input);
+  if (problem) throw new ValidationError(messages.adjustmentRule[problem]);
+  try {
+    return await prisma.adjustmentRule.create({
+      data: {
+        activityId,
+        name: input.name.trim(),
+        partsToSelf: input.partsToSelf,
+        partsFromOther: input.partsFromOther,
+      },
+    });
+  } catch (err) {
+    if (isUniqueViolation(err)) throw new ConflictError(messages.adjustmentNameTaken);
+    throw err;
+  }
+}
+
+export async function withdrawAdjustmentRule(activityId: string, ruleId: string) {
+  const rule = await prisma.adjustmentRule.findFirst({ where: { id: ruleId, activityId } });
+  if (!rule) throw new NotFoundError(messages.adjustmentRuleNotFound);
+  await prisma.adjustmentRule.delete({ where: { id: ruleId } });
+  return rule;
+}
+
+export function seriesStateOf(match: Awaited<ReturnType<typeof loadSeriesMatch>>) {
+  return {
+    parts: match.parts,
+    adjustments: match.adjustments,
+    standing: standingOf(match.activity, match.parts, match.isKnockout, match.adjustments),
+  };
 }

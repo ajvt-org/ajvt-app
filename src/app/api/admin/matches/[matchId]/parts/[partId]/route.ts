@@ -4,16 +4,12 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { common } from "@/lib/messages";
-import { correctPart, loadSeriesMatch, removePart, standingOf } from "@/lib/matchSeriesServer";
+import { correctPart, loadSeriesMatch, removePart, seriesStateOf } from "@/lib/matchSeriesServer";
 
 type Params = { params: Promise<{ matchId: string; partId: string }> };
 
 async function stateOf(matchId: string) {
-  const match = await loadSeriesMatch(matchId);
-  return {
-    parts: match.parts,
-    standing: standingOf(match.activity, match.parts, match.isKnockout),
-  };
+  return seriesStateOf(await loadSeriesMatch(matchId));
 }
 
 export const PATCH = withRoute(
