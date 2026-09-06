@@ -25,6 +25,7 @@ import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/squadSize";
 import { isFootball } from "@/lib/matchShape";
+import { hasStandings } from "@/lib/tournamentFormat";
 import type { PublicMatch } from "@/components/tournament/publicTypes";
 import type { ActivityPageData } from "./activityQuery";
 
@@ -75,21 +76,25 @@ export async function tournamentPanels(
       motmLeaders.length > 0 ||
       teamAdvancedStats.length > 0);
 
-  const hasLeagueStage = matches.some((m) => !m.isKnockout) || activity.groups.length > 0;
-  const bracket = (
-    <div className="card p-3">
-      <BracketTree
-        matches={bracketMatches.map((m) => ({
-          ...m,
-          status: m.status as "SCHEDULED" | "PLAYED",
-        }))}
-        entrant={entrant}
-      />
-    </div>
-  );
+  const bracket =
+    bracketMatches.length > 0 ? (
+      <div className="card p-3">
+        <BracketTree
+          matches={bracketMatches.map((m) => ({
+            ...m,
+            status: m.status as "SCHEDULED" | "PLAYED",
+          }))}
+          entrant={entrant}
+        />
+      </div>
+    ) : (
+      <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
+        {texts.drawNotMade}
+      </p>
+    );
 
   const panels: TournamentPanel[] = [
-    hasLeagueStage || bracketMatches.length === 0
+    hasStandings(activity.format)
       ? {
           key: "standings",
           label: texts.standings,
