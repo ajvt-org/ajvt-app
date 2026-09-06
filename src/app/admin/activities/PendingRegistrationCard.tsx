@@ -11,11 +11,13 @@ import type { Registration } from "./activityTypes";
 export default function PendingRegistrationCard({
   activityId,
   registration,
+  singles,
   actionLoading,
   onReview,
 }: {
   activityId: string;
   registration: Registration;
+  singles: boolean;
   actionLoading: boolean;
   onReview: (
     activityId: string,
@@ -30,7 +32,7 @@ export default function PendingRegistrationCard({
 
   return (
     <div className="rounded-xl p-2.5 space-y-1.5" style={{ background: "var(--mint-50)" }}>
-      <RegistrantIdentity registration={r} />
+      <RegistrantIdentity registration={r} singles={singles} />
       <RegistrationRecord registration={r} />
       {r.paymentProof && (
         <a

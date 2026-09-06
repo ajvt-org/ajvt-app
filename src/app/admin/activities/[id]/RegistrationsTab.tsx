@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import ActivityRegistrationsPanel from "../ActivityRegistrationsPanel";
 import { useRegistrationActions } from "../useRegistrationActions";
 import type { MemberOption } from "../activityTypes";
+import { isSinglesActivity } from "@/lib/entrant";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 
 interface RawMember {
@@ -53,6 +54,7 @@ export default function RegistrationsTab({
         registrations={activity.registrations}
         members={members}
         teams={activity.teams}
+        singles={isSinglesActivity(activity)}
         actionLoading={actions.actionLoading}
         onReview={actions.reviewRegistration}
         onRegister={actions.registerMember}

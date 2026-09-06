@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { nameOf } from "./person";
-import { isSinglesSquad, squadOf } from "./squadSize";
+import { isSinglesActivity, type EntrantActivity } from "./entrant";
 
 type Tx = Prisma.TransactionClient;
 
@@ -13,18 +13,8 @@ const REGISTRATION_SEAT = {
   activity: { select: { isTournament: true, minTeamSize: true, maxTeamSize: true } },
 } satisfies Prisma.ActivityRegistrationSelect;
 
-interface ActivityShape {
-  isTournament: boolean;
-  minTeamSize: number | null;
-  maxTeamSize: number | null;
-}
-
-export function isSingles(activity: ActivityShape): boolean {
-  return activity.isTournament && isSinglesSquad(squadOf(activity));
-}
-
-export function joinableTeams<T>(activity: ActivityShape, teams: T[]): T[] {
-  return activity.isTournament && !isSingles(activity) ? teams : [];
+export function joinableTeams<T>(activity: EntrantActivity, teams: T[]): T[] {
+  return activity.isTournament && !isSinglesActivity(activity) ? teams : [];
 }
 
 async function seatOfViewer(tx: Tx, activityId: string, userId: string) {
@@ -44,7 +34,7 @@ export async function seatRegistrant(tx: Tx, registrationId: string): Promise<st
   const already = await seatOfViewer(tx, registration.activityId, registration.userId);
   if (already) return already.teamId;
 
-  if (isSingles(registration.activity)) {
+  if (isSinglesActivity(registration.activity)) {
     const team = await tx.team.create({
       data: {
         activityId: registration.activityId,
@@ -80,7 +70,7 @@ export async function unseatRegistrant(
     where: { id: activityId },
     select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
   });
-  if (!activity || !isSingles(activity)) return false;
+  if (!activity || !isSinglesActivity(activity)) return false;
 
   const seat = await seatOfViewer(tx, activityId, userId);
   if (!seat) return false;
