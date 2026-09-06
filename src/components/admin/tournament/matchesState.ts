@@ -12,7 +12,6 @@ export interface MatchesState {
   groupStageDone: boolean;
   knockoutLocked: boolean;
   isTwoGroupFormat: boolean;
-  groupStageComplete: boolean;
 }
 
 export function matchesState({
@@ -56,7 +55,5 @@ export function matchesState({
     groupStageDone,
     knockoutLocked: hasGroupStage && groups.length > 0 && !groupStageDone,
     isTwoGroupFormat,
-    groupStageComplete:
-      isTwoGroupFormat && groupStageDone && (bracketMatches.length === 0 || firstRoundWaiting),
   };
 }

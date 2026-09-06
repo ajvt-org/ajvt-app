@@ -24,8 +24,6 @@ export const matchAdmin = {
   pickBothTeams: "يجب اختيار الفريقين",
   confirmDeleteMatch: "هل تريد حذف هذه المباراة؟",
   reorderFailed: "خطأ في إعادة الترتيب",
-  groupStageDoneTitle: "انتهى دور المجموعات!",
-  groupStageDoneHint: "كل الفرق لعبت مبارياتها — يمكنك الآن توليد نصف النهائي من ترتيب المجموعتين.",
   generateSemis: "توليد نصف النهائي",
   suggestionTitle: "جدول الإقصاء المقترح",
   suggestionHint:
