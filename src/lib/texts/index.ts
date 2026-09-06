@@ -99,4 +99,5 @@ export { villageField, villagesDialog } from "./villages";
 export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
+export { seriesResult } from "./seriesResult";
 export { setupLabels, setupWizard } from "./setupWizard";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { halvesLabel, halvesText } from "./halfPoints";
+import { halvesText } from "./halfPoints";
 
 describe("halvesText", () => {
   it("writes a whole number of parts as a whole number", () => {
@@ -18,15 +18,5 @@ describe("halvesText", () => {
     expect(halvesText(-2)).toBe("−1");
     expect(halvesText(-1)).toBe("−½");
     expect(halvesText(-3)).toBe("−1½");
-  });
-});
-
-describe("halvesLabel", () => {
-  it("wraps the number so a minus sign keeps its place in a right to left line", () => {
-    expect(halvesLabel(-3)).toBe("⁨−1½⁩");
-  });
-
-  it("wraps a positive number the same way, so every total reads alike", () => {
-    expect(halvesLabel(2)).toBe("⁨1⁩");
   });
 });

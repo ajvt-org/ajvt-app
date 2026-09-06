@@ -58,6 +58,7 @@ function show(matchShape: "FOOTBALL" | "SERIES", showResultForm = false) {
       teams={[]}
       allMatches={[match()]}
       matchShape={matchShape}
+      series={null}
       suspendedIds={[]}
       mvpVoteMinutes={120}
       onDelete={noop}
@@ -88,6 +89,7 @@ describe("a team name carrying Latin letters", () => {
         teams={[]}
         allMatches={[]}
         matchShape="FOOTBALL"
+        series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -131,6 +133,7 @@ describe("a fixture whose teams are not known yet", () => {
         teams={[]}
         allMatches={[match()]}
         matchShape="FOOTBALL"
+        series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -203,11 +206,10 @@ describe("MatchCard by match shape", () => {
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 
-  it("offers no result entry at all on a series match, and says why", () => {
+  it("offers none of the football entry on a series match", () => {
     show("SERIES", true);
 
     expect(screen.queryByText(texts.addCard)).toBeNull();
     expect(screen.queryByText(/حفظ النتيجة/)).toBeNull();
-    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });

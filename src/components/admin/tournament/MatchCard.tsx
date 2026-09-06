@@ -16,6 +16,7 @@ import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
+import type { SeriesConfig } from "./seriesConfig";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts, lists } from "@/lib/texts";
@@ -26,6 +27,7 @@ export default function MatchCard({
   teams,
   allMatches,
   matchShape,
+  series,
   entrant = "team",
   suspendedIds,
   mvpVoteMinutes,
@@ -45,6 +47,7 @@ export default function MatchCard({
   teams: Team[];
   allMatches: Match[];
   matchShape: "FOOTBALL" | "SERIES";
+  series: SeriesConfig | null;
   entrant?: EntrantKind;
   suspendedIds: string[];
   mvpVoteMinutes: number;
@@ -160,6 +163,7 @@ export default function MatchCard({
             match={match}
             teams={teams}
             matchShape={matchShape}
+            series={series}
             suspendedIds={suspendedIds}
             onSaved={onSaved}
           />

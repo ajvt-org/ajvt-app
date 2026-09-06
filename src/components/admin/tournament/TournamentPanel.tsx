@@ -20,6 +20,7 @@ import { tournamentWorkspace as texts } from "@/lib/texts";
 import DaysTab from "./DaysTab";
 import DisciplineTab from "./DisciplineTab";
 import MatchesTab from "./MatchesTab";
+import { seriesConfigOf } from "./seriesConfig";
 import PlayersTab from "./PlayersTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
@@ -124,6 +125,7 @@ export default function TournamentPanel({
           groups={groups}
           format={info?.format ?? null}
           matchShape={info?.matchShape ?? "FOOTBALL"}
+          series={seriesConfigOf(info)}
           entrant={entrantKind(squad)}
           matches={matches}
           suspendedIds={suspendedIds}
