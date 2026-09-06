@@ -17,6 +17,7 @@ export {
 export { activityPage } from "./activityPage";
 export { forgotPassword } from "./forgotPassword";
 export { notFoundPage } from "./notFoundPage";
+export { changePassword } from "./changePassword";
 export { pageTitles } from "./pageTitles";
 export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";

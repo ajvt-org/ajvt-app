@@ -5,6 +5,7 @@ export const auth = {
   memberCredentialsWrong: "رقم الهاتف أو كلمة المرور غير صحيحة",
   phoneTaken: "رقم الهاتف مسجّل مسبقاً",
   currentPasswordWrong: "كلمة المرور الحالية غير صحيحة",
+  passwordsDoNotMatch: "كلمتا المرور غير متطابقتين",
   passwordUnchanged: "كلمة المرور الجديدة يجب أن تختلف عن الحالية",
   passwordChanged: "تم تغيير كلمة المرور",
   mustChangePassword: "يجب تغيير كلمة المرور المؤقتة أولاً",
