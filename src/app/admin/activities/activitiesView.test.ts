@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   ACTIVITIES_VIEW_KEYS,
-  countForOption,
   DEFAULT_STAGE,
+  offeredAxes,
   matchesActivitiesView,
   readActivitiesView,
   writeActivitiesView,
@@ -151,27 +151,104 @@ describe("what a chip says it would show", () => {
     activity({ id: "t1", isTournament: true }),
     activity({ id: "t2", isTournament: true, isOpen: false }),
     activity({ id: "v1", isVolunteer: true }),
+    activity({ id: "p1", isOpen: false }),
   ];
 
+  const axis = (activities: Activity[], filters: ActivitiesView, key: string) =>
+    offeredAxes(activities, filters).find((a) => a.key === key);
+
+  const countOf = (activities: Activity[], filters: ActivitiesView, key: string, value: string) =>
+    axis(activities, filters, key)?.options.find((o) => o.value === value)?.count;
+
   it("counts what picking it would leave", () => {
-    expect(countForOption(rows, view(), "type", "tournament")).toBe(2);
-    expect(countForOption(rows, view(), "type", "volunteer")).toBe(1);
-    expect(countForOption(rows, view(), "type", "")).toBe(3);
+    expect(countOf(rows, view(), "type", "tournament")).toBe(2);
+    expect(countOf(rows, view(), "type", "volunteer")).toBe(1);
+    expect(countOf(rows, view(), "type", "")).toBe(4);
   });
 
   it("counts against the filters already chosen, not the whole list", () => {
-    const open = view({ state: "open" });
-
-    expect(countForOption(rows, open, "type", "tournament")).toBe(1);
+    expect(countOf(rows, view({ state: "open" }), "type", "tournament")).toBe(1);
   });
 
   it("says nothing would be left rather than leaving the reader to find out", () => {
-    expect(countForOption(rows, view({ state: "closed" }), "type", "volunteer")).toBe(0);
+    expect(countOf(rows, view({ state: "closed" }), "type", "volunteer")).toBe(0);
   });
 
   it("does not let the axis being counted narrow itself", () => {
+    expect(countOf(rows, view({ type: "volunteer" }), "type", "tournament")).toBe(2);
+  });
+});
+
+describe("which filters are worth offering", () => {
+  const view = (over: Partial<ActivitiesView> = {}): ActivitiesView => ({
+    q: "",
+    type: "",
+    state: "",
+    stage: "all",
+    waiting: "",
+    ...over,
+  });
+
+  const keys = (activities: Activity[], filters = view()) =>
+    offeredAxes(activities, filters).map((a) => a.key);
+
+  const optionOf = (activities: Activity[], filters: ActivitiesView, key: string, value: string) =>
+    offeredAxes(activities, filters)
+      .find((a) => a.key === key)
+      ?.options.find((o) => o.value === value);
+
+  it("drops an axis whose every option gives the list it already shows", () => {
+    const allOpenTournaments = [
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "t2", isTournament: true }),
+    ];
+
+    expect(keys(allOpenTournaments)).toEqual([]);
+  });
+
+  it("keeps an axis that can actually narrow the list", () => {
+    const mixed = [
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "p1" }),
+      activity({ id: "c1", isOpen: false }),
+    ];
+
+    expect(keys(mixed)).toEqual(["type", "state"]);
+  });
+
+  it("keeps the stage axis only when something has finished", () => {
+    const running = [activity({ id: "a1" })];
+    const withFinished = [
+      activity({ id: "a1" }),
+      activity({
+        id: "a2",
+        startsAt: "2020-01-01T00:00:00.000Z",
+        endsAt: "2020-01-02T00:00:00.000Z",
+      }),
+    ];
+
+    expect(keys(running, view({ stage: "current" }))).not.toContain("stage");
+    expect(keys(withFinished, view({ stage: "current" }))).toContain("stage");
+  });
+
+  it("never takes away the row a reader has already pressed", () => {
+    const rowsWithNoCampaign = [activity({ id: "t1", isTournament: true })];
+
+    expect(keys(rowsWithNoCampaign, view({ type: "volunteer" }))).toContain("type");
+  });
+
+  it("leaves the way out pressable when the chosen filter empties the list", () => {
+    const rowsWithNoCampaign = [activity({ id: "t1", isTournament: true })];
     const chosen = view({ type: "volunteer" });
 
-    expect(countForOption(rows, chosen, "type", "tournament")).toBe(2);
+    expect(optionOf(rowsWithNoCampaign, chosen, "type", "")?.usable).toBe(true);
+    expect(optionOf(rowsWithNoCampaign, chosen, "type", "volunteer")?.usable).toBe(true);
+  });
+
+  it("marks an option that would show nothing as not a way to see anything", () => {
+    const mixed = [activity({ id: "t1", isTournament: true }), activity({ id: "p1" })];
+
+    expect(optionOf(mixed, view(), "type", "volunteer")?.usable).toBe(false);
+    expect(optionOf(mixed, view(), "type", "tournament")?.usable).toBe(true);
   });
 });

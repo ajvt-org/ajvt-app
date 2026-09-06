@@ -17,13 +17,30 @@ export interface ActivitiesView {
 export interface FilterAxis {
   key: "type" | "state" | "stage";
   label: string;
+  anyValue: string;
   options: { value: string; label: string }[];
+}
+
+export interface AxisOption {
+  value: string;
+  label: string;
+  count: number;
+  usable: boolean;
+}
+
+export interface AxisView {
+  key: FilterAxis["key"];
+  label: string;
+  value: string;
+  anyValue: string;
+  options: AxisOption[];
 }
 
 export const FILTER_AXES: FilterAxis[] = [
   {
     key: "type",
     label: texts.filters.typeAxis,
+    anyValue: "",
     options: [
       { value: "", label: texts.filters.any },
       { value: "tournament", label: texts.filters.tournament },
@@ -34,6 +51,7 @@ export const FILTER_AXES: FilterAxis[] = [
   {
     key: "state",
     label: texts.filters.stateAxis,
+    anyValue: "",
     options: [
       { value: "", label: texts.filters.any },
       { value: "open", label: texts.filters.open },
@@ -43,6 +61,7 @@ export const FILTER_AXES: FilterAxis[] = [
   {
     key: "stage",
     label: texts.filters.stageAxis,
+    anyValue: "all",
     options: [
       { value: "all", label: texts.filters.anyStage },
       { value: "current", label: texts.filters.current },
@@ -103,13 +122,53 @@ export function matchesActivitiesView(
   return !q || activity.title.includes(q);
 }
 
-export function countForOption(
+function matchesAxisValue(
+  activity: Activity,
+  key: FilterAxis["key"],
+  value: string,
+  now: Date,
+): boolean {
+  if (key === "type") return matchesType(activity, value);
+  if (key === "state") return matchesState(activity, value);
+  return matchesStage(activity, value, now);
+}
+
+function axisView(
   activities: Activity[],
   view: ActivitiesView,
-  axis: FilterAxis["key"],
-  value: string,
+  axis: FilterAxis,
+  now: Date,
+): AxisView {
+  const released = activities.filter((activity) =>
+    matchesActivitiesView(activity, { ...view, [axis.key]: axis.anyValue }, now),
+  );
+  const counts = new Map(axis.options.map((option) => [option.value, 0]));
+  for (const activity of released) {
+    for (const option of axis.options) {
+      if (matchesAxisValue(activity, axis.key, option.value, now)) {
+        counts.set(option.value, (counts.get(option.value) ?? 0) + 1);
+      }
+    }
+  }
+  const chosen = view[axis.key];
+  const options = axis.options.map((option) => {
+    const count = counts.get(option.value) ?? 0;
+    return { ...option, count, usable: count > 0 || option.value === chosen };
+  });
+  return { key: axis.key, label: axis.label, value: chosen, anyValue: axis.anyValue, options };
+}
+
+function isWorthOffering(axis: AxisView): boolean {
+  const whole = axis.options.find((option) => option.value === axis.anyValue)?.count ?? 0;
+  const chosen = axis.options.find((option) => option.value === axis.value);
+  if (axis.value !== axis.anyValue && chosen?.count !== whole) return true;
+  return axis.options.some((option) => option.count > 0 && option.count < whole);
+}
+
+export function offeredAxes(
+  activities: Activity[],
+  view: ActivitiesView,
   now = new Date(),
-): number {
-  const asked = { ...view, [axis]: value };
-  return activities.filter((activity) => matchesActivitiesView(activity, asked, now)).length;
+): AxisView[] {
+  return FILTER_AXES.map((axis) => axisView(activities, view, axis, now)).filter(isWorthOffering);
 }
