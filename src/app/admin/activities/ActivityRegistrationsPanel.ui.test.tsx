@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ActivityRegistrationsPanel from "./ActivityRegistrationsPanel";
 import type { MemberOption, Registration } from "./activityTypes";
-import { activityRegistrants as texts } from "@/lib/texts";
+import { activityRegistrants as texts, filterSheet } from "@/lib/texts";
 
 const onRegister = vi.fn();
 const onUnregister = vi.fn();
@@ -260,6 +260,7 @@ describe("the list of registrants", () => {
 
 const SHANAQITA = { id: "t1", name: "الشناقطة" };
 const SAHEL = { id: "t2", name: "أهل الساحل" };
+const BADRIYIN = { id: "t3", name: "البدريين" };
 
 function player(id: string, fullName: string, team: Registration["team"]): Registration {
   return registration({
@@ -269,17 +270,25 @@ function player(id: string, fullName: string, team: Registration["team"]): Regis
   });
 }
 
-describe("looking at one team's registrants", () => {
-  it("offers no chips at all when the activity has no teams", () => {
+async function pickTeams(...labels: string[]) {
+  await userEvent.click(screen.getByRole("button", { name: texts.filterByTeam }));
+  for (const label of labels) {
+    await userEvent.click(screen.getByLabelText(label));
+  }
+  await userEvent.click(screen.getByRole("button", { name: filterSheet.done }));
+}
+
+describe("looking at several teams' registrants", () => {
+  it("offers no filter at all when the activity has no teams", () => {
     show([], [registration()]);
 
-    expect(screen.queryByRole("group", { name: "تصفية حسب الفريق" })).toBeNull();
+    expect(screen.queryByRole("button", { name: texts.filterByTeam })).toBeNull();
   });
 
-  it("offers no chips on a singles tournament, where every chip is one person", () => {
+  it("offers no filter on a singles tournament, where every team is one person", () => {
     show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL], true);
 
-    expect(screen.queryByRole("group", { name: texts.filterByTeam })).toBeNull();
+    expect(screen.queryByRole("button", { name: texts.filterByTeam })).toBeNull();
   });
 
   it("stops naming a team of one beside the person it is named after", () => {
@@ -296,29 +305,91 @@ describe("looking at one team's registrants", () => {
     expect(screen.queryByPlaceholderText(texts.searchRegistrants)).toBeNull();
   });
 
-  it("offers every team, one nobody joined included, and having none", () => {
+  it("says every team is shown while nothing is picked, and stays one row", () => {
     show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
 
-    const chips = screen.getByRole("group", { name: "تصفية حسب الفريق" });
+    expect(
+      within(screen.getByRole("button", { name: texts.filterByTeam })).getByText(texts.allTeams),
+    ).toBeDefined();
+  });
 
-    for (const label of ["كل الفرق", "الشناقطة", "أهل الساحل", "بلا فريق"]) {
-      expect(within(chips).getByRole("button", { name: label })).toBeDefined();
+  it("offers every team, one nobody joined included, and having none", async () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
+
+    await userEvent.click(screen.getByRole("button", { name: texts.filterByTeam }));
+
+    for (const label of ["الشناقطة", "أهل الساحل", texts.noTeam]) {
+      expect(screen.getByLabelText(label)).toBeDefined();
     }
+    expect(screen.queryByLabelText(texts.allTeams)).toBeNull();
   });
 
   it("keeps only the players of the team picked", async () => {
     show([], [player("r1", "محمد", SHANAQITA), player("r2", "سالم", SAHEL)], [SHANAQITA, SAHEL]);
 
-    await userEvent.click(screen.getByRole("button", { name: "الشناقطة" }));
+    await pickTeams("الشناقطة");
 
     expect(screen.getByText("محمد")).toBeDefined();
     expect(screen.queryByText("سالم")).toBeNull();
   });
 
+  it("shows the union of the teams picked", async () => {
+    show(
+      [],
+      [
+        player("r1", "محمد", SHANAQITA),
+        player("r2", "سالم", SAHEL),
+        player("r3", "أحمد", BADRIYIN),
+      ],
+      [SHANAQITA, SAHEL, BADRIYIN],
+    );
+
+    await pickTeams("الشناقطة", "أهل الساحل");
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.getByText("سالم")).toBeDefined();
+    expect(screen.queryByText("أحمد")).toBeNull();
+  });
+
+  it("takes having no team beside a team rather than instead of it", async () => {
+    show(
+      [],
+      [player("r1", "محمد", SHANAQITA), player("r2", "سالم", SAHEL), player("r3", "أحمد", null)],
+      [SHANAQITA, SAHEL],
+    );
+
+    await pickTeams("الشناقطة", texts.noTeam);
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.getByText("أحمد")).toBeDefined();
+    expect(screen.queryByText("سالم")).toBeNull();
+  });
+
+  it("names what is picked on the closed control", async () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
+
+    await pickTeams("الشناقطة", "أهل الساحل");
+
+    const trigger = screen.getByRole("button", { name: texts.filterByTeam });
+    expect(within(trigger).getByText("الشناقطة، أهل الساحل")).toBeDefined();
+  });
+
+  it("goes back to every team when the filter is cleared", async () => {
+    show([], [player("r1", "محمد", SHANAQITA), player("r2", "سالم", SAHEL)], [SHANAQITA, SAHEL]);
+
+    await pickTeams("الشناقطة");
+    await userEvent.click(screen.getByRole("button", { name: texts.filterByTeam }));
+    await userEvent.click(screen.getByText(filterSheet.clear));
+    await userEvent.click(screen.getByRole("button", { name: filterSheet.done }));
+
+    expect(screen.getByText("محمد")).toBeDefined();
+    expect(screen.getByText("سالم")).toBeDefined();
+  });
+
   it("finds the people who still have no team", async () => {
     show([], [player("r1", "محمد", SHANAQITA), player("r2", "سالم", null)], [SHANAQITA]);
 
-    await userEvent.click(screen.getByRole("button", { name: "بلا فريق" }));
+    await pickTeams(texts.noTeam);
 
     expect(screen.getByText("سالم")).toBeDefined();
     expect(screen.queryByText("محمد")).toBeNull();
@@ -327,19 +398,19 @@ describe("looking at one team's registrants", () => {
   it("says nobody matched when the team picked is empty", async () => {
     show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL]);
 
-    await userEvent.click(screen.getByRole("button", { name: "أهل الساحل" }));
+    await pickTeams("أهل الساحل");
 
     expect(screen.getByText("لا يوجد مسجل مطابق")).toBeDefined();
   });
 
-  it("searches inside the team it is filtered to", async () => {
+  it("searches inside the teams it is filtered to", async () => {
     show(
       [],
       [player("r1", "أحمد ولد محمد", SHANAQITA), player("r2", "أحمد ولد سالم", SAHEL)],
       [SHANAQITA, SAHEL],
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "الشناقطة" }));
+    await pickTeams("الشناقطة");
     await userEvent.type(screen.getByPlaceholderText(/ابحث في المسجلين/), "احمد");
 
     expect(screen.getByText("أحمد ولد محمد")).toBeDefined();
