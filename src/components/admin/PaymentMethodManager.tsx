@@ -62,7 +62,7 @@ export default function PaymentMethodManager() {
           onChange={(e) => setName(e.target.value)}
           maxLength={30}
           placeholder={texts.newPlaceholder}
-          className="input flex-1 min-w-0"
+          className="input input-sm flex-1 min-w-0"
           aria-label={texts.newLabel}
         />
         <button type="submit" disabled={busy || !name.trim()} className="btn btn-sm btn-ghost">
