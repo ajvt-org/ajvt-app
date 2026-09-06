@@ -10,24 +10,23 @@ export type MatchShapeValue = "FOOTBALL" | "SERIES";
 export interface MatchShapeChoice {
   value: MatchShapeValue;
   label: string;
-  hint: string;
   icon: IconName;
 }
 
 export const MATCH_SHAPES: MatchShapeChoice[] = [
-  {
-    value: "FOOTBALL",
-    label: texts.shapes.FOOTBALL,
-    hint: texts.shapeHints.FOOTBALL,
-    icon: "ball",
-  },
-  {
-    value: "SERIES",
-    label: texts.shapes.SERIES,
-    hint: texts.shapeHints.SERIES,
-    icon: "dice",
-  },
+  { value: "FOOTBALL", label: texts.shapes.FOOTBALL, icon: "ball" },
+  { value: "SERIES", label: texts.shapes.SERIES, icon: "dice" },
 ];
+
+function LockNote({ children }: { children: string }) {
+  return (
+    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+      <IconLabel name="lock" size={11}>
+        {children}
+      </IconLabel>
+    </p>
+  );
+}
 
 export function matchShapeChoice(value: string): MatchShapeChoice | undefined {
   return MATCH_SHAPES.find((shape) => shape.value === value);
@@ -134,13 +133,8 @@ export default function TournamentSetupFields({
                 disabled={fixturesExist}
                 className="w-4 h-4 mt-0.5"
               />
-              <span className="min-w-0">
-                <span className="block text-sm font-bold" style={{ color: "var(--text-main)" }}>
-                  <IconLabel name={shape.icon}>{shape.label}</IconLabel>
-                </span>
-                <span className="block text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-                  {shape.hint}
-                </span>
+              <span className="min-w-0 text-sm font-bold" style={{ color: "var(--text-main)" }}>
+                <IconLabel name={shape.icon}>{shape.label}</IconLabel>
               </span>
             </label>
           ))}
@@ -165,6 +159,7 @@ export default function TournamentSetupFields({
           <option value="KNOCKOUT">{texts.formats.KNOCKOUT}</option>
           <option value="GROUPS_THEN_KNOCKOUT">{texts.formats.GROUPS_THEN_KNOCKOUT}</option>
         </select>
+        {fixturesExist && <LockNote>{texts.shapeLocked}</LockNote>}
       </div>
 
       <div>
@@ -184,6 +179,12 @@ export default function TournamentSetupFields({
                 const one = e.target.checked ? "1" : "";
                 onMinTeamSize(one);
                 onMaxTeamSize(one);
+                // A squad of one has no team, so the village cap has nothing to
+                // cap. Clear it rather than leave a stored value nothing shows.
+                if (e.target.checked) {
+                  onOrganisedByHomeVillage(false);
+                  onOutsidePlayerLimit("");
+                }
               }}
             />
             <span style={{ color: "var(--text-main)" }}>{texts.singles}</span>
@@ -207,25 +208,33 @@ export default function TournamentSetupFields({
             />
           </div>
         )}
+        {matchesPlayed && <LockNote>{texts.squadLocked}</LockNote>}
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-bold">
-        <input
-          id="tournament-organised-by-home-village"
-          type="checkbox"
-          checked={organisedByHomeVillage}
-          onChange={(e) => onOrganisedByHomeVillage(e.target.checked)}
-        />
-        <span style={{ color: "var(--text-main)" }}>{texts.organisedByHomeVillage}</span>
-      </label>
+      {/* The limit caps players from outside the village that a team may field.
+          A singles squad has no team, so neither the toggle nor the cap means
+          anything there. */}
+      {!singles && (
+        <>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              id="tournament-organised-by-home-village"
+              type="checkbox"
+              checked={organisedByHomeVillage}
+              onChange={(e) => onOrganisedByHomeVillage(e.target.checked)}
+            />
+            <span style={{ color: "var(--text-main)" }}>{texts.organisedByHomeVillage}</span>
+          </label>
 
-      {organisedByHomeVillage && (
-        <NumberField
-          id="tournament-outside-player-limit"
-          label={texts.outsidePlayerLimit}
-          value={outsidePlayerLimit}
-          onChange={onOutsidePlayerLimit}
-        />
+          {organisedByHomeVillage && (
+            <NumberField
+              id="tournament-outside-player-limit"
+              label={texts.outsidePlayerLimit}
+              value={outsidePlayerLimit}
+              onChange={onOutsidePlayerLimit}
+            />
+          )}
+        </>
       )}
     </div>
   );
