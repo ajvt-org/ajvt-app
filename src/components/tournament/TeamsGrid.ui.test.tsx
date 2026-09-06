@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import TeamsGrid from "./TeamsGrid";
+import { publicTournament } from "@/lib/texts";
 
 function team(name: string, size: number, captainUserId: string | null = null) {
   return {
@@ -182,5 +183,79 @@ describe("opening a squad", () => {
     await userEvent.click(summary);
 
     expect(container.querySelector("details")!.open).toBe(false);
+  });
+});
+
+describe("following from the team card", () => {
+  const signedIn = () =>
+    vi.fn().mockResolvedValue({ ok: true, json: async () => ({ loggedIn: true }) });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const stars = () => screen.findAllByLabelText(publicTournament.entrant.team.follow);
+
+  it("gives every team a way to follow it", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    show([team("فريق النجم", 3), team("فريق الوحدة", 2)]);
+
+    expect(await stars()).toHaveLength(2);
+  });
+
+  it("gives a team nobody has joined one too", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    show([team("فريق الشباب", 0)]);
+
+    expect(await stars()).toHaveLength(1);
+  });
+
+  it("does not open the squad when the star is tapped", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    const { container } = show([team("فريق النجم", 3)]);
+    const star = (await stars())[0];
+
+    await userEvent.click(star);
+
+    expect(container.querySelector("details")!.open).toBe(false);
+  });
+
+  it("still opens the squad when the rest of the summary is tapped", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    const { container } = show([team("فريق النجم", 3)]);
+    await stars();
+
+    await userEvent.click(container.querySelector("summary")!);
+
+    expect(container.querySelector("details")!.open).toBe(true);
+  });
+
+  it("gives a singles entrant a star, named for a player", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    cleanup();
+    render(<TeamsGrid teams={[team("أحمد", 1), team("سالم", 1)]} entrant="player" />);
+
+    expect(await screen.findAllByLabelText(publicTournament.entrant.player.follow)).toHaveLength(2);
+  });
+
+  it("follows the entrant a singles player stands for, not the player", async () => {
+    const fetchMock = signedIn();
+    vi.stubGlobal("fetch", fetchMock);
+    cleanup();
+    render(<TeamsGrid teams={[team("أحمد", 1)]} entrant="player" />);
+    await screen.findAllByLabelText(publicTournament.entrant.player.follow);
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/teams/أحمد/follow");
+  });
+
+  it("leaves a squad shown inside a team card without stars of its own", async () => {
+    vi.stubGlobal("fetch", signedIn());
+    const { container } = show([team("فريق النجم", 3)]);
+    await stars();
+
+    await userEvent.click(container.querySelector("summary")!);
+
+    expect(container.querySelectorAll("li button")).toHaveLength(0);
+    expect(await stars()).toHaveLength(1);
   });
 });

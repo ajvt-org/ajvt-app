@@ -1,5 +1,6 @@
 import Icon from "@/components/Icon";
 import PlayerAvatar from "./PlayerAvatar";
+import FollowTeamButton from "./FollowTeamButton";
 import { captainFirst, isCaptain, isViewer } from "@/lib/squad";
 import { publicTournament as texts } from "@/lib/texts";
 
@@ -7,16 +8,19 @@ export type SquadPlayer = {
   id: string;
   fullName: string;
   photo: string | null;
+  teamId?: string;
 };
 
 export default function SquadList({
   players,
   captainId,
   viewerId = null,
+  follow = false,
 }: {
   players: SquadPlayer[];
   captainId: string | null;
   viewerId?: string | null;
+  follow?: boolean;
 }) {
   if (players.length === 0) {
     return (
@@ -55,6 +59,11 @@ export default function SquadList({
                 style={{ background: "var(--mint-600)", color: "white" }}
               >
                 <Icon name="captain" size={12} />
+              </span>
+            )}
+            {follow && player.teamId && (
+              <span className="ms-auto shrink-0">
+                <FollowTeamButton teamId={player.teamId} entrant="player" />
               </span>
             )}
           </li>

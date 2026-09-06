@@ -115,7 +115,6 @@ export default function StandingsTab({
           title={singleFlatTable ? null : groupTitle(group.groupId)}
           rows={group.standings}
           series={series}
-          showFollow={false}
         />
       ))}
     </div>

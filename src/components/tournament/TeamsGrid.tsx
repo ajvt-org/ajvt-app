@@ -2,6 +2,7 @@
 
 import Icon from "@/components/Icon";
 import TeamCardHead from "./TeamCardHead";
+import FollowTeamButton from "./FollowTeamButton";
 import SquadList, { type SquadPlayer } from "./SquadList";
 import { holdsViewer, viewerTeamFirst } from "@/lib/squad";
 import { useOpenTeam } from "@/hooks/useOpenTeam";
@@ -24,6 +25,14 @@ function cardStyle(mine: boolean) {
     : undefined;
 }
 
+function FollowTeam({ teamId }: { teamId: string }) {
+  return (
+    <span className="shrink-0" onClick={(e) => e.stopPropagation()}>
+      <FollowTeamButton teamId={teamId} />
+    </span>
+  );
+}
+
 export default function TeamsGrid({
   teams,
   viewerId = null,
@@ -39,10 +48,11 @@ export default function TeamsGrid({
     return (
       <SquadList
         players={viewerTeamFirst(teams, viewerId).flatMap((team) =>
-          team.members.map((member) => member.member),
+          team.members.map((entry) => ({ ...entry.member, teamId: team.id })),
         )}
         captainId={null}
         viewerId={viewerId}
+        follow
       />
     );
   }
@@ -56,6 +66,7 @@ export default function TeamsGrid({
             <div key={team.id} className="card p-3" style={cardStyle(mine)}>
               <p className={HEAD} style={{ color: "var(--text-main)" }}>
                 <TeamCardHead logo={team.logo} name={team.name} note={texts.noPlayers} />
+                <FollowTeam teamId={team.id} />
               </p>
             </div>
           );
@@ -80,6 +91,7 @@ export default function TeamsGrid({
                 name={team.name}
                 note={texts.playerCount(team.members.length)}
               />
+              <FollowTeam teamId={team.id} />
               <Icon name="chevronDown" size={14} className="disclosure-chevron" />
             </summary>
             <SquadList
