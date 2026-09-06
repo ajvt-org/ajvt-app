@@ -19,6 +19,7 @@ export type ActivityDetail = {
     maxTeamSize: number | null;
     organisedByHomeVillage: boolean;
     outsidePlayerLimit: number | null;
+    mvpVoteMinutes: number;
     isVolunteer: boolean;
     whatsappLink: string | null;
     registrations: {

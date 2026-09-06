@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import ConvertTournamentCard from "./ConvertTournamentCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
-import { convertTournament, tournamentSetup } from "@/lib/texts";
+import { convertTournament, mvpVote, tournamentSetup } from "@/lib/texts";
 
 const patch = vi.fn();
 
@@ -14,6 +14,7 @@ vi.mock("@/lib/api", () => ({
 function activity(
   isTournament: boolean,
   counts: { matches: number; playedMatches: number } = { matches: 0, playedMatches: 0 },
+  over: Partial<ActivityDetail["activity"]> = {},
 ): ActivityDetail["activity"] {
   return {
     id: "a1",
@@ -35,11 +36,13 @@ function activity(
     maxTeamSize: null,
     organisedByHomeVillage: false,
     outsidePlayerLimit: null,
+    mvpVoteMinutes: 120,
     isVolunteer: false,
     whatsappLink: null,
     registrations: [],
     teams: [],
     _count: { ...counts, groups: 0 },
+    ...over,
   };
 }
 
@@ -47,10 +50,16 @@ function disabled(label: string): boolean {
   return (screen.getByLabelText(label) as HTMLInputElement | HTMLSelectElement).disabled;
 }
 
-function show(isTournament = false, counts = { matches: 0, playedMatches: 0 }) {
+function show(
+  isTournament = false,
+  counts = { matches: 0, playedMatches: 0 },
+  over: Partial<ActivityDetail["activity"]> = {},
+) {
   cleanup();
   const onChanged = vi.fn();
-  render(<ConvertTournamentCard activity={activity(isTournament, counts)} onChanged={onChanged} />);
+  render(
+    <ConvertTournamentCard activity={activity(isTournament, counts, over)} onChanged={onChanged} />,
+  );
   return onChanged;
 }
 
@@ -84,6 +93,7 @@ describe("ConvertTournamentCard", () => {
         maxTeamSize: "2",
         organisedByHomeVillage: false,
         outsidePlayerLimit: "",
+        mvpVoteMinutes: 120,
       }),
     );
   });
@@ -110,6 +120,7 @@ describe("ConvertTournamentCard", () => {
         maxTeamSize: "1",
         organisedByHomeVillage: false,
         outsidePlayerLimit: "",
+        mvpVoteMinutes: 120,
       }),
     );
   });
@@ -163,5 +174,48 @@ describe("ConvertTournamentCard", () => {
     await waitFor(() =>
       expect(patch).toHaveBeenCalledWith("/api/admin/activities/a1", { isTournament: false }),
     );
+  });
+});
+
+describe("the vote duration", () => {
+  beforeEach(() => {
+    patch.mockReset();
+    patch.mockResolvedValue({});
+  });
+
+  it("is offered as one field in the settings, with no card and no save of its own", () => {
+    show(true);
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect((screen.getByLabelText(mvpVote.minutesLabel) as HTMLInputElement).value).toBe("120");
+    expect(screen.queryByText("حفظ المدة")).toBeNull();
+  });
+
+  it("stays editable while the format and the squad are locked", () => {
+    show(true, { matches: 4, playedMatches: 2 });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect((screen.getByLabelText(mvpVote.minutesLabel) as HTMLInputElement).disabled).toBe(false);
+    expect(disabled(tournamentSetup.minTeamSize)).toBe(true);
+  });
+
+  it("is not offered to a tournament whose matches are a series", () => {
+    show(true, { matches: 0, playedMatches: 0 }, { matchShape: "SERIES" });
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+
+    expect(screen.queryByLabelText(mvpVote.minutesLabel)).toBeNull();
+  });
+
+  it("goes up with the rest of the settings", async () => {
+    show(true);
+
+    fireEvent.click(screen.getByText("تعديل الإعدادات"));
+    fireEvent.change(screen.getByLabelText(mvpVote.minutesLabel), { target: { value: "45" } });
+    fireEvent.click(screen.getByText("حفظ الإعدادات"));
+
+    await waitFor(() => expect(patch.mock.calls[0][1]).toMatchObject({ mvpVoteMinutes: 45 }));
   });
 });
