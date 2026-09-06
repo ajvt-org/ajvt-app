@@ -22,14 +22,14 @@ export default function ActivityHero({
             src={toThumbUrl(`/api/files/activity/${photo}`)}
             alt=""
             aria-hidden="true"
-            className="activity-hero-blur"
+            className="photo-fill-blur"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/files/activity/${photo}`}
             alt={title}
             decoding="async"
-            className="activity-hero-img"
+            className="photo-fill-img"
           />
         </>
       ) : (

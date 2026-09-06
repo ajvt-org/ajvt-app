@@ -90,6 +90,23 @@ describe("the text beside an avatar", () => {
     expect(screen.getByRole("button", { name: photoUpload.change })).toBeTruthy();
   });
 
+  it("shows the whole picture in the wide frame, over a blurred copy of itself", () => {
+    const { container } = render(
+      <PhotoUpload photo="a.webp" variant="cover" onUpload={vi.fn()} label="غلاف" />,
+    );
+
+    expect(container.querySelector("img.photo-fill-img")).toBeTruthy();
+    expect(container.querySelector("img.photo-fill-blur")).toBeTruthy();
+    expect(container.querySelector("img.object-cover")).toBeNull();
+  });
+
+  it("keeps the small frame cropped, since a contained picture is unreadable there", () => {
+    const { container } = render(<PhotoUpload photo="a.webp" onUpload={vi.fn()} label="صورة" />);
+
+    expect(container.querySelector("img.object-cover")).toBeTruthy();
+    expect(container.querySelector("img.photo-fill-img")).toBeNull();
+  });
+
   it("says the action on the cover strip rather than under the frame", () => {
     render(<PhotoUpload photo="a.webp" variant="cover" onUpload={vi.fn()} label="غلاف" />);
 

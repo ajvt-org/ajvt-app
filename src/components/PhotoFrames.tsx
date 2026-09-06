@@ -18,11 +18,13 @@ function Picture({
   label,
   placeholderIcon,
   size,
+  whole,
 }: {
   displayUrl: string | null;
   label: string;
   placeholderIcon: IconName;
   size: number;
+  whole?: boolean;
 }) {
   if (!displayUrl) {
     return (
@@ -31,8 +33,18 @@ function Picture({
       </span>
     );
   }
-  /* eslint-disable-next-line @next/next/no-img-element */
-  return <img src={displayUrl} alt={label} className="w-full h-full object-cover" />;
+  if (!whole) {
+    /* eslint-disable-next-line @next/next/no-img-element */
+    return <img src={displayUrl} alt={label} className="w-full h-full object-cover" />;
+  }
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={displayUrl} alt="" aria-hidden="true" className="photo-fill-blur" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={displayUrl} alt={label} className="photo-fill-img" />
+    </>
+  );
 }
 
 function Frame({
@@ -107,14 +119,19 @@ export function CoverFrame(props: FrameProps) {
       onPick={props.onPick}
       uploading={props.uploading}
       label={props.label}
-      className="relative w-full h-32 rounded-xl overflow-hidden flex items-center justify-center"
-      style={{ background: "var(--mint-100)", border: "2px dashed var(--mint-300)" }}
+      className="relative w-full rounded-xl overflow-hidden flex items-center justify-center"
+      style={{
+        aspectRatio: "16 / 10",
+        background: "var(--mint-100)",
+        border: "2px dashed var(--mint-300)",
+      }}
     >
       <Picture
         displayUrl={props.displayUrl}
         label={props.label}
         placeholderIcon={props.placeholderIcon}
         size={30}
+        whole
       />
       {!props.locked && (
         <span
