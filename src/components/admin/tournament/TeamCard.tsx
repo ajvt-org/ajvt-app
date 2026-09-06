@@ -6,7 +6,12 @@ import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
 import type { RosterMember, Team, TeamMemberEntry } from "./types";
-import { playerOverOutsideLimit, type SquadBreach, type SquadSettings } from "@/lib/squadRules";
+import {
+  outsideShare,
+  playerOverOutsideLimit,
+  type SquadBreach,
+  type SquadSettings,
+} from "@/lib/squadRules";
 
 export default function TeamCard({
   team,
@@ -53,7 +58,11 @@ export default function TeamCard({
         team={team}
         shownName={shownName}
         squad={settings.squad}
-        breaches={breaches}
+        outside={outsideShare(
+          members.map((entry) => ({ id: entry.member.id, village: entry.member.village })),
+          team,
+          settings,
+        )}
         busy={busy}
         onToggle={onToggle}
         onDeleteTeam={onDeleteTeam}
