@@ -1,7 +1,11 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import KeyHint from "@/components/admin/KeyHint";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
+import { reviewQueue as texts } from "@/lib/texts";
+import { useFinePointer } from "@/lib/useFinePointer";
+import { REVIEW_KEYS } from "./useReviewShortcuts";
 import type { Member } from "./types";
 
 function RejectPicker({
@@ -24,7 +28,7 @@ function RejectPicker({
         style={{ color: "var(--text-main)" }}
         htmlFor="dash-field-3"
       >
-        سبب رفض الدفع — سيظهر للعضو (أو اضغط رقم 1-{REJECTION_REASONS.length} مباشرة)
+        {texts.rejectReasonLabel}
       </label>
       <select
         id="dash-field-3"
@@ -49,7 +53,7 @@ function RejectPicker({
             border: "1px solid var(--mint-200)",
           }}
         >
-          إلغاء
+          {texts.cancel}
         </button>
         <button
           onClick={onConfirm}
@@ -57,7 +61,7 @@ function RejectPicker({
           className="btn text-sm font-bold flex-1"
           style={{ background: "#dc2626", color: "white" }}
         >
-          {loading ? "..." : "تأكيد رفض الدفع"}
+          {loading ? texts.busy : texts.confirmReject}
         </button>
       </div>
     </div>
@@ -86,19 +90,21 @@ export default function MemberDecision({
   onReject: () => void;
 }) {
   const decidable = member.status === "PENDING" || member.status === "ACTIVE";
+  const keyed = useFinePointer();
 
   return (
     <>
-      {decidable && (
-        <p className="text-xs text-center" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="list">اختصارات: A قبول الدفع — R رفض الدفع — N التالي</IconLabel>
-        </p>
-      )}
-
       {member.status === "PENDING" && !showRejectPicker && (
         <div className="grid grid-cols-2 gap-3">
           <button onClick={onApprove} disabled={loading} className="btn btn-primary text-sm">
-            {loading ? "..." : <IconLabel name="check">قبول الدفع</IconLabel>}
+            {loading ? (
+              texts.busy
+            ) : (
+              <>
+                <IconLabel name="check">{texts.accept}</IconLabel>
+                {keyed && <KeyHint>{REVIEW_KEYS.accept.toUpperCase()}</KeyHint>}
+              </>
+            )}
           </button>
           <button
             onClick={onOpenRejectPicker}
@@ -106,7 +112,8 @@ export default function MemberDecision({
             className="btn text-sm font-bold"
             style={{ background: "#dc2626", color: "white" }}
           >
-            <IconLabel name="close">رفض الدفع</IconLabel>
+            <IconLabel name="close">{texts.reject}</IconLabel>
+            {keyed && <KeyHint>{REVIEW_KEYS.reject.toUpperCase()}</KeyHint>}
           </button>
         </div>
       )}
@@ -118,7 +125,7 @@ export default function MemberDecision({
           className="btn w-full text-sm font-bold"
           style={{ background: "#fee2e2", color: "#991b1b" }}
         >
-          تغيير الدفع إلى مرفوض
+          {texts.markRejected}
         </button>
       )}
 
@@ -136,11 +143,11 @@ export default function MemberDecision({
         <>
           {member.rejectionReason && (
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              سبب رفض الدفع: <span className="font-bold">{member.rejectionReason}</span>
+              {texts.rejectionReason} <span className="font-bold">{member.rejectionReason}</span>
             </p>
           )}
           <button onClick={onApprove} disabled={loading} className="btn btn-primary w-full text-sm">
-            {loading ? "..." : "تغيير الدفع إلى معتمد"}
+            {loading ? texts.busy : texts.markAccepted}
           </button>
         </>
       )}
