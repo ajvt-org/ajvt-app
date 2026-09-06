@@ -43,6 +43,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/quizRankingServer.ts",
   "src/lib/quizRankingSql.ts",
   "src/lib/quizRecapServer.ts",
+  "src/lib/quizTutorialServer.ts",
   "src/lib/receiptsServer.ts",
   "src/lib/samePersonServer.ts",
   "src/lib/settingsServer.ts",
