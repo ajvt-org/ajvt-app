@@ -40,15 +40,27 @@ const scorelinesIn = (row: HTMLElement) =>
   [...row.querySelectorAll('[dir="rtl"]')].map((node) => node.textContent);
 
 describe("a day that holds matches", () => {
-  it("keeps the venue with the fixture rather than beside the time", () => {
-    show(day({ matches: [match()] }));
+  it("lifts the ground to the day heading when every match is played on it", () => {
+    show(day({ matches: [match(), match({ id: "m2" })] }));
 
-    const time = screen.getByLabelText(texts.changeTime);
     const venue = screen.getByText("ملعب القرية");
 
-    expect(time.parentElement).not.toBe(venue.parentElement);
-    expect(venue.closest("li")?.contains(time)).toBe(true);
-    expect(venue.closest("div")?.textContent).toContain("النجم");
+    expect(venue.closest(".match-day-head")).not.toBeNull();
+    expect(venue.closest("li")).toBeNull();
+  });
+
+  it("keeps a ground on the row where that match is played somewhere else", () => {
+    show(day({ matches: [match(), match({ id: "m2", venue: "ملعب المدرسة" })] }));
+
+    expect(screen.getByText("ملعب القرية").closest("li")).not.toBeNull();
+    expect(screen.getByText("ملعب المدرسة").closest("li")).not.toBeNull();
+    expect(screen.queryByText("ملعب القرية")!.closest(".match-day-head")).toBeNull();
+  });
+
+  it("leaves the ground on the row when a match on the day has none", () => {
+    show(day({ matches: [match(), match({ id: "m2", venue: null })] }));
+
+    expect(screen.getByText("ملعب القرية").closest("li")).not.toBeNull();
   });
 
   it("keeps the result with the fixture too", () => {
@@ -249,12 +261,10 @@ describe("what a day card does with the width it takes", () => {
     expect(row.children.length).toBe(3);
   });
 
-  it("carries the round the match belongs to, next to the ground", () => {
+  it("carries the round the match belongs to on the row", () => {
     show(day({ matches: [match({ round: "الجولة الأولى" })] }));
 
-    const meta = screen.getByText("الجولة الأولى").parentElement!;
-
-    expect(meta.textContent).toContain("ملعب القرية");
+    expect(screen.getByText("الجولة الأولى").closest("li")).not.toBeNull();
   });
 
   it("holds every match of the day in the order it was given", () => {

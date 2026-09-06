@@ -5,23 +5,26 @@ import LockNote from "@/components/LockNote";
 import { daysTab as texts, lists } from "@/lib/texts";
 import DayHeading from "./DayHeading";
 import DayMatchRow from "./DayMatchRow";
-import { doubleBookedTeams, type TournamentDayRow } from "./daysTypes";
+import { doubleBookedTeams, sharedVenue, type TournamentDayRow } from "./daysTypes";
 
 export default function DayCard({
   day,
   busy,
   onSetRest,
   onRemove,
+  onInsertRestAfter,
   onRetime,
 }: {
   day: TournamentDayRow;
   busy: boolean;
   onSetRest: (isRest: boolean) => void;
   onRemove: () => void;
+  onInsertRestAfter?: () => void;
   onRetime: (matchId: string, time: string) => void;
 }) {
   const conflicts = doubleBookedTeams(day);
   const locked = day.matches.length > 0;
+  const venue = sharedVenue(day);
 
   return (
     <div
@@ -30,7 +33,7 @@ export default function DayCard({
     >
       <div className="match-day-head flex items-center gap-2 flex-wrap">
         <DayHeading position={day.position} date={day.date} isRest={day.isRest} />
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => onSetRest(!day.isRest)}
             disabled={busy || locked}
@@ -49,7 +52,26 @@ export default function DayCard({
               <IconLabel name="trash">{texts.removeDay}</IconLabel>
             </button>
           </span>
+          {onInsertRestAfter && (
+            <button
+              onClick={onInsertRestAfter}
+              disabled={busy}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold"
+              style={{
+                background: "transparent",
+                color: "var(--mint-700)",
+                border: "1px solid var(--mint-200)",
+              }}
+            >
+              <IconLabel name="plus">{texts.addRestAfter}</IconLabel>
+            </button>
+          )}
         </div>
+        {venue && (
+          <span className="text-xs w-full" style={{ color: "var(--text-muted)" }}>
+            <IconLabel name="pin">{venue}</IconLabel>
+          </span>
+        )}
       </div>
 
       {locked && <LockNote>{texts.dayLocked}</LockNote>}
@@ -72,6 +94,7 @@ export default function DayCard({
               key={match.id}
               match={match}
               busy={busy}
+              dayVenue={venue}
               onRetime={(time) => onRetime(match.id, time)}
             />
           ))}
