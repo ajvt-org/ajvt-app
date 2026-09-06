@@ -38,10 +38,19 @@ const match = (over: Partial<Match> = {}): Match => ({
   ...over,
 });
 
-const teams: Team[] = [
-  { id: "t1", name: "فريق 1", logo: null, groupId: null, members: [] },
-  { id: "t2", name: "فريق 2", logo: null, groupId: null, members: [] },
-];
+const team = (id: string, name: string): Team => ({
+  id,
+  name,
+  autoNamed: false,
+  fromHomeVillage: true,
+  logo: null,
+  captainUserId: null,
+  groupId: null,
+  group: null,
+  members: [],
+});
+
+const teams: Team[] = [team("t1", "فريق 1"), team("t2", "فريق 2")];
 
 function show(matches: Match[]) {
   cleanup();
