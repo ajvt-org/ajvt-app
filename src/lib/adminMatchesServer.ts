@@ -4,6 +4,16 @@ import { accountNamed, accountPerson } from "./person";
 import { settleMvpVotes } from "./mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "./mvpVote";
 import { matchSideTeams } from "./matchSides";
+import { isFootball } from "./matchShape";
+import { standingOf } from "./matchSeriesServer";
+
+interface SeriesActivity {
+  matchShape: MatchShape;
+  partsPerMatch: number | null;
+  matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
+  partsToWin: number | null;
+  partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
+}
 
 const TEAM_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
@@ -48,6 +58,18 @@ export const MATCH_INCLUDE = {
       user: { select: { fullName: true, photo: true } },
     },
   },
+  parts: {
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      order: true,
+      abandoned: true,
+      outcome: true,
+      sideAPoints: true,
+      sideBPoints: true,
+      sideAColour: true,
+    },
+  },
   mvpVote: {
     select: {
       id: true,
@@ -67,12 +89,15 @@ export const MATCH_INCLUDE = {
 
 export type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
 
-export function flatMatch(match: LoadedMatch, matchShape: MatchShape) {
-  const sides = matchSideTeams(match, matchShape);
+export function flatMatch(match: LoadedMatch, activity: SeriesActivity) {
+  const sides = matchSideTeams(match, activity.matchShape);
   return {
     ...match,
     firstTeam: sides.first,
     secondTeam: sides.second,
+    series: isFootball(activity.matchShape)
+      ? null
+      : standingOf(activity, match.parts, match.isKnockout),
     manOfTheMatch: match.manOfTheMatchUser
       ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
       : null,
@@ -107,16 +132,27 @@ export async function listMatches(activityId: string) {
     read(),
     prisma.activity.findUnique({
       where: { id: activityId },
-      select: { mvpVoteMinutes: true, matchShape: true },
+      select: {
+        mvpVoteMinutes: true,
+        matchShape: true,
+        partsPerMatch: true,
+        matchEnding: true,
+        partsToWin: true,
+        partDecision: true,
+      },
     }),
   ]);
   const applied = await settleMvpVotes(matches);
-  const matchShape = activity?.matchShape ?? "FOOTBALL";
+  const series: SeriesActivity = activity ?? {
+    matchShape: "FOOTBALL",
+    partsPerMatch: null,
+    matchEnding: null,
+    partsToWin: null,
+    partDecision: null,
+  };
 
   return {
-    matches: (applied.size > 0 ? await read() : matches).map((match) =>
-      flatMatch(match, matchShape),
-    ),
+    matches: (applied.size > 0 ? await read() : matches).map((match) => flatMatch(match, series)),
     mvpVoteMinutes: activity?.mvpVoteMinutes ?? DEFAULT_MVP_VOTE_MINUTES,
   };
 }
