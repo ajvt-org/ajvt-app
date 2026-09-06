@@ -15,6 +15,8 @@ export const activityRegistrants = {
   noneMatch: "لا يوجد مسجل مطابق",
   filterByTeam: "تصفية حسب الفريق",
   allTeams: "كل الفرق",
+  pickedSeparator: "، ",
+  andMoreTeams: (count: number) => `و${count} غيرها`,
   searchToBegin: "اكتب اسماً أو رقم هاتف للبحث عن عضو",
   alreadyRegistered: "مسجَّل بالفعل",
   addedBySelf: "سجّل نفسه",

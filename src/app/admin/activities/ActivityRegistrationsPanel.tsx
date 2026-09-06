@@ -8,7 +8,8 @@ import ConfirmedRegistrantCard from "./ConfirmedRegistrantCard";
 import RegistrantSection from "./RegistrantSection";
 import AddMemberToActivityForm from "./AddMemberToActivityForm";
 import FilterChips from "./FilterChips";
-import { ALL_TEAMS, inTeam, teamFilterOptions } from "./registrantFilter";
+import TeamFilter from "./TeamFilter";
+import { NOTHING_PICKED, hasTeamFilter, inTeam } from "./registrantFilter";
 import { NEWEST_FIRST, byRequestedDate, sortOptions } from "./registrationRecord";
 import type { Registration, MemberOption } from "./activityTypes";
 
@@ -44,7 +45,7 @@ export default function ActivityRegistrationsPanel({
   onUnregister: (activityId: string, userId: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [team, setTeam] = useState(ALL_TEAMS);
+  const [team, setTeam] = useState(NOTHING_PICKED);
   const [order, setOrder] = useState(NEWEST_FIRST);
 
   const tokens = searchTokens(search);
@@ -86,12 +87,7 @@ export default function ActivityRegistrationsPanel({
       />
 
       {!singles && teams.length > 0 && (
-        <FilterChips
-          options={teamFilterOptions(teams)}
-          value={team}
-          onPick={setTeam}
-          label={texts.filterByTeam}
-        />
+        <TeamFilter teams={teams} selection={team} onChange={setTeam} />
       )}
 
       {pending.length > 0 && (
@@ -114,7 +110,7 @@ export default function ActivityRegistrationsPanel({
       <RegistrantSection icon="check" title={texts.confirmed} count={active.length}>
         {active.length === 0 ? (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {tokens.length || team !== ALL_TEAMS ? texts.noneMatch : texts.noneConfirmed}
+            {tokens.length || hasTeamFilter(team) ? texts.noneMatch : texts.noneConfirmed}
           </p>
         ) : (
           <div className="space-y-1.5">
