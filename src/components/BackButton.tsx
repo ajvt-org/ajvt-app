@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import Icon from "./Icon";
-import { backMove } from "@/lib/backNavigation";
+import { backMove, opensHere } from "@/lib/backNavigation";
 import { appTrail } from "@/lib/historyTrail";
 import { navigation } from "@/lib/texts";
 
 export default function BackButton({ href }: { href: string }) {
   function goUp(event: React.MouseEvent<HTMLAnchorElement>) {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    if (event.button !== 0) return;
+    if (!opensHere(event)) return;
     if (backMove(href, appTrail) === "unwind") {
       event.preventDefault();
       window.history.back();
