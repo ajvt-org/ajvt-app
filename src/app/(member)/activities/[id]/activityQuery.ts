@@ -4,6 +4,8 @@ import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
 import { squadOf } from "@/lib/squadSize";
 import { matchSideTeams } from "@/lib/matchSides";
+import { isFootball } from "@/lib/matchShape";
+import { standingOf } from "@/lib/matchSeriesServer";
 
 const MATCH_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
@@ -29,6 +31,15 @@ async function loadActivity(id: string) {
       endsAt: true,
       withTime: true,
       matchShape: true,
+      partsPerMatch: true,
+      matchEnding: true,
+      partsToWin: true,
+      partDecision: true,
+      partWord: true,
+      partsWord: true,
+      hasColours: true,
+      firstColourWord: true,
+      secondColourWord: true,
       minTeamSize: true,
       maxTeamSize: true,
       isTournament: true,
@@ -73,6 +84,18 @@ async function loadActivity(id: string) {
           forfeitWinnerTeamId: true,
           manOfTheMatchUserId: true,
           manOfTheMatchUser: { select: { fullName: true, photo: true } },
+          parts: {
+            orderBy: { order: "asc" },
+            select: {
+              id: true,
+              order: true,
+              abandoned: true,
+              outcome: true,
+              sideAPoints: true,
+              sideBPoints: true,
+              sideAColour: true,
+            },
+          },
           goals: {
             orderBy: { minute: "asc" as const },
             select: {
@@ -142,6 +165,9 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
         ...match,
         firstTeam: namedEntrant(sides.first, identities),
         secondTeam: namedEntrant(sides.second, identities),
+        series: isFootball(activity.matchShape)
+          ? null
+          : standingOf(activity, match.parts, match.isKnockout),
         manOfTheMatch: match.manOfTheMatchUser
           ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
           : null,
