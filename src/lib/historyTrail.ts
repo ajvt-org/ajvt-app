@@ -1,21 +1,12 @@
-function sameOrigin(referrer: string, origin: string): boolean {
-  if (!referrer) return false;
-  try {
-    return new URL(referrer).origin === origin;
-  } catch {
-    return false;
-  }
-}
-
 export interface HistoryTrail {
   noteLocation(url: string): void;
   canUnwind(): boolean;
+  previousIs(url: string): boolean;
 }
 
-export function createTrail(openedFromApp: () => boolean): HistoryTrail {
+export function createTrail(): HistoryTrail {
   const seen: string[] = [];
   let index = 0;
-  let rooted: boolean | null = null;
 
   return {
     noteLocation(url: string) {
@@ -38,12 +29,13 @@ export function createTrail(openedFromApp: () => boolean): HistoryTrail {
     },
 
     canUnwind() {
-      if (rooted === null) rooted = openedFromApp();
-      return index > 0 || rooted;
+      return index > 0;
+    },
+
+    previousIs(url: string) {
+      return index > 0 && seen[index - 1] === url;
     },
   };
 }
 
-export const appTrail = createTrail(() =>
-  typeof document === "undefined" ? false : sameOrigin(document.referrer, window.location.origin),
-);
+export const appTrail = createTrail();
