@@ -27,7 +27,6 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     kind: "number",
     min: FIRST_MEMBERSHIP_YEAR,
     max: runningYear() + 1,
-    hint: settingsForm.membershipYearHint,
   },
   {
     key: "tempPasswordHours",
@@ -35,7 +34,6 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     kind: "number",
     min: 1,
     max: 720,
-    hint: settingsForm.tempPasswordHoursHint,
   },
   {
     key: "supportWhatsapp",
@@ -55,7 +53,6 @@ export const SETTINGS_FIELDS: SettingsField[] = [
     label: settingsForm.secretaryNameLabel,
     kind: "text",
     optional: true,
-    hint: settingsForm.officerHint,
   },
   {
     key: "treasurerName",
