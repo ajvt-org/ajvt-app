@@ -71,8 +71,6 @@ export default function ActivityRegistrationsPanel({
         onRegister={onRegister}
       />
 
-      {/* The same treatment the teams tab search has, and a card of its own so
-          it does not read as a second copy of the add search above it. */}
       <div className="card p-2.5">
         <input
           type="text"

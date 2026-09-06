@@ -141,8 +141,6 @@ export const tournamentSetup = {
   shapeHeading: "نوع المباراة",
   shapes: {
     FOOTBALL: "مباراة كرة قدم",
-    // The games are folded into the label because the app names them nowhere
-    // else and the label on its own leaves an admin guessing.
     SERIES: "سلسلة جولات · شطرنج، ضامة، ورق، بلاي ستيشن",
   },
   formatHeading: "نظام البطولة",
@@ -156,7 +154,6 @@ export const tournamentSetup = {
   maxTeamSize: "الحد الأقصى",
   organisedByHomeVillage: "بطولة من تنظيم التاكلالت",
   outsidePlayerLimit: "الحد الأقصى للاعبين من خارج التاكلالت",
-  // Shown on the controls themselves, and only once they are actually locked.
   shapeLocked: "النظام والنوع أُقفلا بعد إنشاء أول مباراة",
   squadLocked: "حجم الفريق أُقفل بعد انطلاق البطولة",
 } as const;
