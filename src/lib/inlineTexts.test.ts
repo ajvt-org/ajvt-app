@@ -6,6 +6,9 @@ const ARABIC = /[؀-ۿ]/;
 
 const KEPT_CLEAN = [
   "src/app/(member)/donate/page.tsx",
+  "src/app/forgot-password/page.tsx",
+  "src/app/not-found.tsx",
+  "src/app/(member)/activities/[id]/not-found.tsx",
   "src/app/(member)/quiz/QuizPicker.tsx",
   "src/app/admin/quiz/QuestionList.tsx",
   "src/app/admin/quiz/SettingsForm.tsx",
