@@ -17,11 +17,10 @@ async function linesWithin(page: Page, strip: number): Promise<number> {
   return new Set(centres).size;
 }
 
-async function paddingTopOf(page: Page, strip: number): Promise<number> {
+async function badgeRoomOf(page: Page): Promise<number[]> {
   return page
-    .locator(".admin-page .tab-strip")
-    .nth(strip)
-    .evaluate((node) => parseFloat(getComputedStyle(node).paddingTop));
+    .locator(".tab-strip")
+    .evaluateAll((nodes) => nodes.map((node) => parseFloat(getComputedStyle(node).paddingBottom)));
 }
 
 async function overflows(page: Page, strip: number): Promise<boolean> {
@@ -67,8 +66,10 @@ test("the workspace tabs hold to one line each on a phone", async ({ browser }) 
   expect(await linesWithin(page, 1)).toBe(1);
   expect(await overflows(page, 1)).toBe(true);
 
-  for (const strip of [0, 1]) {
-    expect(await paddingTopOf(page, strip)).toBeGreaterThanOrEqual(6);
+  const room = await badgeRoomOf(page);
+  expect(room.length).toBeGreaterThanOrEqual(3);
+  for (const padding of room) {
+    expect(padding).toBeGreaterThanOrEqual(4);
   }
 
   await context.close();
