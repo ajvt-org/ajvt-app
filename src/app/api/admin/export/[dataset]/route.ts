@@ -116,7 +116,7 @@ async function buildCsv(
     return toCsv(ACTIVITY_HEADERS, activityRows(report.rows));
   }
 
-  return toCsv(AGE_HEADERS, ageRows(await getAgeStandings()));
+  return toCsv(AGE_HEADERS, ageRows(await getAgeStandings({ everyGroup: true })));
 }
 
 export const GET = withRoute(

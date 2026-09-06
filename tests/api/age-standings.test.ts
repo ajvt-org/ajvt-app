@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { resetDb, makeMember } from "./helpers";
 
 async function group(name: string, totalCount: number) {
-  return prisma.ageGroup.create({ data: { name, totalCount } });
+  return prisma.ageGroup.create({ data: { name, totalCount, approved: true } });
 }
 
 async function member(age: string, status: "PENDING" | "ACTIVE" | "REJECTED") {
@@ -49,19 +49,24 @@ describe("GET /api/ages/standings", () => {
     expect(await standings()).toMatchObject([{ name: "البدريين", members: 1, rate: 10 }]);
   });
 
-  it("ranks the fuller group first and keeps empty groups", async () => {
+  it("ranks the fuller group first and leaves out the group holding nobody", async () => {
     await group("البدريين", 30);
     await group("أشبال", 30);
     await member("أشبال", "ACTIVE");
 
-    expect(await standings()).toMatchObject([
-      { rank: 1, name: "أشبال", members: 1 },
-      { rank: 2, name: "البدريين", members: 0, rate: 0 },
-    ]);
+    expect(await standings()).toMatchObject([{ rank: 1, name: "أشبال", members: 1 }]);
+  });
+
+  it("leaves out a group nobody has approved, however many joined it", async () => {
+    await prisma.ageGroup.create({ data: { name: "الفلانيين", totalCount: 30 } });
+    await member("الفلانيين", "ACTIVE");
+
+    expect(await standings()).toEqual([]);
   });
 
   it("defaults an unset headcount to thirty", async () => {
-    await prisma.ageGroup.create({ data: { name: "الفتيان" } });
+    await prisma.ageGroup.create({ data: { name: "الفتيان", approved: true } });
+    await member("الفتيان", "ACTIVE");
 
     expect((await standings())[0].total).toBe(30);
   });
