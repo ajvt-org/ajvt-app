@@ -59,6 +59,51 @@ describe("StandingsTable", () => {
     await waitFor(() => expect(screen.getAllByRole("button")).toHaveLength(rows.length));
     expect(screen.getAllByRole("columnheader")).toHaveLength(11);
   });
+
+  it("names the follow control, since the star alone carries no words", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ loggedIn: true }) }),
+    );
+
+    render(<StandingsTable title="المجموعة الأولى" rows={rows} showFollow={true} />);
+
+    const buttons = await screen.findAllByLabelText(publicTournament.entrant.team.follow);
+    expect(buttons).toHaveLength(rows.length);
+    expect(buttons[0].textContent).toBe("");
+  });
+
+  it("says the state on a followed team rather than only colouring it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, json: async () => ({ loggedIn: true, following: true }) }),
+    );
+
+    render(<StandingsTable title="المجموعة الأولى" rows={[rows[0]]} showFollow={true} />);
+
+    const button = await screen.findByLabelText(publicTournament.entrant.team.following);
+    expect(button.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("names the player rather than the team in a singles tournament", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ loggedIn: true }) }),
+    );
+
+    render(
+      <StandingsTable
+        title="المجموعة الأولى"
+        rows={[rows[0]]}
+        showFollow={true}
+        entrant="player"
+      />,
+    );
+
+    expect(await screen.findByLabelText(publicTournament.entrant.player.follow)).toBeDefined();
+  });
 });
 
 describe("a long team name", () => {

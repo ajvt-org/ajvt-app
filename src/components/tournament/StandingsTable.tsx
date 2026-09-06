@@ -1,5 +1,6 @@
 import HalfPoints from "@/components/HalfPoints";
 import TeamLogo from "./TeamLogo";
+import { MATCH_TEAMS_SIZES } from "./matchCard/MatchTeams";
 import FollowTeamButton from "./FollowTeamButton";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
@@ -86,7 +87,7 @@ export default function StandingsTable({
                     logo={row.logo}
                     photo={row.photo}
                     name={row.name}
-                    size={22}
+                    size={MATCH_TEAMS_SIZES.sm.logo}
                     entrant={entrant}
                   />
                   <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
