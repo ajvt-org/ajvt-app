@@ -301,7 +301,17 @@ function suggestionError(problem: string, words: EntrantWording): string {
 }
 
 async function groupTables(activityId: string) {
-  const shape = await matchShapeOf(activityId);
+  const setup = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: {
+      matchShape: true,
+      partsPerMatch: true,
+      matchEnding: true,
+      partsToWin: true,
+      partDecision: true,
+    },
+  });
+  const shape = setup.matchShape;
   const [groups, teams, matches] = await Promise.all([
     prisma.group.findMany({
       where: { activityId },
@@ -319,6 +329,16 @@ async function groupTables(activityId: string) {
         awayTeam: { select: { id: true } },
         sideATeam: { select: { id: true } },
         sideBTeam: { select: { id: true } },
+        parts: {
+          orderBy: { order: "asc" },
+          select: {
+            order: true,
+            abandoned: true,
+            outcome: true,
+            sideAPoints: true,
+            sideBPoints: true,
+          },
+        },
         homeScore: true,
         awayScore: true,
         status: true,
@@ -328,11 +348,17 @@ async function groupTables(activityId: string) {
     }),
   ]);
 
+  const series = !isFootball(shape);
   const leagueMatches = matches
     .filter((m) => !m.isKnockout)
     .map((m) => {
       const sides = matchSideTeams(m, shape);
-      return { ...m, firstTeam: sides.first, secondTeam: sides.second };
+      return {
+        ...m,
+        firstTeam: sides.first,
+        secondTeam: sides.second,
+        series: series ? deriveSeries(rulesOf(setup), m.parts) : null,
+      };
     });
   return {
     groups: groups.map((g) => ({
@@ -341,6 +367,7 @@ async function groupTables(activityId: string) {
       standings: computeStandings(
         teams.filter((t) => t.groupId === g.id),
         leagueMatches,
+        series,
       ),
     })),
     groupStageComplete:

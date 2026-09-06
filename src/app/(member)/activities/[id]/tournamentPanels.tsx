@@ -34,10 +34,12 @@ export async function tournamentPanels(
   myVoteByVoteId: Map<string, string>,
 ) {
   const matches = activity.matches as PublicMatch[];
+  const football = isFootball(activity.matchShape);
   const standingsByGroup = groupStandings(
     activity.teams,
     activity.matches,
     activity.groups.map((g) => g.id),
+    !football,
   );
   const topScorers = computeTopScorers(activity.teams, activity.matches);
   const stats = computeStats(activity.teams, activity.matches);
@@ -60,7 +62,6 @@ export async function tournamentPanels(
     .filter((m) => m.matchDate && matchDateKey(m.matchDate) === todayKey)
     .sort((a, b) => new Date(a.matchDate!).getTime() - new Date(b.matchDate!).getTime());
 
-  const football = isFootball(activity.matchShape);
   const suspended =
     football && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
   const entrant = entrantKind(squadOf(activity));
@@ -106,6 +107,7 @@ export async function tournamentPanels(
                         : texts.noGroup
                   }
                   rows={group.standings}
+                  series={!football}
                   showFollow={!!userId}
                   entrant={entrant}
                 />

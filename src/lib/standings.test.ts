@@ -48,8 +48,8 @@ describe("computeStandings", () => {
     const table = computeStandings(teams, [match("a", "b", 3, 1)]);
     const by = Object.fromEntries(table.map((r) => [r.teamId, r]));
 
-    expect([by.a.gf, by.a.ga, by.a.gd]).toEqual([3, 1, 2]);
-    expect([by.b.gf, by.b.ga, by.b.gd]).toEqual([1, 3, -2]);
+    expect([by.a.scoredFor, by.a.scoredAgainst, by.a.difference]).toEqual([3, 1, 2]);
+    expect([by.b.scoredFor, by.b.scoredAgainst, by.b.difference]).toEqual([1, 3, -2]);
   });
 
   it("ignores knockout matches, they are not part of the league table", () => {
@@ -288,5 +288,83 @@ describe("a fixture with no teams yet", () => {
 
     expect(by.a.points).toBe(1);
     expect(by.b.points).toBe(1);
+  });
+});
+
+describe("a table ranked on parts", () => {
+  const teams = [
+    { id: "a", name: "أ" },
+    { id: "b", name: "ب" },
+    { id: "c", name: "ج" },
+  ];
+
+  function seriesMatch(
+    a: string,
+    b: string,
+    sideAHalves: number,
+    sideBHalves: number,
+    over = true,
+  ) {
+    return {
+      firstTeam: { id: a },
+      secondTeam: { id: b },
+      homeScore: null,
+      awayScore: null,
+      series: { sideAHalves, sideBHalves, over },
+      status: "PLAYED",
+      isKnockout: false,
+    };
+  }
+
+  it("ranks on the parts each side took rather than on three for a win", () => {
+    const rows = computeStandings(teams, [seriesMatch("a", "b", 3, 1)], true);
+
+    expect(rows.find((r) => r.teamId === "a")!.points).toBe(3);
+    expect(rows.find((r) => r.teamId === "b")!.points).toBe(1);
+  });
+
+  it("counts parts for, parts against and the difference between them", () => {
+    const rows = computeStandings(teams, [seriesMatch("a", "b", 3, 1)], true);
+    const first = rows.find((r) => r.teamId === "a")!;
+
+    expect(first.scoredFor).toBe(3);
+    expect(first.scoredAgainst).toBe(1);
+    expect(first.difference).toBe(2);
+  });
+
+  it("carries a half through as a half rather than rounding it", () => {
+    const rows = computeStandings(teams, [seriesMatch("a", "b", 1, 1)], true);
+
+    expect(rows.find((r) => r.teamId === "a")!.points).toBe(1);
+    expect(rows.find((r) => r.teamId === "a")!.drawn).toBe(1);
+  });
+
+  it("takes a side below nothing where a move drove it there", () => {
+    const rows = computeStandings(teams, [seriesMatch("a", "b", 4, -4)], true);
+    const second = rows.find((r) => r.teamId === "b")!;
+
+    expect(second.points).toBe(-4);
+    expect(second.difference).toBe(-8);
+  });
+
+  it("leaves out a match that is not over yet", () => {
+    const rows = computeStandings(teams, [seriesMatch("a", "b", 2, 0, false)], true);
+
+    expect(rows.every((r) => r.played === 0)).toBe(true);
+  });
+
+  it("still ranks a football table on three for a win", () => {
+    const rows = computeStandings(teams, [
+      {
+        firstTeam: { id: "a" },
+        secondTeam: { id: "b" },
+        homeScore: 2,
+        awayScore: 1,
+        status: "PLAYED",
+        isKnockout: false,
+      },
+    ]);
+
+    expect(rows.find((r) => r.teamId === "a")!.points).toBe(3);
   });
 });

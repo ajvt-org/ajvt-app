@@ -19,9 +19,28 @@ export interface StandingsMatchInput {
   secondTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
+  series?: { sideAHalves: number; sideBHalves: number; over: boolean } | null;
   status: string;
   isKnockout: boolean;
   bookings?: StandingsBookingInput[];
+}
+
+export const WIN_POINTS = 3;
+export const DRAW_POINTS = 1;
+
+function scoredIn(m: StandingsMatchInput): { a: number; b: number } | null {
+  if (m.series !== undefined && m.series !== null) {
+    return m.series.over ? { a: m.series.sideAHalves, b: m.series.sideBHalves } : null;
+  }
+  if (m.homeScore === null || m.awayScore === null) return null;
+  return { a: m.homeScore, b: m.awayScore };
+}
+
+function pointsFor(scored: { a: number; b: number }, series: boolean): { a: number; b: number } {
+  if (series) return { a: scored.a, b: scored.b };
+  if (scored.a > scored.b) return { a: WIN_POINTS, b: 0 };
+  if (scored.b > scored.a) return { a: 0, b: WIN_POINTS };
+  return { a: DRAW_POINTS, b: DRAW_POINTS };
 }
 
 export interface StandingsRow {
@@ -33,9 +52,9 @@ export interface StandingsRow {
   won: number;
   drawn: number;
   lost: number;
-  gf: number;
-  ga: number;
-  gd: number;
+  scoredFor: number;
+  scoredAgainst: number;
+  difference: number;
   points: number;
   cardPoints: number;
   unresolved: boolean;
@@ -51,9 +70,9 @@ function blank(team: StandingsTeamInput): StandingsRow {
     won: 0,
     drawn: 0,
     lost: 0,
-    gf: 0,
-    ga: 0,
-    gd: 0,
+    scoredFor: 0,
+    scoredAgainst: 0,
+    difference: 0,
     points: 0,
     cardPoints: 0,
     unresolved: false,
@@ -66,32 +85,38 @@ function sides(m: StandingsMatchInput): { homeId: string; awayId: string } | nul
 }
 
 function counts(matches: StandingsMatchInput[]): boolean[] {
-  return matches.map(
-    (m) => !m.isKnockout && m.status === "PLAYED" && m.homeScore !== null && m.awayScore !== null,
-  );
+  return matches.map((m) => !m.isKnockout && m.status === "PLAYED" && scoredIn(m) !== null);
 }
 
-function tally(teams: StandingsTeamInput[], matches: StandingsMatchInput[]): StandingsRow[] {
+function tally(
+  teams: StandingsTeamInput[],
+  matches: StandingsMatchInput[],
+  series: boolean,
+): StandingsRow[] {
   const table = new Map(teams.map((t) => [t.id, blank(t)]));
   const played = counts(matches);
 
   matches.forEach((m, i) => {
     if (!played[i]) return;
     const pair = sides(m);
-    if (!pair) return;
+    const scored = scoredIn(m);
+    if (!pair || !scored) return;
     const home = table.get(pair.homeId);
     const away = table.get(pair.awayId);
     if (!home || !away) return;
     home.played++;
     away.played++;
-    home.gf += m.homeScore!;
-    home.ga += m.awayScore!;
-    away.gf += m.awayScore!;
-    away.ga += m.homeScore!;
-    if (m.homeScore! > m.awayScore!) {
+    home.scoredFor += scored.a;
+    home.scoredAgainst += scored.b;
+    away.scoredFor += scored.b;
+    away.scoredAgainst += scored.a;
+    const gained = pointsFor(scored, series);
+    home.points += gained.a;
+    away.points += gained.b;
+    if (scored.a > scored.b) {
       home.won++;
       away.lost++;
-    } else if (m.homeScore! < m.awayScore!) {
+    } else if (scored.a < scored.b) {
       away.won++;
       home.lost++;
     } else {
@@ -106,14 +131,13 @@ function tally(teams: StandingsTeamInput[], matches: StandingsMatchInput[]): Sta
 
   return [...table.values()].map((r) => ({
     ...r,
-    gd: r.gf - r.ga,
-    points: r.won * 3 + r.drawn,
+    difference: r.scoredFor - r.scoredAgainst,
   }));
 }
 
 function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<string, number[]> {
   const ids = new Set(rows.map((r) => r.teamId));
-  const mini = new Map(rows.map((r) => [r.teamId, { points: 0, gf: 0, ga: 0 }]));
+  const mini = new Map(rows.map((r) => [r.teamId, { points: 0, scoredFor: 0, scoredAgainst: 0 }]));
   const played = counts(matches);
 
   matches.forEach((m, i) => {
@@ -123,10 +147,10 @@ function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<s
     if (!ids.has(pair.homeId) || !ids.has(pair.awayId)) return;
     const home = mini.get(pair.homeId)!;
     const away = mini.get(pair.awayId)!;
-    home.gf += m.homeScore!;
-    home.ga += m.awayScore!;
-    away.gf += m.awayScore!;
-    away.ga += m.homeScore!;
+    home.scoredFor += m.homeScore!;
+    home.scoredAgainst += m.awayScore!;
+    away.scoredFor += m.awayScore!;
+    away.scoredAgainst += m.homeScore!;
     if (m.homeScore! > m.awayScore!) home.points += 3;
     else if (m.homeScore! < m.awayScore!) away.points += 3;
     else {
@@ -136,7 +160,10 @@ function headToHead(rows: StandingsRow[], matches: StandingsMatchInput[]): Map<s
   });
 
   return new Map(
-    [...mini.entries()].map(([id, m]) => [id, [m.points, m.gf - m.ga, m.gf]] as [string, number[]]),
+    [...mini.entries()].map(
+      ([id, m]) =>
+        [id, [m.points, m.scoredFor - m.scoredAgainst, m.scoredFor]] as [string, number[]],
+    ),
   );
 }
 
@@ -175,15 +202,19 @@ function rank(rows: StandingsRow[], matches: StandingsMatchInput[]): StandingsRo
     at(0),
     at(1),
     at(2),
-    (r) => r.gd,
-    (r) => r.gf,
+    (r) => r.difference,
+    (r) => r.scoredFor,
     (r) => -r.cardPoints,
   ]);
 
   const same = (a: StandingsRow, b: StandingsRow) =>
-    [at(0), at(1), at(2), (r: StandingsRow) => r.gd, (r: StandingsRow) => r.gf].every(
-      (key) => key(a) === key(b),
-    ) && a.cardPoints === b.cardPoints;
+    [
+      at(0),
+      at(1),
+      at(2),
+      (r: StandingsRow) => r.difference,
+      (r: StandingsRow) => r.scoredFor,
+    ].every((key) => key(a) === key(b)) && a.cardPoints === b.cardPoints;
 
   return ordered.map((row, i) => {
     const before = ordered[i - 1];
@@ -196,8 +227,9 @@ function rank(rows: StandingsRow[], matches: StandingsMatchInput[]): StandingsRo
 export function computeStandings(
   teams: StandingsTeamInput[],
   matches: StandingsMatchInput[],
+  series = false,
 ): StandingsRow[] {
-  const rows = tally(teams, matches).sort(
+  const rows = tally(teams, matches, series).sort(
     (a, b) => b.points - a.points || a.name.localeCompare(b.name, "ar"),
   );
   return split(rows, (r) => r.points).flatMap((block) => rank(block, matches));
@@ -207,6 +239,7 @@ export function groupStandings(
   teams: StandingsTeamInput[],
   matches: StandingsMatchInput[],
   groupOrder?: string[],
+  series = false,
 ): { groupId: string | null; teams: StandingsTeamInput[]; standings: StandingsRow[] }[] {
   const byGroup = new Map<string | null, StandingsTeamInput[]>();
   for (const t of teams) {
@@ -224,6 +257,6 @@ export function groupStandings(
     .map(([groupId, groupTeams]) => ({
       groupId,
       teams: groupTeams,
-      standings: computeStandings(groupTeams, matches),
+      standings: computeStandings(groupTeams, matches, series),
     }));
 }

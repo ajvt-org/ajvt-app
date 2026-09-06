@@ -66,8 +66,9 @@ export default function TournamentPanel({
         teams,
         matches,
         groups.map((g) => g.id),
+        !football,
       ),
-    [teams, matches, groups],
+    [teams, matches, groups, football],
   );
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
@@ -143,6 +144,7 @@ export default function TournamentPanel({
           groups={groups}
           stats={stats}
           matches={matches}
+          series={!football}
         />
       )}
       {tab === "discipline" && football && (
