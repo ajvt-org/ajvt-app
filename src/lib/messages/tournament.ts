@@ -70,8 +70,6 @@ export const tournament = {
   scorerWrongTeam: "أحد الهدافين ليس ضمن الفريق الصحيح",
   ownGoalScorerWrongTeam: "مسجل الهدف العكسي يجب أن يكون من الفريق الآخر",
   kickerWrongTeam: "أحد منفذي ركلات الترجيح ليس ضمن فريقه",
-  needPowerOfTwo: (count: number) =>
-    `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${count}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح`,
   bracketSlotsMismatch: (slots: number, pairs: number) =>
     `الدور الأول المجدول يضم ${slots} مباراة والقرعة تحتاج ${pairs}، احذف مباريات الأدوار الإقصائية أو أعد إعداد البطولة`,
   needTwoEntrants: "القرعة تحتاج مشاركَين على الأقل",
