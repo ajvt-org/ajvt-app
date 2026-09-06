@@ -3,12 +3,12 @@
 import { useState } from "react";
 import type { Group, Match, Team, TournamentFormat } from "./types";
 import { matchesState } from "./matchesState";
-import MatchCard from "./MatchCard";
 import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
 import { isFootball } from "@/lib/matchShape";
 import type { SeriesConfig } from "./seriesConfig";
 import BracketPanel from "./BracketPanel";
+import MatchListSection from "./MatchListSection";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import SetupWizard from "./wizard/SetupWizard";
@@ -99,6 +99,27 @@ export default function MatchesTab({
   const scheduled = matches.filter((m) => m.status === "SCHEDULED");
   const played = matches.filter((m) => m.status === "PLAYED");
 
+  const common = {
+    activityId,
+    teams,
+    allMatches: matches,
+    matchShape,
+    series,
+    entrant,
+    suspendedIds,
+    mvpVoteMinutes,
+  };
+
+  const panels = {
+    resultFormFor,
+    mvpFor,
+    detailsFor,
+    onToggleResultForm: (id: string) => setResultFormFor((v) => (v === id ? null : id)),
+    onToggleMvp: (id: string) => setMvpFor((v) => (v === id ? null : id)),
+    onToggleDetails: (id: string) => setDetailsFor((v) => (v === id ? null : id)),
+    onCloseResultForm: () => setResultFormFor(null),
+  };
+
   return (
     <div className="space-y-4">
       {error && (
@@ -110,89 +131,9 @@ export default function MatchesTab({
         </div>
       )}
 
-      <button
-        onClick={() => setShowWizard(true)}
-        className="btn btn-primary text-sm w-full"
-        style={{ background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))" }}
-      >
+      <button onClick={() => setShowWizard(true)} className="btn btn-ghost text-sm w-full">
         <IconLabel name="sparkle">{wizardTexts.open}</IconLabel>
       </button>
-
-      {scheduled.length > 0 && (
-        <div>
-          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="calendar">{texts.upcoming}</IconLabel>
-          </p>
-          <div className="space-y-3">
-            {scheduled.map((m, i) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                teams={teams}
-                allMatches={matches}
-                activityId={activityId}
-                matchShape={matchShape}
-                series={series}
-                entrant={entrant}
-                suspendedIds={suspendedIds}
-                mvpVoteMinutes={mvpVoteMinutes}
-                onDelete={() => deleteMatch(m.id)}
-                showResultForm={resultFormFor === m.id}
-                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showMvp={mvpFor === m.id}
-                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
-                showDetails={detailsFor === m.id}
-                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
-                onMoveUp={i > 0 ? () => moveMatch(scheduled, i, "up") : undefined}
-                onMoveDown={
-                  i < scheduled.length - 1 ? () => moveMatch(scheduled, i, "down") : undefined
-                }
-                onSaved={() => {
-                  setResultFormFor(null);
-                  onChange();
-                }}
-                onChange={onChange}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {played.length > 0 && (
-        <div>
-          <p className="text-sm font-bold mb-2" style={{ color: "var(--text-main)" }}>
-            <IconLabel name="check">{texts.results}</IconLabel>
-          </p>
-          <div className="space-y-3">
-            {played.map((m) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                teams={teams}
-                allMatches={matches}
-                activityId={activityId}
-                matchShape={matchShape}
-                series={series}
-                entrant={entrant}
-                suspendedIds={suspendedIds}
-                mvpVoteMinutes={mvpVoteMinutes}
-                onDelete={() => deleteMatch(m.id)}
-                showResultForm={resultFormFor === m.id}
-                onToggleResultForm={() => setResultFormFor((v) => (v === m.id ? null : m.id))}
-                showMvp={mvpFor === m.id}
-                onToggleMvp={() => setMvpFor((v) => (v === m.id ? null : m.id))}
-                showDetails={detailsFor === m.id}
-                onToggleDetails={() => setDetailsFor((v) => (v === m.id ? null : m.id))}
-                onSaved={() => {
-                  setResultFormFor(null);
-                  onChange();
-                }}
-                onChange={onChange}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {teams.length >= 2 && (
         <BracketPanel
@@ -209,6 +150,27 @@ export default function MatchesTab({
         teams={teams}
         football={isFootball(matchShape)}
         onCreated={onChange}
+      />
+
+      <MatchListSection
+        title={texts.upcoming}
+        icon="calendar"
+        matches={scheduled}
+        common={common}
+        panels={panels}
+        onDelete={deleteMatch}
+        onChange={onChange}
+        onMove={(index, direction) => moveMatch(scheduled, index, direction)}
+      />
+
+      <MatchListSection
+        title={texts.results}
+        icon="check"
+        matches={played}
+        common={common}
+        panels={panels}
+        onDelete={deleteMatch}
+        onChange={onChange}
       />
 
       {showWizard && (
