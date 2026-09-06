@@ -198,9 +198,6 @@ export default function BareAccountsSection({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.lead}
-      </p>
       {users.length === 0 ? (
         <div className="card p-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
           {texts.empty}
