@@ -26,8 +26,6 @@ export default function ActivityRegistrations({
   const team = member.teamMemberships.find((tm) => tm.activityId === activity.id) || null;
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const settled = registration && registration.status !== "REJECTED";
-  // Empty for a singles tournament, where the entrant is the member and there
-  // is nothing to choose, and empty for a tournament whose teams are not made yet.
   const hasTeamsToJoin = activity.joinableTeams.length > 0;
 
   async function run(action: () => Promise<unknown>, done: string) {
@@ -70,10 +68,12 @@ export default function ActivityRegistrations({
     );
   }
 
-  function registerVolunteer() {
-    // Open the WhatsApp group synchronously in the click handler — a browser popup
-    // blocker would kill the redirect if it happened after the register() await below.
+  function openGroupBeforeAnyAwait() {
     if (activity.whatsappLink) window.open(activity.whatsappLink, "_blank", "noopener,noreferrer");
+  }
+
+  function registerVolunteer() {
+    openGroupBeforeAnyAwait();
     register();
   }
 
@@ -87,13 +87,12 @@ export default function ActivityRegistrations({
       showToast(activityRegistration.requestCancelled);
       onReload();
     } catch {
-      // best-effort — the member can just try again
+      return;
     }
   }
 
   return (
     <>
-      {/* One tap — no payment, no form: membership already covers it */}
       <div className="space-y-1.5">
         <div className="flex flex-col items-stretch gap-2 text-xs">
           {settled ? (
