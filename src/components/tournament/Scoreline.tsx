@@ -15,9 +15,9 @@ export default function Scoreline({
       className={`inline-flex items-center gap-1 ${className ?? ""}`.trim()}
       style={style}
     >
-      <span>{home}</span>
+      <bdi dir="ltr">{home}</bdi>
       <span>-</span>
-      <span>{away}</span>
+      <bdi dir="ltr">{away}</bdi>
     </span>
   );
 }

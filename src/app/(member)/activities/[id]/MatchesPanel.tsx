@@ -12,6 +12,7 @@ export default function MatchesPanel({
   scheduled,
   allMatches,
   football,
+  partWord,
   showScorersAndCards,
   tournamentTitle,
   loggedIn,
@@ -23,6 +24,7 @@ export default function MatchesPanel({
   scheduled: PublicMatch[];
   allMatches: PublicMatch[];
   football: boolean;
+  partWord: string | null;
   showScorersAndCards: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
@@ -51,6 +53,7 @@ export default function MatchesPanel({
                 day={day}
                 allMatches={allMatches}
                 football={football}
+                partWord={partWord}
                 showScorersAndCards={showScorersAndCards}
                 tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}

@@ -15,12 +15,15 @@ import { formatMatchTime } from "@/lib/clubTime";
 import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay } from "@/lib/texts";
+import SeriesScoreline from "@/components/admin/tournament/SeriesScoreline";
+import { halvesText } from "@/lib/halfPoints";
 
 export default function MatchResult({
   match,
   day,
   allMatches,
   football = true,
+  partWord = null,
   showScorersAndCards = true,
   tournamentTitle,
   loggedIn,
@@ -32,6 +35,7 @@ export default function MatchResult({
   day: { round: string | null; venue: string | null };
   allMatches: PublicMatch[];
   football?: boolean;
+  partWord?: string | null;
   showScorersAndCards?: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
@@ -84,10 +88,16 @@ export default function MatchResult({
           logo: match.secondTeam.logo,
           photo: match.secondTeam.photo,
         }}
-        score={{ home: match.homeScore, away: match.awayScore }}
+        score={football ? { home: match.homeScore, away: match.awayScore } : null}
         layout="stacked"
         entrant={entrant}
       />
+
+      {match.series && (
+        <div className="flex justify-center">
+          <SeriesScoreline parts={match.parts} standing={match.series} partWord={partWord ?? ""} />
+        </div>
+      )}
 
       {match.forfeitWinnerTeamId && (
         <p className="text-center">
@@ -152,6 +162,8 @@ export default function MatchResult({
           homeTeamPhoto={match.firstTeam.photo}
           awayTeamPhoto={match.secondTeam.photo}
           entrant={entrant}
+          seriesLine={match.series ? halvesText(match.series.sideAHalves) : null}
+          seriesAwayLine={match.series ? halvesText(match.series.sideBHalves) : null}
           homeScore={match.homeScore ?? 0}
           awayScore={match.awayScore ?? 0}
           round={match.round}

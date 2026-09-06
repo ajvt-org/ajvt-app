@@ -12,11 +12,22 @@ describe("MatchTeams", () => {
       <MatchTeams home={home} away={away} score={{ home: 0, away: 4 }} />,
     );
 
-    const names = [...container.querySelectorAll("bdi")].map((b) => b.textContent);
-    expect(names).toEqual(["كاستيا A", "اتحاد الجديدة B"]);
+    const runs = [...container.querySelectorAll("bdi")].map((b) => b.textContent);
+    expect(runs).toContain("كاستيا A");
+    expect(runs).toContain("اتحاد الجديدة B");
 
     const score = [...container.querySelectorAll("span")].find((el) => el.textContent === "0-4");
     expect(score?.getAttribute("dir")).toBe("rtl");
+  });
+
+  it("keeps each side of the score in a left to right run, so a minus sign holds", () => {
+    cleanup();
+    const { container } = render(
+      <MatchTeams home={home} away={away} score={{ home: "−1", away: "2" }} />,
+    );
+
+    const owed = [...container.querySelectorAll("bdi")].find((b) => b.textContent === "−1");
+    expect(owed?.getAttribute("dir")).toBe("ltr");
   });
 
   it("falls back to a separator when there is no score", () => {

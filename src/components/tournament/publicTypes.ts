@@ -1,3 +1,5 @@
+import type { PartRow, SeriesStandingRow } from "@/components/admin/tournament/seriesTypes";
+
 export type MatchTeam = { id: string; name: string; logo: string | null; photo?: string | null };
 
 export type MatchPlayer = { id: string; fullName: string; photo: string | null };
@@ -45,6 +47,8 @@ export type PublicMatch = {
   goals: MatchGoal[];
   penaltyKicks: MatchKick[];
   bookings: MatchBooking[];
+  parts: PartRow[];
+  series: SeriesStandingRow | null;
   mvpVote: {
     id: string;
     status: string;
