@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { setupWizard as texts } from "@/lib/texts";
 import type { DrawnGroup } from "@/lib/tournamentDraw";
@@ -22,9 +23,11 @@ export default function GroupsStep({ groups, swapping, onPick, onReshuffle }: Gr
           <IconLabel name="shuffle">{texts.reshuffle}</IconLabel>
         </button>
       </div>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {swapping ? texts.swapWith : texts.drawHint}
-      </p>
+      {swapping && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {texts.swapWith}
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         {groups.map((group) => (
@@ -38,15 +41,16 @@ export default function GroupsStep({ groups, swapping, onPick, onReshuffle }: Gr
                   <button
                     type="button"
                     onClick={() => onPick(team.id)}
-                    className="w-full text-right px-2 py-1 rounded-lg text-xs truncate"
+                    className="w-full flex items-center justify-between gap-1 px-2 py-1 rounded-lg text-xs"
                     style={{
                       background: swapping === team.id ? "var(--mint-200)" : "var(--mint-50)",
                       border: `1px solid ${
-                        swapping === team.id ? "var(--mint-500)" : "transparent"
+                        swapping === team.id ? "var(--mint-500)" : "var(--mint-200)"
                       }`,
                     }}
                   >
-                    {team.name}
+                    <span className="truncate">{team.name}</span>
+                    <Icon name="shuffle" size={12} className="shrink-0" color="var(--mint-600)" />
                   </button>
                 </li>
               ))}
