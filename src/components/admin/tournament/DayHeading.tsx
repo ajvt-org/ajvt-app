@@ -1,4 +1,3 @@
-import { daysTab as texts } from "@/lib/texts";
 import { dayLabel } from "./daysTypes";
 
 export default function DayHeading({
@@ -24,14 +23,11 @@ export default function DayHeading({
       >
         <span className="badge-numeral font-black tabular-nums">{position}</span>
       </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-black" style={{ color: "var(--text-main)" }}>
-          {label || texts.dayNumber(position)}
+      {label && (
+        <span className="min-w-0 block text-sm font-black" style={{ color: "var(--text-main)" }}>
+          {label}
         </span>
-        <span className="block text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
-          {texts.dayNumber(position)}
-        </span>
-      </span>
+      )}
     </span>
   );
 }

@@ -19,7 +19,7 @@ export const daysTab = {
   pickDay: "اختر اليوم...",
   dayNumber: (position: number) => `اليوم ${position}`,
   dayOption: (position: number, label: string) => `${daysTab.dayNumber(position)} — ${label}`,
-  restDay: "يوم راحة",
+  dayLocked: "اليوم أُقفل لأن فيه مباريات",
   makeMatchDay: "جعله يوم مباريات",
   makeRestDay: "جعله يوم راحة",
   removeDay: "حذف اليوم",
