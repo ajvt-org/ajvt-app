@@ -8,6 +8,7 @@ export const stepPayment = {
   receivingNumber: "رقم المستلم",
   amount: "المبلغ",
   orderCode: "رمز الطلب (اكتبه في سبب التحويل)",
+  memberCode: "رقم عضويتك (اكتبه في سبب التحويل)",
   bankReference: "رقم العملية من الإشعار",
   bankReferenceHint: "اختياري، انسخه من إشعار التحويل",
   bankReferenceOdd: "لا يشبه رقم عملية، تأكد منه",
@@ -15,6 +16,7 @@ export const stepPayment = {
   sending: "جاري إرسال الطلب...",
   saveEdits: "حفظ التعديلات",
   send: "إرسال طلب الانضمام",
+  sendRenewal: "إرسال التجديد",
   payAtLeast: (fee: number) =>
     `الاشتراك ${money(fee)} على الأقل — أدِّ المبلغ ثم التقط صورة من تأكيد العملية وارفعها أدناه`,
   feeMinimum: (fee: number) =>
