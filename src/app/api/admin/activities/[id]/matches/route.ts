@@ -27,7 +27,8 @@ export const POST = withRoute(
     const { id } = await params;
     const session = await requireActivityAccess(id);
     const { homeTeamId, awayTeamId, matchDate, round, venue, isKnockout } = await req.json();
-    const words = entrantWording(await entrantOfActivity(prisma, id));
+    const entrant = await entrantOfActivity(prisma, id);
+    const words = entrantWording(entrant);
 
     if (!homeTeamId || !awayTeamId) {
       return NextResponse.json({ error: words.bothEntrantsRequired }, { status: 400 });
@@ -90,9 +91,11 @@ export const POST = withRoute(
       },
     });
 
-    notifyTeams(homeTeamId, awayTeamId, notify.matchScheduled(home.name, away.name, id)).catch(
-      (err) => logger.error("match.created.push.error", err),
-    );
+    notifyTeams(
+      homeTeamId,
+      awayTeamId,
+      notify.matchScheduled(home.name, away.name, id, entrant),
+    ).catch((err) => logger.error("match.created.push.error", err));
 
     return NextResponse.json({ match }, { status: 201 });
   },

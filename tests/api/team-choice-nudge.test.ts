@@ -60,6 +60,14 @@ describe("the nudge for a player with no team", () => {
     expect((await rowFor(registration.id)).teamNudgeSentAt).not.toBeNull();
   });
 
+  it("sends nothing for a tournament played one against one, which has no team to choose", async () => {
+    await tournamentWithMember("22000210", { minTeamSize: 1, maxTeamSize: 1 });
+
+    await sendTeamChoiceReminders();
+
+    expect(sendPushToUser).not.toHaveBeenCalled();
+  });
+
   it("does not send twice inside the hour", async () => {
     await tournamentWithMember("22000201");
 

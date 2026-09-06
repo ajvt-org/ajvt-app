@@ -126,7 +126,8 @@ export const PATCH = withRoute(
     if (!match) {
       return NextResponse.json({ error: tournament.matchNotFound }, { status: 404 });
     }
-    const words = entrantWording(entrantOf(match.activity));
+    const entrant = entrantOf(match.activity);
+    const words = entrantWording(entrant);
     const wasPlayed = match.status === "PLAYED";
     let finalHomeGroupId = match.homeTeam?.groupId ?? null;
     let finalAwayGroupId = match.awayTeam?.groupId ?? null;
@@ -608,6 +609,7 @@ export const PATCH = withRoute(
             updateData.awayScore!,
             awayName,
             match.activityId,
+            entrant,
           ),
         ).catch((err) => logger.error("match.result.push.error", err));
       }
