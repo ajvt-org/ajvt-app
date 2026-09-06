@@ -61,6 +61,14 @@ export const tournament = {
   seriesNotConfigured: "أكمل إعداد جولات البطولة قبل تسجيل نتيجة",
   matchTakesNoMoreParts: "انتهت المباراة، لا تقبل جولة أخرى",
   partNotFound: "الجولة غير موجودة",
+  adjustmentRuleNotFound: "هذه الحركة غير معرّفة في البطولة",
+  adjustmentNotFound: "الحركة المسجّلة غير موجودة",
+  adjustmentRule: {
+    name: "اسم الحركة مطلوب باسمها في اللعبة",
+    parts: "عدد الجولات يجب أن يكون عدداً صحيحاً غير سالب",
+    noEffect: "الحركة بلا أثر، حدد ما تضيفه أو ما تخصمه",
+  },
+  adjustmentNameTaken: "توجد حركة بهذا الاسم في البطولة",
   partWantsAnOutcome: "الجولة تُحسم بفوز أحد الطرفين أو بتعادل",
   partWantsTwoScores: "الجولة تحتاج نقاط الطرفين، أعداداً صحيحة غير سالبة",
   partBelowItsTarget: (target: number) =>

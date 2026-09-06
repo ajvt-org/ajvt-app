@@ -4,7 +4,7 @@ import { logAction } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
 import { common } from "@/lib/messages";
-import { addPart, loadSeriesMatch, standingOf } from "@/lib/matchSeriesServer";
+import { addPart, loadSeriesMatch, seriesStateOf } from "@/lib/matchSeriesServer";
 
 type Params = { params: Promise<{ matchId: string }> };
 
@@ -15,10 +15,7 @@ export const GET = withRoute(
     await requireMatchAccess(matchId);
 
     const match = await loadSeriesMatch(matchId);
-    return NextResponse.json({
-      parts: match.parts,
-      standing: standingOf(match.activity, match.parts, match.isKnockout),
-    });
+    return NextResponse.json(seriesStateOf(match));
   },
 );
 
@@ -39,13 +36,6 @@ export const POST = withRoute(
     await logAction(session.username, "ADD_MATCH_PART", String(part.order));
 
     const match = await loadSeriesMatch(matchId);
-    return NextResponse.json(
-      {
-        part,
-        parts: match.parts,
-        standing: standingOf(match.activity, match.parts, match.isKnockout),
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ part, ...seriesStateOf(match) }, { status: 201 });
   },
 );
