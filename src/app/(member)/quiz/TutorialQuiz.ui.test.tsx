@@ -2,15 +2,43 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import TutorialQuiz from "./TutorialQuiz";
-import { TUTORIAL_QUESTIONS } from "@/lib/quizTutorial";
+import type { TutorialView } from "@/lib/quizTutorialServer";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 
-const [first, second, third] = TUTORIAL_QUESTIONS;
+const CURVE: ScoreCurve = { fullSeconds: 3, maxSeconds: 10, floorPercent: 50 };
+
+function made(id: string, text: string, right: string, wrong: string[]): TutorialView {
+  return {
+    id,
+    text,
+    category: "تجربة",
+    points: 10,
+    correctCount: 1,
+    options: [
+      { id: `${id}a`, text: right },
+      ...wrong.map((o, i) => ({ id: `${id}${i}`, text: o })),
+    ],
+    correctIds: [`${id}a`],
+  };
+}
+
+const QUESTIONS = [
+  made("t1", "ما عاصمة موريتانيا؟", "نواكشوط", ["نواذيبو", "كيفة"]),
+  made("t2", "كم عدد أيام الأسبوع؟", "سبعة", ["ستة", "ثمانية"]),
+  made("t3", "كم عدد ألوان قوس قزح؟", "سبعة ألوان", ["ستة ألوان", "ثمانية ألوان"]),
+];
+
+const [first, second, third] = QUESTIONS;
+
+function show(onExit = () => {}, questions = QUESTIONS) {
+  return render(<TutorialQuiz questions={questions} curve={CURVE} onExit={onExit} />);
+}
 
 const pick = (text: string) => userEvent.click(screen.getByText(text));
 const confirm = () => userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 const carryOn = (name: RegExp) => userEvent.click(screen.getByRole("button", { name }));
 
-async function answerRight(question: (typeof TUTORIAL_QUESTIONS)[number]) {
+async function answerRight(question: TutorialView) {
   for (const id of question.correctIds) {
     await pick(question.options.find((o) => o.id === id)!.text);
   }
@@ -27,19 +55,19 @@ async function playAll() {
 
 describe("TutorialQuiz", () => {
   it("says the round is practice and does not count", () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     expect(screen.getByText(/لا تحتسب نقاطها/)).toBeDefined();
   });
 
   it("starts on the first question", () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     expect(screen.getByText(first.text)).toBeDefined();
   });
 
   it("goes straight to the next question when an answer is confirmed", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     await answerRight(first);
 
@@ -47,7 +75,7 @@ describe("TutorialQuiz", () => {
   });
 
   it("keeps the score off the question screen", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     await answerRight(first);
 
@@ -56,7 +84,7 @@ describe("TutorialQuiz", () => {
   });
 
   it("pays nothing for a wrong answer and still moves on", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     await pick(first.options.find((o) => !first.correctIds.includes(o.id))!.text);
     await confirm();
@@ -65,7 +93,7 @@ describe("TutorialQuiz", () => {
   });
 
   it("asks for one answer on every question, the last included", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
     await answerRight(first);
     await waitFor(() => screen.getByText(second.text));
     await answerRight(second);
@@ -76,7 +104,7 @@ describe("TutorialQuiz", () => {
   });
 
   it("ends by saying the score does not count", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
 
     await playAll();
 
@@ -85,7 +113,7 @@ describe("TutorialQuiz", () => {
   });
 
   it("can be taken again from the start", async () => {
-    render(<TutorialQuiz onExit={() => {}} />);
+    show();
     await playAll();
     await waitFor(() => screen.getByText(/أنهيت الجولة التجريبية/));
 
@@ -96,7 +124,7 @@ describe("TutorialQuiz", () => {
 
   it("hands the member back to the competition", async () => {
     const onExit = vi.fn();
-    render(<TutorialQuiz onExit={onExit} />);
+    show(onExit);
     await playAll();
     await waitFor(() => screen.getByText(/أنهيت الجولة التجريبية/));
 

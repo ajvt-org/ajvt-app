@@ -1,42 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { TUTORIAL_QUESTIONS, isRight, gradeTutorial } from "./quizTutorial";
-import { DEFAULT_CURVE } from "./competitionConfig";
+import { isRight, gradeTutorial } from "./quizTutorial";
+import { DEFAULT_CURVE, type ScoreCurve } from "./competitionConfig";
 
-const [single] = TUTORIAL_QUESTIONS;
-const multi = {
-  id: "m1",
-  text: "سؤال متعدد",
-  category: "تجربة",
-  points: 20,
-  correctCount: 2,
-  options: [
-    { id: "m1a", text: "أ" },
-    { id: "m1b", text: "ب" },
-    { id: "m1c", text: "ج" },
-  ],
-  correctIds: ["m1a", "m1c"],
-};
+const TUTORIAL_CURVE: ScoreCurve = { fullSeconds: 3, maxSeconds: 10, floorPercent: 50 };
 
-describe("the tutorial bank", () => {
-  it("holds exactly three questions", () => {
-    expect(TUTORIAL_QUESTIONS).toHaveLength(3);
-  });
-
-  it("gives every question at least two options", () => {
-    expect(TUTORIAL_QUESTIONS.every((q) => q.options.length >= 2)).toBe(true);
-  });
-
-  it("marks as many right answers as it asks for", () => {
-    expect(TUTORIAL_QUESTIONS.every((q) => q.correctIds.length === q.correctCount)).toBe(true);
-  });
-
-  it("only marks options that exist", () => {
-    for (const question of TUTORIAL_QUESTIONS) {
-      const ids = new Set(question.options.map((o) => o.id));
-      expect(question.correctIds.every((id) => ids.has(id))).toBe(true);
-    }
-  });
-});
+const single = { id: "t1", points: 10, correctCount: 1, correctIds: ["t1a"] };
+const multi = { id: "m1", points: 20, correctCount: 2, correctIds: ["m1a", "m1c"] };
 
 describe("isRight", () => {
   it("takes the one right option", () => {
@@ -58,13 +27,6 @@ describe("isRight", () => {
 
   it("refuses an empty answer", () => {
     expect(isRight(single, [])).toBe(false);
-  });
-
-  it("keeps every tutorial question to a single answer", () => {
-    for (const question of TUTORIAL_QUESTIONS) {
-      expect(question.correctCount).toBe(1);
-      expect(question.correctIds).toHaveLength(1);
-    }
   });
 });
 
@@ -91,14 +53,8 @@ describe("gradeTutorial", () => {
     expect(out.points).toBe(0);
   });
 
-  it("falls back to the tutorial's own bands", () => {
-    expect(gradeTutorial(single, single.correctIds, 2_000).points).toBe(10);
-  });
-
-  it("closes the tutorial question after ten seconds", () => {
-    const out = gradeTutorial(single, single.correctIds, 12_000);
-
-    expect(out.isCorrect).toBe(false);
-    expect(out.points).toBe(0);
+  it("takes the bands it is given rather than one of its own", () => {
+    expect(gradeTutorial(single, single.correctIds, 2_000, TUTORIAL_CURVE).points).toBe(10);
+    expect(gradeTutorial(single, single.correctIds, 12_000, TUTORIAL_CURVE).points).toBe(0);
   });
 });

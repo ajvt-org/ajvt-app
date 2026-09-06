@@ -6,14 +6,14 @@ import Icon, { type IconName } from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import NextRoundCountdown from "./NextRoundCountdown";
 import type { CompetitionState, RunningCompetition } from "./types";
-import { countedNoun, ROUNDS } from "@/lib/arabicPlural";
-import { landingActivities, quizBoard as texts } from "@/lib/texts";
+import { countedNoun, QUESTIONS, ROUNDS } from "@/lib/arabicPlural";
+import { landingActivities, quizBoard as texts, quizPicker } from "@/lib/texts";
 
 const STATE_LABEL: Record<CompetitionState, string> = {
-  before: "لم تنطلق بعد",
-  open: "جولة مفتوحة الآن",
-  closed: "بين جولتين",
-  over: "انتهت",
+  before: quizPicker.before,
+  open: quizPicker.open,
+  closed: quizPicker.closed,
+  over: quizPicker.over,
 };
 
 const STATE_ICON: Record<CompetitionState, IconName> = {
@@ -97,13 +97,13 @@ function CompetitionCard({
             style={{ color: "var(--copper-600)" }}
           >
             <Icon name="clock" size={13} className="shrink-0" />
-            تنطلق بعد
+            {quizPicker.startsIn}
             <NextRoundCountdown
               opensAt={competition.startsAt}
               onReached={onStarted}
               color="var(--copper-600)"
               compact
-              ariaLabel="الوقت المتبقي لانطلاق المسابقة"
+              ariaLabel={quizPicker.startsInLabel}
             />
           </span>
         ) : (
@@ -125,7 +125,10 @@ function CompetitionCard({
             </span>
             <span className="shrink-0 text-xs tabular-nums" style={{ color: "var(--text-muted)" }}>
               <NumericRanges>
-                {`${competition.passedRounds} من ${countedNoun(competition.roundCount, ROUNDS)}`}
+                {quizPicker.roundsPassed(
+                  competition.passedRounds,
+                  countedNoun(competition.roundCount, ROUNDS),
+                )}
               </NumericRanges>
             </span>
           </span>
@@ -155,6 +158,7 @@ export default function QuizPicker({
   hint,
   onPick,
   onTutorial,
+  tutorialCount = 0,
   onStarted,
 }: {
   competitions: RunningCompetition[];
@@ -162,6 +166,7 @@ export default function QuizPicker({
   hint?: string;
   onPick: (id: string) => void;
   onTutorial?: () => void;
+  tutorialCount?: number;
   onStarted?: () => void;
 }) {
   return (
@@ -229,7 +234,7 @@ export default function QuizPicker({
                 style={{ color: "var(--copper-600)" }}
               >
                 <Icon name="sparkle" size={14} />
-                ركن التجربة
+                {quizPicker.tutorialCorner}
               </span>
               <span
                 className="flex-1"
@@ -276,18 +281,20 @@ export default function QuizPicker({
                     className="block text-xs font-extrabold"
                     style={{ color: "var(--copper-600)" }}
                   >
-                    جديد على المسابقات؟
+                    {quizPicker.newHere}
                   </span>
                   <span className="block font-black" style={{ color: "var(--text-main)" }}>
-                    تعلّم اللعب في دقيقة
+                    {quizPicker.learnInAMinute}
                   </span>
                   <span className="block text-xs" style={{ color: "#8c6a52" }}>
-                    <NumericRanges>3 أسئلة قصيرة للتجربة، لا تُحسب نقاطها</NumericRanges>
+                    <NumericRanges>
+                      {quizPicker.tutorialSize(countedNoun(tutorialCount, QUESTIONS))}
+                    </NumericRanges>
                   </span>
                 </span>
               </div>
               <button onClick={onTutorial} className="btn btn-copper mt-3.5 text-sm relative">
-                <Icon name="play" size={16} className="icon-inline" /> ابدأ الجولة التجريبية
+                <Icon name="play" size={16} className="icon-inline" /> {quizPicker.startTutorial}
               </button>
             </div>
           </>
