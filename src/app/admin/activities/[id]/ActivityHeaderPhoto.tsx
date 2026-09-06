@@ -22,9 +22,7 @@ export default function ActivityHeaderPhoto({
   const showToast = useToast();
   const [error, setError] = useState("");
 
-  // The header sits outside the details form, so the picture saves the moment it
-  // is picked. Nothing here waits on حفظ التفاصيل and nothing is lost on a tab change.
-  async function save(filename: string) {
+  async function saveOnPick(filename: string) {
     setError("");
     try {
       await api.patch(`/api/admin/activities/${activityId}`, { photo: filename });
@@ -44,7 +42,7 @@ export default function ActivityHeaderPhoto({
         bare
         label={texts.activityPhoto}
         placeholderIcon={isVolunteer ? "handshake" : "trophy"}
-        onUpload={save}
+        onUpload={saveOnPick}
       />
       {error && (
         <p className="text-xs font-semibold mt-1" style={{ color: "#dc2626" }}>

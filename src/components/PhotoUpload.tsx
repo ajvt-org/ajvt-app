@@ -65,8 +65,6 @@ export default function PhotoUpload({
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
   const action = locked && lockedNote ? lockedNote : photo || previewUrl ? texts.change : texts.add;
-  // The small frames put their label beside the picture, so a locked note has a
-  // place to sit unless the caller asked for the frame on its own.
   const small = variant === "avatar" || variant === "tile";
   const noteBelow = locked && lockedNote && (!small || bare);
   const Frame = FRAMES[variant];
