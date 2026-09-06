@@ -153,6 +153,7 @@ export const tournamentSetup = {
     GROUPS_THEN_KNOCKOUT: "مجموعات ثم خروج المغلوب",
   },
   squadHeading: "عدد لاعبي الفريق",
+  singles: "بطولة فردية",
   minTeamSize: "الحد الأدنى",
   maxTeamSize: "الحد الأقصى",
   organisedByHomeVillage: "بطولة من تنظيم التاكلالت",
