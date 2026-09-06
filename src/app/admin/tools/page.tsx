@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import PageLoading from "@/components/PageLoading";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import { adminTabs } from "@/lib/texts";
 import { toolsFor } from "./toolLinks";
 
 export default function AdminToolsPage() {
@@ -24,11 +25,7 @@ export default function AdminToolsPage() {
 
   return (
     <div className="admin-page space-y-3">
-      <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="shield">أدوات المشرف</IconLabel>
-      </p>
-
-      <div className="space-y-2">
+      <nav className="space-y-2" aria-label={adminTabs.tools}>
         {toolsFor(role).map((tool) => (
           <Link
             key={tool.href}
@@ -45,7 +42,7 @@ export default function AdminToolsPage() {
             <Icon name="chevronLeft" size={14} />
           </Link>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

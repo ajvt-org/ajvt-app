@@ -227,6 +227,7 @@ const KEPT_CLEAN = [
   "src/app/register/page.tsx",
   "src/components/LandingHero.tsx",
   "src/components/BackButton.tsx",
+  "src/app/admin/tools/page.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
