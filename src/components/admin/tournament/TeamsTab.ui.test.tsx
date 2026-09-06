@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import TeamsTab from "./TeamsTab";
 import type { RosterMember, Team } from "./types";
+import { teamsTab } from "@/lib/texts";
 
 const post = vi.fn();
 const patch = vi.fn();
@@ -376,12 +377,14 @@ describe("the squad the tournament asks for", () => {
     expect([...document.querySelectorAll("bdi")].map((el) => el.textContent)).toEqual(["16", "22"]);
   });
 
-  it("leaves each card badge counting the players and nothing else", () => {
+  it("leaves each card showing where its squad sits, not the range written out", () => {
     showSquad({ min: 16, max: 22 });
 
     const summaries = [...document.querySelectorAll("summary")].map((s) => s.textContent);
     expect(summaries.some((text) => text?.includes("16-22"))).toBe(false);
-    expect(summaries[0]).toContain("3 لاعبين");
+    expect(document.querySelector('summary [role="img"]')?.getAttribute("aria-label")).toContain(
+      teamsTab.squadOfRange(3, 16, 22),
+    );
   });
 
   it("states a fixed squad as the one number it is", () => {

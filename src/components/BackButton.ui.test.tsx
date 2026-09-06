@@ -46,14 +46,9 @@ describe("BackButton", () => {
     expect(back).not.toHaveBeenCalled();
   });
 
-  it("calls the handler it was given rather than touching history", async () => {
-    canUnwind.mockReturnValue(true);
-    const onBack = vi.fn();
-    render(<BackButton onBack={onBack} />);
+  it("is a link on every screen, so no caller can render an arrow that skips the trail", () => {
+    render(<BackButton href="/activities" />);
 
-    await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
-
-    expect(onBack).toHaveBeenCalled();
-    expect(back).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("رجوع").tagName).toBe("A");
   });
 });

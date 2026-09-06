@@ -40,15 +40,27 @@ const scorelinesIn = (row: HTMLElement) =>
   [...row.querySelectorAll('[dir="rtl"]')].map((node) => node.textContent);
 
 describe("a day that holds matches", () => {
-  it("keeps the venue with the fixture rather than beside the time", () => {
-    show(day({ matches: [match()] }));
+  it("lifts the ground to the day heading when every match is played on it", () => {
+    show(day({ matches: [match(), match({ id: "m2" })] }));
 
-    const time = screen.getByLabelText(texts.changeTime);
     const venue = screen.getByText("ملعب القرية");
 
-    expect(time.parentElement).not.toBe(venue.parentElement);
-    expect(venue.closest("li")?.contains(time)).toBe(true);
-    expect(venue.closest("div")?.textContent).toContain("النجم");
+    expect(venue.closest(".match-day-head")).not.toBeNull();
+    expect(venue.closest("li")).toBeNull();
+  });
+
+  it("keeps a ground on the row where that match is played somewhere else", () => {
+    show(day({ matches: [match(), match({ id: "m2", venue: "ملعب المدرسة" })] }));
+
+    expect(screen.getByText("ملعب القرية").closest("li")).not.toBeNull();
+    expect(screen.getByText("ملعب المدرسة").closest("li")).not.toBeNull();
+    expect(screen.queryByText("ملعب القرية")!.closest(".match-day-head")).toBeNull();
+  });
+
+  it("leaves the ground on the row when a match on the day has none", () => {
+    show(day({ matches: [match(), match({ id: "m2", venue: null })] }));
+
+    expect(screen.getByText("ملعب القرية").closest("li")).not.toBeNull();
   });
 
   it("keeps the result with the fixture too", () => {
@@ -103,11 +115,17 @@ describe("a day that holds matches", () => {
     expect(screen.getByText(texts.finished)).toBeDefined();
   });
 
-  it("offers neither the rest toggle nor the delete once matches are on it", () => {
+  it("still shows the rest toggle and the delete, disabled, once matches are on it", () => {
     show(day({ matches: [match()] }));
 
-    expect(screen.queryByText(texts.makeRestDay)).toBeNull();
-    expect(screen.queryByText(texts.removeDay)).toBeNull();
+    expect(screen.getByText(texts.makeRestDay).closest("button")!.disabled).toBe(true);
+    expect(screen.getByText(texts.removeDay).closest("button")!.disabled).toBe(true);
+  });
+
+  it("says on the card why neither will take a tap", () => {
+    show(day({ matches: [match()] }));
+
+    expect(screen.getByText(texts.dayLocked)).toBeDefined();
   });
 });
 
@@ -125,39 +143,45 @@ describe("a day that can still be changed", () => {
   it("offers to make a rest day back into a match day", () => {
     show(day({ isRest: true }));
 
-    expect(screen.getByText(texts.restDay)).toBeDefined();
     expect(screen.getByText(texts.makeMatchDay)).toBeDefined();
     expect(screen.queryByText(texts.makeRestDay)).toBeNull();
   });
 
-  it("names the day and the date it falls on", () => {
-    show(day({ position: 3 }));
+  it("leaves both controls live on an empty day, and says nothing about a lock", () => {
+    show(day());
 
-    expect(screen.getByText(new RegExp(texts.dayNumber(3)))).toBeDefined();
+    expect(screen.getByText(texts.makeRestDay).closest("button")!.disabled).toBe(false);
+    expect(screen.getByText(texts.removeDay).closest("button")!.disabled).toBe(false);
+    expect(screen.queryByText(texts.dayLocked)).toBeNull();
+  });
+
+  it("leaves a rest day nothing to read but its own treatment", () => {
+    const { container } = show(day({ isRest: true, position: 2 }));
+
+    expect(container.textContent).not.toContain("يوم راحة");
   });
 });
 
 describe("the heading of a day", () => {
-  it("leads with the date and keeps the day number under it", () => {
+  it("says the date once and the number once", () => {
     show(day({ position: 3, date: "2026-08-26T00:00:00.000Z" }));
 
-    const date = screen.getByText(/الأربعاء/);
-    const number = screen.getByText(texts.dayNumber(3));
-
-    expect(date.className).toContain("font-black");
-    expect(date.nextElementSibling).toBe(number);
+    expect(screen.getByText(/الأربعاء/).className).toContain("font-black");
+    expect(screen.queryByText(texts.dayNumber(3))).toBeNull();
+    expect(screen.getAllByText("3")).toHaveLength(1);
   });
 
-  it("falls back to the day number when the day has no date", () => {
+  it("shows the badge alone when the day has no date", () => {
     show(day({ position: 3, date: null }));
 
-    expect(screen.getAllByText(texts.dayNumber(3)).length).toBe(2);
+    expect(screen.queryByText(texts.dayNumber(3))).toBeNull();
+    expect(screen.getAllByText("3")).toHaveLength(1);
   });
 
   it("sets the heading apart from what the day holds", () => {
     show(day({ matches: [match()] }));
 
-    const head = screen.getByText(texts.dayNumber(1)).closest(".match-day-head")!;
+    const head = screen.getByText("1").closest(".match-day-head")!;
 
     expect(head).not.toBeNull();
     expect(head.contains(screen.getByText(/النجم/))).toBe(false);
@@ -237,12 +261,10 @@ describe("what a day card does with the width it takes", () => {
     expect(row.children.length).toBe(3);
   });
 
-  it("carries the round the match belongs to, next to the ground", () => {
+  it("carries the round the match belongs to on the row", () => {
     show(day({ matches: [match({ round: "الجولة الأولى" })] }));
 
-    const meta = screen.getByText("الجولة الأولى").parentElement!;
-
-    expect(meta.textContent).toContain("ملعب القرية");
+    expect(screen.getByText("الجولة الأولى").closest("li")).not.toBeNull();
   });
 
   it("holds every match of the day in the order it was given", () => {

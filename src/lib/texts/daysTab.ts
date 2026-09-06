@@ -1,5 +1,5 @@
 export const daysTab = {
-  addRestHere: "أضف يوم راحة هنا",
+  addRestAfter: "يوم راحة بعده",
   loadFailed: "فشل تحميل الأيام",
   needStartDate: "حدد تاريخ بداية البطولة أولاً",
   countedFromStart: "الأيام تُحسب من تاريخ البداية، ويُحسب تاريخ النهاية تلقائياً من عدد الأيام.",
@@ -19,7 +19,7 @@ export const daysTab = {
   pickDay: "اختر اليوم...",
   dayNumber: (position: number) => `اليوم ${position}`,
   dayOption: (position: number, label: string) => `${daysTab.dayNumber(position)} — ${label}`,
-  restDay: "يوم راحة",
+  dayLocked: "اليوم أُقفل لأن فيه مباريات",
   makeMatchDay: "جعله يوم مباريات",
   makeRestDay: "جعله يوم راحة",
   removeDay: "حذف اليوم",

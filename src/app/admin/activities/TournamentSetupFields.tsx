@@ -1,7 +1,9 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
-import { tournamentSetup as texts } from "@/lib/texts";
+import LockNote from "@/components/LockNote";
+import { mvpVote, tournamentSetup as texts } from "@/lib/texts";
+import { MVP_VOTE_MINUTES_MAX, MVP_VOTE_MINUTES_MIN } from "@/lib/mvpVote";
 import { isSinglesSquad, normalizePlayerCount } from "@/lib/squadSize";
 import type { IconName } from "@/components/Icon";
 
@@ -18,16 +20,6 @@ export const MATCH_SHAPES: MatchShapeChoice[] = [
   { value: "SERIES", label: texts.shapes.SERIES, icon: "dice" },
 ];
 
-function LockNote({ children }: { children: string }) {
-  return (
-    <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
-      <IconLabel name="lock" size={11}>
-        {children}
-      </IconLabel>
-    </p>
-  );
-}
-
 export function matchShapeChoice(value: string): MatchShapeChoice | undefined {
   return MATCH_SHAPES.find((shape) => shape.value === value);
 }
@@ -38,12 +30,16 @@ function NumberField({
   value,
   onChange,
   disabled,
+  min = 1,
+  max = 40,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  min?: number;
+  max?: number;
 }) {
   return (
     <div className="flex-1 min-w-0">
@@ -57,8 +53,8 @@ function NumberField({
       <input
         id={id}
         type="number"
-        min={1}
-        max={40}
+        min={min}
+        max={max}
         inputMode="numeric"
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -76,6 +72,7 @@ export default function TournamentSetupFields({
   maxTeamSize,
   organisedByHomeVillage,
   outsidePlayerLimit,
+  mvpVoteMinutes,
   fixturesExist = false,
   matchesPlayed = false,
   onFormat,
@@ -84,6 +81,7 @@ export default function TournamentSetupFields({
   onMaxTeamSize,
   onOrganisedByHomeVillage,
   onOutsidePlayerLimit,
+  onMvpVoteMinutes,
 }: {
   format: string;
   matchShape: string;
@@ -91,6 +89,7 @@ export default function TournamentSetupFields({
   maxTeamSize: string;
   organisedByHomeVillage: boolean;
   outsidePlayerLimit: string;
+  mvpVoteMinutes?: string;
   fixturesExist?: boolean;
   matchesPlayed?: boolean;
   onFormat: (format: string) => void;
@@ -99,6 +98,7 @@ export default function TournamentSetupFields({
   onMaxTeamSize: (value: string) => void;
   onOrganisedByHomeVillage: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
+  onMvpVoteMinutes?: (value: string) => void;
 }) {
   const singles = isSinglesSquad({
     min: normalizePlayerCount(minTeamSize),
@@ -179,8 +179,6 @@ export default function TournamentSetupFields({
                 const one = e.target.checked ? "1" : "";
                 onMinTeamSize(one);
                 onMaxTeamSize(one);
-                // A squad of one has no team, so the village cap has nothing to
-                // cap. Clear it rather than leave a stored value nothing shows.
                 if (e.target.checked) {
                   onOrganisedByHomeVillage(false);
                   onOutsidePlayerLimit("");
@@ -211,9 +209,6 @@ export default function TournamentSetupFields({
         {matchesPlayed && <LockNote>{texts.squadLocked}</LockNote>}
       </div>
 
-      {/* The limit caps players from outside the village that a team may field.
-          A singles squad has no team, so neither the toggle nor the cap means
-          anything there. */}
       {!singles && (
         <>
           <label className="flex items-center gap-2 text-sm font-bold">
@@ -235,6 +230,17 @@ export default function TournamentSetupFields({
             />
           )}
         </>
+      )}
+
+      {onMvpVoteMinutes && matchShape === "FOOTBALL" && (
+        <NumberField
+          id="tournament-mvp-vote-minutes"
+          label={mvpVote.minutesLabel}
+          value={mvpVoteMinutes ?? ""}
+          onChange={onMvpVoteMinutes}
+          min={MVP_VOTE_MINUTES_MIN}
+          max={MVP_VOTE_MINUTES_MAX}
+        />
       )}
     </div>
   );

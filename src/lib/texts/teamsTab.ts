@@ -19,9 +19,11 @@ export const teamsTab = {
   changeTeamLogo: "تغيير شعار الفريق",
   renameTeam: "تعديل اسم الفريق",
   fromHomeVillage: "فريق من التاكلالت",
-  squadShort: "أقل من الحد الأدنى",
-  squadOver: "أكثر من الحد الأقصى",
-  outsideOverLimit: (count: number, limit: number) => `${count} من خارج التاكلالت والحد ${limit}`,
+  squadOfRange: (count: number, min: number | null, max: number) =>
+    min === null
+      ? `${teamsTab.rosterCount(count)}، الحد الأقصى ${max}`
+      : `${teamsTab.rosterCount(count)}، الحد الأدنى ${min} والحد الأقصى ${max}`,
+  outsideOfLimit: (count: number, limit: number) => `${count} من خارج التاكلالت والحد ${limit}`,
   outsidePlayerOverLimit: "فوق حد اللاعبين من خارج التاكلالت",
   squadSize: (size: string) => `حجم الفريق ${size}`,
   rosterCount: (count: number) => countedNoun(count, PLAYERS),

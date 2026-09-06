@@ -5,17 +5,15 @@ import { association } from "@/lib/texts";
 export default function HeaderIdentity({
   title,
   backHref,
-  onBack,
   large,
 }: {
   title: string;
   backHref?: string;
-  onBack?: () => void;
   large?: boolean;
 }) {
   return (
     <>
-      {onBack || backHref ? <BackButton href={backHref} onBack={onBack} /> : null}
+      {backHref ? <BackButton href={backHref} /> : null}
       <Logo mark="symbol" size={38} className="shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>

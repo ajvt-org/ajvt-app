@@ -70,7 +70,7 @@ const setup = (over: Partial<StandingsState> = {}) =>
     <CompetitionView
       membershipHref="/membership"
       standings={{ ...standings, ...over }}
-      onBack={vi.fn()}
+      backHref="/quiz"
       onReloadStandings={vi.fn()}
     />,
   );
@@ -180,7 +180,6 @@ describe("CompetitionView", () => {
   });
 
   it("returns to the quiz page when the last answer lands", async () => {
-    const onBack = vi.fn();
     const onReloadStandings = vi.fn();
     post.mockResolvedValueOnce({
       attemptId: "at1",
@@ -193,7 +192,7 @@ describe("CompetitionView", () => {
       <CompetitionView
         membershipHref="/membership"
         standings={standings}
-        onBack={onBack}
+        backHref="/quiz"
         onReloadStandings={onReloadStandings}
       />,
     );
@@ -211,7 +210,6 @@ describe("CompetitionView", () => {
     await userEvent.click(screen.getByRole("button", { name: "تأكيد الإجابة" }));
 
     await waitFor(() => expect(onReloadStandings).toHaveBeenCalled());
-    expect(onBack).not.toHaveBeenCalled();
     expect(screen.queryByText("ما عاصمة موريتانيا؟")).toBeNull();
     expect(screen.getByRole("tab", { name: "ترتيب الجولة" })).toBeDefined();
   });
@@ -307,20 +305,17 @@ describe("CompetitionView", () => {
     expect(screen.getByRole("option", { name: "الأسبوع 1" })).toBeDefined();
   });
 
-  it("goes back to the list of quizzes rather than out of the section", async () => {
-    const onBack = vi.fn();
+  it("points its arrow at the list of quizzes rather than out of the section", () => {
     render(
       <CompetitionView
         membershipHref="/membership"
         standings={standings}
-        onBack={onBack}
+        backHref="/quiz?from=%2Fhome"
         onReloadStandings={vi.fn()}
       />,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "رجوع" }));
-
-    expect(onBack).toHaveBeenCalled();
+    expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/quiz?from=%2Fhome");
   });
 
   it("says how much of an open round is left", () => {

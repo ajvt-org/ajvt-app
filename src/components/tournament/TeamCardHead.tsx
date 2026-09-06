@@ -1,4 +1,5 @@
 import TeamLogo from "./TeamLogo";
+import { MATCH_TEAMS_SIZES } from "./matchCard/MatchTeams";
 import IconLabel from "@/components/IconLabel";
 
 export default function TeamCardHead({
@@ -12,7 +13,7 @@ export default function TeamCardHead({
 }) {
   return (
     <>
-      <TeamLogo logo={logo} name={name} size={24} />
+      <TeamLogo logo={logo} name={name} size={MATCH_TEAMS_SIZES.md.logo} />
       <span className="min-w-0 flex-1" style={{ wordBreak: "break-word" }}>
         {name}
       </span>
