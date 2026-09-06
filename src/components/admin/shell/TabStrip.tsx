@@ -36,8 +36,8 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className="text-xs sm:text-sm font-bold px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg relative"
       style={{
-        background: active ? "var(--mint-700)" : "transparent",
-        color: active ? "white" : "var(--text-main)",
+        background: active ? "white" : "transparent",
+        color: active ? "var(--mint-700)" : "rgba(255,255,255,0.85)",
       }}
     >
       <IconLabel name={tab.icon}>{tab.label}</IconLabel>
@@ -60,11 +60,7 @@ export default function TabStrip({
   const strip = useStripScroll(pathname);
 
   return (
-    <div
-      ref={strip}
-      className="tab-strip px-3 py-1.5 sm:px-4"
-      style={{ background: "white", borderBottom: "1px solid var(--mint-100)" }}
-    >
+    <div ref={strip} className="tab-strip min-w-0 flex-1">
       {tabs.map((tab) => (
         <Tab
           key={tab.label}
