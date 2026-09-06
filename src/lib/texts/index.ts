@@ -21,7 +21,7 @@ export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
 export { pendingAgeGroups } from "./ageGroups";
-export { adminAccounts } from "./adminAccounts";
+export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
 export { adminShell, adminTabs } from "./adminNav";
