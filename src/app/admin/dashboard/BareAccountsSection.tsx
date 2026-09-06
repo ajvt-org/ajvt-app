@@ -11,7 +11,7 @@ import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
 import TempPasswordBox from "./TempPasswordBox";
-import { bareAccounts as texts } from "@/lib/texts";
+import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
 import type { BareAccount } from "./types";
 
 function identify(user: BareAccount): string {
@@ -218,6 +218,7 @@ export default function BareAccountsSection({
       {confirmDelete && (
         <ConfirmDeleteDialog
           name={identify(confirmDelete)}
+          consequence={confirmDeleteTexts.accountConsequence(identify(confirmDelete))}
           loading={deleteLoading}
           onConfirm={(typed) => deleteUser(confirmDelete.id, typed)}
           onClose={() => setConfirmDelete(null)}

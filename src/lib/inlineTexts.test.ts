@@ -174,6 +174,8 @@ const KEPT_CLEAN = [
   "src/app/admin/dashboard/MemberImportUpload.tsx",
   "src/app/admin/dashboard/MemberImportReview.tsx",
   "src/app/admin/dashboard/MemberImportRow.tsx",
+  "src/app/admin/members/[id]/DeleteMemberCard.tsx",
+  "src/components/admin/ConfirmDeleteDialog.tsx",
   "src/app/admin/dashboard/MemberImportBulkFill.tsx",
   "src/app/admin/dashboard/memberImportState.ts",
   "src/app/api/admin/people/import",
