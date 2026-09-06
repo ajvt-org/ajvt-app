@@ -1,3 +1,4 @@
+import HalfPoints from "@/components/HalfPoints";
 import TeamLogo from "./TeamLogo";
 import FollowTeamButton from "./FollowTeamButton";
 import { publicTournament as texts } from "@/lib/texts";
@@ -13,40 +14,45 @@ type Row = {
   won: number;
   drawn: number;
   lost: number;
-  gf: number;
-  ga: number;
-  gd: number;
+  scoredFor: number;
+  scoredAgainst: number;
+  difference: number;
 };
 
 const columnTexts = texts.standingsColumns;
 
-const COLUMNS: { label: string; detail: boolean; start?: boolean }[] = [
-  { label: columnTexts.rank, detail: false },
-  { label: "", detail: false, start: true },
-  { label: columnTexts.points, detail: false },
-  { label: columnTexts.played, detail: false },
-  { label: columnTexts.won, detail: true },
-  { label: columnTexts.drawn, detail: true },
-  { label: columnTexts.lost, detail: true },
-  { label: columnTexts.goalsFor, detail: true },
-  { label: columnTexts.goalsAgainst, detail: true },
-  { label: columnTexts.goalDifference, detail: false },
-];
+function columnsFor(series: boolean): { label: string; detail: boolean; start?: boolean }[] {
+  return [
+    { label: columnTexts.rank, detail: false },
+    { label: "", detail: false, start: true },
+    { label: columnTexts.points, detail: false },
+    { label: columnTexts.played, detail: false },
+    { label: columnTexts.won, detail: true },
+    { label: columnTexts.drawn, detail: true },
+    { label: columnTexts.lost, detail: true },
+    { label: series ? columnTexts.partsFor : columnTexts.goalsFor, detail: true },
+    { label: series ? columnTexts.partsAgainst : columnTexts.goalsAgainst, detail: true },
+    { label: series ? columnTexts.partDifference : columnTexts.goalDifference, detail: false },
+  ];
+}
 
 export default function StandingsTable({
   title,
   rows,
   showFollow,
+  series = false,
   entrant = "team",
 }: {
   title: string | null;
   rows: Row[];
   showFollow: boolean;
+  series?: boolean;
   entrant?: EntrantKind;
 }) {
-  const columns = COLUMNS.map((column) =>
+  const columns = columnsFor(series).map((column) =>
     column.start ? { ...column, label: texts.entrant[entrant].column } : column,
   );
+  const count = (value: number) => (series ? <HalfPoints halves={value} /> : value);
 
   return (
     <div className="card table-fit overflow-x-auto">
@@ -87,16 +93,16 @@ export default function StandingsTable({
                 </span>
               </td>
               <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>
-                {row.points}
+                {count(row.points)}
               </td>
               <td className="px-2 py-2 text-center">{row.played}</td>
               <td className="px-2 py-2 text-center col-detail">{row.won}</td>
               <td className="px-2 py-2 text-center col-detail">{row.drawn}</td>
               <td className="px-2 py-2 text-center col-detail">{row.lost}</td>
-              <td className="px-2 py-2 text-center col-detail">{row.gf}</td>
-              <td className="px-2 py-2 text-center col-detail">{row.ga}</td>
+              <td className="px-2 py-2 text-center col-detail">{count(row.scoredFor)}</td>
+              <td className="px-2 py-2 text-center col-detail">{count(row.scoredAgainst)}</td>
               <td className="px-2 py-2 text-center" dir="ltr">
-                {row.gd}
+                {count(row.difference)}
               </td>
               {showFollow && (
                 <td className="px-2 py-2 text-center">

@@ -57,6 +57,6 @@ export function drawFirstRound<T extends { id: string; groupId?: string | null }
   return solved ? interleave(solved.pairs, solved.byes) : null;
 }
 
-export function isBye(match: { homeTeam: unknown; awayTeam: unknown; status: string }): boolean {
-  return match.status === "PLAYED" && (match.homeTeam === null) !== (match.awayTeam === null);
+export function isBye(match: { firstTeam: unknown; secondTeam: unknown; status: string }): boolean {
+  return match.status === "PLAYED" && (match.firstTeam === null) !== (match.secondTeam === null);
 }

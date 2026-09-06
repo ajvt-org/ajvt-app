@@ -14,8 +14,8 @@ vi.mock("@/lib/api", () => ({
 
 const match = (over: Partial<Match> = {}): Match => ({
   id: "m",
-  homeTeam: { id: "t1", name: "t1", logo: null },
-  awayTeam: { id: "t2", name: "t2", logo: null },
+  firstTeam: { id: "t1", name: "t1", logo: null },
+  secondTeam: { id: "t2", name: "t2", logo: null },
   matchDate: null,
   round: null,
   venue: null,
@@ -32,14 +32,17 @@ const match = (over: Partial<Match> = {}): Match => ({
   goals: [],
   penaltyKicks: [],
   bookings: [],
+  parts: [],
+  adjustments: [],
+  series: null,
   mvpVote: null,
   ...over,
 });
 
 const waitingBracket = [
-  match({ id: "b1", bracketRound: 1, isKnockout: true, homeTeam: null, awayTeam: null }),
-  match({ id: "b2", bracketRound: 1, isKnockout: true, homeTeam: null, awayTeam: null }),
-  match({ id: "b3", bracketRound: 2, isKnockout: true, homeTeam: null, awayTeam: null }),
+  match({ id: "b1", bracketRound: 1, isKnockout: true, firstTeam: null, secondTeam: null }),
+  match({ id: "b2", bracketRound: 1, isKnockout: true, firstTeam: null, secondTeam: null }),
+  match({ id: "b3", bracketRound: 2, isKnockout: true, firstTeam: null, secondTeam: null }),
 ];
 
 const groups: Group[] = [
@@ -118,7 +121,7 @@ describe("a bracket whose first round is waiting", () => {
         ...groupStage,
         match({ id: "b1", bracketRound: 1, isKnockout: true }),
         match({ id: "b2", bracketRound: 1, isKnockout: true }),
-        match({ id: "b3", bracketRound: 2, isKnockout: true, homeTeam: null, awayTeam: null }),
+        match({ id: "b3", bracketRound: 2, isKnockout: true, firstTeam: null, secondTeam: null }),
       ],
       "GROUPS_THEN_KNOCKOUT",
     );

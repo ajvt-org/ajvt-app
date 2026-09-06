@@ -16,12 +16,14 @@ export default function StandingsTab({
   groups,
   stats,
   matches,
+  series,
 }: {
   title: string;
   standingsByGroup: { groupId: string | null; standings: StandingsRow[] }[];
   groups: Group[];
   stats: ReturnType<typeof computeStats>;
   matches: Match[];
+  series: boolean;
 }) {
   const groupNameById = new Map(groups.map((g) => [g.id, g.name]));
   const hasAnyTeams = standingsByGroup.some((g) => g.standings.length > 0);
@@ -44,9 +46,9 @@ export default function StandingsTab({
           String(r.won),
           String(r.drawn),
           String(r.lost),
-          String(r.gf),
-          String(r.ga),
-          String(r.gd),
+          String(r.scoredFor),
+          String(r.scoredAgainst),
+          String(r.difference),
           String(r.points),
         ]);
       });
@@ -60,9 +62,9 @@ export default function StandingsTab({
       .forEach((m) => {
         rows.push([
           m.round || "",
-          m.homeTeam.name,
+          m.firstTeam.name,
           `${m.homeScore} - ${m.awayScore}`,
-          m.awayTeam.name,
+          m.secondTeam.name,
           m.venue || "",
           m.matchDate ? formatMatchDateTime(m.matchDate) : "",
         ]);
@@ -112,6 +114,7 @@ export default function StandingsTab({
           key={group.groupId ?? "none"}
           title={singleFlatTable ? null : groupTitle(group.groupId)}
           rows={group.standings}
+          series={series}
           showFollow={false}
         />
       ))}

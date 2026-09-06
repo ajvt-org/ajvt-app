@@ -36,7 +36,25 @@ const STANDINGS = {
   boards: [],
 };
 
-function mockFetch() {
+const TUTORIAL = {
+  questions: [
+    {
+      id: "t1",
+      text: "ما عاصمة موريتانيا؟",
+      category: "تجربة",
+      points: 10,
+      correctCount: 1,
+      options: [
+        { id: "t1a", text: "نواكشوط" },
+        { id: "t1b", text: "نواذيبو" },
+      ],
+      correctIds: ["t1a"],
+    },
+  ],
+  curve: { fullSeconds: 3, maxSeconds: 10, floorPercent: 50 },
+};
+
+function mockFetch(tutorial: unknown = TUTORIAL) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
@@ -49,6 +67,9 @@ function mockFetch() {
       }
       if (String(url).startsWith("/api/quiz/standings")) {
         return { ok: true, status: 200, json: async () => STANDINGS };
+      }
+      if (String(url).startsWith("/api/quiz/tutorial")) {
+        return { ok: true, status: 200, json: async () => tutorial };
       }
       return { ok: true, status: 200, json: async () => ({}) };
     }),
@@ -67,6 +88,42 @@ describe("QuizPage", () => {
 
     expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
     expect(screen.getByText("ركن التجربة")).toBeDefined();
+  });
+
+  it("opens the practice round on the questions the bank holds", async () => {
+    render(<QuizPage />);
+    await screen.findByText("مسابقة الصيف");
+
+    await userEvent.click(screen.getByRole("button", { name: /ابدأ الجولة التجريبية/ }));
+
+    expect(await screen.findByText("ما عاصمة موريتانيا؟")).toBeDefined();
+  });
+
+  it("offers no practice round when the tutorial bank is empty", async () => {
+    mockFetch({ questions: [], curve: TUTORIAL.curve });
+    render(<QuizPage />);
+
+    expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
+    expect(screen.queryByText("ركن التجربة")).toBeNull();
+  });
+
+  it("offers no practice round when the tutorial cannot be read", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        String(url).startsWith("/api/quiz/tutorial")
+          ? { ok: false, status: 500, json: async () => ({}) }
+          : {
+              ok: true,
+              status: 200,
+              json: async () => ({ competitions: [COMPETITION], confirmAnswers: true }),
+            },
+      ),
+    );
+    render(<QuizPage />);
+
+    expect(await screen.findByText("مسابقة الصيف")).toBeDefined();
+    expect(screen.queryByText("ركن التجربة")).toBeNull();
   });
 
   it("puts the picked competition in the URL", async () => {

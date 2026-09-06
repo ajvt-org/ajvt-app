@@ -17,8 +17,8 @@ const match = (over: Partial<DayMatch> = {}): DayMatch => ({
   homePenalties: null,
   awayPenalties: null,
   forfeitWinnerTeamId: null,
-  homeTeam: { id: "t1", name: "النجم" },
-  awayTeam: { id: "t2", name: "الوحدة" },
+  firstTeam: { id: "t1", name: "النجم" },
+  secondTeam: { id: "t2", name: "الوحدة" },
   ...over,
 });
 
@@ -248,7 +248,7 @@ describe("what a day card does with the width it takes", () => {
   it("holds every match of the day in the order it was given", () => {
     show(
       day({
-        matches: [match(), match({ id: "m2", homeTeam: { id: "t3", name: "الأمل" } })],
+        matches: [match(), match({ id: "m2", firstTeam: { id: "t3", name: "الأمل" } })],
       }),
     );
 
@@ -262,7 +262,7 @@ describe("what a day card does with the width it takes", () => {
   it("warns on the day when a team is booked twice on it", () => {
     show(
       day({
-        matches: [match(), match({ id: "m2", awayTeam: { id: "t1", name: "النجم" } })],
+        matches: [match(), match({ id: "m2", secondTeam: { id: "t1", name: "النجم" } })],
       }),
     );
 

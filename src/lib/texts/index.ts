@@ -40,7 +40,7 @@ export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from ".
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities, landingHero } from "./landing";
-export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
+export { matchAdmin, sidePlaceholders, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
 export { memberCard } from "./memberCard";
 export { manualAdd } from "./manualAdd";
@@ -64,7 +64,7 @@ export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { proofReuse } from "./proofReuse";
-export { quizBoard } from "./quizBoard";
+export { quizBoard, quizPicker } from "./quizBoard";
 export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
 export { quizStandings, quizWorkspace } from "./quizWorkspace";
@@ -80,6 +80,7 @@ export {
   paymentMethodChoice,
   paymentMethodManager,
 } from "./paymentMethods";
+export { quizQuestionList, quizSettingsForm } from "./quizQuestions";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,
@@ -98,4 +99,5 @@ export { villageField, villagesDialog } from "./villages";
 export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
+export { seriesResult } from "./seriesResult";
 export { setupLabels, setupWizard } from "./setupWizard";

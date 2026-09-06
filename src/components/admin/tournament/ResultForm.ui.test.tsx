@@ -2,19 +2,51 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import ResultForm from "./ResultForm";
 import type { DecidedMatch, Team } from "./types";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, seriesResult as seriesTexts } from "@/lib/texts";
+import type { SeriesConfig } from "./seriesConfig";
 
 const patchMock = vi.fn();
 
 vi.mock("@/lib/api", () => ({
-  api: { patch: (...args: unknown[]) => patchMock(...args) },
+  api: {
+    patch: (...args: unknown[]) => patchMock(...args),
+    get: async () => ({
+      parts: [],
+      standing: {
+        sideAHalves: 0,
+        sideBHalves: 0,
+        partsRecorded: 0,
+        partsScored: 0,
+        partsLeft: 2,
+        partsAllowed: 2,
+        target: null,
+        over: false,
+        level: true,
+        extending: false,
+        winner: null,
+      },
+    }),
+  },
   errorMessage: (e: unknown) => (e as Error).message,
 }));
 
+const SERIES: SeriesConfig = {
+  partsPerMatch: 2,
+  matchEnding: "PLAY_ALL",
+  partsToWin: null,
+  partDecision: "OUTCOME",
+  partTarget: null,
+  partWord: "لعبة",
+  partsWord: "ألعاب",
+  hasColours: false,
+  firstColourWord: null,
+  secondColourWord: null,
+};
+
 const MATCH: DecidedMatch = {
   id: "m1",
-  homeTeam: { id: "t1", name: "الصقور", logo: null },
-  awayTeam: { id: "t2", name: "النسور", logo: null },
+  firstTeam: { id: "t1", name: "الصقور", logo: null },
+  secondTeam: { id: "t2", name: "النسور", logo: null },
   matchDate: null,
   round: null,
   venue: null,
@@ -31,6 +63,9 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
+  parts: [],
+  adjustments: [],
+  series: null,
   mvpVote: null,
 };
 
@@ -73,6 +108,8 @@ describe("ResultForm with a suspended player", () => {
         match={MATCH}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={["p1"]}
         onSaved={vi.fn()}
       />,
@@ -89,6 +126,8 @@ describe("ResultForm with a suspended player", () => {
         match={MATCH}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -111,6 +150,8 @@ describe("ResultForm as goal events", () => {
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -158,21 +199,37 @@ describe("ResultForm as goal events", () => {
     expect(body.homeScore).toBeUndefined();
   });
 
-  it("asks a series match for nothing, and says the entry is still coming", () => {
+  it("asks a series match for none of the football apparatus", () => {
     render(
       <ResultForm
         match={MATCH}
         teams={TEAMS}
         matchShape="SERIES"
+        activityId="a1"
+        series={SERIES}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
     );
 
     expect(screen.queryByText("الأهداف")).toBeNull();
+  });
+
+  it("sends a series admin to the setup before its parts are described", () => {
+    render(
+      <ResultForm
+        match={MATCH}
+        teams={TEAMS}
+        matchShape="SERIES"
+        activityId="a1"
+        series={null}
+        suspendedIds={[]}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(seriesTexts.notConfigured)).toBeDefined();
     expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
-    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });
 
@@ -184,6 +241,8 @@ describe("the goal form", () => {
         match={MATCH}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -202,6 +261,8 @@ describe("the goal form", () => {
         match={MATCH}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -227,6 +288,8 @@ describe("the extra time section", () => {
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,
@@ -310,6 +373,8 @@ describe("the shootout", () => {
         match={{ ...MATCH, ...over }}
         teams={TEAMS}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         onSaved={vi.fn()}
       />,

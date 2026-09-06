@@ -11,3 +11,18 @@ export const quizBoard = {
   resumeRound: "أكمل الجولة",
   signUpToPlay: "سجّل للمشاركة",
 } as const;
+
+export const quizPicker = {
+  before: "لم تنطلق بعد",
+  open: "جولة مفتوحة الآن",
+  closed: "بين جولتين",
+  over: "انتهت",
+  startsIn: "تنطلق بعد",
+  startsInLabel: "الوقت المتبقي لانطلاق المسابقة",
+  roundsPassed: (passed: number, rounds: string) => `${passed} من ${rounds}`,
+  tutorialCorner: "ركن التجربة",
+  newHere: "جديد على المسابقات؟",
+  learnInAMinute: "تعلّم اللعب في دقيقة",
+  tutorialSize: (questions: string) => `${questions} للتجربة، لا تُحتسب في المسابقة`,
+  startTutorial: "ابدأ الجولة التجريبية",
+} as const;

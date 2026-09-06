@@ -13,9 +13,9 @@ const rows = [
     won: 1,
     drawn: 1,
     lost: 0,
-    gf: 3,
-    ga: 2,
-    gd: 1,
+    scoredFor: 3,
+    scoredAgainst: 2,
+    difference: 1,
   },
   {
     teamId: "b",
@@ -26,9 +26,9 @@ const rows = [
     won: 0,
     drawn: 1,
     lost: 1,
-    gf: 1,
-    ga: 2,
-    gd: -1,
+    scoredFor: 1,
+    scoredAgainst: 2,
+    difference: -1,
   },
 ];
 
@@ -79,9 +79,9 @@ describe("a long team name", () => {
             won: 2,
             drawn: 1,
             lost: 0,
-            gf: 5,
-            ga: 2,
-            gd: 3,
+            scoredFor: 5,
+            scoredAgainst: 2,
+            difference: 3,
           },
         ]}
         showFollow={false}
@@ -144,5 +144,59 @@ describe("a tie no rule can settle", () => {
 
     expect(screen.getByText(publicTournament.entrant.player.column)).toBeDefined();
     expect(screen.queryByText(publicTournament.entrant.team.column)).toBeNull();
+  });
+});
+
+describe("a table of a tournament played in parts", () => {
+  const seriesRow = {
+    teamId: "t1",
+    name: "أحمد",
+    logo: null,
+    points: 3,
+    played: 2,
+    won: 1,
+    drawn: 1,
+    lost: 0,
+    scoredFor: 3,
+    scoredAgainst: 1,
+    difference: 2,
+  };
+
+  it("names the columns for parts rather than goals", () => {
+    render(<StandingsTable title={null} rows={[seriesRow]} showFollow={false} series />);
+
+    expect(screen.getByText("له")).toBeDefined();
+    expect(screen.getByText("عليه")).toBeDefined();
+  });
+
+  it("renders a half as a half rather than a decimal", () => {
+    const { container } = render(
+      <StandingsTable title={null} rows={[seriesRow]} showFollow={false} series />,
+    );
+
+    expect(container.textContent).toContain("1½");
+    expect(container.textContent).not.toContain("0.5");
+  });
+
+  it("renders a side driven below nothing with the sign in front", () => {
+    const { container } = render(
+      <StandingsTable
+        title={null}
+        rows={[{ ...seriesRow, points: -4, scoredFor: 0, scoredAgainst: 8, difference: -8 }]}
+        showFollow={false}
+        series
+      />,
+    );
+
+    expect(container.textContent).toContain("−2");
+    expect(container.textContent).toContain("−4");
+  });
+
+  it("leaves a football table counting whole goals", () => {
+    const { container } = render(
+      <StandingsTable title={null} rows={[seriesRow]} showFollow={false} />,
+    );
+
+    expect(container.textContent).not.toContain("½");
   });
 });

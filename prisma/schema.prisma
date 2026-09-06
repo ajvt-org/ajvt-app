@@ -113,6 +113,17 @@ model Activity {
   isTournament           Boolean                @default(false)
   format                 TournamentFormat?
   matchShape             MatchShape             @default(FOOTBALL)
+  partsPerMatch          Int?
+  matchEnding            MatchEnding?
+  partsToWin             Int?
+  partDecision           PartDecision?
+  partTarget             Int?
+  partWord               String?
+  partsWord              String?
+  hasColours             Boolean                @default(false)
+  firstColourWord        String?
+  secondColourWord       String?
+  adjustmentRules        AdjustmentRule[]
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -184,6 +195,8 @@ model Team {
   members         TeamMember[]
   homeMatches     Match[]                @relation("HomeTeam")
   awayMatches     Match[]                @relation("AwayTeam")
+  sideAMatches    Match[]                @relation("SideATeam")
+  sideBMatches    Match[]                @relation("SideBTeam")
   forfeitWins     Match[]                @relation("ForfeitWinner")
   goals           MatchGoal[]
   bookings        MatchBooking[]
@@ -227,6 +240,11 @@ model Match {
   homeTeam            Team?              @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
   awayTeamId          String?
   awayTeam            Team?              @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  sideATeamId         String?
+  sideATeam           Team?              @relation("SideATeam", fields: [sideATeamId], references: [id], onDelete: Cascade)
+  sideBTeamId         String?
+  sideBTeam           Team?              @relation("SideBTeam", fields: [sideBTeamId], references: [id], onDelete: Cascade)
+  sideAOpensAs        PartColour?
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
@@ -251,10 +269,14 @@ model Match {
   goals               MatchGoal[]
   bookings            MatchBooking[]
   penaltyKicks        MatchPenaltyKick[]
+  parts               MatchPart[]
+  adjustments         MatchAdjustment[]
   mvpVote             MatchMvpVote?
 
   @@index([activityId])
   @@index([forfeitWinnerTeamId])
+  @@index([sideATeamId])
+  @@index([sideBTeamId])
 }
 
 model MatchMvpVote {
@@ -323,6 +345,50 @@ enum GoalPeriod {
 // teamId is the team the goal counts FOR. A null member is an unknown scorer;
 // an OWN_GOAL's member belongs to the other team. Scores derive from these
 // rows when a result is saved with events.
+model MatchPart {
+  id          String       @id @default(cuid())
+  matchId     String
+  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  order       Int
+  abandoned   Boolean      @default(false)
+  outcome     PartOutcome?
+  sideAPoints Int?
+  sideBPoints Int?
+  sideAColour PartColour?
+  createdAt   DateTime     @default(now())
+
+  @@unique([matchId, order])
+  @@index([matchId])
+}
+
+model AdjustmentRule {
+  id             String            @id @default(cuid())
+  activityId     String
+  activity       Activity          @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  name           String
+  partsToSelf    Int
+  partsFromOther Int
+  createdAt      DateTime          @default(now())
+  recorded       MatchAdjustment[]
+
+  @@unique([activityId, name])
+  @@index([activityId])
+}
+
+model MatchAdjustment {
+  id        String         @id @default(cuid())
+  matchId   String
+  match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  ruleId    String
+  rule      AdjustmentRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  side      MatchSide
+  order     Int
+  createdAt DateTime       @default(now())
+
+  @@index([matchId])
+  @@index([ruleId])
+}
+
 model MatchGoal {
   id        String     @id @default(cuid())
   matchId   String
@@ -656,6 +722,7 @@ model QuizQuestion {
   category     String // free-text, admin-typed (e.g. "تاريخ", "رياضة")
   points       Int                 @default(10)
   correctCount Int                 @default(1) // number of answers that must be selected to earn credit
+  order        Int                 @default(0) // position inside the bank, ascending, newest first among equals
   bankId       String              @default("general")
   bank         QuestionBank        @relation(fields: [bankId], references: [id])
   active       Boolean             @default(true) // soft-disable without losing send history
@@ -684,12 +751,15 @@ model QuizAnswer {
 // Singleton row (id fixed to "singleton", same idiom as Counter) holding what a
 // new question starts from. Everything about how a quiz runs lives on the quiz.
 model QuizSettings {
-  id                  String   @id
-  defaultAnswerCount  Int      @default(4)
-  defaultCorrectCount Int      @default(1)
-  defaultPoints       Int      @default(10)
-  confirmAnswers      Boolean  @default(true)
-  updatedAt           DateTime @updatedAt
+  id                   String   @id
+  defaultAnswerCount   Int      @default(4)
+  defaultCorrectCount  Int      @default(1)
+  defaultPoints        Int      @default(10)
+  confirmAnswers       Boolean  @default(true)
+  tutorialFullSeconds  Int      @default(3)
+  tutorialMaxSeconds   Int      @default(10)
+  tutorialFloorPercent Int      @default(50)
+  updatedAt            DateTime @updatedAt
 }
 
 // Singleton row (id fixed to "singleton", same idiom as QuizSettings) holding
@@ -939,6 +1009,33 @@ enum TournamentFormat {
 enum MatchShape {
   FOOTBALL
   SERIES
+}
+
+enum MatchEnding {
+  PLAY_ALL
+  FIRST_TO
+}
+
+enum PartDecision {
+  OUTCOME
+  POINTS
+  SCORE
+}
+
+enum PartOutcome {
+  SIDE_A
+  SIDE_B
+  DRAW
+}
+
+enum PartColour {
+  FIRST
+  SECOND
+}
+
+enum MatchSide {
+  SIDE_A
+  SIDE_B
 }
 
 enum SuspensionReason {

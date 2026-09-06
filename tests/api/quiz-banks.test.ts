@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb, get, post, patch, del, createAdmin, signInAsAdmin, withId } from "./helpers";
-import { BANK_NOT_EMPTY, NAME_TAKEN } from "@/lib/questionBankServer";
+import {
+  BANK_NOT_EMPTY,
+  NAME_TAKEN,
+  TUTORIAL_BANK_ID,
+  TUTORIAL_BANK_KEPT,
+} from "@/lib/questionBankServer";
 
 import { GET as LIST, POST as CREATE } from "@/app/api/admin/quiz/banks/route";
 import { PATCH as RENAME, DELETE as REMOVE } from "@/app/api/admin/quiz/banks/[id]/route";
@@ -42,8 +47,31 @@ describe("banks of questions", () => {
   it("starts with the general bank the questions already sit in", async () => {
     const body = await (await list()).json();
 
-    expect(body.banks).toHaveLength(1);
-    expect(body.banks[0].name).toBe("البنك العام");
+    expect(body.banks.map((b: { name: string }) => b.name)).toContain("البنك العام");
+  });
+
+  it("keeps a bank for the tutorial alongside the general one", async () => {
+    const body = await (await list()).json();
+
+    expect(body.banks.map((b: { id: string }) => b.id)).toContain(TUTORIAL_BANK_ID);
+  });
+
+  it("puts the tutorial bank back when it is missing", async () => {
+    await prisma.questionBank.delete({ where: { id: TUTORIAL_BANK_ID } });
+
+    const body = await (await list()).json();
+
+    expect(body.banks.map((b: { id: string }) => b.id)).toContain(TUTORIAL_BANK_ID);
+  });
+
+  it("refuses to delete the tutorial bank even when it is empty", async () => {
+    const res = await remove(TUTORIAL_BANK_ID);
+
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toBe(TUTORIAL_BANK_KEPT);
+    expect(
+      await prisma.questionBank.findUnique({ where: { id: TUTORIAL_BANK_ID } }),
+    ).not.toBeNull();
   });
 
   it("creates a second bank", async () => {
@@ -80,7 +108,7 @@ describe("banks of questions", () => {
     const bank = await made("بنك فارغ");
 
     expect((await remove(bank.id)).status).toBe(200);
-    expect(await prisma.questionBank.count()).toBe(1);
+    expect(await prisma.questionBank.findUnique({ where: { id: bank.id } })).toBeNull();
   });
 
   it("refuses to delete a bank that still holds questions", async () => {

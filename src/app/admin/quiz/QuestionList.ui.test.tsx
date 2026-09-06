@@ -10,6 +10,7 @@ function question(id: string, text: string, category: string, answer: string): Q
     category,
     points: 10,
     correctCount: 1,
+    order: 0,
     active: true,
     createdAt: "2026-01-01T00:00:00.000Z",
     answers: [{ id: `${id}-a`, text: answer, isCorrect: true, order: 0 }],
@@ -24,7 +25,7 @@ const QUESTIONS = [
   question("2", "كم عدد لاعبي فريق كرة القدم؟", "رياضة", "أحد عشر"),
 ];
 
-function renderList(questions: QuestionRow[] = QUESTIONS) {
+function renderList(questions: QuestionRow[] = QUESTIONS, onMove = vi.fn()) {
   render(
     <QuestionList
       questions={questions}
@@ -34,6 +35,7 @@ function renderList(questions: QuestionRow[] = QUESTIONS) {
       onEdit={vi.fn()}
       onToggle={vi.fn()}
       onDelete={vi.fn()}
+      onMove={onMove}
     />,
   );
   return screen.getByPlaceholderText("بحث في السؤال أو التصنيف أو الأجوبة...");
@@ -77,6 +79,16 @@ describe("QuestionList search", () => {
     expect(screen.getByText("الأسئلة (1/2)")).toBeDefined();
   });
 
+  it("hides the arrows while a search is filtering the list", () => {
+    const search = renderList();
+
+    fireEvent.change(search, { target: { value: "عاصمة" } });
+
+    expect(screen.getAllByLabelText("تأخير السؤال").every((b) => b.hasAttribute("disabled"))).toBe(
+      true,
+    );
+  });
+
   it("offers no search box for an empty bank", () => {
     render(
       <QuestionList
@@ -87,10 +99,34 @@ describe("QuestionList search", () => {
         onEdit={vi.fn()}
         onToggle={vi.fn()}
         onDelete={vi.fn()}
+        onMove={vi.fn()}
       />,
     );
 
     expect(screen.queryByPlaceholderText("بحث في السؤال أو التصنيف أو الأجوبة...")).toBeNull();
     expect(screen.getByText("لا توجد أسئلة مسجلة بعد")).toBeDefined();
+  });
+});
+
+describe("QuestionList order", () => {
+  it("does not offer to move the first question up nor the last one down", () => {
+    renderList();
+
+    const up = screen.getAllByLabelText("تقديم السؤال");
+    const down = screen.getAllByLabelText("تأخير السؤال");
+
+    expect(up[0].hasAttribute("disabled")).toBe(true);
+    expect(down[0].hasAttribute("disabled")).toBe(false);
+    expect(up[1].hasAttribute("disabled")).toBe(false);
+    expect(down[1].hasAttribute("disabled")).toBe(true);
+  });
+
+  it("says which question moved and which way", () => {
+    const onMove = vi.fn();
+    renderList(QUESTIONS, onMove);
+
+    fireEvent.click(screen.getAllByLabelText("تأخير السؤال")[0]);
+
+    expect(onMove).toHaveBeenCalledWith(QUESTIONS[0], "down");
   });
 });

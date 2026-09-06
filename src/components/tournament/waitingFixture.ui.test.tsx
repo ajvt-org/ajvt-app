@@ -7,8 +7,8 @@ import type { PublicMatch } from "./publicTypes";
 
 const WAITING: PublicMatch = {
   id: "m1",
-  homeTeam: null,
-  awayTeam: null,
+  firstTeam: null,
+  secondTeam: null,
   matchDate: new Date("2026-09-27T17:00:00.000Z"),
   round: "نصف النهائي",
   venue: "الملعب البلدي",
@@ -25,6 +25,9 @@ const WAITING: PublicMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
+  parts: [],
+  adjustments: [],
+  series: null,
   mvpVote: null,
 };
 
@@ -42,7 +45,7 @@ describe("a fixture whose teams are not known yet", () => {
   it("shows a known side by name and the other as decided later", () => {
     render(
       <MatchFixture
-        match={{ ...WAITING, homeTeam: { id: "t1", name: "الصقور", logo: null } }}
+        match={{ ...WAITING, firstTeam: { id: "t1", name: "الصقور", logo: null } }}
         day={DAY}
       />,
     );

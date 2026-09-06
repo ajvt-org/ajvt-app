@@ -34,7 +34,7 @@ export default function ScheduleStep({ fixtures, teamsById }: ScheduleStepProps)
                     {setupLabels.groupName(f.groupIndex)}
                   </span>
                   <span className="truncate">
-                    {name(f.homeTeamId)} {texts.versus} {name(f.awayTeamId)}
+                    {name(f.firstTeamId)} {texts.versus} {name(f.secondTeamId)}
                   </span>
                 </li>
               ))}

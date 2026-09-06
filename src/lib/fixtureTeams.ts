@@ -5,8 +5,8 @@ export interface FixtureSide {
 }
 
 export interface FixtureTeams {
-  homeTeam: FixtureSide | null;
-  awayTeam: FixtureSide | null;
+  firstTeam: FixtureSide | null;
+  secondTeam: FixtureSide | null;
 }
 
 export function teamName(team: FixtureSide | null): string {
@@ -14,11 +14,14 @@ export function teamName(team: FixtureSide | null): string {
 }
 
 export function fixtureName(match: FixtureTeams): string {
-  return `${teamName(match.homeTeam)} × ${teamName(match.awayTeam)}`;
+  return `${teamName(match.firstTeam)} × ${teamName(match.secondTeam)}`;
 }
 
 export function bothTeamsKnown<T extends FixtureTeams>(
   match: T,
-): match is T & { homeTeam: NonNullable<T["homeTeam"]>; awayTeam: NonNullable<T["awayTeam"]> } {
-  return match.homeTeam !== null && match.awayTeam !== null;
+): match is T & {
+  firstTeam: NonNullable<T["firstTeam"]>;
+  secondTeam: NonNullable<T["secondTeam"]>;
+} {
+  return match.firstTeam !== null && match.secondTeam !== null;
 }

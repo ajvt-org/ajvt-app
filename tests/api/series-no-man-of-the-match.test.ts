@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { prisma } from "@/lib/prisma";
+import { sideIdData } from "@/lib/matchSides";
 import {
   resetDb,
   post,
@@ -45,8 +46,7 @@ async function tournamentOfShape(matchShape: "FOOTBALL" | "SERIES") {
   const match = await prisma.match.create({
     data: {
       activityId: activity.id,
-      homeTeamId: home.id,
-      awayTeamId: away.id,
+      ...sideIdData(matchShape, home.id, away.id),
       matchDate: new Date(Date.now() - 60 * 60_000),
       status: "PLAYED",
       homeScore: 1,

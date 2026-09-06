@@ -19,8 +19,8 @@ vi.mock("@/lib/api", () => ({
 
 const MATCH: DecidedMatch = {
   id: "m1",
-  homeTeam: { id: "t1", name: "الصقور", logo: null },
-  awayTeam: { id: "t2", name: "النسور", logo: null },
+  firstTeam: { id: "t1", name: "الصقور", logo: null },
+  secondTeam: { id: "t2", name: "النسور", logo: null },
   matchDate: null,
   round: null,
   venue: null,
@@ -37,6 +37,9 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
+  parts: [],
+  adjustments: [],
+  series: null,
   mvpVote: null,
 };
 

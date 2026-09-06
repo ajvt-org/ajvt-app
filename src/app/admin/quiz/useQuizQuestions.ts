@@ -7,10 +7,14 @@ import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
 import { counted } from "@/lib/arabicCount";
 import { ANSWER } from "@/lib/messages";
+import { validateCurve } from "@/lib/competitionConfig";
+import type { MoveDirection } from "@/lib/quizQuestionOrder";
 import { emptySettingsForm } from "./types";
 import type { BankRow } from "./BankPicker";
 import type { QuestionFormValues } from "./QuestionFormDialog";
 import type { QuestionRow, QuizSettings, SettingsForm as SettingsFormValues } from "./types";
+
+const ZERO_IS_ALLOWED = new Set(["tutorialFullSeconds", "tutorialFloorPercent"]);
 
 const emptyQuestionForm: QuestionFormValues = {
   text: "",
@@ -63,6 +67,9 @@ export function useQuizQuestions() {
           defaultAnswerCount: String(s.settings.defaultAnswerCount),
           defaultCorrectCount: String(s.settings.defaultCorrectCount),
           defaultPoints: String(s.settings.defaultPoints),
+          tutorialFullSeconds: String(s.settings.tutorialFullSeconds),
+          tutorialMaxSeconds: String(s.settings.tutorialMaxSeconds),
+          tutorialFloorPercent: String(s.settings.tutorialFloorPercent),
         });
       }
       if (q?.questions) setQuestions(q.questions);
@@ -130,7 +137,8 @@ export function useQuizQuestions() {
     const body: Record<string, number> = {};
     for (const [key, val] of Object.entries(settingsForm)) {
       const n = Number(val);
-      if (!Number.isInteger(n) || n <= 0) {
+      const floor = ZERO_IS_ALLOWED.has(key) ? 0 : 1;
+      if (!Number.isInteger(n) || n < floor) {
         setSettingsError("كل القيم يجب أن تكون أرقاماً صحيحة موجبة");
         return;
       }
@@ -138,6 +146,15 @@ export function useQuizQuestions() {
     }
     if (body.defaultCorrectCount > body.defaultAnswerCount) {
       setSettingsError("عدد الإجابات الصحيحة لا يمكن أن يتجاوز عدد الإجابات");
+      return;
+    }
+    const curveProblem = validateCurve({
+      fullSeconds: body.tutorialFullSeconds,
+      maxSeconds: body.tutorialMaxSeconds,
+      floorPercent: body.tutorialFloorPercent,
+    });
+    if (curveProblem) {
+      setSettingsError(curveProblem);
       return;
     }
     setSavingSettings(true);
@@ -242,6 +259,18 @@ export function useQuizQuestions() {
     }
   }
 
+  async function moveQuestion(question: QuestionRow, direction: MoveDirection) {
+    setBusyId(question.id);
+    try {
+      await api.post(`/api/admin/quiz/questions/${question.id}/move`, { direction });
+      await load();
+    } catch (e) {
+      showToast(errorMessage(e), "error");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function deleteQuestion(id: string) {
     if (!confirm("هل أنت متأكد من حذف هذا السؤال؟ سيتم حذف كل الإجابات المرتبطة به.")) return;
     setBusyId(id);
@@ -289,6 +318,7 @@ export function useQuizQuestions() {
     openEdit,
     submitQuestionForm,
     toggleActive,
+    moveQuestion,
     deleteQuestion,
   };
 }

@@ -3,8 +3,8 @@ import { bracketUntouched, firstRoundIsWaiting } from "./bracketState";
 
 const fixture = (over: Partial<Parameters<typeof firstRoundIsWaiting>[0][number]> = {}) => ({
   bracketRound: 1,
-  homeTeam: null,
-  awayTeam: null,
+  firstTeam: null,
+  secondTeam: null,
   status: "SCHEDULED",
   ...over,
 });
@@ -29,13 +29,13 @@ describe("firstRoundIsWaiting", () => {
   });
 
   it("is false once a team has been put into the first round", () => {
-    expect(firstRoundIsWaiting([fixture({ homeTeam: { id: "t1" } }), fixture()])).toBe(false);
+    expect(firstRoundIsWaiting([fixture({ firstTeam: { id: "t1" } }), fixture()])).toBe(false);
   });
 
   it("is false when a later round is waiting but the first one is filled", () => {
     expect(
       firstRoundIsWaiting([
-        fixture({ homeTeam: { id: "t1" }, awayTeam: { id: "t2" } }),
+        fixture({ firstTeam: { id: "t1" }, secondTeam: { id: "t2" } }),
         fixture({ bracketRound: 2 }),
       ]),
     ).toBe(false);

@@ -4,8 +4,11 @@ import { membershipStanding, needsHandling, netMoney } from "./adminHome";
 import { currentMemberships } from "./currentMembershipServer";
 import { asMembershipState } from "./currentMembership";
 import { matchDateKey } from "./clubTime";
+import { matchSideTeams } from "./matchSides";
 
 const DAY_MS = 86_400_000;
+
+const HOME_SIDE = { select: { name: true } } as const;
 
 export async function matchesToday(now = new Date()) {
   const rows = await prisma.match.findMany({
@@ -19,13 +22,20 @@ export async function matchesToday(now = new Date()) {
       status: true,
       homeScore: true,
       awayScore: true,
-      activity: { select: { id: true, title: true } },
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
+      activity: { select: { id: true, title: true, matchShape: true } },
+      homeTeam: HOME_SIDE,
+      awayTeam: HOME_SIDE,
+      sideATeam: HOME_SIDE,
+      sideBTeam: HOME_SIDE,
     },
   });
   const today = matchDateKey(now);
-  return rows.filter((m) => m.matchDate && matchDateKey(m.matchDate) === today);
+  return rows
+    .filter((m) => m.matchDate && matchDateKey(m.matchDate) === today)
+    .map((m) => {
+      const sides = matchSideTeams(m, m.activity.matchShape);
+      return { ...m, firstTeam: sides.first, secondTeam: sides.second };
+    });
 }
 
 export async function adminHomeSummary() {

@@ -1,3 +1,5 @@
+import type { PartRow, RecordedAdjustmentRow, SeriesStandingRow } from "./seriesTypes";
+
 export type TournamentFormat = "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT" | null;
 
 export interface RosterMember {
@@ -84,8 +86,8 @@ export interface MvpVote {
 
 export interface Match {
   id: string;
-  homeTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
-  awayTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  firstTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  secondTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;
@@ -102,12 +104,15 @@ export interface Match {
   goals: MatchGoal[];
   bookings: MatchBooking[];
   penaltyKicks: PenaltyKick[];
+  parts: PartRow[];
+  adjustments: RecordedAdjustmentRow[];
+  series: SeriesStandingRow | null;
   mvpVote: MvpVote | null;
 }
 
 export type DecidedMatch = Match & {
-  homeTeam: NonNullable<Match["homeTeam"]>;
-  awayTeam: NonNullable<Match["awayTeam"]>;
+  firstTeam: NonNullable<Match["firstTeam"]>;
+  secondTeam: NonNullable<Match["secondTeam"]>;
 };
 
 export interface Suspension {

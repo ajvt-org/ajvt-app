@@ -44,6 +44,8 @@ interface ShareResultButtonProps {
   entrant?: EntrantKind;
   homeScore: number;
   awayScore: number;
+  seriesLine?: string | null;
+  seriesAwayLine?: string | null;
   round: string | null;
   tournamentTitle: string;
   goals?: GoalEntry[];
@@ -70,6 +72,8 @@ export default function ShareResultButton({
   entrant = "team",
   homeScore,
   awayScore,
+  seriesLine = null,
+  seriesAwayLine = null,
   round,
   tournamentTitle,
   goals = [],
@@ -132,7 +136,11 @@ export default function ShareResultButton({
         <MatchTeams
           home={{ name: homeTeamName, logo: homeTeamLogo, photo: homeTeamPhoto }}
           away={{ name: awayTeamName, logo: awayTeamLogo, photo: awayTeamPhoto }}
-          score={{ home: homeScore, away: awayScore }}
+          score={
+            seriesLine === null
+              ? { home: homeScore, away: awayScore }
+              : { home: seriesLine, away: seriesAwayLine }
+          }
           tone="dark"
           size="xl"
           layout="stacked"
