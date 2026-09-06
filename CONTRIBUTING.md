@@ -84,7 +84,9 @@ A release pull request is the exception, and has its own template at
 [.github/PULL_REQUEST_TEMPLATE/release.md](.github/PULL_REQUEST_TEMPLATE/release.md).
 Open it with `gh pr create --template .github/PULL_REQUEST_TEMPLATE/release.md`.
 Its body is published verbatim as the release notes, so it is written as notes
-for members and carries no checkbox and nothing addressed to a reviewer. Whether
-the release contains a migration is said in a sentence.
+for members and carries no checkbox and nothing addressed to a reviewer. It is
+the changelog and nothing else, with no section on the reasoning and none on how
+it was tested. Whether the release contains a migration is said in a sentence at
+the end.
 
 Security problems do not go in an issue. See [SECURITY.md](SECURITY.md).
