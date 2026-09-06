@@ -10,7 +10,6 @@ import { isFootball } from "@/lib/matchShape";
 import type { SeriesConfig } from "./seriesConfig";
 import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
-import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import SetupWizard from "./wizard/SetupWizard";
@@ -104,9 +103,6 @@ export default function MatchesTab({
 
   return (
     <div className="space-y-4">
-      {matchShape === "FOOTBALL" && (
-        <MvpVoteMinutesCard activityId={activityId} minutes={mvpVoteMinutes} onChange={onChange} />
-      )}
       {error && (
         <div
           className="p-3 rounded-xl text-sm font-semibold"

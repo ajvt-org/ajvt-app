@@ -45,14 +45,17 @@ export default function MatchDetailsForm({
   );
   const effectiveKnockout = knockoutOffered && isKnockout;
 
+  const bothSides = !!firstTeamId && !!secondTeamId;
+  const neitherSide = !firstTeamId && !secondTeamId;
+
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!firstTeamId || !secondTeamId) {
-      setError(texts.pickBothTeams);
+    if (!bothSides && !neitherSide) {
+      setError(words.bothEntrantsOrNeither);
       return;
     }
-    if (firstTeamId === secondTeamId) {
+    if (bothSides && firstTeamId === secondTeamId) {
       setError(words.entrantAgainstItself);
       return;
     }
@@ -63,8 +66,7 @@ export default function MatchDetailsForm({
         round: round || null,
         venue: venue || null,
         isKnockout: effectiveKnockout,
-        firstTeamId,
-        secondTeamId,
+        ...(bothSides ? { firstTeamId, secondTeamId } : {}),
       });
       onChange();
     } catch (e) {

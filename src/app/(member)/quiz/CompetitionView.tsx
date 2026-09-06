@@ -102,14 +102,14 @@ export default function CompetitionView({
   canPlay = true,
   visitor = false,
   membershipHref,
-  onBack,
+  backHref,
   onReloadStandings,
 }: {
   standings: StandingsState;
   canPlay?: boolean;
   visitor?: boolean;
   membershipHref: string;
-  onBack: () => void;
+  backHref: string;
   onReloadStandings: () => void;
 }) {
   const competitionId = standings.competitionId;
@@ -254,7 +254,7 @@ export default function CompetitionView({
         <div className="relative flex items-center gap-3">
           <HeaderIdentity
             title={standings.name ?? landingActivities.quizTitle}
-            onBack={onBack}
+            backHref={backHref}
             large
           />
         </div>

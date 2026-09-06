@@ -25,6 +25,7 @@ export default function ConvertTournamentCard({
     maxTeamSize: string;
     organisedByHomeVillage: boolean;
     outsidePlayerLimit: string;
+    mvpVoteMinutes: string;
   } | null>(null);
 
   const asField = (value: number | null) => (value === null ? "" : String(value));
@@ -40,6 +41,7 @@ export default function ConvertTournamentCard({
       maxTeamSize: asField(activity.maxTeamSize),
       organisedByHomeVillage: activity.organisedByHomeVillage,
       outsidePlayerLimit: asField(activity.outsidePlayerLimit),
+      mvpVoteMinutes: String(activity.mvpVoteMinutes),
     });
   }
 
@@ -55,6 +57,7 @@ export default function ConvertTournamentCard({
         maxTeamSize: setup.maxTeamSize,
         organisedByHomeVillage: setup.organisedByHomeVillage,
         outsidePlayerLimit: setup.outsidePlayerLimit,
+        ...(setup.mvpVoteMinutes ? { mvpVoteMinutes: Number(setup.mvpVoteMinutes) } : {}),
       });
       setSetup(null);
       await onChanged();
@@ -132,6 +135,7 @@ export default function ConvertTournamentCard({
                 maxTeamSize={setup.maxTeamSize}
                 organisedByHomeVillage={setup.organisedByHomeVillage}
                 outsidePlayerLimit={setup.outsidePlayerLimit}
+                mvpVoteMinutes={setup.mvpVoteMinutes}
                 fixturesExist={fixturesExist}
                 matchesPlayed={matchesPlayed}
                 onMinTeamSize={(minTeamSize) => setSetup((p) => p && { ...p, minTeamSize })}
@@ -141,6 +145,9 @@ export default function ConvertTournamentCard({
                 }
                 onOutsidePlayerLimit={(outsidePlayerLimit) =>
                   setSetup((p) => p && { ...p, outsidePlayerLimit })
+                }
+                onMvpVoteMinutes={(mvpVoteMinutes) =>
+                  setSetup((p) => p && { ...p, mvpVoteMinutes })
                 }
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
                 onMatchShape={(matchShape) => setSetup((p) => p && { ...p, matchShape })}

@@ -5,17 +5,7 @@ import Icon from "./Icon";
 import { appTrail } from "@/lib/historyTrail";
 import { navigation } from "@/lib/texts";
 
-export default function BackButton({ href, onBack }: { href?: string; onBack?: () => void }) {
-  const style = { background: "rgba(255,255,255,0.15)", color: "#fff" };
-
-  if (onBack) {
-    return (
-      <button onClick={onBack} aria-label={navigation.back} className="btn btn-icon" style={style}>
-        <Icon name="chevronRight" />
-      </button>
-    );
-  }
-
+export default function BackButton({ href }: { href: string }) {
   function unwind(event: React.MouseEvent<HTMLAnchorElement>) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     if (event.button !== 0 || !appTrail.canUnwind()) return;
@@ -25,10 +15,10 @@ export default function BackButton({ href, onBack }: { href?: string; onBack?: (
 
   return (
     <Link
-      href={href ?? "/"}
+      href={href}
       aria-label={navigation.back}
       className="btn btn-icon"
-      style={style}
+      style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
       onClick={unwind}
     >
       <Icon name="chevronRight" />

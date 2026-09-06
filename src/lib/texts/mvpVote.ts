@@ -4,11 +4,6 @@ export const mvpVote = {
   pickCandidates: "اختر 2 إلى 6 مرشحين لأفضل لاعب في المباراة",
   pickAtLeastTwo: "اختر لاعبين على الأقل",
   minutesLabel: "مدة التصويت بالدقائق",
-  tournamentMinutesTitle: "مدة تصويت أفضل لاعب",
-  tournamentMinutesHint:
-    "المدة المعتمدة لكل مباريات البطولة، ويمكن تعديلها عند فتح تصويت مباراة بعينها.",
-  minutesSaved: "حُفظت المدة",
-  saveMinutes: "حفظ المدة",
   minutesHint: (minutes: number) => `المدة المعتمدة في البطولة ${minutes} دقيقة`,
   start: (count: number) => `بدء التصويت (${count})`,
   open: "التصويت مفتوح",

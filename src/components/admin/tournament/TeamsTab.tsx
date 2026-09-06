@@ -14,7 +14,7 @@ import ErrorNotice from "@/components/form/ErrorNotice";
 import TeamCard from "./TeamCard";
 import { teamsTab } from "@/lib/texts";
 import { matchingMembers, matchingPeople, matchingTeams } from "./teamSearch";
-import { useOpenTeam } from "./useOpenTeam";
+import { useOpenTeam } from "@/hooks/useOpenTeam";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 

@@ -51,6 +51,7 @@ function activity(over: Partial<ActivityDetail["activity"]> = {}): ActivityDetai
     maxTeamSize: null,
     organisedByHomeVillage: false,
     outsidePlayerLimit: null,
+    mvpVoteMinutes: 120,
     isVolunteer: false,
     whatsappLink: null,
     registrations: [],

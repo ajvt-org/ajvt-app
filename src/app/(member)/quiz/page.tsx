@@ -160,7 +160,7 @@ function QuizScreen() {
         canPlay={canPlay}
         visitor={visitor}
         membershipHref={membershipHref}
-        onBack={() => router.push(quizPath(from, null))}
+        backHref={quizPath(from, null)}
         onReloadStandings={loadStandings}
       />
     );

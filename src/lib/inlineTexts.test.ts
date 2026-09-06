@@ -142,6 +142,7 @@ const KEPT_CLEAN = [
   "src/app/api/admin/activities/[id]/tournament-reset/route.ts",
   "src/components/admin/tournament/TeamsTab.tsx",
   "src/components/admin/tournament/TeamCard.tsx",
+  "src/components/admin/tournament/SquadBar.tsx",
   "src/components/admin/tournament/TeamSummary.tsx",
   "src/components/admin/tournament/TeamIdentityEditor.tsx",
   "src/components/admin/tournament/TeamRoster.tsx",

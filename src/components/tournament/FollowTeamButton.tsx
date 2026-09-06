@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
-import IconLabel from "@/components/IconLabel";
+import Icon from "@/components/Icon";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
 
@@ -55,15 +55,12 @@ export default function FollowTeamButton({
     <button
       onClick={toggle}
       disabled={busy}
-      className="text-xs px-2 py-1 rounded-lg font-bold whitespace-nowrap"
-      style={{
-        background: following ? "var(--mint-600)" : "var(--mint-100)",
-        color: following ? "white" : "var(--mint-700)",
-      }}
+      aria-label={following ? words.following : words.follow}
+      aria-pressed={following}
+      className="btn btn-icon"
+      style={{ background: "transparent", color: "var(--mint-600)" }}
     >
-      <IconLabel name="star" size="1.1em" filled={following}>
-        {following ? words.following : words.follow}
-      </IconLabel>
+      <Icon name="star" size={22} filled={following} />
     </button>
   );
 }

@@ -31,6 +31,16 @@ export function outsideLimitApplies(team: SquadTeam, settings: SquadSettings): b
   );
 }
 
+export function outsideShare(
+  players: SquadPlayer[],
+  team: SquadTeam,
+  settings: SquadSettings,
+): { count: number; limit: number } | null {
+  const limit = settings.outsidePlayerLimit;
+  if (limit === null || !outsideLimitApplies(team, settings)) return null;
+  return { count: players.filter((player) => isOutsidePlayer(player.village)).length, limit };
+}
+
 export function squadBreaches(
   players: SquadPlayer[],
   team: SquadTeam,

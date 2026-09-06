@@ -21,6 +21,7 @@ export interface EntrantWording {
   squadSizeLocked: string;
   entrantAgainstItself: string;
   bothEntrantsRequired: string;
+  bothEntrantsOrNeither: string;
   entrantsNotInTournament: string;
   entrantNotSetYet: string;
   fixtureHasNoEntrants: string;
@@ -47,6 +48,7 @@ const TEAM_WORDING: EntrantWording = {
   squadSizeLocked: "لا يمكن تغيير حجم الفريق بعد انطلاق البطولة",
   entrantAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
   bothEntrantsRequired: "يجب اختيار الفريقين",
+  bothEntrantsOrNeither: "اختر الفريقين معاً أو اترك الاثنين دون تحديد",
   entrantsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   entrantNotSetYet: "فريق لم يُحدد بعد",
   fixtureHasNoEntrants: "لم يُحدد فريقا هذه المباراة بعد",
@@ -74,6 +76,7 @@ const PLAYER_WORDING: EntrantWording = {
   squadSizeLocked: "لا يمكن تغيير عدد اللاعبين لكل مشارك بعد انطلاق البطولة",
   entrantAgainstItself: "لا يمكن أن يلعب اللاعب ضد نفسه",
   bothEntrantsRequired: "يجب اختيار اللاعبين",
+  bothEntrantsOrNeither: "اختر اللاعبين معاً أو اترك الاثنين دون تحديد",
   entrantsNotInTournament: "اللاعبان يجب أن ينتميا إلى هذه البطولة",
   entrantNotSetYet: "لاعب لم يُحدد بعد",
   fixtureHasNoEntrants: "لم يُحدد لاعبا هذه المباراة بعد",
