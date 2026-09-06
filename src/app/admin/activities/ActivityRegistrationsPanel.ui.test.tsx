@@ -152,10 +152,10 @@ describe("the manual add on the registrants tab", () => {
     expect(row.hasAttribute("disabled")).toBe(false);
   });
 
-  it("lists nobody until the admin types", () => {
+  it("rests on the members it has rather than waiting for a letter", () => {
     show([candidate()]);
 
-    expect(screen.queryByText("أحمد ولد محمد")).toBeNull();
+    expect(screen.getByText("أحمد ولد محمد")).toBeTruthy();
   });
 
   it("tells two people of the same name apart by phone, village and عصر", async () => {
@@ -505,5 +505,84 @@ describe("who put a registrant there and when", () => {
     show([], [registration()]);
 
     expect(screen.getByRole("group", { name: "ترتيب حسب تاريخ الطلب" })).toBeTruthy();
+  });
+});
+
+describe("the manual add picker before a letter is typed", () => {
+  const registered = (id: string) =>
+    registration({
+      id: `r-${id}`,
+      member: {
+        id,
+        fullName: `عضو ${id.slice(1)}`,
+        phone: "36000099",
+        age: "البدريين",
+        photo: null,
+      },
+    });
+
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, i) =>
+      candidate({ id: `u${i + 1}`, fullName: `عضو ${i + 1}`, phone: `3600000${i}` }),
+    );
+
+  it("rests on the members it was handed rather than on nothing", () => {
+    show(many(3));
+
+    expect(screen.getByRole("button", { name: /عضو 1/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /عضو 3/ })).toBeTruthy();
+  });
+
+  it("keeps the order it was given, which is newest first", () => {
+    show(many(3));
+
+    const names = screen
+      .getAllByRole("button", { name: /^عضو / })
+      .map((row) => (row.textContent ?? "").trim());
+
+    expect(names[0]).toContain("عضو 1");
+    expect(names[2]).toContain("عضو 3");
+  });
+
+  it("rests on six at most, the same as a search", () => {
+    show(many(9));
+
+    expect(screen.getAllByRole("button", { name: /^عضو / })).toHaveLength(6);
+  });
+
+  it("leaves out anybody already registered rather than resting on rows nobody can pick", () => {
+    show(many(3), [registered("u2")]);
+
+    expect(screen.queryByRole("button", { name: /عضو 2/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: /^عضو / })).toHaveLength(2);
+  });
+
+  it("takes its six after leaving those out, not before", () => {
+    show(many(9), [registered("u1")]);
+
+    const names = screen
+      .getAllByRole("button", { name: /^عضو / })
+      .map((row) => (row.textContent ?? "").trim());
+
+    expect(names).toHaveLength(6);
+    expect(names.some((name) => name.includes("عضو 7"))).toBe(true);
+  });
+
+  it("says nobody is left rather than resting on an empty list", () => {
+    show([candidate({ id: "u1" })], [registered("u1")]);
+
+    expect(screen.getByText("كل الأعضاء مسجلون في هذا النشاط")).toBeTruthy();
+  });
+
+  it("counts nothing as hidden while it is resting", () => {
+    show(many(9));
+
+    expect(screen.queryByText(/غيرهم/)).toBeNull();
+  });
+
+  it("says it is still loading rather than resting on nothing yet", () => {
+    show([], [], [], false, true);
+
+    expect(screen.getByText("جارٍ تحميل الأعضاء...")).toBeTruthy();
   });
 });

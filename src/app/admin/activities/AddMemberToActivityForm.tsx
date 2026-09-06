@@ -42,13 +42,13 @@ export default function AddMemberToActivityForm({
   const [search, setSearch] = useState("");
 
   const tokens = searchTokens(search);
-  const matched = tokens.length
-    ? candidates.filter((c) => matchesSearch(candidateText(c), tokens))
-    : [];
-  const results = matched.slice(0, LIMIT);
-  const hidden = matched.length - results.length;
   const everyoneRegistered =
     candidates.length > 0 && candidates.every((c) => registeredIds.has(c.id));
+  const matched = tokens.length
+    ? candidates.filter((c) => matchesSearch(candidateText(c), tokens))
+    : candidates.filter((c) => !registeredIds.has(c.id));
+  const results = matched.slice(0, LIMIT);
+  const hidden = tokens.length ? matched.length - results.length : 0;
 
   async function pick(userId: string) {
     if (await onRegister(activityId, userId)) setSearch("");
@@ -70,12 +70,12 @@ export default function AddMemberToActivityForm({
       />
       {loading ? (
         <Note>{texts.loadingMembers}</Note>
-      ) : tokens.length === 0 ? (
-        everyoneRegistered ? (
-          <Note>{texts.allRegistered}</Note>
-        ) : null
+      ) : everyoneRegistered ? (
+        <Note>{texts.allRegistered}</Note>
       ) : results.length === 0 ? (
-        <Note>{texts.noMatch}</Note>
+        tokens.length ? (
+          <Note>{texts.noMatch}</Note>
+        ) : null
       ) : (
         <div className="space-y-1">
           {results.map((candidate) => {
