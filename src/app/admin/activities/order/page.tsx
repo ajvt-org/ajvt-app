@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Icon from "@/components/Icon";
-import ArrowLabel from "@/components/ArrowLabel";
+import AdminBackLink from "@/components/admin/AdminBackLink";
 import PageLoading from "@/components/PageLoading";
 import { useToast } from "@/components/Toast";
 import { api, errorMessage } from "@/lib/api";
@@ -81,13 +80,7 @@ export default function ActivityOrderPage() {
 
   return (
     <div className="admin-page space-y-3">
-      <Link
-        href="/admin/activities"
-        className="text-sm font-bold"
-        style={{ color: "var(--mint-600)" }}
-      >
-        <ArrowLabel direction="back">{texts.arrangeBack}</ArrowLabel>
-      </Link>
+      <AdminBackLink href="/admin/activities">{texts.arrangeBack}</AdminBackLink>
 
       <div className="card p-4 space-y-1">
         <p className="text-sm font-black" style={{ color: "var(--text-main)" }}>
