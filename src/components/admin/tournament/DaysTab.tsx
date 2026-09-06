@@ -56,12 +56,10 @@ export default function DaysTab({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           {daysTab.needStartDate}
         </p>
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          {daysTab.countedFromStart}
-        </p>
         <Link
           href={`/admin/activities/${activityId}?tab=details`}
           className="btn btn-sm btn-primary mx-auto"
+          style={{ width: "fit-content" }}
         >
           <IconLabel name="calendar">{daysTab.openActivity}</IconLabel>
         </Link>
