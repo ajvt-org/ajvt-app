@@ -9,7 +9,14 @@ import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, entrantWording, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
-import type { MatchShape, TournamentFormat } from "@prisma/client";
+import type { MatchEnding, MatchShape, PartDecision, TournamentFormat } from "@prisma/client";
+import { seriesSetupProblem } from "@/lib/seriesSetup";
+
+function given<T extends object>(input: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
+}
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]",
@@ -25,6 +32,13 @@ export const GET = withRoute(
         isTournament: true,
         format: true,
         matchShape: true,
+        partsPerMatch: true,
+        matchEnding: true,
+        partsToWin: true,
+        partDecision: true,
+        partTarget: true,
+        partWord: true,
+        partsWord: true,
         minTeamSize: true,
         maxTeamSize: true,
         organisedByHomeVillage: true,
@@ -55,6 +69,13 @@ export const PATCH = withRoute(
       showScorersAndCards,
       format,
       matchShape,
+      partsPerMatch,
+      matchEnding,
+      partsToWin,
+      partDecision,
+      partTarget,
+      partWord,
+      partsWord,
       minTeamSize,
       maxTeamSize,
       organisedByHomeVillage,
@@ -92,6 +113,13 @@ export const PATCH = withRoute(
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
       matchShape?: MatchShape;
+      partsPerMatch?: number | null;
+      matchEnding?: MatchEnding | null;
+      partsToWin?: number | null;
+      partDecision?: PartDecision | null;
+      partTarget?: number | null;
+      partWord?: string | null;
+      partsWord?: string | null;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
       organisedByHomeVillage?: boolean;
@@ -150,6 +178,29 @@ export const PATCH = withRoute(
         return NextResponse.json({ error: tournament.matchShapeLocked }, { status: 409 });
       }
       data.matchShape = matchShape;
+    }
+    const series = {
+      partsPerMatch,
+      matchEnding,
+      partsToWin,
+      partDecision,
+      partTarget,
+      partWord,
+      partsWord,
+    };
+    if (Object.values(series).some((value) => value !== undefined)) {
+      const wanted = { ...existing, ...given(series) };
+      const moved = Object.entries(given(series)).some(
+        ([key, value]) => (existing as Record<string, unknown>)[key] !== value,
+      );
+      if (moved && (await playedCount()) > 0) {
+        return NextResponse.json({ error: tournament.seriesConfigLocked }, { status: 409 });
+      }
+      const problem = seriesSetupProblem(wanted);
+      if (problem) {
+        return NextResponse.json({ error: tournament.seriesSetup[problem] }, { status: 400 });
+      }
+      Object.assign(data, given(series));
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;
