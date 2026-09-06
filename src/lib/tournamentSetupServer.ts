@@ -7,7 +7,7 @@ import { bracketRoundLabel } from "./tournament";
 import { groupRoundRobin, groupRoundSizes } from "./tournamentFixtures";
 import { knockoutRoundSizes } from "./knockoutSlots";
 import { planTournament } from "./tournamentPlan";
-import { isValidGroupShape, knockoutRefusal } from "./tournamentShape";
+import { isValidGroupShape } from "./tournamentShape";
 import { setupLabels } from "./texts/setupWizard";
 import { sideIdData } from "./matchSides";
 
@@ -36,12 +36,7 @@ async function assertNothingPlayed(activityId: string) {
   if (played > 0) throw new ConflictError(messages.setupHasResults(played));
 }
 
-function checkShape(input: SetupInput, teamCount: number, words: EntrantWording) {
-  if (input.format === "KNOCKOUT") {
-    const refusal = knockoutRefusal(teamCount);
-    if (refusal) throw new ValidationError(words.setupNeedsFullBracket(teamCount));
-    return;
-  }
+function checkGroupShape(input: SetupInput, teamCount: number, words: EntrantWording) {
   const placed = input.groups.flatMap((g) => g.teamIds);
   if (placed.length !== teamCount || new Set(placed).size !== teamCount) {
     throw new ValidationError(words.everyEntrantInOneGroup);
@@ -71,9 +66,10 @@ export async function setUpTournament(activityId: string, input: SetupInput): Pr
   const shape = activity.matchShape;
 
   await assertNothingPlayed(activityId);
-  checkShape(input, teams.length, words);
 
   const grouped = input.format === "GROUPS_THEN_KNOCKOUT";
+  if (grouped) checkGroupShape(input, teams.length, words);
+
   const entries = input.groups.map((g, index) => ({ index, teamIds: g.teamIds }));
   const groupFixtures = grouped ? groupRoundRobin(entries) : [];
   const roundSizes = groupRoundSizes(groupFixtures);
