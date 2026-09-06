@@ -4,6 +4,8 @@ import { squadBarGeometry, type OutsideShare } from "@/lib/squadBar";
 
 const BAR_WIDTH = 320;
 const NUMERAL_GUTTER = 10;
+const TRACK_HEIGHT = 18;
+const TICK_OVERHANG = 3;
 const SHORT = "#d97706";
 const WITHIN = "var(--mint-600)";
 const OVER = "#b91c1c";
@@ -14,11 +16,13 @@ const HATCH_DARK =
 function Tick({ at, dashed }: { at: number; dashed?: boolean }) {
   return (
     <span
-      className="absolute inset-y-0"
+      className="absolute"
       style={{
-        insetInlineStart: `${Math.min(at, 100)}%`,
+        insetInlineStart: `${at}%`,
+        top: -TICK_OVERHANG,
+        height: TRACK_HEIGHT + TICK_OVERHANG * 2,
         width: 2,
-        marginInlineStart: at >= 100 ? -2 : -1,
+        marginInlineStart: -1,
         background: dashed
           ? "repeating-linear-gradient(180deg, #1f3d31 0 3px, transparent 3px 6px)"
           : "#1f3d31",
@@ -71,7 +75,7 @@ export default function SquadBar({
       <span className="relative block">
         <span
           className="relative block overflow-hidden rounded-full"
-          style={{ height: 18, background: "var(--mint-100)" }}
+          style={{ height: TRACK_HEIGHT, background: "var(--mint-100)" }}
         >
           <span
             className="absolute inset-y-0"
@@ -107,10 +111,10 @@ export default function SquadBar({
               style={{ insetInlineStart: 0, width: `${bar.hatch}%`, backgroundImage: HATCH }}
             />
           )}
-          {bar.ticks.map((tick) => (
-            <Tick key={`${tick.at}-${tick.dashed}`} at={tick.at} dashed={tick.dashed} />
-          ))}
         </span>
+        {bar.ticks.map((tick) => (
+          <Tick key={`${tick.at}-${tick.dashed}`} at={tick.at} dashed={tick.dashed} />
+        ))}
         <span
           className="absolute text-[11px] font-black tabular-nums"
           style={{
