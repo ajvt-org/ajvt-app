@@ -6,7 +6,7 @@ import IconLabel from "./IconLabel";
 export interface FrameProps {
   displayUrl: string | null;
   label: string;
-  hint: string;
+  action: string;
   uploading: boolean;
   locked: boolean;
   placeholderIcon: IconName;
@@ -79,7 +79,7 @@ export function HeroFrame(props: FrameProps) {
       locked={props.locked}
       onPick={props.onPick}
       uploading={props.uploading}
-      label={props.hint}
+      label={props.action}
       className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center"
       style={{
         background: "var(--mint-100)",
@@ -121,7 +121,7 @@ export function CoverFrame(props: FrameProps) {
           className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1 text-xs py-1 font-semibold"
           style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
         >
-          {props.uploading ? "..." : <IconLabel name="camera">{props.hint}</IconLabel>}
+          {props.uploading ? "..." : <IconLabel name="camera">{props.action}</IconLabel>}
         </span>
       )}
     </Frame>
