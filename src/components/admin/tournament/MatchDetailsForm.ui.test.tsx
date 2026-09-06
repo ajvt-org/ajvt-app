@@ -38,8 +38,8 @@ const TEAMS: Team[] = [
 
 const WAITING: Match = {
   id: "m1",
-  homeTeam: null,
-  awayTeam: null,
+  firstTeam: null,
+  secondTeam: null,
   matchDate: "2026-09-27T17:00:00.000Z",
   round: "نصف النهائي",
   venue: "ملعب القرية",
@@ -56,12 +56,17 @@ const WAITING: Match = {
   goals: [],
   bookings: [],
   penaltyKicks: [],
+  parts: [],
+  adjustments: [],
+  series: null,
   mvpVote: null,
 };
 
 function show(match: Match = WAITING, entrant: "team" | "player" = "team") {
   cleanup();
-  render(<MatchDetailsForm match={match} teams={TEAMS} entrant={entrant} onChange={vi.fn()} />);
+  render(
+    <MatchDetailsForm match={match} teams={TEAMS} entrant={entrant} football onChange={vi.fn()} />,
+  );
 }
 
 beforeEach(() => {
@@ -97,14 +102,14 @@ describe("setting the teams on a fixture that has none", () => {
     fireEvent.submit(screen.getByText(/حفظ التفاصيل/).closest("form")!);
 
     await waitFor(() => expect(patch).toHaveBeenCalled());
-    expect(patch.mock.calls[0][1]).toMatchObject({ homeTeamId: "t1", awayTeamId: "t2" });
+    expect(patch.mock.calls[0][1]).toMatchObject({ firstTeamId: "t1", secondTeamId: "t2" });
   });
 
   it("keeps the teams a fixture already has", () => {
     show({
       ...WAITING,
-      homeTeam: { id: "t1", name: "الصقور", logo: null },
-      awayTeam: { id: "t2", name: "النسور", logo: null },
+      firstTeam: { id: "t1", name: "الصقور", logo: null },
+      secondTeam: { id: "t2", name: "النسور", logo: null },
     });
 
     const selects = screen.getAllByRole("combobox") as HTMLSelectElement[];
@@ -116,8 +121,8 @@ const GROUPED: Team[] = TEAMS.map((t) => ({ ...t, groupId: "g1" }));
 
 const GROUP_FIXTURE: Match = {
   ...WAITING,
-  homeTeam: { id: "t1", name: "الصقور", logo: null },
-  awayTeam: { id: "t2", name: "النسور", logo: null },
+  firstTeam: { id: "t1", name: "الصقور", logo: null },
+  secondTeam: { id: "t2", name: "النسور", logo: null },
   round: "الجولة 1",
   isKnockout: false,
   bracketRound: null,
@@ -125,7 +130,9 @@ const GROUP_FIXTURE: Match = {
 
 function showWith(match: Match, teams: Team[]) {
   cleanup();
-  render(<MatchDetailsForm match={match} teams={teams} entrant="team" onChange={vi.fn()} />);
+  render(
+    <MatchDetailsForm match={match} teams={teams} entrant="team" football onChange={vi.fn()} />,
+  );
 }
 
 describe("the knockout toggle on a group fixture", () => {

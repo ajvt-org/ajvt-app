@@ -43,7 +43,8 @@ function renderStep(form: PaymentValues = formOf(), setForm = vi.fn()) {
       error=""
       loading={false}
       proofUploading={false}
-      editing={false}
+      reference={{ label: stepPayment.orderCode, value: form.referenceCode }}
+      submitLabel={stepPayment.send}
       onSubmit={vi.fn()}
     />,
   );
@@ -237,7 +238,8 @@ describe("the transaction number a member copies off their receipt", () => {
         error=""
         loading={false}
         proofUploading={false}
-        editing={false}
+        reference={{ label: stepPayment.orderCode, value: "ABC123" }}
+        submitLabel={stepPayment.send}
         onSubmit={onSubmit}
       />,
     );

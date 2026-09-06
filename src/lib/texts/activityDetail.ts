@@ -2,7 +2,7 @@ import { ouguiya } from "./currency";
 
 export const convertTournament = {
   heading: "وضع البطولة",
-  hint: "حوّل النشاط إلى بطولة ليحصل على فرق ومباريات وترتيب.",
+  hint: "فرق ومباريات وترتيب",
   editSettings: "تعديل الإعدادات",
   unconvert: "إلغاء وضع البطولة",
   convert: "تحويل إلى بطولة",

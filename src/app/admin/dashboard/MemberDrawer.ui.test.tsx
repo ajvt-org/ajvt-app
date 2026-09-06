@@ -3,6 +3,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import MemberDrawer from "./MemberDrawer";
 import { HOME_VILLAGE } from "@/lib/villages";
 import type { Member } from "./types";
+import { memberDrawer as texts } from "@/lib/texts";
 
 vi.mock("@/lib/api", () => ({
   api: { get: () => Promise.reject(new Error("offline")) },
@@ -65,6 +66,26 @@ function show(m: Member) {
     />,
   );
 }
+
+describe("the way out of the drawer", () => {
+  it("offers the member page once, as a control", () => {
+    cleanup();
+    show(member());
+
+    const links = screen.getAllByRole("link", { name: new RegExp(texts.fullProfile) });
+
+    expect(links).toHaveLength(1);
+    expect(links[0].className).toContain("rounded-lg");
+    expect(links[0].getAttribute("href")).toContain("/admin/members/m1");
+  });
+
+  it("says where it goes rather than what it does", () => {
+    cleanup();
+    show(member());
+
+    expect(screen.queryByRole("link", { name: /تعديل/ })).toBeNull();
+  });
+});
 
 describe("MemberDrawer facts", () => {
   it("names the membership year the amounts belong to", () => {

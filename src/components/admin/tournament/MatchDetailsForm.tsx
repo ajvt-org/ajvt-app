@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { Match, Team } from "./types";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, sidePlaceholders } from "@/lib/texts";
 import { entrantWording } from "@/lib/messages";
 import type { EntrantKind } from "@/lib/entrant";
 import { knockoutToggleAllowed } from "@/lib/tournament";
@@ -14,22 +14,25 @@ export default function MatchDetailsForm({
   match,
   teams,
   entrant,
+  football,
   onChange,
 }: {
   match: Match;
   teams: Team[];
   entrant: EntrantKind;
+  football: boolean;
   onChange: () => void;
 }) {
   const words = entrantWording(entrant);
+  const sides = sidePlaceholders(football);
   const [matchDate, setMatchDate] = useState(
     match.matchDate ? matchDateToLocalInput(match.matchDate) : "",
   );
   const [round, setRound] = useState(match.round || "");
   const [venue, setVenue] = useState(match.venue || "");
   const [isKnockout, setIsKnockout] = useState(match.isKnockout);
-  const [homeTeamId, setHomeTeamId] = useState(match.homeTeam?.id ?? "");
-  const [awayTeamId, setAwayTeamId] = useState(match.awayTeam?.id ?? "");
+  const [firstTeamId, setFirstTeamId] = useState(match.firstTeam?.id ?? "");
+  const [secondTeamId, setSecondTeamId] = useState(match.secondTeam?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,19 +40,19 @@ export default function MatchDetailsForm({
   const knockoutOffered = knockoutToggleAllowed(
     match.isKnockout,
     match.bracketRound,
-    groupOf(homeTeamId),
-    groupOf(awayTeamId),
+    groupOf(firstTeamId),
+    groupOf(secondTeamId),
   );
   const effectiveKnockout = knockoutOffered && isKnockout;
 
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!homeTeamId || !awayTeamId) {
+    if (!firstTeamId || !secondTeamId) {
       setError(texts.pickBothTeams);
       return;
     }
-    if (homeTeamId === awayTeamId) {
+    if (firstTeamId === secondTeamId) {
       setError(words.entrantAgainstItself);
       return;
     }
@@ -60,8 +63,8 @@ export default function MatchDetailsForm({
         round: round || null,
         venue: venue || null,
         isKnockout: effectiveKnockout,
-        homeTeamId,
-        awayTeamId,
+        firstTeamId,
+        secondTeamId,
       });
       onChange();
     } catch (e) {
@@ -71,9 +74,9 @@ export default function MatchDetailsForm({
     }
   }
 
-  const homeTeamForEdit = teams.find((t) => t.id === homeTeamId);
+  const homeTeamForEdit = teams.find((t) => t.id === firstTeamId);
   const awayTeamOptionsForEdit = teams.filter((t) => {
-    if (t.id === homeTeamId) return false;
+    if (t.id === firstTeamId) return false;
     if (effectiveKnockout) return true;
     if (!homeTeamForEdit || homeTeamForEdit.groupId === null || t.groupId === null) return true;
     return t.groupId === homeTeamForEdit.groupId;
@@ -87,14 +90,14 @@ export default function MatchDetailsForm({
     >
       <div className="grid grid-cols-2 gap-2">
         <select
-          value={homeTeamId}
+          value={firstTeamId}
           onChange={(e) => {
-            setHomeTeamId(e.target.value);
-            setAwayTeamId("");
+            setFirstTeamId(e.target.value);
+            setSecondTeamId("");
           }}
           className="input text-sm"
         >
-          <option value="">{texts.homeTeamPlaceholder}</option>
+          <option value="">{sides.first}</option>
           {teams.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -102,11 +105,11 @@ export default function MatchDetailsForm({
           ))}
         </select>
         <select
-          value={awayTeamId}
-          onChange={(e) => setAwayTeamId(e.target.value)}
+          value={secondTeamId}
+          onChange={(e) => setSecondTeamId(e.target.value)}
           className="input text-sm"
         >
-          <option value="">{texts.awayTeamPlaceholder}</option>
+          <option value="">{sides.second}</option>
           {awayTeamOptionsForEdit.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
@@ -148,7 +151,7 @@ export default function MatchDetailsForm({
             checked={isKnockout}
             onChange={(e) => {
               setIsKnockout(e.target.checked);
-              setAwayTeamId("");
+              setSecondTeamId("");
             }}
           />
           <IconLabel name="trophy">{texts.knockoutMatch}</IconLabel>

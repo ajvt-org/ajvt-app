@@ -11,8 +11,8 @@ export interface DayMatch {
   homePenalties: number | null;
   awayPenalties: number | null;
   forfeitWinnerTeamId: string | null;
-  homeTeam: { id: string; name: string } | null;
-  awayTeam: { id: string; name: string } | null;
+  firstTeam: { id: string; name: string } | null;
+  secondTeam: { id: string; name: string } | null;
 }
 
 export interface TournamentDayRow {
@@ -44,7 +44,7 @@ export function doubleBookedTeams(day: TournamentDayRow): string[] {
   const seen = new Map<string, string>();
   const twice = new Set<string>();
   for (const match of day.matches) {
-    for (const team of [match.homeTeam, match.awayTeam]) {
+    for (const team of [match.firstTeam, match.secondTeam]) {
       if (!team) continue;
       if (seen.has(team.id)) twice.add(team.name);
       seen.set(team.id, team.name);

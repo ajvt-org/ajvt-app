@@ -10,6 +10,19 @@ import type { EntrantWording } from "./messages";
 import { entrantOfActivity } from "./entrantServer";
 import { nameOf } from "./person";
 import { entrantKind } from "./entrant";
+import {
+  bothSidesKnown,
+  matchSideIds,
+  matchSideTeams,
+  noSideKnown,
+  sideIdData,
+} from "./matchSides";
+import type { MatchShape } from "@prisma/client";
+import { isFootball } from "./matchShape";
+import { deriveSeries, type PlayedPart } from "./matchSeries";
+import { canBalance, evenlyDrawnOpeners } from "./seriesColours";
+import type { PartColour } from "@prisma/client";
+import { rulesOf } from "./matchSeriesServer";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -27,6 +40,17 @@ interface BracketRow {
   status: string;
   homeTeamId: string | null;
   awayTeamId: string | null;
+  sideATeamId: string | null;
+  sideBTeamId: string | null;
+  parts: PlayedPart[];
+}
+
+async function matchShapeOf(activityId: string): Promise<MatchShape> {
+  const activity = await prisma.activity.findUnique({
+    where: { id: activityId },
+    select: { matchShape: true },
+  });
+  return activity?.matchShape ?? "FOOTBALL";
 }
 
 async function bracketRows(activityId: string): Promise<BracketRow[]> {
@@ -40,49 +64,87 @@ async function bracketRows(activityId: string): Promise<BracketRow[]> {
       status: true,
       homeTeamId: true,
       awayTeamId: true,
+      sideATeamId: true,
+      sideBTeamId: true,
+      parts: {
+        orderBy: { order: "asc" },
+        select: {
+          order: true,
+          abandoned: true,
+          outcome: true,
+          sideAPoints: true,
+          sideBPoints: true,
+        },
+      },
     },
   });
 }
 
-async function clearRedoableBracket(activityId: string, redo: boolean): Promise<BracketRow[]> {
+async function clearRedoableBracket(
+  activityId: string,
+  redo: boolean,
+  shape: MatchShape,
+): Promise<BracketRow[]> {
   const bracket = await bracketRows(activityId);
   if (bracket.length === 0) return [];
 
-  const drawn = bracket.filter((m) => m.homeTeamId !== null || m.awayTeamId !== null);
+  const drawn = bracket.filter((m) => !noSideKnown(m, shape));
   if (drawn.length === 0) return bracket;
   if (!redo) throw new ConflictError(messages.bracketExists);
-  const withResults = bracket.filter(
-    (m) => m.status === "PLAYED" && m.homeTeamId !== null && m.awayTeamId !== null,
-  );
+  const withResults = bracket.filter((m) => m.status === "PLAYED" && bothSidesKnown(m, shape));
   if (withResults.length > 0) throw new ConflictError(messages.bracketHasResults);
 
   await prisma.match.updateMany({
     where: { id: { in: drawn.map((m) => m.id) } },
-    data: { homeTeamId: null, awayTeamId: null, status: "SCHEDULED" },
+    data: { ...sideIdData(shape, null, null), status: "SCHEDULED" },
   });
   return bracket;
 }
 
 interface DrawnSlot {
-  homeTeamId: string;
-  awayTeamId: string | null;
+  firstTeamId: string;
+  secondTeamId: string | null;
   status: "SCHEDULED" | "PLAYED";
 }
 
 function drawnSlot(slot: BracketSlot<{ id: string }>): DrawnSlot {
   return {
-    homeTeamId: slot.home.id,
-    awayTeamId: slot.away?.id ?? null,
+    firstTeamId: slot.home.id,
+    secondTeamId: slot.away?.id ?? null,
     status: slot.away ? "SCHEDULED" : "PLAYED",
   };
 }
 
-async function createFirstRound(activityId: string, slots: DrawnSlot[], label: string) {
+function slotData(slot: DrawnSlot, shape: MatchShape, opensAs: PartColour | null) {
+  return {
+    ...sideIdData(shape, slot.firstTeamId, slot.secondTeamId),
+    sideAOpensAs: opensAs,
+    status: slot.status,
+  };
+}
+
+function openersFor(slots: DrawnSlot[], hasColours: boolean): (PartColour | null)[] {
+  if (!hasColours) return slots.map(() => null);
+  return evenlyDrawnOpeners(
+    slots.map((slot) => ({
+      sideA: slot.firstTeamId,
+      sideB: slot.secondTeamId ?? slot.firstTeamId,
+    })),
+  );
+}
+
+async function createFirstRound(
+  activityId: string,
+  slots: DrawnSlot[],
+  label: string,
+  shape: MatchShape,
+  opens: (PartColour | null)[],
+) {
   let order = await nextMatchOrder(activityId);
   await prisma.match.createMany({
-    data: slots.map((slot) => ({
+    data: slots.map((slot, i) => ({
       activityId,
-      ...slot,
+      ...slotData(slot, shape, opens[i]),
       isKnockout: true,
       bracketRound: 1,
       round: label,
@@ -97,8 +159,13 @@ async function fillFirstRound(
   waiting: BracketRow[],
   slots: DrawnSlot[],
   label: string,
+  shape: MatchShape,
+  hasColours: boolean,
 ) {
-  if (waiting.length === 0) return createFirstRound(activityId, slots, label);
+  const opens = openersFor(slots, hasColours);
+  if (waiting.length === 0) {
+    return createFirstRound(activityId, slots, label, shape, opens);
+  }
 
   const seats = waiting.filter((m) => m.bracketRound === 1);
   if (seats.length !== slots.length) {
@@ -106,7 +173,10 @@ async function fillFirstRound(
   }
 
   for (const [i, seat] of seats.entries()) {
-    await prisma.match.update({ where: { id: seat.id }, data: slots[i] });
+    await prisma.match.update({
+      where: { id: seat.id },
+      data: slotData(slots[i], shape, opens[i]),
+    });
   }
   return seats.length;
 }
@@ -114,7 +184,13 @@ async function fillFirstRound(
 export async function drawBracket(activityId: string, redo = false) {
   const activity = await prisma.activity.findUnique({
     where: { id: activityId },
-    select: { minTeamSize: true, maxTeamSize: true },
+    select: {
+      minTeamSize: true,
+      maxTeamSize: true,
+      matchShape: true,
+      hasColours: true,
+      partsPerMatch: true,
+    },
   });
   const teams = await prisma.team.findMany({
     where: { activityId },
@@ -157,14 +233,61 @@ export async function drawBracket(activityId: string, redo = false) {
     }
   }
 
-  const waiting = await clearRedoableBracket(activityId, redo);
+  const shape = activity?.matchShape ?? "FOOTBALL";
+  const hasColours = activity?.hasColours ?? false;
+  const waiting = await clearRedoableBracket(activityId, redo, shape);
 
   const slots = drawFirstRound(shuffleArray(teams));
   if (!slots) throw new ValidationError(words.drawGroupsImpossible);
 
   const label = bracketRoundLabel(slots.length);
-  const created = await fillFirstRound(activityId, waiting, slots.map(drawnSlot), label);
-  return { created, label };
+  const created = await fillFirstRound(
+    activityId,
+    waiting,
+    slots.map(drawnSlot),
+    label,
+    shape,
+    hasColours,
+  );
+  return {
+    created,
+    label,
+    coloursBalance: hasColours ? canBalance(activity?.partsPerMatch ?? 0) : null,
+  };
+}
+
+interface RoundScore {
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
+}
+
+function footballWinner(
+  match: BracketRow,
+  sides: { first: string | null; second: string | null },
+  score: RoundScore | undefined,
+): string | null {
+  if (!score) return null;
+  return getMatchWinnerTeamId({
+    firstTeamId: sides.first,
+    secondTeamId: sides.second,
+    homeScore: score.homeScore,
+    awayScore: score.awayScore,
+    homePenalties: score.homePenalties,
+    awayPenalties: score.awayPenalties,
+    status: match.status,
+  });
+}
+
+function seriesWinner(
+  activity: Parameters<typeof rulesOf>[0],
+  parts: PlayedPart[],
+  sides: { first: string | null; second: string | null },
+): string | null {
+  const standing = deriveSeries(rulesOf(activity, true), parts);
+  if (!standing.over || standing.winner === null) return null;
+  return standing.winner === "SIDE_A" ? sides.first : sides.second;
 }
 
 function suggestionError(problem: string, words: EntrantWording): string {
@@ -178,6 +301,17 @@ function suggestionError(problem: string, words: EntrantWording): string {
 }
 
 async function groupTables(activityId: string) {
+  const setup = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: {
+      matchShape: true,
+      partsPerMatch: true,
+      matchEnding: true,
+      partsToWin: true,
+      partDecision: true,
+    },
+  });
+  const shape = setup.matchShape;
   const [groups, teams, matches] = await Promise.all([
     prisma.group.findMany({
       where: { activityId },
@@ -193,6 +327,18 @@ async function groupTables(activityId: string) {
       select: {
         homeTeam: { select: { id: true } },
         awayTeam: { select: { id: true } },
+        sideATeam: { select: { id: true } },
+        sideBTeam: { select: { id: true } },
+        parts: {
+          orderBy: { order: "asc" },
+          select: {
+            order: true,
+            abandoned: true,
+            outcome: true,
+            sideAPoints: true,
+            sideBPoints: true,
+          },
+        },
         homeScore: true,
         awayScore: true,
         status: true,
@@ -202,7 +348,18 @@ async function groupTables(activityId: string) {
     }),
   ]);
 
-  const leagueMatches = matches.filter((m) => !m.isKnockout);
+  const series = !isFootball(shape);
+  const leagueMatches = matches
+    .filter((m) => !m.isKnockout)
+    .map((m) => {
+      const sides = matchSideTeams(m, shape);
+      return {
+        ...m,
+        firstTeam: sides.first,
+        secondTeam: sides.second,
+        series: series ? deriveSeries(rulesOf(setup), m.parts) : null,
+      };
+    });
   return {
     groups: groups.map((g) => ({
       id: g.id,
@@ -210,6 +367,7 @@ async function groupTables(activityId: string) {
       standings: computeStandings(
         teams.filter((t) => t.groupId === g.id),
         leagueMatches,
+        series,
       ),
     })),
     groupStageComplete:
@@ -218,6 +376,7 @@ async function groupTables(activityId: string) {
 }
 
 export async function suggestBracket(activityId: string) {
+  const shape = await matchShapeOf(activityId);
   const { groups, groupStageComplete } = await groupTables(activityId);
   const suggestion = suggestFirstKnockoutRound(groups);
   const bracket = await bracketRows(activityId);
@@ -230,7 +389,7 @@ export async function suggestBracket(activityId: string) {
     firstRoundWaiting:
       firstRound.length > 0 &&
       bracket.every((m) => m.status === "SCHEDULED") &&
-      firstRound.every((m) => m.homeTeamId === null && m.awayTeamId === null),
+      firstRound.every((m) => noSideKnown(m, shape)),
   };
 }
 
@@ -244,23 +403,46 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
     throw new ValidationError(suggestionError(problem ?? "notGrouped", words));
   }
 
-  const waiting = await clearRedoableBracket(activityId, redo);
+  const setup = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { matchShape: true, hasColours: true, partsPerMatch: true },
+  });
+  const shape = setup.matchShape;
+  const waiting = await clearRedoableBracket(activityId, redo, shape);
 
   const label = bracketRoundLabel(pairs.length);
   const created = await fillFirstRound(
     activityId,
     waiting,
     pairs.map((pair) => ({
-      homeTeamId: pair.home.teamId,
-      awayTeamId: pair.away.teamId,
+      firstTeamId: pair.home.teamId,
+      secondTeamId: pair.away.teamId,
       status: "SCHEDULED" as const,
     })),
     label,
+    shape,
+    setup.hasColours,
   );
-  return { created, label, problem };
+  return {
+    created,
+    label,
+    problem,
+    coloursBalance: setup.hasColours ? canBalance(setup.partsPerMatch ?? 0) : null,
+  };
 }
 
 export async function advanceBracket(activityId: string) {
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: {
+      matchShape: true,
+      partsPerMatch: true,
+      matchEnding: true,
+      partsToWin: true,
+      partDecision: true,
+    },
+  });
+  const shape = activity.matchShape;
   const bracketMatches = await bracketRows(activityId);
   if (bracketMatches.length === 0) throw new ValidationError(messages.bracketNotStarted);
 
@@ -289,24 +471,16 @@ export async function advanceBracket(activityId: string) {
   if (currentRound.length % 2 !== 0) throw new ConflictError(messages.oddRound);
 
   const nextRound = matchesIn(lastPlayed + 1);
-  if (nextRound.length > 0 && nextRound.every((m) => m.homeTeamId !== null)) {
+  if (nextRound.length > 0 && nextRound.every((m) => matchSideIds(m, shape).first !== null)) {
     throw new ConflictError(messages.roundIncomplete);
   }
 
   const winners: string[] = [];
   for (const m of currentRound) {
-    const score = scoreOf.get(m.id);
-    const winner = score
-      ? getMatchWinnerTeamId({
-          homeTeamId: m.homeTeamId,
-          awayTeamId: m.awayTeamId,
-          homeScore: score.homeScore,
-          awayScore: score.awayScore,
-          homePenalties: score.homePenalties,
-          awayPenalties: score.awayPenalties,
-          status: m.status,
-        })
-      : null;
+    const sides = matchSideIds(m, shape);
+    const winner = isFootball(shape)
+      ? footballWinner(m, sides, scoreOf.get(m.id))
+      : seriesWinner(activity, m.parts, sides);
     if (!winner) throw new ConflictError(messages.tieNeedsPenalties);
     winners.push(winner);
   }
@@ -314,7 +488,7 @@ export async function advanceBracket(activityId: string) {
   const label = bracketRoundLabel(winners.length / 2);
   const pairs = [];
   for (let i = 0; i < winners.length; i += 2) {
-    pairs.push({ homeTeamId: winners[i], awayTeamId: winners[i + 1] });
+    pairs.push(sideIdData(shape, winners[i], winners[i + 1]));
   }
 
   if (nextRound.length === pairs.length) {

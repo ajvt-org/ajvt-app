@@ -5,8 +5,14 @@ import { isUniqueViolation } from "./prismaError";
 import { logger } from "./logger";
 import { tournament as messages } from "./messages";
 import { DAY_MS, atTime, dayDate, derivePlan, endsAtFor } from "./tournamentDays";
+import { matchSideTeams, type SideTeams } from "./matchSides";
 
 type Tx = Prisma.TransactionClient;
+
+type DaySide = { id: string; name: string } | null;
+type LoadedDayMatch = SideTeams<DaySide>;
+
+const DAY_SIDE = { select: { id: true, name: true } } as const;
 
 const MAX_DAYS = 60;
 
@@ -121,6 +127,7 @@ export async function listDays(activityId: string) {
     select: {
       startsAt: true,
       endsAt: true,
+      matchShape: true,
       days: {
         orderBy: { position: "asc" },
         select: {
@@ -140,8 +147,10 @@ export async function listDays(activityId: string) {
               homePenalties: true,
               awayPenalties: true,
               forfeitWinnerTeamId: true,
-              homeTeam: { select: { id: true, name: true } },
-              awayTeam: { select: { id: true, name: true } },
+              homeTeam: DAY_SIDE,
+              awayTeam: DAY_SIDE,
+              sideATeam: DAY_SIDE,
+              sideBTeam: DAY_SIDE,
             },
           },
         },
@@ -160,21 +169,29 @@ export async function listDays(activityId: string) {
           homePenalties: true,
           awayPenalties: true,
           forfeitWinnerTeamId: true,
-          homeTeam: { select: { id: true, name: true } },
-          awayTeam: { select: { id: true, name: true } },
+          homeTeam: DAY_SIDE,
+          awayTeam: DAY_SIDE,
+          sideATeam: DAY_SIDE,
+          sideBTeam: DAY_SIDE,
         },
       },
     },
   });
+
+  const named = <T extends LoadedDayMatch>(match: T) => {
+    const sides = matchSideTeams(match, activity.matchShape);
+    return { ...match, firstTeam: sides.first, secondTeam: sides.second };
+  };
 
   return {
     startsAt: activity.startsAt,
     endsAt: activity.endsAt,
     days: activity.days.map((day) => ({
       ...day,
+      matches: day.matches.map(named),
       date: activity.startsAt ? dayDate(activity.startsAt, day.position) : null,
     })),
-    unscheduled: activity.matches,
+    unscheduled: activity.matches.map(named),
   };
 }
 

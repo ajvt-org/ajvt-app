@@ -108,13 +108,13 @@ export default function BracketPanel({
               if (!bothTeamsKnown(finalMatch)) return null;
               const winnerId = getMatchWinnerTeamId({
                 ...finalMatch,
-                homeTeamId: finalMatch.homeTeam.id,
-                awayTeamId: finalMatch.awayTeam.id,
+                firstTeamId: finalMatch.firstTeam.id,
+                secondTeamId: finalMatch.secondTeam.id,
               });
               const winnerName =
-                winnerId === finalMatch.homeTeam.id
-                  ? finalMatch.homeTeam.name
-                  : finalMatch.awayTeam.name;
+                winnerId === finalMatch.firstTeam.id
+                  ? finalMatch.firstTeam.name
+                  : finalMatch.secondTeam.name;
               return (
                 <p className="text-sm font-black text-center" style={{ color: "var(--mint-700)" }}>
                   <IconLabel name="trophy">

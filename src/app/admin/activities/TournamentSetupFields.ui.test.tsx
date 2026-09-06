@@ -65,6 +65,53 @@ describe("the squad size on a tournament", () => {
   });
 });
 
+describe("saying a tournament is singles", () => {
+  it("offers the choice beside the squad heading", () => {
+    show();
+
+    expect((screen.getByLabelText(texts.singles) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByText(texts.squadHeading)).toBeTruthy();
+  });
+
+  it("fixes the squad at one player when it is ticked", () => {
+    const handlers = show();
+
+    fireEvent.click(screen.getByLabelText(texts.singles));
+
+    expect(handlers.onMinTeamSize).toHaveBeenCalledWith("1");
+    expect(handlers.onMaxTeamSize).toHaveBeenCalledWith("1");
+  });
+
+  it("reads itself back from a squad already fixed at one", () => {
+    show({ minTeamSize: "1", maxTeamSize: "1" });
+
+    expect((screen.getByLabelText(texts.singles) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("stops asking for a squad, and stops saying team, once it is singles", () => {
+    show({ minTeamSize: "1", maxTeamSize: "1" });
+
+    expect(screen.queryByLabelText(texts.minTeamSize)).toBeNull();
+    expect(screen.queryByLabelText(texts.maxTeamSize)).toBeNull();
+    expect(screen.queryByText(texts.squadHeading)).toBeNull();
+  });
+
+  it("clears the squad when it is unticked, rather than leaving one behind", () => {
+    const handlers = show({ minTeamSize: "1", maxTeamSize: "1" });
+
+    fireEvent.click(screen.getByLabelText(texts.singles));
+
+    expect(handlers.onMinTeamSize).toHaveBeenCalledWith("");
+    expect(handlers.onMaxTeamSize).toHaveBeenCalledWith("");
+  });
+
+  it("locks with the squad once a match has been played", () => {
+    show({ matchesPlayed: true });
+
+    expect((screen.getByLabelText(texts.singles) as HTMLInputElement).disabled).toBe(true);
+  });
+});
+
 describe("the shape of a match in the tournament", () => {
   it("offers football and a series, and nothing about the squad size", () => {
     show();

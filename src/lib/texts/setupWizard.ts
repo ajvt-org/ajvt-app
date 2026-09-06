@@ -32,9 +32,7 @@ export const setupWizard = {
 
   formatLabel: "شكل البطولة",
   knockout: "إقصاء مباشر",
-  knockoutHint: "كل فريق يخرج بخسارة واحدة",
   groupsThenKnockout: "مجموعات ثم إقصاء",
-  groupsThenKnockoutHint: "دوري داخل كل مجموعة ثم أدوار إقصائية",
   knockoutRefused: (teamCount: number, below: number | null, above: number) =>
     below === null
       ? `${teamCount} فريقاً لا يملأ جدول إقصاء. جرب ${above} فريقاً`
@@ -48,7 +46,6 @@ export const setupWizard = {
     `${qualifierCount} متأهلاً، ${perGroup} من كل مجموعة`,
 
   drawTitle: "القرعة المقترحة",
-  drawHint: "اختر فريقين لتبديلهما بين مجموعتيهما",
   reshuffle: "إعادة القرعة",
   swapWith: "بدّل مع",
   cancelSwap: "إلغاء التبديل",

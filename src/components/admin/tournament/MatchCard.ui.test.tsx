@@ -10,8 +10,8 @@ const noop = vi.fn();
 function match(): Match {
   return {
     id: "m1",
-    homeTeam: { id: "t1", name: "الصقور", logo: null },
-    awayTeam: { id: "t2", name: "النسور", logo: null },
+    firstTeam: { id: "t1", name: "الصقور", logo: null },
+    secondTeam: { id: "t2", name: "النسور", logo: null },
     matchDate: "2026-08-20T16:00:00.000Z",
     round: "النهائي",
     venue: "ملعب القرية",
@@ -46,6 +46,9 @@ function match(): Match {
         member: { id: "p2", fullName: "سالم", photo: null },
       },
     ],
+    parts: [],
+    adjustments: [],
+    series: null,
     mvpVote: null,
   };
 }
@@ -58,6 +61,8 @@ function show(matchShape: "FOOTBALL" | "SERIES", showResultForm = false) {
       teams={[]}
       allMatches={[match()]}
       matchShape={matchShape}
+      activityId="a1"
+      series={null}
       suspendedIds={[]}
       mvpVoteMinutes={120}
       onDelete={noop}
@@ -80,14 +85,16 @@ describe("a team name carrying Latin letters", () => {
       <MatchCard
         match={{
           ...match(),
-          homeTeam: { id: "t1", name: "كاستيا A", logo: null },
-          awayTeam: { id: "t2", name: "اتحاد الجديدة B", logo: null },
+          firstTeam: { id: "t1", name: "كاستيا A", logo: null },
+          secondTeam: { id: "t2", name: "اتحاد الجديدة B", logo: null },
           homeScore: 0,
           awayScore: 4,
         }}
         teams={[]}
         allMatches={[]}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -118,8 +125,8 @@ describe("a fixture whose teams are not known yet", () => {
       <MatchCard
         match={{
           ...match(),
-          homeTeam: null,
-          awayTeam: null,
+          firstTeam: null,
+          secondTeam: null,
           status: "SCHEDULED",
           homeScore: null,
           awayScore: null,
@@ -131,6 +138,8 @@ describe("a fixture whose teams are not known yet", () => {
         teams={[]}
         allMatches={[match()]}
         matchShape="FOOTBALL"
+        activityId="a1"
+        series={null}
         suspendedIds={[]}
         mvpVoteMinutes={120}
         onDelete={noop}
@@ -203,11 +212,10 @@ describe("MatchCard by match shape", () => {
     expect(screen.getByText(/حفظ النتيجة/)).toBeDefined();
   });
 
-  it("offers no result entry at all on a series match, and says why", () => {
+  it("offers none of the football entry on a series match", () => {
     show("SERIES", true);
 
     expect(screen.queryByText(texts.addCard)).toBeNull();
     expect(screen.queryByText(/حفظ النتيجة/)).toBeNull();
-    expect(screen.getByText(texts.seriesResultNotReady)).toBeDefined();
   });
 });

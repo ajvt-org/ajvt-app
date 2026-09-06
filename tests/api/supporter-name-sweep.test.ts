@@ -98,12 +98,33 @@ async function seed(): Promise<Fixture> {
 
   const method = await prisma.paymentMethod.findFirstOrThrow();
 
+  const tournament = await prisma.activity.create({
+    data: {
+      title: "بطولة الشطرنج",
+      description: "وصف",
+      isTournament: true,
+      matchShape: "SERIES",
+      partsPerMatch: 2,
+      matchEnding: "PLAY_ALL",
+      partDecision: "OUTCOME",
+      partWord: "لعبة",
+      partsWord: "ألعاب",
+    },
+  });
+  const one = await prisma.team.create({ data: { activityId: tournament.id, name: "أ" } });
+  const two = await prisma.team.create({ data: { activityId: tournament.id, name: "ب" } });
+  const match = await prisma.match.create({
+    data: { activityId: tournament.id, sideATeamId: one.id, sideBTeamId: two.id },
+  });
+  await prisma.matchPart.create({ data: { matchId: match.id, order: 1, outcome: "SIDE_A" } });
+
   return {
     activityId: activity.id,
     methodId: method.id,
     userId: giver.id,
     competitionId: competition.id,
     attemptId: attempt.id,
+    matchId: match.id,
     datasets: [...DATASETS],
   };
 }

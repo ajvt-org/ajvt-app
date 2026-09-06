@@ -4,12 +4,12 @@ import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import { matchAdmin as texts } from "@/lib/texts";
+import { matchAdmin as texts, sidePlaceholders } from "@/lib/texts";
 import type { Team } from "./types";
 
 const EMPTY = {
-  homeTeamId: "",
-  awayTeamId: "",
+  firstTeamId: "",
+  secondTeamId: "",
   matchDate: "",
   round: "",
   venue: "",
@@ -19,28 +19,31 @@ const EMPTY = {
 export default function NewMatchForm({
   activityId,
   teams,
+  football,
   onCreated,
 }: {
   activityId: string;
   teams: Team[];
+  football: boolean;
   onCreated: () => void;
 }) {
+  const sides = sidePlaceholders(football);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const homeTeam = teams.find((t) => t.id === form.homeTeamId);
+  const firstTeam = teams.find((t) => t.id === form.firstTeamId);
   const awayTeamOptions = teams.filter((t) => {
-    if (t.id === form.homeTeamId) return false;
+    if (t.id === form.firstTeamId) return false;
     if (form.isKnockout) return true;
-    if (!homeTeam || homeTeam.groupId === null || t.groupId === null) return true;
-    return t.groupId === homeTeam.groupId;
+    if (!firstTeam || firstTeam.groupId === null || t.groupId === null) return true;
+    return t.groupId === firstTeam.groupId;
   });
 
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!form.homeTeamId || !form.awayTeamId) {
+    if (!form.firstTeamId || !form.secondTeamId) {
       setError(texts.pickBothTeams);
       return;
     }
@@ -72,13 +75,20 @@ export default function NewMatchForm({
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
           {texts.newMatchOutsidePlan}
         </p>
+        {!football && (
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            {texts.seriesOrderFromTheDraw}
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
           <select
-            value={form.homeTeamId}
-            onChange={(e) => setForm((p) => ({ ...p, homeTeamId: e.target.value, awayTeamId: "" }))}
+            value={form.firstTeamId}
+            onChange={(e) =>
+              setForm((p) => ({ ...p, firstTeamId: e.target.value, secondTeamId: "" }))
+            }
             className="input"
           >
-            <option value="">{texts.homeTeamPlaceholder}</option>
+            <option value="">{sides.first}</option>
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -86,11 +96,11 @@ export default function NewMatchForm({
             ))}
           </select>
           <select
-            value={form.awayTeamId}
-            onChange={(e) => setForm((p) => ({ ...p, awayTeamId: e.target.value }))}
+            value={form.secondTeamId}
+            onChange={(e) => setForm((p) => ({ ...p, secondTeamId: e.target.value }))}
             className="input"
           >
-            <option value="">{texts.awayTeamPlaceholder}</option>
+            <option value="">{sides.second}</option>
             {awayTeamOptions.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -130,7 +140,7 @@ export default function NewMatchForm({
             type="checkbox"
             checked={form.isKnockout}
             onChange={(e) =>
-              setForm((p) => ({ ...p, isKnockout: e.target.checked, awayTeamId: "" }))
+              setForm((p) => ({ ...p, isKnockout: e.target.checked, secondTeamId: "" }))
             }
           />
           <IconLabel name="trophy">{texts.knockoutFlag}</IconLabel>

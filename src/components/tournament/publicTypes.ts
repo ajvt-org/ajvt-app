@@ -1,3 +1,9 @@
+import type {
+  PartRow,
+  RecordedAdjustmentRow,
+  SeriesStandingRow,
+} from "@/components/admin/tournament/seriesTypes";
+
 export type MatchTeam = { id: string; name: string; logo: string | null; photo?: string | null };
 
 export type MatchPlayer = { id: string; fullName: string; photo: string | null };
@@ -27,8 +33,8 @@ export type MatchBooking = {
 
 export type PublicMatch = {
   id: string;
-  homeTeam: MatchTeam | null;
-  awayTeam: MatchTeam | null;
+  firstTeam: MatchTeam | null;
+  secondTeam: MatchTeam | null;
   matchDate: Date | null;
   round: string | null;
   venue: string | null;
@@ -45,6 +51,9 @@ export type PublicMatch = {
   goals: MatchGoal[];
   penaltyKicks: MatchKick[];
   bookings: MatchBooking[];
+  parts: PartRow[];
+  adjustments: RecordedAdjustmentRow[];
+  series: SeriesStandingRow | null;
   mvpVote: {
     id: string;
     status: string;
@@ -57,4 +66,4 @@ export type PublicMatch = {
   } | null;
 };
 
-export type DecidedMatch = PublicMatch & { homeTeam: MatchTeam; awayTeam: MatchTeam };
+export type DecidedMatch = PublicMatch & { firstTeam: MatchTeam; secondTeam: MatchTeam };

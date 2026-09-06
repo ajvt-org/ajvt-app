@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import { api, errorMessage } from "@/lib/api";
-import { RETENTION_DAYS } from "@/lib/deletedRecords";
+import { deleteMember as texts } from "@/lib/texts";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 
 type Target = "payment" | "person";
@@ -39,27 +39,19 @@ export default function DeleteMemberCard({
     }
   }
 
+  const consequence =
+    confirming === "person"
+      ? texts.personConsequence(fullName)
+      : texts.paymentConsequence(fullName);
+
   return (
     <div className="card p-4 space-y-3" style={{ border: "1.5px solid #fecaca" }}>
-      <p className="text-sm font-black" style={{ color: "#991b1b" }}>
-        <IconLabel name="warning">حذف نهائي</IconLabel>
-      </p>
-
-      <DangerAction
-        note="يحذف الدفع وحده. يبقى الحساب والشخص وبياناته كما هي، ويمكنه إرسال دفع جديد."
-        label="حذف الدفع نهائياً"
-        busy={busy}
-        onClick={() => setConfirming("payment")}
-      />
-
-      {userId && (
-        <DangerAction
-          note={`يحذف الشخص بالكامل: حسابه ودفعه وكل ما يتعلق بهما. يمكن استرجاعه خلال ${RETENTION_DAYS} يوماً.`}
-          label="حذف الشخص نهائياً"
-          busy={busy}
-          onClick={() => setConfirming("person")}
-        />
-      )}
+      <div className="flex flex-wrap gap-2">
+        <DangerButton label={texts.payment} busy={busy} onClick={() => setConfirming("payment")} />
+        {userId && (
+          <DangerButton label={texts.person} busy={busy} onClick={() => setConfirming("person")} />
+        )}
+      </div>
 
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
@@ -70,6 +62,7 @@ export default function DeleteMemberCard({
       {confirming && (
         <ConfirmDeleteDialog
           name={fullName}
+          consequence={consequence}
           loading={busy}
           onConfirm={remove}
           onClose={() => setConfirming(null)}
@@ -79,30 +72,23 @@ export default function DeleteMemberCard({
   );
 }
 
-function DangerAction({
-  note,
+function DangerButton({
   label,
   busy,
   onClick,
 }: {
-  note: string;
   label: string;
   busy: boolean;
   onClick: () => void;
 }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {note}
-      </p>
-      <button
-        onClick={onClick}
-        disabled={busy}
-        className="btn text-sm font-bold"
-        style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
-      >
-        {busy ? "..." : <IconLabel name="trash">{label}</IconLabel>}
-      </button>
-    </div>
+    <button
+      onClick={onClick}
+      disabled={busy}
+      className="btn text-sm font-bold"
+      style={{ background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" }}
+    >
+      {busy ? "..." : <IconLabel name="trash">{label}</IconLabel>}
+    </button>
   );
 }

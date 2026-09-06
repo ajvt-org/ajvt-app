@@ -60,6 +60,9 @@ export default function MembershipStanding({
           {state === "REFUSED" && member && (
             <StandingLink href={`/membership?id=${member.id}`}>{texts.refused.action}</StandingLink>
           )}
+          {state === "BEHIND" && member?.memberNumber && (
+            <StandingLink href="/membership?renew=1">{texts.behind.action}</StandingLink>
+          )}
         </div>
       </div>
     </div>
@@ -77,7 +80,8 @@ function body(state: Tone, member: MemberData | null, currentYear: number): stri
   if (state === "NO_PAYMENT") return texts.noPayment.body;
   if (state === "AWAITING_REVIEW") return texts.awaitingReview.body;
   if (state === "REFUSED") return texts.refused.body;
-  return texts.behind.body(currentYear);
+  if (member?.memberNumber) return texts.behind.body(currentYear);
+  return `${texts.behind.body(currentYear)} ${texts.behind.viaAdmin}`;
 }
 
 function StandingLink({ href, children }: { href: string; children: string }) {

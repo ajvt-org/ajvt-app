@@ -224,7 +224,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="camera">{proofUpload.newPhoto}</IconLabel>
+                <IconLabel name="camera">{proofUpload.takePhoto}</IconLabel>
               </button>
               <button
                 type="button"
@@ -232,7 +232,7 @@ export default function ProofUpload({
                 className="text-xs px-3 py-1.5 rounded-lg font-bold"
                 style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
               >
-                <IconLabel name="image">{proofUpload.fromGallery}</IconLabel>
+                <IconLabel name="image">{proofUpload.pickFromGallery}</IconLabel>
               </button>
             </div>
           )}
@@ -243,10 +243,7 @@ export default function ProofUpload({
             <div className="flex justify-center mb-2" style={{ color: "var(--mint-500)" }}>
               <Icon name="camera" size={40} />
             </div>
-            <p className="font-bold text-sm" style={{ color: "var(--mint-700)" }}>
-              {proofUpload.prompt}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
               {proofUpload.hint}
             </p>
             <div className="flex gap-2 mt-3 justify-center">

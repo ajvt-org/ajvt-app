@@ -73,6 +73,43 @@ describe("MembershipStanding", () => {
     expect(screen.getByText(/2026/)).toBeDefined();
   });
 
+  it("offers the renewal to a member who is behind and carries a number", () => {
+    render(
+      <MembershipStanding
+        member={member({ membershipYear: 2024, memberNumber: "AJVT-2024-0001" })}
+        currentYear={YEAR}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /جدّد اشتراكك/ }).getAttribute("href")).toBe(
+      "/membership?renew=1",
+    );
+    expect(screen.queryByText(/راجع إدارة الرابطة/)).toBeNull();
+  });
+
+  it("still sends a member with no number to the association", () => {
+    render(
+      <MembershipStanding
+        member={member({ membershipYear: 2024, memberNumber: null })}
+        currentYear={YEAR}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: /جدّد اشتراكك/ })).toBeNull();
+    expect(screen.getByText(/راجع إدارة الرابطة/)).toBeDefined();
+  });
+
+  it("offers nothing to renew while a payment is under review", () => {
+    render(
+      <MembershipStanding
+        member={member({ status: "PENDING", memberNumber: "AJVT-2024-0001" })}
+        currentYear={YEAR}
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: /جدّد اشتراكك/ })).toBeNull();
+  });
+
   it("holds its tongue until it knows the year being collected", () => {
     const { container } = render(<MembershipStanding member={null} currentYear={null} />);
 

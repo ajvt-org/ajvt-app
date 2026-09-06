@@ -20,6 +20,7 @@ import { tournamentWorkspace as texts } from "@/lib/texts";
 import DaysTab from "./DaysTab";
 import DisciplineTab from "./DisciplineTab";
 import MatchesTab from "./MatchesTab";
+import { seriesConfigOf } from "./seriesConfig";
 import PlayersTab from "./PlayersTab";
 import ScorersTab from "./ScorersTab";
 import StandingsTab from "./StandingsTab";
@@ -51,8 +52,8 @@ export default function TournamentPanel({
     () =>
       data.matches.map((match) => ({
         ...match,
-        homeTeam: namedEntrant(match.homeTeam, identities),
-        awayTeam: namedEntrant(match.awayTeam, identities),
+        firstTeam: namedEntrant(match.firstTeam, identities),
+        secondTeam: namedEntrant(match.secondTeam, identities),
       })),
     [data.matches, identities],
   );
@@ -65,8 +66,9 @@ export default function TournamentPanel({
         teams,
         matches,
         groups.map((g) => g.id),
+        !football,
       ),
-    [teams, matches, groups],
+    [teams, matches, groups, football],
   );
   const topScorers = useMemo(() => computeTopScorers(teams, matches), [matches, teams]);
   const stats = useMemo(() => computeStats(teams, matches), [teams, matches]);
@@ -124,6 +126,7 @@ export default function TournamentPanel({
           groups={groups}
           format={info?.format ?? null}
           matchShape={info?.matchShape ?? "FOOTBALL"}
+          series={seriesConfigOf(info)}
           entrant={entrantKind(squad)}
           matches={matches}
           suspendedIds={suspendedIds}
@@ -141,6 +144,7 @@ export default function TournamentPanel({
           groups={groups}
           stats={stats}
           matches={matches}
+          series={!football}
         />
       )}
       {tab === "discipline" && football && (

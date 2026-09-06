@@ -28,8 +28,8 @@ function match(
   extra: Partial<StandingsMatchInput> = {},
 ): StandingsMatchInput {
   return {
-    homeTeam: { id: home },
-    awayTeam: { id: away },
+    firstTeam: { id: home },
+    secondTeam: { id: away },
     homeScore,
     awayScore,
     status: "PLAYED",
@@ -151,8 +151,8 @@ describe("computeTopScorers", () => {
 
 describe("getMatchWinnerTeamId", () => {
   const base = {
-    homeTeamId: "a",
-    awayTeamId: "b",
+    firstTeamId: "a",
+    secondTeamId: "b",
     homePenalties: null,
     awayPenalties: null,
     status: "PLAYED",
@@ -213,11 +213,11 @@ describe("bracketRoundLabel", () => {
 });
 
 describe("generateMatchSchedule", () => {
-  function counts(fixtures: { homeTeamId: string; awayTeamId: string }[]) {
+  function counts(fixtures: { firstTeamId: string; secondTeamId: string }[]) {
     const c = new Map<string, number>();
     for (const f of fixtures) {
-      c.set(f.homeTeamId, (c.get(f.homeTeamId) || 0) + 1);
-      c.set(f.awayTeamId, (c.get(f.awayTeamId) || 0) + 1);
+      c.set(f.firstTeamId, (c.get(f.firstTeamId) || 0) + 1);
+      c.set(f.secondTeamId, (c.get(f.secondTeamId) || 0) + 1);
     }
     return c;
   }
@@ -239,7 +239,7 @@ describe("generateMatchSchedule", () => {
   it("never pairs a team against itself", () => {
     const ids = Array.from({ length: 7 }, (_, i) => `t${i}`);
     for (const f of generateMatchSchedule(ids, 3)) {
-      expect(f.homeTeamId).not.toBe(f.awayTeamId);
+      expect(f.firstTeamId).not.toBe(f.secondTeamId);
     }
   });
 
@@ -248,7 +248,7 @@ describe("generateMatchSchedule", () => {
     const byRound = new Map<number, string[]>();
     for (const f of generateMatchSchedule(ids, 3)) {
       const list = byRound.get(f.round) || [];
-      list.push(f.homeTeamId, f.awayTeamId);
+      list.push(f.firstTeamId, f.secondTeamId);
       byRound.set(f.round, list);
     }
     for (const [round, ids2] of byRound) {
@@ -273,15 +273,15 @@ describe("generateMatchSchedule", () => {
     const fixtures = generateMatchSchedule(ids, 3, existing, new Set());
 
     for (const f of fixtures) {
-      expect([f.homeTeamId, f.awayTeamId]).not.toContain("a");
-      expect([f.homeTeamId, f.awayTeamId]).not.toContain("b");
+      expect([f.firstTeamId, f.secondTeamId]).not.toContain("a");
+      expect([f.firstTeamId, f.secondTeamId]).not.toContain("b");
     }
   });
 
   it("prefers new opponents over a rematch", () => {
     const ids = ["a", "b", "c", "d"];
     const pairs = generateMatchSchedule(ids, 3).map((f) =>
-      [f.homeTeamId, f.awayTeamId].sort().join("|"),
+      [f.firstTeamId, f.secondTeamId].sort().join("|"),
     );
 
     expect(new Set(pairs).size).toBe(pairs.length);
@@ -306,8 +306,8 @@ describe("isPowerOfTwo", () => {
 
 describe("a fixture with no teams yet", () => {
   const empty: StandingsMatchInput = {
-    homeTeam: null,
-    awayTeam: null,
+    firstTeam: null,
+    secondTeam: null,
     homeScore: 4,
     awayScore: 2,
     status: "PLAYED",
@@ -324,8 +324,8 @@ describe("a fixture with no teams yet", () => {
   it("has no winner", () => {
     expect(
       getMatchWinnerTeamId({
-        homeTeamId: null,
-        awayTeamId: null,
+        firstTeamId: null,
+        secondTeamId: null,
         homeScore: 3,
         awayScore: 1,
         homePenalties: null,
@@ -336,8 +336,8 @@ describe("a fixture with no teams yet", () => {
   });
 
   it("is not a head to head between any two teams", () => {
-    const played = { id: "m1", homeTeam: { id: "a" }, awayTeam: { id: "b" } };
-    const placeholder = { id: "m2", homeTeam: null, awayTeam: null };
+    const played = { id: "m1", firstTeam: { id: "a" }, secondTeam: { id: "b" } };
+    const placeholder = { id: "m2", firstTeam: null, secondTeam: null };
 
     expect(getHeadToHead([played, placeholder], "a", "b")).toEqual([played]);
   });
@@ -345,13 +345,13 @@ describe("a fixture with no teams yet", () => {
   it("earns nobody a clean sheet", () => {
     const rows = computeCleanSheets(teams, [
       {
-        homeTeam: { id: "a" },
-        awayTeam: { id: "b" },
+        firstTeam: { id: "a" },
+        secondTeam: { id: "b" },
         homeScore: 2,
         awayScore: 0,
         status: "PLAYED",
       },
-      { homeTeam: null, awayTeam: null, homeScore: 1, awayScore: 0, status: "PLAYED" },
+      { firstTeam: null, secondTeam: null, homeScore: 1, awayScore: 0, status: "PLAYED" },
     ]);
     const by = Object.fromEntries(rows.map((r) => [r.teamId, r]));
 
@@ -363,16 +363,16 @@ describe("a fixture with no teams yet", () => {
   it("does not enter a team's form", () => {
     const rows = computeTeamAdvancedStats(teams, [
       {
-        homeTeam: { id: "a", name: "ألف" },
-        awayTeam: { id: "b", name: "باء" },
+        firstTeam: { id: "a", name: "ألف" },
+        secondTeam: { id: "b", name: "باء" },
         homeScore: 3,
         awayScore: 0,
         status: "PLAYED",
         order: 1,
       },
       {
-        homeTeam: null,
-        awayTeam: null,
+        firstTeam: null,
+        secondTeam: null,
         homeScore: 9,
         awayScore: 0,
         status: "PLAYED",

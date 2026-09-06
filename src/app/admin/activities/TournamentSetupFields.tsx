@@ -2,6 +2,7 @@
 
 import IconLabel from "@/components/IconLabel";
 import { tournamentSetup as texts } from "@/lib/texts";
+import { isSinglesSquad, normalizePlayerCount } from "@/lib/squadSize";
 import type { IconName } from "@/components/Icon";
 
 export type MatchShapeValue = "FOOTBALL" | "SERIES";
@@ -100,6 +101,11 @@ export default function TournamentSetupFields({
   onOrganisedByHomeVillage: (value: boolean) => void;
   onOutsidePlayerLimit: (value: string) => void;
 }) {
+  const singles = isSinglesSquad({
+    min: normalizePlayerCount(minTeamSize),
+    max: normalizePlayerCount(maxTeamSize),
+  });
+
   return (
     <div className="space-y-3">
       <div>
@@ -162,25 +168,45 @@ export default function TournamentSetupFields({
       </div>
 
       <div>
-        <p className="block text-sm font-bold mb-1.5" style={{ color: "var(--text-main)" }}>
-          {texts.squadHeading}
-        </p>
-        <div className="flex gap-2">
-          <NumberField
-            id="tournament-min-team-size"
-            label={texts.minTeamSize}
-            value={minTeamSize}
-            onChange={onMinTeamSize}
-            disabled={matchesPlayed}
-          />
-          <NumberField
-            id="tournament-max-team-size"
-            label={texts.maxTeamSize}
-            value={maxTeamSize}
-            onChange={onMaxTeamSize}
-            disabled={matchesPlayed}
-          />
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          {!singles && (
+            <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
+              {texts.squadHeading}
+            </p>
+          )}
+          <label className="flex items-center gap-1.5 text-xs font-bold">
+            <input
+              id="tournament-singles"
+              type="checkbox"
+              checked={singles}
+              disabled={matchesPlayed}
+              onChange={(e) => {
+                const one = e.target.checked ? "1" : "";
+                onMinTeamSize(one);
+                onMaxTeamSize(one);
+              }}
+            />
+            <span style={{ color: "var(--text-main)" }}>{texts.singles}</span>
+          </label>
         </div>
+        {!singles && (
+          <div className="flex gap-2">
+            <NumberField
+              id="tournament-min-team-size"
+              label={texts.minTeamSize}
+              value={minTeamSize}
+              onChange={onMinTeamSize}
+              disabled={matchesPlayed}
+            />
+            <NumberField
+              id="tournament-max-team-size"
+              label={texts.maxTeamSize}
+              value={maxTeamSize}
+              onChange={onMaxTeamSize}
+              disabled={matchesPlayed}
+            />
+          </div>
+        )}
       </div>
 
       <label className="flex items-center gap-2 text-sm font-bold">

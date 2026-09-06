@@ -39,9 +39,15 @@ export default function FixtureRow({ fixture }: { fixture: Fixture }) {
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <TeamName name={fixture.homeTeam.name} mine={fixture.myTeamId === fixture.homeTeam.id} />
+          <TeamName
+            name={fixture.firstTeam.name}
+            mine={fixture.myTeamId === fixture.firstTeam.id}
+          />
           <span style={{ color: "var(--text-muted)" }}>×</span>
-          <TeamName name={fixture.awayTeam.name} mine={fixture.myTeamId === fixture.awayTeam.id} />
+          <TeamName
+            name={fixture.secondTeam.name}
+            mine={fixture.myTeamId === fixture.secondTeam.id}
+          />
         </div>
         {played && (
           <span className="font-black shrink-0 flex items-center gap-1.5">

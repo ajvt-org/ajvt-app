@@ -51,8 +51,8 @@ export function computeTopScorers(
 
 export interface HeadToHeadMatchInput {
   id: string;
-  homeTeam: { id: string } | null;
-  awayTeam: { id: string } | null;
+  firstTeam: { id: string } | null;
+  secondTeam: { id: string } | null;
 }
 
 export function getHeadToHead<T extends HeadToHeadMatchInput>(
@@ -63,8 +63,8 @@ export function getHeadToHead<T extends HeadToHeadMatchInput>(
 ): T[] {
   return matches.filter((m) => {
     if (m.id === excludeMatchId) return false;
-    if (!m.homeTeam || !m.awayTeam) return false;
-    const pair = new Set([m.homeTeam.id, m.awayTeam.id]);
+    if (!m.firstTeam || !m.secondTeam) return false;
+    const pair = new Set([m.firstTeam.id, m.secondTeam.id]);
     return pair.has(teamAId) && pair.has(teamBId) && teamAId !== teamBId;
   });
 }
@@ -87,10 +87,10 @@ export function computeStats(
         m.status === "PLAYED" &&
         m.homeScore !== null &&
         m.awayScore !== null &&
-        m.homeTeam !== null &&
-        m.awayTeam !== null,
+        m.firstTeam !== null &&
+        m.secondTeam !== null,
     )
-    .map((m) => ({ ...m, homeTeam: m.homeTeam!, awayTeam: m.awayTeam! }));
+    .map((m) => ({ ...m, firstTeam: m.firstTeam!, secondTeam: m.secondTeam! }));
   const matchesPlayed = played.length;
   const totalGoals = played.reduce((sum, m) => sum + (m.homeScore ?? 0) + (m.awayScore ?? 0), 0);
 
@@ -98,8 +98,8 @@ export function computeStats(
     teams.map((t) => [t.id, { teamId: t.id, name: t.name, played: 0, gf: 0, ga: 0 }]),
   );
   for (const m of played) {
-    const home = tally.get(m.homeTeam.id);
-    const away = tally.get(m.awayTeam.id);
+    const home = tally.get(m.firstTeam.id);
+    const away = tally.get(m.secondTeam.id);
     if (!home || !away) continue;
     home.played++;
     away.played++;
@@ -149,8 +149,8 @@ export function drawKnockoutPairs<T extends { id: string; groupId?: string | nul
 
 export interface GeneratedFixture {
   round: number;
-  homeTeamId: string;
-  awayTeamId: string;
+  firstTeamId: string;
+  secondTeamId: string;
 }
 
 function circleMethodRounds(teamIds: string[]): [string | null, string | null][][] {
@@ -190,7 +190,7 @@ export function generateMatchSchedule(
     for (const [a, b] of pairs) {
       if (a === null || b === null) continue;
       if ((counts.get(a) || 0) >= targetPerTeam || (counts.get(b) || 0) >= targetPerTeam) continue;
-      fixtures.push({ round, homeTeamId: a, awayTeamId: b });
+      fixtures.push({ round, firstTeamId: a, secondTeamId: b });
       counts.set(a, (counts.get(a) || 0) + 1);
       counts.set(b, (counts.get(b) || 0) + 1);
       played.add(key(a, b));
@@ -212,7 +212,7 @@ export function generateMatchSchedule(
       teamIds.find((t) => t !== a && !played.has(key(a, t))) ||
       teamIds.find((t) => t !== a);
     if (!b || a === b) break;
-    fixtures.push({ round, homeTeamId: a, awayTeamId: b });
+    fixtures.push({ round, firstTeamId: a, secondTeamId: b });
     counts.set(a, (counts.get(a) || 0) + 1);
     counts.set(b, (counts.get(b) || 0) + 1);
     played.add(key(a, b));
@@ -224,8 +224,8 @@ export function generateMatchSchedule(
 }
 
 export interface BracketMatchInput {
-  homeTeamId: string | null;
-  awayTeamId: string | null;
+  firstTeamId: string | null;
+  secondTeamId: string | null;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -235,12 +235,12 @@ export interface BracketMatchInput {
 
 export function getMatchWinnerTeamId(m: BracketMatchInput): string | null {
   if (m.status !== "PLAYED") return null;
-  if (m.homeTeamId === null || m.awayTeamId === null) return m.homeTeamId ?? m.awayTeamId;
+  if (m.firstTeamId === null || m.secondTeamId === null) return m.firstTeamId ?? m.secondTeamId;
   if (m.homeScore === null || m.awayScore === null) return null;
-  if (m.homeScore > m.awayScore) return m.homeTeamId;
-  if (m.awayScore > m.homeScore) return m.awayTeamId;
+  if (m.homeScore > m.awayScore) return m.firstTeamId;
+  if (m.awayScore > m.homeScore) return m.secondTeamId;
   if (m.homePenalties !== null && m.awayPenalties !== null && m.homePenalties !== m.awayPenalties) {
-    return m.homePenalties > m.awayPenalties ? m.homeTeamId : m.awayTeamId;
+    return m.homePenalties > m.awayPenalties ? m.firstTeamId : m.secondTeamId;
   }
   return null;
 }
@@ -335,8 +335,8 @@ export function computeDisciplineStats(
 }
 
 export interface CleanSheetMatchInput {
-  homeTeam: { id: string } | null;
-  awayTeam: { id: string } | null;
+  firstTeam: { id: string } | null;
+  secondTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -357,9 +357,9 @@ export function computeCleanSheets(
   for (const t of teams) table.set(t.id, { teamId: t.id, name: t.name, played: 0, cleanSheets: 0 });
   for (const m of matches) {
     if (m.status !== "PLAYED" || m.homeScore === null || m.awayScore === null) continue;
-    if (!m.homeTeam || !m.awayTeam) continue;
-    const home = table.get(m.homeTeam.id);
-    const away = table.get(m.awayTeam.id);
+    if (!m.firstTeam || !m.secondTeam) continue;
+    const home = table.get(m.firstTeam.id);
+    const away = table.get(m.secondTeam.id);
     if (home) {
       home.played++;
       if (m.awayScore === 0) home.cleanSheets++;
@@ -420,8 +420,8 @@ export function computeMotmLeaders(teams: TeamRosterInput[], matches: MotmMatchI
 }
 
 export interface TeamMatchInput {
-  homeTeam: { id: string; name: string } | null;
-  awayTeam: { id: string; name: string } | null;
+  firstTeam: { id: string; name: string } | null;
+  secondTeam: { id: string; name: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -446,25 +446,25 @@ export function computeTeamAdvancedStats(
         m.status === "PLAYED" &&
         m.homeScore !== null &&
         m.awayScore !== null &&
-        m.homeTeam !== null &&
-        m.awayTeam !== null,
+        m.firstTeam !== null &&
+        m.secondTeam !== null,
     )
     .sort((a, b) => a.order - b.order)
-    .map((m) => ({ ...m, homeTeam: m.homeTeam!, awayTeam: m.awayTeam! }));
+    .map((m) => ({ ...m, firstTeam: m.firstTeam!, secondTeam: m.secondTeam! }));
 
   return teams.map((t) => {
-    const teamMatches = played.filter((m) => m.homeTeam.id === t.id || m.awayTeam.id === t.id);
+    const teamMatches = played.filter((m) => m.firstTeam.id === t.id || m.secondTeam.id === t.id);
 
     let biggestWin: TeamAdvancedRow["biggestWin"] = null;
     for (const m of teamMatches) {
-      const isHome = m.homeTeam.id === t.id;
+      const isHome = m.firstTeam.id === t.id;
       const gf = (isHome ? m.homeScore : m.awayScore) as number;
       const ga = (isHome ? m.awayScore : m.homeScore) as number;
       if (gf <= ga) continue;
       const gd = gf - ga;
       if (!biggestWin || gd > biggestWin.gd) {
         biggestWin = {
-          opponent: isHome ? m.awayTeam.name : m.homeTeam.name,
+          opponent: isHome ? m.secondTeam.name : m.firstTeam.name,
           gf,
           ga,
           gd,
@@ -475,7 +475,7 @@ export function computeTeamAdvancedStats(
     let unbeatenStreak = 0;
     for (let i = teamMatches.length - 1; i >= 0; i--) {
       const m = teamMatches[i];
-      const isHome = m.homeTeam.id === t.id;
+      const isHome = m.firstTeam.id === t.id;
       const gf = (isHome ? m.homeScore : m.awayScore) as number;
       const ga = (isHome ? m.awayScore : m.homeScore) as number;
       if (gf < ga) break;
@@ -483,7 +483,7 @@ export function computeTeamAdvancedStats(
     }
 
     const form: ("W" | "D" | "L")[] = teamMatches.slice(-5).map((m) => {
-      const isHome = m.homeTeam.id === t.id;
+      const isHome = m.firstTeam.id === t.id;
       const gf = (isHome ? m.homeScore : m.awayScore) as number;
       const ga = (isHome ? m.awayScore : m.homeScore) as number;
       return gf > ga ? "W" : gf < ga ? "L" : "D";

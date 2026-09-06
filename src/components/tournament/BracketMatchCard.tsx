@@ -8,8 +8,8 @@ export interface BracketMatch {
   bracketRound: number;
   order: number;
   round: string | null;
-  homeTeam: BracketSideTeam | null;
-  awayTeam: BracketSideTeam | null;
+  firstTeam: BracketSideTeam | null;
+  secondTeam: BracketSideTeam | null;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;
@@ -28,10 +28,10 @@ export default function BracketMatchCard({
 }) {
   const bye = isBye(match);
   const homeWinner = bye
-    ? match.homeTeam !== null
+    ? match.firstTeam !== null
     : match.status === "PLAYED" && isWinner(match, "home");
   const awayWinner = bye
-    ? match.awayTeam !== null
+    ? match.secondTeam !== null
     : match.status === "PLAYED" && isWinner(match, "away");
 
   return (
@@ -41,7 +41,7 @@ export default function BracketMatchCard({
       dir="rtl"
     >
       <BracketSide
-        team={match.homeTeam}
+        team={match.firstTeam}
         score={match.homeScore}
         penalties={match.homePenalties}
         played={match.status === "PLAYED" && !bye}
@@ -52,7 +52,7 @@ export default function BracketMatchCard({
         entrant={entrant}
       />
       <BracketSide
-        team={match.awayTeam}
+        team={match.secondTeam}
         score={match.awayScore}
         penalties={match.awayPenalties}
         played={match.status === "PLAYED" && !bye}

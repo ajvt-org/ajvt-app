@@ -11,6 +11,7 @@ import ConvertTournamentCard from "./ConvertTournamentCard";
 import ConvertCampaignCard from "./ConvertCampaignCard";
 import DeleteActivityButton from "./DeleteActivityButton";
 import ResetTournamentButton from "./ResetTournamentButton";
+import { isFootball } from "@/lib/matchShape";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 import { activityForm as texts } from "@/lib/texts";
 
@@ -142,7 +143,7 @@ export default function DetailsTab({
             {texts.autoApprove}
           </label>
 
-          {activity.isTournament && (
+          {activity.isTournament && isFootball(activity.matchShape) && (
             <div>
               <label className="flex items-center gap-2 text-sm font-bold">
                 <input

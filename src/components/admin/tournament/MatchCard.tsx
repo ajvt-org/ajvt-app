@@ -16,6 +16,8 @@ import BookingsForm from "./BookingsForm";
 import MatchDetailsForm from "./MatchDetailsForm";
 import MvpVoteAdmin from "./MvpVoteAdmin";
 import ResultForm from "./ResultForm";
+import SeriesScoreline from "./SeriesScoreline";
+import type { SeriesConfig } from "./seriesConfig";
 import MatchCardActions from "./MatchCardActions";
 import IconLabel from "@/components/IconLabel";
 import { matchAdmin as texts, lists } from "@/lib/texts";
@@ -25,7 +27,9 @@ export default function MatchCard({
   match,
   teams,
   allMatches,
+  activityId,
   matchShape,
+  series,
   entrant = "team",
   suspendedIds,
   mvpVoteMinutes,
@@ -44,7 +48,9 @@ export default function MatchCard({
   match: Match;
   teams: Team[];
   allMatches: Match[];
+  activityId: string;
   matchShape: "FOOTBALL" | "SERIES";
+  series: SeriesConfig | null;
   entrant?: EntrantKind;
   suspendedIds: string[];
   mvpVoteMinutes: number;
@@ -65,13 +71,13 @@ export default function MatchCard({
   const resultAllowed = resultEntryAllowed(played, match.matchDate, new Date());
   const football = matchShape === "FOOTBALL";
   const priorMeetings = decided
-    ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
+    ? getHeadToHead(allMatches, match.firstTeam.id, match.secondTeam.id, match.id)
     : [];
   const events =
     decided && football
       ? matchEventRows({
           ...match,
-          homeTeamId: match.homeTeam.id,
+          homeTeamId: match.firstTeam.id,
           manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
         })
       : [];
@@ -94,19 +100,30 @@ export default function MatchCard({
       <div className="mt-2">
         <MatchTeams
           home={{
-            name: teamName(match.homeTeam),
-            logo: match.homeTeam?.logo,
-            photo: match.homeTeam?.photo,
+            name: teamName(match.firstTeam),
+            logo: match.firstTeam?.logo,
+            photo: match.firstTeam?.photo,
           }}
           away={{
-            name: teamName(match.awayTeam),
-            logo: match.awayTeam?.logo,
-            photo: match.awayTeam?.photo,
+            name: teamName(match.secondTeam),
+            logo: match.secondTeam?.logo,
+            photo: match.secondTeam?.photo,
           }}
-          score={played ? { home: match.homeScore, away: match.awayScore } : null}
+          score={football && played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
           entrant={entrant}
         />
+        {series && match.series && (
+          <div className="mt-1.5">
+            <SeriesScoreline
+              parts={match.parts}
+              standing={match.series}
+              partWord={series.partWord}
+              adjustments={match.adjustments}
+              sides={[teamName(match.firstTeam), teamName(match.secondTeam)]}
+            />
+          </div>
+        )}
         {priorMeetings.length > 0 && (
           <p
             className="text-xs mt-1 flex items-center gap-1.5 flex-wrap"
@@ -133,8 +150,8 @@ export default function MatchCard({
         <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <MatchEvents rows={events} />
           <MatchTimeline
-            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
-            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+            entries={matchTimeline({ ...match, homeTeamId: match.firstTeam.id })}
+            teams={{ home: match.firstTeam.name, away: match.secondTeam.name }}
           />
         </div>
       )}
@@ -159,7 +176,9 @@ export default function MatchCard({
           <ResultForm
             match={match}
             teams={teams}
+            activityId={activityId}
             matchShape={matchShape}
+            series={series}
             suspendedIds={suspendedIds}
             onSaved={onSaved}
           />
@@ -182,7 +201,13 @@ export default function MatchCard({
         />
       )}
       {showDetails && (
-        <MatchDetailsForm match={match} teams={teams} entrant={entrant} onChange={onChange} />
+        <MatchDetailsForm
+          match={match}
+          teams={teams}
+          entrant={entrant}
+          football={football}
+          onChange={onChange}
+        />
       )}
     </div>
   );

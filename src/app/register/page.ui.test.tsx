@@ -152,7 +152,7 @@ describe("signing up", () => {
     await reachPersonStep();
 
     expect(screen.getByText(signUp.photoLabel)).toBeTruthy();
-    expect(screen.queryByText(photoUpload.addHint)).toBeNull();
+    expect(screen.queryByText(photoUpload.add)).toBeNull();
   });
 
   it("brings back what was typed when the reader comes back to the form", async () => {

@@ -8,6 +8,9 @@ export const matchAdmin = {
     "المباراة المضافة هنا تبقى خارج خطة الأيام، وتظهر في قائمة غير المجدولة حتى تُسند إلى يوم من تبويب الأيام.",
   homeTeamPlaceholder: "الفريق المضيف...",
   awayTeamPlaceholder: "الفريق الضيف...",
+  seriesFirstPlaceholder: "الطرف الأول...",
+  seriesSecondPlaceholder: "الطرف الثاني...",
+  seriesOrderFromTheDraw: "ترتيب الطرفين من القرعة ولا يعطي أفضلية لأحدهما.",
   roundPlaceholder: "الجولة (اختياري)",
   roundLabel: "الجولة",
   venueLabel: "الملعب",
@@ -40,13 +43,12 @@ export const matchAdmin = {
   } as Record<string, string>,
   confirmSemis: "توليد نصف النهائي من ترتيب المجموعتين؟",
   bracketTwoGroups: "نصف النهائي والنهائي",
-  bracketKnockout: "القرعة الإقصائية (شطرنج، بلايستيشن، أو أي نظام إقصاء مباشر)",
+  bracketKnockout: "القرعة الإقصائية",
   knockoutLockedHint:
     "أكمل جميع نتائج دور المجموعات أولاً — ستظهر خيارات الدور الإقصائي هنا بعد انتهاء دور المجموعات.",
   crossSemisHint:
     "نصف نهائي متقاطع من ترتيب المجموعتين (الأول من كل مجموعة أمام الثاني من الأخرى)، ثم النهائي.",
-  drawHint:
-    "قرعة عشوائية بين كل الفرق/اللاعبين المسجَّلين — أي عدد يصلح، ومن لا يجد خصماً في الدور الأول يمرّ مباشرة إلى الدور التالي",
+  drawHint: "أي عدد يصلح، ومن لا يجد خصماً في الدور الأول يمرّ إلى الدور التالي",
   draw: "قرعة عشوائية",
   confirmDraw: "إجراء قرعة عشوائية بين جميع الفرق الحالية؟",
   redraw: "إعادة القرعة",
@@ -146,3 +148,9 @@ export const statsAdmin = {
   teams: "الفرق",
   noStats: "لا توجد إحصائيات مسجلة بعد",
 } as const;
+
+export function sidePlaceholders(football: boolean): { first: string; second: string } {
+  return football
+    ? { first: matchAdmin.homeTeamPlaceholder, second: matchAdmin.awayTeamPlaceholder }
+    : { first: matchAdmin.seriesFirstPlaceholder, second: matchAdmin.seriesSecondPlaceholder };
+}
