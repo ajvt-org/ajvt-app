@@ -23,7 +23,6 @@ export default function StepPerson({
   onPhoto,
   error,
   loading,
-  onBack,
   onSubmit,
 }: {
   fullName: string;
@@ -39,7 +38,6 @@ export default function StepPerson({
   onPhoto: (filename: string) => void;
   error: string;
   loading: boolean;
-  onBack: () => void;
   onSubmit: () => void;
 }) {
   return (
@@ -95,24 +93,9 @@ export default function StepPerson({
 
       <ErrorNotice error={error} />
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="btn"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)", width: "auto" }}
-        >
-          {signUp.back}
-        </button>
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={loading}
-          className="btn btn-primary flex-1"
-        >
-          {loading ? signUp.submitting : signUp.submit}
-        </button>
-      </div>
+      <button type="button" onClick={onSubmit} disabled={loading} className="btn btn-primary">
+        {loading ? signUp.submitting : signUp.submit}
+      </button>
     </div>
   );
 }

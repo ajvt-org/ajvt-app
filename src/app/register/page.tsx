@@ -13,6 +13,7 @@ import { auth, members, villages as villageMessages } from "@/lib/messages";
 import { signUp } from "@/lib/texts";
 import { safeNextPath, validatePhone } from "@/lib/utils";
 import { HOME_VILLAGE, ageForVillage, requiresAgeGroup } from "@/lib/villages";
+import { PERSON_STEP, isPersonStep, stepHref } from "./steps";
 import StepCredentials from "./StepCredentials";
 import StepPerson from "./StepPerson";
 import { DRAFT_KEY, readDraft, type SignUpDraft } from "./draft";
@@ -35,10 +36,13 @@ export default function RegisterPage() {
 
 function RegisterForm() {
   const router = useRouter();
-  const backHref = safeNextPath(useSearchParams().get("from"), "/");
+  const params = useSearchParams();
+  const from = params.get("from");
+  const leaveHref = safeNextPath(from, "/");
+  const credentialsHref = stepHref(null, from);
+  const onPerson = isPersonStep(params.get("step"));
   const { ages, villages, addAge } = useFormLists();
 
-  const [step, setStep] = useState(0);
   const [form, setForm] = useState<SignUpDraft>(EMPTY);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,6 +63,10 @@ function RegisterForm() {
     return () => clearTimeout(timeout);
   }, [form, restored]);
 
+  useEffect(() => {
+    if (restored && onPerson && !password) router.replace(credentialsHref);
+  }, [restored, onPerson, password, router, credentialsHref]);
+
   function set<K extends keyof SignUpDraft>(field: K, value: SignUpDraft[K]) {
     setForm((p) => ({ ...p, [field]: value }));
   }
@@ -69,7 +77,7 @@ function RegisterForm() {
     if (phoneError) return setError(phoneError);
     if (password.length < MIN_PASSWORD_LENGTH) return setError(auth.passwordTooShort);
     if (password !== confirmPassword) return setError(signUp.passwordMismatch);
-    setStep(1);
+    router.push(stepHref(PERSON_STEP, from));
   }
 
   function pickVillage(next: string) {
@@ -103,12 +111,12 @@ function RegisterForm() {
 
   return (
     <div className="app-shell">
-      <PageHeader title={signUp.title} backHref={backHref} />
+      <PageHeader title={signUp.title} backHref={onPerson ? credentialsHref : leaveHref} />
 
       <div className="px-5 py-6 pb-10">
-        <ProgressBar stepIndex={step} total={2} />
+        <ProgressBar stepIndex={onPerson ? 1 : 0} total={2} />
 
-        {step === 0 ? (
+        {!onPerson ? (
           <StepCredentials
             phone={form.phone}
             password={password}
@@ -134,10 +142,6 @@ function RegisterForm() {
             onPhoto={(value) => set("photo", value)}
             error={error}
             loading={loading}
-            onBack={() => {
-              setError("");
-              setStep(0);
-            }}
             onSubmit={create}
           />
         )}
