@@ -26,6 +26,9 @@ export default function ActivityRegistrations({
   const team = member.teamMemberships.find((tm) => tm.activityId === activity.id) || null;
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const settled = registration && registration.status !== "REJECTED";
+  // Empty for a singles tournament, where the entrant is the member and there
+  // is nothing to choose, and empty for a tournament whose teams are not made yet.
+  const hasTeamsToJoin = activity.joinableTeams.length > 0;
 
   async function run(action: () => Promise<unknown>, done: string) {
     setError("");
@@ -112,7 +115,7 @@ export default function ActivityRegistrations({
             </p>
           ) : activity.isOpen && !full ? (
             <>
-              {activity.isTournament && !activity.isVolunteer && activity.teams.length > 0 && (
+              {activity.isTournament && !activity.isVolunteer && hasTeamsToJoin && (
                 <div>
                   <label
                     htmlFor={`choose-team-${activity.id}`}
@@ -129,7 +132,7 @@ export default function ActivityRegistrations({
                     onChange={(e) => setChosenTeamId(e.target.value)}
                   >
                     <option value="">{activityRegistration.noTeamYet}</option>
-                    {activity.teams.map((t) => (
+                    {activity.joinableTeams.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name}
                       </option>
@@ -166,67 +169,65 @@ export default function ActivityRegistrations({
           </p>
         )}
 
-        {registration?.status === "ACTIVE" &&
-          activity.isTournament &&
-          activity.teams.length > 0 && (
-            <div className="mt-1.5">
-              <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
-                <Icon name="flag" size={12} className="icon-inline" />{" "}
-                {team?.status === "ACTIVE"
-                  ? `${activityRegistration.yourTeam}:`
-                  : `${activityRegistration.pickTeam}:`}
-              </p>
-              {team?.status === "ACTIVE" ? (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="badge badge-active">
-                    <IconLabel name="check" size={11}>
-                      {team.teamName}
-                    </IconLabel>
-                  </span>
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {activityRegistration.teamLocked}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {activity.teams.map((t) => {
-                    const mine = team?.teamId === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => pickTeam(t.id)}
-                        disabled={busy || mine}
-                        className="text-xs px-2.5 py-1 rounded-lg font-bold"
-                        style={{
-                          background: mine ? "var(--mint-600)" : "white",
-                          color: mine ? "white" : "var(--mint-700)",
-                          border: "1px solid var(--mint-200)",
-                        }}
-                      >
-                        {mine && <Icon name="clock" size={11} className="icon-inline" />}
-                        {t.name}
-                      </button>
-                    );
-                  })}
-                  {team && (
-                    <>
-                      <span className="badge badge-pending" style={{ fontSize: "10px" }}>
-                        <IconLabel name="clock">{activityRegistration.awaitingApproval}</IconLabel>
-                      </span>
-                      <button
-                        onClick={() => leaveTeam(team.teamId)}
-                        disabled={busy}
-                        className="text-xs font-bold"
-                        style={{ color: "#991b1b" }}
-                      >
-                        {activityRegistration.cancelRequest}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+        {registration?.status === "ACTIVE" && activity.isTournament && hasTeamsToJoin && (
+          <div className="mt-1.5">
+            <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
+              <Icon name="flag" size={12} className="icon-inline" />{" "}
+              {team?.status === "ACTIVE"
+                ? `${activityRegistration.yourTeam}:`
+                : `${activityRegistration.pickTeam}:`}
+            </p>
+            {team?.status === "ACTIVE" ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="badge badge-active">
+                  <IconLabel name="check" size={11}>
+                    {team.teamName}
+                  </IconLabel>
+                </span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {activityRegistration.teamLocked}
+                </span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {activity.joinableTeams.map((t) => {
+                  const mine = team?.teamId === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => pickTeam(t.id)}
+                      disabled={busy || mine}
+                      className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                      style={{
+                        background: mine ? "var(--mint-600)" : "white",
+                        color: mine ? "white" : "var(--mint-700)",
+                        border: "1px solid var(--mint-200)",
+                      }}
+                    >
+                      {mine && <Icon name="clock" size={11} className="icon-inline" />}
+                      {t.name}
+                    </button>
+                  );
+                })}
+                {team && (
+                  <>
+                    <span className="badge badge-pending" style={{ fontSize: "10px" }}>
+                      <IconLabel name="clock">{activityRegistration.awaitingApproval}</IconLabel>
+                    </span>
+                    <button
+                      onClick={() => leaveTeam(team.teamId)}
+                      disabled={busy}
+                      className="text-xs font-bold"
+                      style={{ color: "#991b1b" }}
+                    >
+                      {activityRegistration.cancelRequest}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       {error && (
         <div

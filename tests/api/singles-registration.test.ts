@@ -172,6 +172,6 @@ describe("registering for a singles tournament", () => {
     const body = await (await LIST_ACTIVITIES()).json();
     const row = body.activities.find((a: { id: string }) => a.id === activity.id);
 
-    expect(row.teams).toEqual([]);
+    expect(row.joinableTeams).toEqual([]);
   });
 });
