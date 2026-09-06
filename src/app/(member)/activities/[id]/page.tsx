@@ -12,6 +12,7 @@ import ActivityHero from "./ActivityHero";
 import ActivityStatus from "./ActivityStatus";
 import { entrantKind } from "@/lib/entrant";
 import { squadOf } from "@/lib/squadSize";
+import { joinableTeams } from "@/lib/registrationTeamServer";
 import { loadActivityPage } from "./activityQuery";
 import { tournamentPanels } from "./tournamentPanels";
 import { safeNextPath } from "@/lib/utils";
@@ -118,7 +119,10 @@ export default async function ActivityPage({
                 isVolunteer: activity.isVolunteer,
                 whatsappLink: activity.whatsappLink,
                 registrantCount,
-                teams: activity.teams.map((t) => ({ id: t.id, name: t.name })),
+                joinableTeams: joinableTeams(activity, activity.teams).map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                })),
               }}
             />
           </div>
