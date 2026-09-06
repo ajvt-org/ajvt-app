@@ -54,6 +54,7 @@ export const activityRow = {
   joinRequestChip: (n: number) => `${n} طلب انضمام`,
   filters: {
     any: "الكل",
+    anyStage: "بما فيها المنتهية",
     typeAxis: "النوع",
     stateAxis: "التسجيل",
     stageAxis: "المرحلة",

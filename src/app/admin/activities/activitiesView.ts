@@ -44,7 +44,7 @@ export const FILTER_AXES: FilterAxis[] = [
     key: "stage",
     label: texts.filters.stageAxis,
     options: [
-      { value: "all", label: texts.filters.any },
+      { value: "all", label: texts.filters.anyStage },
       { value: "current", label: texts.filters.current },
       { value: "finished", label: texts.filters.finished },
     ],

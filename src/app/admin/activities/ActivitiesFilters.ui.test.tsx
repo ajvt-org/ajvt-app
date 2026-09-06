@@ -53,14 +53,37 @@ beforeEach(() => {
 });
 
 describe("the one bar the activities are filtered from", () => {
-  it("uses one word for no filter in every row", () => {
+  it("uses one word for the rows that are not filtered to begin with", () => {
     show([activity()]);
 
     expect(screen.getAllByLabelText(/: الكل$/).map((b) => b.getAttribute("aria-label"))).toEqual([
       "النوع: الكل",
       "التسجيل: الكل",
-      "المرحلة: الكل",
     ]);
+  });
+
+  it("says what the stage row offers rather than calling it the same word", () => {
+    show([activity()]);
+
+    expect(screen.getByLabelText("المرحلة: بما فيها المنتهية")).toBeTruthy();
+    expect(screen.queryByLabelText("المرحلة: الكل")).toBeNull();
+  });
+
+  it("counts the stage chip against the finished the page hides by default", () => {
+    show(
+      [
+        activity({
+          id: "a1",
+          startsAt: "2020-01-01T00:00:00.000Z",
+          endsAt: "2020-01-02T00:00:00.000Z",
+        }),
+        activity({ id: "a2" }),
+      ],
+      view({ stage: "current" }),
+    );
+
+    expect(screen.getByLabelText("المرحلة: بما فيها المنتهية").textContent).toContain("2");
+    expect(screen.getByLabelText("المرحلة: جارية وقادمة").textContent).toContain("1");
   });
 
   it("says how many each chip would show", () => {
