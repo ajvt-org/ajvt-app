@@ -10,7 +10,10 @@ type Params = { params: Promise<{ matchId: string; partId: string }> };
 
 async function stateOf(matchId: string) {
   const match = await loadSeriesMatch(matchId);
-  return { parts: match.parts, standing: standingOf(match.activity, match.parts) };
+  return {
+    parts: match.parts,
+    standing: standingOf(match.activity, match.parts, match.isKnockout),
+  };
 }
 
 export const PATCH = withRoute(

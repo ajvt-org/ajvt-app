@@ -332,3 +332,59 @@ describe("the colours of a series match", () => {
     expect(body.parts[0].sideAColour).toBeNull();
   });
 });
+
+describe("a level knockout match", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  it("takes another pair of parts rather than standing level", async () => {
+    const { match } = await matchOf(CHESS);
+    await prisma.match.update({ where: { id: match.id }, data: { isKnockout: true } });
+    await add(match.id, { outcome: "DRAW" });
+
+    const body = await (await add(match.id, { outcome: "DRAW" })).json();
+
+    expect(body.standing.over).toBe(false);
+    expect(body.standing.extending).toBe(true);
+    expect(body.standing.partsLeft).toBe(2);
+    expect((await add(match.id, { outcome: "SIDE_A" })).status).toBe(201);
+  });
+
+  it("stands level in a group stage instead", async () => {
+    const { match } = await matchOf(CHESS);
+    await add(match.id, { outcome: "DRAW" });
+
+    const body = await (await add(match.id, { outcome: "DRAW" })).json();
+
+    expect(body.standing.over).toBe(true);
+    expect(body.standing.level).toBe(true);
+    expect((await add(match.id, { outcome: "SIDE_A" })).status).toBe(409);
+  });
+
+  it("keeps the colours level across the pair it is extended by", async () => {
+    const { match } = await matchOf({
+      ...CHESS,
+      hasColours: true,
+      firstColourWord: "أبيض",
+      secondColourWord: "أسود",
+    });
+    await prisma.match.update({
+      where: { id: match.id },
+      data: { isKnockout: true, sideAOpensAs: "FIRST" },
+    });
+    await add(match.id, { outcome: "DRAW" });
+    await add(match.id, { outcome: "DRAW" });
+    await add(match.id, { outcome: "DRAW" });
+
+    const body = await (await add(match.id, { outcome: "DRAW" })).json();
+
+    expect(body.parts.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
+      "FIRST",
+      "SECOND",
+      "FIRST",
+      "SECOND",
+    ]);
+  });
+});

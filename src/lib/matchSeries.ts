@@ -3,12 +3,14 @@ import type { MatchEnding, PartDecision, PartOutcome } from "@prisma/client";
 export type SeriesSide = "SIDE_A" | "SIDE_B";
 
 export const HALVES_PER_PART = 2;
+export const PARTS_PER_EXTENSION = 2;
 
 export interface SeriesRules {
   partsPerMatch: number;
   matchEnding: MatchEnding;
   partsToWin: number | null;
   partDecision: PartDecision;
+  extendsWhenLevel: boolean;
 }
 
 export interface PlayedPart {
@@ -32,9 +34,11 @@ export interface SeriesStanding {
   partsRecorded: number;
   partsScored: number;
   partsLeft: number;
+  partsAllowed: number;
   target: number | null;
   over: boolean;
   level: boolean;
+  extending: boolean;
   winner: SeriesSide | null;
 }
 
@@ -108,8 +112,12 @@ export function deriveSeries(
     }
   }
 
-  const partsLeft = Math.max(rules.partsPerMatch - partsRecorded, 0);
   const level = sideAHalves === sideBHalves;
+  let partsAllowed = Math.max(rules.partsPerMatch, partsRecorded);
+  if (rules.extendsWhenLevel && winner === null) {
+    while (partsRecorded >= partsAllowed && level) partsAllowed += PARTS_PER_EXTENSION;
+  }
+  const partsLeft = Math.max(partsAllowed - partsRecorded, 0);
   const over = winner !== null || partsLeft === 0;
   if (winner === null && partsLeft === 0 && !level) {
     winner = sideAHalves > sideBHalves ? "SIDE_A" : "SIDE_B";
@@ -121,9 +129,11 @@ export function deriveSeries(
     partsRecorded,
     partsScored,
     partsLeft,
+    partsAllowed,
     target,
     over,
     level,
+    extending: partsAllowed > rules.partsPerMatch,
     winner,
   };
 }
