@@ -9,7 +9,6 @@ import NewMatchForm from "./NewMatchForm";
 import { isFootball } from "@/lib/matchShape";
 import type { SeriesConfig } from "./seriesConfig";
 import BracketPanel from "./BracketPanel";
-import BracketSuggestion from "./BracketSuggestion";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import SetupWizard from "./wizard/SetupWizard";
@@ -62,7 +61,6 @@ export default function MatchesTab({
   }
 
   const state = matchesState({ format, groups, matches });
-  const { groupStageComplete } = state;
 
   async function moveMatch(list: Match[], index: number, direction: "up" | "down") {
     const swapIndex = direction === "up" ? index - 1 : index + 1;
@@ -119,25 +117,6 @@ export default function MatchesTab({
       >
         <IconLabel name="sparkle">{wizardTexts.open}</IconLabel>
       </button>
-
-      {groupStageComplete && (
-        <div
-          className="card p-4 space-y-2"
-          style={{ background: "#d1fae5", border: "1px solid #6ee7b7" }}
-        >
-          <p className="text-sm font-black" style={{ color: "#065f46" }}>
-            <IconLabel name="check">{texts.groupStageDoneTitle}</IconLabel>
-          </p>
-          <p className="text-xs" style={{ color: "#065f46" }}>
-            {texts.groupStageDoneHint}
-          </p>
-          <BracketSuggestion
-            activityId={activityId}
-            busy={generating}
-            onValidate={(redo) => runBracketAction("suggestion", texts.confirmSemis, { redo })}
-          />
-        </div>
-      )}
 
       {scheduled.length > 0 && (
         <div>
