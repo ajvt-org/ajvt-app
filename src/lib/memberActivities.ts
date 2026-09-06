@@ -54,8 +54,6 @@ export function activityDetail(entry: MemberActivity): ActivityDetail {
   if (entry.team && squadIsSet(squadOf(entry)) && entry.team.teammates.length > 0) {
     return { kind: "PARTNERS", names: entry.team.teammates };
   }
-  // A singles entrant is a Team of one named after the member, so naming it here
-  // would tell them they are waiting with a team called themselves.
   const singles = isSinglesActivity(entry);
   if (entry.team && entry.isTournament) {
     return { kind: "AWAITING_SCHEDULE", team: singles ? null : entry.team.name };

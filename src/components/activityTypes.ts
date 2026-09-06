@@ -23,9 +23,6 @@ export interface Activity {
   registrantCount: number;
   unplayedMatches?: number;
   awaitingStage?: TournamentStage | null;
-  // The teams a member may ask to join. A singles tournament has none, because
-  // its entrants are Teams of one that registration creates. Both the list route
-  // and the detail page put this through joinableTeams before it gets here.
   joinableTeams: Team[];
 }
 

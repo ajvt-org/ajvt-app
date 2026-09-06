@@ -145,8 +145,6 @@ export function CoverFrame(props: FrameProps) {
   );
 }
 
-// A face reads as a circle and a poster does not, so the small frame carries its
-// corner as a prop rather than being copied into a second component.
 export type FrameShape = "circle" | "square";
 
 export function AvatarFrame(props: FrameProps & { shape?: FrameShape }) {
@@ -178,7 +176,6 @@ export function AvatarFrame(props: FrameProps & { shape?: FrameShape }) {
   );
 }
 
-// An activity photo is a poster or a scene, so it keeps its corners.
 export function TileFrame(props: FrameProps) {
   return <AvatarFrame {...props} shape="square" />;
 }

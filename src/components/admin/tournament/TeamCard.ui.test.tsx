@@ -201,6 +201,13 @@ describe("TeamCard", () => {
     const name = screen.getByText("فريق النجم");
     expect(name.className).toContain("leading-6");
     expect(name.className).toContain("optical-name");
+
+    const lift = `${(MATCH_TEAMS_SIZES.md.logo - 24) / 2}px`;
+    expect(name.style.marginBlockStart).toBe(lift);
+    for (const glyph of head.querySelectorAll(":scope > span:not(.summary-logo)")) {
+      expect((glyph as HTMLElement).style.marginBlockStart).toBe(lift);
+    }
+    expect(crest.style.marginBlockStart).toBe("");
   });
 
   it("renames the team from the card", () => {
@@ -340,32 +347,48 @@ describe("a squad the admin should look at", () => {
   it("says how short a squad is rather than only that it is short", () => {
     withBreaches([{ kind: "tooFew", count: 6, min: 16 }], squad(6));
 
-    expect(
-      screen.getByLabelText(`${teamsTab.squadOfRange(6, 16, 22)} ${teamsTab.outsideOfLimit(0, 4)}`),
-    ).toBeDefined();
+    expect(screen.getByLabelText(teamsTab.squadOfRange(6, 16, 22))).toBeDefined();
   });
 
   it("says how far past the maximum a squad has gone", () => {
     withBreaches([{ kind: "tooMany", count: 23, max: 22 }], squad(23));
 
-    expect(
-      screen.getByLabelText(
-        `${teamsTab.squadOfRange(23, 16, 22)} ${teamsTab.outsideOfLimit(0, 4)}`,
-      ),
-    ).toBeDefined();
+    expect(screen.getByLabelText(teamsTab.squadOfRange(23, 16, 22))).toBeDefined();
   });
 
-  it("carries the outside share on the same bar", () => {
+  it("gives the outside share a bar of its own, announced apart from the squad", () => {
     withBreaches(
       [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p1"] }],
       squad(16, 5),
     );
 
-    expect(
-      screen.getByLabelText(
-        `${teamsTab.squadOfRange(16, 16, 22)} ${teamsTab.outsideOfLimit(5, 4)}`,
-      ),
-    ).toBeDefined();
+    expect(screen.getByLabelText(teamsTab.squadOfRange(16, 16, 22))).toBeDefined();
+    expect(screen.getByLabelText(teamsTab.outsideOfLimit(5, 4))).toBeDefined();
+  });
+
+  it("says nothing about the outside share on a team the limit does not reach", () => {
+    cleanup();
+    render(
+      <TeamCard
+        team={{ ...team(squad(16)), fromHomeVillage: false }}
+        shownName="فريق النجم"
+        settings={{
+          squad: { min: 16, max: 22 },
+          organisedByHomeVillage: true,
+          outsidePlayerLimit: 4,
+        }}
+        breaches={[]}
+        members={squad(16)}
+        open
+        candidates={[]}
+        suspendedIds={[]}
+        busy={false}
+        {...handlers}
+      />,
+    );
+
+    expect(document.querySelectorAll('summary [role="img"]')).toHaveLength(1);
+    expect(screen.queryByLabelText(teamsTab.outsideOfLimit(0, 4))).toBeNull();
   });
 
   it("marks the roster row that pushed the squad over", () => {

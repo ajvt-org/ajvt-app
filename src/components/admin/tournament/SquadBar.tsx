@@ -1,52 +1,104 @@
 import { teamsTab as texts } from "@/lib/texts";
 import type { SquadSize } from "@/lib/squadSize";
+import {
+  outsideBarGeometry,
+  squadBarGeometry,
+  type BarGeometry,
+  type OutsideShare,
+} from "@/lib/squadBar";
 
+const BAR_WIDTH = 320;
+const NUMERAL_GUTTER = 10;
+const SQUAD_TRACK = 18;
+const OUTSIDE_TRACK = 8;
+const TICK_OVERHANG = 3;
+const COUNT_ROW = 17;
+const AXIS_ROW = 15;
 const SHORT = "#d97706";
 const WITHIN = "var(--mint-600)";
 const OVER = "#b91c1c";
-const HATCH = "repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 3px, transparent 3px 7px)";
-const HATCH_DARK =
-  "repeating-linear-gradient(45deg, rgba(31,61,49,0.22) 0 3px, transparent 3px 7px)";
 
-export interface OutsideShare {
+function Bar({
+  label,
+  count,
+  fill,
+  track,
+  geometry,
+}: {
+  label: string;
   count: number;
-  limit: number;
-}
-
-function inside(at: number): number {
-  return Math.min(Math.max(at, 6), 94);
-}
-
-function Tick({ at, dashed }: { at: number; dashed?: boolean }) {
+  fill: string;
+  track: number;
+  geometry: BarGeometry;
+}) {
   return (
     <span
-      className="absolute inset-y-0"
-      style={{
-        insetInlineStart: `${Math.min(at, 100)}%`,
-        width: 2,
-        marginInlineStart: at >= 100 ? -2 : -1,
-        background: dashed
-          ? "repeating-linear-gradient(180deg, #1f3d31 0 3px, transparent 3px 6px)"
-          : "#1f3d31",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
-      }}
-    />
-  );
-}
-
-function AxisMark({ at, value, dashed }: { at: number; value: number; dashed?: boolean }) {
-  return (
-    <span
-      className="absolute top-0 tabular-nums"
-      style={{
-        insetInlineStart: `${inside(at)}%`,
-        transform: "translateX(50%)",
-        backgroundImage: dashed ? HATCH_DARK : undefined,
-        borderRadius: dashed ? 4 : undefined,
-        paddingInline: dashed ? 3 : undefined,
-      }}
+      role="img"
+      aria-label={label}
+      className="block"
+      style={{ width: `min(100%, ${BAR_WIDTH}px)`, paddingInline: NUMERAL_GUTTER }}
     >
-      {value}
+      <span
+        className="relative block text-[12px] font-black tabular-nums"
+        style={{ height: COUNT_ROW, color: "var(--text-main)" }}
+      >
+        <span
+          className="absolute top-0"
+          style={{ insetInlineStart: `${geometry.countAt}%`, transform: "translateX(50%)" }}
+        >
+          {count}
+        </span>
+      </span>
+      <span className="relative block">
+        <span
+          className="relative block overflow-hidden rounded-full"
+          style={{ height: track, background: "var(--mint-100)" }}
+        >
+          <span
+            className="absolute inset-y-0"
+            style={{ insetInlineStart: 0, width: `${geometry.fill}%`, background: fill }}
+          />
+          {geometry.over && (
+            <span
+              className="absolute inset-y-0"
+              style={{
+                insetInlineStart: `${geometry.over.start}%`,
+                width: `${geometry.over.width}%`,
+                background: OVER,
+              }}
+            />
+          )}
+        </span>
+        {geometry.marks.map((mark) => (
+          <span
+            key={mark.value}
+            className="absolute"
+            style={{
+              insetInlineStart: `${mark.at}%`,
+              top: -TICK_OVERHANG,
+              height: track + TICK_OVERHANG * 2,
+              width: 2,
+              marginInlineStart: -1,
+              background: "#1f3d31",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.85)",
+            }}
+          />
+        ))}
+      </span>
+      <span
+        className="relative block text-[11px] font-bold"
+        style={{ height: AXIS_ROW, color: "var(--text-muted)" }}
+      >
+        {geometry.marks.map((mark) => (
+          <span
+            key={mark.value}
+            className="absolute top-0 tabular-nums"
+            style={{ insetInlineStart: `${mark.at}%`, transform: "translateX(50%)" }}
+          >
+            {mark.value}
+          </span>
+        ))}
+      </span>
     </span>
   );
 }
@@ -60,95 +112,27 @@ export default function SquadBar({
   squad: SquadSize;
   outside: OutsideShare | null;
 }) {
-  const max = squad.max;
-  if (max === null) return null;
-
-  const min = squad.min;
-  const scale = Math.max(max, count, 1);
-  const at = (value: number) => (value / scale) * 100;
-  const short = min !== null && count < min;
-  const filled = Math.min(count, max);
-  const shared = outside ? Math.min(outside.count, count) : 0;
+  const squadBar = squadBarGeometry(count, squad);
+  if (squadBar === null) return null;
 
   return (
-    <span
-      role="img"
-      aria-label={
-        outside
-          ? `${texts.squadOfRange(count, min, max)} ${texts.outsideOfLimit(outside.count, outside.limit)}`
-          : texts.squadOfRange(count, min, max)
-      }
-      className="block w-full"
-    >
-      <span className="relative block">
-        <span
-          className="relative block overflow-hidden rounded-full"
-          style={{ height: 18, background: "var(--mint-100)" }}
-        >
-          <span
-            className="absolute inset-y-0"
-            style={{
-              insetInlineStart: 0,
-              width: `${at(filled)}%`,
-              background: short ? SHORT : WITHIN,
-            }}
-          />
-          {count > max && (
-            <span
-              className="absolute inset-y-0"
-              style={{
-                insetInlineStart: `${at(max)}%`,
-                width: `${at(count) - at(max)}%`,
-                background: OVER,
-              }}
-            />
-          )}
-          {outside && shared > outside.limit && (
-            <span
-              className="absolute inset-y-0"
-              style={{
-                insetInlineStart: `${at(outside.limit)}%`,
-                width: `${at(shared) - at(outside.limit)}%`,
-                background: OVER,
-              }}
-            />
-          )}
-          {shared > 0 && (
-            <span
-              className="absolute inset-y-0"
-              style={{ insetInlineStart: 0, width: `${at(shared)}%`, backgroundImage: HATCH }}
-            />
-          )}
-          {min !== null && min < scale && <Tick at={at(min)} />}
-          <Tick at={at(max)} />
-          {outside && outside.limit < scale && <Tick at={at(outside.limit)} dashed />}
-        </span>
-        <span
-          className="absolute text-[11px] font-black tabular-nums"
-          style={{
-            insetInlineStart: `${inside(at(count))}%`,
-            top: "50%",
-            transform: "translate(50%, -50%)",
-            color: "var(--text-main)",
-            background: "rgba(255,255,255,0.92)",
-            borderRadius: 6,
-            padding: "0 4px",
-            lineHeight: "16px",
-          }}
-        >
-          {count}
-        </span>
-      </span>
-      <span
-        className="relative block text-[10px] font-bold"
-        style={{ height: 14, color: "var(--text-muted)" }}
-      >
-        {outside && outside.limit < scale && (
-          <AxisMark at={at(outside.limit)} value={outside.limit} dashed />
-        )}
-        {min !== null && min < scale && <AxisMark at={at(min)} value={min} />}
-        <AxisMark at={at(max)} value={max} />
-      </span>
-    </span>
+    <>
+      <Bar
+        label={texts.squadOfRange(count, squadBar.min, squadBar.max)}
+        count={count}
+        fill={squadBar.short ? SHORT : WITHIN}
+        track={SQUAD_TRACK}
+        geometry={squadBar}
+      />
+      {outside && (
+        <Bar
+          label={texts.outsideOfLimit(outside.count, outside.limit)}
+          count={outside.count}
+          fill={WITHIN}
+          track={OUTSIDE_TRACK}
+          geometry={outsideBarGeometry(outside)}
+        />
+      )}
+    </>
   );
 }
