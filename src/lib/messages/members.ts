@@ -28,6 +28,7 @@ export const members = {
   noAccountToCorrect: "لا يوجد حساب لهذا العضو",
   yearInvalid: "سنة العضوية غير صالحة",
   renewNotActive: "لا يمكن تجديد عضوية غير مقبولة",
+  renewUnderReview: "الاشتراك الحالي قيد المراجعة",
   renewNotIssued: "لا يوجد رقم عضوية لتجديده",
   renewAlreadyDone: "العضوية مجددة لهذه السنة بالفعل",
   renewYearBehind: "عضوية هذا العضو تتجاوز السنة الجارية",

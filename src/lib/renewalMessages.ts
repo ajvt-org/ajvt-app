@@ -2,6 +2,7 @@ import { members } from "./messages";
 import type { RenewalRefusal } from "./renewal";
 
 const REFUSALS: Record<NonNullable<RenewalRefusal>, string> = {
+  underReview: members.renewUnderReview,
   notActive: members.renewNotActive,
   notIssued: members.renewNotIssued,
   alreadyRenewed: members.renewAlreadyDone,

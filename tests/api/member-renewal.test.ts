@@ -193,10 +193,12 @@ describe("reading a member's years", () => {
     const owing = await member();
     const done = await member({ membershipYear: YEAR, memberNumber: "AJVT-2026-0002" });
     const pending = await member({ status: "PENDING", memberNumber: null });
+    const refused = await member({ status: "REJECTED", memberNumber: null });
 
     expect((await (await YEARS(owing.userId)).json()).refusal).toBeNull();
     expect((await (await YEARS(done.userId)).json()).refusal).toBe("alreadyRenewed");
-    expect((await (await YEARS(pending.userId)).json()).refusal).toBe("notActive");
+    expect((await (await YEARS(pending.userId)).json()).refusal).toBe("underReview");
+    expect((await (await YEARS(refused.userId)).json()).refusal).toBe("notActive");
   });
 
   it("is closed to an admin without the members section", async () => {
