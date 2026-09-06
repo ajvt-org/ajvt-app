@@ -177,4 +177,64 @@ describe("a tournament run by the village", () => {
 
     expect(handlers.onOrganisedByHomeVillage).toHaveBeenCalledWith(true);
   });
+
+  it("offers neither the toggle nor the limit to a singles tournament", () => {
+    show({ minTeamSize: "1", maxTeamSize: "1", organisedByHomeVillage: true });
+
+    expect(screen.queryByLabelText(texts.organisedByHomeVillage)).toBeNull();
+    expect(screen.queryByLabelText(texts.outsidePlayerLimit)).toBeNull();
+  });
+
+  it("clears the toggle and the limit when singles is ticked", () => {
+    const handlers = show({ organisedByHomeVillage: true, outsidePlayerLimit: "4" });
+
+    fireEvent.click(screen.getByLabelText(texts.singles));
+
+    expect(handlers.onOrganisedByHomeVillage).toHaveBeenCalledWith(false);
+    expect(handlers.onOutsidePlayerLimit).toHaveBeenCalledWith("");
+  });
+
+  it("leaves the toggle alone when singles is unticked", () => {
+    const handlers = show({ minTeamSize: "1", maxTeamSize: "1" });
+
+    fireEvent.click(screen.getByLabelText(texts.singles));
+
+    expect(handlers.onOrganisedByHomeVillage).not.toHaveBeenCalled();
+  });
+});
+
+describe("the dialog explaining itself", () => {
+  it("says nothing under the shape choices", () => {
+    show();
+
+    expect(screen.queryByText(/الشطرنج والضامة/)).toBeNull();
+    expect(screen.queryByText(/مباراة واحدة متواصلة/)).toBeNull();
+  });
+
+  it("names the games in the label of the shape they belong to", () => {
+    show();
+
+    expect(screen.getByLabelText(/شطرنج/)).toBeTruthy();
+  });
+
+  it("explains nothing while nothing is locked", () => {
+    show();
+
+    expect(screen.queryByText(new RegExp(texts.shapeLocked))).toBeNull();
+    expect(screen.queryByText(new RegExp(texts.squadLocked))).toBeNull();
+  });
+
+  it("says why the shape and the format will not take input, once they are locked", () => {
+    show({ fixturesExist: true });
+
+    expect(screen.getByText(new RegExp(texts.shapeLocked))).toBeTruthy();
+    expect(screen.queryByText(new RegExp(texts.squadLocked))).toBeNull();
+  });
+
+  it("says why the squad will not take input, once the tournament has started", () => {
+    show({ matchesPlayed: true });
+
+    expect(screen.getByText(new RegExp(texts.squadLocked))).toBeTruthy();
+    expect(screen.queryByText(new RegExp(texts.shapeLocked))).toBeNull();
+  });
 });
