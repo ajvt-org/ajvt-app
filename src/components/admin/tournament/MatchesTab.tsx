@@ -219,6 +219,7 @@ export default function MatchesTab({
         <BracketPanel
           activityId={activityId}
           busy={generating}
+          entrant={entrant}
           state={state}
           onAction={runBracketAction}
         />

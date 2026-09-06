@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
 import BracketPanel from "./BracketPanel";
 import { matchesState } from "./matchesState";
 import { matchAdmin as texts } from "@/lib/texts";
@@ -50,17 +50,24 @@ const groups: Group[] = [
   { id: "g2", name: "المجموعة 2", capacity: 2 },
 ];
 
-function show(matches: Match[], format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT", withGroups = true) {
+function show(
+  matches: Match[],
+  format: "KNOCKOUT" | "GROUPS_THEN_KNOCKOUT",
+  withGroups = true,
+  onAction = vi.fn(),
+) {
   cleanup();
   const usedGroups = withGroups ? groups : [];
   render(
     <BracketPanel
       activityId="a1"
       busy={false}
+      entrant="team"
       state={matchesState({ format, groups: usedGroups, matches })}
-      onAction={vi.fn()}
+      onAction={onAction}
     />,
   );
+  return onAction;
 }
 
 beforeEach(() => {
@@ -99,12 +106,10 @@ describe("a bracket whose first round is waiting", () => {
     expect(screen.getByText(texts.draw)).toBeDefined();
   });
 
-  it("names the draw once above the button and keeps only what the button cannot say", () => {
+  it("keeps the heading beside a bracket that already exists", () => {
     show(waitingBracket, "KNOCKOUT", false);
 
     expect(screen.getByText(texts.bracketKnockout).textContent).toBe(texts.bracketKnockout);
-    expect(screen.getByText(texts.drawHint)).toBeDefined();
-    expect(texts.drawHint).not.toContain(texts.draw);
   });
 
   it("offers neither the redo nor the next round", async () => {
@@ -150,5 +155,38 @@ describe("a bracket that has not been drawn at all", () => {
     show([match({ id: "l1", status: "PLAYED" })], "GROUPS_THEN_KNOCKOUT");
 
     expect(screen.queryByText(new RegExp(texts.knockoutLockedHint))).toBeNull();
+  });
+
+  it("is the draw button and nothing above it", () => {
+    show([], "KNOCKOUT", false);
+
+    expect(screen.getByText(texts.draw)).toBeDefined();
+    expect(screen.queryByText(texts.bracketKnockout)).toBeNull();
+    expect(document.querySelector(".card")).toBeNull();
+  });
+
+  it("tells the confirm what happens to whoever finds no opponent", () => {
+    const onAction = show([], "KNOCKOUT", false);
+    fireEvent.click(screen.getByText(texts.draw));
+
+    expect(onAction).toHaveBeenCalledWith("draw", texts.entrant.team.confirmDraw);
+    expect(texts.entrant.team.confirmDraw).toContain("الدور التالي");
+  });
+
+  it("asks a singles tournament about players rather than teams", () => {
+    cleanup();
+    const onAction = vi.fn();
+    render(
+      <BracketPanel
+        activityId="a1"
+        busy={false}
+        entrant="player"
+        state={matchesState({ format: "KNOCKOUT", groups: [], matches: [] })}
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByText(texts.draw));
+
+    expect(onAction).toHaveBeenCalledWith("draw", texts.entrant.player.confirmDraw);
   });
 });
