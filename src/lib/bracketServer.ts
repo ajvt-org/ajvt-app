@@ -18,6 +18,9 @@ import {
   sideIdData,
 } from "./matchSides";
 import type { MatchShape } from "@prisma/client";
+import { isFootball } from "./matchShape";
+import { deriveSeries, type PlayedPart } from "./matchSeries";
+import { rulesOf } from "./matchSeriesServer";
 
 async function nextMatchOrder(activityId: string) {
   const row = await prisma.match.findFirst({
@@ -37,6 +40,7 @@ interface BracketRow {
   awayTeamId: string | null;
   sideATeamId: string | null;
   sideBTeamId: string | null;
+  parts: PlayedPart[];
 }
 
 async function matchShapeOf(activityId: string): Promise<MatchShape> {
@@ -60,6 +64,16 @@ async function bracketRows(activityId: string): Promise<BracketRow[]> {
       awayTeamId: true,
       sideATeamId: true,
       sideBTeamId: true,
+      parts: {
+        orderBy: { order: "asc" },
+        select: {
+          order: true,
+          abandoned: true,
+          outcome: true,
+          sideAPoints: true,
+          sideBPoints: true,
+        },
+      },
     },
   });
 }
@@ -200,6 +214,40 @@ export async function drawBracket(activityId: string, redo = false) {
   return { created, label };
 }
 
+interface RoundScore {
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
+}
+
+function footballWinner(
+  match: BracketRow,
+  sides: { first: string | null; second: string | null },
+  score: RoundScore | undefined,
+): string | null {
+  if (!score) return null;
+  return getMatchWinnerTeamId({
+    firstTeamId: sides.first,
+    secondTeamId: sides.second,
+    homeScore: score.homeScore,
+    awayScore: score.awayScore,
+    homePenalties: score.homePenalties,
+    awayPenalties: score.awayPenalties,
+    status: match.status,
+  });
+}
+
+function seriesWinner(
+  activity: Parameters<typeof rulesOf>[0],
+  parts: PlayedPart[],
+  sides: { first: string | null; second: string | null },
+): string | null {
+  const standing = deriveSeries(rulesOf(activity), parts);
+  if (!standing.over || standing.winner === null) return null;
+  return standing.winner === "SIDE_A" ? sides.first : sides.second;
+}
+
 function suggestionError(problem: string, words: EntrantWording): string {
   const reasons: Record<string, string> = {
     notGrouped: messages.bracketNeedsGroups,
@@ -305,7 +353,17 @@ export async function createSuggestedBracket(activityId: string, redo = false) {
 }
 
 export async function advanceBracket(activityId: string) {
-  const shape = await matchShapeOf(activityId);
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: {
+      matchShape: true,
+      partsPerMatch: true,
+      matchEnding: true,
+      partsToWin: true,
+      partDecision: true,
+    },
+  });
+  const shape = activity.matchShape;
   const bracketMatches = await bracketRows(activityId);
   if (bracketMatches.length === 0) throw new ValidationError(messages.bracketNotStarted);
 
@@ -340,19 +398,10 @@ export async function advanceBracket(activityId: string) {
 
   const winners: string[] = [];
   for (const m of currentRound) {
-    const score = scoreOf.get(m.id);
     const sides = matchSideIds(m, shape);
-    const winner = score
-      ? getMatchWinnerTeamId({
-          firstTeamId: sides.first,
-          secondTeamId: sides.second,
-          homeScore: score.homeScore,
-          awayScore: score.awayScore,
-          homePenalties: score.homePenalties,
-          awayPenalties: score.awayPenalties,
-          status: m.status,
-        })
-      : null;
+    const winner = isFootball(shape)
+      ? footballWinner(m, sides, scoreOf.get(m.id))
+      : seriesWinner(activity, m.parts, sides);
     if (!winner) throw new ConflictError(messages.tieNeedsPenalties);
     winners.push(winner);
   }

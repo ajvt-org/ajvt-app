@@ -30,6 +30,7 @@ export const DATABASE_BOUND_LIB = [
   "src/lib/paymentProofsServer.ts",
   "src/lib/supportPrivacyServer.ts",
   "src/lib/supportViewer.ts",
+  "src/lib/matchSeriesServer.ts",
   "src/lib/mvpVoteServer.ts",
   "src/lib/prisma.ts",
   "src/lib/proofReuse.ts",
