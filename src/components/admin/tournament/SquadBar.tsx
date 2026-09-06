@@ -6,6 +6,8 @@ const BAR_WIDTH = 320;
 const NUMERAL_GUTTER = 10;
 const TRACK_HEIGHT = 18;
 const TICK_OVERHANG = 3;
+const COUNT_ROW = 17;
+const AXIS_ROW = 15;
 const SHORT = "#d97706";
 const WITHIN = "var(--mint-600)";
 const OVER = "#b91c1c";
@@ -72,6 +74,17 @@ export default function SquadBar({
       className="block"
       style={{ width: `min(100%, ${BAR_WIDTH}px)`, paddingInline: NUMERAL_GUTTER }}
     >
+      <span
+        className="relative block text-[12px] font-black tabular-nums"
+        style={{ height: COUNT_ROW, color: "var(--text-main)" }}
+      >
+        <span
+          className="absolute top-0"
+          style={{ insetInlineStart: `${bar.countAt}%`, transform: "translateX(50%)" }}
+        >
+          {count}
+        </span>
+      </span>
       <span className="relative block">
         <span
           className="relative block overflow-hidden rounded-full"
@@ -115,25 +128,10 @@ export default function SquadBar({
         {bar.ticks.map((tick) => (
           <Tick key={`${tick.at}-${tick.dashed}`} at={tick.at} dashed={tick.dashed} />
         ))}
-        <span
-          className="absolute text-[11px] font-black tabular-nums"
-          style={{
-            insetInlineStart: `${bar.countAt}%`,
-            top: "50%",
-            transform: "translate(50%, -50%)",
-            color: "var(--text-main)",
-            background: "rgba(255,255,255,0.92)",
-            borderRadius: 6,
-            padding: "0 4px",
-            lineHeight: "16px",
-          }}
-        >
-          {count}
-        </span>
       </span>
       <span
-        className="relative block text-[10px] font-bold"
-        style={{ height: 14, color: "var(--text-muted)" }}
+        className="relative block text-[11px] font-bold"
+        style={{ height: AXIS_ROW, color: "var(--text-muted)" }}
       >
         {bar.axis.map((mark) => (
           <AxisMark key={mark.value} at={mark.at} value={mark.value} dashed={mark.dashed} />

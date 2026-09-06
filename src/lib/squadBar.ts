@@ -43,10 +43,6 @@ export function percentOf(value: number, scale: number): number {
   return (value / scale) * 100;
 }
 
-export function insideTrack(at: number): number {
-  return Math.min(Math.max(at, 6), 94);
-}
-
 export function squadBarGeometry(
   count: number,
   squad: SquadSize,
@@ -85,7 +81,7 @@ export function squadBarGeometry(
         : null,
     hatch: shared > 0 ? at(shared) : null,
     ticks,
-    countAt: insideTrack(at(count)),
+    countAt: at(count),
     axis,
   };
 }
