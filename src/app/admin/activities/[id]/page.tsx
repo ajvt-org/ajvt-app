@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
 import ArrowLabel from "@/components/ArrowLabel";
+import AdminBackLink from "@/components/admin/AdminBackLink";
 import ActivityFinance from "./ActivityFinance";
 import ActivityHeaderPhoto from "./ActivityHeaderPhoto";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
@@ -101,13 +102,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
   return (
     <div className="admin-page space-y-4">
-      <Link
-        href="/admin/activities"
-        className="text-sm font-bold"
-        style={{ color: "var(--mint-600)" }}
-      >
-        <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
-      </Link>
+      <AdminBackLink href="/admin/activities">{texts.backToIndex}</AdminBackLink>
 
       <div className="card p-4 space-y-3">
         <div className="flex items-center gap-3">
