@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { settingsForm } from "@/lib/texts";
-import { SETTINGS_FIELDS, cleanValue } from "./settingsFields";
+import { SETTINGS_FIELDS, SETTINGS_GROUPS, cleanValue, groupedFields } from "./settingsFields";
 
 const fieldFor = (key: string) => SETTINGS_FIELDS.find((field) => field.key === key);
 
@@ -28,6 +28,34 @@ describe("the hints the association settings carry", () => {
 
     expect(keys.indexOf("treasurerName")).toBe(keys.indexOf("secretaryName") + 1);
     expect(keys.indexOf("treasurerName")).toBe(keys.length - 1);
+  });
+});
+
+describe("the groups the association settings are shown in", () => {
+  it("shows every field once, so none falls off the page", () => {
+    const shown = groupedFields().flatMap((group) => group.fields.map((field) => field.key));
+
+    expect(shown).toEqual(SETTINGS_FIELDS.map((field) => field.key));
+  });
+
+  it("leaves no group without fields", () => {
+    expect(groupedFields().filter((group) => group.fields.length === 0)).toEqual([]);
+  });
+
+  it("keeps the fee and the year apart from the password and from the names", () => {
+    const membership = groupedFields().find((group) => group.key === "membership");
+
+    expect(membership?.fields.map((field) => field.key)).toEqual([
+      "membershipFee",
+      "membershipYear",
+    ]);
+  });
+
+  it("holds the two officer names in the last group, where their line is printed", () => {
+    const last = groupedFields().at(-1);
+
+    expect(last?.key).toBe(SETTINGS_GROUPS.at(-1)?.key);
+    expect(last?.fields.map((field) => field.key)).toEqual(["secretaryName", "treasurerName"]);
   });
 });
 

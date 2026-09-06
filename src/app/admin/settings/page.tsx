@@ -7,7 +7,7 @@ import PageLoading from "@/components/PageLoading";
 import DataExport from "./DataExport";
 import PaymentMethodManager from "@/components/admin/PaymentMethodManager";
 import SettingsFieldInput from "./SettingsFieldInput";
-import { SETTINGS_FIELDS } from "./settingsFields";
+import { groupedFields } from "./settingsFields";
 import { settingsPage } from "@/lib/texts";
 
 export default function AdminSettingsPage() {
@@ -48,22 +48,29 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="admin-page space-y-5">
-      <h1 className="text-lg font-black" style={{ color: "var(--text-main)" }}>
-        {settingsPage.title}
-      </h1>
-
-      <DataExport />
-
-      <PaymentMethodManager />
-
-      <form onSubmit={save} className="card p-5 space-y-4">
-        {SETTINGS_FIELDS.map((field) => (
-          <SettingsFieldInput
-            key={field.key}
-            field={field}
-            value={values[field.key]}
-            onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
-          />
+      <form onSubmit={save} className="card p-5 space-y-5">
+        {groupedFields().map((group, at) => (
+          <div
+            key={group.key}
+            className="space-y-4"
+            style={
+              at === 0
+                ? undefined
+                : { borderTop: "1px solid var(--mint-100)", paddingTop: "1.25rem" }
+            }
+          >
+            <p className="text-sm font-black" style={{ color: "var(--mint-700)" }}>
+              {group.title}
+            </p>
+            {group.fields.map((field) => (
+              <SettingsFieldInput
+                key={field.key}
+                field={field}
+                value={values[field.key]}
+                onChange={(value) => setValues((p) => ({ ...p, [field.key]: value }))}
+              />
+            ))}
+          </div>
         ))}
 
         {error && (
@@ -81,6 +88,10 @@ export default function AdminSettingsPage() {
           {saving ? settingsPage.saving : settingsPage.save}
         </button>
       </form>
+
+      <PaymentMethodManager />
+
+      <DataExport />
     </div>
   );
 }

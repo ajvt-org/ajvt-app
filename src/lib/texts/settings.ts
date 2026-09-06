@@ -1,5 +1,4 @@
 export const settingsPage = {
-  title: "إعدادات الرابطة",
   saved: "تم الحفظ",
   save: "حفظ",
   saving: "جارٍ الحفظ...",
@@ -10,6 +9,10 @@ export const settingsPage = {
 } as const;
 
 export const settingsForm = {
+  membershipGroup: "العضوية",
+  accessGroup: "الدخول",
+  channelsGroup: "قنوات التواصل",
+  officersGroup: "المسؤولون",
   membershipFeeLabel: "رسم العضوية (أوقية)",
   membershipFeeHint: "المبلغ الأدنى المقبول في استمارة الانضمام.",
   membershipYearLabel: "سنة العضوية الجارية",
