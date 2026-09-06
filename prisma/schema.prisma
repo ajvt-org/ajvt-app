@@ -120,6 +120,9 @@ model Activity {
   partTarget             Int?
   partWord               String?
   partsWord              String?
+  hasColours             Boolean                @default(false)
+  firstColourWord        String?
+  secondColourWord       String?
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
@@ -240,6 +243,7 @@ model Match {
   sideATeam           Team?              @relation("SideATeam", fields: [sideATeamId], references: [id], onDelete: Cascade)
   sideBTeamId         String?
   sideBTeam           Team?              @relation("SideBTeam", fields: [sideBTeamId], references: [id], onDelete: Cascade)
+  sideAOpensAs        PartColour?
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
@@ -348,6 +352,7 @@ model MatchPart {
   outcome     PartOutcome?
   sideAPoints Int?
   sideBPoints Int?
+  sideAColour PartColour?
   createdAt   DateTime     @default(now())
 
   @@unique([matchId, order])
@@ -991,6 +996,11 @@ enum PartOutcome {
   SIDE_A
   SIDE_B
   DRAW
+}
+
+enum PartColour {
+  FIRST
+  SECOND
 }
 
 enum SuspensionReason {

@@ -4,6 +4,7 @@ import { NotFoundError, ValidationError, ConflictError } from "./errors";
 import { tournament as messages } from "./messages";
 import { isSeriesConfigured } from "./seriesSetup";
 import { isFootball } from "./matchShape";
+import { colourOfPart } from "./seriesColours";
 import {
   deriveSeries,
   nextPartOrder,
@@ -24,6 +25,9 @@ export const MATCH_WITH_SERIES = {
       partTarget: true,
       partWord: true,
       partsWord: true,
+      hasColours: true,
+      firstColourWord: true,
+      secondColourWord: true,
     },
   },
 } as const;
@@ -117,9 +121,13 @@ export async function addPart(matchId: string, input: PartInput) {
   if (standing.over) throw new ConflictError(messages.matchTakesNoMoreParts);
 
   const result = readPart(input, match.activity.partDecision!, match.activity.partTarget);
-  return prisma.matchPart.create({
-    data: { matchId, order: nextPartOrder(match.parts), ...result },
-  });
+  const order = nextPartOrder(match.parts);
+  const sideAColour =
+    match.activity.hasColours && match.sideAOpensAs
+      ? colourOfPart(match.sideAOpensAs, order)
+      : null;
+
+  return prisma.matchPart.create({ data: { matchId, order, sideAColour, ...result } });
 }
 
 export async function correctPart(matchId: string, partId: string, input: PartInput) {

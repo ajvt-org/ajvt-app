@@ -8,6 +8,9 @@ export interface SeriesSetup {
   partTarget: number | null;
   partWord: string | null;
   partsWord: string | null;
+  hasColours: boolean;
+  firstColourWord: string | null;
+  secondColourWord: string | null;
 }
 
 export const MAX_PARTS_PER_MATCH = 25;
@@ -22,7 +25,8 @@ export type SeriesSetupProblem =
   | "targetMissing"
   | "partsToWinUnused"
   | "partsToWinMissing"
-  | "partsToWinUnreachable";
+  | "partsToWinUnreachable"
+  | "colourWords";
 
 export function seriesSetupProblem(setup: SeriesSetup): SeriesSetupProblem | null {
   const parts = setup.partsPerMatch;
@@ -37,6 +41,10 @@ export function seriesSetupProblem(setup: SeriesSetup): SeriesSetupProblem | nul
   if (setup.partDecision === "SCORE" && setup.partTarget !== null) return "targetOnAFreeScore";
   if (setup.partDecision === "POINTS") {
     if (!Number.isInteger(setup.partTarget) || (setup.partTarget ?? 0) < 1) return "targetMissing";
+  }
+
+  if (setup.hasColours && (!setup.firstColourWord?.trim() || !setup.secondColourWord?.trim())) {
+    return "colourWords";
   }
 
   if (setup.matchEnding === "PLAY_ALL" && setup.partsToWin !== null) return "partsToWinUnused";

@@ -276,3 +276,59 @@ describe("a series knockout that advances on its parts", () => {
     expect(final.sideBTeamId).toBe(drawn[1].sideATeamId);
   });
 });
+
+describe("the colours of a series match", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await signInAsAdmin(await createAdmin());
+  });
+
+  async function colouredMatch(opensAs: "FIRST" | "SECOND" | null) {
+    const { match } = await matchOf({
+      ...CHESS,
+      hasColours: true,
+      firstColourWord: "أبيض",
+      secondColourWord: "أسود",
+    });
+    if (opensAs) {
+      await prisma.match.update({ where: { id: match.id }, data: { sideAOpensAs: opensAs } });
+    }
+    return match;
+  }
+
+  it("gives the first part the colour the draw set", async () => {
+    const match = await colouredMatch("FIRST");
+
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.parts[0].sideAColour).toBe("FIRST");
+  });
+
+  it("turns the colours over on the next part", async () => {
+    const match = await colouredMatch("FIRST");
+    await add(match.id, { outcome: "SIDE_A" });
+
+    const body = await (await add(match.id, { outcome: "SIDE_B" })).json();
+
+    expect(body.parts.map((p: { sideAColour: string }) => p.sideAColour)).toEqual([
+      "FIRST",
+      "SECOND",
+    ]);
+  });
+
+  it("records no colour where the tournament has none", async () => {
+    const { match } = await matchOf(CHESS);
+
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.parts[0].sideAColour).toBeNull();
+  });
+
+  it("records no colour where the draw never set one", async () => {
+    const match = await colouredMatch(null);
+
+    const body = await (await add(match.id, { outcome: "SIDE_A" })).json();
+
+    expect(body.parts[0].sideAColour).toBeNull();
+  });
+});

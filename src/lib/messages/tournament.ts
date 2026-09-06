@@ -55,6 +55,7 @@ export const tournament = {
     partsToWinUnused: "المباراة التي تُلعب جولاتها كاملة لا تحمل عدد جولات للفوز",
     partsToWinMissing: "حدد عدد الجولات التي تنهي المباراة",
     partsToWinUnreachable: "عدد الجولات التي تنهي المباراة أكبر من عدد جولاتها",
+    colourWords: "حدد اسم الدورين في هذه اللعبة، من يبدأ ومن يليه",
   },
   partsFootballOnly: "الجولات لا تكون إلا في بطولة تُحتسب مبارياتها بجولاتها",
   seriesNotConfigured: "أكمل إعداد جولات البطولة قبل تسجيل نتيجة",
@@ -64,6 +65,8 @@ export const tournament = {
   partWantsTwoScores: "الجولة تحتاج نقاط الطرفين، أعداداً صحيحة غير سالبة",
   partBelowItsTarget: (target: number) =>
     `الجولة تُلعب حتى ${target} نقطة، فلا بد أن يبلغها أحد الطرفين`,
+  coloursNeedAnEvenCount:
+    "عدد الجولات فردي، فلا يمكن أن يتساوى الطرفان في عدد المرات التي يبدأ فيها كل منهما",
   seriesConfigLocked: "لا يمكن تغيير إعداد الجولات بعد أن لُعبت مباراة",
   seriesResultNotReady: "لا يمكن تسجيل نتيجة مباراة تُحتسب بجولاتها، فإدخال الجولات لم يصل بعد",
   resultBeforeKickoff: "لم يحن موعد هذه المباراة بعد — لا يمكن تسجيل نتيجة قبل أن تُلعب",
