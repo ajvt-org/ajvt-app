@@ -15,7 +15,7 @@ export default function PersonIdentity({
   detail,
 }: {
   person: IdentityPerson;
-  detail: ReactNode;
+  detail?: ReactNode;
 }) {
   return (
     <div className="flex items-center gap-2 min-w-0">

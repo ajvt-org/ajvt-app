@@ -3,6 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ActivityRegistrationsPanel from "./ActivityRegistrationsPanel";
 import type { MemberOption, Registration } from "./activityTypes";
+import { activityRegistrants as texts } from "@/lib/texts";
 
 const onRegister = vi.fn();
 const onUnregister = vi.fn();
@@ -46,6 +47,7 @@ function show(
   members: MemberOption[],
   registrations: Registration[] = [],
   teams: { id: string; name: string }[] = [],
+  singles = false,
 ) {
   render(
     <ActivityRegistrationsPanel
@@ -53,6 +55,7 @@ function show(
       registrations={registrations}
       members={members}
       teams={teams}
+      singles={singles}
       actionLoading={false}
       onReview={onReview}
       onRegister={onRegister}
@@ -271,6 +274,26 @@ describe("looking at one team's registrants", () => {
     show([], [registration()]);
 
     expect(screen.queryByRole("group", { name: "تصفية حسب الفريق" })).toBeNull();
+  });
+
+  it("offers no chips on a singles tournament, where every chip is one person", () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL], true);
+
+    expect(screen.queryByRole("group", { name: texts.filterByTeam })).toBeNull();
+  });
+
+  it("stops naming a team of one beside the person it is named after", () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA], true);
+
+    expect(screen.getAllByText("محمد")).toHaveLength(1);
+    expect(screen.queryByText(texts.noTeam)).toBeNull();
+  });
+
+  it("stops offering to search by team on a singles tournament", () => {
+    show([], [player("r1", "محمد", SHANAQITA)], [SHANAQITA, SAHEL], true);
+
+    expect(screen.getByPlaceholderText(texts.searchPlayers)).toBeDefined();
+    expect(screen.queryByPlaceholderText(texts.searchRegistrants)).toBeNull();
   });
 
   it("offers every team, one nobody joined included, and having none", () => {
