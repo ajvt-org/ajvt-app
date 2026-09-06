@@ -1,36 +1,20 @@
 import { describe, it, expect } from "vitest";
 import {
   groupShapes,
-  groupsRefusal,
   isValidGroupShape,
-  knockoutRefusal,
-  nearestBracketSizes,
+  knockoutIsPossible,
   qualifierCountsFor,
   qualifiersPerGroup,
 } from "./tournamentShape";
 
-describe("knockoutRefusal", () => {
-  it("accepts a count that halves cleanly to a final", () => {
-    for (const n of [2, 4, 8, 16, 32]) expect(knockoutRefusal(n)).toBeNull();
+describe("knockoutIsPossible", () => {
+  it("takes any count of two or more", () => {
+    for (const n of [2, 3, 6, 7, 12, 32, 33]) expect(knockoutIsPossible(n)).toBe(true);
   });
 
-  it("refuses six teams and names the counts either side", () => {
-    expect(knockoutRefusal(6)).toEqual({ kind: "notABracket", teamCount: 6, below: 4, above: 8 });
-  });
-
-  it("refuses a count with nothing below it", () => {
-    expect(knockoutRefusal(3)).toEqual({ kind: "notABracket", teamCount: 3, below: 2, above: 4 });
-  });
-
-  it("refuses fewer than two teams", () => {
-    expect(knockoutRefusal(1)).toEqual({ kind: "tooFewTeams", teamCount: 1 });
-    expect(knockoutRefusal(0)).toEqual({ kind: "tooFewTeams", teamCount: 0 });
-  });
-});
-
-describe("nearestBracketSizes", () => {
-  it("has no count below when two is already too many", () => {
-    expect(nearestBracketSizes(2)).toEqual({ below: null, above: 2 });
+  it("refuses fewer than two", () => {
+    expect(knockoutIsPossible(1)).toBe(false);
+    expect(knockoutIsPossible(0)).toBe(false);
   });
 });
 
@@ -61,11 +45,10 @@ describe("groupShapes", () => {
 
   it("offers nothing for a prime count that cannot be split", () => {
     expect(groupShapes(7)).toEqual([]);
-    expect(groupsRefusal(7)).toEqual({ kind: "noGroupSplit", teamCount: 7 });
   });
 
-  it("refuses fewer than two teams before looking at the split", () => {
-    expect(groupsRefusal(1)).toEqual({ kind: "tooFewTeams", teamCount: 1 });
+  it("offers nothing for fewer than two teams", () => {
+    expect(groupShapes(1)).toEqual([]);
   });
 });
 

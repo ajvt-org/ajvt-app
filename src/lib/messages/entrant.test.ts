@@ -34,15 +34,6 @@ describe("the vocabulary a tournament speaks", () => {
     expect(Object.keys(entrantWording("player"))).toEqual(Object.keys(entrantWording("team")));
   });
 
-  it("points the setup refusal at the draw instead of promising a fixed count", () => {
-    for (const entrant of ["team", "player"] as const) {
-      const line = entrantWording(entrant).setupNeedsFullBracket(6);
-      expect(line).toContain("6");
-      expect(line).toContain("القرعة");
-      expect(line).toContain("بلا خصم");
-    }
-  });
-
   it("drops the squad range from a singles roster complaint, which is always one", () => {
     expect(entrantWording("player").entrantsIncomplete(1, 1, "محمد")).toContain("محمد");
     expect(entrantWording("player").entrantsIncomplete(1, 1, "محمد")).not.toContain("1");

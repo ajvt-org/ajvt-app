@@ -47,10 +47,9 @@ describe("wizardBlocker", () => {
     expect(wizardBlocker(1, 0)).toEqual({ kind: "tooFewTeams", teamCount: 1 });
   });
 
-  it("refuses a count that fits neither a bracket nor a group stage", () => {
-    const blocker = wizardBlocker(7, 0);
-
-    expect(blocker?.kind).toBe("noShape");
+  it("lets a count through that fits no group stage, since the knockout takes it", () => {
+    expect(wizardBlocker(7, 0)).toBeNull();
+    expect(wizardBlocker(2, 0)).toBeNull();
   });
 });
 
@@ -59,12 +58,16 @@ describe("formatsFor", () => {
     expect(formatsFor(8)).toEqual(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"]);
   });
 
-  it("offers only a group stage for twelve teams", () => {
-    expect(formatsFor(12)).toEqual(["GROUPS_THEN_KNOCKOUT"]);
+  it("offers both shapes for twelve teams, byes and all", () => {
+    expect(formatsFor(12)).toEqual(["KNOCKOUT", "GROUPS_THEN_KNOCKOUT"]);
   });
 
-  it("offers nothing for a count that fits neither", () => {
-    expect(formatsFor(7)).toEqual([]);
+  it("offers only the knockout for a count that splits into no groups", () => {
+    expect(formatsFor(7)).toEqual(["KNOCKOUT"]);
+  });
+
+  it("offers nothing for fewer than two teams", () => {
+    expect(formatsFor(1)).toEqual([]);
   });
 });
 
@@ -89,8 +92,12 @@ describe("shapeIsChosen", () => {
     expect(shapeIsChosen(state({ format: "KNOCKOUT" }), 8)).toBe(true);
   });
 
-  it("refuses a knockout the count cannot fill", () => {
-    expect(shapeIsChosen(state({ format: "KNOCKOUT" }), 12)).toBe(false);
+  it("takes a knockout for a count that does not fill a bracket", () => {
+    expect(shapeIsChosen(state({ format: "KNOCKOUT" }), 12)).toBe(true);
+  });
+
+  it("refuses a knockout with fewer than two teams", () => {
+    expect(shapeIsChosen(state({ format: "KNOCKOUT" }), 1)).toBe(false);
   });
 
   it("waits for both the group count and the qualifier count", () => {

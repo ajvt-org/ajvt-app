@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { POST as SET_UP } from "@/app/api/admin/activities/[id]/tournament-setup/route";
+import { POST as DRAW } from "@/app/api/admin/activities/[id]/bracket/draw/route";
 import { prisma } from "@/lib/prisma";
 import { resetDb, post, createAdmin, signInAsAdmin, withId } from "./helpers";
 
@@ -18,6 +19,9 @@ async function tournamentWith(teamCount: number) {
 
 const setUp = (id: string, body: object) =>
   SET_UP(post(`/api/admin/activities/${id}/tournament-setup`, body), withId(id));
+
+const drawBracket = (id: string) =>
+  DRAW(post(`/api/admin/activities/${id}/bracket/draw`, {}), withId(id));
 
 const base = { startsAt: "2026-09-20T16:00", times: ["16:00", "18:00"], venue: null };
 
@@ -131,7 +135,7 @@ describe("setting a tournament up in one go", () => {
     expect(await prisma.group.count({ where: { activityId: activity.id } })).toBe(0);
   });
 
-  it("refuses a knockout whose team count does not halve to a final", async () => {
+  it("lays a knockout out for a count that does not halve to a final", async () => {
     const { activity } = await tournamentWith(6);
 
     const res = await setUp(activity.id, {
@@ -141,8 +145,29 @@ describe("setting a tournament up in one go", () => {
       qualifierCount: 0,
     });
 
-    expect(res.status).toBe(400);
-    expect(await prisma.match.count({ where: { activityId: activity.id } })).toBe(0);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ groupMatches: 0, knockoutMatches: 7 });
+    const bracket = (await matches(activity.id)).filter((m) => m.isKnockout);
+
+    expect(bracket.filter((m) => m.bracketRound === 1)).toHaveLength(4);
+    expect(bracket.every((m) => m.dayId !== null && m.matchDate !== null)).toBe(true);
+  });
+
+  it("draws into the seats it created for a count that does not halve", async () => {
+    const { activity } = await tournamentWith(6);
+    await setUp(activity.id, { ...base, format: "KNOCKOUT", groups: [], qualifierCount: 0 });
+
+    const res = await drawBracket(activity.id);
+
+    expect(res.status).toBe(200);
+    const first = (await matches(activity.id)).filter((m) => m.bracketRound === 1);
+
+    expect(first).toHaveLength(4);
+    expect(first.filter((m) => m.awayTeamId === null)).toHaveLength(2);
+    expect(first.filter((m) => m.status === "PLAYED")).toHaveLength(2);
+    expect(
+      new Set(first.flatMap((m) => [m.homeTeamId, m.awayTeamId].filter(Boolean))),
+    ).toHaveProperty("size", 6);
   });
 
   it("refuses groups that divide the teams but not the qualifiers", async () => {

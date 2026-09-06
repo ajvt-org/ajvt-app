@@ -27,7 +27,6 @@ export interface EntrantWording {
   fixtureHasNoEntrants: string;
   fixtureNeedsBothEntrants: string;
   forfeitWinnerNotInMatch: string;
-  setupNeedsFullBracket: (count: number) => string;
 }
 
 const TEAM_WORDING: EntrantWording = {
@@ -54,8 +53,6 @@ const TEAM_WORDING: EntrantWording = {
   fixtureHasNoEntrants: "لم يُحدد فريقا هذه المباراة بعد",
   fixtureNeedsBothEntrants: "المباراة تحتاج فريقين",
   forfeitWinnerNotInMatch: "الفريق الفائز بالانسحاب ليس من فريقي المباراة",
-  setupNeedsFullBracket: (count: number) =>
-    `الإعداد يبني جدولاً مكتملاً، وهو يحتاج 4 أو 8 أو 16 أو 32 فريقاً ولديك ${count}. أضف أو احذف فرقاً، أو أجرِ القرعة فهي تقبل أي عدد وتترك الزائد بلا خصم.`,
 };
 
 const PLAYER_WORDING: EntrantWording = {
@@ -82,8 +79,6 @@ const PLAYER_WORDING: EntrantWording = {
   fixtureHasNoEntrants: "لم يُحدد لاعبا هذه المباراة بعد",
   fixtureNeedsBothEntrants: "المباراة تحتاج لاعبين",
   forfeitWinnerNotInMatch: "اللاعب الفائز بالانسحاب ليس من لاعبي المباراة",
-  setupNeedsFullBracket: (count: number) =>
-    `الإعداد يبني جدولاً مكتملاً، وهو يحتاج 4 أو 8 أو 16 أو 32 لاعباً ولديك ${count}. أضف أو احذف لاعبين، أو أجرِ القرعة فهي تقبل أي عدد وتترك الزائد بلا خصم.`,
 };
 
 export function entrantWording(entrant: EntrantKind): EntrantWording {

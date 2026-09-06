@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-library/react";
 import SetupWizard from "./SetupWizard";
 import { resetTournament, setupWizard as texts } from "@/lib/texts";
+import { bracketRoundLabel } from "@/lib/tournament";
 
 const post = vi.fn();
 const showToast = vi.fn();
@@ -75,11 +76,51 @@ describe("the setup wizard", () => {
     expect(screen.getByRole("button", { name: texts.next })).toHaveProperty("disabled", true);
   });
 
-  it("does not offer a straight knockout for twelve teams", () => {
+  it("offers a straight knockout for twelve teams", () => {
     open(12);
 
-    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", true);
-    expect(screen.getByText(texts.knockoutRefused(12, 8, 16))).toBeTruthy();
+    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", false);
+  });
+
+  it("offers a straight knockout for a count that splits into no groups", () => {
+    open(7);
+
+    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", false);
+    expect(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+
+  it("previews the full bracket a count that does not fill one is drawn into", () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+
+    expect(screen.getByText(bracketRoundLabel(8))).toBeTruthy();
+    expect(screen.getByText(bracketRoundLabel(1))).toBeTruthy();
+    expect(screen.getByText(texts.byeSeats(4))).toBeTruthy();
+  });
+
+  it("says nothing about byes when the count fills the bracket", () => {
+    open(8);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+
+    expect(screen.getByText(bracketRoundLabel(4))).toBeTruthy();
+    expect(screen.queryByText(texts.byeSeats(0))).toBeNull();
+  });
+
+  it("writes a knockout for a count that does not fill a bracket", async () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText(texts.firstDay), { target: { value: "2026-09-20" } });
+    fireEvent.click(screen.getByRole("button", { name: texts.write }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(post.mock.calls[0][1]).toMatchObject({ format: "KNOCKOUT", groups: [] });
   });
 
   it("offers only the group counts that lead somewhere", () => {

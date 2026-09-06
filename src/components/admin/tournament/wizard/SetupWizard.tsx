@@ -211,7 +211,6 @@ export default function SetupWizard({
                 <BracketStep
                   groupCount={state.groupCount ?? 0}
                   qualifierCount={qualifierCount}
-                  teams={teams}
                   grouped={grouped}
                 />
               )}
@@ -267,6 +266,5 @@ export default function SetupWizard({
 
 function blockerText(blocker: NonNullable<ReturnType<typeof wizardBlocker>>): string {
   if (blocker.kind === "hasResults") return texts.hasResults(blocker.played);
-  if (blocker.kind === "tooFewTeams") return texts.tooFewTeams;
-  return texts.noShape(blocker.refusal.teamCount);
+  return texts.tooFewTeams;
 }
