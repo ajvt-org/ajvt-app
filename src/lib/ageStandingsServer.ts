@@ -11,9 +11,10 @@ function tally(rows: { user: { age: string | null } }[]): Map<string, number> {
   return counts;
 }
 
-export async function getAgeStandings(): Promise<AgeStanding[]> {
+export async function getAgeStandings({ everyGroup = false } = {}): Promise<AgeStanding[]> {
   const [groups, rows] = await Promise.all([
     prisma.ageGroup.findMany({
+      where: everyGroup ? undefined : { approved: true },
       orderBy: { createdAt: "asc" },
       select: { name: true, totalCount: true },
     }),
@@ -25,5 +26,5 @@ export async function getAgeStandings(): Promise<AgeStanding[]> {
   const accounts = [...latestByAccount(rows).values()];
   const active = accounts.filter((row) => row.status === "ACTIVE");
 
-  return rankAgeGroups(groups, tally(active), tally(accounts));
+  return rankAgeGroups(groups, tally(active), tally(accounts), { keepEmpty: everyGroup });
 }
