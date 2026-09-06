@@ -43,6 +43,7 @@ async function loadActivity(id: string) {
       minTeamSize: true,
       maxTeamSize: true,
       isTournament: true,
+      format: true,
       showScorersAndCards: true,
       groups: { select: { id: true, name: true }, orderBy: { createdAt: "asc" as const } },
       teams: {

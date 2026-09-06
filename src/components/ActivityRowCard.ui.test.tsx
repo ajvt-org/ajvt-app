@@ -59,9 +59,19 @@ describe("an activity row", () => {
     expect(screen.queryByText(/فريق/)).toBeNull();
   });
 
-  it("says a chess entrant is waiting for a team, without a squad word", () => {
-    render(<ActivityRowCard from="/home" row={row({ kind: "AWAITING_TEAM" }, "بطولة الشطرنج")} />);
+  it("says a team tournament is waiting for the member to join one", () => {
+    render(<ActivityRowCard from="/home" row={row({ kind: "AWAITING_TEAM" }, "كأس الرابطة")} />);
     expect(screen.getByText(/في انتظار انضمامك إلى فريق/)).toBeDefined();
+  });
+
+  it("waits for the schedule without naming a team when there is none to name", () => {
+    render(
+      <ActivityRowCard
+        from="/home"
+        row={row({ kind: "AWAITING_SCHEDULE", team: null }, "بطولة الشطرنج")}
+      />,
+    );
+    expect(screen.getByText("في انتظار برمجة المباريات")).toBeDefined();
   });
 
   it("leads with a decision still pending", () => {

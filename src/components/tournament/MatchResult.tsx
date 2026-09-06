@@ -89,6 +89,7 @@ export default function MatchResult({
           photo: match.secondTeam.photo,
         }}
         score={football ? { home: match.homeScore, away: match.awayScore } : null}
+        size="md"
         layout="stacked"
         entrant={entrant}
       />

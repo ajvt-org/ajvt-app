@@ -26,9 +26,9 @@ export const activityForm = {
   capacity: "السعة",
   noCapacity: "بدون حد",
   whatsappLink: "رابط الواتساب",
-  photoHeading: "الصورة",
   save: "حفظ التفاصيل",
   saved: "تم حفظ التفاصيل",
+  photoSaved: "تم حفظ الصورة",
   datesHeading: "التواريخ",
 } as const;
 
@@ -141,11 +141,9 @@ export const tournamentSetup = {
   shapeHeading: "نوع المباراة",
   shapes: {
     FOOTBALL: "مباراة كرة قدم",
-    SERIES: "سلسلة جولات",
-  },
-  shapeHints: {
-    FOOTBALL: "مباراة واحدة متواصلة، بأهداف وبطاقات ورجل مباراة",
-    SERIES: "مباراة من عدة جولات، كالشطرنج والضامة والورق والبلاي ستيشن",
+    // The games are folded into the label because the app names them nowhere
+    // else and the label on its own leaves an admin guessing.
+    SERIES: "سلسلة جولات · شطرنج، ضامة، ورق، بلاي ستيشن",
   },
   formatHeading: "نظام البطولة",
   formats: {
@@ -158,4 +156,7 @@ export const tournamentSetup = {
   maxTeamSize: "الحد الأقصى",
   organisedByHomeVillage: "بطولة من تنظيم التاكلالت",
   outsidePlayerLimit: "الحد الأقصى للاعبين من خارج التاكلالت",
+  // Shown on the controls themselves, and only once they are actually locked.
+  shapeLocked: "النظام والنوع أُقفلا بعد إنشاء أول مباراة",
+  squadLocked: "حجم الفريق أُقفل بعد انطلاق البطولة",
 } as const;

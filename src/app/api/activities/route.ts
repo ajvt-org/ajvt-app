@@ -56,7 +56,7 @@ export const GET = withRoute("GET /api/activities", async () => {
       registrantCount: a._count.registrations,
       unplayedMatches: a.unplayedMatches,
       awaitingStage: a.awaitingStage,
-      teams: joinableTeams(a, a.teams),
+      joinableTeams: joinableTeams(a, a.teams),
     })),
   });
 });

@@ -1,5 +1,6 @@
 import { sortUpcoming, type Fixture } from "./memberFixtures";
 import { squadIsSet, squadOf } from "./squadSize";
+import { isSinglesActivity } from "./entrant";
 
 export interface ActivityTeam {
   id: string;
@@ -26,7 +27,7 @@ export type ActivityDetail =
   | { kind: "PENDING_REVIEW" }
   | { kind: "NEXT_MATCH"; fixture: Fixture }
   | { kind: "PARTNERS"; names: string[] }
-  | { kind: "AWAITING_SCHEDULE"; team: string }
+  | { kind: "AWAITING_SCHEDULE"; team: string | null }
   | { kind: "AWAITING_TEAM" }
   | { kind: "DATES"; text: string }
   | { kind: "TEAM"; name: string }
@@ -53,10 +54,13 @@ export function activityDetail(entry: MemberActivity): ActivityDetail {
   if (entry.team && squadIsSet(squadOf(entry)) && entry.team.teammates.length > 0) {
     return { kind: "PARTNERS", names: entry.team.teammates };
   }
+  // A singles entrant is a Team of one named after the member, so naming it here
+  // would tell them they are waiting with a team called themselves.
+  const singles = isSinglesActivity(entry);
   if (entry.team && entry.isTournament) {
-    return { kind: "AWAITING_SCHEDULE", team: entry.team.name };
+    return { kind: "AWAITING_SCHEDULE", team: singles ? null : entry.team.name };
   }
-  if (!entry.team && entry.isTournament) return { kind: "AWAITING_TEAM" };
+  if (!entry.team && entry.isTournament && !singles) return { kind: "AWAITING_TEAM" };
   if (entry.dates) return { kind: "DATES", text: entry.dates };
   if (entry.team) return { kind: "TEAM", name: entry.team.name };
   return { kind: "REGISTERED" };

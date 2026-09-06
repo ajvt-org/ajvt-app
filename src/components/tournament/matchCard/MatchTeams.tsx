@@ -7,11 +7,20 @@ export type MatchSide = { name: string; logo?: string | null; photo?: string | n
 
 export type MatchTeamsSize = "sm" | "md" | "lg" | "xl";
 
-const SIZES: Record<MatchTeamsSize, { logo: number; score: string }> = {
-  sm: { logo: 28, score: "text-sm" },
-  md: { logo: 34, score: "text-base" },
-  lg: { logo: 42, score: "text-lg" },
-  xl: { logo: 44, score: "text-2xl" },
+// One scale for every match card in the app, and every caller names its step.
+//
+//   sm  a fixture in a day list, several stacked one under another
+//   md  a result card in a list, read while scrolling past it
+//   lg  a match that owns its card, the today band and the admin match card
+//   xl  the shared image, rasterised at 340px and looked at as a picture
+//
+// The old steps ran 28 to 44, sixteen pixels from the smallest surface to the
+// largest, which is why nothing could be sized for the card it sat in.
+export const MATCH_TEAMS_SIZES: Record<MatchTeamsSize, { logo: number; score: string }> = {
+  sm: { logo: 32, score: "text-sm" },
+  md: { logo: 44, score: "text-base" },
+  lg: { logo: 56, score: "text-lg" },
+  xl: { logo: 72, score: "text-2xl" },
 };
 
 function Name({ name, color, center }: { name: string; color: string; center?: boolean }) {
@@ -79,7 +88,7 @@ export default function MatchTeams({
   away,
   score = null,
   tone = "light",
-  size = "md",
+  size,
   layout = "inline",
   separator = "×",
   entrant = "team",
@@ -88,13 +97,14 @@ export default function MatchTeams({
   away: MatchSide;
   score?: { home: number | string | null; away: number | string | null } | null;
   tone?: MatchTone;
-  size?: MatchTeamsSize;
+  // Required, so a card cannot accept a size by leaving it out.
+  size: MatchTeamsSize;
   layout?: "inline" | "stacked";
   separator?: string;
   entrant?: EntrantKind;
 }) {
   const colors = matchTone[tone];
-  const dims = SIZES[size];
+  const dims = MATCH_TEAMS_SIZES[size];
   const stacked = layout === "stacked";
   const scoreClass = `font-black shrink-0 px-1 ${dims.score}`;
 

@@ -38,7 +38,12 @@ function line(detail: ActivityDetail): { icon: IconName; text: string } {
             : `شريكك ${detail.names[0]}`,
       };
     case "AWAITING_SCHEDULE":
-      return { icon: "clock", text: `${detail.team} · في انتظار برمجة المباريات` };
+      return {
+        icon: "clock",
+        text: detail.team
+          ? `${detail.team} · في انتظار برمجة المباريات`
+          : "في انتظار برمجة المباريات",
+      };
     case "AWAITING_TEAM":
       return { icon: "users", text: "في انتظار انضمامك إلى فريق" };
     case "DATES":

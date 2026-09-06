@@ -110,6 +110,7 @@ export default function MatchCard({
             photo: match.secondTeam?.photo,
           }}
           score={football && played ? { home: match.homeScore, away: match.awayScore } : null}
+          size="lg"
           layout="stacked"
           entrant={entrant}
         />

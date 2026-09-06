@@ -5,7 +5,6 @@ import { api, errorMessage } from "@/lib/api";
 import { useToast } from "@/components/Toast";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
-import PhotoUpload from "@/components/PhotoUpload";
 import ActivityDatesEditor from "../ActivityDatesEditor";
 import ConvertTournamentCard from "./ConvertTournamentCard";
 import ConvertCampaignCard from "./ConvertCampaignCard";
@@ -30,7 +29,6 @@ export default function DetailsTab({
     description: activity.description,
     capacity: activity.capacity === null ? "" : String(activity.capacity),
     whatsappLink: activity.whatsappLink ?? "",
-    photo: activity.photo ?? "",
     isOpen: activity.isOpen,
     autoApprove: activity.autoApprove,
     showScorersAndCards: activity.showScorersAndCards,
@@ -46,7 +44,6 @@ export default function DetailsTab({
         description: form.description.trim(),
         capacity: form.capacity === "" ? null : Number(form.capacity),
         whatsappLink: form.whatsappLink.trim() || null,
-        photo: form.photo || null,
         isOpen: form.isOpen,
         autoApprove: form.autoApprove,
         showScorersAndCards: form.showScorersAndCards,
@@ -161,17 +158,6 @@ export default function DetailsTab({
               </p>
             </div>
           )}
-
-          <div>
-            <p className="block text-sm font-bold mb-1.5">{texts.photoHeading}</p>
-            <PhotoUpload
-              photo={form.photo || null}
-              imageUrlPrefix="/api/files/activity"
-              variant="cover"
-              label={texts.activityPhoto}
-              onUpload={(filename) => setForm((p) => ({ ...p, photo: filename }))}
-            />
-          </div>
 
           {error && (
             <p className="text-xs font-semibold" style={{ color: "#dc2626" }}>

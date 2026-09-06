@@ -19,7 +19,7 @@ const activity: Activity = {
   isVolunteer: false,
   whatsappLink: null,
   registrantCount: 0,
-  teams: [],
+  joinableTeams: [],
 };
 
 const member: EligibleMember = {
@@ -117,7 +117,7 @@ describe("ActivityRegistrations", () => {
   it("lets an approved registrant pick a team in a tournament", async () => {
     const fetchMock = mockFetch();
     setup({
-      activity: { isTournament: true, teams: [{ id: "t1", name: "الفريق الأول" }] },
+      activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
       member: { registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }] },
     });
 
@@ -129,7 +129,7 @@ describe("ActivityRegistrations", () => {
 
   it("locks the team once the admin has confirmed it", () => {
     setup({
-      activity: { isTournament: true, teams: [{ id: "t1", name: "الفريق الأول" }] },
+      activity: { isTournament: true, joinableTeams: [{ id: "t1", name: "الفريق الأول" }] },
       member: {
         registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }],
         teamMemberships: [
@@ -178,7 +178,7 @@ describe("a membership a year behind", () => {
 describe("picking a team while registering", () => {
   const tournament = {
     isTournament: true,
-    teams: [
+    joinableTeams: [
       { id: "t1", name: "الصقور" },
       { id: "t2", name: "النسور" },
     ],
@@ -221,8 +221,23 @@ describe("picking a team while registering", () => {
   });
 
   it("asks nothing when the tournament has no teams yet", () => {
-    setup({ activity: { isTournament: true, teams: [] } });
+    setup({ activity: { isTournament: true, joinableTeams: [] } });
 
     expect(screen.queryByLabelText(/اختر فريقك/)).toBeNull();
+  });
+
+  it("says nothing about teams to a singles entrant who is already approved", () => {
+    setup({
+      activity: { isTournament: true, joinableTeams: [] },
+      member: {
+        registrations: [{ activityId: "a1", status: "ACTIVE", rejectionReason: null }],
+        teamMemberships: [
+          { teamId: "t1", teamName: "محمد ولد أحمد", activityId: "a1", status: "ACTIVE" },
+        ],
+      },
+    });
+
+    expect(screen.queryByText(/فريقك/)).toBeNull();
+    expect(screen.queryByText("تم التأكيد — لا يمكن تغييره")).toBeNull();
   });
 });

@@ -80,6 +80,7 @@ export const publicTournament = {
   group: "مجموعة",
   noGroup: "بدون مجموعة",
   noMatchesYet: "لم تُحدَّد المباريات بعد",
+  drawNotMade: "لم تُجرَ القرعة بعد",
   noPlayers: "لا يوجد لاعبون بعد",
   playerCount: (count: number) => countedNoun(count, PLAYERS),
   captain: "القائد",

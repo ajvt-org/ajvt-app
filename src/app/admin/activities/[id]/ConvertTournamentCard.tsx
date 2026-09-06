@@ -145,9 +145,6 @@ export default function ConvertTournamentCard({
                 onFormat={(format) => setSetup((p) => p && { ...p, format })}
                 onMatchShape={(matchShape) => setSetup((p) => p && { ...p, matchShape })}
               />
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                {texts.lockHint}
-              </p>
               <button onClick={save} disabled={busy} className="btn btn-primary text-sm">
                 {busy ? "..." : activity.isTournament ? texts.saveSettings : texts.convert}
               </button>

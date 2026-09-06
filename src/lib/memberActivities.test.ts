@@ -62,6 +62,18 @@ describe("activityDetail", () => {
     expect(activityDetail(entry()).kind).toBe("AWAITING_TEAM");
   });
 
+  it("does not name the entrant of a singles tournament as a team", () => {
+    const d = activityDetail(
+      entry({ minTeamSize: 1, maxTeamSize: 1, team: { ...team, name: "أحمد ولد سالم" } }),
+    );
+    expect(d).toEqual({ kind: "AWAITING_SCHEDULE", team: null });
+  });
+
+  it("never waits for a team in a singles tournament", () => {
+    const d = activityDetail(entry({ minTeamSize: 1, maxTeamSize: 1 }));
+    expect(d.kind).toBe("REGISTERED");
+  });
+
   it("shows the dates for an activity that is not a tournament", () => {
     const d = activityDetail(
       entry({ isTournament: false, isVolunteer: true, dates: "12 - 15 سبتمبر" }),
