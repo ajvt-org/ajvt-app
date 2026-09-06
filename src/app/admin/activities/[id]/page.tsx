@@ -3,10 +3,10 @@
 import { Suspense, use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loginPathWithNext, toThumbUrl } from "@/lib/utils";
-import Icon from "@/components/Icon";
+import { loginPathWithNext } from "@/lib/utils";
 import ArrowLabel from "@/components/ArrowLabel";
 import ActivityFinance from "./ActivityFinance";
+import ActivityHeaderPhoto from "./ActivityHeaderPhoto";
 import WorkspaceTabs from "@/components/admin/WorkspaceTabs";
 import { activityTabSections } from "./activityTabs";
 import DetailsTab from "./DetailsTab";
@@ -111,21 +111,12 @@ function AdminActivityPageInner({ id }: { id: string }) {
 
       <div className="card p-4 space-y-3">
         <div className="flex items-center gap-3">
-          {activity.photo ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={toThumbUrl(`/api/files/activity/${activity.photo}`)}
-              alt={activity.title}
-              className="w-14 h-14 rounded-xl object-cover shrink-0"
-            />
-          ) : (
-            <span
-              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "var(--mint-100)" }}
-            >
-              <Icon name={activity.isVolunteer ? "handshake" : "trophy"} size={24} />
-            </span>
-          )}
+          <ActivityHeaderPhoto
+            activityId={activity.id}
+            photo={activity.photo}
+            isVolunteer={activity.isVolunteer}
+            onSaved={load}
+          />
           <div className="min-w-0 flex-1 space-y-1">
             <p
               className="font-black text-base"

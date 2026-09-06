@@ -50,7 +50,7 @@ export default function NewActivityForm({
         <PhotoUpload
           photo={draft.photo || null}
           imageUrlPrefix="/api/files/activity"
-          variant="avatar"
+          variant="tile"
           bare
           label={draft.isTournament ? texts.tournamentLogo : texts.activityPhoto}
           placeholderIcon="image"

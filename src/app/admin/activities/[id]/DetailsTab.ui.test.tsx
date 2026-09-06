@@ -100,3 +100,26 @@ describe("the scorers and cards toggle", () => {
     expect(patch.mock.calls[0][1]).toMatchObject({ showScorersAndCards: false });
   });
 });
+
+describe("the picture, which lives in the header now", () => {
+  beforeEach(() => {
+    patch.mockReset();
+    patch.mockResolvedValue({});
+  });
+
+  it("is not in the details form", () => {
+    show({ photo: "p.webp" });
+
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByRole("button", { name: texts.activityPhoto })).toBeNull();
+  });
+
+  it("is left alone when the details are saved", async () => {
+    show({ photo: "p.webp" });
+
+    fireEvent.click(screen.getByText(texts.save));
+
+    await waitFor(() => expect(patch).toHaveBeenCalled());
+    expect(patch.mock.calls[0][1]).not.toHaveProperty("photo");
+  });
+});

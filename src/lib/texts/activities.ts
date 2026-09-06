@@ -26,9 +26,9 @@ export const activityForm = {
   capacity: "السعة",
   noCapacity: "بدون حد",
   whatsappLink: "رابط الواتساب",
-  photoHeading: "الصورة",
   save: "حفظ التفاصيل",
   saved: "تم حفظ التفاصيل",
+  photoSaved: "تم حفظ الصورة",
   datesHeading: "التواريخ",
 } as const;
 
