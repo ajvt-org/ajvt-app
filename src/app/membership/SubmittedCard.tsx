@@ -9,6 +9,7 @@ import Money from "@/components/Money";
 export default function SubmittedCard({
   form,
   editing,
+  renewing,
   copied,
   onCopy,
   onShare,
@@ -16,6 +17,7 @@ export default function SubmittedCard({
 }: {
   form: PaymentValues & { fullName: string };
   editing: boolean;
+  renewing: boolean;
   copied: string | null;
   onCopy: (code: string) => void;
   onShare: () => void;
@@ -31,7 +33,11 @@ export default function SubmittedCard({
           <Icon name="check" size={48} color="white" />
         </div>
         <h1 className="text-lg font-black text-white">
-          {editing ? "تم إرسال التعديلات بنجاح" : "تم إرسال طلبك بنجاح"}
+          {renewing
+            ? "تم إرسال التجديد بنجاح"
+            : editing
+              ? "تم إرسال التعديلات بنجاح"
+              : "تم إرسال طلبك بنجاح"}
         </h1>
         <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.8)" }}>
           سيراجع فريق الرابطة طلبك خلال أقل من ساعة
@@ -39,35 +45,41 @@ export default function SubmittedCard({
       </div>
 
       <div className="px-5 py-6 space-y-4">
-        <div className="card p-4 fade-up">
-          <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
-            رقم دفترك — احتفظ به للمتابعة
-          </p>
-          <div
-            className="flex items-center justify-between rounded-xl px-3 py-2.5"
-            style={{ background: "var(--mint-50)" }}
-          >
-            <span
-              className="font-mono font-black text-lg"
-              style={{ color: "var(--mint-700)" }}
-              dir="ltr"
+        {!renewing && (
+          <div className="card p-4 fade-up">
+            <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-muted)" }}>
+              رقم دفترك — احتفظ به للمتابعة
+            </p>
+            <div
+              className="flex items-center justify-between rounded-xl px-3 py-2.5"
+              style={{ background: "var(--mint-50)" }}
             >
-              {form.referenceCode}
-            </span>
-            <button
-              type="button"
-              onClick={() => onCopy(form.referenceCode)}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{
-                background: copied === form.referenceCode ? "var(--mint-600)" : "white",
-                color: copied === form.referenceCode ? "white" : "var(--mint-700)",
-                border: "1px solid var(--mint-200)",
-              }}
-            >
-              {copied === form.referenceCode ? <IconLabel name="check">تم النسخ</IconLabel> : "نسخ"}
-            </button>
+              <span
+                className="font-mono font-black text-lg"
+                style={{ color: "var(--mint-700)" }}
+                dir="ltr"
+              >
+                {form.referenceCode}
+              </span>
+              <button
+                type="button"
+                onClick={() => onCopy(form.referenceCode)}
+                className="text-xs px-3 py-1.5 rounded-lg font-bold"
+                style={{
+                  background: copied === form.referenceCode ? "var(--mint-600)" : "white",
+                  color: copied === form.referenceCode ? "white" : "var(--mint-700)",
+                  border: "1px solid var(--mint-200)",
+                }}
+              >
+                {copied === form.referenceCode ? (
+                  <IconLabel name="check">تم النسخ</IconLabel>
+                ) : (
+                  "نسخ"
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="card p-4 fade-up delay-1">
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
@@ -89,9 +101,11 @@ export default function SubmittedCard({
           </div>
         </div>
 
-        <button type="button" onClick={onShare} className="btn btn-primary fade-up delay-1">
-          <IconLabel name="upload">مشاركة رقم الدفتر</IconLabel>
-        </button>
+        {!renewing && (
+          <button type="button" onClick={onShare} className="btn btn-primary fade-up delay-1">
+            <IconLabel name="upload">مشاركة رقم الدفتر</IconLabel>
+          </button>
+        )}
         <button
           type="button"
           onClick={onProfile}

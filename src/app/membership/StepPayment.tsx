@@ -33,7 +33,8 @@ export default function StepPayment({
   error,
   loading,
   proofUploading,
-  editing,
+  reference,
+  submitLabel,
   onSubmit,
 }: {
   form: PaymentValues;
@@ -51,7 +52,8 @@ export default function StepPayment({
   error: string;
   loading: boolean;
   proofUploading: boolean;
-  editing: boolean;
+  reference: { label: string; value: string };
+  submitLabel: string;
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
 }) {
   const offer = usePayableMethods();
@@ -120,10 +122,10 @@ export default function StepPayment({
               onCopy={() => onCopy(amount)}
             />
             <CopyRow
-              label={texts.orderCode}
-              value={form.referenceCode}
-              copied={copied === form.referenceCode}
-              onCopy={() => onCopy(form.referenceCode)}
+              label={reference.label}
+              value={reference.value}
+              copied={copied === reference.value}
+              onCopy={() => onCopy(reference.value)}
             />
           </div>
           <p className="text-xs mt-3" style={{ color: "rgba(255,255,255,0.6)" }}>
@@ -222,10 +224,8 @@ export default function StepPayment({
                 </svg>
                 {texts.sending}
               </span>
-            ) : editing ? (
-              <ArrowLabel>{texts.saveEdits}</ArrowLabel>
             ) : (
-              <ArrowLabel>{texts.send}</ArrowLabel>
+              <ArrowLabel>{submitLabel}</ArrowLabel>
             )}
           </button>
         </div>

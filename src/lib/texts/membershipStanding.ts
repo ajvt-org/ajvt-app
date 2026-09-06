@@ -16,6 +16,8 @@ export const membershipStanding = {
   },
   behind: {
     title: (year: number) => `اشتراكك يغطي سنة ${year}`,
-    body: (year: number) => `الرابطة تجمع الآن اشتراكات سنة ${year}. راجع إدارة الرابطة لتجديده.`,
+    body: (year: number) => `الرابطة تجمع الآن اشتراكات سنة ${year}.`,
+    viaAdmin: "راجع إدارة الرابطة لتجديده.",
+    action: "جدّد اشتراكك",
   },
 } as const;

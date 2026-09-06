@@ -11,14 +11,25 @@ import { surplusOf } from "@/lib/membershipSurplus";
 import { validateDonorChoice } from "@/lib/donorChoice";
 import { api, errorMessage } from "@/lib/api";
 import { members } from "@/lib/messages";
+import { canRenew } from "@/lib/renewal";
 import IconLabel from "@/components/IconLabel";
 import PageHeader from "@/components/PageHeader";
-import { pageTitles } from "@/lib/texts";
+import { pageTitles, stepPayment } from "@/lib/texts";
 import { goAfterAuthChange } from "@/lib/authNav";
 import PageLoading from "@/components/PageLoading";
 import StepPayment from "./StepPayment";
 import SubmittedCard from "./SubmittedCard";
 import { DRAFT_KEY, IDLE_TIMEOUT_MS } from "./constants";
+
+function renewalTitle(renewing: boolean, editing: boolean): string {
+  if (renewing) return pageTitles.membershipRenew;
+  return editing ? pageTitles.membershipEdit : pageTitles.membership;
+}
+
+function submitLabelOf(renewing: boolean, editing: boolean): string {
+  if (renewing) return stepPayment.sendRenewal;
+  return editing ? stepPayment.saveEdits : stepPayment.send;
+}
 
 export default function MembershipPage() {
   return (
@@ -38,6 +49,7 @@ function MembershipPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
+  const renewing = searchParams.get("renew") === "1";
   const cameFrom = safeNextPath(searchParams.get("from"), "");
 
   const [loading, setLoading] = useState(false);
@@ -49,6 +61,7 @@ function MembershipPageInner() {
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
+  const [memberNumber, setMemberNumber] = useState("");
   const [wantsName, setWantsName] = useState<boolean | null>(null);
 
   const [form, setForm] = useState({
@@ -79,6 +92,15 @@ function MembershipPageInner() {
       setFullName(me?.fullName ?? "");
 
       const mine = me?.members?.[0];
+      if (renewing) {
+        if (!mine || !canRenew(mine, me.currentYear)) {
+          router.replace("/profile");
+          return;
+        }
+        setMemberNumber(mine.memberNumber ?? "");
+        setChecking(false);
+        return;
+      }
       if (!editId && mine) {
         router.replace(mine.status === "ACTIVE" ? "/profile" : `/membership?id=${mine.id}`);
         return;
@@ -125,13 +147,13 @@ function MembershipPageInner() {
       setChecking(false);
     }
     load();
-  }, [router, editId]);
+  }, [router, editId, renewing]);
 
   useEffect(() => {
-    if (checking || editId) return;
+    if (checking || editId || renewing) return;
     const timeout = setTimeout(() => localStorage.setItem(DRAFT_KEY, JSON.stringify(form)), 300);
     return () => clearTimeout(timeout);
-  }, [form, checking, editId]);
+  }, [form, checking, editId, renewing]);
 
   async function copyCode(code: string) {
     try {
@@ -174,14 +196,23 @@ function MembershipPageInner() {
 
     setLoading(true);
     try {
-      const data = await api.post<{ referenceCode?: string }>("/api/members", {
-        ...(editId ? { id: editId } : {}),
-        ...form,
+      const payment = {
+        paymentMethod: form.paymentMethod,
         accountId: form.accountId || null,
         bankReference: form.bankReference.trim() || null,
         paidAmount: Number(form.paidAmount),
         surplusAnonymous: surplus > 0 && wantsName === false,
         paymentProof: proofFilename,
+      };
+      if (renewing) {
+        await api.post("/api/members/renew", payment);
+        setSubmitted(true);
+        return;
+      }
+      const data = await api.post<{ referenceCode?: string }>("/api/members", {
+        ...(editId ? { id: editId } : {}),
+        referenceCode: form.referenceCode,
+        ...payment,
       });
       if (data.referenceCode && data.referenceCode !== form.referenceCode) {
         setForm((p) => ({ ...p, referenceCode: data.referenceCode as string }));
@@ -215,6 +246,7 @@ function MembershipPageInner() {
       <SubmittedCard
         form={{ ...form, fullName }}
         editing={!!editId}
+        renewing={renewing}
         copied={copied}
         onCopy={copyCode}
         onShare={shareReferenceCode}
@@ -225,10 +257,7 @@ function MembershipPageInner() {
 
   return (
     <div className="app-shell">
-      <PageHeader
-        title={editId ? pageTitles.membershipEdit : pageTitles.membership}
-        backHref={cameFrom || "/home"}
-      />
+      <PageHeader title={renewalTitle(renewing, !!editId)} backHref={cameFrom || "/home"} />
 
       <div className="px-5 py-6 pb-10">
         <div
@@ -264,7 +293,12 @@ function MembershipPageInner() {
           error={error}
           loading={loading}
           proofUploading={proofUploading}
-          editing={!!editId}
+          reference={
+            renewing
+              ? { label: stepPayment.memberCode, value: memberNumber }
+              : { label: stepPayment.orderCode, value: form.referenceCode }
+          }
+          submitLabel={submitLabelOf(renewing, !!editId)}
           onSubmit={handleSubmit}
         />
       </div>
