@@ -93,4 +93,21 @@ describe("the money subtabs", () => {
 
     expect(onOpen).toHaveBeenCalledWith(MONEY_AREAS.treasury);
   });
+
+  it("underlines the screen being read instead of filling it like a top tab", () => {
+    showSubtabs("SUPER", MONEY_AREAS.payments);
+
+    const current = screen.getByText(adminTabs.payments).closest("button");
+    const other = screen.getByText(adminTabs.treasury).closest("button");
+
+    expect(current?.style.borderBottom).toContain("var(--mint-600)");
+    expect(current?.style.background).toBe("");
+    expect(other?.style.borderBottom).toContain("transparent");
+  });
+
+  it("carries no icon, so the level does not repeat the strip above it", () => {
+    showSubtabs("SUPER", MONEY_AREAS.payments);
+
+    expect(screen.getByText(adminTabs.payments).closest("button")?.querySelector("svg")).toBeNull();
+  });
 });
