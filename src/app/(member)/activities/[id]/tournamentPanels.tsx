@@ -23,6 +23,7 @@ import { discipline as disciplineTexts, publicTournament as texts } from "@/lib/
 import { suspendedUserIds } from "@/lib/suspensionServer";
 import { bothTeamsKnown } from "@/lib/fixtureTeams";
 import { entrantKind } from "@/lib/entrant";
+import { viewerTeamId as viewerTeamOf } from "@/lib/squad";
 import { squadOf } from "@/lib/squadSize";
 import { isFootball } from "@/lib/matchShape";
 import { hasStandings } from "@/lib/tournamentFormat";
@@ -66,6 +67,7 @@ export async function tournamentPanels(
   const suspended =
     football && discipline.length > 0 ? await suspendedUserIds(activity.id) : new Set<string>();
   const entrant = entrantKind(squadOf(activity));
+  const viewerTeamId = viewerTeamOf(activity.teams, userId);
   const words = texts.entrant[entrant];
   const participantsLabel = words.plural;
   const hasStats =
@@ -114,6 +116,7 @@ export async function tournamentPanels(
                   rows={group.standings}
                   series={!football}
                   entrant={entrant}
+                  viewerTeamId={viewerTeamId}
                 />
               ))}
               {bracketMatches.length > 0 && (
