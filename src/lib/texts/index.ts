@@ -64,7 +64,7 @@ export { memberPage } from "./memberPage";
 export { memberPhoto } from "./memberPhoto";
 export { photoUpload } from "./photoUpload";
 export { proofReuse } from "./proofReuse";
-export { quizBoard } from "./quizBoard";
+export { quizBoard, quizPicker } from "./quizBoard";
 export { quizCompetition } from "./quizCompetition";
 export { quizScores } from "./quizScores";
 export { quizStandings, quizWorkspace } from "./quizWorkspace";

@@ -10,6 +10,8 @@ import QuizLocked, { CreateAccountAction } from "./QuizLocked";
 import QuizPicker from "./QuizPicker";
 import TutorialQuiz from "./TutorialQuiz";
 import type { RunningCompetition } from "./types";
+import type { TutorialView } from "@/lib/quizTutorialServer";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 import { quizBoard as texts } from "@/lib/texts";
 import { safeNextPath } from "@/lib/utils";
 import { withFrom } from "@/lib/backLink";
@@ -41,6 +43,9 @@ function QuizScreen() {
   const [mine, setMine] = useState<RunningCompetition[]>([]);
   const [confirmAnswers, setConfirmAnswers] = useState(true);
   const [tutorial, setTutorial] = useState(false);
+  const [practice, setPractice] = useState<{ questions: TutorialView[]; curve: ScoreCurve } | null>(
+    null,
+  );
   const [standings, setStandings] = useState<StandingsState | null>(null);
   const [ineligible, setIneligible] = useState(false);
   const [visitor, setVisitor] = useState(false);
@@ -62,6 +67,16 @@ function QuizScreen() {
     }
   }, []);
 
+  const loadPractice = useCallback(async () => {
+    try {
+      const res = await fetch("/api/quiz/tutorial");
+      const json = res.ok ? await res.json() : null;
+      if (json?.questions?.length) setPractice({ questions: json.questions, curve: json.curve });
+    } catch {
+      setPractice(null);
+    }
+  }, []);
+
   const loadStandings = useCallback(() => {
     if (!chosen) return Promise.resolve();
     return fetch(`/api/quiz/standings?competition=${chosen}`)
@@ -74,8 +89,8 @@ function QuizScreen() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadMine().finally(() => setLoading(false));
-  }, [loadMine]);
+    Promise.all([loadMine(), loadPractice()]).finally(() => setLoading(false));
+  }, [loadMine, loadPractice]);
 
   useEffect(() => {
     loadStandings();
@@ -127,8 +142,15 @@ function QuizScreen() {
     );
   }
 
-  if (tutorial) {
-    return <TutorialQuiz confirm={confirmAnswers} onExit={() => setTutorial(false)} />;
+  if (tutorial && practice) {
+    return (
+      <TutorialQuiz
+        questions={practice.questions}
+        curve={practice.curve}
+        confirm={confirmAnswers}
+        onExit={() => setTutorial(false)}
+      />
+    );
   }
 
   if (chosen && standings?.running && standings.competitionId === chosen) {
@@ -149,7 +171,8 @@ function QuizScreen() {
       competitions={mine}
       backHref={backHref}
       onPick={(id) => router.push(quizPath(from, id))}
-      onTutorial={() => setTutorial(true)}
+      onTutorial={practice ? () => setTutorial(true) : undefined}
+      tutorialCount={practice?.questions.length ?? 0}
       hint={canPlay ? undefined : visitor ? texts.visitorHint : texts.ineligibleHint}
       onStarted={loadMine}
     />

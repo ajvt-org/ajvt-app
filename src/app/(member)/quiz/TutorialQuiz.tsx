@@ -4,13 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import NumericRanges from "@/components/NumericRanges";
 import AttemptQuestion from "./AttemptQuestion";
-import { TUTORIAL_QUESTIONS, TUTORIAL_CURVE, gradeTutorial } from "@/lib/quizTutorial";
+import { gradeTutorial } from "@/lib/quizTutorial";
+import type { TutorialView } from "@/lib/quizTutorialServer";
+import type { ScoreCurve } from "@/lib/competitionConfig";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
 
 export default function TutorialQuiz({
+  questions,
+  curve,
   confirm = true,
   onExit,
 }: {
+  questions: TutorialView[];
+  curve: ScoreCurve;
   confirm?: boolean;
   onExit: () => void;
 }) {
@@ -22,12 +28,12 @@ export default function TutorialQuiz({
     startedAt.current = performance.now();
   }, [position]);
 
-  const question = TUTORIAL_QUESTIONS[position];
-  const done = position >= TUTORIAL_QUESTIONS.length;
+  const question = questions[position];
+  const done = position >= questions.length;
 
   function answer(selected: string[]) {
     const elapsed = startedAt.current ? performance.now() - startedAt.current : 0;
-    const graded = gradeTutorial(question, selected, elapsed);
+    const graded = gradeTutorial(question, selected, elapsed, curve);
     setScore((s) => s + graded.points);
     setPosition((p) => p + 1);
   }
@@ -174,7 +180,7 @@ export default function TutorialQuiz({
           shownAt: "",
           options: question.options,
         }}
-        curve={TUTORIAL_CURVE}
+        curve={curve}
         busy={false}
         confirm={confirm}
         onSubmit={answer}
