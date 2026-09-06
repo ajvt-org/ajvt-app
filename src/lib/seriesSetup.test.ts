@@ -9,6 +9,9 @@ const chess: SeriesSetup = {
   partTarget: null,
   partWord: "لعبة",
   partsWord: "ألعاب",
+  hasColours: false,
+  firstColourWord: null,
+  secondColourWord: null,
 };
 
 const maryass: SeriesSetup = {
@@ -19,6 +22,9 @@ const maryass: SeriesSetup = {
   partTarget: 100,
   partWord: "جولة",
   partsWord: "جولات",
+  hasColours: false,
+  firstColourWord: null,
+  secondColourWord: null,
 };
 
 describe("what a series tournament may be set up as", () => {
@@ -69,5 +75,23 @@ describe("what a series tournament may be set up as", () => {
 
   it("refuses a number of parts to win that the match cannot reach", () => {
     expect(seriesSetupProblem({ ...maryass, partsToWin: 4 })).toBe("partsToWinUnreachable");
+  });
+
+  it("takes a tournament that names its two sides", () => {
+    expect(
+      seriesSetupProblem({
+        ...chess,
+        hasColours: true,
+        firstColourWord: "أبيض",
+        secondColourWord: "أسود",
+      }),
+    ).toBeNull();
+  });
+
+  it("wants both words once the sides are named at all", () => {
+    expect(seriesSetupProblem({ ...chess, hasColours: true })).toBe("colourWords");
+    expect(seriesSetupProblem({ ...chess, hasColours: true, firstColourWord: "أبيض" })).toBe(
+      "colourWords",
+    );
   });
 });

@@ -39,6 +39,9 @@ export const GET = withRoute(
         partTarget: true,
         partWord: true,
         partsWord: true,
+        hasColours: true,
+        firstColourWord: true,
+        secondColourWord: true,
         minTeamSize: true,
         maxTeamSize: true,
         organisedByHomeVillage: true,
@@ -76,6 +79,9 @@ export const PATCH = withRoute(
       partTarget,
       partWord,
       partsWord,
+      hasColours,
+      firstColourWord,
+      secondColourWord,
       minTeamSize,
       maxTeamSize,
       organisedByHomeVillage,
@@ -120,6 +126,9 @@ export const PATCH = withRoute(
       partTarget?: number | null;
       partWord?: string | null;
       partsWord?: string | null;
+      hasColours?: boolean;
+      firstColourWord?: string | null;
+      secondColourWord?: string | null;
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
       organisedByHomeVillage?: boolean;
@@ -187,6 +196,9 @@ export const PATCH = withRoute(
       partTarget,
       partWord,
       partsWord,
+      hasColours,
+      firstColourWord,
+      secondColourWord,
     };
     if (Object.values(series).some((value) => value !== undefined)) {
       const wanted = { ...existing, ...given(series) };
