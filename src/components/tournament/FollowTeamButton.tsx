@@ -33,15 +33,18 @@ export default function FollowTeamButton({
   }, [teamId]);
 
   async function toggle() {
+    const wanted = !following;
+    setFollowing(wanted);
     setBusy(true);
     try {
       const res = await fetch(`/api/teams/${teamId}/follow`, {
-        method: following ? "DELETE" : "POST",
+        method: wanted ? "POST" : "DELETE",
       });
-      if (res.ok) {
-        setFollowing((v) => !v);
-        showToast(following ? words.unfollowed : words.followed);
-      }
+      if (!res.ok) throw new Error(texts.followFailed);
+      showToast(wanted ? words.followed : words.unfollowed);
+    } catch {
+      setFollowing(!wanted);
+      showToast(texts.followFailed, "error");
     } finally {
       setBusy(false);
     }

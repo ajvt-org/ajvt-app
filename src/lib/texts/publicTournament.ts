@@ -85,6 +85,7 @@ export const publicTournament = {
   playerCount: (count: number) => countedNoun(count, PLAYERS),
   captain: "القائد",
   teamDecidedLater: "يُحدد لاحقاً",
+  followFailed: "تعذّر تحديث المتابعة، حاول مرة أخرى",
   bye: "بلا خصم",
   byeNote: "يمرّ إلى الدور التالي",
   bracketRound: (round: number) => `الدور ${round}`,
