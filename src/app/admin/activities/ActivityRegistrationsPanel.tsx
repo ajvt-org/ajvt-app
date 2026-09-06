@@ -22,6 +22,7 @@ export default function ActivityRegistrationsPanel({
   activityId,
   registrations,
   members,
+  loadingMembers,
   teams,
   singles,
   actionLoading,
@@ -32,6 +33,7 @@ export default function ActivityRegistrationsPanel({
   activityId: string;
   registrations: Registration[];
   members: MemberOption[];
+  loadingMembers: boolean;
   teams: { id: string; name: string }[];
   singles: boolean;
   actionLoading: boolean;
@@ -66,6 +68,7 @@ export default function ActivityRegistrationsPanel({
       <AddMemberToActivityForm
         activityId={activityId}
         candidates={members}
+        loading={loadingMembers}
         registeredIds={registeredIds}
         actionLoading={actionLoading}
         onRegister={onRegister}
