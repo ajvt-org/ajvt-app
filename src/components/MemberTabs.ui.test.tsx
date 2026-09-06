@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import MemberTabs from "./MemberTabs";
 
+const noteReplacement = vi.fn();
+
 let pathname = "/home";
 let search = "";
 
@@ -9,6 +11,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
   useSearchParams: () => new URLSearchParams(search),
 }));
+
+vi.mock("@/lib/historyTrail", () => ({
+  appTrail: { noteReplacement: (url: string) => noteReplacement(url) },
+}));
+
+function press(link: HTMLAnchorElement, options: MouseEventInit = {}) {
+  link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, ...options }));
+}
 
 async function visit(nextPathname: string, nextSearch = "") {
   cleanup();
@@ -27,6 +37,7 @@ function tab(label: string): HTMLAnchorElement {
 describe("MemberTabs", () => {
   beforeEach(() => {
     sessionStorage.clear();
+    noteReplacement.mockClear();
     pathname = "/home";
     search = "";
   });
@@ -69,5 +80,33 @@ describe("MemberTabs", () => {
 
     expect(tab("الداعمون").getAttribute("href")).toBe("/leaderboard");
     expect(tab("ادعم").getAttribute("href")).toBe("/donate");
+  });
+
+  it("stands in the current entry's place rather than on top of it", async () => {
+    await visit("/home");
+
+    expect(tab("الداعمون").hasAttribute("href")).toBe(true);
+    press(tab("الداعمون"));
+
+    expect(noteReplacement).toHaveBeenCalledWith("/leaderboard");
+  });
+
+  it("tells the trail the screen it is restoring, not the tab root", async () => {
+    await visit("/activities/a1");
+    await visit("/leaderboard");
+    await waitFor(() => {
+      expect(tab("الأنشطة").getAttribute("href")).toBe("/activities/a1");
+    });
+
+    press(tab("الأنشطة"));
+
+    expect(noteReplacement).toHaveBeenCalledWith("/activities/a1");
+  });
+
+  it("leaves the trail alone for a click that asks for a new tab", async () => {
+    await visit("/home");
+    press(tab("الداعمون"), { metaKey: true });
+
+    expect(noteReplacement).not.toHaveBeenCalled();
   });
 });

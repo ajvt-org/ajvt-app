@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import Icon from "@/components/Icon";
 import { MEMBER_TABS, VISITOR_TABS, isTabActive, type Tab } from "@/lib/navigation";
+import { opensHere } from "@/lib/backNavigation";
+import { appTrail } from "@/lib/historyTrail";
 import { remember, tabTarget, type TabMemory } from "@/lib/tabMemory";
 
 const STORE = "ajvt-tab-memory";
@@ -49,10 +51,15 @@ function TabBar({ tabs, memory }: { tabs: Tab[]; memory: TabMemory }) {
       <div className="tab-bar-inner">
         {tabs.map((tab) => {
           const active = isTabActive(tab, pathname);
+          const target = tabTarget(tab, memory, pathname ?? "");
           return (
             <Link
               key={tab.href}
-              href={tabTarget(tab, memory, pathname ?? "")}
+              href={target}
+              replace
+              onClick={(event) => {
+                if (opensHere(event)) appTrail.noteReplacement(target);
+              }}
               aria-current={active ? "page" : undefined}
               className="tab-bar-item"
               style={{ color: active ? "var(--mint-700)" : "var(--text-muted)" }}
@@ -84,9 +91,6 @@ function RememberingTabBar({ tabs }: { tabs: Tab[] }) {
   return <TabBar tabs={tabs} memory={memory} />;
 }
 
-// The bar is fixed, so it would sit on top of the last thing on the page. The
-// spacer is an ordinary block of the same height in normal flow, which keeps
-// every page clear of it without any page having to know the bar exists.
 export default function MemberTabs({ signedIn = true }: { signedIn?: boolean }) {
   const tabs = signedIn ? MEMBER_TABS : VISITOR_TABS;
 
