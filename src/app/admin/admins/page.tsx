@@ -63,7 +63,7 @@ export default function AdminAccountsPage() {
 
   return (
     <div className="admin-page space-y-4">
-      <AdminToolHeader icon="users" title={adminAccounts.title} />
+      <AdminToolHeader href="/admin/admins" />
 
       <div className="space-y-2">
         {accounts.map((account) => (
