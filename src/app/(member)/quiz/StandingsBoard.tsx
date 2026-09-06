@@ -3,6 +3,7 @@
 import PlayerAvatar from "@/components/tournament/PlayerAvatar";
 import NumericRanges from "@/components/NumericRanges";
 import { countedNoun, POINTS } from "@/lib/arabicPlural";
+import { useNow } from "@/hooks/useNow";
 
 export interface BoardRow {
   rank: number;
@@ -17,18 +18,53 @@ export interface MyPlace {
   total: number;
 }
 
+function BlockTimer({ opensAt, closesAt }: { opensAt: string; closesAt: string }) {
+  const now = useNow(60_000);
+  const start = new Date(opensAt).getTime();
+  const end = new Date(closesAt).getTime();
+  const fill = Math.min(1, Math.max(0, (end - now) / Math.max(1, end - start)));
+  const urgent = fill < 0.2;
+
+  return (
+    <div
+      className="w-full rounded-full overflow-hidden"
+      style={{ height: 4, background: "var(--mint-100)" }}
+      role="progressbar"
+      aria-valuenow={Math.round(fill * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${Math.round(fill * 100)}%`,
+          background: urgent
+            ? "linear-gradient(90deg, var(--copper-500), var(--copper-600))"
+            : "var(--mint-500)",
+        }}
+      />
+    </div>
+  );
+}
+
 export default function StandingsBoard({
   title,
   rows,
   mine,
   meId,
   empty,
+  blockOpensAt,
+  blockClosesAt,
+  competitionState,
 }: {
   title: string;
   rows: BoardRow[];
   mine: MyPlace | null;
   meId: string | null;
   empty: string;
+  blockOpensAt?: string | null;
+  blockClosesAt?: string | null;
+  competitionState?: "before" | "open" | "closed" | "over" | null;
 }) {
   const listed = rows.some((r) => r.userId === meId);
   const podium = rows.length >= 3 ? [rows[1], rows[0], rows[2]] : [];
@@ -39,6 +75,13 @@ export default function StandingsBoard({
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
         {title}
       </p>
+
+      {blockOpensAt &&
+        blockClosesAt &&
+        competitionState !== "before" &&
+        competitionState !== "over" && (
+          <BlockTimer opensAt={blockOpensAt} closesAt={blockClosesAt} />
+        )}
 
       {podium.length === 3 && (
         <div className="flex items-end justify-center gap-3 pb-2" aria-label="المنصة">

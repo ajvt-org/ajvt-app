@@ -35,6 +35,8 @@ const standings: StandingsState = {
       blocks: 3,
       rows: [{ rank: 1, userId: "u2", name: "محمد", photoUrl: null, total: 30 }],
       mine: { rank: 4, total: 10 },
+      blockOpensAt: null,
+      blockClosesAt: null,
     },
     {
       id: "b2",
@@ -47,6 +49,8 @@ const standings: StandingsState = {
       blocks: 1,
       rows: [{ rank: 1, userId: "u1", name: "أنا", photoUrl: null, total: 90 }],
       mine: { rank: 1, total: 90 },
+      blockOpensAt: null,
+      blockClosesAt: null,
     },
   ],
 };
