@@ -235,6 +235,7 @@ export default function MatchesTab({
         <SetupWizard
           activityId={activityId}
           teams={teams.map((t) => ({ id: t.id, name: t.name }))}
+          entrant={entrant}
           playedCount={played.length}
           onDone={onChange}
           onClose={() => setShowWizard(false)}

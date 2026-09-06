@@ -3,6 +3,7 @@ import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-li
 import SetupWizard from "./SetupWizard";
 import { resetTournament, setupWizard as texts } from "@/lib/texts";
 import { bracketRoundLabel } from "@/lib/tournament";
+import type { EntrantKind } from "@/lib/entrant";
 
 const post = vi.fn();
 const showToast = vi.fn();
@@ -17,11 +18,12 @@ vi.mock("@/components/Toast", () => ({ useToast: () => showToast }));
 const teams = (n: number) =>
   Array.from({ length: n }, (_, i) => ({ id: `t${i + 1}`, name: `فريق ${i + 1}` }));
 
-function open(teamCount: number, playedCount = 0) {
+function open(teamCount: number, playedCount = 0, entrant: EntrantKind = "team") {
   return render(
     <SetupWizard
       activityId="a1"
       teams={teams(teamCount)}
+      entrant={entrant}
       playedCount={playedCount}
       onDone={() => {}}
       onClose={() => {}}
@@ -66,7 +68,27 @@ describe("the setup wizard", () => {
   it("refuses to run with fewer than two teams", () => {
     open(1);
 
-    expect(screen.getByText(texts.tooFewTeams)).toBeTruthy();
+    expect(screen.getByText(texts.entrant.team.tooFew)).toBeTruthy();
+  });
+
+  it("asks a singles tournament for players rather than teams", () => {
+    open(1, 0, "player");
+
+    expect(screen.getByText(texts.entrant.player.tooFew)).toBeTruthy();
+    expect(screen.queryByText(texts.entrant.team.tooFew)).toBeNull();
+  });
+
+  it("names the group sizes in players on a singles tournament", () => {
+    open(12, 0, "player");
+    fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));
+
+    const options = within(screen.getByLabelText(texts.groupCountLabel)).getAllByRole("option");
+    const labels = options.map((o) => o.textContent ?? "").filter(Boolean);
+
+    expect(labels).toEqual([
+      texts.entrant.player.groupOption(2, 6),
+      texts.entrant.player.groupOption(4, 3),
+    ]);
   });
 
   it("opens on the shape and cannot move on until one is chosen", () => {

@@ -25,7 +25,6 @@ export const setupWizard = {
 
   stepOf: (at: number, total: number) => `الخطوة ${at} من ${total}`,
 
-  tooFewTeams: "أضف فريقين على الأقل قبل إعداد البطولة",
   hasResults: (played: number) =>
     `سُجلت نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل لإعادة البطولة إلى فرقها، ثم أعد الإعداد من هنا`,
 
@@ -34,8 +33,6 @@ export const setupWizard = {
   groupsThenKnockout: "مجموعات ثم إقصاء",
   groupCountLabel: "عدد المجموعات",
   qualifierCountLabel: "عدد المتأهلين",
-  groupOption: (groupCount: number, groupSize: number) =>
-    `${groupCount} مجموعات، ${groupSize} فرق لكل مجموعة`,
   qualifierOption: (qualifierCount: number, perGroup: number) =>
     `${qualifierCount} متأهلاً، ${perGroup} من كل مجموعة`,
 
@@ -66,4 +63,17 @@ export const setupWizard = {
     "الأيام متتالية بلا راحة بينها، ويمكن إضافة أيام راحة من تبويب الأيام بعد الإنشاء",
 
   replaceWarning: "سيُحذف ما سبق من مجموعات ومباريات غير ملعوبة ويُستبدل بهذا الجدول",
+
+  entrant: {
+    team: {
+      tooFew: "أضف فريقين على الأقل قبل إعداد البطولة",
+      groupOption: (groupCount: number, groupSize: number) =>
+        `${groupCount} مجموعات، ${groupSize} فرق لكل مجموعة`,
+    },
+    player: {
+      tooFew: "أضف لاعبين اثنين على الأقل قبل إعداد البطولة",
+      groupOption: (groupCount: number, groupSize: number) =>
+        `${groupCount} مجموعات، ${groupSize} لاعبين لكل مجموعة`,
+    },
+  },
 } as const;

@@ -23,6 +23,7 @@ import {
   type WizardTeam,
 } from "@/lib/tournamentWizard";
 import { fromClubWallClock } from "@/lib/clubTime";
+import type { EntrantKind } from "@/lib/entrant";
 import ShapeStep from "./ShapeStep";
 import GroupsStep from "./GroupsStep";
 import ScheduleStep from "./ScheduleStep";
@@ -32,6 +33,7 @@ import DatesStep from "./DatesStep";
 interface SetupWizardProps {
   activityId: string;
   teams: WizardTeam[];
+  entrant: EntrantKind;
   playedCount: number;
   onDone: () => void;
   onClose: () => void;
@@ -40,6 +42,7 @@ interface SetupWizardProps {
 export default function SetupWizard({
   activityId,
   teams,
+  entrant,
   playedCount,
   onDone,
   onClose,
@@ -179,7 +182,7 @@ export default function SetupWizard({
               className="p-3 rounded-xl text-sm font-semibold"
               style={{ background: "#fee2e2", color: "#991b1b" }}
             >
-              <IconLabel name="warning">{blockerText(blocker)}</IconLabel>
+              <IconLabel name="warning">{blockerText(blocker, entrant)}</IconLabel>
             </p>
           ) : (
             <>
@@ -190,6 +193,7 @@ export default function SetupWizard({
               {step === "shape" && (
                 <ShapeStep
                   teamCount={teams.length}
+                  entrant={entrant}
                   format={state.format}
                   groupCount={state.groupCount}
                   qualifierCount={state.qualifierCount}
@@ -264,7 +268,10 @@ export default function SetupWizard({
   );
 }
 
-function blockerText(blocker: NonNullable<ReturnType<typeof wizardBlocker>>): string {
+function blockerText(
+  blocker: NonNullable<ReturnType<typeof wizardBlocker>>,
+  entrant: EntrantKind,
+): string {
   if (blocker.kind === "hasResults") return texts.hasResults(blocker.played);
-  return texts.tooFewTeams;
+  return texts.entrant[entrant].tooFew;
 }
