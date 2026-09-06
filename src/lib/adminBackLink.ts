@@ -1,4 +1,5 @@
 import { activityWorkspace, memberPage } from "./texts";
+import { withoutFrom } from "./backLink";
 import { safeNextPath } from "./utils";
 
 const MEMBERS = "/admin/dashboard";
@@ -25,15 +26,6 @@ function labelFor(href: string): string {
 export function adminBackLink(from: string | null | undefined): BackLink {
   const href = safeNextPath(from, MEMBERS);
   return { href, label: labelFor(href) };
-}
-
-function withoutFrom(path: string): string {
-  const query = path.indexOf("?");
-  if (query === -1) return path;
-  const params = new URLSearchParams(path.slice(query + 1));
-  params.delete("from");
-  const rest = params.toString();
-  return rest ? `${path.slice(0, query)}?${rest}` : path.slice(0, query);
 }
 
 export function memberCardHref(memberId: string, from: string): string {

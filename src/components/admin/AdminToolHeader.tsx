@@ -1,6 +1,7 @@
-import Link from "next/link";
-import Icon, { type IconName } from "@/components/Icon";
+import { type IconName } from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
+import AdminBackLink from "./AdminBackLink";
+import { adminTools } from "@/lib/texts";
 
 export default function AdminToolHeader({
   icon,
@@ -22,14 +23,7 @@ export default function AdminToolHeader({
             {note}
           </span>
         )}
-        <Link
-          href="/admin/tools"
-          className="text-xs font-bold flex items-center gap-1"
-          style={{ color: "var(--mint-700)" }}
-        >
-          الأدوات
-          <Icon name="chevronLeft" size={12} />
-        </Link>
+        <AdminBackLink href="/admin/tools">{adminTools.backToTools}</AdminBackLink>
       </div>
     </div>
   );

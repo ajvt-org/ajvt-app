@@ -1,10 +1,8 @@
 "use client";
 
 import { Suspense, use, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginPathWithNext } from "@/lib/utils";
-import ArrowLabel from "@/components/ArrowLabel";
 import AdminBackLink from "@/components/admin/AdminBackLink";
 import ActivityFinance from "./ActivityFinance";
 import ActivityHeaderPhoto from "./ActivityHeaderPhoto";
@@ -78,13 +76,7 @@ function AdminActivityPageInner({ id }: { id: string }) {
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           {texts.notFound}
         </p>
-        <Link
-          href="/admin/activities"
-          className="text-sm font-bold"
-          style={{ color: "var(--mint-600)" }}
-        >
-          <ArrowLabel direction="back">{texts.backToIndex}</ArrowLabel>
-        </Link>
+        <AdminBackLink href="/admin/activities">{texts.backToIndex}</AdminBackLink>
       </div>
     );
   }
