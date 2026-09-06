@@ -63,7 +63,7 @@ export default function ActivityPicker({
           className="text-xs font-bold shrink-0"
           style={{ color: "var(--mint-700)" }}
         >
-          <IconLabel name="chevronLeft">{texts.back}</IconLabel>
+          <IconLabel name="chevronRight">{texts.back}</IconLabel>
         </button>
       </div>
 
