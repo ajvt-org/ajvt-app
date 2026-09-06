@@ -444,3 +444,31 @@ describe("MemberImportDialog, what gets sent", () => {
     );
   });
 });
+
+describe("MemberImportDialog, the way back", () => {
+  it("has no way back before there is a step to go back to", () => {
+    mockPreview(preview());
+    setup();
+
+    expect(screen.queryByRole("button", { name: memberImportDialog.back })).toBeNull();
+  });
+
+  it("carries one way back on the review step, in the header", async () => {
+    mockPreview(preview());
+    setup();
+    await upload();
+
+    expect(screen.getAllByRole("button", { name: memberImportDialog.back })).toHaveLength(1);
+  });
+
+  it("returns to the upload step rather than closing the dialog", async () => {
+    mockPreview(preview());
+    const props = setup();
+    await upload();
+
+    await userEvent.click(screen.getByRole("button", { name: memberImportDialog.back }));
+
+    await waitFor(() => expect(screen.getByText(memberImportDialog.templateNote)).toBeDefined());
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
+});

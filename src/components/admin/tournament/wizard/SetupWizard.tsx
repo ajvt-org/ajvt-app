@@ -168,7 +168,11 @@ export default function SetupWizard({
         className="w-full max-w-md rounded-t-3xl md:rounded-2xl overflow-y-auto"
         style={{ background: "var(--mint-50)", maxHeight: "92svh", direction: "rtl" }}
       >
-        <DialogHeader title={texts.title} onClose={onClose} />
+        <DialogHeader
+          title={texts.title}
+          onBack={previousStep(step, state.format) ? goBack : undefined}
+          onClose={onClose}
+        />
         <div className="p-4 space-y-4">
           {blocker ? (
             <p
@@ -233,11 +237,6 @@ export default function SetupWizard({
               )}
 
               <div className="flex items-center gap-2">
-                {previousStep(step, state.format) && (
-                  <button type="button" onClick={goBack} className="btn btn-ghost text-sm">
-                    {texts.back}
-                  </button>
-                )}
                 {last ? (
                   <button
                     type="button"

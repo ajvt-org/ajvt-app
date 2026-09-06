@@ -162,6 +162,7 @@ export default function MemberImportDialog({ ageGroups, onImported, onClose }: P
       >
         <DialogHeader
           title={<IconLabel name="upload">{memberImportDialog.stepTitle(step)}</IconLabel>}
+          onBack={preview && !outcome ? back : undefined}
           onClose={onClose}
         />
 
@@ -185,7 +186,6 @@ export default function MemberImportDialog({ ageGroups, onImported, onClose }: P
               onSelectMissing={() => setRows(selectMissingAgeGroup)}
               onClear={() => setRows(clearSelection)}
               onFill={(change) => setRows((all) => fillValues(all, change, context))}
-              onBack={back}
               onImport={send}
             />
           ) : (
