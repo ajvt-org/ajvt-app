@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
+import { anySideIs } from "@/lib/matchSides";
 import { entrantWording, tournament } from "@/lib/messages";
 import { entrantOfActivity } from "@/lib/entrantServer";
 import { captainIsOnTheRoster } from "@/lib/teamCaptainServer";
@@ -48,7 +49,7 @@ export const PATCH = withRoute(
         const hasMatches = await prisma.match.findFirst({
           where: {
             activityId: existing.activityId,
-            OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
+            ...anySideIs([teamId]),
           },
           select: { id: true },
         });

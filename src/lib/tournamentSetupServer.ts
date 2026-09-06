@@ -9,6 +9,7 @@ import { knockoutRoundSizes } from "./knockoutSlots";
 import { planTournament } from "./tournamentPlan";
 import { isValidGroupShape, knockoutRefusal } from "./tournamentShape";
 import { setupLabels } from "./texts/setupWizard";
+import { sideIdData } from "./matchSides";
 
 export interface SetupGroup {
   name: string;
@@ -63,6 +64,12 @@ export async function setUpTournament(activityId: string, input: SetupInput): Pr
   const words = entrantWording(await entrantOfActivity(prisma, activityId));
   if (teams.length < 2) throw new ValidationError(words.setupNeedsTwoEntrants);
 
+  const activity = await prisma.activity.findUniqueOrThrow({
+    where: { id: activityId },
+    select: { matchShape: true },
+  });
+  const shape = activity.matchShape;
+
   await assertNothingPlayed(activityId);
   checkShape(input, teams.length, words);
 
@@ -114,8 +121,7 @@ export async function setUpTournament(activityId: string, input: SetupInput): Pr
       await tx.match.create({
         data: {
           activityId,
-          homeTeamId: fixture.homeTeamId,
-          awayTeamId: fixture.awayTeamId,
+          ...sideIdData(shape, fixture.firstTeamId, fixture.secondTeamId),
           round: setupLabels.groupRound(input.groups[fixture.groupIndex].name, fixture.round),
           order: order++,
           venue: input.venue,

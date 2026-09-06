@@ -7,8 +7,8 @@ import { matchDisplay } from "@/lib/texts";
 function match(): DecidedMatch {
   return {
     id: "m1",
-    homeTeam: { id: "t1", name: "الصقور", logo: null },
-    awayTeam: { id: "t2", name: "النسور", logo: null },
+    firstTeam: { id: "t1", name: "الصقور", logo: null },
+    secondTeam: { id: "t2", name: "النسور", logo: null },
     matchDate: new Date("2026-08-20T16:00:00.000Z"),
     round: "النهائي",
     venue: "ملعب القرية",

@@ -124,7 +124,7 @@ describe("a fixture whose teams are not known yet", () => {
   it("takes both teams at once and becomes a match", async () => {
     const { placeholder, home, away } = await tournamentWithPlaceholder();
 
-    const res = await save(placeholder.id, { homeTeamId: home.id, awayTeamId: away.id });
+    const res = await save(placeholder.id, { firstTeamId: home.id, secondTeamId: away.id });
 
     expect(res.status).toBe(200);
     expect(await stored(placeholder.id)).toMatchObject({
@@ -136,7 +136,7 @@ describe("a fixture whose teams are not known yet", () => {
   it("refuses one team on its own", async () => {
     const { placeholder, home } = await tournamentWithPlaceholder();
 
-    const res = await save(placeholder.id, { homeTeamId: home.id });
+    const res = await save(placeholder.id, { firstTeamId: home.id });
 
     expect(res.status).toBe(400);
     expect(await stored(placeholder.id)).toMatchObject({ homeTeamId: null });
@@ -144,7 +144,7 @@ describe("a fixture whose teams are not known yet", () => {
 
   it("accepts a result once the teams are set", async () => {
     const { placeholder, home, away } = await tournamentWithPlaceholder();
-    await save(placeholder.id, { homeTeamId: home.id, awayTeamId: away.id });
+    await save(placeholder.id, { firstTeamId: home.id, secondTeamId: away.id });
 
     const res = await save(placeholder.id, { homeScore: 2, awayScore: 1 });
 

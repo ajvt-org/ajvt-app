@@ -1,12 +1,17 @@
-import type { Prisma } from "@prisma/client";
+import type { MatchShape, Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { accountNamed, accountPerson } from "./person";
 import { settleMvpVotes } from "./mvpVoteServer";
 import { DEFAULT_MVP_VOTE_MINUTES } from "./mvpVote";
+import { matchSideTeams } from "./matchSides";
+
+const TEAM_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
 export const MATCH_INCLUDE = {
-  homeTeam: { select: { id: true, name: true, logo: true } },
-  awayTeam: { select: { id: true, name: true, logo: true } },
+  homeTeam: TEAM_SIDE,
+  awayTeam: TEAM_SIDE,
+  sideATeam: TEAM_SIDE,
+  sideBTeam: TEAM_SIDE,
   manOfTheMatchUser: { select: { fullName: true, photo: true } },
   goals: {
     orderBy: { minute: "asc" },
@@ -62,9 +67,12 @@ export const MATCH_INCLUDE = {
 
 export type LoadedMatch = Prisma.MatchGetPayload<{ include: typeof MATCH_INCLUDE }>;
 
-export function flatMatch(match: LoadedMatch) {
+export function flatMatch(match: LoadedMatch, matchShape: MatchShape) {
+  const sides = matchSideTeams(match, matchShape);
   return {
     ...match,
+    firstTeam: sides.first,
+    secondTeam: sides.second,
     manOfTheMatch: match.manOfTheMatchUser
       ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
       : null,
@@ -97,12 +105,18 @@ export async function listMatches(activityId: string) {
 
   const [matches, activity] = await Promise.all([
     read(),
-    prisma.activity.findUnique({ where: { id: activityId }, select: { mvpVoteMinutes: true } }),
+    prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { mvpVoteMinutes: true, matchShape: true },
+    }),
   ]);
   const applied = await settleMvpVotes(matches);
+  const matchShape = activity?.matchShape ?? "FOOTBALL";
 
   return {
-    matches: (applied.size > 0 ? await read() : matches).map(flatMatch),
+    matches: (applied.size > 0 ? await read() : matches).map((match) =>
+      flatMatch(match, matchShape),
+    ),
     mvpVoteMinutes: activity?.mvpVoteMinutes ?? DEFAULT_MVP_VOTE_MINUTES,
   };
 }

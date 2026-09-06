@@ -32,13 +32,13 @@ function match(id: string, home: string, away: string, iso: string) {
     homePenalties: null,
     awayPenalties: null,
     forfeitWinnerTeamId: null,
-    homeTeam: { id: `${home}-id`, name: home },
-    awayTeam: { id: `${away}-id`, name: away },
+    firstTeam: { id: `${home}-id`, name: home },
+    secondTeam: { id: `${away}-id`, name: away },
   };
 }
 
 function waiting(id: string, iso: string) {
-  return { ...match(id, "x", "y", iso), homeTeam: null, awayTeam: null };
+  return { ...match(id, "x", "y", iso), firstTeam: null, secondTeam: null };
 }
 
 const PAYLOAD: DaysPayload = {

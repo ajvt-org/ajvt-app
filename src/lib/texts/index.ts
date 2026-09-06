@@ -40,7 +40,7 @@ export { expenseDestinations, expenseForm, expenseProofs, expensesPage } from ".
 export { financeReport } from "./financeReport";
 export { filterSheet } from "./filterSheet";
 export { landingActivities, landingHero } from "./landing";
-export { matchAdmin, standingsAdmin, statsAdmin } from "./matchAdmin";
+export { matchAdmin, sidePlaceholders, standingsAdmin, statsAdmin } from "./matchAdmin";
 export { memberActivities } from "./memberActivities";
 export { memberCard } from "./memberCard";
 export { manualAdd } from "./manualAdd";

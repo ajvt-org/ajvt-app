@@ -51,8 +51,8 @@ export default function TournamentPanel({
     () =>
       data.matches.map((match) => ({
         ...match,
-        homeTeam: namedEntrant(match.homeTeam, identities),
-        awayTeam: namedEntrant(match.awayTeam, identities),
+        firstTeam: namedEntrant(match.firstTeam, identities),
+        secondTeam: namedEntrant(match.secondTeam, identities),
       })),
     [data.matches, identities],
   );

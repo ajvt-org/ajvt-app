@@ -25,7 +25,8 @@ const team = (id: string, groupId: string | null = null): Team => ({
 
 const teams = [team("t1", "g1"), team("t2", "g1"), team("t3", "g2")];
 
-const show = () => render(<NewMatchForm activityId="a1" teams={teams} onCreated={vi.fn()} />);
+const show = () =>
+  render(<NewMatchForm activityId="a1" teams={teams} football onCreated={vi.fn()} />);
 
 beforeEach(() => {
   post.mockReset();
@@ -80,7 +81,7 @@ describe("NewMatchForm", () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
     expect(post.mock.calls[0][0]).toBe("/api/admin/activities/a1/matches");
-    expect(post.mock.calls[0][1]).toMatchObject({ homeTeamId: "t1", awayTeamId: "t2" });
+    expect(post.mock.calls[0][1]).toMatchObject({ firstTeamId: "t1", secondTeamId: "t2" });
     await waitFor(() => expect((home as HTMLSelectElement).value).toBe(""));
   });
 

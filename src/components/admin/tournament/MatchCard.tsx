@@ -65,13 +65,13 @@ export default function MatchCard({
   const resultAllowed = resultEntryAllowed(played, match.matchDate, new Date());
   const football = matchShape === "FOOTBALL";
   const priorMeetings = decided
-    ? getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id)
+    ? getHeadToHead(allMatches, match.firstTeam.id, match.secondTeam.id, match.id)
     : [];
   const events =
     decided && football
       ? matchEventRows({
           ...match,
-          homeTeamId: match.homeTeam.id,
+          homeTeamId: match.firstTeam.id,
           manOfTheMatchTeam: memberTeamName(match.manOfTheMatch?.id, teams),
         })
       : [];
@@ -94,14 +94,14 @@ export default function MatchCard({
       <div className="mt-2">
         <MatchTeams
           home={{
-            name: teamName(match.homeTeam),
-            logo: match.homeTeam?.logo,
-            photo: match.homeTeam?.photo,
+            name: teamName(match.firstTeam),
+            logo: match.firstTeam?.logo,
+            photo: match.firstTeam?.photo,
           }}
           away={{
-            name: teamName(match.awayTeam),
-            logo: match.awayTeam?.logo,
-            photo: match.awayTeam?.photo,
+            name: teamName(match.secondTeam),
+            logo: match.secondTeam?.logo,
+            photo: match.secondTeam?.photo,
           }}
           score={played ? { home: match.homeScore, away: match.awayScore } : null}
           layout="stacked"
@@ -133,8 +133,8 @@ export default function MatchCard({
         <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
           <MatchEvents rows={events} />
           <MatchTimeline
-            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id })}
-            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+            entries={matchTimeline({ ...match, homeTeamId: match.firstTeam.id })}
+            teams={{ home: match.firstTeam.name, away: match.secondTeam.name }}
           />
         </div>
       )}
@@ -182,7 +182,13 @@ export default function MatchCard({
         />
       )}
       {showDetails && (
-        <MatchDetailsForm match={match} teams={teams} entrant={entrant} onChange={onChange} />
+        <MatchDetailsForm
+          match={match}
+          teams={teams}
+          entrant={entrant}
+          football={football}
+          onChange={onChange}
+        />
       )}
     </div>
   );

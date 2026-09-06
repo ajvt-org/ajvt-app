@@ -60,9 +60,9 @@ export default function StandingsTab({
       .forEach((m) => {
         rows.push([
           m.round || "",
-          m.homeTeam.name,
+          m.firstTeam.name,
           `${m.homeScore} - ${m.awayScore}`,
-          m.awayTeam.name,
+          m.secondTeam.name,
           m.venue || "",
           m.matchDate ? formatMatchDateTime(m.matchDate) : "",
         ]);

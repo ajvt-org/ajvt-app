@@ -16,8 +16,8 @@ export interface Fixture {
   venue: string | null;
   status: string;
   isKnockout: boolean;
-  homeTeam: FixtureTeam;
-  awayTeam: FixtureTeam;
+  firstTeam: FixtureTeam;
+  secondTeam: FixtureTeam;
   homeScore: number | null;
   awayScore: number | null;
   homePenalties: number | null;

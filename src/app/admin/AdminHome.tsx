@@ -24,8 +24,8 @@ export interface HomeMatch {
   homeScore: number | null;
   awayScore: number | null;
   activity: { id: string; title: string };
-  homeTeam: { name: string } | null;
-  awayTeam: { name: string } | null;
+  firstTeam: { name: string } | null;
+  secondTeam: { name: string } | null;
 }
 
 export interface HomeSummary {
@@ -132,13 +132,13 @@ export default function AdminHome() {
                 style={{ color: "var(--text-main)" }}
               >
                 <span className="min-w-0 truncate font-semibold">
-                  <bdi>{teamName(m.homeTeam)}</bdi>{" "}
+                  <bdi>{teamName(m.firstTeam)}</bdi>{" "}
                   {m.status === "PLAYED" ? (
                     <Scoreline home={m.homeScore} away={m.awayScore} />
                   ) : (
                     <span>×</span>
                   )}{" "}
-                  <bdi>{teamName(m.awayTeam)}</bdi>
+                  <bdi>{teamName(m.secondTeam)}</bdi>
                 </span>
                 <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>
                   {m.activity.title}

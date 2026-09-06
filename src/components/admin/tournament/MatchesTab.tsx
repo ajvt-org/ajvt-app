@@ -6,6 +6,7 @@ import { matchesState } from "./matchesState";
 import MatchCard from "./MatchCard";
 import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
+import { isFootball } from "@/lib/matchShape";
 import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
 import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
@@ -220,7 +221,12 @@ export default function MatchesTab({
         />
       )}
 
-      <NewMatchForm activityId={activityId} teams={teams} onCreated={onChange} />
+      <NewMatchForm
+        activityId={activityId}
+        teams={teams}
+        football={isFootball(matchShape)}
+        onCreated={onChange}
+      />
 
       {showWizard && (
         <SetupWizard

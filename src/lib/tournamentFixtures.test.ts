@@ -10,8 +10,8 @@ function groupsOf(teamCount: number, groupCount: number): GroupEntry[] {
   }));
 }
 
-function pairKey(f: { homeTeamId: string; awayTeamId: string }): string {
-  return [f.homeTeamId, f.awayTeamId].sort().join("|");
+function pairKey(f: { firstTeamId: string; secondTeamId: string }): string {
+  return [f.firstTeamId, f.secondTeamId].sort().join("|");
 }
 
 describe("groupRoundRobin", () => {
@@ -23,8 +23,8 @@ describe("groupRoundRobin", () => {
     expect(new Set(fixtures.map(pairKey)).size).toBe(fixtures.length);
     for (const f of fixtures) {
       const group = groups[f.groupIndex];
-      expect(group.teamIds).toContain(f.homeTeamId);
-      expect(group.teamIds).toContain(f.awayTeamId);
+      expect(group.teamIds).toContain(f.firstTeamId);
+      expect(group.teamIds).toContain(f.secondTeamId);
     }
   });
 

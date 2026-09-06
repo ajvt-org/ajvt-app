@@ -26,7 +26,7 @@ export default function MvpVoteAdmin({
     );
   }
 
-  const roster = [match.homeTeam.id, match.awayTeam.id].flatMap(
+  const roster = [match.firstTeam.id, match.secondTeam.id].flatMap(
     (id) => teams.find((t) => t.id === id)?.members.map((m) => m.member) || [],
   );
 

@@ -37,14 +37,14 @@ export default function ResultForm({
   const uid = useId();
   const football = isFootball(matchShape);
   const banned = new Set(suspendedIds);
-  const sides = [match.homeTeam, match.awayTeam];
+  const sides = [match.firstTeam, match.secondTeam];
 
   const rosterOf = (teamId: string) =>
     (teams.find((t) => t.id === teamId)?.members.map((m) => m.member) || []).filter(
       (m) => !banned.has(m.id),
     );
   const otherTeam = (teamId: string) =>
-    teamId === match.homeTeam.id ? match.awayTeam.id : match.homeTeam.id;
+    teamId === match.firstTeam.id ? match.secondTeam.id : match.firstTeam.id;
   const scorerRoster = (teamId: string, kind: GoalKind) =>
     rosterOf(kind === "OWN_GOAL" ? otherTeam(teamId) : teamId);
   const nameOf = (userId: string | null) => {
@@ -55,7 +55,7 @@ export default function ResultForm({
     }
     return texts.unknownScorer;
   };
-  const suspendedPresent = [match.homeTeam.id, match.awayTeam.id]
+  const suspendedPresent = [match.firstTeam.id, match.secondTeam.id]
     .flatMap((id) => teams.find((t) => t.id === id)?.members.map((m) => m.member) || [])
     .filter((m) => banned.has(m.id));
 
@@ -85,25 +85,25 @@ export default function ResultForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const played = playedScore(goals, match.homeTeam.id);
+  const played = playedScore(goals, match.firstTeam.id);
   const awarded = forfeitWinnerTeamId
-    ? forfeitScore(played, forfeitWinnerTeamId, match.homeTeam.id)
+    ? forfeitScore(played, forfeitWinnerTeamId, match.firstTeam.id)
     : played;
   const hs = awarded.home;
   const as = awarded.away;
 
-  const extraAllowed = extraTimeAllowed(match.isKnockout, goals, match.homeTeam.id);
+  const extraAllowed = extraTimeAllowed(match.isKnockout, goals, match.firstTeam.id);
   const showExtra = hasExtraTime(goals) || (extraAllowed && extraOpen);
   const extraBlocked = hasExtraTime(goals) && !extraAllowed;
 
-  const kicksOk = kicksAllowed(match.isKnockout, goals, match.homeTeam.id);
+  const kicksOk = kicksAllowed(match.isKnockout, goals, match.firstTeam.id);
   const showKicks = kicks.length > 0 || kicksOk;
   const kicksBlocked = kicks.length > 0 && !kicksOk;
   const stale = extraBlocked || kicksBlocked;
 
   const kickTally = {
-    home: kicks.filter((k) => k.teamId === match.homeTeam.id && k.scored).length,
-    away: kicks.filter((k) => k.teamId === match.awayTeam.id && k.scored).length,
+    home: kicks.filter((k) => k.teamId === match.firstTeam.id && k.scored).length,
+    away: kicks.filter((k) => k.teamId === match.secondTeam.id && k.scored).length,
   };
 
   async function save(e: React.SubmitEvent<HTMLFormElement>) {
@@ -157,8 +157,8 @@ export default function ResultForm({
         style={{ color: "var(--mint-700)" }}
         aria-live="polite"
       >
-        <bdi>{match.homeTeam.name}</bdi> <Scoreline home={hs} away={as} />{" "}
-        <bdi>{match.awayTeam.name}</bdi>
+        <bdi>{match.firstTeam.name}</bdi> <Scoreline home={hs} away={as} />{" "}
+        <bdi>{match.secondTeam.name}</bdi>
       </p>
 
       {suspendedPresent.length > 0 && (
@@ -173,7 +173,7 @@ export default function ResultForm({
 
       <ForfeitToggle
         sides={sides}
-        homeTeamId={match.homeTeam.id}
+        homeTeamId={match.firstTeam.id}
         scored={played}
         winnerTeamId={forfeitWinnerTeamId}
         onChange={setForfeitWinnerTeamId}
@@ -275,7 +275,7 @@ export default function ResultForm({
               turnTeamId={
                 kicks.length === 0
                   ? null
-                  : nextKickTeamId(kicks, sides[0].id, match.homeTeam.id, match.awayTeam.id)
+                  : nextKickTeamId(kicks, sides[0].id, match.firstTeam.id, match.secondTeam.id)
               }
               rosterOf={rosterOf}
               onAdd={(k) => setKicks((p) => [...p, k])}
@@ -303,7 +303,7 @@ export default function ResultForm({
           className="input"
         >
           <option value="">{texts.motmNone}</option>
-          {[...rosterOf(match.homeTeam.id), ...rosterOf(match.awayTeam.id)].map((m) => (
+          {[...rosterOf(match.firstTeam.id), ...rosterOf(match.secondTeam.id)].map((m) => (
             <option key={m.id} value={m.id}>
               {m.fullName}
             </option>
