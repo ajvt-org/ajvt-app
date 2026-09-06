@@ -6,7 +6,8 @@ import { squadOf, teamIsFull } from "@/lib/squadSize";
 import { logAction, auditContext } from "@/lib/audit";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "@/app/api/teams/[teamId]/join/schema";
-import { members, tournament } from "@/lib/messages";
+import { entrantWording, members, tournament } from "@/lib/messages";
+import { entrantOf } from "@/lib/entrantServer";
 import { nameOf } from "@/lib/person";
 import { currentMembership } from "@/lib/currentMembershipServer";
 
@@ -29,8 +30,9 @@ export const POST = withRoute(
     }
 
     const squad = squadOf(team.activity);
+    const words = entrantWording(entrantOf(team.activity));
     if (teamIsFull(team._count.members, squad)) {
-      return NextResponse.json({ error: tournament.teamFull(squad.max) }, { status: 409 });
+      return NextResponse.json({ error: words.entrantFull(squad.max) }, { status: 409 });
     }
 
     const membership = await currentMembership(prisma, userId);
@@ -54,7 +56,7 @@ export const POST = withRoute(
     });
     if (existingMembership) {
       return NextResponse.json(
-        { error: tournament.playerInAnotherTeam(existingMembership.team.name) },
+        { error: words.memberAlreadyEntered(existingMembership.team.name) },
         { status: 409 },
       );
     }

@@ -7,7 +7,8 @@ import { normalizePlayerCount } from "@/lib/squadSize";
 import { PLAYED_MATCH } from "@/lib/activityMatches";
 import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
-import { activities, tournament } from "@/lib/messages";
+import { activities, entrantWording, tournament } from "@/lib/messages";
+import { entrantOf } from "@/lib/entrantServer";
 import type { MatchShape, TournamentFormat } from "@prisma/client";
 
 export const GET = withRoute(
@@ -130,7 +131,10 @@ export const PATCH = withRoute(
       const moved =
         nextMinTeamSize !== existing.minTeamSize || nextMaxTeamSize !== existing.maxTeamSize;
       if (moved && (await playedCount()) > 0) {
-        return NextResponse.json({ error: tournament.teamSizeLocked }, { status: 409 });
+        return NextResponse.json(
+          { error: entrantWording(entrantOf(existing)).squadSizeLocked },
+          { status: 409 },
+        );
       }
       if (minTeamSize !== undefined) data.minTeamSize = nextMinTeamSize;
       if (maxTeamSize !== undefined) data.maxTeamSize = nextMaxTeamSize;

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireTeamAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
-import { tournament } from "@/lib/messages";
+import { entrantWording, tournament } from "@/lib/messages";
+import { entrantOfActivity } from "@/lib/entrantServer";
 import { captainIsOnTheRoster } from "@/lib/teamCaptainServer";
 
 export const PATCH = withRoute(
@@ -17,6 +18,7 @@ export const PATCH = withRoute(
     if (!existing) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
+    const words = entrantWording(await entrantOfActivity(prisma, existing.activityId));
 
     const data: {
       name?: string;
@@ -28,9 +30,9 @@ export const PATCH = withRoute(
 
     if (name !== undefined) {
       if (!name.trim())
-        return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
+        return NextResponse.json({ error: words.entrantNameRequired }, { status: 400 });
       if (name.trim().length > 40)
-        return NextResponse.json({ error: tournament.teamNameTooLong }, { status: 400 });
+        return NextResponse.json({ error: words.entrantNameTooLong }, { status: 400 });
       data.name = name.trim();
     }
     if (groupId !== undefined) {
@@ -68,7 +70,7 @@ export const PATCH = withRoute(
     if (captainUserId !== undefined) {
       const nextCaptain = captainUserId || null;
       if (nextCaptain && !(await captainIsOnTheRoster(prisma, teamId, nextCaptain))) {
-        return NextResponse.json({ error: tournament.captainNotInTeam }, { status: 400 });
+        return NextResponse.json({ error: words.captainNotInEntrant }, { status: 400 });
       }
       data.captainUserId = nextCaptain;
     }

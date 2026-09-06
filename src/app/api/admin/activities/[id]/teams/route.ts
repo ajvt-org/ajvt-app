@@ -5,7 +5,8 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { placeholderTeamName, squadIsSet, squadOf } from "@/lib/squadSize";
 import { nameOf } from "@/lib/person";
-import { activities, tournament } from "@/lib/messages";
+import { activities, entrantWording, tournament } from "@/lib/messages";
+import { entrantOf } from "@/lib/entrantServer";
 
 export const GET = withRoute(
   "GET /api/admin/activities/[id]/teams",
@@ -63,10 +64,6 @@ export const POST = withRoute(
     const session = await requireActivityAccess(id);
     const { name, groupId, logo } = await req.json();
 
-    if (name?.trim() && name.trim().length > 40) {
-      return NextResponse.json({ error: tournament.teamNameTooLong }, { status: 400 });
-    }
-
     const activity = await prisma.activity.findUnique({
       where: { id },
       select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
@@ -74,8 +71,13 @@ export const POST = withRoute(
     if (!activity?.isTournament) {
       return NextResponse.json({ error: activities.notATournament }, { status: 400 });
     }
+    const words = entrantWording(entrantOf(activity));
+
+    if (name?.trim() && name.trim().length > 40) {
+      return NextResponse.json({ error: words.entrantNameTooLong }, { status: 400 });
+    }
     if (!name?.trim() && !squadIsSet(squadOf(activity))) {
-      return NextResponse.json({ error: tournament.teamNameRequired }, { status: 400 });
+      return NextResponse.json({ error: words.entrantNameRequired }, { status: 400 });
     }
 
     if (groupId) {

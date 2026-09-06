@@ -4,7 +4,8 @@ import { requireGroupAccess } from "@/lib/activityAccessServer";
 import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { ConflictError } from "@/lib/errors";
-import { tournament } from "@/lib/messages";
+import { entrantWording, tournament } from "@/lib/messages";
+import { entrantOfGroup } from "@/lib/entrantServer";
 
 export const PATCH = withRoute(
   "PATCH /api/admin/groups/[groupId]",
@@ -26,7 +27,10 @@ export const PATCH = withRoute(
       } else {
         const capacityValue = Number(capacity);
         if (!Number.isInteger(capacityValue) || capacityValue < 2 || capacityValue > 64) {
-          return NextResponse.json({ error: tournament.targetTeamsRange }, { status: 400 });
+          return NextResponse.json(
+            { error: entrantWording(await entrantOfGroup(prisma, groupId)).targetEntrantsRange },
+            { status: 400 },
+          );
         }
         data.capacity = capacityValue;
       }

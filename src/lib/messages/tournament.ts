@@ -1,50 +1,33 @@
 import { resetTournament } from "../texts/activityDetail";
 
-function squadRange(min: number | null, max: number | null): string {
-  if (min !== null && max !== null && min !== max) return `${min} إلى ${max}`;
-  return String(min ?? max ?? 0);
-}
-
 export const tournament = {
   teamNotFound: "الفريق غير موجود",
-  teamNameRequired: "اسم الفريق مطلوب",
-  teamNameTooLong: "اسم الفريق طويل جداً (40 حرفاً كحد أقصى)",
   groupNotFound: "المجموعة غير موجودة",
   groupNameRequired: "اسم المجموعة مطلوب",
   groupNameTooLong: "اسم المجموعة طويل جداً (40 حرفاً كحد أقصى)",
   groupHasMatches:
     "لا يمكن حذف مجموعة بعد جدولة المباريات، أعد إعداد البطولة إن أردت تغيير المجموعات",
-  targetTeamsRange: "عدد الفرق المستهدف يجب أن يكون بين 2 و64",
   matchNotFound: "المباراة غير موجودة",
   bookingNotFound: "البطاقة غير موجودة",
   minuteInvalid: "الدقيقة يجب أن تكون رقماً صحيحاً بين 1 و130",
   teamNotInMatch: "الفريق لا ينتمي إلى هذه المباراة",
   playerNotInTeam: "اللاعب لا ينتمي إلى هذا الفريق",
-  captainNotInTeam: "القائد يجب أن يكون أحد لاعبي الفريق",
   joinNeedsMembership: "يجب أن تكون العضوية مقبولة أولاً",
   joinNeedsRegistration: "يجب أن يكون تسجيلك في هذا النشاط مقبولاً أولاً",
-  teamChoiceLocked: "لقد تم تأكيد اختيارك للفريق، لا يمكن تغييره",
-  teamFull: (teamSize: number | null) => `هذا الفريق مكتمل — الحد الأقصى ${teamSize} لاعبين`,
   playerRejected: "لا يمكن إضافة لاعب طلبه مرفوض",
   playerNotRegistered: "هذا العضو غير مسجل في هذه البطولة",
-  playerInAnotherTeam: (teamName: string) =>
-    `هذا العضو منضم بالفعل إلى فريق "${teamName}" في هذه البطولة`,
-  teamAgainstItself: "لا يمكن أن يلعب الفريق ضد نفسه",
-  bothTeamsRequired: "يجب اختيار الفريقين",
   roundNameTooLong: "اسم الجولة طويل جداً (40 حرفاً كحد أقصى)",
   venueNameTooLong: "اسم الملعب طويل جداً (60 حرفاً كحد أقصى)",
   leaguePairingAcrossGroups:
     "لا يمكن إنشاء مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
   mvpVoteExists: "يوجد تصويت لهذه المباراة بالفعل — احذفه أولاً لإعادة الإنشاء",
   mvpCandidateOutsideMatch: "كل المرشحين يجب أن ينتموا إلى أحد الفريقين المتنافسين",
-  teamsNotInTournament: "الفريقان يجب أن ينتميا إلى هذه البطولة",
   noVoteForMatch: "لا يوجد تصويت لهذه المباراة",
   voteNeedsResult: "سجّل نتيجة المباراة قبل فتح التصويت",
   voteOver: "انتهت مدة التصويت",
   voteNothingToChange: "لا شيء لتغييره في التصويت",
   formatLocked: "لا يمكن تغيير نظام البطولة بعد إنشاء المباريات",
   groupsNotInKnockout: "هذه بطولة خروج المغلوب — لا يمكن إنشاء مجموعات فيها",
-  teamSizeLocked: "لا يمكن تغيير حجم الفريق بعد انطلاق البطولة",
   matchShapeLocked: "لا يمكن تغيير نوع البطولة بعد إنشاء المباريات",
   matchShapeRetired: "نوع المباراة القديم لم يعد مستعملاً، اختر مباراة كرة قدم أو سلسلة جولات",
   dayNotFound: "اليوم غير موجود",
@@ -52,7 +35,6 @@ export const tournament = {
   dayHasMatches: "لهذا اليوم مباريات — انقلها أو احذفها أولاً",
   dayIsRest: "هذا يوم راحة — حوّله إلى يوم مباريات أولاً",
   startDateMissing: "حدد تاريخ بداية البطولة أولاً من تفاصيل النشاط",
-  needTwoTeams: "يحتاج النشاط إلى فريقين على الأقل",
   suspensionNotFound: "الإيقاف غير موجود",
   suspensionDecided: "حُسم هذا الاقتراح بالفعل",
   suspensionNotActive: "هذا الإيقاف غير نافذ",
@@ -83,33 +65,23 @@ export const tournament = {
   leaguePairing:
     "لا يمكن أن تكون مباراة دور مجموعات بين فريقين من مجموعتين مختلفتين — فعّل «مباراة خروج المغلوب» إن كانت مباراة إقصائية",
   goalEventsInvalid: "بيانات الأهداف غير صالحة",
-  forfeitWinnerNotInMatch: "الفريق الفائز بالانسحاب ليس من فريقي المباراة",
   forfeitNeedsResult: "سجّل نتيجة المباراة قبل تسجيل الانسحاب",
   kicksInvalid: "بيانات ركلات الترجيح غير صالحة",
   scorerWrongTeam: "أحد الهدافين ليس ضمن الفريق الصحيح",
   ownGoalScorerWrongTeam: "مسجل الهدف العكسي يجب أن يكون من الفريق الآخر",
   kickerWrongTeam: "أحد منفذي ركلات الترجيح ليس ضمن فريقه",
-  teamsIncomplete: (min: number | null, max: number | null, names: string) =>
-    `فرق غير مكتملة (${squadRange(min, max)} لاعبين لكل فريق): ${names} — أكملها قبل القرعة`,
   needPowerOfTwo: (count: number) =>
     `عدد الفرق/اللاعبين يجب أن يكون 4 أو 8 أو 16 أو 32... (لديك حالياً ${count}) — أضف أو احذف فرقاً للوصول إلى عدد صحيح`,
   bracketSlotsMismatch: (slots: number, pairs: number) =>
     `الدور الأول المجدول يضم ${slots} مباراة والقرعة تحتاج ${pairs}، احذف مباريات الأدوار الإقصائية أو أعد إعداد البطولة`,
   needTwoEntrants: "القرعة تحتاج مشاركَين على الأقل",
-  drawGroupsImpossible:
-    "توزيع المجموعات لا يسمح بقرعة تتجنّب لقاء فريقين من مجموعة واحدة — عدّل المجموعات ثم أعد القرعة",
   bracketExists: "توجد قرعة بالفعل لهذه البطولة — استخدم زر إعادة القرعة",
   bracketHasResults: "الدور الإقصائي الحالي فيه نتائج مسجلة — لا يمكن إعادة القرعة",
   groupStageIncomplete: "أكمل جميع نتائج دور المجموعات أولاً قبل بدء الدور الإقصائي",
   needTwoGroups:
     "يجب أن يكون هناك مجموعتان بالضبط (المجموعة أ والمجموعة ب) لتوليد نصف النهائي التلقائي",
-  groupNeedsTwoTeams: "كل مجموعة تحتاج فريقين على الأقل",
-  teamNotSetYet: "فريق لم يُحدد بعد",
-  fixtureHasNoTeams: "لم يُحدد فريقا هذه المباراة بعد",
-  fixtureNeedsBothTeams: "المباراة تحتاج فريقين",
   setupHasResults: (played: number) =>
     `لا يمكن إعادة ترتيب بطولة سُجلت فيها نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل أولاً`,
-  setupGroupsIncomplete: "كل فريق يجب أن يكون في مجموعة واحدة",
   setupGroupsUneven: "المجموعات يجب أن تكون متساوية",
   setupShapeInvalid: "عدد المجموعات وعدد المتأهلين لا يتفقان",
   bracketNeedsGroups: "هذه البطولة ليست مقسّمة إلى مجموعات",

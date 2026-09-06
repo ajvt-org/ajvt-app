@@ -8,6 +8,7 @@ export { admins } from "./admins";
 export { money } from "./money";
 export { activities } from "./activities";
 export { tournament } from "./tournament";
+export { entrantWording, type EntrantWording } from "./entrant";
 export { quiz } from "./quiz";
 export { auth } from "./auth";
 export { push } from "./push";

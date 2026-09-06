@@ -181,7 +181,9 @@ export default function MatchCard({
           onChange={onChange}
         />
       )}
-      {showDetails && <MatchDetailsForm match={match} teams={teams} onChange={onChange} />}
+      {showDetails && (
+        <MatchDetailsForm match={match} teams={teams} entrant={entrant} onChange={onChange} />
+      )}
     </div>
   );
 }
