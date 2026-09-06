@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SettingsForm from "./SettingsForm";
 import { emptySettingsForm } from "./types";
+import { quizSettingsForm as texts } from "@/lib/texts";
 
 const setup = (onChange = vi.fn(), onSubmit = vi.fn(), onToggleConfirm = vi.fn()) => {
   render(
@@ -40,6 +41,24 @@ describe("SettingsForm", () => {
     setup();
 
     expect(screen.getByText(/يضبط داخل المسابقة نفسها/)).toBeDefined();
+  });
+
+  it("heads the defaults, so the lead cannot read as more about the toggle", () => {
+    setup();
+
+    const heading = screen.getByText(texts.defaultsTitle).closest("p");
+    const hint = screen.getByText(texts.confirmAnswersKeeps).closest("p");
+
+    expect(heading?.className).toContain("font-bold");
+    expect(hint?.className).not.toContain("font-bold");
+    expect(heading?.compareDocumentPosition(hint!)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+  });
+
+  it("keeps only what the toggle label cannot say", () => {
+    setup();
+
+    expect(screen.getByText(texts.confirmAnswersKeeps)).toBeDefined();
+    expect(texts.confirmAnswersKeeps).not.toContain("دون تأكيد");
   });
 
   it("keeps the points within the range a difficulty is read from", () => {

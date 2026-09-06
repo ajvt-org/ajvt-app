@@ -6,7 +6,7 @@ import IconLabel from "./IconLabel";
 export interface FrameProps {
   displayUrl: string | null;
   label: string;
-  hint: string;
+  action: string;
   uploading: boolean;
   locked: boolean;
   placeholderIcon: IconName;
@@ -18,11 +18,13 @@ function Picture({
   label,
   placeholderIcon,
   size,
+  whole,
 }: {
   displayUrl: string | null;
   label: string;
   placeholderIcon: IconName;
   size: number;
+  whole?: boolean;
 }) {
   if (!displayUrl) {
     return (
@@ -31,8 +33,18 @@ function Picture({
       </span>
     );
   }
-  /* eslint-disable-next-line @next/next/no-img-element */
-  return <img src={displayUrl} alt={label} className="w-full h-full object-cover" />;
+  if (!whole) {
+    /* eslint-disable-next-line @next/next/no-img-element */
+    return <img src={displayUrl} alt={label} className="w-full h-full object-cover" />;
+  }
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={displayUrl} alt="" aria-hidden="true" className="photo-fill-blur" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={displayUrl} alt={label} className="photo-fill-img" />
+    </>
+  );
 }
 
 function Frame({
@@ -79,7 +91,7 @@ export function HeroFrame(props: FrameProps) {
       locked={props.locked}
       onPick={props.onPick}
       uploading={props.uploading}
-      label={props.hint}
+      label={props.action}
       className="relative w-24 h-24 rounded-full overflow-hidden flex items-center justify-center"
       style={{
         background: "var(--mint-100)",
@@ -107,21 +119,26 @@ export function CoverFrame(props: FrameProps) {
       onPick={props.onPick}
       uploading={props.uploading}
       label={props.label}
-      className="relative w-full h-32 rounded-xl overflow-hidden flex items-center justify-center"
-      style={{ background: "var(--mint-100)", border: "2px dashed var(--mint-300)" }}
+      className="relative w-full rounded-xl overflow-hidden flex items-center justify-center"
+      style={{
+        aspectRatio: "16 / 10",
+        background: "var(--mint-100)",
+        border: "2px dashed var(--mint-300)",
+      }}
     >
       <Picture
         displayUrl={props.displayUrl}
         label={props.label}
         placeholderIcon={props.placeholderIcon}
         size={30}
+        whole
       />
       {!props.locked && (
         <span
           className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1 text-xs py-1 font-semibold"
           style={{ background: "rgba(26,63,51,0.75)", color: "white" }}
         >
-          {props.uploading ? "..." : <IconLabel name="camera">{props.hint}</IconLabel>}
+          {props.uploading ? "..." : <IconLabel name="camera">{props.action}</IconLabel>}
         </span>
       )}
     </Frame>

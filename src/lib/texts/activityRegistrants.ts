@@ -11,6 +11,7 @@ export const activityRegistrants = {
   remove: "إزالة",
   noTeam: "بلا فريق",
   searchRegistrants: "ابحث في المسجلين بالاسم أو الهاتف أو الفريق...",
+  searchPlayers: "ابحث في المسجلين بالاسم أو الهاتف...",
   noneMatch: "لا يوجد مسجل مطابق",
   filterByTeam: "تصفية حسب الفريق",
   allTeams: "كل الفرق",

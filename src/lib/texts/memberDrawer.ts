@@ -1,7 +1,6 @@
 export const memberDrawer = {
   title: "تفاصيل الطلب",
   close: "إغلاق",
-  edit: "تعديل",
   paid: "المبلغ المسدد",
   fee: "رسوم الاشتراك",
   support: "مبلغ الدعم",
@@ -22,5 +21,5 @@ export const memberDrawer = {
   addedByAdmin: "أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع",
   status: "الحالة",
   registrations: "الأنشطة المسجل بها",
-  fullProfile: "الملف الكامل للعضو",
+  fullProfile: "الملف الكامل",
 } as const;

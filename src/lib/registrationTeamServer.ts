@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { nameOf } from "./person";
-import { isSinglesSquad, squadOf } from "./squadSize";
+import { isSinglesActivity, type EntrantActivity } from "./entrant";
 
 type Tx = Prisma.TransactionClient;
 
@@ -13,18 +13,8 @@ const REGISTRATION_SEAT = {
   activity: { select: { isTournament: true, minTeamSize: true, maxTeamSize: true } },
 } satisfies Prisma.ActivityRegistrationSelect;
 
-interface ActivityShape {
-  isTournament: boolean;
-  minTeamSize: number | null;
-  maxTeamSize: number | null;
-}
-
-export function isSingles(activity: ActivityShape): boolean {
-  return activity.isTournament && isSinglesSquad(squadOf(activity));
-}
-
-export function joinableTeams<T>(activity: ActivityShape, teams: T[]): T[] {
-  return activity.isTournament && !isSingles(activity) ? teams : [];
+export function joinableTeams<T>(activity: EntrantActivity, teams: T[]): T[] {
+  return activity.isTournament && !isSinglesActivity(activity) ? teams : [];
 }
 
 async function seatOfViewer(tx: Tx, activityId: string, userId: string) {
@@ -44,7 +34,7 @@ export async function seatRegistrant(tx: Tx, registrationId: string): Promise<st
   const already = await seatOfViewer(tx, registration.activityId, registration.userId);
   if (already) return already.teamId;
 
-  if (isSingles(registration.activity)) {
+  if (isSinglesActivity(registration.activity)) {
     const team = await tx.team.create({
       data: {
         activityId: registration.activityId,
@@ -71,17 +61,14 @@ export async function seatRegistrant(tx: Tx, registrationId: string): Promise<st
   return team.id;
 }
 
-export async function unseatRegistrant(
-  tx: Tx,
-  activityId: string,
-  userId: string,
-): Promise<boolean> {
-  const activity = await tx.activity.findUnique({
+async function shapeOf(tx: Tx, activityId: string) {
+  return tx.activity.findUnique({
     where: { id: activityId },
     select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
   });
-  if (!activity || !isSingles(activity)) return false;
+}
 
+async function removeAutoSeat(tx: Tx, activityId: string, userId: string): Promise<boolean> {
   const seat = await seatOfViewer(tx, activityId, userId);
   if (!seat) return false;
 
@@ -97,4 +84,44 @@ export async function unseatRegistrant(
 
   await tx.team.delete({ where: { id: seat.teamId } });
   return true;
+}
+
+export async function unseatRegistrant(
+  tx: Tx,
+  activityId: string,
+  userId: string,
+): Promise<boolean> {
+  const activity = await shapeOf(tx, activityId);
+  if (!activity || !isSinglesActivity(activity)) return false;
+  return removeAutoSeat(tx, activityId, userId);
+}
+
+export interface SeatReconciliation {
+  seated: number;
+  unseated: number;
+  kept: number;
+}
+
+export async function reconcileSeats(tx: Tx, activityId: string): Promise<SeatReconciliation> {
+  const done: SeatReconciliation = { seated: 0, unseated: 0, kept: 0 };
+  const activity = await shapeOf(tx, activityId);
+  if (!activity) return done;
+
+  const registrations = await tx.activityRegistration.findMany({
+    where: { activityId },
+    select: { id: true, userId: true, status: true },
+  });
+
+  for (const registration of registrations) {
+    const seat = await seatOfViewer(tx, activityId, registration.userId);
+    if (isSinglesActivity(activity)) {
+      if (registration.status !== "ACTIVE" || seat) continue;
+      if (await seatRegistrant(tx, registration.id)) done.seated += 1;
+      continue;
+    }
+    if (!seat) continue;
+    if (await removeAutoSeat(tx, activityId, registration.userId)) done.unseated += 1;
+    else done.kept += 1;
+  }
+  return done;
 }

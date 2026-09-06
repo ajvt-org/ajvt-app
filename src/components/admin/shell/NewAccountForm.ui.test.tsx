@@ -38,4 +38,12 @@ describe("NewAccountForm", () => {
 
     expect(select.textContent).not.toContain(ROLE_LABELS.ACTIVITY);
   });
+
+  it("describes no control it does not have", () => {
+    const { container } = render(
+      <NewAccountForm viewerRole={OWNER_ROLE} onCreated={async () => {}} />,
+    );
+
+    expect(container.querySelectorAll("p.text-xs")).toHaveLength(0);
+  });
 });

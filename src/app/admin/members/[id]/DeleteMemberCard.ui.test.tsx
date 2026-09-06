@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DeleteMemberCard from "./DeleteMemberCard";
+import { confirmDelete, deleteMember } from "@/lib/texts";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -17,9 +18,9 @@ function setup(userId: string | null = "u1") {
 }
 
 async function confirmWith(name: string) {
-  await userEvent.click(screen.getByRole("button", { name: /متابعة/ }));
-  await userEvent.type(screen.getByLabelText("اسم العضو للتأكيد"), name);
-  await userEvent.click(screen.getByRole("button", { name: /حذف نهائي$/ }));
+  await userEvent.click(screen.getByRole("button", { name: confirmDelete.proceed }));
+  await userEvent.type(screen.getByLabelText(confirmDelete.nameField), name);
+  await userEvent.click(screen.getByRole("button", { name: confirmDelete.confirm }));
 }
 
 afterEach(() => {
@@ -32,17 +33,44 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.payment) }));
 
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: /متابعة/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: confirmDelete.proceed })).toBeDefined();
+  });
+
+  it("offers two buttons with no heading and no sentence under either", () => {
+    mockFetch();
+    setup();
+
+    expect(screen.queryByText(confirmDelete.title)).toBeNull();
+    expect(screen.queryByText(deleteMember.paymentConsequence("محمد ولد أحمد"))).toBeNull();
+    expect(screen.queryByText(deleteMember.personConsequence("محمد ولد أحمد"))).toBeNull();
+  });
+
+  it("says in the confirmation that only the payment goes", async () => {
+    mockFetch();
+    setup();
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.payment) }));
+
+    expect(screen.getByText(deleteMember.paymentConsequence("محمد ولد أحمد"))).toBeDefined();
+  });
+
+  it("says in the confirmation that the whole person goes", async () => {
+    mockFetch();
+    setup();
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.person) }));
+
+    expect(screen.getByText(deleteMember.personConsequence("محمد ولد أحمد"))).toBeDefined();
   });
 
   it("sends the typed name with the deletion, which the API demands", async () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.payment) }));
     await confirmWith("محمد ولد أحمد");
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/dashboard"));
@@ -57,7 +85,7 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الدفع نهائياً/ }));
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.payment) }));
     await confirmWith("محمد");
 
     expect(fetchMock).not.toHaveBeenCalled();
@@ -67,7 +95,7 @@ describe("DeleteMemberCard", () => {
     const fetchMock = mockFetch();
     setup();
 
-    await userEvent.click(screen.getByRole("button", { name: /حذف الشخص نهائياً/ }));
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(deleteMember.person) }));
     await confirmWith("محمد ولد أحمد");
 
     await waitFor(() => expect(push).toHaveBeenCalledWith("/admin/dashboard"));
@@ -78,7 +106,7 @@ describe("DeleteMemberCard", () => {
     mockFetch();
     setup(null);
 
-    expect(screen.queryByRole("button", { name: /حذف الشخص نهائياً/ })).toBeNull();
-    expect(screen.getByRole("button", { name: /حذف الدفع نهائياً/ })).toBeDefined();
+    expect(screen.queryByRole("button", { name: new RegExp(deleteMember.person) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(deleteMember.payment) })).toBeDefined();
   });
 });

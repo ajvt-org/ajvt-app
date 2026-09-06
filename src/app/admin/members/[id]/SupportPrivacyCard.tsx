@@ -3,7 +3,6 @@
 import { useState } from "react";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
-import ProfileSection from "@/components/admin/ProfileSection";
 import { api, errorMessage } from "@/lib/api";
 import { supportPrivacy as texts } from "@/lib/texts";
 
@@ -45,7 +44,7 @@ export default function SupportPrivacyCard({
   const shown = entries ?? (confidential ? namedEntries : null);
 
   return (
-    <ProfileSection icon="ban" title={texts.title}>
+    <section className="card p-4 space-y-2">
       <label className="flex items-center gap-2 text-sm font-bold">
         <input
           type="checkbox"
@@ -64,6 +63,6 @@ export default function SupportPrivacyCard({
         </Notice>
       )}
       {error && <Notice tone="error">{error}</Notice>}
-    </ProfileSection>
+    </section>
   );
 }

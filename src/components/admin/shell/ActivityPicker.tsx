@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import IconLabel from "@/components/IconLabel";
 import Notice from "@/components/Notice";
+import { ROLE_LABELS } from "@/lib/adminRoles";
+import { SCOPED_ROLE } from "@/lib/activityAccess";
+import { activityPicker as texts } from "@/lib/texts";
 import type { ActivityOption, AdminAccount } from "./accountTypes";
 
 function fetchActivities(): Promise<ActivityOption[]> {
@@ -53,20 +56,20 @@ export default function ActivityPicker({
     <>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="trophy">أنشطة {account.username}</IconLabel>
+          <IconLabel name="trophy">{texts.title(account.username)}</IconLabel>
         </p>
         <button
           onClick={onBack}
           className="text-xs font-bold shrink-0"
           style={{ color: "var(--mint-700)" }}
         >
-          <IconLabel name="chevronLeft">رجوع</IconLabel>
+          <IconLabel name="chevronLeft">{texts.back}</IconLabel>
         </button>
       </div>
 
       <div className="space-y-4">
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          الحساب سيرى الأنشطة المختارة فقط، ولن يصل إلى بقية لوحة التحكم.
+          {texts.scope(ROLE_LABELS[SCOPED_ROLE])}
         </p>
 
         <div className="space-y-2">
@@ -91,7 +94,7 @@ export default function ActivityPicker({
           disabled={saving || chosen.length === 0}
           className="btn btn-primary text-sm"
         >
-          {saving ? "..." : "حفظ"}
+          {saving ? texts.saving : texts.save}
         </button>
       </div>
     </>

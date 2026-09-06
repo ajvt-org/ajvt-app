@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import type { Member } from "./types";
 
+export const REVIEW_KEYS = { accept: "a", reject: "r" } as const;
+
 function typingInField(): boolean {
   const tag = (document.activeElement?.tagName || "").toLowerCase();
   return tag === "input" || tag === "textarea" || tag === "select";
@@ -57,10 +59,10 @@ export function useReviewShortcuts({
       const key = e.key.toLowerCase();
       if (e.key === "Escape") {
         onClose();
-      } else if (key === "a" && selected.status === "PENDING") {
+      } else if (key === REVIEW_KEYS.accept && selected.status === "PENDING") {
         e.preventDefault();
         onValidate(selected.id, "ACTIVE");
-      } else if (key === "r" && selected.status !== "REJECTED") {
+      } else if (key === REVIEW_KEYS.reject && selected.status !== "REJECTED") {
         e.preventDefault();
         setShowRejectPicker(true);
       } else if (key === "n" || e.key === "ArrowDown") {

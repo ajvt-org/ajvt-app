@@ -5,8 +5,16 @@ import PersonIdentity from "./PersonIdentity";
 import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration } from "./activityTypes";
 
-export default function RegistrantIdentity({ registration }: { registration: Registration }) {
+export default function RegistrantIdentity({
+  registration,
+  singles,
+}: {
+  registration: Registration;
+  singles?: boolean;
+}) {
   const { member, team } = registration;
+
+  if (singles) return <PersonIdentity person={member} />;
 
   return (
     <PersonIdentity

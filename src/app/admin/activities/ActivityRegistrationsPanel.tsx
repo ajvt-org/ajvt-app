@@ -12,8 +12,9 @@ import { ALL_TEAMS, inTeam, teamFilterOptions } from "./registrantFilter";
 import { NEWEST_FIRST, byRequestedDate, sortOptions } from "./registrationRecord";
 import type { Registration, MemberOption } from "./activityTypes";
 
-function registrantText(r: Registration): string {
-  return `${r.member.fullName} ${r.member.phone ?? ""} ${r.team?.name ?? ""}`;
+function registrantText(r: Registration, singles: boolean): string {
+  const team = singles ? "" : (r.team?.name ?? "");
+  return `${r.member.fullName} ${r.member.phone ?? ""} ${team}`;
 }
 
 export default function ActivityRegistrationsPanel({
@@ -21,6 +22,7 @@ export default function ActivityRegistrationsPanel({
   registrations,
   members,
   teams,
+  singles,
   actionLoading,
   onReview,
   onRegister,
@@ -30,6 +32,7 @@ export default function ActivityRegistrationsPanel({
   registrations: Registration[];
   members: MemberOption[];
   teams: { id: string; name: string }[];
+  singles: boolean;
   actionLoading: boolean;
   onReview: (
     activityId: string,
@@ -47,7 +50,7 @@ export default function ActivityRegistrationsPanel({
   const tokens = searchTokens(search);
   const inChosenTeam = registrations.filter((r) => inTeam(r, team));
   const shown = tokens.length
-    ? inChosenTeam.filter((r) => matchesSearch(registrantText(r), tokens))
+    ? inChosenTeam.filter((r) => matchesSearch(registrantText(r, singles), tokens))
     : inChosenTeam;
 
   const ordered = byRequestedDate(shown, order);
@@ -69,7 +72,7 @@ export default function ActivityRegistrationsPanel({
 
       <input
         type="text"
-        placeholder={texts.searchRegistrants}
+        placeholder={singles ? texts.searchPlayers : texts.searchRegistrants}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="input text-sm"
@@ -82,7 +85,7 @@ export default function ActivityRegistrationsPanel({
         label={texts.sortByRequested}
       />
 
-      {teams.length > 0 && (
+      {!singles && teams.length > 0 && (
         <FilterChips
           options={teamFilterOptions(teams)}
           value={team}
@@ -99,6 +102,7 @@ export default function ActivityRegistrationsPanel({
                 key={r.id}
                 activityId={activityId}
                 registration={r}
+                singles={singles}
                 actionLoading={actionLoading}
                 onReview={onReview}
               />
@@ -118,6 +122,7 @@ export default function ActivityRegistrationsPanel({
               <ConfirmedRegistrantCard
                 key={r.id}
                 registration={r}
+                singles={singles}
                 onUnregister={(userId) => onUnregister(activityId, userId)}
               />
             ))}

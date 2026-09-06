@@ -7,9 +7,11 @@ import type { Registration } from "./activityTypes";
 
 export default function ConfirmedRegistrantCard({
   registration,
+  singles,
   onUnregister,
 }: {
   registration: Registration;
+  singles: boolean;
   onUnregister: (userId: string) => void;
 }) {
   return (
@@ -18,7 +20,7 @@ export default function ConfirmedRegistrantCard({
       style={{ background: "var(--mint-50)" }}
     >
       <div className="min-w-0 space-y-1">
-        <RegistrantIdentity registration={registration} />
+        <RegistrantIdentity registration={registration} singles={singles} />
         <RegistrationRecord registration={registration} />
       </div>
       <button

@@ -34,8 +34,7 @@ export const activityForm = {
 
 export const convertCampaign = {
   heading: "وضع الحملة التطوعية",
-  hint: "حوّل النشاط إلى حملة تطوعية بمجموعة واتساب يلتحق بها المتطوعون.",
-  isCampaign: "النشاط حملة تطوعية.",
+  hint: "مجموعة واتساب يلتحق بها المتطوعون",
   convert: "تحويل إلى حملة تطوعية",
   confirm: "تأكيد التحويل",
   unconvert: "إلغاء وضع الحملة",
@@ -154,6 +153,7 @@ export const tournamentSetup = {
     GROUPS_THEN_KNOCKOUT: "مجموعات ثم خروج المغلوب",
   },
   squadHeading: "عدد لاعبي الفريق",
+  singles: "بطولة فردية",
   minTeamSize: "الحد الأدنى",
   maxTeamSize: "الحد الأقصى",
   organisedByHomeVillage: "بطولة من تنظيم التاكلالت",

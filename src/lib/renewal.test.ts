@@ -12,8 +12,18 @@ describe("who can be renewed", () => {
   });
 
   it("refuses a member who is not accepted, since there is nothing to renew", () => {
-    expect(renewalRefusal(member({ status: "PENDING" }), 2026)).toBe("notActive");
     expect(renewalRefusal(member({ status: "REJECTED" }), 2026)).toBe("notActive");
+  });
+
+  it("refuses a member whose membership is still waiting on a review", () => {
+    expect(renewalRefusal(member({ status: "PENDING" }), 2026)).toBe("underReview");
+    expect(canRenew(member({ status: "PENDING" }), 2026)).toBe(false);
+  });
+
+  it("says a renewal is waiting rather than that the year is already covered", () => {
+    expect(renewalRefusal(member({ status: "PENDING", membershipYear: 2026 }), 2026)).toBe(
+      "underReview",
+    );
   });
 
   it("refuses a member with no number, since a renewal is meant to keep one", () => {

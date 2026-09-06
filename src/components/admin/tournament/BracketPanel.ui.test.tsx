@@ -99,6 +99,14 @@ describe("a bracket whose first round is waiting", () => {
     expect(screen.getByText(texts.draw)).toBeDefined();
   });
 
+  it("names the draw once above the button and keeps only what the button cannot say", () => {
+    show(waitingBracket, "KNOCKOUT", false);
+
+    expect(screen.getByText(texts.bracketKnockout).textContent).toBe(texts.bracketKnockout);
+    expect(screen.getByText(texts.drawHint)).toBeDefined();
+    expect(texts.drawHint).not.toContain(texts.draw);
+  });
+
   it("offers neither the redo nor the next round", async () => {
     show([...groupStage, ...waitingBracket], "GROUPS_THEN_KNOCKOUT");
 

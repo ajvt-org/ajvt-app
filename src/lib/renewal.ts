@@ -4,9 +4,11 @@ export interface RenewableMember {
   memberNumber: string | null;
 }
 
-export type RenewalRefusal = "notActive" | "notIssued" | "alreadyRenewed" | "yearBehind" | null;
+export type RenewalRefusal =
+  "underReview" | "notActive" | "notIssued" | "alreadyRenewed" | "yearBehind" | null;
 
 export function renewalRefusal(member: RenewableMember, year: number): RenewalRefusal {
+  if (member.status === "PENDING") return "underReview";
   if (member.status !== "ACTIVE") return "notActive";
   if (!member.memberNumber) return "notIssued";
   if (member.membershipYear === year) return "alreadyRenewed";

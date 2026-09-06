@@ -70,9 +70,6 @@ export default function NewAccountForm({
           </option>
         ))}
       </select>
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {adminAccounts.scopeHint}
-      </p>
       {error && <Notice tone="error">{error}</Notice>}
       <button type="submit" disabled={loading} className="btn btn-primary text-sm">
         {loading ? adminAccounts.submitting : adminAccounts.submit}

@@ -4,8 +4,6 @@ export const adminAccounts = {
   addTitle: "إضافة مشرف جديد",
   username: "اسم المستخدم",
   password: "كلمة المرور",
-  scopeHint:
-    "لحصر مشرف في أنشطة بعينها، أنشئ الحساب ثم اضغط «تحديد الأنشطة» في صفّه — تتحول صلاحيته تلقائياً إلى أنشطة محددة فقط.",
   submit: "إضافة",
   submitting: "...",
   you: "أنت",
@@ -21,4 +19,13 @@ export const adminAccounts = {
   moreDetails: "تفاصيل الحساب",
   createdAt: "أُنشئ في",
   lastLoginIp: "عنوان آخر دخول",
+} as const;
+
+export const activityPicker = {
+  title: (username: string) => `أنشطة ${username}`,
+  back: "رجوع",
+  scope: (roleLabel: string) =>
+    `عند الحفظ تصير صلاحية الحساب «${roleLabel}»، فيرى الأنشطة المختارة وحدها ولن يصل إلى بقية لوحة التحكم.`,
+  save: "حفظ",
+  saving: "...",
 } as const;

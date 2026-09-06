@@ -4,6 +4,7 @@ import {
   tournamentRosterTab,
   type TournamentShape,
 } from "@/components/admin/tournament/tournamentTabs";
+import { isSinglesActivity } from "@/lib/entrant";
 import { activityWorkspace as texts } from "@/lib/texts";
 
 export interface TabbedActivity extends TournamentShape {
@@ -38,7 +39,10 @@ function tabsOf(
     case "setup":
       return [{ key: "details", label: texts.tabs.details, icon: "pencil" }];
     case "people":
-      return [...registrationsTab(activity), ...tournamentRosterTab(activity, pendingJoinRequests)];
+      return [
+        ...registrationsTab(activity),
+        ...(isSinglesActivity(activity) ? [] : tournamentRosterTab(activity, pendingJoinRequests)),
+      ];
     case "play":
       return tournamentPlayTabs(activity, pendingProposals);
     case "records":
