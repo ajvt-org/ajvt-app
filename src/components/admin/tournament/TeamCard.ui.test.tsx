@@ -201,6 +201,13 @@ describe("TeamCard", () => {
     const name = screen.getByText("فريق النجم");
     expect(name.className).toContain("leading-6");
     expect(name.className).toContain("optical-name");
+
+    const lift = `${(MATCH_TEAMS_SIZES.md.logo - 24) / 2}px`;
+    expect(name.style.marginBlockStart).toBe(lift);
+    for (const glyph of head.querySelectorAll(":scope > span:not(.summary-logo)")) {
+      expect((glyph as HTMLElement).style.marginBlockStart).toBe(lift);
+    }
+    expect(crest.style.marginBlockStart).toBe("");
   });
 
   it("renames the team from the card", () => {
