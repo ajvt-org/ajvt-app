@@ -1,5 +1,6 @@
 import { teamsTab as texts } from "@/lib/texts";
 import type { SquadSize } from "@/lib/squadSize";
+import { insideTrack, squadBarGeometry, type OutsideShare } from "@/lib/squadBar";
 
 const SHORT = "#d97706";
 const WITHIN = "var(--mint-600)";
@@ -7,15 +8,6 @@ const OVER = "#b91c1c";
 const HATCH = "repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 3px, transparent 3px 7px)";
 const HATCH_DARK =
   "repeating-linear-gradient(45deg, rgba(31,61,49,0.22) 0 3px, transparent 3px 7px)";
-
-export interface OutsideShare {
-  count: number;
-  limit: number;
-}
-
-function inside(at: number): number {
-  return Math.min(Math.max(at, 6), 94);
-}
 
 function Tick({ at, dashed }: { at: number; dashed?: boolean }) {
   return (
@@ -39,7 +31,7 @@ function AxisMark({ at, value, dashed }: { at: number; value: number; dashed?: b
     <span
       className="absolute top-0 tabular-nums"
       style={{
-        insetInlineStart: `${inside(at)}%`,
+        insetInlineStart: `${insideTrack(at)}%`,
         transform: "translateX(50%)",
         backgroundImage: dashed ? HATCH_DARK : undefined,
         borderRadius: dashed ? 4 : undefined,
@@ -60,23 +52,16 @@ export default function SquadBar({
   squad: SquadSize;
   outside: OutsideShare | null;
 }) {
-  const max = squad.max;
-  if (max === null) return null;
-
-  const min = squad.min;
-  const scale = Math.max(max, count, 1);
-  const at = (value: number) => (value / scale) * 100;
-  const short = min !== null && count < min;
-  const filled = Math.min(count, max);
-  const shared = outside ? Math.min(outside.count, count) : 0;
+  const bar = squadBarGeometry(count, squad, outside);
+  if (bar === null) return null;
 
   return (
     <span
       role="img"
       aria-label={
         outside
-          ? `${texts.squadOfRange(count, min, max)} ${texts.outsideOfLimit(outside.count, outside.limit)}`
-          : texts.squadOfRange(count, min, max)
+          ? `${texts.squadOfRange(count, bar.min, bar.max)} ${texts.outsideOfLimit(outside.count, outside.limit)}`
+          : texts.squadOfRange(count, bar.min, bar.max)
       }
       className="block w-full"
     >
@@ -89,44 +74,44 @@ export default function SquadBar({
             className="absolute inset-y-0"
             style={{
               insetInlineStart: 0,
-              width: `${at(filled)}%`,
-              background: short ? SHORT : WITHIN,
+              width: `${bar.fill}%`,
+              background: bar.short ? SHORT : WITHIN,
             }}
           />
-          {count > max && (
+          {bar.over && (
             <span
               className="absolute inset-y-0"
               style={{
-                insetInlineStart: `${at(max)}%`,
-                width: `${at(count) - at(max)}%`,
+                insetInlineStart: `${bar.over.start}%`,
+                width: `${bar.over.width}%`,
                 background: OVER,
               }}
             />
           )}
-          {outside && shared > outside.limit && (
+          {bar.outsideOver && (
             <span
               className="absolute inset-y-0"
               style={{
-                insetInlineStart: `${at(outside.limit)}%`,
-                width: `${at(shared) - at(outside.limit)}%`,
+                insetInlineStart: `${bar.outsideOver.start}%`,
+                width: `${bar.outsideOver.width}%`,
                 background: OVER,
               }}
             />
           )}
-          {shared > 0 && (
+          {bar.hatch !== null && (
             <span
               className="absolute inset-y-0"
-              style={{ insetInlineStart: 0, width: `${at(shared)}%`, backgroundImage: HATCH }}
+              style={{ insetInlineStart: 0, width: `${bar.hatch}%`, backgroundImage: HATCH }}
             />
           )}
-          {min !== null && min < scale && <Tick at={at(min)} />}
-          <Tick at={at(max)} />
-          {outside && outside.limit < scale && <Tick at={at(outside.limit)} dashed />}
+          {bar.ticks.map((tick) => (
+            <Tick key={`${tick.at}-${tick.dashed}`} at={tick.at} dashed={tick.dashed} />
+          ))}
         </span>
         <span
           className="absolute text-[11px] font-black tabular-nums"
           style={{
-            insetInlineStart: `${inside(at(count))}%`,
+            insetInlineStart: `${bar.countAt}%`,
             top: "50%",
             transform: "translate(50%, -50%)",
             color: "var(--text-main)",
@@ -143,11 +128,9 @@ export default function SquadBar({
         className="relative block text-[10px] font-bold"
         style={{ height: 14, color: "var(--text-muted)" }}
       >
-        {outside && outside.limit < scale && (
-          <AxisMark at={at(outside.limit)} value={outside.limit} dashed />
-        )}
-        {min !== null && min < scale && <AxisMark at={at(min)} value={min} />}
-        <AxisMark at={at(max)} value={max} />
+        {bar.axis.map((mark) => (
+          <AxisMark key={mark.value} at={mark.at} value={mark.value} dashed={mark.dashed} />
+        ))}
       </span>
     </span>
   );
