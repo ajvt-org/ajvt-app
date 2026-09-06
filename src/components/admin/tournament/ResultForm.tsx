@@ -20,17 +20,22 @@ import {
 } from "@/lib/matchScores";
 import { discipline as disciplineTexts, lists, matchAdmin as texts } from "@/lib/texts";
 import { isFootball } from "@/lib/matchShape";
+import { seriesResult as seriesTexts } from "@/lib/texts";
+import SeriesResultForm from "./SeriesResultForm";
+import type { SeriesConfig } from "./seriesConfig";
 
 export default function ResultForm({
   match,
   teams,
   matchShape,
+  series,
   suspendedIds,
   onSaved,
 }: {
   match: DecidedMatch;
   teams: Team[];
   matchShape: "FOOTBALL" | "SERIES";
+  series: SeriesConfig | null;
   suspendedIds: string[];
   onSaved: () => void;
 }) {
@@ -136,13 +141,23 @@ export default function ResultForm({
   }
 
   if (!football) {
+    if (!series) {
+      return (
+        <p
+          className="mt-3 pt-3 text-xs"
+          style={{ borderTop: "1px solid var(--mint-100)", color: "var(--text-muted)" }}
+        >
+          {seriesTexts.notConfigured}
+        </p>
+      );
+    }
     return (
-      <p
-        className="mt-3 pt-3 text-xs"
-        style={{ borderTop: "1px solid var(--mint-100)", color: "var(--text-muted)" }}
-      >
-        {texts.seriesResultNotReady}
-      </p>
+      <SeriesResultForm
+        matchId={match.id}
+        config={series}
+        sides={[match.firstTeam.name, match.secondTeam.name]}
+        onSaved={onSaved}
+      />
     );
   }
 

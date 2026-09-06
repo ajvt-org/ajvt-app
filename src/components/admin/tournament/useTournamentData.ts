@@ -22,6 +22,16 @@ export interface TournamentInfo {
   isTournament: boolean;
   format: TournamentFormat;
   matchShape: "FOOTBALL" | "SERIES";
+  partsPerMatch: number | null;
+  matchEnding: "PLAY_ALL" | "FIRST_TO" | null;
+  partsToWin: number | null;
+  partDecision: "OUTCOME" | "POINTS" | "SCORE" | null;
+  partTarget: number | null;
+  partWord: string | null;
+  partsWord: string | null;
+  hasColours: boolean;
+  firstColourWord: string | null;
+  secondColourWord: string | null;
   minTeamSize: number | null;
   maxTeamSize: number | null;
   organisedByHomeVillage: boolean;

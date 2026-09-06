@@ -7,6 +7,7 @@ import MatchCard from "./MatchCard";
 import type { EntrantKind } from "@/lib/entrant";
 import NewMatchForm from "./NewMatchForm";
 import { isFootball } from "@/lib/matchShape";
+import type { SeriesConfig } from "./seriesConfig";
 import BracketPanel from "./BracketPanel";
 import BracketSuggestion from "./BracketSuggestion";
 import MvpVoteMinutesCard from "./MvpVoteMinutesCard";
@@ -21,6 +22,7 @@ export default function MatchesTab({
   groups,
   format,
   matchShape,
+  series,
   entrant,
   matches,
   suspendedIds,
@@ -32,6 +34,7 @@ export default function MatchesTab({
   groups: Group[];
   format: TournamentFormat;
   matchShape: "FOOTBALL" | "SERIES";
+  series: SeriesConfig | null;
   entrant: EntrantKind;
   matches: Match[];
   suspendedIds: string[];
@@ -153,6 +156,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 matchShape={matchShape}
+                series={series}
                 entrant={entrant}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
@@ -191,6 +195,7 @@ export default function MatchesTab({
                 teams={teams}
                 allMatches={matches}
                 matchShape={matchShape}
+                series={series}
                 entrant={entrant}
                 suspendedIds={suspendedIds}
                 mvpVoteMinutes={mvpVoteMinutes}
