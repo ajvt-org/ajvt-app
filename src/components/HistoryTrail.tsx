@@ -9,6 +9,12 @@ function TrackLocation() {
   const search = useSearchParams().toString();
 
   useEffect(() => {
+    const notePop = () => appTrail.notePop();
+    window.addEventListener("popstate", notePop);
+    return () => window.removeEventListener("popstate", notePop);
+  }, []);
+
+  useEffect(() => {
     appTrail.noteLocation(search ? `${pathname}?${search}` : pathname);
   }, [pathname, search]);
 
