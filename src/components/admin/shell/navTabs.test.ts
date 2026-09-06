@@ -5,9 +5,9 @@ import { NAV_TABS, subtabsFor, tabActiveFor, tabsFor } from "./navTabs";
 
 const SHARED = [
   MONEY_AREAS.payments,
+  MONEY_AREAS.expenses,
   MONEY_AREAS.receipts,
   MONEY_AREAS.supporters,
-  MONEY_AREAS.expenses,
 ];
 
 const MONEY = [...SHARED, MONEY_AREAS.treasury, MONEY_AREAS.report];
@@ -44,11 +44,22 @@ describe("the admin navigation", () => {
     expect(subtabHrefs("ACTIVITIES", MONEY_AREAS.receipts)).toEqual(SHARED);
   });
 
-  it("puts the supporters board beside the payments and the receipts", () => {
+  it("puts the two ledgers beside each other, with nobody between them", () => {
     const money = NAV_TABS.find((tab) => tab.label === adminTabs.money);
     const hrefs = money?.tabs?.map((tab) => tab.href) ?? [];
 
-    expect(hrefs.indexOf(MONEY_AREAS.supporters)).toBe(hrefs.indexOf(MONEY_AREAS.receipts) + 1);
+    expect(hrefs.indexOf(MONEY_AREAS.expenses)).toBe(hrefs.indexOf(MONEY_AREAS.payments) + 1);
+  });
+
+  it("keeps the two summaries after everything they summarise", () => {
+    const money = NAV_TABS.find((tab) => tab.label === adminTabs.money);
+    const hrefs = money?.tabs?.map((tab) => tab.href) ?? [];
+
+    expect(hrefs.slice(-2)).toEqual([MONEY_AREAS.treasury, MONEY_AREAS.report]);
+  });
+
+  it("still reads in the same order for a role that sees four of the six", () => {
+    expect(subtabHrefs("MEMBERS", MONEY_AREAS.payments)).toEqual(SHARED);
   });
 
   it("gives every money screen an icon of its own, so the label is not the only difference", () => {
