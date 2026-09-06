@@ -48,12 +48,14 @@ function show(
   registrations: Registration[] = [],
   teams: { id: string; name: string }[] = [],
   singles = false,
+  loadingMembers = false,
 ) {
   render(
     <ActivityRegistrationsPanel
       activityId="a1"
       registrations={registrations}
       members={members}
+      loadingMembers={loadingMembers}
       teams={teams}
       singles={singles}
       actionLoading={false}

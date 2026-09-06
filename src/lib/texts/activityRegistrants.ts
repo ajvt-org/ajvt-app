@@ -2,6 +2,7 @@ export const activityRegistrants = {
   add: "تسجيل عضو يدوياً",
   search: "ابحث بالاسم أو الهاتف...",
   noMatch: "لا يوجد عضو مطابق",
+  loadingMembers: "جارٍ تحميل الأعضاء...",
   more: (count: number) => `و${count} غيرهم — حدّد بحثك أكثر`,
   allRegistered: "كل الأعضاء مسجلون في هذا النشاط",
   pending: "طلبات قيد المراجعة",

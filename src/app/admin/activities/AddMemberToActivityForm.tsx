@@ -27,12 +27,14 @@ function candidateText(candidate: MemberOption): string {
 export default function AddMemberToActivityForm({
   activityId,
   candidates,
+  loading,
   registeredIds,
   actionLoading,
   onRegister,
 }: {
   activityId: string;
   candidates: MemberOption[];
+  loading: boolean;
   registeredIds: Set<string>;
   actionLoading: boolean;
   onRegister: (activityId: string, userId: string) => Promise<boolean>;
@@ -66,7 +68,9 @@ export default function AddMemberToActivityForm({
         className="input input-sm w-full"
         style={{ background: "var(--mint-50)" }}
       />
-      {tokens.length === 0 ? (
+      {loading ? (
+        <Note>{texts.loadingMembers}</Note>
+      ) : tokens.length === 0 ? (
         everyoneRegistered ? (
           <Note>{texts.allRegistered}</Note>
         ) : null

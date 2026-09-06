@@ -14,6 +14,7 @@ const GIVER = "الكريم ولد الساتر";
 // this list until somebody looks at it.
 const ACCOUNT_SURFACES = [
   "members",
+  "members/options",
   "members/[id]/profile",
   "members/[id]/memberships",
   "members/[id]/same-person",
