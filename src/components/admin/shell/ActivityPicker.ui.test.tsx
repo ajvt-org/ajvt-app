@@ -17,14 +17,18 @@ function mockActivities() {
   );
 }
 
+const ACCOUNT: AdminAccount = {
+  id: "ad1",
+  username: "سالم",
+  role: "MEMBERS",
+  activities: [],
+  lastLoginAt: null,
+  lastLoginIp: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 function show() {
-  render(
-    <ActivityPicker
-      account={{ id: "ad1", username: "سالم", role: "MEMBERS", activities: [] } as AdminAccount}
-      onBack={vi.fn()}
-      onSaved={async () => {}}
-    />,
-  );
+  render(<ActivityPicker account={ACCOUNT} onBack={vi.fn()} onSaved={async () => {}} />);
 }
 
 afterEach(() => {
