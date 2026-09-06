@@ -48,19 +48,51 @@ function show(activities: Activity[], filters = view(), selecting = false) {
   );
 }
 
+const FINISHED = { startsAt: "2020-01-01T00:00:00.000Z", endsAt: "2020-01-02T00:00:00.000Z" };
+
+const mixed = () => [
+  activity({ id: "t1", isTournament: true }),
+  activity({ id: "v1", isVolunteer: true }),
+  activity({ id: "p1", isOpen: false }),
+  activity({ id: "f1", ...FINISHED }),
+];
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
 describe("the one bar the activities are filtered from", () => {
-  it("uses one word for no filter in every row", () => {
-    show([activity()]);
+  it("uses one word for the rows that are not filtered to begin with", () => {
+    show(mixed());
 
     expect(screen.getAllByLabelText(/: الكل$/).map((b) => b.getAttribute("aria-label"))).toEqual([
       "النوع: الكل",
       "التسجيل: الكل",
-      "المرحلة: الكل",
     ]);
+  });
+
+  it("says what the stage row offers rather than calling it the same word", () => {
+    show(mixed());
+
+    expect(screen.getByLabelText("المرحلة: مع المنتهية")).toBeTruthy();
+    expect(screen.queryByLabelText("المرحلة: الكل")).toBeNull();
+  });
+
+  it("counts the stage chip against the finished the page hides by default", () => {
+    show(
+      [
+        activity({
+          id: "a1",
+          startsAt: "2020-01-01T00:00:00.000Z",
+          endsAt: "2020-01-02T00:00:00.000Z",
+        }),
+        activity({ id: "a2" }),
+      ],
+      view({ stage: "current" }),
+    );
+
+    expect(screen.getByLabelText("المرحلة: مع المنتهية").textContent).toContain("2");
+    expect(screen.getByLabelText("المرحلة: جارية وقادمة").textContent).toContain("1");
   });
 
   it("says how many each chip would show", () => {
@@ -75,11 +107,39 @@ describe("the one bar the activities are filtered from", () => {
     expect(screen.getByLabelText("النوع: عادية").textContent).toContain("0");
   });
 
+  it("leaves an option that would show nothing where it is, and not pressable", () => {
+    show([
+      activity({ id: "t1", isTournament: true }),
+      activity({ id: "t2", isTournament: true }),
+      activity({ id: "v1", isVolunteer: true }),
+    ]);
+
+    expect(screen.getByLabelText("النوع: عادية")).toHaveProperty("disabled", true);
+    expect(screen.getByLabelText("النوع: حملات")).toHaveProperty("disabled", false);
+  });
+
+  it("gives no row to an axis that cannot change the list", () => {
+    show([activity({ id: "t1", isTournament: true }), activity({ id: "t2", isTournament: true })]);
+
+    expect(screen.queryByLabelText(/^النوع/)).toBeNull();
+    expect(screen.queryByLabelText(/^التسجيل/)).toBeNull();
+    expect(screen.queryByLabelText(/^المرحلة/)).toBeNull();
+    expect(screen.getByPlaceholderText("بحث باسم النشاط...")).toBeTruthy();
+  });
+
+  it("keeps the row a reader is inside even when it empties the list", () => {
+    show([activity({ id: "t1", isTournament: true })], view({ type: "volunteer" }));
+
+    expect(screen.getByLabelText("النوع: حملات").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByLabelText("النوع: الكل")).toHaveProperty("disabled", false);
+  });
+
   it("counts against what is already chosen", () => {
     show(
       [
         activity({ id: "t1", isTournament: true, isOpen: true }),
         activity({ id: "t2", isTournament: true, isOpen: false }),
+        activity({ id: "p1", isOpen: true }),
       ],
       view({ state: "open" }),
     );
@@ -88,7 +148,7 @@ describe("the one bar the activities are filtered from", () => {
   });
 
   it("carries the stage alongside the other filters", async () => {
-    show([activity()]);
+    show(mixed());
 
     await userEvent.click(screen.getByLabelText("المرحلة: منتهية"));
 
@@ -96,14 +156,14 @@ describe("the one bar the activities are filtered from", () => {
   });
 
   it("marks the chip that is on", () => {
-    show([activity()], view({ type: "tournament" }));
+    show(mixed(), view({ type: "tournament" }));
 
     expect(screen.getByLabelText("النوع: بطولات").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByLabelText("النوع: الكل").getAttribute("aria-pressed")).toBe("false");
   });
 
   it("searches by title from the same bar", async () => {
-    show([activity()]);
+    show(mixed());
 
     await userEvent.type(screen.getByPlaceholderText("بحث باسم النشاط..."), "د");
 

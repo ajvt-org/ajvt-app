@@ -1,13 +1,14 @@
 "use client";
 
-import IconLabel from "@/components/IconLabel";
 import { setupWizard as texts } from "@/lib/texts";
-import { groupShapes, nearestBracketSizes, qualifiersPerGroup } from "@/lib/tournamentShape";
+import { groupShapes, qualifiersPerGroup } from "@/lib/tournamentShape";
+import type { EntrantKind } from "@/lib/entrant";
 import type { WizardFormat } from "@/lib/tournamentWizard";
 import { formatsFor } from "@/lib/tournamentWizard";
 
 interface ShapeStepProps {
   teamCount: number;
+  entrant: EntrantKind;
   format: WizardFormat | null;
   groupCount: number | null;
   qualifierCount: number | null;
@@ -18,6 +19,7 @@ interface ShapeStepProps {
 
 export default function ShapeStep({
   teamCount,
+  entrant,
   format,
   groupCount,
   qualifierCount,
@@ -28,7 +30,7 @@ export default function ShapeStep({
   const offered = formatsFor(teamCount);
   const shapes = groupShapes(teamCount);
   const chosen = shapes.find((s) => s.groupCount === groupCount);
-  const nearest = nearestBracketSizes(teamCount);
+  const words = texts.entrant[entrant];
 
   return (
     <div className="space-y-4">
@@ -50,14 +52,6 @@ export default function ShapeStep({
         </div>
       </div>
 
-      {!offered.includes("KNOCKOUT") && (
-        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          <IconLabel name="warning">
-            {texts.knockoutRefused(teamCount, nearest.below, nearest.above)}
-          </IconLabel>
-        </p>
-      )}
-
       {format === "GROUPS_THEN_KNOCKOUT" && (
         <>
           <div>
@@ -73,7 +67,7 @@ export default function ShapeStep({
               <option value="" disabled />
               {shapes.map((shape) => (
                 <option key={shape.groupCount} value={shape.groupCount}>
-                  {texts.groupOption(shape.groupCount, shape.groupSize)}
+                  {words.groupOption(shape.groupCount, shape.groupSize)}
                 </option>
               ))}
             </select>

@@ -117,7 +117,7 @@ describe("planTournament", () => {
     expect(plan.slots[0].round).toBe(1);
   });
 
-  it("has nothing to lay out for a qualifier count that does not halve", () => {
+  it("lays out a full bracket for a qualifier count that does not halve", () => {
     const plan = planTournament({
       startsAt: START,
       times: TIMES,
@@ -125,9 +125,10 @@ describe("planTournament", () => {
       qualifierCount: 6,
     });
 
-    expect(plan.slots).toEqual([]);
-    expect(plan.dayCount).toBe(0);
-    expect(plan.endsAt).toBeNull();
+    expect(plan.slots).toHaveLength(7);
+    expect(plan.slots.filter((s) => s.round === 1)).toHaveLength(4);
+    expect(plan.dayCount).toBeGreaterThan(0);
+    expect(plan.endsAt).not.toBeNull();
   });
 
   it("numbers the matches inside a round from zero", () => {

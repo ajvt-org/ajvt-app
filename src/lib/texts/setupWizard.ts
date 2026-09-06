@@ -25,23 +25,14 @@ export const setupWizard = {
 
   stepOf: (at: number, total: number) => `الخطوة ${at} من ${total}`,
 
-  tooFewTeams: "أضف فريقين على الأقل قبل إعداد البطولة",
   hasResults: (played: number) =>
     `سُجلت نتائج في ${played} مباراة. استخدم «${resetTournament.action}» من تبويب التفاصيل لإعادة البطولة إلى فرقها، ثم أعد الإعداد من هنا`,
-  noShape: (teamCount: number) => `${teamCount} فريقاً لا يكفي لا لجدول إقصاء ولا لمجموعات متساوية`,
 
   formatLabel: "شكل البطولة",
   knockout: "إقصاء مباشر",
   groupsThenKnockout: "مجموعات ثم إقصاء",
-  knockoutRefused: (teamCount: number, below: number | null, above: number) =>
-    below === null
-      ? `${teamCount} فريقاً لا يملأ جدول إقصاء. جرب ${above} فريقاً`
-      : `${teamCount} فريقاً لا يملأ جدول إقصاء. جرب ${below} أو ${above} فريقاً`,
-
   groupCountLabel: "عدد المجموعات",
   qualifierCountLabel: "عدد المتأهلين",
-  groupOption: (groupCount: number, groupSize: number) =>
-    `${groupCount} مجموعات، ${groupSize} فرق لكل مجموعة`,
   qualifierOption: (qualifierCount: number, perGroup: number) =>
     `${qualifierCount} متأهلاً، ${perGroup} من كل مجموعة`,
 
@@ -58,7 +49,7 @@ export const setupWizard = {
   bracketHint: "المقاعد فقط، لأن المجموعات لم تُلعب بعد",
   slot: (position: number, groupName: string) => `${position} ${groupName}`,
   versus: "ضد",
-  knockoutOpeningTitle: "الدور الأول",
+  byeSeats: (count: number) => `${count} من مقاعد الدور الأول بلا خصم، وتمرّ إلى الدور التالي`,
 
   datesTitle: "المواعيد",
   firstDay: "أول يوم",
@@ -72,4 +63,17 @@ export const setupWizard = {
     "الأيام متتالية بلا راحة بينها، ويمكن إضافة أيام راحة من تبويب الأيام بعد الإنشاء",
 
   replaceWarning: "سيُحذف ما سبق من مجموعات ومباريات غير ملعوبة ويُستبدل بهذا الجدول",
+
+  entrant: {
+    team: {
+      tooFew: "أضف فريقين على الأقل قبل إعداد البطولة",
+      groupOption: (groupCount: number, groupSize: number) =>
+        `${groupCount} مجموعات، ${groupSize} فرق لكل مجموعة`,
+    },
+    player: {
+      tooFew: "أضف لاعبين اثنين على الأقل قبل إعداد البطولة",
+      groupOption: (groupCount: number, groupSize: number) =>
+        `${groupCount} مجموعات، ${groupSize} لاعبين لكل مجموعة`,
+    },
+  },
 } as const;

@@ -27,12 +27,14 @@ function candidateText(candidate: MemberOption): string {
 export default function AddMemberToActivityForm({
   activityId,
   candidates,
+  loading,
   registeredIds,
   actionLoading,
   onRegister,
 }: {
   activityId: string;
   candidates: MemberOption[];
+  loading: boolean;
   registeredIds: Set<string>;
   actionLoading: boolean;
   onRegister: (activityId: string, userId: string) => Promise<boolean>;
@@ -40,13 +42,13 @@ export default function AddMemberToActivityForm({
   const [search, setSearch] = useState("");
 
   const tokens = searchTokens(search);
-  const matched = tokens.length
-    ? candidates.filter((c) => matchesSearch(candidateText(c), tokens))
-    : [];
-  const results = matched.slice(0, LIMIT);
-  const hidden = matched.length - results.length;
   const everyoneRegistered =
     candidates.length > 0 && candidates.every((c) => registeredIds.has(c.id));
+  const matched = tokens.length
+    ? candidates.filter((c) => matchesSearch(candidateText(c), tokens))
+    : candidates.filter((c) => !registeredIds.has(c.id));
+  const results = matched.slice(0, LIMIT);
+  const hidden = tokens.length ? matched.length - results.length : 0;
 
   async function pick(userId: string) {
     if (await onRegister(activityId, userId)) setSearch("");
@@ -66,12 +68,14 @@ export default function AddMemberToActivityForm({
         className="input input-sm w-full"
         style={{ background: "var(--mint-50)" }}
       />
-      {tokens.length === 0 ? (
-        everyoneRegistered ? (
-          <Note>{texts.allRegistered}</Note>
-        ) : null
+      {loading ? (
+        <Note>{texts.loadingMembers}</Note>
+      ) : everyoneRegistered ? (
+        <Note>{texts.allRegistered}</Note>
       ) : results.length === 0 ? (
-        <Note>{texts.noMatch}</Note>
+        tokens.length ? (
+          <Note>{texts.noMatch}</Note>
+        ) : null
       ) : (
         <div className="space-y-1">
           {results.map((candidate) => {

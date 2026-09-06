@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-library/react";
 import SetupWizard from "./SetupWizard";
 import { resetTournament, setupWizard as texts } from "@/lib/texts";
+import { bracketRoundLabel } from "@/lib/tournament";
+import type { EntrantKind } from "@/lib/entrant";
 
 const post = vi.fn();
 const showToast = vi.fn();
@@ -16,11 +18,12 @@ vi.mock("@/components/Toast", () => ({ useToast: () => showToast }));
 const teams = (n: number) =>
   Array.from({ length: n }, (_, i) => ({ id: `t${i + 1}`, name: `فريق ${i + 1}` }));
 
-function open(teamCount: number, playedCount = 0) {
+function open(teamCount: number, playedCount = 0, entrant: EntrantKind = "team") {
   return render(
     <SetupWizard
       activityId="a1"
       teams={teams(teamCount)}
+      entrant={entrant}
       playedCount={playedCount}
       onDone={() => {}}
       onClose={() => {}}
@@ -65,7 +68,27 @@ describe("the setup wizard", () => {
   it("refuses to run with fewer than two teams", () => {
     open(1);
 
-    expect(screen.getByText(texts.tooFewTeams)).toBeTruthy();
+    expect(screen.getByText(texts.entrant.team.tooFew)).toBeTruthy();
+  });
+
+  it("asks a singles tournament for players rather than teams", () => {
+    open(1, 0, "player");
+
+    expect(screen.getByText(texts.entrant.player.tooFew)).toBeTruthy();
+    expect(screen.queryByText(texts.entrant.team.tooFew)).toBeNull();
+  });
+
+  it("names the group sizes in players on a singles tournament", () => {
+    open(12, 0, "player");
+    fireEvent.click(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ }));
+
+    const options = within(screen.getByLabelText(texts.groupCountLabel)).getAllByRole("option");
+    const labels = options.map((o) => o.textContent ?? "").filter(Boolean);
+
+    expect(labels).toEqual([
+      texts.entrant.player.groupOption(2, 6),
+      texts.entrant.player.groupOption(4, 3),
+    ]);
   });
 
   it("opens on the shape and cannot move on until one is chosen", () => {
@@ -75,11 +98,51 @@ describe("the setup wizard", () => {
     expect(screen.getByRole("button", { name: texts.next })).toHaveProperty("disabled", true);
   });
 
-  it("does not offer a straight knockout for twelve teams", () => {
+  it("offers a straight knockout for twelve teams", () => {
     open(12);
 
-    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", true);
-    expect(screen.getByText(texts.knockoutRefused(12, 8, 16))).toBeTruthy();
+    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", false);
+  });
+
+  it("offers a straight knockout for a count that splits into no groups", () => {
+    open(7);
+
+    expect(screen.getByRole("button", { name: /إقصاء مباشر/ })).toHaveProperty("disabled", false);
+    expect(screen.getByRole("button", { name: /مجموعات ثم إقصاء/ })).toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+
+  it("previews the full bracket a count that does not fill one is drawn into", () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+
+    expect(screen.getByText(bracketRoundLabel(8))).toBeTruthy();
+    expect(screen.getByText(bracketRoundLabel(1))).toBeTruthy();
+    expect(screen.getByText(texts.byeSeats(4))).toBeTruthy();
+  });
+
+  it("says nothing about byes when the count fills the bracket", () => {
+    open(8);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+
+    expect(screen.getByText(bracketRoundLabel(4))).toBeTruthy();
+    expect(screen.queryByText(texts.byeSeats(0))).toBeNull();
+  });
+
+  it("writes a knockout for a count that does not fill a bracket", async () => {
+    open(12);
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText(texts.firstDay), { target: { value: "2026-09-20" } });
+    fireEvent.click(screen.getByRole("button", { name: texts.write }));
+
+    await waitFor(() => expect(post).toHaveBeenCalled());
+    expect(post.mock.calls[0][1]).toMatchObject({ format: "KNOCKOUT", groups: [] });
   });
 
   it("offers only the group counts that lead somewhere", () => {

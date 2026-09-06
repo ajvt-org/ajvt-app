@@ -8,16 +8,6 @@ import type { MemberOption } from "../activityTypes";
 import { isSinglesActivity } from "@/lib/entrant";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
 
-interface RawMember {
-  id: string;
-  fullName: string;
-  photo: string | null;
-  age: string | null;
-  village: string | null;
-  status: "PENDING" | "ACTIVE" | "REJECTED";
-  user: { phone: string } | null;
-}
-
 export default function RegistrationsTab({
   activity,
   onChanged,
@@ -26,25 +16,15 @@ export default function RegistrationsTab({
   onChanged: () => Promise<void> | void;
 }) {
   const [members, setMembers] = useState<MemberOption[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
   const actions = useRegistrationActions(onChanged);
 
   useEffect(() => {
     api
-      .get<{ members: RawMember[] }>("/api/admin/members")
-      .then((data) =>
-        setMembers(
-          (data.members || []).map((m) => ({
-            id: m.id,
-            fullName: m.fullName,
-            phone: m.user?.phone ?? null,
-            photo: m.photo,
-            age: m.age,
-            village: m.village,
-            status: m.status,
-          })),
-        ),
-      )
-      .catch(() => {});
+      .get<{ members: MemberOption[] }>("/api/admin/members/options")
+      .then((data) => setMembers(data.members || []))
+      .catch(() => {})
+      .finally(() => setLoadingMembers(false));
   }, []);
 
   return (
@@ -53,6 +33,7 @@ export default function RegistrationsTab({
         activityId={activity.id}
         registrations={activity.registrations}
         members={members}
+        loadingMembers={loadingMembers}
         teams={activity.teams}
         singles={isSinglesActivity(activity)}
         actionLoading={actions.actionLoading}

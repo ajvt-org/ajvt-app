@@ -7,6 +7,7 @@ import AdminToolHeader from "@/components/admin/AdminToolHeader";
 import Pagination from "@/components/admin/Pagination";
 import AuditLogEntryCard from "@/components/admin/AuditLogEntryCard";
 import { counted } from "@/lib/arabicCount";
+import { auditLogPage } from "@/lib/texts";
 import { RESULT } from "@/lib/messages";
 import {
   pageCount,
@@ -35,7 +36,7 @@ function AuditLogInner() {
   return (
     <div className="admin-page">
       <div className="mb-3">
-        <AdminToolHeader icon="list" title="سجل الإجراءات" note={counted(total, RESULT)} />
+        <AdminToolHeader href="/admin/audit-log" note={counted(total, RESULT)} />
       </div>
 
       <AuditFilterRow
@@ -50,7 +51,7 @@ function AuditLogInner() {
         <PageLoading />
       ) : logs.length === 0 ? (
         <p className="text-sm text-center py-8" style={{ color: "var(--text-muted)" }}>
-          لا يوجد سجل مطابق
+          {auditLogPage.noMatch}
         </p>
       ) : (
         <div className="space-y-2">

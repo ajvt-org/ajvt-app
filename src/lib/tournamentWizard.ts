@@ -1,9 +1,4 @@
-import {
-  groupShapes,
-  isValidGroupShape,
-  knockoutRefusal,
-  type ShapeRefusal,
-} from "./tournamentShape";
+import { MIN_TEAMS, groupShapes, isValidGroupShape, knockoutIsPossible } from "./tournamentShape";
 import { groupsAreEven, holdsEveryTeamOnce, type DrawnGroup } from "./tournamentDraw";
 
 export const WIZARD_STEPS = ["shape", "groups", "schedule", "bracket", "dates"] as const;
@@ -27,9 +22,7 @@ export interface WizardState {
 }
 
 export type WizardBlocker =
-  | { kind: "tooFewTeams"; teamCount: number }
-  | { kind: "hasResults"; played: number }
-  | { kind: "noShape"; refusal: ShapeRefusal };
+  { kind: "tooFewTeams"; teamCount: number } | { kind: "hasResults"; played: number };
 
 export function stepsFor(format: WizardFormat | null): WizardStep[] {
   if (format === "KNOCKOUT") return ["shape", "bracket", "dates"];
@@ -38,23 +31,19 @@ export function stepsFor(format: WizardFormat | null): WizardStep[] {
 
 export function wizardBlocker(teamCount: number, played: number): WizardBlocker | null {
   if (played > 0) return { kind: "hasResults", played };
-  if (teamCount < 2) return { kind: "tooFewTeams", teamCount };
-  const knockout = knockoutRefusal(teamCount);
-  if (knockout && groupShapes(teamCount).length === 0) {
-    return { kind: "noShape", refusal: knockout };
-  }
+  if (teamCount < MIN_TEAMS) return { kind: "tooFewTeams", teamCount };
   return null;
 }
 
 export function formatsFor(teamCount: number): WizardFormat[] {
   const formats: WizardFormat[] = [];
-  if (knockoutRefusal(teamCount) === null) formats.push("KNOCKOUT");
+  if (knockoutIsPossible(teamCount)) formats.push("KNOCKOUT");
   if (groupShapes(teamCount).length > 0) formats.push("GROUPS_THEN_KNOCKOUT");
   return formats;
 }
 
 export function shapeIsChosen(state: WizardState, teamCount: number): boolean {
-  if (state.format === "KNOCKOUT") return knockoutRefusal(teamCount) === null;
+  if (state.format === "KNOCKOUT") return knockoutIsPossible(teamCount);
   if (state.format !== "GROUPS_THEN_KNOCKOUT") return false;
   if (state.groupCount === null || state.qualifierCount === null) return false;
   return isValidGroupShape(teamCount, state.groupCount, state.qualifierCount);

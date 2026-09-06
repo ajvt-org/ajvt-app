@@ -4,7 +4,7 @@ import BroadcastForm from "./BroadcastForm";
 export default function AdminBroadcastPage() {
   return (
     <div className="admin-page space-y-4">
-      <AdminToolHeader icon="megaphone" title="إرسال إشعار جماعي" />
+      <AdminToolHeader href="/admin/broadcast" />
       <div className="card p-5">
         <BroadcastForm />
       </div>

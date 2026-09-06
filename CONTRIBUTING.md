@@ -50,4 +50,43 @@ Commit subjects are plain imperative and short — "Keep the fee on the member a
 the surplus in donations", not "fix: membership fee". No `feat:` or `fix:`
 prefixes, no long bodies.
 
+## How an issue, a pull request and a review are written
+
+They read as the association rather than as a tool, so say the thing and stop.
+
+- No em dashes and no colons. Rewrite the sentence instead. This kills the label
+  and value habit, so write the label as a sentence.
+- No preamble, no scaffolding, no offers, no emoji. Never narrate the writing
+  itself.
+- Short title. Blunt, short body. Bullets of fact, one or two short sentences
+  each. Three sentences of reasoning under a dash is a paragraph and reads as
+  one.
+- Name the code. Identifiers, files and strings go in backticks. An issue
+  number never does, because a backticked number is not linked and the issue it
+  points at never shows the connection.
+- Nothing read from the production database. This repository is public, so
+  aggregate counts belong outside it too. Write the fault from the logic of it
+  and send the reader to the data themselves.
+
+An issue opens with the fault or the gap, in a sentence or two, with no heading.
+Then `## What should be true` as bullets. Add a section of its own where
+something would break, or where the issue deliberately leaves something out.
+[#1225](../../issues/1225), [#1226](../../issues/1226) and
+[#1207](../../issues/1207) are the models.
+
+A pull request fills
+[.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md). Its
+"How it was tested" names the scenarios in words. No test counts, no coverage
+numbers, no pasted command output, and no status line about the run. Tick the
+migration box only when the branch carries one.
+
+A release pull request is the exception, and has its own template at
+[.github/PULL_REQUEST_TEMPLATE/release.md](.github/PULL_REQUEST_TEMPLATE/release.md).
+Open it with `gh pr create --template .github/PULL_REQUEST_TEMPLATE/release.md`.
+Its body is published verbatim as the release notes, so it is written as notes
+for members and carries no checkbox and nothing addressed to a reviewer. It is
+the changelog and nothing else, with no section on the reasoning and none on how
+it was tested. Whether the release contains a migration is said in a sentence at
+the end.
+
 Security problems do not go in an issue. See [SECURITY.md](SECURITY.md).

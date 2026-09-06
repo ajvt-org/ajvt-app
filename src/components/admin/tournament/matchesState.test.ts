@@ -44,9 +44,9 @@ describe("a knockout tournament", () => {
     expect(matchesState(base).isTwoGroupFormat).toBe(false);
   });
 
-  it("never proposes semis from groups", () => {
+  it("never counts a group stage as done, since it has none", () => {
     const state = matchesState({ ...base, matches: [played()] });
-    expect(state.groupStageComplete).toBe(false);
+    expect(state.isTwoGroupFormat).toBe(false);
   });
 });
 
@@ -61,21 +61,21 @@ describe("a groups-then-knockout tournament", () => {
     });
 
     expect(state.knockoutLocked).toBe(true);
-    expect(state.groupStageComplete).toBe(false);
+    expect(state.groupStageDone).toBe(false);
   });
 
-  it("offers the semis once the group stage is done", () => {
+  it("unlocks the knockout once the group stage is done", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: twoGroups,
       matches: [played({ id: "a" }), played({ id: "b" })],
     });
 
-    expect(state.groupStageComplete).toBe(true);
+    expect(state.groupStageDone).toBe(true);
     expect(state.knockoutLocked).toBe(false);
   });
 
-  it("does not offer the semis with three groups, which the API refuses", () => {
+  it("is not the two-group format with three groups, which the API refuses", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: [group("g1"), group("g2"), group("g3")],
@@ -83,17 +83,16 @@ describe("a groups-then-knockout tournament", () => {
     });
 
     expect(state.isTwoGroupFormat).toBe(false);
-    expect(state.groupStageComplete).toBe(false);
   });
 
-  it("stops offering the semis once a bracket exists", () => {
+  it("stops waiting on the first round once a bracket is drawn", () => {
     const state = matchesState({
       format: "GROUPS_THEN_KNOCKOUT",
       groups: twoGroups,
       matches: [played({ id: "a" }), match({ id: "s", bracketRound: 1, isKnockout: true })],
     });
 
-    expect(state.groupStageComplete).toBe(false);
+    expect(state.firstRoundWaiting).toBe(false);
   });
 });
 
@@ -147,10 +146,10 @@ describe("a bracket laid out before the teams are known", () => {
     expect(state.firstRoundRedoable).toBe(false);
   });
 
-  it("offers the semi final draw once the groups are done", () => {
+  it("unlocks the semi final draw once the groups are done", () => {
     const state = matchesState({ ...base, matches: [...groupStage, ...acrossTwoRounds] });
 
-    expect(state.groupStageComplete).toBe(true);
+    expect(state.knockoutLocked).toBe(false);
   });
 
   it("holds the draw back while a group match is still to play", () => {
@@ -160,7 +159,6 @@ describe("a bracket laid out before the teams are known", () => {
     });
 
     expect(state.knockoutLocked).toBe(true);
-    expect(state.groupStageComplete).toBe(false);
     expect(state.firstRoundWaiting).toBe(true);
   });
 
@@ -178,7 +176,6 @@ describe("a bracket laid out before the teams are known", () => {
 
     expect(state.firstRoundWaiting).toBe(false);
     expect(state.firstRoundRedoable).toBe(true);
-    expect(state.groupStageComplete).toBe(false);
     expect(state.canAdvanceBracket).toBe(true);
   });
 

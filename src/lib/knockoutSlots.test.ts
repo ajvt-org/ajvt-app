@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { bracketSize, drawFirstRound } from "./bracketDraw";
 import {
   knockoutRoundSizes,
   pairQualifierSlots,
@@ -145,8 +146,32 @@ describe("knockoutRoundSizes", () => {
     expect(knockoutRoundSizes(2)).toEqual([1]);
   });
 
-  it("has no rounds for a field that does not halve cleanly", () => {
-    expect(knockoutRoundSizes(6)).toEqual([]);
+  it("rounds a field that does not halve cleanly up to the bracket above it", () => {
+    expect(knockoutRoundSizes(6)).toEqual([4, 2, 1]);
+    expect(knockoutRoundSizes(3)).toEqual([2, 1]);
+    expect(knockoutRoundSizes(12)).toEqual([8, 4, 2, 1]);
+  });
+
+  it("has no rounds for a field of fewer than two", () => {
     expect(knockoutRoundSizes(1)).toEqual([]);
+    expect(knockoutRoundSizes(0)).toEqual([]);
+  });
+
+  it("halves from the first round down to a single final", () => {
+    for (let count = 2; count <= 33; count++) {
+      const sizes = knockoutRoundSizes(count);
+
+      expect(sizes.at(0)).toBe(bracketSize(count) / 2);
+      expect(sizes.at(-1)).toBe(1);
+      expect(sizes.slice(1)).toEqual(sizes.slice(0, -1).map((size) => size / 2));
+    }
+  });
+
+  it("opens with as many matches as the draw produces slots", () => {
+    for (let count = 2; count <= 33; count++) {
+      const entrants = Array.from({ length: count }, (_, i) => ({ id: String(i) }));
+
+      expect(knockoutRoundSizes(count).at(0)).toBe(drawFirstRound(entrants)?.length);
+    }
   });
 });

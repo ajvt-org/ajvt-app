@@ -1,3 +1,4 @@
+import { bracketSize } from "./bracketDraw";
 import { isPowerOfTwo } from "./tournament";
 
 export interface QualifierSlot {
@@ -47,8 +48,8 @@ export function pairQualifierSlots(groupCount: number, qualifierCount: number): 
 }
 
 export function knockoutRoundSizes(qualifierCount: number): number[] {
-  if (!isPowerOfTwo(qualifierCount)) return [];
+  if (qualifierCount < 2) return [];
   const sizes: number[] = [];
-  for (let left = qualifierCount; left >= 2; left /= 2) sizes.push(left / 2);
+  for (let left = bracketSize(qualifierCount); left >= 2; left /= 2) sizes.push(left / 2);
   return sizes;
 }

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security
+    url: https://github.com/ajvt-org/ajvt-app/security/policy
+    about: A security problem never goes in an issue
+  - name: How an issue is written here
+    url: https://github.com/ajvt-org/ajvt-app/blob/dev/CONTRIBUTING.md
+    about: The register an issue, a review and a pull request are written in

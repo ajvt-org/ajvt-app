@@ -140,6 +140,22 @@ describe("DaysTab", () => {
     expect(await screen.findByText("حدد تاريخ بداية البطولة أولاً")).toBeDefined();
     expect(screen.getByText("فتح تفاصيل النشاط")).toBeDefined();
   });
+
+  it("says it once, and does not explain a tab that cannot be used yet", async () => {
+    await show({ startsAt: null, endsAt: null, days: [], unscheduled: [] });
+    const card = (await screen.findByText("حدد تاريخ بداية البطولة أولاً")).closest(".card");
+
+    expect(card?.querySelectorAll("p")).toHaveLength(1);
+    expect(card?.textContent).not.toContain("الأيام تُحسب");
+  });
+
+  it("sizes the way out to its label rather than to the card", async () => {
+    await show({ startsAt: null, endsAt: null, days: [], unscheduled: [] });
+
+    const link = (await screen.findByText("فتح تفاصيل النشاط")).closest("a");
+
+    expect(link?.getAttribute("style")).toContain("fit-content");
+  });
 });
 
 describe("doubleBookedTeams", () => {

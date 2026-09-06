@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { captainFirst, holdsViewer, isCaptain, isViewer, viewerTeamFirst } from "./squad";
+import {
+  captainFirst,
+  holdsViewer,
+  isCaptain,
+  isViewer,
+  viewerTeamFirst,
+  viewerTeamId,
+} from "./squad";
 
 const squad = [{ id: "a" }, { id: "b" }, { id: "c" }];
 
@@ -90,5 +97,23 @@ describe("viewerTeamFirst", () => {
 
   it("keeps a viewer whose team is already first where it is", () => {
     expect(viewerTeamFirst(teams, "a")).toEqual(teams);
+  });
+});
+
+describe("viewerTeamId", () => {
+  it("names the team the viewer plays for", () => {
+    expect(viewerTeamId(teams, "c")).toBe("t2");
+  });
+
+  it("names nobody's team for a viewer who is signed out", () => {
+    expect(viewerTeamId(teams, null)).toBeNull();
+  });
+
+  it("names nobody's team for a viewer who plays for none of them", () => {
+    expect(viewerTeamId(teams, "z")).toBeNull();
+  });
+
+  it("finds a squad of one, which is what a singles entrant is", () => {
+    expect(viewerTeamId([{ id: "solo", members: [{ member: { id: "x" } }] }], "x")).toBe("solo");
   });
 });

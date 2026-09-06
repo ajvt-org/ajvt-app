@@ -2,7 +2,6 @@ export const daysTab = {
   addRestAfter: "يوم راحة بعده",
   loadFailed: "فشل تحميل الأيام",
   needStartDate: "حدد تاريخ بداية البطولة أولاً",
-  countedFromStart: "الأيام تُحسب من تاريخ البداية، ويُحسب تاريخ النهاية تلقائياً من عدد الأيام.",
   openActivity: "فتح تفاصيل النشاط",
   endFromLastDay: "تاريخ النهاية يُحسب تلقائياً من آخر يوم.",
   notifyOnMove: "إشعار اللاعبين والمتابعين عند تحريك الجدول",
