@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { type IconName } from "./Icon";
-import { AvatarFrame, CoverFrame, HeroFrame, type FrameProps } from "./PhotoFrames";
+import { AvatarFrame, CoverFrame, HeroFrame, TileFrame, type FrameProps } from "./PhotoFrames";
 import { photoUpload as texts } from "@/lib/texts";
 
 interface PhotoUploadProps {
@@ -13,7 +13,7 @@ interface PhotoUploadProps {
   imageUrlPrefix?: string;
   label?: string;
   placeholderIcon?: IconName;
-  variant?: "avatar" | "cover" | "hero";
+  variant?: "avatar" | "tile" | "cover" | "hero";
   bare?: boolean;
 }
 
@@ -21,6 +21,7 @@ const FRAMES = {
   hero: HeroFrame,
   cover: CoverFrame,
   avatar: AvatarFrame,
+  tile: TileFrame,
 } as const;
 
 export default function PhotoUpload({
@@ -64,7 +65,10 @@ export default function PhotoUpload({
 
   const displayUrl = previewUrl || (photo ? `${imageUrlPrefix}/${photo}` : null);
   const action = locked && lockedNote ? lockedNote : photo || previewUrl ? texts.change : texts.add;
-  const noteBelow = locked && lockedNote && (variant !== "avatar" || bare);
+  // The small frames put their label beside the picture, so a locked note has a
+  // place to sit unless the caller asked for the frame on its own.
+  const small = variant === "avatar" || variant === "tile";
+  const noteBelow = locked && lockedNote && (!small || bare);
   const Frame = FRAMES[variant];
   const frame: FrameProps = {
     displayUrl,

@@ -107,6 +107,34 @@ describe("the text beside an avatar", () => {
     expect(container.querySelector("img.photo-fill-img")).toBeNull();
   });
 
+  it("keeps its corners in the tile frame and rounds them in the avatar one", () => {
+    const { container, rerender } = render(
+      <PhotoUpload photo="a.webp" variant="tile" onUpload={vi.fn()} bare />,
+    );
+
+    expect(screen.getByRole("button").className).toContain("rounded-xl");
+    expect(container.querySelector("img.object-cover")).toBeTruthy();
+
+    rerender(<PhotoUpload photo="a.webp" variant="avatar" onUpload={vi.fn()} bare />);
+
+    expect(screen.getByRole("button").className).toContain("rounded-full");
+  });
+
+  it("gives the tile frame the same camera badge as the avatar", () => {
+    const { container } = render(
+      <PhotoUpload photo="a.webp" variant="tile" onUpload={vi.fn()} bare />,
+    );
+
+    expect(screen.getByRole("button", { name: photoUpload.defaultLabel })).toBeTruthy();
+    expect(container.querySelector("span.absolute svg")).toBeTruthy();
+  });
+
+  it("offers nothing to click on a locked tile", () => {
+    render(<PhotoUpload photo="a.webp" locked variant="tile" onUpload={vi.fn()} bare />);
+
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
   it("says the action on the cover strip rather than under the frame", () => {
     render(<PhotoUpload photo="a.webp" variant="cover" onUpload={vi.fn()} label="غلاف" />);
 
