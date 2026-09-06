@@ -382,9 +382,10 @@ describe("the squad the tournament asks for", () => {
 
     const summaries = [...document.querySelectorAll("summary")].map((s) => s.textContent);
     expect(summaries.some((text) => text?.includes("16-22"))).toBe(false);
-    expect(document.querySelector('summary [role="img"]')?.getAttribute("aria-label")).toContain(
-      teamsTab.squadOfRange(3, 16, 22),
+    const bars = [...document.querySelectorAll('summary [role="img"]')].map((bar) =>
+      bar.getAttribute("aria-label"),
     );
+    expect(bars).toContain(teamsTab.squadOfRange(3, 16, 22));
   });
 
   it("states a fixed squad as the one number it is", () => {
