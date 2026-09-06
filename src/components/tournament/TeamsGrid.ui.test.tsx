@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import TeamsGrid from "./TeamsGrid";
 
 function team(name: string, size: number, captainUserId: string | null = null) {
@@ -152,5 +153,34 @@ describe("TeamsGrid", () => {
 
     expect(container.querySelectorAll("details")).toHaveLength(0);
     expect(container.querySelectorAll("li")).toHaveLength(2);
+  });
+});
+
+describe("opening a squad", () => {
+  it("starts with every squad closed", () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 4)]);
+
+    expect([...container.querySelectorAll("details")].filter((d) => d.open)).toHaveLength(0);
+  });
+
+  it("closes the squad that was open when another is picked", async () => {
+    const { container } = show([team("فريق النجم", 3), team("فريق الوحدة", 4)]);
+    const [first, second] = [...container.querySelectorAll("summary")];
+
+    await userEvent.click(first);
+    expect([...container.querySelectorAll("details")].map((d) => d.open)).toEqual([true, false]);
+
+    await userEvent.click(second);
+    expect([...container.querySelectorAll("details")].map((d) => d.open)).toEqual([false, true]);
+  });
+
+  it("closes the open squad when it is picked again", async () => {
+    const { container } = show([team("فريق النجم", 3)]);
+    const summary = container.querySelector("summary")!;
+
+    await userEvent.click(summary);
+    await userEvent.click(summary);
+
+    expect(container.querySelector("details")!.open).toBe(false);
   });
 });

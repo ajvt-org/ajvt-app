@@ -1,7 +1,10 @@
+"use client";
+
 import Icon from "@/components/Icon";
 import TeamCardHead from "./TeamCardHead";
 import SquadList, { type SquadPlayer } from "./SquadList";
 import { holdsViewer, viewerTeamFirst } from "@/lib/squad";
+import { useOpenTeam } from "@/hooks/useOpenTeam";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
 
@@ -30,6 +33,8 @@ export default function TeamsGrid({
   viewerId?: string | null;
   entrant?: EntrantKind;
 }) {
+  const { isOpen, toggle } = useOpenTeam([]);
+
   if (entrant === "player") {
     return (
       <SquadList
@@ -56,10 +61,19 @@ export default function TeamsGrid({
           );
         }
         return (
-          <details key={team.id} className="card p-3" style={cardStyle(mine)}>
+          <details
+            key={team.id}
+            className="card p-3"
+            style={cardStyle(mine)}
+            open={isOpen(team.id)}
+          >
             <summary
               className={`disclosure-summary cursor-pointer ${HEAD}`}
               style={{ color: "var(--text-main)" }}
+              onClick={(e) => {
+                e.preventDefault();
+                toggle(team.id, e.currentTarget);
+              }}
             >
               <TeamCardHead
                 logo={team.logo}
