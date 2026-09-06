@@ -17,6 +17,7 @@ export interface Fixture {
   userId: string;
   competitionId: string;
   attemptId: string;
+  matchId: string;
   datasets: string[];
 }
 
@@ -24,12 +25,13 @@ function pathOf(file: string): string {
   return file.replace("../../src/app/api/admin/", "").replace("/route.ts", "");
 }
 
-function idFor(path: string, fixture: Fixture): string | null {
-  if (path.startsWith("activities/")) return fixture.activityId;
-  if (path.startsWith("payment-methods/")) return fixture.methodId;
-  if (path.startsWith("members/")) return fixture.userId;
-  if (path.startsWith("quiz/competitions/")) return fixture.competitionId;
-  if (path.startsWith("quiz/attempts/")) return fixture.attemptId;
+function paramsFor(path: string, fixture: Fixture): Record<string, string> | null {
+  if (path.startsWith("activities/")) return { id: fixture.activityId };
+  if (path.startsWith("payment-methods/")) return { id: fixture.methodId };
+  if (path.startsWith("members/")) return { id: fixture.userId };
+  if (path.startsWith("quiz/competitions/")) return { id: fixture.competitionId };
+  if (path.startsWith("quiz/attempts/")) return { id: fixture.attemptId };
+  if (path.startsWith("matches/")) return { matchId: fixture.matchId };
   return null;
 }
 
@@ -47,9 +49,9 @@ export function routesUnder(fixture: Fixture): SweptRoute[] {
       swept.push({ path, key: path, params: {} });
       continue;
     }
-    const id = idFor(path, fixture);
-    if (id === null) continue;
-    swept.push({ path, key: path, params: { id } });
+    const params = paramsFor(path, fixture);
+    if (params === null) continue;
+    swept.push({ path, key: path, params });
   }
   return swept.sort((a, b) => a.key.localeCompare(b.key));
 }
@@ -58,7 +60,7 @@ export async function unresolved(fixture: Fixture): Promise<string[]> {
   const dynamic = Object.keys(MODULES)
     .map(pathOf)
     .filter((path) => path.includes("[") && !path.includes("[dataset]"))
-    .filter((path) => idFor(path, fixture) === null);
+    .filter((path) => paramsFor(path, fixture) === null);
 
   const served = await Promise.all(dynamic.map((path) => handlerFor(path)));
   return dynamic.filter((_, index) => served[index] !== null);
