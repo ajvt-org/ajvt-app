@@ -17,7 +17,6 @@ export const paymentMethodManager = {
   edit: (name: string) => `تعديل ${name}`,
   toggleActive: (name: string) => `إيقاف أو تفعيل ${name}`,
   toggleMemberFacing: (name: string) => `إتاحة ${name} للأعضاء`,
-  hint: "طريقة الدفع لا تُحذف، تُوقف فقط، حتى تبقى السجلات القديمة سليمة.",
 } as const;
 
 export const paymentAccountManager = {

@@ -56,10 +56,6 @@ export default function PaymentMethodManager() {
         <IconLabel name="card">{texts.title}</IconLabel>
       </p>
 
-      <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        {texts.hint}
-      </p>
-
       <form onSubmit={create} className="flex items-center gap-2">
         <input
           value={name}
