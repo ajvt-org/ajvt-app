@@ -258,6 +258,16 @@ describe("the setup wizard", () => {
     expect(screen.getByText(texts.formatLabel)).toBeTruthy();
   });
 
+  it("carries one way back, and none on the step it opens at", () => {
+    open(8);
+    expect(screen.queryByRole("button", { name: texts.back })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /إقصاء مباشر/ }));
+    next();
+
+    expect(screen.getAllByRole("button", { name: texts.back })).toHaveLength(1);
+  });
+
   it("says what went wrong when the write is refused", async () => {
     post.mockRejectedValue(new Error("لا يمكن إعادة ترتيب بطولة"));
     open(8);
