@@ -1,17 +1,13 @@
 "use client";
 
-import type { FilterAxis } from "./activitiesView";
+import type { AxisView } from "./activitiesView";
 import { activityRow as texts } from "@/lib/texts";
 
 export default function FilterAxisRow({
   axis,
-  value,
-  countOf,
   onPick,
 }: {
-  axis: FilterAxis;
-  value: string;
-  countOf: (value: string) => number;
+  axis: AxisView;
   onPick: (value: string) => void;
 }) {
   return (
@@ -24,12 +20,12 @@ export default function FilterAxisRow({
       </span>
       <div className="flex gap-1.5 flex-wrap" role="group" aria-label={axis.label}>
         {axis.options.map((option) => {
-          const on = value === option.value;
-          const count = countOf(option.value);
+          const on = axis.value === option.value;
           return (
             <button
               key={option.value}
               onClick={() => onPick(option.value)}
+              disabled={!option.usable}
               aria-pressed={on}
               aria-label={texts.filters.pick(axis.label, option.label)}
               className="text-xs px-2 py-1 rounded-lg font-bold flex items-center gap-1"
@@ -37,6 +33,8 @@ export default function FilterAxisRow({
                 background: on ? "var(--mint-600)" : "var(--mint-50)",
                 color: on ? "white" : "var(--mint-700)",
                 border: on ? "none" : "1px solid var(--mint-100)",
+                opacity: option.usable ? 1 : 0.45,
+                cursor: option.usable ? "pointer" : "not-allowed",
               }}
             >
               {option.label}
@@ -44,7 +42,7 @@ export default function FilterAxisRow({
                 className="badge-numeral text-[10px]"
                 style={{ color: on ? "rgba(255,255,255,0.75)" : "var(--text-muted)" }}
               >
-                {count}
+                {option.count}
               </span>
             </button>
           );
