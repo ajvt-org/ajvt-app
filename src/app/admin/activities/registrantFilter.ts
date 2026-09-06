@@ -1,8 +1,6 @@
 import { activityRegistrants as texts } from "@/lib/texts";
 import type { Registration } from "./activityTypes";
 
-// Several teams at once, or none, with "no team" as a bucket of its own rather
-// than a sentinel standing in for one. An empty selection is no filter at all.
 export interface TeamSelection {
   teamIds: string[];
   noTeam: boolean;
@@ -42,7 +40,6 @@ export function pickedLabels(
   return selection.noTeam ? [...named, texts.noTeam] : named;
 }
 
-// Read on the closed control, so it says what is picked without opening it.
 export function teamFilterSummary(
   selection: TeamSelection,
   teams: { id: string; name: string }[],

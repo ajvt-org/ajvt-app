@@ -25,9 +25,6 @@ function Row({ label, on, onToggle }: { label: string; on: boolean; onToggle: ()
   );
 }
 
-// A closed control that names what is picked, and a sheet that holds several
-// teams at once. It stays one row however many teams a tournament has, which a
-// row of chips could not.
 export default function TeamFilter({
   teams,
   selection,

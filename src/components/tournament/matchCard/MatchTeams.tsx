@@ -89,7 +89,6 @@ export default function MatchTeams({
   away: MatchSide;
   score?: { home: number | string | null; away: number | string | null } | null;
   tone?: MatchTone;
-  // Required, so a card cannot accept a size by leaving it out.
   size: MatchTeamsSize;
   layout?: "inline" | "stacked";
   separator?: string;
