@@ -350,6 +350,21 @@ describe("a squad the admin should look at", () => {
     expect(screen.getByLabelText(teamsTab.squadOfRange(6, 16, 22))).toBeDefined();
   });
 
+  it("shows the count with its noun, the way the badge on a fixed squad does", () => {
+    withBreaches([{ kind: "tooFew", count: 6, min: 16 }], squad(6));
+
+    expect(screen.getByText(teamsTab.rosterCount(6))).toBeDefined();
+  });
+
+  it("names the outside share beside its own bar rather than only in the label", () => {
+    withBreaches(
+      [{ kind: "tooManyOutside", count: 5, limit: 4, overPlayerIds: ["p1"] }],
+      squad(16, 5),
+    );
+
+    expect(screen.getByText(teamsTab.outsideCount(5))).toBeDefined();
+  });
+
   it("says how far past the maximum a squad has gone", () => {
     withBreaches([{ kind: "tooMany", count: 23, max: 22 }], squad(23));
 

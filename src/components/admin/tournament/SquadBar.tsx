@@ -20,13 +20,13 @@ const OVER = "#b91c1c";
 
 function Bar({
   label,
-  count,
+  readout,
   fill,
   track,
   geometry,
 }: {
   label: string;
-  count: number;
+  readout: string;
   fill: string;
   track: number;
   geometry: BarGeometry;
@@ -39,15 +39,10 @@ function Bar({
       style={{ width: `min(100%, ${BAR_WIDTH}px)`, paddingInline: NUMERAL_GUTTER }}
     >
       <span
-        className="relative block text-[12px] font-black tabular-nums"
+        className="block text-[12px] font-black tabular-nums leading-none"
         style={{ height: COUNT_ROW, color: "var(--text-main)" }}
       >
-        <span
-          className="absolute top-0"
-          style={{ insetInlineStart: `${geometry.countAt}%`, transform: "translateX(50%)" }}
-        >
-          {count}
-        </span>
+        {readout}
       </span>
       <span className="relative block">
         <span
@@ -119,7 +114,7 @@ export default function SquadBar({
     <>
       <Bar
         label={texts.squadOfRange(count, squadBar.min, squadBar.max)}
-        count={count}
+        readout={texts.rosterCount(count)}
         fill={squadBar.short ? SHORT : WITHIN}
         track={SQUAD_TRACK}
         geometry={squadBar}
@@ -127,7 +122,7 @@ export default function SquadBar({
       {outside && (
         <Bar
           label={texts.outsideOfLimit(outside.count, outside.limit)}
-          count={outside.count}
+          readout={texts.outsideCount(outside.count)}
           fill={WITHIN}
           track={OUTSIDE_TRACK}
           geometry={outsideBarGeometry(outside)}
