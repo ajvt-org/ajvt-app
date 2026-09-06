@@ -51,6 +51,14 @@ describe("the admin navigation", () => {
     expect(hrefs.indexOf(MONEY_AREAS.supporters)).toBe(hrefs.indexOf(MONEY_AREAS.receipts) + 1);
   });
 
+  it("gives every money screen an icon of its own, so the label is not the only difference", () => {
+    const money = NAV_TABS.find((tab) => tab.label === adminTabs.money);
+    const icons = money?.tabs?.map((tab) => tab.icon) ?? [];
+
+    expect(icons).toHaveLength(MONEY.length);
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
   it("hides the money tab from a role granted none of it", () => {
     expect(labels("QUIZ")).not.toContain(adminTabs.money);
     expect(labels("ACTIVITY")).not.toContain(adminTabs.money);
