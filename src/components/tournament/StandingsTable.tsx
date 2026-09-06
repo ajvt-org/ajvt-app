@@ -36,16 +36,21 @@ function columnsFor(series: boolean): { label: string; detail: boolean; start?: 
   ];
 }
 
+const VIEWER_ROW = { background: "var(--mint-50)" };
+const VIEWER_EDGE = { borderInlineStart: "3px solid var(--mint-600)" };
+
 export default function StandingsTable({
   title,
   rows,
   series = false,
   entrant = "team",
+  viewerTeamId = null,
 }: {
   title: string | null;
   rows: Row[];
   series?: boolean;
   entrant?: EntrantKind;
+  viewerTeamId?: string | null;
 }) {
   const columns = columnsFor(series).map((column) =>
     column.start ? { ...column, label: texts.entrant[entrant].column } : column,
@@ -74,35 +79,49 @@ export default function StandingsTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
-            <tr key={row.teamId} style={{ borderTop: "1px solid var(--mint-100)" }}>
-              <td className="px-2 py-2 text-center">{i + 1}</td>
-              <td className="px-2 py-2 font-bold text-xs" style={{ color: "var(--text-main)" }}>
-                <span className="flex items-center gap-1.5 justify-start">
-                  <TeamLogo
-                    logo={row.logo}
-                    photo={row.photo}
-                    name={row.name}
-                    size={MATCH_TEAMS_SIZES.sm.logo}
-                    entrant={entrant}
-                  />
-                  <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
-                </span>
-              </td>
-              <td className="px-2 py-2 text-center font-black" style={{ color: "var(--mint-700)" }}>
-                {count(row.points)}
-              </td>
-              <td className="px-2 py-2 text-center">{row.played}</td>
-              <td className="px-2 py-2 text-center col-detail">{row.won}</td>
-              <td className="px-2 py-2 text-center col-detail">{row.drawn}</td>
-              <td className="px-2 py-2 text-center col-detail">{row.lost}</td>
-              <td className="px-2 py-2 text-center col-detail">{count(row.scoredFor)}</td>
-              <td className="px-2 py-2 text-center col-detail">{count(row.scoredAgainst)}</td>
-              <td className="px-2 py-2 text-center" dir="ltr">
-                {count(row.difference)}
-              </td>
-            </tr>
-          ))}
+          {rows.map((row, i) => {
+            const mine = row.teamId === viewerTeamId;
+            return (
+              <tr
+                key={row.teamId}
+                style={{
+                  borderTop: "1px solid var(--mint-100)",
+                  ...(mine ? VIEWER_ROW : {}),
+                }}
+              >
+                <td className="px-2 py-2 text-center" style={mine ? VIEWER_EDGE : undefined}>
+                  {i + 1}
+                </td>
+                <td className="px-2 py-2 font-bold text-xs" style={{ color: "var(--text-main)" }}>
+                  <span className="flex items-center gap-1.5 justify-start">
+                    <TeamLogo
+                      logo={row.logo}
+                      photo={row.photo}
+                      name={row.name}
+                      size={MATCH_TEAMS_SIZES.sm.logo}
+                      entrant={entrant}
+                    />
+                    <bdi style={{ overflowWrap: "anywhere" }}>{row.name}</bdi>
+                  </span>
+                </td>
+                <td
+                  className="px-2 py-2 text-center font-black"
+                  style={{ color: "var(--mint-700)" }}
+                >
+                  {count(row.points)}
+                </td>
+                <td className="px-2 py-2 text-center">{row.played}</td>
+                <td className="px-2 py-2 text-center col-detail">{row.won}</td>
+                <td className="px-2 py-2 text-center col-detail">{row.drawn}</td>
+                <td className="px-2 py-2 text-center col-detail">{row.lost}</td>
+                <td className="px-2 py-2 text-center col-detail">{count(row.scoredFor)}</td>
+                <td className="px-2 py-2 text-center col-detail">{count(row.scoredAgainst)}</td>
+                <td className="px-2 py-2 text-center" dir="ltr">
+                  {count(row.difference)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

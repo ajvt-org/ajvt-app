@@ -29,6 +29,13 @@ export function holdsViewer(team: TeamEntry, viewerId: string | null): boolean {
   return team.members.some((entry) => isViewer(entry.member.id, viewerId));
 }
 
+export function viewerTeamId<T extends TeamEntry & { id: string }>(
+  teams: T[],
+  viewerId: string | null,
+): string | null {
+  return teams.find((team) => holdsViewer(team, viewerId))?.id ?? null;
+}
+
 export function viewerTeamFirst<T extends TeamEntry>(teams: T[], viewerId: string | null): T[] {
   if (!viewerId) return teams;
   return pickedFirst(teams, (team) => holdsViewer(team, viewerId));

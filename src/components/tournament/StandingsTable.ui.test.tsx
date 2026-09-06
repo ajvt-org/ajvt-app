@@ -183,3 +183,43 @@ describe("a table of a tournament played in parts", () => {
     expect(container.textContent).not.toContain("½");
   });
 });
+
+describe("a member reading their own standings", () => {
+  const mineOf = (container: HTMLElement) =>
+    [...container.querySelectorAll("tbody tr")].filter((row) =>
+      (row.getAttribute("style") ?? "").includes("var(--mint-50)"),
+    );
+
+  it("marks nobody when no viewer is given", () => {
+    const { container } = render(<StandingsTable title={null} rows={rows} />);
+
+    expect(mineOf(container)).toHaveLength(0);
+  });
+
+  it("marks the viewer's row and no other", () => {
+    const { container } = render(<StandingsTable title={null} rows={rows} viewerTeamId="b" />);
+
+    expect(mineOf(container)).toHaveLength(1);
+    expect(mineOf(container)[0].textContent).toContain("فريق الوحدة");
+  });
+
+  it("edges the row as well as tinting it, since the tint is faint on a table", () => {
+    const { container } = render(<StandingsTable title={null} rows={rows} viewerTeamId="b" />);
+
+    const first = mineOf(container)[0].querySelector("td");
+    expect(first?.getAttribute("style")).toContain("var(--mint-600)");
+  });
+
+  it("leaves the rows in rank order rather than lifting the viewer's", () => {
+    const { container } = render(<StandingsTable title={null} rows={rows} viewerTeamId="b" />);
+
+    const names = [...container.querySelectorAll("bdi")].map((n) => n.textContent);
+    expect(names).toEqual([rows[0].name, rows[1].name]);
+  });
+
+  it("marks nobody for a viewer who is in none of these teams", () => {
+    const { container } = render(<StandingsTable title={null} rows={rows} viewerTeamId="nobody" />);
+
+    expect(mineOf(container)).toHaveLength(0);
+  });
+});
