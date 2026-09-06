@@ -6,8 +6,8 @@ const group = (id: string, capacity: number | null = 2): Group => ({ id, name: i
 
 const match = (over: Partial<Match> = {}): Match => ({
   id: "m",
-  homeTeam: { id: "t1", name: "t1", logo: null },
-  awayTeam: { id: "t2", name: "t2", logo: null },
+  firstTeam: { id: "t1", name: "t1", logo: null },
+  secondTeam: { id: "t2", name: "t2", logo: null },
   matchDate: null,
   round: null,
   venue: null,
@@ -125,7 +125,7 @@ describe("advancing the bracket", () => {
 });
 
 const waiting = (id: string, bracketRound: number) =>
-  match({ id, bracketRound, isKnockout: true, homeTeam: null, awayTeam: null });
+  match({ id, bracketRound, isKnockout: true, firstTeam: null, secondTeam: null });
 
 const drawn = (id: string, bracketRound: number, over: Partial<Match> = {}) =>
   match({ id, bracketRound, isKnockout: true, ...over });

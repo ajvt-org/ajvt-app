@@ -3,6 +3,9 @@ import { accountNamed, accountPerson } from "@/lib/person";
 import { settleMvpVotes } from "@/lib/mvpVoteServer";
 import { entrantIdentities, namedEntrant } from "@/lib/entrantName";
 import { squadOf } from "@/lib/squadSize";
+import { matchSideTeams } from "@/lib/matchSides";
+
+const MATCH_SIDE = { select: { id: true, name: true, logo: true } } as const;
 
 export const ACTIVITY_SELECT = {
   photo: true,
@@ -52,8 +55,10 @@ async function loadActivity(id: string) {
         orderBy: [{ status: "asc" }, { order: "asc" }, { matchDate: "asc" }, { createdAt: "asc" }],
         select: {
           id: true,
-          homeTeam: { select: { id: true, name: true, logo: true } },
-          awayTeam: { select: { id: true, name: true, logo: true } },
+          homeTeam: MATCH_SIDE,
+          awayTeam: MATCH_SIDE,
+          sideATeam: MATCH_SIDE,
+          sideBTeam: MATCH_SIDE,
           matchDate: true,
           round: true,
           venue: true,
@@ -131,33 +136,36 @@ function shape(activity: NonNullable<Awaited<ReturnType<typeof loadActivity>>>) 
   return {
     ...activity,
     teams: teams.map((team) => ({ ...team, ...identities.get(team.id) })),
-    matches: activity.matches.map((match) => ({
-      ...match,
-      homeTeam: namedEntrant(match.homeTeam, identities),
-      awayTeam: namedEntrant(match.awayTeam, identities),
-      manOfTheMatch: match.manOfTheMatchUser
-        ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
-        : null,
-      goals: match.goals.map((goal) => ({
-        ...goal,
-        member: goal.userId ? accountPerson(goal) : null,
-      })),
-      penaltyKicks: match.penaltyKicks.map((kick) => ({
-        ...kick,
-        member: kick.userId ? accountPerson(kick) : null,
-      })),
-      bookings: match.bookings.map((booking) => ({ ...booking, member: accountPerson(booking) })),
-      mvpVote: match.mvpVote
-        ? {
-            ...match.mvpVote,
-            candidates: match.mvpVote.candidates.map((c) => ({
-              ...c,
-              memberId: c.userId,
-              member: accountNamed(c),
-            })),
-          }
-        : null,
-    })),
+    matches: activity.matches.map((match) => {
+      const sides = matchSideTeams(match, activity.matchShape);
+      return {
+        ...match,
+        firstTeam: namedEntrant(sides.first, identities),
+        secondTeam: namedEntrant(sides.second, identities),
+        manOfTheMatch: match.manOfTheMatchUser
+          ? accountPerson({ userId: match.manOfTheMatchUserId, user: match.manOfTheMatchUser })
+          : null,
+        goals: match.goals.map((goal) => ({
+          ...goal,
+          member: goal.userId ? accountPerson(goal) : null,
+        })),
+        penaltyKicks: match.penaltyKicks.map((kick) => ({
+          ...kick,
+          member: kick.userId ? accountPerson(kick) : null,
+        })),
+        bookings: match.bookings.map((booking) => ({ ...booking, member: accountPerson(booking) })),
+        mvpVote: match.mvpVote
+          ? {
+              ...match.mvpVote,
+              candidates: match.mvpVote.candidates.map((c) => ({
+                ...c,
+                memberId: c.userId,
+                member: accountNamed(c),
+              })),
+            }
+          : null,
+      };
+    }),
   };
 }
 

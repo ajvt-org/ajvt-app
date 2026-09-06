@@ -22,14 +22,14 @@ export default function MatchFixture({
       </MatchCardHead>
       <MatchTeams
         home={{
-          name: teamName(match.homeTeam),
-          logo: match.homeTeam?.logo,
-          photo: match.homeTeam?.photo,
+          name: teamName(match.firstTeam),
+          logo: match.firstTeam?.logo,
+          photo: match.firstTeam?.photo,
         }}
         away={{
-          name: teamName(match.awayTeam),
-          logo: match.awayTeam?.logo,
-          photo: match.awayTeam?.photo,
+          name: teamName(match.secondTeam),
+          logo: match.secondTeam?.logo,
+          photo: match.secondTeam?.photo,
         }}
         size="sm"
         layout="stacked"

@@ -9,12 +9,16 @@ import { withFrom } from "@/lib/backLink";
 
 function opponent(detail: Extract<ActivityDetail, { kind: "NEXT_MATCH" }>): string {
   const { fixture } = detail;
-  return fixture.myTeamId === fixture.homeTeam.id ? fixture.awayTeam.name : fixture.homeTeam.name;
+  return fixture.myTeamId === fixture.firstTeam.id
+    ? fixture.secondTeam.name
+    : fixture.firstTeam.name;
 }
 
 function myTeam(detail: Extract<ActivityDetail, { kind: "NEXT_MATCH" }>): string {
   const { fixture } = detail;
-  return fixture.myTeamId === fixture.homeTeam.id ? fixture.homeTeam.name : fixture.awayTeam.name;
+  return fixture.myTeamId === fixture.firstTeam.id
+    ? fixture.firstTeam.name
+    : fixture.secondTeam.name;
 }
 
 function line(detail: ActivityDetail): { icon: IconName; text: string } {

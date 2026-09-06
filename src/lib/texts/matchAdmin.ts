@@ -8,6 +8,9 @@ export const matchAdmin = {
     "المباراة المضافة هنا تبقى خارج خطة الأيام، وتظهر في قائمة غير المجدولة حتى تُسند إلى يوم من تبويب الأيام.",
   homeTeamPlaceholder: "الفريق المضيف...",
   awayTeamPlaceholder: "الفريق الضيف...",
+  seriesFirstPlaceholder: "الطرف الأول...",
+  seriesSecondPlaceholder: "الطرف الثاني...",
+  seriesOrderFromTheDraw: "ترتيب الطرفين من القرعة ولا يعطي أفضلية لأحدهما.",
   roundPlaceholder: "الجولة (اختياري)",
   roundLabel: "الجولة",
   venueLabel: "الملعب",
@@ -146,3 +149,9 @@ export const statsAdmin = {
   teams: "الفرق",
   noStats: "لا توجد إحصائيات مسجلة بعد",
 } as const;
+
+export function sidePlaceholders(football: boolean): { first: string; second: string } {
+  return football
+    ? { first: matchAdmin.homeTeamPlaceholder, second: matchAdmin.awayTeamPlaceholder }
+    : { first: matchAdmin.seriesFirstPlaceholder, second: matchAdmin.seriesSecondPlaceholder };
+}

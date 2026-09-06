@@ -8,8 +8,8 @@ export interface GroupEntry {
 export interface GroupFixture {
   groupIndex: number;
   round: number;
-  homeTeamId: string;
-  awayTeamId: string;
+  firstTeamId: string;
+  secondTeamId: string;
 }
 
 export function groupRoundRobin(groups: GroupEntry[]): GroupFixture[] {
@@ -27,8 +27,8 @@ export function groupRoundRobin(groups: GroupEntry[]): GroupFixture[] {
         ordered.push({
           groupIndex: group.index,
           round,
-          homeTeamId: f.homeTeamId,
-          awayTeamId: f.awayTeamId,
+          firstTeamId: f.firstTeamId,
+          secondTeamId: f.secondTeamId,
         });
       }
     });

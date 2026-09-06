@@ -6,20 +6,23 @@ import { notify } from "@/lib/messages";
 import type { CategoryKey } from "./notificationCategories";
 import { entrantOf } from "./entrantServer";
 import { isSinglesSquad, squadOf } from "./squadSize";
+import { matchSideTeams } from "./matchSides";
+
+const REMINDER_SIDE = { select: { id: true, name: true } } as const;
 
 export async function notifyTeams(
-  homeTeamId: string,
-  awayTeamId: string,
+  firstTeamId: string,
+  secondTeamId: string,
   payload: { title: string; body: string; url?: string },
   category: CategoryKey = "TOURNAMENT_MATCH",
 ) {
   const [teamMembers, followers] = await Promise.all([
     prisma.teamMember.findMany({
-      where: { teamId: { in: [homeTeamId, awayTeamId] } },
+      where: { teamId: { in: [firstTeamId, secondTeamId] } },
       select: { userId: true },
     }),
     prisma.teamFollow.findMany({
-      where: { teamId: { in: [homeTeamId, awayTeamId] } },
+      where: { teamId: { in: [firstTeamId, secondTeamId] } },
       select: { userId: true },
     }),
   ]);
@@ -81,23 +84,29 @@ export async function sendMatchReminders() {
     },
     select: {
       id: true,
-      homeTeamId: true,
-      awayTeamId: true,
-      homeTeam: { select: { id: true, name: true } },
-      awayTeam: { select: { id: true, name: true } },
+      homeTeam: REMINDER_SIDE,
+      awayTeam: REMINDER_SIDE,
+      sideATeam: REMINDER_SIDE,
+      sideBTeam: REMINDER_SIDE,
       activityId: true,
-      activity: { select: { minTeamSize: true, maxTeamSize: true } },
+      activity: { select: { minTeamSize: true, maxTeamSize: true, matchShape: true } },
     },
   });
 
   for (const m of matches) {
-    if (m.homeTeam === null || m.awayTeam === null) continue;
+    const sides = matchSideTeams(m, m.activity.matchShape);
+    if (sides.first === null || sides.second === null) continue;
     if (!(await claimReminder(m.id, now))) continue;
 
     await notifyTeams(
-      m.homeTeam.id,
-      m.awayTeam.id,
-      notify.matchReminder(m.homeTeam.name, m.awayTeam.name, m.activityId, entrantOf(m.activity)),
+      sides.first.id,
+      sides.second.id,
+      notify.matchReminder(
+        sides.first.name,
+        sides.second.name,
+        m.activityId,
+        entrantOf(m.activity),
+      ),
       "MATCH_REMINDER",
     ).catch((err) => logger.error("match.reminder.push.error", err));
   }

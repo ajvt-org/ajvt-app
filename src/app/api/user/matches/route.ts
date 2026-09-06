@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { withRoute } from "@/lib/route";
 import { sortUpcoming, sortPast, splitFixtures, type Fixture } from "@/lib/memberFixtures";
+import { anySideIs, matchSideTeams } from "@/lib/matchSides";
+
+const FIXTURE_SIDE = { select: { id: true, name: true } } as const;
 
 const MATCH_SELECT = {
   id: true,
@@ -15,9 +18,11 @@ const MATCH_SELECT = {
   awayScore: true,
   homePenalties: true,
   awayPenalties: true,
-  homeTeam: { select: { id: true, name: true } },
-  awayTeam: { select: { id: true, name: true } },
-  activity: { select: { id: true, title: true } },
+  homeTeam: FIXTURE_SIDE,
+  awayTeam: FIXTURE_SIDE,
+  sideATeam: FIXTURE_SIDE,
+  sideBTeam: FIXTURE_SIDE,
+  activity: { select: { id: true, title: true, matchShape: true } },
 } as const;
 
 export const GET = withRoute("GET /api/user/matches", async () => {
@@ -35,14 +40,15 @@ export const GET = withRoute("GET /api/user/matches", async () => {
   }
 
   const matches = await prisma.match.findMany({
-    where: { OR: [{ homeTeamId: { in: teamIds } }, { awayTeamId: { in: teamIds } }] },
+    where: anySideIs(teamIds),
     select: MATCH_SELECT,
   });
 
   const fixtures: Fixture[] = matches.flatMap((m) => {
-    if (m.homeTeam === null || m.awayTeam === null) return [];
-    const home = m.homeTeam;
-    const away = m.awayTeam;
+    const sides = matchSideTeams(m, m.activity.matchShape);
+    if (sides.first === null || sides.second === null) return [];
+    const first = sides.first;
+    const second = sides.second;
     return [
       {
         id: m.id,
@@ -51,14 +57,14 @@ export const GET = withRoute("GET /api/user/matches", async () => {
         venue: m.venue,
         status: m.status,
         isKnockout: m.isKnockout,
-        homeTeam: home,
-        awayTeam: away,
+        firstTeam: first,
+        secondTeam: second,
         homeScore: m.homeScore,
         awayScore: m.awayScore,
         homePenalties: m.homePenalties,
         awayPenalties: m.awayPenalties,
         activity: m.activity,
-        myTeamId: teamIds.includes(home.id) ? home.id : away.id,
+        myTeamId: teamIds.includes(first.id) ? first.id : second.id,
       },
     ];
   });

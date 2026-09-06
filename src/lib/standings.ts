@@ -15,8 +15,8 @@ export interface StandingsBookingInput {
 }
 
 export interface StandingsMatchInput {
-  homeTeam: { id: string } | null;
-  awayTeam: { id: string } | null;
+  firstTeam: { id: string } | null;
+  secondTeam: { id: string } | null;
   homeScore: number | null;
   awayScore: number | null;
   status: string;
@@ -61,8 +61,8 @@ function blank(team: StandingsTeamInput): StandingsRow {
 }
 
 function sides(m: StandingsMatchInput): { homeId: string; awayId: string } | null {
-  if (!m.homeTeam || !m.awayTeam) return null;
-  return { homeId: m.homeTeam.id, awayId: m.awayTeam.id };
+  if (!m.firstTeam || !m.secondTeam) return null;
+  return { homeId: m.firstTeam.id, awayId: m.secondTeam.id };
 }
 
 function counts(matches: StandingsMatchInput[]): boolean[] {

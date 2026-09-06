@@ -35,11 +35,11 @@ const TODAY_MATCH = {
   homeScore: null,
   awayScore: null,
   activity: { id: "a1", title: "دوري القرية" },
-  homeTeam: { name: "الصقور" },
-  awayTeam: { name: "النسور" },
+  firstTeam: { name: "الصقور" },
+  secondTeam: { name: "النسور" },
 };
 
-const WAITING_MATCH = { ...TODAY_MATCH, id: "m2", homeTeam: null, awayTeam: null };
+const WAITING_MATCH = { ...TODAY_MATCH, id: "m2", firstTeam: null, secondTeam: null };
 
 const SUMMARY = {
   year: 2026,

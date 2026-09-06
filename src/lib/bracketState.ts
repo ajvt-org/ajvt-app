@@ -2,8 +2,8 @@ import { isBye } from "./bracketDraw";
 
 export interface BracketFixture {
   bracketRound: number;
-  homeTeam: unknown;
-  awayTeam: unknown;
+  firstTeam: unknown;
+  secondTeam: unknown;
   status: string;
 }
 
@@ -17,6 +17,6 @@ export function firstRoundIsWaiting(bracketMatches: BracketFixture[]): boolean {
   if (!bracketUntouched(bracketMatches)) return false;
   const firstRound = bracketMatches.filter((m) => m.bracketRound === 1);
   return (
-    firstRound.length > 0 && firstRound.every((m) => m.homeTeam === null && m.awayTeam === null)
+    firstRound.length > 0 && firstRound.every((m) => m.firstTeam === null && m.secondTeam === null)
   );
 }

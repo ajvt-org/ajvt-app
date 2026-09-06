@@ -21,8 +21,8 @@ function match(
   extra: Partial<StandingsMatchInput> = {},
 ): StandingsMatchInput {
   return {
-    homeTeam: { id: home },
-    awayTeam: { id: away },
+    firstTeam: { id: home },
+    secondTeam: { id: away },
     homeScore,
     awayScore,
     status: "PLAYED",
@@ -253,8 +253,8 @@ describe("separating teams level on points", () => {
 
 describe("a fixture with no teams yet", () => {
   const empty = (extra: Partial<StandingsMatchInput> = {}): StandingsMatchInput => ({
-    homeTeam: null,
-    awayTeam: null,
+    firstTeam: null,
+    secondTeam: null,
     homeScore: null,
     awayScore: null,
     status: "SCHEDULED",

@@ -84,8 +84,8 @@ export interface MvpVote {
 
 export interface Match {
   id: string;
-  homeTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
-  awayTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  firstTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
+  secondTeam: { id: string; name: string; logo: string | null; photo?: string | null } | null;
   matchDate: string | null;
   round: string | null;
   venue: string | null;
@@ -106,8 +106,8 @@ export interface Match {
 }
 
 export type DecidedMatch = Match & {
-  homeTeam: NonNullable<Match["homeTeam"]>;
-  awayTeam: NonNullable<Match["awayTeam"]>;
+  firstTeam: NonNullable<Match["firstTeam"]>;
+  secondTeam: NonNullable<Match["secondTeam"]>;
 };
 
 export interface Suspension {

@@ -27,8 +27,8 @@ export type MatchBooking = {
 
 export type PublicMatch = {
   id: string;
-  homeTeam: MatchTeam | null;
-  awayTeam: MatchTeam | null;
+  firstTeam: MatchTeam | null;
+  secondTeam: MatchTeam | null;
   matchDate: Date | null;
   round: string | null;
   venue: string | null;
@@ -57,4 +57,4 @@ export type PublicMatch = {
   } | null;
 };
 
-export type DecidedMatch = PublicMatch & { homeTeam: MatchTeam; awayTeam: MatchTeam };
+export type DecidedMatch = PublicMatch & { firstTeam: MatchTeam; secondTeam: MatchTeam };

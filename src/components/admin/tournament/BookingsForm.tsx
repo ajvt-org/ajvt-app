@@ -20,7 +20,7 @@ export default function BookingsForm({
   suspendedIds: string[];
   onChange: () => void;
 }) {
-  const [teamId, setTeamId] = useState(match.homeTeam.id);
+  const [teamId, setTeamId] = useState(match.firstTeam.id);
   const [userId, setUserId] = useState("");
   const [cardType, setCardType] = useState<"YELLOW" | "RED">("YELLOW");
   const [minute, setMinute] = useState("");
@@ -35,7 +35,7 @@ export default function BookingsForm({
 
   function reset() {
     setEditingId(null);
-    setTeamId(match.homeTeam.id);
+    setTeamId(match.firstTeam.id);
     setUserId("");
     setCardType("YELLOW");
     setMinute("");
@@ -148,8 +148,8 @@ export default function BookingsForm({
               }}
               className="input text-sm"
             >
-              <option value={match.homeTeam.id}>{match.homeTeam.name}</option>
-              <option value={match.awayTeam.id}>{match.awayTeam.name}</option>
+              <option value={match.firstTeam.id}>{match.firstTeam.name}</option>
+              <option value={match.secondTeam.id}>{match.secondTeam.name}</option>
             </select>
           )}
         </FieldRow>

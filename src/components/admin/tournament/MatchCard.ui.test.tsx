@@ -10,8 +10,8 @@ const noop = vi.fn();
 function match(): Match {
   return {
     id: "m1",
-    homeTeam: { id: "t1", name: "الصقور", logo: null },
-    awayTeam: { id: "t2", name: "النسور", logo: null },
+    firstTeam: { id: "t1", name: "الصقور", logo: null },
+    secondTeam: { id: "t2", name: "النسور", logo: null },
     matchDate: "2026-08-20T16:00:00.000Z",
     round: "النهائي",
     venue: "ملعب القرية",
@@ -80,8 +80,8 @@ describe("a team name carrying Latin letters", () => {
       <MatchCard
         match={{
           ...match(),
-          homeTeam: { id: "t1", name: "كاستيا A", logo: null },
-          awayTeam: { id: "t2", name: "اتحاد الجديدة B", logo: null },
+          firstTeam: { id: "t1", name: "كاستيا A", logo: null },
+          secondTeam: { id: "t2", name: "اتحاد الجديدة B", logo: null },
           homeScore: 0,
           awayScore: 4,
         }}
@@ -118,8 +118,8 @@ describe("a fixture whose teams are not known yet", () => {
       <MatchCard
         match={{
           ...match(),
-          homeTeam: null,
-          awayTeam: null,
+          firstTeam: null,
+          secondTeam: null,
           status: "SCHEDULED",
           homeScore: null,
           awayScore: null,

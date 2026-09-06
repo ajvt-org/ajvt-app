@@ -184,6 +184,8 @@ model Team {
   members         TeamMember[]
   homeMatches     Match[]                @relation("HomeTeam")
   awayMatches     Match[]                @relation("AwayTeam")
+  sideAMatches    Match[]                @relation("SideATeam")
+  sideBMatches    Match[]                @relation("SideBTeam")
   forfeitWins     Match[]                @relation("ForfeitWinner")
   goals           MatchGoal[]
   bookings        MatchBooking[]
@@ -227,6 +229,10 @@ model Match {
   homeTeam            Team?              @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
   awayTeamId          String?
   awayTeam            Team?              @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  sideATeamId         String?
+  sideATeam           Team?              @relation("SideATeam", fields: [sideATeamId], references: [id], onDelete: Cascade)
+  sideBTeamId         String?
+  sideBTeam           Team?              @relation("SideBTeam", fields: [sideBTeamId], references: [id], onDelete: Cascade)
   matchDate           DateTime?
   dayId               String?
   day                 TournamentDay?     @relation(fields: [dayId], references: [id], onDelete: SetNull)
@@ -255,6 +261,8 @@ model Match {
 
   @@index([activityId])
   @@index([forfeitWinnerTeamId])
+  @@index([sideATeamId])
+  @@index([sideBTeamId])
 }
 
 model MatchMvpVote {

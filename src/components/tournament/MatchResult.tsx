@@ -41,13 +41,18 @@ export default function MatchResult({
 }) {
   const round = day.round ? null : match.round;
   const venue = day.venue ? null : match.venue;
-  const priorMeetings = getHeadToHead(allMatches, match.homeTeam.id, match.awayTeam.id, match.id);
+  const priorMeetings = getHeadToHead(
+    allMatches,
+    match.firstTeam.id,
+    match.secondTeam.id,
+    match.id,
+  );
   const hideGoalsOfTeamId = match.forfeitWinnerTeamId
-    ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.homeTeam.id, match.awayTeam.id)
+    ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.firstTeam.id, match.secondTeam.id)
     : null;
   const eventRows = matchEventRows({
     ...match,
-    homeTeamId: match.homeTeam.id,
+    homeTeamId: match.firstTeam.id,
     manOfTheMatchTeam,
     hideGoalsOfTeamId,
   });
@@ -69,8 +74,16 @@ export default function MatchResult({
       </MatchCardHead>
 
       <MatchTeams
-        home={{ name: match.homeTeam.name, logo: match.homeTeam.logo, photo: match.homeTeam.photo }}
-        away={{ name: match.awayTeam.name, logo: match.awayTeam.logo, photo: match.awayTeam.photo }}
+        home={{
+          name: match.firstTeam.name,
+          logo: match.firstTeam.logo,
+          photo: match.firstTeam.photo,
+        }}
+        away={{
+          name: match.secondTeam.name,
+          logo: match.secondTeam.logo,
+          photo: match.secondTeam.photo,
+        }}
         score={{ home: match.homeScore, away: match.awayScore }}
         layout="stacked"
         entrant={entrant}
@@ -86,8 +99,8 @@ export default function MatchResult({
         <>
           <MatchEvents rows={showScorersAndCards ? eventRows : withoutScorersAndCards(eventRows)} />
           <MatchTimeline
-            entries={matchTimeline({ ...match, homeTeamId: match.homeTeam.id, hideGoalsOfTeamId })}
-            teams={{ home: match.homeTeam.name, away: match.awayTeam.name }}
+            entries={matchTimeline({ ...match, homeTeamId: match.firstTeam.id, hideGoalsOfTeamId })}
+            teams={{ home: match.firstTeam.name, away: match.secondTeam.name }}
           />
         </>
       )}
@@ -132,12 +145,12 @@ export default function MatchResult({
 
       <MatchCardFooter>
         <ShareResultButton
-          homeTeamName={match.homeTeam.name}
-          awayTeamName={match.awayTeam.name}
-          homeTeamLogo={match.homeTeam.logo}
-          awayTeamLogo={match.awayTeam.logo}
-          homeTeamPhoto={match.homeTeam.photo}
-          awayTeamPhoto={match.awayTeam.photo}
+          homeTeamName={match.firstTeam.name}
+          awayTeamName={match.secondTeam.name}
+          homeTeamLogo={match.firstTeam.logo}
+          awayTeamLogo={match.secondTeam.logo}
+          homeTeamPhoto={match.firstTeam.photo}
+          awayTeamPhoto={match.secondTeam.photo}
           entrant={entrant}
           homeScore={match.homeScore ?? 0}
           awayScore={match.awayScore ?? 0}
@@ -152,7 +165,7 @@ export default function MatchResult({
               count: g.count,
               minute: g.minute,
               kind: g.kind,
-              isHome: g.teamId === match.homeTeam.id,
+              isHome: g.teamId === match.firstTeam.id,
             }))}
           manOfTheMatch={
             football && match.manOfTheMatch
@@ -165,7 +178,7 @@ export default function MatchResult({
             photo: b.member.photo,
             cardType: b.cardType as "YELLOW" | "RED",
             minute: b.minute,
-            isHome: b.teamId === match.homeTeam.id,
+            isHome: b.teamId === match.firstTeam.id,
           }))}
         />
       </MatchCardFooter>
