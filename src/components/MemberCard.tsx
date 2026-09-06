@@ -170,10 +170,6 @@ export default function MemberCard({
           )}
         </button>
       </div>
-
-      <p className="text-xs text-center mt-2" style={{ color: "var(--text-muted)" }}>
-        {memberCard.qrHint}
-      </p>
     </div>
   );
 }
