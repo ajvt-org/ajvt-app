@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import ConvertCampaignCard from "./ConvertCampaignCard";
 import type { ActivityDetail } from "@/components/admin/activityDetailTypes";
+import { convertCampaign } from "@/lib/texts";
 
 const patch = vi.fn();
 const toast = vi.fn();
@@ -152,6 +153,19 @@ describe("ConvertCampaignCard", () => {
         settlePending: "reject",
       }),
     );
+  });
+
+  it("says what the mode is without repeating the button that turns it on", () => {
+    show();
+
+    expect(screen.getByText(convertCampaign.hint)).toBeTruthy();
+    expect(convertCampaign.hint).not.toContain(convertCampaign.convert);
+  });
+
+  it("says nothing under the heading once the activity is a campaign", () => {
+    show({ isVolunteer: true, whatsappLink: LINK });
+
+    expect(screen.queryByText(convertCampaign.hint)).toBeNull();
   });
 
   it("takes the campaign back to an ordinary activity", async () => {

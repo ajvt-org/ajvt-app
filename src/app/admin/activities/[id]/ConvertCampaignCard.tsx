@@ -58,9 +58,11 @@ export default function ConvertCampaignCard({
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
           <IconLabel name="handshake">{texts.heading}</IconLabel>
         </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
-          {activity.isVolunteer ? texts.isCampaign : texts.hint}
-        </p>
+        {!activity.isVolunteer && (
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+            {texts.hint}
+          </p>
+        )}
       </div>
       <div className="flex gap-2 shrink-0">
         {activity.isVolunteer ? (

@@ -34,8 +34,7 @@ export const activityForm = {
 
 export const convertCampaign = {
   heading: "وضع الحملة التطوعية",
-  hint: "حوّل النشاط إلى حملة تطوعية بمجموعة واتساب يلتحق بها المتطوعون.",
-  isCampaign: "النشاط حملة تطوعية.",
+  hint: "مجموعة واتساب يلتحق بها المتطوعون",
   convert: "تحويل إلى حملة تطوعية",
   confirm: "تأكيد التحويل",
   unconvert: "إلغاء وضع الحملة",
