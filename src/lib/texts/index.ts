@@ -29,6 +29,7 @@ export { adminTools } from "./adminTools";
 export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, deleteMember } from "./deleteRecords";
+export { reviewQueue } from "./reviewQueue";
 export { ouguiya } from "./currency";
 export { paidAmount } from "./paidAmount";
 export { stepPayment } from "./stepPayment";
