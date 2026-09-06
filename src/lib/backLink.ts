@@ -1,4 +1,4 @@
-function withoutFrom(path: string): string {
+export function withoutFrom(path: string): string {
   const query = path.indexOf("?");
   if (query === -1) return path;
   const params = new URLSearchParams(path.slice(query + 1));
