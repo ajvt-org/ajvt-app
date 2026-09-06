@@ -9,6 +9,7 @@ import { parse } from "@/lib/validation";
 import { activityUpdateSchema } from "./schema";
 import { activities, entrantWording, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
+import { reconcileSeats } from "@/lib/registrationTeamServer";
 import type { MatchShape, TournamentFormat } from "@prisma/client";
 
 export const GET = withRoute(
@@ -185,6 +186,11 @@ export const PATCH = withRoute(
     }
     const settled = pending > 0 ? (settlePending === "accept" ? "ACTIVE" : "REJECTED") : null;
 
+    const reshaped =
+      data.isTournament !== undefined ||
+      data.minTeamSize !== undefined ||
+      data.maxTeamSize !== undefined;
+
     const activity = await prisma.$transaction(async (tx) => {
       if (settled) {
         await tx.activityRegistration.updateMany({
@@ -192,7 +198,9 @@ export const PATCH = withRoute(
           data: { status: settled },
         });
       }
-      return tx.activity.update({ where: { id }, data });
+      const updated = await tx.activity.update({ where: { id }, data });
+      if (reshaped || settled) await reconcileSeats(tx, id);
+      return updated;
     });
     if (published !== undefined && !!published !== existing.published) {
       await logAction(

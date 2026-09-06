@@ -61,17 +61,14 @@ export async function seatRegistrant(tx: Tx, registrationId: string): Promise<st
   return team.id;
 }
 
-export async function unseatRegistrant(
-  tx: Tx,
-  activityId: string,
-  userId: string,
-): Promise<boolean> {
-  const activity = await tx.activity.findUnique({
+async function shapeOf(tx: Tx, activityId: string) {
+  return tx.activity.findUnique({
     where: { id: activityId },
     select: { isTournament: true, minTeamSize: true, maxTeamSize: true },
   });
-  if (!activity || !isSinglesActivity(activity)) return false;
+}
 
+async function removeAutoSeat(tx: Tx, activityId: string, userId: string): Promise<boolean> {
   const seat = await seatOfViewer(tx, activityId, userId);
   if (!seat) return false;
 
@@ -87,4 +84,44 @@ export async function unseatRegistrant(
 
   await tx.team.delete({ where: { id: seat.teamId } });
   return true;
+}
+
+export async function unseatRegistrant(
+  tx: Tx,
+  activityId: string,
+  userId: string,
+): Promise<boolean> {
+  const activity = await shapeOf(tx, activityId);
+  if (!activity || !isSinglesActivity(activity)) return false;
+  return removeAutoSeat(tx, activityId, userId);
+}
+
+export interface SeatReconciliation {
+  seated: number;
+  unseated: number;
+  kept: number;
+}
+
+export async function reconcileSeats(tx: Tx, activityId: string): Promise<SeatReconciliation> {
+  const done: SeatReconciliation = { seated: 0, unseated: 0, kept: 0 };
+  const activity = await shapeOf(tx, activityId);
+  if (!activity) return done;
+
+  const registrations = await tx.activityRegistration.findMany({
+    where: { activityId },
+    select: { id: true, userId: true, status: true },
+  });
+
+  for (const registration of registrations) {
+    const seat = await seatOfViewer(tx, activityId, registration.userId);
+    if (isSinglesActivity(activity)) {
+      if (registration.status !== "ACTIVE" || seat) continue;
+      if (await seatRegistrant(tx, registration.id)) done.seated += 1;
+      continue;
+    }
+    if (!seat) continue;
+    if (await removeAutoSeat(tx, activityId, registration.userId)) done.unseated += 1;
+    else done.kept += 1;
+  }
+  return done;
 }

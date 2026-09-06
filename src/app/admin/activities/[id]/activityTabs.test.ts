@@ -19,6 +19,28 @@ const flat = (a: TabbedActivity, proposals = 0): WorkspaceTab[] =>
 
 const keys = (a: TabbedActivity, proposals = 0) => flat(a, proposals).map((t) => t.key);
 
+describe("the people section of a singles tournament", () => {
+  const singles = activity({ isTournament: true, minTeamSize: 1, maxTeamSize: 1 });
+  const squad = activity({ isTournament: true, minTeamSize: 5, maxTeamSize: 7 });
+
+  it("holds one list, since a registrant is a player", () => {
+    const people = activityTabSections(singles, 0).find((section) => section.key === "people");
+
+    expect(people?.tabs.map((tab) => tab.key)).toEqual(["registrations"]);
+  });
+
+  it("keeps both lists on a tournament with real teams", () => {
+    const people = activityTabSections(squad, 0).find((section) => section.key === "people");
+
+    expect(people?.tabs.map((tab) => tab.key)).toEqual(["registrations", "teams"]);
+  });
+
+  it("leaves the rest of a singles tournament alone", () => {
+    expect(keys(singles)).toContain("matches");
+    expect(keys(singles)).toContain("standings");
+  });
+});
+
 describe("the tabs an activity opens with", () => {
   it("takes registrations on an ordinary activity", () => {
     expect(keys(activity())).toContain("registrations");
