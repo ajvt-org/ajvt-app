@@ -106,6 +106,7 @@ const KEPT_CLEAN = [
   "src/components/receipt",
   "src/components/ActivityRegistrations.tsx",
   "src/components/admin/tournament/DaysTab.tsx",
+  "src/components/LockNote.tsx",
   "src/components/admin/tournament/DayCard.tsx",
   "src/components/admin/tournament/daysTypes.ts",
   "src/components/admin/tournament/DayMatchResult.tsx",

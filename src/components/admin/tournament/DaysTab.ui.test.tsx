@@ -81,8 +81,8 @@ describe("DaysTab", () => {
   it("walks the days in order, rest day marked", async () => {
     await show();
 
-    expect(await screen.findByText("اليوم 1")).toBeDefined();
-    expect(screen.getByText("يوم راحة")).toBeDefined();
+    expect(await screen.findByText("الاثنين، 24 أغسطس")).toBeDefined();
+    expect(screen.getByText("الثلاثاء، 25 أغسطس")).toBeDefined();
     expect(screen.getByText(/النجم × الوحدة/)).toBeDefined();
   });
 
@@ -130,7 +130,7 @@ describe("DaysTab", () => {
       unscheduled: [{ ...waiting("m6", ""), matchDate: null }],
     });
 
-    expect(await screen.findByText("اليوم 1")).toBeDefined();
+    expect(await screen.findByText("الاثنين، 24 أغسطس")).toBeDefined();
     expect(screen.getAllByText(new RegExp(publicTournament.teamDecidedLater))).toHaveLength(2);
   });
 

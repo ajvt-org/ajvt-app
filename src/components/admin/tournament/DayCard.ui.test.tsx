@@ -103,11 +103,17 @@ describe("a day that holds matches", () => {
     expect(screen.getByText(texts.finished)).toBeDefined();
   });
 
-  it("offers neither the rest toggle nor the delete once matches are on it", () => {
+  it("still shows the rest toggle and the delete, disabled, once matches are on it", () => {
     show(day({ matches: [match()] }));
 
-    expect(screen.queryByText(texts.makeRestDay)).toBeNull();
-    expect(screen.queryByText(texts.removeDay)).toBeNull();
+    expect(screen.getByText(texts.makeRestDay).closest("button")!.disabled).toBe(true);
+    expect(screen.getByText(texts.removeDay).closest("button")!.disabled).toBe(true);
+  });
+
+  it("says on the card why neither will take a tap", () => {
+    show(day({ matches: [match()] }));
+
+    expect(screen.getByText(texts.dayLocked)).toBeDefined();
   });
 });
 
@@ -125,39 +131,45 @@ describe("a day that can still be changed", () => {
   it("offers to make a rest day back into a match day", () => {
     show(day({ isRest: true }));
 
-    expect(screen.getByText(texts.restDay)).toBeDefined();
     expect(screen.getByText(texts.makeMatchDay)).toBeDefined();
     expect(screen.queryByText(texts.makeRestDay)).toBeNull();
   });
 
-  it("names the day and the date it falls on", () => {
-    show(day({ position: 3 }));
+  it("leaves both controls live on an empty day, and says nothing about a lock", () => {
+    show(day());
 
-    expect(screen.getByText(new RegExp(texts.dayNumber(3)))).toBeDefined();
+    expect(screen.getByText(texts.makeRestDay).closest("button")!.disabled).toBe(false);
+    expect(screen.getByText(texts.removeDay).closest("button")!.disabled).toBe(false);
+    expect(screen.queryByText(texts.dayLocked)).toBeNull();
+  });
+
+  it("leaves a rest day nothing to read but its own treatment", () => {
+    const { container } = show(day({ isRest: true, position: 2 }));
+
+    expect(container.textContent).not.toContain("يوم راحة");
   });
 });
 
 describe("the heading of a day", () => {
-  it("leads with the date and keeps the day number under it", () => {
+  it("says the date once and the number once", () => {
     show(day({ position: 3, date: "2026-08-26T00:00:00.000Z" }));
 
-    const date = screen.getByText(/الأربعاء/);
-    const number = screen.getByText(texts.dayNumber(3));
-
-    expect(date.className).toContain("font-black");
-    expect(date.nextElementSibling).toBe(number);
+    expect(screen.getByText(/الأربعاء/).className).toContain("font-black");
+    expect(screen.queryByText(texts.dayNumber(3))).toBeNull();
+    expect(screen.getAllByText("3")).toHaveLength(1);
   });
 
-  it("falls back to the day number when the day has no date", () => {
+  it("shows the badge alone when the day has no date", () => {
     show(day({ position: 3, date: null }));
 
-    expect(screen.getAllByText(texts.dayNumber(3)).length).toBe(2);
+    expect(screen.queryByText(texts.dayNumber(3))).toBeNull();
+    expect(screen.getAllByText("3")).toHaveLength(1);
   });
 
   it("sets the heading apart from what the day holds", () => {
     show(day({ matches: [match()] }));
 
-    const head = screen.getByText(texts.dayNumber(1)).closest(".match-day-head")!;
+    const head = screen.getByText("1").closest(".match-day-head")!;
 
     expect(head).not.toBeNull();
     expect(head.contains(screen.getByText(/النجم/))).toBe(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import IconLabel from "@/components/IconLabel";
+import LockNote from "@/components/LockNote";
 import { daysTab as texts, lists } from "@/lib/texts";
 import DayHeading from "./DayHeading";
 import DayMatchRow from "./DayMatchRow";
@@ -20,7 +21,7 @@ export default function DayCard({
   onRetime: (matchId: string, time: string) => void;
 }) {
   const conflicts = doubleBookedTeams(day);
-  const removable = day.isRest || day.matches.length === 0;
+  const locked = day.matches.length > 0;
 
   return (
     <div
@@ -29,37 +30,29 @@ export default function DayCard({
     >
       <div className="match-day-head flex items-center gap-2 flex-wrap">
         <DayHeading position={day.position} date={day.date} isRest={day.isRest} />
-        {day.isRest && (
-          <span
-            className="text-xs px-2 py-0.5 rounded-lg font-bold shrink-0"
-            style={{ background: "#fef3c7", color: "#b45309" }}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => onSetRest(!day.isRest)}
+            disabled={busy || locked}
+            className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-55"
+            style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
           >
-            {texts.restDay}
-          </span>
-        )}
-        {removable && (
-          <div className="flex items-center gap-2 shrink-0">
+            {day.isRest ? texts.makeMatchDay : texts.makeRestDay}
+          </button>
+          <span className="ps-2" style={{ borderInlineStart: "1px solid var(--mint-200)" }}>
             <button
-              onClick={() => onSetRest(!day.isRest)}
-              disabled={busy}
-              className="text-xs px-3 py-1.5 rounded-lg font-bold"
-              style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
+              onClick={onRemove}
+              disabled={busy || locked}
+              className="text-xs px-3 py-1.5 rounded-lg font-bold disabled:opacity-55"
+              style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
             >
-              {day.isRest ? texts.makeMatchDay : texts.makeRestDay}
+              <IconLabel name="trash">{texts.removeDay}</IconLabel>
             </button>
-            <span className="ps-2" style={{ borderInlineStart: "1px solid var(--mint-200)" }}>
-              <button
-                onClick={onRemove}
-                disabled={busy}
-                className="text-xs px-3 py-1.5 rounded-lg font-bold"
-                style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca" }}
-              >
-                <IconLabel name="trash">{texts.removeDay}</IconLabel>
-              </button>
-            </span>
-          </div>
-        )}
+          </span>
+        </div>
       </div>
+
+      {locked && <LockNote>{texts.dayLocked}</LockNote>}
 
       {conflicts.length > 0 && (
         <p
