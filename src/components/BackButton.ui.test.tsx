@@ -1,52 +1,73 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import BackButton from "./BackButton";
 
 const back = vi.fn();
-const canUnwind = vi.fn();
-vi.mock("@/lib/historyTrail", () => ({ appTrail: { canUnwind: () => canUnwind() } }));
+const previousIs = vi.fn();
+const noteReplacement = vi.fn();
+
+vi.mock("@/lib/historyTrail", () => ({
+  appTrail: {
+    previousIs: (url: string) => previousIs(url),
+    noteReplacement: (url: string) => noteReplacement(url),
+  },
+}));
+
+function press(options: MouseEventInit = {}) {
+  const click = new MouseEvent("click", { bubbles: true, cancelable: true, ...options });
+  screen.getByLabelText("رجوع").dispatchEvent(click);
+  return click;
+}
 
 beforeEach(() => {
   vi.spyOn(window.history, "back").mockImplementation(back);
   back.mockClear();
-  canUnwind.mockReturnValue(false);
+  noteReplacement.mockClear();
+  previousIs.mockReturnValue(false);
 });
 
 describe("BackButton", () => {
-  it("carries the given path, so a cold arrival has somewhere to go", () => {
+  it("carries the given path, so a reader can open the parent in a new tab", () => {
     render(<BackButton href="/activities" />);
 
     expect(screen.getByLabelText("رجوع").getAttribute("href")).toBe("/activities");
   });
 
-  it("follows that path when there is nothing to unwind", async () => {
+  it("unwinds when the entry behind the reader is the parent", () => {
+    previousIs.mockReturnValue(true);
     render(<BackButton href="/activities" />);
-    await userEvent.click(screen.getByLabelText("رجوع"));
+    const click = press();
 
-    expect(back).not.toHaveBeenCalled();
+    expect(previousIs).toHaveBeenCalledWith("/activities");
+    expect(back).toHaveBeenCalled();
+    expect(click.defaultPrevented).toBe(true);
   });
 
-  it("unwinds the history instead of following the path when the reader came from inside the app", async () => {
-    canUnwind.mockReturnValue(true);
+  it("follows the path when the reader arrived from somewhere else", () => {
     render(<BackButton href="/activities" />);
+    const click = press();
 
-    const click = screen.getByLabelText("رجوع");
-    await userEvent.click(click);
+    expect(back).not.toHaveBeenCalled();
+    expect(click.defaultPrevented).toBe(false);
+  });
 
-    expect(back).toHaveBeenCalled();
+  it("tells the trail before it replaces, so the entry behind stays the real one", () => {
+    render(<BackButton href="/activities" />);
+    press();
+
+    expect(noteReplacement).toHaveBeenCalledWith("/activities");
   });
 
   it("leaves the path alone for a click that asks for a new tab", () => {
-    canUnwind.mockReturnValue(true);
+    previousIs.mockReturnValue(true);
     render(<BackButton href="/activities" />);
-
-    fireEvent.click(screen.getByLabelText("رجوع"), { metaKey: true });
+    press({ metaKey: true });
 
     expect(back).not.toHaveBeenCalled();
+    expect(noteReplacement).not.toHaveBeenCalled();
   });
 
-  it("is a link on every screen, so no caller can render an arrow that skips the trail", () => {
+  it("is a link on every screen, so no caller can render an arrow that skips the rule", () => {
     render(<BackButton href="/activities" />);
 
     expect(screen.getByLabelText("رجوع").tagName).toBe("A");
