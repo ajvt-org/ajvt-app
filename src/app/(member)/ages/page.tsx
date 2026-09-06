@@ -5,6 +5,7 @@ import { getAgeStandings } from "@/lib/ageStandingsServer";
 import { getViewerAge } from "@/lib/viewerAge";
 import { counted, countedNoun } from "@/lib/arabicCount";
 import { AGE_GROUP, SUBSCRIBER } from "@/lib/messages";
+import { ageStandings } from "@/lib/texts";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function AgeStandingsPage() {
 
   return (
     <div className="app-shell">
-      <PageHeader title="ترتيب الأعصار" />
+      <PageHeader title={ageStandings.title} />
 
       <div className="px-5 py-6 pb-10 space-y-5">
         {standings.length === 0 ? (
@@ -23,7 +24,7 @@ export default async function AgeStandingsPage() {
               <Icon name="users" size={40} color="var(--mint-400)" />
             </div>
             <p className="font-semibold" style={{ color: "var(--text-main)" }}>
-              لا توجد أعصار بعد
+              {ageStandings.empty}
             </p>
           </div>
         ) : (
@@ -36,7 +37,10 @@ export default async function AgeStandingsPage() {
                 {joined}
               </p>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {countedNoun(joined, SUBSCRIBER)} في {counted(standings.length, AGE_GROUP)}
+                {ageStandings.joined(
+                  countedNoun(joined, SUBSCRIBER),
+                  counted(standings.length, AGE_GROUP),
+                )}
               </p>
             </div>
 

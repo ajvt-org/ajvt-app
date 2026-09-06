@@ -1,3 +1,5 @@
+import { ageStandings } from "@/lib/texts";
+
 export interface AgeStanding {
   rank: number;
   name: string;
@@ -15,11 +17,11 @@ export type AgeSortKey = "rate" | "members" | "userRate" | "users" | "total";
 export const DEFAULT_AGE_SORT: AgeSortKey = "rate";
 
 export const AGE_SORTS: { key: AgeSortKey; label: string }[] = [
-  { key: "rate", label: "نسبة المنتسبين" },
-  { key: "members", label: "عدد المنتسبين" },
-  { key: "userRate", label: "نسبة الحسابات" },
-  { key: "users", label: "عدد الحسابات" },
-  { key: "total", label: "العدد الإجمالي" },
+  { key: "rate", label: ageStandings.sorts.rate },
+  { key: "members", label: ageStandings.sorts.members },
+  { key: "userRate", label: ageStandings.sorts.userRate },
+  { key: "users", label: ageStandings.sorts.users },
+  { key: "total", label: ageStandings.sorts.total },
 ];
 
 export function membershipRate(members: number, total: number): number {
