@@ -52,7 +52,7 @@ export const renewForm = {
 } as const;
 
 export const paymentsPage = {
-  title: (count: number) => `كل إثباتات الدفع (${count})`,
+  title: (count: number) => `كل الدفعات (${count})`,
   addDonation: "تسجيل تبرع يدوياً",
   search: "بحث بالاسم أو النشاط...",
   allAccounts: "كل الأرقام",

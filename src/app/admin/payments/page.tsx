@@ -64,7 +64,7 @@ function AdminPaymentsPageInner() {
     <div className="admin-page space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-          <IconLabel name="receipt">{texts.title(proofs.length)}</IconLabel>
+          <IconLabel name="list">{texts.title(proofs.length)}</IconLabel>
         </p>
         <button
           onClick={() => setAdding(true)}
