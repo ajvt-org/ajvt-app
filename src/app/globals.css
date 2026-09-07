@@ -508,15 +508,17 @@ button:disabled {
 
 /* A row of tabs wider than the screen used to widen the whole page, so the
    layout sat shifted with the first tabs off-screen. It scrolls inside itself
-   now. overflow-x auto makes the other axis auto as well, so the strip clips
-   vertically and a count badge hanging below a tab loses its lower edge. The
-   padding is that overhang, and it lives here rather than on each strip because
-   a call site that forgets it clips the badge with no other sign. */
+   now. overflow-x auto makes the other axis auto as well, so the strip clips a
+   count badge hanging off a tab on either axis. The padding below and the
+   spacer after the last tab are that overhang with room to spare, and they live
+   here rather than on each strip because a call site that forgets them clips
+   the badge with no other sign. Matching the overhang exactly is not enough,
+   since the badge then sits flush against the edge it is kept away from. */
 .tab-strip {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -525,6 +527,10 @@ button:disabled {
 }
 .tab-strip > * {
   flex-shrink: 0;
+}
+.tab-strip::after {
+  content: "";
+  flex: 0 0 8px;
 }
 
 /* Arabic carries most of its mass above the baseline, so centring an icon's
