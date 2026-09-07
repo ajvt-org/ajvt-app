@@ -247,6 +247,7 @@ const KEPT_CLEAN = [
   "src/app/admin/members/[id]/MemberDecision.tsx",
   "src/components/MemberRejected.tsx",
   "src/app/admin/payments/MembershipActions.tsx",
+  "src/app/admin/members/[id]/MembershipSummary.tsx",
 ];
 
 function sourceFiles(path: string): string[] {

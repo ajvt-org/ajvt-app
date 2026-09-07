@@ -8,8 +8,6 @@ import { auditActionLabel } from "@/lib/auditLabels";
 import Icon from "@/components/Icon";
 import IconLabel from "@/components/IconLabel";
 import AdminBackLink from "@/components/admin/AdminBackLink";
-import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
-import MemberProofForm from "@/components/admin/MemberProofForm";
 import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
@@ -19,6 +17,7 @@ import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
 import MembershipEndingCard from "./MembershipEndingCard";
+import MembershipSummary from "./MembershipSummary";
 import SupportPrivacyCard from "./SupportPrivacyCard";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 import { memberStatusLabels } from "@/lib/messages";
@@ -83,7 +82,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
     );
   }
 
-  const { member, supportPrivacy, history } = data;
+  const { member, supportPrivacy, history, currentYear } = data;
 
   return (
     <div className="admin-page space-y-4">
@@ -176,39 +175,13 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
         />
       )}
 
-      <ProfileSection icon="wallet" title={texts.payment}>
-        <dl className="text-sm space-y-1">
-          <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>{texts.paidAmount}</dt>
-            <dd className="font-bold">{member.paidAmount ?? "—"}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>{texts.method}</dt>
-            <dd className="font-bold">{member.paymentMethod || "—"}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt style={{ color: "var(--text-muted)" }}>{texts.requestDate}</dt>
-            <dd className="font-bold" dir="ltr">
-              {day(member.createdAt)}
-            </dd>
-          </div>
-        </dl>
-        {member.paymentProof && (
-          <div className="mt-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/api/files/${member.paymentProof}`}
-              alt={texts.proofAlt}
-              className="w-full object-contain max-h-56 rounded-xl"
-              style={{ background: "#f3f4f6" }}
-            />
-            <ProofReuseWarning filename={member.paymentProof} kind="member" id={member.id} />
-          </div>
-        )}
-        <div className="mt-3">
-          <MemberProofForm memberId={member.id} proof={member.paymentProof} onSaved={load} />
-        </div>
-      </ProfileSection>
+      <MembershipSummary
+        userId={member.id}
+        membershipYear={member.membershipYear}
+        status={member.status as "PENDING" | "ACTIVE" | "REJECTED"}
+        endedAt={member.endedAt}
+        currentYear={currentYear}
+      />
 
       <ProfileSection icon="trophy" title={texts.activities(member.registrations.length)}>
         {member.registrations.length === 0 ? (
@@ -293,11 +266,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
         )}
       </ProfileSection>
 
-      <DeleteMemberCard
-        memberId={member.id}
-        userId={member.user?.id ?? null}
-        fullName={member.fullName}
-      />
+      <DeleteMemberCard userId={member.user?.id ?? null} fullName={member.fullName} />
     </div>
   );
 }

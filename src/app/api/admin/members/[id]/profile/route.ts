@@ -10,6 +10,7 @@ import { seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 import { latestMembership } from "@/lib/currentMembership";
 import { PERSON_WITH_PHONE_SELECT, personOf } from "@/lib/person";
+import { getAppSettings } from "@/lib/settingsServer";
 
 export const GET = withRoute(
   "GET /api/admin/members/[id]/profile",
@@ -100,6 +101,8 @@ export const GET = withRoute(
       select: { id: true, action: true, adminUsername: true, createdAt: true, targetLabel: true },
     });
 
+    const { membershipYear: currentYear } = await getAppSettings();
+
     const named = seesSupporterName(viewerOf(session), {
       userId: id,
       user: { supportNameConfidential },
@@ -129,6 +132,7 @@ export const GET = withRoute(
       },
       supportPrivacy,
       history,
+      currentYear,
     });
   },
 );
