@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { pendingAgeGroups } from "@/lib/texts";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import IconLabel from "@/components/IconLabel";
 import type { AgeGroup } from "./types";
 
@@ -15,6 +16,7 @@ export default function PendingAgeGroups({
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState<string | null>(null);
 
   if (groups.length === 0) return null;
 
@@ -76,10 +78,7 @@ export default function PendingAgeGroups({
             )}
           </button>
           <button
-            onClick={() => {
-              if (!confirm(pendingAgeGroups.confirmReject)) return;
-              run(group.id, () => api.del(`/api/admin/age-groups/${group.id}`));
-            }}
+            onClick={() => setAsking(group.id)}
             disabled={busyId === group.id}
             className="text-xs px-2.5 py-1.5 rounded-lg font-bold shrink-0"
             style={{ background: "#fee2e2", color: "#991b1b" }}
@@ -88,6 +87,22 @@ export default function PendingAgeGroups({
           </button>
         </div>
       ))}
+
+      {asking && (
+        <ConfirmDialog
+          title={pendingAgeGroups.confirmRejectTitle}
+          message={pendingAgeGroups.confirmReject}
+          confirmLabel={pendingAgeGroups.reject}
+          danger
+          loading={busyId === asking}
+          onConfirm={() => {
+            const id = asking;
+            setAsking(null);
+            run(id, () => api.del(`/api/admin/age-groups/${id}`));
+          }}
+          onClose={() => setAsking(null)}
+        />
+      )}
     </div>
   );
 }

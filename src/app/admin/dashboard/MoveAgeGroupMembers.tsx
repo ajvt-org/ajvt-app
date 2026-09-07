@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { api, errorMessage } from "@/lib/api";
 import type { AgeGroup } from "./types";
 import { counted } from "@/lib/arabicCount";
 import { MEMBER } from "@/lib/messages";
+import { moveAgeGroup as texts } from "@/lib/texts";
 
 export default function MoveAgeGroupMembers({
   group,
@@ -20,12 +22,13 @@ export default function MoveAgeGroupMembers({
   const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [asking, setAsking] = useState(false);
 
   const others = ageGroups.filter((g) => g.id !== group.id);
 
   async function move() {
+    setAsking(false);
     if (!target) return;
-    if (!confirm(`نقل كل أعضاء "${group.name}" إلى "${target}"؟`)) return;
     setBusy(true);
     setError("");
     try {
@@ -41,7 +44,7 @@ export default function MoveAgeGroupMembers({
   return (
     <div className="mt-2 pt-2 space-y-2" style={{ borderTop: "1px solid var(--mint-100)" }}>
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        نقل {counted(group.count ?? 0, MEMBER)} إلى عصر آخر
+        {texts.intro(counted(group.count ?? 0, MEMBER))}
       </p>
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
@@ -55,7 +58,7 @@ export default function MoveAgeGroupMembers({
           className="input text-sm"
           autoFocus
         >
-          <option value="">اختر العصر...</option>
+          <option value="">{texts.pick}</option>
           {others.map((g) => (
             <option key={g.id} value={g.name}>
               {g.name}
@@ -63,21 +66,32 @@ export default function MoveAgeGroupMembers({
           ))}
         </select>
         <button
-          onClick={move}
+          onClick={() => setAsking(true)}
           disabled={busy || !target}
           className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-600)", color: "white" }}
         >
-          {busy ? "..." : "نقل"}
+          {busy ? "..." : texts.move}
         </button>
         <button
           onClick={onCancel}
           className="text-xs px-3 py-2.5 rounded-lg font-bold shrink-0"
           style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
         >
-          إلغاء
+          {texts.cancel}
         </button>
       </div>
+
+      {asking && (
+        <ConfirmDialog
+          title={texts.confirmTitle}
+          message={texts.confirmMove(group.name, target)}
+          confirmLabel={texts.move}
+          loading={busy}
+          onConfirm={move}
+          onClose={() => setAsking(false)}
+        />
+      )}
     </div>
   );
 }

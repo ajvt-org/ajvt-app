@@ -23,7 +23,13 @@ export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
-export { ageStandings, pendingAgeGroups } from "./ageGroups";
+export {
+  ageGroupsDialog,
+  ageStandings,
+  moveAgeGroup,
+  orphanAgeGroups,
+  pendingAgeGroups,
+} from "./ageGroups";
 export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
@@ -33,7 +39,7 @@ export { adminTools, auditLogPage, deletedRecords } from "./adminTools";
 export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
 export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
-export { reviewQueue } from "./reviewQueue";
+export { bulkReview, reviewQueue } from "./reviewQueue";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";
 export { membershipSummary } from "./membershipSummary";
