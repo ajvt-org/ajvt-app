@@ -56,7 +56,7 @@ export default function MemberProofForm({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="w-full space-y-2">
       <ProofUpload existingProof={proof} onUploaded={setPicked} onUploadingChange={setUploading} />
       {error && (
         <p className="text-xs font-semibold" style={{ color: "#991b1b" }}>
