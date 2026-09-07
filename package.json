@@ -71,7 +71,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "jsdom": "^30.0.1",
@@ -80,7 +80,7 @@
     "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "typescript-7": "npm:typescript@^7.0.2",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "deepmerge-ts": "^8.0.1",
