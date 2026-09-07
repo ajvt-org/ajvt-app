@@ -212,6 +212,7 @@ const KEPT_CLEAN = [
   "src/app/api/admin/admins",
   "src/app/admin/expenses/page.tsx",
   "src/app/admin/quiz/ScoresPanel.tsx",
+  "src/app/admin/quiz/BankPicker.tsx",
   "src/app/admin/quiz/ScoreRow.tsx",
   "src/app/admin/quiz/ScoreActions.tsx",
   "src/app/admin/quiz/scoreTypes.ts",

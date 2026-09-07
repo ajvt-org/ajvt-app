@@ -86,7 +86,7 @@ export {
   paymentMethodChoice,
   paymentMethodManager,
 } from "./paymentMethods";
-export { quizQuestionList, quizSettingsForm } from "./quizQuestions";
+export { quizBankPicker, quizQuestionList, quizSettingsForm } from "./quizQuestions";
 export { quizRecap } from "./quizRecap";
 export {
   memberReceipts,

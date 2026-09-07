@@ -33,6 +33,25 @@ describe("BankPicker", () => {
     expect(screen.getByText(/12 سؤالاً/)).toBeDefined();
   });
 
+  it("isolates a name so a Latin bank cannot capture the count beside it", () => {
+    setup({
+      banks: [
+        { id: "b3", name: "General Knowledge", _count: { questions: 26 } },
+        { id: "b4", name: "2026", _count: { questions: 4 } },
+      ],
+    });
+
+    expect(screen.getByText("General Knowledge").tagName).toBe("BDI");
+    expect(screen.getByText("2026").tagName).toBe("BDI");
+  });
+
+  it("leaves the spoken labels reading as a sentence", () => {
+    setup({ banks: [{ id: "b3", name: "General Knowledge", _count: { questions: 26 } }] });
+
+    expect(screen.getByRole("button", { name: "تعديل General Knowledge" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "حذف General Knowledge" })).toBeDefined();
+  });
+
   it("opens the bank that was picked", async () => {
     const props = setup();
 
