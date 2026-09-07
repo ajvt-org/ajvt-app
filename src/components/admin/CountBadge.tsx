@@ -7,7 +7,7 @@ export default function CountBadge({ count }: { count: number }) {
   return (
     <span
       dir="ltr"
-      className="absolute -top-1.5 -end-1.5 rounded-full text-white font-black flex items-center justify-center"
+      className="absolute -bottom-1 -end-1.5 rounded-full text-white font-black flex items-center justify-center"
       style={{
         background: RED,
         fontSize: "9px",

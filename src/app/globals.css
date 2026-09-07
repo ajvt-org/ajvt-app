@@ -508,12 +508,15 @@ button:disabled {
 
 /* A row of tabs wider than the screen used to widen the whole page, so the
    layout sat shifted with the first tabs off-screen. It scrolls inside itself
-   now. Vertical padding stays large enough for the -4px count badges, which
-   overflow-x would otherwise clip. */
+   now. overflow-x auto makes the other axis auto as well, so the strip clips
+   vertically and a count badge hanging below a tab loses its lower edge. The
+   padding is that overhang, and it lives here rather than on each strip because
+   a call site that forgets it clips the badge with no other sign. */
 .tab-strip {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding-bottom: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }

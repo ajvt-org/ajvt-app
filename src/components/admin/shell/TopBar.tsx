@@ -22,7 +22,7 @@ export default function TopBar({
 }) {
   return (
     <div
-      className="px-2 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2"
+      className="px-2 py-1 sm:px-4 sm:py-1.5 flex items-center gap-2"
       style={{
         background: "linear-gradient(135deg, var(--mint-700), var(--mint-600))",
         boxShadow: "0 2px 12px rgba(26,63,51,0.2)",
