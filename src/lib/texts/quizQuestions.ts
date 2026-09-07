@@ -1,10 +1,7 @@
 export const quizSettingsForm = {
   title: "إعدادات الأسئلة",
   confirmAnswers: "زر تأكيد الإجابة",
-  confirmAnswersKeeps:
-    "يسري التغيير من الجولة القادمة، والأسئلة متعددة الإجابات تحتفظ بالزر دائماً.",
   defaultsTitle: "ما يظهر جاهزاً عند إضافة سؤال جديد",
-  defaultsLead: "كل ما يخص سير المسابقة يضبط داخل المسابقة نفسها.",
   defaultAnswerCount: "عدد الإجابات الافتراضي",
   defaultCorrectCount: "عدد الإجابات الصحيحة الافتراضي",
   defaultPoints: "النقاط الافتراضية للسؤال",
