@@ -9,7 +9,7 @@ export const adminTabs = {
   treasury: "الخزينة",
   financeReport: "التقرير المالي",
   quiz: "المسابقات الثقافية",
-  stats: "الإحصائيات",
+  stats: "البيانات",
   settings: "الإعدادات",
   tools: "أدوات المشرف",
 } as const;
