@@ -9,6 +9,8 @@ import DonationTags from "./DonationTags";
 import LinkMemberPanel from "./LinkMemberPanel";
 import type { MemberOption, Proof } from "./paymentTypes";
 
+type Panel = "edit" | "link" | "tags";
+
 export default function DonationProofCard({
   proof,
   members,
@@ -32,49 +34,57 @@ export default function DonationProofCard({
   onLink: (userId: string | null) => void;
   onPatch: (changes: Partial<Proof>) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [linking, setLinking] = useState(false);
+  const [panel, setPanel] = useState<Panel | null>(null);
+
+  const toggle = (next: Panel) => setPanel((p) => (p === next ? null : next));
 
   return (
     <>
-      <DonationTags
-        donationId={proof.id}
-        tags={proof.tags ?? []}
-        allTags={financeTags}
-        onSaved={(tags) => onPatch({ tags })}
-      />
-
       <DonationActions
         proof={proof}
         busy={busy}
         onReview={onReview}
-        onEdit={() => setEditing(true)}
+        onEdit={() => toggle("edit")}
+        onTag={() => toggle("tags")}
         onDelete={onDelete}
-        onLink={() => setLinking((p) => !p)}
+        onLink={() => toggle("link")}
         onUnlink={() => onLink(null)}
       />
 
-      {editing && (
+      {panel === "tags" && (
+        <DonationTags
+          donationId={proof.id}
+          tags={proof.tags ?? []}
+          allTags={financeTags}
+          onSaved={(tags) => {
+            onPatch({ tags });
+            setPanel(null);
+          }}
+          onClose={() => setPanel(null)}
+        />
+      )}
+
+      {panel === "edit" && (
         <DonationEditForm
           proof={proof}
           destinations={destinations}
           linkedMember={linkedMember}
-          onCancel={() => setEditing(false)}
-          onRelink={() => setLinking(true)}
+          onCancel={() => setPanel(null)}
+          onRelink={() => setPanel("link")}
           onSaved={(changes) => {
             onPatch(changes);
-            setEditing(false);
+            setPanel(null);
           }}
         />
       )}
 
-      {linking && (
+      {panel === "link" && (
         <LinkMemberPanel
           members={members}
           busy={busy}
           onPick={(userId) => {
             onLink(userId);
-            setLinking(false);
+            setPanel(null);
           }}
         />
       )}

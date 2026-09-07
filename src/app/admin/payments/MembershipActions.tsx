@@ -9,10 +9,7 @@ import { api, errorMessage } from "@/lib/api";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { deleteMember, memberDecision as texts } from "@/lib/texts";
 import PaymentActions from "./PaymentActions";
-
-const DANGER = { background: "#fee2e2", color: "#991b1b" };
-const DANGER_OUTLINE = { background: "white", color: "#991b1b", border: "1.5px solid #fca5a5" };
-const QUIET = { background: "var(--mint-100)", color: "var(--mint-700)" };
+import { DANGER, DANGER_OUTLINE, QUIET } from "./donationTones";
 
 export default function MembershipActions({
   userId,

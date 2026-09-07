@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import { paymentCard, RECEIPT_STATUS_LABEL } from "@/lib/texts";
 import { donorNamesShown } from "@/lib/donorNamesShown";
+import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import MemberIdentity from "./MemberIdentity";
 import type { MemberOption, Proof } from "./paymentTypes";
 
@@ -82,6 +83,8 @@ export default function PaymentFacts({
       )}
 
       {proof.receipt && <ReceiptLine receipt={proof.receipt} />}
+
+      {isDonation && proof.tags && proof.tags.length > 0 && <FinanceTagChips tags={proof.tags} />}
     </div>
   );
 }
