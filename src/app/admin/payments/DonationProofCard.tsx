@@ -75,8 +75,10 @@ export default function DonationProofCard({
           proof={proof}
           destinations={destinations}
           linkedMember={linkedMember}
+          members={members}
+          busy={busy}
           onCancel={() => setPanel(null)}
-          onRelink={() => setPanel("link")}
+          onLink={onLink}
           onSaved={(changes) => {
             onPatch(changes);
             setPanel(null);

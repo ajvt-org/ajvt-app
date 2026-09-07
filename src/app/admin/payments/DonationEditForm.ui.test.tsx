@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DonationEditForm from "./DonationEditForm";
-import { bankReference, donationEdit, paymentAccountPicker } from "@/lib/texts";
+import { bankReference, donationEdit, memberPicker, paymentAccountPicker } from "@/lib/texts";
 import { money } from "@/lib/messages";
 import type { MemberOption, Proof } from "./paymentTypes";
 import { answering, sentBody } from "@tests/ui/paymentMethods";
@@ -70,20 +70,30 @@ function mockPatch(donation: Record<string, unknown> = {}) {
   return fetchMock;
 }
 
+const SECOND: MemberOption = {
+  ...ACCOUNT,
+  id: "m2",
+  userId: "u2",
+  fullName: "الداه الحسن",
+  memberNumber: "AJVT-2026-0062",
+};
+
 function show(over: Partial<Proof> = {}, linkedMember: MemberOption | undefined = ACCOUNT) {
   const onSaved = vi.fn();
-  const onRelink = vi.fn();
+  const onLink = vi.fn();
   render(
     <DonationEditForm
       proof={proofOf(over)}
       destinations={[]}
       linkedMember={linkedMember}
+      members={[ACCOUNT, SECOND]}
+      busy={false}
       onCancel={vi.fn()}
-      onRelink={onRelink}
+      onLink={onLink}
       onSaved={onSaved}
     />,
   );
-  return { onSaved, onRelink };
+  return { onSaved, onLink };
 }
 
 function bodyOf(fetchMock: ReturnType<typeof mockPatch>) {
@@ -193,12 +203,54 @@ describe("editing a support payment", () => {
     expect(screen.getByText(money.amountInvalid)).toBeTruthy();
   });
 
-  it("opens the picker to change a link from inside the form", async () => {
-    const { onRelink } = show({ userId: "u1" });
+  it("opens the picker inside the form and keeps what was typed", async () => {
+    show({ userId: "u1" });
 
+    const amount = screen.getByLabelText(donationEdit.amount);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "4500");
     await userEvent.click(screen.getByText(donationEdit.changeLink));
 
-    expect(onRelink).toHaveBeenCalled();
+    expect(screen.getByPlaceholderText(memberPicker.search)).toBeDefined();
+    expect((screen.getByLabelText(donationEdit.amount) as HTMLInputElement).value).toBe("4500");
+  });
+
+  it("links the member picked and returns to the form still holding the edit", async () => {
+    const { onLink } = show({ userId: "u1" });
+
+    const amount = screen.getByLabelText(donationEdit.amount);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "4500");
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    expect(onLink).toHaveBeenCalledWith("u2");
+    expect(screen.queryByPlaceholderText(memberPicker.search)).toBeNull();
+    expect((screen.getByLabelText(donationEdit.amount) as HTMLInputElement).value).toBe("4500");
+  });
+
+  it("saves nothing of its own when a member is picked", async () => {
+    const fetchMock = mockPatch();
+    show({ userId: "u1" });
+
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.type(screen.getByPlaceholderText(memberPicker.search), "الداه");
+    await userEvent.click(screen.getByText("الداه الحسن"));
+
+    const wrote = fetchMock.mock.calls.some(([url]) =>
+      String(url).startsWith("/api/admin/donations/"),
+    );
+    expect(wrote).toBe(false);
+  });
+
+  it("closes the picker again when the link button is pressed twice", async () => {
+    show({ userId: "u1" });
+
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+    await userEvent.click(screen.getByText(donationEdit.changeLink));
+
+    expect(screen.queryByPlaceholderText(memberPicker.search)).toBeNull();
   });
 
   it("shows who the payment is linked to, not just their name", () => {
@@ -265,8 +317,10 @@ describe("the number a payment landed in", () => {
         }}
         destinations={[]}
         linkedMember={ACCOUNT}
+        members={[ACCOUNT]}
+        busy={false}
         onCancel={vi.fn()}
-        onRelink={vi.fn()}
+        onLink={vi.fn()}
         onSaved={vi.fn()}
       />,
     );
