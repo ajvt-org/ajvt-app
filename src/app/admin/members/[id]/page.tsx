@@ -12,7 +12,6 @@ import SamePersonWarning from "@/components/admin/SamePersonWarning";
 import ProfileSection from "@/components/admin/ProfileSection";
 import PaymentReceipts from "@/components/PaymentReceipts";
 import MemberEditForm from "./MemberEditForm";
-import MemberDecision from "./MemberDecision";
 import DeleteMemberCard from "./DeleteMemberCard";
 import AccountPhoneForm from "./AccountPhoneForm";
 import MemberPhotoCard from "./MemberPhotoCard";
@@ -128,7 +127,7 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
 
       <SamePersonWarning memberId={member.id} />
 
-      {editing ? (
+      {editing && (
         <MemberEditForm
           member={member}
           onSaved={() => {
@@ -137,8 +136,6 @@ function AdminMemberProfilePageInner({ id }: { id: string }) {
           }}
           onCancel={() => setEditing(false)}
         />
-      ) : (
-        <MemberDecision memberId={member.id} status={member.status} onDecided={load} />
       )}
 
       {member.user && (
