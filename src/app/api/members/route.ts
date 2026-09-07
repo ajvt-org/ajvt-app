@@ -17,6 +17,7 @@ import { methodsWithAccounts } from "@/lib/paymentMethodsServer";
 import { accountIsOpenOn, methodNames, payableMethods } from "@/lib/paymentMethods";
 import { readBankReference } from "@/lib/bankReference";
 import { members, money } from "@/lib/messages";
+import { nameOf } from "@/lib/person";
 
 const CODE_ATTEMPTS = 5;
 
@@ -70,11 +71,6 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
 
     await prisma.$transaction(async (tx) => {
       await saveMembershipYear(tx, session.userId, current.year, {
-        paymentMethod,
-        accountId,
-        bankReference,
-        paymentProof,
-        ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
         status: "PENDING",
         rejectionReason: null,
       });
@@ -85,6 +81,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
         proof: paymentProof,
         ...(!current.referenceCode && referenceCode ? { referenceCode } : {}),
         status: "PENDING",
+        recordedBy: nameOf(person),
         anonymous: surplusAnonymous,
       });
     });
@@ -102,14 +99,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
   for (let attempt = 0; ; attempt++) {
     try {
       await prisma.$transaction(async (tx) => {
-        await saveMembershipYear(tx, session.userId, membershipYear, {
-          paymentMethod,
-          accountId,
-          bankReference,
-          paymentProof,
-          referenceCode: code,
-          status: "PENDING",
-        });
+        await saveMembershipYear(tx, session.userId, membershipYear, { status: "PENDING" });
         await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
           method: paymentMethod,
           accountId,
@@ -117,6 +107,7 @@ export const POST = withRoute("Member create", async (req: NextRequest) => {
           proof: paymentProof,
           referenceCode: code,
           status: "PENDING",
+          recordedBy: nameOf(person),
           anonymous: surplusAnonymous,
         });
       });

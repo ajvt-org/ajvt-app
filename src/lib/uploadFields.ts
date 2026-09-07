@@ -8,23 +8,6 @@ import {
   seesPaymentIdentity,
 } from "./supportPrivacy";
 
-async function membershipCarriesConfidentialSupport(
-  userId: string,
-  year: number,
-): Promise<boolean> {
-  const payment = await prisma.payment.findFirst({
-    where: { userId, year, purpose: "MEMBERSHIP" },
-    select: {
-      purpose: true,
-      amount: true,
-      feeApplied: true,
-      userId: true,
-      user: { select: CONFIDENTIAL_SELECT },
-    },
-  });
-  return payment ? !seesPaymentIdentity(PUBLIC_VIEWER, payment) : false;
-}
-
 export type { OwnedMatch, ProofKind };
 
 export const PUBLIC_FILE_ROUTES = [
@@ -67,30 +50,6 @@ export const UPLOAD_FIELDS: UploadField[] = [
           select: { id: true },
         });
         return row ? { kind: "photo", ownerId: row.id, confidential: false } : null;
-      },
-    },
-  },
-  {
-    id: "membership.paymentProof",
-    names: async () =>
-      (await prisma.membership.findMany({ select: { paymentProof: true } })).map(
-        (r) => r.paymentProof,
-      ),
-    rename: (from, to) =>
-      prisma.membership.updateMany({ where: { paymentProof: from }, data: { paymentProof: to } }),
-    serve: {
-      via: "authenticated",
-      locate: async (base) => {
-        const row = await prisma.membership.findFirst({
-          where: { paymentProof: base },
-          select: { userId: true, year: true },
-        });
-        if (!row) return null;
-        return {
-          kind: "membership",
-          ownerId: row.userId,
-          confidential: await membershipCarriesConfidentialSupport(row.userId, row.year),
-        };
       },
     },
   },

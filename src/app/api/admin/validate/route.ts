@@ -6,10 +6,8 @@ import { sendPushToUser } from "@/lib/push";
 import { logAction, auditContext } from "@/lib/audit";
 import { recordFeeVerdict } from "@/lib/membershipPaymentServer";
 import type { MembershipVerdict } from "@/lib/membershipVerdict";
-import { recordMembershipYear, setMembershipStatus } from "@/lib/membershipRecord";
+import { setMembershipStatus } from "@/lib/membershipRecord";
 import { currentMembership } from "@/lib/currentMembershipServer";
-import { membershipPaymentOf } from "@/lib/membershipPaymentRead";
-import { getAppSettings } from "@/lib/settingsServer";
 import { REJECTION_REASONS } from "@/lib/rejectionReasons";
 import { withRoute } from "@/lib/route";
 import { ValidationError } from "@/lib/errors";
@@ -33,13 +31,11 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
     }
   }
 
-  const { membershipFee } = await getAppSettings();
   const account = await prisma.user.findUnique({
     where: { id },
     select: { memberNumber: true },
   });
   const existing = account ? await currentMembership(prisma, id) : null;
-  const paid = existing ? await membershipPaymentOf(prisma, id, existing.year) : null;
   const needsNumber = action === "ACTIVE" && !account?.memberNumber;
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -50,17 +46,9 @@ export const POST = withRoute("Validate", async (req: NextRequest) => {
       rejectionReason: action === "REJECTED" ? rejectionReason || null : null,
       reviewedBy: session.username,
     };
-    const now = new Date();
-    await recordFeeVerdict(tx, id, existing.year, verdict, now);
-    await setMembershipStatus(tx, id, existing.year, verdict, now);
+    await recordFeeVerdict(tx, id, existing.year, verdict, new Date());
+    await setMembershipStatus(tx, id, existing.year, verdict);
     if (issued) await tx.user.update({ where: { id }, data: issued });
-    if (action === "ACTIVE") {
-      await recordMembershipYear(tx, id, existing.year, membershipFee, {
-        paymentMethod: paid?.paymentMethod ?? null,
-        paymentProof: paid?.paymentProof ?? null,
-        recordedBy: session.username,
-      });
-    }
     return { userId: id };
   });
 

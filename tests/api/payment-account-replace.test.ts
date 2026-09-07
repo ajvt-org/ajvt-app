@@ -28,13 +28,12 @@ async function replace(id: string, accountId: string, body: unknown) {
 }
 
 async function moneyOn(accountId: string) {
-  const [payments, memberships, donations, expenses] = await Promise.all([
+  const [payments, donations, expenses] = await Promise.all([
     prisma.payment.findMany({ where: { accountId }, select: { id: true } }),
-    prisma.membership.findMany({ where: { accountId }, select: { id: true } }),
     prisma.donation.findMany({ where: { accountId }, select: { id: true } }),
     prisma.expense.findMany({ where: { accountId }, select: { id: true } }),
   ]);
-  return [...payments, ...memberships, ...donations, ...expenses].map((row) => row.id).sort();
+  return [...payments, ...donations, ...expenses].map((row) => row.id).sort();
 }
 
 describe("replacing the number a method receives into", () => {

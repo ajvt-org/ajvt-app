@@ -108,7 +108,6 @@ describe("POST /api/admin/notifications/broadcast", () => {
         userId: waiting.userId,
         year: new Date().getUTCFullYear(),
         status: "PENDING",
-        paymentMethod: "بنكيلي",
       },
     });
 

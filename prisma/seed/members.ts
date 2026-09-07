@@ -79,31 +79,15 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
     const joined = daysAgo(Math.max(1, 130 - i));
     const reviewedOn = daysAgo(1);
 
-    const snapshot = {
+    const standing = {
       status,
       rejectionReason: status === "REJECTED" ? pick(REJECTION_REASONS, i) : null,
-      paymentMethod: method,
-      paymentProof: proof,
-      referenceCode: referenceCode(i),
     };
-    await saveMembershipYear(prisma, owner, membershipYear, snapshot);
-    if (isActive) {
-      await prisma.membership.updateMany({
-        where: { userId: owner, year: membershipYear },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedOn },
-      });
-    }
+    await saveMembershipYear(prisma, owner, membershipYear, standing);
 
     if (isActive && membershipYear === current && i % RENEWED_EVERY === 0) {
       const reviewedLastYear = daysAgo(370);
-      await saveMembershipYear(prisma, owner, current - 1, {
-        ...snapshot,
-        referenceCode: null,
-      });
-      await prisma.membership.updateMany({
-        where: { userId: owner, year: current - 1 },
-        data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedLastYear },
-      });
+      await saveMembershipYear(prisma, owner, current - 1, standing);
       await writeMembershipFee(prisma, owner, current - 1, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
         method,
         accountId: null,
@@ -127,6 +111,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       status,
       reviewedBy: isActive ? "admin" : null,
       reviewedAt: isActive ? reviewedOn : null,
+      recordedBy: isActive ? "admin" : null,
       anonymous: false,
     });
 

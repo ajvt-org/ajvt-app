@@ -6,11 +6,8 @@ import { getUploadDir } from "../src/lib/uploadDir";
 import { proofHash } from "../src/lib/proofHash";
 
 async function main() {
-  const [memberships, donations, expenses, known] = await Promise.all([
-    prisma.membership.findMany({
-      where: { paymentProof: { not: null } },
-      select: { paymentProof: true },
-    }),
+  const [payments, donations, expenses, known] = await Promise.all([
+    prisma.payment.findMany({ where: { proof: { not: null } }, select: { proof: true } }),
     prisma.donation.findMany({ where: { proof: { not: null } }, select: { proof: true } }),
     prisma.expense.findMany({ where: { proof: { not: null } }, select: { proof: true } }),
     prisma.proofImage.findMany({ select: { filename: true } }),
@@ -19,7 +16,7 @@ async function main() {
   const seen = new Set(known.map((row) => row.filename));
   const names = new Set(
     [
-      ...memberships.map((m) => m.paymentProof),
+      ...payments.map((p) => p.proof),
       ...donations.map((d) => d.proof),
       ...expenses.map((e) => e.proof),
     ].filter((n): n is string => !!n),

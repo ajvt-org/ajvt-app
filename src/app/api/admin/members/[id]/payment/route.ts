@@ -7,7 +7,6 @@ import { parse } from "@/lib/validation";
 import { validatePaidAmount } from "@/lib/donations";
 import { getAppSettings } from "@/lib/settingsServer";
 import { recordMembershipPayment, totalPaidFor } from "@/lib/membershipPaymentServer";
-import { saveMembershipYear } from "@/lib/membershipRecord";
 import { currentMembershipPaid } from "@/lib/currentMembershipServer";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
@@ -49,13 +48,6 @@ export const PUT = withRoute(
       paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined;
 
     await prisma.$transaction(async (tx) => {
-      if (edited) {
-        await saveMembershipYear(tx, id, current.year, {
-          ...(paymentMethod !== undefined ? { paymentMethod } : {}),
-          ...(accountId !== undefined ? { accountId: accountId || null } : {}),
-          ...(paymentProof !== undefined ? { paymentProof } : {}),
-        });
-      }
       if (edited || amountTransferred !== undefined) {
         await recordMembershipPayment(
           tx,

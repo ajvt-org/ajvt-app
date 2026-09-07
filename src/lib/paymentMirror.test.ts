@@ -11,7 +11,6 @@ import {
   isPaidAmount,
   mirrorDonation,
   removeMirroredDonation,
-  stampRecordedBy,
   type MirroredDonation,
 } from "./paymentMirror";
 import {
@@ -196,18 +195,5 @@ describe("writing the mirrored payment", () => {
 
     expect(only(calls, "deleteMany")[0].args.where).toMatchObject({ id: "d1" });
     expect(withdrawReceiptsBeforeDelete).toHaveBeenCalledWith(db, { id: "d1" });
-  });
-});
-
-describe("who recorded a membership payment", () => {
-  it("is stamped only where nobody is stamped yet", async () => {
-    const { db, calls } = fakeDb();
-
-    await stampRecordedBy(db, "u1", 2026, "boss");
-
-    expect(only(calls, "updateMany")[0].args).toMatchObject({
-      where: { userId: "u1", year: 2026, purpose: "MEMBERSHIP", recordedBy: null },
-      data: { recordedBy: "boss" },
-    });
   });
 });

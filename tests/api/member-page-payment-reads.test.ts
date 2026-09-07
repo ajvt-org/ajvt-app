@@ -20,13 +20,6 @@ async function paidMember(over: Record<string, unknown> = {}) {
   });
 }
 
-function staleMembership(userId: string, data: Record<string, unknown>) {
-  return prisma.membership.update({
-    where: { userId_year: { userId, year: YEAR } },
-    data,
-  });
-}
-
 const profileOf = async (userId: string) =>
   (await (await PROFILE(get(`/api/admin/members/${userId}/profile`), withId(userId))).json())
     .member;
@@ -47,12 +40,6 @@ describe("the admin's page for one member reads the payment off the payment", ()
       paymentProof: "paid.jpg",
       referenceCode: "AJ-PAID",
     });
-    await staleMembership(m.userId, {
-      paymentMethod: "مصرفي",
-      paymentProof: "stale.jpg",
-      referenceCode: "AJ-STALE",
-    });
-
     expect(await profileOf(m.userId)).toMatchObject({
       paymentMethod: "بنكيلي",
       paymentProof: "paid.jpg",
@@ -65,15 +52,10 @@ describe("the admin's page for one member reads the payment off the payment", ()
     const account = await prisma.paymentAccount.findFirstOrThrow({
       where: { method: { name: "بنكيلي" } },
     });
-    const other = await prisma.paymentAccount.findFirstOrThrow({
-      where: { method: { name: "مصرفي" } },
-    });
     await prisma.payment.updateMany({
       where: { userId: m.userId, year: YEAR, purpose: "MEMBERSHIP" },
       data: { accountId: account.id },
     });
-    await staleMembership(m.userId, { accountId: other.id });
-
     const member = await profileOf(m.userId);
 
     expect(member.accountId).toBe(account.id);
@@ -87,12 +69,6 @@ describe("the admin's page for one member reads the payment off the payment", ()
       status: "PENDING",
       membershipYear: YEAR,
     });
-    await staleMembership(m.userId, {
-      paymentMethod: "بنكيلي",
-      paymentProof: "stale.jpg",
-      referenceCode: "AJ-NOPAY",
-    });
-
     expect(await profileOf(m.userId)).toMatchObject({
       paymentMethod: null,
       accountId: null,
@@ -118,7 +94,6 @@ describe("the admin's page for one member reads the payment off the payment", ()
       where: { userId: m.userId, year: YEAR, purpose: "MEMBERSHIP" },
       data: { recordedBy: "boss" },
     });
-    await staleMembership(m.userId, { paymentMethod: "مصرفي", recordedBy: "someone" });
 
     const [row] = await yearsOf(m.userId);
 

@@ -41,7 +41,7 @@ describe("the admin home", () => {
   it("counts a member who renewed once, on the year they renewed into", async () => {
     const renewed = await member("جدد", { membershipYear: 2025 });
     await prisma.membership.create({
-      data: { userId: renewed.userId, year: 2026, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: renewed.userId, year: 2026, status: "ACTIVE" },
     });
 
     const body = await (await read()).json();
@@ -52,7 +52,7 @@ describe("the admin home", () => {
   it("reads the newest year when an older one was left waiting", async () => {
     const member2026 = await member("منتظر", { status: "PENDING", membershipYear: 2025 });
     await prisma.membership.create({
-      data: { userId: member2026.userId, year: 2026, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: member2026.userId, year: 2026, status: "ACTIVE" },
     });
 
     const body = await (await read()).json();

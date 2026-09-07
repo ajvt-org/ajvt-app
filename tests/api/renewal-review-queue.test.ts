@@ -64,6 +64,9 @@ const decide = (id: string, action: string, rejectionReason?: string) =>
 const yearRow = (userId: string, year: number) =>
   prisma.membership.findFirstOrThrow({ where: { userId, year } });
 
+const yearFee = (userId: string, year: number) =>
+  prisma.payment.findFirstOrThrow({ where: { userId, year, purpose: "MEMBERSHIP" } });
+
 describe("a member's own renewal in the review queue", () => {
   beforeEach(async () => {
     await resetDb();
@@ -98,10 +101,10 @@ describe("a member's own renewal in the review queue", () => {
     const res = await decide(user.id, "ACTIVE");
 
     expect(res.status).toBe(200);
-    const row = await yearRow(user.id, YEAR);
-    expect(row.status).toBe("ACTIVE");
-    expect(row.reviewedBy).toBe("boss");
-    expect(row.reviewedAt).not.toBeNull();
+    expect((await yearRow(user.id, YEAR)).status).toBe("ACTIVE");
+    const fee = await yearFee(user.id, YEAR);
+    expect(fee.reviewedBy).toBe("boss");
+    expect(fee.reviewedAt).not.toBeNull();
   });
 
   it("keeps the member as the one who recorded it after an admin accepts", async () => {
@@ -110,7 +113,7 @@ describe("a member's own renewal in the review queue", () => {
 
     await decide(user.id, "ACTIVE");
 
-    expect((await yearRow(user.id, YEAR)).recordedBy).toBe("محمد ولد أحمد");
+    expect((await yearFee(user.id, YEAR)).recordedBy).toBe("محمد ولد أحمد");
   });
 
   it("leaves the number the member already carries", async () => {
@@ -162,9 +165,8 @@ describe("a member's own renewal in the review queue", () => {
     );
 
     expect(again.status).toBe(200);
-    const row = await yearRow(user.id, YEAR);
-    expect(row.status).toBe("PENDING");
-    expect(row.paymentProof).toBe("second.jpg");
+    expect((await yearRow(user.id, YEAR)).status).toBe("PENDING");
+    expect((await yearFee(user.id, YEAR)).proof).toBe("second.jpg");
     expect(await prisma.membership.count({ where: { userId: user.id } })).toBe(2);
   });
 

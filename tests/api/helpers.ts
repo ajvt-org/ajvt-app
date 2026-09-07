@@ -11,7 +11,7 @@ import {
   TUTORIAL_BANK_NAME,
 } from "@/lib/questionBankServer";
 import type { ReviewStatus } from "@prisma/client";
-import { writeMembershipFee } from "@/lib/membershipPaymentServer";
+import { writeMembershipFee, type MembershipFee } from "@/lib/membershipPaymentServer";
 import { signToken } from "@/lib/auth";
 import { forgetShared } from "@/lib/sharedResult";
 import { forgetRateLimits } from "@/lib/rateLimit";
@@ -205,9 +205,6 @@ export async function makeMember(data: Record<string, unknown>) {
   const state = {
     status: given.status ?? "PENDING",
     rejectionReason: given.rejectionReason ?? null,
-    paymentMethod: given.paymentMethod ?? null,
-    paymentProof: given.paymentProof ?? null,
-    referenceCode: given.referenceCode ?? null,
     ...(given.createdAt ? { createdAt: given.createdAt } : {}),
   };
   const record = await prisma.membership.upsert({
@@ -229,9 +226,9 @@ export async function makeMember(data: Record<string, unknown>) {
         feeApplied: MEMBERSHIP_FEE,
         year,
         status: state.status,
-        method: state.paymentMethod,
-        proof: state.paymentProof,
-        referenceCode: state.referenceCode,
+        method: given.paymentMethod ?? null,
+        proof: given.paymentProof ?? null,
+        referenceCode: given.referenceCode ?? null,
         userId,
         anonymous,
         donorName: anonymous ? null : account.fullName,
@@ -266,21 +263,19 @@ export async function adminAddsMember(body: Record<string, unknown>) {
   );
 }
 
-export async function payMembershipYear(userId: string, year: number, amount?: number) {
+export async function payMembershipYear(
+  userId: string,
+  year: number,
+  fee: MembershipFee & { amount?: number } = {},
+) {
   const membership = await prisma.membership.findUniqueOrThrow({
     where: { userId_year: { userId, year } },
   });
+  const { amount, ...named } = fee;
   await writeMembershipFee(prisma, userId, year, amount ?? MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
-    method: membership.paymentMethod,
-    accountId: membership.accountId,
-    bankReference: membership.bankReference,
-    proof: membership.paymentProof,
-    referenceCode: membership.referenceCode,
     status: membership.status,
-    reviewedBy: membership.reviewedBy,
-    reviewedAt: membership.reviewedAt,
-    recordedBy: membership.recordedBy,
     anonymous: false,
+    ...named,
   });
 }
 
