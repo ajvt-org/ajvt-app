@@ -24,7 +24,7 @@ function tournament(over: Partial<ActivityPageData> = {}): ActivityPageData {
     isTournament: true,
     format: "KNOCKOUT",
     matchShape: "FOOTBALL",
-    partWord: null,
+    levels: [],
     showScorersAndCards: true,
     minTeamSize: null,
     maxTeamSize: null,

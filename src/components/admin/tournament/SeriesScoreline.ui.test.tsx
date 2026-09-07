@@ -18,12 +18,14 @@ function part(id: string, order: number, extra: Partial<PartRow> = {}): PartRow 
 
 function standing(extra: Partial<SeriesStandingRow> = {}): SeriesStandingRow {
   return {
-    sideAHalves: 0,
-    sideBHalves: 0,
-    partsRecorded: 0,
-    partsScored: 0,
-    partsLeft: 2,
-    partsAllowed: 2,
+    sideATotal: 0,
+    sideBTotal: 0,
+    scored: false,
+    perUnit: 2,
+    unitsRecorded: 0,
+    unitsScored: 0,
+    unitsLeft: 2,
+    unitsAllowed: 2,
     target: null,
     over: false,
     level: true,
@@ -56,8 +58,8 @@ describe("the scoreline on a match card", () => {
     render(
       <SeriesScoreline
         parts={[part("p1", 1, { outcome: "SIDE_A" }), part("p2", 2, { outcome: "DRAW" })]}
-        standing={standing({ sideAHalves: 3, sideBHalves: 1, over: true, level: false })}
-        partWord="لعبة"
+        standing={standing({ sideATotal: 3, sideBTotal: 1, over: true, level: false })}
+        unitWord="لعبة"
       />,
     );
 
@@ -67,7 +69,7 @@ describe("the scoreline on a match card", () => {
 
   it("reads a match in progress differently from a finished one", () => {
     const { rerender, container } = render(
-      <SeriesScoreline parts={[]} standing={standing()} partWord="لعبة" />,
+      <SeriesScoreline parts={[]} standing={standing()} unitWord="لعبة" />,
     );
     expect(screen.getByText("قيد اللعب")).toBeDefined();
 
@@ -75,7 +77,7 @@ describe("the scoreline on a match card", () => {
       <SeriesScoreline
         parts={[]}
         standing={standing({ over: true, level: false, winner: "SIDE_A" })}
-        partWord="لعبة"
+        unitWord="لعبة"
       />,
     );
     expect(screen.queryByText("قيد اللعب")).toBeNull();
@@ -86,32 +88,33 @@ describe("the scoreline on a match card", () => {
     render(
       <SeriesScoreline
         parts={[]}
-        standing={standing({ extending: true, partsAllowed: 4 })}
-        partWord="لعبة"
+        standing={standing({ extending: true, unitsAllowed: 4 })}
+        unitWord="لعبة"
+        extensionUnits="2 ألعاب"
       />,
     );
 
-    expect(screen.getByText("تعادلت، وتُمدَّد بجولتين")).toBeDefined();
+    expect(screen.getByText("تعادلت، وتُمدَّد ب2 ألعاب")).toBeDefined();
   });
 
   it("says a finished match ended level", () => {
     render(
       <SeriesScoreline
         parts={[]}
-        standing={standing({ over: true, level: true, partsLeft: 0 })}
-        partWord="لعبة"
+        standing={standing({ over: true, level: true, unitsLeft: 0 })}
+        unitWord="لعبة"
       />,
     );
 
     expect(screen.getByText("تعادل")).toBeDefined();
   });
 
-  it("shows a side that owes parts with the sign in front of the number", () => {
+  it("shows a side that owes units with the sign in front of the number", () => {
     const { container } = render(
       <SeriesScoreline
         parts={[]}
-        standing={standing({ sideAHalves: -4, sideBHalves: 4 })}
-        partWord="لعبة"
+        standing={standing({ sideATotal: -4, sideBTotal: 4 })}
+        unitWord="لعبة"
       />,
     );
 

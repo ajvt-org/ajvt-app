@@ -10,8 +10,9 @@ import { activityUpdateSchema } from "./schema";
 import { activities, entrantWording, tournament } from "@/lib/messages";
 import { entrantOf } from "@/lib/entrantServer";
 import { reconcileSeats } from "@/lib/registrationTeamServer";
-import type { MatchEnding, MatchShape, PartDecision, TournamentFormat } from "@prisma/client";
-import { seriesSetupProblem } from "@/lib/seriesSetup";
+import type { MatchShape, TournamentFormat } from "@prisma/client";
+import { colourProblem } from "@/lib/seriesSetup";
+import { LEVELS_SELECT } from "@/lib/matchSeriesServer";
 
 function given<T extends object>(input: T): Partial<T> {
   return Object.fromEntries(
@@ -33,13 +34,7 @@ export const GET = withRoute(
         isTournament: true,
         format: true,
         matchShape: true,
-        partsPerMatch: true,
-        matchEnding: true,
-        partsToWin: true,
-        partDecision: true,
-        partTarget: true,
-        partWord: true,
-        partsWord: true,
+        levels: LEVELS_SELECT,
         hasColours: true,
         firstColourWord: true,
         secondColourWord: true,
@@ -73,13 +68,6 @@ export const PATCH = withRoute(
       showScorersAndCards,
       format,
       matchShape,
-      partsPerMatch,
-      matchEnding,
-      partsToWin,
-      partDecision,
-      partTarget,
-      partWord,
-      partsWord,
       hasColours,
       firstColourWord,
       secondColourWord,
@@ -120,13 +108,6 @@ export const PATCH = withRoute(
       showScorersAndCards?: boolean;
       format?: TournamentFormat | null;
       matchShape?: MatchShape;
-      partsPerMatch?: number | null;
-      matchEnding?: MatchEnding | null;
-      partsToWin?: number | null;
-      partDecision?: PartDecision | null;
-      partTarget?: number | null;
-      partWord?: string | null;
-      partsWord?: string | null;
       hasColours?: boolean;
       firstColourWord?: string | null;
       secondColourWord?: string | null;
@@ -189,31 +170,20 @@ export const PATCH = withRoute(
       }
       data.matchShape = matchShape;
     }
-    const series = {
-      partsPerMatch,
-      matchEnding,
-      partsToWin,
-      partDecision,
-      partTarget,
-      partWord,
-      partsWord,
-      hasColours,
-      firstColourWord,
-      secondColourWord,
-    };
-    if (Object.values(series).some((value) => value !== undefined)) {
-      const wanted = { ...existing, ...given(series) };
-      const moved = Object.entries(given(series)).some(
+    const colours = { hasColours, firstColourWord, secondColourWord };
+    if (Object.values(colours).some((value) => value !== undefined)) {
+      const wanted = { ...existing, ...given(colours) };
+      const moved = Object.entries(given(colours)).some(
         ([key, value]) => (existing as Record<string, unknown>)[key] !== value,
       );
       if (moved && (await playedCount()) > 0) {
         return NextResponse.json({ error: tournament.seriesConfigLocked }, { status: 409 });
       }
-      const problem = seriesSetupProblem(wanted);
+      const problem = colourProblem(wanted);
       if (problem) {
         return NextResponse.json({ error: tournament.seriesSetup[problem] }, { status: 400 });
       }
-      Object.assign(data, given(series));
+      Object.assign(data, given(colours));
     }
     if (yellowsForBan !== undefined) data.yellowsForBan = yellowsForBan;
     if (redBanMatches !== undefined) data.redBanMatches = redBanMatches;

@@ -17,26 +17,28 @@ export function partMark(part: PartRow): { text: string; dim: boolean } {
 export default function SeriesScoreline({
   parts,
   standing,
-  partWord,
+  unitWord,
+  extensionUnits = "",
   adjustments = [],
   sides = [],
 }: {
   parts: PartRow[];
   standing: SeriesStandingRow;
-  partWord: string;
+  unitWord: string;
+  extensionUnits?: string;
   adjustments?: RecordedAdjustmentRow[];
   sides?: string[];
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <span className="text-base font-black tabular-nums" style={{ color: "var(--text-main)" }}>
-        <HalfPoints halves={standing.sideAHalves} />
+        <HalfPoints halves={standing.sideATotal} perUnit={standing.perUnit} />
         {" — "}
-        <HalfPoints halves={standing.sideBHalves} />
+        <HalfPoints halves={standing.sideBTotal} perUnit={standing.perUnit} />
       </span>
       {!standing.over && (
         <span className="badge badge-pending">
-          {standing.extending ? texts.extending : texts.inProgress}
+          {standing.extending ? texts.extending(extensionUnits) : texts.inProgress}
         </span>
       )}
       {parts.length > 0 && (
@@ -46,7 +48,7 @@ export default function SeriesScoreline({
             return (
               <span
                 key={part.id}
-                title={`${partWord} ${part.order}`}
+                title={texts.unitNumber(unitWord, part.order)}
                 className="text-xs font-bold rounded px-1.5 py-0.5"
                 style={{
                   background: "var(--mint-50)",

@@ -22,12 +22,12 @@ export function draftOf(part: PartRow): PartDraft {
 }
 
 export function bodyOf(draft: PartDraft, config: SeriesConfig): Record<string, unknown> {
-  if (config.partDecision === "OUTCOME") return { outcome: draft.outcome };
+  if (config.unit.decision === "OUTCOME") return { outcome: draft.outcome };
   return { sideAPoints: Number(draft.sideAPoints), sideBPoints: Number(draft.sideBPoints) };
 }
 
 export function draftIsReady(draft: PartDraft, config: SeriesConfig): boolean {
-  if (config.partDecision === "OUTCOME") return draft.outcome !== "";
+  if (config.unit.decision === "OUTCOME") return draft.outcome !== "";
   return (
     Number.isInteger(Number(draft.sideAPoints)) &&
     Number.isInteger(Number(draft.sideBPoints)) &&
@@ -57,7 +57,7 @@ export default function PartEditor({
 }) {
   return (
     <div className="space-y-2">
-      {config.partDecision === "OUTCOME" ? (
+      {config.unit.decision === "OUTCOME" ? (
         <select
           aria-label={texts.outcomeLabel}
           value={draft.outcome}

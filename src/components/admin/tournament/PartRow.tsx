@@ -45,7 +45,7 @@ export default function PartLine({
       style={{ background: "var(--surface-2)", opacity: part.abandoned ? 0.65 : 1 }}
     >
       <span className="text-xs font-bold shrink-0" style={{ color: "var(--mint-700)" }}>
-        {texts.partNumber(config.partWord, part.order)}
+        {texts.unitNumber(config.unit.singular, part.order)}
       </span>
       <span className="min-w-0 flex-1 text-xs" style={{ color: "var(--text-main)" }}>
         <bdi>{outcomeText(part, sides)}</bdi>
@@ -58,7 +58,7 @@ export default function PartLine({
       {editable && (
         <>
           <button
-            aria-label={`${texts.edit} ${texts.partNumber(config.partWord, part.order)}`}
+            aria-label={`${texts.edit} ${texts.unitNumber(config.unit.singular, part.order)}`}
             onClick={onEdit}
             disabled={busy}
             className="btn btn-icon btn-sm"
@@ -66,7 +66,7 @@ export default function PartLine({
             <Icon name="pencil" size={13} />
           </button>
           <button
-            aria-label={`${texts.remove} ${texts.partNumber(config.partWord, part.order)}`}
+            aria-label={`${texts.remove} ${texts.unitNumber(config.unit.singular, part.order)}`}
             onClick={onRemove}
             disabled={busy}
             className="btn btn-icon btn-sm"
@@ -83,7 +83,7 @@ export default function PartLine({
 export function PartsEmpty({ config }: { config: SeriesConfig }) {
   return (
     <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-      <IconLabel name="list">{texts.none(config.partsWord)}</IconLabel>
+      <IconLabel name="list">{texts.none(config.unit.plural)}</IconLabel>
     </p>
   );
 }

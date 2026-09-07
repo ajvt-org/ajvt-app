@@ -1,13 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import MatchAdjustments, { effectOf } from "./MatchAdjustments";
+import { CHESS_CONFIG } from "@tests/ui/ladders";
 import type { AdjustmentRuleRow, RecordedAdjustmentRow } from "./seriesTypes";
+
+const UNIT = CHESS_CONFIG.unit;
 
 const TEYSSE: AdjustmentRuleRow = {
   id: "r1",
   name: "تيس",
-  partsToSelf: 2,
-  partsFromOther: 2,
+  unitsToSelf: 2,
+  unitsFromOther: 2,
+  levelId: null,
+  endsUnit: false,
 };
 
 const RECORDED: RecordedAdjustmentRow = {
@@ -27,7 +32,7 @@ function show(props: Partial<Parameters<typeof MatchAdjustments>[0]> = {}) {
       rules={[TEYSSE]}
       recorded={[]}
       sides={SIDES}
-      partWord="جولة"
+      unit={UNIT}
       busy={false}
       open
       onRecord={onRecord}
@@ -46,9 +51,9 @@ describe("the moves of a match", () => {
   });
 
   it("says what a move does, so nobody has to work out why the parts do not add up", () => {
-    expect(effectOf(TEYSSE)).toContain("تيس");
-    expect(effectOf(TEYSSE)).toContain("تضيف");
-    expect(effectOf(TEYSSE)).toContain("تخصم");
+    expect(effectOf(TEYSSE, UNIT)).toContain("تيس");
+    expect(effectOf(TEYSSE, UNIT)).toContain("تضيف");
+    expect(effectOf(TEYSSE, UNIT)).toContain("تخصم");
   });
 
   it("says a move happened and which side did it", () => {

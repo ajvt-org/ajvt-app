@@ -96,7 +96,7 @@ export default function SeriesResultForm({
       data-testid="series-result-form"
     >
       <p className="text-sm font-bold" style={{ color: "var(--text-main)" }}>
-        <IconLabel name="list">{texts.heading(config.partsWord)}</IconLabel>
+        <IconLabel name="list">{texts.heading(config.unit.plural)}</IconLabel>
       </p>
 
       <SeriesStanding standing={state.standing} config={config} sides={sides} />
@@ -127,7 +127,7 @@ export default function SeriesResultForm({
         rules={rules}
         recorded={state.adjustments}
         sides={sides}
-        partWord={config.partWord}
+        unit={config.unit}
         busy={busy}
         open={open}
         onRecord={(ruleId, side) =>
