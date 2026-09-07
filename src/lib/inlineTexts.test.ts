@@ -252,6 +252,15 @@ const KEPT_CLEAN = [
   "src/app/admin/members/[id]/ProfileGroup.tsx",
   "src/app/admin/members/[id]/ProfileList.tsx",
   "src/app/api/members/route.ts",
+  "src/app/admin/payments/PaymentActions.tsx",
+  "src/app/admin/payments/PaymentHistory.tsx",
+  "src/app/admin/payments/donationTones.ts",
+  "src/app/admin/dashboard/TempPasswordBox.tsx",
+  "src/components/admin/MemberProofForm.tsx",
+  "src/components/admin/VerbButton.tsx",
+  "src/components/admin/verbTones.ts",
+  "src/components/Icon.tsx",
+  "src/components/IconLabel.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
