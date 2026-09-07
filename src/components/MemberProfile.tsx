@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import IconLabel from "@/components/IconLabel";
 import MemberCard from "@/components/MemberCard";
 import MemberIdentity from "@/components/MemberIdentity";
 import MemberRejected from "@/components/MemberRejected";
@@ -17,14 +16,12 @@ import type { MemberData } from "@/lib/useMember";
 export default function MemberProfile({
   member,
   currentYear,
-  whatsappLink,
   onPhotoUpdated,
   onReload,
   nameRef,
 }: {
   member: MemberData | null;
   currentYear: number | null;
-  whatsappLink: string;
   onPhotoUpdated: (photo: string | null) => void;
   onReload: () => void;
   nameRef?: (el: HTMLElement | null) => void;
@@ -58,26 +55,15 @@ export default function MemberProfile({
         {member && active && <MembershipStanding member={member} currentYear={currentYear} />}
 
         {member && active && (
-          <>
-            <MemberCard
-              fullName={member.fullName}
-              village={member.village}
-              age={member.age}
-              memberNumber={member.memberNumber}
-              verifyToken={member.verifyToken}
-              createdAt={member.createdAt}
-              photo={member.photo}
-            />
-
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-whatsapp"
-            >
-              <IconLabel name="whatsapp">انضم إلى مجموعة الواتساب</IconLabel>
-            </a>
-          </>
+          <MemberCard
+            fullName={member.fullName}
+            village={member.village}
+            age={member.age}
+            memberNumber={member.memberNumber}
+            verifyToken={member.verifyToken}
+            createdAt={member.createdAt}
+            photo={member.photo}
+          />
         )}
       </ProfileSection>
     </div>
