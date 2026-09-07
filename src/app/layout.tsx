@@ -28,6 +28,8 @@ export const viewport: Viewport = {
   themeColor: "#265c49",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl" data-scroll-behavior="smooth">

@@ -210,6 +210,47 @@ describe("the proxy matcher", () => {
   });
 });
 
+describe("the script policy", () => {
+  async function policyAt(path: string, state: State): Promise<string> {
+    const cookie = await COOKIES[state]();
+    const res = await proxy(
+      new NextRequest(`http://localhost${path}`, { headers: cookie ? { cookie } : {} }),
+    );
+    return res.headers.get("content-security-policy") ?? "";
+  }
+
+  it("carries a nonce and no inline allowance", async () => {
+    const policy = await policyAt("/donate", "visitor");
+
+    expect(policy).toMatch(/script-src [^;]*'nonce-[^']+'/);
+    expect(policy.split("; ").find((p) => p.startsWith("script-src"))).not.toContain(
+      "'unsafe-inline'",
+    );
+  });
+
+  it("mints a fresh nonce for every request", async () => {
+    const first = await policyAt("/donate", "visitor");
+    const second = await policyAt("/donate", "visitor");
+
+    expect(first).not.toBe(second);
+  });
+
+  it("hands the page the nonce it names", async () => {
+    const res = await proxy(new NextRequest("http://localhost/donate"));
+    const policy = res.headers.get("content-security-policy") ?? "";
+    const named = /'nonce-([^']+)'/.exec(policy)?.[1];
+
+    expect(named).toBeTruthy();
+    expect(res.headers.get("x-middleware-override-headers")).toContain("x-nonce");
+    expect(res.headers.get("x-middleware-request-x-nonce")).toBe(named);
+  });
+
+  it("still carries the policy on a redirect away from a guarded page", async () => {
+    expect(await policyAt("/home", "visitor")).toContain("script-src");
+    expect(await policyAt("/admin/dashboard", "member")).toContain("script-src");
+  });
+});
+
 describe("a token of the wrong type is treated as absent", () => {
   async function landsWith(path: string, cookie: string): Promise<string> {
     const res = await proxy(new NextRequest(`http://localhost${path}`, { headers: { cookie } }));
