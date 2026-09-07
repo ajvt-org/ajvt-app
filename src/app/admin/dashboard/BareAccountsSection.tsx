@@ -10,7 +10,7 @@ import { push } from "@/lib/messages";
 import { daysWaiting } from "@/lib/waitingRequests";
 import { personDetails } from "@/lib/personDetails";
 import { ageForVillage, requiresAgeGroup } from "@/lib/villages";
-import TempPasswordBox from "./TempPasswordBox";
+import TempPasswordBox from "@/components/admin/TempPasswordBox";
 import { bareAccounts as texts, confirmDelete as confirmDeleteTexts } from "@/lib/texts";
 import type { BareAccount } from "./types";
 
