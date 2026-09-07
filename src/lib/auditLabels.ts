@@ -3,6 +3,8 @@ export const ACTION_LABELS = {
   REJECT_MEMBER: "رفض طلب",
   DELETE_MEMBER: "حذف طلب",
   RESTORE_MEMBER: "استرجاع عضو",
+  END_MEMBERSHIP: "إنهاء عضوية",
+  RESTORE_MEMBERSHIP: "إرجاع عضوية",
   DELETE_USER: "حذف حساب",
   RESTORE_USER: "استرجاع حساب",
   EXPORT_DATA: "تصدير بيانات",
