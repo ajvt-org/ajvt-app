@@ -1,6 +1,7 @@
 "use client";
 
 import AdminList, { type AdminListPagination } from "@/components/admin/AdminList";
+import { paymentsPage as texts } from "@/lib/texts";
 import ProofCard from "./ProofCard";
 import type { FinanceTag } from "@/components/admin/FinanceTagChips";
 import type { DestinationOption } from "@/lib/moneyDestination";
@@ -13,6 +14,7 @@ export default function PaymentsList({
   destinations,
   financeTags,
   busyId,
+  errorOn,
   onReview,
   onDelete,
   onLink,
@@ -26,6 +28,7 @@ export default function PaymentsList({
   destinations: DestinationOption[];
   financeTags: FinanceTag[];
   busyId: string | null;
+  errorOn: (id: string) => string;
   onReview: (proof: Proof, status: "ACTIVE" | "REJECTED") => void;
   onDelete: (proof: Proof) => void;
   onLink: (proof: Proof, userId: string | null) => void;
@@ -45,6 +48,7 @@ export default function PaymentsList({
           destinations={destinations}
           financeTags={financeTags}
           busy={busyId === proof.id}
+          error={errorOn(proof.id)}
           onReview={(status) => onReview(proof, status)}
           onDelete={() => onDelete(proof)}
           onLink={(userId) => onLink(proof, userId)}
@@ -52,7 +56,7 @@ export default function PaymentsList({
           onMembershipChanged={onMembershipChanged}
         />
       )}
-      emptyMessage="لا توجد نتائج"
+      emptyMessage={texts.noResults}
       pagination={pagination}
     />
   );

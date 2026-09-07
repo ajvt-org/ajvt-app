@@ -32,7 +32,7 @@ export { adminShell, adminTabs } from "./adminNav";
 export { adminTools, auditLogPage, deletedRecords } from "./adminTools";
 export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
-export { confirmDelete, deleteMember } from "./deleteRecords";
+export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
 export { reviewQueue } from "./reviewQueue";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";

@@ -2,6 +2,7 @@
 
 import DialogHeader from "@/components/DialogHeader";
 import IconLabel from "@/components/IconLabel";
+import { confirmDialog as texts } from "@/lib/texts";
 
 export default function ConfirmDialogShell({
   title,
@@ -38,7 +39,7 @@ export default function ConfirmDialogShell({
               border: "1px solid var(--mint-200)",
             }}
           >
-            إلغاء
+            {texts.cancel}
           </button>
         </div>
       </div>

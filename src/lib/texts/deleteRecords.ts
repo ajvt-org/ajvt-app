@@ -9,6 +9,11 @@ export const deleteMember = {
     `يُحذف ${name} بالكامل، حسابه ودفعه وكل ما يتعلق بهما. يمكن استرجاعه خلال ${RETENTION_DAYS} يوماً.`,
 } as const;
 
+export const confirmDialog = {
+  confirm: "تأكيد",
+  cancel: "إلغاء",
+} as const;
+
 export const confirmDelete = {
   title: "حذف نهائي",
   proceed: "متابعة",
