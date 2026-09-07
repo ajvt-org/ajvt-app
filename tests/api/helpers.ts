@@ -217,6 +217,8 @@ export async function makeMember(data: Record<string, unknown>) {
         year,
         status: state.status,
         method: state.paymentMethod,
+        proof: state.paymentProof,
+        referenceCode: state.referenceCode,
         userId,
         anonymous,
         donorName: anonymous ? null : account.fullName,
