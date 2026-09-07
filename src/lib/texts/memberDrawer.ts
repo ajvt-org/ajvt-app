@@ -13,13 +13,9 @@ export const memberDrawer = {
   memberNumber: "رقم العضوية",
   requestDate: "تاريخ الطلب",
   requestTime: "وقت الطلب",
-  staleYear: (paidYear: number, currentYear: number) =>
-    `المبالغ أعلاه تخص عضوية ${paidYear}، ولم يجدد عضوية ${currentYear} بعد.`,
   proofTitle: "صورة الكابتير",
   proofAlt: "كابتير",
   proofZoom: "انقر للتكبير",
   addedByAdmin: "أُضيف يدوياً من طرف المشرف — لا يوجد إثبات دفع",
-  status: "الحالة",
-  registrations: "الأنشطة المسجل بها",
   fullProfile: "الملف الكامل",
 } as const;

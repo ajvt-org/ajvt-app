@@ -11,11 +11,8 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { memberCardHref } from "@/lib/adminBackLink";
 import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import { villageField } from "@/lib/texts";
-import { STATUS_LABEL, STATUS_BADGE, STATUS_ICON } from "./constants";
-import MemberAccountCard from "./MemberAccountCard";
 import MemberDecision from "./MemberDecision";
 import type { Member } from "./types";
-import MembershipPanel from "./MembershipPanel";
 import { memberDrawer as texts } from "@/lib/texts";
 import Money from "@/components/Money";
 
@@ -91,7 +88,7 @@ function paidRows(member: Member): Row[] {
   ];
 }
 
-function Facts({ member, settingsYear }: { member: Member; settingsYear: number }) {
+function Facts({ member }: { member: Member }) {
   const rows: Row[] = [
     [texts.phone, member.user?.phone || texts.phoneUnknown, "ltr"],
     [villageField.label, member.village, undefined],
@@ -116,14 +113,6 @@ function Facts({ member, settingsYear }: { member: Member; settingsYear: number 
           </span>
         </div>
       ))}
-      {member.status === "ACTIVE" && member.membershipYear < settingsYear && (
-        <p
-          className="text-xs font-bold rounded-lg px-3 py-2"
-          style={{ background: "#fef3c7", color: "#92400e" }}
-        >
-          {texts.staleYear(member.membershipYear, settingsYear)}
-        </p>
-      )}
     </div>
   );
 }
@@ -177,21 +166,11 @@ function Proof({
 export interface MemberDrawerProps {
   member: Member;
   actionLoading: boolean;
-  settingsYear: number;
-  resetLoading: boolean;
-  tempPassword: string | null;
-  tempPasswordHours: number;
-  accountPhone: string;
-  attachLoading: boolean;
-  attachError: string;
   showRejectPicker: boolean;
   rejectReason: string;
   onClose: () => void;
   onZoomProof: () => void;
   onProofSaved: () => void;
-  onResetPassword: () => void;
-  onAccountPhone: (phone: string) => void;
-  onAttachAccount: () => void;
   onRejectReason: (reason: string) => void;
   onOpenRejectPicker: () => void;
   onCloseRejectPicker: () => void;
@@ -202,21 +181,11 @@ export interface MemberDrawerProps {
 export default function MemberDrawer({
   member,
   actionLoading,
-  settingsYear,
-  resetLoading,
-  tempPassword,
-  tempPasswordHours,
-  accountPhone,
-  attachLoading,
-  attachError,
   showRejectPicker,
   rejectReason,
   onClose,
   onZoomProof,
   onProofSaved,
-  onResetPassword,
-  onAccountPhone,
-  onAttachAccount,
   onRejectReason,
   onOpenRejectPicker,
   onCloseRejectPicker,
@@ -244,48 +213,7 @@ export default function MemberDrawer({
         <div className="p-5 space-y-4">
           <SamePersonWarning memberId={member.id} />
           <Identity member={member} />
-          <Facts member={member} settingsYear={settingsYear} />
-          <MembershipPanel memberId={member.id} />
-
-          <div className="flex items-center justify-between card p-4">
-            <span
-              className="text-sm font-semibold flex items-center"
-              style={{ color: "var(--text-muted)" }}
-            >
-              <IconLabel name="flag">{texts.status}</IconLabel>
-            </span>
-            <span className={`badge ${STATUS_BADGE[member.status]}`}>
-              <IconLabel name={STATUS_ICON[member.status]}>{STATUS_LABEL[member.status]}</IconLabel>
-            </span>
-          </div>
-
-          {member.registrations && member.registrations.length > 0 && (
-            <div className="card p-4">
-              <p className="text-sm font-semibold mb-2" style={{ color: "var(--text-muted)" }}>
-                {texts.registrations}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {member.registrations.map((r) => (
-                  <span key={r.activityId} className="badge badge-active">
-                    {r.activity.title}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <MemberAccountCard
-            hasAccount={!!member.userId}
-            resetLoading={resetLoading}
-            tempPassword={tempPassword}
-            tempPasswordHours={tempPasswordHours}
-            phone={accountPhone}
-            attachLoading={attachLoading}
-            attachError={attachError}
-            onReset={onResetPassword}
-            onPhone={onAccountPhone}
-            onAttach={onAttachAccount}
-          />
+          <Facts member={member} />
 
           <Proof member={member} onZoom={onZoomProof} onProofSaved={onProofSaved} />
 
