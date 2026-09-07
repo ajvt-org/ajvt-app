@@ -4,6 +4,7 @@ import { common } from "@/lib/messages";
 const INVALID = common.invalidBody;
 
 const level = z.object({
+  id: z.string().nullish(),
   singular: z.string(INVALID),
   plural: z.string(INVALID),
   ending: z.enum(["PLAY_ALL", "FIRST_TO", "FIRST_PAST"], INVALID).nullable().default(null),
