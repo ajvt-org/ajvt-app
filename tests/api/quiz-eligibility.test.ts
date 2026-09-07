@@ -34,7 +34,7 @@ function endFor(userId: string, year = YEAR) {
 
 function renewInto(userId: string, year: number, status: "PENDING" | "ACTIVE" | "REJECTED") {
   return prisma.membership.create({
-    data: { userId, year, status, paymentMethod: "بنكيلي" },
+    data: { userId, year, status },
   });
 }
 

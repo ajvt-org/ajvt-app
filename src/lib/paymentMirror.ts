@@ -119,10 +119,3 @@ export async function removeMirroredDonation(db: Db, donationId: string) {
   await withdrawReceiptsBeforeDelete(db, { id: donationId });
   await db.payment.deleteMany({ where: { id: donationId } });
 }
-
-export async function stampRecordedBy(db: Db, userId: string, year: number, username: string) {
-  await db.payment.updateMany({
-    where: { userId, year, purpose: "MEMBERSHIP", recordedBy: null },
-    data: { recordedBy: username },
-  });
-}

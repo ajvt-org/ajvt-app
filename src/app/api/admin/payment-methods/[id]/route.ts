@@ -86,10 +86,6 @@ export const PATCH = withRoute(
             where: { paymentMethod: existing.name },
             data: { paymentMethod: data.name },
           }),
-          tx.membership.updateMany({
-            where: { paymentMethod: existing.name },
-            data: { paymentMethod: data.name },
-          }),
         ]);
       }
       return saved;

@@ -62,30 +62,23 @@ describe("the method a member may submit", () => {
   });
 });
 
+const membershipFee = () => prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
+
 describe("the account a member says they paid into", () => {
   beforeEach(async () => {
     await resetDb();
     await signInAs(await createUser());
   });
 
-  it("is kept on the membership", async () => {
+  it("is kept on the payment", async () => {
     const account = await openAccountOn(PAYABLE);
     expect((await submitWith(PAYABLE, account.id)).status).toBe(201);
-    const membership = await prisma.membership.findFirstOrThrow();
-    expect(membership.accountId).toBe(account.id);
+    expect((await membershipFee()).accountId).toBe(account.id);
   });
 
-  it("reaches the unified table through the mirror", async () => {
-    const account = await openAccountOn(PAYABLE);
-    await submitWith(PAYABLE, account.id);
-    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
-    expect(payment.accountId).toBe(account.id);
-  });
-
-  it("may be left out, and the record then says so", async () => {
+  it("may be left out, and the payment then says so", async () => {
     expect((await submitWith(PAYABLE)).status).toBe(201);
-    const membership = await prisma.membership.findFirstOrThrow();
-    expect(membership.accountId).toBeNull();
+    expect((await membershipFee()).accountId).toBeNull();
   });
 
   it("is refused when it belongs to another method", async () => {
@@ -138,9 +131,10 @@ describe("the account a member says they paid into", () => {
     );
 
     expect(res.status).toBe(200);
-    expect((await prisma.membership.findFirstOrThrow({ where: { userId: id } })).accountId).toBe(
-      account.id,
-    );
+    expect(
+      (await prisma.payment.findFirstOrThrow({ where: { userId: id, purpose: "MEMBERSHIP" } }))
+        .accountId,
+    ).toBe(account.id);
   });
 
   it("is still refused when a member edits onto a number they never held", async () => {
@@ -169,28 +163,25 @@ describe("the transaction number a member copies off their receipt", () => {
     return REGISTER(post("/api/members", { ...submission, paymentMethod: PAYABLE, bankReference }));
   }
 
-  it("is kept on the membership and reaches the unified table", async () => {
+  it("is kept on the payment", async () => {
     expect((await submitWithReference("TR10000000001")).status).toBe(201);
 
-    const membership = await prisma.membership.findFirstOrThrow();
-    expect(membership.bankReference).toBe("TR10000000001");
-    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
-    expect(payment.bankReference).toBe("TR10000000001");
+    expect((await membershipFee()).bankReference).toBe("TR10000000001");
   });
 
   it("drops the spaces a member grouped it with", async () => {
     await submitWithReference("TR 100 000 000 01");
-    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBe("TR10000000001");
+    expect((await membershipFee()).bankReference).toBe("TR10000000001");
   });
 
   it("may be left out entirely", async () => {
     expect((await submitWithReference(null)).status).toBe(201);
-    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBeNull();
+    expect((await membershipFee()).bankReference).toBeNull();
   });
 
   it("is taken even when it does not look like one, since the screen only warns", async () => {
     expect((await submitWithReference("AJV-EG8A6")).status).toBe(201);
-    expect((await prisma.membership.findFirstOrThrow()).bankReference).toBe("AJV-EG8A6");
+    expect((await membershipFee()).bankReference).toBe("AJV-EG8A6");
   });
 
   it("refuses one longer than a reference could be", async () => {
@@ -208,8 +199,8 @@ describe("the transaction number a member copies off their receipt", () => {
       }),
     );
 
-    const membership = await prisma.membership.findFirstOrThrow();
-    expect(membership.referenceCode).toBe("AJ-EG8A6");
-    expect(membership.bankReference).toBe("TR10000000001");
+    const payment = await membershipFee();
+    expect(payment.referenceCode).toBe("AJ-EG8A6");
+    expect(payment.bankReference).toBe("TR10000000001");
   });
 });

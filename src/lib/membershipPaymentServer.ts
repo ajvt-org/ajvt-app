@@ -5,7 +5,6 @@ import {
   syncReceiptsFor,
   withdrawReceiptsBeforeDelete,
 } from "./paymentReceiptServer";
-import { setMembershipStatus } from "./membershipRecord";
 import type { MembershipVerdict } from "./membershipVerdict";
 import { currentMembership } from "./currentMembershipServer";
 
@@ -103,20 +102,6 @@ export async function recordMembershipPayment(
   const membership = await currentMembership(db, userId);
   if (!membership) return;
   await writeMembershipFee(db, userId, membership.year, total, fee, fields);
-}
-
-export async function syncSurplusStatus(db: Db, userId: string, reviewedBy?: string) {
-  const membership = await currentMembership(db, userId);
-  if (!membership) return;
-
-  const verdict = {
-    status: membership.status,
-    rejectionReason: membership.rejectionReason,
-    reviewedBy: reviewedBy ?? null,
-  };
-  const now = new Date();
-  await recordFeeVerdict(db, userId, membership.year, verdict, now);
-  await setMembershipStatus(db, userId, membership.year, verdict, now);
 }
 
 export async function setSurplusVisibility(db: Db, userId: string, anonymous: boolean) {

@@ -1,18 +1,17 @@
 import { describe, it, expect, vi } from "vitest";
 import { addMembership, type NewMembership } from "./membershipCreate";
 
-vi.mock("./membershipRecord", () => ({
-  recordMembershipYear: vi.fn(),
-  saveMembershipYear: vi.fn(),
-}));
+vi.mock("./membershipRecord", () => ({ saveMembershipYear: vi.fn() }));
 vi.mock("./membershipPaymentServer", () => ({ recordMembershipPayment: vi.fn() }));
 
-import { recordMembershipYear, saveMembershipYear } from "./membershipRecord";
+import { saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
 
 function fakeDb() {
   return { user: { update: vi.fn().mockResolvedValue({}) } };
 }
+
+const ISSUED = { memberNumber: "AJVT-2026-0001", verifyToken: "tok" };
 
 function input(over: Partial<NewMembership> = {}): NewMembership {
   return {
@@ -36,12 +35,7 @@ describe("addMembership", () => {
 
     await addMembership(db as never, input());
 
-    expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, {
-      status: "PENDING",
-      paymentMethod: "بنكيلي",
-      accountId: null,
-      paymentProof: null,
-    });
+    expect(saveMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, { status: "PENDING" });
     expect(recordMembershipPayment).toHaveBeenCalledWith(db, "u1", 100, 100, {
       method: "بنكيلي",
       accountId: null,
@@ -58,45 +52,23 @@ describe("addMembership", () => {
 
     await addMembership(waiting as never, input({ status: "PENDING" }));
 
-    expect(saveMembershipYear).toHaveBeenCalledWith(waiting, "u1", 2026, {
-      status: "PENDING",
-      paymentMethod: "بنكيلي",
-      accountId: null,
-      paymentProof: null,
-    });
+    expect(saveMembershipYear).toHaveBeenCalledWith(waiting, "u1", 2026, { status: "PENDING" });
   });
 
-  it("records no accepted year while the payment is still under review", async () => {
-    vi.mocked(recordMembershipYear).mockClear();
+  it("issues no membership number while the payment is still under review", async () => {
     const db = fakeDb();
 
-    await addMembership(db as never, input({ status: "PENDING" }));
+    await addMembership(db as never, input({ status: "PENDING", issued: ISSUED }));
 
-    expect(recordMembershipYear).not.toHaveBeenCalled();
     expect(db.user.update).not.toHaveBeenCalled();
-  });
-
-  it("records the year against the account, not the membership row", async () => {
-    vi.mocked(recordMembershipYear).mockClear();
-    const db = fakeDb();
-
-    await addMembership(db as never, input({ status: "ACTIVE" }));
-
-    expect(recordMembershipYear).toHaveBeenCalledWith(db, "u1", 2026, 100, {
-      paymentMethod: "بنكيلي",
-      accountId: null,
-      paymentProof: null,
-      recordedBy: "admin",
-    });
   });
 
   it("stamps a membership number on the account when one was issued", async () => {
     const db = fakeDb();
-    const issued = { memberNumber: "AJVT-2026-0001", verifyToken: "tok" };
 
-    await addMembership(db as never, input({ status: "ACTIVE", issued }));
+    await addMembership(db as never, input({ status: "ACTIVE", issued: ISSUED }));
 
-    expect(db.user.update).toHaveBeenCalledWith({ where: { id: "u1" }, data: issued });
+    expect(db.user.update).toHaveBeenCalledWith({ where: { id: "u1" }, data: ISSUED });
   });
 
   it("leaves an existing membership number alone", async () => {

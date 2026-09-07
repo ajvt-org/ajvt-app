@@ -46,9 +46,9 @@ describe("what a member reads about their own membership", () => {
   it("is the newest year once they have renewed", async () => {
     const account = await member({ membershipYear: YEAR - 1, status: "REJECTED" });
     await prisma.membership.create({
-      data: { userId: account.id, year: YEAR, status: "ACTIVE", paymentMethod: "مصرفي" },
+      data: { userId: account.id, year: YEAR, status: "ACTIVE" },
     });
-    await payMembershipYear(account.id, YEAR);
+    await payMembershipYear(account.id, YEAR, { method: "مصرفي" });
 
     expect(await mine()).toMatchObject({
       status: "ACTIVE",

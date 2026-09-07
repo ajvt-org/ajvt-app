@@ -12,6 +12,9 @@ const validBody = {
   paidAmount: 1000,
 };
 
+const feeOf = (userId: string) =>
+  prisma.payment.findFirstOrThrow({ where: { userId, purpose: "MEMBERSHIP" } });
+
 describe("POST /api/members", () => {
   beforeEach(async () => {
     await resetDb();
@@ -134,8 +137,7 @@ describe("POST /api/members", () => {
     );
 
     expect(res.status).toBe(200);
-    const updated = await prisma.membership.findFirstOrThrow();
-    expect(updated.paymentMethod).toBe("السداد");
+    expect((await feeOf(member.userId)).method).toBe("السداد");
     expect(await prisma.membership.count()).toBe(1);
   });
 
@@ -225,7 +227,7 @@ describe("POST /api/members", () => {
     const updated = await prisma.membership.findFirstOrThrow({ where: { userId: member.userId } });
     expect(updated.status).toBe("PENDING");
     expect(updated.rejectionReason).toBeNull();
-    expect(updated.paymentProof).toBe("better.webp");
+    expect((await feeOf(member.userId)).proof).toBe("better.webp");
     expect(await prisma.membership.count()).toBe(1);
   });
 

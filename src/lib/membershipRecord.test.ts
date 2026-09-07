@@ -12,12 +12,12 @@ describe("saveMembershipYear", () => {
   it("writes the year it was given, on the account it was given", async () => {
     const { upsert, client } = db();
 
-    await saveMembershipYear(client, "u1", 2026, { paymentMethod: "بنكيلي" });
+    await saveMembershipYear(client, "u1", 2026, { status: "ACTIVE" });
 
     expect(upsert).toHaveBeenCalledWith({
       where: { userId_year: { userId: "u1", year: 2026 } },
-      update: { paymentMethod: "بنكيلي" },
-      create: { userId: "u1", year: 2026, paymentMethod: "بنكيلي" },
+      update: { status: "ACTIVE" },
+      create: { userId: "u1", year: 2026, status: "ACTIVE" },
     });
   });
 
@@ -29,11 +29,11 @@ describe("saveMembershipYear", () => {
     expect(upsert.mock.calls[0][0].update).toEqual({});
   });
 
-  it("carries a cleared proof rather than dropping it", async () => {
+  it("carries a cleared refusal reason rather than dropping it", async () => {
     const { upsert, client } = db();
 
-    await saveMembershipYear(client, "u1", 2026, { paymentProof: null });
+    await saveMembershipYear(client, "u1", 2026, { rejectionReason: null });
 
-    expect(upsert.mock.calls[0][0].update).toEqual({ paymentProof: null });
+    expect(upsert.mock.calls[0][0].update).toEqual({ rejectionReason: null });
   });
 });

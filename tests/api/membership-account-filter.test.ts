@@ -14,16 +14,13 @@ async function anAccount(code: string) {
 async function aMembership(accountId: string | null) {
   const user = await prisma.user.create({ data: { fullName: "عضو" } });
   await prisma.membership.create({
-    data: {
-      userId: user.id,
-      year: 2026,
-      status: "ACTIVE",
-      paymentMethod: METHOD,
-      accountId,
-      paymentProof: "proof.jpg",
-    },
+    data: { userId: user.id, year: 2026, status: "ACTIVE" },
   });
-  await payMembershipYear(user.id, 2026);
+  await payMembershipYear(user.id, 2026, {
+    method: METHOD,
+    accountId,
+    proof: "proof.jpg",
+  });
   return user.id;
 }
 

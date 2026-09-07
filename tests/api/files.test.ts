@@ -4,6 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { GET } from "@/app/api/files/[filename]/route";
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 import {
   resetDb,
   get,
@@ -61,11 +62,19 @@ async function seedEverything() {
   const [owner, other] = [await createUser("22000001"), await createUser("22000002")];
   const mine = await memberFor(owner, {
     paymentProof: "member-proof.webp",
+    paidAmount: MEMBERSHIP_FEE,
     photo: "headshot.webp",
   });
-  await memberFor(other, { paymentProof: "other-proof.webp" });
-  await prisma.membership.create({
-    data: { userId: mine.userId, year: 2020, paymentProof: "membership-proof.webp" },
+  await memberFor(other, { paymentProof: "other-proof.webp", paidAmount: MEMBERSHIP_FEE });
+  await prisma.membership.create({ data: { userId: mine.userId, year: 2020 } });
+  await prisma.payment.create({
+    data: {
+      purpose: "MEMBERSHIP",
+      amount: MEMBERSHIP_FEE,
+      year: 2020,
+      proof: "membership-proof.webp",
+      userId: mine.userId,
+    },
   });
   const activity = await prisma.activity.create({ data: { title: "نشاط", description: "وصف" } });
   await prisma.activityRegistration.create({

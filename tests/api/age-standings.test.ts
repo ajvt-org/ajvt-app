@@ -36,7 +36,6 @@ describe("GET /api/ages/standings", () => {
         userId: renewed.userId,
         year: new Date().getUTCFullYear() + 1,
         status: "ACTIVE",
-        paymentMethod: "بنكيلي",
       },
     });
 

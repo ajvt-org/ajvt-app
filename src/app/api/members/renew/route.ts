@@ -49,16 +49,7 @@ export const POST = withRoute("Member renew", async (req: NextRequest) => {
 
   await prisma.$transaction(async (tx) => {
     await tx.membership.create({
-      data: {
-        userId: session.userId,
-        year: membershipYear,
-        status: "PENDING",
-        paymentMethod,
-        accountId: accountId || null,
-        bankReference: bankNumber,
-        paymentProof,
-        recordedBy: nameOf(account),
-      },
+      data: { userId: session.userId, year: membershipYear, status: "PENDING" },
     });
     await recordMembershipPayment(tx, session.userId, Number(paidAmount), membershipFee, {
       method: paymentMethod,

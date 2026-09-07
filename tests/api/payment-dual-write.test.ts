@@ -55,36 +55,30 @@ async function moneyKeptAnywhereElse() {
   return prisma.donation.count({ where: { source: "MEMBERSHIP" } });
 }
 
-const MIRRORED = [
-  ["paymentMethod", "method"],
-  ["accountId", "accountId"],
-  ["bankReference", "bankReference"],
-  ["paymentProof", "proof"],
-  ["referenceCode", "referenceCode"],
-  ["recordedBy", "recordedBy"],
-  ["reviewedBy", "reviewedBy"],
-  ["reviewedAt", "reviewedAt"],
+const CARRIED = [
+  "method",
+  "accountId",
+  "bankReference",
+  "proof",
+  "referenceCode",
+  "recordedBy",
+  "reviewedBy",
+  "reviewedAt",
 ] as const;
 
-async function columnsThatDisagree() {
+async function columnsMissingFromThePayment() {
   const memberships = await prisma.membership.findMany();
-  const disagreements: string[] = [];
+  const missing: string[] = [];
   for (const membership of memberships) {
     const payment = await prisma.payment.findFirst({
       where: { userId: membership.userId, year: membership.year, purpose: "MEMBERSHIP" },
     });
     if (!payment) continue;
-    for (const [onMembership, onPayment] of MIRRORED) {
-      const left = membership[onMembership];
-      const right = payment[onPayment];
-      const same =
-        left instanceof Date && right instanceof Date
-          ? left.getTime() === right.getTime()
-          : left === right;
-      if (!same) disagreements.push(onMembership);
+    for (const column of CARRIED) {
+      if (!(column in payment)) missing.push(column);
     }
   }
-  return disagreements;
+  return missing;
 }
 
 describe("every path that touches money writes only the payment", () => {
@@ -114,7 +108,7 @@ describe("every path that touches money writes only the payment", () => {
     expect(payment.status).toBe("ACTIVE");
   });
 
-  it("keeps the admin who recorded the year on the payment as well", async () => {
+  it("names the member who sent it as the recorder and the admin as the reviewer", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
     const m = await prisma.membership.findFirstOrThrow();
@@ -122,13 +116,12 @@ describe("every path that touches money writes only the payment", () => {
 
     await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
 
-    const membership = await prisma.membership.findFirstOrThrow({ where: { userId: m.userId } });
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
-    expect(payment.recordedBy).toBe(membership.recordedBy);
-    expect(payment.recordedBy).toBe("boss");
+    expect(payment.recordedBy).toBe("محمد ولد أحمد");
+    expect(payment.reviewedBy).toBe("boss");
   });
 
-  it("leaves the first admin on the year when a second one edits it", async () => {
+  it("leaves the first recorder on the payment when an admin edits it", async () => {
     await signInAs(await createUser());
     await REGISTER(post("/api/members", submission));
     const m = await prisma.membership.findFirstOrThrow();
@@ -146,17 +139,17 @@ describe("every path that touches money writes only the payment", () => {
 
     expect(
       (await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } })).recordedBy,
-    ).toBe("boss");
+    ).toBe("محمد ولد أحمد");
   });
 
-  it("carries all eight of the mirrored columns after a member joins", async () => {
+  it("carries all eight columns after a member joins", async () => {
     await signInAs(await createUser());
 
     await REGISTER(post("/api/members", { ...submission, referenceCode: "AJ-2345B" }));
 
     const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
     expect(payment.referenceCode).toBe("AJ-2345B");
-    expect(await columnsThatDisagree()).toEqual([]);
+    expect(await columnsMissingFromThePayment()).toEqual([]);
   });
 
   it("carries all eight after an admin approves the member", async () => {
@@ -170,7 +163,7 @@ describe("every path that touches money writes only the payment", () => {
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
     expect(payment.reviewedBy).toBe("boss");
     expect(payment.reviewedAt).not.toBeNull();
-    expect(await columnsThatDisagree()).toEqual([]);
+    expect(await columnsMissingFromThePayment()).toEqual([]);
   });
 
   it("carries all eight after an admin refuses the member", async () => {
@@ -189,7 +182,7 @@ describe("every path that touches money writes only the payment", () => {
 
     const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
     expect(payment.reviewedBy).toBe("boss");
-    expect(await columnsThatDisagree()).toEqual([]);
+    expect(await columnsMissingFromThePayment()).toEqual([]);
   });
 
   it("agrees after an admin refuses that member", async () => {

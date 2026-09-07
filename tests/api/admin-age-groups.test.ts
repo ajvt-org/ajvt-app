@@ -99,7 +99,7 @@ describe("PATCH /api/admin/age-groups/[id]", () => {
     await PATCH(post(`/api/admin/age-groups/${group.id}`, { name: "المنصورون" }), withId(group.id));
 
     const rows = await prisma.membership.findMany({
-      where: { paymentProof: { not: null } },
+      where: { userId: { in: [older.userId, newer.userId] } },
       orderBy: { updatedAt: "desc" },
       select: { userId: true },
     });

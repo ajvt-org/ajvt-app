@@ -239,7 +239,7 @@ describe("deleting the account of a member", () => {
   it("keeps the years of their membership in the archive", async () => {
     const user = await userWithMember();
     await prisma.membership.create({
-      data: { userId: user.id, year: 2025, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: user.id, year: 2025, status: "ACTIVE" },
     });
 
     await DELETE(...asDelete(user.id, { confirmName: "محمد ولد أحمد" }));

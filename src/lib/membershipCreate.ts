@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import { recordMembershipYear, saveMembershipYear } from "./membershipRecord";
+import { saveMembershipYear } from "./membershipRecord";
 import { recordMembershipPayment } from "./membershipPaymentServer";
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -19,12 +19,7 @@ export interface NewMembership {
 }
 
 export async function addMembership(db: Db, m: NewMembership): Promise<void> {
-  await saveMembershipYear(db, m.userId, m.membershipYear, {
-    status: m.status,
-    paymentMethod: m.paymentMethod,
-    accountId: m.accountId,
-    paymentProof: m.paymentProof,
-  });
+  await saveMembershipYear(db, m.userId, m.membershipYear, { status: m.status });
 
   await recordMembershipPayment(db, m.userId, m.paidAmount, m.fee, {
     method: m.paymentMethod,
@@ -35,15 +30,7 @@ export async function addMembership(db: Db, m: NewMembership): Promise<void> {
     anonymous: m.surplusAnonymous,
   });
 
-  if (m.status === "ACTIVE") {
-    await recordMembershipYear(db, m.userId, m.membershipYear, m.fee, {
-      paymentMethod: m.paymentMethod,
-      accountId: m.accountId,
-      paymentProof: m.paymentProof,
-      recordedBy: m.recordedBy,
-    });
-    if (m.issued) {
-      await db.user.update({ where: { id: m.userId }, data: m.issued });
-    }
+  if (m.status === "ACTIVE" && m.issued) {
+    await db.user.update({ where: { id: m.userId }, data: m.issued });
   }
 }

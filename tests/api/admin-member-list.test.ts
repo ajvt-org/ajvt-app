@@ -20,7 +20,7 @@ const YEAR = runningYear();
 
 async function renewInto(userId: string, year: number, paymentMethod: string) {
   await prisma.membership.create({
-    data: { userId, year, status: "ACTIVE", paymentMethod },
+    data: { userId, year, status: "ACTIVE" },
   });
   await prisma.payment.create({
     data: {
@@ -112,10 +112,7 @@ describe("the admin member list", () => {
       referenceCode: "AJ-PAID2",
       paidAmount: MEMBERSHIP_FEE,
     });
-    await prisma.membership.update({
-      where: { userId_year: { userId: user.id, year: YEAR } },
-      data: { paymentMethod: "مصرفي", paymentProof: "other.jpg", referenceCode: "AJ-STALE" },
-    });
+    void user;
 
     const [row] = await listed();
 
@@ -128,11 +125,7 @@ describe("the admin member list", () => {
   });
 
   it("leaves the method and the reference code empty when no payment carries them", async () => {
-    const user = await member("بلا دفعة", { paymentMethod: "بنكيلي" });
-    await prisma.membership.update({
-      where: { userId_year: { userId: user.id, year: YEAR } },
-      data: { referenceCode: "AJ-NOPAY" },
-    });
+    await member("بلا دفعة", { paymentMethod: "بنكيلي", referenceCode: "AJ-NOPAY" });
 
     const [row] = await listed();
 
@@ -148,18 +141,12 @@ describe("the proofs waiting for an admin", () => {
   });
 
   it("shows the newest proof a member sent, once", async () => {
-    const user = await member("مجدد", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
-    await payMembershipYear(user.id, YEAR - 1);
+    const user = await member("مجدد", { membershipYear: YEAR - 1 });
+    await payMembershipYear(user.id, YEAR - 1, { proof: "old.webp" });
     await prisma.membership.create({
-      data: {
-        userId: user.id,
-        year: YEAR,
-        status: "ACTIVE",
-        paymentMethod: "بنكيلي",
-        paymentProof: "new.webp",
-      },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
-    await payMembershipYear(user.id, YEAR);
+    await payMembershipYear(user.id, YEAR, { method: "بنكيلي", proof: "new.webp" });
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
     const membership = proofs.filter((p: { kind: string }) => p.kind === "MEMBERSHIP");
@@ -169,12 +156,12 @@ describe("the proofs waiting for an admin", () => {
   });
 
   it("keeps the last proof a member sent when a later year carries none", async () => {
-    const user = await member("توقف", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
-    await payMembershipYear(user.id, YEAR - 1);
+    const user = await member("توقف", { membershipYear: YEAR - 1 });
+    await payMembershipYear(user.id, YEAR - 1, { proof: "old.webp" });
     await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
-    await payMembershipYear(user.id, YEAR);
+    await payMembershipYear(user.id, YEAR, { method: "بنكيلي" });
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
 

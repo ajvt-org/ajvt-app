@@ -5,6 +5,7 @@ import { logAction, auditContext } from "@/lib/audit";
 import { withRoute } from "@/lib/route";
 import { NotFoundError, ConflictError } from "@/lib/errors";
 import { accounts } from "@/lib/messages";
+import { archivedMembership } from "@/lib/archivedMembership";
 
 export const POST = withRoute(
   "POST /api/admin/deleted/[id]/restore",
@@ -26,7 +27,10 @@ export const POST = withRoute(
       const { memberships } = data as { memberships?: Record<string, unknown>[] };
       if (!memberships) throw new ConflictError(accounts.archivePredatesTheRecord);
       await prisma.$transaction([
-        prisma.membership.createMany({ data: memberships as never, skipDuplicates: true }),
+        prisma.membership.createMany({
+          data: memberships.map(archivedMembership),
+          skipDuplicates: true,
+        }),
         prisma.deletedRecord.delete({ where: { id } }),
       ]);
 

@@ -51,7 +51,7 @@ describe("the age the viewer belongs to", () => {
   it("follows the newest year when a member has renewed", async () => {
     const user = await member({ status: "REJECTED", membershipYear: YEAR - 1 });
     await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "بنكيلي" },
+      data: { userId: user.id, year: YEAR, status: "ACTIVE" },
     });
     await signInAs(user);
 
@@ -61,7 +61,7 @@ describe("the age the viewer belongs to", () => {
   it("is nothing once the newest year was refused", async () => {
     const user = await member({ membershipYear: YEAR - 1 });
     await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "REJECTED", paymentMethod: "بنكيلي" },
+      data: { userId: user.id, year: YEAR, status: "REJECTED" },
     });
     await signInAs(user);
 

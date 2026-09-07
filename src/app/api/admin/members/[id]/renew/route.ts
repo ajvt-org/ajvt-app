@@ -14,7 +14,6 @@ import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { renewSchema } from "./schema";
 import { accountIdError } from "@/lib/paymentAccountsServer";
-import { stampRecordedBy } from "@/lib/paymentMirror";
 import { currentMembership } from "@/lib/currentMembershipServer";
 import { nameOf } from "@/lib/person";
 
@@ -59,17 +58,7 @@ export const POST = withRoute(
     const renewed = await prisma.$transaction(async (tx) => {
       const reviewedAt = new Date();
       await tx.membership.create({
-        data: {
-          userId: id,
-          year: membershipYear,
-          status: "ACTIVE",
-          paymentMethod,
-          accountId: accountId || null,
-          paymentProof: paymentProof || null,
-          recordedBy: session.username,
-          reviewedBy: session.username,
-          reviewedAt,
-        },
+        data: { userId: id, year: membershipYear, status: "ACTIVE" },
       });
       await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, {
         method: paymentMethod,
@@ -80,7 +69,6 @@ export const POST = withRoute(
         reviewedBy: session.username,
         reviewedAt,
       });
-      await stampRecordedBy(tx, id, membershipYear, session.username);
       return { id, userId: id, membershipYear };
     });
 
