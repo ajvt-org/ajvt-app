@@ -1,6 +1,9 @@
 import type { LevelRow } from "@/lib/matchLevels";
 import type { SeriesConfig } from "@/components/admin/tournament/seriesConfig";
-import type { SeriesStandingRow } from "@/components/admin/tournament/seriesTypes";
+import type {
+  SeriesStandingRow,
+  UnitRow as UnitNodeShape,
+} from "@/components/admin/tournament/seriesTypes";
 
 export const BLANK_LEVEL: LevelRow = {
   id: "level",
@@ -52,6 +55,25 @@ export const CHESS_CONFIG = ladderConfig(
   { singular: "لعبة", plural: "ألعاب", decision: "OUTCOME" },
   { hasColours: true, firstColourWord: "أبيض", secondColourWord: "أسود" },
 );
+
+export function unitNode(over: Partial<UnitNodeShape> & { id: string; order: number }) {
+  return {
+    levelId: "unit",
+    abandoned: false,
+    outcome: null,
+    sideAPoints: null,
+    sideBPoints: null,
+    sideAColour: null,
+    worth: null,
+    sideALostCredit: false,
+    sideBLostCredit: false,
+    decider: false,
+    endedBy: null,
+    children: [],
+    standing: null,
+    ...over,
+  };
+}
 
 export const SCORED_CONFIG = ladderConfig(
   { ending: "FIRST_TO", unitsPerParent: 3, unitsToWin: 2 },

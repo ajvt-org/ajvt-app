@@ -31,6 +31,20 @@ describe("series result texts", () => {
     }
   });
 
+  it("names the level in what the editor asks for", () => {
+    expect(seriesResult.outcomeOf("لعبة")).toBe("نتيجة لعبة");
+    expect(seriesResult.addOne("لعبة")).toBe("إضافة لعبة");
+    expect(seriesResult.openOne("لعبة 1")).toContain("لعبة 1");
+    expect(seriesResult.closeOne("لعبة 1")).toContain("لعبة 1");
+    expect(seriesResult.takesNoMore("ألعاب")).toContain("ألعاب");
+  });
+
+  it("says what opening a unit will discard, and what a unit counted", () => {
+    expect(seriesResult.openDiscards("نقاط")).toContain("نقاط");
+    expect(seriesResult.countedTwice("2")).toContain("2");
+    expect(seriesResult.endedBy("تيس")).toContain("تيس");
+  });
+
   it("says which colour a side opened in", () => {
     expect(seriesResult.colourOf("أحمد", "أبيض")).toBe("أحمد أبيض");
   });
