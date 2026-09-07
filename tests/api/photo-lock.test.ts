@@ -12,6 +12,7 @@ import {
   createUsers,
   signInAs,
   signInAsAdmin,
+  uploadedBy,
   withId,
   makeMember,
 } from "./helpers";
@@ -94,7 +95,9 @@ describe("an admin blocking a member's picture", () => {
 
   it("still lets the admin set a picture on a blocked member", async () => {
     const { user, member: row } = await member({ photoLocked: true, photo: null });
-    await signInAsAdmin(await createAdmin());
+    const admin = await createAdmin();
+    await signInAsAdmin(admin);
+    await uploadedBy("admin.webp", { adminId: admin.id });
 
     const res = await ADMIN_PATCH(
       patch(`/api/admin/members/${row.userId}`, { photo: "admin.webp" }),
@@ -135,6 +138,7 @@ describe("a blocked member changing their own picture", () => {
   it("may still change it while the block is off", async () => {
     const { user, member: row } = await member();
     await signInAs(user);
+    await uploadedBy("new.webp", { userId: user.id });
 
     expect((await changePhoto(row.userId, "new.webp")).status).toBe(200);
     expect((await accountOf(user.id)).photo).toBe("new.webp");
@@ -143,6 +147,7 @@ describe("a blocked member changing their own picture", () => {
   it("hands the new picture back to the screen that asked", async () => {
     const { user, member: row } = await member();
     await signInAs(user);
+    await uploadedBy("new.webp", { userId: user.id });
 
     const body = await (await changePhoto(row.userId, "new.webp")).json();
 

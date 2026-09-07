@@ -10,6 +10,7 @@ import { auth, common, villages } from "@/lib/messages";
 import { ageForVillage, isKnownVillage } from "@/lib/villages";
 import { villageNames } from "@/lib/villagesServer";
 import { suggestAgeGroup } from "@/lib/ageGroups";
+import { ANONYMOUS_UPLOADER, requireOwnUpload } from "@/lib/uploadOwnerServer";
 import { registerSchema } from "./schema";
 
 const WINDOW_MS = 60 * 60 * 1000;
@@ -33,6 +34,8 @@ export const POST = withRoute("POST /api/auth/register", async (req: NextRequest
 
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing) throw new ConflictError(auth.phoneTaken);
+
+  await requireOwnUpload(photo, ANONYMOUS_UPLOADER);
 
   const hashed = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({

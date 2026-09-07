@@ -9,6 +9,7 @@ import { members } from "@/lib/messages";
 import { PERSON_SELECT, personOf } from "@/lib/person";
 import { anonymousForYear, paidForYear } from "@/lib/paidBreakdown";
 import { latestMembership } from "@/lib/currentMembership";
+import { requireOwnUpload } from "@/lib/uploadOwnerServer";
 
 const MEMBERSHIP_SELECT = {
   year: true,
@@ -96,6 +97,7 @@ export const PATCH = withRoute(
     if (photo !== undefined && existing.photoLocked) {
       return NextResponse.json({ error: members.photoLocked }, { status: 403 });
     }
+    await requireOwnUpload(photo, { userId: session.userId, adminId: null });
 
     if (surplusAnonymous !== undefined) {
       await prisma.$transaction((tx) => setSurplusVisibility(tx, id, surplusAnonymous));
