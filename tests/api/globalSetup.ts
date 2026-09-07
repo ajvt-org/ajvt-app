@@ -32,10 +32,10 @@ export default async function setup() {
   const key = claimKey(base);
 
   for (let slot = 1; slot <= API_TEST_DATABASES; slot += 1) {
-    const free = await client.query<{ ok: boolean }>(
-      "SELECT pg_try_advisory_lock($1, $2) AS ok",
-      [key, slot],
-    );
+    const free = await client.query<{ ok: boolean }>("SELECT pg_try_advisory_lock($1, $2) AS ok", [
+      key,
+      slot,
+    ]);
     if (!free.rows[0].ok) continue;
 
     const name = databaseName(workerDatabase(base, slot));
