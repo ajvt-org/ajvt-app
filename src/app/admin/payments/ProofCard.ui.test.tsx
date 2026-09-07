@@ -337,4 +337,22 @@ describe("a membership payment carries its own controls", () => {
 
     expect(screen.queryByRole("button", { name: new RegExp(deleteMember.payment) })).toBeNull();
   });
+
+  it("reads from the decision on the proof towards the deletion of the payment", () => {
+    mockFetch([]);
+    const { container } = show(membership);
+    const text = container.textContent!;
+
+    expect(text.indexOf(memberDecision.accept)).toBeLessThan(text.indexOf(memberDecision.refuse));
+    expect(text.indexOf(memberDecision.refuse)).toBeLessThan(text.indexOf(deleteMember.payment));
+  });
+
+  it("keeps the deletion out of the group the decisions sit in", () => {
+    mockFetch([]);
+    show(membership);
+
+    const accept = screen.getByRole("button", { name: new RegExp(memberDecision.accept) });
+    const remove = screen.getByRole("button", { name: new RegExp(deleteMember.payment) });
+    expect(accept.parentElement!.contains(remove)).toBe(false);
+  });
 });
