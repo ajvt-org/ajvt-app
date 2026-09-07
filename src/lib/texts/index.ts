@@ -61,6 +61,7 @@ export { memberImportDialog } from "./memberImportDialog";
 export { memberProof } from "./memberProof";
 export { membershipStanding } from "./membershipStanding";
 export { memberMatches } from "./memberMatches";
+export { myActivities } from "./myActivities";
 export { mvpVote } from "./mvpVote";
 export { navigation } from "./navigation";
 export { activityWorkspace, tournamentWorkspace } from "./workspace";

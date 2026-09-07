@@ -234,6 +234,7 @@ const KEPT_CLEAN = [
   "src/app/admin/deleted/page.tsx",
   "src/lib/ageStandings.ts",
   "src/app/(member)/ages/page.tsx",
+  "src/components/MyActivities.tsx",
 ];
 
 function sourceFiles(path: string): string[] {
