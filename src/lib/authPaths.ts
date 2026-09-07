@@ -1,13 +1,18 @@
 export const USER_PROTECTED = ["/home", "/profile", "/change-password", "/membership"];
-export const ADMIN_PROTECTED = ["/admin/dashboard"];
+export const ADMIN_ROOT = "/admin";
+export const ADMIN_OPEN = ["/admin/login"];
 export const CHANGE_PASSWORD_PATH = "/change-password";
+
+function under(root: string, pathname: string): boolean {
+  return pathname === root || pathname.startsWith(`${root}/`);
+}
 
 export function isUserProtected(pathname: string): boolean {
   return USER_PROTECTED.some((p) => pathname.startsWith(p));
 }
 
 export function isAdminProtected(pathname: string): boolean {
-  return ADMIN_PROTECTED.some((p) => pathname.startsWith(p));
+  return under(ADMIN_ROOT, pathname) && !ADMIN_OPEN.some((p) => under(p, pathname));
 }
 
 export function isProtectedForm(pathname: string, params: URLSearchParams): boolean {
