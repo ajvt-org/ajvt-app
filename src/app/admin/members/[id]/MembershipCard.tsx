@@ -6,9 +6,10 @@ import ProfileSection from "@/components/admin/ProfileSection";
 import { membershipState, type StatefulMembership } from "@/lib/membershipState";
 import { membershipSummary as texts } from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
+import MembershipEnding, { EndedRows } from "./MembershipEnding";
 import MembershipPaymentDialog from "./MembershipPaymentDialog";
 
-export default function MembershipSummary({
+export default function MembershipCard({
   member,
   currentYear,
   onChanged,
@@ -40,15 +41,28 @@ export default function MembershipSummary({
             {member.membershipYear}
           </dd>
         </div>
+        {member.endedAt && (
+          <EndedRows
+            endedAt={member.endedAt}
+            endedReason={member.endedReason}
+            endedBy={member.endedBy}
+          />
+        )}
       </dl>
 
-      <button
-        onClick={() => setOpening(true)}
-        className="btn btn-sm font-bold"
-        style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-      >
-        <IconLabel name="card">{texts.toPayment}</IconLabel>
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button onClick={() => setOpening(true)} className="btn btn-sm btn-ghost font-bold">
+          <IconLabel name="card">{texts.toPayment}</IconLabel>
+        </button>
+
+        {member.status === "ACTIVE" && (
+          <MembershipEnding
+            memberId={member.id}
+            ended={member.endedAt !== null}
+            onChanged={onChanged}
+          />
+        )}
+      </div>
 
       {opening && (
         <MembershipPaymentDialog

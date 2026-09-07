@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MemberPhotoCard from "./MemberPhotoCard";
+import MemberPhotoRow from "./MemberPhotoRow";
 import { memberPhoto as texts } from "@/lib/texts";
 
 const patch = vi.fn();
@@ -19,7 +19,7 @@ beforeEach(() => {
 function show(over: { photo?: string | null; locked?: boolean; onChanged?: () => void } = {}) {
   const onChanged = over.onChanged ?? vi.fn();
   render(
-    <MemberPhotoCard
+    <MemberPhotoRow
       memberId="m1"
       photo={over.photo === undefined ? "a.webp" : over.photo}
       locked={over.locked ?? false}
@@ -94,7 +94,7 @@ describe("blocking the picture", () => {
 
   it("carries no sentence under either button", () => {
     const { container } = render(
-      <MemberPhotoCard memberId="m1" photo="a.webp" locked={false} onChanged={vi.fn()} />,
+      <MemberPhotoRow memberId="m1" photo="a.webp" locked={false} onChanged={vi.fn()} />,
     );
 
     expect(container.querySelectorAll("p.text-xs")).toHaveLength(0);

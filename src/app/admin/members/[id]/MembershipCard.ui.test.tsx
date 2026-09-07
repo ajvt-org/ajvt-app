@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import MembershipSummary from "./MembershipSummary";
-import { deleteMember, memberDecision, membershipSummary as texts } from "@/lib/texts";
+import MembershipCard from "./MembershipCard";
+import {
+  deleteMember,
+  memberDecision,
+  membershipEnding,
+  membershipSummary as texts,
+} from "@/lib/texts";
 import type { MemberProfile } from "@/components/admin/profileTypes";
 
 type Member = MemberProfile["member"];
@@ -39,9 +44,7 @@ function memberOf(over: Partial<Member> = {}): Member {
 }
 
 function show(over: Partial<Member> = {}) {
-  return render(
-    <MembershipSummary member={memberOf(over)} currentYear={2026} onChanged={vi.fn()} />,
-  );
+  return render(<MembershipCard member={memberOf(over)} currentYear={2026} onChanged={vi.fn()} />);
 }
 
 async function open(over: Partial<Member> = {}) {
@@ -106,6 +109,55 @@ describe("reading one member's membership payment", () => {
     await userEvent.click(screen.getByRole("button", { name: "إغلاق" }));
 
     expect(screen.queryByText(texts.paymentTitle)).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
+  });
+});
+
+describe("one card for one membership year", () => {
+  it("says the standing and the year once", () => {
+    show();
+
+    expect(screen.getAllByText(texts.states.APPLIED)).toHaveLength(1);
+    expect(screen.getAllByText("2026")).toHaveLength(1);
+  });
+
+  it("offers to end a membership that stands", () => {
+    show({ status: "ACTIVE" });
+
+    expect(screen.getByRole("button", { name: new RegExp(membershipEnding.end) })).toBeTruthy();
+  });
+
+  it("draws why a membership ended, when, and by whom, over the way back", () => {
+    show({
+      status: "ACTIVE",
+      endedAt: "2026-09-01T00:00:00.000Z",
+      endedReason: "مخالفة النظام الداخلي",
+      endedBy: "eminyous",
+    });
+
+    expect(screen.getByText(texts.states.ENDED)).toBeTruthy();
+    expect(screen.getByText("مخالفة النظام الداخلي")).toBeTruthy();
+    expect(screen.getByText("2026-09-01")).toBeTruthy();
+    expect(screen.getByText("eminyous")).toBeTruthy();
+    expect(screen.getByRole("button", { name: new RegExp(membershipEnding.restore) })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: new RegExp(membershipEnding.end) })).toBeNull();
+  });
+
+  it("reads a membership that never became one, with nothing to end", () => {
+    show({ status: "REJECTED", membershipYear: 2025 });
+
+    expect(screen.getByText(texts.states.APPLICATION_REFUSED)).toBeTruthy();
+    expect(screen.getByText("2025")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: new RegExp(membershipEnding.end) })).toBeNull();
+    expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
+  });
+
+  it("keeps the payment reachable while a reason for ending is being picked", async () => {
+    show({ status: "ACTIVE" });
+
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(membershipEnding.end) }));
+
+    expect(screen.getByLabelText(membershipEnding.reasonLabel)).toBeTruthy();
     expect(screen.getByRole("button", { name: new RegExp(texts.toPayment) })).toBeTruthy();
   });
 });

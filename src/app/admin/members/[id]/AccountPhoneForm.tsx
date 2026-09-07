@@ -36,27 +36,31 @@ export default function AccountPhoneForm({
 
   if (!editing) {
     return (
-      <div className="flex items-center gap-2">
-        {phone ? (
-          <span className="font-bold" dir="ltr">
-            {phone}
-          </span>
-        ) : (
-          <span className="font-bold" style={{ color: "var(--text-muted)" }}>
-            {texts.none}
-          </span>
-        )}
-        <button
-          onClick={() => {
-            setValue(phone ?? "");
-            setError("");
-            setEditing(true);
-          }}
-          className="text-xs font-bold px-2 py-1 rounded-lg"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
-          <IconLabel name={phone ? "pencil" : "plus"}>{phone ? texts.edit : texts.add}</IconLabel>
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+          {texts.label}
+        </span>
+        <span className="flex items-center gap-2">
+          {phone ? (
+            <span className="font-bold text-sm" dir="ltr">
+              {phone}
+            </span>
+          ) : (
+            <span className="text-sm" style={{ color: "var(--text-muted)" }}>
+              {texts.none}
+            </span>
+          )}
+          <button
+            onClick={() => {
+              setValue(phone ?? "");
+              setError("");
+              setEditing(true);
+            }}
+            className="btn btn-sm btn-ghost font-bold"
+          >
+            <IconLabel name={phone ? "pencil" : "plus"}>{phone ? texts.edit : texts.add}</IconLabel>
+          </button>
+        </span>
       </div>
     );
   }
@@ -84,15 +88,11 @@ export default function AccountPhoneForm({
           <Icon name="warning" size={13} className="icon-inline" /> {error}
         </p>
       )}
-      <div className="flex gap-2">
-        <button onClick={save} disabled={saving} className="btn btn-primary text-sm flex-1">
+      <div className="flex flex-wrap gap-2">
+        <button onClick={save} disabled={saving} className="btn btn-sm btn-primary">
           {saving ? "..." : texts.save}
         </button>
-        <button
-          onClick={() => setEditing(false)}
-          className="btn text-sm"
-          style={{ background: "var(--mint-100)", color: "var(--mint-700)" }}
-        >
+        <button onClick={() => setEditing(false)} className="btn btn-sm btn-ghost">
           {texts.cancel}
         </button>
       </div>
