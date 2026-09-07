@@ -24,12 +24,17 @@ export function latestByAccount<T extends AccountMembership>(rows: T[]): Map<str
   return latest;
 }
 
-type StatedMembership = MembershipOfAYear & { status: StatefulMembership["status"] };
+type StatedMembership = MembershipOfAYear & {
+  status: StatefulMembership["status"];
+  endedAt: StatefulMembership["endedAt"];
+};
 
 export function asMembershipState(row: StatedMembership): StatefulMembership;
 export function asMembershipState(row: StatedMembership | null): StatefulMembership | null;
 export function asMembershipState(row: StatedMembership | null): StatefulMembership | null {
-  return row === null ? null : { status: row.status, membershipYear: row.year };
+  return row === null
+    ? null
+    : { status: row.status, membershipYear: row.year, endedAt: row.endedAt };
 }
 
 const REVIEW_ORDER = ["PENDING", "ACTIVE", "REJECTED"];

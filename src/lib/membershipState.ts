@@ -1,9 +1,10 @@
 export type MembershipState =
-  "NO_PAYMENT" | "AWAITING_REVIEW" | "REFUSED" | "UP_TO_DATE" | "BEHIND";
+  "NO_PAYMENT" | "AWAITING_REVIEW" | "REFUSED" | "UP_TO_DATE" | "BEHIND" | "ENDED";
 
 export interface StatefulMembership {
   status: "PENDING" | "ACTIVE" | "REJECTED";
   membershipYear: number;
+  endedAt: Date | string | null;
 }
 
 export function membershipState(
@@ -13,6 +14,7 @@ export function membershipState(
   if (!member) return "NO_PAYMENT";
   if (member.status === "PENDING") return "AWAITING_REVIEW";
   if (member.status === "REJECTED") return "REFUSED";
+  if (member.endedAt) return "ENDED";
 
   return member.membershipYear >= currentYear ? "UP_TO_DATE" : "BEHIND";
 }

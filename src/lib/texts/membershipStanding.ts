@@ -14,6 +14,10 @@ export const membershipStanding = {
     action: "أعد إرسال الدفع",
     reasonLabel: "سبب رفض الدفع",
   },
+  ended: {
+    title: "انتهت عضويتك",
+    body: "أنهت الإدارة عضويتك لهذه السنة. راجع إدارة الرابطة لمعرفة التفاصيل.",
+  },
   behind: {
     title: (year: number) => `اشتراكك يغطي سنة ${year}`,
     body: (year: number) => `الرابطة تجمع الآن اشتراكات سنة ${year}.`,

@@ -14,6 +14,9 @@ export const MEMBERSHIP_SELECT = {
   bankReference: true,
   paymentProof: true,
   referenceCode: true,
+  endedAt: true,
+  endedReason: true,
+  endedBy: true,
   createdAt: true,
 } as const;
 
@@ -24,7 +27,7 @@ export async function currentMembership(db: Db, userId: string) {
 
 export async function currentMemberships(db: Db) {
   const rows = await db.membership.findMany({
-    select: { userId: true, year: true, status: true },
+    select: { userId: true, year: true, status: true, endedAt: true },
   });
   return [...latestByAccount(rows).values()];
 }
