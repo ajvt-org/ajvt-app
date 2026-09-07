@@ -6,6 +6,7 @@ import IconLabel from "@/components/IconLabel";
 import { formatDate, formatTime } from "@/lib/utils";
 import { paymentCard, RECEIPT_STATUS_LABEL } from "@/lib/texts";
 import { donorNamesShown } from "@/lib/donorNamesShown";
+import { donorPhoneShown } from "@/lib/donorPhoneShown";
 import FinanceTagChips from "@/components/admin/FinanceTagChips";
 import MemberIdentity from "./MemberIdentity";
 import type { MemberOption, Proof } from "./paymentTypes";
@@ -53,6 +54,7 @@ export default function PaymentFacts({
   linkedMember?: MemberOption;
 }) {
   const names = donorNamesShown(proof);
+  const phone = donorPhoneShown(proof, linkedMember);
   const isDonation = proof.kind === "DONATION";
 
   return (
@@ -76,9 +78,9 @@ export default function PaymentFacts({
 
       {isDonation && names.typed && <bdi>{paymentCard.storedName(names.typed)}</bdi>}
 
-      {isDonation && proof.donorPhone && (
+      {isDonation && phone && (
         <span dir="ltr">
-          <Icon name="phone" size={13} className="icon-inline" /> {proof.donorPhone}
+          <Icon name="phone" size={13} className="icon-inline" /> {phone}
         </span>
       )}
 
