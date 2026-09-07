@@ -40,9 +40,13 @@ export default function WorkspaceTabs({
   const current = sectionHolding(sections, active) ?? sections[0];
   if (!current) return null;
 
+  const sectionsToPick = sections.length > 1;
+  const tabsToPick = current.tabs.length > 1;
+  if (!sectionsToPick && !tabsToPick) return null;
+
   return (
     <div className="space-y-1.5">
-      {sections.length > 1 && (
+      {sectionsToPick && (
         <div className="tab-strip">
           {sections.map((section) => {
             const on = section.key === current.key;
@@ -65,27 +69,29 @@ export default function WorkspaceTabs({
         </div>
       )}
 
-      <div className="tab-strip">
-        {current.tabs.map((tab) => {
-          const on = tab.key === active;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => onPick(tab.key)}
-              aria-current={on ? "page" : undefined}
-              className="text-xs sm:text-sm font-bold px-3 py-2 rounded-xl relative"
-              style={{
-                background: on ? "var(--mint-700)" : "white",
-                color: on ? "white" : "var(--text-main)",
-                border: on ? "none" : "1px solid var(--mint-100)",
-              }}
-            >
-              <IconLabel name={tab.icon}>{tab.label}</IconLabel>
-              <CountBadge count={tab.badge ?? 0} />
-            </button>
-          );
-        })}
-      </div>
+      {tabsToPick && (
+        <div className="tab-strip">
+          {current.tabs.map((tab) => {
+            const on = tab.key === active;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => onPick(tab.key)}
+                aria-current={on ? "page" : undefined}
+                className="text-xs sm:text-sm font-bold px-3 py-2 rounded-xl relative"
+                style={{
+                  background: on ? "var(--mint-700)" : "white",
+                  color: on ? "white" : "var(--text-main)",
+                  border: on ? "none" : "1px solid var(--mint-100)",
+                }}
+              >
+                <IconLabel name={tab.icon}>{tab.label}</IconLabel>
+                <CountBadge count={tab.badge ?? 0} />
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

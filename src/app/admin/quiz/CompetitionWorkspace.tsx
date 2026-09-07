@@ -47,7 +47,7 @@ export default function CompetitionWorkspace({
 
   return (
     <div className="space-y-3">
-      {tabs.length > 1 && <WorkspaceTabs sections={sections} active={active} onPick={setPicked} />}
+      <WorkspaceTabs sections={sections} active={active} onPick={setPicked} />
 
       {active === "settings" && (
         <>

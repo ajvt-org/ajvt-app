@@ -55,13 +55,13 @@ test("the workspace tabs hold to one line each on a phone", async ({ browser }) 
   await page.goto(`/admin/activities/${id}`);
   await page.waitForSelector(".admin-page .tab-strip");
 
-  await expect(page.locator(".admin-page .tab-strip")).toHaveCount(2);
+  await expect(page.locator(".admin-page .tab-strip")).toHaveCount(1);
   expect(await linesWithin(page, 0)).toBe(1);
-  expect(await linesWithin(page, 1)).toBe(1);
 
   await page.getByRole("button", { name: "المنافسة" }).click();
   await expect(page.getByText("المباريات")).toBeVisible();
 
+  await expect(page.locator(".admin-page .tab-strip")).toHaveCount(2);
   expect(await linesWithin(page, 0)).toBe(1);
   expect(await linesWithin(page, 1)).toBe(1);
   expect(await overflows(page, 1)).toBe(true);
