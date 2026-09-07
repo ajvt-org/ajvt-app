@@ -4,7 +4,7 @@ import { PAYMENT_METHOD_SHARE, REJECTION_REASONS } from "./data";
 import { placeholder } from "./images";
 import { daysAgo, fullName, next, pick, referenceCode } from "./random";
 import { runningYear } from "../../src/lib/membershipYear";
-import { mirrorMembershipPayment } from "../../src/lib/paymentMirror";
+import { writeMembershipFee } from "../../src/lib/membershipPaymentServer";
 import { MEMBERSHIP_FEE } from "../../src/lib/donations";
 import { rosterSlots } from "./roster";
 import { saveMembershipYear } from "../../src/lib/membershipRecord";
@@ -104,11 +104,7 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         where: { userId: owner, year: current - 1 },
         data: { recordedBy: "admin", reviewedBy: "admin", reviewedAt: reviewedLastYear },
       });
-      await mirrorMembershipPayment(prisma, {
-        userId: owner,
-        year: current - 1,
-        amount: MEMBERSHIP_FEE,
-        feeApplied: MEMBERSHIP_FEE,
+      await writeMembershipFee(prisma, owner, current - 1, MEMBERSHIP_FEE, MEMBERSHIP_FEE, {
         method,
         accountId: null,
         bankReference: null,
@@ -117,17 +113,12 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
         status,
         reviewedBy: "admin",
         reviewedAt: reviewedLastYear,
-        anonymous: false,
-        donorName: fullName(i),
         recordedBy: "admin",
+        anonymous: false,
       });
     }
 
-    await mirrorMembershipPayment(prisma, {
-      userId: owner,
-      year: membershipYear,
-      amount: paid,
-      feeApplied: MEMBERSHIP_FEE,
+    await writeMembershipFee(prisma, owner, membershipYear, paid, MEMBERSHIP_FEE, {
       method,
       accountId: null,
       bankReference: null,
@@ -137,7 +128,6 @@ export async function seedMembers(users: SeededUser[]): Promise<SeededMembers> {
       reviewedBy: isActive ? "admin" : null,
       reviewedAt: isActive ? reviewedOn : null,
       anonymous: false,
-      donorName: fullName(i),
     });
 
     const withName = { userId: owner, createdAt: joined, fullName: fullName(i) };

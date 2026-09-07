@@ -45,16 +45,34 @@ export const PUT = withRoute(
 
     const before = await totalPaidFor(prisma, id);
 
+    const edited =
+      paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined;
+
     await prisma.$transaction(async (tx) => {
-      if (paymentMethod !== undefined || accountId !== undefined || paymentProof !== undefined) {
+      if (edited) {
         await saveMembershipYear(tx, id, current.year, {
           ...(paymentMethod !== undefined ? { paymentMethod } : {}),
           ...(accountId !== undefined ? { accountId: accountId || null } : {}),
           ...(paymentProof !== undefined ? { paymentProof } : {}),
         });
       }
-      if (amountTransferred !== undefined) {
-        await recordMembershipPayment(tx, id, amountTransferred, membershipFee);
+      if (edited || amountTransferred !== undefined) {
+        await recordMembershipPayment(
+          tx,
+          id,
+          amountTransferred !== undefined ? amountTransferred : before,
+          membershipFee,
+          {
+            method: paymentMethod !== undefined ? paymentMethod : current.paymentMethod,
+            accountId: accountId !== undefined ? accountId || null : current.accountId,
+            bankReference: current.bankReference,
+            proof: paymentProof !== undefined ? paymentProof : current.paymentProof,
+            referenceCode: current.referenceCode,
+            status: current.status,
+            reviewedBy: current.reviewedBy,
+            reviewedAt: current.reviewedAt,
+          },
+        );
       }
     });
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { GET as proofsRoute } from "@/app/api/admin/payment-proofs/route";
 import { prisma } from "@/lib/prisma";
 import { matchesAccount, NO_ACCOUNT } from "@/app/admin/payments/paymentsFilters";
-import { resetDb, get, createAdmin, signInAsAdmin, mirrorMembershipYear } from "./helpers";
+import { resetDb, get, createAdmin, signInAsAdmin, payMembershipYear } from "./helpers";
 
 const METHOD = "بنكيلي";
 
@@ -23,7 +23,7 @@ async function aMembership(accountId: string | null) {
       paymentProof: "proof.jpg",
     },
   });
-  await mirrorMembershipYear(user.id, 2026);
+  await payMembershipYear(user.id, 2026);
   return user.id;
 }
 

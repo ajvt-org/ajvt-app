@@ -57,6 +57,7 @@ export const POST = withRoute(
     const before = await totalPaidFor(prisma, id);
 
     const renewed = await prisma.$transaction(async (tx) => {
+      const reviewedAt = new Date();
       await tx.membership.create({
         data: {
           userId: id,
@@ -67,10 +68,18 @@ export const POST = withRoute(
           paymentProof: paymentProof || null,
           recordedBy: session.username,
           reviewedBy: session.username,
-          reviewedAt: new Date(),
+          reviewedAt,
         },
       });
-      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee);
+      await recordMembershipPayment(tx, id, Number(paidAmount), membershipFee, {
+        method: paymentMethod,
+        accountId: accountId || null,
+        proof: paymentProof || null,
+        status: "ACTIVE",
+        recordedBy: session.username,
+        reviewedBy: session.username,
+        reviewedAt,
+      });
       await stampRecordedBy(tx, id, membershipYear, session.username);
       return { id, userId: id, membershipYear };
     });
