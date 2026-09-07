@@ -120,6 +120,7 @@ model Activity {
   minTeamSize            Int?
   maxTeamSize            Int?
   organisedByHomeVillage Boolean                @default(false) // the tournament is run by the village, so a team says whether it is a village team
+  playersBuildTeams      Boolean                @default(false) // registrants create and captain their own teams instead of an admin arranging them
   outsidePlayerLimit     Int? // players from outside the village a village team may field, counted from the village on each account
   yellowsForBan          Int                    @default(2) // yellows across the tournament that propose a suspension
   redBanMatches          Int                    @default(1) // matches a proposed red-card ban carries
@@ -214,13 +215,14 @@ model TeamFollow {
 }
 
 model TeamMember {
-  id        String           @id @default(cuid())
-  teamId    String
-  team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status    TeamMemberStatus @default(ACTIVE) // PENDING = self-service join awaiting approval, ACTIVE = locked in
-  createdAt DateTime         @default(now())
+  id               String           @id @default(cuid())
+  teamId           String
+  team             Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status           TeamMemberStatus @default(ACTIVE) // PENDING = self-service join awaiting approval, ACTIVE = locked in
+  invitedByCaptain Boolean          @default(false)
+  createdAt        DateTime         @default(now())
 
   @@unique([teamId, userId])
 }

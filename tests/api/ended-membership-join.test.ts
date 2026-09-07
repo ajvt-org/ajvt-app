@@ -9,7 +9,13 @@ import { resetDb, post, createUser, signInAs, makeMember, withParams } from "./h
 
 async function tournamentTeam() {
   const activity = await prisma.activity.create({
-    data: { title: "بطولة الحي", description: "بطولة فرق", isTournament: true, isOpen: true },
+    data: {
+      title: "بطولة الحي",
+      description: "بطولة فرق",
+      isTournament: true,
+      playersBuildTeams: true,
+      isOpen: true,
+    },
   });
   const team = await prisma.team.create({ data: { name: "النجم", activityId: activity.id } });
   return { activity, team };

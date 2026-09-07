@@ -27,6 +27,7 @@ export default function ActivityRegistrations({
   const full = activity.capacity !== null && activity.registrantCount >= activity.capacity;
   const settled = registration && registration.status !== "REJECTED";
   const hasTeamsToJoin = activity.joinableTeams.length > 0;
+  const mayJoinATeam = activity.playersBuildTeams && hasTeamsToJoin;
 
   async function run(action: () => Promise<unknown>, done: string) {
     setError("");
@@ -168,7 +169,7 @@ export default function ActivityRegistrations({
           </p>
         )}
 
-        {registration?.status === "ACTIVE" && activity.isTournament && hasTeamsToJoin && (
+        {registration?.status === "ACTIVE" && activity.isTournament && mayJoinATeam && (
           <div className="mt-1.5">
             <p className="text-xs mb-1" style={{ color: "var(--text-muted)" }}>
               <Icon name="flag" size={12} className="icon-inline" />{" "}

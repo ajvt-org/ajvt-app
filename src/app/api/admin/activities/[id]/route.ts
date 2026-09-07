@@ -46,6 +46,7 @@ export const GET = withRoute(
         minTeamSize: true,
         maxTeamSize: true,
         organisedByHomeVillage: true,
+        playersBuildTeams: true,
         outsidePlayerLimit: true,
         startsAt: true,
         endsAt: true,
@@ -86,6 +87,7 @@ export const PATCH = withRoute(
       minTeamSize,
       maxTeamSize,
       organisedByHomeVillage,
+      playersBuildTeams,
       outsidePlayerLimit,
       yellowsForBan,
       redBanMatches,
@@ -133,6 +135,7 @@ export const PATCH = withRoute(
       minTeamSize?: number | null;
       maxTeamSize?: number | null;
       organisedByHomeVillage?: boolean;
+      playersBuildTeams?: boolean;
       outsidePlayerLimit?: number | null;
       yellowsForBan?: number;
       redBanMatches?: number;
@@ -179,6 +182,9 @@ export const PATCH = withRoute(
     }
     if (organisedByHomeVillage !== undefined) {
       data.organisedByHomeVillage = !!organisedByHomeVillage;
+    }
+    if (playersBuildTeams !== undefined) {
+      data.playersBuildTeams = !!playersBuildTeams;
     }
     if (outsidePlayerLimit !== undefined) {
       data.outsidePlayerLimit = normalizePlayerCount(outsidePlayerLimit);

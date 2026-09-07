@@ -11,6 +11,7 @@ import { asMembershipState } from "@/lib/currentMembership";
 import { membershipState } from "@/lib/membershipState";
 import { getAppSettings } from "@/lib/settingsServer";
 import { releaseCaptain } from "@/lib/teamCaptainServer";
+import { playersMayBuildTeams } from "@/lib/teamBuilding";
 
 export const POST = withRoute(
   "POST /api/teams/[teamId]/join",
@@ -21,7 +22,21 @@ export const POST = withRoute(
 
     const [membership, team] = await Promise.all([
       userId === session.userId ? currentMembership(prisma, userId) : null,
-      prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
+      prisma.team.findUnique({
+        where: { id: teamId },
+        select: {
+          id: true,
+          activityId: true,
+          activity: {
+            select: {
+              isTournament: true,
+              minTeamSize: true,
+              maxTeamSize: true,
+              playersBuildTeams: true,
+            },
+          },
+        },
+      }),
     ]);
     if (!membership) {
       return NextResponse.json({ error: members.notFound }, { status: 404 });
@@ -37,6 +52,9 @@ export const POST = withRoute(
 
     if (!team) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
+    }
+    if (!playersMayBuildTeams(team.activity)) {
+      return NextResponse.json({ error: tournament.teamsArrangedByAdmin }, { status: 403 });
     }
 
     const registered = await prisma.activityRegistration.findUnique({

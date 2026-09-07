@@ -18,6 +18,7 @@ export type ActivityDetail = {
     minTeamSize: number | null;
     maxTeamSize: number | null;
     organisedByHomeVillage: boolean;
+    playersBuildTeams: boolean;
     outsidePlayerLimit: number | null;
     mvpVoteMinutes: number;
     isVolunteer: boolean;

@@ -61,6 +61,7 @@ export const activityUpdateSchema = z
     minTeamSize: z.unknown().optional(),
     maxTeamSize: z.unknown().optional(),
     organisedByHomeVillage: z.boolean().optional(),
+    playersBuildTeams: z.boolean().optional(),
     outsidePlayerLimit: z.unknown().optional(),
     isVolunteer: z.unknown().optional(),
     published: z.unknown().optional(),
