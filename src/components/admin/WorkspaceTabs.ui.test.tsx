@@ -86,7 +86,7 @@ describe("the two levels of the workspace row", () => {
   });
 
   it("scrolls each level rather than wrapping onto another line", () => {
-    const { view } = show();
+    const { view } = show("registrations");
 
     const strips = view.container.querySelectorAll(".tab-strip");
 
@@ -108,10 +108,55 @@ describe("the two levels of the workspace row", () => {
   it("falls back to the first section when the open tab is not in any of them", () => {
     show("nothing");
 
-    expect(screen.getByText("التفاصيل")).toBeDefined();
     expect(screen.getByRole("button", { name: /الإعداد/ }).getAttribute("aria-current")).toBe(
       "true",
     );
+  });
+});
+
+describe("a strip that offers no choice", () => {
+  it("drops the tab row when the open section holds a single tab", () => {
+    const { view } = show("details");
+
+    const strips = view.container.querySelectorAll(".tab-strip");
+
+    expect(strips.length).toBe(1);
+    expect(screen.queryByText("التفاصيل")).toBeNull();
+    expect(screen.getByRole("button", { name: /الإعداد/ })).toBeDefined();
+  });
+
+  it("brings the tab row back on a section that holds more than one", () => {
+    const { view } = show("registrations");
+
+    expect(view.container.querySelectorAll(".tab-strip").length).toBe(2);
+    expect(screen.getByText("المسجلون")).toBeDefined();
+  });
+
+  it("renders nothing when one section holds one tab", () => {
+    cleanup();
+    const view = render(
+      <WorkspaceTabs sections={[SECTIONS[0]]} active="details" onPick={vi.fn()} />,
+    );
+
+    expect(view.container.innerHTML).toBe("");
+  });
+
+  it("keeps the count of a hidden tab on the section above it", () => {
+    cleanup();
+    const only = {
+      key: "people",
+      label: "المشاركون",
+      tabs: [{ key: "registrations", label: "المسجلون", icon: "users" as const, badge: 3 }],
+    };
+    render(
+      <WorkspaceTabs sections={[SECTIONS[0], only]} active="registrations" onPick={vi.fn()} />,
+    );
+
+    expect(screen.queryByText("المسجلون")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /المشاركون/ }).querySelector("span[dir='ltr']")
+        ?.textContent,
+    ).toBe("3");
   });
 });
 

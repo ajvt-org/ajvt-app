@@ -28,16 +28,14 @@ export const GET = withRoute("GET /api/admin/payment-methods", async () => {
     },
   });
   const usage = await accountUsage();
-  const [expenses, payments, donations] = await Promise.all([
+  const [expenses, payments] = await Promise.all([
     prisma.expense.groupBy({ by: ["method"], _count: { _all: true } }),
     prisma.payment.groupBy({ by: ["method"], _count: { _all: true } }),
-    prisma.donation.groupBy({ by: ["paymentMethod"], _count: { _all: true } }),
   ]);
 
   const rows = adminMethodRows(methods, [
     ...expenses.map((row) => ({ name: row.method, count: row._count._all })),
     ...payments.map((row) => ({ name: row.method, count: row._count._all })),
-    ...donations.map((row) => ({ name: row.paymentMethod, count: row._count._all })),
   ]);
 
   return NextResponse.json({

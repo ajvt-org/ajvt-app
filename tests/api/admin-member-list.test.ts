@@ -10,11 +10,30 @@ import {
   signInAsAdmin,
   createUser,
   makeMember,
+  mirrorMembershipYear,
   withParams,
 } from "./helpers";
 import { runningYear } from "@/lib/membershipYear";
+import { MEMBERSHIP_FEE } from "@/lib/donations";
 
 const YEAR = runningYear();
+
+async function renewInto(userId: string, year: number, paymentMethod: string) {
+  await prisma.membership.create({
+    data: { userId, year, status: "ACTIVE", paymentMethod },
+  });
+  await prisma.payment.create({
+    data: {
+      purpose: "MEMBERSHIP",
+      amount: MEMBERSHIP_FEE,
+      feeApplied: MEMBERSHIP_FEE,
+      year,
+      status: "ACTIVE",
+      method: paymentMethod,
+      userId,
+    },
+  });
+}
 
 async function member(fullName: string, over: Record<string, unknown> = {}) {
   const user = await createUser(`2${String(Math.random()).slice(2, 9)}`);
@@ -62,9 +81,7 @@ describe("the admin member list", () => {
 
   it("reads a renewed member on the year they renewed into, once", async () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1, paymentMethod: "بنكيلي" });
-    await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "مصرفي" },
-    });
+    await renewInto(user.id, YEAR, "مصرفي");
 
     const rows = await listed();
 
@@ -80,14 +97,47 @@ describe("the admin member list", () => {
 
   it("exports a member once, on their newest year", async () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1 });
-    await prisma.membership.create({
-      data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "مصرفي" },
-    });
+    await renewInto(user.id, YEAR, "مصرفي");
 
     const csv = await exported();
 
     expect(csv.split("\n").filter((line) => line.includes("مجدد"))).toHaveLength(1);
     expect(csv).toContain("مصرفي");
+  });
+
+  it("takes the method, the proof and the reference code from the payment", async () => {
+    const user = await member("مدفوع", {
+      paymentMethod: "بنكيلي",
+      paymentProof: "proof.jpg",
+      referenceCode: "AJ-PAID2",
+      paidAmount: MEMBERSHIP_FEE,
+    });
+    await prisma.membership.update({
+      where: { userId_year: { userId: user.id, year: YEAR } },
+      data: { paymentMethod: "مصرفي", paymentProof: "other.jpg", referenceCode: "AJ-STALE" },
+    });
+
+    const [row] = await listed();
+
+    expect(row).toMatchObject({
+      paymentMethod: "بنكيلي",
+      paymentProof: "proof.jpg",
+      referenceCode: "AJ-PAID2",
+    });
+    expect(await exported()).toContain("AJ-PAID2");
+  });
+
+  it("leaves the method and the reference code empty when no payment carries them", async () => {
+    const user = await member("بلا دفعة", { paymentMethod: "بنكيلي" });
+    await prisma.membership.update({
+      where: { userId_year: { userId: user.id, year: YEAR } },
+      data: { referenceCode: "AJ-NOPAY" },
+    });
+
+    const [row] = await listed();
+
+    expect(row).toMatchObject({ paymentMethod: null, referenceCode: null });
+    expect(await exported()).not.toContain("AJ-NOPAY");
   });
 });
 
@@ -99,6 +149,7 @@ describe("the proofs waiting for an admin", () => {
 
   it("shows the newest proof a member sent, once", async () => {
     const user = await member("مجدد", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
+    await mirrorMembershipYear(user.id, YEAR - 1);
     await prisma.membership.create({
       data: {
         userId: user.id,
@@ -108,6 +159,7 @@ describe("the proofs waiting for an admin", () => {
         paymentProof: "new.webp",
       },
     });
+    await mirrorMembershipYear(user.id, YEAR);
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
     const membership = proofs.filter((p: { kind: string }) => p.kind === "MEMBERSHIP");
@@ -118,9 +170,11 @@ describe("the proofs waiting for an admin", () => {
 
   it("keeps the last proof a member sent when a later year carries none", async () => {
     const user = await member("توقف", { membershipYear: YEAR - 1, paymentProof: "old.webp" });
+    await mirrorMembershipYear(user.id, YEAR - 1);
     await prisma.membership.create({
       data: { userId: user.id, year: YEAR, status: "ACTIVE", paymentMethod: "بنكيلي" },
     });
+    await mirrorMembershipYear(user.id, YEAR);
 
     const { proofs } = await (await PROOFS(get("/api/admin/payment-proofs"))).json();
 

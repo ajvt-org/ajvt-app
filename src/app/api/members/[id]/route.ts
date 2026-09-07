@@ -14,17 +14,22 @@ const MEMBERSHIP_SELECT = {
   year: true,
   status: true,
   rejectionReason: true,
-  paymentMethod: true,
-  accountId: true,
-  bankReference: true,
-  paymentProof: true,
-  referenceCode: true,
   createdAt: true,
 } as const;
 
 const PAYMENTS_SELECT = {
   where: { purpose: "MEMBERSHIP" },
-  select: { amount: true, feeApplied: true, year: true, anonymous: true },
+  select: {
+    amount: true,
+    feeApplied: true,
+    year: true,
+    anonymous: true,
+    method: true,
+    accountId: true,
+    bankReference: true,
+    proof: true,
+    referenceCode: true,
+  },
 } as const;
 
 export const GET = withRoute(
@@ -52,9 +57,15 @@ export const GET = withRoute(
 
     const { year, ...rest } = current;
     const paid = paidForYear(account.payments, year);
+    const payment = account.payments.find((row) => row.year === year);
     return NextResponse.json({
       ...personOf(account),
       ...rest,
+      paymentMethod: payment?.method ?? null,
+      accountId: payment?.accountId ?? null,
+      bankReference: payment?.bankReference ?? null,
+      paymentProof: payment?.proof ?? null,
+      referenceCode: payment?.referenceCode ?? null,
       id,
       membershipYear: year,
       surplusAnonymous: anonymousForYear(account.payments, year),

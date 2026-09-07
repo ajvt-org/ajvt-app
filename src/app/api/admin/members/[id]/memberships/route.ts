@@ -8,6 +8,7 @@ import { currentMembership } from "@/lib/currentMembershipServer";
 import { NotFoundError } from "@/lib/errors";
 import { members as messages } from "@/lib/messages";
 import { feeOnly, paidForYear } from "@/lib/paidBreakdown";
+import { paymentOfYear } from "@/lib/membershipPaymentFields";
 import { CONFIDENTIAL_SELECT, seesSupporterName } from "@/lib/supportPrivacy";
 import { viewerOf } from "@/lib/supportViewer";
 
@@ -34,22 +35,27 @@ export const GET = withRoute(
         year: true,
         status: true,
         rejectionReason: true,
-        paymentMethod: true,
-        recordedBy: true,
         createdAt: true,
       },
     });
 
     const payments = await prisma.payment.findMany({
       where: { userId: id, purpose: "MEMBERSHIP" },
-      select: { amount: true, feeApplied: true, year: true },
+      select: { amount: true, feeApplied: true, year: true, method: true, recordedBy: true },
     });
 
     return NextResponse.json({
       memberships: memberships.map((m) => {
         const banked = paidForYear(payments, m.year);
         const paid = named ? banked : feeOnly(banked);
-        return { ...m, paidAmount: paid?.fee ?? null, supportAmount: paid?.support ?? 0 };
+        const payment = paymentOfYear(payments, m.year);
+        return {
+          ...m,
+          paymentMethod: payment?.method ?? null,
+          recordedBy: payment?.recordedBy ?? null,
+          paidAmount: paid?.fee ?? null,
+          supportAmount: paid?.support ?? 0,
+        };
       }),
       currentYear: membershipYear,
       refusal: renewalRefusal(
