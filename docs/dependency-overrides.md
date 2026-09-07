@@ -25,3 +25,24 @@ there would have been a break in production.
 **Remove this when `@prisma/config` ships a dependency on `deepmerge-ts` 8** (#432). Check with
 `npm view @prisma/config dependencies`. Once it does, delete the override, run `npm install` with
 npm 11, and confirm `npm ls deepmerge-ts` no longer says `overridden`.
+
+## `mysql2` → `^3.24.2`
+
+Added 2026-09-01 for [GHSA-3f6p-5ww8-9rcr](https://github.com/advisories/GHSA-3f6p-5ww8-9rcr), a high
+advisory on mysql2 below 3.22.0 where an auth plugin downgrade to `mysql_clear_password` leaks the
+password in the clear. The audit job started failing on every branch. The range also covers
+[GHSA-rgwj-5xj2-c3m3](https://github.com/advisories/GHSA-rgwj-5xj2-c3m3), a later moderate on 3.23.0
+and below.
+
+`mysql2` is a plain dependency of the `prisma` CLI, not an optional one, so it is in the tree on
+every install. Prisma pins one exact version of it and the latest release still pins 3.15.3, so
+there is no Prisma release to move to. `npm audit fix --force` offered a downgrade to Prisma 6,
+which is two majors back.
+
+Nothing here talks to MySQL. The datasource is Postgres and the client goes through the pg adapter,
+so the package is carried and never loaded. That does not make the audit wrong to stop the build,
+and an override costs nothing.
+
+**Remove this when `prisma` depends on mysql2 3.23.1 or later.** Check with
+`npm view prisma dependencies`. Once it does, delete the override and confirm `npm ls mysql2` no
+longer says `overridden`.
