@@ -13,7 +13,8 @@ import {
   NO_FILTERS,
 } from "@/lib/memberFilters";
 import { api, ApiError, errorMessage } from "@/lib/api";
-import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { memberCardHref } from "@/lib/adminBackLink";
+import { awaitsReview, nextAwaitingReview } from "@/lib/reviewQueue";
 import { pageCount, paginate } from "@/lib/listUrlState";
 import type { FilterTab, Member, AgeGroup, OrphanAge, Village } from "./types";
 import { PAGE_SIZE } from "./constants";
@@ -44,12 +45,14 @@ import BareAccountsSection from "./BareAccountsSection";
 import { useBareAccounts } from "./useBareAccounts";
 import { OTHER_VILLAGE } from "@/lib/villages";
 import PageLoading from "@/components/PageLoading";
+import { useAdminOrigin } from "@/components/admin/adminOrigin";
 import MemberDrawer from "./MemberDrawer";
 import ProofZoom from "./ProofZoom";
 
 function AdminDashboardInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const origin = useAdminOrigin();
   const membership = useMembershipSettings();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,13 +75,6 @@ function AdminDashboardInner() {
 
   const [page, setPage] = useState(1);
   const [lastFilterKey, setLastFilterKey] = useState("PENDING|");
-
-  const [resetLoading, setResetLoading] = useState(false);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [tempPasswordHours, setTempPasswordHours] = useState(DEFAULT_SETTINGS.tempPasswordHours);
-  const [accountPhoneInput, setAccountPhoneInput] = useState("");
-  const [attachAccountLoading, setAttachAccountLoading] = useState(false);
-  const [attachAccountError, setAttachAccountError] = useState("");
 
   const [showStats, setShowStats] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -163,7 +159,6 @@ function AdminDashboardInner() {
   function closeDrawer() {
     setSelected(null);
     setProofZoom(false);
-    setTempPassword(null);
     setShowRejectPicker(false);
   }
 
@@ -175,10 +170,9 @@ function AdminDashboardInner() {
         action,
         ...(reason ? { rejectionReason: reason } : {}),
       });
-      const idx = paginated.findIndex((m) => m.id === id);
-      const next = idx !== -1 ? paginated[idx + 1] : undefined;
+      const next = nextAwaitingReview(paginated, id, 1);
       await fetchMembers();
-      setSelected(next && next.id !== id ? next : null);
+      setSelected(next);
       setShowRejectPicker(false);
       setProofZoom(false);
     } catch (e) {
@@ -244,51 +238,6 @@ function AdminDashboardInner() {
     }
   }
 
-  async function resetPassword(userId: string) {
-    setResetLoading(true);
-    setTempPassword(null);
-    try {
-      const data = await api.post<{ tempPassword: string; hours: number }>(
-        "/api/admin/reset-password",
-        { userId },
-      );
-      setTempPassword(data.tempPassword);
-      setTempPasswordHours(data.hours);
-    } catch (e) {
-      alert(errorMessage(e));
-    } finally {
-      setResetLoading(false);
-    }
-  }
-
-  async function attachAccount(memberId: string) {
-    setAttachAccountError("");
-    if (!accountPhoneInput.trim()) {
-      setAttachAccountError("رقم الهاتف مطلوب");
-      return;
-    }
-    setAttachAccountLoading(true);
-    setTempPassword(null);
-    try {
-      const data = await api.patch<{ member: Member; tempPassword?: string }>(
-        `/api/admin/members/${memberId}`,
-        { accountPhone: accountPhoneInput.trim() },
-      );
-      setSelected(data.member);
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === memberId ? { ...m, userId: data.member.userId, phone: data.member.phone } : m,
-        ),
-      );
-      if (data.tempPassword) setTempPassword(data.tempPassword);
-      setAccountPhoneInput("");
-    } catch (e) {
-      setAttachAccountError(errorMessage(e));
-    } finally {
-      setAttachAccountLoading(false);
-    }
-  }
-
   const counts = statusCounts(members);
   const byAge = useMemo(() => ageBreakdown(members), [members]);
   const byVillage = useMemo(() => villageBreakdown(members), [members]);
@@ -341,7 +290,6 @@ function AdminDashboardInner() {
     onStep: (next) => {
       setSelected(next);
       setProofZoom(false);
-      setTempPassword(null);
     },
   });
 
@@ -439,9 +387,12 @@ function AdminDashboardInner() {
               selectedIds={selectedIds}
               onToggle={toggleSelected}
               onOpen={(m) => {
+                if (!awaitsReview(m)) {
+                  router.push(memberCardHref(m.id, origin));
+                  return;
+                }
                 setSelected(m);
                 setProofZoom(false);
-                setTempPassword(null);
                 setShowRejectPicker(false);
               }}
               onRenamed={(id, fullName) => {
@@ -458,21 +409,11 @@ function AdminDashboardInner() {
         <MemberDrawer
           member={selected}
           actionLoading={actionLoading}
-          settingsYear={membership.year}
-          resetLoading={resetLoading}
-          tempPassword={tempPassword}
-          tempPasswordHours={tempPasswordHours}
-          accountPhone={accountPhoneInput}
-          attachLoading={attachAccountLoading}
-          attachError={attachAccountError}
           showRejectPicker={showRejectPicker}
           rejectReason={rejectReason}
           onClose={closeDrawer}
           onZoomProof={() => setProofZoom(true)}
           onProofSaved={refreshSelected}
-          onResetPassword={() => resetPassword(selected.userId!)}
-          onAccountPhone={setAccountPhoneInput}
-          onAttachAccount={() => attachAccount(selected.id)}
           onRejectReason={setRejectReason}
           onOpenRejectPicker={() => setShowRejectPicker(true)}
           onCloseRejectPicker={() => setShowRejectPicker(false)}
