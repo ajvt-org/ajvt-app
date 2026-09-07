@@ -1,7 +1,6 @@
 "use client";
 
 import AddPlayerRow from "./AddPlayerRow";
-import TeamIdentityEditor from "./TeamIdentityEditor";
 import TeamRoster from "./TeamRoster";
 import TeamSummary from "./TeamSummary";
 import { teamsTab } from "@/lib/texts";
@@ -65,19 +64,22 @@ export default function TeamCard({
         )}
         busy={busy}
         onToggle={onToggle}
+        onRenameTeam={onRenameTeam}
+        onSetLogo={onSetLogo}
         onDeleteTeam={onDeleteTeam}
       />
       <div className="space-y-3 pt-3">
-        <TeamIdentityEditor
-          name={team.name}
-          logo={team.logo}
-          busy={busy}
-          askVillage={settings.organisedByHomeVillage}
-          fromHomeVillage={team.fromHomeVillage}
-          onRenameTeam={onRenameTeam}
-          onSetFromHomeVillage={onSetFromHomeVillage}
-          onSetLogo={onSetLogo}
-        />
+        {settings.organisedByHomeVillage && (
+          <label className="flex items-center gap-2 text-xs font-bold">
+            <input
+              type="checkbox"
+              checked={team.fromHomeVillage}
+              disabled={busy}
+              onChange={(e) => onSetFromHomeVillage(e.target.checked)}
+            />
+            <span style={{ color: "var(--text-main)" }}>{teamsTab.fromHomeVillage}</span>
+          </label>
+        )}
         {members.length < team.members.length && (
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             {teamsTab.rosterSubset(members.length, team.members.length)}

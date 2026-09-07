@@ -10,8 +10,11 @@ export interface FrameProps {
   uploading: boolean;
   locked: boolean;
   placeholderIcon: IconName;
+  size?: number;
   onPick: () => void;
 }
+
+const AVATAR = 64;
 
 function Picture({
   displayUrl,
@@ -149,20 +152,26 @@ export type FrameShape = "circle" | "square";
 
 export function AvatarFrame(props: FrameProps & { shape?: FrameShape }) {
   const corner = props.shape === "square" ? "rounded-xl" : "rounded-full";
+  const side = props.size ?? AVATAR;
   return (
     <Frame
       locked={props.locked}
       onPick={props.onPick}
       uploading={props.uploading}
       label={props.label}
-      className={`relative w-16 h-16 ${corner} overflow-hidden shrink-0 flex items-center justify-center`}
-      style={{ background: "var(--mint-100)", border: "2px solid var(--mint-300)" }}
+      className={`relative ${corner} overflow-hidden shrink-0 flex items-center justify-center`}
+      style={{
+        width: side,
+        height: side,
+        background: "var(--mint-100)",
+        border: "2px solid var(--mint-300)",
+      }}
     >
       <Picture
         displayUrl={props.displayUrl}
         label={props.label}
         placeholderIcon={props.placeholderIcon}
-        size={24}
+        size={Math.round((side * 24) / AVATAR)}
       />
       {!props.locked && (
         <span

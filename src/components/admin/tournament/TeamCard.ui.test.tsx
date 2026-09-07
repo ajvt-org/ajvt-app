@@ -1,11 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { readFileSync } from "node:fs";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import TeamCard from "./TeamCard";
 import type { Team, TeamMemberEntry } from "./types";
 import type { SquadBreach } from "@/lib/squadRules";
 import { teamsTab } from "@/lib/texts";
-import { MATCH_TEAMS_SIZES } from "@/components/tournament/matchCard/MatchTeams";
+import { CREST, ONTO_FIRST_LINE } from "./TeamIdentityEditor";
 
 function entry(
   id: string,
@@ -144,14 +143,18 @@ describe("TeamCard", () => {
     expect(screen.getAllByText("فريق النجم").length).toBe(1);
   });
 
-  it("hands the small logo to the stylesheet to drop once the card opens", () => {
-    const { container } = render(
+  it("asks where a team comes from only when the village runs the tournament", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 });
+    expect(screen.queryByLabelText(teamsTab.fromHomeVillage)).toBeNull();
+
+    cleanup();
+    render(
       <TeamCard
         team={team([entry("p1", "أحمد ولد محمد")])}
         shownName="فريق النجم"
         settings={{
           squad: { min: 1, max: 1 },
-          organisedByHomeVillage: false,
+          organisedByHomeVillage: true,
           outsidePlayerLimit: null,
         }}
         breaches={[]}
@@ -164,9 +167,18 @@ describe("TeamCard", () => {
       />,
     );
 
-    expect(container.querySelectorAll(".summary-logo").length).toBe(1);
-    const css = readFileSync("src/app/globals.css", "utf8");
-    expect(css).toContain("details[open] > .disclosure-summary .summary-logo");
+    const asked = screen.getByLabelText(teamsTab.fromHomeVillage) as HTMLInputElement;
+    expect(asked.checked).toBe(true);
+    fireEvent.click(asked);
+    expect(handlers.onSetFromHomeVillage).toHaveBeenCalledWith(false);
+  });
+
+  it("carries one crest, which the card neither hides nor reveals", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, false);
+    expect(screen.getAllByLabelText(teamsTab.changeTeamLogo)).toHaveLength(1);
+
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, true);
+    expect(screen.getAllByLabelText(teamsTab.changeTeamLogo)).toHaveLength(1);
   });
 
   it("sits the summary glyphs on the line the name sets", () => {
@@ -191,29 +203,43 @@ describe("TeamCard", () => {
 
     const head = container.querySelector(".disclosure-summary > div") as HTMLElement;
     expect(head.innerHTML).not.toContain("mt-2");
-    const crest = head.querySelector(".summary-logo") as HTMLElement;
+    const crest = screen.getByLabelText(teamsTab.changeTeamLogo);
     expect(crest.style.width).toBe(crest.style.height);
-    expect(crest.style.width).toBe(`${MATCH_TEAMS_SIZES.md.logo}px`);
-    for (const glyph of head.querySelectorAll(":scope > span:not(.summary-logo)")) {
-      expect(glyph.className).toContain("h-6");
-      expect(glyph.className).toContain("items-center");
-    }
+    expect(crest.style.width).toBe(`${CREST}px`);
+
     const name = screen.getByText("فريق النجم");
     expect(name.className).toContain("leading-6");
     expect(name.className).toContain("optical-name");
 
-    const lift = `${(MATCH_TEAMS_SIZES.md.logo - 24) / 2}px`;
+    const lift = `${ONTO_FIRST_LINE}px`;
     expect(name.style.marginBlockStart).toBe(lift);
-    for (const glyph of head.querySelectorAll(":scope > span:not(.summary-logo)")) {
+    const nameRow = name.parentElement as HTMLElement;
+    for (const glyph of nameRow.querySelectorAll(":scope > span")) {
+      expect(glyph.className).toContain("h-6");
+      expect(glyph.className).toContain("items-center");
       expect((glyph as HTMLElement).style.marginBlockStart).toBe(lift);
     }
-    expect(crest.style.marginBlockStart).toBe("");
+    expect((crest.parentElement?.parentElement as HTMLElement).style.marginBlockStart).toBe("");
+  });
+
+  it("edits the crest and the name with the card closed", () => {
+    show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 }, null, false);
+    const card = document.querySelector("details") as HTMLDetailsElement;
+
+    fireEvent.click(screen.getByLabelText(teamsTab.changeTeamLogo));
+    expect(handlers.onToggle).not.toHaveBeenCalled();
+    expect(card.open).toBe(false);
+
+    fireEvent.click(screen.getByLabelText(teamsTab.renameTeam));
+    expect(handlers.onToggle).not.toHaveBeenCalled();
+    expect(card.open).toBe(false);
+    expect(screen.getByDisplayValue("فريق النجم")).toBeDefined();
   });
 
   it("renames the team from the card", () => {
     show([entry("p1", "أحمد ولد محمد")], { min: 1, max: 1 });
 
-    fireEvent.click(screen.getByText("تعديل اسم الفريق"));
+    fireEvent.click(screen.getByLabelText("تعديل اسم الفريق"));
     fireEvent.change(screen.getByDisplayValue("فريق النجم"), {
       target: { value: "فريق الوحدة" },
     });
