@@ -14,6 +14,8 @@ export const MEMBERSHIP_SELECT = {
   bankReference: true,
   paymentProof: true,
   referenceCode: true,
+  reviewedBy: true,
+  reviewedAt: true,
   endedAt: true,
   endedReason: true,
   endedBy: true,

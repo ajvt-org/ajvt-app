@@ -201,6 +201,8 @@ describe("writing the mirrored payment", () => {
   });
 });
 
+const REVIEWED_ON = new Date("2026-02-03T10:00:00.000Z");
+
 const MEMBERSHIP = {
   userId: "u1",
   year: 2026,
@@ -210,7 +212,10 @@ const MEMBERSHIP = {
   accountId: null,
   bankReference: null,
   proof: null,
+  referenceCode: "AJ-1234",
   status: "ACTIVE" as const,
+  reviewedBy: "boss",
+  reviewedAt: REVIEWED_ON,
   anonymous: false,
   donorName: null,
 };
@@ -247,15 +252,65 @@ describe("the payment a membership is mirrored into", () => {
     }
   });
 
+  it("carries the reference code and the reviewer when it makes one", async () => {
+    const { db, calls } = fakeDb();
+
+    await mirrorMembershipPayment(db, MEMBERSHIP);
+
+    expect(only(calls, "create")[0].args.data).toMatchObject({
+      referenceCode: "AJ-1234",
+      reviewedBy: "boss",
+      reviewedAt: REVIEWED_ON,
+    });
+  });
+
+  it("carries them onto the one already standing too", async () => {
+    const { db, calls } = fakeDb({ id: "p1" });
+
+    await mirrorMembershipPayment(db, MEMBERSHIP);
+
+    expect(only(calls, "update")[0].args.data).toMatchObject({
+      referenceCode: "AJ-1234",
+      reviewedBy: "boss",
+      reviewedAt: REVIEWED_ON,
+    });
+  });
+
   it("moves the status of the year's membership payment", async () => {
     const { db, calls } = fakeDb();
 
-    await mirrorMembershipStatus(db, "u1", 2026, "REJECTED");
+    await mirrorMembershipStatus(db, "u1", 2026, { status: "REJECTED" }, REVIEWED_ON);
 
     expect(only(calls, "updateMany")[0].args).toMatchObject({
       where: { userId: "u1", year: 2026, purpose: "MEMBERSHIP" },
       data: { status: "REJECTED" },
     });
+  });
+
+  it("takes the reviewer with the verdict when one is named", async () => {
+    const { db, calls } = fakeDb();
+
+    await mirrorMembershipStatus(
+      db,
+      "u1",
+      2026,
+      { status: "ACTIVE", reviewedBy: "boss" },
+      REVIEWED_ON,
+    );
+
+    expect(only(calls, "updateMany")[0].args.data).toEqual({
+      status: "ACTIVE",
+      reviewedBy: "boss",
+      reviewedAt: REVIEWED_ON,
+    });
+  });
+
+  it("leaves the reviewer alone when the verdict names nobody", async () => {
+    const { db, calls } = fakeDb();
+
+    await mirrorMembershipStatus(db, "u1", 2026, { status: "PENDING" }, REVIEWED_ON);
+
+    expect(only(calls, "updateMany")[0].args.data).toEqual({ status: "PENDING" });
   });
 
   it("stamps who recorded it, and only where nobody is stamped yet", async () => {

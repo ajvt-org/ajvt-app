@@ -34,7 +34,10 @@ async function lastYearSurplus(memberId: string, amount: number) {
     accountId: null,
     bankReference: null,
     proof: null,
+    referenceCode: null,
     status: "ACTIVE",
+    reviewedBy: null,
+    reviewedAt: null,
     anonymous: false,
     donorName: "محمد ولد أحمد",
   });

@@ -51,10 +51,40 @@ function donateForm(fields: Record<string, string>) {
   return postForm("/api/donations", fd, { "x-forwarded-for": `10.1.0.${++ip}` });
 }
 
-// The payment is the only place money is kept. If any path leaves a figure on
-// a membership year or a surplus donation, the two can disagree.
 async function moneyKeptAnywhereElse() {
   return prisma.donation.count({ where: { source: "MEMBERSHIP" } });
+}
+
+const MIRRORED = [
+  ["paymentMethod", "method"],
+  ["accountId", "accountId"],
+  ["bankReference", "bankReference"],
+  ["paymentProof", "proof"],
+  ["referenceCode", "referenceCode"],
+  ["recordedBy", "recordedBy"],
+  ["reviewedBy", "reviewedBy"],
+  ["reviewedAt", "reviewedAt"],
+] as const;
+
+async function columnsThatDisagree() {
+  const memberships = await prisma.membership.findMany();
+  const disagreements: string[] = [];
+  for (const membership of memberships) {
+    const payment = await prisma.payment.findFirst({
+      where: { userId: membership.userId, year: membership.year, purpose: "MEMBERSHIP" },
+    });
+    if (!payment) continue;
+    for (const [onMembership, onPayment] of MIRRORED) {
+      const left = membership[onMembership];
+      const right = payment[onPayment];
+      const same =
+        left instanceof Date && right instanceof Date
+          ? left.getTime() === right.getTime()
+          : left === right;
+      if (!same) disagreements.push(onMembership);
+    }
+  }
+  return disagreements;
 }
 
 describe("every path that touches money writes only the payment", () => {
@@ -117,6 +147,49 @@ describe("every path that touches money writes only the payment", () => {
     expect(
       (await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } })).recordedBy,
     ).toBe("boss");
+  });
+
+  it("carries all eight of the mirrored columns after a member joins", async () => {
+    await signInAs(await createUser());
+
+    await REGISTER(post("/api/members", { ...submission, referenceCode: "AJ-2345B" }));
+
+    const payment = await prisma.payment.findFirstOrThrow({ where: { purpose: "MEMBERSHIP" } });
+    expect(payment.referenceCode).toBe("AJ-2345B");
+    expect(await columnsThatDisagree()).toEqual([]);
+  });
+
+  it("carries all eight after an admin approves the member", async () => {
+    await signInAs(await createUser());
+    await REGISTER(post("/api/members", { ...submission, referenceCode: "AJ-2345B" }));
+    const m = await prisma.membership.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    await VALIDATE(post("/api/admin/validate", { id: m.userId, action: "ACTIVE" }));
+
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
+    expect(payment.reviewedBy).toBe("boss");
+    expect(payment.reviewedAt).not.toBeNull();
+    expect(await columnsThatDisagree()).toEqual([]);
+  });
+
+  it("carries all eight after an admin refuses the member", async () => {
+    await signInAs(await createUser());
+    await REGISTER(post("/api/members", { ...submission, referenceCode: "AJ-2345B" }));
+    const m = await prisma.membership.findFirstOrThrow();
+    await signInAsAdmin(await createAdmin("boss", "SUPER"));
+
+    await VALIDATE(
+      post("/api/admin/validate", {
+        id: m.userId,
+        action: "REJECTED",
+        rejectionReason: "الصورة غير واضحة",
+      }),
+    );
+
+    const payment = await prisma.payment.findFirstOrThrow({ where: { userId: m.userId } });
+    expect(payment.reviewedBy).toBe("boss");
+    expect(await columnsThatDisagree()).toEqual([]);
   });
 
   it("agrees after an admin refuses that member", async () => {

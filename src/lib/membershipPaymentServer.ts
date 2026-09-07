@@ -34,7 +34,10 @@ export async function recordMembershipPayment(
     accountId: membership.accountId,
     bankReference: membership.bankReference,
     proof: membership.paymentProof,
+    referenceCode: membership.referenceCode,
     status: membership.status,
+    reviewedBy: membership.reviewedBy,
+    reviewedAt: membership.reviewedAt,
     anonymous,
     donorName: anonymous ? null : (account?.fullName ?? null),
   });
@@ -44,18 +47,14 @@ export async function syncSurplusStatus(db: Db, userId: string, reviewedBy?: str
   const membership = await currentMembership(db, userId);
   if (!membership) return;
 
-  await mirrorMembershipStatus(db, userId, membership.year, membership.status);
-  await setMembershipStatus(
-    db,
-    userId,
-    membership.year,
-    {
-      status: membership.status,
-      rejectionReason: membership.rejectionReason,
-      reviewedBy: reviewedBy ?? null,
-    },
-    new Date(),
-  );
+  const verdict = {
+    status: membership.status,
+    rejectionReason: membership.rejectionReason,
+    reviewedBy: reviewedBy ?? null,
+  };
+  const now = new Date();
+  await mirrorMembershipStatus(db, userId, membership.year, verdict, now);
+  await setMembershipStatus(db, userId, membership.year, verdict, now);
 }
 
 export async function setSurplusVisibility(db: Db, userId: string, anonymous: boolean) {

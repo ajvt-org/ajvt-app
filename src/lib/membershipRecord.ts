@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient, ReviewStatus } from "@prisma/client";
-import { stampRecordedBy } from "./paymentMirror";
+import { stampRecordedBy, type MembershipVerdict } from "./paymentMirror";
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
@@ -62,12 +62,6 @@ export async function recordMembershipYear(
     });
     await stampRecordedBy(db, userId, year, payment.recordedBy);
   }
-}
-
-export interface MembershipVerdict {
-  status: ReviewStatus;
-  rejectionReason?: string | null;
-  reviewedBy?: string | null;
 }
 
 export async function setMembershipStatus(
