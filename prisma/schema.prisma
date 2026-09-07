@@ -258,7 +258,7 @@ model Match {
   goals               MatchGoal[]
   bookings            MatchBooking[]
   penaltyKicks        MatchPenaltyKick[]
-  parts               MatchPart[]
+  units               MatchUnit[]
   adjustments         MatchAdjustment[]
   mvpVote             MatchMvpVote?
 
@@ -334,20 +334,31 @@ enum GoalPeriod {
 // teamId is the team the goal counts FOR. A null member is an unknown scorer;
 // an OWN_GOAL's member belongs to the other team. Scores derive from these
 // rows when a result is saved with events.
-model MatchPart {
-  id          String       @id @default(cuid())
-  matchId     String
-  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  order       Int
-  abandoned   Boolean      @default(false)
-  outcome     PartOutcome?
-  sideAPoints Int?
-  sideBPoints Int?
-  sideAColour PartColour?
-  createdAt   DateTime     @default(now())
+model MatchUnit {
+  id              String            @id @default(cuid())
+  matchId         String
+  match           Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  parentId        String?
+  parent          MatchUnit?        @relation("UnitChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children        MatchUnit[]       @relation("UnitChildren")
+  levelId         String
+  level           MatchLevel        @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  order           Int
+  abandoned       Boolean           @default(false)
+  outcome         PartOutcome?
+  sideAPoints     Int?
+  sideBPoints     Int?
+  sideAColour     PartColour?
+  worth           Int?
+  sideALostCredit Boolean           @default(false)
+  sideBLostCredit Boolean           @default(false)
+  adjustments     MatchAdjustment[]
+  createdAt       DateTime          @default(now())
 
-  @@unique([matchId, order])
+  @@unique([matchId, parentId, order])
   @@index([matchId])
+  @@index([parentId])
+  @@index([levelId])
 }
 
 model MatchLevel {
@@ -375,6 +386,7 @@ model MatchLevel {
   doublesOnRecoveredCredit Boolean          @default(false)
   createdAt                DateTime         @default(now())
   rules                    AdjustmentRule[]
+  units                    MatchUnit[]
 
   @@unique([activityId, order])
   @@index([activityId])
@@ -402,13 +414,15 @@ model MatchAdjustment {
   id        String         @id @default(cuid())
   matchId   String
   match     Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  unitId    String
+  unit      MatchUnit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
   ruleId    String
   rule      AdjustmentRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   side      MatchSide
-  order     Int
   createdAt DateTime       @default(now())
 
   @@index([matchId])
+  @@index([unitId])
   @@index([ruleId])
 }
 
