@@ -33,6 +33,11 @@ export const members = {
   renewAlreadyDone: "العضوية مجددة لهذه السنة بالفعل",
   renewYearBehind: "عضوية هذا العضو تتجاوز السنة الجارية",
   photoLocked: "تغيير الصورة موقوف على هذا الحساب، راجع إدارة الرابطة",
+  endingReasonRequired: "سبب إنهاء العضوية مطلوب",
+  endingReasonInvalid: "سبب إنهاء العضوية غير صالح",
+  endNotStanding: "لا يمكن إنهاء عضوية غير مقبولة",
+  endAlreadyEnded: "هذه العضوية منتهية بالفعل",
+  restoreNotEnded: "هذه العضوية غير منتهية",
 } as const;
 
 export const ageGroups = {
