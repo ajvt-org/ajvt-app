@@ -29,6 +29,7 @@ export interface AdjustmentRow {
 export interface ResolvedUnit {
   row: UnitRow;
   depth: number;
+  decider: boolean;
   children: ResolvedUnit[];
   standing: SeriesStanding | null;
   played: PlayedUnit;
@@ -107,6 +108,7 @@ export function computedWorth(
   children: ResolvedUnit[],
   standing: SeriesStanding,
   adjustments: AdjustmentRow[],
+  decider = false,
 ): number {
   const own = ladder[depth];
   if (!own || standing.winner === null) return own?.wonUnitWorth ?? 1;
@@ -119,6 +121,7 @@ export function computedWorth(
       depth,
       children.slice(0, standing.unitsRecorded - 1),
       adjustments,
+      decider,
     );
     if (totalOf(before, other(standing.winner)) === 0) return own.doubledWorth;
   }
@@ -143,6 +146,14 @@ function movesIn(units: ResolvedUnit[], adjustments: AdjustmentRow[]): RecordedI
     .map((move) => ({ order: orderOf.get(move.unitId)!, side: move.side, rule: move.rule }));
 }
 
+export function decidesItsParent(
+  rules: SeriesRules,
+  index: number,
+  before: SeriesStanding,
+): boolean {
+  return index === rules.unitsPerParent - 1 && before.level && !before.over;
+}
+
 export function resolveMatch(
   levels: LevelRow[],
   rows: UnitRow[],
@@ -151,17 +162,27 @@ export function resolveMatch(
   const ladder = ladderOf(levels);
   const groups = byParent(rows);
 
-  const resolve = (row: UnitRow, depth: number): ResolvedUnit => {
-    const children = (groups.get(row.id) ?? []).map((child) => resolve(child, depth + 1));
+  const resolve = (row: UnitRow, depth: number, decider: boolean): ResolvedUnit => {
+    const children = resolveSiblings(groups.get(row.id) ?? [], depth + 1);
     if (children.length === 0) {
-      return { row, depth, children, standing: null, played: typedPlay(row) };
+      return { row, depth, decider, children, standing: null, played: typedPlay(row) };
     }
-    const standing = standingUnder(ladder, depth, children, adjustments);
-    const worth = computedWorth(ladder, depth, children, standing, adjustments);
-    return { row, depth, children, standing, played: computedPlay(row, standing, worth) };
+    const standing = standingUnder(ladder, depth, children, adjustments, decider);
+    const worth = computedWorth(ladder, depth, children, standing, adjustments, decider);
+    return { row, depth, decider, children, standing, played: computedPlay(row, standing, worth) };
   };
 
-  const units = (groups.get(null) ?? []).map((row) => resolve(row, 1));
+  const resolveSiblings = (rows: UnitRow[], depth: number): ResolvedUnit[] => {
+    const done: ResolvedUnit[] = [];
+    for (const row of rows) {
+      const before = standingUnder(ladder, depth - 1, done, adjustments);
+      const decider = decidesItsParent(rulesAt(ladder, depth - 1), done.length, before);
+      done.push(resolve(row, depth, decider));
+    }
+    return done;
+  };
+
+  const units = resolveSiblings(groups.get(null) ?? [], 1);
   return { units, standing: standingUnder(ladder, 0, units, adjustments) };
 }
 
@@ -170,12 +191,14 @@ function standingUnder(
   depth: number,
   children: ResolvedUnit[],
   adjustments: AdjustmentRow[],
+  decider = false,
 ): SeriesStanding {
   const rules = rulesAt(ladder, depth);
   return deriveSeries(
     rules,
     children.map((child) => child.played),
     asAdjustments(movesIn(children, adjustments), rules.halvesPerUnit),
+    decider,
   );
 }
 

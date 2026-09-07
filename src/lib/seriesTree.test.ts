@@ -379,3 +379,86 @@ describe("what a won unit is worth", () => {
     expect(units[0].standing?.sideATotal).toBe(2);
   });
 });
+
+describe("the deciding unit of a level", () => {
+  const SHORT = CARDS.map((level) => (level.id === "set" ? { ...level, unitsToWin: 2 } : level));
+  const DECIDED = SHORT.map((level) =>
+    level.id === "set" ? { ...level, deciderTarget: 3 } : level,
+  );
+
+  function sets(scores: [number, number][][]) {
+    return scores.flatMap(([...points], index) => [
+      unit({ id: `s${index + 1}`, levelId: "set", order: index + 1 }),
+      ...points.map(([a, b], at) =>
+        unit({
+          id: `s${index + 1}p${at + 1}`,
+          levelId: "point",
+          parentId: `s${index + 1}`,
+          order: at + 1,
+          sideAPoints: a,
+          sideBPoints: b,
+        }),
+      ),
+    ]);
+  }
+
+  it("plays to the ordinary target while the level above is not level", () => {
+    const rows = sets([
+      [
+        [101, 20],
+        [101, 30],
+      ],
+    ]);
+
+    const { units } = resolveMatch(DECIDED, rows);
+
+    expect(units[0].decider).toBe(false);
+    expect(units[0].standing?.over).toBe(true);
+    expect(units[0].standing?.target).toBe(2);
+  });
+
+  it("plays to its own target when the level above is level after the others", () => {
+    const rows = sets([
+      [
+        [101, 20],
+        [101, 30],
+      ],
+      [
+        [20, 101],
+        [30, 101],
+      ],
+      [
+        [101, 20],
+        [101, 30],
+      ],
+    ]);
+
+    const { units } = resolveMatch(DECIDED, rows);
+
+    expect(units[2].decider).toBe(true);
+    expect(units[2].standing?.target).toBe(3);
+    expect(units[2].standing?.over).toBe(false);
+  });
+
+  it("uses the ordinary target where the level declares no second one", () => {
+    const rows = sets([
+      [
+        [101, 20],
+        [101, 30],
+      ],
+      [
+        [20, 101],
+        [30, 101],
+      ],
+      [
+        [101, 20],
+        [101, 30],
+      ],
+    ]);
+
+    const { units } = resolveMatch(SHORT, rows);
+
+    expect(units[2].standing?.target).toBe(2);
+    expect(units[2].standing?.over).toBe(true);
+  });
+});
