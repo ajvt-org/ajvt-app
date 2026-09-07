@@ -9,6 +9,7 @@ export const paymentMethodManager = {
   empty: "لا توجد طرق دفع بعد",
   memberFacing: "متاحة للأعضاء",
   adminOnly: "للإدارة فقط",
+  withoutNumbers: "بدون أرقام",
   stopped: "موقوفة",
   stop: "إيقاف",
   resume: "إعادة تفعيل",
@@ -17,6 +18,7 @@ export const paymentMethodManager = {
   edit: (name: string) => `تعديل ${name}`,
   toggleActive: (name: string) => `إيقاف أو تفعيل ${name}`,
   toggleMemberFacing: (name: string) => `إتاحة ${name} للأعضاء`,
+  toggleCarriesNumbers: (name: string) => `استلام ${name} برقم`,
 } as const;
 
 export const paymentAccountManager = {

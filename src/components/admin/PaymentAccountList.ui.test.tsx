@@ -20,7 +20,15 @@ function account(over: Partial<AdminAccountRow> = {}): AdminAccountRow {
 }
 
 function show(accounts: AdminAccountRow[], onRun = vi.fn()) {
-  render(<PaymentAccountList methodId={METHOD} accounts={accounts} busy={false} onRun={onRun} />);
+  render(
+    <PaymentAccountList
+      methodId={METHOD}
+      accounts={accounts}
+      carriesNumbers
+      busy={false}
+      onRun={onRun}
+    />,
+  );
   return onRun;
 }
 
@@ -144,5 +152,22 @@ describe("replacing a number", () => {
     fireEvent.change(screen.getByLabelText(texts.replaceLabel), { target: { value: "222222" } });
     fireEvent.click(screen.getAllByRole("button", { name: texts.replace })[0]);
     expect(onRun).toHaveBeenCalled();
+  });
+});
+
+describe("a method that is not received through a number", () => {
+  it("is given no list, no empty line and no way to add one", () => {
+    const { container } = render(
+      <PaymentAccountList
+        methodId={METHOD}
+        accounts={[]}
+        carriesNumbers={false}
+        busy={false}
+        onRun={vi.fn()}
+      />,
+    );
+    expect(container.innerHTML).toBe("");
+    expect(screen.queryByText(texts.none)).toBeNull();
+    expect(screen.queryByLabelText(texts.newLabel)).toBeNull();
   });
 });

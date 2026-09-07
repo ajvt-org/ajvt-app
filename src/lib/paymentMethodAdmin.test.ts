@@ -254,6 +254,10 @@ describe("a method that reaches nobody", () => {
     const closed = { ...open, id: "a2", code: "222222", closedAt: new Date(), active: false };
     expect(openAccountRows([open, closed]).map((row) => row.id)).toEqual([open.id]);
   });
+
+  it("is not one received in person, which has no number to be missing", () => {
+    expect(reachesNobody(method({ carriesNumbers: false }))).toBe(false);
+  });
 });
 
 describe("turning the numbers off on a method", () => {

@@ -9,11 +9,13 @@ import PaymentAccountRow from "./PaymentAccountRow";
 export default function PaymentAccountList({
   methodId,
   accounts,
+  carriesNumbers,
   busy,
   onRun,
 }: {
   methodId: string;
   accounts: AdminAccountRow[];
+  carriesNumbers: boolean;
   busy: boolean;
   onRun: (action: () => Promise<unknown>) => Promise<void>;
 }) {
@@ -28,6 +30,8 @@ export default function PaymentAccountList({
       setCode("");
     });
   }
+
+  if (!carriesNumbers) return null;
 
   return (
     <div
