@@ -2,10 +2,12 @@
 
 import IconLabel from "@/components/IconLabel";
 import type { IconName } from "@/components/Icon";
+import { quizTabs } from "@/lib/texts";
 
 export const QUIZ_TABS = [
-  { key: "competitions", label: "المسابقات", icon: "trophy" },
-  { key: "bank", label: "بنك الأسئلة", icon: "list" },
+  { key: "competitions", label: quizTabs.competitions, icon: "trophy" },
+  { key: "bank", label: quizTabs.bank, icon: "list" },
+  { key: "settings", label: quizTabs.settings, icon: "gear" },
 ] as const;
 
 export type QuizTab = (typeof QUIZ_TABS)[number]["key"];
@@ -22,7 +24,7 @@ export default function QuizTabs({
   onSelect: (tab: QuizTab) => void;
 }) {
   return (
-    <div className="flex gap-2" role="tablist">
+    <div className="tab-strip" role="tablist">
       {QUIZ_TABS.map((tab) => (
         <button
           key={tab.key}
