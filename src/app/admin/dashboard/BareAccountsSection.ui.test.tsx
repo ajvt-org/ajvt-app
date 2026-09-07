@@ -3,6 +3,7 @@ import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/re
 import BareAccountsSection from "./BareAccountsSection";
 import type { BareAccount } from "./types";
 import { bareAccounts, manualAdd } from "@/lib/texts";
+import { GRAVE, LEAD, SAFE } from "@/components/admin/verbTones";
 
 const post = vi.fn();
 const del = vi.fn();
@@ -226,5 +227,29 @@ describe("where the person is from", () => {
     renderSection([account({ phone: null, fullName: "سيدي ولد المشرف", village: "نواكشوط" })]);
 
     expect(screen.getByText("نواكشوط")).toBeDefined();
+  });
+
+  it("gives each verb its weight from the shared vocabulary", () => {
+    renderSection([account()]);
+
+    const verb = (label: string) => screen.getByRole("button", { name: new RegExp(label) });
+    expect(verb(bareAccounts.resetPassword).style.background).toBe(SAFE.background);
+    expect(verb(bareAccounts.addRequest).style.background).toBe(LEAD.background);
+    expect(verb(bareAccounts.remove).style.background).toBe(GRAVE.background);
+    expect(verb(bareAccounts.remove).style.border).toContain("1px solid");
+  });
+
+  it("builds every verb from the one button rather than four hand written ones", () => {
+    renderSection([account()]);
+
+    for (const label of [
+      bareAccounts.nudge,
+      bareAccounts.resetPassword,
+      bareAccounts.addRequest,
+      bareAccounts.remove,
+    ]) {
+      const button = screen.getByRole("button", { name: new RegExp(label) });
+      expect(button.className).toContain("disabled:opacity-50");
+    }
   });
 });

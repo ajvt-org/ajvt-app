@@ -10,4 +10,5 @@ export const bareAccounts = {
   resetPassword: "إعادة تعيين",
   addRequest: "إضافة طلب",
   remove: "حذف",
+  busy: "...",
 } as const;
