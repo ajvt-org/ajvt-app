@@ -37,7 +37,7 @@ const MATCH: DecidedMatch = {
   goals: [],
   penaltyKicks: [],
   bookings: [],
-  parts: [],
+  units: [],
   adjustments: [],
   series: null,
   mvpVote: null,
@@ -56,6 +56,7 @@ const TEAMS: Team[] = [
     members: [
       {
         status: "ACTIVE",
+        invitedByCaptain: false,
         member: {
           id: "p1",
           fullName: "سالم",

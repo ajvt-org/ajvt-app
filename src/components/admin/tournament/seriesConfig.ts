@@ -1,39 +1,31 @@
+import { ladderOf, type Ladder, type LevelRow } from "@/lib/matchLevels";
+import { ladderProblem } from "@/lib/seriesSetup";
 import type { TournamentInfo } from "./useTournamentData";
 
 export interface SeriesConfig {
-  partsPerMatch: number;
-  matchEnding: "PLAY_ALL" | "FIRST_TO";
-  partsToWin: number | null;
-  partDecision: "OUTCOME" | "POINTS" | "SCORE";
-  partTarget: number | null;
-  partWord: string;
-  partsWord: string;
+  ladder: Ladder;
+  match: LevelRow;
+  unit: LevelRow;
   hasColours: boolean;
   firstColourWord: string | null;
   secondColourWord: string | null;
 }
 
+export function configOfLadder(
+  levels: LevelRow[],
+  colours: Pick<SeriesConfig, "hasColours" | "firstColourWord" | "secondColourWord">,
+): SeriesConfig | null {
+  const ladder = ladderOf(levels);
+  if (ladderProblem(ladder) !== null) return null;
+  if (ladder.length < 2) return null;
+  return { ladder, match: ladder[0], unit: ladder[1], ...colours };
+}
+
 export function seriesConfigOf(info: TournamentInfo | null): SeriesConfig | null {
   if (!info || info.matchShape !== "SERIES") return null;
-  if (
-    info.partsPerMatch === null ||
-    info.matchEnding === null ||
-    info.partDecision === null ||
-    !info.partWord ||
-    !info.partsWord
-  ) {
-    return null;
-  }
-  return {
-    partsPerMatch: info.partsPerMatch,
-    matchEnding: info.matchEnding,
-    partsToWin: info.partsToWin,
-    partDecision: info.partDecision,
-    partTarget: info.partTarget,
-    partWord: info.partWord,
-    partsWord: info.partsWord,
+  return configOfLadder(info.levels, {
     hasColours: info.hasColours,
     firstColourWord: info.firstColourWord,
     secondColourWord: info.secondColourWord,
-  };
+  });
 }

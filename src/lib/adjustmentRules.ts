@@ -1,35 +1,50 @@
-import { HALVES_PER_PART, type RecordedAdjustment, type SeriesSide } from "./matchSeries";
+import type { RecordedAdjustment, SeriesSide } from "./matchSeries";
 
-export const MAX_ADJUSTMENT_PARTS = 10;
+export const MAX_ADJUSTMENT_UNITS = 10;
 
 export interface RuleShape {
   name: string;
-  partsToSelf: number;
-  partsFromOther: number;
+  unitsToSelf: number;
+  unitsFromOther: number;
+  levelId?: string | null;
+  endsUnit?: boolean;
 }
 
-export type RuleProblem = "name" | "parts" | "noEffect";
+export type RuleProblem = "name" | "units" | "noEffect";
 
 export function ruleProblem(rule: RuleShape): RuleProblem | null {
   if (!rule.name.trim()) return "name";
-  for (const parts of [rule.partsToSelf, rule.partsFromOther]) {
-    if (!Number.isInteger(parts) || parts < 0 || parts > MAX_ADJUSTMENT_PARTS) return "parts";
+  for (const units of [rule.unitsToSelf, rule.unitsFromOther]) {
+    if (!Number.isInteger(units) || units < 0 || units > MAX_ADJUSTMENT_UNITS) return "units";
   }
-  if (rule.partsToSelf === 0 && rule.partsFromOther === 0) return "noEffect";
+  if (rule.unitsToSelf === 0 && rule.unitsFromOther === 0 && rule.endsUnit !== true) {
+    return "noEffect";
+  }
   return null;
 }
 
 export interface RecordedInstance {
   order: number;
   side: SeriesSide;
-  rule: { partsToSelf: number; partsFromOther: number };
+  rule: { unitsToSelf: number; unitsFromOther: number };
 }
 
-export function asAdjustments(recorded: RecordedInstance[]): RecordedAdjustment[] {
+export function offerableRules<T extends { levelId?: string | null }>(
+  rules: T[],
+  levelIds: (string | null)[],
+): T[] {
+  const declared = new Set(levelIds.filter((id): id is string => id !== null));
+  return rules.filter((rule) => !rule.levelId || declared.has(rule.levelId));
+}
+
+export function asAdjustments(
+  recorded: RecordedInstance[],
+  halvesPerUnit: number,
+): RecordedAdjustment[] {
   return recorded.map((row) => ({
     order: row.order,
     side: row.side,
-    selfHalves: row.rule.partsToSelf * HALVES_PER_PART,
-    otherHalves: row.rule.partsFromOther * HALVES_PER_PART,
+    selfHalves: row.rule.unitsToSelf * halvesPerUnit,
+    otherHalves: row.rule.unitsFromOther * halvesPerUnit,
   }));
 }

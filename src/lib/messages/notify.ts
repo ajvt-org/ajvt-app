@@ -50,6 +50,12 @@ export const notify = {
     url: `/activities/${activityId}`,
   }),
 
+  teamInvitation: (teamName: string, activityId: string): PushPayload => ({
+    title: "دعوة للانضمام إلى فريق",
+    body: `فريق ${teamName} يدعوك للانضمام إليه`,
+    url: `/activities/${activityId}`,
+  }),
+
   teamChoiceReminder: (tournamentTitle: string, activityId: string): PushPayload => ({
     title: "اختر فريقك",
     body: `لم تنضم إلى فريق في ${tournamentTitle} بعد`,

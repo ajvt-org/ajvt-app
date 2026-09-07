@@ -24,6 +24,7 @@ export default function ConvertTournamentCard({
     minTeamSize: string;
     maxTeamSize: string;
     organisedByHomeVillage: boolean;
+    playersBuildTeams: boolean;
     outsidePlayerLimit: string;
     mvpVoteMinutes: string;
   } | null>(null);
@@ -40,6 +41,7 @@ export default function ConvertTournamentCard({
       minTeamSize: asField(activity.minTeamSize),
       maxTeamSize: asField(activity.maxTeamSize),
       organisedByHomeVillage: activity.organisedByHomeVillage,
+      playersBuildTeams: activity.playersBuildTeams,
       outsidePlayerLimit: asField(activity.outsidePlayerLimit),
       mvpVoteMinutes: String(activity.mvpVoteMinutes),
     });
@@ -56,6 +58,7 @@ export default function ConvertTournamentCard({
         minTeamSize: setup.minTeamSize,
         maxTeamSize: setup.maxTeamSize,
         organisedByHomeVillage: setup.organisedByHomeVillage,
+        playersBuildTeams: setup.playersBuildTeams,
         outsidePlayerLimit: setup.outsidePlayerLimit,
         ...(setup.mvpVoteMinutes ? { mvpVoteMinutes: Number(setup.mvpVoteMinutes) } : {}),
       });
@@ -134,6 +137,7 @@ export default function ConvertTournamentCard({
                 minTeamSize={setup.minTeamSize}
                 maxTeamSize={setup.maxTeamSize}
                 organisedByHomeVillage={setup.organisedByHomeVillage}
+                playersBuildTeams={setup.playersBuildTeams}
                 outsidePlayerLimit={setup.outsidePlayerLimit}
                 mvpVoteMinutes={setup.mvpVoteMinutes}
                 fixturesExist={fixturesExist}
@@ -142,6 +146,9 @@ export default function ConvertTournamentCard({
                 onMaxTeamSize={(maxTeamSize) => setSetup((p) => p && { ...p, maxTeamSize })}
                 onOrganisedByHomeVillage={(organisedByHomeVillage) =>
                   setSetup((p) => p && { ...p, organisedByHomeVillage })
+                }
+                onPlayersBuildTeams={(playersBuildTeams) =>
+                  setSetup((p) => p && { ...p, playersBuildTeams })
                 }
                 onOutsidePlayerLimit={(outsidePlayerLimit) =>
                   setSetup((p) => p && { ...p, outsidePlayerLimit })

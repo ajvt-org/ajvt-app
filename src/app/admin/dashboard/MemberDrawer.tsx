@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import Notice from "@/components/Notice";
 import IconLabel from "@/components/IconLabel";
 import ArrowLabel from "@/components/ArrowLabel";
 import ProofReuseWarning from "@/components/admin/ProofReuseWarning";
@@ -166,6 +167,7 @@ function Proof({
 export interface MemberDrawerProps {
   member: Member;
   actionLoading: boolean;
+  error: string;
   showRejectPicker: boolean;
   rejectReason: string;
   onClose: () => void;
@@ -181,6 +183,7 @@ export interface MemberDrawerProps {
 export default function MemberDrawer({
   member,
   actionLoading,
+  error,
   showRejectPicker,
   rejectReason,
   onClose,
@@ -228,6 +231,8 @@ export default function MemberDrawer({
             onApprove={onApprove}
             onReject={onReject}
           />
+
+          {error && <Notice tone="error">{error}</Notice>}
 
           <div className="pb-2" />
         </div>

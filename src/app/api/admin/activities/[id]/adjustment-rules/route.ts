@@ -23,7 +23,13 @@ export const POST = withRoute(
     const { id } = await params;
     const session = await requireActivityAccess(id);
 
-    let body: { name?: unknown; partsToSelf?: unknown; partsFromOther?: unknown };
+    let body: {
+      name?: unknown;
+      unitsToSelf?: unknown;
+      unitsFromOther?: unknown;
+      levelId?: unknown;
+      endsUnit?: unknown;
+    };
     try {
       body = await req.json();
     } catch {
@@ -32,8 +38,10 @@ export const POST = withRoute(
 
     const rule = await declareAdjustmentRule(id, {
       name: typeof body.name === "string" ? body.name : "",
-      partsToSelf: Number(body.partsToSelf),
-      partsFromOther: Number(body.partsFromOther),
+      unitsToSelf: Number(body.unitsToSelf),
+      unitsFromOther: Number(body.unitsFromOther),
+      levelId: typeof body.levelId === "string" ? body.levelId : null,
+      endsUnit: body.endsUnit === true,
     });
     await logAction(session.username, "DECLARE_ADJUSTMENT_RULE", rule.name);
 

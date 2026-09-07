@@ -1,11 +1,12 @@
 "use client";
 
+import { confirmDialog as texts } from "@/lib/texts";
 import ConfirmDialogShell from "./ConfirmDialogShell";
 
 export default function ConfirmDialog({
   title,
   message,
-  confirmLabel = "تأكيد",
+  confirmLabel = texts.confirm,
   danger,
   loading,
   onConfirm,

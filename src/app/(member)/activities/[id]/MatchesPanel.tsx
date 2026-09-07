@@ -6,13 +6,14 @@ import type { DecidedMatch, PublicMatch } from "@/components/tournament/publicTy
 import { memberTeamName } from "@/lib/matchEvents";
 import { publicTournament as texts } from "@/lib/texts";
 import type { EntrantKind } from "@/lib/entrant";
+import type { LevelRow } from "@/lib/matchLevels";
 
 export default function MatchesPanel({
   played,
   scheduled,
   allMatches,
   football,
-  partWord,
+  levels,
   showScorersAndCards,
   tournamentTitle,
   loggedIn,
@@ -24,7 +25,7 @@ export default function MatchesPanel({
   scheduled: PublicMatch[];
   allMatches: PublicMatch[];
   football: boolean;
-  partWord: string | null;
+  levels: LevelRow[];
   showScorersAndCards: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
@@ -53,7 +54,7 @@ export default function MatchesPanel({
                 day={day}
                 allMatches={allMatches}
                 football={football}
-                partWord={partWord}
+                levels={levels}
                 showScorersAndCards={showScorersAndCards}
                 tournamentTitle={tournamentTitle}
                 loggedIn={loggedIn}

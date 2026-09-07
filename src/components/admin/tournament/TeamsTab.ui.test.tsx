@@ -29,6 +29,7 @@ function team(id: string, name: string, members: { id: string; name: string }[])
     group: null,
     members: members.map((m) => ({
       status: "ACTIVE" as const,
+      invitedByCaptain: false,
       member: {
         id: m.id,
         fullName: m.name,

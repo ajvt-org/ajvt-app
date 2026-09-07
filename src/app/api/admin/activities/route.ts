@@ -39,7 +39,11 @@ export const GET = withRoute("GET /api/admin/activities", async () => {
         orderBy: { createdAt: "asc" },
       },
       teams: {
-        select: { _count: { select: { members: { where: { status: "PENDING" } } } } },
+        select: {
+          _count: {
+            select: { members: { where: { status: "PENDING", invitedByCaptain: false } } },
+          },
+        },
       },
       matches: { select: STANDING_MATCH_SELECT },
     },
@@ -77,6 +81,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
     minTeamSize,
     maxTeamSize,
     organisedByHomeVillage,
+    playersBuildTeams,
     outsidePlayerLimit,
     isVolunteer,
     whatsappLink,
@@ -110,6 +115,7 @@ export const POST = withRoute("POST /api/admin/activities", async (req: NextRequ
       minTeamSize: isTournament ? normalizePlayerCount(minTeamSize) : null,
       maxTeamSize: isTournament ? normalizePlayerCount(maxTeamSize) : null,
       organisedByHomeVillage: !!isTournament && !!organisedByHomeVillage,
+      playersBuildTeams: !!isTournament && !!playersBuildTeams,
       outsidePlayerLimit: isTournament ? normalizePlayerCount(outsidePlayerLimit) : null,
       isVolunteer: !!isVolunteer,
       whatsappLink: isVolunteer ? whatsappLink!.trim() : null,

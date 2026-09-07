@@ -6,7 +6,6 @@ export default function CountBadge({ count }: { count: number }) {
 
   return (
     <span
-      dir="ltr"
       className="absolute -bottom-1 -end-1.5 rounded-full text-white font-black flex items-center justify-center"
       style={{
         background: RED,
@@ -16,7 +15,9 @@ export default function CountBadge({ count }: { count: number }) {
         padding: "0 3px",
       }}
     >
-      <span className="badge-numeral">{count > MAX ? `+${MAX}` : count}</span>
+      <span dir="ltr" className="badge-numeral">
+        {count > MAX ? `+${MAX}` : count}
+      </span>
     </span>
   );
 }

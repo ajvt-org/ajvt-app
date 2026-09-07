@@ -16,14 +16,16 @@ import type { DecidedMatch, PublicMatch } from "./publicTypes";
 import type { EntrantKind } from "@/lib/entrant";
 import { matchDisplay } from "@/lib/texts";
 import SeriesScoreline from "@/components/admin/tournament/SeriesScoreline";
+import MatchUnits from "./MatchUnits";
 import { halvesText } from "@/lib/halfPoints";
+import { countedUnits, ladderOf, type LevelRow } from "@/lib/matchLevels";
 
 export default function MatchResult({
   match,
   day,
   allMatches,
   football = true,
-  partWord = null,
+  levels = [],
   showScorersAndCards = true,
   tournamentTitle,
   loggedIn,
@@ -35,7 +37,7 @@ export default function MatchResult({
   day: { round: string | null; venue: string | null };
   allMatches: PublicMatch[];
   football?: boolean;
-  partWord?: string | null;
+  levels?: LevelRow[];
   showScorersAndCards?: boolean;
   tournamentTitle: string;
   loggedIn: boolean;
@@ -51,6 +53,8 @@ export default function MatchResult({
     match.secondTeam.id,
     match.id,
   );
+  const ladder = ladderOf(levels);
+  const unitLevel = ladder[1] ?? null;
   const hideGoalsOfTeamId = match.forfeitWinnerTeamId
     ? forfeitLoserTeamId(match.forfeitWinnerTeamId, match.firstTeam.id, match.secondTeam.id)
     : null;
@@ -95,9 +99,21 @@ export default function MatchResult({
       />
 
       {match.series && (
-        <div className="flex justify-center">
-          <SeriesScoreline parts={match.parts} standing={match.series} partWord={partWord ?? ""} />
-        </div>
+        <>
+          <div className="flex justify-center">
+            <SeriesScoreline
+              units={match.units}
+              standing={match.series}
+              unitWord={unitLevel?.singular ?? ""}
+              extensionUnits={unitLevel ? countedUnits(ladder[0].extensionUnits, unitLevel) : ""}
+            />
+          </div>
+          <MatchUnits
+            units={match.units}
+            levels={ladder}
+            sides={[match.firstTeam.name, match.secondTeam.name]}
+          />
+        </>
       )}
 
       {match.forfeitWinnerTeamId && (
@@ -163,8 +179,12 @@ export default function MatchResult({
           homeTeamPhoto={match.firstTeam.photo}
           awayTeamPhoto={match.secondTeam.photo}
           entrant={entrant}
-          seriesLine={match.series ? halvesText(match.series.sideAHalves) : null}
-          seriesAwayLine={match.series ? halvesText(match.series.sideBHalves) : null}
+          seriesLine={
+            match.series ? halvesText(match.series.sideATotal, match.series.perUnit) : null
+          }
+          seriesAwayLine={
+            match.series ? halvesText(match.series.sideBTotal, match.series.perUnit) : null
+          }
           homeScore={match.homeScore ?? 0}
           awayScore={match.awayScore ?? 0}
           round={match.round}

@@ -28,6 +28,7 @@ const TEAM: Team = {
   members: [
     {
       status: "ACTIVE",
+      invitedByCaptain: false,
       member: {
         id: "p1",
         fullName: "سالم",

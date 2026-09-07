@@ -5,66 +5,65 @@ import { withRoute } from "@/lib/route";
 import { parse } from "@/lib/validation";
 import { teamMemberSchema } from "./schema";
 import { entrantWording, members, tournament } from "@/lib/messages";
-import { entrantOfActivity, entrantOfTeam } from "@/lib/entrantServer";
-import { currentMembership } from "@/lib/currentMembershipServer";
-import { asMembershipState } from "@/lib/currentMembership";
-import { membershipState } from "@/lib/membershipState";
-import { getAppSettings } from "@/lib/settingsServer";
+import { entrantOf } from "@/lib/entrantServer";
 import { releaseCaptain } from "@/lib/teamCaptainServer";
+import { refuseWhenLocked, requireTeamBuilder } from "@/lib/teamBuildingServer";
+import { playersMayBuildTeams } from "@/lib/teamBuilding";
+import { membershipIsLocked } from "@/lib/teamLock";
+import { isMember } from "@/lib/teamInvites";
+
+const TOURNAMENT = {
+  isTournament: true,
+  minTeamSize: true,
+  maxTeamSize: true,
+  playersBuildTeams: true,
+  startsAt: true,
+} as const;
 
 export const POST = withRoute(
   "POST /api/teams/[teamId]/join",
   async (req: NextRequest, { params }: { params: Promise<{ teamId: string }> }) => {
-    const session = await requireUser();
     const { teamId } = await params;
     const { userId } = parse(teamMemberSchema, await req.json());
 
-    const [membership, team] = await Promise.all([
-      userId === session.userId ? currentMembership(prisma, userId) : null,
-      prisma.team.findUnique({ where: { id: teamId }, select: { id: true, activityId: true } }),
-    ]);
-    if (!membership) {
-      return NextResponse.json({ error: members.notFound }, { status: 404 });
-    }
-    if (membership.status !== "ACTIVE") {
-      return NextResponse.json({ error: tournament.joinNeedsMembership }, { status: 403 });
-    }
-
-    const { membershipYear } = await getAppSettings();
-    if (membershipState(asMembershipState(membership), membershipYear) === "ENDED") {
-      return NextResponse.json({ error: tournament.joinMembershipEnded }, { status: 403 });
-    }
-
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true, activityId: true },
+    });
     if (!team) {
       return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
     }
 
-    const registered = await prisma.activityRegistration.findUnique({
-      where: { userId_activityId: { userId: session.userId, activityId: team.activityId } },
-    });
-    if (!registered || registered.status !== "ACTIVE") {
-      return NextResponse.json({ error: tournament.joinNeedsRegistration }, { status: 403 });
+    const { userId: viewerId, activity } = await requireTeamBuilder(team.activityId);
+    if (userId !== viewerId) {
+      return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
+    refuseWhenLocked(activity);
 
     const existingMembership = await prisma.teamMember.findFirst({
-      where: { userId: session.userId, team: { activityId: team.activityId } },
-      select: { id: true, teamId: true, status: true },
+      where: { userId: viewerId, team: { activityId: team.activityId } },
+      select: { id: true, teamId: true, status: true, invitedByCaptain: true },
     });
     if (existingMembership?.teamId === teamId) {
       return NextResponse.json({ ok: true });
     }
-    if (existingMembership?.status === "ACTIVE") {
-      const words = entrantWording(await entrantOfActivity(prisma, team.activityId));
-      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
+    if (existingMembership && isMember(existingMembership)) {
+      const leaving = await prisma.team.findUnique({
+        where: { id: existingMembership.teamId },
+        select: { captainUserId: true },
+      });
+      if (leaving?.captainUserId === viewerId) {
+        return NextResponse.json({ error: tournament.captainCannotLeave }, { status: 409 });
+      }
     }
 
     await prisma.$transaction(async (tx) => {
       if (existingMembership) {
-        await releaseCaptain(tx, existingMembership.teamId, session.userId);
+        await releaseCaptain(tx, existingMembership.teamId, viewerId);
         await tx.teamMember.delete({ where: { id: existingMembership.id } });
       }
       await tx.teamMember.create({
-        data: { teamId, userId: session.userId, status: "PENDING" },
+        data: { teamId, userId: viewerId, status: "PENDING" },
       });
     });
 
@@ -83,13 +82,31 @@ export const DELETE = withRoute(
       return NextResponse.json({ error: members.notFound }, { status: 404 });
     }
 
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { captainUserId: true, activity: { select: TOURNAMENT } },
+    });
+    if (!team) {
+      return NextResponse.json({ error: tournament.teamNotFound }, { status: 404 });
+    }
+
     const existing = await prisma.teamMember.findUnique({
       where: { teamId_userId: { teamId, userId: session.userId } },
-      select: { status: true },
+      select: { status: true, invitedByCaptain: true },
     });
-    if (existing?.status === "ACTIVE") {
-      const words = entrantWording(await entrantOfTeam(prisma, teamId));
-      return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
+
+    const words = entrantWording(entrantOf(team.activity));
+    const players = playersMayBuildTeams(team.activity);
+    if (existing && isMember(existing)) {
+      if (!players) {
+        return NextResponse.json({ error: words.entrantChoiceSettled }, { status: 403 });
+      }
+      if (membershipIsLocked(team.activity, new Date())) {
+        return NextResponse.json({ error: words.entrantChoiceLocked }, { status: 403 });
+      }
+      if (team.captainUserId === session.userId) {
+        return NextResponse.json({ error: tournament.captainCannotLeave }, { status: 409 });
+      }
     }
 
     await prisma.$transaction(async (tx) => {

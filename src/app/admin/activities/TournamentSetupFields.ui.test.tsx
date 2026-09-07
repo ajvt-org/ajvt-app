@@ -10,6 +10,7 @@ function show(over: Record<string, unknown> = {}) {
     onMinTeamSize: vi.fn(),
     onMaxTeamSize: vi.fn(),
     onOrganisedByHomeVillage: vi.fn(),
+    onPlayersBuildTeams: vi.fn(),
     onOutsidePlayerLimit: vi.fn(),
   };
   render(
@@ -19,6 +20,7 @@ function show(over: Record<string, unknown> = {}) {
       minTeamSize="16"
       maxTeamSize="22"
       organisedByHomeVillage={false}
+      playersBuildTeams={false}
       outsidePlayerLimit=""
       {...handlers}
       {...over}
@@ -51,12 +53,14 @@ describe("the squad size on a tournament", () => {
         minTeamSize="16"
         maxTeamSize="22"
         organisedByHomeVillage
+        playersBuildTeams={false}
         outsidePlayerLimit="4"
         onFormat={vi.fn()}
         onMatchShape={vi.fn()}
         onMinTeamSize={vi.fn()}
         onMaxTeamSize={vi.fn()}
         onOrganisedByHomeVillage={vi.fn()}
+        onPlayersBuildTeams={vi.fn()}
         onOutsidePlayerLimit={vi.fn()}
       />,
     );
@@ -236,5 +240,29 @@ describe("the dialog explaining itself", () => {
 
     expect(screen.getByText(new RegExp(texts.squadLocked))).toBeTruthy();
     expect(screen.queryByText(new RegExp(texts.shapeLocked))).toBeNull();
+  });
+});
+
+describe("the switch that says who builds the teams", () => {
+  it("sends the switch up", () => {
+    const handlers = show();
+
+    fireEvent.click(screen.getByLabelText(texts.playersBuildTeams));
+
+    expect(handlers.onPlayersBuildTeams).toHaveBeenCalledWith(true);
+  });
+
+  it("keeps it away from a singles tournament", () => {
+    show({ minTeamSize: "1", maxTeamSize: "1", playersBuildTeams: true });
+
+    expect(screen.queryByLabelText(texts.playersBuildTeams)).toBeNull();
+  });
+
+  it("clears it when singles is ticked", () => {
+    const handlers = show({ playersBuildTeams: true });
+
+    fireEvent.click(screen.getByLabelText(texts.singles));
+
+    expect(handlers.onPlayersBuildTeams).toHaveBeenCalledWith(false);
   });
 });

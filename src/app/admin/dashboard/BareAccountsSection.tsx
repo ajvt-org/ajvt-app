@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import Icon from "@/components/Icon";
+import Notice from "@/components/Notice";
 import PageLoading from "@/components/PageLoading";
 import ConfirmDeleteDialog from "@/components/admin/ConfirmDeleteDialog";
 import VerbButton from "@/components/admin/VerbButton";
@@ -73,6 +74,7 @@ function Row({
   onDelete: () => void;
 }) {
   const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState("");
   const [temp, setTemp] = useState<{ password: string; hours: number } | null>(null);
 
   const age = ageForVillage(user.village, user.age);
@@ -85,6 +87,7 @@ function Row({
 
   async function resetPassword() {
     setResetBusy(true);
+    setResetError("");
     try {
       const data = await api.post<{ tempPassword: string; hours: number }>(
         "/api/admin/reset-password",
@@ -92,7 +95,7 @@ function Row({
       );
       setTemp({ password: data.tempPassword, hours: data.hours });
     } catch (e) {
-      alert(errorMessage(e));
+      setResetError(errorMessage(e));
     } finally {
       setResetBusy(false);
     }
@@ -151,6 +154,7 @@ function Row({
           {texts.remove}
         </VerbButton>
       </div>
+      {resetError && <Notice tone="error">{resetError}</Notice>}
       {temp && <TempPasswordBox value={temp.password} hours={temp.hours} />}
     </div>
   );
@@ -169,15 +173,17 @@ export default function BareAccountsSection({
 }) {
   const [confirmDelete, setConfirmDelete] = useState<BareAccount | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   async function deleteUser(id: string, confirmPhone: string) {
     setDeleteLoading(true);
+    setDeleteError("");
     try {
       await api.del(`/api/admin/users/${id}`, { confirmPhone });
       setConfirmDelete(null);
       await onChanged();
     } catch (e) {
-      alert(errorMessage(e));
+      setDeleteError(errorMessage(e));
     } finally {
       setDeleteLoading(false);
     }
@@ -187,6 +193,8 @@ export default function BareAccountsSection({
 
   return (
     <div className="space-y-2">
+      {deleteError && <Notice tone="error">{deleteError}</Notice>}
+
       {users.length === 0 ? (
         <div className="card p-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
           {texts.empty}

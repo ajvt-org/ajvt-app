@@ -23,7 +23,13 @@ export { activityReport } from "./activityReport";
 export { destinationPicker } from "./destinationPicker";
 export { activityRegistration } from "./activityRegistration";
 export { activityRegistrants, registrationStatusLabels } from "./activityRegistrants";
-export { ageStandings, pendingAgeGroups } from "./ageGroups";
+export {
+  ageGroupsDialog,
+  ageStandings,
+  moveAgeGroup,
+  orphanAgeGroups,
+  pendingAgeGroups,
+} from "./ageGroups";
 export { adminAccounts, activityPicker } from "./adminAccounts";
 export { adminHome } from "./adminHome";
 export { accountPhone } from "./accountPhone";
@@ -32,8 +38,8 @@ export { adminShell, adminTabs } from "./adminNav";
 export { adminTools, auditLogPage, deletedRecords } from "./adminTools";
 export { association } from "./association";
 export { bareAccounts } from "./bareAccounts";
-export { confirmDelete, deleteMember } from "./deleteRecords";
-export { reviewQueue } from "./reviewQueue";
+export { confirmDelete, confirmDialog, deleteMember } from "./deleteRecords";
+export { bulkReview, reviewQueue } from "./reviewQueue";
 export { memberDecision } from "./memberDecision";
 export { memberRejected } from "./memberRejected";
 export { membershipSummary } from "./membershipSummary";
@@ -108,6 +114,7 @@ export { signUp } from "./signUp";
 export { supportPrivacy } from "./supportPrivacy";
 export { adminSupporters, supporters, surplusCard } from "./supporters";
 export { teamsTab } from "./teamsTab";
+export { teamBuilder } from "./teamBuilder";
 export { treasury } from "./treasury";
 export { verifyPage } from "./verify";
 export { villageField, villagesDialog } from "./villages";
@@ -115,4 +122,6 @@ export { playersTab } from "./playersTab";
 export { proofUpload } from "./proofUpload";
 export { matchDisplay, publicTournament } from "./publicTournament";
 export { seriesResult } from "./seriesResult";
+export { matchLevelsSetup } from "./matchLevelsSetup";
+export { matchUnitCard } from "./matchUnitCard";
 export { setupLabels, setupWizard } from "./setupWizard";

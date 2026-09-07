@@ -58,6 +58,7 @@ export const paymentsPage = {
   search: "بحث بالاسم أو النشاط...",
   allAccounts: "كل الأرقام",
   accountFilter: "تصفية حسب الرقم",
+  noResults: "لا توجد نتائج",
 } as const;
 
 export const byAccount = {

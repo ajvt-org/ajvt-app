@@ -152,11 +152,15 @@ export default function NewActivityForm({
           minTeamSize={draft.minTeamSize}
           maxTeamSize={draft.maxTeamSize}
           organisedByHomeVillage={draft.organisedByHomeVillage}
+          playersBuildTeams={draft.playersBuildTeams}
           outsidePlayerLimit={draft.outsidePlayerLimit}
           onMinTeamSize={(minTeamSize) => setDraft((p) => ({ ...p, minTeamSize }))}
           onMaxTeamSize={(maxTeamSize) => setDraft((p) => ({ ...p, maxTeamSize }))}
           onOrganisedByHomeVillage={(organisedByHomeVillage) =>
             setDraft((p) => ({ ...p, organisedByHomeVillage }))
+          }
+          onPlayersBuildTeams={(playersBuildTeams) =>
+            setDraft((p) => ({ ...p, playersBuildTeams }))
           }
           onOutsidePlayerLimit={(outsidePlayerLimit) =>
             setDraft((p) => ({ ...p, outsidePlayerLimit }))
